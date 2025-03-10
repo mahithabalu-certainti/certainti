@@ -1,0 +1,24 @@
+{
+  "name": "rdcredits_platform_be",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon --watch src src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@apollo/server": "^4.11.3",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "graphql-tools": "^9.0.16",
+    "install": "^0.13.0",
+    "nodemon": "^3.1.9",
+    "pg": "^8.13.3",
+    "sequelize": "^6.37.6",
+    "winston": "^3.17.0"
+  }
+}
