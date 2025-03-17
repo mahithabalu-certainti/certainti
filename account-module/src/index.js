@@ -1,5 +1,5 @@
 require("dotenv").config();
-const Configurations = require("./config/config");
+const configurations = require("./config/config");
 const initExpressServer = require("./expressServer");
 const initGraphQLServer = require("./graphqlServer");
 
@@ -7,7 +7,7 @@ const PORT = process.env.SERVER_PORT || 3000;
 
 async function startServer() {
   try {
-    const dbInstance = Configurations.getInstance().getDbConfig();
+    const dbInstance = configurations.getInstance().getDbConfig();
     await dbInstance.sync({ force: false });
     console.log("Database initialized successfully");
 
@@ -15,7 +15,7 @@ async function startServer() {
     const { graphqlPath } = await initGraphQLServer(app);
 
     app.listen(PORT, () => {
-      console.log(`🚀 Graphql Server ready at: ${graphqlPath}`);
+      console.log(`Graphql Server ready at: ${graphqlPath}`);
       console.log(`Server running on port : ${PORT}`);
     });
   } catch (err) {

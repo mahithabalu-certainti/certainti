@@ -1,9 +1,9 @@
 const response = require("../utils/apiResponse");
 const constant = require("../utils/constant");
-const Configurations = require("../config/config");
+const configurations = require("../config/config");
 
-const logger = Configurations.getInstance().getLogger();
-const services = Configurations.getInstance().getServices();
+const logger = configurations.getInstance().getLogger();
+const services = configurations.getInstance().getServices();
 const accountServices = services.accountServices;
 
 /**
@@ -34,7 +34,7 @@ async function accounts(req, res) {
         accounts.data
       );
     } else {
-      logger.info("Failed log: ", {
+      logger.error("Failed log: ", {
         timestamp: new Date().toISOString(),
         method: methodName,
       });
@@ -47,7 +47,7 @@ async function accounts(req, res) {
     }
   } catch (err) {
     const error = err;
-    logger.info("Failed log: ", {
+    logger.error("Failed log: ", {
       timestamp: new Date().toString(),
       method: "accounts",
       message: error.message,

@@ -1,7 +1,7 @@
 const winston = require("winston");
 const { transports, createLogger, format } = winston;
 const sequelize = require("./dataSource");
-const Services = require("../services/index.service");
+const Services = require("../services");
 
 /**
  * @class Configurations

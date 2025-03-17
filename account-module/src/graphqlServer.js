@@ -4,8 +4,8 @@ const { makeExecutableSchema } = require("@graphql-tools/schema");
 const typeDefs = require("./schema/schema");
 const accountResolvers = require("./resolvers");
 const initRequestContext = require("./context");
-const Configurations = require("./config/config");
-const services = Configurations.getInstance().getServices();
+const configurations = require("./config/config");
+const services = configurations.getInstance().getServices();
 
 const GRAPHQL_PATH = "/graphql";
 

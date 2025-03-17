@@ -1,4 +1,4 @@
-const AccountServices = require("./account.service");
+const AccountServices = require("./accountService");
 
 class Services {
   constructor() {

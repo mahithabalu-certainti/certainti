@@ -1,4 +1,4 @@
-const Account = require("../models/account.model");
+const Account = require("../models/accountModel");
 const constant = require("../utils/constant");
 
 class AccountService {
