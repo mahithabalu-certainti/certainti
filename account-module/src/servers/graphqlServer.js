@@ -1,10 +1,10 @@
 const { ApolloServer } = require("@apollo/server");
 const { expressMiddleware } = require("@apollo/server/express4");
 const { makeExecutableSchema } = require("@graphql-tools/schema");
-const typeDefs = require("./schema/schema");
-const accountResolvers = require("./resolvers");
-const initRequestContext = require("./context");
-const configurations = require("./config/config");
+const typeDefs = require("../graphql/schema");
+const accountResolvers = require("../resolvers");
+const initRequestContext = require("../graphql/context");
+const configurations = require("../config/config");
 const services = configurations.getInstance().getServices();
 
 const GRAPHQL_PATH = "/graphql";

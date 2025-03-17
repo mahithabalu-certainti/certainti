@@ -1,7 +1,7 @@
 require("dotenv").config();
 const configurations = require("./config/config");
-const initExpressServer = require("./expressServer");
-const initGraphQLServer = require("./graphqlServer");
+const initExpressServer = require("./servers/expressServer");
+const initGraphQLServer = require("./servers/graphqlServer");
 
 const PORT = process.env.SERVER_PORT || 3000;
 

@@ -1,9 +1,9 @@
 const express = require("express");
 const cors = require("cors");
-const routes = require("./routes");
-const authMiddleware = require("./middlewares/authMiddleware");
+const routes = require("../routes");
+const authMiddleware = require("../middlewares/authMiddleware");
 
-const initExpressServer = async () => {
+const initExpressServer = () => {
   const app = express();
 
   app.use(express.json());

@@ -1,4 +1,4 @@
-const authMiddleware = require("./middlewares/authMiddleware");
+const authMiddleware = require("../middlewares/authMiddleware");
 
 const initRequestContext = async (ctx, appContext) => {
   await authMiddleware(ctx.req, null, () => {});
