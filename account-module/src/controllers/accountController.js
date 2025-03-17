@@ -49,7 +49,7 @@ async function accounts(req, res) {
     const error = err;
     logger.error("Failed log: ", {
       timestamp: new Date().toString(),
-      method: "accounts",
+      method: methodName,
       message: error.message,
     });
 
