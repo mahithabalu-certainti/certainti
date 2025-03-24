@@ -10,9 +10,11 @@ export async function validateRequest(
   req: Request,
   schema: Joi.Schema,
   organization: string,
-  res: Response
+  res: Response,
+  type?: "GET" | "POST" | "PUT" | "DELETE"
 ): Promise<any> {
-  const { error, value } = schema.validate(req.body, { abortEarly: false });
+  const requestValidationType = type === "GET" ? req.query : req.body; 
+  const { error, value } = schema.validate(requestValidationType, { abortEarly: false });
   if (error) {
     const errorMessages = requestErrorMessages(error);
     logger.error("Validation failed:", {

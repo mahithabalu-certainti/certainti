@@ -24,16 +24,23 @@ async function createUser(req: Request, res: Response): Promise<void> {
   try {
     const { organization } = req.body;
 
-    const { error: reqErr } = userReqSchema.validate({
-      organization
-    }, {
-      abortEarly: false,
-    });
+    const { error: reqErr } = userReqSchema.validate(
+      {
+        organization,
+      },
+      {
+        abortEarly: false,
+      }
+    );
 
     if (reqErr) {
-      errorResponse(res, constants.BAD_REQUEST, constants.BAD_REQUEST_MESSAGE, {
-        organization: "organization is required",
-      });
+      const errorMessage = requestErrorMessages(reqErr);
+      errorResponse(
+        res,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        errorMessage
+      );
       return;
     }
 
@@ -95,11 +102,14 @@ async function createUser(req: Request, res: Response): Promise<void> {
 async function updateUser(req: Request, res: Response): Promise<void> {
   try {
     const { organization } = req.body;
-    const { error: reqErr } = userReqSchema.validate({
-      organization
-    }, {
-      abortEarly: false,
-    });
+    const { error: reqErr } = userReqSchema.validate(
+      {
+        organization,
+      },
+      {
+        abortEarly: false,
+      }
+    );
 
     if (reqErr) {
       errorResponse(
@@ -120,7 +130,7 @@ async function updateUser(req: Request, res: Response): Promise<void> {
       res
     );
 
-    if(!value){
+    if (!value) {
       return;
     }
 
@@ -177,27 +187,9 @@ async function updateUser(req: Request, res: Response): Promise<void> {
   }
 }
 
-const listUsers = async (req: Request, res: Response): Promise<void> => {
+async function listUsers(req: Request, res: Response): Promise<void> {
   try {
-    const { error, value } = listUserSchema.validate(req.query, {
-      abortEarly: true,
-    });
-
-    if (error) {
-      const errorMessages = requestErrorMessages(error);
-      logger.error("Failed log: ", {
-        timestamp: new Date().toString(),
-        method: "list user",
-        message: "Request validation failed",
-      });
-      errorResponse(
-        res,
-        constants.BAD_REQUEST,
-        constants.BAD_REQUEST_MESSAGE,
-        errorMessages
-      );
-      return;
-    }
+    const value = await validateRequest(req, listUserSchema, "", res, "GET");
 
     let parsedFilters: Record<string, any> = {};
 
@@ -258,9 +250,9 @@ const listUsers = async (req: Request, res: Response): Promise<void> => {
     });
     errorResponse(res, constants.FAILED, constants.FAILED_MESSAGE, err.message);
   }
-};
+}
 
-const listUserById = async (req: Request, res: Response): Promise<void> => {
+async function listUserById(req: Request, res: Response): Promise<void> {
   try {
     const { id: userId } = req.params;
 
@@ -323,91 +315,6 @@ const listUserById = async (req: Request, res: Response): Promise<void> => {
     });
     errorResponse(res, constants.FAILED, constants.FAILED_MESSAGE, err.message);
   }
-};
-
-async function userRoles(req: Request, res: Response): Promise<void> {
-  try {
-    const roles = await services.userServices.roles();
-
-    if (roles.statusCode === constants.SUCCESS) {
-      logger.info("Success log: ", {
-        timestamp: new Date().toISOString(),
-        method: "get roles",
-      });
-
-      successResponse(
-        res,
-        constants.SUCCESS,
-        constants.SUCCESS_MESSAGE,
-        roles.data
-      );
-    } else {
-      logger.error("Failed log: ", {
-        timestamp: new Date().toISOString(),
-        method: "get roles",
-      });
-      errorResponse(
-        res,
-        constants.BAD_REQUEST,
-        constants.BAD_REQUEST_MESSAGE,
-        roles.message
-      );
-    }
-  } catch (error) {
-    const err = error as Error;
-    logger.error("Failed log: ", {
-      timestamp: new Date().toString(),
-      method: "get roles",
-      message: err.message,
-    });
-    errorResponse(res, constants.FAILED, constants.FAILED_MESSAGE, err.message);
-  }
 }
 
-async function userProfiles(req: Request, res: Response): Promise<void> {
-  try {
-    const profiles = await services.userServices.profiles();
-
-    if (profiles.statusCode === constants.SUCCESS) {
-      logger.info("Success log: ", {
-        timestamp: new Date().toISOString(),
-        method: "get profiles",
-      });
-
-      successResponse(
-        res,
-        constants.SUCCESS,
-        constants.SUCCESS_MESSAGE,
-        profiles.data
-      );
-    } else {
-      logger.error("Failed log: ", {
-        timestamp: new Date().toISOString(),
-        method: "get roles",
-      });
-      errorResponse(
-        res,
-        constants.BAD_REQUEST,
-        constants.BAD_REQUEST_MESSAGE,
-        profiles.message
-      );
-    }
-  } catch (error) {
-    const err = error as Error;
-    logger.error("Failed log: ", {
-      timestamp: new Date().toString(),
-      method: "get profiles",
-      message: err.message,
-    });
-    errorResponse(res, constants.FAILED, constants.FAILED_MESSAGE, err.message);
-  }
-}
-
-export {
-  createUser,
-  updateUser,
-  userRoles,
-  userProfiles,
-  listUsers,
-  listUserById,
-};
+export { createUser, updateUser, listUsers, listUserById };

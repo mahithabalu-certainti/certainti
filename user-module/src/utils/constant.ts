@@ -10,8 +10,8 @@ export const constants = {
   FAILED_MESSAGE: "Failed",
   UNAUTHORIZED_MESSAGE: "Unauthorized",
 
-  PLATFORM_TWO: "platform2.0",
-  PLATFORM_ONE: "platform1.0"
+  PLATFORM_TWO: "PF2.0",
+  PLATFORM_ONE: "EA"
   
 } as const;
 

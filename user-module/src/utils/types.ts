@@ -7,6 +7,9 @@ export interface IEmailMessage {
   toRecipients: { emailAddress: { address: string } }[];
 }
 
+type IOrganization = "EA" | "PF2.0";
+type IStatus = "active" | "inactive";
+
 export interface IUserData {
   first_name: string;
   last_name: string;
@@ -17,7 +20,7 @@ export interface IUserData {
   user_name: string;
   profile_id: string;
   role: string;
-  status: "active" | "inactive";
+  status: IStatus;
   street: string;
   city: number;
   state: number;
@@ -32,7 +35,7 @@ export interface IUserData {
   department_id?: string;
   function_group_id?: string;
   created_by: string;
-  organization: "platform2.0" | "platform1.0";
+  organization: IOrganization
 }
 
 export interface IUpdateUserData {
@@ -40,7 +43,7 @@ export interface IUpdateUserData {
   middle_name?: string;
   last_name: string;
   profile_id: string;
-  status: "active" | "inactive";
+  status: IStatus;
   street: string;
   city: number;
   state: number;
@@ -56,6 +59,6 @@ export interface IUpdateUserData {
   employment_date?: Date;
   department_id?: string;
   function_group_id?: string;
-  organization: "platform2.0" | "platform1.0";
+  organization: IOrganization
   updated_by: string;
 }

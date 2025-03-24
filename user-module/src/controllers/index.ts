@@ -2,19 +2,21 @@ import {
   createUser,
   listUsers,
   updateUser,
-  userProfiles,
-  userRoles,
-  listUserById
+  listUserById,
 } from "./userController";
+import { userProfiles, userRoles } from "./userManagementController";
 
 const controller = {
   userController: {
     createUser,
     updateUser,
+
+    listUsers,
+    listUserById,
+  },
+  userManagementController: {
     userProfiles,
     userRoles,
-    listUsers,
-    listUserById
   },
 };
 
