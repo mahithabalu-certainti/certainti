@@ -46,7 +46,6 @@ describe("Account Controller", () => {
 
     it("should return unauthorized on invalid or empty token", async () => {
       const res = await request(app).get("/api/accounts");
-      console.log("Response val", res);
       expect(res.status).toBe(constant.UNAUTHORIZED);
       expect(res.body.data).toBeUndefined();
     });
