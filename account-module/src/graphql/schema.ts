@@ -1,4 +1,4 @@
-const { gql } = require("graphql-tag");
+import { gql } from "graphql-tag";
 
 const typeDefs = gql`
   type Account {
@@ -41,4 +41,4 @@ const typeDefs = gql`
   }
 `;
 
-module.exports = typeDefs;
+export default typeDefs;

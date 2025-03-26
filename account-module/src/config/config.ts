@@ -1,7 +1,6 @@
-const winston = require("winston");
-const { transports, createLogger, format } = winston;
-const sequelize = require("./dataSource");
-const Services = require("../services");
+import { createLogger, transports, format, Logger } from "winston";
+import sequelize from "./dataSource";
+import Services from "../services";
 
 /**
  * @class Configurations
@@ -10,12 +9,12 @@ const Services = require("../services");
  * only one instance of configurations exists throughout the application.
  */
 class Configurations {
-  static instance;
-  dbConfig;
-  logger;
-  services;
+  private static instance: Configurations | null = null;
+  private dbConfig: typeof sequelize;
+  private logger: Logger;
+  private services: Services;
 
-  constructor() {
+  private constructor() {
     this.dbConfig = sequelize;
 
     this.logger = createLogger({
@@ -34,7 +33,7 @@ class Configurations {
    * If no instance exists, it creates one before returning.
    * @returns {Configurations} - The singleton instance of Configurations.
    */
-  static getInstance() {
+  public static getInstance(): Configurations {
     if (!Configurations.instance) {
       Configurations.instance = new Configurations();
     }
@@ -44,14 +43,19 @@ class Configurations {
   /**
    * @function getDbConfig
    * @description Returns the database configuration object.
-   * @returns {any} - The TypeORM DataSource configuration.
+   * @returns {any} - The Sequelize instance (dbConfig).
    */
-  getDbConfig() {
+  public getDbConfig(): typeof sequelize {
     return this.dbConfig;
   }
 
-  initDb() {
-    return this.dbConfig.sync({ force: true }).then(async () => {
+  /**
+   * @function initDb
+   * @description Initializes and syncs the database.
+   * @returns {Promise<void>} - A promise that resolves once the database is synced.
+   */
+  public initDb(): Promise<void> {
+    return this.dbConfig.sync({ force: true }).then(() => {
       console.log("Database synced!");
     });
   }
@@ -61,7 +65,7 @@ class Configurations {
    * @description Returns the Services instance.
    * @returns {Services} - The Services instance.
    */
-  getServices() {
+  public getServices(): Services {
     return this.services;
   }
 
@@ -70,9 +74,9 @@ class Configurations {
    * @description Returns the Winston logger instance.
    * @returns {Logger} - The Winston logger.
    */
-  getLogger() {
+  public getLogger(): Logger {
     return this.logger;
   }
 }
 
-module.exports = Configurations;
+export default Configurations;

@@ -193,6 +193,10 @@ async function listUsers(req: Request, res: Response): Promise<void> {
 
     let parsedFilters: Record<string, any> = {};
 
+    if(!value){
+      return;
+    }
+
     try {
       parsedFilters = JSON.parse(value.filters);
     } catch (error) {
