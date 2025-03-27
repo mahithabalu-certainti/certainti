@@ -5,6 +5,7 @@ interface CurrencyAttributes {
   rid: string;            
   currency_code: string;  
   currency_name: string;  
+  currency_symbol: string;
 }
 
 interface CurrencyCreationAttributes extends Optional<CurrencyAttributes, 'rid'> {}
@@ -13,6 +14,7 @@ export class Currency extends Model<CurrencyAttributes, CurrencyCreationAttribut
   rid!: string;
   currency_code!: string;
   currency_name!: string;
+  currency_symbol!: string;
 }
 
 Currency.init(
@@ -28,6 +30,10 @@ Currency.init(
       allowNull: false,
     },
     currency_name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    currency_symbol: {
       type: DataTypes.STRING,
       allowNull: false,
     },
