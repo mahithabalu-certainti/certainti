@@ -51,50 +51,95 @@ async function country(req: Request, res: Response): Promise<void> {
 }
 
 async function currency(req: Request, res: Response): Promise<void> {
-    try {
-      const currencies = await services.geoDataServices.currencies();
-      if (currencies.statusCode === HttpStatus.SUCCESS) {
-        logger.info("Success log: ", {
-          timestamp: new Date().toISOString(),
-          method: "currency",
-        });
-  
-        successResponse(
-          res,
-          HttpStatus.SUCCESS,
-          HttpStatus.SUCCESS_MESSAGE,
-          currencies.data
-        );
-      } else {
-        logger.error("Failed log: ", {
-          timestamp: new Date().toISOString(),
-          method: "currency",
-        });
-        errorResponse(
-          res,
-          HttpStatus.BAD_REQUEST,
-          HttpStatus.BAD_REQUEST_MESSAGE,
-          currencies.message
-        );
-      }
-    } catch (err) {
-      const error = err as Error;
-      logger.error("Failed log: ", {
-        timestamp: new Date().toString(),
+  try {
+    const currencies = await services.geoDataServices.currencies();
+    if (currencies.statusCode === HttpStatus.SUCCESS) {
+      logger.info("Success log: ", {
+        timestamp: new Date().toISOString(),
         method: "currency",
-        message: error.message,
       });
-  
+
+      successResponse(
+        res,
+        HttpStatus.SUCCESS,
+        HttpStatus.SUCCESS_MESSAGE,
+        currencies.data
+      );
+    } else {
+      logger.error("Failed log: ", {
+        timestamp: new Date().toISOString(),
+        method: "currency",
+      });
       errorResponse(
         res,
-        HttpStatus.FAILED,
-        HttpStatus.FAILED_MESSAGE,
-        error.message
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        currencies.message
       );
     }
+  } catch (err) {
+    const error = err as Error;
+    logger.error("Failed log: ", {
+      timestamp: new Date().toString(),
+      method: "currency",
+      message: error.message,
+    });
+
+    errorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
   }
+}
+
+async function regions(req: Request, res: Response): Promise<void> {
+  try {
+    const regions = await services.geoDataServices.regions();
+    if (regions.statusCode === HttpStatus.SUCCESS) {
+      logger.info("Success log: ", {
+        timestamp: new Date().toISOString(),
+        method: "regions",
+      });
+
+      successResponse(
+        res,
+        HttpStatus.SUCCESS,
+        HttpStatus.SUCCESS_MESSAGE,
+        regions.data
+      );
+    } else {
+      logger.error("Failed log: ", {
+        timestamp: new Date().toISOString(),
+        method: "regions",
+      });
+      errorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        regions.message
+      );
+    }
+  } catch (err) {
+    const error = err as Error;
+    logger.error("Failed log: ", {
+      timestamp: new Date().toString(),
+      method: "regions",
+      message: error.message,
+    });
+
+    errorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
 
 export default {
   country,
-  currency
+  currency,
+  regions
 };
