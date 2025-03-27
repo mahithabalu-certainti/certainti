@@ -18,7 +18,7 @@ const initExpressServer = (): Server => {
       credentials: true,
     })
   );
-  app.use(authMiddleware);
+  // app.use(authMiddleware);
 
   app.use('/api', routes);
 

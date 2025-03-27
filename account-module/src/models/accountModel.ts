@@ -1,6 +1,8 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import sequelize from "../config/dataSource";
 import DatabaseConnection from "./dbConnectionModel";
+import { Country } from "./countryModel";
+import { Currency } from "./currencyModel";
 
 interface AccountAttributes {
   rid?: string;
@@ -18,6 +20,8 @@ interface AccountAttributes {
   industry: string;
   primary_contact_name: string;
   serial_number?: number;
+  status: string;
+  annual_revenue: string;
 }
 
 interface AccountCreationAttributes
@@ -42,6 +46,8 @@ class Account
   public industry!: string;
   public primary_contact_name!: string;
   public serial_number!: number;
+  public status!: string;
+  public annual_revenue!: string;
 }
 
 Account.init(
@@ -72,8 +78,19 @@ Account.init(
       type: DataTypes.INTEGER,
       allowNull: true,
     },
+    status: {
+      type: DataTypes.STRING(20),
+      allowNull: false,
+      validate: {
+        isIn: [["active", "inactive"]],
+      },
+    },
     is_parent: {
       type: DataTypes.BOOLEAN,
+      allowNull: false,
+    },
+    annual_revenue: {
+      type: DataTypes.STRING(50),
       allowNull: false,
     },
     region: {
@@ -145,6 +162,16 @@ Account.hasMany(Account, {
 Account.belongsTo(DatabaseConnection, {
   foreignKey: "database_connection_rid",
   as: "database_connection",
+});
+
+Account.belongsTo(Country, {
+  foreignKey: "country_rid",
+  as: "country",
+});
+
+Account.belongsTo(Currency, {
+  foreignKey: "currency_rid",
+  as: "currency",
 });
 
 export default Account;

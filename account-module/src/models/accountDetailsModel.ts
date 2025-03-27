@@ -2,7 +2,6 @@ import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 
 interface AccountDetailsAttributes {
   rid: number;
-  status: "active" | "inactive";
   account_rid?: number;
   tax_claim_level: string;
   max_ai_interactions: number;
@@ -15,15 +14,14 @@ interface AccountDetailsAttributes {
   blended_rate_subcon?: string;
   created_by?: string;
   modified_by?: string;
-  primary_contact: string;
-  contact_number: string;
-  point_of_contact: string;
-  poc_email: string;
-  poc_number: string;
+  primary_contact_email: string;
+  primary_contact_number: string;
+  finance_poc_name: string;
+  finance_poc_email: string;
+  finanace_poc_number: string;
   website?: string;
   project_manager: string;
   database_level: boolean;
-  annual_revenue: string;
   data_residency?: string;
   data_storage?: string;
 }
@@ -39,7 +37,6 @@ class AccountDetails
   implements AccountDetailsAttributes
 {
   public rid!: number;
-  public status!: "active" | "inactive";
   public tax_claim_level!: string;
   public max_ai_interactions!: number;
   public expiry_duration!: number;
@@ -51,16 +48,15 @@ class AccountDetails
   public blended_rate_subcon?: string;
   public created_by?: string;
   public modified_by?: string;
-  public primary_contact!: string;
-  public contact_number!: string;
-  public point_of_contact!: string;
-  public poc_email!: string;
-  public poc_number!: string;
+  public primary_contact_email!: string;
+  public primary_contact_number!: string;
+  public finance_poc_name!: string;
+  public finance_poc_email!: string;
+  public finanace_poc_number!: string;
   public industry!: string;
   public website?: string;
   public project_manager!: string;
   public database_level!: boolean;
-  public annual_revenue!: string;
   public data_residency?: string;
   public data_storage?: string;
   public created_datetime?: Date;
@@ -79,13 +75,6 @@ AccountDetails.init(
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
-    },
-    status: {
-      type: DataTypes.STRING(20),
-      allowNull: false,
-      validate: {
-        isIn: [["active", "inactive"]],
-      },
     },
     account_rid: {
       type: DataTypes.UUID,
@@ -139,29 +128,29 @@ AccountDetails.init(
       type: DataTypes.STRING(255),
       allowNull: true,
     },
-    primary_contact: {
+    primary_contact_email: {
       type: DataTypes.STRING(50),
       allowNull: false,
       validate: {
         isEmail: true,
       },
     },
-    contact_number: {
+    primary_contact_number: {
       type: DataTypes.STRING(50),
       allowNull: false,
     },
-    point_of_contact: {
+    finance_poc_name: {
       type: DataTypes.STRING(25),
       allowNull: false,
     },
-    poc_email: {
+    finance_poc_email: {
       type: DataTypes.STRING(50),
       allowNull: false,
       validate: {
         isEmail: true,
       },
     },
-    poc_number: {
+    finanace_poc_number: {
       type: DataTypes.STRING(50),
       allowNull: false,
     },
@@ -178,10 +167,6 @@ AccountDetails.init(
     },
     database_level: {
       type: DataTypes.BOOLEAN,
-      allowNull: false,
-    },
-    annual_revenue: {
-      type: DataTypes.STRING(50),
       allowNull: false,
     },
     data_residency: {

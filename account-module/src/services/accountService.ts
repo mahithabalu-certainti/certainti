@@ -2,7 +2,9 @@ import { Op } from "sequelize";
 import sequelize from "../config/dataSource";
 import Account from "../models/accountModel";
 import { HttpStatus } from "../utils/constant";
-import { IAccount } from "../utils/types";
+import { IAccount, IUpdateAccount } from "../utils/types";
+import { Country } from "../models/countryModel";
+import { Currency } from "../models/currencyModel";
 
 class AccountService {
   private accountRepository: typeof Account | null;
@@ -33,24 +35,53 @@ class AccountService {
    * @returns {Promise<{ statusCode: number, message: string, data?: { account: any } }>}
    * - An object containing the status code, message, and retrieved account data.
    */
-  async accountList(): Promise<{
+  async accountList(
+    page: number,
+    limit: number,
+    search: string,
+    filters: Record<string, string>,
+    sortBy: string,
+    sortOrder: string,
+  ): Promise<{
     statusCode: number;
     message: string;
-    data?: { account: any };
+    data?: { account: any, count: number };
   }> {
     try {
       const repository = this.getAccountRepository();
 
-      const account = await repository.findAll({
+      const whereClause = this.buildWhereClause(filters, search); 
+      const offset = (page - 1) * limit;
+
+      const [finalSortBy, finalSortOrder] = this.getSortParameters(
+        sortBy,
+        sortOrder
+      );
+
+      const { count, rows: account } = await repository.findAndCountAll({
         where: {
           parent_account_rid: {
             [Op.is]: null,
           } as any,
+          ...whereClause
         },
+        limit,
+        offset,
+        order: [[finalSortBy, finalSortOrder]],
         include: [
           {
             model: Account,
             as: "child_accounts",
+          },
+          {
+            model: Country,
+            as: "country",
+            attributes: ['country_name']
+          },
+          {
+            model: Currency,
+            as: "currency",
+            attributes: ['currency_code']
           },
         ],
       });
@@ -60,9 +91,11 @@ class AccountService {
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
           account,
+          count
         },
       };
     } catch (err) {
+      console.log("Eror r", err);
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -83,7 +116,9 @@ class AccountService {
         industry,
         primary_contact_name,
         account_country_region_rid,
-        data_storage
+        data_storage,
+        status,
+        annual_revenue
       } = accountData;
 
       if (data_storage === "store_in_parent" && !parent_account_rid) {
@@ -118,6 +153,8 @@ class AccountService {
           : account_currency_rid,
         industry,
         primary_contact_name,
+        status,
+        annual_revenue
       });
 
       if (data_storage === "store_in_parent") {
@@ -145,6 +182,90 @@ class AccountService {
       };
     }
   }
+  
+  async updateAccount(accountData: IUpdateAccount){
+    try{
+      const repository = this.getAccountRepository();
+      const {
+        account_name,
+        account_description,
+        account_country_rid,
+        account_currency_rid,
+        industry,
+        primary_contact_name,
+        account_country_region_rid,
+        data_storage,
+        account_rid,
+        parent_account_rid
+      } = accountData;
+
+      const account = await repository.update({
+        account_name,
+        account_description: account_description || "",
+        region: account_country_region_rid,
+        storage_type: data_storage,
+        country_rid: account_country_rid,
+        currency_rid: account_currency_rid,
+        industry,
+        primary_contact_name,
+      }, {
+        where: {
+          rid: account_rid
+        }
+      });
+
+      if(parent_account_rid && data_storage === "separate_db"){
+        this.updateAccountDetails(account_rid, accountData);
+      }
+
+      if(parent_account_rid && data_storage === "store_in_parent"){
+        this.updateAccountDetails(parent_account_rid, accountData);
+      }
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          account,
+        },
+      };
+
+    }catch(err){
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: (err as Error).message,
+      };
+    }
+  }
+
+  async gloablAcconunts(){
+    try{
+      const repository = await this.getAccountRepository();
+      const { count, rows: gloablAcconunts } = await repository.findAndCountAll({
+        where: {
+          parent_account_rid: {
+            [Op.is]: null,
+          } as any,
+        },
+        attributes: ['rid', 'account_name']
+      });
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          gloablAcconunts,
+          count
+        },
+      };
+    }catch(err){
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: (err as Error).message,
+      };
+    }
+  }
 
   async createNewSchema(accountId: string) {
     try {
@@ -162,7 +283,6 @@ class AccountService {
     await sequelize.query(`
       CREATE TABLE IF NOT EXISTS "${schemaName}"."account_details" (
         rid UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        status VARCHAR(20) CHECK (status IN ('active', 'inactive')) NOT NULL,
         account_rid UUID NOT NULL,
         tax_claim_level VARCHAR(50) NOT NULL,
         max_ai_interactions INT CHECK (max_ai_interactions BETWEEN 3 AND 5) NOT NULL,
@@ -174,14 +294,13 @@ class AccountService {
         blended_rate_subcon VARCHAR(10),
         created_by VARCHAR(255),
         modified_by VARCHAR(255),
-        primary_contact VARCHAR(50) NOT NULL,
-        contact_number VARCHAR(50) NOT NULL,
-        point_of_contact VARCHAR(25) NOT NULL,
-        poc_email VARCHAR(50) NOT NULL,
-        poc_number VARCHAR(50) NOT NULL,
+        primary_contact_email VARCHAR(50) NOT NULL,
+        primary_contact_number VARCHAR(50) NOT NULL,
+        finance_poc_name VARCHAR(25) NOT NULL,
+        finance_poc_email VARCHAR(50) NOT NULL,
+        finanace_poc_number VARCHAR(50) NOT NULL,
         website VARCHAR(50),
         project_manager VARCHAR(50) NOT NULL,
-        annual_revenue VARCHAR(50) NOT NULL,
         data_residency VARCHAR(255),
         data_storage VARCHAR(255) CHECK (data_storage IN ('separate_db', 'store_in_parent'))
       );
@@ -195,21 +314,21 @@ class AccountService {
       await sequelize.query(
         `
         INSERT INTO "${schemaName}"."account_details" (
-          status, account_rid, tax_claim_level, max_ai_interactions, 
+          account_rid, tax_claim_level, max_ai_interactions, 
           autosend_interaction, fiscal_start_date, fiscal_end_date, 
           interaction_cc_list, blended_rate_fte, blended_rate_subcon, 
-          created_by, modified_by, primary_contact, contact_number, 
-          point_of_contact, poc_email, poc_number, website, 
-          project_manager, annual_revenue, 
+          created_by, modified_by, primary_contact_email, primary_contact_number, 
+          finance_poc_name, finance_poc_email, finanace_poc_number, website, 
+          project_manager, 
           data_residency, data_storage
         ) 
         VALUES (
-          'active', :account_rid, :tax_claim_level, :max_ai_interactions, 
+          :account_rid, :tax_claim_level, :max_ai_interactions, 
           :autosend_interaction, :fiscal_start_date, :fiscal_end_date, 
           :interaction_cc_list, :blended_rate_fte, :blended_rate_subcon, 
-          :created_by, :modified_by, :primary_contact, :contact_number, 
-          :point_of_contact, :poc_email, :poc_number, :website, 
-          :project_manager, :annual_revenue, 
+          :created_by, :modified_by, :primary_contact_email, :primary_contact_number, 
+          :finance_poc_name, :finance_poc_email, :finanace_poc_number, :website, 
+          :project_manager, 
           :data_residency, :data_storage
         );
       `,
@@ -226,14 +345,13 @@ class AccountService {
             blended_rate_subcon: accountData.blended_rate_subcon ?? null,
             created_by: "Admin",
             modified_by: "Admin",
-            primary_contact: accountData.primary_contact,
-            contact_number: accountData.contact_number,
-            point_of_contact: accountData.contact_number,
-            poc_email: accountData.poc_email,
-            poc_number: accountData.poc_number,
+            primary_contact_email: accountData.primary_contact_email,
+            primary_contact_number: accountData.primary_contact_number,
+            finance_poc_name: accountData.finance_poc_name,
+            finance_poc_email: accountData.finance_poc_email,
+            finanace_poc_number: accountData.finance_poc_number,
             website: accountData.website ?? null,
             project_manager: accountData.project_manager,
-            annual_revenue: accountData.annual_revenue,
             data_residency: accountData.data_residency ?? null,
             data_storage: accountData.data_storage ?? null,
           },
@@ -243,6 +361,54 @@ class AccountService {
       throw new Error((err as Error).message);
     }
   }
+  
+  async updateAccountDetails(account_rid: string, accountData: IUpdateAccount) {
+    try {
+      const schemaName = `account_${account_rid}`;
+  
+      await sequelize.query(
+        `
+        UPDATE "${schemaName}"."account_details"
+        SET 
+          max_ai_interactions = :max_ai_interactions,
+          autosend_interaction = :autosend_interaction,
+          interaction_cc_list = :interaction_cc_list,
+          blended_rate_fte = :blended_rate_fte,
+          blended_rate_subcon = :blended_rate_subcon,
+          modified_by = :modified_by,
+          primary_contact_email = :primary_contact_email,
+          primary_contact_number = :primary_contact_number,
+          finance_poc_name = :finance_poc_name,
+          finance_poc_email = :finance_poc_email,
+          finanace_poc_number = :finanace_poc_number,
+          website = :website,
+          project_manager = :project_manager
+        WHERE account_rid = :account_rid;
+      `,
+        {
+          replacements: {
+            account_rid: account_rid,
+            max_ai_interactions: accountData.max_ai_interactions,
+            autosend_interaction: accountData.autosend_interaction,
+            interaction_cc_list: accountData.interaction_cc_list ?? null,
+            blended_rate_fte: accountData.blended_rate_fte ?? null,
+            blended_rate_subcon: accountData.blended_rate_subcon ?? null,
+            modified_by: "Admin", 
+            primary_contact_email: accountData.primary_contact_email,
+            primary_contact_number: accountData.primary_contact_number,
+            finance_poc_name: accountData.finance_poc_name,
+            finance_poc_email: accountData.finance_poc_email,
+            finanace_poc_number: accountData.finance_poc_number,
+            website: accountData.website ?? null,
+            project_manager: accountData.project_manager
+          },
+        }
+      );
+    } catch (err) {
+      throw new Error((err as Error).message);
+    }
+  }
+  
 
   buildWhereClause(
     filters: Record<string, any>,
@@ -255,14 +421,25 @@ class AccountService {
         [Op.or]: [
           { account_name: { [Op.iLike]: `%${search}%` } },
           { r_number: { [Op.iLike]: `%${search}%` } },
-          { parent_account: { [Op.iLike]: `%${search}%` } },
           { industry: { [Op.iLike]: `%${search}%` } },
-          { country: { [Op.iLike]: `%${search}%` } },
-          { currecy: { [Op.iLike]: `%${search}%` } },
           { status: { [Op.iLike]: `%${search}%` } },
           { primary_contact_name: { [Op.iLike]: `%${search}%` } },
+          { status: { [Op.iLike]: `%${search}%` } },
+          { annual_revenue: { [Op.iLike]: `%${search}%` } },
         ],
       };
+
+      // const countrySearchCondition = {
+      //   "$country.country_name$": {
+      //     [Op.iLike]: `%${search}%`
+      //   }
+      // };
+
+      // const currencySearchCondition = {
+      //   "$currency.currency_code$": {
+      //     [Op.iLike]: `%${search}%`
+      //   }
+      // };
 
       if (Object.keys(whereClause).length > 0) {
         whereClause = {
@@ -274,10 +451,16 @@ class AccountService {
     }
 
     const filterFields = [
-      { clientField: "user_name", dbField: "first_name" },
-      { clientField: "full_name", dbField: "full_name" },
-      { clientField: "email", dbField: "email" },
+      { clientField: "parent_account", dbField: "account_name" },
+      { clientField: "account_number", dbField: "r_number" },
+      { clientField: "account_name", dbField: "account_name" },
       { clientField: "status", dbField: "status" },
+      { clientField: "industry", dbField: "industry" },
+      { clientField: "country", dbField: "country" },
+      { clientField: "currency", dbField: "currency" },
+      { clientField: "primary_contact", dbField: "primary_contact_name" },
+      { clientField: "is_parent_account", dbField: "is_parent" },
+      { clientField: "annual_revenue", dbField: "annual_revenue" },
     ];
 
     filterFields.forEach((fieldMapping) => {
@@ -286,26 +469,67 @@ class AccountService {
       if (filters[clientField]) {
         const fieldFilter = filters[clientField];
 
-        if (fieldFilter.startsWith) {
-          whereClause[dbField] = { [Op.iLike]: `${fieldFilter.startsWith}%` };
-        } else if (fieldFilter.endWith) {
-          whereClause[dbField] = { [Op.iLike]: `%${fieldFilter.endWith}` };
+        if (fieldFilter.equals) {
+          whereClause[dbField] = { [Op.iLike]: fieldFilter.equals };
         } else if (fieldFilter.contains) {
-          whereClause[dbField] = { [Op.iLike]: `%${fieldFilter.contains}%` };
+          whereClause[dbField] = { [Op.iLike]: `%${fieldFilter.contains}%` }; 
         } else if (fieldFilter.value) {
-          whereClause[dbField] = fieldFilter.value;
+          whereClause[dbField] = fieldFilter.value; 
+        }else if (fieldFilter.greaterThan) {
+          whereClause[dbField] = { [Op.gt]: fieldFilter.greaterThan }; 
+        } else if (fieldFilter.lesserThan) {
+          whereClause[dbField] = { [Op.lt]: fieldFilter.lesserThan }; 
+        } else if (fieldFilter.between) {
+          if (Array.isArray(fieldFilter.between) && fieldFilter.between.length === 2) {
+            whereClause[dbField] = { [Op.between]: fieldFilter.between };
+          }
         }
       }
     });
 
-    if (filters.profile && filters.profile.startsWith) {
-      whereClause["$profile.profile_name$"] = {
-        [Op.iLike]: `%${filters.profile.startsWith}%`,
-      };
+    if (filters.country) {
+      if (Array.isArray(filters.country)) {
+        whereClause["$country.country_name$"] = {
+          [Op.or]: filters.country.map(country => ({
+            [Op.iLike]: `%${country}%`
+          }))
+        };
+      }
+    }
+    
+    if (filters.currency) {
+      if (Array.isArray(filters.currency)) {
+        whereClause["$currency.currency_code$"] = {
+          [Op.iLike]: {
+            [Op.or]: filters.currency.map(currency => `%${currency}%`), 
+          },
+        };
+      }
     }
 
     return whereClause;
   }
+
+  getSortParameters(sortBy: string, sortOrder: string): [string, string] {
+    const validSortColumns = [
+      "account_name",
+      "status",
+      "r_number",
+      "industry",
+      "primary_contact_name",
+      "is_parent",
+      "country",
+      "currency",
+      "annual_revenue"
+    ];
+    if (!validSortColumns.includes(sortBy)) {
+      sortBy = "createdAt";
+    }
+
+    sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
+    return [sortBy, sortOrder];
+  }
 }
 
 export default AccountService;
+
