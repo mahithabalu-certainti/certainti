@@ -53,6 +53,10 @@ async function createUser(req: Request, res: Response): Promise<void> {
       res
     );
 
+    if(!value){
+      return;
+    }
+
     const password = await generateSecurePassword(12);
     const azureUser = await createAzureB2CUser(value, password);
     if (!azureUser) {
@@ -190,6 +194,10 @@ async function updateUser(req: Request, res: Response): Promise<void> {
 async function listUsers(req: Request, res: Response): Promise<void> {
   try {
     const value = await validateRequest(req, listUserSchema, "", res, "GET");
+
+    if(!value){
+      return;
+    }
 
     let parsedFilters: Record<string, any> = {};
 
