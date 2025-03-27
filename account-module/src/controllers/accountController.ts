@@ -244,9 +244,57 @@ async function globalAccounts(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function accountById(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    const account = await accountServices.accountById(id);
+
+    if (account.statusCode === HttpStatus.SUCCESS) {
+      logger.info("Success log: ", {
+        timestamp: new Date().toISOString(),
+        method: "global account",
+      });
+
+      successResponse(
+        res,
+        HttpStatus.SUCCESS,
+        HttpStatus.SUCCESS_MESSAGE,
+        account.data
+      );
+    } else {
+      logger.error("Failed log: ", {
+        timestamp: new Date().toISOString(),
+        method: "global account",
+      });
+      errorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        account.errorMessage || account.message
+      );
+    }
+  } catch (err) {
+    const error = err as Error;
+    logger.error("Failed log: ", {
+      timestamp: new Date().toString(),
+      method: "global account",
+      message: error.message,
+    });
+
+    errorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+
 export default {
   accounts,
   createAccount,
   updateAccount,
-  globalAccounts
+  globalAccounts,
+  accountById
 };

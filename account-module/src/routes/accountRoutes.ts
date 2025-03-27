@@ -4,6 +4,7 @@ import controller from '../controllers';
 const routes: Router = Router();
 
 routes.get('/', controller.accountController.accounts);
+routes.get('/:id', controller.accountController.accountById);
 routes.get('/global', controller.accountController.globalAccounts);
 routes.get('/country', controller.geoDataController.country);
 routes.get('/currency', controller.geoDataController.currency);

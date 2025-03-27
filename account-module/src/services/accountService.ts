@@ -288,6 +288,48 @@ class AccountService {
     }
   }
 
+  async accountById(account_id: string){
+    try{
+      const repository = await this.getAccountRepository();
+      const accountById = await repository.findOne({
+        where: {
+          rid: account_id
+        },
+        include: [
+          {
+            model: Account,
+            as: "child_accounts",
+          },
+          {
+            model: Country,
+            as: "country",
+            attributes: ["country_name"],
+            required: true,
+          },
+          {
+            model: Currency,
+            as: "currency",
+            attributes: ["currency_code"],
+            required: true,
+          },
+        ],
+      });
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          accountById,
+        },
+      };
+    }catch (err) {
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: (err as Error).message,
+      };
+    }
+  }
+
   async createNewSchema(account_number: string) {
     try {
       await sequelize.createSchema(`platform_v2_${account_number}`, {});
