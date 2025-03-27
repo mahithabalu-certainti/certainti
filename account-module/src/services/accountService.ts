@@ -159,9 +159,9 @@ class AccountService {
         annual_revenue
       });
 
-      if (data_storage === "store_in_parent") {
+      if (parent_account && data_storage === "store_in_parent") {
         await this.insertAccountDetails(
-          account.r_number,
+          parent_account?.r_number,
           accountData,
           account.rid
         );
