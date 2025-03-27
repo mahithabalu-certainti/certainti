@@ -21,7 +21,7 @@ interface AccountAttributes {
   primary_contact_name: string;
   serial_number?: number;
   status: string;
-  annual_revenue: string;
+  annual_revenue: number;
 }
 
 interface AccountCreationAttributes
@@ -47,7 +47,7 @@ class Account
   public primary_contact_name!: string;
   public serial_number!: number;
   public status!: string;
-  public annual_revenue!: string;
+  public annual_revenue!: number;
 }
 
 Account.init(
@@ -90,7 +90,7 @@ Account.init(
       allowNull: false,
     },
     annual_revenue: {
-      type: DataTypes.STRING(50),
+      type: DataTypes.DECIMAL(),
       allowNull: false,
     },
     region: {
@@ -133,12 +133,10 @@ Account.init(
     timestamps: true,
     hooks: {
       beforeValidate: async (account) => {
-        const latestAccount = await Account.findOne({
-          order: [["serial_number", "DESC"]],
-        });
+        const latestAccount = await Account.findAll();
 
         const serialNumber = latestAccount
-          ? latestAccount.serial_number + 1
+          ? latestAccount.length + 1
           : 1;
 
         const accountCode = `ACC${serialNumber.toString().padStart(4, "0")}`;

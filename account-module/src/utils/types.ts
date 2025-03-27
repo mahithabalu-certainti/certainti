@@ -38,7 +38,7 @@ export interface IAccount {
   database_connection_rid?: number | null;
   created_datetime?: string | null;
   modified_datetime?: string | null;
-  annual_revenue: string;
+  annual_revenue: number;
   data_residency?: string | null;
   data_storage: "separate_db" | "store_in_parent";
 }
@@ -84,7 +84,8 @@ export interface IUpdateAccount {
   database_connection_rid?: number | null;
   created_datetime?: string | null;
   modified_datetime?: string | null;
-  annual_revenue: string;
+  annual_revenue: number;
   data_residency?: string | null;
   data_storage: "separate_db" | "store_in_parent";
+  r_number: string;
 }

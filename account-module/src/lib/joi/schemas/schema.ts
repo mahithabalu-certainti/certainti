@@ -82,19 +82,13 @@ const accountSchema = Joi.object({
   primary_contact_number: Joi.string().max(50).required(),
   finance_poc_name: Joi.string().min(3).max(25).required(),
   finance_poc_email: Joi.string().email().max(50).required(),
-  finanace_poc_number: Joi.string().max(50).required(),
+  finance_poc_number: Joi.string().max(50).required(),
   industry: Joi.string().min(5).max(25).required(),
   website: Joi.string().max(50).allow(null).optional(),
   project_manager: Joi.string().email().max(50).required(),
   created_datetime: Joi.date().iso().allow(null),
   modified_datetime: Joi.date().iso().allow(null),
-  annual_revenue: Joi.string()
-    .pattern(/^\d{1,50}(\.\d{0,2})?$/)
-    .required()
-    .messages({
-      "string.pattern.base":
-        "annual_revenue must be a valid number with a maximum of 50 digits and up to 2 decimal places",
-    }),
+  annual_revenue: Joi.number().required(),
   data_residency: Joi.string().max(255).optional(),
   data_storage: Joi.string()
     .valid("separate_db", "store_in_parent")
@@ -106,6 +100,7 @@ const updateAccountSchema = Joi.object({
   account_rid: Joi.string().max(255).required(),
   account_id: Joi.string().max(255).required(),
   account_name: Joi.string().min(7).max(25).required(),
+  r_number: Joi.string().required(),
   account_description: Joi.string().max(500).optional(),
   status: Joi.string().valid("active", "inactive").required(),
   is_parent: Joi.boolean().required(),
@@ -181,17 +176,11 @@ const updateAccountSchema = Joi.object({
   primary_contact_number: Joi.string().max(50).required(),
   finance_poc_name: Joi.string().min(3).max(25).required(),
   finance_poc_email: Joi.string().email().max(50).required(),
-  finanace_poc_number: Joi.string().max(50).required(),
+  finance_poc_number: Joi.string().max(50).required(),
   industry: Joi.string().min(5).max(25).required(),
   website: Joi.string().max(50).allow(null).optional(),
   project_manager: Joi.string().email().max(50).required(),
-  annual_revenue: Joi.string()
-    .pattern(/^\d{1,50}(\.\d{0,2})?$/)
-    .required()
-    .messages({
-      "string.pattern.base":
-        "annual_revenue must be a valid number with a maximum of 50 digits and up to 2 decimal places",
-    }),
+  annual_revenue: Joi.number().required(),
   data_residency: Joi.string().max(255).optional(),
   data_storage: Joi.string()
     .valid("separate_db", "store_in_parent")

@@ -76,12 +76,14 @@ class AccountService {
           {
             model: Country,
             as: "country",
-            attributes: ['country_name']
+            attributes: ['country_name'],
+            required: true,
           },
           {
             model: Currency,
             as: "currency",
-            attributes: ['currency_code']
+            attributes: ['currency_code'],
+            required: true,
           },
         ],
       });
@@ -159,12 +161,13 @@ class AccountService {
 
       if (data_storage === "store_in_parent") {
         await this.insertAccountDetails(
-          account.parent_account_rid,
-          accountData
+          account.r_number,
+          accountData,
+          account.rid
         );
       } else {
-        await this.createNewSchema(account.rid);
-        await this.insertAccountDetails(account.rid, accountData);
+        await this.createNewSchema(account.r_number);
+        await this.insertAccountDetails(account.r_number, accountData, account.rid);
       }
 
       return {
@@ -196,18 +199,20 @@ class AccountService {
         account_country_region_rid,
         data_storage,
         account_rid,
-        parent_account_rid
+        parent_account_rid,
+        r_number,
+        annual_revenue
       } = accountData;
 
       const account = await repository.update({
         account_name,
         account_description: account_description || "",
         region: account_country_region_rid,
-        storage_type: data_storage,
         country_rid: account_country_rid,
         currency_rid: account_currency_rid,
         industry,
         primary_contact_name,
+        annual_revenue
       }, {
         where: {
           rid: account_rid
@@ -215,11 +220,11 @@ class AccountService {
       });
 
       if(parent_account_rid && data_storage === "separate_db"){
-        this.updateAccountDetails(account_rid, accountData);
+        this.updateAccountDetails(account_rid, accountData, r_number);
       }
 
       if(parent_account_rid && data_storage === "store_in_parent"){
-        this.updateAccountDetails(parent_account_rid, accountData);
+        this.updateAccountDetails(parent_account_rid, accountData, r_number);
       }
 
       return {
@@ -267,18 +272,18 @@ class AccountService {
     }
   }
 
-  async createNewSchema(accountId: string) {
+  async createNewSchema(account_number: string) {
     try {
-      await sequelize.createSchema(`account_${accountId}`, {});
-      await this.createAccountTables(accountId);
+      await sequelize.createSchema(`account_${account_number}`, {});
+      await this.createAccountTables(account_number);
     } catch (err) {
       console.error("Error creating schema and tables: ", err);
       throw new Error("Error creating schema and tables.");
     }
   }
 
-  async createAccountTables(accountId: string) {
-    const schemaName = `account_${accountId}`;
+  async createAccountTables(account_number: string) {
+    const schemaName = `account_${account_number}`;
 
     await sequelize.query(`
       CREATE TABLE IF NOT EXISTS "${schemaName}"."account_details" (
@@ -307,9 +312,9 @@ class AccountService {
     `);
   }
 
-  async insertAccountDetails(account_rid: string, accountData: IAccount) {
+  async insertAccountDetails(account_number: string, accountData: IAccount, account_rid: string) {
     try {
-      const schemaName = `account_${account_rid}`;
+      const schemaName = `account_${account_number}`;
 
       await sequelize.query(
         `
@@ -362,9 +367,9 @@ class AccountService {
     }
   }
   
-  async updateAccountDetails(account_rid: string, accountData: IUpdateAccount) {
+  async updateAccountDetails(account_rid: string, accountData: IUpdateAccount, account_number: string) {
     try {
-      const schemaName = `account_${account_rid}`;
+      const schemaName = `account_${account_number}`;
   
       await sequelize.query(
         `
