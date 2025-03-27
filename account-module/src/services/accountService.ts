@@ -345,7 +345,7 @@ class AccountService {
 
     await sequelize.query(`
       CREATE TABLE IF NOT EXISTS "${schemaName}"."account_details" (
-        rid UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         account_rid UUID NOT NULL,
         tax_claim_level VARCHAR(50) NOT NULL,
         max_ai_interactions INT CHECK (max_ai_interactions BETWEEN 3 AND 5) NOT NULL,
