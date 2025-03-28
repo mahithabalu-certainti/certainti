@@ -120,7 +120,7 @@ User.init(
       allowNull: true,
     },
     state: {
-      type: DataTypes.UUID,
+      type: DataTypes.STRING,
       allowNull: true,
     },
     zip_code: {
