@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import routes from '../routes';
-import authMiddleware from '../middlewares/authMiddleware';
+import requestLogger from '../middlewares/requestLoggerMiddleware';
 
 interface Server {
   app: express.Application;
@@ -18,7 +18,7 @@ const initExpressServer = (): Server => {
       credentials: true,
     })
   );
-  // app.use(authMiddleware);
+  app.use(requestLogger);
 
   app.use('/api', routes);
 

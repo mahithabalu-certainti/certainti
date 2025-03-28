@@ -16,14 +16,21 @@ class Configurations {
 
   private constructor() {
     this.dbConfig = sequelize;
+    this.services = new Services();
 
     this.logger = createLogger({
       level: "info",
-      format: format.combine(format.timestamp(), format.json()),
+      format: format.combine(
+        format.colorize({ level: true }),
+        format.timestamp(),
+        format.printf(({ timestamp, level, message, method, url }) => {
+          return `[${level}] -> ${message} ${method} ${url ? `| ${url}` : ""} ${
+            timestamp ? `| ${timestamp}` : ""
+          }`;
+        })
+      ),
       transports: [new transports.Console()],
     });
-
-    this.services = new Services();
   }
 
   /**

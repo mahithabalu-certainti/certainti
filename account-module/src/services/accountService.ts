@@ -1,4 +1,4 @@
-import { Op } from "sequelize";
+import { Op, where } from "sequelize";
 import sequelize from "../config/dataSource";
 import Account from "../models/accountModel";
 import { HttpStatus } from "../utils/constant";
@@ -45,12 +45,13 @@ class AccountService {
   ): Promise<{
     statusCode: number;
     message: string;
+    errorMessage?: string;
     data?: { account: any; count: number };
   }> {
     try {
       const repository = this.getAccountRepository();
 
-      const { whereClause, childWhereClause } = this.buildWhereClause(filters, search);
+      const { whereClause } = this.buildWhereClause(filters, search);
       const offset = (page - 1) * limit;
 
       const [finalSortBy, finalSortOrder] = this.getSortParameters(
@@ -58,7 +59,7 @@ class AccountService {
         sortOrder
       );
 
-      const { count, rows: account } = await repository.findAndCountAll({
+      const account = await repository.findAll({
         where: {
           parent_account_rid: {
             [Op.is]: null,
@@ -68,24 +69,8 @@ class AccountService {
         limit,
         offset,
         order: [[finalSortBy, finalSortOrder]],
-        include: [
-          {
-            model: Account,
-            as: "child_accounts",
-          },
-          {
-            model: Country,
-            as: "country",
-            attributes: ["country_name"],
-            required: true,
-          },
-          {
-            model: Currency,
-            as: "currency",
-            attributes: ["currency_code"],
-            required: true,
-          },
-        ],
+        subQuery: false,
+        include: this.getAccountIncludeOptions(),
       });
 
       return {
@@ -93,15 +78,11 @@ class AccountService {
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
           account,
-          count,
+          count: account.length,
         },
       };
     } catch (err) {
-      console.log("Eror r", err);
-      return {
-        statusCode: HttpStatus.FAILED,
-        message: HttpStatus.FAILED_MESSAGE,
-      };
+      return this.throwServiceError((err as Error));
     }
   }
 
@@ -208,7 +189,7 @@ class AccountService {
         annual_revenue,
       } = accountData;
 
-      const [affectedCounts, affectedRows ] = await repository.update(
+      const [affectedCounts, affectedRows] = await repository.update(
         {
           account_name,
           account_description: account_description || "",
@@ -223,7 +204,7 @@ class AccountService {
           where: {
             rid: account_rid,
           },
-          returning: true, 
+          returning: true,
         }
       );
 
@@ -235,10 +216,14 @@ class AccountService {
       }
 
       if (default_parent_id === "store_in_parent") {
-        this.updateAccountDetails(default_parent_id, accountData, default_r_number);
+        this.updateAccountDetails(
+          default_parent_id,
+          accountData,
+          default_r_number
+        );
       }
 
-      if(default_parent_id === null){
+      if (default_parent_id === null) {
         this.updateAccountDetails(account_rid, accountData, default_r_number);
       }
 
@@ -261,7 +246,7 @@ class AccountService {
   async gloablAcconunts() {
     try {
       const repository = await this.getAccountRepository();
-      const { count, rows: gloablAcconunts } = await repository.findAndCountAll(
+      const gloablAcconunts = await repository.findAll(
         {
           where: {
             parent_account_rid: {
@@ -276,7 +261,7 @@ class AccountService {
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
           gloablAcconunts,
-          count,
+          count: gloablAcconunts.length,
         },
       };
     } catch (err) {
@@ -288,12 +273,12 @@ class AccountService {
     }
   }
 
-  async accountById(account_id: string){
-    try{
+  async accountById(account_id: string) {
+    try {
       const repository = await this.getAccountRepository();
       const accountById = await repository.findOne({
         where: {
-          rid: account_id
+          rid: account_id,
         },
         include: [
           {
@@ -321,7 +306,7 @@ class AccountService {
           accountById,
         },
       };
-    }catch (err) {
+    } catch (err) {
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -484,38 +469,47 @@ class AccountService {
     filters: Record<string, any>,
     search: string
   ): {
-    whereClause: Record<string, any>, 
-    childWhereClause: Record<string, any>
+    whereClause: Record<string, any>;
   } {
     let whereClause: Record<string, any> = {};
-    let childWhereClause: Record<string, any> = {};
 
     if (search) {
-      const searchCondition = {
-        [Op.or]: [
-          { account_name: { [Op.iLike]: `%${search}%` } },
-          { r_number: { [Op.iLike]: `%${search}%` } },
-          { industry: { [Op.iLike]: `%${search}%` } },
-          { status: { [Op.iLike]: `%${search}%` } },
-          { primary_contact_name: { [Op.iLike]: `%${search}%` } },
-          { status: { [Op.iLike]: `%${search}%` } },
-          { "$country.country_name$": { [Op.iLike]: `%${search}%` } },
-          { "$currency.currency_code$": { [Op.iLike]: `%${search}%` } },
-          ...(isNaN(parseInt(search))
-            ? []
-            : [{ annual_revenue: { [Op.eq]: parseInt(search) } }]),
-        ],
-      };
-
-      if (Object.keys(whereClause).length > 0) {
-        whereClause = {
-          [Op.and]: [whereClause, searchCondition],
-        };
-      } else {
-        whereClause = searchCondition;
-      }
+      whereClause = this.buildSearchCondition(search, whereClause);
     }
 
+    whereClause = this.applyFilters(filters, whereClause);
+
+    return { whereClause };
+  }
+
+  private buildSearchCondition(
+    search: string,
+    whereClause: Record<string, any>
+  ): Record<string, any> {
+    const searchCondition = {
+      [Op.or]: [
+        { account_name: { [Op.iLike]: `%${search}%` } },
+        { r_number: { [Op.iLike]: `%${search}%` } },
+        { industry: { [Op.iLike]: `%${search}%` } },
+        { status: { [Op.iLike]: `%${search}%` } },
+        { primary_contact_name: { [Op.iLike]: `%${search}%` } },
+        { "$country.country_name$": { [Op.iLike]: `%${search}%` } },
+        { "$currency.currency_code$": { [Op.iLike]: `%${search}%` } },
+        ...(isNaN(parseInt(search))
+          ? []
+          : [{ annual_revenue: { [Op.eq]: parseInt(search) } }]),
+      ],
+    };
+
+    return Object.keys(whereClause).length > 0
+      ? { [Op.and]: [whereClause, searchCondition] }
+      : searchCondition;
+  }
+
+  private applyFilters(
+    filters: Record<string, any>,
+    whereClause: Record<string, any>
+  ): Record<string, any> {
     const filterFields = [
       { clientField: "parent_account", dbField: "account_name" },
       { clientField: "account_number", dbField: "r_number" },
@@ -530,77 +524,119 @@ class AccountService {
       { clientField: "account_id", dbField: "eid" },
     ];
 
-    filterFields.forEach((fieldMapping) => {
-      const { clientField, dbField } = fieldMapping;
-
+    filterFields.forEach(({ clientField, dbField }) => {
       if (filters[clientField]) {
         const fieldFilter = filters[clientField];
-
-        if (fieldFilter.equals) {
-          whereClause[dbField] = { [Op.iLike]: fieldFilter.equals };
-        } else if (fieldFilter.contains) {
-          whereClause[dbField] = { [Op.iLike]: `%${fieldFilter.contains}%` };
-        } else if (fieldFilter.value) {
-          whereClause[dbField] = fieldFilter.value;
-        } else if (fieldFilter.greaterThan) {
-          whereClause[dbField] = { [Op.gt]: fieldFilter.greaterThan };
-        } else if (fieldFilter.lesserThan) {
-          whereClause[dbField] = { [Op.lt]: fieldFilter.lesserThan };
-        } else if (fieldFilter.between) {
-          if (
-            Array.isArray(fieldFilter.between) &&
-            fieldFilter.between.length === 2
-          ) {
-            whereClause[dbField] = { [Op.between]: fieldFilter.between };
-          }
-        }
+        whereClause[dbField] = this.getFieldFilter(fieldFilter, dbField);
       }
     });
 
     if (filters.country) {
-      if (Array.isArray(filters.country)) {
-        whereClause["$country.country_name$"] = {
-          [Op.or]: filters.country.map((country) => ({
-            [Op.iLike]: `%${country}%`,
-          })),
-        };
-      }
+      whereClause["$country.country_name$"] = this.getMultiValueFilter(
+        filters.country
+      );
     }
 
     if (filters.currency) {
-      if (Array.isArray(filters.currency)) {
-        whereClause["$currency.currency_code$"] = {
-          [Op.or]: filters.currency.map((currency) => ({
-            [Op.iLike]: `%${currency}%`,
-          })),
-        };
-      }
+      whereClause["$currency.currency_code$"] = this.getMultiValueFilter(
+        filters.currency
+      );
     }
 
     if (filters.parent_account) {
-      if (filters.parent_account.contains) {
-        whereClause["account_name"] = { [Op.iLike]: `%${filters.parent_account.contains}%` };
-        whereClause["is_parent"] = true;
-      }
-      if (filters.parent_account.equals) {
-        whereClause["account_name"] = { [Op.iLike]: `${filters.parent_account.equals}` };
-        whereClause["is_parent"] = true;
-      }
+      whereClause = this.applyParentAccountFilter(filters, whereClause);
     }
 
-    // if (filters.account_number) {
-    //   if (filters.account_number.contains) {
-    //     childWhereClause["r_number"] = { [Op.like]: `%${filters.account_number.contains}%` };
-    //   }
-    //   if (filters.account_number.equals) {
-    //     childWhereClause["r_number"] = { [Op.like]: `%${filters.account_number.equals}%` };
-    //   }
-    // }
+    if (filters.account_number) {
+      whereClause = this.applyAccountNumberFilter(filters, whereClause);
+    }
 
-    return {
-      whereClause,
-      childWhereClause
-    };
+    return whereClause;
+  }
+
+  private getFieldFilter(fieldFilter: any, dbField: string): any {
+    if (fieldFilter.equals) {
+      return { [Op.iLike]: fieldFilter.equals };
+    }
+    if (fieldFilter.contains) {
+      return { [Op.iLike]: `%${fieldFilter.contains}%` };
+    }
+    if (fieldFilter.value) {
+      return fieldFilter.value;
+    }
+    if (fieldFilter.greaterThan) {
+      return { [Op.gt]: fieldFilter.greaterThan };
+    }
+    if (fieldFilter.lesserThan) {
+      return { [Op.lt]: fieldFilter.lesserThan };
+    }
+    if (
+      fieldFilter.between &&
+      Array.isArray(fieldFilter.between) &&
+      fieldFilter.between.length === 2
+    ) {
+      return { [Op.between]: fieldFilter.between };
+    }
+    return null;
+  }
+
+  private getMultiValueFilter(filter: any): any {
+    if (Array.isArray(filter)) {
+      return {
+        [Op.or]: filter.map((value: string) => ({ [Op.iLike]: `%${value}%` })),
+      };
+    }
+    return null;
+  }
+
+  private applyParentAccountFilter(
+    filters: Record<string, any>,
+    whereClause: Record<string, any>
+  ): Record<string, any> {
+    if (filters.parent_account.contains) {
+      whereClause["account_name"] = {
+        [Op.iLike]: `%${filters.parent_account.contains}%`,
+      };
+      whereClause["is_parent"] = true;
+    }
+    if (filters.parent_account.equals) {
+      whereClause["account_name"] = {
+        [Op.iLike]: `${filters.parent_account.equals}`,
+      };
+      whereClause["is_parent"] = true;
+    }
+    return whereClause;
+  }
+
+  private applyAccountNumberFilter(
+    filters: Record<string, any>,
+    whereClause: Record<string, any>
+  ): Record<string, any> {
+    if (filters.account_number.contains) {
+      whereClause = {
+        [Op.or]: [
+          { r_number: { [Op.like]: `%${filters.account_number.contains}%` } },
+          {
+            "$child_accounts.r_number$": {
+              [Op.like]: `%${filters.account_number.contains}%`,
+            },
+          },
+        ],
+      };
+    }
+    if (filters.account_number.equals) {
+      whereClause = {
+        [Op.or]: [
+          { r_number: { [Op.like]: `%${filters.account_number.equals}%` } },
+          {
+            "$child_accounts.r_number$": {
+              [Op.like]: `%${filters.account_number.equals}%`,
+            },
+          },
+        ],
+      };
+    }
+    return whereClause;
   }
 
   getSortParameters(sortBy: string, sortOrder: string): [string, string] {
@@ -621,6 +657,43 @@ class AccountService {
 
     sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
     return [sortBy, sortOrder];
+  }
+
+  private getAccountIncludeOptions() {
+    return [
+      {
+        model: Account,
+        as: "child_accounts",
+        include: [
+          { model: Country, as: "country", attributes: ["country_name"] },
+          { model: Currency, as: "currency", attributes: ["currency_code"] },
+        ],
+      },
+      {
+        model: Country,
+        as: "country",
+        attributes: ["country_name"],
+        required: true,
+      },
+      {
+        model: Currency,
+        as: "currency",
+        attributes: ["currency_code"],
+        required: true,
+      },
+    ];
+  }
+
+  private throwServiceError(err: Error): {
+    statusCode: number;
+    message: string;
+    errorMessage: string;
+  } {
+    return {
+      statusCode: HttpStatus.FAILED,
+      message: HttpStatus.FAILED_MESSAGE,
+      errorMessage: err.message,
+    };
   }
 }
 
