@@ -1,6 +1,7 @@
 import { Country } from "../models/countryModel";
 import { Currency } from "../models/currencyModel";
 import { Region } from "../models/regionModel";
+import { States } from "../models/stateModel";
 import { HttpStatus } from "../utils/constant";
 
 class GeoDataService {
@@ -66,6 +67,28 @@ class GeoDataService {
       };
     } catch (err) {
         console.log("err", err)
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+      };
+    }
+  }
+
+  async states(): Promise<{
+    statusCode: number;
+    message: string;
+    data?: { states: any };
+  }> {
+    try {
+      const states = await States.findAll();
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          states
+        },
+      };
+    } catch (err) {
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,

@@ -138,8 +138,53 @@ async function regions(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function states(req: Request, res: Response): Promise<void> {
+  try {
+    const states = await services.geoDataServices.states();
+    if (states.statusCode === HttpStatus.SUCCESS) {
+      logger.info("Success log: ", {
+        timestamp: new Date().toISOString(),
+        method: "states",
+      });
+
+      successResponse(
+        res,
+        HttpStatus.SUCCESS,
+        HttpStatus.SUCCESS_MESSAGE,
+        states.data
+      );
+    } else {
+      logger.error("Failed log: ", {
+        timestamp: new Date().toISOString(),
+        method: "states",
+      });
+      errorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        states.message
+      );
+    }
+  } catch (err) {
+    const error = err as Error;
+    logger.error("Failed log: ", {
+      timestamp: new Date().toString(),
+      method: "states",
+      message: error.message,
+    });
+
+    errorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
 export default {
   country,
   currency,
-  regions
+  regions,
+  states
 };
