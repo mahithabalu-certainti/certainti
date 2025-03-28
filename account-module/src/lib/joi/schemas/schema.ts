@@ -3,6 +3,30 @@ import Joi from "joi";
 const uuidRegex =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+const allowedTLDs = [
+  "com",
+  "org",
+  "net",
+  "info",
+  "io",
+  "app",
+  "dev",
+  "us",
+  "uk",
+  "ca",
+  "pro",
+  "top",
+  "vip",
+  "club",
+  "social",
+  "news",
+  "buzz",
+  "edu",
+  "travel",
+  "health",
+  "in"
+];
+
 const accountSchema = Joi.object({
   account_id: Joi.string().max(255).required(),
   account_name: Joi.string().min(7).max(25).required(),
@@ -84,7 +108,18 @@ const accountSchema = Joi.object({
   finance_poc_email: Joi.string().email().max(50).required(),
   finance_poc_number: Joi.string().max(50).required(),
   industry: Joi.string().min(5).max(25).required(),
-  website: Joi.string().max(50).allow(null).optional(),
+  website: Joi.string()
+    .max(50)
+    .allow(null)
+    .optional()
+    .pattern(
+      new RegExp(`^https:\\/\\/[a-zA-Z0-9.-]+\\.(${allowedTLDs.join("|")})$`)
+    )
+    .messages({
+      "string.pattern.base": `The website must be a valid HTTPS URL with a domain ending in one of the following: ${allowedTLDs.join(
+        ", "
+      )}.`,
+    }),
   project_manager: Joi.string().email().max(50).required(),
   created_datetime: Joi.date().iso().allow(null),
   modified_datetime: Joi.date().iso().allow(null),
@@ -178,7 +213,18 @@ const updateAccountSchema = Joi.object({
   finance_poc_email: Joi.string().email().max(50).required(),
   finance_poc_number: Joi.string().max(50).required(),
   industry: Joi.string().min(5).max(25).required(),
-  website: Joi.string().max(50).allow(null).optional(),
+  website: Joi.string()
+    .max(50)
+    .allow(null)
+    .optional()
+    .pattern(
+      new RegExp(`^https:\\/\\/[a-zA-Z0-9.-]+\\.(${allowedTLDs.join("|")})$`)
+    )
+    .messages({
+      "string.pattern.base": `The website must be a valid HTTPS URL with a domain ending in one of the following: ${allowedTLDs.join(
+        ", "
+      )}.`,
+    }),
   project_manager: Joi.string().email().max(50).required(),
   annual_revenue: Joi.number().required(),
   data_residency: Joi.string().max(255).optional(),
