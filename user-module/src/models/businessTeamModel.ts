@@ -6,8 +6,8 @@ interface BusinessTeamsAttributes {
   business_team_id: string;
   business_teams: string;
   role_hierarchy?: string | null;
-  createdAt?: Date;
-  updatedAt?: Date;
+  created_datetime?: Date;
+  modified_datetime?: Date;
 }
 
 interface BusinessTeamsCreationAttributes
@@ -23,8 +23,8 @@ export class BusinessTeams
   public role_hierarchy?: string | null;
 
   // Timestamps
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  public readonly created_datetime!: Date;
+  public readonly modified_datetime!: Date;
 }
 
 // Initialize the model
@@ -48,11 +48,21 @@ BusinessTeams.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    created_datetime: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    modified_datetime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
+    },
   },
   {
     sequelize,
     modelName: "BusinessTeams",
     tableName: "business_teams",
-    timestamps: true,
+    timestamps: false,
   }
 );

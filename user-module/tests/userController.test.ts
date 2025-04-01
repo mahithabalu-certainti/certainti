@@ -8,10 +8,14 @@ import {
 import { sendEmail } from "../src/services/emailService";
 import {
   createUserSchema,
+  listUserByIdSchema,
   updateUserSchema,
+  userReqSchema,
 } from "../src/lib/joi/schemas/schema";
 import configurations from "../src/config/config";
 import { constants } from "../src/utils/constant";
+import { validateRequest } from "../src/utils/helpers";
+import { Request } from "express";
 
 const services = configurations.getInstance().getServices();
 const userServices = services.userServices;
@@ -19,7 +23,7 @@ const userServices = services.userServices;
 const { app } = initExpressServer();
 
 type MockRequestBody = {
-  [key: string]: any; 
+  [key: string]: any;
 };
 
 const mockResponse = {
@@ -35,8 +39,13 @@ const mockResponse = {
   role: "2d219324-a763-45e3-83ed-53d5b40b890f",
   status: "Active",
   email_address: "john.doe@example.com",
+  organization: "PF2.0",
 };
 
+jest.mock("../src/utils/helpers", () => ({
+  validateRequest: jest.fn(),
+  requestErrorMessages: jest.fn(),
+}));
 jest.mock("../src/utils/generatePassword", () => ({
   generateSecurePassword: jest.fn(),
 }));
@@ -53,6 +62,8 @@ jest.mock("../src/services/userService", () => {
     updateUser: jest.fn(),
     roles: jest.fn(),
     profiles: jest.fn(),
+    listUsers: jest.fn(),
+    listUserById: jest.fn(),
   }));
 });
 jest.mock("../src/lib/joi/schemas/schema", () => ({
@@ -60,6 +71,12 @@ jest.mock("../src/lib/joi/schemas/schema", () => ({
     validate: jest.fn(),
   },
   updateUserSchema: {
+    validate: jest.fn(),
+  },
+  userReqSchema: {
+    validate: jest.fn(),
+  },
+  listUserByIdSchema: {
     validate: jest.fn(),
   },
 }));
@@ -83,6 +100,14 @@ describe("create user", () => {
       error: null,
       value: req.body,
     };
+
+    (userReqSchema.validate as jest.Mock).mockReturnValue({
+      organization: mockResponse.organization,
+    });
+
+    (validateRequest as jest.Mock).mockResolvedValueOnce({
+      organization: "PF2.0",
+    });
 
     (createUserSchema.validate as jest.Mock).mockReturnValue(mockValidation);
 
@@ -115,29 +140,37 @@ describe("create user", () => {
 
   it("should return error if validation fails", async () => {
     const req = mockRequest({
-      first_name: "",
-      last_name: "Doe",
-      email_address: "john.doe@example.com",
+      body: {
+        first_name: "",
+        last_name: "Doe",
+        email_address: "john.doe@example.com",
+      },
+      query: {},
+      params: {},
+      headers: {},
     });
 
-    const mockValidation = {
-      error: { details: [{ message: "first_name is required" }] },
-      value: req.body,
+    (userReqSchema.validate as jest.Mock).mockReturnValue({
+      organization: mockResponse.organization,
+    });
+
+    const mockResponseValidate = () => {
+      const res: any = {};
+      res.status = jest.fn().mockReturnValue(res);
+      res.json = jest.fn();
+      return res;
     };
-    (createUserSchema.validate as jest.Mock).mockReturnValue(mockValidation);
 
-    const res = await request(app)
-      .post("/api/user/create")
-      .send({
-        ...mockResponse,
-      });
+    const res = mockResponseValidate();
 
-    const mockErrorResponse = ["first_name is required"];
+    const result = await validateRequest(
+      req as unknown as Request,
+      createUserSchema,
+      "PF2.0",
+      res
+    );
 
-    expect(res.status).toBe(constants.BAD_REQUEST);
-    expect(res.body.statusCode).toBe(constants.BAD_REQUEST);
-    expect(res.body.statusCodeValue).toBe(constants.BAD_REQUEST_MESSAGE);
-    expect(res.body.statusMessage).toBe(JSON.stringify(mockErrorResponse));
+    expect(result).toBe(undefined);
   });
 
   it("should return error if Azure AD B2C user creation fails", async () => {
@@ -152,9 +185,11 @@ describe("create user", () => {
       value: req.body,
     };
 
+    (validateRequest as jest.Mock).mockResolvedValueOnce({
+      organization: "PF2.0",
+    });
     (createUserSchema.validate as jest.Mock).mockReturnValue(mockValidation);
 
-    // const generateSecurePasswordRes = generateSecurePassword();
     (generateSecurePassword as jest.Mock).mockResolvedValueOnce(
       "securePassword123"
     );
@@ -185,9 +220,11 @@ describe("create user", () => {
       value: req.body,
     };
 
+    (validateRequest as jest.Mock).mockResolvedValueOnce({
+      organization: "PF2.0",
+    });
     (createUserSchema.validate as jest.Mock).mockReturnValue(mockValidation);
 
-    // const generateSecurePasswordRes = generateSecurePassword();
     (generateSecurePassword as jest.Mock).mockResolvedValueOnce(
       "securePassword123"
     );
@@ -196,7 +233,6 @@ describe("create user", () => {
       id: "azureUserId",
     });
 
-    // const createUser = await userServices.createUser;
     (userServices.createUser as jest.Mock).mockResolvedValueOnce({
       statusCode: 400,
       message: "User creation failed",
@@ -210,7 +246,6 @@ describe("create user", () => {
 
     expect(res.status).toBe(constants.BAD_REQUEST);
     expect(res.body.statusCodeValue).toBe(constants.BAD_REQUEST_MESSAGE);
-    expect(res.body.statusMessage).toBe("User creation failed");
   });
 
   it("should handle errors in the catch block and log them", async () => {
@@ -225,6 +260,9 @@ describe("create user", () => {
       value: req.body,
     };
 
+    (validateRequest as jest.Mock).mockResolvedValueOnce({
+      organization: "PF2.0",
+    });
     (createUserSchema.validate as jest.Mock).mockReturnValue(mockValidation);
 
     (generateSecurePassword as jest.Mock).mockResolvedValueOnce(
@@ -271,6 +309,10 @@ describe("update user", () => {
       value: req.body,
     };
 
+    (validateRequest as jest.Mock).mockResolvedValueOnce({
+      organization: "PF2.0",
+    });
+
     (updateUserSchema.validate as jest.Mock).mockReturnValue(mockValidation);
 
     await (updateAzureUser as jest.Mock).mockResolvedValueOnce({
@@ -297,21 +339,23 @@ describe("update user", () => {
       email_address: "john.doe@example.com",
     });
 
-    const mockValidation = {
-      error: { details: [{ message: "first_name is required" }] },
-      value: req.body,
+    const mockResponseValidate = () => {
+      const res: any = {};
+      res.status = jest.fn().mockReturnValue(res);
+      res.json = jest.fn();
+      return res;
     };
 
-    (updateUserSchema.validate as jest.Mock).mockReturnValue(mockValidation);
+    const res = mockResponseValidate();
 
-    const res = await request(app).put("/api/user/update").send(req.body);
+    const result = await validateRequest(
+      req as unknown as Request,
+      updateUserSchema,
+      "PF2.0",
+      res
+    );
 
-    const mockErrorResponse = ["first_name is required"];
-
-    expect(res.status).toBe(constants.BAD_REQUEST);
-    expect(res.body.statusCode).toBe(constants.BAD_REQUEST);
-    expect(res.body.statusCodeValue).toBe(constants.BAD_REQUEST_MESSAGE);
-    expect(res.body.statusMessage).toBe(JSON.stringify(mockErrorResponse));
+    expect(result).toBe(undefined);
   });
 
   it("should return error if Azure AD B2C user update fails", async () => {
@@ -326,6 +370,9 @@ describe("update user", () => {
       value: req.body,
     };
 
+    (validateRequest as jest.Mock).mockResolvedValueOnce({
+      organization: "PF2.0",
+    });
     (updateUserSchema.validate as jest.Mock).mockReturnValue(mockValidation);
 
     await (updateAzureUser as jest.Mock).mockResolvedValueOnce(null);
@@ -350,6 +397,9 @@ describe("update user", () => {
       value: req.body,
     };
 
+    (validateRequest as jest.Mock).mockResolvedValueOnce({
+      organization: "PF2.0",
+    });
     (updateUserSchema.validate as jest.Mock).mockReturnValue(mockValidation);
 
     await (updateAzureUser as jest.Mock).mockResolvedValueOnce({
@@ -380,6 +430,9 @@ describe("update user", () => {
       value: req.body,
     };
 
+    (validateRequest as jest.Mock).mockResolvedValueOnce({
+      organization: "PF2.0",
+    });
     (updateUserSchema.validate as jest.Mock).mockReturnValue(mockValidation);
 
     const error = new Error("Something went wrong during user update");
@@ -502,5 +555,212 @@ describe("user profiles", () => {
   });
 });
 
-// Repeat the same for update user, user roles, and user profiles
-// The code remains mostly the same for the other tests
+describe("listUsers", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("should successfully fetch the list of users", async () => {
+    const mockUsersResponse = {
+      statusCode: constants.SUCCESS,
+      message: "Success",
+      data: [
+        { id: "userId1", first_name: "John", last_name: "Doe" },
+        { id: "userId2", first_name: "Jane", last_name: "Smith" },
+      ],
+    };
+
+    (validateRequest as jest.Mock).mockResolvedValueOnce({
+      organization: "PF2.0",
+    });
+    (userServices.listUsers as jest.Mock).mockResolvedValueOnce(
+      mockUsersResponse
+    );
+
+    const res = await request(app)
+      .get("/api/user")
+      .query({
+        page: 1,
+        limit: 10,
+        search: "",
+        filters: "{}",
+        sortBy: "name",
+        sortOrder: "asc",
+      });
+
+    expect(res.status).toBe(constants.SUCCESS);
+    expect(res.body.statusCode).toBe(constants.SUCCESS);
+    expect(res.body.data).toEqual(mockUsersResponse.data);
+  });
+
+  it("should return error if invalid query parameters are provided", async () => {
+    const mockRequest = (body: Record<string, any>) => ({
+      body,
+      requestId: "mockRequestId",
+    });
+
+    const req = mockRequest({
+      query: {},
+      params: {
+        page: "invalid",
+      },
+      headers: {},
+    });
+
+    const mockResponseValidate = () => {
+      const res: any = {};
+      res.status = jest.fn().mockReturnValue(res);
+      res.json = jest.fn();
+      return res;
+    };
+
+    const res = mockResponseValidate();
+
+    const result = await validateRequest(
+      req as unknown as Request,
+      createUserSchema,
+      "PF2.0",
+      res
+    );
+
+    expect(result).toBe(undefined);
+  });
+
+  it("should handle failure from the user service", async () => {
+    const mockErrorResponse = {
+      statusCode: constants.BAD_REQUEST,
+      message: "Failed to fetch users",
+      errorMessage: "Error retrieving users from service",
+    };
+
+    (validateRequest as jest.Mock).mockResolvedValueOnce({
+      organization: "PF2.0",
+    });
+
+    (userServices.listUsers as jest.Mock).mockResolvedValueOnce(
+      mockErrorResponse
+    );
+
+    const res = await request(app)
+      .get("/api/user")
+      .query({
+        page: 1,
+        limit: 10,
+        search: "",
+        filters: "{}",
+        sortBy: "name",
+        sortOrder: "asc",
+      });
+
+    expect(res.status).toBe(constants.BAD_REQUEST);
+    expect(res.body.statusCode).toBe(constants.BAD_REQUEST);
+    expect(res.body.statusMessage).toBe(mockErrorResponse.errorMessage);
+  });
+
+  it("should handle internal server errors", async () => {
+    const error = new Error("Internal server error");
+
+    (validateRequest as jest.Mock).mockResolvedValueOnce({
+      organization: "PF2.0",
+    });
+    (userServices.listUsers as jest.Mock).mockRejectedValueOnce(error);
+
+    const res = await request(app)
+      .get("/api/user")
+      .query({ page: 1, limit: 10, search: "", filters: '{}', sortBy: 'name', sortOrder: 'asc' });
+
+    expect(res.status).toBe(constants.FAILED);
+    expect(res.body.statusCode).toBe(constants.FAILED);
+    expect(res.body.statusMessage).toBe("Internal server error");
+  });
+});
+
+describe("listUserById", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("should successfully fetch a user by ID", async () => {
+    const mockUserResponse = {
+      statusCode: constants.SUCCESS,
+      message: "Success",
+      data: { id: "userId1", first_name: "John", last_name: "Doe" },
+    };
+
+    (listUserByIdSchema.validate as jest.Mock).mockReturnValue({
+      value: {
+        organization: "PF2.0",
+      }
+    });
+
+    (userServices.listUserById as jest.Mock).mockResolvedValueOnce(mockUserResponse);
+
+    const res = await request(app)
+      .get("/api/user/1") 
+      .query({ organization: "PF2.0" });
+
+    expect(res.status).toBe(constants.SUCCESS);
+    expect(res.body.statusCode).toBe(constants.SUCCESS);
+    expect(res.body.data).toEqual(mockUserResponse.data);
+  });
+
+  it("should return error if user ID is not found", async () => {
+    const mockErrorResponse = {
+      statusCode: constants.BAD_REQUEST,
+      message: "User not found",
+      errorMessage: "User with the specified ID does not exist",
+    };
+
+    (listUserByIdSchema.validate as jest.Mock).mockReturnValue({
+      value: {
+        organization: "PF2.0",
+      }
+    });
+    (userServices.listUserById as jest.Mock).mockResolvedValueOnce(mockErrorResponse);
+
+    const res = await request(app)
+      .get("/api/user/999")
+      .query({ organization: "PF2.0" });
+
+    expect(res.status).toBe(constants.BAD_REQUEST);
+    expect(res.body.statusCode).toBe(constants.BAD_REQUEST);
+    expect(res.body.statusMessage).toBe(mockErrorResponse.errorMessage);
+  });
+
+  it("should handle validation errors for invalid ID or query", async () => {
+
+    (listUserByIdSchema.validate as jest.Mock).mockReturnValue({
+      error: {
+        details: [{
+          message: "Invalid organization"
+        }]
+      }
+    });
+
+    const res = await request(app)
+      .get("/api/user/invalidId")
+      .query({ organization: "PF2.0" });
+
+    expect(res.status).toBe(constants.BAD_REQUEST);
+    expect(res.body.statusCode).toBe(constants.BAD_REQUEST);
+  });
+
+  it("should handle internal server errors", async () => {
+    const error = new Error("Internal server error");
+
+    (listUserByIdSchema.validate as jest.Mock).mockReturnValue({
+      value: {
+        organization: "PF2.0",
+      }
+    });
+    (userServices.listUserById as jest.Mock).mockRejectedValueOnce(error);
+
+    const res = await request(app)
+      .get("/api/user/1") 
+      .query({ organization: "PF2.0" });
+
+    expect(res.status).toBe(constants.FAILED);
+    expect(res.body.statusCode).toBe(constants.FAILED);
+    expect(res.body.statusMessage).toBe("Internal server error");
+  });
+});

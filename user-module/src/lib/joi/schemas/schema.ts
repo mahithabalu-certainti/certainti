@@ -87,7 +87,7 @@ const listUserSchema = Joi.object({
   limit: Joi.string().pattern(/^[0-9]+$/).default("10"),
   search: Joi.string().max(255).optional(),
   filters: Joi.string().default("{}"),
-  sortBy: Joi.string().default("createdAt"),
+  sortBy: Joi.string().default("created_datetime"),
   sortOrder: Joi.string().valid("ASC", "DESC").default("DESC"),
   organization: Joi.string().required().valid(constants.PLATFORM_TWO, constants.PLATFORM_ONE),
 });

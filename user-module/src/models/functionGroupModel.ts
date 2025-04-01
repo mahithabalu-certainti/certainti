@@ -6,14 +6,14 @@ interface FunctionGroupAttributes {
   function_group_id: string;
   function_group_name: string;
   department_id: string;
-  created_at?: Date;
-  updated_at?: Date;
+  created_datetime?: Date;
+  modified_datetime?: Date;
 }
 
 interface FunctionGroupCreationAttributes
   extends Optional<
     FunctionGroupAttributes,
-    "function_group_id" | "created_at" | "updated_at"
+    "function_group_id" | "created_datetime" | "modified_datetime"
   > {}
 
 export class FunctionGroup
@@ -23,8 +23,8 @@ export class FunctionGroup
   public function_group_id!: string;
   public function_group_name!: string;
   public department_id!: string;
-  public created_at?: Date;
-  public updated_at?: Date;
+  public created_datetime?: Date;
+  public modified_datetime?: Date;
 }
 
 FunctionGroup.init(
@@ -47,16 +47,26 @@ FunctionGroup.init(
       },
       onDelete: "CASCADE",
     },
+    created_datetime: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    modified_datetime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
+    },
   },
   {
     sequelize,
     modelName: "FunctionGroup",
     tableName: process.env.FUNCTION_GROUP_TABLE_NAME || "function_groups",
     freezeTableName: true,
-    timestamps: true,
+    timestamps: false,
     hooks: {
       beforeUpdate: (functionGroup: FunctionGroup) => {
-        functionGroup.updated_at = new Date();
+        functionGroup.modified_datetime = new Date();
       },
     },
   }

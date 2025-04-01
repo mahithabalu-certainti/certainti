@@ -7,8 +7,8 @@ interface ModuleFieldsAttributes {
   module_subsection?: string | null;
   field_name: string;
   description?: string | null;
-  createdAt?: Date;
-  updatedAt?: Date;
+  created_datetime?: Date;
+  modified_datetime?: Date;
 }
 
 interface ModuleFieldsCreationAttributes
@@ -25,8 +25,8 @@ export class ModuleFields
   public description?: string | null;
 
   // Timestamps
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  public readonly created_datetime!: Date;
+  public readonly modified_datetime!: Date;
 }
 
 // Initialize the model
@@ -58,11 +58,21 @@ ModuleFields.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    created_datetime: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    modified_datetime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
+    },
   },
   {
     sequelize,
     modelName: "ModuleFields",
     tableName: "module_fields",
-    timestamps: true,
+    timestamps: false,
   }
 );

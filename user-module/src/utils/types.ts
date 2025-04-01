@@ -17,13 +17,13 @@ export interface IUserData {
   full_name?: string;
   email: string;
   mobile?: string;
-  user_name: string;
+  user_name?: string;
   profile_id: string;
   role: string;
-  status: IStatus;
+  status: string;
   street: string;
-  city: number;
-  state: number;
+  city: string;
+  state: string;
   zip_code: string;
   country: number;
   designation?: string;
@@ -35,7 +35,7 @@ export interface IUserData {
   department_id?: string;
   function_group_id?: string;
   created_by: string;
-  organization: IOrganization
+  organization: string
 }
 
 export interface IUpdateUserData {
@@ -43,10 +43,10 @@ export interface IUpdateUserData {
   middle_name?: string;
   last_name: string;
   profile_id: string;
-  status: IStatus;
+  status: string;
   street: string;
-  city: number;
-  state: number;
+  city: string;
+  state: string;
   zip_code: string;
   country: number;
   mobile?: string;
@@ -59,6 +59,6 @@ export interface IUpdateUserData {
   employment_date?: Date;
   department_id?: string;
   function_group_id?: string;
-  organization: IOrganization
+  organization: string
   updated_by: string;
 }

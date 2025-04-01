@@ -10,11 +10,11 @@ interface ProfileAttributes {
   profile_status?: string;
   created_by?: string;
   modified_by?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  created_datetime?: Date;
+  modified_datetime?: Date;
 }
 
-// Define the interface for the creation attributes (optional fields like createdAt, updatedAt)
+// Define the interface for the creation attributes (optional fields like created_datetime, modified_datetime)
 interface ProfileCreationAttributes
   extends Optional<ProfileAttributes, "rid"> {}
 
@@ -33,8 +33,8 @@ export class Profile
   public modified_by?: string;
 
   // Timestamps
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  public readonly created_datetime!: Date;
+  public readonly modified_datetime!: Date;
 }
 
 // Initialize the model
@@ -74,11 +74,21 @@ Profile.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    created_datetime: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    modified_datetime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
+    },
   },
   {
     sequelize,
     modelName: "Profile",
     tableName: "profile",
-    timestamps: true,
+    timestamps: false,
   }
 );

@@ -18,6 +18,21 @@ interface UpdateUser {
   azure_id?: string;
 }
 
+/**
+ * Creates a new user in Azure B2C.
+ * 
+ * This function checks if the user already exists in Azure B2C by their email. If the user does not exist, 
+ * it creates a new user with the provided user information and password. It also assigns the user to a given 
+ * Azure B2C tenant and forces the user to change their password at the next sign-in.
+ * 
+ * @param {User} users - The user object containing the necessary information to create the user in Azure B2C.
+ * @param {string} password - The password for the new user.
+ * 
+ * @returns {Promise<any>} - A promise that resolves to the newly created user object if the user is successfully created.
+ * 
+ * @throws {Error} - If the user already exists, or if any of the required parameters are missing, or if there 
+ * is any failure in communication with Azure B2C.
+ */
 const createAzureB2CUser = async (users: User, password: string) => {
   try {
     if (!users || !users.email || !password) {
@@ -78,6 +93,19 @@ const createAzureB2CUser = async (users: User, password: string) => {
   }
 };
 
+/**
+ * Updates an existing user in Azure B2C.
+ * 
+ * This function updates the user's display name, given name, and surname in Azure B2C using their Azure ID.
+ * The function first checks if the user exists in Azure B2C. If the user exists, it performs the update.
+ * 
+ * @param {UpdateUser} users - The user object containing the information to update for the existing user in Azure B2C.
+ * 
+ * @returns {Promise<any>} - A promise that resolves to the updated user object if the update is successful.
+ * 
+ * @throws {Error} - If the user does not exist, or if any of the required parameters are missing, or if there 
+ * is any failure in communication with Azure B2C.
+ */
 const updateAzureUser = async (users: UpdateUser) => {
   try {
     if (!users || !users.azure_id) {

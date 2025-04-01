@@ -20,6 +20,17 @@ import { requestErrorMessages, validateRequest } from "../utils/helpers";
 const logger = configurations.getInstance().getLogger();
 const services = configurations.getInstance().getServices();
 
+/**
+ * Creates a new user by validating the request, generating a secure password,
+ * creating a user in Azure AD B2C, and storing the user information.
+ * Sends a welcome email to the user after creation.
+ *
+ * @param {Request} req - The Express request object containing the request data.
+ * @param {Response} res - The Express response object used to send the response back to the client.
+ * @returns {Promise<void>} - A promise that resolves when the user creation process is complete.
+ *
+ * @throws {Error} - Throws an error if the user creation process fails at any step.
+ */
 async function createUser(req: Request, res: Response): Promise<void> {
   try {
     const { organization } = req.body;
@@ -53,7 +64,7 @@ async function createUser(req: Request, res: Response): Promise<void> {
       res
     );
 
-    if(!value){
+    if (!value) {
       return;
     }
 
@@ -103,6 +114,15 @@ async function createUser(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Updates an existing user by validating the request and updating their details in Azure AD B2C.
+ *
+ * @param {Request} req - The Express request object containing the user data to be updated.
+ * @param {Response} res - The Express response object used to send the response back to the client.
+ * @returns {Promise<void>} - A promise that resolves when the user update process is complete.
+ *
+ * @throws {Error} - Throws an error if the user update process fails at any step.
+ */
 async function updateUser(req: Request, res: Response): Promise<void> {
   try {
     const { organization } = req.body;
@@ -191,11 +211,20 @@ async function updateUser(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Lists users based on the provided query parameters like filters, pagination, and sorting.
+ *
+ * @param {Request} req - The Express request object containing the request data (filters, search, etc.).
+ * @param {Response} res - The Express response object used to send the response back to the client.
+ * @returns {Promise<void>} - A promise that resolves when the list of users is returned.
+ *
+ * @throws {Error} - Throws an error if the user listing process fails at any step.
+ */
 async function listUsers(req: Request, res: Response): Promise<void> {
   try {
     const value = await validateRequest(req, listUserSchema, "", res, "GET");
 
-    if(!value){
+    if (!value) {
       return;
     }
 
@@ -264,6 +293,15 @@ async function listUsers(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Lists a specific user by their unique ID.
+ *
+ * @param {Request} req - The Express request object containing the user ID to be searched for.
+ * @param {Response} res - The Express response object used to send the response back to the client.
+ * @returns {Promise<void>} - A promise that resolves when the user details are returned.
+ *
+ * @throws {Error} - Throws an error if the user search process fails at any step.
+ */
 async function listUserById(req: Request, res: Response): Promise<void> {
   try {
     const { id: userId } = req.params;

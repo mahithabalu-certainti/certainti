@@ -11,8 +11,8 @@ interface ProfileModuleAccessAttributes {
   delete: boolean;
   read: boolean;
   list: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
+  created_datetime?: Date;
+  modified_datetime?: Date;
 }
 
 interface ProfileModuleAccessCreationAttributes
@@ -37,8 +37,8 @@ export class ProfileModuleAccess
   public list!: boolean;
 
   // Timestamps
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  public readonly created_datetime!: Date;
+  public readonly modified_datetime!: Date;
 }
 
 // Initialize the model
@@ -81,11 +81,21 @@ ProfileModuleAccess.init(
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    created_datetime: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    modified_datetime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
+    },
   },
   {
     sequelize,
     modelName: "ProfileModuleAccess",
     tableName: "profile_module_access",
-    timestamps: true,
+    timestamps: false,
   }
 );
