@@ -353,7 +353,8 @@ class AccountService {
         website VARCHAR(50),
         project_manager VARCHAR(50) NOT NULL,
         data_residency VARCHAR(255),
-        data_storage VARCHAR(255) CHECK (data_storage IN ('separate_db', 'store_in_parent'))
+        data_storage VARCHAR(255) CHECK (data_storage IN ('separate_db', 'store_in_parent')),
+        auto_access_rd BOOLEAN NOT NULL
       );
     `);
   }
@@ -375,7 +376,7 @@ class AccountService {
           created_by, modified_by, primary_contact_email, primary_contact_number, 
           finance_poc_name, finance_poc_email, finanace_poc_number, website, 
           project_manager, 
-          data_residency, data_storage
+          data_residency, data_storage, auto_access_rd
         ) 
         VALUES (
           :account_rid, :tax_claim_level, :max_ai_interactions, 
@@ -384,7 +385,7 @@ class AccountService {
           :created_by, :modified_by, :primary_contact_email, :primary_contact_number, 
           :finance_poc_name, :finance_poc_email, :finanace_poc_number, :website, 
           :project_manager, 
-          :data_residency, :data_storage
+          :data_residency, :data_storage, :auto_access_rd
         );
       `,
         {
@@ -409,6 +410,7 @@ class AccountService {
             project_manager: accountData.project_manager,
             data_residency: accountData.data_residency ?? null,
             data_storage: accountData.data_storage ?? null,
+            auto_access_rd: accountData.auto_access_rd
           },
         }
       );
@@ -441,7 +443,8 @@ class AccountService {
           finance_poc_email = :finance_poc_email,
           finanace_poc_number = :finanace_poc_number,
           website = :website,
-          project_manager = :project_manager
+          project_manager = :project_manager,
+          auto_access_rd = :auto_access_rd
         WHERE account_rid = :account_rid;
       `,
         {
@@ -460,6 +463,7 @@ class AccountService {
             finanace_poc_number: accountData.finance_poc_number,
             website: accountData.website ?? null,
             project_manager: accountData.project_manager,
+            auto_access_rd: accountData.auto_access_rd
           },
         }
       );
