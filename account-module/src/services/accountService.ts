@@ -82,7 +82,7 @@ class AccountService {
         },
       };
     } catch (err) {
-      return this.throwServiceError((err as Error));
+      return this.throwServiceError(err as Error);
     }
   }
 
@@ -246,16 +246,14 @@ class AccountService {
   async gloablAcconunts() {
     try {
       const repository = await this.getAccountRepository();
-      const gloablAcconunts = await repository.findAll(
-        {
-          where: {
-            parent_account_rid: {
-              [Op.is]: null,
-            } as any,
-          },
-          attributes: ["rid", "account_name"],
-        }
-      );
+      const gloablAcconunts = await repository.findAll({
+        where: {
+          parent_account_rid: {
+            [Op.is]: null,
+          } as any,
+        },
+        attributes: ["rid", "account_name"],
+      });
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -299,11 +297,16 @@ class AccountService {
           },
         ],
       });
+      const accountDetails = await this.fetchAccountDetails(
+        accountById?.r_number || "",
+        accountById?.rid || ""
+      );
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
           accountById,
+          accountDetails: accountDetails.length > 0 ? accountDetails[0] : {},
         },
       };
     } catch (err) {
@@ -462,6 +465,22 @@ class AccountService {
       );
     } catch (err) {
       throw new Error((err as Error).message);
+    }
+  }
+
+  async fetchAccountDetails(account_number: string, account_rid: string) {
+    try {
+      const query = `
+        SELECT * FROM "platform_v2_${account_number}".account_details WHERE account_rid = :account_rid
+      `;
+
+      const users = await sequelize.query(query, {
+        replacements: { account_rid },
+        type: "SELECT",
+      });
+      return users;
+    } catch (err) {
+      throw new Error("Error retrieving account details");
     }
   }
 
@@ -667,6 +686,11 @@ class AccountService {
         include: [
           { model: Country, as: "country", attributes: ["country_name"] },
           { model: Currency, as: "currency", attributes: ["currency_code"] },
+          {
+            model: Account,
+            as: "parent_account",
+            attributes: ["account_name"],
+          },
         ],
       },
       {
