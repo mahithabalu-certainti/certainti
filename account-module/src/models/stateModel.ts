@@ -7,6 +7,8 @@ interface StateAttributes {
   r_number: string;
   country_rid: string;
   state_name: string;
+  created_datetime?: Date;
+  modified_datetime?: Date;
 }
 
 interface StateCreationAttributes extends Optional<StateAttributes, "rid"> {}
@@ -19,6 +21,8 @@ export class States
   r_number!: string;
   country_rid!: string;
   state_name!: string;
+  created_datetime!: Date;
+  modified_datetime!: Date;
 }
 
 States.init(
@@ -41,12 +45,22 @@ States.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    created_datetime: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    modified_datetime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: DataTypes.NOW,
+    },
   },
   {
     sequelize,
     modelName: "State",
     tableName: "state",
-    timestamps: true,
+    timestamps: false,
   }
 );
 

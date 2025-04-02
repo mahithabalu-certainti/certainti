@@ -22,6 +22,8 @@ interface AccountAttributes {
   serial_number?: number;
   status: string;
   annual_revenue: number;
+  created_datetime?: Date;
+  modified_datetime?: Date;
 }
 
 interface AccountCreationAttributes
@@ -48,6 +50,8 @@ class Account
   public serial_number!: number;
   public status!: string;
   public annual_revenue!: number;
+  public created_datetime!: Date;
+  public modified_datetime!: Date;
 }
 
 Account.init(
@@ -125,13 +129,26 @@ Account.init(
       type: DataTypes.STRING(50),
       allowNull: false,
     },
+    created_datetime: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    modified_datetime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: DataTypes.NOW,
+    },
   },
   {
     sequelize,
     modelName: "Account",
     tableName: "account",
-    timestamps: true,
+    timestamps: false,
     hooks: {
+      beforeUpdate: (user) => {
+        user.setDataValue("modified_datetime", new Date());
+      },
       beforeValidate: async (account) => {
         const latestAccount = await Account.findAll();
 

@@ -8,6 +8,8 @@ interface CountryAttributes {
   country_code: string;
   country_name: string;
   default_currency_rid: string;
+  created_datetime?: Date;
+  modified_datetime?: Date;
 }
 
 interface CountryCreationAttributes
@@ -22,8 +24,8 @@ export class Country
   country_code!: string;
   country_name!: string;
   default_currency_rid!: string;
-  createdAt!: string;
-  updatedAt!: string;
+  created_datetime?: Date;
+  modified_datetime?: Date;
 }
 
 Country.init(
@@ -50,12 +52,22 @@ Country.init(
       type: DataTypes.UUID,
       allowNull: false,
     },
+    created_datetime: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    modified_datetime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: DataTypes.NOW,
+    },
   },
   {
     sequelize,
     modelName: "Country",
     tableName: "country",
-    timestamps: true,
+    timestamps: false,
   }
 );
 

@@ -82,6 +82,7 @@ class AccountService {
         },
       };
     } catch (err) {
+      console.log("Error ", err);
       return this.throwServiceError(err as Error);
     }
   }
@@ -354,7 +355,9 @@ class AccountService {
         project_manager VARCHAR(50) NOT NULL,
         data_residency VARCHAR(255),
         data_storage VARCHAR(255) CHECK (data_storage IN ('separate_db', 'store_in_parent')),
-        auto_access_rd BOOLEAN NOT NULL
+        auto_access_rd BOOLEAN NOT NULL,
+        created_datetime DATE DEFAULT CURRENT_TIMESTAMP NULL,
+        modified_datetime DATE DEFAULT CURRENT_TIMESTAMP NULL
       );
     `);
   }
@@ -443,7 +446,8 @@ class AccountService {
           finanace_poc_number = :finanace_poc_number,
           website = :website,
           project_manager = :project_manager,
-          auto_access_rd = :auto_access_rd
+          auto_access_rd = :auto_access_rd,
+          modified_datetime = :modified_datetime
         WHERE account_rid = :account_rid;
       `,
         {
@@ -462,7 +466,8 @@ class AccountService {
             finanace_poc_number: accountData.finance_poc_number,
             website: accountData.website ?? null,
             project_manager: accountData.project_manager,
-            auto_access_rd: accountData.auto_access_rd
+            auto_access_rd: accountData.auto_access_rd,
+            modified_datetime: new Date()
           },
         }
       );
@@ -674,7 +679,7 @@ class AccountService {
       "annual_revenue",
     ];
     if (!validSortColumns.includes(sortBy)) {
-      sortBy = "createdAt";
+      sortBy = "created_datetime";
     }
 
     sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";

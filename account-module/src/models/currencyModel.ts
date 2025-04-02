@@ -6,6 +6,8 @@ interface CurrencyAttributes {
   currency_code: string;  
   currency_name: string;  
   currency_symbol: string;
+  created_datetime?: Date;
+  modified_datetime?: Date;
 }
 
 interface CurrencyCreationAttributes extends Optional<CurrencyAttributes, 'rid'> {}
@@ -15,6 +17,8 @@ export class Currency extends Model<CurrencyAttributes, CurrencyCreationAttribut
   currency_code!: string;
   currency_name!: string;
   currency_symbol!: string;
+  created_datetime!: Date;
+  modified_datetime!: Date;
 }
 
 Currency.init(
@@ -37,12 +41,22 @@ Currency.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    created_datetime: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    modified_datetime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: DataTypes.NOW,
+    },
   },
   {
     sequelize, 
     modelName: 'Currency', 
     tableName: 'currency', 
-    timestamps: true,
+    timestamps: false,
   }
 );
 

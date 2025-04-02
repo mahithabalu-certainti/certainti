@@ -8,6 +8,8 @@ interface RegionAttributes {
   country_rid: string;
   country_name: string;
   region_name: string;
+  created_datetime?: Date;
+  modified_datetime?: Date;
 }
 
 interface RegionCreationAttributes extends Optional<RegionAttributes, "rid"> {}
@@ -21,6 +23,8 @@ export class Region
   country_rid!: string;
   country_name!: string;
   region_name!: string;
+  created_datetime!: Date;
+  modified_datetime!: Date;
 }
 
 Region.init(
@@ -47,12 +51,22 @@ Region.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    created_datetime: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    modified_datetime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: DataTypes.NOW,
+    },
   },
   {
     sequelize,
     modelName: "Region",
     tableName: "regions",
-    timestamps: true,
+    timestamps: false,
   }
 );
 

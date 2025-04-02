@@ -6,6 +6,8 @@ interface DatabaseConnectionAttributes {
   r_number: string;
   eid: number;
   database_name: string;
+  created_datetime?: Date;
+  modified_datetime?: Date;
 }
 
 interface DatabaseConnectionCreationAttributes
@@ -22,6 +24,8 @@ class DatabaseConnection
   public r_number!: string;
   public eid!: number;
   public database_name!: string;
+  public created_datetime!: Date;
+  public modified_datetime!: Date;
 }
 
 DatabaseConnection.init(
@@ -43,12 +47,22 @@ DatabaseConnection.init(
       type: DataTypes.STRING(255),
       allowNull: false,
     },
+    created_datetime: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    modified_datetime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: DataTypes.NOW,
+    },
   },
   {
     sequelize,
     modelName: "DatabaseConnection",
     tableName: "database_connection",
-    timestamps: true,
+    timestamps: false,
   }
 );
 

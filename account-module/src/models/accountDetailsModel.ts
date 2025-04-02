@@ -185,7 +185,7 @@ AccountDetails.init(
     sequelize,
     modelName: "AccountDetails",
     tableName: "account_details",
-    timestamps: true,
+    timestamps: false,
   }
 );
 
