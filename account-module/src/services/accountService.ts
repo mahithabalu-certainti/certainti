@@ -335,7 +335,7 @@ class AccountService {
       CREATE TABLE IF NOT EXISTS "${schemaName}"."account_details" (
         rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         account_rid UUID NOT NULL,
-        tax_claim_level VARCHAR(50) NOT NULL,
+        tax_claim_level VARCHAR(50) NULL,
         max_ai_interactions INT CHECK (max_ai_interactions BETWEEN 3 AND 5) NOT NULL,
         autosend_interaction BOOLEAN NOT NULL,
         fiscal_start_date VARCHAR(10) NOT NULL,
@@ -370,7 +370,7 @@ class AccountService {
       await sequelize.query(
         `
         INSERT INTO "${schemaName}"."account_details" (
-          account_rid, tax_claim_level, max_ai_interactions, 
+          account_rid, max_ai_interactions, 
           autosend_interaction, fiscal_start_date, fiscal_end_date, 
           interaction_cc_list, blended_rate_fte, blended_rate_subcon, 
           created_by, modified_by, primary_contact_email, primary_contact_number, 
@@ -379,7 +379,7 @@ class AccountService {
           data_residency, data_storage, auto_access_rd
         ) 
         VALUES (
-          :account_rid, :tax_claim_level, :max_ai_interactions, 
+          :account_rid, :max_ai_interactions, 
           :autosend_interaction, :fiscal_start_date, :fiscal_end_date, 
           :interaction_cc_list, :blended_rate_fte, :blended_rate_subcon, 
           :created_by, :modified_by, :primary_contact_email, :primary_contact_number, 
@@ -391,7 +391,6 @@ class AccountService {
         {
           replacements: {
             account_rid: account_rid,
-            tax_claim_level: accountData.data_residency,
             max_ai_interactions: accountData.max_ai_interactions,
             autosend_interaction: accountData.autosend_interaction,
             fiscal_start_date: accountData.fiscal_start_date,

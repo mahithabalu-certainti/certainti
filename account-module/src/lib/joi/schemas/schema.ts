@@ -55,13 +55,6 @@ const accountSchema = Joi.object({
       "string.pattern.base": "Invalid UUID format for region RID",
       "any.required": "Account country region RID is required",
     }),
-  account_city_rid: Joi.string()
-    .pattern(uuidRegex, "valid UUID")
-    .required()
-    .messages({
-      "string.pattern.base": "Invalid UUID format for city RID",
-      "any.required": "Account city RID is required",
-    }),
   max_ai_interactions: Joi.number().integer().min(3).max(5).required(),
   autosend_interaction: Joi.boolean().required(),
   auto_access_rd: Joi.boolean().required(),
@@ -103,10 +96,10 @@ const accountSchema = Joi.object({
   modified_by: Joi.string().max(255).optional(),
   primary_contact_name: Joi.string().min(3).max(25).required(),
   primary_contact_email: Joi.string().email().max(50).required(),
-  primary_contact_number: Joi.string().max(50).required(),
+  primary_contact_number: Joi.string().max(10).required(),
   finance_poc_name: Joi.string().min(3).max(25).required(),
   finance_poc_email: Joi.string().email().max(50).required(),
-  finance_poc_number: Joi.string().max(50).required(),
+  finance_poc_number: Joi.string().max(10).required(),
   industry: Joi.string().min(5).max(25).required(),
   website: Joi.string()
     .max(50)
@@ -124,7 +117,6 @@ const accountSchema = Joi.object({
   created_datetime: Joi.date().iso().allow(null),
   modified_datetime: Joi.date().iso().allow(null),
   annual_revenue: Joi.number().required(),
-  data_residency: Joi.string().max(255).optional(),
   data_storage: Joi.string()
     .valid("separate_db", "store_in_parent")
     .max(255)
@@ -160,13 +152,6 @@ const updateAccountSchema = Joi.object({
     .messages({
       "string.pattern.base": "Invalid UUID format for region RID",
       "any.required": "Account country region RID is required",
-    }),
-  account_city_rid: Joi.string()
-    .pattern(uuidRegex, "valid UUID")
-    .required()
-    .messages({
-      "string.pattern.base": "Invalid UUID format for city RID",
-      "any.required": "Account city RID is required",
     }),
   max_ai_interactions: Joi.number().integer().min(3).max(5).required(),
   autosend_interaction: Joi.boolean().required(),
@@ -208,10 +193,10 @@ const updateAccountSchema = Joi.object({
   modified_by: Joi.string().max(255).optional(),
   primary_contact_name: Joi.string().min(3).max(25).required(),
   primary_contact_email: Joi.string().email().max(50).required(),
-  primary_contact_number: Joi.string().max(50).required(),
+  primary_contact_number: Joi.string().max(10).required(),
   finance_poc_name: Joi.string().min(3).max(25).required(),
   finance_poc_email: Joi.string().email().max(50).required(),
-  finance_poc_number: Joi.string().max(50).required(),
+  finance_poc_number: Joi.string().max(10).required(),
   industry: Joi.string().min(5).max(25).required(),
   website: Joi.string()
     .max(50)
@@ -227,7 +212,6 @@ const updateAccountSchema = Joi.object({
     }),
   project_manager: Joi.string().email().max(50).required(),
   annual_revenue: Joi.number().required(),
-  data_residency: Joi.string().max(255).optional(),
   data_storage: Joi.string()
     .valid("separate_db", "store_in_parent")
     .max(255)
