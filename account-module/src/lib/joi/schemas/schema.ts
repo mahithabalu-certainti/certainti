@@ -28,9 +28,9 @@ const allowedTLDs = [
 ];
 
 const accountSchema = Joi.object({
-  account_id: Joi.string().max(255).required(),
+  account_id: Joi.string().max(255).allow(null).optional(),
   account_name: Joi.string().min(7).max(25).required(),
-  account_description: Joi.string().max(500).optional(),
+  account_description: Joi.string().max(500).optional().allow("").allow(null),
   status: Joi.string().valid("active", "inactive").required(),
   is_parent: Joi.boolean().required(),
   parent_account_rid: Joi.string().allow(null).optional(),
@@ -81,7 +81,9 @@ const accountSchema = Joi.object({
       "string.pattern.base":
         "blended_rate_fte must be a number with up to 10 characters, including decimal places",
       "string.max": "blended_rate_fte must be at most 10 characters long",
-    }),
+    })
+    .allow(null)
+    .allow(""),
 
   blended_rate_subcon: Joi.string()
     .pattern(/^\d{1,8}(\.\d{0,2})?$/)
@@ -91,7 +93,9 @@ const accountSchema = Joi.object({
       "string.pattern.base":
         "blended_rate_subcon must be a number with up to 10 characters, including decimal places",
       "string.max": "blended_rate_subcon must be at most 10 characters long",
-    }),
+    })
+    .allow(null)
+    .allow(""),
   created_by: Joi.string().max(255).optional(),
   modified_by: Joi.string().max(255).optional(),
   primary_contact_name: Joi.string().min(3).max(25).required(),
