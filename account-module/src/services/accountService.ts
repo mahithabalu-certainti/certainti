@@ -59,6 +59,20 @@ class AccountService {
         sortOrder
       );
 
+      const order: any[] = [];
+
+      if (finalSortBy !== "country" && finalSortBy !== "currency") {
+        order.push([finalSortBy, finalSortOrder]);  
+      } 
+
+      if (finalSortBy === "country") {
+        order.push([{ model: Country, as: 'country' }, 'country_name', finalSortOrder]);
+      }
+
+      if (finalSortBy === "currency") {
+        order.push([{ model: Currency, as: 'currency' }, 'currency_code', finalSortOrder]);
+      }
+
       const account = await repository.findAll({
         where: {
           parent_account_rid: {
@@ -68,7 +82,7 @@ class AccountService {
         },
         limit,
         offset,
-        order: [[finalSortBy, finalSortOrder]],
+        order,
         subQuery: false,
         include: this.getAccountIncludeOptions(),
       });
