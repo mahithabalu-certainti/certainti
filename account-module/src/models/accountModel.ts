@@ -5,12 +5,12 @@ import { Country } from "./countryModel";
 import { Currency } from "./currencyModel";
 
 interface AccountAttributes {
-  rid?: string;
+  rid: string;
   eid?: string;
   r_number: string;
   account_name: string;
   account_description: string;
-  region?: number;
+  region?: string;
   is_parent: boolean;
   parent_account_rid?: string | null;
   storage_type: string;
@@ -19,7 +19,6 @@ interface AccountAttributes {
   currency_rid: string;
   industry: string;
   primary_contact_name: string;
-  serial_number?: number;
   status: string;
   annual_revenue: number;
   created_datetime?: Date;
@@ -38,20 +37,19 @@ class Account
   public account_name!: string;
   public account_description!: string;
   public is_parent!: boolean;
-  public eid!: string;
-  public region!: number;
+  public eid?: string;
+  public region?: string;
   public storage_type!: string;
-  public parent_account_rid!: string;
-  public database_connection_rid!: string;
+  public parent_account_rid?: string | null;
+  public database_connection_rid?: string;
   public country_rid!: string;
   public currency_rid!: string;
   public industry!: string;
   public primary_contact_name!: string;
-  public serial_number!: number;
   public status!: string;
   public annual_revenue!: number;
-  public created_datetime!: Date;
-  public modified_datetime!: Date;
+  public created_datetime?: Date;
+  public modified_datetime?: Date;
 }
 
 Account.init(
@@ -65,21 +63,17 @@ Account.init(
       type: DataTypes.STRING(255),
       allowNull: false,
     },
-    serial_number: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      autoIncrement: true,
-    },
     account_name: {
       type: DataTypes.STRING(255),
       allowNull: false,
+      unique: true
     },
     account_description: {
       type: DataTypes.STRING(255),
       allowNull: true,
     },
     eid: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING,
       allowNull: true,
     },
     status: {

@@ -10,3 +10,8 @@ export const HttpStatus = {
   FAILED_MESSAGE: "Failed",
   UNAUTHORIZED_MESSAGE: "Unauthorized",
 };
+
+export const NODE_ENV = {
+  DEV: "DEV",
+  PROD: "PRODUCTION"
+}

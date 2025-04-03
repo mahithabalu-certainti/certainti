@@ -11,7 +11,7 @@ export interface IAccount {
   parent_account_rid?: string | null;
   account_currency_rid: string;
   account_country_rid: string;
-  account_country_region_rid: number;
+  account_country_region_rid: string;
   account_city_rid: number;
   tax_claim_level: string;
   max_ai_interactions: number;
@@ -57,7 +57,7 @@ export interface IUpdateAccount {
   parent_account_rid?: string | null;
   account_currency_rid: string;
   account_country_rid: string;
-  account_country_region_rid: number;
+  account_country_region_rid: string;
   account_city_rid: number;
   tax_claim_level: string;
   max_ai_interactions: number;

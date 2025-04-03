@@ -2,183 +2,181 @@ import { Request, Response } from "express";
 import configurations from "../config/config";
 import { errorResponse, successResponse } from "../utils/apiResponse";
 import { HttpStatus } from "../utils/constant";
+import {
+  errorLog,
+  handleErrorResponse,
+  handleSuccessResponse,
+  successLog,
+} from "../utils/helpers";
 
 const logger = configurations.getInstance().getLogger();
 const services = configurations.getInstance().getServices();
 
+/**
+ * Handles the request to fetch a list of countries from the geoDataService.
+ *
+ * @param {Request} req The request object containing details of the HTTP request.
+ * @param {Response} res The response object to send the HTTP response.
+ * @returns {Promise<void>} A promise that resolves when the request is processed.
+ *
+ * This method calls the `countries` service, checks the status, and sends an appropriate response:
+ * - If successful, it sends a success response with the list of countries.
+ * - If failed, it logs the error and sends an error response.
+ */
 async function country(req: Request, res: Response): Promise<void> {
+  const methodName = "country";
   try {
     const countries = await services.geoDataServices.countries();
     if (countries.statusCode === HttpStatus.SUCCESS) {
-      logger.info("Success log: ", {
-        timestamp: new Date().toISOString(),
-        method: "country",
-      });
-
-      successResponse(
-        res,
-        HttpStatus.SUCCESS,
-        HttpStatus.SUCCESS_MESSAGE,
-        countries.data
-      );
+      successLog(methodName);
+      handleSuccessResponse(res, countries.data);
+      return;
     } else {
-      logger.error("Failed log: ", {
-        timestamp: new Date().toISOString(),
-        method: "country",
-      });
-      errorResponse(
+      errorLog(methodName, countries.errorMessage);
+      handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
         countries.message
       );
+      return;
     }
   } catch (err) {
     const error = err as Error;
-    logger.error("Failed log: ", {
-      timestamp: new Date().toString(),
-      method: "country",
-      message: error.message,
-    });
-
-    errorResponse(
+    errorLog(methodName, error.message);
+    handleErrorResponse(
       res,
       HttpStatus.FAILED,
       HttpStatus.FAILED_MESSAGE,
       error.message
     );
+    return;
   }
 }
 
+/**
+ * Handles the request to fetch a list of currencies from the geoDataService.
+ * 
+ * @param {Request} req The request object containing details of the HTTP request.
+ * @param {Response} res The response object to send the HTTP response.
+ * @returns {Promise<void>} A promise that resolves when the request is processed.
+ * 
+ * This method calls the `currencies` service, checks the status, and sends an appropriate response:
+ * - If successful, it sends a success response with the list of currencies.
+ * - If failed, it logs the error and sends an error response.
+ */
 async function currency(req: Request, res: Response): Promise<void> {
+  const methodName = "currency";
   try {
     const currencies = await services.geoDataServices.currencies();
     if (currencies.statusCode === HttpStatus.SUCCESS) {
-      logger.info("Success log: ", {
-        timestamp: new Date().toISOString(),
-        method: "currency",
-      });
-
-      successResponse(
-        res,
-        HttpStatus.SUCCESS,
-        HttpStatus.SUCCESS_MESSAGE,
-        currencies.data
-      );
+      successLog(methodName);
+      handleSuccessResponse(res, currencies.data);
+      return;
     } else {
-      logger.error("Failed log: ", {
-        timestamp: new Date().toISOString(),
-        method: "currency",
-      });
-      errorResponse(
+      errorLog(methodName, currencies.errorMessage);
+      handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
         currencies.message
       );
+      return;
     }
   } catch (err) {
     const error = err as Error;
-    logger.error("Failed log: ", {
-      timestamp: new Date().toString(),
-      method: "currency",
-      message: error.message,
-    });
-
-    errorResponse(
+    errorLog(methodName, error.message);
+    handleErrorResponse(
       res,
       HttpStatus.FAILED,
       HttpStatus.FAILED_MESSAGE,
       error.message
     );
+    return;
   }
 }
 
+/**
+ * Handles the request to fetch a list of regions from the geoDataService.
+ * 
+ * @param {Request} req The request object containing details of the HTTP request.
+ * @param {Response} res The response object to send the HTTP response.
+ * @returns {Promise<void>} A promise that resolves when the request is processed.
+ * 
+ * This method calls the `regions` service, checks the status, and sends an appropriate response:
+ * - If successful, it sends a success response with the list of regions.
+ * - If failed, it logs the error and sends an error response.
+ */
 async function regions(req: Request, res: Response): Promise<void> {
+  const methodName = "regions";
   try {
     const regions = await services.geoDataServices.regions();
     if (regions.statusCode === HttpStatus.SUCCESS) {
-      logger.info("Success log: ", {
-        timestamp: new Date().toISOString(),
-        method: "regions",
-      });
-
-      successResponse(
-        res,
-        HttpStatus.SUCCESS,
-        HttpStatus.SUCCESS_MESSAGE,
-        regions.data
-      );
+      successLog(methodName);
+      handleSuccessResponse(res, regions.data);
+      return;
     } else {
-      logger.error("Failed log: ", {
-        timestamp: new Date().toISOString(),
-        method: "regions",
-      });
-      errorResponse(
+      errorLog(methodName, regions.errorMessage);
+      handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
         regions.message
       );
+      return;
     }
   } catch (err) {
     const error = err as Error;
-    logger.error("Failed log: ", {
-      timestamp: new Date().toString(),
-      method: "regions",
-      message: error.message,
-    });
-
-    errorResponse(
+    errorLog(methodName, error.message);
+    handleErrorResponse(
       res,
       HttpStatus.FAILED,
       HttpStatus.FAILED_MESSAGE,
       error.message
     );
+    return;
   }
 }
 
+/**
+ * Handles the request to fetch a list of states from the geoDataService.
+ * 
+ * @param {Request} req The request object containing details of the HTTP request.
+ * @param {Response} res The response object to send the HTTP response.
+ * @returns {Promise<void>} A promise that resolves when the request is processed.
+ * 
+ * This method calls the `states` service, checks the status, and sends an appropriate response:
+ * - If successful, it sends a success response with the list of states.
+ * - If failed, it logs the error and sends an error response.
+ */
 async function states(req: Request, res: Response): Promise<void> {
+  const methodName = "states";
   try {
     const states = await services.geoDataServices.states();
     if (states.statusCode === HttpStatus.SUCCESS) {
-      logger.info("Success log: ", {
-        timestamp: new Date().toISOString(),
-        method: "states",
-      });
-
-      successResponse(
-        res,
-        HttpStatus.SUCCESS,
-        HttpStatus.SUCCESS_MESSAGE,
-        states.data
-      );
+      successLog(methodName);
+      handleSuccessResponse(res, states.data);
+      return;
     } else {
-      logger.error("Failed log: ", {
-        timestamp: new Date().toISOString(),
-        method: "states",
-      });
-      errorResponse(
+      errorLog(methodName, states.errorMessage);
+      handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
         states.message
       );
+      return;
     }
   } catch (err) {
     const error = err as Error;
-    logger.error("Failed log: ", {
-      timestamp: new Date().toString(),
-      method: "states",
-      message: error.message,
-    });
-
+    errorLog(methodName, error.message);
     errorResponse(
       res,
       HttpStatus.FAILED,
       HttpStatus.FAILED_MESSAGE,
       error.message
     );
+    return;
   }
 }
 
@@ -186,5 +184,5 @@ export default {
   country,
   currency,
   regions,
-  states
+  states,
 };

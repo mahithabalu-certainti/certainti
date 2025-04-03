@@ -2,7 +2,13 @@ import { Request, Response } from "express";
 import { errorResponse, successResponse } from "../utils/apiResponse";
 import { HttpStatus } from "../utils/constant";
 import configurations from "../config/config";
-import { validateRequest } from "../utils/helpers";
+import {
+  errorLog,
+  handleErrorResponse,
+  handleSuccessResponse,
+  successLog,
+  validateRequest,
+} from "../utils/helpers";
 import {
   accountSchema,
   listAccountSchema,
@@ -24,7 +30,7 @@ const accountServices = services.accountServices;
  * or an error message on failure.
  */
 async function accounts(req: Request, res: Response): Promise<void> {
-  const methodName = "account";
+  const methodName = "list user";
   try {
     const value = await validateRequest(req, listAccountSchema, res, "GET");
 
@@ -35,13 +41,14 @@ async function accounts(req: Request, res: Response): Promise<void> {
     }
 
     try {
-      parsedFilters = JSON.parse(value.filters);
+      if (value.filters) {
+        parsedFilters = JSON.parse(value.filters);
+      }
     } catch (error) {
-      logger.error("Failed log: ", {
-        timestamp: new Date().toISOString(),
-        method: "list user",
-        message: "Invalid filters format. Must be a valid JSON object.",
-      });
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
     }
 
     const pageNum: number = parseInt(value.page, 10) || 1;
@@ -57,47 +64,46 @@ async function accounts(req: Request, res: Response): Promise<void> {
     );
 
     if (accounts.statusCode === HttpStatus.SUCCESS) {
-      logger.info("Success log: ", {
-        timestamp: new Date().toISOString(),
-        method: methodName,
-      });
-
-      successResponse(
-        res,
-        HttpStatus.SUCCESS,
-        HttpStatus.SUCCESS_MESSAGE,
-        accounts.data
-      );
+      successLog(methodName);
+      handleSuccessResponse(res, accounts.data);
+      return;
     } else {
-      logger.error("Failed log: ", {
-        timestamp: new Date().toISOString(),
-        method: methodName,
-      });
-      errorResponse(
+      errorLog(methodName, accounts.errorMessage);
+      handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
-        accounts.message
+        accounts.errorMessage!
       );
+      return;
     }
   } catch (err) {
     const error = err as Error;
-    logger.error("Failed log: ", {
-      timestamp: new Date().toString(),
-      method: methodName,
-      message: error.message,
-    });
-
-    errorResponse(
+    errorLog(methodName, error.message);
+    handleErrorResponse(
       res,
       HttpStatus.FAILED,
       HttpStatus.FAILED_MESSAGE,
       error.message
     );
+    return;
   }
 }
 
+/**
+ * Handles the request to create a new account.
+ *
+ * @param {Request} req The request object containing details of the HTTP request.
+ * @param {Response} res The response object to send the HTTP response.
+ * @returns {Promise<void>} A promise that resolves when the request is processed.
+ *
+ * This method validates the request data using `accountSchema`, calls the `createAccount` service to create a new account,
+ * and sends an appropriate response:
+ * - If successful, it sends a success response with the created account data.
+ * - If failed, it logs the error and sends an error response with the error message.
+ */
 async function createAccount(req: Request, res: Response): Promise<void> {
+  const methodName = "create account";
   try {
     const value = await validateRequest(req, accountSchema, res);
 
@@ -108,47 +114,46 @@ async function createAccount(req: Request, res: Response): Promise<void> {
     const account = await accountServices.createAccount(value);
 
     if (account.statusCode === HttpStatus.SUCCESS) {
-      logger.info("Success log: ", {
-        timestamp: new Date().toISOString(),
-        method: "create account",
-      });
-
-      successResponse(
-        res,
-        HttpStatus.SUCCESS,
-        HttpStatus.SUCCESS_MESSAGE,
-        account.data
-      );
+      successLog(methodName);
+      handleSuccessResponse(res, account.data);
+      return;
     } else {
-      logger.error("Failed log: ", {
-        timestamp: new Date().toISOString(),
-        method: "create account",
-      });
-      errorResponse(
+      errorLog(methodName, account.errorMessage);
+      handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
-        account.errorMessage || account.message
+        account.errorMessage
       );
+      return;
     }
   } catch (err) {
     const error = err as Error;
-    logger.error("Failed log: ", {
-      timestamp: new Date().toString(),
-      method: "create account",
-      message: error.message,
-    });
-
-    errorResponse(
+    errorLog(methodName, error.message);
+    handleErrorResponse(
       res,
-      HttpStatus.FAILED,
-      HttpStatus.FAILED_MESSAGE,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
       error.message
     );
+    return;
   }
 }
 
+/**
+ * Handles the request to update an existing account.
+ *
+ * @param {Request} req The request object containing details of the HTTP request.
+ * @param {Response} res The response object to send the HTTP response.
+ * @returns {Promise<void>} A promise that resolves when the request is processed.
+ *
+ * This method validates the request data using `updateAccountSchema`, calls the `updateAccount` service to update the account,
+ * and sends an appropriate response:
+ * - If successful, it sends a success response with the updated account data.
+ * - If failed, it logs the error and sends an error response with the error message.
+ */
 async function updateAccount(req: Request, res: Response): Promise<void> {
+  const methodName = "update account";
   try {
     const value = await validateRequest(req, updateAccountSchema, res);
 
@@ -159,83 +164,65 @@ async function updateAccount(req: Request, res: Response): Promise<void> {
     const account = await accountServices.updateAccount(value);
 
     if (account.statusCode === HttpStatus.SUCCESS) {
-      logger.info("Success log: ", {
-        timestamp: new Date().toISOString(),
-        method: "update account",
-      });
-
-      successResponse(
-        res,
-        HttpStatus.SUCCESS,
-        HttpStatus.SUCCESS_MESSAGE,
-        account.data
-      );
+      successLog(methodName);
+      handleSuccessResponse(res, account.data);
+      return;
     } else {
-      logger.error("Failed log: ", {
-        timestamp: new Date().toISOString(),
-        method: "update account",
-      });
-      errorResponse(
+      errorLog(methodName, account.errorMessage);
+      handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
-        account.errorMessage || account.message
+        account.errorMessage
       );
+      return;
     }
   } catch (err) {
     const error = err as Error;
-    logger.error("Failed log: ", {
-      timestamp: new Date().toString(),
-      method: "update account",
-      message: error.message,
-    });
 
-    errorResponse(
+    errorLog(methodName, error.message);
+    handleErrorResponse(
       res,
       HttpStatus.FAILED,
       HttpStatus.FAILED_MESSAGE,
       error.message
     );
+    return;
   }
 }
 
+/**
+ * Handles the request to fetch all global accounts.
+ *
+ * @param {Request} req The request object containing details of the HTTP request.
+ * @param {Response} res The response object to send the HTTP response.
+ * @returns {Promise<void>} A promise that resolves when the request is processed.
+ *
+ * This method calls the `globalAccounts` service to fetch all global accounts and sends an appropriate response:
+ * - If successful, it sends a success response with the global accounts data.
+ * - If failed, it logs the error and sends an error response with the error message.
+ */
 async function globalAccounts(req: Request, res: Response): Promise<void> {
+  const methodName = "global account";
   try {
-    const account = await accountServices.gloablAcconunts();
+    const account = await accountServices.globalAccounts();
 
     if (account.statusCode === HttpStatus.SUCCESS) {
-      logger.info("Success log: ", {
-        timestamp: new Date().toISOString(),
-        method: "global account",
-      });
-
-      successResponse(
-        res,
-        HttpStatus.SUCCESS,
-        HttpStatus.SUCCESS_MESSAGE,
-        account.data
-      );
+      successLog(methodName);
+      handleSuccessResponse(res, account.data);
     } else {
-      logger.error("Failed log: ", {
-        timestamp: new Date().toISOString(),
-        method: "global account",
-      });
-      errorResponse(
+      errorLog(methodName, account.errorMessage);
+      handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
-        account.errorMessage || account.message
+        account.errorMessage
       );
     }
   } catch (err) {
     const error = err as Error;
-    logger.error("Failed log: ", {
-      timestamp: new Date().toString(),
-      method: "global account",
-      message: error.message,
-    });
-
-    errorResponse(
+    errorLog(methodName, error.message);
+    handleErrorResponse(
       res,
       HttpStatus.FAILED,
       HttpStatus.FAILED_MESSAGE,
@@ -244,44 +231,40 @@ async function globalAccounts(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Handles the request to fetch a specific account by its ID.
+ *
+ * @param {Request} req The request object containing details of the HTTP request.
+ * @param {Response} res The response object to send the HTTP response.
+ * @returns {Promise<void>} A promise that resolves when the request is processed.
+ *
+ * This method retrieves the account ID from the request parameters, calls the `accountById` service to fetch the account,
+ * and sends an appropriate response:
+ * - If successful, it sends a success response with the account data.
+ * - If failed, it logs the error and sends an error response with the error message.
+ */
 async function accountById(req: Request, res: Response): Promise<void> {
+  const methodName = "global account";
   try {
     const { id } = req.params;
     const account = await accountServices.accountById(id);
 
     if (account.statusCode === HttpStatus.SUCCESS) {
-      logger.info("Success log: ", {
-        timestamp: new Date().toISOString(),
-        method: "global account",
-      });
-
-      successResponse(
-        res,
-        HttpStatus.SUCCESS,
-        HttpStatus.SUCCESS_MESSAGE,
-        account.data
-      );
+      successLog(methodName);
+      handleSuccessResponse(res, account.data);
     } else {
-      logger.error("Failed log: ", {
-        timestamp: new Date().toISOString(),
-        method: "global account",
-      });
-      errorResponse(
+      errorLog(methodName, account.errorMessage);
+      handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
-        account.errorMessage || account.message
+        account.errorMessage
       );
     }
   } catch (err) {
     const error = err as Error;
-    logger.error("Failed log: ", {
-      timestamp: new Date().toString(),
-      method: "global account",
-      message: error.message,
-    });
-
-    errorResponse(
+    errorLog(methodName, error.message);
+    handleErrorResponse(
       res,
       HttpStatus.FAILED,
       HttpStatus.FAILED_MESSAGE,
@@ -289,12 +272,11 @@ async function accountById(req: Request, res: Response): Promise<void> {
     );
   }
 }
-
 
 export default {
   accounts,
   createAccount,
   updateAccount,
   globalAccounts,
-  accountById
+  accountById,
 };

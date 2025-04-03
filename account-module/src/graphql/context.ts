@@ -1,9 +1,12 @@
 import { ExpressContextFunctionArgument } from "@apollo/server/express4";
 import Services from "../services";
-import authMiddleware from "../middlewares/authMiddleware";
 
-interface AppContext {
-  services: Services;
+interface RequestContext {
+  req: Express.Request;
+  res: Express.Response;
+  connection?: any;
+  token?: string;
+  services?: Services;
 }
 
 /**
@@ -17,8 +20,7 @@ interface AppContext {
 const initRequestContext = async (
   ctx: ExpressContextFunctionArgument,
   appContext: Services
-): Promise<any> => {
-  // await authMiddleware(ctx.req, null, () => {});
+): Promise<RequestContext> => {
   return {
     ...ctx,
     services: appContext,

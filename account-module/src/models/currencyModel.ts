@@ -32,6 +32,7 @@ Currency.init(
     currency_code: {
       type: DataTypes.STRING,
       allowNull: false,
+      unique: true
     },
     currency_name: {
       type: DataTypes.STRING,

@@ -1,9 +1,9 @@
-import accountsController from './accountController';
+import accountController from './accountController';
 import geoDataController from './geoDataController';
 
 const controller = {
-  accountController: accountsController,
-  geoDataController: geoDataController,
+  accountController,
+  geoDataController,
 };
 
 export default controller;

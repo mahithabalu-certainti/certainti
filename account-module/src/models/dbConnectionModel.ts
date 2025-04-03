@@ -2,7 +2,7 @@ import { DataTypes, Model, Optional } from "sequelize";
 import sequelize from "../config/dataSource";
 
 interface DatabaseConnectionAttributes {
-  rid: number;
+  rid: string;
   r_number: string;
   eid: number;
   database_name: string;
@@ -20,7 +20,7 @@ class DatabaseConnection
   >
   implements DatabaseConnectionAttributes
 {
-  public rid!: number;
+  public rid!: string;
   public r_number!: string;
   public eid!: number;
   public database_name!: string;

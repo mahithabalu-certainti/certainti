@@ -1,16 +1,18 @@
-import { Op, where } from "sequelize";
-import sequelize from "../config/dataSource";
+import { Op } from "sequelize";
 import Account from "../models/accountModel";
 import { HttpStatus } from "../utils/constant";
 import { IAccount, IUpdateAccount } from "../utils/types";
 import { Country } from "../models/countryModel";
 import { Currency } from "../models/currencyModel";
+import SchemaService from "./schemaService";
 
 class AccountService {
   private accountRepository: typeof Account | null;
+  private schemaService: SchemaService;
 
   constructor() {
     this.accountRepository = null;
+    this.schemaService = new SchemaService();
   }
 
   /**
@@ -36,12 +38,12 @@ class AccountService {
    * - An object containing the status code, message, and retrieved account data.
    */
   async accountList(
-    page: number,
-    limit: number,
+    page: number = 1,
+    limit: number = 10,
     search: string,
-    filters: Record<string, string>,
-    sortBy: string,
-    sortOrder: string
+    filters: Record<string, string> = {},
+    sortBy: string = "created_datetime",
+    sortOrder: string = "ASC"
   ): Promise<{
     statusCode: number;
     message: string;
@@ -52,6 +54,7 @@ class AccountService {
       const repository = this.getAccountRepository();
 
       const { whereClause } = this.buildWhereClause(filters, search);
+
       const offset = (page - 1) * limit;
 
       const [finalSortBy, finalSortOrder] = this.getSortParameters(
@@ -62,15 +65,23 @@ class AccountService {
       const order: any[] = [];
 
       if (finalSortBy !== "country" && finalSortBy !== "currency") {
-        order.push([finalSortBy, finalSortOrder]);  
-      } 
+        order.push([finalSortBy, finalSortOrder]);
+      }
 
       if (finalSortBy === "country") {
-        order.push([{ model: Country, as: 'country' }, 'country_name', finalSortOrder]);
+        order.push([
+          { model: Country, as: "country" },
+          "country_name",
+          finalSortOrder,
+        ]);
       }
 
       if (finalSortBy === "currency") {
-        order.push([{ model: Currency, as: 'currency' }, 'currency_code', finalSortOrder]);
+        order.push([
+          { model: Currency, as: "currency" },
+          "currency_code",
+          finalSortOrder,
+        ]);
       }
 
       const account = await repository.findAll({
@@ -96,12 +107,16 @@ class AccountService {
         },
       };
     } catch (err) {
-      console.log("Error ", err);
       return this.throwServiceError(err as Error);
     }
   }
 
-  async createAccount(accountData: IAccount) {
+  async createAccount(accountData: IAccount): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { account: any };
+  }> {
     try {
       const repository = this.getAccountRepository();
       let parent_account = null;
@@ -123,6 +138,22 @@ class AccountService {
         throw new Error(
           "Please select global account to store in parent account"
         );
+      }
+
+      const isUnique = await this.checkIsAccounUnique(account_name);
+      if(!isUnique){
+        throw new Error("Account name must be unique");
+      }
+
+      if (parent_account_rid !== null) {
+        const parent_account = await repository.findOne({
+          where: {
+            rid: parent_account_rid,
+          },
+        });
+        if (!parent_account) {
+          throw new Error("Invalid parent account");
+        }
       }
 
       if (data_storage === "store_in_parent" && parent_account_rid !== null) {
@@ -156,14 +187,14 @@ class AccountService {
       });
 
       if (parent_account && data_storage === "store_in_parent") {
-        await this.insertAccountDetails(
+        await this.schemaService.insertAccountDetails(
           parent_account?.r_number,
           accountData,
           account.rid
         );
       } else {
-        await this.createNewSchema(account.r_number);
-        await this.insertAccountDetails(
+        await this.schemaService.createNewSchema(account.r_number);
+        await this.schemaService.insertAccountDetails(
           account.r_number,
           accountData,
           account.rid
@@ -178,15 +209,16 @@ class AccountService {
         },
       };
     } catch (err) {
-      return {
-        statusCode: HttpStatus.FAILED,
-        message: HttpStatus.FAILED_MESSAGE,
-        errorMessage: (err as Error).message,
-      };
+      return this.throwServiceError(err as Error);
     }
   }
 
-  async updateAccount(accountData: IUpdateAccount) {
+  async updateAccount(accountData: IUpdateAccount): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { affectedCounts: number };
+  }> {
     try {
       const repository = this.getAccountRepository();
       const {
@@ -199,8 +231,6 @@ class AccountService {
         account_country_region_rid,
         data_storage,
         account_rid,
-        parent_account_rid,
-        r_number,
         annual_revenue,
       } = accountData;
 
@@ -227,11 +257,15 @@ class AccountService {
       const default_r_number = affectedRows[0].r_number;
 
       if (default_parent_id && data_storage === "separate_db") {
-        this.updateAccountDetails(account_rid, accountData, default_r_number);
+        this.schemaService.updateAccountDetails(
+          account_rid,
+          accountData,
+          default_r_number
+        );
       }
 
       if (default_parent_id === "store_in_parent") {
-        this.updateAccountDetails(
+        this.schemaService.updateAccountDetails(
           default_parent_id,
           accountData,
           default_r_number
@@ -239,7 +273,11 @@ class AccountService {
       }
 
       if (default_parent_id === null) {
-        this.updateAccountDetails(account_rid, accountData, default_r_number);
+        this.schemaService.updateAccountDetails(
+          account_rid,
+          accountData,
+          default_r_number
+        );
       }
 
       return {
@@ -258,10 +296,15 @@ class AccountService {
     }
   }
 
-  async gloablAcconunts() {
+  async globalAccounts(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { gloablAcconunt: any; count: number };
+  }> {
     try {
       const repository = await this.getAccountRepository();
-      const gloablAcconunts = await repository.findAll({
+      const gloablAcconunt = await repository.findAll({
         where: {
           parent_account_rid: {
             [Op.is]: null,
@@ -273,20 +316,21 @@ class AccountService {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          gloablAcconunts,
-          count: gloablAcconunts.length,
+          gloablAcconunt,
+          count: gloablAcconunt.length,
         },
       };
     } catch (err) {
-      return {
-        statusCode: HttpStatus.FAILED,
-        message: HttpStatus.FAILED_MESSAGE,
-        errorMessage: (err as Error).message,
-      };
+      return this.throwServiceError(err as Error);
     }
   }
 
-  async accountById(account_id: string) {
+  async accountById(account_id: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { accountById: any; accountDetails: any };
+  }> {
     try {
       const repository = await this.getAccountRepository();
       const accountById = await repository.findOne({
@@ -312,7 +356,7 @@ class AccountService {
           },
         ],
       });
-      const accountDetails = await this.fetchAccountDetails(
+      const accountDetails = await this.schemaService.fetchAccountDetails(
         accountById?.r_number || "",
         accountById?.rid || ""
       );
@@ -325,184 +369,7 @@ class AccountService {
         },
       };
     } catch (err) {
-      return {
-        statusCode: HttpStatus.FAILED,
-        message: HttpStatus.FAILED_MESSAGE,
-        errorMessage: (err as Error).message,
-      };
-    }
-  }
-
-  async createNewSchema(account_number: string) {
-    try {
-      await sequelize.createSchema(`platform_v2_${account_number}`, {});
-      await this.createAccountTables(account_number);
-    } catch (err) {
-      console.error("Error creating schema and tables: ", err);
-      throw new Error("Error creating schema and tables.");
-    }
-  }
-
-  async createAccountTables(account_number: string) {
-    const schemaName = `platform_v2_${account_number}`;
-
-    await sequelize.query(`
-      CREATE TABLE IF NOT EXISTS "${schemaName}"."account_details" (
-        rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        account_rid UUID NOT NULL,
-        tax_claim_level VARCHAR(50) NULL,
-        max_ai_interactions INT CHECK (max_ai_interactions BETWEEN 3 AND 5) NOT NULL,
-        autosend_interaction BOOLEAN NOT NULL,
-        fiscal_start_date VARCHAR(10) NOT NULL,
-        fiscal_end_date VARCHAR(10) NOT NULL,
-        interaction_cc_list VARCHAR,
-        blended_rate_fte VARCHAR(10),
-        blended_rate_subcon VARCHAR(10),
-        created_by VARCHAR(255),
-        modified_by VARCHAR(255),
-        primary_contact_email VARCHAR(50) NOT NULL,
-        primary_contact_number VARCHAR(50) NOT NULL,
-        finance_poc_name VARCHAR(25) NOT NULL,
-        finance_poc_email VARCHAR(50) NOT NULL,
-        finanace_poc_number VARCHAR(50) NOT NULL,
-        website VARCHAR(50),
-        project_manager VARCHAR(50) NOT NULL,
-        data_residency VARCHAR(255),
-        data_storage VARCHAR(255) CHECK (data_storage IN ('separate_db', 'store_in_parent')),
-        auto_access_rd BOOLEAN NOT NULL,
-        created_datetime DATE DEFAULT CURRENT_TIMESTAMP NULL,
-        modified_datetime DATE DEFAULT CURRENT_TIMESTAMP NULL
-      );
-    `);
-  }
-
-  async insertAccountDetails(
-    account_number: string,
-    accountData: IAccount,
-    account_rid: string
-  ) {
-    try {
-      const schemaName = `platform_v2_${account_number}`;
-
-      await sequelize.query(
-        `
-        INSERT INTO "${schemaName}"."account_details" (
-          account_rid, max_ai_interactions, 
-          autosend_interaction, fiscal_start_date, fiscal_end_date, 
-          interaction_cc_list, blended_rate_fte, blended_rate_subcon, 
-          created_by, modified_by, primary_contact_email, primary_contact_number, 
-          finance_poc_name, finance_poc_email, finanace_poc_number, website, 
-          project_manager, 
-          data_residency, data_storage, auto_access_rd
-        ) 
-        VALUES (
-          :account_rid, :max_ai_interactions, 
-          :autosend_interaction, :fiscal_start_date, :fiscal_end_date, 
-          :interaction_cc_list, :blended_rate_fte, :blended_rate_subcon, 
-          :created_by, :modified_by, :primary_contact_email, :primary_contact_number, 
-          :finance_poc_name, :finance_poc_email, :finanace_poc_number, :website, 
-          :project_manager, 
-          :data_residency, :data_storage, :auto_access_rd
-        );
-      `,
-        {
-          replacements: {
-            account_rid: account_rid,
-            max_ai_interactions: accountData.max_ai_interactions,
-            autosend_interaction: accountData.autosend_interaction,
-            fiscal_start_date: accountData.fiscal_start_date,
-            fiscal_end_date: accountData.fiscal_end_date,
-            interaction_cc_list: accountData.interaction_cc_list ?? null,
-            blended_rate_fte: accountData.blended_rate_fte ?? null,
-            blended_rate_subcon: accountData.blended_rate_subcon ?? null,
-            created_by: "Admin",
-            modified_by: "Admin",
-            primary_contact_email: accountData.primary_contact_email,
-            primary_contact_number: accountData.primary_contact_number,
-            finance_poc_name: accountData.finance_poc_name,
-            finance_poc_email: accountData.finance_poc_email,
-            finanace_poc_number: accountData.finance_poc_number,
-            website: accountData.website ?? null,
-            project_manager: accountData.project_manager,
-            data_residency: accountData.data_residency ?? null,
-            data_storage: accountData.data_storage ?? null,
-            auto_access_rd: accountData.auto_access_rd
-          },
-        }
-      );
-    } catch (err) {
-      throw new Error((err as Error).message);
-    }
-  }
-
-  async updateAccountDetails(
-    account_rid: string,
-    accountData: IUpdateAccount,
-    account_number: string
-  ) {
-    try {
-      const schemaName = `platform_v2_${account_number}`;
-
-      await sequelize.query(
-        `
-        UPDATE "${schemaName}"."account_details"
-        SET 
-          max_ai_interactions = :max_ai_interactions,
-          autosend_interaction = :autosend_interaction,
-          interaction_cc_list = :interaction_cc_list,
-          blended_rate_fte = :blended_rate_fte,
-          blended_rate_subcon = :blended_rate_subcon,
-          modified_by = :modified_by,
-          primary_contact_email = :primary_contact_email,
-          primary_contact_number = :primary_contact_number,
-          finance_poc_name = :finance_poc_name,
-          finance_poc_email = :finance_poc_email,
-          finanace_poc_number = :finanace_poc_number,
-          website = :website,
-          project_manager = :project_manager,
-          auto_access_rd = :auto_access_rd,
-          modified_datetime = :modified_datetime
-        WHERE account_rid = :account_rid;
-      `,
-        {
-          replacements: {
-            account_rid: account_rid,
-            max_ai_interactions: accountData.max_ai_interactions,
-            autosend_interaction: accountData.autosend_interaction,
-            interaction_cc_list: accountData.interaction_cc_list ?? null,
-            blended_rate_fte: accountData.blended_rate_fte ?? null,
-            blended_rate_subcon: accountData.blended_rate_subcon ?? null,
-            modified_by: "Admin",
-            primary_contact_email: accountData.primary_contact_email,
-            primary_contact_number: accountData.primary_contact_number,
-            finance_poc_name: accountData.finance_poc_name,
-            finance_poc_email: accountData.finance_poc_email,
-            finanace_poc_number: accountData.finance_poc_number,
-            website: accountData.website ?? null,
-            project_manager: accountData.project_manager,
-            auto_access_rd: accountData.auto_access_rd,
-            modified_datetime: new Date()
-          },
-        }
-      );
-    } catch (err) {
-      throw new Error((err as Error).message);
-    }
-  }
-
-  async fetchAccountDetails(account_number: string, account_rid: string) {
-    try {
-      const query = `
-        SELECT * FROM "platform_v2_${account_number}".account_details WHERE account_rid = :account_rid
-      `;
-
-      const users = await sequelize.query(query, {
-        replacements: { account_rid },
-        type: "SELECT",
-      });
-      return users;
-    } catch (err) {
-      throw new Error("Error retrieving account details");
+      return this.throwServiceError(err as Error);
     }
   }
 
@@ -557,8 +424,8 @@ class AccountService {
       { clientField: "account_name", dbField: "account_name" },
       { clientField: "status", dbField: "status" },
       { clientField: "industry", dbField: "industry" },
-      { clientField: "country", dbField: "country" },
-      { clientField: "currency", dbField: "currency" },
+      { clientField: "country", dbField: "$country.country_name$" },
+      { clientField: "currency", dbField: "$currency.currency_code$" },
       { clientField: "primary_contact", dbField: "primary_contact_name" },
       { clientField: "is_parent_account", dbField: "is_parent" },
       { clientField: "annual_revenue", dbField: "annual_revenue" },
@@ -584,7 +451,7 @@ class AccountService {
       );
     }
 
-    if (filters.parent_account) {
+    if (filters && filters.parent_account) {
       whereClause = this.applyParentAccountFilter(filters, whereClause);
     }
 
@@ -618,7 +485,6 @@ class AccountService {
     ) {
       return { [Op.between]: fieldFilter.between };
     }
-    return null;
   }
 
   private getMultiValueFilter(filter: any): any {
@@ -728,6 +594,18 @@ class AccountService {
         required: true,
       },
     ];
+  }
+
+  private async checkIsAccounUnique(account_name: string): Promise<boolean> {
+    const response = await Account.findOne({
+      where: {
+        account_name,
+      },
+    });
+    if (response && response.account_name) {
+      return false;
+    }
+    return true;
   }
 
   private throwServiceError(err: Error): {

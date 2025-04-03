@@ -43,6 +43,7 @@ Country.init(
     country_code: {
       type: DataTypes.STRING,
       allowNull: false,
+      unique: true,
     },
     country_name: {
       type: DataTypes.STRING,
@@ -51,6 +52,14 @@ Country.init(
     default_currency_rid: {
       type: DataTypes.UUID,
       allowNull: false,
+      validate: {
+        async isCurrencyExist(value: string) {
+          const currency = await Currency.findByPk(value);
+          if (!currency) {
+            throw new Error(`Currency with id ${value} does not exist`);
+          }
+        },
+      },
     },
     created_datetime: {
       type: DataTypes.DATE,
