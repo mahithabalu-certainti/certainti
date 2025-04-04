@@ -20,6 +20,10 @@ jobs:
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
       - name: Fetch secrets and create .env file
         id: fetch-secrets
         run: |
