@@ -1,0 +1,45 @@
+import {
+  AccountFieldsApiResponse,
+  Status,
+  Storagetype,
+} from '../types/account';
+
+export const mockAccountDetails: AccountFieldsApiResponse = {
+  statusCode: 200,
+  statusCodeValue: 'Success',
+  statusMessage: '',
+  data: {
+    accountById: {
+      r_number: 'ACC0010',
+      account_name: 'Wipro-Global',
+      account_description: 'This is a description of the account.',
+      status: Status.Active,
+      is_parent: true,
+      annual_revenue: 10000,
+      region: '75ebb6e9-8c12-4ff8-91e0-f9ba19e819e8',
+      parent_account_rid: '',
+      country_rid: '6dd3b70f-dd05-4199-a266-dbcae1828788',
+      currency_rid: '68f55916-6108-497a-9d56-2f63f1aef524',
+      industry: 'Technology',
+      primary_contact_name: 'John Doe',
+      rid: '2d991b85-e388-40a8-944e-81ddf8d9cc41',
+    },
+    accountDetails: {
+      max_ai_interactions: 3,
+      autosend_interaction: true,
+      fiscal_start_date: '01/01/2023',
+      fiscal_end_date: '31/12/2023',
+      blended_rate_fte: '100.00',
+      blended_rate_subcon: '120.50',
+      primary_contact_email: 'john.doe@example.com',
+      primary_contact_number: '123-456-7890',
+      finance_poc_name: 'Jane Doe',
+      finance_poc_email: 'jane.doe@example.com',
+      finanace_poc_number: '987-654-3210',
+      website: 'https://example.com',
+      project_manager: 'pm@example.com',
+      auto_access_rd: false,
+      data_storage: Storagetype.SeperateDB,
+    },
+  },
+};
