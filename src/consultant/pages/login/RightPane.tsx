@@ -1,6 +1,6 @@
 import { Box } from '@mui/material';
 import React from 'react';
-import { certaintiLogo, loginBg, onrouteLogo } from '../../../assets';
+import { certaintiLogo, loginBg } from '../../../assets';
 import { Image, Text } from '../../../components';
 import { useAppTranslation } from '../../../hooks/use-app-translation';
 
@@ -24,11 +24,9 @@ export const RightPane: React.FC = () => {
       {/* Top section */}
       <Box className='flex-1 flex flex-col justify-center'>
         <Box className='flex flex-col gap-2'>
-          <Image
-            src={onrouteLogo}
-            alt='Onroute'
-            className='w-[200px] h-[42px] md:w-[360px] md:h-[62px]'
-          />
+          <Text className='text-[48px] text-primary font-bold'>
+            {t('core', 'login.platform20')}
+          </Text>
           <Box className='flex flex-wrap items-center gap-2'>
             <Text className='text-[12px] md:text-[18px] text-primary font-bold'>
               {t('core', 'login.poweredBy')}
@@ -41,12 +39,6 @@ export const RightPane: React.FC = () => {
           </Box>
         </Box>
       </Box>
-
-      <Image
-        src={certaintiLogo}
-        alt='Certainti.ai'
-        className='w-[150px] sm:w-[200px] mt-8'
-      />
     </Box>
   );
 };
