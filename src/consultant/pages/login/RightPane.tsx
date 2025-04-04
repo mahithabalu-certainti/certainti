@@ -24,37 +24,29 @@ export const RightPane: React.FC = () => {
       {/* Top section */}
       <Box className='flex-1 flex flex-col justify-center'>
         <Box className='flex flex-col gap-2'>
-          {/* Welcome message */}
-          <Text className='text-[28px] md:text-[48px] text-primary font-bold'>
-            {t('core', 'login.enterpriseAssist')}
-          </Text>
-          <Text className='text-[15px] md:text-[20px] text-secondary font-medium'>
-            {t('core', 'login.enablingAIExcellence')}
-          </Text>
-          {/* Onroute logo */}
           <Image
             src={onrouteLogo}
             alt='Onroute'
             className='w-[200px] h-[42px] md:w-[360px] md:h-[62px]'
           />
+          <Box className='flex flex-wrap items-center gap-2'>
+            <Text className='text-[12px] md:text-[18px] text-primary font-bold'>
+              {t('core', 'login.poweredBy')}
+            </Text>
+            <Image
+              src={certaintiLogo}
+              className='w-auto h-[12px] md:h-[18px]'
+              alt='Certainti.ai'
+            />
+          </Box>
         </Box>
       </Box>
 
-      {/* Bottom section */}
-      <Box className='mt-auto'>
-        <Box className='flex flex-wrap items-center gap-2'>
-          {/* Powered by message */}
-          <Text className='text-[12px] md:text-[18px] font-medium mt-1'>
-            {t('core', 'login.poweredBy')}
-          </Text>
-          {/* Certainti logo */}
-          <Image
-            src={certaintiLogo}
-            className='w-auto h-[12px] md:h-[18px]'
-            alt='Certainti.ai'
-          />
-        </Box>
-      </Box>
+      <Image
+        src={certaintiLogo}
+        alt='Certainti.ai'
+        className='w-[150px] sm:w-[200px] mt-8'
+      />
     </Box>
   );
 };
