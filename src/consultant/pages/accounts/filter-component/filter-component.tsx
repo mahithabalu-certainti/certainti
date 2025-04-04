@@ -162,6 +162,13 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
     setAppliedFilters(formatFilterForApi(filterStates));
   };
 
+  const handleResetFilters = () => {
+    setSelectedFilters([]);
+    setFilterStates({});
+    setAppliedFilters({});
+    setIsModified(false);
+  };
+
   const renderFilterControls = (field: FieldConfig) => {
     if (!selectedFilters.includes(field.name)) return null;
 
@@ -230,16 +237,25 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
         <Typography variant='subtitle1' sx={{ fontWeight: 'bold' }}>
           Filter By Fields
         </Typography>
-        {isModified && (
+        <Box>
           <Button
-            variant='contained'
-            color='primary'
-            onClick={handleApplyFilters}
-            sx={{ ml: 2 }}
+            variant='outlined'
+            color='secondary'
+            onClick={handleResetFilters}
+            sx={{ mr: 1, height: '30px' }}
           >
-            Apply
+            Reset
           </Button>
-        )}
+          {isModified && (
+            <Button
+              variant='contained'
+              color='primary'
+              onClick={handleApplyFilters}
+            >
+              Apply
+            </Button>
+          )}
+        </Box>
       </Box>
 
       {fields.map((field) => (
