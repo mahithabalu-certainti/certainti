@@ -8,15 +8,14 @@ const routes: Router = Router();
 routes.get("/health", async (req, res) => {
   const methodName = "health check";
   try {
-    const dbStatus = await testDbConnection();
     successLog(methodName);
-    res.status(200).json({ status: "ok", dbStatus });
+    res.status(200).send("OK");
     return;
   } catch (error) {
-    errorLog(methodName, "Failed to connect to database");
+    errorLog(methodName, "Internal Server Error: Unable to perform health check.");
     res
       .status(500)
-      .json({ status: "error", message: "Failed to connect to database" });
+      .json({ status: "error", message: "Internal Server Error: Unable to perform health check." });
     return;
   }
 });
