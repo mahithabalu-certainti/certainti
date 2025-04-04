@@ -12,8 +12,8 @@ import {
 import ActionsDropdown from '../../../components/actions-dropdown/actions-dropdown';
 import TextButton from '../../../components/button/text-button';
 import { ACCOUNT_CREATE } from '../../../routes';
-import AccountTable from './table/account-table';
 import FilterComponent from './filter-component/filter-component';
+import AccountTable from './table/account-table';
 
 const BUTTON_STYLES = {
   height: '35px',

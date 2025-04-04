@@ -71,7 +71,7 @@ export const useManageUserDetail = (userId: string) => {
     enabled: !!userId, // Only fetch if userId exists
     staleTime: 0, // No cache
     gcTime: 0, // Immediately remove from cache
-    retry: 2, // Retry up to 2 times on failure
+    retry: 0,
   });
 };
 
@@ -102,8 +102,7 @@ export const useManageUserProfile = () => {
   return useQuery<UserProfileApiResponse, Error>({
     queryKey: ['userProfile'], // Unique query key
     queryFn: () => fetchUserProfile(),
-    staleTime: 5 * 60 * 1000, // 5 minutes cache
-    retry: 2, // Retry up to 2 times on failure
+    retry: 0, // Retry up to 2 times on failure
   });
 };
 
@@ -200,7 +199,6 @@ export const useManageUserRole = () => {
   return useQuery<UserRolesApiResponse, Error>({
     queryKey: ['userRoles'], // Unique query key
     queryFn: () => fetchUserRoles(),
-    staleTime: 5 * 60 * 1000, // 5 minutes cache
-    retry: 2, // Retry up to 2 times on failure
+    retry: 0,
   });
 };

@@ -1,4 +1,4 @@
-import { ParentAccountApiResponse } from '../types/account';
+import { ParentAccountApiResponse } from '../types';
 
 export const mockParentAccountList: ParentAccountApiResponse = {
   statusCode: 200,

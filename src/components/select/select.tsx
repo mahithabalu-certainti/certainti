@@ -1,9 +1,8 @@
-import * as React from 'react';
 import Button from '@mui/material/Button';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-
+import * as React from 'react';
+import arrowDownIcon from '../../../assets/icons/arrow-down.svg';
 export default function BasicMenu() {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -22,7 +21,7 @@ export default function BasicMenu() {
         aria-haspopup='true'
         aria-expanded={open ? 'true' : undefined}
         onClick={handleClick}
-        endIcon={<ArrowDropDownIcon />}
+        endIcon={<img src={arrowDownIcon} alt='arrow' />}
       >
         Dashboard
       </Button>

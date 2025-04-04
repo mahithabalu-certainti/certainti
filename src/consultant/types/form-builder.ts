@@ -12,7 +12,7 @@ export interface FormTypeFields {
   value?: string;
   options?: selectOptions[];
   error?: string;
-  placeHolder?: string;
+  placeholder?: string;
   regex?: string | RegExp;
   regexErrorMessage?: string;
   disabled?: boolean;

@@ -1,4 +1,4 @@
-import { cases } from "../types/cases";
+import { cases } from "../types";
 
 export const casesList: cases[] = [
   {

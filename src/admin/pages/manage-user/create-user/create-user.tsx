@@ -2,7 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import { ManageUserIcon } from '../../../../assets/icons';
 import { FormBuilder, Toast } from '../../../../components';
 import { useToast } from '../../../../hooks';
-import { formData } from './form-data';
+import { FormData } from './form-data';
 import TextButton from '../../../../components/button/text-button';
 import { useLocation, useParams } from 'react-router-dom';
 import { useGetAllCountries } from '../../../../common-service';
@@ -14,6 +14,7 @@ import {
   useManageUserRole,
   useUpdateUserDetails,
 } from '../../../service/manage-user/manage-user-service';
+import { SelectOption } from '../../../../consultant/types';
 
 export const CreateUser: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -77,56 +78,32 @@ export const CreateUser: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updateUser.isSuccess, createUser.isSuccess]);
 
-  const memoizedFormData = useMemo(() => {
-    //Assign userprofile/countries data into dropdown
-    if (userProfiles.data?.data?.profiles || allCountries.data?.data.country) {
-      return formData.map((section) => ({
-        ...section,
-        fields: section.fields.map((field) => {
-          if (field.name === 'profile_rid') {
-            return {
-              ...field,
-              options: userProfiles.data?.data.profiles.map((profile) => ({
-                label: profile.profile_name,
-                value: profile.rid,
-              })),
-            };
-          }
-          if (field.name === 'country') {
-            return {
-              ...field,
-              options: allCountries.data?.data.country.map((country) => ({
-                label: country.country_name,
-                value: country.rid,
-              })),
-            };
-          }
-          if (field.name === 'role_rid') {
-            return {
-              ...field,
-              options: userRoles.data?.data.roles.map((role) => ({
-                label: role.business_teams,
-                value: role.rid,
-              })),
-            };
-          }
-          if (field.name === 'email') {
-            return {
-              ...field,
-              disabled: isEditView,
-            };
-          }
-          return field;
-        }),
-      }));
-    }
-    return formData;
-  }, [
-    userProfiles.data?.data?.profiles,
-    userRoles.data?.data.roles,
-    allCountries.data?.data.country,
-    isEditView,
-  ]);
+  const memoizedContry: SelectOption[] = useMemo(
+    () =>
+      allCountries.data?.data.country.map((country) => ({
+        label: country.country_name,
+        value: country.rid,
+      })) || [],
+    [allCountries.data?.data.country]
+  );
+
+  const memoizeProfiles: SelectOption[] = useMemo(
+    () =>
+      userProfiles.data?.data.profiles.map((profile) => ({
+        label: profile.profile_name,
+        value: profile.rid,
+      })) || [],
+    [userProfiles.data?.data.profiles]
+  );
+
+  const memoizeRole: SelectOption[] = useMemo(
+    () =>
+      userRoles.data?.data.roles.map((role) => ({
+        label: role.business_teams,
+        value: role.rid,
+      })) || [],
+    [userRoles.data?.data.roles]
+  );
 
   const submitData = (data: Partial<UserDetail>) => {
     if (isEditView) {
@@ -216,7 +193,12 @@ export const CreateUser: React.FC = () => {
                 allCountries.isLoading ||
                 userRoles.isLoading
               }
-              data={memoizedFormData}
+              data={FormData(
+                memoizedContry,
+                memoizeProfiles,
+                memoizeRole,
+                isEditView
+              )}
               values={isEditView && userDatas ? { ...userDatas } : undefined}
               outData={submitData}
               formRef={formRef}

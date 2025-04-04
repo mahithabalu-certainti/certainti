@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { accountHomeIcon, editIcon } from '../../../assets';
+import { useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
+import TextButton from '../../../components/button/text-button';
 import { Toast } from '../../../components/toast-message';
 import { useToast } from '../../../hooks';
 import {
@@ -11,15 +12,13 @@ import {
   useFetchParentAccounts,
   useFetchRegion,
 } from '../../services/account';
-import { FormData } from './form-data';
-import { transformFormData } from './utils';
-import { AccountFormData, SelectOption } from '../../types';
-import { useGetAllCountries } from '../../../common-service';
 import {
   useCreateAccount,
   useUpdateAccount,
 } from '../../services/account-create';
-import TextButton from '../../../components/button/text-button';
+import { AccountFormData, SelectOption } from '../../types';
+import { FormData } from './form-data';
+import { transformFormData } from './utils';
 
 export const AccountForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
