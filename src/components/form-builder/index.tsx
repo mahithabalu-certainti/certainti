@@ -337,7 +337,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     }
   };
 
-  if (loading) {
+  if (loading) { //Skeleton loader
     return (
       <div className='grid md:grid-cols-2 gap-6'>
         {[...Array(8)].map((_, index) => (
