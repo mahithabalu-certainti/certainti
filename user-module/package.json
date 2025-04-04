@@ -1,7 +1,6 @@
 {
-  "name": "rdcredits_platform_be",
+  "name": "user-module",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "scripts": {
     "start": "nodemon --watch src --exec ts-node src/index.ts",
@@ -10,24 +9,29 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "description": "",
   "dependencies": {
-    "@apollo/server": "^4.11.3",
+    "@azure/identity": "^4.8.0",
+    "@microsoft/microsoft-graph-client": "^3.0.7",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "express-rate-limit": "^7.5.0",
-    "graphql-tools": "^9.0.16",
     "joi": "^17.13.3",
     "nodemon": "^3.1.9",
-    "pg": "^8.13.3",
+    "pg": "^8.14.0",
     "sequelize": "^6.37.6",
+    "supertest": "^7.0.0",
     "uuid": "^11.1.0",
     "winston": "^3.17.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
-    "@types/node": "^22.13.12",
+    "@types/express": "^5.0.1",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.13.10",
+    "@types/supertest": "^6.0.2",
     "jest": "^29.7.0",
-    "supertest": "^7.0.0",
+    "ts-jest": "^29.2.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.2"
   }
