@@ -1,16 +1,15 @@
 import { useMemo } from 'react';
 import { FormType, SelectOption, YesNo } from '../../types';
+import { DATA_STORAGE_OPTIONS, STATUS_OPTIONS } from './utils';
 import {
   createDateField,
   createRadioField,
   createSelectField,
   createTextAreaField,
   createTextField,
-  DATA_STORAGE_OPTIONS,
   REGEX_PATTERNS,
-  STATUS_OPTIONS,
   YES_NO_OPTIONS,
-} from './utils';
+} from '../../../common-utils';
 
 export const FormData = (
   country: SelectOption[],
@@ -29,38 +28,50 @@ export const FormData = (
             required: true,
             regex: REGEX_PATTERNS.ALPHANUMERIC,
             regexErrorMessage: 'Please Enter valid Account ID',
-            disabled: disableFields
+            placeholder: 'Enter Account ID',
+            disabled: disableFields,
           }),
-          createSelectField('status', 'Status', STATUS_OPTIONS),
-          createSelectField(
-            'parent_account_rid',
-            'Parent Account',
-            parentAccount,
-            disableFields,
-            false,
-            {key: 'is_parent', matchedValue: YesNo.No, errorMessage: 'Field is required'}
-          ),
+          createSelectField('status', 'Status', {
+            required: true,
+            options: STATUS_OPTIONS,
+            placeholder: 'Choose Status',
+          }),
+          createSelectField('parent_account_rid', 'Parent Account', {
+            options: parentAccount,
+            placeholder: 'Choose Parent Account',
+            required: false,
+            disabled: disableFields,
+            dependsRequired: {
+              key: 'is_parent',
+              matchedValue: YesNo.No,
+              errorMessage: 'Field is required',
+            },
+          }),
           createTextField('website', 'Website', {
             required: false,
             regex: REGEX_PATTERNS.WEBSITE,
             regexErrorMessage: 'Enter a valid website URL',
+            placeholder: 'Enter Website',
           }),
           createTextField('account_name', 'Account Name', {
             required: true,
             regex: REGEX_PATTERNS.ACCOUNT_NAME,
             regexErrorMessage:
               'Account name should contain only letters and between 7 to 25 characters',
+            placeholder: 'Enter Account Name',
           }),
           createTextField('industry', 'Industry', {
             required: true,
             regex: REGEX_PATTERNS.LETTERS_5_TO_25,
             regexErrorMessage:
               'Industry should contain only letters and between 5 to 25 characters',
+            placeholder: 'Enter Industry',
           }),
           createTextField('project_manager', 'Project Manager', {
             required: true,
             regex: REGEX_PATTERNS.EMAIL,
             regexErrorMessage: 'Enter a valid email address',
+            placeholder: 'Enter Project Manager',
           }),
           createRadioField('is_parent', 'Is Parent Account', {
             radioOptions: YES_NO_OPTIONS,
@@ -73,9 +84,21 @@ export const FormData = (
         sectionName: 'Location and Currency Information',
         fillType: 'half',
         fields: [
-          createSelectField('country_rid', 'Country', country),
-          createSelectField('currency_rid', 'Currency', currency),
-          createSelectField('region', 'Region', region),
+          createSelectField('country_rid', 'Country', {
+            options: country,
+            placeholder: 'Choose Country',
+            required: true,
+          }),
+          createSelectField('currency_rid', 'Currency', {
+            options: currency,
+            required: true,
+            placeholder: 'Choose Currency',
+          }),
+          createSelectField('region', 'Region', {
+            options: region,
+            placeholder: 'Choose Region',
+            required: true,
+          }),
         ],
       },
       {
@@ -86,31 +109,37 @@ export const FormData = (
             required: true,
             regex: REGEX_PATTERNS.LETTERS_3_TO_25,
             regexErrorMessage: 'Letters Only and between 3 to 25 characters',
+            placeholder: 'Enter Primary Contact Name',
           }),
           createTextField('finance_poc_name', 'Finance point of contact', {
             required: true,
             regex: REGEX_PATTERNS.LETTERS_3_TO_25,
             regexErrorMessage: 'Letters Only and between 3 to 25 characters',
+            placeholder: 'Enter Finance point of contact',
           }),
           createTextField('primary_contact_email', 'Primary Contact Email', {
             required: true,
             regex: REGEX_PATTERNS.EMAIL,
             regexErrorMessage: 'Enter a valid email address',
+            placeholder: 'Enter Primary Contact Email',
           }),
           createTextField('finance_poc_email', 'Finance POC Email', {
             required: true,
             regex: REGEX_PATTERNS.EMAIL,
             regexErrorMessage: 'Enter a valid email address',
+            placeholder: 'Enter Finance POC Email',
           }),
           createTextField('primary_contact_number', 'Primary Contact Phone', {
             required: true,
             regex: REGEX_PATTERNS.PHONE,
             regexErrorMessage: 'Enter a valid number (e.g 9876543210)',
+            placeholder: 'Enter Primary Contact Phone',
           }),
           createTextField('finanace_poc_number', 'Finance POC Phone', {
             required: true,
             regex: REGEX_PATTERNS.PHONE,
             regexErrorMessage: 'Enter a valid number (e.g 9876543210)',
+            placeholder: 'Enter Finance POC Phone',
           }),
         ],
       },
@@ -118,36 +147,42 @@ export const FormData = (
         sectionName: 'Settings Information',
         fillType: 'half',
         fields: [
-          createDateField(
-            'fiscal_start_date',
-            'Fiscal Start Date',
-            disableFields
-          ),
+          createDateField('fiscal_start_date', 'Fiscal Start Date', {
+            required: true,
+            disabled: disableFields,
+          }),
           createTextField('max_ai_interactions', 'Max AI Intractions', {
             required: true,
-            regex: /^[3-5]$/,
+            regex: REGEX_PATTERNS.MAX_AI_INTRACTION,
             regexErrorMessage: 'Enter a number between 3 and 5',
+            placeholder: 'Enter Max AI Intractions',
           }),
-          createDateField(
-            'fiscal_end_date',
-            'Fiscal End Date',
-            disableFields,
-            {key: 'fiscal_start_date', errorMessage: 'Date should be greater or equal to Fiscal Start Date'}
-          ),
+          createDateField('fiscal_end_date', 'Fiscal End Date', {
+            disabled: disableFields,
+            required: true,
+            greaterThan: {
+              key: 'fiscal_start_date',
+              errorMessage:
+                'Date should be greater or equal to Fiscal Start Date',
+            },
+          }),
           createTextField('blended_rate_fte', 'Blended Rate - FTE', {
             required: false,
             regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
             regexErrorMessage: 'Numbers only maximum 10 digits',
+            placeholder: 'Enter Blended Rate - FTE',
           }),
           createTextField('annual_revenue', 'Annual Revenue', {
             required: true,
-            regex: /^[0-9]+(\.[0-9]{1,2})?$/,
+            regex: REGEX_PATTERNS.NUMBERS,
             regexErrorMessage: 'Enter a valid annual revenue',
+            placeholder: 'Enter Annual Revenue',
           }),
           createTextField('blended_rate_subcon', 'Blended Rate - SubCon', {
             required: false,
             regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
             regexErrorMessage: 'Numbers only maximum 10 digits',
+            placeholder: 'Enter Blended Rate - SubCon',
           }),
           createRadioField('auto_access_rd', 'Auto assess RD', {
             radioOptions: YES_NO_OPTIONS,
@@ -172,10 +207,11 @@ export const FormData = (
             required: false,
             regex: REGEX_PATTERNS.DESCRIPTION,
             regexErrorMessage: 'Maximum 500 characters allowed',
+            placeholder: 'Enter Description',
           }),
         ],
       },
     ],
-    [country, parentAccount, currency, region, disableFields]
+    [country, parentAccount, region, disableFields, currency]
   );
 };
