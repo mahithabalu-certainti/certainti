@@ -83,38 +83,44 @@ jobs:
           API_CLIENT_SECRET=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "b2c-tenant-api-client-secret" --query value -o tsv)
           API_TENANT_ID=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "b2c-tenant-api-tenant-id" --query value -o tsv)
           API_TENANT_DOMAIN=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "b2c-tenant-domain" --query value -o tsv)
-          DB_USER=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "db-admin-username" --query value -o tsv)
-          DB_PASSWORD=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "db-admin-password" --query value -o tsv)
-          DB_HOST=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "db-endpoint" --query value -o tsv)
-          DB_NAME=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "database-name" --query value -o tsv)
+          MAIN_DB_USER=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "main-db-admin-username" --query value -o tsv)
+          MAIN_DB_PASSWORD=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "main-db-admin-password" --query value -o tsv)
+          MAIN_DB_HOST=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "main-db-endpoint" --query value -o tsv)
+          MAIN_DB_NAME=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "main-database-name" --query value -o tsv)
+          ORG_DB_USER=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "org-db-admin-username" --query value -o tsv)
+          ORG_DB_PASSWORD=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "org-db-admin-password" --query value -o tsv)
+          ORG_DB_HOST=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "org-db-endpoint" --query value -o tsv)
+          ORG_DB_NAME=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "org-database-name" --query value -o tsv)
           MAIL_CLIENT_SECRET=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-client-secret" --query value -o tsv)
           MAIL_CLIENT_ID=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-client-id" --query value -o tsv)
           MAIL_TENANT_ID=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-tenant-id" --query value -o tsv)
           
           # Write secrets to .env file
           cat <<EOF > $ENV_FILE
+          SERVER_PORT=5000
           AZURE_B2C_TENANT=$API_TENANT_DOMAIN
           AZURE_B2C_CLIENT_SECRET=$API_CLIENT_SECRET
           AZURE_B2C_CLIENT_ID=$API_CLIENT_ID
           AZURE_B2C_TENANT_ID=$API_TENANT_ID
-          DB_USER=$DB_USER
-          DB_PASSWORD=$DB_PASSWORD
-          DB_HOST=$DB_HOST
-          DB_NAME=$DB_NAME
-          DB_PORT=5432
-          USER_TABLE_NAME=users
+          MAIN_PG_DATABASE_NAME=$MAIN_DB_NAME
+          MAIN_PG_USER=$MAIN_DB_USER
+          MAIN_PG_PASSWORD=$MAIN_DB_PASSWORD
+          MAIN_PG_HOST=$MAIN_DB_HOST
+          MAIN_PG_DB_PORT=5432
+          ORG_PG_DATABASE_NAME=$ORG_DB_NAME
+          ORG_PG_USER=$ORG_DB_USER
+          ORG_PG_PASSWORD=$ORG_DB_PASSWORD
+          ORG_PG_HOST=$ORG_DB_HOST
+          ORG_PG_DB_PORT=5432
           AZURE_SCOPE=https://graph.microsoft.com/.default
-          FUNCTION_GROUP_TABLE_NAME=function_groups
-          DEPARTMENT_TABLE=departments
-          PROFILE_TABLE=profiles
           MAIL_TENANT_ID=$MAIL_TENANT_ID
           MAIL_CLIENT_ID=$MAIL_CLIENT_ID
           MAIL_CLIENT_SECRET=$MAIL_CLIENT_SECRET
-          EMAIL_FROM=ea-communications@certainti.ai
-          SUPPORT_EMAIL=ea-support@certainti.ai
-          SUPPORT_PHONE=+1234567890
-          LOGIN_URL=https://enterpriseassist-onroute-dev.certainti.ai
-          CORS_ORIGIN=http://localhost:3000,https://enterpriseassist-onroute-dev.certainti.ai
+          EMAIL_FROM=interactions@certainti.ai
+          LOGIN_URL=https://platform20-dev.certainti.ai
+          SUPPORT_EMAIL=support@certainti.ai
+          LOG_LEVEL=debug
+          NODE_ENV=DEV
           EOF
           
           echo "$ENV_FILE file created successfully!"
@@ -210,36 +216,29 @@ jobs:
           # Fetch secrets from Azure Key Vault and write to .env file
           echo "Fetching secrets from Azure Key Vault: $KEY_VAULT_NAME"
           
-          STORAGE_ACCOUNT_NAME=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "storage-account-name" --query value -o tsv)
-          STORAGE_ACCOUNT_KEY=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "storage-account-primary-key" --query value -o tsv)
-          DB_USER=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "db-admin-username" --query value -o tsv)
-          DB_PASSWORD=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "db-admin-password" --query value -o tsv)
-          DB_HOST=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "db-endpoint" --query value -o tsv)
-          DB_NAME=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "database-name" --query value -o tsv)
+          MAIN_DB_USER=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "main-db-admin-username" --query value -o tsv)
+          MAIN_DB_PASSWORD=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "main-db-admin-password" --query value -o tsv)
+          MAIN_DB_HOST=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "main-db-endpoint" --query value -o tsv)
+          MAIN_DB_NAME=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "main-database-name" --query value -o tsv)
+          ORG_DB_USER=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "org-db-admin-username" --query value -o tsv)
+          ORG_DB_PASSWORD=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "org-db-admin-password" --query value -o tsv)
+          ORG_DB_HOST=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "org-db-endpoint" --query value -o tsv)
+          ORG_DB_NAME=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "org-database-name" --query value -o tsv)
           
           # Write secrets to .env file
           cat <<EOF > $ENV_FILE
-          AZURE_STORAGE_ACCOUNT_NAME=$STORAGE_ACCOUNT_NAME
-          AZURE_STORAGE_ACCOUNT_KEY=$STORAGE_ACCOUNT_KEY
-          AZURE_STORAGE_CONTAINER=documents
-          FILE_METADATA_TABLE_NAME=document_metadata
-          DB_USER=$DB_USER
-          DB_PASSWORD=$DB_PASSWORD
-          DB_HOST=$DB_HOST
-          DB_NAME=$DB_NAME
-          DB_PORT=5432
-          CHAT_FEEDBACK_TABLE_NAME=user_feedback
-          CHAT_MESSAGE_TABLE_NAME=chat_messages
-          USER_TABLE_NAME=users
-          DEPARTMENT_TABLE=departments
-          MAIL_API=https://enterpriseassist-onroute-dev.certainti.ai/user-module/v1/mail/sendEmail
-          FUNCTION_GROUP_TABLE=function_groups
-          AI_STORE_API=https://enterpriseassist-onroute-dev.certainti.ai/aiService/v1/processDocument
-          AI_UPDATE_API=https://enterpriseassist-onroute-dev.certainti.ai/aiService/v1/updateDocument
-          AI_RETRIVAL_API=https://enterpriseassist-onroute-dev.certainti.ai/aiService/v1/summary
-          CORS_ORIGIN=http://localhost:3000,https://enterpriseassist-onroute-dev.certainti.ai
-          LOCATION_TABLE_NAME=locations
-          DOCUMENT_INFO_TABLE_NAME=document_info
+          MAIN_PG_DATABASE_NAME=$MAIN_DB_NAME
+          MAIN_PG_USER=$MAIN_DB_USER
+          MAIN_PG_PASSWORD=$MAIN_DB_PASSWORD
+          MAIN_PG_HOST=$MAIN_DB_HOST
+          MAIN_PG_DB_PORT=5432
+          ORG_PG_DATABASE_NAME=$ORG_DB_NAME
+          ORG_PG_USER=$ORG_DB_USER
+          ORG_PG_PASSWORD=$ORG_DB_PASSWORD
+          ORG_PG_HOST=$ORG_DB_HOST
+          ORG_PG_DB_PORT=5432
+          LOG_LEVEL=debug
+          NODE_ENV=DEV
           EOF
           
           echo "$ENV_FILE file created successfully!"
