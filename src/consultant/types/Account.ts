@@ -8,7 +8,7 @@ export interface ParentAccountApiResponse extends CommonApiResponse {
 
 export interface CurrencyApiResponse extends CommonApiResponse {
   data: {
-    currency: Currency[];
+    currency: Currencys[];
   };
 }
 
@@ -30,7 +30,7 @@ export interface Regions {
   region_name: string;
 }
 
-export interface Currency {
+export interface Currencys {
   rid: string;
   currency_name: string;
 }

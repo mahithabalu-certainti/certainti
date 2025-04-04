@@ -61,7 +61,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           <input
             type={field.type}
             name={field.name}
-            placeholder={field.placeHolder}
+            placeholder={field.placeholder}
             className={
               'w-full sm:text-sm p-2 border-1 ' + isError + fieldDisabled
             }
@@ -80,7 +80,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           <select
             name={field.name}
             className={
-              'w-full sm:text-sm p-2 border-1 ' + isError + fieldDisabled
+              'w-full sm:text-sm p-2 border-1 ' +
+              (fieldValue === '' ? 'text-gray-500 ' : '') +
+              isError +
+              fieldDisabled
             }
             onChange={(e) =>
               setConstructFormData((prevData) => ({
@@ -91,7 +94,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             value={fieldValue}
             disabled={field.disabled}
           >
-            <option value=''>{field.placeHolder}</option>
+            <option value='' className='text-gray-500'>
+              {field.placeholder}
+            </option>
             {field?.options?.map((option, i) => (
               <option key={i} value={option.value}>
                 {option.label}
@@ -108,7 +113,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               fieldDisabled
             }
             name={field.name}
-            placeholder={field.placeHolder}
+            placeholder={field.placeholder}
             onChange={(e) =>
               setConstructFormData((prevData) => ({
                 ...prevData,
@@ -152,7 +157,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   sx={{
                     '& .MuiOutlinedInput-root': { borderRadius: 0, fontSize },
                   }}
-                  placeholder={field.placeHolder}
+                  placeholder={field.placeholder}
                   error={!!field.error}
                 />
               )}
@@ -235,8 +240,19 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 textField: {
                   fullWidth: true,
                   size: 'small',
-                  sx: { '& .MuiOutlinedInput-root': { borderRadius: 0 } },
-                  placeholder: field.placeHolder,
+                  InputProps: { disabled: true },
+                  sx: {
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 0,
+                      '&.Mui-disabled': {
+                        '& input': {
+                          color: 'black',
+                          WebkitTextFillColor: 'black',
+                        },
+                      },
+                    },
+                  },
+                  placeholder: field.placeholder,
                   error: !!field.error,
                 },
               }}
@@ -348,6 +364,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     htmlFor={field.name}
                   >
                     {field.label}
+                    {field.required && <span className='text-red-500'> *</span>}
                   </label>
                   <div className={isHalf ? 'col-span-8' : 'col-span-10'}>
                     {getFields(field)}

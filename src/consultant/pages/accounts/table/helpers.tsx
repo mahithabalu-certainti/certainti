@@ -1,7 +1,7 @@
 import { Checkbox, IconButton, TableCell, TableRow } from '@mui/material';
 import React from 'react';
 import { arrowDownIcon, arrowUpIcon } from '../../../../assets';
-import { Account, ConvertedAccount } from '../../../types/Account';
+import { Account, ConvertedAccount } from '../../../types/account';
 import ActionButton from './Icon-button';
 
 interface RenderRowsProps {
