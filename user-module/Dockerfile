@@ -17,5 +17,5 @@ RUN apk add --no-cache curl
 COPY --from=build /app /app
 
 EXPOSE 5000
-
-CMD ["node", "src/index.ts"]
+RUN npm install ts-node
+CMD ["npx", "ts-node", "src/index.ts"]

@@ -8,6 +8,7 @@ RUN npm ci
 COPY . .
 
 
+
 # Stage 2: Runtime Stage
 FROM node:20-alpine
 WORKDIR /app
@@ -17,5 +18,5 @@ RUN apk add --no-cache curl
 COPY --from=build /app /app
 
 EXPOSE 5001
-
-CMD ["node", "src/index.ts"]
+RUN npm install ts-node
+CMD ["npx", "ts-node", "src/index.ts"]
