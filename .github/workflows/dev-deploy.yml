@@ -1,4 +1,4 @@
-name: Deploy Platform 2.0 Backend Services
+name: Deploy Platform 2.0 Development Backend Services
 
 on:
   push:
@@ -52,10 +52,10 @@ jobs:
         working-directory: user-module
       - name: Build Docker Image
         run: |
-          docker build -t ${{ secrets.DEV_ACR_LOGIN_SERVER }}/usermodule:${{ env.IMAGE_TAG }} .
+          docker build -t ${{ secrets.DEV_ACR_LOGIN_SERVER }}/user-module:${{ env.IMAGE_TAG }} .
         working-directory: user-module
       - name: Push Docker Image to ACR
-        run: docker push ${{ secrets.DEV_ACR_LOGIN_SERVER }}/usermodule:${{ env.IMAGE_TAG }}
+        run: docker push ${{ secrets.DEV_ACR_LOGIN_SERVER }}/user-module:${{ env.IMAGE_TAG }}
         working-directory: user-module
       - name: Set up SSH key
         run: |
@@ -141,7 +141,7 @@ jobs:
             
             # Update only the usermodule image tag
             echo "Updating docker-compose.yml..."
-            sed -i 's|image:.*usermodule:.*|image: ${{ secrets.DEV_ACR_LOGIN_SERVER }}/usermodule:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            sed -i 's|image:.*user-module:.*|image: ${{ secrets.DEV_ACR_LOGIN_SERVER }}/user-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
             echo "Docker Compose updated successfully!"
             
             # Login to ACR 
@@ -149,7 +149,7 @@ jobs:
             echo "Logged in to ACR successfully!"
             
             # Pull latest changes and restart
-            if docker compose up -d --pull always --no-deps usermodule; then
+            if docker compose up -d --pull always --no-deps user-module; then
               echo "Deployment successful!"
               # Remove old stopped containers
               docker container prune -f || true
