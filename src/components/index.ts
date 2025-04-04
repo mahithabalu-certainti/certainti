@@ -2,6 +2,7 @@
 export * from './actions-dropdown';
 export * from './form-builder';
 export * from './global-modal';
+export * from './header';
 export * from './image';
 export * from './layout';
 export * from './navbar';
