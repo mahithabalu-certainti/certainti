@@ -16,10 +16,10 @@ const createUserSchema = Joi.object({
   role: Joi.string().max(255).required(),
   status: Joi.string().valid("active", "inactive").required(),
   street: Joi.string().max(255).optional(),
-  city: Joi.number().integer().optional(),
-  state: Joi.number().integer().optional(),
+  city: Joi.string().max(255).optional(),
+  state: Joi.string().max(255).optional(),
   zip_code: Joi.string().max(255).optional(),
-  country: Joi.number().integer().optional(),
+  country: Joi.string().max(255).optional(),
   created_by: Joi.string().max(255).required(),
 });
 
@@ -54,10 +54,10 @@ const updateUserSchema = Joi.object({
   role: Joi.string().max(255).required(),
   status: Joi.string().valid("active", "inactive").required(),
   street: Joi.string().max(255).optional(),
-  city: Joi.number().integer().optional(),
-  state: Joi.number().integer().optional(),
+  city: Joi.string().max(255).optional(),
+  state: Joi.string().max(255).optional(),
   zip_code: Joi.string().max(255).optional(),
-  country: Joi.number().integer().optional(),
+  country: Joi.string().max(255).optional(),
   updated_by: Joi.string().max(255).required(),
 });
 
@@ -87,7 +87,7 @@ const listUserSchema = Joi.object({
   limit: Joi.string().pattern(/^[0-9]+$/).default("10"),
   search: Joi.string().max(255).optional(),
   filters: Joi.string().default("{}"),
-  sortBy: Joi.string().default("createdAt"),
+  sortBy: Joi.string().default("created_datetime"),
   sortOrder: Joi.string().valid("ASC", "DESC").default("DESC"),
   organization: Joi.string().required().valid(constants.PLATFORM_TWO, constants.PLATFORM_ONE),
 });

@@ -6,11 +6,11 @@ interface ModuleAttributes {
   module_id: number;
   module_name: string;
   parent_module_id: number;
-  createdAt?: Date;
-  updatedAt?: Date;
+  created_datetime?: Date;
+  modified_datetime?: Date;
 }
 
-// Define the interface for the creation attributes (optional fields like createdAt, updatedAt)
+// Define the interface for the creation attributes (optional fields like created_datetime, modified_datetime)
 interface ModuleCreationAttributes extends Optional<ModuleAttributes, 'module_id'> {}
 
 // Define the Module model class extending Sequelize's Model class
@@ -20,8 +20,8 @@ export class Module extends Model<ModuleAttributes, ModuleCreationAttributes> im
   public parent_module_id!: number;
 
   // Timestamps
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  public readonly created_datetime!: Date;
+  public readonly modified_datetime!: Date;
 }
 
 // Initialize the model
@@ -41,11 +41,21 @@ Module.init(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    created_datetime: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    modified_datetime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
+    },
   },
   {
     sequelize,
     modelName: 'Module',
     tableName: 'module',
-    timestamps: true,
+    timestamps: false,
   }
 );

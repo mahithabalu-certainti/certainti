@@ -8,8 +8,8 @@ interface ApiAttributes {
   endpoint: string;
   http_method: string;
   access_type: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  created_datetime?: Date;
+  modified_datetime?: Date;
 }
 
 interface ApiCreationAttributes extends Optional<ApiAttributes, "api_id"> {}
@@ -26,8 +26,8 @@ export class Api
   public access_type!: string;
 
   // Timestamps
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  public readonly created_datetime!: Date;
+  public readonly modified_datetime!: Date;
 }
 
 Api.init(
@@ -58,11 +58,21 @@ Api.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    created_datetime: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    modified_datetime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
+    },
   },
   {
     sequelize,
     modelName: "Api",
     tableName: "api",
-    timestamps: true,
+    timestamps: false,
   }
 );

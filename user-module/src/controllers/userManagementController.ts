@@ -6,6 +6,16 @@ import configurations from "../config/config";
 const logger = configurations.getInstance().getLogger();
 const services = configurations.getInstance().getServices();
 
+/**
+ * Fetches the user roles from the service and returns them in the response.
+ * Logs success or failure depending on the outcome.
+ *
+ * @param {Request} req - The Express request object containing any necessary request data.
+ * @param {Response} res - The Express response object used to send the response back to the client.
+ * @returns {Promise<void>} - A promise that resolves when the user roles are fetched and the response is sent.
+ *
+ * @throws {Error} - Throws an error if the request to fetch roles fails at any step.
+ */
 async function userRoles(req: Request, res: Response): Promise<void> {
   try {
     const roles = await services.userServices.roles();
@@ -45,6 +55,16 @@ async function userRoles(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Fetches the user profiles from the service and returns them in the response.
+ * Logs success or failure depending on the outcome.
+ *
+ * @param {Request} req - The Express request object containing any necessary request data.
+ * @param {Response} res - The Express response object used to send the response back to the client.
+ * @returns {Promise<void>} - A promise that resolves when the user profiles are fetched and the response is sent.
+ *
+ * @throws {Error} - Throws an error if the request to fetch profiles fails at any step.
+ */
 async function userProfiles(req: Request, res: Response): Promise<void> {
   try {
     const profiles = await services.userServices.profiles();

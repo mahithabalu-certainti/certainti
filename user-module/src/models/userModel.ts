@@ -17,8 +17,8 @@ interface UserAttributes {
   full_name?: string;
   email: string;
   street?: string;
-  city?: number;
-  state?: number;
+  city?: string;
+  state?: string;
   zip_code?: string;
   country?: number;
   role_rid?: string;
@@ -28,8 +28,8 @@ interface UserAttributes {
   status?: string;
   created_by?: string;
   modified_by?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  created_datetime?: Date;
+  modified_datetime?: Date;
 }
 
 interface UserCreationAttributes extends Optional<UserAttributes, "rid"> {}
@@ -50,8 +50,8 @@ export class User
   public full_name?: string;
   public email!: string;
   public street?: string;
-  public city?: number;
-  public state?: number;
+  public city?: string;
+  public state?: string;
   public zip_code?: string;
   public country?: number;
   public role_rid?: string;
@@ -62,8 +62,8 @@ export class User
   public created_by?: string;
   public modified_by?: string;
 
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  public readonly created_datetime!: Date;
+  public readonly modified_datetime!: Date;
 }
 
 User.init(
@@ -116,11 +116,11 @@ User.init(
       allowNull: true,
     },
     city: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING,
       allowNull: true,
     },
     state: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING,
       allowNull: true,
     },
     zip_code: {
@@ -128,7 +128,7 @@ User.init(
       allowNull: true,
     },
     country: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: true,
     },
     role_rid: {
@@ -164,16 +164,25 @@ User.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    created_datetime: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    modified_datetime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
+    },
   },
   {
     sequelize,
     modelName: "User",
     tableName: "user",
-    timestamps: true,
+    timestamps: false,
     hooks: {
       beforeUpdate: (user) => {
-        user.setDataValue("updatedAt", new Date());
-        user.setDataValue("createdAt", new Date());
+        user.setDataValue("modified_datetime", new Date());
       },
     },
   }
@@ -188,35 +197,3 @@ User.belongsTo(BusinessTeams, {
   foreignKey: "role_rid",
   as: "business_teams",
 });
-
-/* 
-common columns
-1. first_name
-2. middle_name
-3. last_name
-4. email
-5. mobile
-6. profile_id
-7. status 
-8. role
-9. street
-10. city
-11. state
-12. zip_code
-13. country
-14. created_by
-15. modified_by
-16. azure_id
-
-
-enterprise assist columns 
-1. designation
-2. manager_name
-3. manager_email
-4. manager_employee_id
-5. employee_id
-6. employment_date
-7. department_id
-8. function_group_id
-
-*/

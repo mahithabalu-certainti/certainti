@@ -4,14 +4,14 @@ import sequelize from "../config/dataSource";
 interface DepartmentAttributes {
   department_id: string; // UUID
   department_name: string;
-  created_at?: Date;
-  updated_at?: Date;
+  created_datetime?: Date;
+  modified_datetime?: Date;
 }
 
 interface DepartmentCreationAttributes
   extends Optional<
     DepartmentAttributes,
-    "department_id" | "created_at" | "updated_at"
+    "department_id" | "created_datetime" | "modified_datetime"
   > {}
 
 export class Department
@@ -20,8 +20,8 @@ export class Department
 {
   public department_id!: string;
   public department_name!: string;
-  public created_at?: Date;
-  public updated_at?: Date;
+  public created_datetime?: Date;
+  public modified_datetime?: Date;
 }
 
 // Define the model using Sequelize
@@ -36,17 +36,27 @@ Department.init(
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
-    }
+    },
+    created_datetime: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    modified_datetime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
+    },
   },
   {
     sequelize,
     modelName: "Department",
     tableName: process.env.DEPARTMENT_TABLE || "departments",
     freezeTableName: true,
-    timestamps: true,
+    timestamps: false,
     hooks: {
       beforeUpdate: (department: Department) => {
-        department.updated_at = new Date();
+        department.modified_datetime = new Date();
       },
     },
   }

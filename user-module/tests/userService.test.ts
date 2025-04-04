@@ -1,9 +1,27 @@
 import UserService from "../src/services/userService";
 import { constants } from "../src/utils/constant";
 import { User, BusinessTeams, Profile } from "../src/models";
+import { UserDetails } from "../src/models/userDetailsModel";
+import { Op } from "sequelize";
+
+interface WhereClause {
+  [Op.and]?: any[];
+  [Op.or]?: any[];
+  [key: string]: any;
+}
 
 jest.mock("../src/models/userModel", () => ({
   User: {
+    belongsTo: jest.fn(),
+    create: jest.fn(),
+    findOne: jest.fn(),
+    update: jest.fn(),
+    findAll: jest.fn(),
+  },
+}));
+
+jest.mock("../src/models/userDetailsModel", () => ({
+  UserDetails: {
     belongsTo: jest.fn(),
     create: jest.fn(),
     findOne: jest.fn(),
@@ -49,15 +67,19 @@ describe("UserService", () => {
       const mockUserData = {
         first_name: "John",
         last_name: "Doe",
-        email_address: "john.doe@example.com",
-        profile: "1",
-        active: "Active",
+        email: "john.doe@example.com",
         street: "123 Main St",
-        city: 2,
-        state: 3,
+        city: "ABC city",
+        state: "3",
         zip_code: "10001",
         country: 4,
         role: "1",
+        profile_id: "2",
+        status: "active",
+        organization: "PF2.0",
+        updated_by: "Admin",
+        user_name: "john",
+        created_by: "ADMIN",
       };
 
       const mockAzureId = "azure-123";
@@ -74,15 +96,18 @@ describe("UserService", () => {
           azure_id: mockAzureId,
           first_name: mockUserData.first_name,
           last_name: mockUserData.last_name,
-          email: mockUserData.email_address,
-          profile_rid: mockUserData.profile,
-          status: mockUserData.active,
+          full_name: mockUserData.first_name + " " + mockUserData.last_name,
+          email: mockUserData.email,
+          profile_rid: mockUserData.profile_id,
+          status: mockUserData.status,
           street: mockUserData.street,
           city: mockUserData.city,
           state: mockUserData.state,
           zip_code: mockUserData.zip_code,
           country: mockUserData.country,
           role_rid: mockUserData.role,
+          middle_name: undefined,
+          created_by: "ADMIN",
         })
       );
     });
@@ -91,15 +116,19 @@ describe("UserService", () => {
       const mockUserData = {
         first_name: "John",
         last_name: "Doe",
-        email_address: "john.doe@example.com",
+        email: "john.doe@example.com",
         profile: "1",
-        active: "Active",
         street: "123 Main St",
-        city: 2,
-        state: 3,
+        city: "ABC city",
+        state: "2",
         zip_code: "10001",
-        country: 3,
+        country: 4,
         role: "1",
+        profile_id: "2",
+        status: "active",
+        organization: "PF2.0",
+        updated_by: "Admin",
+        created_by: "ADMIN",
       };
       const mockAzureId = "azure-123";
 
@@ -119,14 +148,19 @@ describe("UserService", () => {
       const mockUserData = {
         first_name: "John",
         last_name: "Doe",
+        email: "john.doe@example.com",
         profile: "1",
-        active: "Active",
         street: "123 Main St",
-        city: 2,
-        state: 3,
+        city: "ABC city",
+        state: "2",
         zip_code: "10001",
         country: 4,
         role: "1",
+        profile_id: "2",
+        status: "active",
+        organization: "PF2.0",
+        updated_by: "Admin",
+        created_by: "ADMIN",
       };
       const mockUserId = "1";
       const mockExistingUser = { rid: mockUserId };
@@ -145,14 +179,19 @@ describe("UserService", () => {
       const mockUserData = {
         first_name: "John",
         last_name: "Doe",
-        profile: "1",
+        email: "john.doe@example.com",
         active: "Active",
         street: "123 Main St",
-        city: 2,
-        state: 2,
-        zip_code: "ABC",
+        city: "ABC city",
+        state: "2",
+        zip_code: "10001",
         country: 4,
         role: "1",
+        profile_id: "2",
+        status: "active",
+        organization: "PF2.0",
+        updated_by: "Admin",
+        created_by: "ADMIN",
       };
       const mockUserId = "1";
 
@@ -168,14 +207,19 @@ describe("UserService", () => {
       const mockUserData = {
         first_name: "John",
         last_name: "Doe",
+        email: "john.doe@example.com",
         profile: "1",
-        active: "Active",
         street: "123 Main St",
-        city: 2,
-        state: 3,
+        city: "ABC city",
+        state: "2",
         zip_code: "10001",
         country: 4,
         role: "1",
+        profile_id: "2",
+        status: "active",
+        organization: "PF2.0",
+        updated_by: "Admin",
+        created_by: "ADMIN",
       };
       const mockUserId = "1";
 
@@ -188,6 +232,162 @@ describe("UserService", () => {
 
       expect(result.statusCode).toBe(constants.FAILED);
       expect(result.message).toBe(constants.FAILED_MESSAGE);
+    });
+  });
+
+  describe("listUsers", () => {
+    it("should successfully retrieve a list of users", async () => {
+      const mockUsers = [
+        { id: "1", first_name: "John", last_name: "Doe" },
+        { id: "2", first_name: "Jane", last_name: "Smith" },
+      ];
+      const mockFilters = { status: "active" };
+      const mockPage = 1;
+      const mockLimit = 10;
+      const mockSearch = "John";
+      const mockSortBy = "first_name";
+      const mockSortOrder = "asc";
+      const mockOrganization = constants.PLATFORM_TWO;
+
+      (User.findAll as jest.Mock).mockResolvedValueOnce(mockUsers);
+
+      const result = await userService.listUsers(
+        mockPage,
+        mockLimit,
+        mockSearch,
+        mockFilters,
+        mockSortBy,
+        mockSortOrder,
+        mockOrganization
+      );
+
+      expect(result.statusCode).toBe(constants.SUCCESS);
+      expect(result.message).toBe(constants.SUCCESS_MESSAGE);
+      expect(result.data?.users).toEqual(mockUsers);
+    });
+
+    it("should return an error if list users retrieval fails", async () => {
+      const mockPage = 1;
+      const mockLimit = 10;
+      const mockSearch = "John";
+      const mockFilters = {};
+      const mockSortBy = "first_name";
+      const mockSortOrder = "asc";
+      const mockOrganization = constants.PLATFORM_TWO;
+
+      (User.findAll as jest.Mock).mockRejectedValueOnce(
+        new Error("Failed to fetch users")
+      );
+
+      const result = await userService.listUsers(
+        mockPage,
+        mockLimit,
+        mockSearch,
+        mockFilters,
+        mockSortBy,
+        mockSortOrder,
+        mockOrganization
+      );
+
+      expect(result.statusCode).toBe(constants.FAILED);
+      expect(result.message).toBe(constants.FAILED_MESSAGE);
+    });
+  });
+
+  describe("listUserById", () => {
+    it("should successfully retrieve a user by ID", async () => {
+      const mockUserId = "user-123";
+      const mockOrganization = constants.PLATFORM_TWO;
+      const mockUser = {
+        rid: "user-123",
+        first_name: "John",
+        last_name: "Doe",
+      };
+
+      (User.findAll as jest.Mock).mockResolvedValueOnce([mockUser]);
+
+      const result = await userService.listUserById(
+        mockUserId,
+        mockOrganization
+      );
+
+      expect(result.statusCode).toBe(constants.SUCCESS);
+      expect(result.message).toBe(constants.SUCCESS_MESSAGE);
+      expect(result.data?.users).toEqual([mockUser]);
+    });
+
+    it("should return an error if user by ID retrieval fails", async () => {
+      const mockUserId = "user-123";
+      const mockOrganization = constants.PLATFORM_TWO;
+
+      (User.findAll as jest.Mock).mockRejectedValueOnce(
+        new Error("Failed to fetch user by ID")
+      );
+
+      const result = await userService.listUserById(
+        mockUserId,
+        mockOrganization
+      );
+
+      expect(result.statusCode).toBe(constants.FAILED);
+      expect(result.message).toBe(constants.FAILED_MESSAGE);
+    });
+  });
+
+  describe("updateUserDetails", () => {
+    it("should successfully update user details", async () => {
+      const mockUserDetails = {
+        first_name: "John",
+        middle_name: "A.",
+        last_name: "Doe",
+        profile_id: "1", // You can adjust this based on your specific needs.
+        status: "active",
+        street: "123 Main St",
+        city: "ABC City",
+        state: "3", // Use valid state ID or number
+        zip_code: "10001",
+        country: 4, // Adjust according to the country list
+        mobile: "123-456-7890",
+        role: "2", // Adjust role ID or reference
+        designation: "Software Engineer",
+        manager_name: "Jane Smith",
+        manager_email: "jane.smith@example.com",
+        manager_employee_id: "EMP-123",
+        employee_id: "EMP-001",
+        employment_date: new Date("2023-01-01"),
+        department_id: "D001", // Adjust department ID
+        function_group_id: "FG001", // Adjust function group ID
+        organization: "PF2.0",
+        updated_by: "Admin",
+      };
+      const mockUserId = "user-123";
+
+      (UserDetails.update as jest.Mock).mockResolvedValueOnce([1]);
+
+      const result = await userService.updateUserDetails(
+        mockUserDetails,
+        mockUserId
+      );
+
+      expect(UserDetails.update).toHaveBeenCalledWith(
+        {
+          department_id: mockUserDetails.department_id,
+          designation: mockUserDetails.designation,
+          employment_date: mockUserDetails.employment_date,
+          manager_email: mockUserDetails.manager_email,
+          manager_employee_id: mockUserDetails.manager_employee_id,
+          manager_name: mockUserDetails.manager_name,
+          employee_id: mockUserDetails.employee_id,
+          function_group_id: mockUserDetails.function_group_id,
+          mobile: mockUserDetails.mobile,
+          modified_datetime: expect.any(Date),
+        },
+        {
+          where: {
+            user_id: mockUserId,
+          },
+        }
+      );
     });
   });
 
@@ -238,6 +438,64 @@ describe("UserService", () => {
 
       expect(result.statusCode).toBe(constants.FAILED);
       expect(result.message).toBe(constants.FAILED_MESSAGE);
+    });
+  });
+
+  describe("getSortParameters", () => {
+    it("should return the correct sort parameters for valid inputs", () => {
+      const sortBy = "first_name";
+      const sortOrder = "ASC";
+
+      const result = userService.getSortParameters(sortBy, sortOrder);
+
+      expect(result).toEqual([sortBy, "ASC"]);
+    });
+
+    it("should default to 'created_datetime' if sortBy is invalid", () => {
+      const sortBy = "invalid_column";
+      const sortOrder = "DESC";
+
+      const result = userService.getSortParameters(sortBy, sortOrder);
+
+      expect(result).toEqual(["created_datetime", "DESC"]);
+    });
+
+    it("should default to 'ASC' if sortOrder is invalid", () => {
+      const sortBy = "first_name";
+      const sortOrder = "invalid_order";
+
+      const result = userService.getSortParameters(sortBy, sortOrder);
+
+      expect(result).toEqual([sortBy, "DESC"]);
+    });
+  });
+
+  describe("buildWhereClause", () => {
+    it("should build the whereClause with search and filters", () => {
+      const filters = {
+        user_name: { startsWith: "John" },
+        status: { value: "active" },
+      };
+      const search = "john.doe@example.com";
+
+      const whereClause = userService.buildWhereClause(filters, search);
+
+      const whereClauseAsTyped = whereClause as WhereClause;
+
+      expect(whereClause).toBeDefined();
+      expect(whereClauseAsTyped["first_name"]).toEqual({
+        [Op.iLike]: "John%",
+      });
+      expect(whereClauseAsTyped["status"]).toEqual("active");
+    });
+
+    it("should return an empty whereClause when no filters are provided", () => {
+      const filters = {};
+      const search = "";
+
+      const whereClause = userService.buildWhereClause(filters, search);
+
+      expect(whereClause).toEqual({});
     });
   });
 });

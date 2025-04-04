@@ -32,7 +32,7 @@ describe("createAzureB2CUser", () => {
 
   it("should throw an error if required user information is missing", async () => {
     const incompleteUser = {
-      email_address: "",
+      email: "",
       last_name: "",
       first_name: "",
     };
@@ -45,7 +45,7 @@ describe("createAzureB2CUser", () => {
     (getAzureB2CToken as jest.Mock).mockResolvedValueOnce(null);
 
     const users = {
-      email_address: "john.doe@example.com",
+      email: "john.doe@example.com",
       first_name: "John",
       last_name: "Doe",
     };
@@ -60,7 +60,7 @@ describe("createAzureB2CUser", () => {
     (getAzureB2CToken as jest.Mock).mockResolvedValueOnce(mockAccessToken);
 
     const users = {
-      email_address: "john.doe@example.com",
+      email: "john.doe@example.com",
       first_name: "John",
       last_name: "Doe",
     };
@@ -90,7 +90,7 @@ describe("createAzureB2CUser", () => {
     (getAzureB2CToken as jest.Mock).mockResolvedValueOnce(mockAccessToken);
 
     const users = {
-      email_address: "john.doe@example.com",
+      email: "john.doe@example.com",
       first_name: "John",
       last_name: "Doe",
     };
@@ -126,7 +126,7 @@ describe("createAzureB2CUser", () => {
     (getAzureB2CToken as jest.Mock).mockResolvedValueOnce(mockAccessToken);
 
     const users = {
-      email_address: "john.doe@example.com",
+      email: "john.doe@example.com",
       first_name: "John",
       last_name: "Doe",
     };

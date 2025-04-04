@@ -8,19 +8,37 @@ import {
   updateUserSchema,
   userReqSchema,
 } from "../lib/joi/schemas/schema";
-import { errorResponse, successResponse } from "../utils/apiResponse";
+import { errorResponse } from "../utils/apiResponse";
 import { constants } from "../utils/constant";
 import configurations from "../config/config";
 import { createAzureB2CUser, updateAzureUser } from "../services/manageUser";
 import { generateSecurePassword } from "../utils/generatePassword";
 import { sendEmail } from "../services/emailService";
 import { mailTemplate } from "../utils/mailTemplate";
-import { requestErrorMessages, validateRequest } from "../utils/helpers";
+import {
+  errorLog,
+  handleErrorResponse,
+  handleSuccessResponse,
+  requestErrorMessages,
+  successLog,
+  validateRequest,
+} from "../utils/helpers";
 
-const logger = configurations.getInstance().getLogger();
 const services = configurations.getInstance().getServices();
 
+/**
+ * Creates a new user by validating the request, generating a secure password,
+ * creating a user in Azure AD B2C, and storing the user information.
+ * Sends a welcome email to the user after creation.
+ *
+ * @param {Request} req - The Express request object containing the request data.
+ * @param {Response} res - The Express response object used to send the response back to the client.
+ * @returns {Promise<void>} - A promise that resolves when the user creation process is complete.
+ *
+ * @throws {Error} - Throws an error if the user creation process fails at any step.
+ */
 async function createUser(req: Request, res: Response): Promise<void> {
+  const methodName = "Create user";
   try {
     const { organization } = req.body;
 
@@ -35,7 +53,7 @@ async function createUser(req: Request, res: Response): Promise<void> {
 
     if (reqErr) {
       const errorMessage = requestErrorMessages(reqErr);
-      errorResponse(
+      handleErrorResponse(
         res,
         constants.BAD_REQUEST,
         constants.BAD_REQUEST_MESSAGE,
@@ -53,10 +71,15 @@ async function createUser(req: Request, res: Response): Promise<void> {
       res
     );
 
+    if (!value) {
+      return;
+    }
+
     const password = await generateSecurePassword(12);
     const azureUser = await createAzureB2CUser(value, password);
     if (!azureUser) {
-      errorResponse(
+      errorLog(methodName, "Azure AD B2C user creation failed");
+      handleErrorResponse(
         res,
         constants.FAILED,
         constants.FAILED_MESSAGE,
@@ -70,36 +93,43 @@ async function createUser(req: Request, res: Response): Promise<void> {
     await sendEmail(mailContent);
 
     if (user.statusCode === constants.SUCCESS) {
-      logger.info("Success log: ", {
-        timestamp: new Date().toISOString(),
-        method: "create user",
-      });
-
-      successResponse(res, constants.SUCCESS, constants.SUCCESS_MESSAGE, user);
+      successLog(methodName);
+      handleSuccessResponse(res, user);
+      return;
     } else {
-      logger.error("Failed log: ", {
-        timestamp: new Date().toISOString(),
-        method: "create user",
-      });
-      errorResponse(
+      errorLog(methodName, user.message);
+      handleErrorResponse(
         res,
         constants.BAD_REQUEST,
         constants.BAD_REQUEST_MESSAGE,
-        user.error
+        user.errorMessage
       );
+      return;
     }
   } catch (error) {
     const err = error as Error;
-    logger.error("Failed log: ", {
-      timestamp: new Date().toString(),
-      method: "create user",
-      message: err.message,
-    });
-    errorResponse(res, constants.FAILED, constants.FAILED_MESSAGE, err.message);
+    errorLog(methodName, err.message);
+    handleErrorResponse(
+      res,
+      constants.FAILED,
+      constants.FAILED_MESSAGE,
+      err.message
+    );
+    return;
   }
 }
 
+/**
+ * Updates an existing user by validating the request and updating their details in Azure AD B2C.
+ *
+ * @param {Request} req - The Express request object containing the user data to be updated.
+ * @param {Response} res - The Express response object used to send the response back to the client.
+ * @returns {Promise<void>} - A promise that resolves when the user update process is complete.
+ *
+ * @throws {Error} - Throws an error if the user update process fails at any step.
+ */
 async function updateUser(req: Request, res: Response): Promise<void> {
+  const methodName = "Update user";
   try {
     const { organization } = req.body;
     const { error: reqErr } = userReqSchema.validate(
@@ -112,7 +142,7 @@ async function updateUser(req: Request, res: Response): Promise<void> {
     );
 
     if (reqErr) {
-      errorResponse(
+      handleErrorResponse(
         res,
         constants.BAD_REQUEST,
         constants.BAD_REQUEST_MESSAGE,
@@ -136,12 +166,8 @@ async function updateUser(req: Request, res: Response): Promise<void> {
 
     const azureUser = await updateAzureUser(value);
     if (!azureUser) {
-      logger.error("Failed log: ", {
-        timestamp: new Date().toString(),
-        method: "update user",
-        message: "Azure AD B2C user update failed",
-      });
-      errorResponse(
+      errorLog(methodName, "Azure AD B2C user update failed");
+      handleErrorResponse(
         res,
         constants.FAILED,
         constants.FAILED_MESSAGE,
@@ -153,43 +179,49 @@ async function updateUser(req: Request, res: Response): Promise<void> {
     const user = await services.userServices.updateUser(value, value.rid);
 
     if (user.statusCode === constants.SUCCESS) {
-      logger.info("Success log: ", {
-        timestamp: new Date().toISOString(),
-        method: "update user",
-      });
-
-      successResponse(
-        res,
-        constants.SUCCESS,
-        constants.SUCCESS_MESSAGE,
-        user.data
-      );
+      successLog(methodName);
+      handleSuccessResponse(res, user.data);
+      return;
     } else {
-      logger.error("Failed log: ", {
-        timestamp: new Date().toISOString(),
-        method: "update user",
-      });
-      errorResponse(
+      errorLog(methodName, user.message);
+      handleErrorResponse(
         res,
         constants.BAD_REQUEST,
         constants.BAD_REQUEST_MESSAGE,
-        user.message
+        user.errorMessage
       );
+      return;
     }
   } catch (error) {
     const err = error as Error;
-    logger.error("Failed log: ", {
-      timestamp: new Date().toString(),
-      method: "update user",
-      message: err.message,
-    });
-    errorResponse(res, constants.FAILED, constants.FAILED_MESSAGE, err.message);
+    errorLog(methodName, err.message);
+    handleErrorResponse(
+      res,
+      constants.FAILED,
+      constants.FAILED_MESSAGE,
+      err.message
+    );
+    return;
   }
 }
 
+/**
+ * Lists users based on the provided query parameters like filters, pagination, and sorting.
+ *
+ * @param {Request} req - The Express request object containing the request data (filters, search, etc.).
+ * @param {Response} res - The Express response object used to send the response back to the client.
+ * @returns {Promise<void>} - A promise that resolves when the list of users is returned.
+ *
+ * @throws {Error} - Throws an error if the user listing process fails at any step.
+ */
 async function listUsers(req: Request, res: Response): Promise<void> {
+  const methodName = "List user";
   try {
     const value = await validateRequest(req, listUserSchema, "", res, "GET");
+
+    if (!value) {
+      return;
+    }
 
     let parsedFilters: Record<string, any> = {};
 
@@ -200,11 +232,10 @@ async function listUsers(req: Request, res: Response): Promise<void> {
     try {
       parsedFilters = JSON.parse(value.filters);
     } catch (error) {
-      logger.error("Failed log: ", {
-        timestamp: new Date().toISOString(),
-        method: "list user",
-        message: "Invalid filters format. Must be a valid JSON object.",
-      });
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
     }
 
     const pageNum: number = parseInt(value.page, 10) || 1;
@@ -220,24 +251,12 @@ async function listUsers(req: Request, res: Response): Promise<void> {
       value.organization
     );
     if (result.statusCode === constants.SUCCESS) {
-      logger.info("Success log: ", {
-        timestamp: new Date().toISOString(),
-        method: "list user",
-      });
-
-      successResponse(
-        res,
-        constants.SUCCESS,
-        constants.SUCCESS_MESSAGE,
-        result.data
-      );
+      successLog(methodName);
+      handleSuccessResponse(res, result.data);
       return;
     } else {
-      logger.error("Failed log: ", {
-        timestamp: new Date().toISOString(),
-        method: "list user",
-      });
-      errorResponse(
+      errorLog(methodName, result.errorMessage);
+      handleErrorResponse(
         res,
         constants.BAD_REQUEST,
         constants.BAD_REQUEST_MESSAGE,
@@ -247,16 +266,28 @@ async function listUsers(req: Request, res: Response): Promise<void> {
     }
   } catch (error) {
     const err = error as Error;
-    logger.error("Failed log: ", {
-      timestamp: new Date().toString(),
-      method: "list user",
-      message: err.message,
-    });
-    errorResponse(res, constants.FAILED, constants.FAILED_MESSAGE, err.message);
+    errorLog(methodName, err.message);
+    handleErrorResponse(
+      res,
+      constants.FAILED,
+      constants.FAILED_MESSAGE,
+      err.message
+    );
+    return;
   }
 }
 
+/**
+ * Lists a specific user by their unique ID.
+ *
+ * @param {Request} req - The Express request object containing the user ID to be searched for.
+ * @param {Response} res - The Express response object used to send the response back to the client.
+ * @returns {Promise<void>} - A promise that resolves when the user details are returned.
+ *
+ * @throws {Error} - Throws an error if the user search process fails at any step.
+ */
 async function listUserById(req: Request, res: Response): Promise<void> {
+  const methodName = "List user by ID";
   try {
     const { id: userId } = req.params;
 
@@ -266,12 +297,8 @@ async function listUserById(req: Request, res: Response): Promise<void> {
 
     if (error) {
       const errorMessages = requestErrorMessages(error);
-      logger.error("Failed log: ", {
-        timestamp: new Date().toString(),
-        method: "list user",
-        message: "Request validation failed",
-      });
-      errorResponse(
+      errorLog(methodName, "Request validation failed");
+      handleErrorResponse(
         res,
         constants.BAD_REQUEST,
         constants.BAD_REQUEST_MESSAGE,
@@ -285,24 +312,12 @@ async function listUserById(req: Request, res: Response): Promise<void> {
       value.organization
     );
     if (result.statusCode === constants.SUCCESS) {
-      logger.info("Success log: ", {
-        timestamp: new Date().toISOString(),
-        method: "list user",
-      });
-
-      successResponse(
-        res,
-        constants.SUCCESS,
-        constants.SUCCESS_MESSAGE,
-        result.data
-      );
+      successLog(methodName);
+      handleSuccessResponse(res, result.data);
       return;
     } else {
-      logger.error("Failed log: ", {
-        timestamp: new Date().toISOString(),
-        method: "list user",
-      });
-      errorResponse(
+      errorLog(methodName, result.errorMessage);
+      handleErrorResponse(
         res,
         constants.BAD_REQUEST,
         constants.BAD_REQUEST_MESSAGE,
@@ -312,12 +327,9 @@ async function listUserById(req: Request, res: Response): Promise<void> {
     }
   } catch (error) {
     const err = error as Error;
-    logger.error("Failed log: ", {
-      timestamp: new Date().toString(),
-      method: "list user",
-      message: err.message,
-    });
+    errorLog(methodName, err.message);
     errorResponse(res, constants.FAILED, constants.FAILED_MESSAGE, err.message);
+    return;
   }
 }
 

@@ -17,8 +17,8 @@ interface UserDetailsAttributes {
   employment_date?: Date;
   department_id?: string;
   function_group_id?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  created_datetime?: Date;
+  modified_datetime?: Date;
 }
 
 interface UserCreationAttributes
@@ -42,8 +42,8 @@ export class UserDetails
   public department_id?: string;
   public function_group_id?: string;
 
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  public readonly created_datetime!: Date;
+  public readonly modified_datetime!: Date;
 }
 
 UserDetails.init(
@@ -103,12 +103,22 @@ UserDetails.init(
       },
       onDelete: "NO ACTION",
     },
+    created_datetime: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    modified_datetime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
+    },
   },
   {
     sequelize,
     modelName: "UserDetails",
     tableName: "user_details",
-    timestamps: true,
+    timestamps: false,
     hooks: {
       beforeValidate: async (user) => {
         if (user) {
@@ -122,7 +132,7 @@ UserDetails.init(
         }
       },
       beforeUpdate: (user) => {
-        user.setDataValue("updatedAt", new Date());
+        user.setDataValue("modified_datetime", new Date());
       },
     },
   }

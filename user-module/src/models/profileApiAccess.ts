@@ -6,11 +6,11 @@ interface ProfileApiAccessAttributes {
   api_access_id: number;
   api_id: number;
   profile_id: number;
-  createdAt?: Date;
-  updatedAt?: Date;
+  created_datetime?: Date;
+  modified_datetime?: Date;
 }
 
-// Define the interface for the creation attributes (optional fields like createdAt, updatedAt)
+// Define the interface for the creation attributes (optional fields like created_datetime, modified_datetime)
 interface ProfileApiAccessCreationAttributes
   extends Optional<ProfileApiAccessAttributes, "api_access_id"> {}
 
@@ -24,8 +24,8 @@ export class ProfileApiAccess
   public profile_id!: number;
 
   // Timestamps
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  public readonly created_datetime!: Date;
+  public readonly modified_datetime!: Date;
 }
 
 // Initialize the model
@@ -45,11 +45,21 @@ ProfileApiAccess.init(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    created_datetime: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    modified_datetime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
+    },
   },
   {
     sequelize,
     modelName: "ProfileApiAccess",
     tableName: "profile_api_access",
-    timestamps: true,
+    timestamps: false,
   }
 );
