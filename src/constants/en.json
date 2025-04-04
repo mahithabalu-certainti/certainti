@@ -6,7 +6,8 @@
     "loading": "Logging in...",
     "enterpriseAssist": "Enterprise Assist",
     "enablingAIExcellence": "Enabling AI Excellence",
-    "poweredBy": "Powered By"
+    "poweredBy": "Powered By",
+    "signInError": "Failed to login. Please try again later."
   },
   "notFound": {
     "title": "Not Found",
