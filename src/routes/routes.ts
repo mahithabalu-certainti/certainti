@@ -1,7 +1,5 @@
 export const MAIN_ROUTE = '/';
-export const ACCOUNT = '/account';
-export const ACCOUNT_CREATE = `${ACCOUNT}/create`;
-export const ACCOUNT_EDIT = `${ACCOUNT}/edit/:accountid`;
+
 export const LOGIN = '/login';
 
 export const MANAGE_USER = '/manage-user';
@@ -23,5 +21,12 @@ export const ADMIN_MANAGE_USER = '/admin/manage-user';
 export const ADMIN_MANAGE_USER_DETAILS = `${ADMIN_MANAGE_USER}/:userid`;
 export const ADMIN_CREATE_USER = `${ADMIN_MANAGE_USER}/create`;
 export const ADMIN_EDIT_USER = `${ADMIN_MANAGE_USER}/edit/:userid`;
+
+/** ACCOUNT ROUTES */
+
+export const ACCOUNT = '/account';
+export const ACCOUNT_CREATE = `${ACCOUNT}/create`;
+export const ACCOUNT_EDIT = `${ACCOUNT}/edit/:accountid`;
+export const ACCOUNT_DETAILS = `${ACCOUNT}/details/:accountid`;
 
 export const NOT_FOUND = '*';

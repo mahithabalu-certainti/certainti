@@ -1,8 +1,4 @@
-import {
-  AccountFieldsApiResponse,
-  Status,
-  Storagetype,
-} from '../types/account';
+import { AccountFieldsApiResponse, Status, Storagetype } from '../types';
 
 export const mockAccountDetails: AccountFieldsApiResponse = {
   statusCode: 200,

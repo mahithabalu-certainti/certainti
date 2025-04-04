@@ -4,6 +4,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { CreateUser, ManageUser, ManageUserDetails } from './admin/pages';
 import { AppLayout } from './components';
 import {
+  AccountDetails,
   AccountForm,
   Accounts,
   HomePage,
@@ -15,6 +16,7 @@ import { useAuthHook } from './hooks/use-auth';
 import {
   ACCOUNT,
   ACCOUNT_CREATE,
+  ACCOUNT_DETAILS,
   ACCOUNT_EDIT,
   ADMIN_CREATE_USER,
   ADMIN_EDIT_USER,
@@ -56,6 +58,7 @@ export const App: React.FC<IApp> = ({ instance }) => {
             <Route path={ACCOUNT} element={<Accounts />} />
             <Route path={ACCOUNT_CREATE} element={<AccountForm />} />
             <Route path={ACCOUNT_EDIT} element={<AccountForm />} />
+            <Route path={ACCOUNT_DETAILS} element={<AccountDetails />} />
 
             {/* Route for the Admin */}
 
