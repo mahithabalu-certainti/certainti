@@ -12,7 +12,7 @@ import { ILeftPane } from '../../types/auth';
  * @param {ILeftPane} props - The props for the component.
  * @param {() => void} props.handleLogin - The function to handle the login process.
  */
-export const LeftPane: React.FC<ILeftPane> = ({ handleLogin }) => {
+export const LeftPane: React.FC<ILeftPane> = ({ handleLogin, isLoading }) => {
   const t = useAppTranslation();
 
   return (
@@ -28,6 +28,7 @@ export const LeftPane: React.FC<ILeftPane> = ({ handleLogin }) => {
       {/* Login button */}
       <Button
         onClick={handleLogin}
+        disabled={isLoading}
         sx={{
           width: '100%',
           mt: 2,
@@ -45,7 +46,7 @@ export const LeftPane: React.FC<ILeftPane> = ({ handleLogin }) => {
           },
         }}
       >
-        {t('core', 'login.button')}
+        {isLoading ? t('core', 'login.loading') : t('core', 'login.button')}
       </Button>
     </Box>
   );
