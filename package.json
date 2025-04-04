@@ -16,6 +16,9 @@
     "format": "prettier --write \"src/**/*\" --ignore-path .prettierignore",
     "format:check": "prettier --check \"src/**/*\" --ignore-path .prettierignore"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "@azure/msal-browser": "^4.2.1",
     "@azure/msal-react": "^3.0.4",
