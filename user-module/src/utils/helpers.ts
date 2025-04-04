@@ -1,7 +1,7 @@
 import Joi from "joi";
 import { Request, Response } from "express";
 import { constants } from "./constant";
-import { errorResponse } from "./apiResponse";
+import { errorResponse, successResponse } from "./apiResponse";
 import configurations from "../config/config";
 
 const logger = configurations.getInstance().getLogger();
@@ -69,4 +69,36 @@ export function requestErrorMessages(error: any): Record<string, string> {
     acc[field] = err.message.replace(/"/g, "");
     return acc;
   }, {});
+}
+
+
+export function successLog(methodName: string): void {
+  logger.info(`Successfully retrieved ${methodName} data `, {
+    timestamp: new Date().toISOString(),
+    method: methodName,
+  });
+}
+
+export function errorLog(methodName: string, errorMessage?: string): void {
+  logger.error("Failed log: ", {
+    timestamp: new Date().toISOString(),
+    method: methodName,
+    message: errorMessage,
+  });
+}
+
+export function handleSuccessResponse(
+  res: Response,
+  data: any
+) {
+  return successResponse(res, constants.SUCCESS, constants.SUCCESS_MESSAGE, data);
+}
+
+export function handleErrorResponse(
+  res: Response,
+  statusCode: number,
+  statusCodeValue: string,
+  message?: any
+): void {
+  errorResponse(res, statusCode, statusCodeValue, message);
 }

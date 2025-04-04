@@ -15,3 +15,8 @@ export const constants = {
   
 } as const;
 
+
+export const NODE_ENV = {
+  DEV: "DEV",
+  PROD: "PRODUCTION"
+}

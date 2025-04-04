@@ -1,6 +1,7 @@
 import { createLogger, transports, format, Logger } from "winston";
 import sequelize from "./dataSource";
 import Services from "../services";
+import { NODE_ENV } from "../utils/constant";
 
 /**
  * @class Configurations
@@ -18,7 +19,7 @@ class Configurations {
     this.dbConfig = sequelize;
 
     this.logger = createLogger({
-      level: "info",
+      level: process.env.NODE_ENV === NODE_ENV.DEV ? "info" : "debug",
       format: format.combine(
         format.colorize({ level: true }),
         format.timestamp(),
@@ -63,8 +64,22 @@ class Configurations {
    * @returns {Promise<void>} - Resolves once the database is synced.
    */
   public async initDb(): Promise<void> {
-    await this.dbConfig.sync({ force: true });
-    console.log("Database synced!");
+    try {
+      const forceSync = process.env.NODE_ENV !== NODE_ENV.PROD;
+      await this.dbConfig.sync({ force: forceSync });
+      if (forceSync) {
+        this.logger.info(
+          "Database synced with force: true (non-production environment)."
+        );
+      } else {
+        this.logger.info("Database synced successfully.");
+      }
+    } catch (err) {
+      this.logger.error(
+        `Error syncing the database: ${(err as Error).message}`
+      );
+      throw new Error(`Database sync failed: ${(err as Error).message}`);
+    }
   }
 
   /**
