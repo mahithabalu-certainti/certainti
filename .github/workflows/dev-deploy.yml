@@ -227,6 +227,7 @@ jobs:
           
           # Write secrets to .env file
           cat <<EOF > $ENV_FILE
+          SERVER_PORT=5001
           MAIN_PG_DATABASE_NAME=$MAIN_DB_NAME
           MAIN_PG_USER=$MAIN_DB_USER
           MAIN_PG_PASSWORD=$MAIN_DB_PASSWORD
