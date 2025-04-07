@@ -1,6 +1,4 @@
-import { DataTypes, Model, Optional } from "sequelize";
-import sequelize from "../config/dataSource";
-
+import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 interface DatabaseConnectionAttributes {
   rid: string;
   r_number: string;
@@ -13,7 +11,7 @@ interface DatabaseConnectionAttributes {
 interface DatabaseConnectionCreationAttributes
   extends Optional<DatabaseConnectionAttributes, "rid"> {}
 
-class DatabaseConnection
+export class DatabaseConnection
   extends Model<
     DatabaseConnectionAttributes,
     DatabaseConnectionCreationAttributes
@@ -26,44 +24,45 @@ class DatabaseConnection
   public database_name!: string;
   public created_datetime!: Date;
   public modified_datetime!: Date;
+
+  static initialize(sequelize: Sequelize) {
+    DatabaseConnection.init(
+      {
+        rid: {
+          type: DataTypes.UUID,
+          defaultValue: DataTypes.UUIDV4,
+          primaryKey: true,
+        },
+        r_number: {
+          type: DataTypes.STRING(255),
+          allowNull: true,
+        },
+        eid: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+        },
+        database_name: {
+          type: DataTypes.STRING(255),
+          allowNull: false,
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: DataTypes.NOW,
+        },
+      },
+      {
+        sequelize,
+        modelName: "DatabaseConnection",
+        tableName: "database_connection",
+        timestamps: false,
+      }
+    );
+  }
 }
 
-DatabaseConnection.init(
-  {
-    rid: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
-      primaryKey: true,
-    },
-    r_number: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-    },
-    eid: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    database_name: {
-      type: DataTypes.STRING(255),
-      allowNull: false,
-    },
-    created_datetime: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
-    },
-    modified_datetime: {
-      type: DataTypes.DATE,
-      allowNull: true,
-      defaultValue: DataTypes.NOW,
-    },
-  },
-  {
-    sequelize,
-    modelName: "DatabaseConnection",
-    tableName: "database_connection",
-    timestamps: false,
-  }
-);
-
-export default DatabaseConnection;

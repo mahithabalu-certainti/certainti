@@ -1,5 +1,4 @@
-import { DataTypes, Model, Optional } from "sequelize";
-import sequelize from "../config/dataSource";
+import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { Department } from "./departmentModel";
 
 interface FunctionGroupAttributes {
@@ -25,53 +24,53 @@ export class FunctionGroup
   public department_id!: string;
   public created_datetime?: Date;
   public modified_datetime?: Date;
-}
 
-FunctionGroup.init(
-  {
-    function_group_id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
-      primaryKey: true,
-    },
-    function_group_name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
-    },
-    department_id: {
-      type: DataTypes.UUID,
-      references: {
-        model: "departments",
-        key: "department_id",
+  static initialize(sequelize: Sequelize) {
+    FunctionGroup.init(
+      {
+        function_group_id: {
+          type: DataTypes.UUID,
+          defaultValue: DataTypes.UUIDV4,
+          primaryKey: true,
+        },
+        function_group_name: {
+          type: DataTypes.STRING,
+          allowNull: false,
+          unique: true,
+        },
+        department_id: {
+          type: DataTypes.UUID,
+          references: {
+            model: "departments",
+            key: "department_id",
+          },
+          onDelete: "CASCADE",
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: null,
+        },
       },
-      onDelete: "CASCADE",
-    },
-    created_datetime: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
-    },
-    modified_datetime: {
-      type: DataTypes.DATE,
-      allowNull: true,
-      defaultValue: null,
-    },
-  },
-  {
-    sequelize,
-    modelName: "FunctionGroup",
-    tableName: process.env.FUNCTION_GROUP_TABLE_NAME || "function_groups",
-    freezeTableName: true,
-    timestamps: false,
-    hooks: {
-      beforeUpdate: (functionGroup: FunctionGroup) => {
-        functionGroup.modified_datetime = new Date();
-      },
-    },
+      {
+        sequelize,
+        modelName: "FunctionGroup",
+        tableName: process.env.FUNCTION_GROUP_TABLE_NAME || "function_groups",
+        freezeTableName: true,
+        timestamps: false,
+        hooks: {
+          beforeUpdate: (functionGroup: FunctionGroup) => {
+            functionGroup.modified_datetime = new Date();
+          },
+        },
+      }
+    );
+
+    FunctionGroup.belongsTo(Department, { foreignKey: "department_id" });
   }
-);
-
-FunctionGroup.belongsTo(Department, { foreignKey: "department_id" });
-
-export default FunctionGroup;
+}

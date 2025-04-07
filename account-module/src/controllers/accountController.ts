@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import { errorResponse, successResponse } from "../utils/apiResponse";
 import { HttpStatus } from "../utils/constant";
 import configurations from "../config/config";
 import {
@@ -15,7 +14,7 @@ import {
   updateAccountSchema,
 } from "../lib/joi/schemas/schema";
 
-const logger = configurations.getInstance().getLogger();
+
 const services = configurations.getInstance().getServices();
 const accountServices = services.accountServices;
 

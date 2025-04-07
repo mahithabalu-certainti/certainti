@@ -1,10 +1,10 @@
-import { UserDetails } from "../models/userDetailsModel";
-import { User, Profile, BusinessTeams } from "../models/index";
+import { models } from "../models/index";
 import { constants } from "../utils/constant";
 import { IUpdateUserData, IUserData } from "../utils/types";
 import { Op } from "sequelize";
-import Department from "../models/departmentModel";
-import FunctionGroup from "../models/functionGroupModel";
+
+
+const { User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams } = models;
 
 class UserService {
   private accountRepository: typeof User | null = null;
