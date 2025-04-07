@@ -66,7 +66,7 @@ export async function initSequelize() {
     if (!DB_NAME || !DB_USER || !DB_PASSWORD || !DB_HOST) {
       throw new Error("One or more required database secrets are missing.");
     }
-
+    
     sequelize = new Sequelize(
       DB_NAME,
       DB_USER,

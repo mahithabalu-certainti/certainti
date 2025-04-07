@@ -1,9 +1,6 @@
-import { DataTypes, Model, Optional } from "sequelize";
-import sequelize from "../config/dataSource";
+import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { Profile } from "./profileModel";
 import { BusinessTeams } from "./businessTeamModel";
-import { UserDetails } from "./userDetailsModel";
-
 interface UserAttributes {
   rid: string;
   r_number?: string;
@@ -64,136 +61,138 @@ export class User
 
   public readonly created_datetime!: Date;
   public readonly modified_datetime!: Date;
-}
 
-User.init(
-  {
-    rid: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
-      primaryKey: true,
-    },
-    r_number: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    eid: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    azure_id: {
-      type: DataTypes.STRING,
-    },
-    ext_object_id: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    login_id: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    first_name: {
-      type: DataTypes.STRING,
-    },
-    middle_name: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    last_name: {
-      type: DataTypes.STRING,
-    },
-    full_name: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    email: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
-    },
-    street: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    city: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    state: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    zip_code: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    country: {
-      type: DataTypes.UUID,
-      allowNull: true,
-    },
-    role_rid: {
-      type: DataTypes.UUID,
-      references: {
-        model: "business_teams",
-        key: "rid",
+  static initialize(sequelize: Sequelize) {
+    User.init(
+      {
+        rid: {
+          type: DataTypes.UUID,
+          defaultValue: DataTypes.UUIDV4,
+          primaryKey: true,
+        },
+        r_number: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+        eid: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+        },
+        azure_id: {
+          type: DataTypes.STRING,
+        },
+        ext_object_id: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+        login_id: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+        first_name: {
+          type: DataTypes.STRING,
+        },
+        middle_name: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+        last_name: {
+          type: DataTypes.STRING,
+        },
+        full_name: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+        email: {
+          type: DataTypes.STRING,
+          allowNull: false,
+          unique: true,
+        },
+        street: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+        city: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+        state: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+        zip_code: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+        country: {
+          type: DataTypes.UUID,
+          allowNull: true,
+        },
+        role_rid: {
+          type: DataTypes.UUID,
+          references: {
+            model: "business_teams",
+            key: "rid",
+          },
+        },
+        profile_rid: {
+          type: DataTypes.UUID,
+          references: {
+            model: "profile",
+            key: "rid",
+          },
+        },
+        last_login_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+        },
+        login_attempt_failure_count: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+        },
+        status: {
+          type: DataTypes.STRING,
+        },
+        created_by: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        modified_by: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: null,
+        },
       },
-    },
-    profile_rid: {
-      type: DataTypes.UUID,
-      references: {
-        model: "profile",
-        key: "rid",
-      },
-    },
-    last_login_datetime: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    login_attempt_failure_count: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    status: {
-      type: DataTypes.STRING,
-    },
-    created_by: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    modified_by: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    created_datetime: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
-    },
-    modified_datetime: {
-      type: DataTypes.DATE,
-      allowNull: true,
-      defaultValue: null,
-    },
-  },
-  {
-    sequelize,
-    modelName: "User",
-    tableName: "user",
-    timestamps: false,
-    hooks: {
-      beforeUpdate: (user) => {
-        user.setDataValue("modified_datetime", new Date());
-      },
-    },
+      {
+        sequelize,
+        modelName: "User",
+        tableName: "user",
+        timestamps: false,
+        hooks: {
+          beforeUpdate: (user) => {
+            user.setDataValue("modified_datetime", new Date());
+          },
+        },
+      }
+    );
+
+    User.belongsTo(Profile, {
+      foreignKey: "profile_rid",
+      as: "profile",
+    });
+
+    User.belongsTo(BusinessTeams, {
+      foreignKey: "role_rid",
+      as: "business_teams",
+    });
   }
-);
-
-User.belongsTo(Profile, {
-  foreignKey: "profile_rid",
-  as: "profile",
-});
-
-User.belongsTo(BusinessTeams, {
-  foreignKey: "role_rid",
-  as: "business_teams",
-});
+}

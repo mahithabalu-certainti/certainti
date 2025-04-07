@@ -1,5 +1,4 @@
-import { DataTypes, Model, Optional } from "sequelize";
-import sequelize from "../config/dataSource";
+import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 
 // Define the interface for the attributes of the ProfileApiAccess model
 interface ProfileApiAccessAttributes {
@@ -26,40 +25,42 @@ export class ProfileApiAccess
   // Timestamps
   public readonly created_datetime!: Date;
   public readonly modified_datetime!: Date;
-}
 
-// Initialize the model
-ProfileApiAccess.init(
-  {
-    api_access_id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-      allowNull: false,
-    },
-    api_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    profile_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    created_datetime: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
-    },
-    modified_datetime: {
-      type: DataTypes.DATE,
-      allowNull: true,
-      defaultValue: null,
-    },
-  },
-  {
-    sequelize,
-    modelName: "ProfileApiAccess",
-    tableName: "profile_api_access",
-    timestamps: false,
+  static initialize(sequelize: Sequelize) {
+    // Initialize the model
+    ProfileApiAccess.init(
+      {
+        api_access_id: {
+          type: DataTypes.INTEGER,
+          primaryKey: true,
+          autoIncrement: true,
+          allowNull: false,
+        },
+        api_id: {
+          type: DataTypes.INTEGER,
+          allowNull: false,
+        },
+        profile_id: {
+          type: DataTypes.INTEGER,
+          allowNull: false,
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: null,
+        },
+      },
+      {
+        sequelize,
+        modelName: "ProfileApiAccess",
+        tableName: "profile_api_access",
+        timestamps: false,
+      }
+    );
   }
-);
+}

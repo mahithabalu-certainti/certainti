@@ -1,6 +1,4 @@
-import { DataTypes, Model, Optional } from "sequelize";
-import sequelize from "../config/dataSource";
-
+import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 interface ApiAttributes {
   api_id: number;
   module_id: number;
@@ -28,51 +26,53 @@ export class Api
   // Timestamps
   public readonly created_datetime!: Date;
   public readonly modified_datetime!: Date;
-}
 
-Api.init(
-  {
-    api_id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-      allowNull: false,
-    },
-    module_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    api_name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    endpoint: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    http_method: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    access_type: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    created_datetime: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
-    },
-    modified_datetime: {
-      type: DataTypes.DATE,
-      allowNull: true,
-      defaultValue: null,
-    },
-  },
-  {
-    sequelize,
-    modelName: "Api",
-    tableName: "api",
-    timestamps: false,
+  static initialize(sequelize: Sequelize) {
+    Api.init(
+      {
+        api_id: {
+          type: DataTypes.INTEGER,
+          primaryKey: true,
+          autoIncrement: true,
+          allowNull: false,
+        },
+        module_id: {
+          type: DataTypes.INTEGER,
+          allowNull: false,
+        },
+        api_name: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        endpoint: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        http_method: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        access_type: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: null,
+        },
+      },
+      {
+        sequelize,
+        modelName: "Api",
+        tableName: "api",
+        timestamps: false,
+      }
+    );
   }
-);
+}

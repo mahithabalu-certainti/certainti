@@ -1,10 +1,10 @@
 import { Op } from "sequelize";
-import Account from "../models/accountModel";
 import { HttpStatus } from "../utils/constant";
 import { IAccount, IUpdateAccount } from "../utils/types";
-import { Country } from "../models/countryModel";
-import { Currency } from "../models/currencyModel";
 import SchemaService from "./schemaService";
+import { models } from "../models";
+
+const { Account, Country, Currency } = models;
 
 class AccountService {
   private accountRepository: typeof Account | null;

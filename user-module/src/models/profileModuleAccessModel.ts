@@ -1,5 +1,4 @@
-import { DataTypes, Model, Optional } from "sequelize";
-import sequelize from "../config/dataSource";
+import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 
 interface ProfileModuleAccessAttributes {
   profile_module_id: number;
@@ -39,63 +38,65 @@ export class ProfileModuleAccess
   // Timestamps
   public readonly created_datetime!: Date;
   public readonly modified_datetime!: Date;
-}
 
-// Initialize the model
-ProfileModuleAccess.init(
-  {
-    profile_module_id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-    },
-    profile_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    module_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    is_tab_enabled: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-    },
-    write: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-    },
-    edit: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-    },
-    delete: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-    },
-    read: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-    },
-    list: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-    },
-    created_datetime: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
-    },
-    modified_datetime: {
-      type: DataTypes.DATE,
-      allowNull: true,
-      defaultValue: null,
-    },
-  },
-  {
-    sequelize,
-    modelName: "ProfileModuleAccess",
-    tableName: "profile_module_access",
-    timestamps: false,
+  static initialize(sequelize: Sequelize) {
+    // Initialize the model
+    ProfileModuleAccess.init(
+      {
+        profile_module_id: {
+          type: DataTypes.INTEGER,
+          primaryKey: true,
+          autoIncrement: true,
+        },
+        profile_id: {
+          type: DataTypes.INTEGER,
+          allowNull: false,
+        },
+        module_id: {
+          type: DataTypes.INTEGER,
+          allowNull: false,
+        },
+        is_tab_enabled: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false,
+        },
+        write: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false,
+        },
+        edit: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false,
+        },
+        delete: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false,
+        },
+        read: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false,
+        },
+        list: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false,
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: null,
+        },
+      },
+      {
+        sequelize,
+        modelName: "ProfileModuleAccess",
+        tableName: "profile_module_access",
+        timestamps: false,
+      }
+    );
   }
-);
+}
