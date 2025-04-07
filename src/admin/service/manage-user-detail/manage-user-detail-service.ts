@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import api from '../../../api/api';
+import { userServiceApi } from '../../../api/api';
 import { ManageUserDetailApiResponse } from '../../types/admin-user-detail';
 import { getUserDetailUrl } from '../urls';
 
@@ -12,7 +12,7 @@ export const fetchManageUserDetail = async (
   userId: string
 ): Promise<ManageUserDetailApiResponse> => {
   try {
-    const response = await api.get<ManageUserDetailApiResponse>(
+    const response = await userServiceApi.get<ManageUserDetailApiResponse>(
       getUserDetailUrl(userId)
     );
     return response.data;

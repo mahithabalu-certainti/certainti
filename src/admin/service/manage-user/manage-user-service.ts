@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import api, { ORGANIZATION } from '../../../api/api';
+import { userServiceApi } from '../../../api/api';
 import {
   ManagerUserApiResponse,
   ManagerUserDetailApiResponse,
@@ -10,10 +10,11 @@ import {
 } from '../../types/manage-user';
 import { getUserListUrl } from '../urls';
 import { CommonApiResponse } from '../../../common-service';
+const ORGANIZATION = import.meta.env.VITE_ORGANIZATION;
 
 export const fetchManageUserList = async (params: UserListParams = {}) => {
   const queryParams = {
-    organization: 'PF2.0',
+    organization: ORGANIZATION,
     page: params.page || 1,
     limit: params.limit || 10,
     sortBy: params.sortBy || 'createdAt',
@@ -22,7 +23,7 @@ export const fetchManageUserList = async (params: UserListParams = {}) => {
   };
 
   const url = getUserListUrl(queryParams);
-  const response = await api.get<ManagerUserApiResponse>(url);
+  const response = await userServiceApi.get<ManagerUserApiResponse>(url);
   return response.data;
 };
 
@@ -48,7 +49,7 @@ export const fetchManageUserDetail = async (
   userId: string
 ): Promise<ManagerUserDetailApiResponse> => {
   try {
-    const { data } = await api.get<ManagerUserDetailApiResponse>(
+    const { data } = await userServiceApi.get<ManagerUserDetailApiResponse>(
       getUserDetailUrl(userId)
     );
     // await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -85,7 +86,8 @@ export const getUserProfileUrl = (): string => {
  */
 export const fetchUserProfile = async (): Promise<UserProfileApiResponse> => {
   try {
-    const { data } = await api.get<UserProfileApiResponse>(getUserProfileUrl());
+    const { data } =
+      await userServiceApi.get<UserProfileApiResponse>(getUserProfileUrl());
     // await new Promise((resolve) => setTimeout(resolve, 1000));
     return data;
   } catch (error) {
@@ -102,7 +104,7 @@ export const useManageUserProfile = () => {
   return useQuery<UserProfileApiResponse, Error>({
     queryKey: ['userProfile'], // Unique query key
     queryFn: () => fetchUserProfile(),
-    retry: 0, // Retry up to 2 times on failure
+    retry: 0,
   });
 };
 
@@ -118,7 +120,10 @@ export const updateUserDetails = async (
   body: Partial<UserDetail>
 ): Promise<CommonApiResponse> => {
   try {
-    const { data } = await api.put<CommonApiResponse>(getUpdateUserUrl(), body);
+    const { data } = await userServiceApi.put<CommonApiResponse>(
+      getUpdateUserUrl(),
+      body
+    );
     // await new Promise((resolve) => setTimeout(resolve, 1000));
     return data;
   } catch (error) {
@@ -150,7 +155,7 @@ export const createUserDetails = async (
   body: Partial<UserDetail>
 ): Promise<CommonApiResponse> => {
   try {
-    const { data } = await api.post<CommonApiResponse>(
+    const { data } = await userServiceApi.post<CommonApiResponse>(
       getCreateUserUrl(),
       body
     );
@@ -182,7 +187,8 @@ export const getUserRolesUrl = (): string => {
  */
 export const fetchUserRoles = async (): Promise<UserRolesApiResponse> => {
   try {
-    const { data } = await api.get<UserRolesApiResponse>(getUserRolesUrl());
+    const { data } =
+      await userServiceApi.get<UserRolesApiResponse>(getUserRolesUrl());
     // await new Promise((resolve) => setTimeout(resolve, 1000));
     return data;
   } catch (error) {

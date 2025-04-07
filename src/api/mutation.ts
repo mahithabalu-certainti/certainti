@@ -3,7 +3,7 @@ import {
   UseMutationOptions,
   UseMutationResult,
 } from '@tanstack/react-query';
-import api from './api';
+import { accountServiceApi } from './api';
 
 export const useApiMutation = <T, V = void>(
   endpoint: string,
@@ -12,7 +12,7 @@ export const useApiMutation = <T, V = void>(
 ): UseMutationResult<T, Error, V> => {
   return useMutation<T, Error, V>({
     mutationFn: async (data) => {
-      const response = await api[method]<T>(endpoint, data);
+      const response = await accountServiceApi[method]<T>(endpoint, data);
       return response.data;
     },
     ...options,

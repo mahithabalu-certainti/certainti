@@ -1,4 +1,3 @@
-import { ORGANIZATION } from '../../api/api';
 import { ManagerUserDetailApiResponse, UserRole } from '../types/manage-user';
 
 export const mockUserDetails: ManagerUserDetailApiResponse = {
@@ -21,7 +20,7 @@ export const mockUserDetails: ManagerUserDetailApiResponse = {
         status: 'active',
         profile_rid: '5ef971eb-e481-431a-99bb-988eb5840f81',
         azure_id: 'asd22e4',
-        organization: ORGANIZATION,
+        organization: import.meta.env.VITE_ORGANIZATION,
         profile_id: 'sdfds234',
         role: 'asdsdd',
         role_rid: 'asdsadad',

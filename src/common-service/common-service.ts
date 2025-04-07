@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import api from '../api/api';
+import { accountServiceApi } from '../api/api';
 import { GetAllCountriesApiResponse } from './';
 
 export const getAllCountriesUrl = (): string => {
@@ -14,7 +14,9 @@ export const fetchAllCountries =
   async (): Promise<GetAllCountriesApiResponse> => {
     try {
       const { data } =
-        await api.get<GetAllCountriesApiResponse>(getAllCountriesUrl());
+        await accountServiceApi.get<GetAllCountriesApiResponse>(
+          getAllCountriesUrl()
+        );
       // await new Promise((resolve) => setTimeout(resolve, 1000));
       return data;
     } catch (error) {

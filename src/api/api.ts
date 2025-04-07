@@ -2,15 +2,12 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { LOGIN } from '../routes';
 
-export const BASE_URL = 'https://frank-mastiff-merry.ngrok-free.app';
-export const ORGANIZATION = 'PF2.0';
-
-// Create Axios instance
-const api = axios.create({
-  baseURL: BASE_URL, // Replace with your API base URL
+// Create User Service Axios instance
+const userServiceApi = axios.create({
+  baseURL: import.meta.env.VITE_USER_BASE_URL, // Replace with your API base URL
   headers: {
     'Content-Type': 'application/json',
-    'ngrok-skip-browser-warning': '1',
+    // 'ngrok-skip-browser-warning': '1',
   },
 });
 
@@ -20,8 +17,16 @@ type ErrorResponse = {
   errors?: Record<string, string[]>;
 };
 
+// Create Account Service Axios instance
+const accountServiceApi = axios.create({
+  baseURL: import.meta.env.VITE_ACCOUNT_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 // Axios Interceptors for Error Handling
-api.interceptors.response.use(
+userServiceApi.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError<ErrorResponse>) => {
     if (!error.response) {
@@ -45,4 +50,29 @@ api.interceptors.response.use(
   }
 );
 
-export default api;
+// Axios Interceptors for Error Handling
+accountServiceApi.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  (error: AxiosError<ErrorResponse>) => {
+    if (!error.response) {
+      console.error('Network error - Please check your internet connection.');
+      throw new Error('Network error');
+    }
+
+    const { status, data } = error.response;
+    const errorMessage = data?.message || error.message;
+
+    console.error(`API Error: ${status} - ${errorMessage}`);
+
+    // Handle 401 Unauthorized globally
+    if (status === 401) {
+      console.warn('Unauthorized - Redirecting to login...');
+      window.location.href = LOGIN;
+    }
+
+    // You can transform the error here if needed
+    throw new Error(errorMessage);
+  }
+);
+
+export { userServiceApi, accountServiceApi };

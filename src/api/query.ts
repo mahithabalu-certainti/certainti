@@ -3,7 +3,7 @@ import {
   UseQueryOptions,
   UseQueryResult,
 } from '@tanstack/react-query';
-import api from './api';
+import { userServiceApi } from './api';
 
 type ApiResponse<T> = {
   data: T;
@@ -20,7 +20,9 @@ export const useApi = <T>(
   return useQuery<ApiResponse<T>, Error, T>({
     queryKey: [endpoint, params],
     queryFn: async () => {
-      const response = await api.get<ApiResponse<T>>(endpoint, { params });
+      const response = await userServiceApi.get<ApiResponse<T>>(endpoint, {
+        params,
+      });
       return response.data;
     },
     select: (data) => data.data,
