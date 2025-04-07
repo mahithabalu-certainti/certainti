@@ -21,8 +21,12 @@ import {
   settingsIcon,
 } from '../../assets';
 import { GlobalModal } from '../global-modal';
+import { PublicClientApplication } from '@azure/msal-browser';
+import { msalConfig } from '../../config/msalConfig';
+import { useAuthHook } from '../../hooks';
 
 export const Navbar: React.FC = () => {
+  const msalSigninInstance = new PublicClientApplication(msalConfig);
   const [searchAnchor, setSearchAnchor] = useState<null | HTMLElement>(null);
   const [notificationAnchor, setNotificationAnchor] =
     useState<null | HTMLElement>(null);
@@ -30,6 +34,7 @@ export const Navbar: React.FC = () => {
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] =
     React.useState<null | HTMLElement>(null);
   const [isGlobalModalOpen, setIsGlobalModalOpen] = useState(false);
+  const { logout } = useAuthHook();
 
   const menuId = 'account-menu';
   const mobileMenuId = 'account-menu-mobile';
@@ -80,6 +85,18 @@ export const Navbar: React.FC = () => {
     setIsGlobalModalOpen(false);
   };
 
+  const handleLogout = async () => {
+    try {
+      await msalSigninInstance.initialize();
+      await msalSigninInstance.logoutPopup();
+      await msalSigninInstance.clearCache();
+      logout();
+      window.location.replace('/login');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
+
   const renderMenu = (
     <Menu
       anchorEl={anchorEl}
@@ -98,6 +115,7 @@ export const Navbar: React.FC = () => {
     >
       <MenuItem onClick={handleMenuClose}>Profile</MenuItem>
       <MenuItem onClick={handleMenuClose}>My account</MenuItem>
+      <MenuItem onClick={handleLogout}>Logout</MenuItem>
     </Menu>
   );
 

@@ -10,6 +10,7 @@ import {
   FormTypeFields,
   selectOptions,
 } from '../../consultant/types';
+import { FieldTypes, OnChange } from '../../common-service';
 
 interface FormBuilderProps {
   data: FormType[];
@@ -17,6 +18,7 @@ interface FormBuilderProps {
   loading?: boolean;
   values?: Record<string, string | string[] | boolean | number | null>;
   outData: (e: object) => void;
+  onChange?: (params: OnChange) => void;
 }
 
 export const FormBuilder: React.FC<FormBuilderProps> = ({
@@ -24,11 +26,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   formRef,
   values,
   loading,
+  onChange,
   outData,
 }) => {
   const [formData, setFormData] = React.useState<FormType[]>();
   const [constructFormData, setConstructFormData] = React.useState<
-    Record<string, string | string[] | dayjs.Dayjs | null>
+    Record<string, FieldTypes>
   >({});
 
   useEffect(() => {
@@ -55,6 +58,19 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     const fieldValue = (constructFormData[field.name] as string) || '';
     const fieldDisabled = field.disabled ? ' bg-gray-100' : '';
 
+    const handleChange = (value: FieldTypes) => {
+      setConstructFormData((prevData) => {
+        const newData = {
+          ...prevData,
+          [field.name]: value,
+        };
+        if (field.onChange && onChange) {
+          onChange({ fieldName: field.name, fieldValue: value });
+        }
+        return newData;
+      });
+    };
+
     switch (field.type) {
       case 'text':
         return (
@@ -66,12 +82,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               'w-full sm:text-sm p-2 border-1 ' + isError + fieldDisabled
             }
             disabled={field.disabled}
-            onChange={(e) =>
-              setConstructFormData((prevData) => ({
-                ...prevData,
-                [field.name]: e.target.value,
-              }))
-            }
+            onChange={(e) => handleChange(e.target.value)}
             value={fieldValue}
           />
         );
@@ -85,12 +96,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               isError +
               fieldDisabled
             }
-            onChange={(e) =>
-              setConstructFormData((prevData) => ({
-                ...prevData,
-                [field.name]: e.target.value,
-              }))
-            }
+            onChange={(e) => handleChange(e.target.value)}
             value={fieldValue}
             disabled={field.disabled}
           >
@@ -114,12 +120,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
             name={field.name}
             placeholder={field.placeholder}
-            onChange={(e) =>
-              setConstructFormData((prevData) => ({
-                ...prevData,
-                [field.name]: e.target.value,
-              }))
-            }
+            onChange={(e) => handleChange(e.target.value)}
             disabled={field.disabled}
             value={fieldValue}
           />
@@ -138,10 +139,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               popupIcon={null}
               slotProps={{ paper: { style: { fontSize } } }}
               onChange={(_e, newValue: selectOptions) => {
-                setConstructFormData((prevData) => ({
-                  ...prevData,
-                  [field.name]: newValue?.value || '',
-                }));
+                handleChange(newValue?.value || '');
               }}
               value={
                 field.options?.find((opt) => opt.value === fieldValue) || {
@@ -184,10 +182,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     const newValues = currentValues.includes(option.value)
                       ? currentValues.filter((v) => v !== option.value)
                       : [...currentValues, option.value];
-                    setConstructFormData((prevData) => ({
-                      ...prevData,
-                      [field.name]: newValues,
-                    }));
+                    handleChange(newValues);
                   }}
                 />
                 <span className='text-sm text-gray-400'>{option.label}</span>
@@ -207,10 +202,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   checked={constructFormData[field.name] === option.value}
                   disabled={field.disabled}
                   onChange={(e) => {
-                    setConstructFormData((prevData) => ({
-                      ...prevData,
-                      [field.name]: e.target.value,
-                    }));
+                    handleChange(e.target.value);
                   }}
                 />
                 <span className='text-sm text-gray-400'>{option.label}</span>
@@ -225,10 +217,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               value={dayjs(fieldValue, 'DD/MM/YYYY')}
               disabled={field.disabled}
               onChange={(newValue) => {
-                setConstructFormData((prevData) => ({
-                  ...prevData,
-                  [field.name]: dayjs(newValue).format('DD/MM/YYYY'),
-                }));
+                handleChange(dayjs(newValue).format('DD/MM/YYYY'));
               }}
               shouldDisableDate={(date) => dayjs(date).isBefore(dayjs(), 'day')}
               slots={{
@@ -337,7 +326,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     }
   };
 
-  if (loading) { //Skeleton loader
+  if (loading) {
+    //Skeleton loader
     return (
       <div className='grid md:grid-cols-2 gap-6'>
         {[...Array(8)].map((_, index) => (

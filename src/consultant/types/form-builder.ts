@@ -18,6 +18,7 @@ export interface FormTypeFields {
   disabled?: boolean;
   greaterThan?: Record<string, string>;
   dependsRequired?: Record<string, string>;
+  onChange?: boolean;
 }
 
 export interface selectOptions {
@@ -54,4 +55,5 @@ export interface FieldType {
   defaultValue?: string;
   greaterThan?: Record<string, string>;
   dependsRequired?: Record<string, string>;
+  onChange?: boolean;
 }

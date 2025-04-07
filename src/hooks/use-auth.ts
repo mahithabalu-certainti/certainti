@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { LOGIN } from '../routes';
 import { clearAuthDetail, setAuthDetail } from '../store/slices/auth-slice';
 import { IAuthDetails } from '../store/type/auth-slice-type';
 
@@ -15,7 +13,6 @@ const DEFAULT_AUTH_DETAIL: IAuthDetails = {
 
 export const useAuthHook = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
   const [authDetails, setAuthDetails] = useState<IAuthDetails>(() => {
     const auth = localStorage.getItem('auth');
     if (!auth) return DEFAULT_AUTH_DETAIL;
@@ -37,7 +34,6 @@ export const useAuthHook = () => {
   };
 
   const logout = () => {
-    navigate(LOGIN);
     localStorage.removeItem('auth');
     dispatch(clearAuthDetail());
     setAuthDetails(DEFAULT_AUTH_DETAIL);
