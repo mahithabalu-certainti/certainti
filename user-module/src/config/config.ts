@@ -1,5 +1,4 @@
 import { createLogger, transports, format, Logger } from "winston";
-import sequelize from "./dataSource";
 import Services from "../services";
 import { NODE_ENV } from "../utils/constant";
 
@@ -11,12 +10,10 @@ import { NODE_ENV } from "../utils/constant";
  */
 class Configurations {
   private static instance: Configurations;
-  private dbConfig: any; // Type it as needed for sequelize instance
   private logger: Logger;
   private services: Services;
 
   private constructor() {
-    this.dbConfig = sequelize;
 
     this.logger = createLogger({
       level: process.env.NODE_ENV === NODE_ENV.DEV ? "info" : "debug",
@@ -54,33 +51,33 @@ class Configurations {
    * @description Returns the database configuration object.
    * @returns {any} - The Sequelize configuration.
    */
-  public getDbConfig(): any {
-    return this.dbConfig;
-  }
+  // public getDbConfig(): any {
+  //   return this.dbConfig;
+  // }
 
   /**
    * @function initDb
    * @description Initializes the database connection and syncs it.
    * @returns {Promise<void>} - Resolves once the database is synced.
    */
-  public async initDb(): Promise<void> {
-    try {
-      const forceSync = process.env.NODE_ENV !== NODE_ENV.PROD;
-      await this.dbConfig.sync({ force: forceSync });
-      if (forceSync) {
-        this.logger.info(
-          "Database synced with force: true (non-production environment)."
-        );
-      } else {
-        this.logger.info("Database synced successfully.");
-      }
-    } catch (err) {
-      this.logger.error(
-        `Error syncing the database: ${(err as Error).message}`
-      );
-      throw new Error(`Database sync failed: ${(err as Error).message}`);
-    }
-  }
+  // public async initDb(): Promise<void> {
+  //   try {
+  //     const forceSync = process.env.NODE_ENV !== NODE_ENV.PROD;
+  //     await this.dbConfig.sync({ force: forceSync });
+  //     if (forceSync) {
+  //       this.logger.info(
+  //         "Database synced with force: true (non-production environment)."
+  //       );
+  //     } else {
+  //       this.logger.info("Database synced successfully.");
+  //     }
+  //   } catch (err) {
+  //     this.logger.error(
+  //       `Error syncing the database: ${(err as Error).message}`
+  //     );
+  //     throw new Error(`Database sync failed: ${(err as Error).message}`);
+  //   }
+  // }
 
   /**
    * @function getServices

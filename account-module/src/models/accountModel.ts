@@ -1,6 +1,5 @@
-import { DataTypes, Model, Optional } from "sequelize";
-import sequelize from "../config/dataSource";
-import DatabaseConnection from "./dbConnectionModel";
+import { DataTypes, Model, Optional, Sequelize } from "sequelize";
+import { DatabaseConnection } from "./dbConnectionModel";
 import { Country } from "./countryModel";
 import { Currency } from "./currencyModel";
 
@@ -28,7 +27,7 @@ interface AccountAttributes {
 interface AccountCreationAttributes
   extends Optional<AccountAttributes, "rid"> {}
 
-class Account
+export class Account
   extends Model<AccountAttributes, AccountCreationAttributes>
   implements AccountAttributes
 {
@@ -50,137 +49,136 @@ class Account
   public annual_revenue!: number;
   public created_datetime?: Date;
   public modified_datetime?: Date;
-}
 
-Account.init(
-  {
-    rid: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
-      primaryKey: true,
-    },
-    r_number: {
-      type: DataTypes.STRING(255),
-      allowNull: false,
-    },
-    account_name: {
-      type: DataTypes.STRING(255),
-      allowNull: false,
-      unique: true
-    },
-    account_description: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-    },
-    eid: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    status: {
-      type: DataTypes.STRING(20),
-      allowNull: false,
-      validate: {
-        isIn: [["active", "inactive"]],
+  static initialize(sequelize: Sequelize) {
+    Account.init(
+      {
+        rid: {
+          type: DataTypes.UUID,
+          defaultValue: DataTypes.UUIDV4,
+          primaryKey: true,
+        },
+        r_number: {
+          type: DataTypes.STRING(255),
+          allowNull: false,
+        },
+        account_name: {
+          type: DataTypes.STRING(255),
+          allowNull: false,
+          unique: true,
+        },
+        account_description: {
+          type: DataTypes.STRING(255),
+          allowNull: true,
+        },
+        eid: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+        status: {
+          type: DataTypes.STRING(20),
+          allowNull: false,
+          validate: {
+            isIn: [["active", "inactive"]],
+          },
+        },
+        is_parent: {
+          type: DataTypes.BOOLEAN,
+          allowNull: false,
+        },
+        annual_revenue: {
+          type: DataTypes.DECIMAL(),
+          allowNull: false,
+        },
+        region: {
+          type: DataTypes.UUID,
+          allowNull: true,
+        },
+        storage_type: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        parent_account_rid: {
+          type: DataTypes.UUID,
+          allowNull: true,
+        },
+        database_connection_rid: {
+          type: DataTypes.UUID,
+          allowNull: true,
+        },
+        country_rid: {
+          type: DataTypes.UUID,
+          allowNull: false,
+        },
+        currency_rid: {
+          type: DataTypes.UUID,
+          allowNull: false,
+        },
+        industry: {
+          type: DataTypes.STRING(25),
+          allowNull: false,
+        },
+        primary_contact_name: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: DataTypes.NOW,
+        },
       },
-    },
-    is_parent: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-    },
-    annual_revenue: {
-      type: DataTypes.DECIMAL(),
-      allowNull: false,
-    },
-    region: {
-      type: DataTypes.UUID,
-      allowNull: true,
-    },
-    storage_type: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    parent_account_rid: {
-      type: DataTypes.UUID,
-      allowNull: true,
-    },
-    database_connection_rid: {
-      type: DataTypes.UUID,
-      allowNull: true,
-    },
-    country_rid: {
-      type: DataTypes.UUID,
-      allowNull: false,
-    },
-    currency_rid: {
-      type: DataTypes.UUID,
-      allowNull: false,
-    },
-    industry: {
-      type: DataTypes.STRING(25),
-      allowNull: false,
-    },
-    primary_contact_name: {
-      type: DataTypes.STRING(50),
-      allowNull: false,
-    },
-    created_datetime: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
-    },
-    modified_datetime: {
-      type: DataTypes.DATE,
-      allowNull: true,
-      defaultValue: DataTypes.NOW,
-    },
-  },
-  {
-    sequelize,
-    modelName: "Account",
-    tableName: "account",
-    timestamps: false,
-    hooks: {
-      beforeUpdate: (user) => {
-        user.setDataValue("modified_datetime", new Date());
-      },
-      beforeValidate: async (account) => {
-        const latestAccount = await Account.findAll();
+      {
+        sequelize,
+        modelName: "Account",
+        tableName: "account",
+        timestamps: false,
+        hooks: {
+          beforeUpdate: (user) => {
+            user.setDataValue("modified_datetime", new Date());
+          },
+          beforeValidate: async (account) => {
+            const latestAccount = await Account.findAll();
+            const serialNumber = latestAccount ? latestAccount.length + 1 : 1;
 
-        const serialNumber = latestAccount
-          ? latestAccount.length + 1
-          : 1;
+            const accountCode = `ACC${serialNumber
+              .toString()
+              .padStart(4, "0")}`;
+            account.setDataValue("r_number", accountCode);
+          },
+        },
+      }
+    );
 
-        const accountCode = `ACC${serialNumber.toString().padStart(4, "0")}`;
-        account.setDataValue("r_number", accountCode);
-      },
-    },
+    // Associations
+    Account.belongsTo(Account, {
+      foreignKey: "parent_account_rid",
+      as: "parent_account",
+    });
+
+    Account.hasMany(Account, {
+      foreignKey: "parent_account_rid",
+      as: "child_accounts",
+    });
+
+    Account.belongsTo(DatabaseConnection, {
+      foreignKey: "database_connection_rid",
+      as: "database_connection",
+    });
+
+    Account.belongsTo(Country, {
+      foreignKey: "country_rid",
+      as: "country",
+    });
+
+    Account.belongsTo(Currency, {
+      foreignKey: "currency_rid",
+      as: "currency",
+    });
   }
-);
-
-// Associations
-Account.belongsTo(Account, {
-  foreignKey: "parent_account_rid",
-  as: "parent_account",
-});
-
-Account.hasMany(Account, {
-  foreignKey: "parent_account_rid",
-  as: "child_accounts",
-});
-
-Account.belongsTo(DatabaseConnection, {
-  foreignKey: "database_connection_rid",
-  as: "database_connection",
-});
-
-Account.belongsTo(Country, {
-  foreignKey: "country_rid",
-  as: "country",
-});
-
-Account.belongsTo(Currency, {
-  foreignKey: "currency_rid",
-  as: "currency",
-});
-
-export default Account;
+}

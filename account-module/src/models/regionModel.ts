@@ -1,7 +1,5 @@
-import { Model, DataTypes, Optional } from "sequelize";
-import sequelize from "../config/dataSource";
+import { Model, DataTypes, Optional, Sequelize } from "sequelize";
 import { Country } from "./countryModel";
-
 interface RegionAttributes {
   rid: string;
   r_number: string;
@@ -25,52 +23,54 @@ export class Region
   region_name!: string;
   created_datetime!: Date;
   modified_datetime!: Date;
-}
 
-Region.init(
-  {
-    rid: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
-      primaryKey: true,
-      allowNull: false,
-    },
-    r_number: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    country_rid: {
-      type: DataTypes.UUID,
-      allowNull: false,
-    },
-    country_name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    region_name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    created_datetime: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
-    },
-    modified_datetime: {
-      type: DataTypes.DATE,
-      allowNull: true,
-      defaultValue: DataTypes.NOW,
-    },
-  },
-  {
-    sequelize,
-    modelName: "Region",
-    tableName: "regions",
-    timestamps: false,
+  static initialize(sequelize: Sequelize) {
+    Region.init(
+      {
+        rid: {
+          type: DataTypes.UUID,
+          defaultValue: DataTypes.UUIDV4,
+          primaryKey: true,
+          allowNull: false,
+        },
+        r_number: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        country_rid: {
+          type: DataTypes.UUID,
+          allowNull: false,
+        },
+        country_name: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        region_name: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: DataTypes.NOW,
+        },
+      },
+      {
+        sequelize,
+        modelName: "Region",
+        tableName: "regions",
+        timestamps: false,
+      }
+    );
+
+    Region.belongsTo(Country, {
+      foreignKey: "country_rid",
+      as: "country",
+    });
   }
-);
-
-Region.belongsTo(Country, {
-  foreignKey: "country_rid",
-  as: "country",
-});
+}

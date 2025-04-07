@@ -1,9 +1,10 @@
-import sequelize from "../config/dataSource";
+import { initOrgSequelize } from "../config/orgdbDataSource";
 import { IAccount, IUpdateAccount } from "../utils/types";
 
 class SchemaService {
   async createNewSchema(account_number: string) {
     try {
+      const sequelize = await initOrgSequelize();
       await sequelize.createSchema(`platform_v2_${account_number}`, {});
       await this.createAccountTables(account_number);
     } catch (err) {
@@ -13,6 +14,7 @@ class SchemaService {
 
   async createAccountTables(account_number: string) {
     const schemaName = `platform_v2_${account_number}`;
+    const sequelize = await initOrgSequelize();
     await sequelize.query(`
         CREATE TABLE IF NOT EXISTS "${schemaName}"."account_details" (
           rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -49,7 +51,7 @@ class SchemaService {
     account_rid: string
   ) {
     const schemaName = `platform_v2_${account_number}`;
-
+    const sequelize = await initOrgSequelize();
     await sequelize.query(
       `
         INSERT INTO "${schemaName}"."account_details" (
@@ -105,6 +107,8 @@ class SchemaService {
   ) {
     const schemaName = `platform_v2_${account_number}`;
 
+    const sequelize = await initOrgSequelize();
+
     await sequelize.query(
       `
         UPDATE "${schemaName}"."account_details"
@@ -154,6 +158,8 @@ class SchemaService {
       const query = `
         SELECT * FROM "platform_v2_${account_number}".account_details WHERE account_rid = :account_rid
       `;
+
+      const sequelize = await initOrgSequelize();
 
       const users = await sequelize.query(query, {
         replacements: { account_rid },

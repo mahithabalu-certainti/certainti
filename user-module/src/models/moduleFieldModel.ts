@@ -1,6 +1,4 @@
-import { DataTypes, Model, Optional } from "sequelize";
-import sequelize from "../config/dataSource";
-
+import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 interface ModuleFieldsAttributes {
   module_field_id: number;
   module_id: number;
@@ -27,52 +25,54 @@ export class ModuleFields
   // Timestamps
   public readonly created_datetime!: Date;
   public readonly modified_datetime!: Date;
-}
 
-// Initialize the model
-ModuleFields.init(
-  {
-    module_field_id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-      allowNull: false,
-    },
-    module_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: "module",
-        key: "module_id",
+  static initialize(sequelize: Sequelize) {
+    // Initialize the model
+    ModuleFields.init(
+      {
+        module_field_id: {
+          type: DataTypes.INTEGER,
+          primaryKey: true,
+          autoIncrement: true,
+          allowNull: false,
+        },
+        module_id: {
+          type: DataTypes.INTEGER,
+          allowNull: false,
+          references: {
+            model: "module",
+            key: "module_id",
+          },
+        },
+        module_subsection: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+        field_name: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        description: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: null,
+        },
       },
-    },
-    module_subsection: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    field_name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    description: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    created_datetime: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
-    },
-    modified_datetime: {
-      type: DataTypes.DATE,
-      allowNull: true,
-      defaultValue: null,
-    },
-  },
-  {
-    sequelize,
-    modelName: "ModuleFields",
-    tableName: "module_fields",
-    timestamps: false,
+      {
+        sequelize,
+        modelName: "ModuleFields",
+        tableName: "module_fields",
+        timestamps: false,
+      }
+    );
   }
-);
+}

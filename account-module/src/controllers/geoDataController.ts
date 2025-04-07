@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import configurations from "../config/config";
-import { errorResponse, successResponse } from "../utils/apiResponse";
+import { errorResponse } from "../utils/apiResponse";
 import { HttpStatus } from "../utils/constant";
 import {
   errorLog,
@@ -9,7 +9,6 @@ import {
   successLog,
 } from "../utils/helpers";
 
-const logger = configurations.getInstance().getLogger();
 const services = configurations.getInstance().getServices();
 
 /**
