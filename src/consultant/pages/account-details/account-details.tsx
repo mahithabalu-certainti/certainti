@@ -103,7 +103,7 @@ export const AccountDetails = () => {
         <PageHeader
           variant='sub'
           placeholder='Account Name'
-          title={data?.data.name || 'Account Title'}
+          title={data?.data?.accountById?.account_name || 'Account Title'}
           totalRecords={5}
           actionItems={menuItems}
           primaryButton={{
