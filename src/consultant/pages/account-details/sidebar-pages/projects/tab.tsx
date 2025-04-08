@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Box, Menu, MenuItem, Tab, Tabs } from '@mui/material';
 import React, { useState } from 'react';
 import { ActionsDropdown } from '../../../../../components';
@@ -8,15 +7,15 @@ import { SortByDropdown } from '../../../../../components/sortby-dropdown';
 const TabPanel: React.FC = () => {
   const [tabValue, setTabValue] = useState('overview');
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedSort, setSelectedSort] = useState('Accounts');
+  const [, setSelectedSort] = useState('Accounts');
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
     setTabValue(newValue);
   };
 
-  const handleSortClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setSortAnchorEl(event.currentTarget);
-  };
+  // const handleSortClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  //   setSortAnchorEl(event.currentTarget);
+  // };
 
   const handleSortClose = () => {
     setSortAnchorEl(null);

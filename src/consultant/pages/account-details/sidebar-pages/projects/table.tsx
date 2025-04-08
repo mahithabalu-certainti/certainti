@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   Button,
   IconButton,
@@ -28,9 +27,7 @@ interface Project {
 const ProjectsTable: React.FC = () => {
   const [page, setPage] = useState(0);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
-    null
-  );
+  const [, setSelectedProjectId] = useState<string | null>(null);
 
   // Sample data
   const projects: Project[] = [
@@ -81,7 +78,7 @@ const ProjectsTable: React.FC = () => {
     },
   ];
 
-  const handleChangePage = (event: unknown, newPage: number) => {
+  const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
   };
 

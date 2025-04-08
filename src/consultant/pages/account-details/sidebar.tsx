@@ -1,14 +1,5 @@
 import React from 'react';
-
-type MenuItem = {
-  name: string;
-  key: string;
-};
-
-type SidebarProps = {
-  activeKey: string;
-  onSelect: (key: string) => void;
-};
+import { MenuItem, SidebarProps } from '../../types';
 
 const menuItems: MenuItem[] = [
   { name: 'Financial Highlights', key: 'financial' },
