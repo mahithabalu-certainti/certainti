@@ -1,0 +1,158 @@
+import { Box, Chip, Skeleton, Typography } from '@mui/material';
+import React from 'react';
+
+interface AccountInfoColumn {
+  items: {
+    label: string;
+    value: string | React.ReactNode;
+  }[];
+}
+
+interface AccountInfoProps {
+  columns: AccountInfoColumn[];
+  className?: string;
+  loading?: boolean;
+  error?: boolean;
+}
+
+export const AccountInfo: React.FC<AccountInfoProps> = ({
+  columns,
+  className = '',
+  loading = false,
+  error,
+}) => {
+  const renderValue = (value: string | React.ReactNode) => {
+    if (typeof value === 'string') {
+      const lowerValue = value.toLowerCase();
+      if (lowerValue === 'active') {
+        return (
+          <Chip
+            label={value}
+            size='small'
+            sx={{
+              backgroundColor: '#E6F7EE',
+              color: '#00A854',
+              fontWeight: 500,
+            }}
+          />
+        );
+      }
+      if (lowerValue === 'inactive') {
+        return (
+          <Chip
+            label={value}
+            size='small'
+            sx={{
+              backgroundColor: '#FFEBEE',
+              color: '#F44336',
+              fontWeight: 500,
+            }}
+          />
+        );
+      }
+      if (lowerValue === 'yes' || lowerValue === 'no') {
+        return (
+          <Typography
+            component='span'
+            sx={{
+              color: lowerValue === 'yes' ? '#00A854' : '#F44336',
+              fontWeight: 500,
+            }}
+          >
+            {value}
+          </Typography>
+        );
+      }
+    }
+    return value;
+  };
+
+  // Column width configuration
+  const columnWidths = ['25%', '25%', '15%', '20%', '25%'];
+
+  if (error) {
+    return (
+      <Box
+        className={`p-6 border-b-1 border-gray-300 text-red-500 ${className}`}
+      >
+        Failed to Load
+      </Box>
+    );
+  }
+
+  if (loading) {
+    return (
+      <Box
+        className={`flex p-6 bg-white border-b-1 border-gray-300 ${className}`}
+        sx={{ gap: '0 16px' }}
+      >
+        {columnWidths.map((width, colIndex) => (
+          <Box
+            key={colIndex}
+            sx={{
+              width,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+            }}
+          >
+            {[1, 2, 3].map((item) => (
+              <Box key={item}>
+                <Skeleton variant='text' width='60%' height={10} />
+                <Skeleton variant='text' width='80%' height={10} />
+              </Box>
+            ))}
+          </Box>
+        ))}
+      </Box>
+    );
+  }
+
+  return (
+    <Box
+      className={`flex p-6 bg-white border-b-1 border-gray-300 ${className}`}
+      sx={{
+        gap: '0 16px',
+      }}
+    >
+      {columns?.map((column, colIndex) => (
+        <Box
+          key={colIndex}
+          sx={{
+            width: columnWidths[colIndex],
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+          }}
+        >
+          {column?.items?.map((item, itemIndex) => (
+            <Box key={itemIndex}>
+              <Typography
+                variant='caption'
+                sx={{
+                  color: '#7D98B6',
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  display: 'block',
+                  mb: 0.5,
+                }}
+              >
+                {item.label}
+              </Typography>
+              <Typography
+                variant='body2'
+                sx={{
+                  color: '#333',
+                  fontSize: '1rem',
+                  fontWeight: 500,
+                }}
+              >
+                {renderValue(item.value)}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+      ))}
+    </Box>
+  );
+};

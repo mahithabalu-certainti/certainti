@@ -29,7 +29,7 @@ export const ManageUserDetails: React.FC = () => {
     isError,
     error,
   } = useManageUserDetail(userId || '');
-  console.log('user', user);
+
   const userDetail = user?.data.users[0];
   const userActionButtons: string[] = [
     'Suspend User',

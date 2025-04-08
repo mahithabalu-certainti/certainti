@@ -12,13 +12,13 @@ import {
   Typography,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
+import { generatePath, useNavigate } from 'react-router-dom';
+import { ACCOUNT, ACCOUNT_DETAILS } from '../../../../routes';
 import { useAccounts } from '../../../services/account';
 import { Account, AccountList, ConvertedAccount } from '../../../types/account';
 import { convertAccounts } from '../helpers';
 import { renderChildRows, renderRows } from './helpers';
 import './styles.css';
-import { useNavigate } from 'react-router-dom';
-import { ACCOUNT } from '../../../../routes';
 
 const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
   const navigate = useNavigate();
@@ -51,6 +51,14 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
 
   const handleDelete = (account: Account) => {
     console.log('Delete account', account.accountId);
+  };
+  const handleView = (account: Account) => {
+    const path = generatePath(ACCOUNT_DETAILS, {
+      accountid: account.accountId,
+    });
+    navigate(path, {
+      state: { account },
+    });
   };
 
   // Toggle expand/collapse state for a row
@@ -158,6 +166,7 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
       handleSelectRow,
       handleEdit,
       handleDelete,
+      handleView,
       openRows,
     });
 
@@ -273,6 +282,7 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
               handleSelectRow,
               handleEdit,
               handleDelete,
+              handleView,
               renderChildRows: childRowsRenderer,
             })
           )}

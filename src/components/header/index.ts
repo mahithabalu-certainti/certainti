@@ -1,1 +1,1 @@
-export { default as MainPageHeader } from './header';
+export { default as PageHeader } from './header.tsx';

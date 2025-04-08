@@ -1,68 +1,38 @@
-import { ManageUser } from '../types/manage-user';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-export const ManageUserMockData: ManageUser[] = [
-  {
-    id: '1',
-    username: 'john_doe',
-    fullName: 'John Doe',
-    email: 'johndoe@gmail.com',
-    profile: 'Software Engineer',
-    status: 'Active',
+export const ManageUserMockData: any = {
+  statusCode: 200,
+  statusCodeValue: 'Success',
+  statusMessage: 'Success',
+  data: {
+    users: [
+      {
+        rid: '848a701c-684a-4161-b3e2-3a466e3464f5',
+        email: 'test@gmail.com',
+        status: 'active',
+        full_name: 'KK KK',
+        first_name: 'KK',
+        profile: {
+          profile_name: 'Technical Consultant',
+        },
+        business_teams: {
+          business_teams: 'Account Administration',
+        },
+      },
+      {
+        rid: '001891c0-ddfe-4521-a806-e489916616ad',
+        email: 'rahul.adams@example.com',
+        status: 'active',
+        full_name: 'Isabella Adams',
+        first_name: 'Rahul',
+        profile: {
+          profile_name: 'Administrator',
+        },
+        business_teams: {
+          business_teams: 'Case Administration',
+        },
+      },
+    ],
   },
-  {
-    id: '2',
-    username: 'jane_smith',
-    fullName: 'Jane Smith',
-    email: 'janesmith@gmail.com',
-    profile: 'Product Manager',
-    status: 'Active',
-  },
-  {
-    id: '3',
-    username: 'michael_brown',
-    fullName: 'Michael Brown',
-    email: 'michaelb@gmail.com',
-    profile: 'Data Analyst',
-    status: 'Active',
-  },
-  {
-    id: '4',
-    username: 'emily_jones',
-    fullName: 'Emily Jones',
-    email: 'emilyjones@gmail.com',
-    profile: 'Graphic Designer',
-    status: 'Active',
-  },
-  {
-    id: '5',
-    username: 'david_wilson',
-    fullName: 'David Wilson',
-    email: 'davidw@gmail.com',
-    profile: 'Marketing Specialist',
-    status: 'Active',
-  },
-  {
-    id: '6',
-    username: 'sarah_miller',
-    fullName: 'Sarah Miller',
-    email: 'sarahmiller@gmail.com',
-    profile: 'HR Coordinator',
-    status: 'Active',
-  },
-  {
-    id: '7',
-    username: 'chris_lee',
-    fullName: 'Chris Lee',
-    email: 'chrislee@gmail.com',
-    profile: 'Web Developer',
-    status: 'Active',
-  },
-  {
-    id: '8',
-    username: 'laura_adams',
-    fullName: 'Laura Adams',
-    email: 'lauraadams@gmail.com',
-    profile: 'Content Writer',
-    status: 'Active',
-  },
-];
+  requestId: 'b189dc09-d117-4d19-ab3d-420aab3a7ac6',
+};
