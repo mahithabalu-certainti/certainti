@@ -1,18 +1,14 @@
 import dotenv from "dotenv";
 dotenv.config();
-
-import configurations from "./config/config";
 import initExpressServer from "./servers/expressServer";
 import initGraphQLServer from "./servers/graphqlServer";
+import { initModels } from "./models";
 
 const PORT = process.env.SERVER_PORT || 3000;
 
 async function startServer() {
   try {
-    const dbInstance = configurations.getInstance().getDbConfig();
-    await dbInstance.sync({ force: false });
-    console.log("Database initialized successfully");
-
+    await initModels();
     const { app } = await initExpressServer();
     const { graphqlPath } = await initGraphQLServer(app);
 

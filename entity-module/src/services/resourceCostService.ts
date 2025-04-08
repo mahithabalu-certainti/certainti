@@ -1,9 +1,8 @@
-import { Op, where } from "sequelize";
-import sequelize from "../config/dataSource";
-import ResourceCost from "../models/ResourceCost";
+import { Op } from "sequelize";
+import { ResourceCost } from "../models/resourceCost";
 import { HttpStatus } from "../utils/constants";
 import { IResourceCost, IUpdateResourceCost } from "../utils/types";
-import Resources from "../models/Resource";
+import { Resources } from "../models/resource";
 
 class ResourceCostService {
   private resourceCostRepository: typeof ResourceCost | null;

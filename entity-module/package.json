@@ -18,6 +18,8 @@
   },
   "dependencies": {
     "@apollo/server": "^4.11.3",
+    "@azure/identity": "^4.8.0",
+    "@azure/keyvault-secrets": "^4.9.0",
     "@graphql-tools/load-files": "^7.0.1",
     "apollo-server-express": "^3.13.0",
     "cors": "^2.8.5",
