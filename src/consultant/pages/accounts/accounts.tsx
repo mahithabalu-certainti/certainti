@@ -1,27 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  accountHomeIcon,
-  accountSettingsIcon,
-  actionIcon,
-  downloadIcon,
-  filterIcon,
-  refreshIcon,
-} from '../../../assets';
-import ActionsDropdown from '../../../components/actions-dropdown/actions-dropdown';
-import TextButton from '../../../components/button/text-button';
+import { PageHeader } from '../../../components';
 import { ACCOUNT_CREATE } from '../../../routes';
 import FilterComponent from './filter-component/filter-component';
 import AccountTable from './table/account-table';
 
-const BUTTON_STYLES = {
-  height: '35px',
-  color: '#F15A29',
-};
-
 export const Accounts: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
+  const navigate = useNavigate();
 
   const menuItems = [
     {
@@ -34,65 +21,56 @@ export const Accounts: React.FC = () => {
     },
   ];
 
-  const navigate = useNavigate();
-
-  const handleCreateAcount = () => {
+  const handleCreateAccount = () => {
     navigate(ACCOUNT_CREATE);
   };
+
+  const handleFilterClick = () => {
+    console.log('Filter clicked');
+    // Add filter logic here
+  };
+
+  const handleRefreshClick = () => {
+    console.log('Refresh clicked');
+    // Add refresh logic here
+  };
+
+  const handleDownloadClick = () => {
+    console.log('Download clicked');
+    // Add download logic here
+  };
+
+  const handleActionsClick = () => {
+    console.log('Actions clicked');
+    // Add actions logic here
+  };
+
+  const handleSettingsClick = () => {
+    console.log('Settings clicked');
+    // Add settings logic here
+  };
+
   return (
     <>
-      <div className='flex w-full h-[15%] border-b-2 border-gray-300 p-4'>
-        <div className='flex justify-between w-full'>
-          <div className='flex'>
-            <div className='flex items-center justify-center'>
-              <img
-                src={accountHomeIcon}
-                alt='menu-icon'
-                className='h-10 w-10 bg-[#d16dd3] p-2.5 rounded'
-              />
-              <div className='flex flex-col mx-2'>
-                <div className='font-semibold text-[20px]'>All Accounts</div>
-                <div className='font-medium text-[#7D98B6] text-[11px]'>
-                  Total Records found - 5
-                </div>
-              </div>
-              <div className='border border-gray-300 p-2'>
-                <img src={filterIcon} alt='menu-icon' className='h-[15px]' />
-              </div>
-            </div>
-          </div>
-          <div className='flex gap-2 justify-center items-center'>
-            <ActionsDropdown actions={menuItems} />
-            <TextButton
-              label='Create Account'
-              onClick={handleCreateAcount}
-              sx={{
-                ...BUTTON_STYLES,
-                backgroundColor: '#F15A29',
-                color: '#fff',
-              }}
-            />
-            <div className='flex'>
-              <div className='flex border border-gray-300 p-2 h-[35px] justify-center items-center'>
-                <img src={refreshIcon} alt='menu-icon' className='h-[15px]' />
-              </div>
-              <div className='flex border border-gray-300 p-2 h-[35px] justify-center items-center'>
-                <img src={downloadIcon} alt='menu-icon' className='h-[18px]' />
-              </div>
-            </div>
-            <div className='flex border border-gray-300 p-2 h-[35px] justify-center items-center bg-[#EAF0F6]'>
-              <img src={actionIcon} alt='menu-icon' className='h-[13px]' />
-            </div>
-            <div className='flex border border-gray-300 p-2 h-[35px] justify-center items-center bg-[#EAF0F6]'>
-              <img
-                src={accountSettingsIcon}
-                alt='menu-icon'
-                className='h-[13px]'
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title='All Accounts'
+        totalRecords={5}
+        actionItems={menuItems}
+        primaryButton={{
+          label: 'Create Account',
+          onClick: handleCreateAccount,
+        }}
+        variant='main'
+        showFilter={true}
+        showRefresh={true}
+        showDownload={true}
+        onFilterClick={handleFilterClick}
+        onRefreshClick={handleRefreshClick}
+        onDownloadClick={handleDownloadClick}
+        onActionsClick={handleActionsClick}
+        onSettingsClick={handleSettingsClick}
+      />
+
       <div className='flex'>
         <div className='flex w-[20%] h-full border-r-2 border-gray-300 min-h-[calc(100vh-144px)]'>
           <FilterComponent setAppliedFilters={setAppliedFilters} />

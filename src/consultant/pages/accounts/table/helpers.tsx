@@ -2,7 +2,7 @@ import { Checkbox, IconButton, TableCell, TableRow } from '@mui/material';
 import React from 'react';
 import { arrowDownIcon, arrowUpIcon } from '../../../../assets';
 import { Account, ConvertedAccount } from '../../../types';
-import ActionButton from './Icon-button';
+import ActionButton from './action-button';
 
 interface RenderRowsProps {
   accounts: ConvertedAccount[];
@@ -12,6 +12,7 @@ interface RenderRowsProps {
   handleSelectRow: (index: number) => void;
   handleEdit: (account: Account) => void;
   handleDelete: (account: Account) => void;
+  handleView: (account: Account) => void;
   renderChildRows: (parentAccount: string | null) => React.ReactNode;
 }
 
@@ -22,6 +23,7 @@ interface RenderChildRowsProps {
   handleSelectRow: (index: number) => void;
   handleEdit: (account: Account) => void;
   handleDelete: (account: Account) => void;
+  handleView: (account: Account) => void;
   openRows: Set<string>;
 }
 
@@ -33,9 +35,9 @@ export const renderRows = ({
   handleSelectRow,
   handleEdit,
   handleDelete,
+  handleView,
   renderChildRows,
 }: RenderRowsProps) => {
-  console.log('accounts', accounts);
   const rows = accounts?.filter((account) => !account?.parentAccount);
   return rows?.map((account) => {
     const globalIndex = accounts?.findIndex(
@@ -95,6 +97,7 @@ export const renderRows = ({
             <ActionButton
               onEdit={() => handleEdit(account)}
               onDelete={() => handleDelete(account)}
+              onView={() => handleView(account)}
             />
           </TableCell>
         </TableRow>
@@ -112,6 +115,7 @@ export const renderChildRows = ({
   handleSelectRow,
   handleEdit,
   handleDelete,
+  handleView,
   openRows,
 }: RenderChildRowsProps) => {
   return accounts
@@ -148,6 +152,7 @@ export const renderChildRows = ({
             <ActionButton
               onEdit={() => handleEdit(account)}
               onDelete={() => handleDelete(account)}
+              onView={() => handleView(account)}
             />
           </TableCell>
         </TableRow>

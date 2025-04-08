@@ -1,6 +1,6 @@
-import { arrowDownIcon } from '../../assets';
 import { Box, Button, Menu, MenuItem, Typography } from '@mui/material';
 import React, { MouseEvent, useState } from 'react';
+import { arrowDownIcon } from '../../assets';
 
 const SortByDropdown: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -28,10 +28,8 @@ const SortByDropdown: React.FC = () => {
         onClick={handleOpen}
         sx={{
           color: '#1A3D6F', // Text color
-          backgroundColor: '#F8FAFD', // Light background color
           textTransform: 'none', // Keep text as normal case
           border: '1px solid #CBD6E2', // Border color
-          borderRadius: '6px', // Rounded corners
           padding: '6px 12px', // Adjusted padding
           minWidth: '180px', // Set min width for consistency
           justifyContent: 'space-between', // Align text & icon properly

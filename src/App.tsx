@@ -10,6 +10,8 @@ import {
   HomePage,
   Login,
   NotFound,
+  ProjectForm,
+  ResourceForm,
 } from './consultant/pages';
 import { IApp } from './consultant/types';
 import { useAuthHook } from './hooks/use-auth';
@@ -25,7 +27,9 @@ import {
   LOGIN,
   MAIN_ROUTE,
   NOT_FOUND,
+  PROJECT_CREATE,
   ProtectedRoute,
+  RESOURCE_CREATE,
 } from './routes';
 
 /**
@@ -59,6 +63,8 @@ export const App: React.FC<IApp> = ({ instance }) => {
             <Route path={ACCOUNT_CREATE} element={<AccountForm />} />
             <Route path={ACCOUNT_EDIT} element={<AccountForm />} />
             <Route path={ACCOUNT_DETAILS} element={<AccountDetails />} />
+            <Route path={PROJECT_CREATE} element={<ProjectForm />} />
+            <Route path={RESOURCE_CREATE} element={<ResourceForm />} />
 
             {/* Route for the Admin */}
 
