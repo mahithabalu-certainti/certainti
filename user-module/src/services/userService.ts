@@ -462,7 +462,7 @@ class UserService {
    *
    * @returns {Promise<{ statusCode: string, message: string, data: { rid: string; user_role: string } | null }>}
    */
-  async roleById(azureId: string): Promise<{
+  async permissionById(azureId: string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
