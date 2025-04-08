@@ -354,6 +354,11 @@ class AccountService {
             attributes: ["currency_code"],
             required: true,
           },
+          {
+            model: Account,
+            as: "parent_account",
+            attributes: ["account_name"],
+          },
         ],
       });
       const accountDetails = await this.schemaService.fetchAccountDetails(
