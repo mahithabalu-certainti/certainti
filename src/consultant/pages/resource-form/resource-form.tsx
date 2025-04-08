@@ -111,11 +111,11 @@ const ResourceForm: React.FC = () => {
 
   const memoizedParentAccounts: SelectOption[] = useMemo(
     () =>
-      parentAccount.data?.data.gloablAcconunts.map((account) => ({
+      parentAccount.data?.data.gloablAcconunt.map((account) => ({
         label: account.account_name,
         value: account.rid,
       })) || [],
-    [parentAccount.data?.data.gloablAcconunts]
+    [parentAccount.data?.data.gloablAcconunt]
   );
 
   const memoizedCurrency: SelectOption[] = useMemo(
@@ -125,15 +125,6 @@ const ResourceForm: React.FC = () => {
         value: account.rid,
       })) || [],
     [currency.data?.data.currency]
-  );
-
-  const memoizedRegions: SelectOption[] = useMemo(
-    () =>
-      regions.data?.data.regions.map((account) => ({
-        label: account.region_name,
-        value: account.rid,
-      })) || [],
-    [regions.data?.data.regions]
   );
 
   const submitData = (formValues: Partial<AccountFormData>) => {
@@ -192,9 +183,7 @@ const ResourceForm: React.FC = () => {
           data={FormData(
             memoizedContry,
             memoizedParentAccounts,
-            memoizedCurrency,
-            memoizedRegions,
-            isEditView
+            memoizedCurrency
           )}
           loading={
             allCountries.isLoading ||

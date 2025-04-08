@@ -111,11 +111,11 @@ const ProjectForm: React.FC = () => {
 
   const memoizedParentAccounts: SelectOption[] = useMemo(
     () =>
-      parentAccount.data?.data.gloablAcconunts.map((account) => ({
+      parentAccount.data?.data.gloablAcconunt.map((account) => ({
         label: account.account_name,
         value: account.rid,
       })) || [],
-    [parentAccount.data?.data.gloablAcconunts]
+    [parentAccount.data?.data?.gloablAcconunt]
   );
 
   const memoizedCurrency: SelectOption[] = useMemo(
