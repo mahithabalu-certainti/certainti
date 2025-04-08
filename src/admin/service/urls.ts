@@ -1,6 +1,7 @@
-import { ORGANIZATION } from '../../api/api';
 import { UserListParams } from '../types/manage-user';
 import { buildQueryString } from './helpers';
+
+const ORGANIZATION = import.meta.env.VITE_ORGANIZATION
 
 export const getUserListUrl = (params: UserListParams = {}): string => {
   const defaultParams: UserListParams = {

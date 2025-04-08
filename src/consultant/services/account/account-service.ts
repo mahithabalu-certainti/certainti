@@ -3,7 +3,7 @@ import {
   UseQueryOptions,
   UseQueryResult,
 } from '@tanstack/react-query';
-import api from '../../../api/api';
+import { accountServiceApi } from '../../../api/api';
 import {
   AccountFieldsApiResponse,
   AccountList,
@@ -13,12 +13,18 @@ import {
   ParentAccountApiResponse,
   RegionApiResponse,
 } from '../../types';
-import { AccountDetailUrl, AccountListURL, CurrencyUrl, ParentAccountUrl, RegionUrl } from '../urls/account-url';
+import {
+  AccountDetailUrl,
+  AccountListURL,
+  CurrencyUrl,
+  ParentAccountUrl,
+  RegionUrl,
+} from '../urls/account-url';
 
 export const fetchAccountFields = async (
   acctounId: string
 ): Promise<AccountFieldsApiResponse> => {
-  const { data } = await api.get<AccountFieldsApiResponse>(
+  const { data } = await accountServiceApi.get<AccountFieldsApiResponse>(
     AccountDetailUrl(acctounId)
   );
   return data;
@@ -27,7 +33,9 @@ export const fetchAccountFields = async (
 export const fetchAccounts = async (
   params: AccountListURLParams
 ): Promise<{ accounts: AccountList[]; count: number }> => {
-  const response = await api.get<AccountListResponse>(AccountListURL(params));
+  const response = await accountServiceApi.get<AccountListResponse>(
+    AccountListURL(params)
+  );
   return {
     accounts: response.data.data.account,
     count: response.data.data.count,
@@ -47,16 +55,18 @@ export const useAccounts = (
 
 export const fetchParentAccounts =
   async (): Promise<ParentAccountApiResponse> => {
-    const { data } = await api.get<ParentAccountApiResponse>(ParentAccountUrl);
+    const { data } =
+      await accountServiceApi.get<ParentAccountApiResponse>(ParentAccountUrl);
     return data;
   };
 
 export const fetchCurrency = async (): Promise<CurrencyApiResponse> => {
-  const { data } = await api.get<CurrencyApiResponse>(CurrencyUrl);
+  const { data } =
+    await accountServiceApi.get<CurrencyApiResponse>(CurrencyUrl);
   return data;
 };
 
 export const fetchRegion = async (): Promise<RegionApiResponse> => {
-  const { data } = await api.get<RegionApiResponse>(RegionUrl);
+  const { data } = await accountServiceApi.get<RegionApiResponse>(RegionUrl);
   return data;
 };
