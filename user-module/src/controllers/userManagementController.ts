@@ -83,11 +83,11 @@ async function userProfiles(req: Request, res: Response): Promise<void> {
   }
 }
 
-async function userRoleById(req: Request, res: Response): Promise<void> {
-  const methodName = "Get role by id";
+async function userPermissionById(req: Request, res: Response): Promise<void> {
+  const methodName = "User permission by ID";
   try {
     const userAzureId = req.params.id;
-    const userRole = await services.userServices.roleById(userAzureId);
+    const userRole = await services.userServices.permissionById(userAzureId);
     if (userRole.statusCode === constants.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, userRole.data);
@@ -112,4 +112,4 @@ async function userRoleById(req: Request, res: Response): Promise<void> {
   }
 }
 
-export { userProfiles, userRoles, userRoleById };
+export { userProfiles, userRoles, userPermissionById };
