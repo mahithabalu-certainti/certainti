@@ -3,11 +3,19 @@ import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Navbar, Sidebar } from '../';
 import { chevronLeftIcon } from '../../assets';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store/store';
+import { UserRoles } from '../../common-service';
 
 export const AppLayout: React.FC = () => {
+  const userData = useSelector((state: RootState) => state.auth);
   const [mobileView, setMobileView] = useState<boolean>(false);
   const [sidebarExpand, setSidebarExpand] = useState<boolean>(true);
-  const [showAdminSidebar] = useState<boolean>(true);
+  const [showAdminSidebar, setShowAdminSidebar] = useState<boolean>(false);
+
+  useEffect(() => {
+    setShowAdminSidebar(userData?.role === UserRoles.Admin);
+  }, [userData.role]);
 
   useEffect(() => {
     const handleResize = () => {

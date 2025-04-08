@@ -16,8 +16,8 @@ export const TASK_TEMPLATES = '/task-templates';
 export const CHECKLIST_TEMPLATES = '/checklist-templates';
 
 /** ADMIN ROUTES */
-
-export const ADMIN_MANAGE_USER = '/admin/manage-user';
+export const ADMIN = '/admin';
+export const ADMIN_MANAGE_USER = `${ADMIN}/manage-user`;
 export const ADMIN_MANAGE_USER_DETAILS = `${ADMIN_MANAGE_USER}/:userid`;
 export const ADMIN_CREATE_USER = `${ADMIN_MANAGE_USER}/create`;
 export const ADMIN_EDIT_USER = `${ADMIN_MANAGE_USER}/edit/:userid`;
