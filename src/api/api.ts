@@ -4,10 +4,9 @@ import { LOGIN } from '../routes';
 
 // Create User Service Axios instance
 const userServiceApi = axios.create({
-  baseURL: import.meta.env.VITE_USER_BASE_URL, // Replace with your API base URL
+  baseURL: import.meta.env.VITE_BASE_URL + import.meta.env.VITE_USER_URL, // Replace with your API base URL
   headers: {
     'Content-Type': 'application/json',
-    // 'ngrok-skip-browser-warning': '1',
   },
 });
 
@@ -19,7 +18,7 @@ type ErrorResponse = {
 
 // Create Account Service Axios instance
 const accountServiceApi = axios.create({
-  baseURL: import.meta.env.VITE_ACCOUNT_BASE_URL,
+  baseURL: import.meta.env.VITE_BASE_URL + import.meta.env.VITE_ACCOUNT_URL,
   headers: {
     'Content-Type': 'application/json',
   },
