@@ -27,6 +27,7 @@ interface UserAttributes {
   modified_by?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
+  business_teams?: any;
 }
 
 interface UserCreationAttributes extends Optional<UserAttributes, "rid"> {}
@@ -58,6 +59,7 @@ export class User
   public status?: string;
   public created_by?: string;
   public modified_by?: string;
+  public business_teams?: any;
 
   public readonly created_datetime!: Date;
   public readonly modified_datetime!: Date;

@@ -1,10 +1,10 @@
 import { models } from "../models/index";
 import { constants } from "../utils/constant";
 import { IUpdateUserData, IUserData } from "../utils/types";
-import { Op } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 
-
-const { User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams } = models;
+const { User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams } =
+  models;
 
 class UserService {
   private accountRepository: typeof User | null = null;
@@ -448,6 +448,58 @@ class UserService {
         },
       };
     } catch (err) {
+      return this.throwServiceError(err as Error);
+    }
+  }
+
+  /**
+   * Retrieves the role information for a user by their Azure ID.
+   *
+   * This method finds a user by their Azure ID and returns the role ID (`role_rid`) and associated user role
+   * from the `business_teams` model. If no user or associated `business_teams` are found, it returns an error message.
+   *
+   * @param {string} azureId - The Azure ID of the user whose role is to be retrieved.
+   *
+   * @returns {Promise<{ statusCode: string, message: string, data: { rid: string; user_role: string } | null }>}
+   */
+  async roleById(azureId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { rid: string; user_role: string } | null;
+  }> {
+    try {
+      const roles = await User.findOne({
+        attributes: ["role_rid"],
+        where: { azure_id: azureId },
+        include: [
+          {
+            model: BusinessTeams,
+            as: "business_teams",
+            required: true,
+            attributes: ["business_teams"],
+          },
+        ],
+      });
+
+      if (!roles || !roles.business_teams) {
+        return {
+          statusCode: constants.NOT_FOUND,
+          message: constants.NOT_FOUND_MESSAGE,
+          data: null,
+        };
+      }
+
+      return {
+        statusCode: constants.SUCCESS,
+        message: constants.SUCCESS_MESSAGE,
+        data: {
+          rid: roles.role_rid || "",
+          user_role: roles.business_teams?.business_teams,
+        },
+      };
+    } catch (err) {
+      console.log;
       return this.throwServiceError(err as Error);
     }
   }

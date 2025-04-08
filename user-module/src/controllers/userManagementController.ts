@@ -2,6 +2,12 @@ import { Request, Response } from "express";
 import { constants } from "../utils/constant";
 import { errorResponse, successResponse } from "../utils/apiResponse";
 import configurations from "../config/config";
+import {
+  errorLog,
+  handleErrorResponse,
+  handleSuccessResponse,
+  successLog,
+} from "../utils/helpers";
 
 const logger = configurations.getInstance().getLogger();
 const services = configurations.getInstance().getServices();
@@ -17,41 +23,26 @@ const services = configurations.getInstance().getServices();
  * @throws {Error} - Throws an error if the request to fetch roles fails at any step.
  */
 async function userRoles(req: Request, res: Response): Promise<void> {
+  const methodName = "User roles";
   try {
     const roles = await services.userServices.roles();
 
     if (roles.statusCode === constants.SUCCESS) {
-      logger.info("Success log: ", {
-        timestamp: new Date().toISOString(),
-        method: "get roles",
-      });
-
-      successResponse(
-        res,
-        constants.SUCCESS,
-        constants.SUCCESS_MESSAGE,
-        roles.data
-      );
+      successLog(methodName);
+      handleSuccessResponse(res, roles.data);
     } else {
-      logger.error("Failed log: ", {
-        timestamp: new Date().toISOString(),
-        method: "get roles",
-      });
-      errorResponse(
+      errorLog(methodName, roles.errorMessage);
+      handleErrorResponse(
         res,
         constants.BAD_REQUEST,
         constants.BAD_REQUEST_MESSAGE,
-        roles.message
+        roles.errorMessage
       );
     }
   } catch (error) {
     const err = error as Error;
-    logger.error("Failed log: ", {
-      timestamp: new Date().toString(),
-      method: "get roles",
-      message: err.message,
-    });
-    errorResponse(res, constants.FAILED, constants.FAILED_MESSAGE, err.message);
+    errorLog(methodName, err.message);
+    handleErrorResponse(res, constants.FAILED, constants.FAILED_MESSAGE, err.message);
   }
 }
 
@@ -66,42 +57,59 @@ async function userRoles(req: Request, res: Response): Promise<void> {
  * @throws {Error} - Throws an error if the request to fetch profiles fails at any step.
  */
 async function userProfiles(req: Request, res: Response): Promise<void> {
+  const methodName = "User profiles"
   try {
     const profiles = await services.userServices.profiles();
 
     if (profiles.statusCode === constants.SUCCESS) {
-      logger.info("Success log: ", {
-        timestamp: new Date().toISOString(),
-        method: "get profiles",
-      });
-
-      successResponse(
+      successLog(methodName)
+      handleSuccessResponse(
         res,
-        constants.SUCCESS,
-        constants.SUCCESS_MESSAGE,
         profiles.data
       );
     } else {
-      logger.error("Failed log: ", {
-        timestamp: new Date().toISOString(),
-        method: "get roles",
-      });
-      errorResponse(
+      errorLog(methodName, profiles.errorMessage);
+      handleErrorResponse(
         res,
         constants.BAD_REQUEST,
         constants.BAD_REQUEST_MESSAGE,
-        profiles.message
+        profiles.errorMessage
       );
     }
   } catch (error) {
     const err = error as Error;
-    logger.error("Failed log: ", {
-      timestamp: new Date().toString(),
-      method: "get profiles",
-      message: err.message,
-    });
-    errorResponse(res, constants.FAILED, constants.FAILED_MESSAGE, err.message);
+    errorLog(methodName, err.message);
+    handleErrorResponse(res, constants.FAILED, constants.FAILED_MESSAGE, err.message);
   }
 }
 
-export { userProfiles, userRoles };
+async function userRoleById(req: Request, res: Response): Promise<void> {
+  const methodName = "Get role by id";
+  try {
+    const userAzureId = req.params.id;
+    const userRole = await services.userServices.roleById(userAzureId);
+    if (userRole.statusCode === constants.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, userRole.data);
+    } else {
+      errorLog(methodName, userRole.errorMessage);
+      handleErrorResponse(
+        res,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        userRole.errorMessage
+      );
+    }
+  } catch (error) {
+    const err = error as Error;
+    errorLog(methodName, err.message);
+    handleErrorResponse(
+      res,
+      constants.FAILED,
+      constants.FAILED_MESSAGE,
+      err.message
+    );
+  }
+}
+
+export { userProfiles, userRoles, userRoleById };
