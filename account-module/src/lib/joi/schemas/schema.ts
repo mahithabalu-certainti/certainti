@@ -24,7 +24,7 @@ const allowedTLDs = [
   "edu",
   "travel",
   "health",
-  "in"
+  "in",
 ];
 
 const accountSchema = Joi.object({
@@ -132,7 +132,7 @@ const updateAccountSchema = Joi.object({
   account_id: Joi.string().max(255).required(),
   account_name: Joi.string().min(7).max(25).required(),
   r_number: Joi.string().required(),
-  account_description: Joi.string().max(500).optional(),
+  account_description: Joi.string().max(500).optional().allow("").allow(null),
   status: Joi.string().valid("active", "inactive").required(),
   is_parent: Joi.boolean().required(),
   parent_account_rid: Joi.string().allow(null).optional(),
@@ -183,7 +183,9 @@ const updateAccountSchema = Joi.object({
       "string.pattern.base":
         "blended_rate_fte must be a number with up to 10 characters, including decimal places",
       "string.max": "blended_rate_fte must be at most 10 characters long",
-    }),
+    })
+    .allow(null)
+    .allow(""),
 
   blended_rate_subcon: Joi.string()
     .pattern(/^\d{1,8}(\.\d{0,2})?$/)
@@ -193,7 +195,9 @@ const updateAccountSchema = Joi.object({
       "string.pattern.base":
         "blended_rate_subcon must be a number with up to 10 characters, including decimal places",
       "string.max": "blended_rate_subcon must be at most 10 characters long",
-    }),
+    })
+    .allow(null)
+    .allow(""),
   modified_by: Joi.string().max(255).optional(),
   primary_contact_name: Joi.string().min(3).max(25).required(),
   primary_contact_email: Joi.string().email().max(50).required(),
