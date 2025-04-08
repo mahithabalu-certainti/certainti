@@ -9,6 +9,7 @@ export const createTextField = (
     regexErrorMessage?: string;
     placeholder?: string;
     disabled?: boolean;
+    onChange?: boolean;
   } = {}
 ): FieldType => ({
   type: 'text',
@@ -19,6 +20,7 @@ export const createTextField = (
   regexErrorMessage: options.regexErrorMessage,
   placeholder: options.placeholder,
   disabled: options.disabled,
+  onChange: options.onChange,
 });
 
 export const createTextAreaField = (
