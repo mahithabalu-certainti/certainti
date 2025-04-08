@@ -2,7 +2,7 @@ import { Checkbox, IconButton, TableCell, TableRow } from '@mui/material';
 import React from 'react';
 import { arrowDownIcon, arrowUpIcon } from '../../../../assets';
 import { Account, ConvertedAccount } from '../../../types';
-import ActionButton from './Icon-button';
+import ActionButton from './action-button';
 
 interface RenderRowsProps {
   accounts: ConvertedAccount[];
@@ -38,7 +38,6 @@ export const renderRows = ({
   handleView,
   renderChildRows,
 }: RenderRowsProps) => {
-  console.log('accounts', accounts);
   const rows = accounts?.filter((account) => !account?.parentAccount);
   return rows?.map((account) => {
     const globalIndex = accounts?.findIndex(

@@ -11,6 +11,9 @@ interface AccountData {
     currency: {
       currency_code: string;
     };
+    parent_account: {
+      account_name: string;
+    };
     industry: string;
     primary_contact_name: string;
     parent_account_name: string;
@@ -38,7 +41,10 @@ export const transformAccountData = (data: AccountData): DisplayColumn[] => {
     {
       // Column 2 (25%)
       items: [
-        { label: 'Parent Name', value: account?.parent_account_name || '-' },
+        {
+          label: 'Parent Name',
+          value: account?.parent_account?.account_name || '-',
+        },
         { label: 'Currency', value: account?.currency.currency_code },
       ],
     },
