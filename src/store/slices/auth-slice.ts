@@ -8,6 +8,7 @@ const initialState: IAuthDetails = {
   userId: null,
   email: null,
   name: null,
+  role: null,
 };
 
 const authSlice = createSlice({
@@ -20,6 +21,7 @@ const authSlice = createSlice({
       state.userId = action.payload.userId;
       state.email = action.payload.email;
       state.name = action.payload.name;
+      state.role = action.payload.role;
     },
     clearAuthDetail: () => {
       return initialState;

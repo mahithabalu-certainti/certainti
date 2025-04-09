@@ -10,6 +10,7 @@ import { IAuthDetails } from '../../../store/type/auth-slice-type';
 import { msalConfig } from '../../../config/msalConfig';
 import { Toast } from '../../../components';
 import { useAppTranslation } from '../../../hooks/use-app-translation';
+import { fetchCurrentUserRole } from '../../../common-service/common-service';
 
 const msalSigninInstance = new PublicClientApplication(msalConfig);
 
@@ -25,22 +26,23 @@ export const Login: React.FC = () => {
   const { toast, hideToast, errorToast } = useToast();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const t = useAppTranslation();
-  
-  /**
-   * Handles the login process using MSAL.
-   * On successful login, it updates the authentication details and navigates to the home page.
-   */
+
   const handleLogin = async () => {
     try {
       setIsLoading(true);
       await msalSigninInstance.initialize();
       const { idToken, account } = await msalSigninInstance.loginPopup();
+      const userRole = await fetchCurrentUserRole(
+        account?.localAccountId,
+        idToken
+      );
       const authDetail = {
         isAuthenticated: true,
         authToken: idToken,
         userId: account?.localAccountId,
         email: account?.username,
         name: account?.name,
+        role: userRole.data.user_role,
       };
       login(authDetail as IAuthDetails);
       setIsLoading(false);
