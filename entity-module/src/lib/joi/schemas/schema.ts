@@ -92,6 +92,72 @@ const updateResourceCostValidation = (data: any) => {
   }
 };
 
+const isNotFutureDate = (value: string, helpers: Joi.CustomHelpers): any => {
+  const date = new Date(value);
+  const currentDate = new Date();
+  if (date > currentDate) {
+    return helpers.error("any.invalid", {
+      message: "Date cannot be in the future.",
+    });
+  }
+  return value;
+};
+
+const isEndDateAfterStartDate = (
+  value: string,
+  helpers: Joi.CustomHelpers
+): any => {
+  const context = helpers.state?.parent;
+
+  if (
+    context?.effective_from_date &&
+    new Date(value) <= new Date(context.effective_from_date)
+  ) {
+    return helpers.error("any.invalid", {
+      message: "Effective end date must be after the start date.",
+    });
+  }
+  return value;
+};
+
+const createResourcesSchema = Joi.object({
+  resource_ref_id: Joi.string().max(50).required(),
+  resource_type: Joi.string().valid("Full_time", "Contract").required(),
+  first_name: Joi.string().min(2).max(100).optional().allow("").allow(null),
+  middle_name: Joi.string().max(100).optional().allow("").allow(null),
+  last_name: Joi.string().min(2).max(100).optional().allow("").allow(null),
+  full_name: Joi.string().min(3).max(200).optional().allow("").allow(null),
+  org_name: Joi.string().min(3).max(100).optional().allow("").allow(null),
+  role: Joi.string().min(4).max(100).optional().allow("").allow(null),
+  fiscal_year: Joi.string().max(4).required(),
+  email: Joi.string().email().max(255).optional().allow("").allow(null),
+  mobile: Joi.string().max(15).optional().allow("").allow(null),
+  country: Joi.string().max(3).optional().allow("").allow(null),
+  region: Joi.string().max(50).optional().allow("").allow(null),
+  currency: Joi.string().max(3).optional().allow("").allow(null),
+  effective_from_date: Joi.string()
+    .max(10)
+    .optional()
+    .allow("")
+    .allow(null)
+    .custom(isNotFutureDate, "Future Date Validation")
+    .optional(),
+  effective_end_date: Joi.string()
+    .max(10)
+    .optional()
+    .allow("")
+    .allow(null)
+    .custom(isEndDateAfterStartDate, "End Date Validation")
+    .optional(),
+  designation: Joi.string().min(4).max(100).optional().allow("").allow(null),
+  manager_name: Joi.string().min(3).max(100).optional().allow("").allow(null),
+  total_yearsof_experience: Joi.number().optional().allow("").allow(null),
+  total_yearsof_experience_organization: Joi.number()
+    .optional()
+    .allow("")
+    .allow(null),
+});
+
 export {
   resourceCostValidation,
   listResourceCostValidation,
@@ -101,4 +167,5 @@ export {
   listResourceCostSchema,
   getResourceCostSchema,
   updateResourceCostSchema,
+  createResourcesSchema
 };
