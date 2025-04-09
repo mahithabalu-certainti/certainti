@@ -361,9 +361,20 @@ class AccountService {
           },
         ],
       });
+
+      let acconuntNumber = accountById?.r_number || "";
+      if(accountById?.storage_type === "store_in_parent"){
+        const parentAccount = await repository.findOne({
+          where: {
+            rid: accountById.parent_account_rid || ""
+          }
+        })
+        acconuntNumber = parentAccount?.r_number || "";
+      }
+
       const accountDetails = await this.schemaService.fetchAccountDetails(
-        accountById?.r_number || "",
-        accountById?.rid || ""
+        acconuntNumber,
+        accountById?.rid || "",
       );
       return {
         statusCode: HttpStatus.SUCCESS,
