@@ -39,3 +39,4 @@ export const PROJECT_CREATE = `${PROJECT}/create`;
 export const PROJECT_EDIT = `${PROJECT}/edit/:projectid`;
 
 export const NOT_FOUND = 'page-not-found';
+export const NOT_MATCH = '*';

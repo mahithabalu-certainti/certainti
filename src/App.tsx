@@ -26,6 +26,7 @@ import {
   ADMIN_MANAGE_USER_DETAILS,
   LOGIN,
   MAIN_ROUTE,
+  NOT_MATCH,
   PROJECT_CREATE,
   ProtectedRoute,
   RESOURCE_CREATE,
@@ -75,7 +76,7 @@ export const App: React.FC<IApp> = ({ instance }) => {
           </Route>
 
           {/* Page not found */}
-          <Route path='*' element={<NotFound />} />
+          <Route path={NOT_MATCH} element={<NotFound />} />
         </Route>
       </Routes>
     </MsalProvider>

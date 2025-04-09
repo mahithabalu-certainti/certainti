@@ -1,5 +1,5 @@
 // api.ts
-import axios, { AxiosError, AxiosResponse } from 'axios';
+import axios, { AxiosError } from 'axios';
 import { LOGIN } from '../routes';
 
 // Type for standard error response
@@ -19,9 +19,7 @@ const userServiceApi = axios.create({
 // Create Account Service Axios instance
 const accountServiceApi = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL + import.meta.env.VITE_ACCOUNT_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
 });
 
 // Common error handler for both services
@@ -46,10 +44,14 @@ const errorHandler = (error: AxiosError<ErrorResponse>) => {
 
 // Apply interceptors to both services
 [accountServiceApi, userServiceApi].forEach((api) => {
-  api.interceptors.response.use(
-    (response: AxiosResponse) => response,
-    errorHandler
-  );
+  api.interceptors.request.use((config) => {
+    const auth = localStorage.getItem('auth');
+    const { authToken } = auth ? JSON.parse(auth) : {};
+    if (authToken) {
+      config.headers.Authorization = `Bearer ${authToken}`;
+    }
+    return config;
+  }, errorHandler);
 });
 
 export { userServiceApi, accountServiceApi };

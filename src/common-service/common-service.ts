@@ -47,13 +47,18 @@ export const getCurrentUserRoleUrl = (id: string): string => {
  * @returns Promise with user details
  */
 export const fetchCurrentUserRole = async (
-  userId: string
+  userId: string,
+  idToken: string
 ): Promise<GetCurrentUserRoleApiResponse> => {
   try {
     const { data } = await userServiceApi.get<GetCurrentUserRoleApiResponse>(
-      getCurrentUserRoleUrl(userId)
+      getCurrentUserRoleUrl(userId),
+      {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      }
     );
-    // await new Promise((resolve) => setTimeout(resolve, 1000));
     return data;
   } catch (error) {
     console.error('Error fetching user details:', error);

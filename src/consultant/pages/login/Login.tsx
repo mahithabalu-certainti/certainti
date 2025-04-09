@@ -32,8 +32,10 @@ export const Login: React.FC = () => {
       setIsLoading(true);
       await msalSigninInstance.initialize();
       const { idToken, account } = await msalSigninInstance.loginPopup();
-
-      const userRole = await fetchCurrentUserRole(account?.localAccountId);
+      const userRole = await fetchCurrentUserRole(
+        account?.localAccountId,
+        idToken
+      );
       const authDetail = {
         isAuthenticated: true,
         authToken: idToken,

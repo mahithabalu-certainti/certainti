@@ -1,7 +1,7 @@
 import { UserListParams } from '../types/manage-user';
 import { buildQueryString } from './helpers';
 
-const ORGANIZATION = import.meta.env.VITE_ORGANIZATION
+const ORGANIZATION = import.meta.env.VITE_ORGANIZATION;
 
 export const getUserListUrl = (params: UserListParams = {}): string => {
   const defaultParams: UserListParams = {
@@ -17,11 +17,11 @@ export const getUserListUrl = (params: UserListParams = {}): string => {
     ...defaultParams,
   };
 
-  return `/api/user?${buildQueryString(queryParams)}`;
+  return `/api/user/list?${buildQueryString(queryParams)}`;
 };
 
 export const getUserDetailUrl = (userId: string): string => {
-  return `/api/user/${userId}?organization=${ORGANIZATION}`;
+  return `/api/user/list/${userId}?organization=${ORGANIZATION}`;
 };
 
 // Example usage

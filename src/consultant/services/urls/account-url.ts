@@ -26,7 +26,7 @@ export const AccountListURL = ({
   sortOrder,
   filters,
 }: AccountListURLParams): string => {
-  const baseUrl = '/api/accounts/';
+  const baseUrl = '/api/accounts/list';
   const searchParams = new URLSearchParams();
 
   searchParams.set('page', page.toString());
@@ -43,4 +43,4 @@ export const AccountListURL = ({
 };
 
 export const AccountDetailUrl = (accountId: string) =>
-  `/api/accounts/${accountId}`;
+  `/api/accounts/list/${accountId}`;
