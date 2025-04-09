@@ -12,10 +12,11 @@ export const DATA_STORAGE_OPTIONS: SelectOption[] = [
 
 export const transformFormData = (
   formData: Partial<AccountFormData>,
-  isEdit: boolean
+  isEdit: boolean,
+  account_rid?: string
 ): Partial<NewAccountData> => {
   const data: Partial<NewAccountData> = {
-    account_id: formData.rid,
+    account_id: account_rid,
     account_name: formData.account_name,
     account_description: formData.account_description || null,
     status: formData.status,
@@ -44,8 +45,8 @@ export const transformFormData = (
     data_storage: formData.data_storage,
   };
   if (isEdit) {
-    data.account_rid = formData.rid;
-    data.r_number = formData.rid;
+    data.account_rid = account_rid;
+    data.r_number = account_rid;
   }
   return data;
 };

@@ -38,7 +38,7 @@ export const Navbar: React.FC = () => {
     React.useState<null | HTMLElement>(null);
   const [isGlobalModalOpen, setIsGlobalModalOpen] = useState(false);
   const { logout } = useAuthHook();
-  const { role } = useSelector((state: RootState) => state.auth);
+  const { role, name } = useSelector((state: RootState) => state.auth);
   const isConsultant = role !== UserRoles.Admin;
 
   const menuId = 'account-menu';
@@ -331,7 +331,7 @@ export const Navbar: React.FC = () => {
                 src='https://mui.com/static/images/avatar/2.jpg'
                 alt='User Avatar'
               />
-              <span className='text-sm px-2'>John doe</span>
+              <span className='text-sm px-2'>{name}</span>
               <img src={chevronDownIcon} alt='down nav' />
             </IconButton>
           </Box>

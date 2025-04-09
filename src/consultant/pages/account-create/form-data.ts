@@ -24,12 +24,19 @@ export const FormData = (
         sectionName: 'Basic Information',
         fillType: 'half',
         fields: [
-          createTextField('rid', 'Account ID', {
+          // createTextField('rid', 'Account ID', {
+          //   required: true,
+          //   regex: REGEX_PATTERNS.ALPHANUMERIC,
+          //   regexErrorMessage: 'Please Enter valid Account ID',
+          //   placeholder: 'Enter Account ID',
+          //   disabled: disableFields,
+          // }),
+          createTextField('account_name', 'Account Name', {
             required: true,
-            regex: REGEX_PATTERNS.ALPHANUMERIC,
-            regexErrorMessage: 'Please Enter valid Account ID',
-            placeholder: 'Enter Account ID',
-            disabled: disableFields,
+            regex: REGEX_PATTERNS.ACCOUNT_NAME,
+            regexErrorMessage:
+              'Account name should contain only letters and between 7 to 25 characters',
+            placeholder: 'Enter Account Name',
           }),
           createSelectField('status', 'Status', {
             required: true,
@@ -52,13 +59,6 @@ export const FormData = (
             regex: REGEX_PATTERNS.WEBSITE,
             regexErrorMessage: 'Enter a valid website URL',
             placeholder: 'Enter Website',
-          }),
-          createTextField('account_name', 'Account Name', {
-            required: true,
-            regex: REGEX_PATTERNS.ACCOUNT_NAME,
-            regexErrorMessage:
-              'Account name should contain only letters and between 7 to 25 characters',
-            placeholder: 'Enter Account Name',
           }),
           createTextField('industry', 'Industry', {
             required: true,
