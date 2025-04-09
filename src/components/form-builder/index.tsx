@@ -279,7 +279,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         if (
           field.dependsRequired?.key &&
           constructFormData[field.dependsRequired.key] ===
-            field.dependsRequired?.matchedValue
+            field.dependsRequired?.matchedValue && !hasValue
         ) {
           hasError = true;
           return { ...field, error: field.dependsRequired.errorMessage };

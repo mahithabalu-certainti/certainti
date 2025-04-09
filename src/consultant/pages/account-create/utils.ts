@@ -7,7 +7,7 @@ export const STATUS_OPTIONS: SelectOption[] = [
 
 export const DATA_STORAGE_OPTIONS: SelectOption[] = [
   { label: 'Separate DB', value: 'separate_db' },
-  { label: 'Store in DB', value: 'store_in_parent' },
+  { label: 'Store in Parent', value: 'store_in_parent' },
 ];
 
 export const transformFormData = (
