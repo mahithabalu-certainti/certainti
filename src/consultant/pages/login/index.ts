@@ -1,3 +1,3 @@
 export * from './left-pane';
-export * from './login';
+export * from './logins-new';
 export * from './right-pane';
