@@ -58,7 +58,7 @@ jobs:
           echo "VITE_RESET_PW_AUTHORITY=$PASSWORD_RESET_AUTHORITY" >> $ENV_FILE
           echo "VITE_REDIRECT_URL=https://platform20-dev.certainti.ai/" >> $ENV_FILE
           echo "VITE_POST_LOGOUT_REDIRECT_URL=https://platform20-dev.certainti.ai/" >> $ENV_FILE
-          echo "VITE_BASE_URL=https://api-platform20-dev.certainti.ai" >> $ENV_FILE
+          echo "VITE_BASE_URL=https://dev-platform20-api-management.azure-api.net" >> $ENV_FILE
           echo "VITE_USER_URL=/userService" >> $ENV_FILE
           echo "VITE_ACCOUNT_URL=/accountService" >> $ENV_FILE
           echo "VITE_ORGANIZATION=PF2.0" >> $ENV_FILE
