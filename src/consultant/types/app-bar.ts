@@ -3,13 +3,20 @@ export interface INavItem {
   name: string;
   icon: string;
   link: string;
+  matchLink: string;
 }
 
 export interface AdminNavItem {
   title: string;
   icon: string;
   openStatus: boolean;
-  subItemTitle: { name: string; link: string }[];
+  subItemTitle: SubItemTitle[];
+}
+
+export interface SubItemTitle {
+  name: string;
+  link: string;
+  matchLink: string;
 }
 
 export interface SideBarProps {

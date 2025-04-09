@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { accountServiceApi } from '../api/api';
-import { GetAllCountriesApiResponse } from './';
+import { accountServiceApi, userServiceApi } from '../api/api';
+import { GetAllCountriesApiResponse, GetCurrentUserRoleApiResponse } from './';
 
 export const getAllCountriesUrl = (): string => {
   return `/api/accounts/country`;
@@ -36,4 +36,32 @@ export const useGetAllCountries = () => {
     staleTime: 5 * 60 * 1000, // 5 minutes cache
     retry: 0,
   });
+};
+
+export const getCurrentUserRoleUrl = (id: string): string => {
+  return `/api/user/${id}/permission`;
+};
+
+/**
+ * Fetches current user Role (view only)
+ * @returns Promise with user details
+ */
+export const fetchCurrentUserRole = async (
+  userId: string,
+  idToken: string
+): Promise<GetCurrentUserRoleApiResponse> => {
+  try {
+    const { data } = await userServiceApi.get<GetCurrentUserRoleApiResponse>(
+      getCurrentUserRoleUrl(userId),
+      {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      }
+    );
+    return data;
+  } catch (error) {
+    console.error('Error fetching user details:', error);
+    throw error;
+  }
 };

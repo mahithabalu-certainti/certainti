@@ -1,4 +1,4 @@
-import { CommonApiResponse } from '../../common-service';
+import { CommonApiResponse, UserRoles } from '../../common-service';
 
 export type ManageUser = {
   id: string;
@@ -91,7 +91,7 @@ export interface Profiles {
 
 export interface Roles {
   rid: string;
-  business_teams: string;
+  business_teams: UserRoles;
 }
 
 // API Response Data Type

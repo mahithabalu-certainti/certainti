@@ -27,18 +27,24 @@ import {
   helpIcon,
   logo,
   logoSmall,
-  logoutIcon,
+  // logoutIcon,
   notesIcon,
   projectsIcon,
   settingsIcon,
   surveyIcon,
   timesheetIcon,
 } from '../../assets';
-import { AdminNavItem, INavItem, SideBarProps } from '../../consultant/types';
+import {
+  AdminNavItem,
+  INavItem,
+  SideBarProps,
+  SubItemTitle,
+} from '../../consultant/types';
 import { useAuthHook } from '../../hooks/use-auth';
 import {
   ACCOUNT,
   ADMIN_MANAGE_USER,
+  NOT_FOUND,
   CHECKLIST_TEMPLATES,
   EMAIL_TEMPLATES,
   IMPORT_TEMPLATES,
@@ -52,79 +58,91 @@ import {
   TASK_TEMPLATES,
 } from '../../routes';
 
-const sideNavItems: INavItem[] = [
+const accountNavItems: INavItem[] = [
   {
     icon: dashboardIcon,
     name: 'Dashboard',
     link: MAIN_ROUTE,
     type: 'link',
+    matchLink: MAIN_ROUTE,
   },
   {
     icon: accountsIcon,
     name: 'Accounts',
     link: ACCOUNT,
     type: 'link',
+    matchLink: ACCOUNT,
   },
   {
     icon: projectsIcon,
     name: 'Projects',
-    link: MAIN_ROUTE,
+    link: NOT_FOUND,
     type: 'link',
+    matchLink: '',
   },
   {
     icon: timesheetIcon,
     name: 'Timeline',
-    link: MAIN_ROUTE,
+    link: NOT_FOUND,
     type: 'link',
+    matchLink: '',
   },
   {
     icon: caseIcon,
     name: 'Cases',
-    link: MAIN_ROUTE,
+    link: NOT_FOUND,
     type: 'link',
+    matchLink: '',
   },
   {
     icon: surveyIcon,
     name: 'Survey',
-    link: MAIN_ROUTE,
+    link: NOT_FOUND,
     type: 'link',
+    matchLink: '',
   },
   {
     icon: notesIcon,
     name: 'Notes',
-    link: MAIN_ROUTE,
+    link: NOT_FOUND,
     type: 'link',
+    matchLink: '',
   },
   {
     icon: attachmentIcon,
     name: 'Attachments',
-    link: MAIN_ROUTE,
+    link: NOT_FOUND,
     type: 'link',
+    matchLink: '',
   },
   {
     icon: '',
     name: '',
     link: '',
     type: 'divider',
+    matchLink: '',
   },
   {
     icon: helpIcon,
     name: 'Help',
-    link: MAIN_ROUTE,
+    link: NOT_FOUND,
     type: 'link',
+    matchLink: '',
   },
   {
     icon: settingsIcon,
     name: 'Settings',
-    link: MAIN_ROUTE,
+    link: NOT_FOUND,
     type: 'link',
+    matchLink: '',
   },
-  {
-    icon: logoutIcon,
-    name: 'Logout',
-    link: MAIN_ROUTE,
-    type: 'link',
-  },
+  // {
+  //   icon: logoutIcon,
+  //   name: 'Logout',
+  //   link: MAIN_ROUTE,
+  //   type: 'link',
+  //   matchLink: '',
+  // },
 ];
 
 const sideNavAdminItems: AdminNavItem[] = [
@@ -133,10 +151,26 @@ const sideNavAdminItems: AdminNavItem[] = [
     icon: adminPermissionIcon,
     openStatus: false,
     subItemTitle: [
-      { name: 'Manage User', link: ADMIN_MANAGE_USER },
-      { name: 'Manage Profile', link: MANAGE_PROFILE },
-      { name: 'Manage User Group', link: MANAGE_USER_GROUP },
-      { name: 'Manage User Access', link: MANAGE_USER_ACCESS },
+      {
+        name: 'Manage User',
+        link: ADMIN_MANAGE_USER,
+        matchLink: ADMIN_MANAGE_USER,
+      },
+      {
+        name: 'Manage Profile',
+        link: MANAGE_PROFILE,
+        matchLink: MANAGE_PROFILE,
+      },
+      {
+        name: 'Manage User Group',
+        link: MANAGE_USER_GROUP,
+        matchLink: MANAGE_USER_GROUP,
+      },
+      {
+        name: 'Manage User Access',
+        link: MANAGE_USER_ACCESS,
+        matchLink: MANAGE_USER_ACCESS,
+      },
     ],
   },
   {
@@ -144,8 +178,16 @@ const sideNavAdminItems: AdminNavItem[] = [
     icon: configureSettingIcon,
     openStatus: false,
     subItemTitle: [
-      { name: 'Manage Settings', link: MANAGE_SETTINGS },
-      { name: 'Manage Geo-Based Rule', link: MANAGE_GEO_BASED_RULE },
+      {
+        name: 'Manage Settings',
+        link: MANAGE_SETTINGS,
+        matchLink: MANAGE_SETTINGS,
+      },
+      {
+        name: 'Manage Geo-Based Rule',
+        link: MANAGE_GEO_BASED_RULE,
+        matchLink: MANAGE_GEO_BASED_RULE,
+      },
     ],
   },
   {
@@ -153,15 +195,43 @@ const sideNavAdminItems: AdminNavItem[] = [
     icon: adminTemplateIcon,
     openStatus: false,
     subItemTitle: [
-      { name: 'Import templates', link: IMPORT_TEMPLATES },
-      { name: 'Interaction templates', link: INTERACTION_TEMPLATES },
-      { name: 'Email templates', link: EMAIL_TEMPLATES },
-      { name: 'Survey templates', link: TASK_TEMPLATES },
-      { name: 'Task templates', link: TASK_TEMPLATES },
-      { name: 'Checklist templates', link: CHECKLIST_TEMPLATES },
+      {
+        name: 'Import templates',
+        link: IMPORT_TEMPLATES,
+        matchLink: IMPORT_TEMPLATES,
+      },
+      {
+        name: 'Interaction templates',
+        link: INTERACTION_TEMPLATES,
+        matchLink: '',
+      },
+      {
+        name: 'Email templates',
+        link: EMAIL_TEMPLATES,
+        matchLink: EMAIL_TEMPLATES,
+      },
+      {
+        name: 'Survey templates',
+        link: TASK_TEMPLATES,
+        matchLink: TASK_TEMPLATES,
+      },
+      {
+        name: 'Task templates',
+        link: TASK_TEMPLATES,
+        matchLink: TASK_TEMPLATES,
+      },
+      {
+        name: 'Checklist templates',
+        link: CHECKLIST_TEMPLATES,
+        matchLink: CHECKLIST_TEMPLATES,
+      },
     ],
   },
 ];
+
+const matchCheck = (subItem: SubItemTitle, pathname: string): boolean => {
+  return subItem.matchLink === pathname;
+};
 
 export const Sidebar: React.FC<SideBarProps> = ({
   showAdminSidebar,
@@ -169,10 +239,20 @@ export const Sidebar: React.FC<SideBarProps> = ({
   sidebarExpand,
 }) => {
   const navigate = useNavigate();
-  const location = useLocation();
+  const { pathname } = useLocation();
+  // Get only few segments of the path
+  const trimmedPathname = (count: number) =>
+    '/' + pathname.split('/').filter(Boolean).slice(0, count).join('/');
+
   const { logout } = useAuthHook();
-  const [adminNavItems, setAdminNavItems] =
-    useState<AdminNavItem[]>(sideNavAdminItems);
+  const [adminNavItems, setAdminNavItems] = useState<AdminNavItem[]>(
+    sideNavAdminItems.map((item) => ({
+      ...item,
+      openStatus: item.subItemTitle.some((subItem) =>
+        matchCheck(subItem, trimmedPathname(2))
+      ),
+    }))
+  );
 
   const handleLogout = () => {
     logout();
@@ -218,7 +298,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
 
       <List>
         {!showAdminSidebar &&
-          sideNavItems.map((item, i) => {
+          accountNavItems.map((item, i) => {
             if (item.type === 'divider') {
               return <Divider key={i} />;
             } else
@@ -228,6 +308,13 @@ export const Sidebar: React.FC<SideBarProps> = ({
                     sx={{
                       justifyContent: !sidebarExpand ? 'center' : 'flex-start',
                       minHeight: 48,
+                      backgroundColor:
+                        item.matchLink === trimmedPathname(1)
+                          ? 'primary.dark'
+                          : '',
+                      '&:hover': {
+                        backgroundColor: 'primary.dark',
+                      },
                     }}
                     onClick={() => {
                       if (item.name === 'Logout') {
@@ -264,22 +351,20 @@ export const Sidebar: React.FC<SideBarProps> = ({
                   className='h-[20px]'
                 />
               </ListItemIcon>
-              {
-                <ListItemText
-                  sx={{
-                    '& .MuiTypography-root': {
-                      fontWeight: 600,
-                    },
-                  }}
-                  primary={'Administration'}
-                />
-              }
+              <ListItemText
+                sx={{
+                  '& .MuiTypography-root': {
+                    fontWeight: 600,
+                  },
+                }}
+                primary={'Administration'}
+              />
             </ListItemButton>
           </ListItem>
         )}
         {showAdminSidebar &&
           adminNavItems.map((item, index) => (
-            <>
+            <div key={index}>
               <ListItem key={index} disablePadding>
                 <ListItemButton
                   sx={{
@@ -292,16 +377,14 @@ export const Sidebar: React.FC<SideBarProps> = ({
                   <ListItemIcon sx={{ justifyContent: 'center' }}>
                     <img src={item.icon} alt='menu-icon' className='h-[20px]' />
                   </ListItemIcon>
-                  {
-                    <ListItemText
-                      sx={{
-                        '& .MuiTypography-root': {
-                          fontWeight: 400,
-                        },
-                      }}
-                      primary={item.title}
-                    />
-                  }
+                  <ListItemText
+                    sx={{
+                      '& .MuiTypography-root': {
+                        fontWeight: 400,
+                      },
+                    }}
+                    primary={item.title}
+                  />
                   {item.subItemTitle.length > 0 &&
                     (item.openStatus ? (
                       <img src={adminChevronUpIcon} alt='down' />
@@ -326,17 +409,20 @@ export const Sidebar: React.FC<SideBarProps> = ({
                         <ListItemText
                           sx={{
                             '& .MuiTypography-root': {
-                              fontWeight:
-                                subItem.link === location.pathname ? 400 : 300,
-                              color:
-                                subItem.link === location.pathname
-                                  ? '#F16137'
-                                  : '#FFFFFF',
+                              fontWeight: matchCheck(
+                                subItem,
+                                trimmedPathname(2)
+                              )
+                                ? 400
+                                : 300,
+                              color: matchCheck(subItem, trimmedPathname(2))
+                                ? '#F16137'
+                                : '#FFFFFF',
                             },
                           }}
                           primary={subItem.name}
                         />
-                        {subItem.link === location.pathname && (
+                        {matchCheck(subItem, trimmedPathname(2)) && (
                           <ListItemIcon>
                             <img
                               src={adminSubmenuActiveIcon}
@@ -349,7 +435,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                     </List>
                   ))}
               </Collapse>
-            </>
+            </div>
           ))}
       </List>
     </Drawer>

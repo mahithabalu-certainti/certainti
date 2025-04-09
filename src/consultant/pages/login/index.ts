@@ -1,3 +1,3 @@
-export * from './LeftPane';
-export * from './Login';
-export * from './RightPane';
+export * from './left-pane';
+export * from './login';
+export * from './right-pane';

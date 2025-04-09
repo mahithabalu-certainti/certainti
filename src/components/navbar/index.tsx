@@ -24,6 +24,9 @@ import { GlobalModal } from '../global-modal';
 import { PublicClientApplication } from '@azure/msal-browser';
 import { msalConfig } from '../../config/msalConfig';
 import { useAuthHook } from '../../hooks';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store/store';
+import { UserRoles } from '../../common-service';
 
 export const Navbar: React.FC = () => {
   const msalSigninInstance = new PublicClientApplication(msalConfig);
@@ -35,6 +38,8 @@ export const Navbar: React.FC = () => {
     React.useState<null | HTMLElement>(null);
   const [isGlobalModalOpen, setIsGlobalModalOpen] = useState(false);
   const { logout } = useAuthHook();
+  const { role } = useSelector((state: RootState) => state.auth);
+  const isConsultant = role !== UserRoles.Admin;
 
   const menuId = 'account-menu';
   const mobileMenuId = 'account-menu-mobile';
@@ -263,32 +268,36 @@ export const Navbar: React.FC = () => {
           <Box
             sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}
           >
-            <IconButton
-              color='inherit'
-              disableRipple
-              onClick={() => setIsGlobalModalOpen(true)}
-            >
-              <img src={globeIcon} alt='global' className='h-5' />
-              <span className='text-sm px-2'>Global</span>
-            </IconButton>
-            <div className='border-l border-gray-500 h-6' />
-            <select
-              className='px-4 py-2 focus:outline-none cursor-pointer'
-              aria-label='Fiscal Year Selector'
-            >
-              <option value='all' className='text-black'>
-                FY-All
-              </option>
-              <option value='2021' className='text-black'>
-                2021
-              </option>
-              <option value='2022' className='text-black'>
-                2022
-              </option>
-              <option value='2023' className='text-black'>
-                2023
-              </option>
-            </select>
+            {isConsultant && (
+              <>
+                <IconButton
+                  color='inherit'
+                  disableRipple
+                  onClick={() => setIsGlobalModalOpen(true)}
+                >
+                  <img src={globeIcon} alt='global' className='h-5' />
+                  <span className='text-sm px-2'>Global</span>
+                </IconButton>
+                <div className='border-l border-gray-500 h-6' />
+                <select
+                  className='px-4 py-2 focus:outline-none cursor-pointer'
+                  aria-label='Fiscal Year Selector'
+                >
+                  <option value='all' className='text-black'>
+                    FY-All
+                  </option>
+                  <option value='2021' className='text-black'>
+                    2021
+                  </option>
+                  <option value='2022' className='text-black'>
+                    2022
+                  </option>
+                  <option value='2023' className='text-black'>
+                    2023
+                  </option>
+                </select>
+              </>
+            )}
             <div className='border-l border-gray-500 mx-2  h-6' />
             <IconButton size='large' color='inherit'>
               <img src={phoneIcon} alt='phone' className='h-5' />

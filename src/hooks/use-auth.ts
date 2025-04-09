@@ -9,6 +9,7 @@ const DEFAULT_AUTH_DETAIL: IAuthDetails = {
   isAuthenticated: false,
   userId: null,
   name: null,
+  role: null,
 };
 
 export const useAuthHook = () => {
