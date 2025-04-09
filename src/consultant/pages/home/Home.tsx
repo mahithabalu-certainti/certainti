@@ -1,5 +1,5 @@
 import React from 'react';
 
 export const HomePage: React.FC = () => {
-  return <>Home</>;
+  return <div className='p-10'>Dashboard</div>;
 };

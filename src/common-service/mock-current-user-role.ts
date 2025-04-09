@@ -6,6 +6,6 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
   statusMessage: 'Success',
   data: {
     rid: '84268de1-936a-43c3-b98c-a48858c8bb42',
-    user_role: UserRoles.AccountAdministration,
+    user_role: UserRoles.Admin,
   },
 };

@@ -23,22 +23,19 @@ export const ADMIN_CREATE_USER = `${ADMIN_MANAGE_USER}/create`;
 export const ADMIN_EDIT_USER = `${ADMIN_MANAGE_USER}/edit/:userid`;
 
 /** ACCOUNT ROUTES */
-
 export const ACCOUNT = '/account';
 export const ACCOUNT_CREATE = `${ACCOUNT}/create`;
 export const ACCOUNT_EDIT = `${ACCOUNT}/edit/:accountid`;
 export const ACCOUNT_DETAILS = `${ACCOUNT}/details/:accountid`;
 
 /** RESOURCES ROUTES */
-
 export const RESOURCE = '/resource';
 export const RESOURCE_CREATE = `${RESOURCE}/create`;
 export const RESOURCE_EDIT = `${RESOURCE}/edit/:resourcesid`;
 
 /** PROJECT ROUTES */
-
 export const PROJECT = '/project';
 export const PROJECT_CREATE = `${PROJECT}/create`;
 export const PROJECT_EDIT = `${PROJECT}/edit/:projectid`;
 
-export const NOT_FOUND = '*';
+export const NOT_FOUND = 'page-not-found';

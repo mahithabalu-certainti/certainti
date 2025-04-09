@@ -26,7 +26,6 @@ import {
   ADMIN_MANAGE_USER_DETAILS,
   LOGIN,
   MAIN_ROUTE,
-  NOT_FOUND,
   PROJECT_CREATE,
   ProtectedRoute,
   RESOURCE_CREATE,
@@ -46,28 +45,26 @@ export const App: React.FC<IApp> = ({ instance }) => {
   return (
     <MsalProvider instance={instance}>
       <Routes>
-        {/* Route for the login page */}
         <Route
           path={LOGIN}
           element={
             _isAuthenticated ? <Navigate to={MAIN_ROUTE} replace /> : <Login />
           }
         />
-
-        {/* Protected routes */}
-        <Route element={<ProtectedRoute />}>
-          <Route element={<AppLayout />}>
-            {/* Route for the home page */}
+        <Route element={<AppLayout />}>
+          {/* Accounts protected routes */}
+          <Route element={<ProtectedRoute requireConsultant />}>
             <Route index element={<HomePage />} />
-            <Route path={ACCOUNT} element={<Accounts />} />
+            <Route index path={ACCOUNT} element={<Accounts />} />
             <Route path={ACCOUNT_CREATE} element={<AccountForm />} />
             <Route path={ACCOUNT_EDIT} element={<AccountForm />} />
             <Route path={ACCOUNT_DETAILS} element={<AccountDetails />} />
             <Route path={PROJECT_CREATE} element={<ProjectForm />} />
             <Route path={RESOURCE_CREATE} element={<ResourceForm />} />
+          </Route>
 
-            {/* Route for the Admin */}
-
+          {/* Admin protected routes */}
+          <Route element={<ProtectedRoute requireAdmin />}>
             <Route path={ADMIN_MANAGE_USER} element={<ManageUser />} />
             <Route
               path={ADMIN_MANAGE_USER_DETAILS}
@@ -76,10 +73,10 @@ export const App: React.FC<IApp> = ({ instance }) => {
             <Route path={ADMIN_CREATE_USER} element={<CreateUser />} />
             <Route path={ADMIN_EDIT_USER} element={<CreateUser />} />
           </Route>
-        </Route>
 
-        {/* Route for the 404 Not Found page */}
-        <Route path={NOT_FOUND} element={<NotFound />} />
+          {/* Page not found */}
+          <Route path='*' element={<NotFound />} />
+        </Route>
       </Routes>
     </MsalProvider>
   );

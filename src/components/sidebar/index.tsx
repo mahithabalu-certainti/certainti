@@ -27,7 +27,7 @@ import {
   helpIcon,
   logo,
   logoSmall,
-  logoutIcon,
+  // logoutIcon,
   notesIcon,
   projectsIcon,
   settingsIcon,
@@ -125,24 +125,24 @@ const accountNavItems: INavItem[] = [
   {
     icon: helpIcon,
     name: 'Help',
-    link: MAIN_ROUTE,
+    link: NOT_FOUND,
     type: 'link',
     matchLink: '',
   },
   {
     icon: settingsIcon,
     name: 'Settings',
-    link: MAIN_ROUTE,
+    link: NOT_FOUND,
     type: 'link',
     matchLink: '',
   },
-  {
-    icon: logoutIcon,
-    name: 'Logout',
-    link: MAIN_ROUTE,
-    type: 'link',
-    matchLink: '',
-  },
+  // {
+  //   icon: logoutIcon,
+  //   name: 'Logout',
+  //   link: MAIN_ROUTE,
+  //   type: 'link',
+  //   matchLink: '',
+  // },
 ];
 
 const sideNavAdminItems: AdminNavItem[] = [
