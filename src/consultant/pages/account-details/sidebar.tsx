@@ -1,4 +1,5 @@
 import React from 'react';
+import { adminSubmenuActiveIcon } from '../../../assets';
 import { MenuItem, SidebarProps } from '../../types';
 
 const menuItems: MenuItem[] = [
@@ -24,13 +25,16 @@ const Sidebar: React.FC<SidebarProps> = ({ activeKey, onSelect }) => {
           <li key={item.key}>
             <button
               onClick={() => onSelect(item.key)}
-              className={`w-full text-left px-3 py-2 rounded hover:bg-blue-100 ${
+              className={`w-full flex items-center gap-2 text-left px-3 py-2 rounded hover:bg-[#0BBFB726] ${
                 activeKey === item.key
-                  ? 'bg-blue-200 font-semibold'
+                  ? 'bg-[#0BBFB726] font-semibold'
                   : 'font-normal'
               }`}
             >
               {item.name}
+              {activeKey === item.key && (
+                <img src={adminSubmenuActiveIcon} alt='active' />
+              )}
             </button>
           </li>
         ))}

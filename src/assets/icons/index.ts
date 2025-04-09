@@ -25,6 +25,7 @@ import editIcon from './edit.svg';
 import filterIcon from './filter.svg';
 import globeIcon from './globe.svg';
 import helpIcon from './help.svg';
+import leftArrowIcon from './leftArrow.svg';
 import logoSmall from './logo-small.svg';
 import logo from './logo.svg';
 import logoutIcon from './logout.svg';
@@ -35,7 +36,9 @@ import notificationIcon from './notification.svg';
 import phoneIcon from './phone.svg';
 import plusIcon from './plus.svg';
 import projectsIcon from './projects.svg';
+import projectHeaderIcon from './projectsHeader.svg';
 import refreshIcon from './refresh.svg';
+import resourceHeaderIcon from './resourceHeader.svg';
 import searchBlackIcon from './search-black.svg';
 import searchIcon from './search.svg';
 import settingsIcon from './settings.svg';
@@ -70,6 +73,7 @@ export {
   filterIcon,
   globeIcon,
   helpIcon,
+  leftArrowIcon,
   logo,
   logoSmall,
   logoutIcon,
@@ -79,8 +83,10 @@ export {
   notificationIcon,
   phoneIcon,
   plusIcon,
+  projectHeaderIcon,
   projectsIcon,
   refreshIcon,
+  resourceHeaderIcon,
   searchBlackIcon,
   searchIcon,
   settingsIcon,

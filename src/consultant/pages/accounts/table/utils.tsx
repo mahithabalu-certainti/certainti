@@ -12,8 +12,8 @@ interface RenderRowsProps {
   handleSelectRow: (index: number) => void;
   handleEdit: (account: Account) => void;
   handleDelete: (account: Account) => void;
-  handleView: (account: Account) => void;
   renderChildRows: (parentAccount: string | null) => React.ReactNode;
+  handleAccountNameClick: (account: Account) => void;
 }
 
 interface RenderChildRowsProps {
@@ -23,7 +23,7 @@ interface RenderChildRowsProps {
   handleSelectRow: (index: number) => void;
   handleEdit: (account: Account) => void;
   handleDelete: (account: Account) => void;
-  handleView: (account: Account) => void;
+  handleAccountNameClick: (account: Account) => void;
   openRows: Set<string>;
 }
 
@@ -35,8 +35,8 @@ export const renderRows = ({
   handleSelectRow,
   handleEdit,
   handleDelete,
-  handleView,
   renderChildRows,
+  handleAccountNameClick,
 }: RenderRowsProps) => {
   const rows = accounts?.filter((account) => !account?.parentAccount);
   return rows?.map((account) => {
@@ -83,7 +83,12 @@ export const renderRows = ({
                 )}
               </IconButton>
             ) : null}
-            {account.accountName}
+            <span
+              className={`cursor-pointer ${hasChildren ? '' : 'ml-8'} no-underline hover:underline`}
+              onClick={() => handleAccountNameClick(account)}
+            >
+              {account.accountName}
+            </span>
           </TableCell>
           <TableCell>{account.accountId}</TableCell>
           <TableCell>{account.parentAccount || '-'}</TableCell>
@@ -97,7 +102,6 @@ export const renderRows = ({
             <ActionButton
               onEdit={() => handleEdit(account)}
               onDelete={() => handleDelete(account)}
-              onView={() => handleView(account)}
             />
           </TableCell>
         </TableRow>
@@ -115,7 +119,7 @@ export const renderChildRows = ({
   handleSelectRow,
   handleEdit,
   handleDelete,
-  handleView,
+  handleAccountNameClick,
   openRows,
 }: RenderChildRowsProps) => {
   return accounts
@@ -132,7 +136,12 @@ export const renderChildRows = ({
               checked={selectedRows.has(globalIndex)}
               onChange={() => handleSelectRow(globalIndex)}
             />
-            {account.accountName}
+            <span
+              className={`cursor-pointer no-underline hover:underline`}
+              onClick={() => handleAccountNameClick(account)}
+            >
+              {account.accountName}
+            </span>
           </TableCell>
           <TableCell>{account.accountId}</TableCell>
           <TableCell>{account.parentAccount || '-'}</TableCell>
@@ -152,7 +161,6 @@ export const renderChildRows = ({
             <ActionButton
               onEdit={() => handleEdit(account)}
               onDelete={() => handleDelete(account)}
-              onView={() => handleView(account)}
             />
           </TableCell>
         </TableRow>

@@ -17,8 +17,8 @@ import { ACCOUNT, ACCOUNT_DETAILS } from '../../../../routes';
 import { useAccounts } from '../../../services/account';
 import { Account, AccountList, ConvertedAccount } from '../../../types/account';
 import { convertAccounts } from '../helpers';
-import { renderChildRows, renderRows } from './helpers';
 import './styles.css';
+import { renderChildRows, renderRows } from './utils';
 
 const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
   const navigate = useNavigate();
@@ -42,6 +42,16 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
     setAccounts(convertAccounts(accountList?.accounts ?? []));
   }, [accountList]);
 
+  // Add this handler in the AccountTable component
+  const handleAccountNameClick = (account: Account) => {
+    const path = generatePath(ACCOUNT_DETAILS, {
+      accountid: account.accountId,
+    });
+    navigate(path, {
+      state: { account },
+    });
+  };
+
   // Handler for edit and delete actions
   const handleEdit = (account: Account) => {
     navigate(ACCOUNT + '/edit/' + account.accountId, {
@@ -51,14 +61,6 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
 
   const handleDelete = (account: Account) => {
     console.log('Delete account', account.accountId);
-  };
-  const handleView = (account: Account) => {
-    const path = generatePath(ACCOUNT_DETAILS, {
-      accountid: account.accountId,
-    });
-    navigate(path, {
-      state: { account },
-    });
   };
 
   // Toggle expand/collapse state for a row
@@ -166,8 +168,8 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
       handleSelectRow,
       handleEdit,
       handleDelete,
-      handleView,
       openRows,
+      handleAccountNameClick,
     });
 
   return (
@@ -282,8 +284,8 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
               handleSelectRow,
               handleEdit,
               handleDelete,
-              handleView,
               renderChildRows: childRowsRenderer,
+              handleAccountNameClick,
             })
           )}
         </TableBody>
