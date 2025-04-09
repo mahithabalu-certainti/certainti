@@ -18,6 +18,9 @@ export const useFetchAccountFields = (accountId: string) => {
     queryKey: ['accountFields', accountId],
     queryFn: () => fetchAccountFields(accountId),
     enabled: !!accountId, // Only fetch if accountId exists
+    staleTime: 0, // No cache
+    gcTime: 0, // Immediately remove from cache
+    retry: 0,
   });
 };
 
