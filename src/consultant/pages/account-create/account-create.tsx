@@ -137,11 +137,11 @@ export const AccountForm: React.FC = () => {
   );
 
   const submitData = (formValues: Partial<AccountFormData>) => {
-    const accountData = transformFormData(formValues, isEditView);
+    const transformData = transformFormData(formValues, isEditView, accountData?.rid);
     if (isEditView) {
-      updateAccount.mutate(accountData);
+      updateAccount.mutate(transformData);
     } else {
-      createAccount.mutate(accountData);
+      createAccount.mutate(transformData);
     }
   };
 
