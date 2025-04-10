@@ -9,16 +9,6 @@ export const ParentAccountUrl = '/api/accounts/global';
 export const CurrencyUrl = '/api/accounts/currency';
 export const RegionUrl = '/api/accounts/regions';
 
-// export const AccountListURL = ({
-//   page,
-//   limit,
-//   sortBy,
-//   sortOrder,
-//   filters,
-// }: AccountListURLParams): string => {
-//   return `/api/accounts/?page=${page}&limit=${limit}&sortBy=${sortBy}&sortOrder=${sortOrder}&filters=${JSON.stringify(filters)}`;
-// };
-
 export const AccountListURL = ({
   page,
   limit,

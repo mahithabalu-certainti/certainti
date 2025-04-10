@@ -116,13 +116,17 @@ export interface NewAccountData extends AccountFieldsTypes, AccountById {
   created_by: string;
   modified_by: string;
   finance_poc_number: string;
-  account_rid: string
+  account_rid: string;
 }
 
-export interface AccountFormData extends Omit<NewAccountData, 'is_parent' | 'autosend_interaction' | 'auto_access_rd'> {
-  is_parent: YesNo
-  autosend_interaction: YesNo
-  auto_access_rd: YesNo
+export interface AccountFormData
+  extends Omit<
+    NewAccountData,
+    'is_parent' | 'autosend_interaction' | 'auto_access_rd'
+  > {
+  is_parent: YesNo;
+  autosend_interaction: YesNo;
+  auto_access_rd: YesNo;
 }
 
 type Country = {
@@ -179,23 +183,6 @@ export type AccountList = {
   account_number?: number;
   primary_contact?: string;
 };
-
-// export type AccountList1 = {
-//   rid: string;
-//   r_number: string;
-//   account_name: string;
-//   industry: string;
-//   status: string;
-//   primary_contact_name?: string;
-//   child_accounts?: AccountList1[];
-//   country?: {
-//     country_name: string;
-//   };
-//   currency?: {
-//     currency_code: string;
-//   };
-//   parentAccountID: string;
-// };
 
 export interface ConvertedAccount {
   accountName: string;

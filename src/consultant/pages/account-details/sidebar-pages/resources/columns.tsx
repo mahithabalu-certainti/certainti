@@ -13,7 +13,7 @@ interface ResourceColumnsProps {
 
 const BASE_COLUMNS: ColumnDefinition[] = [
   {
-    id: 'id',
+    id: 'rid',
     label: 'Resource Id',
     sortable: true,
     render: (value: string, row: any) => (
@@ -29,10 +29,10 @@ const BASE_COLUMNS: ColumnDefinition[] = [
       </span>
     ),
   },
-  { id: 'number', label: 'Resource Number', sortable: true },
-  { id: 'refId', label: 'Resource Ref Id', sortable: true },
-  { id: 'fullName', label: 'Resource Full Name', sortable: true },
-  { id: 'type', label: 'Resource Type', sortable: true },
+  { id: 'r_number', label: 'Resource Number', sortable: true },
+  { id: 'resource_ref_id', label: 'Resource Ref Id', sortable: true },
+  { id: 'resource_fullname', label: 'Resource Full Name', sortable: true },
+  { id: 'resource_type', label: 'Resource Type', sortable: true },
 ];
 
 const EXTENDED_COLUMNS: ColumnDefinition[] = [
@@ -43,7 +43,7 @@ const EXTENDED_COLUMNS: ColumnDefinition[] = [
 ];
 
 const createStatusColumn = (activeOnly: boolean = false): ColumnDefinition => ({
-  id: 'status',
+  id: 'resource_status',
   label: 'Status',
   sortable: true,
   render: (value: string) => (

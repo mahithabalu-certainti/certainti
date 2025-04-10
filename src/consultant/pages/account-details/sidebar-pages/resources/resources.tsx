@@ -81,7 +81,7 @@ const Resource = () => {
         title='Resource'
       />
       <ListTable
-        data={mockResourcesList}
+        data={mockResourcesList.data.resources}
         columns={columns}
         actionMenuItems={actionMenuItems}
         title='Resource'
