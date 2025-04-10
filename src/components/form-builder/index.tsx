@@ -229,7 +229,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 textField: {
                   fullWidth: true,
                   size: 'small',
-                  InputProps: { disabled: true },
+                  InputProps: {
+                    disabled: true,
+                    onPaste: (e: React.ClipboardEvent<HTMLInputElement>) => {
+                      e.preventDefault();
+                      return false;
+                    },
+                  },
                   sx: {
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 0,
