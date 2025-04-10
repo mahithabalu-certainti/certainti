@@ -1,0 +1,278 @@
+import { Box, FormControl, MenuItem, Select, SelectChangeEvent } from '@mui/material';
+import React, { useState } from 'react';
+import { Button } from '../button';
+import { arrowBackIcon, filterArrowRightIcon } from '../../assets';
+import { DateFilterOption, dateOptions, EnumFilterOption, enumOptions, enumValueOptions, FieldConfig, FilterComponentProps, FilterState, NumberFilterOption, numberOptions, TextFilterOption, textOptions } from './filterType';
+import { DateFilterControl, EnumFilterControl, NumberFilterControl, TextFilterControl } from './helper';
+import { getInitialStateForField } from '../../consultant/pages/account-details/sidebar-pages/resources/utils';
+// import { getInitialStateForField } from '../../consultant/pages/resource/utils';
+
+
+const Filter: React.FC<FilterComponentProps> = ({ filterMenu, setAppliedFilters, handleFilter }) => {
+    const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+    const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
+        {}
+    );
+    const [showFilterOption, setShowFilterOption] = useState<boolean>(false);
+
+    const handleClickFilterMenu = (fieldName: string) => {
+        setSelectedFilters((prev) =>
+            prev.includes(fieldName)
+                ? prev.filter((item) => item !== fieldName)
+                : [...prev, fieldName]
+        );
+
+        if (!filterStates[fieldName]) {
+            const fieldConfig = filterMenu.find((f) => f.name === fieldName);
+            if (!fieldConfig) return;
+
+            setFilterStates((prev) => ({
+                ...prev,
+                [fieldName]: getInitialStateForField(fieldConfig),
+            }));
+        }
+    }
+
+    const handleFilterOptionChange = (
+        fieldName: string,
+        event: SelectChangeEvent<any>
+    ) => {
+        const fieldConfig = filterMenu.find((f) => f.name === fieldName);
+        if (!fieldConfig) return;
+
+        setFilterStates((prev) => {
+            const currentState = prev[fieldName] || {};
+            switch (fieldConfig.type) {
+                case 'text':
+                    return {
+                        ...prev,
+                        [fieldName]: {
+                            ...currentState,
+                            text: {
+                                ...currentState.text!,
+                                option: event.target.value as TextFilterOption,
+                            },
+                        },
+                    };
+                case 'number':
+                    return {
+                        ...prev,
+                        [fieldName]: {
+                            ...currentState,
+                            number: {
+                                ...currentState.number!,
+                                option: event.target.value as NumberFilterOption,
+                            },
+                        },
+                    };
+                case 'enum':
+                    return {
+                        ...prev,
+                        [fieldName]: {
+                            ...currentState,
+                            enum: {
+                                ...currentState.enum!,
+                                option: event.target.value as EnumFilterOption,
+                            },
+                        },
+                    };
+                case 'date':
+                    return {
+                        ...prev,
+                        [fieldName]: {
+                            ...currentState,
+                            date: {
+                                ...currentState.date!,
+                                option: event.target.value as DateFilterOption,
+                            },
+                        },
+                    };
+                default:
+                    return prev;
+            }
+        });
+    };
+
+    const handleFilterValueChange = (
+        fieldName: string,
+        event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
+        // setIsModified(true);
+        const fieldConfig = filterMenu.find((f) => f.name === fieldName);
+        if (!fieldConfig) return;
+
+        setFilterStates((prev) => {
+            const currentState = prev[fieldName] || {};
+            switch (fieldConfig.type) {
+                case 'text':
+                    return {
+                        ...prev,
+                        [fieldName]: {
+                            ...currentState,
+                            text: {
+                                ...currentState.text!,
+                                value: event.target.value,
+                            },
+                        },
+                    };
+                case 'number':
+                    return {
+                        ...prev,
+                        [fieldName]: {
+                            ...currentState,
+                            number: {
+                                ...currentState.number!,
+                                value: {
+                                    ...currentState.number?.value,
+                                    [event.target.name]: event.target.value
+                                },
+                            },
+                        },
+                    };
+                default:
+                    return prev;
+            }
+        });
+    };
+
+    const handleEnumSelectChange = (fieldName: string, isMultiple: boolean, value: string[]) => {
+        setFilterStates((prev: any) => {
+            return {
+                ...prev,
+                [fieldName]: {
+                    ...prev[fieldName],
+                    enum: {
+                        ...prev[fieldName].enum,
+                        value: isMultiple ? value : [value],
+                    },
+                },
+            };
+        });
+    };
+
+    const handleDateChange = (type: string, fieldName: string, value: string) => {
+        setFilterStates((prev: any) => {
+            return {
+                ...prev,
+                [fieldName]: {
+                    ...prev[fieldName],
+                    date: {
+                        ...prev[fieldName].date,
+                        value: {
+                            ...prev[fieldName].date.value,
+                            [type]: value
+                        },
+                    },
+                },
+            };
+        });
+    };
+
+
+
+    const renderFilterControls = (field: FieldConfig) => {
+        if (!selectedFilters.includes(field.name)) return null;
+
+        const fieldState = filterStates[field.name] || {};
+
+        switch (field.type) {
+            case 'text':
+                return (
+                    <TextFilterControl
+                        filterStates={filterStates}
+                        menuOption={textOptions}
+                        fieldName={field.name}
+                        state={fieldState}
+                        onOptionChange={handleFilterOptionChange}
+                        onValueChange={handleFilterValueChange}
+                    />
+                );
+            case 'number':
+                return (
+                    <NumberFilterControl
+                        filterStates={filterStates}
+                        menuOption={numberOptions}
+                        fieldName={field.name}
+                        state={fieldState}
+                        onOptionChange={handleFilterOptionChange}
+                        onValueChange={handleFilterValueChange}
+                    />
+                );
+            case 'enum':
+                return (
+                    <EnumFilterControl
+                        filterStates={filterStates}
+                        menuOption={enumOptions}
+                        valueOptions={enumValueOptions}
+                        fieldName={field.name}
+                        state={fieldState}
+                        onOptionChange={handleFilterOptionChange}
+                        onChange={handleEnumSelectChange}
+                    />
+                );
+            case 'date':
+                return (
+                    <DateFilterControl
+                        filterStates={filterStates}
+                        menuOption={dateOptions}
+                        fieldName={field.name}
+                        state={fieldState}
+                        onOptionChange={handleFilterOptionChange}
+                        onValueChange={handleDateChange}
+                    // onChange={handleBooleanChange}
+                    />
+                );
+            default:
+                return null;
+        }
+    };
+
+
+    return (
+        <Box className='fixed top-0 right-0 z-1111 bg-[#0000006e] bg-opacity-10 w-full h-full'>
+
+            <Box className='absolute top-0 right-0 z-1111 overflow-y-scroll w-[248px] max-h-[568px] bg-white opacity-100'>
+                <Box className='flex justify-between items-center p-2 border-b border-[#CBD6E2]'>
+                    <Box>Filters</Box>
+                    <Button label='Reset' variant='text' sx={{
+                        textDecoration: 'underline', '&:hover': {
+                            background: 'none',
+                            color: '#F16137',
+                            textDecoration: 'underline'
+                        }
+                    }} />
+                </Box>
+                {filterMenu && filterMenu.map((item, index) => (<>
+
+                    <Box key={index} className='flex gap-2 justify-between items-center p-2 border-b border-[#CBD6E2]'
+                        onClick={() => handleClickFilterMenu(item.name)}
+                    >
+                        <Box className="text-[#2D3E4F] font-light text-sm">{item.name}</Box>
+                        <Box className="text-[#2D3E4F] ">
+                            <img src={filterArrowRightIcon} alt="icon" className='w-[16px] h-[16px]' />
+                        </Box>
+                    </Box>
+                    {renderFilterControls(item)}
+
+                </>
+                ))}
+                <Box className='flex  justify-end items-center gap-2 p-2'>
+                    <Button onClick={handleFilter} label='Cancel' sx={{
+                        height: "32px", border: '1px solid #CBD6E2', color: '#7D98B6', borderRadius: '2px', '&:hover': {
+                            background: 'none',
+                            color: '#7D98B6'
+                        }
+                    }} />
+                    <Button label='Find' sx={{
+                        height: "32px", background: '#F16137', color: '#FFFFFF', borderRadius: '2px', '&:hover': {
+                            background: '#F16137',
+                            color: '#FFFFFF'
+                        }
+                    }} />
+                </Box>
+            </Box>
+        </Box>
+    );
+}
+
+export default Filter;

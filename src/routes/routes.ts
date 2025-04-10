@@ -33,6 +33,16 @@ export const RESOURCE = '/resource';
 export const RESOURCE_CREATE = `${RESOURCE}/create`;
 export const RESOURCE_EDIT = `${RESOURCE}/edit/:resourcesid`;
 
+// Resource cost route
+export const RESOURCECOST = '/resource/cost';
+export const RESOURCECOST_CREATE = `${RESOURCECOST}/create`;
+export const RESOURCECOST_EDIT = `${RESOURCECOST}/edit/:costid`;
+
+// Resource skill route
+export const RESOURCESKILL = '/resource-skill';
+export const RESOURCESKILL_CREATE = `${RESOURCESKILL}/create`;
+export const RESOURCESKILL_EDIT = `${RESOURCESKILL}/edit/:skillid`;
+
 /** PROJECT ROUTES */
 export const PROJECT = '/project';
 export const PROJECT_CREATE = `${PROJECT}/create`;

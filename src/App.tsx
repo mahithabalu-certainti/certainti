@@ -29,8 +29,11 @@ import {
   NOT_MATCH,
   PROJECT_CREATE,
   ProtectedRoute,
+  RESOURCE,
   RESOURCE_CREATE,
 } from './routes';
+import Resource from './consultant/pages/account-details/sidebar-pages/resources/resources';
+// import Resource from './consultant/pages/resource/resource';
 
 /**
  * App component serves as the root component of the application.
@@ -62,6 +65,7 @@ export const App: React.FC<IApp> = ({ instance }) => {
             <Route path={ACCOUNT_DETAILS} element={<AccountDetails />} />
             <Route path={PROJECT_CREATE} element={<ProjectForm />} />
             <Route path={RESOURCE_CREATE} element={<ResourceForm />} />
+            <Route path={RESOURCE} element={<Resource />} />
           </Route>
 
           {/* Admin protected routes */}

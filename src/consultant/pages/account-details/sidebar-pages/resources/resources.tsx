@@ -5,13 +5,17 @@ import { mockResourcesList } from '../../../../mockdata/resource-list';
 import TabPanel from '../../components/tab';
 import ListTable from '../../components/table';
 import { getResourceColumns } from './columns';
+import ResourceTableHeader from './resource-table-header';
+import ResourceSubComponents from './resource-sub-components';
 
 const Resource = () => {
   const [viewMode, setViewMode] = useState<boolean>(false);
+  const [viewResourceList, setViewResourceListt] = useState<boolean>(true)
   const [columns, setColumns] = useState<any>([]);
 
   const handleResourceClick = (row: any) => {
-    console.log('Resource clicked:', row.id);
+    setViewResourceListt(!viewResourceList)
+    console.log('Resource clicked:');
     // Add your custom logic here
   };
 
@@ -52,22 +56,22 @@ const Resource = () => {
     variant: 'text' | 'outlined' | 'contained';
     onClick: () => void;
   }[] = [
-    {
-      label: 'Download',
-      variant: 'outlined',
-      onClick: () => console.log('Download'),
-    },
-    {
-      label: 'New',
-      variant: 'outlined',
-      onClick: () => console.log('New'),
-    },
-    {
-      label: 'View',
-      variant: 'outlined',
-      onClick: () => setViewMode(true),
-    },
-  ];
+      {
+        label: 'Download',
+        variant: 'outlined',
+        onClick: () => console.log('Download'),
+      },
+      {
+        label: 'New',
+        variant: 'outlined',
+        onClick: () => console.log('New'),
+      },
+      {
+        label: 'View',
+        variant: 'outlined',
+        onClick: () => setViewMode(true),
+      },
+    ];
 
   const toggleViewMode = () => {
     setViewMode(!viewMode);
@@ -80,19 +84,24 @@ const Resource = () => {
         onExitView={toggleViewMode}
         title='Resource'
       />
-      <ListTable
+      <ResourceTableHeader title='Resource'
+        titleIcon={<img src={resourceHeaderIcon} alt='resource header icon' />}
+        headerButtons={viewMode ? [] : headerButtons} />
+      {!viewResourceList ? <ResourceSubComponents /> : <ListTable
         data={mockResourcesList.data.resources}
         columns={columns}
         actionMenuItems={actionMenuItems}
-        title='Resource'
-        titleIcon={<img src={resourceHeaderIcon} alt='resource header icon' />}
-        headerButtons={viewMode ? [] : headerButtons}
+        // title='Resource'
+        // titleIcon={<img src={resourceHeaderIcon} alt='resource header icon' />}
+        // headerButtons={viewMode ? [] : headerButtons}
         pagination={!viewMode}
         rowsPerPage={5}
         sortable={true}
         setViewMode={setViewMode}
         viewMode={viewMode}
-      />
+      />}
+
+
     </div>
   );
 };
