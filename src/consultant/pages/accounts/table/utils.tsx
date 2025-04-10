@@ -1,4 +1,4 @@
-import { Checkbox, IconButton, TableCell, TableRow } from '@mui/material';
+import { Box, Checkbox, IconButton, TableCell, TableRow } from '@mui/material';
 import React from 'react';
 import { arrowDownIcon, arrowUpIcon } from '../../../../assets';
 import { Account, ConvertedAccount } from '../../../types';
@@ -61,15 +61,22 @@ export const renderRows = ({
     return (
       <React.Fragment key={account.accountName}>
         <TableRow>
-          <TableCell>
-            <Checkbox
-              checked={
-                allChildrenSelected || selectedRows.has(globalIndex as number)
-              }
-              onChange={() => handleSelectRow(globalIndex as number)}
-            />
+          <TableCell sx={{ maxWidth: '50px' }}>
+            <Box className='flex items-center justify-center'>
+              <Checkbox
+                checked={
+                  allChildrenSelected || selectedRows.has(globalIndex as number)
+                }
+                onChange={() => handleSelectRow(globalIndex as number)}
+              />
+            </Box>
           </TableCell>
-          <TableCell>
+          <TableCell
+            sx={{
+              fontWeight: '400 !important',
+              color: '#2D3E4F !important',
+            }}
+          >
             {hasChildren ? ( // Only show the icon if there are children
               <IconButton
                 aria-label='expand row'
@@ -77,27 +84,46 @@ export const renderRows = ({
                 onClick={() => handleRowClick(account.accountName)}
               >
                 {openRows.has(account.accountName) ? (
-                  <img src={arrowUpIcon} alt='arrowUp' />
+                  <img
+                    src={arrowUpIcon}
+                    alt='arrowUp'
+                    style={{
+                      filter:
+                        'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
+                    }}
+                  />
                 ) : (
-                  <img src={arrowDownIcon} alt='arrowDown' />
+                  <img
+                    src={arrowDownIcon}
+                    alt='arrowDown'
+                    style={{
+                      filter:
+                        'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
+                    }}
+                  />
                 )}
               </IconButton>
             ) : null}
             <span
               className={`cursor-pointer ${hasChildren ? '' : 'ml-8'} no-underline hover:underline`}
               onClick={() => handleAccountNameClick(account)}
-            >
-              {account.accountName}
-            </span>
+            ></span>
+            {account.accountName}
           </TableCell>
-          <TableCell>{account.accountId}</TableCell>
-          <TableCell>{account.parentAccount || '-'}</TableCell>
-          <TableCell>{account.accountNumber}</TableCell>
-          <TableCell>{account.industry}</TableCell>
-          <TableCell>{account.country}</TableCell>
-          <TableCell>{account.currency}</TableCell>
+          <TableCell sx={{ minWidth: '350px' }}>{account.accountId}</TableCell>
+          <TableCell sx={{ minWidth: '200px' }}>
+            {account.parentAccount || '-'}
+          </TableCell>
+          <TableCell sx={{ minWidth: '180px' }}>
+            {account.accountNumber}
+          </TableCell>
+          <TableCell sx={{ minWidth: '200px' }}>{account.industry}</TableCell>
+          <TableCell sx={{ minWidth: '150px' }}>{account.country}</TableCell>
+          <TableCell sx={{ minWidth: '100px' }}>{account.currency}</TableCell>
           <TableCell>{account.status}</TableCell>
-          <TableCell>{account.primaryContact}</TableCell>
+          <TableCell sx={{ minWidth: '180px' }}>
+            {account.primaryContact}
+          </TableCell>
           <TableCell>
             <ActionButton
               onEdit={() => handleEdit(account)}
@@ -131,7 +157,12 @@ export const renderChildRows = ({
       return (
         <TableRow key={account.accountName}>
           <TableCell className='no-border' />
-          <TableCell>
+          <TableCell
+            sx={{
+              fontWeight: '400 !important',
+              color: '#2D3E4F !important',
+            }}
+          >
             <Checkbox
               checked={selectedRows.has(globalIndex)}
               onChange={() => handleSelectRow(globalIndex)}
@@ -143,21 +174,28 @@ export const renderChildRows = ({
               {account.accountName}
             </span>
           </TableCell>
-          <TableCell>{account.accountId}</TableCell>
-          <TableCell>{account.parentAccount || '-'}</TableCell>
-          <TableCell>{account.accountNumber}</TableCell>
-          <TableCell>{account.industry}</TableCell>
-          <TableCell>{account.country}</TableCell>
+          <TableCell sx={{ minWidth: '350px' }}>{account.accountId}</TableCell>
+          <TableCell sx={{ minWidth: '200px' }}>
+            {account.parentAccount || '-'}
+          </TableCell>
+          <TableCell sx={{ minWidth: '180px' }}>
+            {account.accountNumber}
+          </TableCell>
+          <TableCell sx={{ minWidth: '200px' }}>{account.industry}</TableCell>
+          <TableCell sx={{ minWidth: '150px' }}>{account.country}</TableCell>
           <TableCell
+            sx={{ minWidth: '100px' }}
             className={`last-column ${
               openRows.has(account.accountName) ? 'no-border-right' : ''
             }`}
           >
             {account.currency}
           </TableCell>
-          <TableCell>{account.status}</TableCell>
-          <TableCell>{account.primaryContact}</TableCell>
-          <TableCell>
+          <TableCell sx={{ minWidth: '100px' }}>{account.status}</TableCell>
+          <TableCell sx={{ minWidth: '180px' }}>
+            {account.primaryContact}
+          </TableCell>
+          <TableCell sx={{ minWidth: '80px' }}>
             <ActionButton
               onEdit={() => handleEdit(account)}
               onDelete={() => handleDelete(account)}

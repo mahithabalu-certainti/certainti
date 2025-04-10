@@ -174,10 +174,28 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
 
   return (
     <Paper sx={{ overflowX: 'auto', boxShadow: 'none' }}>
-      <Table className='border border-[#E0E0E0]'>
-        <TableHead>
+      <Table
+        sx={{
+          border: '1px solid #CBD6E2',
+          borderCollapse: 'collapse',
+          '& .MuiTableCell-root': {
+            border: '1px solid #CBD6E2',
+          },
+        }}
+      >
+        <TableHead
+          sx={{
+            '& .MuiTableCell-root': {
+              fontWeight: 500,
+              fontSize: '14px',
+              lineHeight: '21px',
+              color: '#2A2A2A',
+              padding: '8px',
+            },
+          }}
+        >
           <TableRow>
-            <TableCell />
+            <TableCell sx={{ maxWidth: '50px' }} />
             <TableCell sx={{ minWidth: '300px' }}>
               <TableSortLabel
                 active={orderBy === 'account_name'}
@@ -187,7 +205,7 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
                 Account Name
               </TableSortLabel>
             </TableCell>
-            <TableCell>
+            <TableCell sx={{ minWidth: '350px' }}>
               <TableSortLabel
                 active={orderBy === 'account_id'}
                 direction={orderBy === 'account_id' ? order : 'asc'}
@@ -196,7 +214,7 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
                 Account ID
               </TableSortLabel>
             </TableCell>
-            <TableCell>
+            <TableCell sx={{ minWidth: '200px' }}>
               <TableSortLabel
                 active={orderBy === 'parent_account'}
                 direction={orderBy === 'parent_account' ? order : 'asc'}
@@ -205,7 +223,7 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
                 Parent Account
               </TableSortLabel>
             </TableCell>
-            <TableCell>
+            <TableCell sx={{ minWidth: '180px' }}>
               <TableSortLabel
                 active={orderBy === 'account_number'}
                 direction={orderBy === 'account_number' ? order : 'asc'}
@@ -214,7 +232,7 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
                 Account Number
               </TableSortLabel>
             </TableCell>
-            <TableCell>
+            <TableCell sx={{ minWidth: '200px' }}>
               <TableSortLabel
                 active={orderBy === 'industry'}
                 direction={orderBy === 'industry' ? order : 'asc'}
@@ -223,7 +241,7 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
                 Industry
               </TableSortLabel>
             </TableCell>
-            <TableCell>
+            <TableCell sx={{ minWidth: '150px' }}>
               <TableSortLabel
                 active={orderBy === 'country'}
                 direction={orderBy === 'country' ? order : 'asc'}
@@ -232,7 +250,7 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
                 Country
               </TableSortLabel>
             </TableCell>
-            <TableCell>
+            <TableCell sx={{ minWidth: '100px' }}>
               <TableSortLabel
                 active={orderBy === 'currency'}
                 direction={orderBy === 'currency' ? order : 'asc'}
@@ -241,7 +259,7 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
                 Currency
               </TableSortLabel>
             </TableCell>
-            <TableCell>
+            <TableCell sx={{ minWidth: '100px' }}>
               <TableSortLabel
                 active={orderBy === 'status'}
                 direction={orderBy === 'status' ? order : 'asc'}
@@ -250,7 +268,7 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
                 Status
               </TableSortLabel>
             </TableCell>
-            <TableCell>
+            <TableCell sx={{ minWidth: '180px' }}>
               <TableSortLabel
                 active={orderBy === 'primary_contact'}
                 direction={orderBy === 'primary_contact' ? order : 'asc'}
@@ -259,10 +277,20 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
                 Primary Contact
               </TableSortLabel>
             </TableCell>
-            <TableCell>Actions</TableCell>
+            <TableCell sx={{ minWidth: '80px' }}>Actions</TableCell>
           </TableRow>
         </TableHead>
-        <TableBody>
+        <TableBody
+          sx={{
+            '& .MuiTableCell-root': {
+              fontWeight: 300,
+              fontSize: '14px',
+              lineHeight: '21px',
+              color: '#425A76',
+              padding: '6px',
+            },
+          }}
+        >
           {loading ? (
             <TableRow>
               <TableCell colSpan={11} align='center'>
