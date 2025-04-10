@@ -8,7 +8,6 @@ import { actionIcon } from '../../../../assets';
 interface ActionButtonProps {
   onEdit: () => void;
   onDelete: () => void;
-  onView: () => void;
 }
 
 const StyledMenu = styled((props: MenuProps) => (
@@ -52,11 +51,7 @@ const StyledMenu = styled((props: MenuProps) => (
   },
 }));
 
-export default function ActionButton({
-  onEdit,
-  onDelete,
-  onView,
-}: ActionButtonProps) {
+export default function ActionButton({ onEdit, onDelete }: ActionButtonProps) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -89,15 +84,6 @@ export default function ActionButton({
         open={open}
         onClose={handleClose}
       >
-        <MenuItem
-          onClick={() => {
-            handleClose();
-            onView();
-          }}
-          disableRipple
-        >
-          View
-        </MenuItem>
         <MenuItem
           onClick={() => {
             handleClose();

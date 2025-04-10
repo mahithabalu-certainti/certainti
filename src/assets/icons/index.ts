@@ -2,12 +2,12 @@ import accountHomeIcon from './account-home.svg';
 import accountSettingsIcon from './account-settings.svg';
 import accountsIcon from './accounts.svg';
 import actionIcon from './action.svg';
-import adminChevronDownIcon from './adminChevronDownIcon.svg';
-import adminChevronUpIcon from './adminChevronUpIcon.svg';
-import adminPermissionIcon from './adminPermissionIcon.svg';
-import adminSubmenuActiveIcon from './adminSubmenuActiveIcon.svg';
-import adminTemplateIcon from './adminTemplateIcon.svg';
-import administrationIcon from './administrationIcon.svg';
+import adminChevronDownIcon from './admin-chevron-down.svg';
+import adminChevronUpIcon from './admin-chevron-up.svg';
+import adminPermissionIcon from './admin-permission.svg';
+import adminSubmenuActiveIcon from './admin-submenu-active.svg';
+import adminTemplateIcon from './admin-template.svg';
+import administrationIcon from './administration.svg';
 import allAccountIcon from './all-account.svg';
 import arrowDownIcon from './arrow-down.svg';
 import arrowUpIcon from './arrow-up.svg';
@@ -18,24 +18,27 @@ import chevronDownIcon from './chevron-down.svg';
 import chevronLeftIcon from './chevron-left.svg';
 import closeCircleIcon from './close-circle.svg';
 import closeIcon from './close.svg';
-import configureSettingIcon from './configureSettingIcon.svg';
+import configureSettingIcon from './configure-setting.svg';
 import dashboardIcon from './dashboard.svg';
 import downloadIcon from './download.svg';
 import editIcon from './edit.svg';
 import filterIcon from './filter.svg';
 import globeIcon from './globe.svg';
 import helpIcon from './help.svg';
+import leftArrowIcon from './left-arrow.svg';
 import logoSmall from './logo-small.svg';
 import logo from './logo.svg';
 import logoutIcon from './logout.svg';
-import ManageUserIcon from './manageUser.svg';
+import ManageUserIcon from './manage-user.svg';
 import menuIcon from './menu-icon.svg';
 import notesIcon from './notes.svg';
 import notificationIcon from './notification.svg';
 import phoneIcon from './phone.svg';
 import plusIcon from './plus.svg';
+import projectHeaderIcon from './projects-header.svg';
 import projectsIcon from './projects.svg';
 import refreshIcon from './refresh.svg';
+import resourceHeaderIcon from './resource-header.svg';
 import searchBlackIcon from './search-black.svg';
 import searchIcon from './search.svg';
 import settingsIcon from './settings.svg';
@@ -70,6 +73,7 @@ export {
   filterIcon,
   globeIcon,
   helpIcon,
+  leftArrowIcon,
   logo,
   logoSmall,
   logoutIcon,
@@ -79,8 +83,10 @@ export {
   notificationIcon,
   phoneIcon,
   plusIcon,
+  projectHeaderIcon,
   projectsIcon,
   refreshIcon,
+  resourceHeaderIcon,
   searchBlackIcon,
   searchIcon,
   settingsIcon,

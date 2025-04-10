@@ -6,13 +6,13 @@ export const theme = createTheme({
   },
   palette: {
     primary: {
-      main: '#2D3E4F',
+      main: '#2D3E4F', // dark green
     },
     secondary: {
-      main: '#F16137',
+      main: '#F16137', // orange
     },
     error: {
-      main: '#fb2c36',
+      main: '#fb2c36', // red orange
     },
   },
 });

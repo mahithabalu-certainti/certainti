@@ -12,7 +12,7 @@ import TextButton from '../button/text-button';
 
 const DEFAULT_BUTTON_STYLES = {
   height: '35px',
-  color: '#F15A29',
+  color: 'secondary.main',
 };
 
 interface HeaderProps {
@@ -125,7 +125,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
               onClick={primaryButton.onClick}
               sx={{
                 ...DEFAULT_BUTTON_STYLES,
-                backgroundColor: '#F15A29',
+                backgroundColor: 'secondary.main',
                 color: '#fff',
                 ...customStyles.button,
               }}

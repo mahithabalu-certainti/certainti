@@ -14,18 +14,22 @@ interface ActionsDropdownProps {
 }
 
 const StyledButton = styled(Button)<{ variantType: 'filled' | 'outlined' }>(
-  ({ variantType }) => ({
-    backgroundColor: variantType === 'filled' ? '#F15A29' : 'transparent',
+  ({ variantType, theme }) => ({
+    backgroundColor:
+      variantType === 'filled' ? theme.palette.secondary.main : 'transparent',
     height: '35px',
-    color: variantType === 'filled' ? '#fff' : '#F15A29',
-    border: variantType === 'outlined' ? '1px solid #F15A29' : 'none',
+    color: variantType === 'filled' ? '#fff' : theme.palette.secondary.main,
+    border:
+      variantType === 'outlined'
+        ? `1px solid ${theme.palette.secondary.main}`
+        : 'none',
     textTransform: 'none',
     fontSize: '14px',
     fontWeight: 'bold',
     padding: '8px 16px',
     borderRadius: '0px',
     '&:hover': {
-      backgroundColor: '#F15A29',
+      backgroundColor: theme.palette.secondary.main,
       color: '#fff',
     },
   })

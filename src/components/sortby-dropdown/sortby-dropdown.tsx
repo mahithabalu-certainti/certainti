@@ -52,7 +52,7 @@ const SortByDropdown: React.FC = () => {
         slotProps={{
           paper: {
             sx: {
-              minWidth: '100px', // Match button width
+              minWidth: '180px', // Match button width
               border: '1px solid #CBD6E2', // Border to match button
               boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)', // Subtle shadow effect
               borderRadius: '6px', // Rounded dropdown
