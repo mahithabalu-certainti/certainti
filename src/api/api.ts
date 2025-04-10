@@ -3,6 +3,7 @@ import axios, { AxiosError, AxiosResponse } from 'axios';
 import { LOGIN } from '../routes';
 import { PublicClientApplication } from '@azure/msal-browser';
 import { msalConfig } from '../config/msalConfig';
+import { FailedQueueItem } from '../common-service';
 
 // Initialize MSAL instance
 const msalSigninInstance = new PublicClientApplication(msalConfig);
@@ -44,10 +45,7 @@ const accountServiceApi = axios.create({
   );
 });
 
-type FailedQueueItem = {
-  resolve: (token: string) => void;
-  reject: (error: unknown) => void;
-};
+
 
 // Create a flag to prevent multiple refresh attempts
 let isRefreshing = false;

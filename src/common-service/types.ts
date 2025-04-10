@@ -14,8 +14,8 @@ export interface GetAllCountriesApiResponse extends CommonApiResponse {
 
 export interface GetCurrentUserRoleApiResponse extends CommonApiResponse {
   data: {
-    rid: string,
-    user_role: UserRoles,
+    rid: string;
+    user_role: UserRoles;
   };
 }
 
@@ -40,3 +40,8 @@ export enum UserRoles {
   ProjectFinancialReview = 'Project Financial Review',
   ProjectTechnicalReview = 'Project Technical Review',
 }
+
+export type FailedQueueItem = {
+  resolve: (token: string) => void;
+  reject: (error: unknown) => void;
+};
