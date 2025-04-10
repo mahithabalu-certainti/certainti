@@ -4,7 +4,6 @@ import { accountHomeIcon, editIcon } from '../../../assets';
 import { useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
-import { Toast } from '../../../components/toast-message';
 import { useToast } from '../../../hooks';
 import {
   useFetchAccountFields,
@@ -22,7 +21,7 @@ import { transformFormData } from './utils';
 
 const ResourceForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
-  const { toast, successToast, errorToast, hideToast } = useToast();
+  const { successToast, errorToast } = useToast();
   const location = useLocation();
   const { accountid } = useParams();
 
@@ -146,7 +145,6 @@ const ResourceForm: React.FC = () => {
 
   return (
     <>
-      <Toast {...toast} onClose={hideToast} />
       <div className='flex justify-between items-center border-b-2 border-gray-200 px-10 py-6'>
         <div className='flex items-center'>
           <img
