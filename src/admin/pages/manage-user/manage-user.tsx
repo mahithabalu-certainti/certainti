@@ -7,12 +7,12 @@ import { UserTable } from './table/user-table';
 
 const BUTTON_STYLES = {
   height: '35px',
-  color: 'secondary.main',
+  color: '#F15A29',
 };
 
 const HEADER_STYLES = {
-  adminPermission: 'font-semibold text-[#7D98B6] text-xs',
-  manageUser: 'font-semibold text-2xl',
+  adminPermission: 'font-medium text-[#7D98B6] text-[11px]',
+  manageUser: 'font-semibold text-[20px] text-[#2D3E4F]',
 };
 
 const MENU_ITEMS = [
@@ -58,9 +58,13 @@ export const ManageUser: React.FC = () => {
   return (
     <div className='flex flex-col h-[calc(100vh-64px)] overflow-y-auto w-full p-4 gap-3'>
       {/* Header Section */}
-      <div className='flex h-[12%] w-full p-4 items-center justify-between border border-gray-300 rounded'>
+      <div className='flex h-[12%] w-full p-4 items-center justify-between border border-[#EAF0F5] rounded'>
         <div className='flex items-center gap-2'>
-          <img src={ManageUserIcon} alt='manage user' />
+          <img
+            src={ManageUserIcon}
+            alt='manage user'
+            className='h-10 w-10 rounded'
+          />
           <div className='flex flex-col'>
             <div className={HEADER_STYLES.adminPermission}>
               Admin Permission
@@ -74,22 +78,37 @@ export const ManageUser: React.FC = () => {
             label='Create User'
             variant='filled'
             onClick={() => navigate(ADMIN_CREATE_USER)}
+            sx={{
+              ...BUTTON_STYLES,
+              backgroundColor: '#F16137',
+              color: '#fff',
+              borderRadius: '2px',
+              fontSize: '13px',
+              fontWeight: 400,
+            }}
           />
         </div>
       </div>
 
       {/* User Table Section */}
-      <div className='border border-gray-300 rounded'>
-        <div className='flex justify-between items-center border-b border-gray-300 p-4'>
-          <div className='font-semibold text-xl'>All Users</div>
-          <div className='flex gap-2 m-2'>
+      <div className='border border-[#EAF0F5] rounded'>
+        <div className='flex justify-between items-center border-b border-[#EAF0F5] p-4'>
+          <div className='font-semibold text-[20px] leading-5 text-[#2D3E4F]'>
+            All Users
+          </div>
+          <div className='flex gap-3'>
             {userActionButtons.map((label) => (
               <TextButton
                 key={label}
                 label={label}
-                sx={BUTTON_STYLES}
                 variant='outlined'
                 onClick={() => handleAction(label)}
+                sx={{
+                  ...BUTTON_STYLES,
+                  borderRadius: '2px',
+                  fontSize: '13px',
+                  fontWeight: 400,
+                }}
               />
             ))}
           </div>

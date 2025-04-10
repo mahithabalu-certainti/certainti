@@ -91,7 +91,17 @@ const Table = <T extends RowData>({
     <Paper sx={{ overflowX: 'auto', width: '100%' }}>
       <TableContainer>
         <MuiTable>
-          <TableHead>
+          <TableHead
+            sx={{
+              '& .MuiTableCell-root': {
+                fontWeight: 500,
+                fontSize: '14px',
+                lineHeight: '21px',
+                color: '#2A2A2A',
+                padding: '8px',
+              },
+            }}
+          >
             <TableRow>
               {/* Select all checkbox */}
               {selectable && (
@@ -137,7 +147,17 @@ const Table = <T extends RowData>({
             </TableRow>
           </TableHead>
 
-          <TableBody>
+          <TableBody
+            sx={{
+              '& .MuiTableCell-root': {
+                fontWeight: 300,
+                fontSize: '14px',
+                lineHeight: '21px',
+                color: '#425A76',
+                padding: '6px',
+              },
+            }}
+          >
             {/* Loading state */}
             {loading && (
               <TableRow>

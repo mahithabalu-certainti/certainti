@@ -24,10 +24,10 @@ const StyledButton = styled(Button)<{ variantType: 'filled' | 'outlined' }>(
         ? `1px solid ${theme.palette.secondary.main}`
         : 'none',
     textTransform: 'none',
-    fontSize: '14px',
-    fontWeight: 'bold',
+    fontSize: '13px',
+    fontWeight: 400,
     padding: '8px 16px',
-    borderRadius: '0px',
+    borderRadius: '2px',
     '&:hover': {
       backgroundColor: theme.palette.secondary.main,
       color: '#fff',
@@ -57,9 +57,23 @@ const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
         onClick={handleClick}
         endIcon={
           open ? (
-            <img src={arrowUpIcon} alt='arrowUp' />
+            <img
+              src={arrowUpIcon}
+              alt='arrowUp'
+              style={{
+                filter:
+                  'invert(52%) sepia(82%) saturate(749%) hue-rotate(343deg) brightness(97%) contrast(89%)',
+              }}
+            />
           ) : (
-            <img src={arrowDownIcon} alt='arrowDown' />
+            <img
+              src={arrowDownIcon}
+              alt='arrowDown'
+              style={{
+                filter:
+                  'invert(52%) sepia(82%) saturate(749%) hue-rotate(343deg) brightness(97%) contrast(89%)',
+              }}
+            />
           )
         }
       >

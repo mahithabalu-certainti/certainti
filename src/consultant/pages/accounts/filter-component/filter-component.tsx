@@ -226,37 +226,57 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
 
   return (
     <Box sx={{ width: 320, p: 2 }}>
-      <Box
+      {/* <Typography variant='subtitle1' sx={{ fontSize: '16px', fontWeight: 600, color: '#2D3E4F', lineHeight: '30px' }}>
+        Filter Accounts by
+      </Typography> */}
+      <Typography
+        variant='subtitle1'
         sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 1,
+          fontSize: '16px',
+          fontWeight: 600,
+          color: '#2D3E4F',
+          lineHeight: '30px',
         }}
       >
-        <Typography variant='subtitle1' sx={{ fontWeight: 'bold' }}>
-          Filter By Fields
-        </Typography>
-        <Box>
+        Filter By Fields
+      </Typography>
+
+      {isModified && (
+        <Box className='flex items-center justify-end gap-2 w-full'>
           <Button
             variant='outlined'
             color='secondary'
+            disableRipple
             onClick={handleResetFilters}
-            sx={{ mr: 1, height: '30px' }}
+            sx={{
+              height: '30px',
+              minHeight: '30x',
+              textTransform: 'none',
+              fontSize: '14px',
+              fontWeight: 400,
+              color: '#F16137',
+            }}
           >
             Reset
           </Button>
-          {isModified && (
-            <Button
-              variant='contained'
-              color='primary'
-              onClick={handleApplyFilters}
-            >
-              Apply
-            </Button>
-          )}
+
+          <Button
+            variant='outlined'
+            color='primary'
+            onClick={handleApplyFilters}
+            sx={{
+              height: '30px',
+              minHeight: '30x',
+              textTransform: 'none',
+              fontSize: '14px',
+              fontWeight: 400,
+              color: '#2D3E4F',
+            }}
+          >
+            Apply
+          </Button>
         </Box>
-      </Box>
+      )}
 
       {fields.map((field) => (
         <Box key={field.name}>
@@ -268,7 +288,14 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
               />
             }
             label={
-              <Typography sx={{ fontSize: '0.875rem' }}>
+              <Typography
+                sx={{
+                  fontSize: '14px',
+                  fontWeight: 400,
+                  lineHeight: '30px',
+                  color: '#2D3E4F',
+                }}
+              >
                 {field.name}
               </Typography>
             }

@@ -62,7 +62,7 @@ export default function ActionButton({ onEdit, onDelete }: ActionButtonProps) {
   };
 
   return (
-    <div>
+    <div className='flex justify-center items-center'>
       <IconButton
         aria-label='more'
         id='long-button'
