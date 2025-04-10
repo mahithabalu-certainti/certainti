@@ -107,8 +107,9 @@ export const renderRows = ({
             <span
               className={`cursor-pointer ${hasChildren ? '' : 'ml-8'} no-underline hover:underline`}
               onClick={() => handleAccountNameClick(account)}
-            ></span>
-            {account.accountName}
+            >
+              {account.accountName}
+            </span>
           </TableCell>
           <TableCell sx={{ minWidth: '350px' }}>{account.accountId}</TableCell>
           <TableCell sx={{ minWidth: '200px' }}>
@@ -168,7 +169,7 @@ export const renderChildRows = ({
               onChange={() => handleSelectRow(globalIndex)}
             />
             <span
-              className={`cursor-pointer no-underline hover:underline`}
+              className={`cursor-pointer hover:underline`}
               onClick={() => handleAccountNameClick(account)}
             >
               {account.accountName}
