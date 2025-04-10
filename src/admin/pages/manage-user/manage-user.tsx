@@ -2,12 +2,12 @@ import { useNavigate } from 'react-router-dom';
 import { ManageUserIcon } from '../../../assets/icons';
 import ActionsDropdown from '../../../components/actions-dropdown/actions-dropdown';
 import TextButton from '../../../components/button/text-button';
-import { UserTable } from './table/user-table';
 import { ADMIN_CREATE_USER } from '../../../routes';
+import { UserTable } from './table/user-table';
 
 const BUTTON_STYLES = {
   height: '35px',
-  color: '#F15A29',
+  color: 'secondary.main',
 };
 
 const HEADER_STYLES = {

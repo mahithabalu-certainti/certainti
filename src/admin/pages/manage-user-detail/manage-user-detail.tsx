@@ -119,7 +119,11 @@ export const ManageUserDetails: React.FC = () => {
           <ActionsDropdown actions={MENU_ITEMS} />
           <TextButton
             label='Create Account'
-            sx={{ ...BUTTON_STYLES, backgroundColor: '#F15A29', color: '#fff' }}
+            sx={{
+              ...BUTTON_STYLES,
+              backgroundColor: 'secondary.main',
+              color: '#fff',
+            }}
           />
         </div>
       </div>
