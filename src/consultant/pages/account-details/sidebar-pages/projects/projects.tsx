@@ -1,7 +1,7 @@
 // /* eslint-disable @typescript-eslint/no-explicit-any */
 // import { useState } from 'react';
 // import { projectHeaderIcon } from '../../../../../assets';
-// import { mockPojectsList } from '../../../../mockdata/project-list';
+// import { mockProjectsList } from '../../../../mockdata/project-list';
 // import TabPanel from '../../components/tab';
 // import ListTable from '../../components/table';
 
@@ -82,7 +82,7 @@
 //         title='Project'
 //       />
 //       <ListTable
-//         data={mockPojectsList}
+//         data={mockProjectsList}
 //         columns={columns}
 //         actionMenuItems={actionMenuItems}
 //         title='Projects'

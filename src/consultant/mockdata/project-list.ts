@@ -8,7 +8,7 @@ interface Project {
   status: string;
 }
 
-export const mockPojectsList: Project[] = [
+export const mockProjectsList: Project[] = [
   {
     id: '2003001',
     number: 'TT2P001',
