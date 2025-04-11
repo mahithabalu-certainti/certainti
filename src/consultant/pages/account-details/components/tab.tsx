@@ -1,16 +1,22 @@
 import { Box, Menu, MenuItem, Tab, Tabs } from '@mui/material';
-import React, { useState } from 'react';
-import { leftArrowIcon } from '../../../../assets';
-import { ActionsDropdown } from '../../../../components';
+import React, { Fragment, useState } from 'react';
+import { leftArrowIcon, resourceFilterIcon } from '../../../../assets';
+import { ActionsDropdown, Image } from '../../../../components';
 import { FiscalYearDropdown } from './fiscal-year-dropdown';
+import Filter from '../../../../components/filter/filter';
+import { costFields, skillFields } from '../sidebar-pages/resources/utils';
 
 interface TabPanelProps {
   viewMode: boolean;
   onExitView: () => void;
   title: string;
+  handleFilter: () => void
+  value: string
+  showFilter: boolean,
+  setAppliedFilters: (filters: Record<string, any>) => void
 }
 
-const TabPanel: React.FC<TabPanelProps> = ({ viewMode, onExitView, title }) => {
+const TabPanel: React.FC<TabPanelProps> = ({ viewMode, onExitView, title, handleFilter, value, showFilter, setAppliedFilters }) => {
   const [tabValue, setTabValue] = useState(0);
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
   const [, setSelectedSort] = useState('Accounts');
@@ -40,99 +46,105 @@ const TabPanel: React.FC<TabPanelProps> = ({ viewMode, onExitView, title }) => {
   ];
 
   return (
-    <Box className='p-4 rounded-lg'>
-      <Box className='flex justify-between items-center mb-4'>
-        {viewMode ? (
-          <div className='flex gap-2 cursor-pointer' onClick={onExitView}>
-            <img src={leftArrowIcon} alt='' />
-            {title}
-          </div>
-        ) : (
-          // <Button
-          //   variant='outlined'
-          //   onClick={onExitView}
-          //   className='text-blue-600 border-blue-600'
-          //   sx={{
-          //     textTransform: 'none',
-          //     fontSize: '14px',
-          //     fontWeight: 600,
-          //     minHeight: '36px',
-          //     padding: '8px 16px',
-          //   }}
-          // >
-          //   Exit View
-          // </Button>
-          <Tabs
-            value={tabValue}
-            onChange={handleTabChange}
-            className='border-1 border-gray-300'
-            sx={{
-              padding: '3px',
-              minHeight: '36px',
-              '& .MuiTabs-indicator': {
-                display: 'none',
-                '& .MuiTabs-root': {
-                  borderBottom: 'none',
-                },
-              },
-            }}
-          >
-            <Tab
-              label='Overview'
+    <Fragment>
+      <Box className='p-4 rounded-lg'>
+        <Box className='flex justify-between items-center mb-4'>
+          {viewMode ? (
+            <div className='flex gap-2 cursor-pointer' onClick={onExitView}>
+              <img src={leftArrowIcon} alt='' />
+              {title}
+            </div>
+          ) : (
+            // <Button
+            //   variant='outlined'
+            //   onClick={onExitView}
+            //   className='text-blue-600 border-blue-600'
+            //   sx={{
+            //     textTransform: 'none',
+            //     fontSize: '14px',
+            //     fontWeight: 600,
+            //     minHeight: '36px',
+            //     padding: '8px 16px',
+            //   }}
+            // >
+            //   Exit View
+            // </Button>
+            <Tabs
+              value={tabValue}
+              onChange={handleTabChange}
+              className='border-1 border-gray-300'
               sx={{
-                textTransform: 'none',
-                fontSize: '14px',
-                fontWeight: 600,
-                color: tabValue === 0 ? '#0BBFB726' : '',
-                backgroundColor: tabValue === 0 ? '#0BBFB726' : '',
-                margin: '0',
-                border: tabValue === 0 ? '2px solid #0BBFB7' : '',
+                padding: '3px',
                 minHeight: '36px',
-                padding: '8px 16px',
-                '&.Mui-selected': {
-                  color: '#1A3D6F',
+                '& .MuiTabs-indicator': {
+                  display: 'none',
+                  '& .MuiTabs-root': {
+                    borderBottom: 'none',
+                  },
                 },
               }}
-            />
-            <Tab
-              label='Timeline'
-              sx={{
-                textTransform: 'none',
-                fontSize: '14px',
-                fontWeight: 600,
-                color: tabValue === 1 ? '#0BBFB726' : '',
-                backgroundColor: tabValue === 1 ? '#0BBFB726' : '',
-                margin: '0',
-                border: tabValue === 1 ? '2px solid #0BBFB7' : '',
-                minHeight: '36px',
-                padding: '8px 16px',
-                '&.Mui-selected': {
-                  color: '#1A3D6F',
-                },
-              }}
-            />
-          </Tabs>
-        )}
+            >
+              <Tab
+                label='Overview'
+                sx={{
+                  textTransform: 'none',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: tabValue === 0 ? '#0BBFB726' : '',
+                  backgroundColor: tabValue === 0 ? '#0BBFB726' : '',
+                  margin: '0',
+                  border: tabValue === 0 ? '2px solid #0BBFB7' : '',
+                  minHeight: '36px',
+                  padding: '8px 16px',
+                  '&.Mui-selected': {
+                    color: '#1A3D6F',
+                  },
+                }}
+              />
+              <Tab
+                label='Timeline'
+                sx={{
+                  textTransform: 'none',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: tabValue === 1 ? '#0BBFB726' : '',
+                  backgroundColor: tabValue === 1 ? '#0BBFB726' : '',
+                  margin: '0',
+                  border: tabValue === 1 ? '2px solid #0BBFB7' : '',
+                  minHeight: '36px',
+                  padding: '8px 16px',
+                  '&.Mui-selected': {
+                    color: '#1A3D6F',
+                  },
+                }}
+              />
+            </Tabs>
+          )}
 
-        <Box className='flex items-center space-x-2'>
-          <FiscalYearDropdown />
-          <ActionsDropdown actions={MENU_ITEMS} />
+          <Box className='flex items-center space-x-2'>
+            <Box onClick={handleFilter} className='h-[38px] w-[38px] flex items-center justify-center border border-[#CBD6E2]'>
+              <Image src={resourceFilterIcon} />
+            </Box>
+            <FiscalYearDropdown />
+            <ActionsDropdown actions={MENU_ITEMS} />
+          </Box>
         </Box>
-      </Box>
 
-      <Menu
-        anchorEl={sortAnchorEl}
-        open={Boolean(sortAnchorEl)}
-        onClose={handleSortClose}
-      >
-        <MenuItem onClick={() => handleSortSelect('Accounts')}>
-          Accounts
-        </MenuItem>
-        <MenuItem onClick={() => handleSortSelect('Date')}>Date</MenuItem>
-        <MenuItem onClick={() => handleSortSelect('Amount')}>Amount</MenuItem>
-        <MenuItem onClick={() => handleSortSelect('User')}>User</MenuItem>
-      </Menu>
-    </Box>
+        <Menu
+          anchorEl={sortAnchorEl}
+          open={Boolean(sortAnchorEl)}
+          onClose={handleSortClose}
+        >
+          <MenuItem onClick={() => handleSortSelect('Accounts')}>
+            Accounts
+          </MenuItem>
+          <MenuItem onClick={() => handleSortSelect('Date')}>Date</MenuItem>
+          <MenuItem onClick={() => handleSortSelect('Amount')}>Amount</MenuItem>
+          <MenuItem onClick={() => handleSortSelect('User')}>User</MenuItem>
+        </Menu>
+      </Box>
+      {showFilter && <Filter filterMenu={value === 'cost' ? costFields : skillFields} setAppliedFilters={setAppliedFilters} handleFilter={handleFilter} />}
+    </Fragment>
   );
 };
 

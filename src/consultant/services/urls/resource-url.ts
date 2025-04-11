@@ -1,5 +1,12 @@
 import { ResourceListURLParams } from '../../types/resource';
 
+const baseUrl = import.meta.env.VITE_RESOURCE_URL;
+
+export const ResourceCreateURL = `${baseUrl}/api/resource/create`;
+export const ResourceUpdateURL = `${baseUrl}api/resource/update`;
+export const ResourceDetailURL = (resourceId: string): string =>
+  `${baseUrl}/api/resource/${resourceId}`;
+
 export const ResourceListURL = ({
   page,
   limit,
@@ -7,7 +14,6 @@ export const ResourceListURL = ({
   sortOrder,
   filters,
 }: ResourceListURLParams): string => {
-  const baseUrl = '/api/resource/';
   const searchParams = new URLSearchParams();
 
   searchParams.set('page', page.toString());

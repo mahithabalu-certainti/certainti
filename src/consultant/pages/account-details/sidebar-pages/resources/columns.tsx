@@ -9,6 +9,7 @@ interface ColumnDefinition {
 interface ResourceColumnsProps {
   onResourceIdClick: (row: any) => void; // Now mandatory
   view?: boolean;
+  onClickId?: string;
 }
 
 const BASE_COLUMNS: ColumnDefinition[] = [
@@ -69,11 +70,12 @@ const resourceColumnsAll: ColumnDefinition[] = [
 export const getResourceColumns = ({
   onResourceIdClick,
   view = false,
+  onClickId,
 }: ResourceColumnsProps): ColumnDefinition[] => {
   // Common function to apply click handler to ID column
   const applyClickHandler = (columns: ColumnDefinition[]) => {
     return columns.map((column) =>
-      column.id === 'id'
+      column.id === (onClickId || 'rid')
         ? {
             ...column,
             render: (value: string, row: any) => (

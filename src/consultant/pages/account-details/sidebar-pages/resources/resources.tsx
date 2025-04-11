@@ -5,14 +5,29 @@ import { mockResourcesList } from '../../../../mockdata/resource-list';
 import TabPanel from '../../components/tab';
 import ListTable from '../../components/table';
 import { getResourceColumns } from './columns';
+import ResourceSubComponents from './resource-sub-components';
+import ResourceTableHeader from './resource-table-header';
 
 const Resource = () => {
   const [viewMode, setViewMode] = useState<boolean>(false);
+  const [viewResourceList, setViewResourceList] = useState<boolean>(true);
   const [columns, setColumns] = useState<any>([]);
+  const [showFilter, setShowFilter] = useState<boolean>(false);
+  const [value, setValue] = useState('details');
+  const [, setAppliedFilters] = useState<Record<string, any>>();
+
+  const handleFilter = () => {
+    setShowFilter(!showFilter);
+  };
+
+  const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
+    setValue(newValue);
+  };
 
   const handleResourceClick = (row: any) => {
-    console.log('Resource clicked:', row.id);
-    // Add your custom logic here
+    console.log('row', row);
+    setViewResourceList(!viewResourceList);
+    console.log('Resource clicked:');
   };
 
   useEffect(() => {
@@ -20,6 +35,7 @@ const Resource = () => {
       getResourceColumns({
         onResourceIdClick: handleResourceClick,
         view: viewMode,
+        onClickId: 'rid',
       })
     );
   }, [viewMode]);
@@ -79,20 +95,37 @@ const Resource = () => {
         viewMode={viewMode}
         onExitView={toggleViewMode}
         title='Resource'
+        handleFilter={handleFilter}
+        value={value}
+        showFilter={showFilter}
+        setAppliedFilters={setAppliedFilters}
       />
-      <ListTable
-        data={mockResourcesList.data.resources}
-        columns={columns}
-        actionMenuItems={actionMenuItems}
+      <ResourceTableHeader
         title='Resource'
         titleIcon={<img src={resourceHeaderIcon} alt='resource header icon' />}
         headerButtons={viewMode ? [] : headerButtons}
-        pagination={!viewMode}
-        rowsPerPage={5}
-        sortable={true}
-        setViewMode={setViewMode}
-        viewMode={viewMode}
+        toggleViewMode={toggleViewMode}
       />
+      {!viewResourceList ? (
+        <ResourceSubComponents
+          handleTabChange={handleTabChange}
+          value={value}
+        />
+      ) : (
+        <ListTable
+          data={mockResourcesList.data.resources}
+          columns={columns}
+          actionMenuItems={actionMenuItems}
+          // title='Resource'
+          // titleIcon={<img src={resourceHeaderIcon} alt='resource header icon' />}
+          // headerButtons={viewMode ? [] : headerButtons}
+          pagination={!viewMode}
+          rowsPerPage={5}
+          sortable={true}
+          setViewMode={setViewMode}
+          viewMode={viewMode}
+        />
+      )}
     </div>
   );
 };

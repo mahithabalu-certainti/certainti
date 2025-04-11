@@ -139,6 +139,9 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
           return prev;
       }
     });
+
+    console.log("filterStates", filterStates);
+    
   };
 
   const handleBooleanChange = (fieldName: string, checked: boolean) => {

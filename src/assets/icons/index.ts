@@ -44,12 +44,17 @@ import searchIcon from './search.svg';
 import settingsIcon from './settings.svg';
 import surveyIcon from './survey.svg';
 import timesheetIcon from './timesheet.svg';
+import arrowBackIcon from './arrowBackIcon.svg';
+import resourceProfileIcon from './resourceProfileIcon.svg';
+import filterArrowRightIcon from './filterArrowRightIcon.svg';
+import resourceFilterIcon from './resourceFilterIcon.svg'
 
 export {
   accountHomeIcon,
   accountSettingsIcon,
   accountsIcon,
   actionIcon,
+  resourceFilterIcon,
   adminChevronDownIcon,
   adminChevronUpIcon,
   administrationIcon,
@@ -59,6 +64,8 @@ export {
   allAccountIcon,
   arrowDownIcon,
   arrowUpIcon,
+  arrowBackIcon,
+  resourceProfileIcon,
   attachmentIcon,
   calendarIcon,
   caseIcon,
@@ -71,6 +78,7 @@ export {
   downloadIcon,
   editIcon,
   filterIcon,
+  filterArrowRightIcon,
   globeIcon,
   helpIcon,
   leftArrowIcon,

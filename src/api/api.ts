@@ -4,6 +4,8 @@ import { LOGIN } from '../routes';
 import { PublicClientApplication } from '@azure/msal-browser';
 import { msalConfig } from '../config/msalConfig';
 import { FailedQueueItem } from '../common-service';
+import { ErrorResponse } from 'react-router-dom';
+// Removed ErrorResponse import as it is not used correctly
 
 // Initialize MSAL instance
 const msalSigninInstance = new PublicClientApplication(msalConfig);
@@ -27,6 +29,37 @@ const accountServiceApi = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL + import.meta.env.VITE_ACCOUNT_URL,
   headers: { 'Content-Type': 'application/json' },
 });
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+api.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  (error: AxiosError<ErrorResponse>) => {
+    if (!error.response) {
+      console.error('Network error - Please check your internet connection.');
+      throw new Error('Network error');
+    }
+
+    const { status, data } = error.response;
+    const errorMessage = (data as any)?.message || error.message;
+
+    console.error(`API Error: ${status} - ${errorMessage}`);
+
+    // Handle 401 Unauthorized globally
+    if (status === 401) {
+      console.warn('Unauthorized - Redirecting to login...');
+      window.location.href = LOGIN;
+    }
+
+    // You can transform the error here if needed
+    throw new Error(errorMessage);
+  }
+);
 
 // Apply interceptors to both services
 [accountServiceApi, userServiceApi].forEach((api) => {
@@ -138,4 +171,5 @@ const processQueue = (error: unknown, token: string | null = null) => {
   );
 });
 
-export { userServiceApi, accountServiceApi };
+export { accountServiceApi, userServiceApi, api };
+ 

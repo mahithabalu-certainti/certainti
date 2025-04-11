@@ -13,6 +13,7 @@ import {
   ProjectForm,
   ResourceForm,
 } from './consultant/pages';
+import Resource from './consultant/pages/account-details/sidebar-pages/resources/resources';
 import { IApp } from './consultant/types';
 import { useAuthHook } from './hooks/use-auth';
 import {
@@ -29,10 +30,13 @@ import {
   NOT_MATCH,
   PROJECT_CREATE,
   ProtectedRoute,
+  RESOURCE,
   RESOURCE_CREATE,
 } from './routes';
-import { useToast } from './hooks';
+// imprt Resource from './consultant/pages/resource/resource';
+// import Resource from './consultant/pages/resource/resource';
 import { useSelector } from 'react-redux';
+import { useToast } from './hooks';
 import { RootState } from './store/store';
 
 /**
@@ -67,6 +71,7 @@ export const App: React.FC<IApp> = ({ instance }) => {
             <Route path={ACCOUNT_DETAILS} element={<AccountDetails />} />
             <Route path={PROJECT_CREATE} element={<ProjectForm />} />
             <Route path={RESOURCE_CREATE} element={<ResourceForm />} />
+            <Route path={RESOURCE} element={<Resource />} />
           </Route>
 
           {/* Admin protected routes */}
