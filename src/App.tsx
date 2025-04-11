@@ -2,7 +2,7 @@ import { MsalProvider } from '@azure/msal-react';
 import React from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { CreateUser, ManageUser, ManageUserDetails } from './admin/pages';
-import { AppLayout } from './components';
+import { AppLayout, Toast } from './components';
 import {
   AccountDetails,
   AccountForm,
@@ -31,6 +31,9 @@ import {
   ProtectedRoute,
   RESOURCE_CREATE,
 } from './routes';
+import { useToast } from './hooks';
+import { useSelector } from 'react-redux';
+import { RootState } from './store/store';
 
 /**
  * App component serves as the root component of the application.
@@ -42,6 +45,8 @@ import {
 export const App: React.FC<IApp> = ({ instance }) => {
   const { isAuthenticated } = useAuthHook();
   const _isAuthenticated = isAuthenticated();
+  const { hideToast } = useToast();
+  const toastProps = useSelector((state: RootState) => state.toast);
 
   return (
     <MsalProvider instance={instance}>
@@ -79,6 +84,7 @@ export const App: React.FC<IApp> = ({ instance }) => {
           <Route path={NOT_MATCH} element={<NotFound />} />
         </Route>
       </Routes>
+      <Toast onClose={hideToast} {...toastProps} />
     </MsalProvider>
   );
 };

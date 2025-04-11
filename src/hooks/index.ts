@@ -1,2 +1,2 @@
 export * from './use-auth';
-export * from './useToast';
+export * from './use-toast';
