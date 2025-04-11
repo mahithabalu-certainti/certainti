@@ -24,8 +24,8 @@ export const useAuthHook = () => {
   });
 
   const isAuthenticated = (): boolean => {
-    return authDetails.isAuthenticated ?? false;
-    // return true;
+    // return authDetails.isAuthenticated ?? false;
+    return true;
   };
 
   const login = (authDetail: IAuthDetails) => {

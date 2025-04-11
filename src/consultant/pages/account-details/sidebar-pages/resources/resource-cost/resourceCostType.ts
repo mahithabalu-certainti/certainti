@@ -2,7 +2,7 @@
 
 import { ResourceCostList } from "../../../../../types/resourceCost";
 
-export interface renderCostRowProps {
+export interface RenderCostRowProps {
   resourceCost: ResourceCostType[];
 }
 

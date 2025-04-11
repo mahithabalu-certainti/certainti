@@ -168,6 +168,9 @@ const Filter: React.FC<FilterComponentProps> = ({ filterMenu, setAppliedFilters,
         });
     };
 
+    console.log("filterstate", filterStates);
+    
+
 
 
     const renderFilterControls = (field: FieldConfig) => {
@@ -229,9 +232,9 @@ const Filter: React.FC<FilterComponentProps> = ({ filterMenu, setAppliedFilters,
 
 
     return (
-        <Box className='fixed top-0 right-0 z-1111 bg-[#0000006e] bg-opacity-10 w-full h-full'>
+        <Box className='fixed top-0 right-0 z-1300 bg-[#0000006e] bg-opacity-10 w-full h-full'>
 
-            <Box className='absolute top-0 right-0 z-1111 overflow-y-scroll w-[248px] max-h-[568px] bg-white opacity-100'>
+            <Box className='absolute top-0 right-0 z-1300 overflow-y-scroll w-[248px] max-h-[568px] bg-white opacity-100'>
                 <Box className='flex justify-between items-center p-2 border-b border-[#CBD6E2]'>
                     <Box>Filters</Box>
                     <Button label='Reset' variant='text' sx={{

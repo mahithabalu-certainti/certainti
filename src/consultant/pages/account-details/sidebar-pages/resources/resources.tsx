@@ -10,12 +10,24 @@ import ResourceTableHeader from './resource-table-header';
 
 const Resource = () => {
   const [viewMode, setViewMode] = useState<boolean>(false);
-  const [viewResourceList, setViewResourceListt] = useState<boolean>(true);
+  const [viewResourceList, setViewResourceList] = useState<boolean>(true);
   const [columns, setColumns] = useState<any>([]);
+
+  const [showFilter, setShowFilter] = useState<boolean>(false)
+  const [value, setValue] = useState('details');
+  const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>()
+
+  const handleFilter = () => {
+    setShowFilter(!showFilter);
+  }
+
+  const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
+    setValue(newValue);
+  };
 
   const handleResourceClick = (row: any) => {
     console.log('row', row);
-    setViewResourceListt(!viewResourceList);
+    setViewResourceList(!viewResourceList);
     console.log('Resource clicked:');
   };
 
@@ -84,14 +96,19 @@ const Resource = () => {
         viewMode={viewMode}
         onExitView={toggleViewMode}
         title='Resource'
+        handleFilter={handleFilter}
+        value={value}
+        showFilter={showFilter}
+        setAppliedFilters={setAppliedFilters}
       />
       <ResourceTableHeader
         title='Resource'
         titleIcon={<img src={resourceHeaderIcon} alt='resource header icon' />}
         headerButtons={viewMode ? [] : headerButtons}
+        toggleViewMode={toggleViewMode}
       />
       {!viewResourceList ? (
-        <ResourceSubComponents />
+        <ResourceSubComponents handleTabChange={handleTabChange} value={value} />
       ) : (
         <ListTable
           data={mockResourcesList.data.resources}

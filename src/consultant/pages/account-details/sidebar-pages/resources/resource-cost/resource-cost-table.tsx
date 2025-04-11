@@ -1,5 +1,5 @@
 import { CircularProgress, Paper, Table, TableBody, TableCell, TableHead, TablePagination, TableRow, TableSortLabel, Typography } from "@mui/material"
-import { convertResourceCost, renderCostRowProps, ResourceCostType } from "./resourceCostType";
+import { convertResourceCost, RenderCostRowProps, ResourceCostType } from "./resourceCostType";
 import { useEffect, useState } from "react";
 // import { ResourceCostList } from "../../../types/resourceCost";
 // import { useResourceCost } from "../../../services/resource-cost/resource-cost-service";
@@ -74,7 +74,7 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters }) =>
 
   const renderRows = ({
     resourceCost,
-  }: renderCostRowProps) => {
+  }: RenderCostRowProps) => {
 
     return resourceCost?.map((cost) => {
 

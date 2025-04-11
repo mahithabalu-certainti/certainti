@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo } from 'react';
 import { ManageUserIcon } from '../../../../assets/icons';
-import { FormBuilder, Toast } from '../../../../components';
+import { FormBuilder } from '../../../../components';
 import { useToast } from '../../../../hooks';
 import { FormData } from './form-data';
 import TextButton from '../../../../components/button/text-button';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useGetAllCountries } from '../../../../common-service';
 import { UserDetail, UserRole } from '../../../types/manage-user';
 import {
@@ -15,12 +15,14 @@ import {
   useUpdateUserDetails,
 } from '../../../service/manage-user/manage-user-service';
 import { SelectOption } from '../../../../consultant/types';
+import { ADMIN_MANAGE_USER } from '../../../../routes';
 
 export const CreateUser: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
-  const { toast, successToast, errorToast, hideToast } = useToast();
+  const { successToast, errorToast } = useToast();
   const location = useLocation();
   const { userid } = useParams();
+  const navigate = useNavigate();
 
   const userDetails = useManageUserDetail(userid as string);
   const userDatas = userDetails.data?.data?.users[0];
@@ -74,6 +76,7 @@ export const CreateUser: React.FC = () => {
       successToast(
         isEditView ? 'User update successfully' : 'User created successfully'
       );
+      navigate(ADMIN_MANAGE_USER);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updateUser.isSuccess, createUser.isSuccess]);
@@ -142,7 +145,6 @@ export const CreateUser: React.FC = () => {
 
   return (
     <>
-      <Toast {...toast} onClose={hideToast} />
       <div className='flex flex-col p-4 gap-3'>
         {/* Header Section */}
         <div className='flex h-[12%] w-full p-4 items-center justify-between border border-gray-300 rounded'>

@@ -61,7 +61,7 @@ export const TextFilterControl: React.FC<{
                     }}
                 >
                     {menuOption && menuOption.map((menu) => (
-                        <MenuItem value={menu.value}>{menu.option}</MenuItem>
+                        <MenuItem key={menu.option} value={menu.value}>{menu.option}</MenuItem>
                     ))}
                     {/* <MenuItem value='equals'>equals</MenuItem>
                     <MenuItem value='startsWith'>starts with</MenuItem> */}
@@ -124,7 +124,7 @@ export const NumberFilterControl: React.FC<{
                     }}
                 >
                     {menuOption && menuOption.map((menu) => (
-                        <MenuItem value={menu.value}>{menu.option}</MenuItem>
+                        <MenuItem key={menu.option} value={menu.value}>{menu.option}</MenuItem>
                     ))}
                 </Select>
             </FormControl>
@@ -181,7 +181,9 @@ export const DateFilterControl: React.FC<{
     ) => void;
 }> = ({ filterStates, menuOption, fieldName, state, onOptionChange, onValueChange }) => {
     const isBetween = formatString(filterStates?.[fieldName]?.date?.option) === 'Between';
-    const disableInput = formatString(filterStates?.[fieldName]?.date?.option) === 'Is Empty' || formatString(filterStates?.[fieldName]?.date?.option) === 'Is Not Empty' || formatString(filterStates?.[fieldName]?.date?.option) === 'This Month';
+    const disableInput = formatString(filterStates?.[fieldName]?.date?.option) === 'Is Empty' ||
+        formatString(filterStates?.[fieldName]?.date?.option) === 'Is Not Empty' ||
+        formatString(filterStates?.[fieldName]?.date?.option) === 'This Month';
     return (
         <Box sx={{ p: 1, mt: 1, borderBottom: '1px solid #CBD6E2' }}>
             <FormControl fullWidth size='small' sx={{
@@ -206,11 +208,15 @@ export const DateFilterControl: React.FC<{
                     }}
                 >
                     {menuOption && menuOption.map((menu) => (
-                        <MenuItem value={menu.value}>{menu.option}</MenuItem>
+                        <MenuItem key={menu.option} value={menu.value}>{menu.option}</MenuItem>
                     ))}
                 </Select>
             </FormControl>
-            <Box sx={{ mt: 1, borderBottom: '1px solid #CBD6E2' }}>
+            <Box sx={{
+                borderBottom: '1px solid #CBD6E2', '.MuiFormControl-root': {
+                    marginTop: '8px'
+                }
+            }}>
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DatePicker
                         name='from'
@@ -240,6 +246,8 @@ export const DateFilterControl: React.FC<{
                                 sx: {
                                     '& .MuiOutlinedInput-root': {
                                         borderRadius: 0,
+                                        fontSize: '12px',
+                                        fontWeight: 300,
                                         '&.Mui-disabled': {
                                             '& input': {
                                                 color: 'black',
@@ -256,7 +264,8 @@ export const DateFilterControl: React.FC<{
                 {isBetween && <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DatePicker
                         name='to'
-                        value={dayjs(state.date?.value.from, 'YYYY/MM/DD')}
+                        sx={{ mt: 1 }}
+                        value={dayjs(state.date?.value.to, 'YYYY/MM/DD')}
                         disabled={disableInput}
                         format="YYYY/MM/DD"
                         onChange={(newValue) => {
@@ -282,6 +291,9 @@ export const DateFilterControl: React.FC<{
                                 sx: {
                                     '& .MuiOutlinedInput-root': {
                                         borderRadius: 0,
+                                        fontSize: '12px',
+                                        fontWeight: 300,
+
                                         '&.Mui-disabled': {
                                             '& input': {
                                                 color: 'black',

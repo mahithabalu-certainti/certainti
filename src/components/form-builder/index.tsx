@@ -229,8 +229,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 textField: {
                   fullWidth: true,
                   size: 'small',
+                  disabled: true,
                   InputProps: {
-                    disabled: true,
                     onPaste: (e: React.ClipboardEvent<HTMLInputElement>) => {
                       e.preventDefault();
                       return false;
@@ -240,9 +240,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 0,
                       '&.Mui-disabled': {
-                        '& input': {
-                          color: 'black',
-                          WebkitTextFillColor: 'black',
+                      '& input': {
+                        color: 'black',
+                        WebkitTextFillColor: 'black',
                         },
                       },
                     },

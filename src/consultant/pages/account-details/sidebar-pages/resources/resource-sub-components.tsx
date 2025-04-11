@@ -4,28 +4,21 @@ import { useNavigate } from 'react-router-dom';
 import ResourceCostTable from './resource-cost/resource-cost-table';
 import ResourceSkillTable from './resource-skill/resource-skill-table';
 
-const ResourceSubComponents: React.FC = () => {
-  const navigate = useNavigate();
-  const [selectedResourceInfo, setSelectedResourceInfo] =
-    React.useState<any>(null);
-  const [value, setValue] = useState('details');
-  const [showFilter, setShowFilter] = useState<boolean>(false);
-  const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
+interface SubcomponentProps {
+    handleTabChange: (event: React.SyntheticEvent, newValue: string)=> void,
+    value: string,
+}
 
-  const handleFilter = () => {
-    setShowFilter(!showFilter);
-  };
-
-  const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
-    setValue(newValue);
-  };
+const ResourceSubComponents: React.FC<SubcomponentProps> = ({handleTabChange, value}) => {
+    const navigate = useNavigate();
+ 
 
   const hanleClickNew = () => {
     navigate(`/resource/create`, { state: { value } });
   };
   return (
     <Fragment>
-      <Box>
+      <Box className="mr-2">
         <Tabs
           value={value}
           onChange={handleTabChange}

@@ -222,7 +222,7 @@ const ListTable: React.FC<ReusableTableProps> = ({
           <TableBody>
             {displayedRows.map((row, rowIndex) => (
               <TableRow
-                key={rowIndex}
+                key={row.id}
                 className='hover:bg-gray-50'
                 selected={viewMode && selectedRows.has(rowIndex.toString())}
               >
@@ -332,7 +332,7 @@ const ListTable: React.FC<ReusableTableProps> = ({
                 borderColor: 'grey.300',
                 backgroundColor: 'grey.100',
               }}
-              key={index}
+              key={item.label}
               onClick={() => {
                 item.onClick(selectedRow);
                 handleMenuClose();

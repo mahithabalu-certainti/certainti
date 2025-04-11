@@ -3,7 +3,7 @@ import { CircularProgress, Paper, Table, TableBody, TableCell, TableHead, TableP
 import { useState } from "react";
 import React from 'react';
 import { useLocation, useNavigate } from "react-router-dom";
-import { renderSkillRowProps, ResourceSkillType } from "./resourceSkillType";
+import { RenderSkillRowProps, ResourceSkillType } from "./resourceSkillType";
 import { ResourceSkillList } from "../../../../../types/resourceSkill";
 import { useResourceSkill } from "../../../../../services/resource-skill/resource-skill-service";
 import { RESOURCESKILL } from "../../../../../../routes";
@@ -64,7 +64,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ appliedFilters }) =
 
   const renderRows = ({
     resourceSkill,
-  }: renderSkillRowProps) => {
+  }: RenderSkillRowProps) => {
 
     return resourceSkill?.map((skill, i) => {
 

@@ -9,16 +9,17 @@ interface ResourceTableHeaderProps {
         variant: 'text' | 'outlined' | 'contained';
         onClick: () => void;
     }[];
+    toggleViewMode: () => void;
 }
 
 const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({ title = '',
     titleIcon,
-    headerButtons = [], }) => {
+    headerButtons = [], toggleViewMode}) => {
     return (
-        <div className='border-1 border-gray-300 mr-2'>
-            <div className='flex items-center border-b-1 border-gray-300 justify-between p-4'>
+        <div className='border border-gray-300 mr-2'>
+            <div className='flex items-center border-b border-gray-300 justify-between p-4'>
                 {title && (
-                    <div className='flex gap-2 items-center'>
+                    <div className='flex items-center'>
                         {titleIcon && (
                             <div className='bg-pink-100 p-2 rounded-lg mr-2'>
                                 {titleIcon}
@@ -35,9 +36,9 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({ title = '',
                                 key={index}
                                 label={button.label}
                                 variant={button.variant}
-                                // onClick={
-                                //     button.label === 'View' ? toggleViewMode : button.onClick
-                                // }
+                                onClick={
+                                    button.label === 'View' ? toggleViewMode : button.onClick
+                                }
                             />
                         ))}
                     </div>
