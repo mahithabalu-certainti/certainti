@@ -4,12 +4,11 @@ import {
   UseQueryResult,
 } from '@tanstack/react-query';
 import {
-  NewCostData,
   ResourceCostApiResponse,
   ResourceCostList,
   ResourceCostListParams,
 } from '../../types/resourceCost';
-import { useApiMutation } from '../../../api/mutation';
+// import { useApiMutation } from '../../../api/mutation';
 import { api } from '../../../api/api';
 import { ResourceListURL  } from '../urls';
 

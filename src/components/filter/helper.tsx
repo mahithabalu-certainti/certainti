@@ -2,16 +2,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
     Box,
-    Checkbox,
     FormControl,
-    FormControlLabel,
     MenuItem,
     Select,
     SelectChangeEvent,
     TextField,
 } from '@mui/material';
-import { FilterState, NumberFilterState, TextFilterState } from './filterType';
-import { Fragment, ReactEventHandler, useState } from 'react';
+import { FilterState } from './filterType';
+import { Fragment } from 'react';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';

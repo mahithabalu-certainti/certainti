@@ -4,6 +4,8 @@ import { LOGIN } from '../routes';
 import { PublicClientApplication } from '@azure/msal-browser';
 import { msalConfig } from '../config/msalConfig';
 import { FailedQueueItem } from '../common-service';
+import { ErrorResponse } from 'react-router-dom';
+// Removed ErrorResponse import as it is not used correctly
 
 // Initialize MSAL instance
 const msalSigninInstance = new PublicClientApplication(msalConfig);
@@ -44,7 +46,7 @@ api.interceptors.response.use(
     }
 
     const { status, data } = error.response;
-    const errorMessage = data?.message || error.message;
+    const errorMessage = (data as any)?.message || error.message;
 
     console.error(`API Error: ${status} - ${errorMessage}`);
 

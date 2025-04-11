@@ -1,9 +1,9 @@
 import { CircularProgress, Paper, Table, TableBody, TableCell, TableHead, TablePagination, TableRow, TableSortLabel, Typography } from "@mui/material";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import React from 'react';
 import { useLocation, useNavigate } from "react-router-dom";
-import { RenderSkillRowProps, ResourceSkillType } from "./resourceSkillType";
+import { convertResourceSkill, RenderSkillRowProps, ResourceSkillType } from "./resourceSkillType";
 import { ResourceSkillList } from "../../../../../types/resourceSkill";
 import { useResourceSkill } from "../../../../../services/resource-skill/resource-skill-service";
 import { RESOURCESKILL } from "../../../../../../routes";
@@ -28,6 +28,9 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ appliedFilters }) =
 
   console.log("location", location.state);
   
+  useEffect(() => {
+    setResourceSkillList(convertResourceSkill(skillList?.resourceSkill || []));
+    }, [skillList]);
 
   const handleEdit = (skill: ResourceSkillType) => {
     navigate(RESOURCESKILL + '/edit/' + 1, {

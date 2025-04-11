@@ -16,7 +16,6 @@ import {
   TableSortLabel,
 } from '@mui/material';
 import React, { useState } from 'react';
-import TextButton from '../../../../components/button/text-button';
 
 interface Column {
   id: string;
@@ -54,9 +53,9 @@ const ListTable: React.FC<ReusableTableProps> = ({
   data = [],
   columns = [],
   actionMenuItems = [],
-  title = '',
-  titleIcon,
-  headerButtons = [],
+  // title = '',
+  // titleIcon,
+  // headerButtons = [],
   pagination = true,
   rowsPerPage = 5,
   sortable = true,
@@ -324,7 +323,7 @@ const ListTable: React.FC<ReusableTableProps> = ({
             horizontal: 'right',
           }}
         >
-          {actionMenuItems.map((item, index) => (
+          {actionMenuItems.map((item) => (
             <MenuItem
               sx={{
                 display: 'flex',

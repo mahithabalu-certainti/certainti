@@ -1,5 +1,5 @@
 import { Box, Tab, Tabs } from '@mui/material';
-import React, { Fragment, useState } from 'react';
+import React, { Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ResourceCostTable from './resource-cost/resource-cost-table';
 import ResourceSkillTable from './resource-skill/resource-skill-table';
@@ -10,12 +10,13 @@ interface SubcomponentProps {
 }
 
 const ResourceSubComponents: React.FC<SubcomponentProps> = ({handleTabChange, value}) => {
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
  
 
-  const hanleClickNew = () => {
-    navigate(`/resource/create`, { state: { value } });
-  };
+  // const hanleClickNew = () => {
+  //   navigate(`/resource/create`, { state: { value } });
+  // };
+
   return (
     <Fragment>
       <Box className="mr-2">

@@ -12,7 +12,6 @@ const Resource = () => {
   const [viewMode, setViewMode] = useState<boolean>(false);
   const [viewResourceList, setViewResourceList] = useState<boolean>(true);
   const [columns, setColumns] = useState<any>([]);
-
   const [showFilter, setShowFilter] = useState<boolean>(false)
   const [value, setValue] = useState('details');
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>()

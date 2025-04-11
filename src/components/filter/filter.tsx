@@ -1,7 +1,7 @@
-import { Box, FormControl, MenuItem, Select, SelectChangeEvent } from '@mui/material';
+import { Box, SelectChangeEvent } from '@mui/material';
 import React, { useState } from 'react';
 import { Button } from '../button';
-import { arrowBackIcon, filterArrowRightIcon } from '../../assets';
+import { filterArrowRightIcon } from '../../assets';
 import { DateFilterOption, dateOptions, EnumFilterOption, enumOptions, enumValueOptions, FieldConfig, FilterComponentProps, FilterState, NumberFilterOption, numberOptions, TextFilterOption, textOptions } from './filterType';
 import { DateFilterControl, EnumFilterControl, NumberFilterControl, TextFilterControl } from './helper';
 import { getInitialStateForField } from '../../consultant/pages/account-details/sidebar-pages/resources/utils';
@@ -13,7 +13,7 @@ const Filter: React.FC<FilterComponentProps> = ({ filterMenu, setAppliedFilters,
     const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
         {}
     );
-    const [showFilterOption, setShowFilterOption] = useState<boolean>(false);
+    // const [showFilterOption, setShowFilterOption] = useState<boolean>(false);
 
     const handleClickFilterMenu = (fieldName: string) => {
         setSelectedFilters((prev) =>
