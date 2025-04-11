@@ -12,13 +12,13 @@ const Resource = () => {
   const [viewMode, setViewMode] = useState<boolean>(false);
   const [viewResourceList, setViewResourceList] = useState<boolean>(true);
   const [columns, setColumns] = useState<any>([]);
-  const [showFilter, setShowFilter] = useState<boolean>(false)
+  const [showFilter, setShowFilter] = useState<boolean>(false);
   const [value, setValue] = useState('details');
-  const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>()
+  const [, setAppliedFilters] = useState<Record<string, any>>();
 
   const handleFilter = () => {
     setShowFilter(!showFilter);
-  }
+  };
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
     setValue(newValue);
@@ -107,7 +107,10 @@ const Resource = () => {
         toggleViewMode={toggleViewMode}
       />
       {!viewResourceList ? (
-        <ResourceSubComponents handleTabChange={handleTabChange} value={value} />
+        <ResourceSubComponents
+          handleTabChange={handleTabChange}
+          value={value}
+        />
       ) : (
         <ListTable
           data={mockResourcesList.data.resources}

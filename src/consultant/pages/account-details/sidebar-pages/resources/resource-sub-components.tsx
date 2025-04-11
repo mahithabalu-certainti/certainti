@@ -1,17 +1,18 @@
 import { Box, Tab, Tabs } from '@mui/material';
 import React, { Fragment } from 'react';
-import { useNavigate } from 'react-router-dom';
 import ResourceCostTable from './resource-cost/resource-cost-table';
 import ResourceSkillTable from './resource-skill/resource-skill-table';
 
 interface SubcomponentProps {
-    handleTabChange: (event: React.SyntheticEvent, newValue: string)=> void,
-    value: string,
+  handleTabChange: (event: React.SyntheticEvent, newValue: string) => void;
+  value: string;
 }
 
-const ResourceSubComponents: React.FC<SubcomponentProps> = ({handleTabChange, value}) => {
-    // const navigate = useNavigate();
- 
+const ResourceSubComponents: React.FC<SubcomponentProps> = ({
+  handleTabChange,
+  value,
+}) => {
+  // const navigate = useNavigate();
 
   // const hanleClickNew = () => {
   //   navigate(`/resource/create`, { state: { value } });
@@ -19,7 +20,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({handleTabChange, va
 
   return (
     <Fragment>
-      <Box className="mr-2">
+      <Box className='mr-2'>
         <Tabs
           value={value}
           onChange={handleTabChange}
