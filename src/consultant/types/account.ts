@@ -148,11 +148,16 @@ export type AccountListResponse = {
 };
 
 export interface AccountListURLParams {
-  page: number;
-  limit: number;
-  sortBy: string;
-  sortOrder: 'ASC' | 'DESC';
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
   filters?: object;
+  globalFilters?: globalFilters;
+}
+
+export interface globalFilters {
+  [key: string]: string[];
 }
 
 export type AccountList = {

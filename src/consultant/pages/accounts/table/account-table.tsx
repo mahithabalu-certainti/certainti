@@ -19,6 +19,9 @@ import { Account, AccountList, ConvertedAccount } from '../../../types/account';
 import { convertAccounts } from '../helpers';
 import './styles.css';
 import { renderChildRows, renderRows } from './utils';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { reshapeGlobalFilter } from '../../../../common-utils';
 
 const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
   const navigate = useNavigate();
@@ -30,12 +33,15 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
   const [orderBy, setOrderBy] = useState<keyof AccountList>('account_name');
   const [accounts, setAccounts] = useState<ConvertedAccount[]>();
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
+  const { filters } = useSelector((state: RootState) => state.account);
+
   const { data: accountList, isLoading: loading } = useAccounts({
     page: page,
     limit: rowsPerPage,
     sortBy: orderBy,
     sortOrder: apiOrder,
     filters: appliedFilters,
+    globalFilters: reshapeGlobalFilter(filters),
   });
 
   useEffect(() => {

@@ -31,7 +31,7 @@ export const fetchAccountFields = async (
 };
 
 export const fetchAccounts = async (
-  params: AccountListURLParams
+  params: AccountListURLParams = {}
 ): Promise<{ accounts: AccountList[]; count: number }> => {
   const response = await accountServiceApi.get<AccountListResponse>(
     AccountListURL(params)
@@ -43,12 +43,13 @@ export const fetchAccounts = async (
 };
 
 export const useAccounts = (
-  params: AccountListURLParams,
+  params: AccountListURLParams = {},
   options?: UseQueryOptions<{ accounts: AccountList[]; count: number }, Error>
 ): UseQueryResult<{ accounts: AccountList[]; count: number }, Error> => {
   return useQuery<{ accounts: AccountList[]; count: number }, Error>({
     queryKey: ['accounts', params],
     queryFn: () => fetchAccounts(params),
+    retry: 0,
     ...options,
   });
 };
