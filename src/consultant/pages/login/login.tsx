@@ -3,12 +3,10 @@ import Box from '@mui/material/Box';
 import { PublicClientApplication } from '@azure/msal-browser';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
 import { LeftPane, RightPane } from '.';
 import { useAuthHook, useToast } from '../../../hooks';
 import { IAuthDetails } from '../../../store/type/auth-slice-type';
 import { msalConfig } from '../../../config/msalConfig';
-import { Toast } from '../../../components';
 import { useAppTranslation } from '../../../hooks/use-app-translation';
 import { fetchCurrentUserRole } from '../../../common-service/common-service';
 
@@ -23,7 +21,7 @@ export const Login: React.FC = () => {
 
   const navigate = useNavigate();
   const { login } = useAuthHook();
-  const { toast, hideToast, errorToast } = useToast();
+  const { errorToast } = useToast();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const t = useAppTranslation();
 
@@ -57,14 +55,11 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <>
-      <Toast {...toast} onClose={hideToast} />
-      <Box className='min-h-screen flex'>
-        <Box className='flex-1 grid md:grid-cols-2'>
-          <LeftPane handleLogin={handleLogin} isLoading={isLoading} />
-          <RightPane />
-        </Box>
+    <Box className='min-h-screen flex'>
+      <Box className='flex-1 grid md:grid-cols-2'>
+        <LeftPane handleLogin={handleLogin} isLoading={isLoading} />
+        <RightPane />
       </Box>
-    </>
+    </Box>
   );
 };

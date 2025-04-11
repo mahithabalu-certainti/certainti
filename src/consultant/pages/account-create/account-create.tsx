@@ -1,10 +1,9 @@
 import React, { useEffect, useMemo } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { accountHomeIcon, editIcon } from '../../../assets';
 import { useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
-import { Toast } from '../../../components/toast-message';
 import { useToast } from '../../../hooks';
 import {
   useFetchAccountFields,
@@ -19,10 +18,11 @@ import {
 import { AccountFormData, SelectOption } from '../../types';
 import { FormData } from './form-data';
 import { transformFormData } from './utils';
+import { ACCOUNT } from '../../../routes';
 
 export const AccountForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
-  const { toast, successToast, errorToast, hideToast } = useToast();
+  const { successToast, errorToast } = useToast();
   const location = useLocation();
   const { accountid } = useParams();
 
@@ -50,6 +50,7 @@ export const AccountForm: React.FC = () => {
   const regions = useFetchRegion();
   const createAccount = useCreateAccount();
   const updateAccount = useUpdateAccount();
+  const navigate = useNavigate();
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
 
@@ -96,6 +97,7 @@ export const AccountForm: React.FC = () => {
           ? 'Account update successfully'
           : 'Account created successfully'
       );
+      navigate(ACCOUNT);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [createAccount.isSuccess, updateAccount.isSuccess, isEditView]);
@@ -137,7 +139,11 @@ export const AccountForm: React.FC = () => {
   );
 
   const submitData = (formValues: Partial<AccountFormData>) => {
-    const transformData = transformFormData(formValues, isEditView, accountData?.rid);
+    const transformData = transformFormData(
+      formValues,
+      isEditView,
+      accountData?.rid
+    );
     if (isEditView) {
       updateAccount.mutate(transformData);
     } else {
@@ -155,7 +161,6 @@ export const AccountForm: React.FC = () => {
 
   return (
     <>
-      <Toast {...toast} onClose={hideToast} />
       <div className='flex justify-between items-center border-b-2 border-gray-200 px-10 py-6'>
         <div className='flex items-center'>
           <img
