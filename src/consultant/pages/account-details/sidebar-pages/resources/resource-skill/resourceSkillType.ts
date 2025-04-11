@@ -2,7 +2,7 @@
 
 import { ResourceSkillList } from "../../../../../types/resourceSkill";
 
-export interface renderSkillRowProps {
+export interface RenderSkillRowProps {
   resourceSkill: ResourceSkillType[];
 }
 

@@ -1,7 +1,7 @@
-import { Box, FormControl, MenuItem, Select, SelectChangeEvent } from '@mui/material';
+import { Box, SelectChangeEvent } from '@mui/material';
 import React, { useState } from 'react';
 import { Button } from '../button';
-import { arrowBackIcon, filterArrowRightIcon } from '../../assets';
+import { filterArrowRightIcon } from '../../assets';
 import { DateFilterOption, dateOptions, EnumFilterOption, enumOptions, enumValueOptions, FieldConfig, FilterComponentProps, FilterState, NumberFilterOption, numberOptions, TextFilterOption, textOptions } from './filterType';
 import { DateFilterControl, EnumFilterControl, NumberFilterControl, TextFilterControl } from './helper';
 import { getInitialStateForField } from '../../consultant/pages/account-details/sidebar-pages/resources/utils';
@@ -13,7 +13,7 @@ const Filter: React.FC<FilterComponentProps> = ({ filterMenu, setAppliedFilters,
     const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
         {}
     );
-    const [showFilterOption, setShowFilterOption] = useState<boolean>(false);
+    // const [showFilterOption, setShowFilterOption] = useState<boolean>(false);
 
     const handleClickFilterMenu = (fieldName: string) => {
         setSelectedFilters((prev) =>
@@ -168,6 +168,9 @@ const Filter: React.FC<FilterComponentProps> = ({ filterMenu, setAppliedFilters,
         });
     };
 
+    console.log("filterstate", filterStates);
+    
+
 
 
     const renderFilterControls = (field: FieldConfig) => {
@@ -229,9 +232,9 @@ const Filter: React.FC<FilterComponentProps> = ({ filterMenu, setAppliedFilters,
 
 
     return (
-        <Box className='fixed top-0 right-0 z-1111 bg-[#0000006e] bg-opacity-10 w-full h-full'>
+        <Box className='fixed top-0 right-0 z-1300 bg-[#0000006e] bg-opacity-10 w-full h-full'>
 
-            <Box className='absolute top-0 right-0 z-1111 overflow-y-scroll w-[248px] max-h-[568px] bg-white opacity-100'>
+            <Box className='absolute top-0 right-0 z-1300 overflow-y-scroll w-[248px] max-h-[568px] bg-white opacity-100'>
                 <Box className='flex justify-between items-center p-2 border-b border-[#CBD6E2]'>
                     <Box>Filters</Box>
                     <Button label='Reset' variant='text' sx={{

@@ -34,6 +34,7 @@ import {
   RESOURCE_CREATE,
 } from './routes';
 // imprt Resource from './consultant/pages/resource/resource';
+// import Resource from './consultant/pages/resource/resource';
 import { useSelector } from 'react-redux';
 import { useToast } from './hooks';
 import { RootState } from './store/store';

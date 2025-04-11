@@ -16,7 +16,6 @@ import {
   TableSortLabel,
 } from '@mui/material';
 import React, { useState } from 'react';
-import TextButton from '../../../../components/button/text-button';
 
 interface Column {
   id: string;
@@ -54,9 +53,9 @@ const ListTable: React.FC<ReusableTableProps> = ({
   data = [],
   columns = [],
   actionMenuItems = [],
-  title = '',
-  titleIcon,
-  headerButtons = [],
+  // title = '',
+  // titleIcon,
+  // headerButtons = [],
   pagination = true,
   rowsPerPage = 5,
   sortable = true,
@@ -222,7 +221,7 @@ const ListTable: React.FC<ReusableTableProps> = ({
           <TableBody>
             {displayedRows.map((row, rowIndex) => (
               <TableRow
-                key={rowIndex}
+                key={row.id}
                 className='hover:bg-gray-50'
                 selected={viewMode && selectedRows.has(rowIndex.toString())}
               >
@@ -324,7 +323,7 @@ const ListTable: React.FC<ReusableTableProps> = ({
             horizontal: 'right',
           }}
         >
-          {actionMenuItems.map((item, index) => (
+          {actionMenuItems.map((item) => (
             <MenuItem
               sx={{
                 display: 'flex',
@@ -332,7 +331,7 @@ const ListTable: React.FC<ReusableTableProps> = ({
                 borderColor: 'grey.300',
                 backgroundColor: 'grey.100',
               }}
-              key={index}
+              key={item.label}
               onClick={() => {
                 item.onClick(selectedRow);
                 handleMenuClose();
