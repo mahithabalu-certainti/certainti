@@ -5,18 +5,18 @@ import { mockResourcesList } from '../../../../mockdata/resource-list';
 import TabPanel from '../../components/tab';
 import ListTable from '../../components/table';
 import { getResourceColumns } from './columns';
-import ResourceTableHeader from './resource-table-header';
 import ResourceSubComponents from './resource-sub-components';
+import ResourceTableHeader from './resource-table-header';
 
 const Resource = () => {
   const [viewMode, setViewMode] = useState<boolean>(false);
-  const [viewResourceList, setViewResourceListt] = useState<boolean>(true)
+  const [viewResourceList, setViewResourceListt] = useState<boolean>(true);
   const [columns, setColumns] = useState<any>([]);
 
   const handleResourceClick = (row: any) => {
-    setViewResourceListt(!viewResourceList)
+    console.log('row', row);
+    setViewResourceListt(!viewResourceList);
     console.log('Resource clicked:');
-    // Add your custom logic here
   };
 
   useEffect(() => {
@@ -24,6 +24,7 @@ const Resource = () => {
       getResourceColumns({
         onResourceIdClick: handleResourceClick,
         view: viewMode,
+        onClickId: 'rid',
       })
     );
   }, [viewMode]);
@@ -56,22 +57,22 @@ const Resource = () => {
     variant: 'text' | 'outlined' | 'contained';
     onClick: () => void;
   }[] = [
-      {
-        label: 'Download',
-        variant: 'outlined',
-        onClick: () => console.log('Download'),
-      },
-      {
-        label: 'New',
-        variant: 'outlined',
-        onClick: () => console.log('New'),
-      },
-      {
-        label: 'View',
-        variant: 'outlined',
-        onClick: () => setViewMode(true),
-      },
-    ];
+    {
+      label: 'Download',
+      variant: 'outlined',
+      onClick: () => console.log('Download'),
+    },
+    {
+      label: 'New',
+      variant: 'outlined',
+      onClick: () => console.log('New'),
+    },
+    {
+      label: 'View',
+      variant: 'outlined',
+      onClick: () => setViewMode(true),
+    },
+  ];
 
   const toggleViewMode = () => {
     setViewMode(!viewMode);
@@ -84,24 +85,28 @@ const Resource = () => {
         onExitView={toggleViewMode}
         title='Resource'
       />
-      <ResourceTableHeader title='Resource'
+      <ResourceTableHeader
+        title='Resource'
         titleIcon={<img src={resourceHeaderIcon} alt='resource header icon' />}
-        headerButtons={viewMode ? [] : headerButtons} />
-      {!viewResourceList ? <ResourceSubComponents /> : <ListTable
-        data={mockResourcesList.data.resources}
-        columns={columns}
-        actionMenuItems={actionMenuItems}
-        // title='Resource'
-        // titleIcon={<img src={resourceHeaderIcon} alt='resource header icon' />}
-        // headerButtons={viewMode ? [] : headerButtons}
-        pagination={!viewMode}
-        rowsPerPage={5}
-        sortable={true}
-        setViewMode={setViewMode}
-        viewMode={viewMode}
-      />}
-
-
+        headerButtons={viewMode ? [] : headerButtons}
+      />
+      {!viewResourceList ? (
+        <ResourceSubComponents />
+      ) : (
+        <ListTable
+          data={mockResourcesList.data.resources}
+          columns={columns}
+          actionMenuItems={actionMenuItems}
+          // title='Resource'
+          // titleIcon={<img src={resourceHeaderIcon} alt='resource header icon' />}
+          // headerButtons={viewMode ? [] : headerButtons}
+          pagination={!viewMode}
+          rowsPerPage={5}
+          sortable={true}
+          setViewMode={setViewMode}
+          viewMode={viewMode}
+        />
+      )}
     </div>
   );
 };
