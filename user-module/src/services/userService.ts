@@ -556,12 +556,26 @@ class UserService {
     sortBy: string,
     sortOrder: string
   ) {
+    const order: any[] = [];
+
+    if (sortBy !== "$profile.profile_name$") {
+      order.push([sortBy, sortOrder]);
+    }
+
+    if (sortBy === "$profile.profile_name$") {
+      order.push([
+        { model: Profile, as: "profile" },
+        "profile_name",
+        sortOrder,
+      ]);
+    }
+
     return await User.findAll({
       where: whereClause,
       attributes: ["rid", "email", "status", "full_name", "first_name"],
       limit,
       offset,
-      order: [[sortBy, sortOrder]],
+      order,
       include: [
         {
           model: Profile,
@@ -717,9 +731,16 @@ class UserService {
       "status",
       "created_datetime",
       "modified_datetime",
+      "full_name",
+      "profile"
     ];
+
     if (!validSortColumns.includes(sortBy)) {
       sortBy = "created_datetime";
+    };
+
+    if(sortBy === "profile"){
+      sortBy = "$profile.profile_name$";
     }
 
     sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
