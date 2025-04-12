@@ -138,3 +138,8 @@ export const REGEX_PATTERNS = {
   MAX_AI_INTRACTION: /^[3-5]$/,
   NUMBERS: /^[0-9]+(\.[0-9]{1,2})?$/,
 };
+
+export const fiscalYears = Array.from({ length: 6 }, (_, i) => {
+  const year = new Date().getFullYear() - i;
+  return { value: `FY-${year}`, label: `FY-${year}` };
+});

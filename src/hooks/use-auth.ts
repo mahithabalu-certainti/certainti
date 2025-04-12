@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { clearAuthDetail, setAuthDetail } from '../store/slices/auth-slice';
 import { IAuthDetails } from '../store/type/auth-slice-type';
+import { setUserId } from '../store/slices/account-slice';
 
 const DEFAULT_AUTH_DETAIL: IAuthDetails = {
   authToken: null,
@@ -20,6 +21,7 @@ export const useAuthHook = () => {
 
     const parsedAuth = JSON.parse(auth);
     dispatch(setAuthDetail(parsedAuth));
+    dispatch(setUserId(parsedAuth.userId));
     return parsedAuth;
   });
 

@@ -30,9 +30,20 @@ export interface GlobalModalProps {
   handleCloseGlobalModal: () => void;
 }
 
-export interface FilterState {
-  account: string[];
+export interface FilterEntry {
+  account: string;
   child: string[];
 }
 
+export type FilterState = FilterEntry[];
+
 export type FilterType = 'account' | 'child';
+
+export interface AccountFilter {
+  rid: string;
+  account_name: string;
+  child_accounts?: {
+    rid: string;
+    account_name: string;
+  }[];
+}
