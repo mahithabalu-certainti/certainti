@@ -400,7 +400,6 @@ class AccountService {
     if (search) {
       whereClause = this.buildSearchCondition(search, whereClause);
     }
-    console.log("filters 2 =>", JSON.stringify(filters, null, 2));
     whereClause = this.applyFilters(filters, whereClause);
 
     return { whereClause };
@@ -456,9 +455,7 @@ class AccountService {
     }
 
     filterFields.forEach(({ clientField, dbField }) => {
-      console.log("inside for each ", clientField);
       if (filters[clientField]) {
-        console.log("inside if filters[clientField] ", filters[clientField]);
         const fieldFilter = filters[clientField];
         whereClause[dbField] = this.getFieldFilter(fieldFilter, dbField);
       }
@@ -475,11 +472,6 @@ class AccountService {
         filters.currency
       );
     }
-    console.log("whereClause before", whereClause);
-
-    console.log("filters 3 =>", JSON.stringify(filters, null, 2));
-    console.log("whereClause initial", whereClause);
-
     return whereClause;
   }
 
@@ -495,7 +487,6 @@ class AccountService {
       return { [Op.iLike]: fieldFilter.equals };
     }
     if (fieldFilter.contains) {
-      console.log("inside conditional if",fieldFilter.contains)
       return { [Op.iLike]: `%${fieldFilter.contains}%` };
     }
     if (fieldFilter.value) {
