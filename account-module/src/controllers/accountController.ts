@@ -54,6 +54,7 @@ async function accounts(req: Request, res: Response): Promise<void> {
     }
     const pageNum: number = parseInt(value.page, 10) || 1;
     const limitNum: number = parseInt(value.limit, 10) || 10;
+    const fiscalYear: number = parseInt(value.limit, 10) || 10;
 
     const accounts = await accountServices.accountList(
       pageNum,
@@ -62,7 +63,8 @@ async function accounts(req: Request, res: Response): Promise<void> {
       parsedFilters,
       value.sortBy,
       value.sortOrder,
-      parsedGlobalFilters
+      parsedGlobalFilters,
+      fiscalYear
     );
 
     if (accounts.statusCode === HttpStatus.SUCCESS) {

@@ -9,13 +9,14 @@ type PaginationInput = {
   sortOrder?: string;
   filters?: string;
   globalFilters?: string;
+  fiscalYear?: number;
 };
 
 const accountResolvers: IResolvers = {
   Query: {
     getAccounts: async (_, params: { pagination: PaginationInput }, ctx) => {
       try {
-        const { limit, page, search, sortBy, sortOrder, filters, globalFilters } =
+        const { limit, page, search, sortBy, sortOrder, filters, globalFilters, fiscalYear} =
           params.pagination;
           
         const result = await ctx.services.accountServices.accountList(
@@ -25,7 +26,8 @@ const accountResolvers: IResolvers = {
           filters,
           sortBy,
           sortOrder,
-          globalFilters
+          globalFilters,
+          fiscalYear
         );
 
         if (result.statusCode !== HttpStatus.SUCCESS) {

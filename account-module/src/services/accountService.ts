@@ -44,7 +44,8 @@ class AccountService {
     filters: Record<string, string> = {},
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
-    globalFilters: Record<string, string[]> = {},   
+    globalFilters: Record<string, string[]> = {},
+    fiscalYear: number
   ): Promise<{
     statusCode: number;
     message: string;
