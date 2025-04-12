@@ -81,14 +81,18 @@ export const CreateUser: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updateUser.isSuccess, createUser.isSuccess]);
 
-  const memoizedContry: SelectOption[] = useMemo(
-    () =>
-      allCountries.data?.data.country.map((country) => ({
-        label: country.country_name,
-        value: country.rid,
-      })) || [],
-    [allCountries.data?.data.country]
-  );
+const memoizedContry: SelectOption[] = useMemo(() => {
+  const countries = allCountries.data?.data.country || [];
+
+  return countries
+    .slice() // create a shallow copy to avoid mutating original data
+    .sort((a, b) => a.country_name.localeCompare(b.country_name))
+    .map((country) => ({
+      label: country.country_name,
+      value: country.rid,
+    }));
+}, [allCountries.data?.data.country]);
+
 
   const memoizeProfiles: SelectOption[] = useMemo(
     () =>

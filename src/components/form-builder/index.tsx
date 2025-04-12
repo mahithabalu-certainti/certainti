@@ -78,6 +78,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             type={field.type}
             name={field.name}
             placeholder={field.placeholder}
+            autoComplete="off"
             className={
               'w-full sm:text-sm p-2 border-1 ' + isError + fieldDisabled
             }

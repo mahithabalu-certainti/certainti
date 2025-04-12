@@ -6,8 +6,8 @@ import {
 // import api from '../../../api/api';
 // import { skillListURL } from '../urls/resource-url';
 import { ResourceSkillApiResponse, ResourceSkillList, ResourceSkillListParams } from '../../types/resourceSkill';
-import { api } from '../../../api/api';
 import { ResourceListURL } from '../urls';
+import { api } from '../../../api/api';
 // import { skillListURL } from '../urls';
 
 

@@ -4,8 +4,6 @@ import { LOGIN } from '../routes';
 import { PublicClientApplication } from '@azure/msal-browser';
 import { msalConfig } from '../config/msalConfig';
 import { FailedQueueItem } from '../common-service';
-import { ErrorResponse } from 'react-router-dom';
-// Removed ErrorResponse import as it is not used correctly
 
 // Initialize MSAL instance
 const msalSigninInstance = new PublicClientApplication(msalConfig);
@@ -37,32 +35,8 @@ const api = axios.create({
   },
 });
 
-api.interceptors.response.use(
-  (response: AxiosResponse) => response,
-  (error: AxiosError<ErrorResponse>) => {
-    if (!error.response) {
-      console.error('Network error - Please check your internet connection.');
-      throw new Error('Network error');
-    }
-
-    const { status, data } = error.response;
-    const errorMessage = (data as any)?.message || error.message;
-
-    console.error(`API Error: ${status} - ${errorMessage}`);
-
-    // Handle 401 Unauthorized globally
-    if (status === 401) {
-      console.warn('Unauthorized - Redirecting to login...');
-      window.location.href = LOGIN;
-    }
-
-    // You can transform the error here if needed
-    throw new Error(errorMessage);
-  }
-);
-
 // Apply interceptors to both services
-[accountServiceApi, userServiceApi].forEach((api) => {
+[accountServiceApi, userServiceApi, api].forEach((api) => {
   api.interceptors.request.use(
     (config) => {
       const auth = localStorage.getItem('auth');
@@ -77,8 +51,6 @@ api.interceptors.response.use(
     }
   );
 });
-
-
 
 // Create a flag to prevent multiple refresh attempts
 let isRefreshing = false;
@@ -96,7 +68,7 @@ const processQueue = (error: unknown, token: string | null = null) => {
 };
 
 // Modify the response interceptor
-[accountServiceApi, userServiceApi].forEach((api) => {
+[accountServiceApi, userServiceApi, api].forEach((api) => {
   api.interceptors.response.use(
     (response: AxiosResponse) => {
       return response;
@@ -105,7 +77,10 @@ const processQueue = (error: unknown, token: string | null = null) => {
       const originalRequest = error.config!;
 
       // Check if error is due to token expiration
-      if (error.response?.status === 401 && !(originalRequest as { _retry?: boolean })._retry) {
+      if (
+        error.response?.status === 401 &&
+        !(originalRequest as { _retry?: boolean })._retry
+      ) {
         if (isRefreshing) {
           // If already refreshing, add to queue
           return new Promise<string>((resolve, reject) => {
@@ -172,4 +147,3 @@ const processQueue = (error: unknown, token: string | null = null) => {
 });
 
 export { accountServiceApi, userServiceApi, api };
- 
