@@ -43,7 +43,8 @@ class AccountService {
     search: string,
     filters: Record<string, string> = {},
     sortBy: string = "created_datetime",
-    sortOrder: string = "ASC"
+    sortOrder: string = "ASC",
+    globalFilters: Record<string, string[]> = {},   
   ): Promise<{
     statusCode: number;
     message: string;
@@ -52,9 +53,8 @@ class AccountService {
   }> {
     try {
       const repository = this.getAccountRepository();
-
       const { whereClause } = this.buildWhereClause(filters, search);
-
+      const {allWhereClause, childClause} = this.applyAccountIDFilter(globalFilters,whereClause )
       const offset = (page - 1) * limit;
 
       const [finalSortBy, finalSortOrder] = this.getSortParameters(
@@ -89,13 +89,13 @@ class AccountService {
           parent_account_rid: {
             [Op.is]: null,
           } as any,
-          ...whereClause,
+          ...allWhereClause,
         },
         limit,
         offset,
         order,
         subQuery: false,
-        include: this.getAccountIncludeOptions(),
+        include: this.getAccountIncludeOptions(childClause),
       });
 
       return {
@@ -400,7 +400,6 @@ class AccountService {
     if (search) {
       whereClause = this.buildSearchCondition(search, whereClause);
     }
-
     whereClause = this.applyFilters(filters, whereClause);
 
     return { whereClause };
@@ -447,6 +446,13 @@ class AccountService {
       { clientField: "annual_revenue", dbField: "annual_revenue" },
       { clientField: "account_id", dbField: "eid" },
     ];
+    if (filters && filters.parent_account) {
+      whereClause = this.applyParentAccountFilter(filters, whereClause);
+    }
+
+    if (filters.account_number) {
+      whereClause = this.applyAccountNumberFilter(filters, whereClause);
+    }
 
     filterFields.forEach(({ clientField, dbField }) => {
       if (filters[clientField]) {
@@ -466,16 +472,14 @@ class AccountService {
         filters.currency
       );
     }
-
-    if (filters && filters.parent_account) {
-      whereClause = this.applyParentAccountFilter(filters, whereClause);
-    }
-
-    if (filters.account_number) {
-      whereClause = this.applyAccountNumberFilter(filters, whereClause);
-    }
-
     return whereClause;
+  }
+
+  private symbolReplacer(key: string, value: any): any {
+    if (typeof value === "symbol") {
+      return value.toString(); // Converts Symbol(Op.or) to "Symbol(Op.or)"
+    }
+    return value;
   }
 
   private getFieldFilter(fieldFilter: any, dbField: string): any {
@@ -562,6 +566,36 @@ class AccountService {
     return whereClause;
   }
 
+  private applyAccountIDFilter(
+    allIds: Record<string, string[]>,
+    whereClause: Record<string, any>
+  ): { allWhereClause: Record<string, any>; childClause: Record<string, any> } {
+    let newWhereClause = whereClause;
+    let childClause: Record<string, any> = {};
+  
+    if (allIds && Object.keys(allIds).length > 0) {
+      const parentIds = Object.keys(allIds);
+      const childIds = Object.values(allIds).flat();
+  
+      newWhereClause = {
+        ...whereClause,
+        [Op.or]: [
+          { rid: { [Op.in]: parentIds } }
+        ]
+      };
+  
+      childClause = { rid: { [Op.in]: childIds } };
+    }
+  
+    return {
+      allWhereClause: newWhereClause,
+      childClause
+    };
+  }
+  
+  
+  
+
   getSortParameters(sortBy: string, sortOrder: string): [string, string] {
     const validSortColumns = [
       "account_name",
@@ -582,11 +616,12 @@ class AccountService {
     return [sortBy, sortOrder];
   }
 
-  private getAccountIncludeOptions() {
+  private getAccountIncludeOptions(childClause: Record<string, any>) {
     return [
       {
         model: Account,
         as: "child_accounts",
+        where:childClause,
         include: [
           { model: Country, as: "country", attributes: ["country_name"] },
           { model: Currency, as: "currency", attributes: ["currency_code"] },

@@ -7,7 +7,8 @@ export interface IAccountService {
     search: string,
     filters: Record<string, string>,
     sortBy: string,
-    sortOrder: string
+    sortOrder: string,
+    globalFilters: Record<string, string[]>,
   ): Promise<{
     statusCode: number;
     message: string;

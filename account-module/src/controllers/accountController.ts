@@ -32,8 +32,8 @@ async function accounts(req: Request, res: Response): Promise<void> {
   const methodName = "list user";
   try {
     const value = await validateRequest(req, listAccountSchema, res, "GET");
-
     let parsedFilters: Record<string, any> = {};
+    let parsedGlobalFilters: Record<string, string[]> = {}
 
     if (!value) {
       return;
@@ -43,13 +43,15 @@ async function accounts(req: Request, res: Response): Promise<void> {
       if (value.filters) {
         parsedFilters = JSON.parse(value.filters);
       }
+      if (value.globalFilters) {
+        parsedGlobalFilters = JSON.parse(value.globalFilters);
+      }
     } catch (error) {
       errorLog(
         methodName,
         "Invalid filters format. Must be a valid JSON object."
       );
     }
-
     const pageNum: number = parseInt(value.page, 10) || 1;
     const limitNum: number = parseInt(value.limit, 10) || 10;
 
@@ -59,7 +61,8 @@ async function accounts(req: Request, res: Response): Promise<void> {
       value.search,
       parsedFilters,
       value.sortBy,
-      value.sortOrder
+      value.sortOrder,
+      parsedGlobalFilters
     );
 
     if (accounts.statusCode === HttpStatus.SUCCESS) {
