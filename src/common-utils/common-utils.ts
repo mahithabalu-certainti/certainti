@@ -125,18 +125,21 @@ export const YES_NO_OPTIONS: SelectOption[] = [
 export const REGEX_PATTERNS = {
   ALPHANUMERIC: /^[A-Za-z0-9-]+$/,
   LETTERS_SPACES: /^[A-Za-z\s]+$/,
-  ACCOUNT_NAME: /^[A-Za-z-\s]{7,25}$/,
-  LETTERS_5_TO_25: /^[A-Za-z-\s]{5,25}$/,
-  LETTERS_3_TO_25: /^[A-Za-z-\s]{3,25}$/,
-  EMAIL: /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$/,
+  ACCOUNT_NAME: /^(?=.{7,25}$)[A-Za-z]+(?:\s[A-Za-z]+)*$/,
+  LETTERS_5_TO_25: /^[A-Za-z\s]{5,25}$/,
+  LETTERS_3_TO_25: /^(?!.*\s{2,})[A-Za-z\s]{3,25}$/,
+  EMAIL: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
   PHONE: /^([0-9]{10})$/,
-  WEBSITE: /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/,
+  WEBSITE: /^(https?:\/\/)?([a-zA-Z0-9-]{1,50}\.)+[a-zA-Z]{2,}(\/[^\s]*)?$/i,
   DATA_RESIDENCY: /^[A-Za-z0-9\s-]+$/,
   NUMBER_OPTIONAL_DECIMAL: /^([0-9]{1,10}(\.[0-9]{1,2})?)?$/,
   DESCRIPTION: /^.{0,500}$/,
-  POSTAL_CODE: /^\d{5}(-\d{4})?$/,
+  POSTAL_CODE: /^[a-zA-Z0-9]{6,10}$/,
   MAX_AI_INTRACTION: /^[3-5]$/,
-  NUMBERS: /^[0-9]+(\.[0-9]{1,2})?$/,
+  NUMBERS: /^[0-9,]{1,20}$/,
+  NAME_REGEX: /^[A-Za-z\s'-]{3,50}$/,
+  STREET_REGEX: /^[A-Za-z\s]{3,200}$/,
+  CITY_REGEX: /^[A-Za-z\s]{3,100}$/,
 };
 
 export const fiscalYears = Array.from({ length: 6 }, (_, i) => {

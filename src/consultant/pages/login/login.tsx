@@ -59,13 +59,11 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <>
-      <Box className='min-h-screen flex'>
-        <Box className='flex-1 grid md:grid-cols-2'>
-          <LeftPane handleLogin={handleLogin} isLoading={isLoading} />
-          <RightPane />
-        </Box>
+    <Box className='min-h-screen flex'>
+      <Box className='flex-1 grid md:grid-cols-2'>
+        <LeftPane handleLogin={handleLogin} isLoading={isLoading} />
+        <RightPane />
       </Box>
-    </>
+    </Box>
   );
 };

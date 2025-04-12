@@ -46,7 +46,7 @@ export const FormData = (
           createSelectField('parent_account_rid', 'Parent Account', {
             options: parentAccount,
             placeholder: 'Choose Parent Account',
-            required: false,
+            required: true,
             disabled: disableFields,
             dependsRequired: {
               key: 'is_parent',
@@ -71,7 +71,7 @@ export const FormData = (
             required: true,
             regex: REGEX_PATTERNS.EMAIL,
             regexErrorMessage: 'Enter a valid email address',
-            placeholder: 'Enter Project Manager',
+            placeholder: 'Enter Project Manager Email',
           }),
           createRadioField('is_parent', 'Is Parent Account', {
             radioOptions: YES_NO_OPTIONS,
@@ -181,7 +181,7 @@ export const FormData = (
           createTextField('blended_rate_subcon', 'Blended Rate - SubCon', {
             required: false,
             regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
-            regexErrorMessage: 'Numbers only maximum 10 digits',
+           regexErrorMessage: 'Enter a valid annual revenue using numbers and commas only',
             placeholder: 'Enter Blended Rate - SubCon',
           }),
           createRadioField('auto_access_rd', 'Auto assess RD', {
