@@ -237,6 +237,7 @@ const listAccountSchema = Joi.object({
   filters: Joi.string().default("{}"),
   sortBy: Joi.string().default("createdAt"),
   sortOrder: Joi.string().valid("ASC", "DESC").default("DESC"),
+  globalFilters: Joi.string().default("{}"),
 });
 
 export { accountSchema, updateAccountSchema, listAccountSchema };

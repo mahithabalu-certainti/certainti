@@ -62,7 +62,8 @@ const typeDefs = gql`
     search: String
     sortBy: String
     sortOrder: String
-    filters: JSON
+    filters: JSON,
+    globalFilters: JSON,    
   }
 
   type AccountConnection {
