@@ -1,4 +1,4 @@
-import { FieldType, SelectOption } from '../consultant/types';
+import { AllowedCountry, FieldType, SelectOption } from '../consultant/types';
 
 export const createTextField = (
   name: string,
@@ -18,6 +18,25 @@ export const createTextField = (
   required: options.required ?? false,
   regex: options.regex,
   regexErrorMessage: options.regexErrorMessage,
+  placeholder: options.placeholder,
+  disabled: options.disabled,
+  onChange: options.onChange,
+});
+
+export const createPhoneInputField = (
+  name: string,
+  label: string,
+  options: {
+    required?: boolean;
+    placeholder?: string;
+    disabled?: boolean;
+    onChange?: boolean;
+  } = {}
+): FieldType => ({
+  type: 'phone',
+  name,
+  label,
+  required: options.required ?? false,
   placeholder: options.placeholder,
   disabled: options.disabled,
   onChange: options.onChange,
@@ -141,6 +160,17 @@ export const REGEX_PATTERNS = {
   STREET_REGEX: /^[A-Za-z\s]{3,200}$/,
   CITY_REGEX: /^[A-Za-z\s]{3,100}$/,
 };
+
+export const ALLOWED_COUNTRIES: AllowedCountry[] = [
+  'us',
+  'ca',
+  'gb',
+  'ie',
+  'se',
+  'ro',
+  'au',
+  'fr',
+];
 
 export const fiscalYears = Array.from({ length: 6 }, (_, i) => {
   const year = new Date().getFullYear() - i;
