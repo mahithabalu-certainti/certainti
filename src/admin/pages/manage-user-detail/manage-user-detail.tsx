@@ -6,7 +6,7 @@ import TextButton from '../../../components/button/text-button';
 import { useManageUserDetail } from '../../service/manage-user-detail/manage-user-detail-service';
 import { Detail } from '../../types/admin-user-detail';
 import { BUTTON_STYLES, HEADER_STYLES } from './styles';
- 
+
 const MENU_ITEMS = [
   {
     label: 'Assign Permission to User',
@@ -17,7 +17,7 @@ const MENU_ITEMS = [
     onClick: () => console.log('View Permissions clicked'),
   },
 ];
- 
+
 export const ManageUserDetails: React.FC = () => {
   // Get userId from URL params
   const location = useLocation();
@@ -29,7 +29,7 @@ export const ManageUserDetails: React.FC = () => {
     isError,
     error,
   } = useManageUserDetail(userId || '');
- 
+
   const userDetail = user?.data.users[0];
   const userActionButtons: string[] = [
     'Suspend User',
@@ -37,7 +37,7 @@ export const ManageUserDetails: React.FC = () => {
     'Reset Password',
     'Delete',
   ];
- 
+
   const handleAction = (action: string) => {
     switch (action) {
       case 'Suspend User':
@@ -56,61 +56,70 @@ export const ManageUserDetails: React.FC = () => {
         break;
     }
   };
- 
+
   const renderRow = (value: Detail): JSX.Element => (
     <div className='grid grid-cols-2 gap-1 items-center justify-center border-b border-gray-200 py-2'>
       <div className='font-bold text-center'>{value?.label}</div>
-      <div className=''>{value?.value}</div>
+      <div>{value?.value}</div>
     </div>
   );
- 
+
   if (!userId) {
     return <div>No user ID provided</div>;
   }
- 
+
   if (isLoading) {
     return <div>Loading user details...</div>;
   }
- 
+
   if (isError) {
     return <div>Error loading user details: {error?.message}</div>;
   }
- 
+
   if (!user) {
     return <div>User not found</div>;
   }
- 
-  const capitalizeFirstLetter = (str: string) => {
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+
+  const capitalizeFirstLetter = (str?: string) => {
+    if (str) {
+      return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    }
+    return 'N/A';
   };
- 
+
   // Map your API data to the mock data structure
   const mappedUserDetails: Detail[] = [
     { label: 'Full name', value: userDetail?.full_name || 'N/A' },
     { label: 'Email address', value: userDetail?.email || 'N/A' },
     { label: 'Profile', value: userDetail?.profile.profile_name || 'N/A' },
-    { label: 'Active', value: userDetail?.status ? capitalizeFirstLetter(userDetail.status) : 'N/A' },
+    {
+      label: 'Active',
+      value: capitalizeFirstLetter(userDetail?.status),
+    },
     { label: 'First name', value: userDetail?.first_name || 'N/A' },
     { label: 'Last name', value: userDetail?.last_name || 'N/A' },
     { label: 'Street', value: userDetail?.street || 'N/A' },
     { label: 'City', value: userDetail?.city || 'N/A' },
     // Add other fields as needed
   ];
- 
+
   const mappedAdditionalDetails: Detail[] = [
     { label: 'State/Province', value: userDetail?.state || 'N/A' },
     { label: 'Zip/Postal Code', value: userDetail?.zip_code || 'N/A' },
     { label: 'Country', value: userDetail?.country || 'N/A' },
-    { label: 'Created by', value: userDetail?.created_by || 'N/A' },
+    {
+      label: 'Created by',
+      value: capitalizeFirstLetter(userDetail?.created_by),
+    },
     { label: 'Created on', value: userDetail?.createdAt || 'N/A' },
     { label: 'Modified by', value: userDetail?.modified_by || 'N/A' },
     { label: 'Modified on', value: userDetail?.updatedAt },
   ];
- 
+
   const goBack = () => {
     window.history.back();
   };
- 
+
   return (
     <div className='flex flex-col h-[calc(100vh-64px)] w-full overflow-y-auto p-4 gap-3'>
       <div className='flex h-[12%] w-full p-4 items-center justify-between border border-gray-300 rounded'>
@@ -133,14 +142,13 @@ export const ManageUserDetails: React.FC = () => {
               color: '#fff',
             }}
           />
-         
-            <TextButton
-              label='Back'
-              variant='outlined'
-              color='inherit'
-              onClick={goBack}
-            />
-         
+
+          <TextButton
+            label='Back'
+            variant='outlined'
+            color='inherit'
+            onClick={goBack}
+          />
         </div>
       </div>
       {/* User Details section  */}
