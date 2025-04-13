@@ -48,4 +48,6 @@ export type FieldConfig = {
 
 export interface FilterComponentProps {
   setAppliedFilters: (filters: Record<string, any>) => void;
+  searchTerm: string;
+  setSearchTerm: (value: string) => void;
 }

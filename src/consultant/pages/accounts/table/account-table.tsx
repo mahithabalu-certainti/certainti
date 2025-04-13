@@ -33,7 +33,9 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
   const [orderBy, setOrderBy] = useState<keyof AccountList>('account_name');
   const [accounts, setAccounts] = useState<ConvertedAccount[]>();
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
-  const { filters } = useSelector((state: RootState) => state.account);
+  const { filters, fiscalYear } = useSelector(
+    (state: RootState) => state.account
+  );
 
   const { data: accountList, isLoading: loading } = useAccounts({
     page: page,
@@ -42,6 +44,7 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
     sortOrder: apiOrder,
     filters: appliedFilters,
     globalFilters: reshapeGlobalFilter(filters),
+    fiscalYear,
   });
 
   useEffect(() => {
@@ -179,6 +182,7 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
     });
 
   return (
+    <>
     <Paper sx={{ overflowX: 'auto', boxShadow: 'none' }}>
       <Table
         sx={{
@@ -265,6 +269,15 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
                 Currency
               </TableSortLabel>
             </TableCell>
+            <TableCell sx={{ minWidth: '160px' }}>
+              <TableSortLabel
+                active={orderBy === 'annual_revenue'}
+                direction={orderBy === 'annual_revenue' ? order : 'asc'}
+                onClick={createSortHandler('annual_revenue')}
+              >
+                Annual Revenue
+              </TableSortLabel>
+            </TableCell>
             <TableCell sx={{ minWidth: '100px' }}>
               <TableSortLabel
                 active={orderBy === 'status'}
@@ -324,7 +337,8 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
           )}
         </TableBody>
       </Table>
-      <TablePagination
+    </Paper>
+    <TablePagination
         rowsPerPageOptions={[5, 10, 25]}
         component='div'
         count={accountList?.count ?? 0}
@@ -333,7 +347,7 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
-    </Paper>
+    </>
   );
 };
 

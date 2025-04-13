@@ -5,7 +5,7 @@ import { useToast } from '../../../../hooks';
 import { FormData } from './form-data';
 import TextButton from '../../../../components/button/text-button';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { useGetAllCountries } from '../../../../common-service';
+import { CheckErrorMsg, useGetAllCountries } from '../../../../common-service';
 import { UserDetail, UserRole } from '../../../types/manage-user';
 import {
   useCreateUserDetails,
@@ -16,6 +16,7 @@ import {
 } from '../../../service/manage-user/manage-user-service';
 import { SelectOption } from '../../../../consultant/types';
 import { ADMIN_MANAGE_USER } from '../../../../routes';
+import { checkError, checkErrorMsg } from '../../../../common-utils';
 
 export const CreateUser: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -35,55 +36,38 @@ export const CreateUser: React.FC = () => {
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
 
-  useEffect(() => {
-    // Hook Error Handling
-    if (
-      userDetails.isError ||
-      userProfiles.isError ||
-      userRoles.isError ||
-      allCountries.isError ||
-      updateUser.isError ||
-      createUser.isError
-    ) {
-      errorToast(
-        userDetails.error?.message ||
-          userProfiles.error?.message ||
-          userRoles.error?.message ||
-          allCountries.error?.message ||
-          updateUser.error?.message ||
-          createUser.error?.message ||
-          'An error occurred'
-      );
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    userDetails.isError,
-    userDetails.error?.message,
-    userProfiles.isError,
-    userProfiles.error?.message,
-    userRoles.isError,
-    userRoles.error?.message,
-    allCountries.isError,
-    allCountries.error?.message,
-    updateUser.isError,
-    updateUser.error?.message,
-    createUser.isError,
-    createUser.error?.message,
-  ]);
+  // Hook Error Handling
+  const errorhandlingData = [
+    userDetails,
+    userProfiles,
+    userRoles,
+    allCountries,
+    updateUser,
+    createUser,
+  ];
+  const commonError = checkError(errorhandlingData);
+  const commonErrorMsg = checkErrorMsg(errorhandlingData as CheckErrorMsg[]);
+  const commonSuccess = updateUser.isSuccess || createUser.isSuccess;
 
   useEffect(() => {
-    if (updateUser.isSuccess || createUser.isSuccess) {
+    if (commonError) {
+      errorToast(commonErrorMsg);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [commonError, commonErrorMsg]);
+
+  useEffect(() => {
+    if (commonSuccess) {
       successToast(
         isEditView ? 'User update successfully' : 'User created successfully'
       );
       navigate(ADMIN_MANAGE_USER);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [updateUser.isSuccess, createUser.isSuccess]);
+  }, [commonSuccess, isEditView]);
 
 const memoizedContry: SelectOption[] = useMemo(() => {
   const countries = allCountries.data?.data.country || [];
-
   return countries
     .slice() // create a shallow copy to avoid mutating original data
     .sort((a, b) => a.country_name.localeCompare(b.country_name))
@@ -92,7 +76,6 @@ const memoizedContry: SelectOption[] = useMemo(() => {
       value: country.rid,
     }));
 }, [allCountries.data?.data.country]);
-
 
   const memoizeProfiles: SelectOption[] = useMemo(
     () =>

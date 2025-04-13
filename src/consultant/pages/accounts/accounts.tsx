@@ -22,6 +22,8 @@ const BUTTON_STYLES = {
 
 export const Accounts: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [isFilterOpen, setIsFilterOpen] = useState<boolean>(true);
 
   const menuItems = [
     {
@@ -58,7 +60,10 @@ export const Accounts: React.FC = () => {
                 <span className='font-semibold text-[#2D3E4F]'>5</span>
               </div>
             </div>
-            <div className='flex items-center justify-center border border-[#EAF0F5] mt-0.5 ml-2 rounded-xs w-9 h-9'>
+            <div
+              className={`flex items-center justify-center border mt-0.5 ml-2 rounded-xs w-9 h-9 cursor-pointer transition-colors duration-300 ${isFilterOpen ? 'bg-[#EAF0F6] border-[#CBD6E2]' : 'border-[#EAF0F5]'}`}
+              onClick={() => setIsFilterOpen((prev) => !prev)}
+            >
               <img src={filterIcon} alt='menu-icon' className='h-[13px]' />
             </div>
           </div>
@@ -102,17 +107,32 @@ export const Accounts: React.FC = () => {
           </div>
         </div>
       </div>
-      <div className='flex flex-1'>
-        <div className='flex w-[20%] h-full border-r-2 border-gray-300 min-h-[calc(100vh-144px)]'>
-          <FilterComponent setAppliedFilters={setAppliedFilters} />
+      <div className='flex flex-1 transition-all duration-300 ease-in-out'>
+        <div
+          className={`transition-all duration-300 ease-in-out overflow-hidden h-full border-r-2 border-gray-300 min-h-[calc(100vh-144px)] ${
+            isFilterOpen ? 'w-[20%] opacity-100' : 'w-0 opacity-0'
+          }`}
+        >
+          <FilterComponent
+            setAppliedFilters={setAppliedFilters}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+          />
         </div>
 
-        <div className='flex flex-col w-[80%] p-5 border-l-2 border-gray-300 -ml-[2px]'>
+        <div
+          className={`transition-all duration-300 ease-in-out flex flex-col ${
+            isFilterOpen ? 'w-[80%]' : 'w-full'
+          } p-5 border-l-2 border-gray-300 -ml-[2px]`}
+        >
           <div className='font-semibold text-[16px] leading-5 text-[#2D3E4F] mb-6'>
             All Accounts
             {/* <span className='font-normal'>• 10 items</span> */}
           </div>
-          <AccountTable appliedFilters={appliedFilters} />
+          <AccountTable
+            appliedFilters={appliedFilters}
+            searchTerm={searchTerm}
+          />
         </div>
       </div>
     </div>

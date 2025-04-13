@@ -56,7 +56,7 @@ export const Navbar: React.FC = () => {
   const isNotificationMenuOpen = Boolean(notificationAnchor);
   const isSearchMenuOpen = Boolean(searchAnchor);
   const searchMenus = ['Account', 'Projects', 'Case', 'Resources', 'TimeSheet'];
-  const fiscalYearsDropDown = [{ value: 'FY-All', label: 'FY-All' }].concat(
+  const fiscalYearsDropDown = [{ value: '', label: 'FY-All' }].concat(
     fiscalYears
   );
 

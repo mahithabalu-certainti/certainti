@@ -154,6 +154,7 @@ export interface AccountListURLParams {
   sortOrder?: 'ASC' | 'DESC';
   filters?: object;
   globalFilters?: globalFilters;
+  fiscalYear?: string;
 }
 
 export interface globalFilters {
@@ -200,4 +201,5 @@ export interface ConvertedAccount {
   status: 'Active' | 'In Active';
   primaryContact: string;
   parentAccountID: string | null;
+  annualRevenue: string;
 }

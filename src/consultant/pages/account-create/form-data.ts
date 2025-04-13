@@ -3,7 +3,7 @@ import { FormType, SelectOption, YesNo } from '../../types';
 import { DATA_STORAGE_OPTIONS, STATUS_OPTIONS } from './utils';
 import {
   createDateField,
-  createPhoneInputField,
+  // createPhoneInputField,
   createRadioField,
   createSelectField,
   createTextAreaField,
@@ -36,7 +36,7 @@ export const FormData = (
             required: true,
             regex: REGEX_PATTERNS.ACCOUNT_NAME,
             regexErrorMessage:
-              'Account name should contain only letters and between 7 to 25 characters',
+              'Invalid Account Name',
             placeholder: 'Enter Account Name',
           }),
           createSelectField('status', 'Status', {
@@ -51,7 +51,7 @@ export const FormData = (
             disabled: disableFields,
             dependsRequired: {
               key: 'is_parent',
-              matchedValue: YesNo.No,
+              matchedValue: YesNo.Yes,
               errorMessage: 'Field is required',
             },
           }),
@@ -130,12 +130,16 @@ export const FormData = (
             regexErrorMessage: 'Enter a valid email address',
             placeholder: 'Enter Finance POC Email',
           }),
-          createPhoneInputField('primary_contact_number', 'Primary Contact Phone', {
+          createTextField('primary_contact_number', 'Primary Contact Phone', {
             required: true,
+            regex: REGEX_PATTERNS.PHONE,
+            regexErrorMessage: 'Enter a valid number (e.g 9876543210)',
             placeholder: 'Enter Primary Contact Phone',
           }),
-          createPhoneInputField('finanace_poc_number', 'Finance POC Phone', {
+          createTextField('finanace_poc_number', 'Finance POC Phone', {
             required: true,
+            regex: REGEX_PATTERNS.PHONE,
+            regexErrorMessage: 'Enter a valid number (e.g 9876543210)',
             placeholder: 'Enter Finance POC Phone',
           }),
         ],

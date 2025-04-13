@@ -45,3 +45,19 @@ export type FailedQueueItem = {
   resolve: (token: string) => void;
   reject: (error: unknown) => void;
 };
+
+export interface CheckError {
+  isError: boolean;
+}
+
+export interface CheckErrorMsg {
+  error: {
+    message?: string;
+    response?: {
+      data?: {
+        statusMessage?: string;
+        message?: string;
+      }; 
+    }
+  };
+}
