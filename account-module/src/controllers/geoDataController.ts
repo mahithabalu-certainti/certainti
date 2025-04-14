@@ -139,19 +139,22 @@ async function regions(req: Request, res: Response): Promise<void> {
 
 /**
  * Handles the request to fetch a list of states from the geoDataService.
+ * Can filter states by country_rid if provided as a query parameter.
  * 
  * @param {Request} req The request object containing details of the HTTP request.
  * @param {Response} res The response object to send the HTTP response.
  * @returns {Promise<void>} A promise that resolves when the request is processed.
  * 
- * This method calls the `states` service, checks the status, and sends an appropriate response:
- * - If successful, it sends a success response with the list of states.
+ * This method calls the `states` service with optional country_rid filter, checks the status, and sends an appropriate response:
+ * - If successful, it sends a success response with the filtered list of states.
  * - If failed, it logs the error and sends an error response.
  */
 async function states(req: Request, res: Response): Promise<void> {
   const methodName = "states";
   try {
-    const states = await services.geoDataServices.states();
+    const countryId = req.query.country_rid as string;
+    const states = await services.geoDataServices.states(countryId);
+    
     if (states.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, states.data);
@@ -179,9 +182,56 @@ async function states(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Handles the request to fetch a list of cities from the geoDataService.
+ * Can filter cities by state_rid if provided as a route parameter.
+ * 
+ * @param {Request} req The request object containing details of the HTTP request.
+ * @param {Response} res The response object to send the HTTP response.
+ * @returns {Promise<void>} A promise that resolves when the request is processed.
+ * 
+ * This method calls the `cities` service with optional state_rid filter, checks the status, and sends an appropriate response:
+ * - If successful, it sends a success response with the filtered list of cities.
+ * - If failed, it logs the error and sends an error response.
+ */
+async function cities(req: Request, res: Response): Promise<void> {
+  const methodName = "cities";
+  try {
+    const { stateId } = req.params;
+    const cities = await services.geoDataServices.cities(stateId);
+    
+    if (cities.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, cities.data);
+      return;
+    } else {
+      errorLog(methodName, cities.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        cities.message
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    errorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+// Update the export to include the cities function
 export default {
   country,
   currency,
   regions,
   states,
+  cities
 };

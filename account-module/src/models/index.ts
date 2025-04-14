@@ -5,6 +5,7 @@ import { Country } from "./countryModel";
 import { DatabaseConnection } from "./dbConnectionModel";
 import { Region } from "./regionModel";
 import { States } from "./stateModel";
+import { City } from "./cityModel";
 
 export const models: {
   Account: typeof Account;
@@ -13,6 +14,7 @@ export const models: {
   DatabaseConnection: typeof DatabaseConnection;
   Region: typeof Region;
   States: typeof States;
+  City: typeof City;
 } = {
   Account: Account,
   Currency: Currency,
@@ -20,6 +22,7 @@ export const models: {
   DatabaseConnection: DatabaseConnection,
   Region: Region,
   States: States,
+  City: City,
 };
 
 export async function initModels() {
@@ -29,6 +32,7 @@ export async function initModels() {
     Country.initialize(sequelize);
     Region.initialize(sequelize);
     States.initialize(sequelize);
+    City.initialize(sequelize);
     DatabaseConnection.initialize(sequelize);
     Account.initialize(sequelize);
     await sequelize.sync({ force: false });
@@ -36,3 +40,13 @@ export async function initModels() {
     console.log("Errr loading models", err);
   }
 }
+
+export const modelExports = {
+  Account,
+  Currency,
+  Country,
+  DatabaseConnection,
+  Region,
+  States,
+  City,
+};
