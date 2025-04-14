@@ -1,6 +1,6 @@
 import AccountServices from "./accountService";
 import GeoDataService from "./geoDataService";
-import { IAccountService, IGeoDataService } from "./iinterfaces/interfaces";
+import { IAccountService, IGeoDataService } from "./interfaces/accountInterface";
 
 interface IServiceContainer {
   accountServices: IAccountService;
