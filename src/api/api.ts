@@ -135,6 +135,7 @@ const processQueue = (error: unknown, token: string | null = null) => {
           // If refresh fails, clear queue and redirect to login
           processQueue(refreshError, null);
           isRefreshing = false;
+          console.error('refreshError', refreshError);
           localStorage.removeItem('auth');
           window.location.href = LOGIN;
           return Promise.reject(refreshError);

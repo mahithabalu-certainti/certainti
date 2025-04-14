@@ -21,6 +21,7 @@ export function convertAccounts(
       status: account.status === 'active' ? 'Active' : 'In Active',
       primaryContact: account.primary_contact_name || 'Unknown',
       parentAccountID: account.parent_account_rid,
+      annualRevenue: account.annual_revenue,
     };
     result.push(convertedAccount);
 

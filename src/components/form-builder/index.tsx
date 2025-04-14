@@ -290,7 +290,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   };
 
   const validatePhoneNumber = (phone: string, countryCode: string) => {
-    const country_code = countryCode.toUpperCase() as CountryCode;
+    const country_code = countryCode?.toUpperCase() as CountryCode;
     const phoneNumber = parsePhoneNumberFromString(`+${phone}`, country_code);
 
     if (!phoneNumber) {

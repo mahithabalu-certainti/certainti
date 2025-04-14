@@ -122,21 +122,61 @@ const Table = <T extends RowData>({
 
               {/* Column headers */}
               {columns.map((column) => (
+                // <TableCell
+                //   key={column.id}
+                //   onClick={() => column.sortable && handleSort(column.id)}
+                //   sx={{
+                //     cursor: column.sortable ? 'pointer' : 'default',
+                //     fontWeight: sortBy === column.id ? 'bold' : 'normal',
+                //     minWidth: 120,
+                //   }}
+                // >
+                //   <div className='flex items-center'>
+                //     {column.header}
+                //     {column.sortable && sortBy === column.id && (
+                //       <span className='ml-1'
+                //       >
+                //         {sortOrder === 'ASC' ? '↑' : '↓'}
+                //       </span>
+                //     )}
+                //   </div>
+                // </TableCell>
                 <TableCell
                   key={column.id}
-                  onClick={() => column.sortable && handleSort(column.id)}
                   sx={{
-                    cursor: column.sortable ? 'pointer' : 'default',
+                    cursor: 'default',
                     fontWeight: sortBy === column.id ? 'bold' : 'normal',
-                    minWidth: 120,
+                    // minWidth: 120,
                   }}
                 >
                   <div className='flex items-center'>
                     {column.header}
-                    {column.sortable && sortBy === column.id && (
-                      <span className='ml-1'>
-                        {sortOrder === 'ASC' ? '↑' : '↓'}
-                      </span>
+
+                    {column.sortable && (
+                      <>
+                        {sortBy === column.id && (
+                          <span
+                            className='ml-1 cursor-pointer'
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSort(column.id);
+                            }}
+                          >
+                            {sortOrder === 'ASC' ? '↑' : '↓'}
+                          </span>
+                        )}
+                        {sortBy !== column.id && (
+                          <span
+                            className='ml-1 cursor-pointer text-gray-400'
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSort(column.id);
+                            }}
+                          >
+                            ↕
+                          </span>
+                        )}
+                      </>
                     )}
                   </div>
                 </TableCell>

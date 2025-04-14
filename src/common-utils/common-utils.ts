@@ -1,3 +1,4 @@
+import { CheckError, CheckErrorMsg } from '../common-service';
 import { AllowedCountry, FieldType, SelectOption } from '../consultant/types';
 
 export const createTextField = (
@@ -147,17 +148,19 @@ export const REGEX_PATTERNS = {
   ACCOUNT_NAME: /^(?=.{7,25}$)[A-Za-z]+(?:\s[A-Za-z]+)*$/,
   LETTERS_5_TO_25: /^[A-Za-z\s]{5,25}$/,
   LETTERS_3_TO_25: /^(?!.*\s{2,})[A-Za-z\s]{3,25}$/,
-  EMAIL: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+  EMAIL:
+    /^(?=.{1,254}$)[a-zA-Z0-9](?!.*[._%+]{2})[a-zA-Z0-9._-]{0,62}[a-zA-Z0-9]@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
   PHONE: /^([0-9]{10})$/,
-  WEBSITE: /^(https?:\/\/)?([a-zA-Z0-9-]{1,50}\.)+[a-zA-Z]{2,}(\/[^\s]*)?$/i,
+  WEBSITE: /^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]{1,50}(\.[a-zA-Z]{2,})+(\/[^\s]*)?$/i,
   DATA_RESIDENCY: /^[A-Za-z0-9\s-]+$/,
   NUMBER_OPTIONAL_DECIMAL: /^([0-9]{1,10}(\.[0-9]{1,2})?)?$/,
   DESCRIPTION: /^.{0,500}$/,
-  POSTAL_CODE: /^[a-zA-Z0-9]{6,10}$/,
+  POSTAL_CODE:
+    /^(?![a-zA-Z]+$)(?=(?:[^a-zA-Z]*[a-zA-Z]){0,2}[^a-zA-Z]*$)[a-zA-Z0-9]{6,10}$/,
   MAX_AI_INTRACTION: /^[3-5]$/,
   NUMBERS: /^[0-9,]{1,20}$/,
   NAME_REGEX: /^[A-Za-z\s'-]{3,50}$/,
-  STREET_REGEX: /^[A-Za-z\s]{3,200}$/,
+  STREET_REGEX: /^(?![\W_]+$)(?!\s*$)[\w\W]{3,200}$/,
   CITY_REGEX: /^[A-Za-z\s]{3,100}$/,
 };
 
@@ -174,5 +177,24 @@ export const ALLOWED_COUNTRIES: AllowedCountry[] = [
 
 export const fiscalYears = Array.from({ length: 6 }, (_, i) => {
   const year = new Date().getFullYear() - i;
-  return { value: `FY-${year}`, label: `FY-${year}` };
+  return { value: year.toString(), label: `FY-${year}` };
 });
+
+export const checkError = (data: CheckError[]) => {
+  return data.some((value) => value.isError === true);
+};
+
+export const checkErrorMsg = (data: CheckErrorMsg[]): string =>
+  data
+    .filter(({ error }) => error?.message)
+    .map(({ error }) => {
+      const errorData = error?.response?.data;
+      return `<strong>${error?.message}</strong><p>${
+        errorData?.statusMessage
+          ? typeof errorData.statusMessage === 'object'
+            ? Object.values(errorData.statusMessage).join(', ')
+            : errorData.statusMessage
+          : errorData?.message
+      }</p>`;
+    })
+    .join('');
