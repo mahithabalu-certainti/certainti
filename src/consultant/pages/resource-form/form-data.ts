@@ -12,7 +12,8 @@ import { frequencyOption, resourceTypeOption, statusOption } from './utils';
 export const FormData = (
   country: SelectOption[],
   currency: SelectOption[],
-  region: SelectOption[]
+  state: SelectOption[],
+  stateLoading?: boolean
 ): FormType[] => {
   return useMemo(
     () => [
@@ -94,11 +95,13 @@ export const FormData = (
             options: country,
             placeholder: '-Select-',
             required: true,
+            onChange: true,
           }),
           createSelectField('region', 'Region', {
-            options: region,
+            options: state,
             placeholder: '-Select-',
             required: true,
+            isLoading: stateLoading,
           }),
           createSelectField('currency', 'Currency', {
             options: currency,
@@ -189,6 +192,6 @@ export const FormData = (
         ],
       },
     ],
-    [country, currency, region]
+    [country, currency, state]
   );
 };

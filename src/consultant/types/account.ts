@@ -12,9 +12,15 @@ export interface CurrencyApiResponse extends CommonApiResponse {
   };
 }
 
-export interface RegionApiResponse extends CommonApiResponse {
+export interface StatesApiResponse extends CommonApiResponse {
   data: {
-    regions: Regions[];
+    states: States[];
+  };
+}
+
+export interface CitysApiResponse extends CommonApiResponse {
+  data: {
+    cities: Cities[];
   };
 }
 
@@ -25,9 +31,14 @@ export interface AccountFieldsApiResponse extends CommonApiResponse {
   };
 }
 
-export interface Regions {
+export interface States {
   rid: string;
-  region_name: string;
+  state_name: string;
+}
+
+export interface Cities {
+  rid: string;
+  city_name: string;
 }
 
 export interface Currencys {

@@ -1,14 +1,18 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { accountHomeIcon, editIcon } from '../../../assets';
-import { CheckErrorMsg, useGetAllCountries } from '../../../common-service';
+import {
+  CheckErrorMsg,
+  OnChange,
+  useGetAllCountries,
+} from '../../../common-service';
 import { checkError, checkErrorMsg } from '../../../common-utils';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
 import { mockResourceCreatePayload } from '../../mockdata/resource-create';
 import { mockResourceUpdateRequest } from '../../mockdata/resource-update';
-import { useFetchCurrency, useFetchRegion } from '../../services/account';
+import { useFetchCurrency, useFetchState } from '../../services/account';
 import { useCreateResource } from '../../services/resource-create';
 import { useResourceDetail } from '../../services/resource-details';
 import { useUpdateResource } from '../../services/resource-update';
@@ -17,6 +21,7 @@ import { FormData } from './form-data';
 
 const ResourceForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
+  const [currentCountry, setCurrentCountry] = useState('');
   const { successToast, errorToast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
@@ -37,9 +42,9 @@ const ResourceForm: React.FC = () => {
 
   const allCountries = useGetAllCountries();
   const currency = useFetchCurrency();
-  const regions = useFetchRegion();
   const createResource = useCreateResource();
   const updateResource = useUpdateResource();
+  const states = useFetchState(currentCountry);
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
 
@@ -48,7 +53,7 @@ const ResourceForm: React.FC = () => {
     createResource,
     allCountries,
     currency,
-    regions,
+    states,
     updateResource,
   ];
   const commonError = checkError(errorhandlingData);
@@ -82,13 +87,13 @@ const ResourceForm: React.FC = () => {
     [allCountries.data?.data.country]
   );
 
-  const memoizedRegions: SelectOption[] = useMemo(
+  const memoizedStates: SelectOption[] = useMemo(
     () =>
-      regions.data?.data.regions.map((account) => ({
-        label: account.region_name,
+      states.data?.data.states.map((account) => ({
+        label: account.state_name,
         value: account.rid,
       })) || [],
-    [regions.data?.data.regions]
+    [states.data?.data.states]
   );
 
   const memoizedCurrency: SelectOption[] = useMemo(
@@ -118,6 +123,12 @@ const ResourceForm: React.FC = () => {
   const goBack = () => {
     formRef.current?.reset();
     navigate(-1);
+  };
+
+  const onChangeField = (data: OnChange) => {
+    if (data.fieldName === 'country') {
+      setCurrentCountry(data.fieldValue as string);
+    }
   };
 
   return (
@@ -160,10 +171,13 @@ const ResourceForm: React.FC = () => {
       </div>
       <div className='p-10'>
         <FormBuilder
-          data={FormData(memoizedContry, memoizedCurrency, memoizedRegions)}
-          loading={
-            allCountries.isLoading || currency.isLoading || regions.isLoading
-          }
+          data={FormData(
+            memoizedContry,
+            memoizedCurrency,
+            memoizedStates,
+            states.isLoading
+          )}
+          loading={allCountries.isLoading || currency.isLoading}
           values={
             isEditView &&
             (resource.data?.data?.resource as unknown as Record<
@@ -184,6 +198,7 @@ const ResourceForm: React.FC = () => {
           // }
           outData={submitData}
           formRef={formRef}
+          onChange={onChangeField}
         />
       </div>
     </>

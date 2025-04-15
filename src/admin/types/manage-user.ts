@@ -77,6 +77,7 @@ export interface UserDetail {
   organization: string;
   profile_id: string;
   updated_by: UserRole;
+  phone?: string;
 }
 
 export enum UserRole {
