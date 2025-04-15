@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export const mockAccountlist: any = {
+export const mockAccountList: any = {
     statusCode: 200,
     statusCodeValue: 'Success',
     statusMessage: '',
