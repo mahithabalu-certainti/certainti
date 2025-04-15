@@ -2,13 +2,11 @@ import dotenv from "dotenv";
 dotenv.config();
 import initExpressServer from "./servers/expressServer";
 import initGraphQLServer from "./servers/graphqlServer";
-import { initModels } from "./models";
 
 const PORT = process.env.SERVER_PORT || 3000;
 
 async function startServer() {
   try {
-    await initModels();
     const { app } = await initExpressServer();
     const { graphqlPath } = await initGraphQLServer(app);
 

@@ -1,8 +1,10 @@
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { makeExecutableSchema } from '@graphql-tools/schema';
-import typeDefs from '../graphql/schema';
-import resourceCostResolvers from '../resolvers';
+import resourceCostGraphQlSchema from "../graphql/resourceCostGraphQlSchema";
+import resourceSkillGraphQlSchema from "../graphql/resourceSkillGraphQlSchema";
+import resourceCostResolvers from '../resolvers/resourceCostResolver';
+import resourceSkillResolvers from '../resolvers/resourceSkillResolver';
 import initRequestContext from '../graphql/context';
 import configurations from '../config/config';
 import { Application } from 'express';
@@ -16,8 +18,8 @@ interface GraphQLServer {
 
 const initGraphQLServer = async (app: Application): Promise<GraphQLServer> => {
   const schema = makeExecutableSchema({
-    typeDefs,
-    resolvers: resourceCostResolvers,
+    typeDefs: [resourceCostGraphQlSchema,resourceSkillGraphQlSchema],
+    resolvers: [resourceCostResolvers,resourceSkillResolvers]
   });
 
   const server = new ApolloServer({

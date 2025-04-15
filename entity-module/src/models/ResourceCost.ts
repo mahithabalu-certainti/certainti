@@ -1,175 +1,202 @@
-import { Model, DataTypes, UUIDV4, Sequelize } from "sequelize";
+import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { Resources } from "./resource";
 
-export class ResourceCost extends Model {
-  public id!: string;
-  public resource_id!: string;
-  public resource_cost_number!: string;
-  public resource_ref_id!: string;
-  public currency!: string;
-  public start_date!: Date;
-  public end_date?: Date;
-  public annual_compensation?: number;
-  public monthly_compensation?: number;
-  public weekly_compensation?: number;
-  public daily_compensation?: number;
-  public hourly_compensation?: number;
-  public status!: string;
-  public created_at!: Date;
-  public updated_at!: Date;
-  public created_by?: string;
-  public updated_by?: string;
+interface ResourceCostAttributes {
+ rid: string,
+ r_number?: string,
+ eid?: string,
+ account_rid: string,
+ resource_type: string,
+ resource_rid: string,
+ resource_ref_id: string, 
+ effective_date: Date,
+ end_date?: Date,
+ annual_cost?: number,
+ semi_annual_cost?: number,
+ monthly_cost?: number,
+ weekly_cost?: number,
+ bi_weekly_cost?: number,
+ daily_cost?: number,
+ hourly_cost?: number,
+ currency_rid: string,
+ status?: string,
+ created_datetime?: Date,
+ modified_datetime?: Date,
+ created_by?: string,
+ modified_by?: string,
+}
+
+interface ResourceCostCreationAttributes
+  extends Optional<ResourceCostAttributes, "rid"> {}
+
+export class ResourceCost extends Model<ResourceCostAttributes, ResourceCostCreationAttributes> implements ResourceCostAttributes 
+{
+  rid!: string;
+  r_number?: string;
+  eid?: string;
+  account_rid!: string;
+  resource_type!: string;
+  resource_rid!: string;
+  resource_ref_id!: string;
+  effective_date!: Date;
+  end_date?: Date;
+  annual_cost?: number;
+  semi_annual_cost?: number;
+  monthly_cost?: number;
+  weekly_cost?: number;
+  bi_weekly_cost?: number;
+  daily_cost?: number;
+  hourly_cost?: number;
+  currency_rid!: string;
+  status?: string;
+  created_datetime?: Date;
+  modified_datetime?: Date;
+  created_by?: string;
+  modified_by?: string;
 
   static initialize(sequelize: Sequelize) {
     ResourceCost.init(
       {
-        id: {
-          type: DataTypes.UUID,
-          defaultValue: UUIDV4,
-          primaryKey: true,
-        },
-        resource_cost_number: {
-          type: DataTypes.STRING(20),
-          unique: true,
-        },
-        resource_ref_id: {
-          type: DataTypes.STRING(50),
-          allowNull: false,
-        },
-        currency: {
-          type: DataTypes.STRING(3),
-          allowNull: false,
-        },
-        start_date: {
-          type: DataTypes.DATEONLY,
-          allowNull: false,
-          validate: {
-            notInFuture(value: Date) {
-              if (new Date(value) > new Date()) {
-                throw new Error("Start date cannot be in the future");
-              }
-            },
-          },
-        },
-        end_date: {
-          type: DataTypes.DATEONLY,
-          allowNull: true,
-          validate: {
-            isAfterStartDate(value: Date) {
-              if (
-                value &&
-                new Date(value) <= new Date(this.start_date as Date)
-              ) {
-                throw new Error("End date must be later than start date");
-              }
-            },
-          },
-        },
-        annual_compensation: {
-          type: DataTypes.DECIMAL(12, 2),
-          allowNull: true,
-          validate: {
-            isPositive(value: number) {
-              if (value !== null && value < 0) {
-                throw new Error("Compensation must be a positive number");
-              }
-            },
-          },
-        },
-        monthly_compensation: {
-          type: DataTypes.DECIMAL(12, 2),
-          allowNull: true,
-          validate: {
-            isPositive(value: number) {
-              if (value !== null && value < 0) {
-                throw new Error("Compensation must be a positive number");
-              }
-            },
-          },
-        },
-        weekly_compensation: {
-          type: DataTypes.DECIMAL(12, 2),
-          allowNull: true,
-          validate: {
-            isPositive(value: number) {
-              if (value !== null && value < 0) {
-                throw new Error("Compensation must be a positive number");
-              }
-            },
-          },
-        },
-        daily_compensation: {
-          type: DataTypes.DECIMAL(12, 2),
-          allowNull: true,
-          validate: {
-            isPositive(value: number) {
-              if (value !== null && value < 0) {
-                throw new Error("Compensation must be a positive number");
-              }
-            },
-          },
-        },
-        hourly_compensation: {
-          type: DataTypes.DECIMAL(12, 2),
-          allowNull: true,
-          validate: {
-            isPositive(value: number) {
-              if (value !== null && value < 0) {
-                throw new Error("Compensation must be a positive number");
-              }
-            },
-          },
-        },
-        status: {
-          type: DataTypes.STRING(10),
-          defaultValue: "Active",
-        },
-        created_at: {
-          type: DataTypes.DATE,
-          defaultValue: DataTypes.NOW,
-        },
-        updated_at: {
-          type: DataTypes.DATE,
-          defaultValue: DataTypes.NOW,
-        },
-        created_by: {
-          type: DataTypes.STRING(50),
-          allowNull: true,
-        },
-        updated_by: {
-          type: DataTypes.STRING(50),
-          allowNull: true,
-        },
+       rid: {
+        type: DataTypes.UUID,
+        defaultValue: UUIDV4,
+        primaryKey: true,
+       },
+       r_number: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+       },
+       eid: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+       },
+       account_rid: {
+        type: DataTypes.UUID,
+        allowNull: false,
+       },
+       resource_type: {
+        type: DataTypes.STRING(255),
+        allowNull: false,
+       },
+       resource_rid: {
+        type: DataTypes.UUID,
+        allowNull: false,
+       },
+       resource_ref_id: {
+        type: DataTypes.STRING(255),
+        allowNull: false,
+       },
+       effective_date: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        validate: {
+          notFuture(value: Date) {
+            if (value > new Date()) {
+              throw new Error('Effective date cannot be in the future');
+            }
+          }
+        }
+       },
+       end_date: {
+        type: DataTypes.DATE,
+        allowNull: true,
+       },
+       annual_cost: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+       },
+       semi_annual_cost: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+       },
+       monthly_cost: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+       },
+       weekly_cost: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+       },
+       bi_weekly_cost: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+       },
+       daily_cost: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+       },
+       hourly_cost: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+       },
+       currency_rid: {
+        type: DataTypes.UUID,
+        allowNull: false,
+       },
+       status: {
+        type: DataTypes.STRING(255),
+        defaultValue: "active",
+       },
+       created_datetime: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        defaultValue: DataTypes.NOW,
+       },
+       modified_datetime: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        defaultValue: DataTypes.NOW,
+       },
+       created_by: {
+        type: DataTypes.UUID,
+        allowNull: true,
+       },
+       modified_by: {
+        type: DataTypes.UUID,
+        allowNull: true,
+       },
       },
       {
-        tableName: "resource_cost",
         sequelize,
-        timestamps: true,
-        createdAt: "created_at",
-        updatedAt: "updated_at",
+        modelName: "ResourceCost",
+        tableName: "resource_cost",
+        timestamps: false,
         hooks: {
-          beforeCreate: (record: ResourceCost) => {
-            // Generate resource_cost_number with prefix 'RC' followed by timestamp and random chars
-            const timestamp = Date.now().toString().slice(-6);
-            const random = Math.floor(Math.random() * 10000)
-              .toString()
-              .padStart(4, "0");
-            record.resource_cost_number = `RC-${timestamp}-${random}`;
-          },
-        },
+          beforeCreate: async (resourceCost: ResourceCost) => {
+            // Generate r_number if not provided
+            if (!resourceCost.r_number) {
+              // Get the latest resource cost to determine the next number
+              const latestResourceCost = await ResourceCost.findOne({
+                order: [['created_datetime', 'DESC']],
+              });
+              
+              // Extract the numeric part if a previous record exists, or start with 1
+              let nextNumber = 1;
+              if (latestResourceCost && latestResourceCost.r_number) {
+                const match = latestResourceCost.r_number.match(/RC(\d+)/);
+                if (match && match[1]) {
+                  nextNumber = parseInt(match[1], 10) + 1;
+                }
+              }
+              
+              // Format the r_number with leading zeros (e.g., RC00001)
+              resourceCost.r_number = `RC${nextNumber.toString().padStart(5, '0')}`;
+            }
+          }
+        }
       }
     );
 
     // ResourceCost model
     ResourceCost.belongsTo(Resources, {
-      foreignKey: "resource_ref_id",
-      targetKey: "resource_ref_id",
+      foreignKey: "resource_rid",
+      targetKey: "rid",
     });
 
     // Resource model
     Resources.hasMany(ResourceCost, {
-      foreignKey: "resource_ref_id",
-      sourceKey: "resource_ref_id",
+      foreignKey: "resource_rid",
+      sourceKey: "rid",
     });
   }
 }
