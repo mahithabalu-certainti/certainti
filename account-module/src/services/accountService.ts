@@ -223,22 +223,28 @@ class AccountService {
     try {
       const repository = this.getAccountRepository();
       const {
+        account_rid,
         account_name,
         account_description,
+        status,
+        is_parent,
+        annual_revenue,
+        account_country_region_rid,
+        data_storage,
+        parent_account_rid,
         account_country_rid,
         account_currency_rid,
         industry,
-        primary_contact_name,
-        account_country_region_rid,
-        data_storage,
-        account_rid,
-        annual_revenue,
+        primary_contact_name
       } = accountData;
 
       const [affectedCounts, affectedRows] = await repository.update(
         {
           account_name,
           account_description: account_description || "",
+          status,
+          is_parent,
+          parent_account_rid,
           region: account_country_region_rid,
           country_rid: account_country_rid,
           currency_rid: account_currency_rid,
