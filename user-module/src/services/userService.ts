@@ -163,6 +163,8 @@ class UserService {
           country,
           role_rid: role,
           middle_name,
+          full_name:
+          first_name + (middle_name ? " " + middle_name : "") + " " + last_name,
           modified_by: updated_by,
           modified_datetime: new Date(),
         },

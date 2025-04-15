@@ -15,11 +15,11 @@ const createUserSchema = Joi.object({
   profile_id: Joi.string().max(255).required(),
   role: Joi.string().max(255).required(),
   status: Joi.string().valid("active", "inactive").required(),
-  street: Joi.string().max(255).optional(),
-  city: Joi.string().max(255).optional(),
-  state: Joi.string().max(255).optional(),
-  zip_code: Joi.string().max(255).optional(),
-  country: Joi.string().max(255).optional(),
+  street: Joi.string().max(255).allow('', null).optional(),
+  city: Joi.string().max(255).allow('', null).optional(),
+  state: Joi.string().max(255).allow('', null).optional(),
+  zip_code: Joi.string().max(255).allow('', null).optional(),
+  country: Joi.string().max(255).allow('', null).optional(),
   created_by: Joi.string().max(255).required(),
 });
 
@@ -53,11 +53,11 @@ const updateUserSchema = Joi.object({
   profile_id: Joi.string().max(255).required(),
   role: Joi.string().max(255).required(),
   status: Joi.string().valid("active", "inactive").required(),
-  street: Joi.string().max(255).optional(),
-  city: Joi.string().max(255).optional(),
-  state: Joi.string().max(255).optional(),
-  zip_code: Joi.string().max(255).optional(),
-  country: Joi.string().max(255).optional(),
+  street: Joi.string().max(255).allow('', null).optional(),
+  city: Joi.string().max(255).allow('', null).optional(),
+  state: Joi.string().max(255).allow('', null).optional(),
+  zip_code: Joi.string().max(255).allow('', null).optional(),
+  country: Joi.string().max(255).allow('', null).optional(),
   updated_by: Joi.string().max(255).required(),
 });
 
