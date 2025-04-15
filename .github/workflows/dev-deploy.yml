@@ -264,3 +264,114 @@ jobs:
               exit 1
             fi
           EOF
+
+  # JOB to build backend entity-module code
+  entity-module:
+    needs:
+      - changes
+      - user-module
+      - account-module
+    if: ${{ needs.changes.outputs.entity-module == 'true' || always()}}
+    name: Build and Deploy Document Service
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set Up Tag
+        run: echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Login to ACR
+        run: az acr login --name ${{ secrets.DEV_ACR_NAME }}
+        working-directory: entity-module
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.DEV_ACR_LOGIN_SERVER }}/entity-module:${{ env.IMAGE_TAG }} .
+        working-directory: entity-module
+      - name: Push Docker Image to ACR
+        run: docker push ${{ secrets.DEV_ACR_LOGIN_SERVER }}/entity-module:${{ env.IMAGE_TAG }}
+        working-directory: entity-module
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEV_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.DEV_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
+      - name: Fetch secrets and create .env file
+        working-directory: entity-module
+        run: |
+          KEY_VAULT_NAME=${{ secrets.DEV_KEY_VAULT_NAME }}
+          ENV_FILE=".env.entitymodule"
+          
+          # Ensure Azure CLI is authenticated
+          az account show > /dev/null 2>&1
+          if [ $? -ne 0 ]; then
+          echo "Error: Azure CLI is not authenticated. Run 'az login' first."
+          exit 1
+          fi
+          
+          # Fetch secrets from Azure Key Vault and write to .env file
+          echo "Fetching secrets from Azure Key Vault: $KEY_VAULT_NAME"
+          
+          KEY_VAULT_URI=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "key-vault-uri" --query value -o tsv)
+          
+          # Write secrets to .env file
+          cat <<EOF > $ENV_FILE
+          SERVER_PORT=5001
+          KEY_VAULT_URI=$KEY_VAULT_URI
+          MAINDB_NAME=main-database-name
+          MAINDB_PASSWORD=main-db-admin-password
+          MAINDB_USERNAME=main-db-admin-username
+          MAINDB_ENDPOINT=main-db-endpoint
+          ORGDB_NAME=org-database-name
+          ORGDB_PASSWORD=org-db-admin-password
+          ORGDB_USERNAME=org-db-admin-username
+          ORGDB_ENDPOINT=org-db-endpoint
+          LOG_LEVEL=debug
+          NODE_ENV=DEV
+          EOF
+          
+          echo "$ENV_FILE file created successfully!"
+      - name: Copy .env file to VM
+        run: |
+          scp -o StrictHostKeyChecking=no .env.entitymodule adminuser@${{ secrets.DEV_BACKEND_VM_HOST }}:/tmp/
+        working-directory: entity-module
+      - name: SSH into VM and deploy
+        run: |
+          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.DEV_BACKEND_VM_HOST }} << 'EOF'
+            sudo -s
+            cd /app/backend
+
+            # Ensure docker-compose.yml exists
+            if [ ! -f "docker-compose.yml" ]; then
+              echo "docker-compose.yml not found!"
+              exit 1
+            fi
+            
+            # Move .env file with sudo
+            sudo mv /tmp/.env.entitymodule /app/backend/.env.entitymodule
+            echo ".env file moved successfully!"
+          
+            # Update only the entity-module image tag
+            echo "Updating docker-compose.yml..."
+            sed -i 's|image:.*entity-module:.*|image: ${{ secrets.DEV_ACR_LOGIN_SERVER }}/entity-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            echo "Docker Compose updated successfully!"
+          
+            # Login to ACR 
+            az acr login --name ${{ secrets.DEV_ACR_NAME }}
+            echo "Logged in to ACR successfully!"
+          
+            # Pull latest changes and restart
+            if docker compose up -d --pull always --no-deps entity-module; then
+              echo "Deployment successful!"
+              # Remove old stopped containers
+              docker container prune -f || true
+              # Remove unused images (keeps only the latest deployed version)
+              docker image prune -af || true
+            else
+              echo "Deployment failed!"
+              exit 1
+            fi
+          EOF
