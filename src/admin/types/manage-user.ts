@@ -101,13 +101,13 @@ export interface UsersData {
 }
 
 // Complete API Response Type
-export interface ManagerUserApiResponse extends CommonApiResponse {
+export interface ManageUserApiResponse extends CommonApiResponse {
   data: {
     users: User[];
   };
 }
 
-export interface ManagerUserDetailApiResponse extends CommonApiResponse {
+export interface ManageUserDetailApiResponse extends CommonApiResponse {
   data: {
     users: UserDetail[];
   };

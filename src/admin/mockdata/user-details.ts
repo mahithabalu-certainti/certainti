@@ -1,6 +1,6 @@
-import { ManagerUserDetailApiResponse, UserRole } from '../types/manage-user';
+import { ManageUserDetailApiResponse, UserRole } from '../types/manage-user';
 
-export const mockUserDetails: ManagerUserDetailApiResponse = {
+export const mockUserDetails: ManageUserDetailApiResponse = {
   statusCode: 200,
   statusCodeValue: 'Success',
   statusMessage: 'Success',
