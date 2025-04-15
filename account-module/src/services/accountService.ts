@@ -45,7 +45,7 @@ class AccountService {
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
     globalFilters: Record<string, string[]> = {},
-    fiscalYear: number
+    fiscalYear: number | "FY-All"
   ): Promise<{
     statusCode: number;
     message: string;

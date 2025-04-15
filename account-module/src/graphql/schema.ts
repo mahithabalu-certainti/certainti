@@ -64,7 +64,7 @@ const typeDefs = gql`
     sortOrder: String
     filters: JSON,
     globalFilters: JSON, 
-    fiscalYear: Int
+    fiscalYear: String
   }
 
   type AccountConnection {

@@ -9,8 +9,7 @@ type PaginationInput = {
   sortOrder?: string;
   filters?: string;
   globalFilters?: string;
-  fiscalYear?: number;
-};
+  fiscalYear: number | "FY-All"};
 
 const accountResolvers: IResolvers = {
   Query: {
