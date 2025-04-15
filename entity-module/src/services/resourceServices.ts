@@ -1,0 +1,427 @@
+import { HttpStatus } from "../utils/constants";
+import { ICreateResource, IUpdateResource } from "../utils/types";
+import SchemaService from "./schemaService";
+import moment from "moment";
+import { Op, Sequelize } from "sequelize";
+
+export class ResourceService {
+  private schemaService: SchemaService;
+
+  constructor() {
+    this.schemaService = new SchemaService();
+  }
+
+  /**
+   * Creates a new resource entry in the database for a given account.
+   * Ensures the schema and account validity before insertion.
+   *
+   * @param {ICreateResource} resourceData - The data required to create a resource.
+   * @returns {Promise<object>} - A response object with status, message, and created resource.
+   */
+  async createResource(resourceData: ICreateResource): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resource: any };
+  }> {
+    try {
+      const { account_number, account_id } = resourceData;
+
+      const { isAccountExist, dataStorage, parentAccountId } =
+        await this.schemaService.checkAccountIdAndNumber(
+          account_number,
+          account_id
+        );
+
+      if (!isAccountExist) {
+        throw new Error(
+          "Invalid account number or account ID. The specified account was not found."
+        );
+      }
+
+      let accountNumber = account_number;
+
+      if (dataStorage === "store_in_parent") {
+        accountNumber = await this.schemaService.fetchParentAccount(
+          parentAccountId
+        );
+      }
+
+      const isExists = await this.schemaService.checkIfSchemaExists(
+        accountNumber
+      );
+
+      if (!isExists) {
+        throw new Error(
+          "Invalid account number: The account number does not exist."
+        );
+      }
+
+      await this.schemaService.createResourceTable(accountNumber);
+
+      const startDate = moment(resourceData.effective_from_date, "DD/MM/YYYY");
+      const endDate = moment(resourceData.effective_end_date, "DD/MM/YYYY");
+
+      const resource = await this.schemaService.insertResourcesTable(
+        resourceData,
+        startDate,
+        endDate,
+        accountNumber
+      );
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          resource,
+        },
+      };
+    } catch (err) {
+      return this.throwServiceError(err as Error);
+    }
+  }
+
+  /**
+   * Fetches a paginated list of resources for a given account with optional filters, search, and sorting.
+   *
+   * @param {string} accountNumber - The account number to fetch resources from.
+   * @param {number} fiscal_year - The fiscal year (currently unused).
+   * @param {number} [page=1] - The page number for pagination.
+   * @param {number} [limit=10] - Number of items per page.
+   * @param {string} search - Global search term.
+   * @param {Record<string, string>} filters - Filter object mapping fields to values.
+   * @param {string} [sortBy="created_datetime"] - Field to sort by.
+   * @param {string} [sortOrder="ASC"] - Sort order, either ASC or DESC.
+   * @returns {Promise<object>} - Response with resource list and count.
+   */
+  async resourcesList(
+    accountNumber: string,
+    fiscalYear: number = moment().year(),
+    page: number = 1,
+    limit: number = 10,
+    search: string,
+    filters: Record<string, string> = {},
+    sortBy: string = "created_datetime",
+    sortOrder: string = "ASC"
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resources: any; count: number };
+  }> {
+    try {
+      const { accountNumber: accountRNumber } =
+        await this.schemaService.fetchAccountByNumber(accountNumber);
+
+      const isExists = await this.schemaService.checkIfSchemaExists(
+        accountRNumber
+      );
+
+      if (!isExists) {
+        throw new Error(
+          "Invalid account number: The account number does not exist."
+        );
+      }
+
+      const offset = (page - 1) * limit;
+
+      const [finalSortBy, finalSortOrder] = this.getSortParameters(
+        sortBy,
+        sortOrder
+      );
+
+      const { whereClause } = this.buildWhereClause(filters, search);
+
+      const resources = await this.schemaService.fetchResources(
+        accountRNumber,
+        offset,
+        limit,
+        [[finalSortBy, finalSortOrder]],
+        whereClause,
+        fiscalYear
+      );
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          resources,
+          count: resources.length,
+        },
+      };
+    } catch (err) {
+      return this.throwServiceError(err as Error);
+    }
+  }
+
+  /**
+   * Updates an existing resource's data for a given account.
+   * Validates that the resource and schema exist.
+   *
+   * @param {IUpdateResource} resourceData - Updated data for the resource.
+   * @returns {Promise<object>} - Response containing the updated resource data.
+   */
+  async updateResource(resourceData: IUpdateResource): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resource: any };
+  }> {
+    try {
+      const { account_number, resource_id } = resourceData;
+
+      let { accountNumber, accountId } =
+        await this.schemaService.fetchAccountByNumber(account_number);
+
+      const isResourceExist = await this.schemaService.checkIfResourceExists(
+        resource_id,
+        accountNumber
+      );
+
+      if (!isResourceExist) {
+        throw new Error(
+          "Invalid resource ID: The specified resource does not exist."
+        );
+      }
+
+      const isExists = await this.schemaService.checkIfSchemaExists(
+        accountNumber
+      );
+
+      if (!isExists) {
+        throw new Error(
+          "Invalid account number: The account number does not exist."
+        );
+      }
+
+      const resource = await this.schemaService.updateResource(
+        resourceData,
+        accountNumber,
+        accountId
+      );
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          resource,
+        },
+      };
+    } catch (err) {
+      return this.throwServiceError(err as Error);
+    }
+  }
+
+  /**
+   * Retrieves detailed information about a resource by its ID for a given account.
+   *
+   * @param {string} accountRNumber - Account number.
+   * @param {string} resourceId - ID of the resource.
+   * @returns {Promise<object>} - Response containing the resource details.
+   */
+  async resourceById(
+    accountRNumber: string,
+    resourceId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resourceDetails: any };
+  }> {
+    try {
+      let { accountNumber } = await this.schemaService.fetchAccountByNumber(
+        accountRNumber
+      );
+
+      const isExists = await this.schemaService.checkIfSchemaExists(
+        accountNumber
+      );
+
+      if (!isExists) {
+        throw new Error(
+          "Invalid account number: The account number does not exist."
+        );
+      }
+
+      const isResourceExist = await this.schemaService.checkIfResourceExists(
+        resourceId,
+        accountNumber
+      );
+
+      if (!isResourceExist) {
+        throw new Error(
+          "Invalid resource ID: The specified resource does not exist."
+        );
+      }
+
+      const resourceDetails = await this.schemaService.resourceDetails(
+        accountNumber,
+        resourceId
+      );
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          resourceDetails,
+        },
+      };
+    } catch (err) {
+      return this.throwServiceError(err as Error);
+    }
+  }
+
+  /**
+   * Validates and returns sorting parameters based on user input.
+   * Defaults to "created_datetime" if the field is invalid.
+   *
+   * @param {string} sortBy - Field to sort by.
+   * @param {string} sortOrder - Sort direction (ASC or DESC).
+   * @returns {[string, string]} - Tuple of validated sort field and order.
+   */
+  getSortParameters(sortBy: string, sortOrder: string): [string, string] {
+    const validSortColumns = [
+      "r_number",
+      "resource_ref_id",
+      "resource_fullname",
+      "resource_type",
+      "status",
+    ];
+    if (!validSortColumns.includes(sortBy)) {
+      sortBy = "created_datetime";
+    }
+
+    sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
+    return [sortBy, sortOrder];
+  }
+
+  /**
+   * Builds a Sequelize `where` clause from search and filter parameters.
+   *
+   * @param {Record<string, any>} filters - Key-value filters.
+   * @param {string} search - Global search string.
+   * @returns {object} - Sequelize-compatible `where` clause.
+   */
+  buildWhereClause(
+    filters: Record<string, any>,
+    search: string
+  ): {
+    whereClause: Record<string, any>;
+  } {
+    let whereClause: Record<string, any> = {};
+
+    if (search) {
+      whereClause = this.buildSearchCondition(search, whereClause);
+    }
+
+    whereClause = this.applyFilters(filters, whereClause);
+
+    return { whereClause };
+  }
+
+  /**
+   * Builds a case-insensitive OR condition across searchable fields for global search.
+   *
+   * @param {string} search - The search term.
+   * @param {Record<string, any>} whereClause - The existing where clause.
+   * @returns {Record<string, any>} - Modified where clause including search conditions.
+   */
+  private buildSearchCondition(
+    search: string,
+    whereClause: Record<string, any>
+  ): Record<string, any> {
+    const searchCondition = {
+      [Op.or]: [
+        { resource_fullname: { [Op.iLike]: `%${search}%` } },
+        { r_number: { [Op.iLike]: `%${search}%` } },
+      ],
+    };
+
+    return Object.keys(whereClause).length > 0
+      ? { [Op.and]: [whereClause, searchCondition] }
+      : searchCondition;
+  }
+
+  /**
+   * Applies filters to a Sequelize where clause with special handling for ENUM/UUID fields.
+   * Automatically casts fields like enums or UUIDs to TEXT when needed.
+   *
+   * @param {Record<string, any>} filters - Filter input from the client.
+   * @param {Record<string, any>} whereClause - Existing Sequelize where clause.
+   * @returns {Record<string, any>} - Final where clause with applied filters.
+   */
+
+  private applyFilters(
+    filters: Record<string, any>,
+    whereClause: Record<string, any>
+  ): Record<string, any> {
+    const castToTextFields = ["resource_type", "resource_status", "rid"];
+
+    const filterFields = [
+      { clientField: "rid", dbField: "rid" },
+      { clientField: "resource_ref_id", dbField: "resource_ref_id" },
+      { clientField: "r_number", dbField: "r_number" },
+      { clientField: "resource_fullname", dbField: "resource_fullname" },
+      { clientField: "resource_type", dbField: "resource_type" },
+      { clientField: "resource_status", dbField: "resource_status" },
+      { clientField: "resource_email", dbField: "resource_email" },
+      { clientField: "resource_mobile", dbField: "resource_mobile" },
+      { clientField: "resource_role", dbField: "resource_role" },
+    ];
+
+    filterFields.forEach(({ clientField, dbField }) => {
+      if (filters[clientField]) {
+        const fieldFilter = filters[clientField];
+
+        if (castToTextFields.includes(dbField)) {
+          whereClause[dbField] = Sequelize.where(
+            Sequelize.cast(Sequelize.col(dbField), "TEXT"),
+            this.getFieldFilter(fieldFilter, dbField)
+          );
+        } else {
+          whereClause[dbField] = this.getFieldFilter(fieldFilter, dbField);
+        }
+      }
+    });
+
+    return whereClause;
+  }
+
+  /**
+   * Translates a single filter into a Sequelize condition.
+   * Supports `equals`, `contains`, and direct value matching.
+   *
+   * @param {any} fieldFilter - The filter object for a specific field.
+   * @param {string} dbField - The corresponding database field name.
+   * @returns {any} - Sequelize-compatible condition.
+   */
+  private getFieldFilter(fieldFilter: any, dbField: string): any {
+    if (fieldFilter.equals) {
+      return { [Op.iLike]: fieldFilter.equals };
+    }
+    if (fieldFilter.contains) {
+      return { [Op.iLike]: `%${fieldFilter.contains}%` };
+    }
+    if (fieldFilter.value) {
+      return fieldFilter.value;
+    }
+  }
+
+  /**
+   * Formats an error response to be returned from service methods.
+   *
+   * @param {Error} err - The caught error.
+   * @returns {object} - Standardized error response object.
+   */
+  private throwServiceError(err: Error): {
+    statusCode: number;
+    message: string;
+    errorMessage: string;
+  } {
+    return {
+      statusCode: HttpStatus.FAILED,
+      message: HttpStatus.FAILED_MESSAGE,
+      errorMessage: err.message,
+    };
+  }
+}
