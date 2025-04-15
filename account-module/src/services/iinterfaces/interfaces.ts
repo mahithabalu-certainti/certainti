@@ -57,31 +57,21 @@ export interface IGeoDataService {
   countries(): Promise<
     GeoDataResponse<{
       country: any;
-      count: number;
     }>
   >;
   currencies(): Promise<
     GeoDataResponse<{
       currency: any;
-      count: number;
     }>
   >;
   regions(): Promise<
     GeoDataResponse<{
       regions: any;
-      count: number;
     }>
   >;
-  states(countryId?: string): Promise<
+  states(): Promise<
     GeoDataResponse<{
       states: any;
-      count: number;
-    }>
-  >;
-  cities(stateId?: string): Promise<
-    GeoDataResponse<{
-      cities: any;
-      count: number;
     }>
   >;
 }
