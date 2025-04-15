@@ -3,6 +3,7 @@ import { FormType, SelectOption, YesNo } from '../../types';
 import { DATA_STORAGE_OPTIONS, STATUS_OPTIONS } from './utils';
 import {
   createDateField,
+  // createPhoneInputField,
   createRadioField,
   createSelectField,
   createTextAreaField,
@@ -35,7 +36,7 @@ export const FormData = (
             required: true,
             regex: REGEX_PATTERNS.ACCOUNT_NAME,
             regexErrorMessage:
-              'Account name should contain only letters and between 7 to 25 characters',
+              'Invalid Account Name',
             placeholder: 'Enter Account Name',
           }),
           createSelectField('status', 'Status', {
@@ -46,11 +47,11 @@ export const FormData = (
           createSelectField('parent_account_rid', 'Parent Account', {
             options: parentAccount,
             placeholder: 'Choose Parent Account',
-            required: false,
+            required: true,
             disabled: disableFields,
             dependsRequired: {
               key: 'is_parent',
-              matchedValue: YesNo.No,
+              matchedValue: YesNo.Yes,
               errorMessage: 'Field is required',
             },
           }),
@@ -71,7 +72,7 @@ export const FormData = (
             required: true,
             regex: REGEX_PATTERNS.EMAIL,
             regexErrorMessage: 'Enter a valid email address',
-            placeholder: 'Enter Project Manager',
+            placeholder: 'Enter Project Manager Email',
           }),
           createRadioField('is_parent', 'Is Parent Account', {
             radioOptions: YES_NO_OPTIONS,
@@ -181,7 +182,7 @@ export const FormData = (
           createTextField('blended_rate_subcon', 'Blended Rate - SubCon', {
             required: false,
             regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
-            regexErrorMessage: 'Numbers only maximum 10 digits',
+           regexErrorMessage: 'Enter a valid annual revenue using numbers and commas only',
             placeholder: 'Enter Blended Rate - SubCon',
           }),
           createRadioField('auto_access_rd', 'Auto assess RD', {

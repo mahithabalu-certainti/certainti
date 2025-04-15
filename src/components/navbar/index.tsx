@@ -1,3 +1,4 @@
+import { PublicClientApplication } from '@azure/msal-browser';
 import {
   AppBar,
   Badge,
@@ -9,6 +10,7 @@ import {
   Toolbar,
 } from '@mui/material';
 import React, { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   accountsIcon,
   chevronDownIcon,
@@ -20,16 +22,17 @@ import {
   searchIcon,
   settingsIcon,
 } from '../../assets';
-import { GlobalModal } from '../global-modal';
-import { PublicClientApplication } from '@azure/msal-browser';
+import { UserRoles } from '../../common-service';
 import { msalConfig } from '../../config/msalConfig';
 import { useAuthHook } from '../../hooks';
-import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
-import { UserRoles } from '../../common-service';
+import { GlobalModal } from '../global-modal';
+import { setFiscalYear } from '../../store/slices/account-slice';
+import { fiscalYears } from '../../common-utils';
 
 export const Navbar: React.FC = () => {
   const msalSigninInstance = new PublicClientApplication(msalConfig);
+
   const [searchAnchor, setSearchAnchor] = useState<null | HTMLElement>(null);
   const [notificationAnchor, setNotificationAnchor] =
     useState<null | HTMLElement>(null);
@@ -37,21 +40,25 @@ export const Navbar: React.FC = () => {
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] =
     React.useState<null | HTMLElement>(null);
   const [isGlobalModalOpen, setIsGlobalModalOpen] = useState(false);
+
+  const dispatch = useDispatch();
   const { logout } = useAuthHook();
   const { role, name } = useSelector((state: RootState) => state.auth);
-  const isConsultant = role !== UserRoles.Admin;
+  const { fiscalYear } = useSelector((state: RootState) => state.account);
 
+  const isConsultant = role !== UserRoles.Admin;
   const menuId = 'account-menu';
   const mobileMenuId = 'account-menu-mobile';
   const notificationId = 'notification-menu';
   const searchMenuId = 'search-menu';
-
   const isMenuOpen = Boolean(anchorEl);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
   const isNotificationMenuOpen = Boolean(notificationAnchor);
   const isSearchMenuOpen = Boolean(searchAnchor);
-
   const searchMenus = ['Account', 'Projects', 'Case', 'Resources', 'TimeSheet'];
+  const fiscalYearsDropDown = [{ value: '', label: 'FY-All' }].concat(
+    fiscalYears
+  );
 
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -280,21 +287,20 @@ export const Navbar: React.FC = () => {
                 </IconButton>
                 <div className='border-l border-gray-500 h-6' />
                 <select
+                  value={fiscalYear}
+                  onChange={(e) => dispatch(setFiscalYear(e.target.value))}
                   className='px-4 py-2 focus:outline-none cursor-pointer'
                   aria-label='Fiscal Year Selector'
                 >
-                  <option value='all' className='text-black'>
-                    FY-All
-                  </option>
-                  <option value='2021' className='text-black'>
-                    2021
-                  </option>
-                  <option value='2022' className='text-black'>
-                    2022
-                  </option>
-                  <option value='2023' className='text-black'>
-                    2023
-                  </option>
+                  {fiscalYearsDropDown.map((fy) => (
+                    <option
+                      key={fy.value}
+                      value={fy.value}
+                      className='text-black'
+                    >
+                      {fy.label}
+                    </option>
+                  ))}
                 </select>
               </>
             )}

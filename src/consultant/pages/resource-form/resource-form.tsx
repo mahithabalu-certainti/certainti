@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { accountHomeIcon, editIcon } from '../../../assets';
-import { useGetAllCountries } from '../../../common-service';
+import { CheckErrorMsg, useGetAllCountries } from '../../../common-service';
+import { checkError, checkErrorMsg } from '../../../common-utils';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
@@ -42,40 +43,27 @@ const ResourceForm: React.FC = () => {
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
 
-  useEffect(() => {
-    // Hook Error Handling
-    if (
-      createResource.isError ||
-      allCountries.isError ||
-      currency.isError ||
-      regions.isError ||
-      updateResource.isError
-    ) {
-      errorToast(
-        createResource.error?.message ||
-          allCountries.error?.message ||
-          currency.error?.message ||
-          regions.error?.message ||
-          updateResource.error?.message ||
-          'An error occurred'
-      );
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    createResource.isError,
-    createResource.error?.message,
-    allCountries.isError,
-    allCountries.error?.message,
-    currency.isError,
-    currency.error?.message,
-    regions.isError,
-    regions.error?.message,
-    updateResource.isError,
-    updateResource.error?.message,
-  ]);
+  // Hook Error Handling
+  const errorhandlingData = [
+    createResource,
+    allCountries,
+    currency,
+    regions,
+    updateResource,
+  ];
+  const commonError = checkError(errorhandlingData);
+  const commonErrorMsg = checkErrorMsg(errorhandlingData as CheckErrorMsg[]);
+  const commonSuccess = createResource.isSuccess || updateResource.isSuccess;
 
   useEffect(() => {
-    if (createResource.isSuccess || updateResource.isSuccess) {
+    if (commonError) {
+      errorToast(commonErrorMsg);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [commonError, commonErrorMsg]);
+
+  useEffect(() => {
+    if (commonSuccess) {
       successToast(
         isEditView
           ? 'Account update successfully'
@@ -83,7 +71,7 @@ const ResourceForm: React.FC = () => {
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [createResource.isSuccess, updateResource.isSuccess, isEditView]);
+  }, [commonSuccess, isEditView]);
 
   const memoizedContry: SelectOption[] = useMemo(
     () =>

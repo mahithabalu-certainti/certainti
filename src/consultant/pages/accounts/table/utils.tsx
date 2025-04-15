@@ -121,6 +121,7 @@ export const renderRows = ({
           <TableCell sx={{ minWidth: '200px' }}>{account.industry}</TableCell>
           <TableCell sx={{ minWidth: '150px' }}>{account.country}</TableCell>
           <TableCell sx={{ minWidth: '100px' }}>{account.currency}</TableCell>
+          <TableCell sx={{ minWidth: '160px' }}>{account.annualRevenue}</TableCell>
           <TableCell>{account.status}</TableCell>
           <TableCell sx={{ minWidth: '180px' }}>
             {account.primaryContact}
@@ -192,6 +193,7 @@ export const renderChildRows = ({
           >
             {account.currency}
           </TableCell>
+          <TableCell sx={{ minWidth: '160px' }}>{account.annualRevenue}</TableCell>
           <TableCell sx={{ minWidth: '100px' }}>{account.status}</TableCell>
           <TableCell sx={{ minWidth: '180px' }}>
             {account.primaryContact}

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { accountHomeIcon, editIcon } from '../../../assets';
-import { useGetAllCountries } from '../../../common-service';
+import { CheckErrorMsg, useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
@@ -19,6 +19,7 @@ import { AccountFormData, SelectOption } from '../../types';
 import { FormData } from './form-data';
 import { transformFormData } from './utils';
 import { ACCOUNT } from '../../../routes';
+import { checkError, checkErrorMsg } from '../../../common-utils';
 
 export const AccountForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -54,44 +55,29 @@ export const AccountForm: React.FC = () => {
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
 
-  useEffect(() => {
-    // Hook Error Handling
-    if (
-      createAccount.isError ||
-      allCountries.isError ||
-      parentAccount.isError ||
-      currency.isError ||
-      regions.isError ||
-      updateAccount.isError
-    ) {
-      errorToast(
-        createAccount.error?.message ||
-          allCountries.error?.message ||
-          parentAccount.error?.message ||
-          currency.error?.message ||
-          regions.error?.message ||
-          updateAccount.error?.message ||
-          'An error occurred'
-      );
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    createAccount.isError,
-    createAccount.error?.message,
-    allCountries.isError,
-    allCountries.error?.message,
-    parentAccount.isError,
-    parentAccount.error?.message,
-    currency.isError,
-    currency.error?.message,
-    regions.isError,
-    regions.error?.message,
-    updateAccount.isError,
-    updateAccount.error?.message,
-  ]);
+  // Hook Error Handling
+  const errorhandlingData = [
+    getAccount,
+    allCountries,
+    parentAccount,
+    currency,
+    regions,
+    updateAccount,
+    createAccount,
+  ];
+  const commonError = checkError(errorhandlingData);
+  const commonErrorMsg = checkErrorMsg(errorhandlingData as CheckErrorMsg[]);
+  const commonSuccess = createAccount.isSuccess || updateAccount.isSuccess;
 
   useEffect(() => {
-    if (createAccount.isSuccess || updateAccount.isSuccess) {
+    if (commonError) {
+      errorToast(commonErrorMsg);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [commonError, commonErrorMsg]);
+
+  useEffect(() => {
+    if (commonSuccess) {
       successToast(
         isEditView
           ? 'Account update successfully'
@@ -100,7 +86,7 @@ export const AccountForm: React.FC = () => {
       navigate(ACCOUNT);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [createAccount.isSuccess, updateAccount.isSuccess, isEditView]);
+  }, [commonSuccess, isEditView]);
 
   const memoizedContry: SelectOption[] = useMemo(
     () =>

@@ -60,7 +60,7 @@ export const ManageUserDetails: React.FC = () => {
   const renderRow = (value: Detail): JSX.Element => (
     <div className='grid grid-cols-2 gap-1 items-center justify-center border-b border-gray-200 py-2'>
       <div className='font-bold text-center'>{value?.label}</div>
-      <div className=''>{value?.value}</div>
+      <div>{value?.value}</div>
     </div>
   );
 
@@ -80,12 +80,22 @@ export const ManageUserDetails: React.FC = () => {
     return <div>User not found</div>;
   }
 
+  const capitalizeFirstLetter = (str?: string) => {
+    if (str) {
+      return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    }
+    return 'N/A';
+  };
+
   // Map your API data to the mock data structure
   const mappedUserDetails: Detail[] = [
     { label: 'Full name', value: userDetail?.full_name || 'N/A' },
     { label: 'Email address', value: userDetail?.email || 'N/A' },
     { label: 'Profile', value: userDetail?.profile.profile_name || 'N/A' },
-    { label: 'Active', value: userDetail?.status || 'N/A' },
+    {
+      label: 'Active',
+      value: capitalizeFirstLetter(userDetail?.status),
+    },
     { label: 'First name', value: userDetail?.first_name || 'N/A' },
     { label: 'Last name', value: userDetail?.last_name || 'N/A' },
     { label: 'Street', value: userDetail?.street || 'N/A' },
@@ -97,11 +107,18 @@ export const ManageUserDetails: React.FC = () => {
     { label: 'State/Province', value: userDetail?.state || 'N/A' },
     { label: 'Zip/Postal Code', value: userDetail?.zip_code || 'N/A' },
     { label: 'Country', value: userDetail?.country || 'N/A' },
-    { label: 'Created by', value: userDetail?.created_by || 'N/A' },
+    {
+      label: 'Created by',
+      value: capitalizeFirstLetter(userDetail?.created_by),
+    },
     { label: 'Created on', value: userDetail?.createdAt || 'N/A' },
     { label: 'Modified by', value: userDetail?.modified_by || 'N/A' },
     { label: 'Modified on', value: userDetail?.updatedAt },
   ];
+
+  const goBack = () => {
+    window.history.back();
+  };
 
   return (
     <div className='flex flex-col h-[calc(100vh-64px)] w-full overflow-y-auto p-4 gap-3'>
@@ -124,6 +141,13 @@ export const ManageUserDetails: React.FC = () => {
               backgroundColor: 'secondary.main',
               color: '#fff',
             }}
+          />
+
+          <TextButton
+            label='Back'
+            variant='outlined'
+            color='inherit'
+            onClick={goBack}
           />
         </div>
       </div>

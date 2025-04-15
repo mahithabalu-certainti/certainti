@@ -4,10 +4,13 @@ import {
   Button,
   Checkbox,
   FormControlLabel,
+  InputAdornment,
   SelectChangeEvent,
+  TextField,
   Typography,
 } from '@mui/material';
 import React, { useState } from 'react';
+import { arrowDownIcon, searchIcon } from '../../../../assets';
 import {
   FieldConfig,
   FilterComponentProps,
@@ -26,12 +29,15 @@ import { fields, formatFilterForApi, getInitialStateForField } from './utils';
 
 const FilterComponent: React.FC<FilterComponentProps> = ({
   setAppliedFilters,
+  searchTerm,
+  setSearchTerm,
 }) => {
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
     {}
   );
   const [isModified, setIsModified] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
 
   const handleCheckboxChange = (fieldName: string) => {
     setIsModified(true);
@@ -139,9 +145,6 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
           return prev;
       }
     });
-
-    console.log("filterStates", filterStates);
-    
   };
 
   const handleBooleanChange = (fieldName: string, checked: boolean) => {
@@ -228,10 +231,61 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
   };
 
   return (
-    <Box sx={{ width: 320, p: 2 }}>
+    <Box sx={{ width: '100%', p: 2 }}>
       {/* <Typography variant='subtitle1' sx={{ fontSize: '16px', fontWeight: 600, color: '#2D3E4F', lineHeight: '30px' }}>
         Filter Accounts by
       </Typography> */}
+      <TextField
+        placeholder='Search'
+        variant='outlined'
+        size='small'
+        fullWidth
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        sx={{
+          mb: 2,
+          '& .MuiOutlinedInput-root': {
+            borderRadius: '26px',
+            color: '#2D3E4F',
+            fontSize: '12px',
+            fontWeight: 400,
+            lineHeight: '20px',
+            '& fieldset': {
+              borderColor: '#ccc',
+            },
+            '&:hover fieldset': {
+              borderColor: '#CBD6E2',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: '#3f51b5',
+            },
+            '& input::placeholder': {
+              color: '#7D98B6',
+              opacity: 1,
+            },
+          },
+        }}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position='start'>
+              <img
+                src={searchIcon}
+                alt='Search'
+                style={{
+                  width: 20,
+                  height: 20,
+                  filter:
+                    'brightness(0) saturate(100%) invert(22%) sepia(15%) saturate(1726%) hue-rotate(169deg) brightness(91%) contrast(87%)', // This filter converts the icon to #2D3E4F
+                }}
+              />
+            </InputAdornment>
+          ),
+          style: {
+            paddingLeft: '12px',
+          },
+        }}
+      />
+
       <Typography
         variant='subtitle1'
         sx={{
@@ -240,72 +294,90 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
           color: '#2D3E4F',
           lineHeight: '30px',
         }}
+        className='flex items-center gap-1 cursor-pointer'
+        onClick={() => setShowFilters(!showFilters)}
       >
+        <img
+          src={arrowDownIcon}
+          alt='arrow'
+          style={{
+            width: 20,
+            height: 20,
+            filter:
+              'brightness(0) saturate(100%) invert(22%) sepia(15%) saturate(1726%) hue-rotate(169deg) brightness(91%) contrast(87%)',
+            transform: showFilters ? 'rotate(0deg)' : 'rotate(180deg)',
+            transition: 'transform 0.2s ease-in-out',
+          }}
+        />
         Filter By Fields
       </Typography>
 
-      {isModified && (
-        <Box className='flex items-center justify-end gap-2 w-full'>
-          <Button
-            variant='outlined'
-            color='secondary'
-            disableRipple
-            onClick={handleResetFilters}
-            sx={{
-              height: '30px',
-              minHeight: '30x',
-              textTransform: 'none',
-              fontSize: '14px',
-              fontWeight: 400,
-              color: '#F16137',
-            }}
-          >
-            Reset
-          </Button>
-
-          <Button
-            variant='outlined'
-            color='primary'
-            onClick={handleApplyFilters}
-            sx={{
-              height: '30px',
-              minHeight: '30x',
-              textTransform: 'none',
-              fontSize: '14px',
-              fontWeight: 400,
-              color: '#2D3E4F',
-            }}
-          >
-            Apply
-          </Button>
-        </Box>
-      )}
-
-      {fields.map((field) => (
-        <Box key={field.name}>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={selectedFilters.includes(field.name)}
-                onChange={() => handleCheckboxChange(field.name)}
-              />
-            }
-            label={
-              <Typography
+      {showFilters && (
+        <>
+          {isModified && (
+            <Box className='flex items-center justify-end gap-2 w-full'>
+              <Button
+                variant='outlined'
+                color='secondary'
+                disableRipple
+                onClick={handleResetFilters}
                 sx={{
+                  height: '30px',
+                  minHeight: '30x',
+                  textTransform: 'none',
                   fontSize: '14px',
                   fontWeight: 400,
-                  lineHeight: '30px',
+                  color: '#F16137',
+                }}
+              >
+                Reset
+              </Button>
+
+              <Button
+                variant='outlined'
+                color='primary'
+                onClick={handleApplyFilters}
+                sx={{
+                  height: '30px',
+                  minHeight: '30x',
+                  textTransform: 'none',
+                  fontSize: '14px',
+                  fontWeight: 400,
                   color: '#2D3E4F',
                 }}
               >
-                {field.name}
-              </Typography>
-            }
-          />
-          {renderFilterControls(field)}
-        </Box>
-      ))}
+                Apply
+              </Button>
+            </Box>
+          )}
+
+          {fields.map((field) => (
+            <Box key={field.name}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={selectedFilters.includes(field.name)}
+                    onChange={() => handleCheckboxChange(field.name)}
+                  />
+                }
+                label={
+                  <Typography
+                    sx={{
+                      fontSize: '14px',
+                      fontWeight: 400,
+                      lineHeight: '30px',
+                      color: '#2D3E4F',
+                    }}
+                  >
+                    {field.name}
+                  </Typography>
+                }
+              />
+              {renderFilterControls(field)}
+            </Box>
+          ))}
+        </>
+      )}
     </Box>
   );
 };

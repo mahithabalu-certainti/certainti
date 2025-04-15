@@ -3,9 +3,13 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
+import { CountryCode, parsePhoneNumberFromString } from 'libphonenumber-js';
 import React, { useEffect } from 'react';
+import PhoneInput, { CountryData } from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 import { calendarIcon, searchBlackIcon } from '../../assets';
 import { FieldTypes, OnChange } from '../../common-service';
+import { ALLOWED_COUNTRIES } from '../../common-utils';
 import {
   FormType,
   FormTypeFields,
@@ -60,11 +64,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     const fieldValue = (constructFormData[field.name] as string) || '';
     const fieldDisabled = field.disabled ? ' bg-gray-100' : '';
 
-    const handleChange = (value: FieldTypes) => {
+    const handleChange = (value: FieldTypes, countryCode?: FieldTypes) => {
       setConstructFormData((prevData) => {
         const newData = {
           ...prevData,
           [field.name]: value,
+          ...(countryCode !== undefined && {
+            [`${field.name}_countryCode`]: countryCode,
+          }),
         };
         if (field.onChange && onChange) {
           onChange({ fieldName: field.name, fieldValue: value });
@@ -80,6 +87,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             type={field.type}
             name={field.name}
             placeholder={field.placeholder}
+            autoComplete='off'
             className={
               'w-full sm:text-sm p-2 border-1 ' + isError + fieldDisabled
             }
@@ -256,9 +264,56 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             />
           </LocalizationProvider>
         );
+      case 'phone':
+        return (
+          <PhoneInput
+            country='us'
+            onlyCountries={ALLOWED_COUNTRIES}
+            countryCodeEditable={false}
+            value={fieldValue}
+            onChange={(phone, country: CountryData) =>
+              handleChange(phone, country.countryCode)
+            }
+            inputClass={`!w-full !text-sm !p-2 !pl-12 !border !h-[38px] !rounded-[0px] ${
+              field.error ? '!border-red-500' : '!border-gray-300'
+            }${field.disabled ? ' !bg-gray-100' : ''}`}
+            buttonClass={`!bg-transparent !border-r ${field.error ? '!border-red-500' : '!border-gray-300'} !rounded-[0px] !hover:bg-transparent !shadow-none !px-0 !m-0`}
+            containerClass='!w-full'
+            inputProps={{
+              name: field.name,
+              disabled: field.disabled,
+              placeholder: field.placeholder,
+            }}
+          />
+        );
       default:
         return null;
     }
+  };
+
+  const validatePhoneNumber = (phone: string, countryCode: string) => {
+    const country_code = countryCode?.toUpperCase() as CountryCode;
+    const phoneNumber = parsePhoneNumberFromString(`+${phone}`, country_code);
+
+    if (!phoneNumber) {
+      return { isValid: false, error: 'Invalid phone number format' };
+    }
+
+    if (!phoneNumber.isPossible()) {
+      return {
+        isValid: false,
+        error: 'Phone number length is not valid for the selected country',
+      };
+    }
+
+    if (!phoneNumber.isValid()) {
+      return {
+        isValid: false,
+        error: 'Phone number does not match the selected country format',
+      };
+    }
+
+    return { isValid: true, error: '' };
   };
 
   const submitData = (e: React.FormEvent<HTMLFormElement>) => {
@@ -281,6 +336,26 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         if (field.required && !hasValue) {
           hasError = true;
           return { ...field, error: 'Field is required' };
+        }
+
+        if (field.type === 'phone') {
+          const value = constructFormData[field.name] as string;
+          const countryCode = constructFormData[
+            `${field.name}_countryCode`
+          ] as string;
+
+          if (field.required && !value) {
+            hasError = true;
+            return { ...field, error: 'Phone number is required' };
+          }
+
+          if (value) {
+            const validation = validatePhoneNumber(value, countryCode);
+            if (!validation.isValid) {
+              hasError = true;
+              return { ...field, error: validation.error };
+            }
+          }
         }
 
         // Depends Required Validation
@@ -331,7 +406,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
     if (!hasError) {
       //If there is no error then only submit the data
-      outData(constructFormData);
+      const cleanedData = Object.fromEntries(
+        Object.entries(constructFormData).filter(
+          ([key]) => !key.endsWith('_countryCode')
+        )
+      );
+      outData(cleanedData);
     }
   };
 

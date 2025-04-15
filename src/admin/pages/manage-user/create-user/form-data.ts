@@ -21,35 +21,39 @@ export const FormData = (
         fields: [
           createTextField('first_name', 'First name', {
             required: true,
-            regex: REGEX_PATTERNS.LETTERS_SPACES,
-            regexErrorMessage: 'First name must be alphabets',
+           regex: REGEX_PATTERNS.NAME_REGEX,
+            regexErrorMessage: 'First name must contain only letters, spaces, apostrophes (\') or hyphens (-), and be 3 to 50 characters long.',
             placeholder: 'Enter First name',
           }),
           createTextField('street', 'Street', {
-            required: true,
+            required: false,
+             regex: REGEX_PATTERNS.STREET_REGEX,
+            regexErrorMessage: 'Street must contain only letters and spaces, and be 3 to 200 characters long.',
             placeholder: 'Enter Street',
           }),
           createTextField('last_name', 'Last name', {
             required: true,
-            regex: REGEX_PATTERNS.LETTERS_SPACES,
+            regex: REGEX_PATTERNS.NAME_REGEX,
+
             placeholder: 'Enter Last name',
-            regexErrorMessage: 'Last name must be alphabets',
+
+            regexErrorMessage: 'Last name must contain only letters, spaces, apostrophes (\') or hyphens (-), and be 3 to 50 characters long.',
           }),
           createTextField('city', 'City', {
-            required: true,
-            regex: REGEX_PATTERNS.LETTERS_SPACES,
+            required: false,
+            regex: REGEX_PATTERNS.CITY_REGEX,
             placeholder: 'Enter City',
-            regexErrorMessage: 'City must be alphabets',
+            regexErrorMessage: 'City must contain only letters and spaces, and be 3 to 100 characters long.',
           }),
           createTextField('email', 'Email Address', {
             required: true,
             regex: REGEX_PATTERNS.EMAIL,
             placeholder: 'Enter Email Address',
-            regexErrorMessage: 'Enter a valid email address',
+            regexErrorMessage: 'Invalid email address',
             disabled: disableFields,
           }),
           createTextField('state', 'State/Province', {
-            required: true,
+            required: false,
             regex: REGEX_PATTERNS.LETTERS_SPACES,
             placeholder: 'Enter State/Province',
             regexErrorMessage: 'State must be alphabets',
@@ -57,23 +61,23 @@ export const FormData = (
           createSelectField('profile_rid', 'Profile', {
             options: profile,
             required: true,
-            placeholder: 'Enter Profile',
+            placeholder: 'Select Profile',
           }),
           createTextField('zip_code', 'Zip/Postal code', {
-            required: true,
+            required: false,
             regex: REGEX_PATTERNS.POSTAL_CODE,
             regexErrorMessage:
-              'Enter a valid postal code (e.g., 12345 or 12345-6789)',
+              'Invalid postal code / zip code',
             placeholder: 'Enter Zip/Postal code',
           }),
           createSelectField('role_rid', 'Role', {
             options: role,
-            placeholder: 'Enter Role',
+            placeholder: 'Select Role',
             required: true,
           }),
           createSelectField('country', 'Country', {
             options: country,
-            placeholder: 'Enter Country',
+            placeholder: 'Select Country',
             required: true,
           }),
           createRadioField('status', 'Active', {
