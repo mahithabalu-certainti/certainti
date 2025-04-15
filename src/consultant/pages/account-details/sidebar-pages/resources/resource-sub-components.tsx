@@ -2,7 +2,6 @@ import { Box, Tab, Tabs } from '@mui/material';
 import React, { Fragment } from 'react';
 import ResourceCostTable from './resource-cost/resource-cost-table';
 import ResourceSkillTable from './resource-skill/resource-skill-table';
-import { FilterState } from '../../../../../components/filter/filterType';
 import { AccountData } from '../../utils';
 
 

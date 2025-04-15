@@ -2,7 +2,7 @@ import { CircularProgress, Paper, Table, TableBody, TableCell, TableHead, TableP
 
 import { useEffect, useState } from "react";
 import React from 'react';
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { convertResourceSkill, RenderSkillRowProps, ResourceSkillType } from "./resourceSkillType";
 import { ResourceSkillList } from "../../../../../types/resourceSkill";
 import { useResourceSkill } from "../../../../../services/resource-skill/resource-skill-service";
@@ -11,7 +11,7 @@ import ActionButton from "../../../../accounts/table/action-button";
 
 const ResourceSkillTable: React.FC<Record<string, any>> = ({ appliedFilters, accountDetails }) => {
   const navigate = useNavigate();
-  const location = useLocation();
+  // const location = useLocation();
   const [page, setPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState<number>(25);
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');

@@ -1,4 +1,4 @@
-import { SelectOption, selectOptions } from '../types';
+import { SelectOption } from '../types';
 
 export const mockDesignationOptions: SelectOption[] = [
   { label: 'Software Engineer', value: 'software_engineer' },

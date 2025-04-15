@@ -12,7 +12,7 @@ import { RESOURCE } from '../../../../../routes';
 import { AccountData } from '../../utils';
 
 interface ResourceProps{
-  accountDetails: AccountData
+  accountDetails?: AccountData
 }
 
 const Resource:React.FC<ResourceProps> = ({accountDetails}) => {
@@ -128,7 +128,7 @@ const Resource:React.FC<ResourceProps> = ({accountDetails}) => {
           handleTabChange={handleTabChange}
           value={value}
           appliedFilters={appliedFilters || {}}
-          accountDetails={accountDetails}
+          accountDetails={accountDetails as AccountData}
         />
       ) : (
         <ListTable
