@@ -30,7 +30,6 @@ export const TextFilterControl: React.FC<{
       >
         <MenuItem value='contains'>contains</MenuItem>
         <MenuItem value='equals'>equals</MenuItem>
-        <MenuItem value='startsWith'>starts with</MenuItem>
       </Select>
     </FormControl>
     <TextField
@@ -65,9 +64,8 @@ export const NumberFilterControl: React.FC<{
         onChange={(e) => onOptionChange(fieldName, e)}
         sx={{ height: '30px', minHeight: 20 }}
       >
-        <MenuItem value='lessThan'>less than</MenuItem>
-        <MenuItem value='greaterThan'>greater than</MenuItem>
         <MenuItem value='equals'>equals</MenuItem>
+        <MenuItem value='contains'>contains</MenuItem>
       </Select>
     </FormControl>
     <TextField

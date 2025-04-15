@@ -15,21 +15,26 @@ export const AccountListURL = ({
   sortBy,
   sortOrder,
   filters,
+  globalFilters,
+  fiscalYear,
 }: AccountListURLParams): string => {
   const baseUrl = '/api/accounts/list';
   const searchParams = new URLSearchParams();
 
-  searchParams.set('page', page.toString());
-  searchParams.set('limit', limit.toString());
-  searchParams.set('sortBy', sortBy);
-  searchParams.set('sortOrder', sortOrder);
-
-  // Only add filters if the object has properties
+  if (page !== undefined) searchParams.set('page', page.toString());
+  if (limit !== undefined) searchParams.set('limit', limit.toString());
+  if (sortBy !== undefined) searchParams.set('sortBy', sortBy);
+  if (sortOrder !== undefined) searchParams.set('sortOrder', sortOrder);
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
   }
+  if (globalFilters !== undefined) {
+    searchParams.set('globalFilters', JSON.stringify(globalFilters));
+  }
+  if (fiscalYear) searchParams.set('fiscalYear', fiscalYear);
 
-  return `${baseUrl}?${searchParams.toString()}`;
+  const queryString = searchParams.toString();
+  return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };
 
 export const AccountDetailUrl = (accountId: string) =>

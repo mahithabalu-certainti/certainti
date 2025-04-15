@@ -34,7 +34,8 @@ export type InputType =
   | 'textarea'
   | 'checkbox'
   | 'date'
-  | 'radio';
+  | 'radio'
+  | 'phone';
 
 export interface SelectOption {
   label: string;
@@ -59,3 +60,5 @@ export interface FieldType {
   onChange?: boolean;
   anyOneRequired?:boolean, // financial information error handling
 }
+
+export type AllowedCountry = 'us' | 'ca' | 'gb' | 'ie' | 'se' | 'ro' | 'au' | 'fr';

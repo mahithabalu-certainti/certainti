@@ -148,11 +148,17 @@ export type AccountListResponse = {
 };
 
 export interface AccountListURLParams {
-  page: number;
-  limit: number;
-  sortBy: string;
-  sortOrder: 'ASC' | 'DESC';
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
   filters?: object;
+  globalFilters?: globalFilters;
+  fiscalYear?: string;
+}
+
+export interface globalFilters {
+  [key: string]: string[];
 }
 
 export type AccountList = {
@@ -195,4 +201,5 @@ export interface ConvertedAccount {
   status: 'Active' | 'In Active';
   primaryContact: string;
   parentAccountID: string | null;
+  annualRevenue: string;
 }

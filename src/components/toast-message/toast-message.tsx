@@ -8,13 +8,14 @@ export const Toast = ({ open, message, severity, onClose }: ToastProps) => {
       autoHideDuration={3000}
       onClose={onClose}
       anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-      sx={{
-        boxShadow: '0 0 38px #000',
-        marginTop: '54px' // Changed from top to marginTop for better positioning
-      }}
+      sx={{ marginTop: '54px' }}
     >
-      <Alert onClose={onClose} severity={severity}>
-        {message}
+      <Alert
+        onClose={onClose}
+        severity={severity}
+        sx={{ maxWidth: '80%', boxShadow: '0 0 38px #000', minWidth: '300px' }}
+      >
+        <div dangerouslySetInnerHTML={{ __html: message }} />
       </Alert>
     </Snackbar>
   );
