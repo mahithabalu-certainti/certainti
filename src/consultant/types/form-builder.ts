@@ -19,6 +19,7 @@ export interface FormTypeFields {
   greaterThan?: Record<string, string>;
   dependsRequired?: Record<string, string>;
   onChange?: boolean;
+  isLoading?: boolean;
 }
 
 export interface selectOptions {
@@ -57,6 +58,7 @@ export interface FieldType {
   greaterThan?: Record<string, string>;
   dependsRequired?: Record<string, string>;
   onChange?: boolean;
+  isLoading?: boolean;
 }
 
 export type AllowedCountry = 'us' | 'ca' | 'gb' | 'ie' | 'se' | 'ro' | 'au' | 'fr';

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { FormType, SelectOption } from '../../../../consultant/types';
 import {
+  createPhoneInputField,
   createRadioField,
   createSelectField,
   createTextField,
@@ -11,7 +12,11 @@ export const FormData = (
   country: SelectOption[],
   profile: SelectOption[],
   role: SelectOption[],
-  disableFields?: boolean
+  states: SelectOption[],
+  city: SelectOption[],
+  disableFields?: boolean,
+  stateLoading?: boolean,
+  cityLoading?: boolean
 ): FormType[] => {
   return useMemo(
     () => [
@@ -21,14 +26,16 @@ export const FormData = (
         fields: [
           createTextField('first_name', 'First name', {
             required: true,
-           regex: REGEX_PATTERNS.NAME_REGEX,
-            regexErrorMessage: 'First name must contain only letters, spaces, apostrophes (\') or hyphens (-), and be 3 to 50 characters long.',
+            regex: REGEX_PATTERNS.NAME_REGEX,
+            regexErrorMessage:
+              "First name must contain only letters, spaces, apostrophes (') or hyphens (-), and be 3 to 50 characters long.",
             placeholder: 'Enter First name',
           }),
           createTextField('street', 'Street', {
             required: false,
-             regex: REGEX_PATTERNS.STREET_REGEX,
-            regexErrorMessage: 'Street must contain only letters and spaces, and be 3 to 200 characters long.',
+            regex: REGEX_PATTERNS.STREET_REGEX,
+            regexErrorMessage:
+              'Street must contain only letters and spaces, and be 3 to 200 characters long.',
             placeholder: 'Enter Street',
           }),
           createTextField('last_name', 'Last name', {
@@ -37,13 +44,8 @@ export const FormData = (
 
             placeholder: 'Enter Last name',
 
-            regexErrorMessage: 'Last name must contain only letters, spaces, apostrophes (\') or hyphens (-), and be 3 to 50 characters long.',
-          }),
-          createTextField('city', 'City', {
-            required: false,
-            regex: REGEX_PATTERNS.CITY_REGEX,
-            placeholder: 'Enter City',
-            regexErrorMessage: 'City must contain only letters and spaces, and be 3 to 100 characters long.',
+            regexErrorMessage:
+              "Last name must contain only letters, spaces, apostrophes (') or hyphens (-), and be 3 to 50 characters long.",
           }),
           createTextField('email', 'Email Address', {
             required: true,
@@ -51,12 +53,6 @@ export const FormData = (
             placeholder: 'Enter Email Address',
             regexErrorMessage: 'Invalid email address',
             disabled: disableFields,
-          }),
-          createTextField('state', 'State/Province', {
-            required: false,
-            regex: REGEX_PATTERNS.LETTERS_SPACES,
-            placeholder: 'Enter State/Province',
-            regexErrorMessage: 'State must be alphabets',
           }),
           createSelectField('profile_rid', 'Profile', {
             options: profile,
@@ -66,9 +62,12 @@ export const FormData = (
           createTextField('zip_code', 'Zip/Postal code', {
             required: false,
             regex: REGEX_PATTERNS.POSTAL_CODE,
-            regexErrorMessage:
-              'Invalid postal code / zip code',
+            regexErrorMessage: 'Invalid postal code / zip code',
             placeholder: 'Enter Zip/Postal code',
+          }),
+          createPhoneInputField('phone', 'Phone Number', {
+            required: false,
+            placeholder: 'Enter Phone Number',
           }),
           createSelectField('role_rid', 'Role', {
             options: role,
@@ -79,6 +78,20 @@ export const FormData = (
             options: country,
             placeholder: 'Select Country',
             required: true,
+            onChange: true,
+          }),
+          createSelectField('state', 'State/Province', {
+            options: states,
+            placeholder: 'Select State',
+            required: false,
+            onChange: true,
+            isLoading: stateLoading,
+          }),
+          createSelectField('city', 'City', {
+            options: city,
+            placeholder: 'Select City',
+            required: false,
+            isLoading: stateLoading || cityLoading,
           }),
           createRadioField('status', 'Active', {
             required: true,
@@ -90,6 +103,15 @@ export const FormData = (
         ],
       },
     ],
-    [country, profile, role, disableFields]
+    [
+      country,
+      profile,
+      role,
+      disableFields,
+      states,
+      stateLoading,
+      city,
+      cityLoading,
+    ]
   );
 };

@@ -1,15 +1,18 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { accountHomeIcon, editIcon } from '../../../assets';
-import { CheckErrorMsg, useGetAllCountries } from '../../../common-service';
+import {
+  CheckErrorMsg,
+  OnChange,
+  useGetAllCountries,
+} from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
 import {
   useFetchAccountFields,
   useFetchCurrency,
-  useFetchParentAccounts,
-  useFetchRegion,
+  useFetchState,
 } from '../../services/account';
 import {
   useCreateAccount,
@@ -22,6 +25,7 @@ import { checkError, checkErrorMsg } from '../../../common-utils';
 
 const ProjectForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
+  const [currentCountry, setCurrentCountry] = useState('');
   const { successToast, errorToast } = useToast();
   const location = useLocation();
   const { accountid } = useParams();
@@ -45,9 +49,8 @@ const ProjectForm: React.FC = () => {
   );
 
   const allCountries = useGetAllCountries();
-  const parentAccount = useFetchParentAccounts();
   const currency = useFetchCurrency();
-  const regions = useFetchRegion();
+  const state = useFetchState(currentCountry);
   const createAccount = useCreateAccount();
   const updateAccount = useUpdateAccount();
 
@@ -57,9 +60,8 @@ const ProjectForm: React.FC = () => {
   const errorhandlingData = [
     createAccount,
     allCountries,
-    parentAccount,
     currency,
-    regions,
+    state,
     updateAccount,
   ];
   const commonError = checkError(errorhandlingData);
@@ -93,15 +95,6 @@ const ProjectForm: React.FC = () => {
     [allCountries.data?.data.country]
   );
 
-  const memoizedParentAccounts: SelectOption[] = useMemo(
-    () =>
-      parentAccount.data?.data.gloablAcconunt.map((account) => ({
-        label: account.account_name,
-        value: account.rid,
-      })) || [],
-    [parentAccount.data?.data?.gloablAcconunt]
-  );
-
   const memoizedCurrency: SelectOption[] = useMemo(
     () =>
       currency.data?.data.currency.map((account) => ({
@@ -113,11 +106,11 @@ const ProjectForm: React.FC = () => {
 
   const memoizedRegions: SelectOption[] = useMemo(
     () =>
-      regions.data?.data.regions.map((account) => ({
-        label: account.region_name,
-        value: account.rid,
+      state.data?.data.states.map((state) => ({
+        label: state.state_name,
+        value: state.rid,
       })) || [],
-    [regions.data?.data.regions]
+    [state.data?.data.states]
   );
 
   const submitData = (formValues: Partial<AccountFormData>) => {
@@ -135,6 +128,12 @@ const ProjectForm: React.FC = () => {
 
   const goBack = () => {
     window.history.back();
+  };
+
+  const onChangeField = (data: OnChange) => {
+    if (data.fieldName === 'country_rid') {
+      setCurrentCountry(data.fieldValue as string);
+    }
   };
 
   return (
@@ -174,20 +173,18 @@ const ProjectForm: React.FC = () => {
         <FormBuilder
           data={FormData(
             memoizedContry,
-            memoizedParentAccounts,
             memoizedCurrency,
             memoizedRegions,
-            isEditView
+            isEditView,
+            state.isLoading
           )}
           loading={
-            allCountries.isLoading ||
-            parentAccount.isLoading ||
-            currency.isLoading ||
-            regions.isLoading
+            allCountries.isLoading || currency.isLoading || state.isLoading
           }
           values={isEditView && accountData ? { ...accountData } : undefined}
           outData={submitData}
           formRef={formRef}
+          onChange={onChangeField}
         />
       </div>
     </>

@@ -1,7 +1,11 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { accountHomeIcon, editIcon } from '../../../assets';
-import { CheckErrorMsg, useGetAllCountries } from '../../../common-service';
+import {
+  CheckErrorMsg,
+  OnChange,
+  useGetAllCountries,
+} from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
@@ -9,7 +13,7 @@ import {
   useFetchAccountFields,
   useFetchCurrency,
   useFetchParentAccounts,
-  useFetchRegion,
+  useFetchState,
 } from '../../services/account';
 import {
   useCreateAccount,
@@ -23,6 +27,7 @@ import { checkError, checkErrorMsg } from '../../../common-utils';
 
 export const AccountForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
+  const [currentCountry, setCurrentCountry] = useState('');
   const { successToast, errorToast } = useToast();
   const location = useLocation();
   const { accountid } = useParams();
@@ -48,7 +53,7 @@ export const AccountForm: React.FC = () => {
   const allCountries = useGetAllCountries();
   const parentAccount = useFetchParentAccounts();
   const currency = useFetchCurrency();
-  const regions = useFetchRegion();
+  const states = useFetchState(currentCountry);
   const createAccount = useCreateAccount();
   const updateAccount = useUpdateAccount();
   const navigate = useNavigate();
@@ -61,7 +66,7 @@ export const AccountForm: React.FC = () => {
     allCountries,
     parentAccount,
     currency,
-    regions,
+    states,
     updateAccount,
     createAccount,
   ];
@@ -87,6 +92,12 @@ export const AccountForm: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
+
+  useEffect(() => {
+    if (accountData.country_rid) {
+      setCurrentCountry(accountData.country_rid);
+    }
+  }, [accountData.country_rid]);
 
   const memoizedContry: SelectOption[] = useMemo(
     () =>
@@ -115,13 +126,13 @@ export const AccountForm: React.FC = () => {
     [currency.data?.data.currency]
   );
 
-  const memoizedRegions: SelectOption[] = useMemo(
+  const memoizedState: SelectOption[] = useMemo(
     () =>
-      regions.data?.data.regions.map((account) => ({
-        label: account.region_name,
-        value: account.rid,
+      states.data?.data.states.map((state) => ({
+        label: state.state_name,
+        value: state.rid,
       })) || [],
-    [regions.data?.data.regions]
+    [states.data?.data.states]
   );
 
   const submitData = (formValues: Partial<AccountFormData>) => {
@@ -139,6 +150,12 @@ export const AccountForm: React.FC = () => {
 
   const handleExternalSubmit = () => {
     formRef.current?.requestSubmit();
+  };
+
+  const onChangeField = (data: OnChange) => {
+    if (data.fieldName === 'country_rid') {
+      setCurrentCountry(data.fieldValue as string);
+    }
   };
 
   const goBack = () => {
@@ -184,18 +201,19 @@ export const AccountForm: React.FC = () => {
             memoizedContry,
             memoizedParentAccounts,
             memoizedCurrency,
-            memoizedRegions,
-            isEditView
+            memoizedState,
+            isEditView,
+            states.isLoading
           )}
           loading={
             allCountries.isLoading ||
             parentAccount.isLoading ||
-            currency.isLoading ||
-            regions.isLoading
+            currency.isLoading
           }
           values={isEditView && accountData ? { ...accountData } : undefined}
           outData={submitData}
           formRef={formRef}
+          onChange={onChangeField}
         />
       </div>
     </>

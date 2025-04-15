@@ -38,6 +38,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     Record<string, FieldTypes>
   >({});
 
+  const CommonSkeleton = (
+    <Skeleton variant='rounded' width='100%' height={36} />
+  );
+
   useEffect(() => {
     setFormData(data);
     // Only set initial form data if constructFormData is empty
@@ -63,20 +67,27 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     const fieldDisabled = field.disabled ? ' bg-gray-100' : '';
 
     const handleChange = (value: FieldTypes, countryCode?: FieldTypes) => {
-      setConstructFormData((prevData) => {
-        const newData = {
-          ...prevData,
-          [field.name]: value,
-          ...(countryCode !== undefined && {
-            [`${field.name}_countryCode`]: countryCode,
-          }),
-        };
-        if (field.onChange && onChange) {
-          onChange({ fieldName: field.name, fieldValue: value });
-        }
-        return newData;
-      });
+      const newData = {
+        ...constructFormData,
+        [field.name]: value,
+        ...(countryCode !== undefined && {
+          [`${field.name}_countryCode`]: countryCode,
+        }),
+      };
+      
+      if (field.onChange && onChange) {
+        onChange({ fieldName: field.name, fieldValue: value });
+      }
+      
+      // Queue the state update for after render
+      setTimeout(() => {
+        setConstructFormData(newData);
+      }, 0);
     };
+
+    if (field.isLoading) {
+      return CommonSkeleton;
+    }
 
     switch (field.type) {
       case 'text':
@@ -85,7 +96,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             type={field.type}
             name={field.name}
             placeholder={field.placeholder}
-            autoComplete="off"
+            autoComplete='off'
             className={
               'w-full sm:text-sm p-2 border-1 ' + isError + fieldDisabled
             }
@@ -267,7 +278,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           <PhoneInput
             country='us'
             onlyCountries={ALLOWED_COUNTRIES}
-            countryCodeEditable={false}
             value={fieldValue}
             onChange={(phone, country: CountryData) =>
               handleChange(phone, country.countryCode)
@@ -418,7 +428,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     return (
       <div className='grid md:grid-cols-2 gap-6'>
         {[...Array(8)].map((_, index) => (
-          <Skeleton key={index} variant='rounded' width='100%' height={40} />
+          <React.Fragment key={index}>{CommonSkeleton}</React.Fragment>
         ))}
       </div>
     );
