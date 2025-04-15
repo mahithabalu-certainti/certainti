@@ -3,7 +3,7 @@ import { FormType, SelectOption, YesNo } from '../../types';
 import { DATA_STORAGE_OPTIONS, STATUS_OPTIONS } from './utils';
 import {
   createDateField,
-  // createPhoneInputField,
+  createPhoneInputField,
   createRadioField,
   createSelectField,
   createTextAreaField,
@@ -16,8 +16,9 @@ export const FormData = (
   country: SelectOption[],
   parentAccount: SelectOption[],
   currency: SelectOption[],
-  region: SelectOption[],
-  disableFields?: boolean
+  state: SelectOption[],
+  disableFields?: boolean,
+  stateLoading?: boolean
 ): FormType[] => {
   return useMemo(
     () => [
@@ -35,8 +36,7 @@ export const FormData = (
           createTextField('account_name', 'Account Name', {
             required: true,
             regex: REGEX_PATTERNS.ACCOUNT_NAME,
-            regexErrorMessage:
-              'Invalid Account Name',
+            regexErrorMessage: 'Invalid Account Name',
             placeholder: 'Enter Account Name',
           }),
           createSelectField('status', 'Status', {
@@ -47,11 +47,11 @@ export const FormData = (
           createSelectField('parent_account_rid', 'Parent Account', {
             options: parentAccount,
             placeholder: 'Choose Parent Account',
-            required: true,
+            required: false,
             disabled: disableFields,
             dependsRequired: {
               key: 'is_parent',
-              matchedValue: YesNo.Yes,
+              matchedValue: YesNo.No,
               errorMessage: 'Field is required',
             },
           }),
@@ -89,16 +89,18 @@ export const FormData = (
             options: country,
             placeholder: 'Choose Country',
             required: true,
+            onChange: true,
+          }),
+          createSelectField('region', 'Region', {
+            options: state,
+            placeholder: 'Choose Region',
+            required: true,
+            isLoading: stateLoading,
           }),
           createSelectField('currency_rid', 'Currency', {
             options: currency,
             required: true,
             placeholder: 'Choose Currency',
-          }),
-          createSelectField('region', 'Region', {
-            options: region,
-            placeholder: 'Choose Region',
-            required: true,
           }),
         ],
       },
@@ -130,16 +132,16 @@ export const FormData = (
             regexErrorMessage: 'Enter a valid email address',
             placeholder: 'Enter Finance POC Email',
           }),
-          createTextField('primary_contact_number', 'Primary Contact Phone', {
+          createPhoneInputField(
+            'primary_contact_number',
+            'Primary Contact Phone',
+            {
+              required: true,
+              placeholder: 'Enter Primary Contact Phone',
+            }
+          ),
+          createPhoneInputField('finanace_poc_number', 'Finance POC Phone', {
             required: true,
-            regex: REGEX_PATTERNS.PHONE,
-            regexErrorMessage: 'Enter a valid number (e.g 9876543210)',
-            placeholder: 'Enter Primary Contact Phone',
-          }),
-          createTextField('finanace_poc_number', 'Finance POC Phone', {
-            required: true,
-            regex: REGEX_PATTERNS.PHONE,
-            regexErrorMessage: 'Enter a valid number (e.g 9876543210)',
             placeholder: 'Enter Finance POC Phone',
           }),
         ],
@@ -213,6 +215,6 @@ export const FormData = (
         ],
       },
     ],
-    [country, parentAccount, region, disableFields, currency]
+    [country, parentAccount, state, disableFields, currency, stateLoading]
   );
 };

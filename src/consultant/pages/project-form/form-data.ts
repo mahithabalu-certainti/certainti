@@ -10,10 +10,10 @@ import { FormType, SelectOption } from '../../types';
 
 export const FormData = (
   country: SelectOption[],
-  parentAccount: SelectOption[],
   currency: SelectOption[],
-  region: SelectOption[],
-  disableFields?: boolean
+  state: SelectOption[],
+  disableFields?: boolean,
+  stateLoading?: boolean
 ): FormType[] => {
   return useMemo(
     () => [
@@ -44,9 +44,10 @@ export const FormData = (
             disabled: disableFields,
           }),
           createSelectField('region', 'Region', {
-            options: region,
+            options: state,
             placeholder: 'Choose Region',
             required: true,
+            isLoading: stateLoading,
           }),
           createTextField('industry', 'Industry', {
             required: true,
@@ -62,7 +63,7 @@ export const FormData = (
             placeholder: 'Enter Project Manager',
           }),
           createSelectField('region', 'Region', {
-            options: region,
+            options: state,
             placeholder: 'Choose Region',
             required: true,
           }),
@@ -83,7 +84,7 @@ export const FormData = (
             placeholder: 'Choose Currency',
           }),
           createSelectField('region', 'Region', {
-            options: region,
+            options: state,
             placeholder: 'Choose Region',
             required: true,
           }),
@@ -167,7 +168,7 @@ export const FormData = (
         fillType: 'half',
         fields: [
           createSelectField('account_billing_type', 'Account Billing Type', {
-            options: region,
+            options: state,
             placeholder: 'Choose bill type',
             required: true,
           }),
@@ -258,6 +259,6 @@ export const FormData = (
         ],
       },
     ],
-    [country, parentAccount, region, disableFields, currency]
+    [country, state, disableFields, currency, stateLoading]
   );
 };

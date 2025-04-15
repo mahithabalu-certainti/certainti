@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { accountHomeIcon, editIcon } from '../../../assets';
-import { CheckErrorMsg, useGetAllCountries } from '../../../common-service';
+import { CheckErrorMsg, OnChange, useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
@@ -9,7 +9,7 @@ import {
   useFetchAccountFields,
   useFetchCurrency,
   useFetchParentAccounts,
-  useFetchRegion,
+  useFetchState,
 } from '../../services/account';
 import {
   useCreateAccount,
@@ -22,6 +22,7 @@ import { checkError, checkErrorMsg } from '../../../common-utils';
 
 const ResourceForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
+  const [currentCountry, setCurrentCountry] = useState('');
   const { successToast, errorToast } = useToast();
   const location = useLocation();
   const { accountid } = useParams();
@@ -47,7 +48,7 @@ const ResourceForm: React.FC = () => {
   const allCountries = useGetAllCountries();
   const parentAccount = useFetchParentAccounts();
   const currency = useFetchCurrency();
-  const regions = useFetchRegion();
+  const regions = useFetchState(currentCountry);
   const createAccount = useCreateAccount();
   const updateAccount = useUpdateAccount();
 
@@ -128,6 +129,12 @@ const ResourceForm: React.FC = () => {
     window.history.back();
   };
 
+  const onChangeField = (data: OnChange) => {
+    if (data.fieldName === 'country_rid') {
+      setCurrentCountry(data.fieldValue as string);
+    }
+  };
+
   return (
     <>
       <div className='flex justify-between items-center border-b-2 border-gray-200 px-10 py-6'>
@@ -177,6 +184,7 @@ const ResourceForm: React.FC = () => {
           values={isEditView && accountData ? { ...accountData } : undefined}
           outData={submitData}
           formRef={formRef}
+          onChange={onChangeField}
         />
       </div>
     </>

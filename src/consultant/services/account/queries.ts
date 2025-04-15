@@ -1,15 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
 import {
   AccountFieldsApiResponse,
+  CitysApiResponse,
   CurrencyApiResponse,
   ParentAccountApiResponse,
-  RegionApiResponse,
+  StatesApiResponse,
 } from '../../types';
 import {
   fetchAccountFields,
+  fetchCity,
   fetchCurrency,
   fetchParentAccounts,
-  fetchRegion,
+  fetchState,
 } from './account-service';
 
 // Fetch Account Fields Hook
@@ -40,10 +42,20 @@ export const useFetchCurrency = () => {
   });
 };
 
-export const useFetchRegion = () => {
-  return useQuery<RegionApiResponse, Error>({
-    queryKey: ['region'],
-    queryFn: fetchRegion,
+export const useFetchState = (countryId: string) => {
+  return useQuery<StatesApiResponse, Error>({
+    queryKey: ['states', countryId], // Add countryId to query key
+    queryFn: () => fetchState(countryId),
     retry: 0,
+    enabled: !!countryId, // Only fetch if countryId exists
+  });
+};
+
+export const useFetchCity = (stateId: string) => {
+  return useQuery<CitysApiResponse, Error>({
+    queryKey: ['city', stateId], // Add countryId to query key
+    queryFn: () => fetchCity(stateId),
+    retry: 0,
+    enabled: !!stateId, // Only fetch if countryId exists
   });
 };
