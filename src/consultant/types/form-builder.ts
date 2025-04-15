@@ -19,6 +19,7 @@ export interface FormTypeFields {
   greaterThan?: Record<string, string>;
   dependsRequired?: Record<string, string>;
   onChange?: boolean;
+  anyOneRequired?:boolean
 }
 
 export interface selectOptions {
@@ -56,4 +57,5 @@ export interface FieldType {
   greaterThan?: Record<string, string>;
   dependsRequired?: Record<string, string>;
   onChange?: boolean;
+  anyOneRequired?:boolean, // financial information error handling
 }

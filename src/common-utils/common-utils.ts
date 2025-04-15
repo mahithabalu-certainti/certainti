@@ -10,6 +10,7 @@ export const createTextField = (
     placeholder?: string;
     disabled?: boolean;
     onChange?: boolean;
+    anyOneRequired?:boolean,
   } = {}
 ): FieldType => ({
   type: 'text',
@@ -21,6 +22,7 @@ export const createTextField = (
   placeholder: options.placeholder,
   disabled: options.disabled,
   onChange: options.onChange,
+  anyOneRequired:options.anyOneRequired
 });
 
 export const createTextAreaField = (

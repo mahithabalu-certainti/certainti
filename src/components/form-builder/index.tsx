@@ -11,6 +11,7 @@ import {
   selectOptions,
 } from '../../consultant/types';
 import { FieldTypes, OnChange } from '../../common-service';
+import { useLocation } from 'react-router-dom';
 
 interface FormBuilderProps {
   data: FormType[];
@@ -29,17 +30,25 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   onChange,
   outData,
 }) => {
+  const location = useLocation();
+  const { state } = location;
   const [formData, setFormData] = React.useState<FormType[]>();
   const [constructFormData, setConstructFormData] = React.useState<
     Record<string, FieldTypes>
   >({});
+  const sections = data;
+  const filteredSections = sections.filter((section) => {
+    if (section.sectionName === 'Financial Information' && !state.cost) return false;
+    if (section.sectionName === 'Skill Information' && !state.skill) return false;
+    return true;
+  });
 
   useEffect(() => {
-    setFormData(data);
+    setFormData(filteredSections);
     // Only set initial form data if constructFormData is empty
     if (Object.values(constructFormData).every((value) => !value)) {
       let constructFormData = {};
-      data.forEach((section) => {
+      filteredSections.forEach((section) => {
         section.fields.forEach((field) => {
           constructFormData = {
             ...constructFormData,
@@ -50,13 +59,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       setConstructFormData(constructFormData);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, values]);
+  }, [data, values, state]);
 
-  const getFields = (field: FormTypeFields) => {
+  const getFields = (field: FormTypeFields, section: FormType) => {
+    const readOnly = (section.sectionName !== 'Financial Information' && state?.cost) || (section.sectionName !== 'Skill Information' && state?.skill)
     const isError = field.error ? 'border-red-500' : 'border-gray-300';
     const fontSize = '0.875rem';
     const fieldValue = (constructFormData[field.name] as string) || '';
-    const fieldDisabled = field.disabled ? ' bg-gray-100' : '';
+    const fieldDisabled = (field.disabled || readOnly) ? ' bg-gray-100' : '';
 
     const handleChange = (value: FieldTypes) => {
       setConstructFormData((prevData) => {
@@ -81,7 +91,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             className={
               'w-full sm:text-sm p-2 border-1 ' + isError + fieldDisabled
             }
-            disabled={field.disabled}
+            disabled={field.disabled || readOnly}
             onChange={(e) => handleChange(e.target.value)}
             value={fieldValue}
           />
@@ -98,7 +108,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
             onChange={(e) => handleChange(e.target.value)}
             value={fieldValue}
-            disabled={field.disabled}
+            disabled={field.disabled || readOnly}
           >
             <option value='' className='text-gray-500'>
               {field.placeholder}
@@ -121,7 +131,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             name={field.name}
             placeholder={field.placeholder}
             onChange={(e) => handleChange(e.target.value)}
-            disabled={field.disabled}
+            disabled={field.disabled || readOnly}
             value={fieldValue}
           />
         );
@@ -175,7 +185,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       option.value
                     ) || false
                   }
-                  disabled={field.disabled}
+                  disabled={field.disabled || readOnly}
                   onChange={() => {
                     const currentValues =
                       (constructFormData[field.name] as string[]) || [];
@@ -200,7 +210,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   name={field.name}
                   value={option.value}
                   checked={constructFormData[field.name] === option.value}
-                  disabled={field.disabled}
+                  disabled={field.disabled || readOnly}
                   onChange={(e) => {
                     handleChange(e.target.value);
                   }}
@@ -214,8 +224,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
+              className={fieldDisabled}
               value={dayjs(fieldValue, 'DD/MM/YYYY')}
-              disabled={field.disabled}
+              disabled={field.disabled || readOnly}
               onChange={(newValue) => {
                 handleChange(dayjs(newValue).format('DD/MM/YYYY'));
               }}
@@ -240,9 +251,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 0,
                       '&.Mui-disabled': {
-                      '& input': {
-                        color: 'black',
-                        WebkitTextFillColor: 'black',
+                        '& input': {
+                          color: 'black',
+                          WebkitTextFillColor: 'black',
                         },
                       },
                     },
@@ -262,6 +273,18 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   const submitData = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     let hasError = false;
+    console.log("formData", formData);
+
+    const allAnyOneRequiredFields = formData
+      ?.flatMap(section => section.fields.filter(field => field.anyOneRequired));
+
+    // Step 2: Check if at least one of them has a value
+    const isAnyFieldFilled = allAnyOneRequiredFields?.some(field => {
+      const value = constructFormData[field.name];
+      if (field.type === 'checkbox') return (value as string[])?.length > 0;
+      return value !== undefined && value !== null && value.toString().trim() !== '';
+    });
+
     const dataValidation = formData?.map((section) => ({
       ...section,
       fields: section.fields.map((field) => {
@@ -285,17 +308,26 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         if (
           field.dependsRequired?.key &&
           constructFormData[field.dependsRequired.key] ===
-            field.dependsRequired?.matchedValue && !hasValue
+          field.dependsRequired?.matchedValue && !hasValue
         ) {
           hasError = true;
           return { ...field, error: field.dependsRequired.errorMessage };
+        }
+
+        if (field.anyOneRequired) {
+          if (!isAnyFieldFilled) {
+            hasError = true;
+            return { ...field, error: "Any one cost information is required" }
+          } else {
+            return { ...field, error: "" }; // Clear error if any field is filled
+          }
         }
 
         // Date custom Validation
         if (
           field.greaterThan &&
           (constructFormData[field.greaterThan.key] || '') >
-            (constructFormData[field.name] || '')
+          (constructFormData[field.name] || '')
         ) {
           hasError = true;
           return {
@@ -348,7 +380,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       {formData?.map((it, i) => {
         const isHalf = it.fillType === 'half';
         return (
-          <div key={i}>
+          (<div key={i}>
             <h4 className={`font-medium mb-4 ${i !== 0 ? 'mt-10' : ''}`}>
               {it.sectionName}
             </h4>
@@ -363,7 +395,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     {field.required && <span className='text-red-500'> *</span>}
                   </label>
                   <div className={isHalf ? 'col-span-8' : 'col-span-10'}>
-                    {getFields(field)}
+                    {getFields(field, it)}
                     {field.error && (
                       <span className='text-red-500 text-sm col-span-full'>
                         {field.error}
@@ -373,7 +405,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 </div>
               ))}
             </div>
-          </div>
+          </div>)
         );
       })}
     </form>

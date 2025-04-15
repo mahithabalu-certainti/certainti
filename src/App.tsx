@@ -32,6 +32,10 @@ import {
   ProtectedRoute,
   RESOURCE,
   RESOURCE_CREATE,
+  RESOURCECOST_CREATE,
+  RESOURCECOST_EDIT,
+  RESOURCESKILL_CREATE,
+  RESOURCESKILL_EDIT,
 } from './routes';
 // imprt Resource from './consultant/pages/resource/resource';
 // import Resource from './consultant/pages/resource/resource';
@@ -71,6 +75,10 @@ export const App: React.FC<IApp> = ({ instance }) => {
             <Route path={ACCOUNT_DETAILS} element={<AccountDetails />} />
             <Route path={PROJECT_CREATE} element={<ProjectForm />} />
             <Route path={RESOURCE_CREATE} element={<ResourceForm />} />
+            <Route path={RESOURCECOST_CREATE} element={<ResourceForm />} />
+            <Route path={RESOURCESKILL_CREATE} element={<ResourceForm />} />
+            <Route path={RESOURCECOST_EDIT} element={<ResourceForm />} />
+            <Route path={RESOURCESKILL_EDIT} element={<ResourceForm />} />
             <Route path={RESOURCE} element={<Resource />} />
           </Route>
 

@@ -7,14 +7,23 @@ import ListTable from '../../components/table';
 import { getResourceColumns } from './columns';
 import ResourceSubComponents from './resource-sub-components';
 import ResourceTableHeader from './resource-table-header';
+import { useNavigate } from 'react-router-dom';
+import { RESOURCE } from '../../../../../routes';
+import { AccountData } from '../../utils';
 
-const Resource = () => {
+interface ResourceProps{
+  accountDetails: AccountData
+}
+
+const Resource:React.FC<ResourceProps> = ({accountDetails}) => {
+  const navigate = useNavigate()
   const [viewMode, setViewMode] = useState<boolean>(false);
   const [viewResourceList, setViewResourceList] = useState<boolean>(true);
   const [columns, setColumns] = useState<any>([]);
   const [showFilter, setShowFilter] = useState<boolean>(false);
-  const [value, setValue] = useState('details');
-  const [, setAppliedFilters] = useState<Record<string, any>>();
+  const [value, setValue] = useState('');
+  const [resourceInfo, setResourceInfo] = useState<any>({})
+  const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
 
   const handleFilter = () => {
     setShowFilter(!showFilter);
@@ -25,10 +34,18 @@ const Resource = () => {
   };
 
   const handleResourceClick = (row: any) => {
-    console.log('row', row);
+    setResourceInfo(row);
     setViewResourceList(!viewResourceList);
-    console.log('Resource clicked:');
+    setValue('details')
   };
+
+  const handleNewCLick = () => {
+    if (value === 'cost') {
+      navigate(`${RESOURCE}/cost/create`, { state: { resourceInfo, cost: true } })
+    } else if (value === 'skill') {
+      navigate(`${RESOURCE}/skill/create`, { state: { resourceInfo, skill: true } })
+    }
+  }
 
   useEffect(() => {
     setColumns(
@@ -68,22 +85,22 @@ const Resource = () => {
     variant: 'text' | 'outlined' | 'contained';
     onClick: () => void;
   }[] = [
-    {
-      label: 'Download',
-      variant: 'outlined',
-      onClick: () => console.log('Download'),
-    },
-    {
-      label: 'New',
-      variant: 'outlined',
-      onClick: () => console.log('New'),
-    },
-    {
-      label: 'View',
-      variant: 'outlined',
-      onClick: () => setViewMode(true),
-    },
-  ];
+      {
+        label: 'Download',
+        variant: 'outlined',
+        onClick: () => console.log('Download'),
+      },
+      {
+        label: 'New',
+        variant: 'outlined',
+        onClick: handleNewCLick,
+      },
+      {
+        label: 'View',
+        variant: 'outlined',
+        onClick: () => setViewMode(true),
+      },
+    ];
 
   const toggleViewMode = () => {
     setViewMode(!viewMode);
@@ -110,6 +127,8 @@ const Resource = () => {
         <ResourceSubComponents
           handleTabChange={handleTabChange}
           value={value}
+          appliedFilters={appliedFilters || {}}
+          accountDetails={accountDetails}
         />
       ) : (
         <ListTable

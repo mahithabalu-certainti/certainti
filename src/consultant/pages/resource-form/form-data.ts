@@ -7,9 +7,9 @@ import {
   REGEX_PATTERNS,
 } from '../../../common-utils';
 import {
-  mockCostFrequencyOptions,
   mockDesignationOptions,
   mockResourceStatusOptions,
+  mockSkillLevelOptions,
   mockStatusOptions,
 } from '../../mockdata/resource-form';
 import { FormType, SelectOption } from '../../types';
@@ -122,16 +122,86 @@ export const FormData = (
         sectionName: 'Financial Information',
         fillType: 'half',
         fields: [
-          createSelectField('cost_frequency', 'Cost Frequency', {
-            options: mockCostFrequencyOptions,
-            placeholder: '-Select-',
-            required: true,
+          createDateField('financial_start_date', 'Effective From', {
+            required: false,
           }),
-          createTextField('cost', 'Cost', {
-            required: true,
+          createDateField('financial_end_date', 'End Date', {
+            required: false,
+          }),
+          createTextField('annual', 'Annual', {
+            required: false,
             regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
             regexErrorMessage: 'Numbers only',
             placeholder: 'Enter Cost',
+            anyOneRequired: true,
+          }),
+          createTextField('semi_annual', 'Semi Annual', {
+            required: false,
+            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
+            regexErrorMessage: 'Numbers only',
+            placeholder: 'Enter Cost',
+            anyOneRequired: true,
+          }),
+          createTextField('monthly', 'Monthly', {
+            required: false,
+            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
+            regexErrorMessage: 'Numbers only',
+            placeholder: 'Enter Cost',
+            anyOneRequired: true,
+          }),
+          createTextField('bi_weekly', 'Bi Weekly', {
+            required: false,
+            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
+            regexErrorMessage: 'Numbers only',
+            placeholder: 'Enter Cost',
+            anyOneRequired: true,
+          }),
+          createTextField('weekly', 'Weekly', {
+            required: false,
+            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
+            regexErrorMessage: 'Numbers only',
+            placeholder: 'Enter Cost',
+            anyOneRequired: true,
+          }),
+          createTextField('daily', 'Daily', {
+            required: false,
+            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
+            regexErrorMessage: 'Numbers only',
+            placeholder: 'Enter Cost',
+            anyOneRequired: true,
+          }),
+          createTextField('hourly', 'Hourly', {
+            required: false,
+            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
+            regexErrorMessage: 'Numbers only',
+            placeholder: 'Enter Cost',
+            anyOneRequired: true,
+          }),
+        ],
+      },
+      {
+        sectionName: 'Skill Information',
+        fillType: 'half',
+        fields: [
+          createDateField('skill_start_date', 'Start Date', {
+            required: false,
+          }),
+          createTextField('skill_name', 'Skill Name', {
+            required: true,
+            regex: REGEX_PATTERNS.LETTERS_SPACES,
+            regexErrorMessage: 'Letters and spaces only',
+            placeholder: 'Enter Skill Name',
+          }),
+          createSelectField('skill_level', 'Skill Level', {
+            options: mockSkillLevelOptions,
+            placeholder: '-Select-',
+            required: false,
+          }),
+          createTextField('years_of_experience', 'Years of Experience', {
+            required: false,
+            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
+            regexErrorMessage: 'Numbers only',
+            placeholder: 'Enter years of experience',
           }),
         ],
       },

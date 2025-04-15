@@ -39,7 +39,7 @@ export const RESOURCECOST_CREATE = `${RESOURCECOST}/create`;
 export const RESOURCECOST_EDIT = `${RESOURCECOST}/edit/:costid`;
 
 // Resource skill route
-export const RESOURCESKILL = '/resource-skill';
+export const RESOURCESKILL = '/resource/skill';
 export const RESOURCESKILL_CREATE = `${RESOURCESKILL}/create`;
 export const RESOURCESKILL_EDIT = `${RESOURCESKILL}/edit/:skillid`;
 

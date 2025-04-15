@@ -9,13 +9,13 @@ import { useResourceSkill } from "../../../../../services/resource-skill/resourc
 import { RESOURCESKILL } from "../../../../../../routes";
 import ActionButton from "../../../../accounts/table/action-button";
 
-const ResourceSkillTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
+const ResourceSkillTable: React.FC<Record<string, any>> = ({ appliedFilters, accountDetails }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [page, setPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState<number>(25);
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
-  const [orderBy, setOrderBy] = useState<keyof ResourceSkillList>('resourceRole');
+  const [orderBy, setOrderBy] = useState<keyof ResourceSkillList>('resource_desc');
   const [resourceSkillList, setResourceSkillList] = useState<ResourceSkillType[]>([]);
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
   const { data: skillList, isLoading: loading } = useResourceSkill({
@@ -24,17 +24,16 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ appliedFilters }) =
     sortBy: orderBy,
     sortOrder: apiOrder,
     filters: appliedFilters,
+    accountNumber: accountDetails?.accountById?.r_number
   });
 
-  console.log("location", location.state);
-  
   useEffect(() => {
     setResourceSkillList(convertResourceSkill(skillList?.resourceSkill || []));
-    }, [skillList]);
+  }, [skillList]);
 
   const handleEdit = (skill: ResourceSkillType) => {
-    navigate(RESOURCESKILL + '/edit/' + 1, {
-      state: { skill },
+    navigate(RESOURCESKILL + '/edit/' + skill.resourceRID, {
+      state: { skillInfo: skill, skill: true },
     });
   };
 
@@ -53,7 +52,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ appliedFilters }) =
 
   const handleRequestSort = (
     _event: React.MouseEvent<unknown>,
-    property: keyof ResourceSkillType
+    property: keyof ResourceSkillList
   ) => {
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
@@ -61,7 +60,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ appliedFilters }) =
   };
 
   const createSortHandler =
-    (property: keyof ResourceSkillType) => (event: React.MouseEvent<unknown>) => {
+    (property: keyof ResourceSkillList) => (event: React.MouseEvent<unknown>) => {
       handleRequestSort(event, property);
     };
 
@@ -90,7 +89,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ appliedFilters }) =
               <ActionButton
                 onEdit={() => handleEdit(skill)}
                 onDelete={() => { }}
-                // onView={() => { }}
+              // onView={() => { }}
               />
             </TableCell>
           </TableRow>
@@ -107,45 +106,45 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ appliedFilters }) =
           <TableRow>
             <TableCell>
               <TableSortLabel
-                active={orderBy === 'resourceRole'}
-                direction={orderBy === 'resourceRole' ? order : 'asc'}
-                onClick={createSortHandler('resourceRole')}
+                active={orderBy === 'resource_desc'}
+                direction={orderBy === 'resource_desc' ? order : 'asc'}
+                onClick={createSortHandler('resource_desc')}
               >
                 Resource Role
               </TableSortLabel>
             </TableCell>
             <TableCell>
               <TableSortLabel
-                active={orderBy === 'startDate'}
-                direction={orderBy === 'startDate' ? order : 'asc'}
-                onClick={createSortHandler('startDate')}
+                active={orderBy === 'start_date'}
+                direction={orderBy === 'start_date' ? order : 'asc'}
+                onClick={createSortHandler('start_date')}
               >
                 Start Date
               </TableSortLabel>
             </TableCell>
             <TableCell>
               <TableSortLabel
-                active={orderBy === 'skillName'}
-                direction={orderBy === 'skillName' ? order : 'asc'}
-                onClick={createSortHandler('skillName')}
+                active={orderBy === 'skill_name'}
+                direction={orderBy === 'skill_name' ? order : 'asc'}
+                onClick={createSortHandler('skill_name')}
               >
                 Skill Name
               </TableSortLabel>
             </TableCell>
             <TableCell>
               <TableSortLabel
-                active={orderBy === 'skillLevel'}
-                direction={orderBy === 'skillLevel' ? order : 'asc'}
-                onClick={createSortHandler('skillLevel')}
+                active={orderBy === 'skill_level'}
+                direction={orderBy === 'skill_level' ? order : 'asc'}
+                onClick={createSortHandler('skill_level')}
               >
                 Skill Level
               </TableSortLabel>
             </TableCell>
             <TableCell>
               <TableSortLabel
-                active={orderBy === 'yearsOfExperience'}
-                direction={orderBy === 'yearsOfExperience' ? order : 'asc'}
-                onClick={createSortHandler('yearsOfExperience')}
+                active={orderBy === 'years_of_experience'}
+                direction={orderBy === 'years_of_experience' ? order : 'asc'}
+                onClick={createSortHandler('years_of_experience')}
               >
                 Years of Experience
               </TableSortLabel>

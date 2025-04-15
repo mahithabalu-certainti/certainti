@@ -1,4 +1,4 @@
-import { SelectOption } from '../types';
+import { SelectOption, selectOptions } from '../types';
 
 export const mockDesignationOptions: SelectOption[] = [
   { label: 'Software Engineer', value: 'software_engineer' },
@@ -34,4 +34,10 @@ export const mockCostFrequencyOptions: SelectOption[] = [
   { label: 'Monthly', value: 'monthly' },
   { label: 'Annually', value: 'annually' },
   { label: 'Project-based', value: 'project_based' },
+];
+
+export const mockSkillLevelOptions: SelectOption[] = [
+  { label: 'Beginner', value: 'beginner' },
+  { label: 'Intermediate', value: 'intermediate' },
+  { label: 'Advanced', value: 'advanced' },
 ];

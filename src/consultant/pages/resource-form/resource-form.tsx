@@ -25,6 +25,7 @@ const ResourceForm: React.FC = () => {
   const location = useLocation();
   const { accountid } = useParams();
 
+  // Need to call resource by id api for fetching resource info
   const getAccount = useFetchAccountFields(accountid as string);
   const account = getAccount.data?.data;
   const accountData = useMemo(
@@ -33,12 +34,12 @@ const ResourceForm: React.FC = () => {
       ...account?.accountById,
       ...(account?.accountById &&
         account?.accountDetails && {
-          is_parent: account?.accountById.is_parent ? 'yes' : 'no',
-          autosend_interaction: account?.accountDetails.autosend_interaction
-            ? 'yes'
-            : 'no',
-          auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
-        }),
+        is_parent: account?.accountById.is_parent ? 'yes' : 'no',
+        autosend_interaction: account?.accountDetails.autosend_interaction
+          ? 'yes'
+          : 'no',
+        auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
+      }),
     }),
     [account]
   );
@@ -64,12 +65,12 @@ const ResourceForm: React.FC = () => {
     ) {
       errorToast(
         createAccount.error?.message ||
-          allCountries.error?.message ||
-          parentAccount.error?.message ||
-          currency.error?.message ||
-          regions.error?.message ||
-          updateAccount.error?.message ||
-          'An error occurred'
+        allCountries.error?.message ||
+        parentAccount.error?.message ||
+        currency.error?.message ||
+        regions.error?.message ||
+        updateAccount.error?.message ||
+        'An error occurred'
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

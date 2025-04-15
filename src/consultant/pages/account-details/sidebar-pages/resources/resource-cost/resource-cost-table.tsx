@@ -12,12 +12,12 @@ import ActionButton from "../../../../accounts/table/action-button";
 // import { RESOURCECOST } from "../../../../routes";
 // import ActionButton from "../../accounts/table/action-button";
 
-const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
+const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters, accountDetails }) => {
   const navigate = useNavigate();
   const [page, setPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState<number>(25);
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
-  const [orderBy, setOrderBy] = useState<keyof ResourceCostList>('resource_cost_number');
+  const [orderBy, setOrderBy] = useState<keyof ResourceCostList>('resource_rid');
   const [resourceCostList, setResourceCostList] = useState<ResourceCostType[]>([]);
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
   const { data: costList, isLoading: loading } = useResourceCost({
@@ -26,6 +26,7 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters }) =>
     sortBy: orderBy,
     sortOrder: apiOrder,
     filters: appliedFilters,
+    accountNumber: accountDetails?.accountById?.r_number
   });
 
   useEffect(() => {
@@ -36,9 +37,9 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters }) =>
 
   const handleEdit = (cost: ResourceCostType) => {
     console.log("cost", cost);
-    
+
     navigate(RESOURCECOST + '/edit/' + cost.resourceCostNumber, {
-      state: { cost },
+      state: { costInfo: cost, cost: true },
     });
   };
 
@@ -81,7 +82,7 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters }) =>
       return (
         <React.Fragment key={cost.resourceCostNumber}>
           <TableRow sx={{
-            '.MuiTableCell-root':{
+            '.MuiTableCell-root': {
               fontWeight: 300,
               color: '#425A76',
             }
@@ -94,18 +95,18 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters }) =>
             </TableCell>
             <TableCell>{cost.startDate}</TableCell>
             <TableCell>{cost.endDate}</TableCell>
-            <TableCell>{cost.hourlyCompensation ? cost.hourlyCompensation :  '-'}</TableCell>
-            <TableCell>{cost.dailyCompensation ? cost.dailyCompensation: "-"}</TableCell>
-            <TableCell>{cost.biWeeklyCompensation ? cost.biWeeklyCompensation:  "-"}</TableCell>
-            <TableCell>{cost.weeklyCompensation ? cost.weeklyCompensation:  "-"}</TableCell>
-            <TableCell>{cost.monthlyCompensation ? cost.monthlyCompensation : "-"}</TableCell>
-            <TableCell>{cost.semiAnnualCompensation ? cost.semiAnnualCompensation: "-"}</TableCell>
-            <TableCell>{cost.annualCompensation ? cost.annualCompensation: "-"}</TableCell>
+            <TableCell>{cost.hourlyCost ? cost.hourlyCost : '-'}</TableCell>
+            <TableCell>{cost.dailyCost ? cost.dailyCost : "-"}</TableCell>
+            <TableCell>{cost.biWeeklyCost ? cost.biWeeklyCost : "-"}</TableCell>
+            <TableCell>{cost.weeklyCost ? cost.weeklyCost : "-"}</TableCell>
+            <TableCell>{cost.monthlyCost ? cost.monthlyCost : "-"}</TableCell>
+            <TableCell>{cost.semiAnnualCost ? cost.semiAnnualCost : "-"}</TableCell>
+            <TableCell>{cost.annualCost ? cost.annualCost : "-"}</TableCell>
             <TableCell>
               <ActionButton
                 onEdit={() => handleEdit(cost)}
                 onDelete={() => { }}
-                // onView={() => { }}
+              // onView={() => { }}
               />
             </TableCell>
           </TableRow>
@@ -116,15 +117,15 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters }) =>
 
 
   return (
-    <Paper sx={{ overflowX: 'auto', boxShadow: 'none' }}>
+    <Paper sx={{ overflowX: 'scroll', boxShadow: 'none' }}>
       <Table className='border border-[#E0E0E0]'>
         <TableHead>
           <TableRow>
             <TableCell>
               <TableSortLabel
-                active={orderBy === 'resource_cost_number'}
-                direction={orderBy === 'resource_cost_number' ? order : 'asc'}
-                onClick={createSortHandler('resource_cost_number')}
+                active={orderBy === 'resource_rid'}
+                direction={orderBy === 'resource_rid' ? order : 'asc'}
+                onClick={createSortHandler('resource_rid')}
               >
                 Resource Cost Number
               </TableSortLabel>
@@ -140,9 +141,9 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters }) =>
             </TableCell>
             <TableCell>
               <TableSortLabel
-                active={orderBy === 'start_date'}
-                direction={orderBy === 'start_date' ? order : 'asc'}
-                onClick={createSortHandler('start_date')}
+                active={orderBy === 'effective_date'}
+                direction={orderBy === 'effective_date' ? order : 'asc'}
+                onClick={createSortHandler('effective_date')}
               >
                 Start Date
               </TableSortLabel>
@@ -158,63 +159,63 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters }) =>
             </TableCell>
             <TableCell>
               <TableSortLabel
-                active={orderBy === 'hourly_compensation'}
-                direction={orderBy === 'hourly_compensation' ? order : 'asc'}
-                onClick={createSortHandler('hourly_compensation')}
+                active={orderBy === 'hourly_cost'}
+                direction={orderBy === 'hourly_cost' ? order : 'asc'}
+                onClick={createSortHandler('hourly_cost')}
               >
                 Hourly
               </TableSortLabel>
             </TableCell>
             <TableCell>
               <TableSortLabel
-                active={orderBy === 'daily_compensation'}
-                direction={orderBy === 'daily_compensation' ? order : 'asc'}
-                onClick={createSortHandler('daily_compensation')}
+                active={orderBy === 'daily_cost'}
+                direction={orderBy === 'daily_cost' ? order : 'asc'}
+                onClick={createSortHandler('daily_cost')}
               >
                 Daily
               </TableSortLabel>
             </TableCell>
             <TableCell>
               <TableSortLabel
-                active={orderBy === 'bi_weekly_compensation'}
-                direction={orderBy === 'bi_weekly_compensation' ? order : 'asc'}
-                onClick={createSortHandler('bi_weekly_compensation')}
+                active={orderBy === 'bi_weekly_cost'}
+                direction={orderBy === 'bi_weekly_cost' ? order : 'asc'}
+                onClick={createSortHandler('bi_weekly_cost')}
               >
                 Bi-Weekly
               </TableSortLabel>
             </TableCell>
             <TableCell>
               <TableSortLabel
-                active={orderBy === 'weekly_compensation'}
-                direction={orderBy === 'weekly_compensation' ? order : 'asc'}
-                onClick={createSortHandler('weekly_compensation')}
+                active={orderBy === 'weekly_cost'}
+                direction={orderBy === 'weekly_cost' ? order : 'asc'}
+                onClick={createSortHandler('weekly_cost')}
               >
                 Weekly
               </TableSortLabel>
             </TableCell>
             <TableCell>
               <TableSortLabel
-                active={orderBy === 'monthly_compensation'}
-                direction={orderBy === 'monthly_compensation' ? order : 'asc'}
-                onClick={createSortHandler('monthly_compensation')}
+                active={orderBy === 'monthly_cost'}
+                direction={orderBy === 'monthly_cost' ? order : 'asc'}
+                onClick={createSortHandler('monthly_cost')}
               >
                 Monthly
               </TableSortLabel>
             </TableCell>
             <TableCell>
               <TableSortLabel
-                active={orderBy === 'semi_annual_compensation'}
-                direction={orderBy === 'semi_annual_compensation' ? order : 'asc'}
-                onClick={createSortHandler('semi_annual_compensation')}
+                active={orderBy === 'semi_annual_cost'}
+                direction={orderBy === 'semi_annual_cost' ? order : 'asc'}
+                onClick={createSortHandler('semi_annual_cost')}
               >
                 Semin Annual
               </TableSortLabel>
             </TableCell>
             <TableCell>
               <TableSortLabel
-                active={orderBy === 'annual_compensation'}
-                direction={orderBy === 'annual_compensation' ? order : 'asc'}
-                onClick={createSortHandler('annual_compensation')}
+                active={orderBy === 'annual_cost'}
+                direction={orderBy === 'annual_cost' ? order : 'asc'}
+                onClick={createSortHandler('annual_cost')}
               >
                 Annual
               </TableSortLabel>

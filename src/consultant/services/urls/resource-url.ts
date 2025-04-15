@@ -12,7 +12,7 @@ export const ResourceListURL = ({
   limit,
   sortBy,
   sortOrder,
-  filters,
+  filters
 }: ResourceListURLParams): string => {
   const searchParams = new URLSearchParams();
 

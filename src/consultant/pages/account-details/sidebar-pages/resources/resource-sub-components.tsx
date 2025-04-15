@@ -2,15 +2,22 @@ import { Box, Tab, Tabs } from '@mui/material';
 import React, { Fragment } from 'react';
 import ResourceCostTable from './resource-cost/resource-cost-table';
 import ResourceSkillTable from './resource-skill/resource-skill-table';
+import { FilterState } from '../../../../../components/filter/filterType';
+import { AccountData } from '../../utils';
+
 
 interface SubcomponentProps {
   handleTabChange: (event: React.SyntheticEvent, newValue: string) => void;
   value: string;
+  appliedFilters: Record<string, any>
+  accountDetails: AccountData
 }
 
 const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   handleTabChange,
   value,
+  appliedFilters,
+  accountDetails
 }) => {
   // const navigate = useNavigate();
 
@@ -20,7 +27,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
 
   return (
     <Fragment>
-      <Box className='mr-2'>
+      <Box className='mr-2 max-w-[100%]'>
         <Tabs
           value={value}
           onChange={handleTabChange}
@@ -70,13 +77,13 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
         {/* You can add the content for each tab below */}
         {value === 'details' && <Box>Details Content</Box>}
         {value === 'cost' && (
-          <Box>
-            <ResourceCostTable />
+          <Box sx={{width: '100%', overflowX: 'auto'}}>
+            <ResourceCostTable appliedFilters={appliedFilters} accountDetails={accountDetails} />
           </Box>
         )}
         {value === 'skill' && (
-          <Box>
-            <ResourceSkillTable />
+          <Box sx={{width: '100%', overflowX: 'auto'}}>
+            <ResourceSkillTable appliedFilters={appliedFilters} accountDetails={accountDetails} />
           </Box>
         )}
       </Box>

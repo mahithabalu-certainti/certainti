@@ -6,32 +6,46 @@ export interface ResourceCostListParams {
   sortBy: string;
   sortOrder: 'ASC' | 'DESC';
   filters?: object;
+  accountNumber?: string;
+  fiscalYear?: number;
 }
 
 export type ResourceCostList = {
-  id: string;
-  resource_cost_number: string;
-  resource_ref_id: string;
-  currency: string;
-  start_date: string;
-  end_date: string;
-  annual_compensation: string | null;
-  semi_annual_compensation: string | null;
-  bi_weekly_compensation: string | null;
-  monthly_compensation: string | null;
-  weekly_compensation: string | null;
-  daily_compensation: string | null;
-  hourly_compensation: string | null;
-  status: 'Active' | 'Inactive';
-  created_at: string;
-  updated_at: string;
-  created_by: string;
-  updated_by: string;
+  id?: string;
+  rid?: string;
+  status?: string;
+  created_datetime?: string;
+  modified_datetime?: string;
+  eid?: string;
+  account_rid?: string;
+  resource_type?: 'Full-time';
+  resource_rid?: string;
+  resource_ref_id?: string;
+  effective_date?: string;
+  end_date?: string;
+  annual_cost?: string | null;
+  semi_annual_cost?: string | null;
+  monthly_cost?: string | null;
+  weekly_cost?: string | null;
+  bi_weekly_cost?: string | null;
+  daily_cost?: string | null;
+  hourly_cost?: string | null;
+  currency_rid?: string;
+  fiscal_year?: string;
+  currency?:string,
+  r_number?: string;
+  created_by?: string | null;
+  modified_by?: string | null;
 };
 
 export interface NewCostData {
-  costType: string;
-  cost: string;
+  annual_cost: string | null;
+  semi_annual_cost: string | null;
+  bi_weekly_cost: string | null;
+  monthly_cost: string | null;
+  weekly_cost: string | null;
+  daily_cost: string | null;
+  hourly_cost: string | null;
 }
 
 export interface ResourceCostApiResponse extends CommonApiResponse {

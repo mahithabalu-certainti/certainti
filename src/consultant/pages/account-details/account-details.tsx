@@ -75,7 +75,7 @@ export const AccountDetails = () => {
       case 'details':
         return <Details />;
       case 'resources':
-        return <Resources />;
+        return <Resources accountDetails={accountDetails} />;
       case 'attachments':
         return <Attachments />;
       case 'projects':
@@ -121,7 +121,7 @@ export const AccountDetails = () => {
       />
       <div className='flex w-full'>
         <Sidebar activeKey={activeKey} onSelect={setActiveKey} />
-        <div className='flex w-screen p-4 '>{renderContent()}</div>
+        <div className='flex w-[80%] p-4 '>{renderContent()}</div>
       </div>
     </div>
   );
