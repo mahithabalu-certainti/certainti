@@ -5,12 +5,12 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
 import React, { useEffect } from 'react';
 import { calendarIcon, searchBlackIcon } from '../../assets';
+import { FieldTypes, OnChange } from '../../common-service';
 import {
   FormType,
   FormTypeFields,
   selectOptions,
 } from '../../consultant/types';
-import { FieldTypes, OnChange } from '../../common-service';
 
 interface FormBuilderProps {
   data: FormType[];
@@ -34,6 +34,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     Record<string, FieldTypes>
   >({});
 
+  console.log('data', data);
+  console.log('values', values);
   useEffect(() => {
     setFormData(data);
     // Only set initial form data if constructFormData is empty
@@ -240,9 +242,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 0,
                       '&.Mui-disabled': {
-                      '& input': {
-                        color: 'black',
-                        WebkitTextFillColor: 'black',
+                        '& input': {
+                          color: 'black',
+                          WebkitTextFillColor: 'black',
                         },
                       },
                     },
@@ -285,7 +287,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         if (
           field.dependsRequired?.key &&
           constructFormData[field.dependsRequired.key] ===
-            field.dependsRequired?.matchedValue && !hasValue
+            field.dependsRequired?.matchedValue &&
+          !hasValue
         ) {
           hasError = true;
           return { ...field, error: field.dependsRequired.errorMessage };

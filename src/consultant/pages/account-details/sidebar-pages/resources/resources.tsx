@@ -1,21 +1,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { resourceHeaderIcon } from '../../../../../assets';
-import { mockResourcesList } from '../../../../mockdata/resource-list';
+import { RESOURCE, RESOURCE_CREATE } from '../../../../../routes';
+import { useResourceList } from '../../../../services/resource-list';
 import TabPanel from '../../components/tab';
 import ListTable from '../../components/table';
 import { getResourceColumns } from './columns';
 import ResourceSubComponents from './resource-sub-components';
 import ResourceTableHeader from './resource-table-header';
 
-const Resource = () => {
+const Resource = ({ accountData }: any) => {
   const [viewMode, setViewMode] = useState<boolean>(false);
   const [viewResourceList, setViewResourceList] = useState<boolean>(true);
   const [columns, setColumns] = useState<any>([]);
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [value, setValue] = useState('details');
   const [, setAppliedFilters] = useState<Record<string, any>>();
-
+  const [showBackArrow, setShowBackArrow] = useState<boolean>(false);
+  const [resourceData, setResourceData] = useState<any>({});
+  const navigate = useNavigate();
+  const { data: ResourceList } = useResourceList();
   const handleFilter = () => {
     setShowFilter(!showFilter);
   };
@@ -25,9 +30,9 @@ const Resource = () => {
   };
 
   const handleResourceClick = (row: any) => {
-    console.log('row', row);
+    setResourceData(row);
     setViewResourceList(!viewResourceList);
-    console.log('Resource clicked:');
+    setShowBackArrow(!showBackArrow);
   };
 
   useEffect(() => {
@@ -40,10 +45,16 @@ const Resource = () => {
     );
   }, [viewMode]);
 
+  const handleEdit = (resource: any) => {
+    navigate(RESOURCE + '/edit/' + resource.rid, {
+      state: { resource, accountData },
+    });
+  };
+
   const actionMenuItems = [
     {
       label: 'Edit',
-      onClick: (row: any) => console.log('Edit', row),
+      onClick: handleEdit,
     },
     {
       label: 'Delete',
@@ -76,12 +87,7 @@ const Resource = () => {
     {
       label: 'New',
       variant: 'outlined',
-      onClick: () => console.log('New'),
-    },
-    {
-      label: 'View',
-      variant: 'outlined',
-      onClick: () => setViewMode(true),
+      onClick: () => handleCreateResource(),
     },
   ];
 
@@ -89,6 +95,14 @@ const Resource = () => {
     setViewMode(!viewMode);
   };
 
+  const handleBackClick = () => {
+    setViewResourceList(!viewResourceList);
+    setShowBackArrow(!showBackArrow);
+  };
+
+  const handleCreateResource = () => {
+    navigate(RESOURCE_CREATE, { state: accountData });
+  };
   return (
     <div className='w-full'>
       <TabPanel
@@ -105,15 +119,18 @@ const Resource = () => {
         titleIcon={<img src={resourceHeaderIcon} alt='resource header icon' />}
         headerButtons={viewMode ? [] : headerButtons}
         toggleViewMode={toggleViewMode}
+        showBackArrow={showBackArrow}
+        onBackClick={handleBackClick}
       />
       {!viewResourceList ? (
         <ResourceSubComponents
           handleTabChange={handleTabChange}
           value={value}
+          resourceData={resourceData}
         />
       ) : (
         <ListTable
-          data={mockResourcesList.data.resources}
+          data={ResourceList?.resource as any}
           columns={columns}
           actionMenuItems={actionMenuItems}
           // title='Resource'

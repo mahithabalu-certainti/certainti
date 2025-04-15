@@ -32,6 +32,7 @@ import {
   ProtectedRoute,
   RESOURCE,
   RESOURCE_CREATE,
+  RESOURCE_EDIT,
 } from './routes';
 // imprt Resource from './consultant/pages/resource/resource';
 // import Resource from './consultant/pages/resource/resource';
@@ -71,6 +72,7 @@ export const App: React.FC<IApp> = ({ instance }) => {
             <Route path={ACCOUNT_DETAILS} element={<AccountDetails />} />
             <Route path={PROJECT_CREATE} element={<ProjectForm />} />
             <Route path={RESOURCE_CREATE} element={<ResourceForm />} />
+            <Route path={RESOURCE_EDIT} element={<ResourceForm />} />
             <Route path={RESOURCE} element={<Resource />} />
           </Route>
 

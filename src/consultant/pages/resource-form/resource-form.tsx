@@ -1,95 +1,81 @@
 import React, { useEffect, useMemo } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { accountHomeIcon, editIcon } from '../../../assets';
 import { useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
-import {
-  useFetchAccountFields,
-  useFetchCurrency,
-  useFetchParentAccounts,
-  useFetchRegion,
-} from '../../services/account';
-import {
-  useCreateAccount,
-  useUpdateAccount,
-} from '../../services/account-create';
+import { mockResourceCreatePayload } from '../../mockdata/resource-create';
+import { mockResourceUpdateRequest } from '../../mockdata/resource-update';
+import { useFetchCurrency, useFetchRegion } from '../../services/account';
+import { useCreateResource } from '../../services/resource-create';
+import { useResourceDetail } from '../../services/resource-details';
+import { useUpdateResource } from '../../services/resource-update';
 import { AccountFormData, SelectOption } from '../../types';
 import { FormData } from './form-data';
-import { transformFormData } from './utils';
 
 const ResourceForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const { successToast, errorToast } = useToast();
   const location = useLocation();
-  const { accountid } = useParams();
 
-  const getAccount = useFetchAccountFields(accountid as string);
-  const account = getAccount.data?.data;
-  const accountData = useMemo(
-    () => ({
-      ...account?.accountDetails,
-      ...account?.accountById,
-      ...(account?.accountById &&
-        account?.accountDetails && {
-          is_parent: account?.accountById.is_parent ? 'yes' : 'no',
-          autosend_interaction: account?.accountDetails.autosend_interaction
-            ? 'yes'
-            : 'no',
-          auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
-        }),
-    }),
-    [account]
+  const getResource = useResourceDetail(
+    location?.state?.data?.accountById?.rid
   );
+  const resource = getResource;
+  const resourceData = location?.state?.accountData?.data?.accountById;
+
+  // const resourceData = useMemo(
+  //   () => ({
+  //      resource,
+  //   }),
+  //   [resource]
+  // );
+  // console.log('resourceData', resourceData)
+  // console.log('resourceData', Boolean(resourceData));
 
   const allCountries = useGetAllCountries();
-  const parentAccount = useFetchParentAccounts();
   const currency = useFetchCurrency();
   const regions = useFetchRegion();
-  const createAccount = useCreateAccount();
-  const updateAccount = useUpdateAccount();
+  const createResource = useCreateResource();
+  const updateResource = useUpdateResource();
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
 
   useEffect(() => {
     // Hook Error Handling
     if (
-      createAccount.isError ||
+      createResource.isError ||
       allCountries.isError ||
-      parentAccount.isError ||
       currency.isError ||
       regions.isError ||
-      updateAccount.isError
+      updateResource.isError
     ) {
       errorToast(
-        createAccount.error?.message ||
+        createResource.error?.message ||
           allCountries.error?.message ||
-          parentAccount.error?.message ||
           currency.error?.message ||
           regions.error?.message ||
-          updateAccount.error?.message ||
+          updateResource.error?.message ||
           'An error occurred'
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    createAccount.isError,
-    createAccount.error?.message,
+    createResource.isError,
+    createResource.error?.message,
     allCountries.isError,
     allCountries.error?.message,
-    parentAccount.isError,
-    parentAccount.error?.message,
     currency.isError,
     currency.error?.message,
     regions.isError,
     regions.error?.message,
-    updateAccount.isError,
-    updateAccount.error?.message,
+    updateResource.isError,
+    updateResource.error?.message,
   ]);
 
   useEffect(() => {
-    if (createAccount.isSuccess || updateAccount.isSuccess) {
+    if (createResource.isSuccess || updateResource.isSuccess) {
       successToast(
         isEditView
           ? 'Account update successfully'
@@ -97,7 +83,7 @@ const ResourceForm: React.FC = () => {
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [createAccount.isSuccess, updateAccount.isSuccess, isEditView]);
+  }, [createResource.isSuccess, updateResource.isSuccess, isEditView]);
 
   const memoizedContry: SelectOption[] = useMemo(
     () =>
@@ -108,13 +94,13 @@ const ResourceForm: React.FC = () => {
     [allCountries.data?.data.country]
   );
 
-  const memoizedParentAccounts: SelectOption[] = useMemo(
+  const memoizedRegions: SelectOption[] = useMemo(
     () =>
-      parentAccount.data?.data.gloablAcconunt.map((account) => ({
-        label: account.account_name,
+      regions.data?.data.regions.map((account) => ({
+        label: account.region_name,
         value: account.rid,
       })) || [],
-    [parentAccount.data?.data.gloablAcconunt]
+    [regions.data?.data.regions]
   );
 
   const memoizedCurrency: SelectOption[] = useMemo(
@@ -127,11 +113,12 @@ const ResourceForm: React.FC = () => {
   );
 
   const submitData = (formValues: Partial<AccountFormData>) => {
-    const accountData = transformFormData(formValues, isEditView);
+    console.log('formValues', formValues);
+    // const resourceData = transformFormData(formValues, isEditView);
     if (isEditView) {
-      updateAccount.mutate(accountData);
+      updateResource.mutate(mockResourceUpdateRequest);
     } else {
-      createAccount.mutate(accountData);
+      createResource.mutate(mockResourceCreatePayload);
     }
   };
 
@@ -156,8 +143,11 @@ const ResourceForm: React.FC = () => {
             {isEditView && (
               <h5 className='text-xs ml-2 text-gray-500 mb-1'>Edit Resource</h5>
             )}
+            <div className=' text-xs ml-2 leading-4 text-gray-500'>
+              {'Account > ' + resourceData?.account_name}
+            </div>
             <h4 className='font-bold text-lg ml-2 leading-4'>
-              {isEditView ? accountData.account_name : 'Create Resource'}
+              {isEditView ? resourceData?.resource_fullname : 'New Resource'}
             </h4>
           </div>
         </div>
@@ -171,25 +161,24 @@ const ResourceForm: React.FC = () => {
           <TextButton
             label='Save'
             variant='filled'
-            loading={createAccount.isPending || updateAccount.isPending}
+            loading={createResource.isPending || updateResource.isPending}
             onClick={handleExternalSubmit}
           />
         </div>
       </div>
       <div className='p-10'>
         <FormBuilder
-          data={FormData(
-            memoizedContry,
-            memoizedParentAccounts,
-            memoizedCurrency
-          )}
+          data={FormData(memoizedContry, memoizedCurrency, memoizedRegions)}
           loading={
-            allCountries.isLoading ||
-            parentAccount.isLoading ||
-            currency.isLoading ||
-            regions.isLoading
+            allCountries.isLoading || currency.isLoading || regions.isLoading
           }
-          values={isEditView && accountData ? { ...accountData } : undefined}
+          // values={isEditView && resourceData ? resourceData : undefined}
+          values={
+            resource.data?.data?.resource as unknown as Record<
+              string,
+              string | number | boolean | string[] | null
+            >
+          }
           outData={submitData}
           formRef={formRef}
         />

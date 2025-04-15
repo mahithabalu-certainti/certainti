@@ -17,6 +17,7 @@ export type ResourceList = {
 
 export type ResourcesData = {
   resources: ResourceList[];
+  count: number;
 };
 
 export type ResourcesListResponse = {

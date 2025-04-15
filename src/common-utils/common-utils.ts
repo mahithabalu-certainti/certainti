@@ -137,4 +137,5 @@ export const REGEX_PATTERNS = {
   POSTAL_CODE: /^\d{5}(-\d{4})?$/,
   MAX_AI_INTRACTION: /^[3-5]$/,
   NUMBERS: /^[0-9]+(\.[0-9]{1,2})?$/,
+  NUMBERS_GREATER_THAN_ZERO: /^[1-9]\d*$/,
 };
