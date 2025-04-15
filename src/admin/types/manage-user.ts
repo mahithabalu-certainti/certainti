@@ -9,10 +9,11 @@ export type ManageUser = {
   status: string;
 };
 
-export type ManageUserColumn = {
+export type ManageUserColumn<T> = {
   id: string;
   header: string;
   sortable?: boolean;
+  render?: (row: T) => React.ReactNode;
 };
 
 export type SortOrder = 'ASC' | 'DESC';

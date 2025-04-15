@@ -4,9 +4,7 @@ import { useResourceDetail } from '../../../../../services/resource-details';
 
 const ResourceDetails: React.FC<any> = ({ resourceDetails }) => {
   const { data: resource } = useResourceDetail(resourceDetails.rid);
-  console.log('resource', resource);
   const resourceData = resource?.data?.resource;
-  console.log('resourceData', resourceData);
   // Helper function to format date strings
   const formatDate = (dateString: string) => {
     if (!dateString) return '-';

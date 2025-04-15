@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { accountHomeIcon, editIcon } from '../../../assets';
 import { CheckErrorMsg, useGetAllCountries } from '../../../common-service';
 import { checkError, checkErrorMsg } from '../../../common-utils';
@@ -19,12 +19,12 @@ const ResourceForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const { successToast, errorToast } = useToast();
   const location = useLocation();
-
-  const getResource = useResourceDetail(
-    location?.state?.data?.accountById?.rid
-  );
-  const resource = getResource;
+  const navigate = useNavigate();
+  const resource = useResourceDetail(location?.state?.data?.accountById?.rid);
+  console.log('location', location?.state);
+  // const resource = getResource;
   const resourceData = location?.state?.accountData?.data?.accountById;
+  console.log('resourceData', resourceData);
 
   // const resourceData = useMemo(
   //   () => ({
@@ -112,10 +112,12 @@ const ResourceForm: React.FC = () => {
 
   const handleExternalSubmit = () => {
     formRef.current?.requestSubmit();
+    formRef.current?.reset();
   };
 
   const goBack = () => {
-    window.history.back();
+    formRef.current?.reset();
+    navigate(-1);
   };
 
   return (
@@ -132,10 +134,12 @@ const ResourceForm: React.FC = () => {
               <h5 className='text-xs ml-2 text-gray-500 mb-1'>Edit Resource</h5>
             )}
             <div className=' text-xs ml-2 leading-4 text-gray-500'>
-              {'Account > ' + resourceData?.account_name}
+              {'Account > ' + location?.state?.resource?.resource_fullname}
             </div>
             <h4 className='font-bold text-lg ml-2 leading-4'>
-              {isEditView ? resourceData?.resource_fullname : 'New Resource'}
+              {isEditView
+                ? location?.state?.resource?.resource_fullname
+                : 'New Resource'}
             </h4>
           </div>
         </div>
@@ -160,13 +164,24 @@ const ResourceForm: React.FC = () => {
           loading={
             allCountries.isLoading || currency.isLoading || regions.isLoading
           }
-          // values={isEditView && resourceData ? resourceData : undefined}
           values={
-            resource.data?.data?.resource as unknown as Record<
+            isEditView &&
+            (resource.data?.data?.resource as unknown as Record<
               string,
               string | number | boolean | string[] | null
-            >
+            >)
+              ? (resource.data?.data?.resource as unknown as Record<
+                  string,
+                  string | number | boolean | string[] | null
+                >)
+              : undefined
           }
+          // values={
+          //   resource.data?.data?.resource as unknown as Record<
+          //     string,
+          //     string | number | boolean | string[] | null
+          //   >
+          // }
           outData={submitData}
           formRef={formRef}
         />
