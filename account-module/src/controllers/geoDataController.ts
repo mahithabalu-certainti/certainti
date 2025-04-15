@@ -152,7 +152,7 @@ async function regions(req: Request, res: Response): Promise<void> {
 async function states(req: Request, res: Response): Promise<void> {
   const methodName = "states";
   try {
-    const countryId = req.query.country_rid as string;
+    const { countryId } = req.params;
     const states = await services.geoDataServices.states(countryId);
     
     if (states.statusCode === HttpStatus.SUCCESS) {
