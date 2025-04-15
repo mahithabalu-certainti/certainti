@@ -93,7 +93,17 @@ const createResourcesSchema = Joi.object({
       "any.allowOnly": '"organization name" cannot be null or empty',
     }),
   role: Joi.string().min(4).max(100).optional().allow("").allow(null),
-  fiscal_year: Joi.number().max(4).required(),
+  fiscal_year: Joi.number()
+  .integer()
+  .min(1000)
+  .max(9999)
+  .required()
+  .messages({
+    'number.base': 'Fiscal year must be a number',
+    'number.min': 'Fiscal year must be a 4-digit number',
+    'number.max': 'Fiscal year must be a 4-digit number',
+    'any.required': 'Fiscal year is required',
+  }),
   email: Joi.string().email().max(255).optional().allow("").allow(null),
   mobile: Joi.string().max(15).optional().allow("").allow(null),
   country: Joi.string().guid({ version: ['uuidv4'] }).optional().allow('', null),
@@ -183,7 +193,17 @@ const updateResourceSchema = Joi.object({
       "any.allowOnly": '"organization name" cannot be null or empty',
     }),
   role: Joi.string().min(4).max(100).optional().allow("").allow(null),
-  fiscal_year: Joi.number().max(4).required(),
+  fiscal_year: Joi.number()
+  .integer()
+  .min(1000)
+  .max(9999)
+  .required()
+  .messages({
+    'number.base': 'Fiscal year must be a number',
+    'number.min': 'Fiscal year must be a 4-digit number',
+    'number.max': 'Fiscal year must be a 4-digit number',
+    'any.required': 'Fiscal year is required',
+  }),
   email: Joi.string().email().max(255).optional().allow("").allow(null),
   mobile: Joi.string().max(15).optional().allow("").allow(null),
   country: Joi.string().guid({ version: ['uuidv4'] }).optional().allow('', null),
@@ -257,7 +277,17 @@ const listResourceSchema = Joi.object({
   limit: Joi.string()
     .pattern(/^[0-9]+$/)
     .default("10"),
-  fiscal_year: Joi.number().max(4).required(),
+  fiscal_year: Joi.number()
+    .integer()
+    .min(1000)
+    .max(9999)
+    .optional()
+    .messages({
+      'number.base': 'Fiscal year must be a number',
+      'number.min': 'Fiscal year must be a 4-digit number',
+      'number.max': 'Fiscal year must be a 4-digit number',
+      'any.required': 'Fiscal year is required',
+    }),
   search: Joi.string().max(255).optional(),
   filters: Joi.string().default("{}"),
   sortBy: Joi.string().default("createdAt"),
@@ -267,7 +297,7 @@ const listResourceSchema = Joi.object({
 const createResourceSkillSchema = Joi.object({
   eid: Joi.string().max(255).optional().allow(null).allow(""),
   account_rid: Joi.string().max(255).required(),
-  resource_type: Joi.string().valid("Full_time", "Contract").required(),
+  resource_type: Joi.string().valid("FullTime", "Contract").required(),
   resource_rid: Joi.string().max(255).required(),
   resource_ref_id: Joi.string().max(255).required(),
   resource_desc: Joi.string().max(100).required(),
@@ -315,7 +345,7 @@ const listResourceSkillSchema = Joi.object({
   sortBy: Joi.string().default("createdAt").optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
   accountNumber: Joi.string().max(255).required(),
-  fiscalYear: Joi.number().max(4).required(),
+  fiscalYear: Joi.number().required(),
 });
 
 const updateResourceCostSchema = Joi.object({
@@ -376,14 +406,14 @@ const listResourceCostSchema = Joi.object({
   sortBy: Joi.string().default("createdAt"),
   sortOrder: Joi.string().valid("ASC", "DESC").default("DESC"),
   accountNumber: Joi.string().max(255).required(),
-  fiscalYear: Joi.number().max(4).required(),
+  fiscalYear: Joi.number().required(),
 });
 
 const resourceCostSchema = Joi.object({
   eid: Joi.string().max(255).optional().allow(null).allow(""),
   account_rid: Joi.string().pattern(uuidRegex).required(),
   accountNumber: Joi.string().max(255).required(),
-  resource_type: Joi.string().valid("Full_time", "Contract").required(),
+  resource_type: Joi.string().valid("FullTime", "Contract").required(),
   resource_rid: Joi.string().pattern(uuidRegex).required(),
   resource_ref_id: Joi.string().max(255).required(),
   effective_date: Joi.string().required(),

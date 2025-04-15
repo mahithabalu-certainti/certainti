@@ -9,6 +9,11 @@ import { ResourcesHistory } from "../models/resourceHistory";
 import { ResourcesTimeline } from "../models/resourceTimeline";
 
 class SchemaService {
+  /**
+   * Checks if the schema for a given account number exists.
+   * @param accountNumber - The account number to check.
+   * @returns A boolean indicating if the schema exists.
+   */
   async checkIfSchemaExists(accountNumber: string) {
     try {
       const schemaName = `platform_v2_${accountNumber}`;
@@ -28,6 +33,12 @@ class SchemaService {
     }
   }
 
+  /**
+   * Validates if an account number and ID pair exists.
+   * @param accountNumber - The account number.
+   * @param accountId - The account ID.
+   * @returns Account existence status and related metadata.
+   */
   async checkAccountIdAndNumber(
     accountNumber: string,
     accountId: string
@@ -57,6 +68,10 @@ class SchemaService {
     }
   }
 
+  /**
+   * Creates the resource-related tables for a given account schema.
+   * @param accountNumber - The account number to initialize tables for.
+   */
   async createResourceTable(accountNumber: string) {
     try {
       const schemaName = `platform_v2_${accountNumber}`;
@@ -82,12 +97,23 @@ class SchemaService {
     }
   }
 
+  /**
+   * Fetches paginated and filtered list of resources.
+   * @param accountNumber - Account number.
+   * @param offset - Offset for pagination.
+   * @param limit - Number of results per page.
+   * @param order - Sorting order array (e.g., [['name', 'ASC']]).
+   * @param whereClause - Filters applied on query.
+   * @param fiscalYear - Fiscal year to filter resources.
+   * @returns List of matching resources.
+   */
   async fetchResources(
     accountNumber: string,
     offset: number,
     limit: number,
     order: any[],
-    whereClause: Record<string, string> = {}
+    whereClause: Record<string, string> = {},
+    fiscalYear: number
   ) {
     try {
       const schemaName = `platform_v2_${accountNumber}`;
@@ -96,6 +122,7 @@ class SchemaService {
       const Resource = Resources.initialize(sequelize, schemaName);
       const resources = await Resource.findAll({
         where: {
+          fiscal_year: fiscalYear,
           ...whereClause,
         },
         limit,
@@ -122,6 +149,12 @@ class SchemaService {
     }
   }
 
+  /**
+   * Fetches a single resource by ID.
+   * @param accountNumber - Account number (schema).
+   * @param accountId - Resource ID (RID).
+   * @returns Resource record or null.
+   */
   async fetchResourceById(accountNumber: string, accountId: string) {
     try {
       const schemaName = `platform_v2_${accountNumber}`;
@@ -141,6 +174,14 @@ class SchemaService {
     }
   }
 
+  /**
+   * Inserts a new resource record into the resource table.
+   * @param resourceData - Data for the new resource.
+   * @param startDate - Moment object of start date.
+   * @param endDate - Moment object of end date.
+   * @param accountNumber - Account number (schema).
+   * @returns Created resource object.
+   */
   async insertResourcesTable(
     resourceData: ICreateResource,
     startDate: Moment,
@@ -229,6 +270,15 @@ class SchemaService {
     }
   }
 
+  /**
+   * Inserts a record into the resource fiscal table.
+   * @param sequelize - Sequelize instance.
+   * @param schemaName - Schema name.
+   * @param resourceData - Resource data object.
+   * @param resourceId - Resource ID.
+   * @param startDate - Start date (Moment).
+   * @param endDate - End date (Moment).
+   */
   async insertResourceFiscalTable(
     sequelize: Sequelize,
     schemaName: string,
@@ -263,6 +313,12 @@ class SchemaService {
     }
   }
 
+  /**
+   * Checks whether a resource exists by ID.
+   * @param resourceId - Resource ID (RID).
+   * @param accountNumber - Account number (schema).
+   * @returns True if resource exists, false otherwise.
+   */ 
   async checkIfResourceExists(
     resourceId: string,
     accountNumber: string
@@ -287,6 +343,13 @@ class SchemaService {
     }
   }
 
+  /**
+   * Updates an existing resource record.
+   * @param resourceData - Updated resource data.
+   * @param accountNumber - Account number (schema).
+   * @param accountId - Account ID.
+   * @returns Update result.
+   */
   async updateResource(
     resourceData: IUpdateResource,
     accountNumber: string,
@@ -381,6 +444,13 @@ class SchemaService {
     }
   }
 
+   /**
+   * Updates the fiscal data of a resource.
+   * @param resourceData - Updated resource data.
+   * @param startDate - Start date (Moment).
+   * @param endDate - End date (Moment).
+   * @param accountNumber - Account number (schema).
+   */
   async updateResourceFiscal(
     resourceData: IUpdateResource,
     startDate: Moment,
@@ -419,6 +489,11 @@ class SchemaService {
     }
   }
 
+   /**
+   * Fetches the parent account number for a given parent account ID.
+   * @param parentAccountId - Parent account RID.
+   * @returns Parent account number.
+   */
   async fetchParentAccount(parentAccountId: string): Promise<string> {
     try {
       const sequelize = await initMainDbSequelize();
@@ -439,6 +514,11 @@ class SchemaService {
     }
   }
 
+   /**
+   * Retrieves account metadata by account number.
+   * @param accountNumber - Account number.
+   * @returns Object with accountNumber and accountId.
+   */
   async fetchAccountByNumber(accountNumber: string) {
     try {
       const sequelize = await initMainDbSequelize();
@@ -473,6 +553,13 @@ class SchemaService {
     }
   }
 
+  /**
+   * Logs history of changes made to a resource.
+   * @param accountNumber - Account number (schema).
+   * @param resourceId - Resource ID (RID).
+   * @param newResourceData - Updated data.
+   * @param existingResourceData - Existing resource data.
+   */
   async updateResourceHistory(
     accountNumber: string,
     resourceId: string,
@@ -539,6 +626,12 @@ class SchemaService {
     }
   }
 
+  /**
+   * Fetches detailed resource data by ID and enriches with country, currency, and region names.
+   * @param accountNumber - Account number (schema).
+   * @param resourceId - Resource RID.
+   * @returns Enriched resource object.
+   */
   async resourceDetails(accountNumber: string, resourceId: string) {
     try {
       const schemaName = `platform_v2_${accountNumber}`;
@@ -591,6 +684,14 @@ class SchemaService {
     }
   }
 
+  /**
+   * Adds an event to the resource timeline (e.g., create/update).
+   * @param accountNumber - Account number.
+   * @param resourceData - Resource data object.
+   * @param resourceId - Resource RID.
+   * @param eventName - Event name ('create', 'update', etc).
+   * @param accountId - Account RID.
+   */
   async addTimeline(
     accountNumber: string,
     resourceData: any,

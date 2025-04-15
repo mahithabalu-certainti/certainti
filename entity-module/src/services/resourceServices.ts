@@ -1,35 +1,23 @@
 import { HttpStatus } from "../utils/constants";
 import { ICreateResource, IUpdateResource } from "../utils/types";
-import { models } from "../models/index";
 import SchemaService from "./schemaService";
 import moment from "moment";
 import { Op, Sequelize } from "sequelize";
 
-const { Resources } = models;
-
 export class ResourceService {
-  private resourceCostRepository: typeof Resources | null;
   private schemaService: SchemaService;
 
   constructor() {
-    this.resourceCostRepository = null;
     this.schemaService = new SchemaService();
   }
 
   /**
-   * Retrieves the Resource model instance.
-   * If the repository has not been initialized, it creates a new instance
-   * using the database configuration.
+   * Creates a new resource entry in the database for a given account.
+   * Ensures the schema and account validity before insertion.
    *
-   * @returns {typeof Resources} - The model for Resource cost entity.
+   * @param {ICreateResource} resourceData - The data required to create a resource.
+   * @returns {Promise<object>} - A response object with status, message, and created resource.
    */
-  private getResourceCostRepository(): typeof Resources {
-    if (!this.resourceCostRepository) {
-      this.resourceCostRepository = Resources;
-    }
-    return this.resourceCostRepository;
-  }
-
   async createResource(resourceData: ICreateResource): Promise<{
     statusCode: number;
     message: string;
@@ -93,9 +81,22 @@ export class ResourceService {
     }
   }
 
+  /**
+   * Fetches a paginated list of resources for a given account with optional filters, search, and sorting.
+   *
+   * @param {string} accountNumber - The account number to fetch resources from.
+   * @param {number} fiscal_year - The fiscal year (currently unused).
+   * @param {number} [page=1] - The page number for pagination.
+   * @param {number} [limit=10] - Number of items per page.
+   * @param {string} search - Global search term.
+   * @param {Record<string, string>} filters - Filter object mapping fields to values.
+   * @param {string} [sortBy="created_datetime"] - Field to sort by.
+   * @param {string} [sortOrder="ASC"] - Sort order, either ASC or DESC.
+   * @returns {Promise<object>} - Response with resource list and count.
+   */
   async resourcesList(
     accountNumber: string,
-    fiscal_year: number,
+    fiscalYear: number = moment().year(),
     page: number = 1,
     limit: number = 10,
     search: string,
@@ -136,7 +137,8 @@ export class ResourceService {
         offset,
         limit,
         [[finalSortBy, finalSortOrder]],
-        whereClause
+        whereClause,
+        fiscalYear
       );
 
       return {
@@ -152,6 +154,13 @@ export class ResourceService {
     }
   }
 
+  /**
+   * Updates an existing resource's data for a given account.
+   * Validates that the resource and schema exist.
+   *
+   * @param {IUpdateResource} resourceData - Updated data for the resource.
+   * @returns {Promise<object>} - Response containing the updated resource data.
+   */
   async updateResource(resourceData: IUpdateResource): Promise<{
     statusCode: number;
     message: string;
@@ -203,6 +212,13 @@ export class ResourceService {
     }
   }
 
+  /**
+   * Retrieves detailed information about a resource by its ID for a given account.
+   *
+   * @param {string} accountRNumber - Account number.
+   * @param {string} resourceId - ID of the resource.
+   * @returns {Promise<object>} - Response containing the resource details.
+   */
   async resourceById(
     accountRNumber: string,
     resourceId: string
@@ -255,6 +271,14 @@ export class ResourceService {
     }
   }
 
+  /**
+   * Validates and returns sorting parameters based on user input.
+   * Defaults to "created_datetime" if the field is invalid.
+   *
+   * @param {string} sortBy - Field to sort by.
+   * @param {string} sortOrder - Sort direction (ASC or DESC).
+   * @returns {[string, string]} - Tuple of validated sort field and order.
+   */
   getSortParameters(sortBy: string, sortOrder: string): [string, string] {
     const validSortColumns = [
       "r_number",
@@ -271,6 +295,13 @@ export class ResourceService {
     return [sortBy, sortOrder];
   }
 
+  /**
+   * Builds a Sequelize `where` clause from search and filter parameters.
+   *
+   * @param {Record<string, any>} filters - Key-value filters.
+   * @param {string} search - Global search string.
+   * @returns {object} - Sequelize-compatible `where` clause.
+   */
   buildWhereClause(
     filters: Record<string, any>,
     search: string
@@ -288,6 +319,13 @@ export class ResourceService {
     return { whereClause };
   }
 
+  /**
+   * Builds a case-insensitive OR condition across searchable fields for global search.
+   *
+   * @param {string} search - The search term.
+   * @param {Record<string, any>} whereClause - The existing where clause.
+   * @returns {Record<string, any>} - Modified where clause including search conditions.
+   */
   private buildSearchCondition(
     search: string,
     whereClause: Record<string, any>
@@ -304,11 +342,20 @@ export class ResourceService {
       : searchCondition;
   }
 
+  /**
+   * Applies filters to a Sequelize where clause with special handling for ENUM/UUID fields.
+   * Automatically casts fields like enums or UUIDs to TEXT when needed.
+   *
+   * @param {Record<string, any>} filters - Filter input from the client.
+   * @param {Record<string, any>} whereClause - Existing Sequelize where clause.
+   * @returns {Record<string, any>} - Final where clause with applied filters.
+   */
+
   private applyFilters(
     filters: Record<string, any>,
     whereClause: Record<string, any>
   ): Record<string, any> {
-    const castToTextFields = ["resource_type", "resource_status", "rid"]; 
+    const castToTextFields = ["resource_type", "resource_status", "rid"];
 
     const filterFields = [
       { clientField: "rid", dbField: "rid" },
@@ -317,6 +364,9 @@ export class ResourceService {
       { clientField: "resource_fullname", dbField: "resource_fullname" },
       { clientField: "resource_type", dbField: "resource_type" },
       { clientField: "resource_status", dbField: "resource_status" },
+      { clientField: "resource_email", dbField: "resource_email" },
+      { clientField: "resource_mobile", dbField: "resource_mobile" },
+      { clientField: "resource_role", dbField: "resource_role" },
     ];
 
     filterFields.forEach(({ clientField, dbField }) => {
@@ -337,6 +387,14 @@ export class ResourceService {
     return whereClause;
   }
 
+  /**
+   * Translates a single filter into a Sequelize condition.
+   * Supports `equals`, `contains`, and direct value matching.
+   *
+   * @param {any} fieldFilter - The filter object for a specific field.
+   * @param {string} dbField - The corresponding database field name.
+   * @returns {any} - Sequelize-compatible condition.
+   */
   private getFieldFilter(fieldFilter: any, dbField: string): any {
     if (fieldFilter.equals) {
       return { [Op.iLike]: fieldFilter.equals };
@@ -349,6 +407,12 @@ export class ResourceService {
     }
   }
 
+  /**
+   * Formats an error response to be returned from service methods.
+   *
+   * @param {Error} err - The caught error.
+   * @returns {object} - Standardized error response object.
+   */
   private throwServiceError(err: Error): {
     statusCode: number;
     message: string;

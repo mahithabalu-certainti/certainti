@@ -26,6 +26,7 @@ interface ResourceFiscalAttributes {
   weekly_cost?: number;
   daily_cost?: number;
   hourly_cost?: number;
+  bi_weekly_cost?: number;
   total_cost_for_year_project?: number;
   total_cost_for_year_project_resource_level?: number;
   total_cost_for_year_project_task_level?: number;
@@ -72,6 +73,7 @@ export class ResourceFiscal
   public weekly_cost?: number;
   public daily_cost?: number;
   public hourly_cost?: number;
+  public bi_weekly_cost?: number;
   public total_cost_for_year_project?: number;
   public total_cost_for_year_project_resource_level?: number;
   public total_cost_for_year_project_task_level?: number;
@@ -182,6 +184,17 @@ export class ResourceFiscal
           validate: {
             isPositive(value: number) {
               if (value !== null && value < 0) {
+                throw new Error("Compensation must be a positive number");
+              }
+            },
+          },
+        },
+        bi_weekly_cost: {
+          type: DataTypes.DECIMAL(12, 2),
+          allowNull: true,
+          validate: {
+            isPositive(value: number) {
+              if (value!== null && value < 0) {
                 throw new Error("Compensation must be a positive number");
               }
             },
