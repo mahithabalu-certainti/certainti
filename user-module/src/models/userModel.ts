@@ -17,7 +17,7 @@ interface UserAttributes {
   city?: string;
   state?: string;
   zip_code?: string;
-  country?: number;
+  country?: string;
   role_rid?: string;
   profile_rid?: string;
   last_login_datetime?: Date;
@@ -52,7 +52,7 @@ export class User
   public city?: string;
   public state?: string;
   public zip_code?: string;
-  public country?: number;
+  public country?: string;
   public role_rid?: string;
   public profile_rid?: string;
   public last_login_datetime?: Date;

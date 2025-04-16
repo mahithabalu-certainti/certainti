@@ -1,7 +1,8 @@
+import { initSequelize } from "../config/dataSource";
 import { models } from "../models/index";
 import { constants } from "../utils/constant";
 import { IUpdateUserData, IUserData } from "../utils/types";
-import { Op, Sequelize } from "sequelize";
+import { Op } from "sequelize";
 
 const { User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams } =
   models;
@@ -60,7 +61,7 @@ class UserService {
         middle_name,
         created_by,
         organization,
-        phone
+        phone,
       } = userData;
 
       const repository = this.getAccountRepository();
@@ -168,7 +169,10 @@ class UserService {
           middle_name,
           phone,
           full_name:
-          first_name + (middle_name ? " " + middle_name : "") + " " + last_name,
+            first_name +
+            (middle_name ? " " + middle_name : "") +
+            " " +
+            last_name,
           modified_by: updated_by,
           modified_datetime: new Date(),
         },
@@ -308,10 +312,11 @@ class UserService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { users: any };
+    data?: { users: any; count: number };
   }> {
     try {
       let users = null;
+      let count: number = 0;
       const offset = (page - 1) * limit;
 
       const whereClause = this.buildWhereClause(filters, search);
@@ -322,13 +327,15 @@ class UserService {
       );
 
       if (organization == constants.PLATFORM_TWO) {
-        users = await this.fetchUser(
+        const { rows, count:totalCount } = await this.fetchUser(
           whereClause,
           limit,
           offset,
           finalSortBy,
           finalSortOrder
         );
+        users = rows;
+        count = totalCount;
       } else {
         users = await this.fetchUserDetails(
           whereClause,
@@ -343,6 +350,7 @@ class UserService {
         message: constants.SUCCESS_MESSAGE,
         data: {
           users,
+          count
         },
       };
     } catch (err) {
@@ -375,7 +383,7 @@ class UserService {
     try {
       let users = null;
       if (organization === constants.PLATFORM_TWO) {
-        users = await User.findAll({
+        users = await User.findOne({
           where: {
             rid: userId,
           },
@@ -394,6 +402,14 @@ class UserService {
             },
           ],
         });
+        if (users) {
+          const { country, state } = await this.getGeoData(
+            users.country || "",
+            users.state || ""
+          );
+          (users as any).dataValues.country_name = country;
+          (users as any).dataValues.state_name = state;
+        }
       } else {
         users = UserDetails.findAll({
           where: {
@@ -472,11 +488,11 @@ class UserService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { rid: string; user_role: string } | null;
+    data?: { rid: string; user_role: string; user_id: string } | null;
   }> {
     try {
       const roles = await User.findOne({
-        attributes: ["role_rid"],
+        attributes: ["role_rid", "rid"],
         where: { azure_id: azureId },
         include: [
           {
@@ -502,6 +518,7 @@ class UserService {
         data: {
           rid: roles.role_rid || "",
           user_role: roles.business_teams?.business_teams,
+          user_id: roles.rid,
         },
       };
     } catch (err) {
@@ -576,7 +593,7 @@ class UserService {
       ]);
     }
 
-    return await User.findAll({
+    const { count, rows } = await User.findAndCountAll({
       where: whereClause,
       attributes: ["rid", "email", "status", "full_name", "first_name"],
       limit,
@@ -597,6 +614,10 @@ class UserService {
         },
       ],
     });
+    return {
+      rows,
+      count,
+    };
   }
 
   /**
@@ -710,7 +731,19 @@ class UserService {
 
     if (filters.profile && filters.profile.startsWith) {
       whereClause["$profile.profile_name$"] = {
-        [Op.iLike]: `%${filters.profile.startsWith}%`,
+        [Op.iLike]: `${filters.profile.startsWith}%`,
+      };
+    }
+
+    if (filters.profile && filters.profile.endWith) {
+      whereClause["$profile.profile_name$"] = {
+        [Op.iLike]: `%${filters.profile.endWith}`,
+      };
+    }
+
+    if (filters.profile && filters.profile.contains) {
+      whereClause["$profile.profile_name$"] = {
+        [Op.iLike]: `%${filters.profile.contains}%`,
       };
     }
 
@@ -738,19 +771,53 @@ class UserService {
       "created_datetime",
       "modified_datetime",
       "full_name",
-      "profile"
+      "profile",
     ];
 
     if (!validSortColumns.includes(sortBy)) {
       sortBy = "created_datetime";
-    };
+    }
 
-    if(sortBy === "profile"){
+    if (sortBy === "profile") {
       sortBy = "$profile.profile_name$";
     }
 
     sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
     return [sortBy, sortOrder];
+  }
+
+  async getGeoData(countryId: string, stateId: string) {
+    const mainDbSequelize = await initSequelize();
+
+    let country: string | null = null;
+    let state: string | null = null;
+
+    if (countryId) {
+      const [countryResult]: any[] = await mainDbSequelize.query(
+        `SELECT country_name FROM country WHERE rid = :rid`,
+        {
+          replacements: { rid: countryId },
+          type: "SELECT",
+        }
+      );
+      country = countryResult?.country_name || null;
+    }
+
+    if (stateId) {
+      const [stateResult]: any[] = await mainDbSequelize.query(
+        `SELECT state_name FROM state WHERE rid = :rid`,
+        {
+          replacements: { rid: stateId },
+          type: "SELECT",
+        }
+      );
+      state = stateResult?.state_name || null;
+    }
+
+    return {
+      country,
+      state,
+    };
   }
 
   private throwServiceError(err: Error): {
