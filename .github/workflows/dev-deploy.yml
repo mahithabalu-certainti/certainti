@@ -7,6 +7,7 @@ on:
     paths:
       - user-module/**
       - account-module/**
+      - entity-module/**
 
 env:
   ENVIRONMENT: dev
@@ -19,6 +20,7 @@ jobs:
     outputs:
       user-module: ${{ steps.filter.outputs.user-module }}
       account-module: ${{ steps.filter.outputs.account-module }}
+      entity-module: ${{ steps.filter.outputs.entity-module }}
     # For pull requests it's not necessary to checkout the code
     steps:
       - uses: actions/checkout@v3
@@ -31,6 +33,8 @@ jobs:
               - 'user-module/**'
             account-module:
               - 'account-module/**'
+            entity-module:
+              - 'entity-module/**'
 
   # JOB to build backend user-module code
   user-module:
