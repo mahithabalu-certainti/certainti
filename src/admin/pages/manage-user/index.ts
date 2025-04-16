@@ -1,2 +1,2 @@
-export { ManageUser } from './manage-user';
 export * from './create-user';
+export * from './user-list';

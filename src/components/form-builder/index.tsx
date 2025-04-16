@@ -6,10 +6,11 @@ import dayjs from 'dayjs';
 import { CountryCode, parsePhoneNumberFromString } from 'libphonenumber-js';
 import React, { useEffect } from 'react';
 import PhoneInput, { CountryData } from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 import { calendarIcon, closeIcon, searchBlackIcon } from '../../assets';
+
 import { FieldTypes, OnChange } from '../../common-service';
 import { ALLOWED_COUNTRIES } from '../../common-utils';
-import 'react-phone-input-2/lib/style.css';
 import {
   FormType,
   FormTypeFields,

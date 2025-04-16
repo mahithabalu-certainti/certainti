@@ -1,16 +1,20 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Box, Tab, Tabs } from '@mui/material';
 import React, { Fragment } from 'react';
 import ResourceCostTable from './resource-cost/resource-cost-table';
+import ResourceDetails from './resource-details/resource-details';
 import ResourceSkillTable from './resource-skill/resource-skill-table';
 
 interface SubcomponentProps {
   handleTabChange: (event: React.SyntheticEvent, newValue: string) => void;
   value: string;
+  resourceData: any;
 }
 
 const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   handleTabChange,
   value,
+  resourceData,
 }) => {
   // const navigate = useNavigate();
 
@@ -68,7 +72,11 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
         </Tabs>
 
         {/* You can add the content for each tab below */}
-        {value === 'details' && <Box>Details Content</Box>}
+        {value === 'details' && (
+          <Box>
+            <ResourceDetails resourceDetails={resourceData} />
+          </Box>
+        )}
         {value === 'cost' && (
           <Box>
             <ResourceCostTable />

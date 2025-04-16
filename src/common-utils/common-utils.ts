@@ -159,7 +159,8 @@ export const REGEX_PATTERNS = {
   EMAIL:
   /^(?=.{1,254}$)(?!.*[._%+]{2})[a-zA-Z0-9](?:[a-zA-Z0-9._-]{0,62}[a-zA-Z0-9])?@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
   PHONE: /^([0-9]{10})$/,
-  WEBSITE: /^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]{1,50}(\.[a-zA-Z]{2,})+(\/[^\s]*)?$/i,
+  WEBSITE:
+    /^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]{1,50}(\.[a-zA-Z]{2,})+(\/[^\s]*)?$/i,
   DATA_RESIDENCY: /^[A-Za-z0-9\s-]+$/,
   NUMBER_OPTIONAL_DECIMAL: /^([0-9]{1,10}(\.[0-9]{1,2})?)?$/,
   DESCRIPTION: /^.{0,500}$/,
@@ -171,6 +172,7 @@ export const REGEX_PATTERNS = {
   NAME_REGEX: /^[A-Za-z\s'-]+$/,
   STREET_REGEX: /^(?![\W_]+$)(?!\s*$)[\w\W]{3,200}$/,
   CITY_REGEX: /^[A-Za-z\s]{3,100}$/,
+  NUMBERS_GREATER_THAN_ZERO: /^[1-9]\d*$/,
   MANAGER_REGEX: /^(?=.{7,50}$)[A-Za-z0-9!"#$%&'()*+,-./:;<=>?@[\\\]^_`{|}~]+$/
 };
 

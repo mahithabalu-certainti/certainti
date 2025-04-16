@@ -5,6 +5,7 @@ export const mockResourcesList: ResourcesListResponse = {
   statusCodeValue: 'Success',
   statusMessage: '',
   data: {
+    count: 4,
     resources: [
       {
         rid: '4e15cef8-3efb-4e98-8ec7-e16f27ae8d63',

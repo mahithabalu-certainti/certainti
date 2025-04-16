@@ -6,13 +6,14 @@ export type ManageUser = {
   fullName: string;
   email: string;
   profile: string;
-  status: string;
+  status: 'Active' | 'Inactive';
 };
 
-export type ManageUserColumn = {
+export type ManageUserColumn<T> = {
   id: string;
   header: string;
   sortable?: boolean;
+  render?: (row: T) => React.ReactNode;
 };
 
 export type SortOrder = 'ASC' | 'DESC';
@@ -33,6 +34,7 @@ export interface UserListParams {
   sortBy?: string;
   sortOrder?: SortOrder;
   filters?: Filters;
+  searchTerm?: string;
 }
 
 // User Profile Type

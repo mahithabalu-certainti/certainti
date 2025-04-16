@@ -19,7 +19,9 @@ export const fetchManageUserList = async (params: UserListParams = {}) => {
     limit: params.limit || 10,
     sortBy: params.sortBy || 'createdAt',
     sortOrder: params.sortOrder || 'ASC',
-    ...params.filters,
+    filters: params.filters || {},
+    ...(params.filters && { filters: params.filters }),
+    ...(params.searchTerm && { search: params.searchTerm }),
   };
 
   const url = getUserListUrl(queryParams);

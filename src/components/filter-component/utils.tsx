@@ -1,7 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // filterUtils.ts
-import { FieldConfig, FilterState } from '../../../types/account-filter';
+// import { FieldConfig, FilterState } from '../../../types/account-filter';
 
+import {
+  FieldConfig,
+  FilterState,
+} from '../../consultant/types/account-filter';
 export const fields: FieldConfig[] = [
   { name: 'Parent Account', type: 'text' },
   { name: 'Account Number', type: 'number' },

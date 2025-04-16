@@ -6,18 +6,14 @@ import {
   createTextField,
   REGEX_PATTERNS,
 } from '../../../common-utils';
-import {
-  mockCostFrequencyOptions,
-  mockDesignationOptions,
-  mockResourceStatusOptions,
-  mockStatusOptions,
-} from '../../mockdata/resource-form';
 import { FormType, SelectOption } from '../../types';
+import { frequencyOption, resourceTypeOption, statusOption } from './utils';
 
 export const FormData = (
   country: SelectOption[],
   currency: SelectOption[],
-  region: SelectOption[]
+  state: SelectOption[],
+  stateLoading?: boolean
 ): FormType[] => {
   return useMemo(
     () => [
@@ -31,48 +27,42 @@ export const FormData = (
             regexErrorMessage: 'Alphanumeric characters only',
             placeholder: 'Enter Resource Ref Id',
           }),
-          createTextField('resource_full_name', 'Resource Full Name', {
-            required: true,
-            regex: REGEX_PATTERNS.LETTERS_SPACES,
-            regexErrorMessage: 'Letters and spaces only',
-            placeholder: 'Enter Full Name',
-          }),
-          createTextField('resource_type', 'Resource Type', {
+          createTextField('resource_fullname', 'Resource Full Name', {
             required: true,
             regex: REGEX_PATTERNS.LETTERS_3_TO_25,
             regexErrorMessage: '3-25 letters only',
-            placeholder: 'Enter Resource Type',
+            placeholder: 'Enter Full Name',
           }),
-          createTextField('resource_org_name', 'Resource Org Name', {
+          createSelectField('resource_type', 'Resource Type', {
+            options: resourceTypeOption,
+            placeholder: '-Select-',
             required: true,
-            regex: REGEX_PATTERNS.ALPHANUMERIC,
-            regexErrorMessage: 'Alphanumeric characters only',
+          }),
+          createTextField('resource_orgname', 'Resource Org Name', {
+            required: true,
+            regex: REGEX_PATTERNS.LETTERS_3_TO_25,
+            regexErrorMessage: '3-25 letters only',
             placeholder: 'Enter Organization Name',
           }),
-          createTextField('resource_first_name', 'Resource First Name', {
-            required: true,
+          createTextField('resource_firstname', 'Resource First Name', {
+            required: false,
             regex: REGEX_PATTERNS.LETTERS_3_TO_25,
             regexErrorMessage: '3-25 letters only',
             placeholder: 'Enter First Name',
           }),
-          createSelectField('resource_status', 'Resource Status', {
-            options: mockResourceStatusOptions,
-            placeholder: '-Select-',
-            required: true,
-          }),
-          createTextField('resource_middle_name', 'Resource Middle Name', {
+          createTextField('resource_middlename', 'Resource Middle Name', {
             required: false,
             regex: REGEX_PATTERNS.LETTERS_3_TO_25,
             regexErrorMessage: '3-25 letters only',
             placeholder: 'Enter Middle Name',
           }),
-          createSelectField('status', 'Status', {
-            options: mockStatusOptions,
+          createSelectField('resource_status', 'Status', {
+            options: statusOption,
             placeholder: '-Select-',
             required: true,
           }),
-          createTextField('resource_last_name', 'Resource Last Name', {
-            required: true,
+          createTextField('resource_lastname', 'Resource Last Name', {
+            required: false,
             regex: REGEX_PATTERNS.LETTERS_3_TO_25,
             regexErrorMessage: '3-25 letters only',
             placeholder: 'Enter Last Name',
@@ -105,11 +95,13 @@ export const FormData = (
             options: country,
             placeholder: '-Select-',
             required: true,
+            onChange: true,
           }),
           createSelectField('region', 'Region', {
-            options: region,
+            options: state,
             placeholder: '-Select-',
             required: true,
+            isLoading: stateLoading,
           }),
           createSelectField('currency', 'Currency', {
             options: currency,
@@ -123,7 +115,7 @@ export const FormData = (
         fillType: 'half',
         fields: [
           createSelectField('cost_frequency', 'Cost Frequency', {
-            options: mockCostFrequencyOptions,
+            options: frequencyOption,
             placeholder: '-Select-',
             required: true,
           }),
@@ -143,19 +135,20 @@ export const FormData = (
             'resource_effective_from',
             'Resource Effective From',
             {
-              required: true,
+              required: false,
             }
           ),
-          createDateField('resource_end_date', 'Resource End Date', {
+          createDateField('resource_enddate', 'Resource End Date', {
             required: false,
           }),
-          createSelectField('designation', 'Designation', {
-            options: mockDesignationOptions,
-            placeholder: '-Select-',
-            required: true,
+          createTextField('designation', 'Designation', {
+            required: false,
+            regex: REGEX_PATTERNS.LETTERS_SPACES,
+            regexErrorMessage: 'Letters and spaces only',
+            placeholder: 'Enter Designation',
           }),
           createTextField('manager_name', 'Manager Name', {
-            required: true,
+            required: false,
             regex: REGEX_PATTERNS.LETTERS_SPACES,
             regexErrorMessage: 'Letters and spaces only',
             placeholder: 'Enter Manager Name',
@@ -167,22 +160,22 @@ export const FormData = (
         fillType: 'half',
         fields: [
           createTextField(
-            'total_years_of_experience',
+            'total_years_oexperience',
             'Total Years of Experience',
             {
-              required: true,
-              regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
-              regexErrorMessage: 'Numbers only',
+              required: false,
+              regex: REGEX_PATTERNS.NUMBERS_GREATER_THAN_ZERO,
+              regexErrorMessage: 'Numbers Greater than Zero',
               placeholder: 'Enter Years',
             }
           ),
           createTextField(
-            'total_years_in_the_organisation',
+            'total_years_in_org',
             'Total Years in the Organisation',
             {
-              required: true,
-              regex: REGEX_PATTERNS.NUMBERS,
-              regexErrorMessage: 'Numbers only',
+              required: false,
+              regex: REGEX_PATTERNS.NUMBERS_GREATER_THAN_ZERO,
+              regexErrorMessage: 'Numbers Greater than Zero',
               placeholder: 'Enter Years',
             }
           ),
@@ -192,13 +185,13 @@ export const FormData = (
         sectionName: 'Additional Information',
         fillType: 'full',
         fields: [
-          createTextAreaField('description', 'Description', {
+          createTextAreaField('resource_desc', 'Description', {
             required: false,
             placeholder: 'Enter any additional information...',
           }),
         ],
       },
     ],
-    [country, currency, region]
+    [country, currency, state]
   );
 };
