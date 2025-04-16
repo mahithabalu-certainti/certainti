@@ -1,5 +1,4 @@
 // FilterControls.tsx
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Box,
   Checkbox,
@@ -16,7 +15,7 @@ import { FilterState } from '../../../types/account-filter';
 export const TextFilterControl: React.FC<{
   fieldName: string;
   state: FilterState;
-  onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
+  onOptionChange: (fieldName: string, event: SelectChangeEvent<string>) => void;
   onValueChange: (
     fieldName: string,
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -52,7 +51,7 @@ export const TextFilterControl: React.FC<{
 export const NumberFilterControl: React.FC<{
   fieldName: string;
   state: FilterState;
-  onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
+  onOptionChange: (fieldName: string, event: SelectChangeEvent<string>) => void;
   onValueChange: (
     fieldName: string,
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -90,7 +89,7 @@ export const StatusFilterControl: React.FC<{
   fieldName: string;
   state: FilterState;
   options: string[];
-  onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
+  onOptionChange: (fieldName: string, event: SelectChangeEvent<string>) => void;
 }> = ({ fieldName, state, options, onOptionChange }) => (
   <Box sx={{ pl: 3, mt: 1 }}>
     <FormControl fullWidth size='small'>
