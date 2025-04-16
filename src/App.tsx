@@ -1,5 +1,6 @@
 import { MsalProvider } from '@azure/msal-react';
 import React from 'react';
+import { useSelector } from 'react-redux';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { CreateUser, ManageUserDetails, UserList } from './admin/pages';
 import { AppLayout, Toast } from './components';
@@ -16,6 +17,7 @@ import {
 } from './consultant/pages';
 import Resource from './consultant/pages/account-details/sidebar-pages/resources/resources';
 import { IApp } from './consultant/types';
+import { useToast } from './hooks';
 import { useAuthHook } from './hooks/use-auth';
 import {
   ACCOUNT,
@@ -36,10 +38,6 @@ import {
   RESOURCE_CREATE,
   RESOURCE_EDIT,
 } from './routes';
-// imprt Resource from './consultant/pages/resource/resource';
-// import Resource from './consultant/pages/resource/resource';
-import { useSelector } from 'react-redux';
-import { useToast } from './hooks';
 import { RootState } from './store/store';
 
 /**

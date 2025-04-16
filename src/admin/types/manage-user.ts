@@ -6,7 +6,7 @@ export type ManageUser = {
   fullName: string;
   email: string;
   profile: string;
-  status: string;
+  status: 'Active' | 'Inactive';
 };
 
 export type ManageUserColumn<T> = {

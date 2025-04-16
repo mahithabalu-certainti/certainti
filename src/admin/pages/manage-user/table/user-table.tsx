@@ -31,14 +31,21 @@ export const UserTable: React.FC<Record<string, any>> = (appliedFilters) => {
   const convertUserListData = (data: User[]): ManageUser[] => {
     if (!data) return [];
 
-    return data.map((item) => ({
-      id: item.rid,
-      username: item.first_name,
-      fullName: item.full_name,
-      email: item.email,
-      profile: item.profile.profile_name,
-      status: item.status?.charAt(0).toUpperCase() + item.status.slice(1),
-    }));
+    return data.map((item) => {
+      // Convert status to match the expected type
+      const originalStatus = item.status?.toLowerCase();
+      const convertedStatus =
+        originalStatus === 'active' ? 'Active' : 'Inactive';
+
+      return {
+        id: item.rid,
+        username: item.first_name,
+        fullName: item.full_name,
+        email: item.email,
+        profile: item.profile.profile_name,
+        status: convertedStatus,
+      };
+    });
   };
 
   useEffect(() => {

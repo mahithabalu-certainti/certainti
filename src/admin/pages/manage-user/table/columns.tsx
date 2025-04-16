@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { ManageUserColumn } from '../../../types/manage-user';
+import { ManageUser, ManageUserColumn } from '../../../types/manage-user';
 
-export const userColumns: ManageUserColumn<any>[] = [
+export const userColumns: ManageUserColumn<ManageUser>[] = [
   { id: 'username', header: 'Username', sortable: true },
   { id: 'fullName', header: 'Full name', sortable: true },
   { id: 'email', header: 'Email', sortable: true },
@@ -10,7 +9,7 @@ export const userColumns: ManageUserColumn<any>[] = [
     id: 'status',
     header: 'Status',
     sortable: true,
-    render: (row: any) => (
+    render: (row: ManageUser) => (
       <span style={{ color: row.status === 'Active' ? '#4CAF50' : '#F44336' }}>
         {row.status}
       </span>
