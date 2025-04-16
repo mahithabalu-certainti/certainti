@@ -19,7 +19,7 @@ const createUserSchema = Joi.object({
   city: Joi.string().max(255).allow('', null).optional(),
   state: Joi.string().max(255).allow('', null).optional(),
   zip_code: Joi.string().max(255).allow('', null).optional(),
-  phone: Joi.string().pattern(/^[1-9]\d{9,14}$/).required(),
+  phone: Joi.string().pattern(/^[1-9]\d{9,14}$/).optional(),
   country: Joi.string().max(255).allow('', null).optional(),
   created_by: Joi.string().max(255).required(),
 });
@@ -59,7 +59,7 @@ const updateUserSchema = Joi.object({
   state: Joi.string().max(255).allow('', null).optional(),
   zip_code: Joi.string().max(255).allow('', null).optional(),
   country: Joi.string().max(255).allow('', null).optional(),
-  phone: Joi.string().pattern(/^[1-9]\d{9,14}$/).required(),
+  phone: Joi.string().pattern(/^[1-9]\d{9,14}$/).optional(),
   updated_by: Joi.string().max(255).required(),
 });
 
