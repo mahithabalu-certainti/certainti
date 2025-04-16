@@ -143,7 +143,11 @@ class AccountService {
 
       const isUnique = await this.checkIsAccounUnique(account_name);
       if(!isUnique){
-        throw new Error("Account name must be unique");
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: `An account with the name "${account_name}" already exists. Please choose a different name.`
+        };
       }
 
       if (parent_account_rid !== null) {
