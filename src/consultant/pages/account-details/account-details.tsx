@@ -74,7 +74,7 @@ export const AccountDetails = () => {
       case 'details':
         return <Details />;
       case 'resources':
-        return <Resources accountData={data} />;
+        return <Resources accountDetails={data} />;
       case 'attachments':
         return <Attachments />;
       case 'projects':

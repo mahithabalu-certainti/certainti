@@ -233,7 +233,16 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
 
   return (
     <Box sx={{ width: '100%', p: 2 }}>
-      <Typography variant='subtitle1' sx={{ fontSize: '16px', fontWeight: 600, color: '#2D3E4F', lineHeight: '30px', mb: 1 }}>
+      <Typography
+        variant='subtitle1'
+        sx={{
+          fontSize: '16px',
+          fontWeight: 600,
+          color: '#2D3E4F',
+          lineHeight: '30px',
+          mb: 1,
+        }}
+      >
         Filter Accounts by
       </Typography>
       <TextField
@@ -266,23 +275,25 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
             },
           },
         }}
-        inputProps={{
-          startAdornment: (
-            <InputAdornment position='start'>
-              <img
-                src={searchIcon}
-                alt='Search'
-                style={{
-                  width: 20,
-                  height: 20,
-                  filter:
-                    'brightness(0) saturate(100%) invert(22%) sepia(15%) saturate(1726%) hue-rotate(169deg) brightness(91%) contrast(87%)', // This filter converts the icon to #2D3E4F
-                }}
-              />
-            </InputAdornment>
-          ),
-          style: {
-            paddingLeft: '12px',
+        slotProps={{
+          htmlInput: {
+            startAdornment: (
+              <InputAdornment position='start'>
+                <img
+                  src={searchIcon}
+                  alt='Search'
+                  style={{
+                    width: 20,
+                    height: 20,
+                    filter:
+                      'brightness(0) saturate(100%) invert(22%) sepia(15%) saturate(1726%) hue-rotate(169deg) brightness(91%) contrast(87%)',
+                  }}
+                />
+              </InputAdornment>
+            ),
+            style: {
+              paddingLeft: '12px',
+            },
           },
         }}
       />

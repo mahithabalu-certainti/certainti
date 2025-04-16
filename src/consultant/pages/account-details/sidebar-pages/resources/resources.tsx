@@ -10,7 +10,7 @@ import { getResourceColumns } from './columns';
 import ResourceSubComponents from './resource-sub-components';
 import ResourceTableHeader from './resource-table-header';
 
-const Resource = ({ accountData }: any) => {
+const Resource = ({ accountDetails }: any) => {
   const [viewMode, setViewMode] = useState<boolean>(false);
   const [viewResourceList, setViewResourceList] = useState<boolean>(true);
   const [columns, setColumns] = useState<any>([]);
@@ -47,7 +47,7 @@ const Resource = ({ accountData }: any) => {
 
   const handleEdit = (resource: any) => {
     navigate(RESOURCE + '/edit/' + resource.rid, {
-      state: { resource, accountData },
+      state: { resource, accountDetails },
     });
   };
 
@@ -101,7 +101,7 @@ const Resource = ({ accountData }: any) => {
   };
 
   const handleCreateResource = () => {
-    navigate(RESOURCE_CREATE, { state: accountData });
+    navigate(RESOURCE_CREATE, { state: accountDetails });
   };
   return (
     <div className='w-full'>

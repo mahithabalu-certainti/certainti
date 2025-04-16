@@ -24,21 +24,9 @@ const ResourceForm: React.FC = () => {
   const [currentCountry, setCurrentCountry] = useState('');
   const { successToast, errorToast } = useToast();
   const location = useLocation();
+  console.log('location', location);
   const navigate = useNavigate();
   const resource = useResourceDetail(location?.state?.data?.accountById?.rid);
-  console.log('location', location?.state);
-  // const resource = getResource;
-  const resourceData = location?.state?.accountData?.data?.accountById;
-  console.log('resourceData', resourceData);
-
-  // const resourceData = useMemo(
-  //   () => ({
-  //      resource,
-  //   }),
-  //   [resource]
-  // );
-  // console.log('resourceData', resourceData)
-  // console.log('resourceData', Boolean(resourceData));
 
   const allCountries = useGetAllCountries();
   const currency = useFetchCurrency();
@@ -145,11 +133,12 @@ const ResourceForm: React.FC = () => {
               <h5 className='text-xs ml-2 text-gray-500 mb-1'>Edit Resource</h5>
             )}
             <div className=' text-xs ml-2 leading-4 text-gray-500'>
-              {'Account > ' + location?.state?.data?.accountById?.account_name}
+              {'Account > ' +
+                `${isEditView ? location?.state?.accountDetails?.data?.accountById?.account_name : location?.state?.data?.accountById?.account_name}`}
             </div>
             <h4 className='font-bold text-lg ml-2 leading-4'>
               {isEditView
-                ? location?.state?.data?.resource?.resource_fullname
+                ? location?.state?.resource?.resource_fullname
                 : 'New Resource'}
             </h4>
           </div>
