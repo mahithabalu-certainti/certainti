@@ -68,11 +68,11 @@ export const FormData = (
               'Industry should contain only letters and between 5 to 25 characters',
             placeholder: 'Enter Industry',
           }),
-          createTextField('project_manager', 'Project Manager', {
+          createTextField('project_manager', 'Delivery Manager', {
             required: true,
-            regex: REGEX_PATTERNS.EMAIL,
-            regexErrorMessage: 'Enter a valid email address',
-            placeholder: 'Enter Project Manager Email',
+            regex: REGEX_PATTERNS.MANAGER_REGEX,
+            regexErrorMessage: 'Enter a valid name',
+            placeholder: 'Enter Delivery Manager Name',
           }),
           createRadioField('is_parent', 'Is Parent Account', {
             radioOptions: YES_NO_OPTIONS,
