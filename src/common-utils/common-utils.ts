@@ -173,6 +173,7 @@ export const REGEX_PATTERNS = {
   STREET_REGEX: /^(?![\W_]+$)(?!\s*$)[\w\W]{3,200}$/,
   CITY_REGEX: /^[A-Za-z\s]{3,100}$/,
   NUMBERS_GREATER_THAN_ZERO: /^[1-9]\d*$/,
+  MANAGER_REGEX: /^(?=.{7,50}$)[A-Za-z0-9!"#$%&'()*+,-./:;<=>?@[\\\]^_`{|}~]+$/
 };
 
 export const ALLOWED_COUNTRIES: AllowedCountry[] = [

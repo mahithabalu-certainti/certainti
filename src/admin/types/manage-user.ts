@@ -124,7 +124,7 @@ export interface ManageUserApiResponse extends CommonApiResponse {
 
 export interface ManageUserDetailApiResponse extends CommonApiResponse {
   data: {
-    users: UserDetail[];
+    users: UserDetail;
   };
 }
 

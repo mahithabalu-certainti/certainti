@@ -1,16 +1,21 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ManageUserIcon } from '../../../../assets/icons';
-import { FormBuilder } from '../../../../components';
-import { useToast } from '../../../../hooks';
-import { FormData } from './form-data';
-import TextButton from '../../../../components/button/text-button';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { ManageUserIcon } from '../../../../assets/icons';
 import {
   CheckErrorMsg,
   OnChange,
   useGetAllCountries,
 } from '../../../../common-service';
-import { UserDetail, UserRole } from '../../../types/manage-user';
+import { checkError, checkErrorMsg } from '../../../../common-utils';
+import { FormBuilder } from '../../../../components';
+import TextButton from '../../../../components/button/text-button';
+import {
+  useFetchCity,
+  useFetchState,
+} from '../../../../consultant/services/account';
+import { SelectOption } from '../../../../consultant/types';
+import { useToast } from '../../../../hooks';
+import { ADMIN_MANAGE_USER } from '../../../../routes';
 import {
   useCreateUserDetails,
   useManageUserDetail,
@@ -18,13 +23,8 @@ import {
   useManageUserRole,
   useUpdateUserDetails,
 } from '../../../service/manage-user/manage-user-service';
-import { SelectOption } from '../../../../consultant/types';
-import { ADMIN_MANAGE_USER } from '../../../../routes';
-import { checkError, checkErrorMsg } from '../../../../common-utils';
-import {
-  useFetchCity,
-  useFetchState,
-} from '../../../../consultant/services/account';
+import { UserDetail, UserRole } from '../../../types/manage-user';
+import { FormData } from './form-data';
 
 export const CreateUser: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -38,7 +38,7 @@ export const CreateUser: React.FC = () => {
   const navigate = useNavigate();
 
   const userDetails = useManageUserDetail(userid as string);
-  const userDatas = userDetails.data?.data?.users[0];
+  const userDatas = userDetails.data?.data?.users;
 
   const userProfiles = useManageUserProfile();
   const allCountries = useGetAllCountries();
