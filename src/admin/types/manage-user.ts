@@ -119,6 +119,7 @@ export interface UsersData {
 export interface ManageUserApiResponse extends CommonApiResponse {
   data: {
     users: User[];
+    count: number;
   };
 }
 
