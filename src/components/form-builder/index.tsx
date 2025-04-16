@@ -98,10 +98,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         }));
       });
 
-      // Queue the state update for after render
-      setTimeout(() => {
-        setConstructFormData(newData);
-      }, 0);
+      setConstructFormData(newData);
     };
 
     if (field.isLoading) {
@@ -254,14 +251,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             <DatePicker
               value={dayjs(fieldValue, 'DD/MM/YYYY')}
               disabled={field.disabled}
+              format='MM/DD'
+              views={['month', 'day']}
+              minDate={dayjs().startOf('year')}
+              maxDate={dayjs().endOf('year')}
               onChange={(newValue) => {
-                if (!newValue) {
-                  handleChange('');
-                } else {
-                  handleChange(dayjs(newValue).format('DD/MM/YYYY'));
-                }
+                handleChange(dayjs(newValue).format('DD/MM/YYYY'));
               }}
-              shouldDisableDate={(date) => dayjs(date).isBefore(dayjs(), 'day')}
               slots={{
                 openPickerIcon: () => (
                   <img src={calendarIcon} alt='calendar' className='w-6 h-5' />
@@ -271,7 +267,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 ),
               }}
               slotProps={{
-                field: { clearable: true },
+                field: { clearable: !field.disabled },
                 textField: {
                   fullWidth: true,
                   size: 'small',
@@ -283,11 +279,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     },
                     inputProps: {
                       readOnly: true,
-                      onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => {
-                        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-                          e.preventDefault();
-                        }
-                      },
                     },
                   },
                   sx: {
