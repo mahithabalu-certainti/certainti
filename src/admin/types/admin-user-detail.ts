@@ -27,9 +27,12 @@ type User = {
   email: string;
   street: string | null;
   city: number | null; // Changed to number based on your example
+  city_name: string | null; // Changed to number based on your example
   state: number | null; // Changed to number based on your example
+  state_name: string | null; // Changed to number based on your example
   zip_code: string | null;
   country: number | null; // Changed to number based on your example
+  country_name: string | null;
   role_rid: string;
   profile_rid: string;
   last_login_datetime: string | null;

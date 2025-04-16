@@ -70,7 +70,7 @@ const Table = <T extends RowData>({
 
   // Handle sorting
   const handleSort = (columnId: string) => {
-    if (!onSort || !columns.find((col) => col.id === columnId)?.sortable)
+    if (!onSort || !columns.find((col) => col.sort === columnId)?.sortable)
       return;
 
     const isCurrentSort = columnId === sortBy;
@@ -155,23 +155,29 @@ const Table = <T extends RowData>({
 
                     {column.sortable && (
                       <>
-                        {sortBy === column.id && (
+                        {sortBy === column.sort && (
                           <span
                             className='ml-1 cursor-pointer'
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleSort(column.id);
+                              if (column.sort) {
+                                if (column.sort) {
+                                  handleSort(column.sort);
+                                }
+                              }
                             }}
                           >
                             {sortOrder === 'ASC' ? '↑' : '↓'}
                           </span>
                         )}
-                        {sortBy !== column.id && (
+                        {sortBy !== column.sort && (
                           <span
                             className='ml-1 cursor-pointer text-gray-400'
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleSort(column.id);
+                              if (column.sort) {
+                                handleSort(column.sort);
+                              }
                             }}
                           >
                             ↕
