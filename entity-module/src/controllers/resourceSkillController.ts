@@ -164,6 +164,7 @@ async function resourceSkill(req: Request, res: Response): Promise<void> {
       if (resourceSkill.statusCode === HttpStatus.SUCCESS) {
         successLog(methodName);
         handleSuccessResponse(res, resourceSkill.data);
+        return;
       } else {
         errorLog(methodName, resourceSkill.errorMessage);
         handleErrorResponse(
@@ -172,8 +173,8 @@ async function resourceSkill(req: Request, res: Response): Promise<void> {
           HttpStatus.BAD_REQUEST_MESSAGE,
           resourceSkill.message
         );
+        return;
       }
-      return;
     }
 
     // If no rid is provided, proceed with normal filtering and pagination
@@ -205,6 +206,7 @@ async function resourceSkill(req: Request, res: Response): Promise<void> {
     if (resourceSkill.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, resourceSkill.data);
+      return;
     } else {
       errorLog(methodName, resourceSkill.errorMessage);
       handleErrorResponse(
@@ -213,6 +215,7 @@ async function resourceSkill(req: Request, res: Response): Promise<void> {
         HttpStatus.BAD_REQUEST_MESSAGE,
         resourceSkill.message
       );
+      return;
     }
   } catch (err) {
     const error = err as Error;
@@ -224,6 +227,7 @@ async function resourceSkill(req: Request, res: Response): Promise<void> {
       HttpStatus.FAILED_MESSAGE,
       error.message
     );
+    return;
   }
 }
 
