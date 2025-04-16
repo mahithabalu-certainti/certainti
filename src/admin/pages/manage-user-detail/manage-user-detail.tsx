@@ -1,12 +1,12 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { ManageUserIcon } from '../../../assets/icons';
+import { getDateTimeFormat } from '../../../common-utils';
 import ActionsDropdown from '../../../components/actions-dropdown/actions-dropdown';
 import TextButton from '../../../components/button/text-button';
 import { useManageUserDetail } from '../../service/manage-user-detail/manage-user-detail-service';
 import { Detail } from '../../types/admin-user-detail';
 import { BUTTON_STYLES, HEADER_STYLES } from './styles';
-import { getDateTimeFormat } from '../../../common-utils';
 
 const MENU_ITEMS = [
   {
@@ -31,7 +31,7 @@ export const ManageUserDetails: React.FC = () => {
     error,
   } = useManageUserDetail(userId || '');
 
-  const userDetail = user?.data.users[0];
+  const userDetail = user?.data.users;
   const userActionButtons: string[] = [
     'Suspend User',
     'Reactive User',
