@@ -25,7 +25,7 @@ export interface IUserData {
   city: string;
   state: string;
   zip_code: string;
-  country: number;
+  country: string;
   designation?: string;
   manager_name?: string;
   manager_email?: string;
@@ -49,7 +49,7 @@ export interface IUpdateUserData {
   city: string;
   state: string;
   zip_code: string;
-  country: number;
+  country: string;
   mobile?: string;
   role: string;
   designation?: string;

@@ -87,7 +87,7 @@ const userDetailsUpdateSchema = Joi.object({
 const listUserSchema = Joi.object({
   page: Joi.string().pattern(/^[0-9]+$/).default("1"),
   limit: Joi.string().pattern(/^[0-9]+$/).default("10"),
-  search: Joi.string().max(255).optional(),
+  search: Joi.string().max(255).optional().allow(""),
   filters: Joi.string().default("{}"),
   sortBy: Joi.string().default("created_datetime"),
   sortOrder: Joi.string().valid("ASC", "DESC").default("DESC"),
