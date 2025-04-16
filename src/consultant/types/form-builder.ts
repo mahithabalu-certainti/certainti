@@ -20,6 +20,7 @@ export interface FormTypeFields {
   dependsRequired?: Record<string, string>;
   onChange?: boolean;
   anyOneRequired?:boolean
+  isLoading?: boolean;
 }
 
 export interface selectOptions {
@@ -59,6 +60,7 @@ export interface FieldType {
   dependsRequired?: Record<string, string>;
   onChange?: boolean;
   anyOneRequired?:boolean, // financial information error handling
+  isLoading?: boolean;
 }
 
 export type AllowedCountry = 'us' | 'ca' | 'gb' | 'ie' | 'se' | 'ro' | 'au' | 'fr';

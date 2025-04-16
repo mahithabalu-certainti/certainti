@@ -108,6 +108,8 @@ export const createSelectField = (
     placeholder?: string;
     disabled?: boolean;
     dependsRequired?: Record<string, string>;
+    onChange?: boolean;
+    isLoading?: boolean;
   }
 ): FieldType => ({
   type: 'select',
@@ -118,6 +120,8 @@ export const createSelectField = (
   disabled: others.disabled,
   placeholder: others.placeholder,
   dependsRequired: others.dependsRequired,
+  onChange: others.onChange,
+  isLoading: others.isLoading,
 });
 
 export const createDateField = (

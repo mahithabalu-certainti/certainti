@@ -9,16 +9,18 @@ import {
   AccountList,
   AccountListResponse,
   AccountListURLParams,
+  CitysApiResponse,
   CurrencyApiResponse,
   ParentAccountApiResponse,
-  RegionApiResponse,
+  StatesApiResponse,
 } from '../../types';
 import {
   AccountDetailUrl,
   AccountListURL,
+  CityUrl,
   CurrencyUrl,
   ParentAccountUrl,
-  RegionUrl,
+  StateUrl,
 } from '../urls/account-url';
 
 export const fetchAccountFields = async (
@@ -67,7 +69,18 @@ export const fetchCurrency = async (): Promise<CurrencyApiResponse> => {
   return data;
 };
 
-export const fetchRegion = async (): Promise<RegionApiResponse> => {
-  const { data } = await accountServiceApi.get<RegionApiResponse>(RegionUrl);
+export const fetchState = async (
+  countryId: string
+): Promise<StatesApiResponse> => {
+  const { data } = await accountServiceApi.get<StatesApiResponse>(
+    StateUrl(countryId)
+  );
+  return data;
+};
+
+export const fetchCity = async (stateId: string): Promise<CitysApiResponse> => {
+  const { data } = await accountServiceApi.get<CitysApiResponse>(
+    CityUrl(stateId)
+  );
   return data;
 };

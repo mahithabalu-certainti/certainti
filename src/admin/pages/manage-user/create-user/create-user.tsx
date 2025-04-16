@@ -1,11 +1,15 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ManageUserIcon } from '../../../../assets/icons';
 import { FormBuilder } from '../../../../components';
 import { useToast } from '../../../../hooks';
 import { FormData } from './form-data';
 import TextButton from '../../../../components/button/text-button';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { CheckErrorMsg, useGetAllCountries } from '../../../../common-service';
+import {
+  CheckErrorMsg,
+  OnChange,
+  useGetAllCountries,
+} from '../../../../common-service';
 import { UserDetail, UserRole } from '../../../types/manage-user';
 import {
   useCreateUserDetails,
@@ -17,9 +21,17 @@ import {
 import { SelectOption } from '../../../../consultant/types';
 import { ADMIN_MANAGE_USER } from '../../../../routes';
 import { checkError, checkErrorMsg } from '../../../../common-utils';
+import {
+  useFetchCity,
+  useFetchState,
+} from '../../../../consultant/services/account';
 
 export const CreateUser: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
+  const [currentCountry, setCurrentCountry] = useState({
+    country: '',
+    state: '',
+  });
   const { successToast, errorToast } = useToast();
   const location = useLocation();
   const { userid } = useParams();
@@ -31,6 +43,8 @@ export const CreateUser: React.FC = () => {
   const userProfiles = useManageUserProfile();
   const allCountries = useGetAllCountries();
   const userRoles = useManageUserRole();
+  const states = useFetchState(currentCountry.country);
+  const city = useFetchCity(currentCountry.state);
   const updateUser = useUpdateUserDetails();
   const createUser = useCreateUserDetails();
 
@@ -42,6 +56,7 @@ export const CreateUser: React.FC = () => {
     userProfiles,
     userRoles,
     allCountries,
+    states,
     updateUser,
     createUser,
   ];
@@ -66,16 +81,35 @@ export const CreateUser: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
 
-const memoizedContry: SelectOption[] = useMemo(() => {
-  const countries = allCountries.data?.data.country || [];
-  return countries
-    .slice() // create a shallow copy to avoid mutating original data
-    .sort((a, b) => a.country_name.localeCompare(b.country_name))
-    .map((country) => ({
-      label: country.country_name,
-      value: country.rid,
-    }));
-}, [allCountries.data?.data.country]);
+  useEffect(() => {
+    if (userDatas?.country || userDatas?.state) {
+      setCurrentCountry((prev) => ({
+        ...prev,
+        country: userDatas?.country,
+        state: userDatas?.state,
+      }));
+    }
+  }, [userDatas?.country, userDatas?.state]);
+
+  const memoizedCountry: SelectOption[] = useMemo(() => {
+    const countries = allCountries.data?.data.country || [];
+    return countries
+      .slice() // create a shallow copy to avoid mutating original data
+      .sort((a, b) => a.country_name.localeCompare(b.country_name))
+      .map((country) => ({
+        label: country.country_name,
+        value: country.rid,
+      }));
+  }, [allCountries.data?.data.country]);
+
+  const memoizedState: SelectOption[] = useMemo(
+    () =>
+      states.data?.data.states.map((role) => ({
+        label: role.state_name,
+        value: role.rid,
+      })) || [],
+    [states.data?.data.states]
+  );
 
   const memoizeProfiles: SelectOption[] = useMemo(
     () =>
@@ -95,6 +129,15 @@ const memoizedContry: SelectOption[] = useMemo(() => {
     [userRoles.data?.data.roles]
   );
 
+  const memoizeCity: SelectOption[] = useMemo(
+    () =>
+      city.data?.data.cities.map((role) => ({
+        label: role.city_name,
+        value: role.rid,
+      })) || [],
+    [city.data?.data.cities]
+  );
+
   const submitData = (data: Partial<UserDetail>) => {
     if (isEditView) {
       const constructData = {
@@ -108,6 +151,9 @@ const memoizedContry: SelectOption[] = useMemo(() => {
       delete constructData.profile_rid;
       delete constructData.email;
       delete constructData.role_rid;
+      if (!constructData.phone) {
+        delete constructData.phone;
+      }
       updateUser.mutate(constructData);
     } else {
       const constructData = {
@@ -118,12 +164,24 @@ const memoizedContry: SelectOption[] = useMemo(() => {
       } as Partial<UserDetail>;
       delete constructData.profile_rid;
       delete constructData.role_rid;
+      if (!constructData.phone) {
+        delete constructData.phone;
+      }
       createUser.mutate(constructData);
     }
   };
 
   const handleExternalSubmit = () => {
     formRef.current?.requestSubmit(); // This will trigger the form's onSubmit
+  };
+
+  const onChangeField = ({ fieldName, fieldValue }: OnChange) => {
+    if (fieldName === 'country' || fieldName === 'state') {
+      setCurrentCountry((prev) => ({
+        ...prev,
+        [fieldName]: fieldValue as string,
+      }));
+    }
   };
 
   const goBack = () => {
@@ -183,14 +241,19 @@ const memoizedContry: SelectOption[] = useMemo(() => {
                 userRoles.isLoading
               }
               data={FormData(
-                memoizedContry,
+                memoizedCountry,
                 memoizeProfiles,
                 memoizeRole,
-                isEditView
+                memoizedState,
+                memoizeCity,
+                isEditView,
+                states.isLoading,
+                city.isLoading
               )}
               values={isEditView && userDatas ? { ...userDatas } : undefined}
               outData={submitData}
               formRef={formRef}
+              onChange={onChangeField}
             />
           </div>
         </div>
