@@ -1,6 +1,7 @@
 // managing exports for components
 export * from './actions-dropdown';
 export * from './dropdown';
+export * from './filter-component';
 export * from './form-builder';
 export * from './global-modal';
 export * from './header';

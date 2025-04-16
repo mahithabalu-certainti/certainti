@@ -10,7 +10,7 @@ import {
   SelectChangeEvent,
   TextField,
 } from '@mui/material';
-import { FilterState } from '../../../types/account-filter';
+import { FilterState } from '../../consultant/types/account-filter';
 
 export const TextFilterControl: React.FC<{
   fieldName: string;

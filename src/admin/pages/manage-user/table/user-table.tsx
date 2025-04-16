@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Table } from '../../../../components/table';
@@ -6,7 +7,7 @@ import { useManageUserList } from '../../../service/manage-user/manage-user-serv
 import { ManageUser, User, UserListParams } from '../../../types/manage-user';
 import { userColumns } from './columns';
 
-export const UserTable = () => {
+export const UserTable: React.FC<Record<string, any>> = (appliedFilters) => {
   const [users, setUsers] = useState<ManageUser[]>([]);
   const navigate = useNavigate();
   const [tableParams, setTableParams] = useState<UserListParams>({
@@ -15,6 +16,14 @@ export const UserTable = () => {
     sortBy: 'createdAt',
     sortOrder: 'ASC',
   });
+
+  useEffect(() => {
+    setTableParams((prev) => ({
+      ...prev,
+      filters: appliedFilters.appliedFilters,
+      search: appliedFilters.searchTerm,
+    }));
+  }, [appliedFilters]);
 
   const { data, isLoading, isError } = useManageUserList(tableParams);
   const totalItems = data?.data?.users.length || 0;

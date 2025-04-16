@@ -9,10 +9,11 @@ import {
   filterIcon,
   refreshIcon,
 } from '../../../assets';
+import { Filter } from '../../../components';
 import ActionsDropdown from '../../../components/actions-dropdown/actions-dropdown';
 import TextButton from '../../../components/button/text-button';
 import { ACCOUNT_CREATE } from '../../../routes';
-import FilterComponent from './filter-component/filter-component';
+import { accountFilterfields } from './helpers';
 import AccountTable from './table/account-table';
 
 const BUTTON_STYLES = {
@@ -117,10 +118,11 @@ export const Accounts: React.FC = () => {
             isFilterOpen ? 'w-[20%] opacity-100' : 'w-0 opacity-0'
           }`}
         >
-          <FilterComponent
+          <Filter
             setAppliedFilters={setAppliedFilters}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
+            filterFields={accountFilterfields}
           />
         </div>
 

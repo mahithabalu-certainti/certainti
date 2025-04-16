@@ -1,9 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ManageUserIcon } from '../../../assets/icons';
-import ActionsDropdown from '../../../components/actions-dropdown/actions-dropdown';
-import TextButton from '../../../components/button/text-button';
-import { ADMIN_CREATE_USER } from '../../../routes';
-import { UserTable } from './table/user-table';
+import { ManageUserIcon } from '../../../../assets/icons';
+import { Filter } from '../../../../components';
+import ActionsDropdown from '../../../../components/actions-dropdown/actions-dropdown';
+import TextButton from '../../../../components/button/text-button';
+import { ADMIN_CREATE_USER } from '../../../../routes';
+import { UserTable } from '../table/user-table';
+import { userFilterfields } from './helpers';
 
 const BUTTON_STYLES = {
   height: '35px',
@@ -26,9 +30,10 @@ const MENU_ITEMS = [
   },
 ];
 
-export const ManageUser: React.FC = () => {
+const UserList: React.FC = () => {
   const navigate = useNavigate();
-
+  const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
+  const [searchTerm, setSearchTerm] = useState<string>('');
   const userActionButtons = [
     'Suspend User',
     'Reactive User',
@@ -113,8 +118,25 @@ export const ManageUser: React.FC = () => {
             ))}
           </div>
         </div>
-        <UserTable />
+        <div className='flex flex-row w-full'>
+          <div className='flex w-[20%]'>
+            <Filter
+              setAppliedFilters={setAppliedFilters}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              filterFields={userFilterfields}
+            />
+          </div>
+          <div className='flex w-[80%]'>
+            <UserTable
+              appliedFilters={appliedFilters}
+              searchTerm={searchTerm}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
 };
+
+export default UserList;

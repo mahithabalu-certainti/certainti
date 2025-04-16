@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   CircularProgress,
@@ -18,6 +19,7 @@ import { reshapeGlobalFilter } from '../../../../common-utils';
 import { ACCOUNT, ACCOUNT_DETAILS } from '../../../../routes';
 import { RootState } from '../../../../store/store';
 import { useAccounts } from '../../../services/account';
+import { FilterState } from '../../../types';
 import { Account, AccountList, ConvertedAccount } from '../../../types/account';
 import { convertAccounts } from '../helpers';
 import './styles.css';
@@ -36,9 +38,10 @@ const AccountTable: React.FC<Record<string, any>> = ({
   const [orderBy, setOrderBy] = useState<keyof AccountList>('account_name');
   const [accounts, setAccounts] = useState<ConvertedAccount[]>();
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
-  const { filters, fiscalYear } = useSelector(
-    (state: RootState) => state.account
-  );
+  const { filters, fiscalYear } = useSelector<
+    RootState,
+    { filters: unknown; fiscalYear: string }
+  >((state: RootState) => state.account);
 
   const { data: accountList, isLoading: loading } = useAccounts({
     page: page,
@@ -46,7 +49,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
     sortBy: orderBy,
     sortOrder: apiOrder,
     filters: appliedFilters,
-    globalFilters: reshapeGlobalFilter(filters),
+    globalFilters: reshapeGlobalFilter(filters as FilterState),
     fiscalYear,
   });
 

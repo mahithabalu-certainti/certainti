@@ -1,7 +1,7 @@
 import { MsalProvider } from '@azure/msal-react';
 import React from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { CreateUser, ManageUser, ManageUserDetails } from './admin/pages';
+import { CreateUser, ManageUserDetails, UserList } from './admin/pages';
 import { AppLayout, Toast } from './components';
 import {
   AccountDetails,
@@ -78,7 +78,7 @@ export const App: React.FC<IApp> = ({ instance }) => {
 
           {/* Admin protected routes */}
           <Route element={<ProtectedRoute requireAdmin />}>
-            <Route path={ADMIN_MANAGE_USER} element={<ManageUser />} />
+            <Route path={ADMIN_MANAGE_USER} element={<UserList />} />
             <Route
               path={ADMIN_MANAGE_USER_DETAILS}
               element={<ManageUserDetails />}

@@ -1,24 +1,45 @@
-import { CircularProgress, Paper, Table, TableBody, TableCell, TableHead, TablePagination, TableRow, TableSortLabel, Typography } from "@mui/material"
-import { convertResourceCost, RenderCostRowProps, ResourceCostType } from "./resourceCostType";
-import { useEffect, useState } from "react";
+import {
+  CircularProgress,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TablePagination,
+  TableRow,
+  TableSortLabel,
+  Typography,
+} from '@mui/material';
+import { useEffect, useState } from 'react';
+import {
+  convertResourceCost,
+  RenderCostRowProps,
+  ResourceCostType,
+} from './resourceCostType';
 // import { ResourceCostList } from "../../../types/resourceCost";
 // import { useResourceCost } from "../../../services/resource-cost/resource-cost-service";
 import React from 'react';
-import { useNavigate } from "react-router-dom";
-import { ResourceCostList } from "../../../../../types/resourceCost";
-import { useResourceCost } from "../../../../../services/resource-cost/resource-cost-service";
-import { RESOURCECOST } from "../../../../../../routes";
-import ActionButton from "../../../../accounts/table/action-button";
+import { useNavigate } from 'react-router-dom';
+import { RESOURCECOST } from '../../../../../../routes';
+import { useResourceCost } from '../../../../../services/resource-cost/resource-cost-service';
+import { ResourceCostList } from '../../../../../types/resourceCost';
+import ActionButton from '../../../../account-list/table/action-button';
 // import { RESOURCECOST } from "../../../../routes";
 // import ActionButton from "../../accounts/table/action-button";
 
-const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
+const ResourceCostTable: React.FC<Record<string, any>> = ({
+  appliedFilters,
+}) => {
   const navigate = useNavigate();
   const [page, setPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState<number>(25);
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
-  const [orderBy, setOrderBy] = useState<keyof ResourceCostList>('resource_cost_number');
-  const [resourceCostList, setResourceCostList] = useState<ResourceCostType[]>([]);
+  const [orderBy, setOrderBy] = useState<keyof ResourceCostList>(
+    'resource_cost_number'
+  );
+  const [resourceCostList, setResourceCostList] = useState<ResourceCostType[]>(
+    []
+  );
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
   const { data: costList, isLoading: loading } = useResourceCost({
     page: page,
@@ -32,11 +53,9 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters }) =>
     setResourceCostList(convertResourceCost(costList?.resourceCost || []));
   }, [costList]);
 
-
-
   const handleEdit = (cost: ResourceCostType) => {
-    console.log("cost", cost);
-    
+    console.log('cost', cost);
+
     navigate(RESOURCECOST + '/edit/' + cost.resourceCostNumber, {
       state: { cost },
     });
@@ -68,43 +87,52 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters }) =>
   };
 
   const createSortHandler =
-    (property: keyof ResourceCostList) => (event: React.MouseEvent<unknown>) => {
+    (property: keyof ResourceCostList) =>
+    (event: React.MouseEvent<unknown>) => {
       handleRequestSort(event, property);
     };
 
-  const renderRows = ({
-    resourceCost,
-  }: RenderCostRowProps) => {
-
+  const renderRows = ({ resourceCost }: RenderCostRowProps) => {
     return resourceCost?.map((cost) => {
-
       return (
         <React.Fragment key={cost.resourceCostNumber}>
-          <TableRow sx={{
-            '.MuiTableCell-root':{
-              fontWeight: 300,
-              color: '#425A76',
-            }
-          }}>
-            <TableCell>
-              {cost.resourceCostNumber}
-            </TableCell>
-            <TableCell>
-              {cost.currency}
-            </TableCell>
+          <TableRow
+            sx={{
+              '.MuiTableCell-root': {
+                fontWeight: 300,
+                color: '#425A76',
+              },
+            }}
+          >
+            <TableCell>{cost.resourceCostNumber}</TableCell>
+            <TableCell>{cost.currency}</TableCell>
             <TableCell>{cost.startDate}</TableCell>
             <TableCell>{cost.endDate}</TableCell>
-            <TableCell>{cost.hourlyCompensation ? cost.hourlyCompensation :  '-'}</TableCell>
-            <TableCell>{cost.dailyCompensation ? cost.dailyCompensation: "-"}</TableCell>
-            <TableCell>{cost.biWeeklyCompensation ? cost.biWeeklyCompensation:  "-"}</TableCell>
-            <TableCell>{cost.weeklyCompensation ? cost.weeklyCompensation:  "-"}</TableCell>
-            <TableCell>{cost.monthlyCompensation ? cost.monthlyCompensation : "-"}</TableCell>
-            <TableCell>{cost.semiAnnualCompensation ? cost.semiAnnualCompensation: "-"}</TableCell>
-            <TableCell>{cost.annualCompensation ? cost.annualCompensation: "-"}</TableCell>
+            <TableCell>
+              {cost.hourlyCompensation ? cost.hourlyCompensation : '-'}
+            </TableCell>
+            <TableCell>
+              {cost.dailyCompensation ? cost.dailyCompensation : '-'}
+            </TableCell>
+            <TableCell>
+              {cost.biWeeklyCompensation ? cost.biWeeklyCompensation : '-'}
+            </TableCell>
+            <TableCell>
+              {cost.weeklyCompensation ? cost.weeklyCompensation : '-'}
+            </TableCell>
+            <TableCell>
+              {cost.monthlyCompensation ? cost.monthlyCompensation : '-'}
+            </TableCell>
+            <TableCell>
+              {cost.semiAnnualCompensation ? cost.semiAnnualCompensation : '-'}
+            </TableCell>
+            <TableCell>
+              {cost.annualCompensation ? cost.annualCompensation : '-'}
+            </TableCell>
             <TableCell>
               <ActionButton
                 onEdit={() => handleEdit(cost)}
-                onDelete={() => { }}
+                onDelete={() => {}}
                 // onView={() => { }}
               />
             </TableCell>
@@ -113,7 +141,6 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters }) =>
       );
     });
   };
-
 
   return (
     <Paper sx={{ overflowX: 'auto', boxShadow: 'none' }}>
@@ -204,7 +231,9 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters }) =>
             <TableCell>
               <TableSortLabel
                 active={orderBy === 'semi_annual_compensation'}
-                direction={orderBy === 'semi_annual_compensation' ? order : 'asc'}
+                direction={
+                  orderBy === 'semi_annual_compensation' ? order : 'asc'
+                }
                 onClick={createSortHandler('semi_annual_compensation')}
               >
                 Semin Annual
@@ -219,9 +248,7 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters }) =>
                 Annual
               </TableSortLabel>
             </TableCell>
-            <TableCell>
-              Action
-            </TableCell>
+            <TableCell>Action</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -239,7 +266,7 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters }) =>
             </TableRow>
           ) : (
             renderRows({
-              resourceCost: resourceCostList || []
+              resourceCost: resourceCostList || [],
             })
           )}
         </TableBody>
@@ -254,7 +281,7 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters }) =>
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
     </Paper>
-  )
-}
+  );
+};
 
 export default ResourceCostTable;

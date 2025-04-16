@@ -1,19 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // filterUtils.ts
-import { FieldConfig, FilterState } from '../../../types/account-filter';
+// import { FieldConfig, FilterState } from '../../../types/account-filter';
 
-export const fields: FieldConfig[] = [
-  { name: 'Parent Account', type: 'text' },
-  { name: 'Account Number', type: 'number' },
-  { name: 'Account Name', type: 'text' },
-  { name: 'Account ID', type: 'text' },
-  { name: 'Industry', type: 'text' },
-  { name: 'Country', type: 'multi-select', options: ['Canada', 'USA', 'UK'] },
-  { name: 'Currency', type: 'multi-select', options: ['CAD', 'USD', 'EUR'] },
-  { name: 'Status', type: 'status', options: ['Active', 'Inactive'] },
-  { name: 'Primary Contact', type: 'text' },
-  { name: 'is Parent Account', type: 'boolean' },
-];
+import {
+  FieldConfig,
+  FilterState,
+} from '../../consultant/types/account-filter';
 
 export const getInitialStateForField = (
   fieldConfig: FieldConfig
