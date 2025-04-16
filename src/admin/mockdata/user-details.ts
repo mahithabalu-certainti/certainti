@@ -1,29 +1,40 @@
-import { ManagerUserDetailApiResponse, UserRole } from '../types/manage-user';
+import { ManageUserDetailApiResponse, UserRole } from '../types/manage-user';
 
-export const mockUserDetails: ManagerUserDetailApiResponse = {
+export const mockUserDetails: ManageUserDetailApiResponse = {
   statusCode: 200,
   statusCodeValue: 'Success',
   statusMessage: 'Success',
   data: {
     users: [
       {
-        rid: 'b48f4ae6-2bab-46c6-8835-9f3db7581e82',
-        first_name: 'Kevin',
-        last_name: 'Peter',
-        full_name: 'Kevin Peter',
-        email: 'john4568@yopmail.com',
-        street: '47 W 13th St',
-        city: 'New York',
-        state: 'Brooklyn',
-        zip_code: 'NY 10011',
-        country: '3',
+        rid: '90ec4002-9aa2-4347-be66-57a93ecfde08',
+        r_number: '',
+        azure_id: 'c78c57bb-e89c-4310-9f8a-d429e8ebcdf4',
+        first_name: 'Rizwan',
+        last_name: 'Mohamed',
+        full_name: 'Rizwan Mohamed',
+        email: 'mohamed.rizwan@certainti.ai',
+        street: '',
+        city: '',
+        state: '',
+        zip_code: '',
+        country: '2042d653-741c-4e7c-b5e0-0e1ba017134b',
+        role_rid: '2d219324-a763-45e3-83ed-53d5b40b890f',
+        profile_rid: '1a94f781-e3ef-41e9-874f-1742c2e86d91',
         status: 'active',
-        profile_rid: '5ef971eb-e481-431a-99bb-988eb5840f81',
-        azure_id: 'asd22e4',
-        organization: import.meta.env.VITE_ORGANIZATION,
-        profile_id: 'sdfds234',
-        role: 'asdsdd',
-        role_rid: 'asdsadad',
+        created_by: 'Admin',
+        modified_by: 'Admin',
+        created_datetime: '2025-04-08T12:42:50.970Z',
+        modified_datetime: '2025-04-15T12:53:52.082Z',
+        profile: {
+          profile_name: 'Administrator',
+        },
+        business_teams: {
+          business_teams: 'Account Administration',
+        },
+        role: '',
+        organization: '',
+        profile_id: '',
         updated_by: UserRole.Admin,
       },
     ],

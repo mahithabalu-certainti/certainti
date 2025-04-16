@@ -1,10 +1,10 @@
 // FilterControls.tsx
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Box,
   Checkbox,
   FormControl,
   FormControlLabel,
+  FormGroup,
   MenuItem,
   Select,
   SelectChangeEvent,
@@ -15,7 +15,7 @@ import { FilterState } from '../../consultant/types/account-filter';
 export const TextFilterControl: React.FC<{
   fieldName: string;
   state: FilterState;
-  onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
+  onOptionChange: (fieldName: string, event: SelectChangeEvent<string>) => void;
   onValueChange: (
     fieldName: string,
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -51,7 +51,7 @@ export const TextFilterControl: React.FC<{
 export const NumberFilterControl: React.FC<{
   fieldName: string;
   state: FilterState;
-  onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
+  onOptionChange: (fieldName: string, event: SelectChangeEvent<string>) => void;
   onValueChange: (
     fieldName: string,
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -64,8 +64,8 @@ export const NumberFilterControl: React.FC<{
         onChange={(e) => onOptionChange(fieldName, e)}
         sx={{ height: '30px', minHeight: 20 }}
       >
-        <MenuItem value='equals'>equals</MenuItem>
         <MenuItem value='contains'>contains</MenuItem>
+        <MenuItem value='equals'>equals</MenuItem>
       </Select>
     </FormControl>
     <TextField
@@ -89,7 +89,7 @@ export const StatusFilterControl: React.FC<{
   fieldName: string;
   state: FilterState;
   options: string[];
-  onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
+  onOptionChange: (fieldName: string, event: SelectChangeEvent<string>) => void;
 }> = ({ fieldName, state, options, onOptionChange }) => (
   <Box sx={{ pl: 3, mt: 1 }}>
     <FormControl fullWidth size='small'>
@@ -112,19 +112,34 @@ export const BooleanFilterControl: React.FC<{
   fieldName: string;
   state: FilterState;
   onChange: (fieldName: string, checked: boolean) => void;
-}> = ({ fieldName, state, onChange }) => (
-  <Box sx={{ pl: 3, mt: 1 }}>
-    <FormControlLabel
-      control={
-        <Checkbox
-          checked={state.boolean?.value || false}
-          onChange={(e) => onChange(fieldName, e.target.checked)}
+}> = ({ fieldName, state, onChange }) => {
+  const value = state.boolean?.value ?? false;
+
+  return (
+    <Box sx={{ pl: 3, mt: 1 }}>
+      <FormGroup row>
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={value === true}
+              onChange={() => onChange(fieldName, true)}
+            />
+          }
+          label='Yes'
         />
-      }
-      label='Yes'
-    />
-  </Box>
-);
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={value === false}
+              onChange={() => onChange(fieldName, false)}
+            />
+          }
+          label='No'
+        />
+      </FormGroup>
+    </Box>
+  );
+};
 
 export const MultiSelectFilterControl: React.FC<{
   fieldName: string;

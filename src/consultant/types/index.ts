@@ -9,3 +9,4 @@ export * from './page-sidebar';
 export * from './resource-details';
 export * from './table';
 export * from './toast-message';
+export * from './profile';

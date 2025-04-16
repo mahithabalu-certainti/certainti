@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Define filter options for each field type
-export type TextFilterOption = 'contains' | 'equals' | 'startsWith';
-export type NumberFilterOption = 'lessThan' | 'greaterThan' | 'equals';
+export type TextFilterOption = 'contains' | 'equals';
+export type NumberFilterOption = 'contains' | 'equals';
 export type StatusFilterOption = 'equals';
 export type BooleanFilterOption = 'equals';
 

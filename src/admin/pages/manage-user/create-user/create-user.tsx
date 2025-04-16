@@ -91,7 +91,7 @@ export const CreateUser: React.FC = () => {
     }
   }, [userDatas?.country, userDatas?.state]);
 
-  const memoizedContry: SelectOption[] = useMemo(() => {
+  const memoizedCountry: SelectOption[] = useMemo(() => {
     const countries = allCountries.data?.data.country || [];
     return countries
       .slice() // create a shallow copy to avoid mutating original data
@@ -241,7 +241,7 @@ export const CreateUser: React.FC = () => {
                 userRoles.isLoading
               }
               data={FormData(
-                memoizedContry,
+                memoizedCountry,
                 memoizeProfiles,
                 memoizeRole,
                 memoizedState,

@@ -2,8 +2,8 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { userServiceApi } from '../../../api/api';
 import { CommonApiResponse } from '../../../common-service';
 import {
-  ManagerUserApiResponse,
-  ManagerUserDetailApiResponse,
+  ManageUserApiResponse,
+  ManageUserDetailApiResponse,
   UserDetail,
   UserListParams,
   UserProfileApiResponse,
@@ -25,12 +25,12 @@ export const fetchManageUserList = async (params: UserListParams = {}) => {
   };
 
   const url = getUserListUrl(queryParams);
-  const response = await userServiceApi.get<ManagerUserApiResponse>(url);
+  const response = await userServiceApi.get<ManageUserApiResponse>(url);
   return response.data;
 };
 
 export const useManageUserList = (params: UserListParams = {}) => {
-  return useQuery<ManagerUserApiResponse, Error>({
+  return useQuery<ManageUserApiResponse, Error>({
     queryKey: ['manageUsers', params],
     queryFn: () => fetchManageUserList(params),
     staleTime: 5 * 60 * 1000, // 5 minutes cache
@@ -49,9 +49,9 @@ export const getUserDetailUrl = (userId: string): string => {
  */
 export const fetchManageUserDetail = async (
   userId: string
-): Promise<ManagerUserDetailApiResponse> => {
+): Promise<ManageUserDetailApiResponse> => {
   try {
-    const { data } = await userServiceApi.get<ManagerUserDetailApiResponse>(
+    const { data } = await userServiceApi.get<ManageUserDetailApiResponse>(
       getUserDetailUrl(userId)
     );
     // await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -68,7 +68,7 @@ export const fetchManageUserDetail = async (
  * @returns UseQueryResult with user details and query state
  */
 export const useManageUserDetail = (userId: string) => {
-  return useQuery<ManagerUserDetailApiResponse, Error>({
+  return useQuery<ManageUserDetailApiResponse, Error>({
     queryKey: ['userDetail', userId], // Unique query key
     queryFn: () => fetchManageUserDetail(userId),
     enabled: !!userId, // Only fetch if userId exists

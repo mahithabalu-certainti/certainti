@@ -6,6 +6,36 @@ import {
   FieldConfig,
   FilterState,
 } from '../../consultant/types/account-filter';
+export const fields: FieldConfig[] = [
+  { name: 'Parent Account', type: 'text' },
+  { name: 'Account Number', type: 'number' },
+  { name: 'Account Name', type: 'text' },
+  { name: 'Account ID', type: 'text' },
+  { name: 'Industries', type: 'text' },
+  {
+    name: 'Country',
+    type: 'multi-select',
+    options: [
+      'Canada',
+      'United States',
+      'United Kingdom',
+      'Ireland',
+      'Sweden',
+      'Romania',
+      'Australia',
+      'France',
+    ],
+  },
+  {
+    name: 'Currency',
+    type: 'multi-select',
+    options: ['CAD', 'USD', 'GBP', 'EUR', 'SEK', 'RON', 'AUD'],
+  },
+  { name: 'Annual Revenue', type: 'number' },
+  { name: 'Status', type: 'status', options: ['Active', 'Inactive'] },
+  { name: 'Primary Contact', type: 'text' },
+  { name: 'is Parent Account', type: 'boolean' },
+];
 
 export const getInitialStateForField = (
   fieldConfig: FieldConfig
@@ -14,7 +44,7 @@ export const getInitialStateForField = (
     case 'text':
       return { text: { option: 'contains', value: '' } };
     case 'number':
-      return { number: { option: 'equals', value: '' } };
+      return { number: { option: 'contains', value: '' } };
     case 'status':
       return { status: { option: 'equals', value: 'Active' } };
     case 'boolean':

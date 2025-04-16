@@ -145,15 +145,12 @@ export const FormData = (
           ),
           createTextField('spoc_email', 'SPOC Email', {
             required: true,
-            regex: REGEX_PATTERNS.PHONE,
-            regexErrorMessage: 'Enter a valid number (e.g 9876543210)',
-            placeholder: 'Enter Primary Contact Phone',
+            regex: REGEX_PATTERNS.EMAIL,
+            regexErrorMessage: 'Enter a valid email address',
+            placeholder: 'Enter SPOC Email',
           }),
           createTextField('project_cc_list', 'Project CC List', {
             required: true,
-            regex: REGEX_PATTERNS.PHONE,
-            regexErrorMessage: 'Enter a valid number (e.g 9876543210)',
-            placeholder: 'Enter Finance POC Phone',
           }),
           createTextField('spoc_mobile', 'SPOC Mobile', {
             required: true,

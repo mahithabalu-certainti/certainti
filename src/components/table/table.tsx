@@ -10,6 +10,7 @@ import {
   TableHead,
   TablePagination,
   TableRow,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import React, { useState } from 'react';
@@ -281,36 +282,81 @@ const Table = <T extends RowData>({
                     {(onEdit || onDelete || onView) && (
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>
                         {onView && (
-                          <Button
-                            variant='outlined'
-                            size='small'
-                            color='primary'
-                            sx={{ mr: 1 }}
-                            onClick={() => onView(row)}
+                          <Tooltip
+                            arrow
+                            title='Click to view'
+                            slotProps={{
+                              tooltip: {
+                                sx: {
+                                  backgroundColor: '#fff',
+                                  color: 'rgba(0, 0, 0, 0.87)',
+                                  boxShadow: 2,
+                                  borderRadius: '4px',
+                                },
+                              },
+                            }}
                           >
-                            View
-                          </Button>
+                            <Button
+                              variant='outlined'
+                              size='small'
+                              color='primary'
+                              sx={{ mr: 1 }}
+                              onClick={() => onView(row)}
+                            >
+                              View
+                            </Button>
+                          </Tooltip>
                         )}
                         {onEdit && (
-                          <Button
-                            variant='outlined'
-                            size='small'
-                            color='secondary'
-                            sx={{ mr: 1 }}
-                            onClick={() => onEdit(row)}
+                          <Tooltip
+                            arrow
+                            title='Click to edit'
+                            slotProps={{
+                              tooltip: {
+                                sx: {
+                                  backgroundColor: '#fff',
+                                  color: 'rgba(0, 0, 0, 0.87)',
+                                  boxShadow: 2,
+                                  borderRadius: '4px',
+                                },
+                              },
+                            }}
                           >
-                            Edit
-                          </Button>
+                            <Button
+                              variant='outlined'
+                              size='small'
+                              color='secondary'
+                              sx={{ mr: 1 }}
+                              onClick={() => onEdit(row)}
+                            >
+                              Edit
+                            </Button>
+                          </Tooltip>
                         )}
                         {onDelete && (
-                          <Button
-                            variant='outlined'
-                            size='small'
-                            color='error'
-                            onClick={() => onDelete(row)}
+                          <Tooltip
+                            arrow
+                            title='Click to delete'
+                            slotProps={{
+                              tooltip: {
+                                sx: {
+                                  backgroundColor: '#fff',
+                                  color: 'rgba(0, 0, 0, 0.87)',
+                                  boxShadow: 2,
+                                  borderRadius: '4px',
+                                },
+                              },
+                            }}
                           >
-                            Delete
-                          </Button>
+                            <Button
+                              variant='outlined'
+                              size='small'
+                              color='error'
+                              onClick={() => onDelete(row)}
+                            >
+                              Delete
+                            </Button>
+                          </Tooltip>
                         )}
                       </TableCell>
                     )}

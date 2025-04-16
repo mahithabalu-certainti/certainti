@@ -6,6 +6,7 @@ const initialState: IAuthDetails = {
   isAuthenticated: false,
   authToken: null,
   userId: null,
+  azureId: null,
   email: null,
   name: null,
   role: null,
@@ -19,6 +20,7 @@ const authSlice = createSlice({
       state.isAuthenticated = action.payload.isAuthenticated;
       state.authToken = action.payload.authToken;
       state.userId = action.payload.userId;
+      state.azureId = action.payload.azureId;
       state.email = action.payload.email;
       state.name = action.payload.name;
       state.role = action.payload.role;
