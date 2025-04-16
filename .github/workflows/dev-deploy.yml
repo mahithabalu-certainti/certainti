@@ -319,7 +319,7 @@ jobs:
           
           # Write secrets to .env file
           cat <<EOF > $ENV_FILE
-          SERVER_PORT=5001
+          SERVER_PORT=5006
           KEY_VAULT_URI=$KEY_VAULT_URI
           MAINDB_NAME=main-database-name
           MAINDB_PASSWORD=main-db-admin-password
