@@ -1,3 +1,5 @@
+import dayjs from 'dayjs';
+import { UserDetail } from '../admin/types/manage-user';
 import { CheckError, CheckErrorMsg } from '../common-service';
 import { AllowedCountry, FieldType, SelectOption } from '../consultant/types';
 
@@ -108,6 +110,7 @@ export const createSelectField = (
     dependsRequired?: Record<string, string>;
     onChange?: boolean;
     isLoading?: boolean;
+    resetDependsFields?: string[];
   }
 ): FieldType => ({
   type: 'select',
@@ -120,6 +123,7 @@ export const createSelectField = (
   dependsRequired: others.dependsRequired,
   onChange: others.onChange,
   isLoading: others.isLoading,
+  resetDependsFields: others.resetDependsFields,
 });
 
 export const createDateField = (
@@ -153,17 +157,18 @@ export const REGEX_PATTERNS = {
   LETTERS_5_TO_25: /^[A-Za-z\s]{5,25}$/,
   LETTERS_3_TO_25: /^(?!.*\s{2,})[A-Za-z\s]{3,25}$/,
   EMAIL:
-    /^(?=.{1,254}$)[a-zA-Z0-9](?!.*[._%+]{2})[a-zA-Z0-9._-]{0,62}[a-zA-Z0-9]@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+  /^(?=.{1,254}$)(?!.*[._%+]{2})[a-zA-Z0-9](?:[a-zA-Z0-9._-]{0,62}[a-zA-Z0-9])?@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
   PHONE: /^([0-9]{10})$/,
   WEBSITE: /^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]{1,50}(\.[a-zA-Z]{2,})+(\/[^\s]*)?$/i,
   DATA_RESIDENCY: /^[A-Za-z0-9\s-]+$/,
   NUMBER_OPTIONAL_DECIMAL: /^([0-9]{1,10}(\.[0-9]{1,2})?)?$/,
   DESCRIPTION: /^.{0,500}$/,
+  ACCOUNT_DESCRIPTION: /^.{500,1000}$/,
   POSTAL_CODE:
     /^(?![a-zA-Z]+$)(?=(?:[^a-zA-Z]*[a-zA-Z]){0,2}[^a-zA-Z]*$)[a-zA-Z0-9]{6,10}$/,
   MAX_AI_INTRACTION: /^[3-5]$/,
-  NUMBERS: /^[0-9,]{1,20}$/,
-  NAME_REGEX: /^[A-Za-z\s'-]{3,50}$/,
+  NUMBERS: /^[0-9]{1,20}$/,
+  NAME_REGEX: /^[A-Za-z\s'-]+$/,
   STREET_REGEX: /^(?![\W_]+$)(?!\s*$)[\w\W]{3,200}$/,
   CITY_REGEX: /^[A-Za-z\s]{3,100}$/,
 };
@@ -202,3 +207,19 @@ export const checkErrorMsg = (data: CheckErrorMsg[]): string =>
       }</p>`;
     })
     .join('');
+
+export const formatAddress = (userDatas?: UserDetail) => {
+  const addressParts = [
+    userDatas?.street,
+    userDatas?.city,
+    userDatas?.state_name,
+    userDatas?.zip_code,
+    userDatas?.country_name,
+  ].filter(Boolean);
+  return addressParts.join(', ');
+};
+
+export const getDateTimeFormat = (date?: string) => {
+  if (!date) return '';
+  return dayjs(date).format('MM-DD-YYYY HH:mm:ss');
+};

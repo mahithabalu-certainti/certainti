@@ -77,6 +77,19 @@ export interface UserDetail {
   profile_id: string;
   updated_by: UserRole;
   phone?: string;
+  r_number: string;
+  created_by: string;
+  modified_by: string;
+  created_datetime: string;
+  modified_datetime: string;
+  country_name?: string;
+  state_name?: string;
+  profile: {
+    profile_name: string;
+  };
+  business_teams: {
+    business_teams: string;
+  };
 }
 
 export enum UserRole {

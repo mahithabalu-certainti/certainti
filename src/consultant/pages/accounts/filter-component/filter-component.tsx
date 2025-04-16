@@ -232,9 +232,9 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
 
   return (
     <Box sx={{ width: '100%', p: 2 }}>
-      {/* <Typography variant='subtitle1' sx={{ fontSize: '16px', fontWeight: 600, color: '#2D3E4F', lineHeight: '30px' }}>
+      <Typography variant='subtitle1' sx={{ fontSize: '16px', fontWeight: 600, color: '#2D3E4F', lineHeight: '30px', mb: 1 }}>
         Filter Accounts by
-      </Typography> */}
+      </Typography>
       <TextField
         placeholder='Search'
         variant='outlined'
