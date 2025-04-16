@@ -8,3 +8,4 @@ export * from './form-builder';
 export * from './page-sidebar';
 export * from './table';
 export * from './toast-message';
+export * from './profile';

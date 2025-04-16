@@ -10,7 +10,12 @@ import { UserRoles } from '../../common-service';
 export const AppLayout: React.FC = () => {
   const userData = useSelector((state: RootState) => state.auth);
   const [mobileView, setMobileView] = useState<boolean>(false);
-  const [sidebarExpand, setSidebarExpand] = useState<boolean>(true);
+  const [sidebarExpand, setSidebarExpand] = useState<boolean>(() => {
+    const isAdmin = userData?.role === UserRoles.Admin;
+    if (isAdmin) return true;
+    const saved = localStorage.getItem('sidebarExpand');
+    return saved ? JSON.parse(saved) : true;
+  });
   const [showAdminSidebar, setShowAdminSidebar] = useState<boolean>(false);
 
   useEffect(() => {
@@ -42,7 +47,11 @@ export const AppLayout: React.FC = () => {
       {!showAdminSidebar && (
         <button
           className={`fixed cursor-pointer bg-white z-[1300] transform -translate-x-1/2 top-[70px] shadow-md shadow-[#4242429c] rounded-[2px] p-[4px]${sidebarExpand ? ' left-[260px]' : ' left-[80px]'}`}
-          onClick={() => setSidebarExpand(!sidebarExpand)}
+          onClick={() => {
+            const newState = !sidebarExpand;
+            setSidebarExpand(newState);
+            localStorage.setItem('sidebarExpand', JSON.stringify(newState));
+          }}
         >
           <img
             src={chevronLeftIcon}

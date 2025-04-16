@@ -18,6 +18,7 @@ export interface FormTypeFields {
   disabled?: boolean;
   greaterThan?: Record<string, string>;
   dependsRequired?: Record<string, string>;
+  resetDependsFields?: string[];
   onChange?: boolean;
   anyOneRequired?:boolean
   isLoading?: boolean;
@@ -58,9 +59,18 @@ export interface FieldType {
   defaultValue?: string;
   greaterThan?: Record<string, string>;
   dependsRequired?: Record<string, string>;
+  resetDependsFields?: string[];
   onChange?: boolean;
   anyOneRequired?:boolean, // financial information error handling
   isLoading?: boolean;
 }
 
-export type AllowedCountry = 'us' | 'ca' | 'gb' | 'ie' | 'se' | 'ro' | 'au' | 'fr';
+export type AllowedCountry =
+  | 'us'
+  | 'ca'
+  | 'gb'
+  | 'ie'
+  | 'se'
+  | 'ro'
+  | 'au'
+  | 'fr';

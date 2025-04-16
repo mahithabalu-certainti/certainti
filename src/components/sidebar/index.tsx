@@ -8,6 +8,7 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Tooltip,
 } from '@mui/material';
 import * as React from 'react';
 import { useState } from 'react';
@@ -324,13 +325,38 @@ export const Sidebar: React.FC<SideBarProps> = ({
                       }
                     }}
                   >
-                    <ListItemIcon sx={{ justifyContent: 'center' }}>
-                      <img
-                        src={item.icon}
-                        alt='menu-icon'
-                        className='h-[20px]'
-                      />
-                    </ListItemIcon>
+                    <Tooltip
+                      title={item.name}
+                      placement='right-end'
+                      slotProps={{
+                        tooltip: {
+                          sx: {
+                            backgroundColor: '#fff',
+                            color: 'rgba(0, 0, 0, 0.87)',
+                            boxShadow: 2,
+                            borderRadius: '4px',
+                          },
+                        },
+                        popper: {
+                          modifiers: [
+                            {
+                              name: 'offset',
+                              options: {
+                                offset: [30, -40],
+                              },
+                            },
+                          ],
+                        },
+                      }}
+                    >
+                      <ListItemIcon sx={{ justifyContent: 'center' }}>
+                        <img
+                          src={item.icon}
+                          alt='menu-icon'
+                          className='h-[20px]'
+                        />
+                      </ListItemIcon>
+                    </Tooltip>
                     {sidebarExpand && <ListItemText primary={item.name} />}
                   </ListItemButton>
                 </ListItem>
@@ -374,9 +400,38 @@ export const Sidebar: React.FC<SideBarProps> = ({
                   }}
                   onClick={() => handleToggle(index)}
                 >
-                  <ListItemIcon sx={{ justifyContent: 'center' }}>
-                    <img src={item.icon} alt='menu-icon' className='h-[20px]' />
-                  </ListItemIcon>
+                  <Tooltip
+                    title={item.title}
+                    placement='bottom-end'
+                    slotProps={{
+                      tooltip: {
+                        sx: {
+                          backgroundColor: '#fff',
+                          color: 'rgba(0, 0, 0, 0.87)',
+                          boxShadow: 2,
+                          borderRadius: '4px',
+                        },
+                      },
+                      popper: {
+                        modifiers: [
+                          {
+                            name: 'offset',
+                            options: {
+                              offset: [30, -40],
+                            },
+                          },
+                        ],
+                      },
+                    }}
+                  >
+                    <ListItemIcon sx={{ justifyContent: 'center' }}>
+                      <img
+                        src={item.icon}
+                        alt='menu-icon'
+                        className='h-[20px]'
+                      />
+                    </ListItemIcon>
+                  </Tooltip>
                   <ListItemText
                     sx={{
                       '& .MuiTypography-root': {

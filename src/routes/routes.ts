@@ -1,6 +1,7 @@
 export const MAIN_ROUTE = '/';
 
 export const LOGIN = '/login';
+export const PROFILE = '/profile';
 
 export const MANAGE_USER = '/manage-user';
 export const MANAGE_PROFILE = '/manage-profile';

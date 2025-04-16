@@ -29,6 +29,8 @@ import { RootState } from '../../store/store';
 import { GlobalModal } from '../global-modal';
 import { setFiscalYear } from '../../store/slices/account-slice';
 import { fiscalYears } from '../../common-utils';
+import { useNavigate } from 'react-router-dom';
+import { PROFILE } from '../../routes';
 
 export const Navbar: React.FC = () => {
   const msalSigninInstance = new PublicClientApplication(msalConfig);
@@ -43,6 +45,7 @@ export const Navbar: React.FC = () => {
 
   const dispatch = useDispatch();
   const { logout } = useAuthHook();
+  const navigate = useNavigate();
   const { role, name } = useSelector((state: RootState) => state.auth);
   const { fiscalYear } = useSelector((state: RootState) => state.account);
 
@@ -109,6 +112,11 @@ export const Navbar: React.FC = () => {
     }
   };
 
+  const goToProfile = () => {
+    navigate(PROFILE);
+    handleMenuClose();
+  };
+
   const renderMenu = (
     <Menu
       anchorEl={anchorEl}
@@ -125,8 +133,7 @@ export const Navbar: React.FC = () => {
       open={isMenuOpen}
       onClose={handleMenuClose}
     >
-      <MenuItem onClick={handleMenuClose}>Profile</MenuItem>
-      <MenuItem onClick={handleMenuClose}>My account</MenuItem>
+      {isConsultant && <MenuItem onClick={goToProfile}>Profile</MenuItem>}
       <MenuItem onClick={handleLogout}>Logout</MenuItem>
     </Menu>
   );
