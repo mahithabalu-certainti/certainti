@@ -403,12 +403,14 @@ class UserService {
           ],
         });
         if (users) {
-          const { country, state } = await this.getGeoData(
+          const { country, state, city } = await this.getGeoData(
             users.country || "",
-            users.state || ""
+            users.state || "",
+            users.city || ""
           );
           (users as any).dataValues.country_name = country;
           (users as any).dataValues.state_name = state;
+          (users as any).dataValues.city_name = city;
         }
       } else {
         users = UserDetails.findAll({
@@ -786,11 +788,12 @@ class UserService {
     return [sortBy, sortOrder];
   }
 
-  async getGeoData(countryId: string, stateId: string) {
+  async getGeoData(countryId: string, stateId: string, cityId: string) {
     const mainDbSequelize = await initSequelize();
 
     let country: string | null = null;
     let state: string | null = null;
+    let city: string | null = null;
 
     if (countryId) {
       const [countryResult]: any[] = await mainDbSequelize.query(
@@ -814,9 +817,21 @@ class UserService {
       state = stateResult?.state_name || null;
     }
 
+    if (cityId) {
+      const [stateResult]: any[] = await mainDbSequelize.query(
+        `SELECT rid FROM city WHERE rid = :rid`,
+        {
+          replacements: { rid: cityId },
+          type: "SELECT",
+        }
+      );
+      city = stateResult?.state_name || null;
+    }
+
     return {
       country,
       state,
+      city
     };
   }
 

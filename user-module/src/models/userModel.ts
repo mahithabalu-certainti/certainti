@@ -189,6 +189,15 @@ export class User
           beforeUpdate: (user) => {
             user.setDataValue("modified_datetime", new Date());
           },
+          beforeValidate: async (account) => {
+            const latestAccount = await User.findAll();
+            const serialNumber = latestAccount ? latestAccount.length + 1 : 1;
+
+            const accountCode = `USR${serialNumber
+              .toString()
+              .padStart(4, "0")}`;
+            account.setDataValue("r_number", accountCode);
+          },
         },
       }
     );
