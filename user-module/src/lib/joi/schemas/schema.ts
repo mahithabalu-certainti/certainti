@@ -41,7 +41,6 @@ const enterpriseUserSchema = Joi.object({
   employment_date: Joi.date().optional(),
   department_id: Joi.string().max(255).required(),
   function_group_id: Joi.string().max(255).required(),
-  phone: Joi.string().pattern(/^[1-9]\d{9,14}$/).required(),
   created_by: Joi.string().max(255).required(),
 })
 
@@ -60,6 +59,7 @@ const updateUserSchema = Joi.object({
   state: Joi.string().max(255).allow('', null).optional(),
   zip_code: Joi.string().max(255).allow('', null).optional(),
   country: Joi.string().max(255).allow('', null).optional(),
+  phone: Joi.string().pattern(/^[1-9]\d{9,14}$/).required(),
   updated_by: Joi.string().max(255).required(),
 });
 

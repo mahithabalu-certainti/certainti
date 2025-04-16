@@ -34,6 +34,7 @@ export interface IUserData {
   employment_date?: Date;
   department_id?: string;
   function_group_id?: string;
+  phone?: string;
   created_by: string;
   organization: string
 }
@@ -60,5 +61,6 @@ export interface IUpdateUserData {
   department_id?: string;
   function_group_id?: string;
   organization: string
+  phone?: string;
   updated_by: string;
 }
