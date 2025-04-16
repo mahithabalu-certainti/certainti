@@ -145,8 +145,8 @@ export class ResourceService {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          resources,
-          count: resources.length,
+          resources: resources.resources,
+          count: resources.totalCount,
         },
       };
     } catch (err) {
