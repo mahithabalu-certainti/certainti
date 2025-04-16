@@ -164,11 +164,6 @@ export const FormData = (
           createDateField('fiscal_end_date', 'Fiscal End Date', {
             disabled: disableFields,
             required: true,
-            greaterThan: {
-              key: 'fiscal_start_date',
-              errorMessage:
-                'Date should be greater or equal to Fiscal Start Date',
-            },
           }),
           createTextField('blended_rate_fte', 'Blended Rate - FTE', {
             required: false,
@@ -210,7 +205,7 @@ export const FormData = (
           createTextAreaField('account_description', 'Description', {
             required: false,
             regex: REGEX_PATTERNS.ACCOUNT_DESCRIPTION,
-            regexErrorMessage: 'Description must be at least 500 characters',
+            regexErrorMessage: 'Description must be at with in 500 characters',
             placeholder: 'Enter Description',
           }),
         ],
