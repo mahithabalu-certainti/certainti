@@ -1,5 +1,5 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
-import { Resources } from "./resource";
+import { Resources } from "./resources";
 import { Skill } from "./skill";
 
 interface ResourceSkillAttributes  {

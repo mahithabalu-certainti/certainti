@@ -1,8 +1,8 @@
 import { Sequelize } from "sequelize";
-import { ResourceCost } from "../models/resourceCost";
+import { ResourceCost } from "../models/resourcesCost";
 import { ResourceCostTimeline } from "../models/resourceCostTimeline";
 import { ResourceCostHistory } from "../models/resourceCostHistory";
-import { Resources } from "../models/resource";
+import { Resources } from "../models/resources";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { HttpStatus } from "../utils/constants";

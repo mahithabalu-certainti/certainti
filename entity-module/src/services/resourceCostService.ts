@@ -1,5 +1,5 @@
-import { ResourceCost } from "../models/resourceCost";
-import { Resources } from "../models/resource";
+import { ResourceCost } from "../models/resourcesCost";
+import { Resources } from "../models/resources";
 import { HttpStatus } from "../utils/constants";
 import { IResourceCost, IUpdateResourceCost } from "../utils/types";
 import { ResourceCostTimeline } from "../models/resourceCostTimeline";

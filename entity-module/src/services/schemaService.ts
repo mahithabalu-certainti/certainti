@@ -1,6 +1,6 @@
 import moment, { Moment } from "moment";
 import { initOrgSequelize } from "../config/orgDataSource";
-import { Resources } from "../models/resource";
+import { Resources } from "../models/resources";
 import { ICreateResource, IUpdateResource } from "../utils/types";
 import { Sequelize } from "sequelize";
 import { ResourceFiscal } from "../models/resourceFiscal";
