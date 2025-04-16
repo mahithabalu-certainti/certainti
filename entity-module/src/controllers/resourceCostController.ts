@@ -210,7 +210,7 @@ async function updateResourceCost(req: Request, res: Response): Promise<void> {
 async function resourceCostById(req: Request, res: Response): Promise<void> {
   const methodName = "resourceCostById";
   try {
-    const id = req.query.id as string;
+    const { id } = req.params;
     const accountNumber = req.query.accountNumber as string;
     const result = await resourceCostService.resourceCostById(id,accountNumber);
 
