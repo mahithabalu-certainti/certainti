@@ -276,7 +276,7 @@ jobs:
       - user-module
       - account-module
     if: ${{ needs.changes.outputs.entity-module == 'true' || always()}}
-    name: Build and Deploy Document Service
+    name: Build and Deploy Entity Service
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
