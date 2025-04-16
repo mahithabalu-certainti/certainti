@@ -90,6 +90,7 @@ export const FormData = (
             placeholder: 'Choose Country',
             required: true,
             onChange: true,
+            resetDependsFields: ['region'],
           }),
           createSelectField('region', 'Region', {
             options: state,
@@ -208,8 +209,8 @@ export const FormData = (
         fields: [
           createTextAreaField('account_description', 'Description', {
             required: false,
-            regex: REGEX_PATTERNS.DESCRIPTION,
-            regexErrorMessage: 'Maximum 500 characters allowed',
+            regex: REGEX_PATTERNS.ACCOUNT_DESCRIPTION,
+            regexErrorMessage: 'Description must be at least 500 characters',
             placeholder: 'Enter Description',
           }),
         ],

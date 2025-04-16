@@ -6,6 +6,7 @@ import TextButton from '../../../components/button/text-button';
 import { useManageUserDetail } from '../../service/manage-user-detail/manage-user-detail-service';
 import { Detail } from '../../types/admin-user-detail';
 import { BUTTON_STYLES, HEADER_STYLES } from './styles';
+import { getDateTimeFormat } from '../../../common-utils';
 
 const MENU_ITEMS = [
   {
@@ -57,13 +58,26 @@ export const ManageUserDetails: React.FC = () => {
     }
   };
 
-  const renderRow = (value: Detail): JSX.Element => (
-    <div className='grid grid-cols-2 gap-1 items-center justify-center border-b border-gray-200 py-2'>
-      <div className='font-bold text-center'>{value?.label}</div>
-      <div>{value?.value}</div>
-    </div>
-  );
+  const renderRows = (left: Detail[], right: Detail[]) => {
+    const maxLength = Math.max(left.length, right.length);
 
+    return Array.from({ length: maxLength }).map((_, index) => (
+      <React.Fragment key={index}>
+        <div className='grid grid-cols-2 gap-1 items-center justify-center border-b border-gray-200 py-2'>
+          <div className='font-bold text-center'>
+            {left[index]?.label ?? ''}
+          </div>
+          <div>{left[index]?.value ?? ''}</div>
+        </div>
+        <div className='grid grid-cols-2 gap-1 items-center justify-center border-b border-gray-200 py-2'>
+          <div className='font-bold text-center'>
+            {right[index]?.label ?? ''}
+          </div>
+          <div>{right[index]?.value ?? ''}</div>
+        </div>
+      </React.Fragment>
+    ));
+  };
   if (!userId) {
     return <div>No user ID provided</div>;
   }
@@ -89,11 +103,12 @@ export const ManageUserDetails: React.FC = () => {
 
   // Map your API data to the mock data structure
   const mappedUserDetails: Detail[] = [
+    { label: 'User ID', value: userDetail?.rid || 'N/A' },
     { label: 'Full name', value: userDetail?.full_name || 'N/A' },
     { label: 'Email address', value: userDetail?.email || 'N/A' },
     { label: 'Profile', value: userDetail?.profile.profile_name || 'N/A' },
     {
-      label: 'Active',
+      label: 'Status',
       value: capitalizeFirstLetter(userDetail?.status),
     },
     { label: 'First name', value: userDetail?.first_name || 'N/A' },
@@ -104,6 +119,7 @@ export const ManageUserDetails: React.FC = () => {
   ];
 
   const mappedAdditionalDetails: Detail[] = [
+    { label: 'User number', value: userDetail?.r_number || 'N/A' },
     { label: 'State/Province', value: userDetail?.state || 'N/A' },
     { label: 'Zip/Postal Code', value: userDetail?.zip_code || 'N/A' },
     { label: 'Country', value: userDetail?.country || 'N/A' },
@@ -111,9 +127,15 @@ export const ManageUserDetails: React.FC = () => {
       label: 'Created by',
       value: capitalizeFirstLetter(userDetail?.created_by),
     },
-    { label: 'Created on', value: userDetail?.createdAt || 'N/A' },
+    {
+      label: 'Created on',
+      value: getDateTimeFormat(userDetail?.created_datetime),
+    },
     { label: 'Modified by', value: userDetail?.modified_by || 'N/A' },
-    { label: 'Modified on', value: userDetail?.updatedAt },
+    {
+      label: 'Modified on',
+      value: getDateTimeFormat(userDetail?.modified_datetime),
+    },
   ];
 
   const goBack = () => {
@@ -174,17 +196,8 @@ export const ManageUserDetails: React.FC = () => {
           <div className='flex bg-[#CBD6E2] p-2'>
             <div className='mb-3 text-small font-semibold'>User Details</div>
           </div>
-          <div className='grid grid-cols-2'>
-            <div className='flex flex-col space-y-4'>
-              {mappedUserDetails.map((detail, index) => (
-                <React.Fragment key={index}>{renderRow(detail)}</React.Fragment>
-              ))}
-            </div>
-            <div className='flex flex-col space-y-4'>
-              {mappedAdditionalDetails.map((detail, index) => (
-                <React.Fragment key={index}>{renderRow(detail)}</React.Fragment>
-              ))}
-            </div>
+          <div className='grid grid-cols-2 divide-y'>
+            {renderRows(mappedUserDetails, mappedAdditionalDetails)}
           </div>
         </div>
       </div>

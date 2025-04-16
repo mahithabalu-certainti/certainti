@@ -4,7 +4,7 @@ export const userDetails: Detail[] = [
   { label: 'Full name', value: 'Sample Text' },
   { label: 'Email address', value: 'Sample Text' },
   { label: 'Profile', value: 'Sample Text' },
-  { label: 'Active', value: 'Sample Text' },
+  { label: 'Status', value: 'Sample Text' },
   { label: 'First name', value: 'Sample Text' },
   { label: 'Last name', value: 'Sample Text' },
   { label: 'Street', value: 'Sample Text' },

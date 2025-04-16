@@ -93,7 +93,7 @@ export const FormData = (
             required: false,
             isLoading: stateLoading || cityLoading,
           }),
-          createRadioField('status', 'Active', {
+          createRadioField('status', 'Status', {
             required: true,
             radioOptions: [
               { label: 'Active', value: 'active' },

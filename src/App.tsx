@@ -10,6 +10,7 @@ import {
   HomePage,
   Login,
   NotFound,
+  Profile,
   ProjectForm,
   ResourceForm,
 } from './consultant/pages';
@@ -28,6 +29,7 @@ import {
   LOGIN,
   MAIN_ROUTE,
   NOT_MATCH,
+  PROFILE,
   PROJECT_CREATE,
   ProtectedRoute,
   RESOURCE,
@@ -72,6 +74,7 @@ export const App: React.FC<IApp> = ({ instance }) => {
             <Route path={PROJECT_CREATE} element={<ProjectForm />} />
             <Route path={RESOURCE_CREATE} element={<ResourceForm />} />
             <Route path={RESOURCE} element={<Resource />} />
+            <Route path={PROFILE} element={<Profile />} />
           </Route>
 
           {/* Admin protected routes */}
