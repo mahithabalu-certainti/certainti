@@ -60,6 +60,7 @@ class UserService {
         middle_name,
         created_by,
         organization,
+        phone
       } = userData;
 
       const repository = this.getAccountRepository();
@@ -78,6 +79,7 @@ class UserService {
         country,
         role_rid: role,
         middle_name,
+        phone,
         full_name:
           first_name + (middle_name ? " " + middle_name : "") + " " + last_name,
         created_by,
@@ -135,6 +137,7 @@ class UserService {
         role,
         middle_name,
         organization,
+        phone,
         updated_by,
       } = userData;
 
@@ -163,6 +166,7 @@ class UserService {
           country,
           role_rid: role,
           middle_name,
+          phone,
           full_name:
           first_name + (middle_name ? " " + middle_name : "") + " " + last_name,
           modified_by: updated_by,

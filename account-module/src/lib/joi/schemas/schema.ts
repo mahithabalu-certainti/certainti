@@ -201,10 +201,10 @@ const updateAccountSchema = Joi.object({
   modified_by: Joi.string().max(255).optional(),
   primary_contact_name: Joi.string().min(3).max(25).required(),
   primary_contact_email: Joi.string().email().max(50).required(),
-  primary_contact_number: Joi.string().max(10).required(),
+  primary_contact_number: Joi.string().pattern(/^[1-9]\d{9,14}$/).required(),
   finance_poc_name: Joi.string().min(3).max(25).required(),
   finance_poc_email: Joi.string().email().max(50).required(),
-  finance_poc_number: Joi.string().max(10).required(),
+  finance_poc_number: Joi.string().pattern(/^[1-9]\d{9,14}$/).required(),
   industry: Joi.string().min(5).max(25).required(),
   website: Joi.string()
     .max(50)

@@ -23,6 +23,7 @@ interface UserAttributes {
   last_login_datetime?: Date;
   login_attempt_failure_count?: number;
   status?: string;
+  phone?: string;
   created_by?: string;
   modified_by?: string;
   created_datetime?: Date;
@@ -57,6 +58,7 @@ export class User
   public last_login_datetime?: Date;
   public login_attempt_failure_count?: number;
   public status?: string;
+  public phone?: string;
   public created_by?: string;
   public modified_by?: string;
   public business_teams?: any;
@@ -98,6 +100,10 @@ export class User
           type: DataTypes.STRING,
           allowNull: true,
         },
+        phone: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },       
         last_name: {
           type: DataTypes.STRING,
         },
