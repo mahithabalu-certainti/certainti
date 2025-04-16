@@ -3,6 +3,7 @@ export type Column<T> = {
   header: string;
   render?: (row: T) => React.ReactNode;
   sortable?: boolean;
+  sort?: string;
 };
 
 export type RowData = {

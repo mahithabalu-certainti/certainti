@@ -26,7 +26,7 @@ export const UserTable: React.FC<Record<string, any>> = (appliedFilters) => {
   }, [appliedFilters]);
 
   const { data, isLoading, isError } = useManageUserList(tableParams);
-  const totalItems = data?.data?.users.length || 0;
+  const totalItems = data?.data?.count || 0;
 
   const convertUserListData = (data: User[]): ManageUser[] => {
     if (!data) return [];

@@ -13,6 +13,7 @@ export type ManageUserColumn<T> = {
   id: string;
   header: string;
   sortable?: boolean;
+  sort?: string;
   render?: (row: T) => React.ReactNode;
 };
 
@@ -119,6 +120,7 @@ export interface UsersData {
 export interface ManageUserApiResponse extends CommonApiResponse {
   data: {
     users: User[];
+    count: number;
   };
 }
 

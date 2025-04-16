@@ -33,8 +33,8 @@ export const useManageUserList = (params: UserListParams = {}) => {
   return useQuery<ManageUserApiResponse, Error>({
     queryKey: ['manageUsers', params],
     queryFn: () => fetchManageUserList(params),
-    staleTime: 5 * 60 * 1000, // 5 minutes cache
-    retry: 2,
+    staleTime: 0, // No cache
+    gcTime: 0, // Immediately remove from cache
   });
 };
 

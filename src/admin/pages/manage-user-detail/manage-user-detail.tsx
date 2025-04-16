@@ -114,15 +114,15 @@ export const ManageUserDetails: React.FC = () => {
     { label: 'First name', value: userDetail?.first_name || 'N/A' },
     { label: 'Last name', value: userDetail?.last_name || 'N/A' },
     { label: 'Street', value: userDetail?.street || 'N/A' },
-    { label: 'City', value: userDetail?.city || 'N/A' },
+    { label: 'City', value: userDetail?.city_name || 'N/A' },
     // Add other fields as needed
   ];
 
   const mappedAdditionalDetails: Detail[] = [
     { label: 'User number', value: userDetail?.r_number || 'N/A' },
-    { label: 'State/Province', value: userDetail?.state || 'N/A' },
+    { label: 'State/Province', value: userDetail?.state_name || 'N/A' },
     { label: 'Zip/Postal Code', value: userDetail?.zip_code || 'N/A' },
-    { label: 'Country', value: userDetail?.country || 'N/A' },
+    { label: 'Country', value: userDetail?.country_name || 'N/A' },
     {
       label: 'Created by',
       value: capitalizeFirstLetter(userDetail?.created_by),
@@ -131,10 +131,14 @@ export const ManageUserDetails: React.FC = () => {
       label: 'Created on',
       value: getDateTimeFormat(userDetail?.created_datetime),
     },
-    { label: 'Modified by', value: userDetail?.modified_by || 'N/A' },
+    { label: 'Last Updated by', value: userDetail?.modified_by || 'N/A' },
     {
-      label: 'Modified on',
+      label: 'Last Updated On',
       value: getDateTimeFormat(userDetail?.modified_datetime),
+    },
+    {
+      label: 'Role',
+      value: userDetail?.business_teams?.business_teams,
     },
   ];
 
