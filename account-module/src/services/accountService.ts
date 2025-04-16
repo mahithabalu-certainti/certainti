@@ -96,7 +96,7 @@ class AccountService {
         offset,
         order,
         subQuery: false,
-        include: this.getAccountIncludeOptions(childClause),
+        include: this.getAccountIncludeOptions(childClause,globalFilters),
       });
 
       // Get total count without pagination
@@ -107,7 +107,7 @@ class AccountService {
         } as any,
         ...allWhereClause,
       },
-      include: this.getAccountIncludeOptions(childClause),
+      include: this.getAccountIncludeOptions(childClause,globalFilters),
       distinct: true
     });
 
@@ -635,22 +635,39 @@ class AccountService {
     return [sortBy, sortOrder];
   }
 
-  private getAccountIncludeOptions(childClause: Record<string, any>) {
+  private getAccountIncludeOptions(
+    childClause: Record < string, any > ,
+    globalFilters: Record < string, string[] >
+  ) {
+    const isGlobalFiltersEmpty = !globalFilters || Object.keys(globalFilters).length === 0;
+  
+    const childAccountsInclude: any = {
+      model: Account,
+      as: "child_accounts",
+      include: [{
+          model: Country,
+          as: "country",
+          attributes: ["country_name"]
+        },
+        {
+          model: Currency,
+          as: "currency",
+          attributes: ["currency_code"]
+        },
+        {
+          model: Account,
+          as: "parent_account",
+          attributes: ["account_name"],
+        },
+      ],
+    };
+  
+    if (!isGlobalFiltersEmpty) {
+      childAccountsInclude.where = childClause;
+    }
+  
     return [
-      {
-        model: Account,
-        as: "child_accounts",
-        where:childClause,
-        include: [
-          { model: Country, as: "country", attributes: ["country_name"] },
-          { model: Currency, as: "currency", attributes: ["currency_code"] },
-          {
-            model: Account,
-            as: "parent_account",
-            attributes: ["account_name"],
-          },
-        ],
-      },
+      childAccountsInclude,
       {
         model: Country,
         as: "country",
