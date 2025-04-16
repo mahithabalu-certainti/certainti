@@ -9,6 +9,7 @@ const DEFAULT_AUTH_DETAIL: IAuthDetails = {
   email: null,
   isAuthenticated: false,
   userId: null,
+  azureId: null,
   name: null,
   role: null,
 };

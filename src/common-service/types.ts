@@ -16,6 +16,7 @@ export interface GetCurrentUserRoleApiResponse extends CommonApiResponse {
   data: {
     rid: string;
     user_role: UserRoles;
+    user_id: string;
   };
 }
 

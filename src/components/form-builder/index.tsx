@@ -6,7 +6,7 @@ import dayjs from 'dayjs';
 import { CountryCode, parsePhoneNumberFromString } from 'libphonenumber-js';
 import React, { useEffect } from 'react';
 import PhoneInput, { CountryData } from 'react-phone-input-2';
-import { calendarIcon, searchBlackIcon } from '../../assets';
+import { calendarIcon, closeIcon, searchBlackIcon } from '../../assets';
 import { FieldTypes, OnChange } from '../../common-service';
 import { ALLOWED_COUNTRIES } from '../../common-utils';
 import 'react-phone-input-2/lib/style.css';
@@ -20,7 +20,7 @@ interface FormBuilderProps {
   data: FormType[];
   formRef: React.RefObject<HTMLFormElement>;
   loading?: boolean;
-  values?: Record<string, string | string[] | boolean | number | null>;
+  values?: Record<string, string | string[] | boolean | number | null | object>;
   outData: (e: object) => void;
   onChange?: (params: OnChange) => void;
 }
@@ -74,11 +74,29 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           [`${field.name}_countryCode`]: countryCode,
         }),
       };
-      
+
+      if (field.resetDependsFields?.length) {
+        field.resetDependsFields.forEach((field) => {
+          newData[field] = '';
+        });
+      }
+
       if (field.onChange && onChange) {
         onChange({ fieldName: field.name, fieldValue: value });
       }
-      
+
+      setFormData((prevFormData) => {
+        return prevFormData?.map((section) => ({
+          ...section,
+          fields: section.fields.map((f) => {
+            if (f.name === field.name) {
+              return { ...f, error: '' };
+            }
+            return f;
+          }),
+        }));
+      });
+
       // Queue the state update for after render
       setTimeout(() => {
         setConstructFormData(newData);
@@ -236,23 +254,39 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               value={dayjs(fieldValue, 'DD/MM/YYYY')}
               disabled={field.disabled}
               onChange={(newValue) => {
-                handleChange(dayjs(newValue).format('DD/MM/YYYY'));
+                if (!newValue) {
+                  handleChange('');
+                } else {
+                  handleChange(dayjs(newValue).format('DD/MM/YYYY'));
+                }
               }}
               shouldDisableDate={(date) => dayjs(date).isBefore(dayjs(), 'day')}
               slots={{
                 openPickerIcon: () => (
                   <img src={calendarIcon} alt='calendar' className='w-6 h-5' />
                 ),
+                clearIcon: () => (
+                  <img src={closeIcon} alt='calendar' className='w-2.5 h-2.5' />
+                ),
               }}
               slotProps={{
+                field: { clearable: true },
                 textField: {
                   fullWidth: true,
                   size: 'small',
-                  disabled: true,
+                  disabled: false,
                   InputProps: {
                     onPaste: (e: React.ClipboardEvent<HTMLInputElement>) => {
                       e.preventDefault();
                       return false;
+                    },
+                    inputProps: {
+                      readOnly: true,
+                      onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => {
+                        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                          e.preventDefault();
+                        }
+                      },
                     },
                   },
                   sx: {
@@ -402,6 +436,18 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             return {
               ...field,
               error: field.regexErrorMessage || 'Invalid format',
+            };
+          }
+        }
+
+        if (field.type === 'text' && value) {
+          const emojiRegex =
+            /[\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD83C-\uDBFF\uDC00-\uDFFF]+|[\u2600-\u26FF]/gu;
+          if (emojiRegex.test(value)) {
+            hasError = true;
+            return {
+              ...field,
+              error: 'Emojis are not accepted',
             };
           }
         }

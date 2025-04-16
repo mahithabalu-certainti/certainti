@@ -40,10 +40,11 @@ export const Login: React.FC = () => {
       const authDetail = {
         isAuthenticated: true,
         authToken: idToken,
-        userId: account?.localAccountId,
+        azureId: account?.localAccountId,
         email: account?.username,
         name: account?.name,
         role: userRole.data.user_role,
+        userId: userRole.data.user_id,
       };
       login(authDetail as IAuthDetails);
       dispatch(setUserId(account?.localAccountId));
