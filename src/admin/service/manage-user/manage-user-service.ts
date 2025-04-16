@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { userServiceApi } from '../../../api/api';
+import { CommonApiResponse } from '../../../common-service';
 import {
   ManageUserApiResponse,
   ManageUserDetailApiResponse,
@@ -9,7 +10,6 @@ import {
   UserRolesApiResponse,
 } from '../../types/manage-user';
 import { getUserListUrl } from '../urls';
-import { CommonApiResponse } from '../../../common-service';
 const ORGANIZATION = import.meta.env.VITE_ORGANIZATION;
 
 export const fetchManageUserList = async (params: UserListParams = {}) => {
