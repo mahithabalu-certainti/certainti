@@ -141,7 +141,14 @@ class SchemaService {
           "resource_role",
         ],
       });
-      return resources;
+
+      const totalCount = await Resource.count({
+        where: {
+          fiscal_year: fiscalYear,
+          ...whereClause,
+        },
+      });
+      return {resources, totalCount};
     } catch (err) {
       throw new Error(
         "Error creating table resources: " + (err as Error).message

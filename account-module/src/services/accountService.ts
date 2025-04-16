@@ -99,12 +99,24 @@ class AccountService {
         include: this.getAccountIncludeOptions(childClause),
       });
 
+      // Get total count without pagination
+    const totalCount = await repository.count({
+      where: {
+        parent_account_rid: {
+          [Op.is]: null,
+        } as any,
+        ...allWhereClause,
+      },
+      include: this.getAccountIncludeOptions(childClause),
+      distinct: true
+    });
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
           account,
-          count: account.length,
+          count: totalCount,
         },
       };
     } catch (err) {
