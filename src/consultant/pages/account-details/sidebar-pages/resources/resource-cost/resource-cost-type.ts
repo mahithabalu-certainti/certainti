@@ -1,6 +1,6 @@
 // import { ResourceCostList } from '../../../types/resourceCost';
 
-import { ResourceCostList } from "../../../../../types/resourceCost";
+import { ResourceCostList } from "../../../../../types/resource-cost";
 
 export interface RenderCostRowProps {
   resourceCost: ResourceCostType[];

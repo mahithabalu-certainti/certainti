@@ -27,6 +27,7 @@ const ResourceForm: React.FC = () => {
   const [currentCountry, setCurrentCountry] = useState('');
   const { successToast, errorToast } = useToast();
   const location = useLocation();
+  const { state } = location;
   const { accountid } = useParams();
 
   // Need to call resource by id api for fetching resource info
@@ -70,10 +71,15 @@ const ResourceForm: React.FC = () => {
     currency,
     regions,
     updateAccount,
+    createResourceCost,
+    updateResourceCost,
+    createResourceSkill,
+    updateResourceSkill
   ];
   const commonError = checkError(errorhandlingData);
   const commonErrorMsg = checkErrorMsg(errorhandlingData as CheckErrorMsg[]);
-  const commonSuccess = createAccount.isSuccess || updateAccount.isSuccess;
+  const costSkillSuccess = createResourceCost.isSuccess || updateResourceCost.isSuccess || createResourceSkill.isSuccess || updateResourceSkill.isSuccess
+  const commonSuccess = createAccount.isSuccess || updateAccount.isSuccess || costSkillSuccess;
 
   useEffect(() => {
     if (commonError) {
@@ -84,6 +90,22 @@ const ResourceForm: React.FC = () => {
 
   useEffect(() => {
     if (commonSuccess) {
+      if (state?.cost) {
+        successToast(
+          isEditView
+            ? 'Resource cost updated successfully'
+            : 'Resource cost created successfully'
+        );
+      }
+
+      if (state?.skill) {
+        successToast(
+          isEditView
+            ? 'Resource skill updated successfully'
+            : 'Resource skill created successfully'
+        );
+      }
+
       successToast(
         isEditView
           ? 'Account update successfully'
@@ -121,8 +143,8 @@ const ResourceForm: React.FC = () => {
   );
 
   const submitData = (formValues: any) => {
-    const {state} = location;
-    if(state.cost){
+    const { state } = location;
+    if (state.cost) {
       const costData = transformCostData(formValues, isEditView);
       if (isEditView) {
         updateResourceCost.mutate(costData)
@@ -130,7 +152,7 @@ const ResourceForm: React.FC = () => {
         createResourceCost.mutate(costData);
       }
     }
-    if(state.skill){
+    if (state.skill) {
       const skillData = transformSkillData(formValues, isEditView);
       if (isEditView) {
         updateResourceSkill.mutate(skillData);

@@ -36,7 +36,7 @@ export const UserTable = () => {
     if (data?.data) {
       setUsers(convertUserListData(data?.data?.users));
     }
-  }, [data?.data]);
+  }, [data]);
 
   const getRowId = (row: ManageUser) => row.id;
 

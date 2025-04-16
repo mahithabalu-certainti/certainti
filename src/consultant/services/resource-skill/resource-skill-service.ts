@@ -11,10 +11,10 @@ import {
   ResourceSkillList,
   ResourceSkillListParams,
   ResourceSkillPayload,
-} from '../../types/resourceSkill';
+} from '../../types/resource-skill';
 import { api } from '../../../api/api';
 import { skillListURL } from '../urls/resource-cost-skill-urls';
-import { skillLevel } from '../../pages/account-details/sidebar-pages/resources/resource-skill/resourceSkillType';
+import { skillLevel } from '../../pages/account-details/sidebar-pages/resources/resource-skill/resource-skill-type';
 
 const mockData: ResourceSkillApiResponse = {
   statusCode: 200,

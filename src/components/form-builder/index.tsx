@@ -65,30 +65,33 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         });
       });
 
-      let costInfo = state?.costInfo;
-      let skillInfo = state?.skillInfo;
-
-      constructFormData = {
-        ...constructFormData,
-        skill_level: skillInfo?.skillLevel.toLowerCase() || '',
-        skill_name: skillInfo?.skillName || '',
-        skill_start_date: skillInfo?.startDate || '',
-        years_of_experience: skillInfo?.yearsOfExperience || '',
+      if (state?.cost) {
+        let costInfo = state?.costInfo;
+        constructFormData = {
+          ...constructFormData,
+          financial_start_date: costInfo?.startDate || '',
+          financial_end_date: costInfo?.endDate || '',
+          annual: costInfo?.annualCost || '',
+          semi_annual: costInfo?.semiAnnualCost || '',
+          monthly: costInfo?.monthlyCost || '',
+          bi_weekly: costInfo?.biWeeklyCost || '',
+          weekly: costInfo?.weeklyCost || '',
+          daily: costInfo?.dailyCost || '',
+          hourly: costInfo?.hourlyCost || '',
+          currency: costInfo?.currency || '', // Assuming you want to include currency as well
+        };
       }
 
-      constructFormData = {
-        ...constructFormData,
-        financial_start_date: costInfo?.startDate || '',
-        financial_end_date: costInfo?.endDate || '',
-        annual: costInfo?.annualCost || '',
-        semi_annual: costInfo?.semiAnnualCost || '',
-        monthly: costInfo?.monthlyCost || '',
-        bi_weekly: costInfo?.biWeeklyCost || '',
-        weekly: costInfo?.weeklyCost || '',
-        daily: costInfo?.dailyCost || '',
-        hourly: costInfo?.hourlyCost || '',
-        currency: costInfo?.currency || '', // Assuming you want to include currency as well
-      };
+      if (state?.skill) {
+        let skillInfo = state?.skillInfo;
+        constructFormData = {
+          ...constructFormData,
+          skill_level: skillInfo?.skillLevel.toLowerCase() || '',
+          skill_name: skillInfo?.skillName || '',
+          skill_start_date: skillInfo?.startDate || '',
+          years_of_experience: skillInfo?.yearsOfExperience || '',
+        }
+      }     
 
       setConstructFormData(constructFormData);
     }
@@ -114,11 +117,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           [`${field.name}_countryCode`]: countryCode,
         }),
       };
-      
+
       if (field.onChange && onChange) {
         onChange({ fieldName: field.name, fieldValue: value });
       }
-      
+
       // Queue the state update for after render
       setTimeout(() => {
         setConstructFormData(newData);

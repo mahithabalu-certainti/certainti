@@ -1,6 +1,6 @@
 // import { ResourceSkillList } from '../../../types/resourceSkill';
 
-import { ResourceSkillList } from "../../../../../types/resourceSkill";
+import { ResourceSkillList } from "../../../../../types/resource-skill";
 
 export interface RenderSkillRowProps {
   resourceSkill: ResourceSkillType[];

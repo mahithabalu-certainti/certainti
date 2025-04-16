@@ -1,7 +1,7 @@
 import { AccountFormData, NewAccountData } from '../../types';
-import { ResourceCostPayload, ResourceCostSkillFormData } from '../../types/resourceCost';
-import { ResourceSkillPayload } from '../../types/resourceSkill';
-import { skillLevel } from '../account-details/sidebar-pages/resources/resource-skill/resourceSkillType';
+import { ResourceCostPayload, ResourceCostSkillFormData } from '../../types/resource-cost';
+import { ResourceSkillPayload } from '../../types/resource-skill';
+import { skillLevel } from '../account-details/sidebar-pages/resources/resource-skill/resource-skill-type';
 
 export const transformFormData = (
   formData: Partial<AccountFormData>,

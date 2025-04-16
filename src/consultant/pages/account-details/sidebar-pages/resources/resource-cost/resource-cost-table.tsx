@@ -1,11 +1,11 @@
 import { CircularProgress, Paper, Table, TableBody, TableCell, TableHead, TablePagination, TableRow, TableSortLabel, Typography } from "@mui/material"
-import { convertResourceCost, RenderCostRowProps, ResourceCostType } from "./resourceCostType";
+import { convertResourceCost, RenderCostRowProps, ResourceCostType } from "./resource-cost-type";
 import { useEffect, useState } from "react";
 // import { ResourceCostList } from "../../../types/resourceCost";
 // import { useResourceCost } from "../../../services/resource-cost/resource-cost-service";
 import React from 'react';
 import { useNavigate } from "react-router-dom";
-import { ResourceCostList } from "../../../../../types/resourceCost";
+import { ResourceCostList } from "../../../../../types/resource-cost";
 import { useResourceCost } from "../../../../../services/resource-cost/resource-cost-service";
 import { RESOURCECOST } from "../../../../../../routes";
 import ActionButton from "../../../../accounts/table/action-button";

@@ -11,7 +11,7 @@ import {
   ResourceCostList,
   ResourceCostListParams,
   ResourceCostPayload,
-} from '../../types/resourceCost';
+} from '../../types/resource-cost';
 // import { useApiMutation } from '../../../api/mutation';
 import { api } from '../../../api/api';
 import { costListURL } from '../urls/resource-cost-skill-urls';

@@ -3,8 +3,8 @@ import { CircularProgress, Paper, Table, TableBody, TableCell, TableHead, TableP
 import { useEffect, useState } from "react";
 import React from 'react';
 import { useNavigate } from "react-router-dom";
-import { convertResourceSkill, RenderSkillRowProps, ResourceSkillType } from "./resourceSkillType";
-import { ResourceSkillList } from "../../../../../types/resourceSkill";
+import { convertResourceSkill, RenderSkillRowProps, ResourceSkillType } from "./resource-skill-type";
+import { ResourceSkillList } from "../../../../../types/resource-skill";
 import { useResourceSkill } from "../../../../../services/resource-skill/resource-skill-service";
 import { RESOURCESKILL } from "../../../../../../routes";
 import ActionButton from "../../../../accounts/table/action-button";

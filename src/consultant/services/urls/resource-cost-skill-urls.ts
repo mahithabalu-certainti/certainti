@@ -1,5 +1,5 @@
-import { ResourceCostListParams } from '../../types/resourceCost';
-import { ResourceSkillListParams } from '../../types/resourceSkill';
+import { ResourceCostListParams } from '../../types/resource-cost';
+import { ResourceSkillListParams } from '../../types/resource-skill';
 
 const baseUrl = import.meta.env.VITE_RESOURCE_URL;
 export const resourceCostUrl = '/api/resource_cost/';
