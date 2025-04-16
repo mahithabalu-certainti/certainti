@@ -180,7 +180,8 @@ export const FormData = (
           createTextField('blended_rate_subcon', 'Blended Rate - SubCon', {
             required: false,
             regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
-           regexErrorMessage: 'Enter a valid annual revenue using numbers and commas only',
+            regexErrorMessage:
+              'Enter a valid annual revenue using numbers and commas only',
             placeholder: 'Enter Blended Rate - SubCon',
           }),
           createRadioField('auto_access_rd', 'Auto assess RD', {
@@ -205,7 +206,7 @@ export const FormData = (
           createTextAreaField('account_description', 'Description', {
             required: false,
             regex: REGEX_PATTERNS.ACCOUNT_DESCRIPTION,
-            regexErrorMessage: 'Description must be at with in 500 characters',
+            regexErrorMessage: 'Description must be with in 500 characters',
             placeholder: 'Enter Description',
           }),
         ],
