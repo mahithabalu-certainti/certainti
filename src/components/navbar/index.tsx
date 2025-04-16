@@ -1,4 +1,4 @@
-import { PublicClientApplication } from '@azure/msal-browser';
+import { BrowserAuthError, PublicClientApplication } from '@azure/msal-browser';
 import {
   AppBar,
   Badge,
@@ -23,8 +23,8 @@ import {
   settingsIcon,
 } from '../../assets';
 import { UserRoles } from '../../common-service';
-import { msalConfig } from '../../config/msalConfig';
-import { useAuthHook } from '../../hooks';
+import { msalConfig, msalResetPasswordConfig } from '../../config/msalConfig';
+import { useAuthHook, useToast } from '../../hooks';
 import { RootState } from '../../store/store';
 import { GlobalModal } from '../global-modal';
 import { setFiscalYear } from '../../store/slices/account-slice';
@@ -34,7 +34,11 @@ import { PROFILE } from '../../routes';
 
 export const Navbar: React.FC = () => {
   const msalSigninInstance = new PublicClientApplication(msalConfig);
+  const msalResetInstance = new PublicClientApplication(
+    msalResetPasswordConfig
+  );
 
+  const { successToast, errorToast } = useToast();
   const [searchAnchor, setSearchAnchor] = useState<null | HTMLElement>(null);
   const [notificationAnchor, setNotificationAnchor] =
     useState<null | HTMLElement>(null);
@@ -100,6 +104,31 @@ export const Navbar: React.FC = () => {
     setIsGlobalModalOpen(false);
   };
 
+  const changePassword = async () => {
+    try {
+      await msalResetInstance.initialize();
+      await msalResetInstance.loginPopup();
+      successToast('Password changed successfully');
+
+      await msalSigninInstance.initialize();
+      await msalSigninInstance.logoutPopup();
+      await msalSigninInstance.clearCache();
+      logout();
+      window.location.replace('/login');
+    } catch (error) {
+      const err = error as BrowserAuthError;
+      // Prevent show error for User cancelation
+      const isCanceledByUser = [
+        'The user has cancelled entering self-asserted information.',
+        'User cancelled the flow',
+      ].some((msg) => err.errorMessage.includes(msg));
+
+      if (!isCanceledByUser) {
+        errorToast(err.errorMessage);
+      }
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await msalSigninInstance.initialize();
@@ -134,6 +163,7 @@ export const Navbar: React.FC = () => {
       onClose={handleMenuClose}
     >
       {isConsultant && <MenuItem onClick={goToProfile}>Profile</MenuItem>}
+      <MenuItem onClick={changePassword}>Change Password</MenuItem>
       <MenuItem onClick={handleLogout}>Logout</MenuItem>
     </Menu>
   );
