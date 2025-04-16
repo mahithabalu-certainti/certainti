@@ -1,5 +1,5 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
-import { Resources } from "./resources";
+import { Resources } from "./resource";
 
 interface ResourceCostAttributes {
  rid: string,

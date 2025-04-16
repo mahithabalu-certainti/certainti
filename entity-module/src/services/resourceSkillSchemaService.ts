@@ -1,7 +1,7 @@
 import { Sequelize } from "sequelize";
 import { HttpStatus } from "../utils/constants";
 import { initOrgSequelize } from "../config/orgDataSource";
-import { Resources } from "../models/resources";
+import { Resources } from "../models/resource";
 import { Skill } from "../models/skill";
 import { ResourceSkill } from "../models/resourceSkill";
 import { ResourceSkillTimeline } from "../models/resourceSkillTimeline";

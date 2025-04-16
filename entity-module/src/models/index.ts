@@ -1,6 +1,6 @@
 import { initOrgSequelize } from "../config/orgDataSource";
-import { Resources } from "./resources";
-import { ResourceCost } from "./resourcesCost";
+import { Resources } from "./resource";
+import { ResourceCost } from "./resourceCost";
 import { ResourceCostHistory } from "./resourceCostHistory";
 import { ResourceCostTimeline } from "./resourceCostTimeline";
 import { ResourceSkill } from "./resourceSkill";
