@@ -12,18 +12,21 @@ import {
   Typography,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { generatePath, useNavigate } from 'react-router-dom';
+import { reshapeGlobalFilter } from '../../../../common-utils';
 import { ACCOUNT, ACCOUNT_DETAILS } from '../../../../routes';
+import { RootState } from '../../../../store/store';
 import { useAccounts } from '../../../services/account';
 import { Account, AccountList, ConvertedAccount } from '../../../types/account';
 import { convertAccounts } from '../helpers';
 import './styles.css';
 import { renderChildRows, renderRows } from './utils';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../../../store/store';
-import { reshapeGlobalFilter } from '../../../../common-utils';
 
-const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
+const AccountTable: React.FC<Record<string, any>> = ({
+  appliedFilters,
+  setTotalCount,
+}) => {
   const navigate = useNavigate();
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
@@ -49,6 +52,7 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
 
   useEffect(() => {
     setAccounts(convertAccounts(accountList?.accounts ?? []));
+    setTotalCount(accountList?.count ?? 0);
   }, [accountList]);
 
   // Add this handler in the AccountTable component
@@ -183,162 +187,162 @@ const AccountTable: React.FC<Record<string, any>> = ({ appliedFilters }) => {
 
   return (
     <>
-    <Paper sx={{ overflowX: 'auto', boxShadow: 'none' }}>
-      <Table
-        sx={{
-          border: '1px solid #CBD6E2',
-          borderCollapse: 'collapse',
-          '& .MuiTableCell-root': {
+      <Paper sx={{ overflowX: 'auto', boxShadow: 'none' }}>
+        <Table
+          sx={{
             border: '1px solid #CBD6E2',
-          },
-        }}
-      >
-        <TableHead
-          sx={{
+            borderCollapse: 'collapse',
             '& .MuiTableCell-root': {
-              fontWeight: 500,
-              fontSize: '14px',
-              lineHeight: '21px',
-              color: '#2A2A2A',
-              padding: '8px',
+              border: '1px solid #CBD6E2',
             },
           }}
         >
-          <TableRow>
-            <TableCell sx={{ maxWidth: '50px' }} />
-            <TableCell sx={{ minWidth: '300px' }}>
-              <TableSortLabel
-                active={orderBy === 'account_name'}
-                direction={orderBy === 'account_name' ? order : 'asc'}
-                onClick={createSortHandler('account_name')}
-              >
-                Account Name
-              </TableSortLabel>
-            </TableCell>
-            <TableCell sx={{ minWidth: '350px' }}>
-              <TableSortLabel
-                active={orderBy === 'account_id'}
-                direction={orderBy === 'account_id' ? order : 'asc'}
-                onClick={createSortHandler('account_id')}
-              >
-                Account ID
-              </TableSortLabel>
-            </TableCell>
-            <TableCell sx={{ minWidth: '200px' }}>
-              <TableSortLabel
-                active={orderBy === 'parent_account'}
-                direction={orderBy === 'parent_account' ? order : 'asc'}
-                onClick={createSortHandler('parent_account')}
-              >
-                Parent Account
-              </TableSortLabel>
-            </TableCell>
-            <TableCell sx={{ minWidth: '180px' }}>
-              <TableSortLabel
-                active={orderBy === 'account_number'}
-                direction={orderBy === 'account_number' ? order : 'asc'}
-                onClick={createSortHandler('account_number')}
-              >
-                Account Number
-              </TableSortLabel>
-            </TableCell>
-            <TableCell sx={{ minWidth: '200px' }}>
-              <TableSortLabel
-                active={orderBy === 'industry'}
-                direction={orderBy === 'industry' ? order : 'asc'}
-                onClick={createSortHandler('industry')}
-              >
-                Industry
-              </TableSortLabel>
-            </TableCell>
-            <TableCell sx={{ minWidth: '150px' }}>
-              <TableSortLabel
-                active={orderBy === 'country'}
-                direction={orderBy === 'country' ? order : 'asc'}
-                onClick={createSortHandler('country')}
-              >
-                Country
-              </TableSortLabel>
-            </TableCell>
-            <TableCell sx={{ minWidth: '100px' }}>
-              <TableSortLabel
-                active={orderBy === 'currency'}
-                direction={orderBy === 'currency' ? order : 'asc'}
-                onClick={createSortHandler('currency')}
-              >
-                Currency
-              </TableSortLabel>
-            </TableCell>
-            <TableCell sx={{ minWidth: '160px' }}>
-              <TableSortLabel
-                active={orderBy === 'annual_revenue'}
-                direction={orderBy === 'annual_revenue' ? order : 'asc'}
-                onClick={createSortHandler('annual_revenue')}
-              >
-                Annual Revenue
-              </TableSortLabel>
-            </TableCell>
-            <TableCell sx={{ minWidth: '100px' }}>
-              <TableSortLabel
-                active={orderBy === 'status'}
-                direction={orderBy === 'status' ? order : 'asc'}
-                onClick={createSortHandler('status')}
-              >
-                Status
-              </TableSortLabel>
-            </TableCell>
-            <TableCell sx={{ minWidth: '180px' }}>
-              <TableSortLabel
-                active={orderBy === 'primary_contact'}
-                direction={orderBy === 'primary_contact' ? order : 'asc'}
-                onClick={createSortHandler('primary_contact')}
-              >
-                Primary Contact
-              </TableSortLabel>
-            </TableCell>
-            <TableCell sx={{ minWidth: '80px' }}>Actions</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody
-          sx={{
-            '& .MuiTableCell-root': {
-              fontWeight: 300,
-              fontSize: '14px',
-              lineHeight: '21px',
-              color: '#425A76',
-              padding: '6px',
-            },
-          }}
-        >
-          {loading ? (
+          <TableHead
+            sx={{
+              '& .MuiTableCell-root': {
+                fontWeight: 500,
+                fontSize: '14px',
+                lineHeight: '21px',
+                color: '#2A2A2A',
+                padding: '8px',
+              },
+            }}
+          >
             <TableRow>
-              <TableCell colSpan={11} align='center'>
-                <CircularProgress />
+              <TableCell sx={{ maxWidth: '50px' }} />
+              <TableCell sx={{ minWidth: '300px' }}>
+                <TableSortLabel
+                  active={orderBy === 'account_name'}
+                  direction={orderBy === 'account_name' ? order : 'asc'}
+                  onClick={createSortHandler('account_name')}
+                >
+                  Account Name
+                </TableSortLabel>
               </TableCell>
-            </TableRow>
-          ) : accounts?.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={11} align='center'>
-                <Typography variant='body1'>No data available</Typography>
+              <TableCell sx={{ minWidth: '350px' }}>
+                <TableSortLabel
+                  active={orderBy === 'account_id'}
+                  direction={orderBy === 'account_id' ? order : 'asc'}
+                  onClick={createSortHandler('account_id')}
+                >
+                  Account ID
+                </TableSortLabel>
               </TableCell>
+              <TableCell sx={{ minWidth: '200px' }}>
+                <TableSortLabel
+                  active={orderBy === 'parent_account'}
+                  direction={orderBy === 'parent_account' ? order : 'asc'}
+                  onClick={createSortHandler('parent_account')}
+                >
+                  Parent Account
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ minWidth: '180px' }}>
+                <TableSortLabel
+                  active={orderBy === 'account_number'}
+                  direction={orderBy === 'account_number' ? order : 'asc'}
+                  onClick={createSortHandler('account_number')}
+                >
+                  Account Number
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ minWidth: '200px' }}>
+                <TableSortLabel
+                  active={orderBy === 'industry'}
+                  direction={orderBy === 'industry' ? order : 'asc'}
+                  onClick={createSortHandler('industry')}
+                >
+                  Industry
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ minWidth: '150px' }}>
+                <TableSortLabel
+                  active={orderBy === 'country'}
+                  direction={orderBy === 'country' ? order : 'asc'}
+                  onClick={createSortHandler('country')}
+                >
+                  Country
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ minWidth: '100px' }}>
+                <TableSortLabel
+                  active={orderBy === 'currency'}
+                  direction={orderBy === 'currency' ? order : 'asc'}
+                  onClick={createSortHandler('currency')}
+                >
+                  Currency
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ minWidth: '160px' }}>
+                <TableSortLabel
+                  active={orderBy === 'annual_revenue'}
+                  direction={orderBy === 'annual_revenue' ? order : 'asc'}
+                  onClick={createSortHandler('annual_revenue')}
+                >
+                  Annual Revenue
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ minWidth: '100px' }}>
+                <TableSortLabel
+                  active={orderBy === 'status'}
+                  direction={orderBy === 'status' ? order : 'asc'}
+                  onClick={createSortHandler('status')}
+                >
+                  Status
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ minWidth: '180px' }}>
+                <TableSortLabel
+                  active={orderBy === 'primary_contact'}
+                  direction={orderBy === 'primary_contact' ? order : 'asc'}
+                  onClick={createSortHandler('primary_contact')}
+                >
+                  Primary Contact
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ minWidth: '80px' }}>Actions</TableCell>
             </TableRow>
-          ) : (
-            renderRows({
-              accounts: accounts || [],
-              openRows,
-              selectedRows,
-              handleRowClick,
-              handleSelectRow,
-              handleEdit,
-              handleDelete,
-              renderChildRows: childRowsRenderer,
-              handleAccountNameClick,
-            })
-          )}
-        </TableBody>
-      </Table>
-    </Paper>
-    <TablePagination
+          </TableHead>
+          <TableBody
+            sx={{
+              '& .MuiTableCell-root': {
+                fontWeight: 300,
+                fontSize: '14px',
+                lineHeight: '21px',
+                color: '#425A76',
+                padding: '6px',
+              },
+            }}
+          >
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={11} align='center'>
+                  <CircularProgress />
+                </TableCell>
+              </TableRow>
+            ) : accounts?.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={11} align='center'>
+                  <Typography variant='body1'>No data available</Typography>
+                </TableCell>
+              </TableRow>
+            ) : (
+              renderRows({
+                accounts: accounts || [],
+                openRows,
+                selectedRows,
+                handleRowClick,
+                handleSelectRow,
+                handleEdit,
+                handleDelete,
+                renderChildRows: childRowsRenderer,
+                handleAccountNameClick,
+              })
+            )}
+          </TableBody>
+        </Table>
+      </Paper>
+      <TablePagination
         rowsPerPageOptions={[5, 10, 25]}
         component='div'
         count={accountList?.count ?? 0}

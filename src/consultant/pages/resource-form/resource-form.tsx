@@ -145,11 +145,11 @@ const ResourceForm: React.FC = () => {
               <h5 className='text-xs ml-2 text-gray-500 mb-1'>Edit Resource</h5>
             )}
             <div className=' text-xs ml-2 leading-4 text-gray-500'>
-              {'Account > ' + location?.state?.resource?.resource_fullname}
+              {'Account > ' + location?.state?.data?.accountById?.account_name}
             </div>
             <h4 className='font-bold text-lg ml-2 leading-4'>
               {isEditView
-                ? location?.state?.resource?.resource_fullname
+                ? location?.state?.data?.resource?.resource_fullname
                 : 'New Resource'}
             </h4>
           </div>

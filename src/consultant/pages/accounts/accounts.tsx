@@ -41,6 +41,8 @@ export const Accounts: React.FC = () => {
   const handleCreateAcount = () => {
     navigate(ACCOUNT_CREATE);
   };
+
+  const [totalCount, setTotalCount] = useState<number>(0);
   return (
     <div className='flex flex-col w-full h-full'>
       <div className='flex justify-between w-full h-[15%] border-b-2 border-[#CBD6E2] p-4'>
@@ -57,7 +59,9 @@ export const Accounts: React.FC = () => {
               </div>
               <div className='font-medium text-[#7D98B6] text-[11px]'>
                 Total Records found -{' '}
-                <span className='font-semibold text-[#2D3E4F]'>5</span>
+                <span className='font-semibold text-[#2D3E4F]'>
+                  {totalCount}
+                </span>
               </div>
             </div>
             <div
@@ -132,6 +136,7 @@ export const Accounts: React.FC = () => {
           <AccountTable
             appliedFilters={appliedFilters}
             searchTerm={searchTerm}
+            setTotalCount={setTotalCount}
           />
         </div>
       </div>
