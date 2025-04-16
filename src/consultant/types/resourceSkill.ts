@@ -48,3 +48,43 @@ export interface ResourceSkillApiResponse extends CommonApiResponse {
     count: number;
   };
 }
+
+export type ResourceSkillFormData = {
+  rid?: string;
+  eid?: string;
+  account_rid?: string;
+  resource_type?: string;
+  resource_rid?: string;
+  resource_ref_id?: string;
+  resource_desc?: string;
+  start_date?: string;
+  skill_description?: string;
+  skill_level?: skillLevel;
+  years_of_experience?: number;
+  fiscal_year?: string;
+  skill_type?: string;
+  skill_name: string;
+  technical_weightage?: string;
+  accountNumber?: string;
+}
+
+
+
+export type ResourceSkillPayload = {
+  rid?: string;
+  eid?: string;
+  account_rid?: string;
+  resource_type?: string;
+  resource_rid?: string;
+  resource_ref_id?: string;
+  resource_desc?: string;
+  start_date?: string;
+  skill_description?: string;
+  skill_level?: skillLevel;
+  years_of_experience?: number;
+  fiscal_year?: string;
+  skill_type?: string;
+  skill_name: string;
+  technical_weightage?: string;
+  accountNumber?: string;
+};

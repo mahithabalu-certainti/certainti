@@ -14,7 +14,7 @@ interface ResourceTableHeaderProps {
 
 const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({ title = '',
     titleIcon,
-    headerButtons = [], toggleViewMode}) => {
+    headerButtons = [], toggleViewMode }) => {
     return (
         <div className='border border-gray-300 mr-2'>
             <div className='flex items-center border-b border-gray-300 justify-between p-4'>

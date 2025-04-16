@@ -32,7 +32,7 @@ export type ResourceCostList = {
   hourly_cost?: string | null;
   currency_rid?: string;
   fiscal_year?: string;
-  currency?:string,
+  currency?: string;
   r_number?: string;
   created_by?: string | null;
   modified_by?: string | null;
@@ -54,3 +54,63 @@ export interface ResourceCostApiResponse extends CommonApiResponse {
     count: number;
   };
 }
+
+export type ResourceCostSkillFormData = {
+  rid?: string;
+  resource_ref_id?: string;
+  resource_full_name?: string;
+  resource_type?: string;
+  resource_org_name?: string;
+  resource_first_name?: string;
+  resource_status?: string;
+  resource_middle_name?: string;
+  status?: string;
+  resource_last_name?: string;
+  resource_email?: string;
+  resource_mobile?: string;
+  country?: string;
+  region?: string;
+  currency?: string;
+  financial_start_date?: string;
+  financial_end_date?: string;
+  annual?: string;
+  semi_annual?: string;
+  monthly?: string;
+  bi_weekly?: string;
+  weekly?: string;
+  daily?: string;
+  hourly?: string;
+  resource_effective_from?: string;
+  resource_end_date?: string;
+  designation?: string;
+  manager_name?: string;
+  total_years_of_experience?: string;
+  total_years_in_the_organisation?: string;
+  description?: string;
+  skill_level?: string;
+  skill_name?: string;
+  skill_start_date?: string;
+  years_of_experience?: string;
+};
+
+export type ResourceCostPayload = {
+  eid?: string;
+  rid?: string;
+  account_rid?: string;
+  resource_type?: string;
+  resource_rid: string;
+  resource_ref_id: string;
+  effective_date?: string;
+  end_date?: string;
+  annual_cost?: number;
+  semi_annual_cost?: number;
+  monthly_cost?: number;
+  weekly_cost?: number;
+  bi_weekly_cost?: number;
+  daily_cost?: number;
+  hourly_cost?: number;
+  fiscal_year?: string;
+  currency_rid?: string;
+  accountNumber?: string;
+  status?: string;
+};

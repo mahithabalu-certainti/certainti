@@ -1,4 +1,7 @@
 import { AccountFormData, NewAccountData } from '../../types';
+import { ResourceCostPayload, ResourceCostSkillFormData } from '../../types/resourceCost';
+import { ResourceSkillPayload } from '../../types/resourceSkill';
+import { skillLevel } from '../account-details/sidebar-pages/resources/resource-skill/resourceSkillType';
 
 export const transformFormData = (
   formData: Partial<AccountFormData>,
@@ -37,5 +40,65 @@ export const transformFormData = (
     data.account_rid = formData.rid;
     data.r_number = formData.rid;
   }
+  return data;
+};
+
+export const transformCostData = (
+  formData: Partial<ResourceCostSkillFormData>,
+  isEdit: boolean
+) => {
+  const data: Partial<ResourceCostPayload> = {
+    eid: '',
+    // account_rid: formData.account_rid,
+    resource_type: formData.resource_type,
+    resource_rid: formData.resource_ref_id,
+    resource_ref_id: formData.resource_ref_id,
+    effective_date: formData.financial_start_date,
+    end_date: formData.financial_end_date,
+    annual_cost: Number(formData.annual),
+    semi_annual_cost: Number(formData.semi_annual),
+    monthly_cost: Number(formData.monthly),
+    weekly_cost: Number(formData.weekly),
+    bi_weekly_cost: Number(formData.bi_weekly),
+    daily_cost: Number(formData.daily),
+    hourly_cost: Number(formData.hourly),
+    // fiscal_year: formData?.fiscal_year,
+    // currency_rid: formData?.currency_rid,
+    // accountNumber: formData?.accountNumber,
+    status: formData?.status,
+  };
+
+  if (isEdit) {
+    data.rid = formData.rid;
+  }
+
+  return data;
+};
+
+export const transformSkillData = (
+  formData: Partial<ResourceCostSkillFormData>,
+  isEdit: boolean
+) => {
+  const data: Partial<ResourceSkillPayload> = {
+    eid: '',
+    // account_rid: formData.account_rid,
+    resource_type: formData.resource_type,
+    resource_rid: formData.resource_ref_id,
+    resource_ref_id: formData.resource_ref_id,
+    // resource_desc: formData.resource_desc,
+    start_date: formData.skill_start_date,
+    skill_description: formData.skill_name,
+    skill_level: formData.skill_level as skillLevel,
+    years_of_experience: Number(formData.years_of_experience),
+    // fiscal_year: formData.fiscal_year,
+    skill_name: formData.skill_name,
+    technical_weightage: '',
+    // accountNumber: formData.accountNumber,
+  };
+
+  if (isEdit) {
+    data.rid = formData.rid;
+  }
+
   return data;
 };

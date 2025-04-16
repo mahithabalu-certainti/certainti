@@ -1,6 +1,7 @@
 import {
   useMutation,
   UseMutationOptions,
+  UseMutationResult,
   useQuery,
   UseQueryOptions,
   UseQueryResult,
@@ -9,6 +10,7 @@ import {
   ResourceCostApiResponse,
   ResourceCostList,
   ResourceCostListParams,
+  ResourceCostPayload,
 } from '../../types/resourceCost';
 // import { useApiMutation } from '../../../api/mutation';
 import { api } from '../../../api/api';
@@ -39,7 +41,7 @@ const mockData: ResourceCostApiResponse = {
         bi_weekly_cost: null,
         daily_cost: null,
         hourly_cost: null,
-        currency: "INR",
+        currency: 'INR',
         currency_rid: 'c8eb857d-b3e5-4e07-9704-8e420fea3d6c',
         fiscal_year: '2024',
         r_number: 'RC00005',
@@ -82,7 +84,17 @@ export const fetchResourceCost = async (
   return data;
 };
 
-export const useCreateResourceCost = (options?: UseMutationOptions) => {
+export const useCreateResourceCost = (
+  options?: UseMutationOptions<
+    Partial<ResourceCostApiResponse>,
+    Error,
+    Partial<ResourceCostPayload>
+  >
+): UseMutationResult<
+  Partial<ResourceCostApiResponse>,
+  Error,
+  Partial<ResourceCostPayload>
+> => {
   return useMutation({
     mutationKey: ['create-resource-cost'],
     mutationFn: async (payload) => {
@@ -93,7 +105,17 @@ export const useCreateResourceCost = (options?: UseMutationOptions) => {
   });
 };
 
-export const useUpdateResourceCost = (options?: UseMutationOptions) => {
+export const useUpdateResourceCost = (
+  options?: UseMutationOptions<
+    Partial<ResourceCostApiResponse>,
+    Error,
+    Partial<ResourceCostPayload>
+  >
+): UseMutationResult<
+  Partial<ResourceCostApiResponse>,
+  Error,
+  Partial<ResourceCostPayload>
+> => {
   return useMutation({
     mutationKey: ['update-resource-cost'],
     mutationFn: async (payload) => {

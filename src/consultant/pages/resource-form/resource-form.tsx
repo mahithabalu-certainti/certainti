@@ -15,10 +15,12 @@ import {
   useCreateAccount,
   useUpdateAccount,
 } from '../../services/account-create';
-import { AccountFormData, SelectOption } from '../../types';
+import { SelectOption } from '../../types';
 import { FormData } from './form-data';
-import { transformFormData } from './utils';
+import { transformCostData, transformSkillData } from './utils';
 import { checkError, checkErrorMsg } from '../../../common-utils';
+import { useCreateResourceCost, useUpdateResourceCost } from '../../services/resource-cost/resource-cost-service';
+import { useCreateResourceSkill, useUpdateResourceSkill } from '../../services/resource-skill/resource-skill-service';
 
 const ResourceForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -51,6 +53,11 @@ const ResourceForm: React.FC = () => {
   const regions = useFetchRegion();
   const createAccount = useCreateAccount();
   const updateAccount = useUpdateAccount();
+
+  const createResourceCost = useCreateResourceCost();
+  const updateResourceCost = useUpdateResourceCost();
+  const createResourceSkill = useCreateResourceSkill()
+  const updateResourceSkill = useUpdateResourceSkill()
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
 
@@ -112,12 +119,23 @@ const ResourceForm: React.FC = () => {
     [currency.data?.data.currency]
   );
 
-  const submitData = (formValues: Partial<AccountFormData>) => {
-    const accountData = transformFormData(formValues, isEditView);
-    if (isEditView) {
-      updateAccount.mutate(accountData);
-    } else {
-      createAccount.mutate(accountData);
+  const submitData = (formValues: any) => {
+    const {state} = location;
+    if(state.cost){
+      const costData = transformCostData(formValues, isEditView);
+      if (isEditView) {
+        updateResourceCost.mutate(costData)
+      } else {
+        createResourceCost.mutate(costData);
+      }
+    }
+    if(state.skill){
+      const skillData = transformSkillData(formValues, isEditView);
+      if (isEditView) {
+        updateResourceSkill.mutate(skillData);
+      } else {
+        createResourceSkill.mutate(skillData);
+      }
     }
   };
 

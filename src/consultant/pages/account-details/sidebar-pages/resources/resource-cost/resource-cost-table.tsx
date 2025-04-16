@@ -33,11 +33,7 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters, acco
     setResourceCostList(convertResourceCost(costList?.resourceCost || []));
   }, [costList]);
 
-
-
   const handleEdit = (cost: ResourceCostType) => {
-    console.log("cost", cost);
-
     navigate(RESOURCECOST + '/edit/' + cost.resourceCostNumber, {
       state: { costInfo: cost, cost: true },
     });

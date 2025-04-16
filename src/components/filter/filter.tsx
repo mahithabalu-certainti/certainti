@@ -48,8 +48,6 @@ const Filter: React.FC<FilterComponentProps> = ({
   }
 
   const handleClickFilterMenu = (fieldName: string) => {
-    console.log("fieldName", fieldName);
-
     setSelectedFilters((prev) =>
       prev.includes(fieldName)
         ? prev.filter((item) => item !== fieldName)
@@ -58,9 +56,6 @@ const Filter: React.FC<FilterComponentProps> = ({
 
     if (!filterStates[fieldName]) {
       const fieldConfig = filterMenu.find((f) => f.value === fieldName);
-      console.log("fieldConfig", fieldConfig);
-      
-
       if (!fieldConfig) return;
 
       setFilterStates((prev) => ({

@@ -60,6 +60,32 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           };
         });
       });
+
+      let costInfo = state?.costInfo;
+      let skillInfo = state?.skillInfo;
+
+      constructFormData = {
+        ...constructFormData,
+        skill_level: skillInfo?.skillLevel.toLowerCase() || '',
+        skill_name: skillInfo?.skillName || '',
+        skill_start_date: skillInfo?.startDate || '',
+        years_of_experience: skillInfo?.yearsOfExperience || '',
+      }
+
+      constructFormData = {
+        ...constructFormData,
+        financial_start_date: costInfo?.startDate || '',
+        financial_end_date: costInfo?.endDate || '',
+        annual: costInfo?.annualCost || '',
+        semi_annual: costInfo?.semiAnnualCost || '',
+        monthly: costInfo?.monthlyCost || '',
+        bi_weekly: costInfo?.biWeeklyCost || '',
+        weekly: costInfo?.weeklyCost || '',
+        daily: costInfo?.dailyCost || '',
+        hourly: costInfo?.hourlyCost || '',
+        currency: costInfo?.currency || '', // Assuming you want to include currency as well
+      };
+
       setConstructFormData(constructFormData);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -71,6 +97,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     const fontSize = '0.875rem';
     const fieldValue = (constructFormData[field.name] as string) || '';
     const fieldDisabled = (field.disabled || readOnly) ? ' bg-gray-100' : '';
+    const today = new Date();
+    const sixYearsAgo = new Date();
+    sixYearsAgo.setFullYear(today.getFullYear() - 6)
+    const sectionDate = section.sectionName === "Financial Information" || section.sectionName === "Skill Information";
 
     const handleChange = (value: FieldTypes, countryCode?: FieldTypes) => {
       setConstructFormData((prevData) => {
@@ -233,12 +263,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
               className={fieldDisabled}
-              value={dayjs(fieldValue, 'DD/MM/YYYY')}
+              maxDate={sectionDate ? dayjs(today) : undefined}
+              minDate={sectionDate ? dayjs(sixYearsAgo) : undefined}
+              value={sectionDate ? dayjs(fieldValue) : dayjs(fieldValue, 'DD/MM/YYYY')}
               disabled={field.disabled || readOnly}
               onChange={(newValue) => {
                 handleChange(dayjs(newValue).format('DD/MM/YYYY'));
               }}
-              shouldDisableDate={(date) => dayjs(date).isBefore(dayjs(), 'day')}
+              shouldDisableDate={(date) => sectionDate ? dayjs(date).isAfter(dayjs(), 'day') : dayjs(date).isBefore(dayjs(), 'day')}
               slots={{
                 openPickerIcon: () => (
                   <img src={calendarIcon} alt='calendar' className='w-6 h-5' />
@@ -283,9 +315,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             onChange={(phone, country: CountryData) =>
               handleChange(phone, country.countryCode)
             }
-            inputClass={`!w-full !text-sm !p-2 !pl-12 !border !h-[38px] !rounded-[0px] ${
-              field.error ? '!border-red-500' : '!border-gray-300'
-            }${field.disabled ? ' !bg-gray-100' : ''}`}
+            inputClass={`!w-full !text-sm !p-2 !pl-12 !border !h-[38px] !rounded-[0px] ${field.error ? '!border-red-500' : '!border-gray-300'
+              }${field.disabled ? ' !bg-gray-100' : ''}`}
             buttonClass={`!bg-transparent !border-r ${field.error ? '!border-red-500' : '!border-gray-300'} !rounded-[0px] !hover:bg-transparent !shadow-none !px-0 !m-0`}
             containerClass='!w-full'
             inputProps={{
@@ -328,8 +359,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   const submitData = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     let hasError = false;
-    console.log("formData", formData);
-
     const allAnyOneRequiredFields = formData
       ?.flatMap(section => section.fields.filter(field => field.anyOneRequired));
 
@@ -441,6 +470,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           ([key]) => !key.endsWith('_countryCode')
         )
       );
+      console.log("cleandedData", cleanedData);
       outData(cleanedData);
     }
   };

@@ -1,6 +1,7 @@
 import {
   useMutation,
   UseMutationOptions,
+  UseMutationResult,
   useQuery,
   UseQueryOptions,
   UseQueryResult,
@@ -9,12 +10,13 @@ import {
   ResourceSkillApiResponse,
   ResourceSkillList,
   ResourceSkillListParams,
+  ResourceSkillPayload,
 } from '../../types/resourceSkill';
 import { api } from '../../../api/api';
 import { skillListURL } from '../urls/resource-cost-skill-urls';
 import { skillLevel } from '../../pages/account-details/sidebar-pages/resources/resource-skill/resourceSkillType';
 
-const mockData:ResourceSkillApiResponse = {
+const mockData: ResourceSkillApiResponse = {
   statusCode: 200,
   statusCodeValue: 'Success',
   statusMessage: '',
@@ -84,7 +86,17 @@ export const fetchResourceSkill = async (
   return data;
 };
 
-export const useCreateResourceSkill = (options?: UseMutationOptions) => {
+export const useCreateResourceSkill = (
+  options?: UseMutationOptions<
+    Partial<ResourceSkillApiResponse>,
+    Error,
+    Partial<ResourceSkillPayload>
+  >
+): UseMutationResult<
+  Partial<ResourceSkillApiResponse>,
+  Error,
+  Partial<ResourceSkillPayload>
+> => {
   return useMutation({
     mutationKey: ['create-resource-skill'],
     mutationFn: async (payload) => {
@@ -95,7 +107,17 @@ export const useCreateResourceSkill = (options?: UseMutationOptions) => {
   });
 };
 
-export const useUpdateResourceSkill = (options?: UseMutationOptions) => {
+export const useUpdateResourceSkill = (
+  options?: UseMutationOptions<
+    Partial<ResourceSkillApiResponse>,
+    Error,
+    Partial<ResourceSkillPayload>
+  >
+): UseMutationResult<
+  Partial<ResourceSkillApiResponse>,
+  Error,
+  Partial<ResourceSkillPayload>
+> => {
   return useMutation({
     mutationKey: ['update-resource-skill'],
     mutationFn: async (payload) => {
