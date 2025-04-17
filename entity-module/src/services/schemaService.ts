@@ -140,6 +140,8 @@ class SchemaService {
           "resource_email",
           "resource_mobile",
           "resource_role",
+          "designation",
+          "total_years_experience"
         ],
       });
 
