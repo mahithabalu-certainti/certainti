@@ -11,6 +11,7 @@ import {
   TextField,
 } from '@mui/material';
 import { FilterState } from '../../consultant/types/account-filter';
+import { useMemo } from 'react';
 
 export const TextFilterControl: React.FC<{
   fieldName: string;
@@ -75,7 +76,22 @@ export const NumberFilterControl: React.FC<{
       type='number'
       value={state.number?.value || ''}
       onChange={(e) => onValueChange(fieldName, e)}
-      sx={{ mt: 1 }}
+      sx={{
+        mt: 1,
+        '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button': {
+          '-webkit-appearance': 'none',
+          margin: 0,
+        },
+        '& input[type=number]': {
+          '-moz-appearance': 'textfield',
+        },
+      }}
+      inputProps={{ min: 0 }}
+      onKeyDown={(e) => {
+        if (e.key === '-' || e.key === 'e') {
+          e.preventDefault();
+        }
+      }}
       slotProps={{
         input: {
           sx: { height: '30px', paddingY: 0, fontSize: '0.75rem' },
@@ -146,25 +162,45 @@ export const MultiSelectFilterControl: React.FC<{
   state: FilterState;
   options: string[];
   onChange: (fieldName: string, values: string[]) => void;
-}> = ({ fieldName, state, options, onChange }) => (
-  <Box sx={{ pl: 3, mt: 1 }}>
-    <FormControl fullWidth size='small'>
-      <Select
-        multiple
-        value={state.multiSelect?.values || []}
-        onChange={(e) => onChange(fieldName, e.target.value as string[])}
-        sx={{ height: 'auto', minHeight: 30 }}
-        renderValue={(selected) => (selected as string[]).join(', ')}
-      >
-        {options.map((option) => (
-          <MenuItem key={option} value={option}>
-            <Checkbox
-              checked={(state.multiSelect?.values || []).includes(option)}
-            />
-            {option}
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
-  </Box>
-);
+}> = ({ fieldName, state, options, onChange }) => {
+  const selectedValues = state.multiSelect?.values || [];
+
+  const menuItems = useMemo(() => {
+    return options.map((option) => (
+      <MenuItem key={option} value={option} dense>
+        <Checkbox checked={selectedValues.includes(option)} size="small" />
+        {option}
+      </MenuItem>
+    ));
+  }, [options, selectedValues]);
+
+  return (
+    <Box sx={{ pl: 3, mt: 1 }}>
+      <FormControl fullWidth size="small">
+        <Select
+          multiple
+          value={selectedValues}
+          onChange={(e) => onChange(fieldName, e.target.value as string[])}
+          sx={{ 
+            height: 'auto', 
+            minHeight: 30,
+            '& .MuiSelect-select': {
+              py: 0.5,
+              fontSize: '0.875rem',
+            }
+          }}
+          renderValue={(selected) => (selected as string[]).join(', ')}
+          MenuProps={{
+            PaperProps: {
+              style: {
+                maxHeight: 200
+              },
+            },
+          }}
+        >
+          {menuItems}
+        </Select>
+      </FormControl>
+    </Box>
+  );
+};

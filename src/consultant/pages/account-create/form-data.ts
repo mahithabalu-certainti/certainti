@@ -35,9 +35,16 @@ export const FormData = (
           // }),
           createTextField('account_name', 'Account Name', {
             required: true,
-            regex: REGEX_PATTERNS.ACCOUNT_NAME,
+            regex: REGEX_PATTERNS.NAME_REGEX,
             regexErrorMessage: 'Invalid Account Name',
             placeholder: 'Enter Account Name',
+            lengthRequired: {
+              key: 'name_length',
+              minMatchedValue: REGEX_PATTERNS.MIN_ACCOUNT_NAME_REGEX,
+              minErrorMessage: 'Account name must be more than 6 characters long',
+              maxMatchedValue: REGEX_PATTERNS.MAX_ACCOUNT_NAME_REGEX,
+              maxErrorMessage: 'Max length exceeded',
+            },
           }),
           createSelectField('status', 'Status', {
             required: true,

@@ -67,14 +67,18 @@ export const ManageUserDetails: React.FC = () => {
           <div className='font-bold text-center'>
             {left[index]?.label ?? ''}
           </div>
-          <div>{left[index]?.value ?? ''}</div>
-        </div>
+          <div className='break-words whitespace-normal max-w-full'>
+            {left[index]?.value ?? ''}
+          </div>
+       </div>
         <div className='grid grid-cols-2 gap-1 items-center justify-center border-b border-gray-200 py-2'>
           <div className='font-bold text-center'>
             {right[index]?.label ?? ''}
           </div>
-          <div>{right[index]?.value ?? ''}</div>
-        </div>
+          <div className='break-words whitespace-normal max-w-full'>
+            {right[index]?.value ?? ''}
+          </div>
+       </div>
       </React.Fragment>
     ));
   };

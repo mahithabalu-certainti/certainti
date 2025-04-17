@@ -37,25 +37,35 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
   const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
     {}
   );
-  const [isModified, setIsModified] = useState(false);
   const [showFilters, setShowFilters] = useState(true);
+  const filterApplied = selectedFilters.length > 0;
+
+  const filteredFields = filterFields.filter((field) =>
+    field.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleCheckboxChange = (fieldName: string) => {
-    setIsModified(true);
     setSelectedFilters((prev) =>
       prev.includes(fieldName)
         ? prev.filter((item) => item !== fieldName)
         : [...prev, fieldName]
     );
-
-    if (!filterStates[fieldName]) {
+  
+    if (selectedFilters.includes(fieldName)) {
+      setFilterStates((prev) => {
+        const newState = { ...prev };
+        delete newState[fieldName];
+        setAppliedFilters(formatFilterForApi(newState));
+        return newState;
+      });
+    } else {
       const fieldConfig = filterFields.find((f) => f.name === fieldName);
-      if (!fieldConfig) return;
-
-      setFilterStates((prev) => ({
-        ...prev,
-        [fieldName]: getInitialStateForField(fieldConfig),
-      }));
+      if (fieldConfig) {
+        setFilterStates((prev) => ({
+          ...prev,
+          [fieldName]: getInitialStateForField(fieldConfig),
+        }));
+      }
     }
   };
 
@@ -63,7 +73,6 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
     fieldName: string,
     event: SelectChangeEvent<any>
   ) => {
-    setIsModified(true);
     const fieldConfig = filterFields.find((f) => f.name === fieldName);
     if (!fieldConfig) return;
 
@@ -113,7 +122,6 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
     fieldName: string,
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    setIsModified(true);
     const fieldConfig = filterFields.find((f) => f.name === fieldName);
     if (!fieldConfig) return;
 
@@ -149,7 +157,6 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
   };
 
   const handleBooleanChange = (fieldName: string, checked: boolean) => {
-    setIsModified(true);
     setFilterStates((prev) => ({
       ...prev,
       [fieldName]: { boolean: { option: 'equals', value: checked } },
@@ -157,7 +164,6 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
   };
 
   const handleMultiSelectChange = (fieldName: string, values: string[]) => {
-    setIsModified(true);
     setFilterStates((prev) => ({
       ...prev,
       [fieldName]: { multiSelect: { values } },
@@ -165,7 +171,6 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
   };
 
   const handleApplyFilters = () => {
-    setIsModified(false);
     setAppliedFilters(formatFilterForApi(filterStates));
   };
 
@@ -173,7 +178,6 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
     setSelectedFilters([]);
     setFilterStates({});
     setAppliedFilters({});
-    setIsModified(false);
   };
 
   const renderFilterControls = (field: FieldConfig) => {
@@ -326,7 +330,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
 
       {showFilters && (
         <>
-          {isModified && (
+          {filterApplied && (
             <Box className='flex items-center gap-2 w-full'>
               <Button
                 variant='outlined'
@@ -363,7 +367,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
             </Box>
           )}
 
-          {filterFields.map((field) => (
+          {filteredFields.map((field) => (
             <Box key={field.name}>
               <FormControlLabel
                 control={

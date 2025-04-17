@@ -65,7 +65,7 @@ export const formatFilterForApi = (
     const fieldKey = fieldName.toLowerCase().replace(/\s+/g, '_');
 
     if (state.text) {
-      formattedFilters[fieldKey] = { [state.text.option]: state.text.value };
+      formattedFilters[fieldKey] = { [state.text.option]: state.text.value.toLowerCase() };
     } else if (state.number) {
       formattedFilters[fieldKey] = {
         [state.number.option]: state.number.value,

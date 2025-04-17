@@ -19,6 +19,13 @@ export interface FormTypeFields {
   greaterThan?: Record<string, string>;
   dependsRequired?: Record<string, string>;
   resetDependsFields?: string[];
+  lengthRequired?: {
+    key: string;
+    minMatchedValue: RegExp;
+    maxMatchedValue: RegExp;
+    minErrorMessage: string;
+    maxErrorMessage: string;
+  };
   onChange?: boolean;
   isLoading?: boolean;
 }
@@ -59,6 +66,13 @@ export interface FieldType {
   greaterThan?: Record<string, string>;
   dependsRequired?: Record<string, string>;
   resetDependsFields?: string[];
+  lengthRequired?: {
+    key: string;
+    minMatchedValue: RegExp;
+    maxMatchedValue: RegExp;
+    minErrorMessage: string;
+    maxErrorMessage: string;
+  };
   onChange?: boolean;
   isLoading?: boolean;
 }
