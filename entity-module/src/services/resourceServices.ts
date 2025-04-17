@@ -281,12 +281,20 @@ export class ResourceService {
    */
   getSortParameters(sortBy: string, sortOrder: string): [string, string] {
     const validSortColumns = [
+      "rid",
       "r_number",
       "resource_ref_id",
       "resource_fullname",
       "resource_type",
-      "status",
+      "resource_status",
+      "total_years_experience",
+      "resource_role",
+      "resource_mobile",
+      "resource_email",
+      "designation",
+      "total_years_experience"
     ];
+
     if (!validSortColumns.includes(sortBy)) {
       sortBy = "created_datetime";
     }
@@ -367,6 +375,8 @@ export class ResourceService {
       { clientField: "resource_email", dbField: "resource_email" },
       { clientField: "resource_mobile", dbField: "resource_mobile" },
       { clientField: "resource_role", dbField: "resource_role" },
+      { clientField: "designation", dbField: "designation" },
+      { clientField: "total_years_experience", dbField: "total_years_experience" },
     ];
 
     filterFields.forEach(({ clientField, dbField }) => {
@@ -404,6 +414,19 @@ export class ResourceService {
     }
     if (fieldFilter.value) {
       return fieldFilter.value;
+    }
+    if (fieldFilter.greaterThan) {
+      return { [Op.gt]: fieldFilter.greaterThan };
+    }
+    if (fieldFilter.lesserThan) {
+      return { [Op.lt]: fieldFilter.lesserThan };
+    }
+    if (
+      fieldFilter.between &&
+      Array.isArray(fieldFilter.between) &&
+      fieldFilter.between.length === 2
+    ) {
+      return { [Op.between]: fieldFilter.between };
     }
   }
 
