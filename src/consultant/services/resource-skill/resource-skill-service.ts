@@ -13,7 +13,10 @@ import {
   ResourceSkillPayload,
 } from '../../types/resource-skill';
 import { api } from '../../../api/api';
-import { skillListURL } from '../urls/resource-cost-skill-urls';
+import {
+  fetchResourceSkillByIdUrl,
+  skillListURL,
+} from '../urls/resource-cost-skill-urls';
 import { skillLevel } from '../../pages/account-details/sidebar-pages/resources/resource-skill/resource-skill-type';
 
 const mockData: ResourceSkillApiResponse = {
@@ -82,6 +85,29 @@ export const fetchResourceSkill = async (
 ): Promise<ResourceSkillApiResponse> => {
   const { data } = await api.get<ResourceSkillApiResponse>(
     skillListURL(params)
+  );
+  return data;
+};
+
+export const useFetchResourceSkillById = (
+  params: ResourceSkillListParams,
+  options?: UseQueryOptions
+): UseQueryResult => {
+  return useQuery({
+    queryKey: ['resource-skill-byId', params],
+    queryFn: async () => {
+      const res = await fetchResourceSkillById(params);
+      return res.data;
+    },
+    ...options,
+  });
+};
+
+export const fetchResourceSkillById = async (
+  params: Partial<ResourceSkillListParams>
+): Promise<ResourceSkillApiResponse> => {
+  const { data } = await api.get<ResourceSkillApiResponse>(
+    fetchResourceSkillByIdUrl(params)
   );
   return data;
 };

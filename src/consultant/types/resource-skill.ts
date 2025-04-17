@@ -1,13 +1,14 @@
 import { CommonApiResponse } from '../../common-service';
 
 export interface ResourceSkillListParams {
-  page: number;
-  limit: number;
-  sortBy: string;
-  sortOrder: 'ASC' | 'DESC';
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
   filters?: object;
   accountNumber?: string;
   fiscalYear?: number;
+  rid?:string,
 }
 
 enum skillLevel {

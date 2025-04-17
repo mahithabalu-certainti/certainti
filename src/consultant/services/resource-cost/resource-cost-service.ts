@@ -14,7 +14,10 @@ import {
 } from '../../types/resource-cost';
 // import { useApiMutation } from '../../../api/mutation';
 import { api } from '../../../api/api';
-import { costListURL } from '../urls/resource-cost-skill-urls';
+import {
+  costListURL,
+  fetchResourceCostByIdUrl,
+} from '../urls/resource-cost-skill-urls';
 
 const mockData: ResourceCostApiResponse = {
   statusCode: 200,
@@ -81,6 +84,29 @@ export const fetchResourceCost = async (
   params: ResourceCostListParams
 ): Promise<ResourceCostApiResponse> => {
   const { data } = await api.get<ResourceCostApiResponse>(costListURL(params));
+  return data;
+};
+
+export const useFetchResourceCostById = (
+  params: ResourceCostListParams,
+  options?: UseQueryOptions
+): UseQueryResult => {
+  return useQuery({
+    queryKey: ['resource-cost-byId', params],
+    queryFn: async () => {
+      const res = await fetchResourceCostById(params);
+      return res.data;
+    },
+    ...options,
+  });
+};
+
+export const fetchResourceCostById = async (
+  params: ResourceCostListParams
+): Promise<ResourceCostApiResponse> => {
+  const { data } = await api.get<ResourceCostApiResponse>(
+    fetchResourceCostByIdUrl(params)
+  );
   return data;
 };
 

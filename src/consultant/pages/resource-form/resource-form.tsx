@@ -19,8 +19,8 @@ import { SelectOption } from '../../types';
 import { FormData } from './form-data';
 import { transformCostData, transformSkillData } from './utils';
 import { checkError, checkErrorMsg } from '../../../common-utils';
-import { useCreateResourceCost, useUpdateResourceCost } from '../../services/resource-cost/resource-cost-service';
-import { useCreateResourceSkill, useUpdateResourceSkill } from '../../services/resource-skill/resource-skill-service';
+import { useCreateResourceCost, useFetchResourceCostById, useUpdateResourceCost } from '../../services/resource-cost/resource-cost-service';
+import { useCreateResourceSkill, useFetchResourceSkillById, useUpdateResourceSkill } from '../../services/resource-skill/resource-skill-service';
 
 const ResourceForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -48,6 +48,31 @@ const ResourceForm: React.FC = () => {
     }),
     [account]
   );
+
+  //fetch resource cost by id
+
+  const getCostData = useFetchResourceCostById({id:"", accountNumber:""});
+  const costInfo = getCostData.data;
+  // const costData = useMemo(
+  //   () => ({
+  //     ...account?.accountDetails,
+  //     ...account?.accountById,
+  //     ...(account?.accountById &&
+  //       account?.accountDetails && {
+  //       is_parent: account?.accountById.is_parent ? 'yes' : 'no',
+  //       autosend_interaction: account?.accountDetails.autosend_interaction
+  //         ? 'yes'
+  //         : 'no',
+  //       auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
+  //     }),
+  //   }),
+  //   [cost]
+  // );
+
+  //fetch resource skill by id
+
+  const getSkillData = useFetchResourceSkillById({rid:"", accountNumber:""});
+  const skillInfo = getSkillData.data;
 
   const allCountries = useGetAllCountries();
   const parentAccount = useFetchParentAccounts();

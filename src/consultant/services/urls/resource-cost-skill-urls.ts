@@ -3,6 +3,7 @@ import { ResourceSkillListParams } from '../../types/resource-skill';
 
 const baseUrl = import.meta.env.VITE_RESOURCE_URL;
 export const resourceCostUrl = '/api/resource_cost/';
+export const resourceCostById = '/api/resource_cost/resourcecost/by/id';
 export const createResourceCost = '/api/resource_cost/create';
 export const updateResourceCost = '/api/resource_cost/update';
 export const resourceSkillUrl = '/api/resource_skill';
@@ -31,7 +32,7 @@ export const costListURL = ({
   sortBy,
   sortOrder,
   filters,
-  accountNumber
+  accountNumber,
 }: ResourceCostListParams): string => {
   return returnURL(resourceCostUrl, {
     page,
@@ -39,7 +40,26 @@ export const costListURL = ({
     sortBy,
     sortOrder,
     filters,
-    accountNumber
+    accountNumber,
+  });
+};
+
+export const fetchResourceCostByIdUrl = ({
+  id,
+  accountNumber,
+}: ResourceCostListParams): string => {
+  return returnURL(resourceCostById, {
+    id,
+    accountNumber,
+  });
+};
+export const fetchResourceSkillByIdUrl = ({
+  rid,
+  accountNumber,
+}: ResourceSkillListParams): string => {
+  return returnURL(resourceSkillUrl, {
+    rid,
+    accountNumber,
   });
 };
 
@@ -49,7 +69,7 @@ export const skillListURL = ({
   sortBy,
   sortOrder,
   filters,
-  accountNumber
+  accountNumber,
 }: ResourceSkillListParams): string => {
   return returnURL(resourceSkillUrl, {
     page,
@@ -57,6 +77,6 @@ export const skillListURL = ({
     sortBy,
     sortOrder,
     filters,
-    accountNumber
+    accountNumber,
   });
 };
