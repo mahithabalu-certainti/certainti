@@ -127,20 +127,6 @@ class ResourceCostService {
   }
 
   /**
-   * Creates an error response with the specified message
-   *
-   * @param errorMessage - The error message to include
-   * @returns Error response object
-   */
-  private createErrorResponse(errorMessage: string) {
-    return {
-      statusCode: HttpStatus.FAILED,
-      message: HttpStatus.FAILED_MESSAGE,
-      errorMessage,
-    };
-  }
-
-  /**
    * Creates a new resource cost record in the specified account schema.
    *
    * This method:

@@ -427,7 +427,7 @@ class ResourceCostSchemaService {
 
       // Build the query to get data from the account-specific schema
       const query = `
-        SELECT rc.*, r.r_number, r.resource_fullname
+        SELECT rc.*,rc.r_number as r_number, r.r_number as resourceNumber, r.resource_fullname
         FROM "${schemaName}"."resource_cost" rc
         INNER JOIN "${schemaName}"."resources" r ON rc.resource_rid = r.rid
         WHERE 1=1
@@ -468,6 +468,45 @@ class ResourceCostSchemaService {
 
       const resourceCost = results;
       const totalCount = countResult ? (countResult as any).total : 0;
+
+            
+        // Extract all unique currency_rid values
+        const currencyIds = [...new Set(resourceCost.map((rc: any) => rc.currency_rid))].filter(Boolean);
+        
+        if (currencyIds.length > 0) {
+          // Use raw query to fetch currency information
+          const currencyQuery = `
+            SELECT rid, currency_code, currency_name, currency_symbol 
+            FROM public.currency 
+            WHERE rid IN (:currencyIds)
+          `;
+          
+          const mainDbSequelize = await initMainDbSequelize();
+          const currencies = await mainDbSequelize.query(currencyQuery, {
+            replacements: { currencyIds },
+            type: "SELECT"
+          });
+          
+          // Create a map for quick lookup
+          const currencyMap:any = currencies.reduce((map: any, curr: any) => {
+            map[curr.rid] = curr;
+            return map;
+          }, {});
+          
+          // Add currency info to each resource cost
+          resourceCost.forEach((rc: any) => {
+            if (rc.currency_rid && currencyMap[rc.currency_rid]) {
+              rc.currency = {
+                currency_code: currencyMap[rc.currency_rid].currency_code,
+                currency_name: currencyMap[rc.currency_rid].currency_name,
+                currency_symbol: currencyMap[rc.currency_rid].currency_symbol
+              };
+            } else {
+              rc.currency = null;
+            }
+          });
+        }
+      
 
       return {
         statusCode: HttpStatus.SUCCESS,
