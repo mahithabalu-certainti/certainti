@@ -120,6 +120,7 @@ class SchemaService {
       const sequelize = await initOrgSequelize();
 
       const Resource = Resources.initialize(sequelize, schemaName);
+      await Resource.sync({ force: false });
       const resources = await Resource.findAll({
         where: {
           fiscal_year: fiscalYear,

@@ -67,11 +67,17 @@ export async function initOrgSequelize() {
     sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
       host: DB_HOST,
       dialect: "postgres",
-      port: 5433,
+      port: 5432,
       logging: env !== "production",
       define: {
         freezeTableName: true,
         timestamps: false,
+      },
+      dialectOptions: {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false,
+        },
       },
     });
     await sequelize.authenticate();
