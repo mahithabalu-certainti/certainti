@@ -3,8 +3,8 @@ import resourceCostController from "../controllers/resourceCostController";
 
 const routes: Router = Router();
 
-routes.get("/", resourceCostController.resourceCosts);
-routes.get("/:id", resourceCostController.resourceCostById);
+routes.get("/list", resourceCostController.resourceCosts);
+routes.get("/specific/:id", resourceCostController.resourceCostById);
 routes.post("/create", resourceCostController.createResourceCost);
 routes.put("/update", resourceCostController.updateResourceCost);
 

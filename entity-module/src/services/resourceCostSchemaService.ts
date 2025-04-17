@@ -6,6 +6,7 @@ import { Resources } from "../models/resource";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { HttpStatus } from "../utils/constants";
+import { ResourceFiscal } from "../models/resourceFiscal";
 
 class ResourceCostSchemaService {
   private sequelizeInstance: Sequelize | null = null;
@@ -24,8 +25,9 @@ class ResourceCostSchemaService {
 
         // Initialize models with the sequelize instance
         Resources.initialize(sequelize, schemaName);
+        ResourceFiscal.initialize(sequelize, schemaName);
         ResourceCost.initialize(sequelize);
-        ResourceCostTimeline.initialize(sequelize);
+        ResourceCostTimeline.initialize(sequelize,schemaName);
         ResourceCostHistory.initialize(sequelize);
 
         this.sequelizeInstance = sequelize;
@@ -179,6 +181,12 @@ class ResourceCostSchemaService {
                 schema: schemaName, // Explicitly set schema
               });
               break;
+            case "resource_fiscal":
+              await sequelize.models.ResourceFiscal.sync({
+                force: false,
+                schema: schemaName, // Explicitly set schema
+              });
+              break;  
             default:
               throw new Error(`Table model ${tableName} not found`);
           }

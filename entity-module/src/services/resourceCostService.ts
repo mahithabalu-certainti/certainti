@@ -1,16 +1,21 @@
 import { ResourceCost } from "../models/resourceCost";
 import { Resources } from "../models/resource";
+import  {IResourceCost, IUpdateResourceCost} from "../utils/types";
 import { HttpStatus } from "../utils/constants";
-import { IResourceCost, IUpdateResourceCost } from "../utils/types";
 import { ResourceCostTimeline } from "../models/resourceCostTimeline";
 import { ResourceCostHistory } from "../models/resourceCostHistory";
 import resourceCostSchemaService from "../services/resourceCostSchemaService";
+import SchemaService from "./schemaService";
+import { initOrgSequelize } from "../config/orgDataSource";
+import { ResourceFiscal } from "../models/resourceFiscal";
 
 class ResourceCostService {
   private resourceCostRepository: typeof ResourceCost | null;
+  private schemaService: SchemaService;
 
   constructor() {
     this.resourceCostRepository = null;
+    this.schemaService = new SchemaService();
   }
 
   /**
@@ -62,12 +67,14 @@ class ResourceCostService {
       const [finalSortBy, finalSortOrder] =
         resourceCostSchemaService.getSortParameters(sortBy, sortOrder);
 
+        let { accountNumber: accountNumberFetched, accountId } =
+        await this.schemaService.fetchAccountByNumber(accountNumber);  
       // Check if account-specific schema exists
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `platform_v2_${accountNumberFetched}`;
       const tableName = "resource_cost";
       const schemaAndTableValidation =
         await resourceCostSchemaService.validateSchema(
-          accountNumber,
+          accountNumberFetched,
           tableName
         );
 
@@ -171,7 +178,9 @@ class ResourceCostService {
         accountNumber,
       } = resourceCost;
 
-      const schemaName = `platform_v2_${accountNumber}`;
+      let { accountNumber: accountNumberFetched, accountId } =
+        await this.schemaService.fetchAccountByNumber(accountNumber);
+      const schemaName = `platform_v2_${accountNumberFetched}`;
       // Create both tables in parallel for better performance
       const [resourceCostTableCreated, timelineTableCreated] =
         await Promise.all([
@@ -224,9 +233,9 @@ class ResourceCostService {
 
         if (resource_rid) {
           try {
-            // Import the ResourceFiscal model if not already imported
-            const { ResourceFiscal } = require("../models/resourceFiscal");
-
+            
+            const sequelize = await initOrgSequelize();
+            ResourceFiscal.initialize(sequelize,schemaName);
             // Check if a record already exists for this resource and fiscal year
             const existingFiscal = await ResourceFiscal.findOne({
               where: {
@@ -237,7 +246,7 @@ class ResourceCostService {
             if (existingFiscal) {
               await existingFiscal.update({
                 annual_cost,
-                semi_annual_cost,
+                semiannual_cost:semi_annual_cost,
                 monthly_cost,
                 weekly_cost,
                 bi_weekly_cost,
@@ -263,7 +272,8 @@ class ResourceCostService {
           "Create",
           eventStatus,
           "",
-          account_rid
+          account_rid,
+          schemaName
         );
       } catch (timelineError) {
         console.error("Failed to create timeline entry:", timelineError);
@@ -304,9 +314,12 @@ class ResourceCostService {
     eventName: string,
     eventStatus: string,
     modifiedBy: string,
-    account_rid: string
+    account_rid: string,
+    schemaName: string
   ): Promise<void> {
     try {
+      const sequelize = await initOrgSequelize();
+      ResourceCostTimeline.initialize(sequelize,schemaName);
       // Create the timeline entry using Sequelize model
       await ResourceCostTimeline.create({
         account_rid: account_rid,
@@ -352,7 +365,10 @@ class ResourceCostService {
         status,
       } = resourceCostData;
 
-      const schemaName = `platform_v2_${accountNumber}`;
+      let { accountNumber: accountNumberFetched, accountId } =
+        await this.schemaService.fetchAccountByNumber(accountNumber);
+
+      const schemaName = `platform_v2_${accountNumberFetched}`;
       const tableName = "resource_cost_timeline";
       const schemaAndTableValidation =
         await resourceCostSchemaService.validateSchema(schemaName, tableName);
@@ -411,9 +427,8 @@ class ResourceCostService {
 
         if (affectedRows[0].resource_rid) {
           try {
-            // Import the ResourceFiscal model if not already imported
-            const { ResourceFiscal } = require("../models/resourceFiscal");
-
+            const sequelize = await initOrgSequelize();
+            ResourceFiscal.initialize(sequelize,schemaName);
             // Check if a record already exists for this resource and fiscal year
             const existingFiscal = await ResourceFiscal.findOne({
               where: {
@@ -424,7 +439,7 @@ class ResourceCostService {
             if (existingFiscal) {
               await existingFiscal.update({
                 annual_cost,
-                semi_annual_cost,
+                semiannual_cost:semi_annual_cost,
                 monthly_cost,
                 weekly_cost,
                 bi_weekly_cost,
@@ -454,7 +469,8 @@ class ResourceCostService {
             "Update",
             "Success",
             "",
-            originalResourceCost.account_rid
+            originalResourceCost.account_rid,
+            schemaName
           );
         }
 
@@ -474,7 +490,8 @@ class ResourceCostService {
             "Update",
             "Failed",
             "",
-            originalResourceCost.account_rid
+            originalResourceCost.account_rid,
+            schemaName
           );
         } catch (timelineError) {
           console.error(
@@ -514,8 +531,10 @@ class ResourceCostService {
         throw new Error("Database connection not available");
       }
 
+      let { accountNumber: accountNumberFetched, accountId } =
+        await this.schemaService.fetchAccountByNumber(accountNumber);
       // Make sure we're in the right schema context
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `platform_v2_${accountNumberFetched}`;
       const tableExists = await resourceCostSchemaService.validateSchema(
         schemaName,
         "resource_cost_history"
@@ -609,7 +628,9 @@ class ResourceCostService {
   async resourceCostById(id: string, accountNumber: string) {
     try {
       const repository = this.getResourceCostRepository();
-      const schemaName = `platform_v2_${accountNumber}`;
+      let { accountNumber: accountNumberFetched, accountId } =
+        await this.schemaService.fetchAccountByNumber(accountNumber);
+      const schemaName = `platform_v2_${accountNumberFetched}`;
       const validateSchema = await resourceCostSchemaService.validateSchema(
         schemaName,
         "resource_cost"

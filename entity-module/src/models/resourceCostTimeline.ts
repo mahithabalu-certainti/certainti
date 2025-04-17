@@ -29,7 +29,7 @@ export class ResourceCostTimeline extends Model<ResourceCostTimelineAttributes, 
  modified_datetime?: Date;
  modified_by!: string;
 
-  static initialize(sequelize: Sequelize) {
+  static initialize(sequelize: Sequelize, schemaName: string) {
     ResourceCostTimeline.init(
       {
        rid: {
@@ -79,6 +79,7 @@ export class ResourceCostTimeline extends Model<ResourceCostTimelineAttributes, 
       },
       {
         sequelize,
+        schema: schemaName,
         modelName: "ResourceCostTimeline",
         tableName: "resource_cost_timeline",
         timestamps: false,
