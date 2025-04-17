@@ -5,15 +5,20 @@ import { ResourceSkillTimeline } from "../models/resourceSkillTimeline";
 import { Skill } from "../models/skill";
 import { ResourceSkillHistory } from "../models/resourceSkillHistory";
 import resourceSkillSchemaService from "./resourceSkillSchemaService";
+import SchemaService from "./schemaService";
+import { ResourceFiscal } from "../models/resourceFiscal";
+import { initOrgSequelize } from "../config/orgDataSource";
 
 
 
 
 class ResourceSkillService {
     private resourceSkillRepository: typeof ResourceSkill | null;
+    private schemaService: SchemaService;
 
     constructor(){
         this.resourceSkillRepository=null;
+        this.schemaService = new SchemaService();
     }
 
 
@@ -55,7 +60,9 @@ class ResourceSkillService {
             accountNumber,
           } = resourceSkill;
       
-          const schemaName = `platform_v2_${accountNumber}`;
+          let { accountNumber: accountNumberFetched, accountId } =
+        await this.schemaService.fetchAccountByNumber(accountNumber);
+          const schemaName = `platform_v2_${accountNumberFetched}`;
           
           // Create both tables in parallel for better performance
           const [resourceSkillTableCreated, timelineTableCreated, skillTableCreated] = await Promise.all([
@@ -149,9 +156,8 @@ class ResourceSkillService {
             // Update the resource_fiscal table
       if (resource_rid) {
         try {
-          // Import the ResourceFiscal model if not already imported
-          const { ResourceFiscal } = require("../models/resourceFiscal");
-          
+          const sequelize = await initOrgSequelize();
+          ResourceFiscal.initialize(sequelize,schemaName);
           // Check if a record already exists for this resource and fiscal year
           const existingFiscal = await ResourceFiscal.findOne({
             where: {
@@ -163,14 +169,6 @@ class ResourceSkillService {
             await existingFiscal.update({
               modified_by,
               modified_datetime: new Date()
-            });
-          } else {
-            // Create a new fiscal record
-            await ResourceFiscal.create({
-              resource_rid,
-              created_by,
-              modified_by,
-              account_rid
             });
           }
         } catch (fiscalError) {
@@ -192,6 +190,7 @@ class ResourceSkillService {
               eventStatus,
               "",
               account_rid,
+              schemaName
             );
           } catch (timelineError) {
             console.error("Failed to create timeline entry:", timelineError);
@@ -233,9 +232,12 @@ class ResourceSkillService {
     eventStatus: string,
     modifiedBy: string,
     account_rid: string,
+    schemaName: string,
   ): Promise<void> {
     try {
       
+      const sequelize = await initOrgSequelize();
+      ResourceSkillTimeline.initialize(sequelize,schemaName);
       // Create the timeline entry using Sequelize model
       await ResourceSkillTimeline.create({
         account_rid: account_rid,
@@ -280,7 +282,9 @@ class ResourceSkillService {
       } = resourceSkillData;
 
 
-    const schemaName = `platform_v2_${accountNumber}`;
+    let { accountNumber: accountNumberFetched, accountId } =
+      await this.schemaService.fetchAccountByNumber(accountNumber);  
+    const schemaName = `platform_v2_${accountNumberFetched}`;
 
     // Create tables in parallel for better performance
     const [timelineTableCreated, historyTableCreated] = await Promise.all([
@@ -336,7 +340,7 @@ class ResourceSkillService {
         originalResourceSkill.toJSON(),
         affectedRows[0],
         "",
-        accountNumber
+        accountNumberFetched
       );
 
       // Also log to timeline
@@ -346,6 +350,7 @@ class ResourceSkillService {
         "Success",
         "",
         originalResourceSkill.account_rid,
+        schemaName
       );
     }
 
@@ -366,6 +371,7 @@ class ResourceSkillService {
           "Failed",
           "",
           originalResourceSkill.account_rid,
+          schemaName
         );
       } catch (timelineError) {
         console.error("Failed to create timeline entry for failed update:", timelineError);
@@ -512,10 +518,12 @@ private async createResourceSkillHistory(
       const offset = (page - 1) * limit;
       const [finalSortBy, finalSortOrder] = resourceSkillSchemaService.getSortParameters(sortBy, sortOrder);
 
+      let { accountNumber: accountNumberFetched, accountId } =
+        await this.schemaService.fetchAccountByNumber(accountNumber);
       // Check if account-specific schema exists
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `platform_v2_${accountNumberFetched}`;
       const tableName = "resource_skill";
-      const schemaAndTableValidation = await resourceSkillSchemaService.validateSchema(accountNumber, tableName);
+      const schemaAndTableValidation = await resourceSkillSchemaService.validateSchema(accountNumberFetched, tableName);
 
       if (!schemaAndTableValidation) {
         return resourceSkillSchemaService.createErrorResponse("Account schema does not exist");

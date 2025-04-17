@@ -29,7 +29,7 @@ export class ResourceSkillTimeline extends Model<ResourceSkillTimelineAttributes
  modified_datetime?: Date;
  modified_by!: string;
 
-  static initialize(sequelize: Sequelize) {
+  static initialize(sequelize: Sequelize,schemaName: string) {
     ResourceSkillTimeline.init(
       {
        rid: {
@@ -79,6 +79,7 @@ export class ResourceSkillTimeline extends Model<ResourceSkillTimelineAttributes
       },
       {
         sequelize,
+        schema: schemaName,
         modelName: "ResourceSkillTimeline",
         tableName: "resource_skill_timeline",
         timestamps: false,

@@ -6,6 +6,7 @@ import { Skill } from "../models/skill";
 import { ResourceSkill } from "../models/resourceSkill";
 import { ResourceSkillTimeline } from "../models/resourceSkillTimeline";
 import { ResourceSkillHistory } from "../models/resourceSkillHistory";
+import { ResourceFiscal } from "../models/resourceFiscal";
 
 class ResourceSkillSchemaService {
   private sequelizeInstance: Sequelize | null = null;
@@ -24,9 +25,10 @@ class ResourceSkillSchemaService {
 
         // Initialize models with the sequelize instance
         Resources.initialize(sequelize, schemaName);
+        ResourceFiscal.initialize(sequelize,schemaName);
         Skill.initialize(sequelize);
         ResourceSkill.initialize(sequelize);
-        ResourceSkillTimeline.initialize(sequelize);
+        ResourceSkillTimeline.initialize(sequelize,schemaName);
         ResourceSkillHistory.initialize(sequelize);
 
         this.sequelizeInstance = sequelize;
@@ -180,6 +182,11 @@ class ResourceSkillSchemaService {
                 schema: schemaName, // Explicitly set schema
               });
               break;
+            case "resource_fiscal":  
+              await sequelize.models.ResourceFiscal.sync({
+                force: false,
+                schema: schemaName, // Explicitly set schema
+              });
             default:
               throw new Error(`Table model ${tableName} not found`);
           }
