@@ -496,11 +496,9 @@ class ResourceCostSchemaService {
           // Add currency info to each resource cost
           resourceCost.forEach((rc: any) => {
             if (rc.currency_rid && currencyMap[rc.currency_rid]) {
-              rc.currency = {
-                currency_code: currencyMap[rc.currency_rid].currency_code,
-                currency_name: currencyMap[rc.currency_rid].currency_name,
-                currency_symbol: currencyMap[rc.currency_rid].currency_symbol
-              };
+                rc.currency_code = currencyMap[rc.currency_rid].currency_code;
+                rc.currency_name = currencyMap[rc.currency_rid].currency_name;
+                rc.currency_symbol = currencyMap[rc.currency_rid].currency_symbol;
             } else {
               rc.currency = null;
             }
