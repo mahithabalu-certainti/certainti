@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Box, Tab, Tabs } from '@mui/material';
 import React, { Fragment } from 'react';
 import ResourceCostTable from './resource-cost/resource-cost-table';
+import ResourceDetails from './resource-details/resource-details';
 import ResourceSkillTable from './resource-skill/resource-skill-table';
 import { AccountData } from '../../utils';
 
@@ -8,6 +10,7 @@ import { AccountData } from '../../utils';
 interface SubcomponentProps {
   handleTabChange: (event: React.SyntheticEvent, newValue: string) => void;
   value: string;
+  resourceData: any;
   appliedFilters: Record<string, any>
   accountDetails: AccountData
 }
@@ -15,6 +18,7 @@ interface SubcomponentProps {
 const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   handleTabChange,
   value,
+  resourceData,
   appliedFilters,
   accountDetails
 }) => {
@@ -74,7 +78,11 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
         </Tabs>
 
         {/* You can add the content for each tab below */}
-        {value === 'details' && <Box>Details Content</Box>}
+        {value === 'details' && (
+          <Box>
+            <ResourceDetails resourceDetails={resourceData} />
+          </Box>
+        )}
         {value === 'cost' && (
           <Box sx={{width: '100%', overflowX: 'auto'}}>
             <ResourceCostTable appliedFilters={appliedFilters} accountDetails={accountDetails} />

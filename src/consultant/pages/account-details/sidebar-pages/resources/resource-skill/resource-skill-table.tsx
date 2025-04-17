@@ -1,4 +1,15 @@
-import { CircularProgress, Paper, Table, TableBody, TableCell, TableHead, TablePagination, TableRow, TableSortLabel, Typography } from "@mui/material";
+import {
+  CircularProgress,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TablePagination,
+  TableRow,
+  TableSortLabel,
+  Typography,
+} from '@mui/material';
 
 import { useEffect, useState } from "react";
 import React from 'react';
@@ -7,7 +18,7 @@ import { convertResourceSkill, RenderSkillRowProps, ResourceSkillType } from "./
 import { ResourceSkillList } from "../../../../../types/resource-skill";
 import { useResourceSkill } from "../../../../../services/resource-skill/resource-skill-service";
 import { RESOURCESKILL } from "../../../../../../routes";
-import ActionButton from "../../../../accounts/table/action-button";
+import ActionButton from '../../../../account-list/table/action-button';
 
 const ResourceSkillTable: React.FC<Record<string, any>> = ({ appliedFilters, accountDetails }) => {
   const navigate = useNavigate();
@@ -37,7 +48,6 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ appliedFilters, acc
     });
   };
 
-
   const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
   };
@@ -64,23 +74,19 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ appliedFilters, acc
       handleRequestSort(event, property);
     };
 
-  const renderRows = ({
-    resourceSkill,
-  }: RenderSkillRowProps) => {
-
+  const renderRows = ({ resourceSkill }: RenderSkillRowProps) => {
     return resourceSkill?.map((skill, i) => {
-
       return (
         <React.Fragment key={i}>
-          <TableRow sx={{
-            '.MuiTableCell-root': {
-              fontWeight: 300,
-              color: '#425A76',
-            }
-          }}>
-            <TableCell>
-              {skill.resourceRole}
-            </TableCell>
+          <TableRow
+            sx={{
+              '.MuiTableCell-root': {
+                fontWeight: 300,
+                color: '#425A76',
+              },
+            }}
+          >
+            <TableCell>{skill.resourceRole}</TableCell>
             <TableCell>{skill.startDate}</TableCell>
             <TableCell>{skill.skillName}</TableCell>
             <TableCell>{skill.skillLevel}</TableCell>
@@ -97,7 +103,6 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ appliedFilters, acc
       );
     });
   };
-
 
   return (
     <Paper sx={{ overflowX: 'auto', boxShadow: 'none' }}>
@@ -149,9 +154,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ appliedFilters, acc
                 Years of Experience
               </TableSortLabel>
             </TableCell>
-            <TableCell>
-              Action
-            </TableCell>
+            <TableCell>Action</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -186,7 +189,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ appliedFilters, acc
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
     </Paper>
-  )
-}
+  );
+};
 
 export default ResourceSkillTable;

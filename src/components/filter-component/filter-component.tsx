@@ -10,14 +10,14 @@ import {
   Typography,
 } from '@mui/material';
 import React, { useState } from 'react';
-import { arrowDownIcon, searchIcon } from '../../../../assets';
+import { arrowDownIcon, searchIcon } from '../../assets';
 import {
   FieldConfig,
   FilterComponentProps,
   FilterState,
   NumberFilterOption,
   TextFilterOption,
-} from '../../../types/account-filter';
+} from '../../consultant/types/account-filter';
 import {
   BooleanFilterControl,
   MultiSelectFilterControl,
@@ -25,12 +25,13 @@ import {
   StatusFilterControl,
   TextFilterControl,
 } from './helpers';
-import { fields, formatFilterForApi, getInitialStateForField } from './utils';
+import { formatFilterForApi, getInitialStateForField } from './utils';
 
 const FilterComponent: React.FC<FilterComponentProps> = ({
   setAppliedFilters,
   searchTerm,
   setSearchTerm,
+  filterFields,
 }) => {
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
@@ -48,7 +49,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
     );
 
     if (!filterStates[fieldName]) {
-      const fieldConfig = fields.find((f) => f.name === fieldName);
+      const fieldConfig = filterFields.find((f) => f.name === fieldName);
       if (!fieldConfig) return;
 
       setFilterStates((prev) => ({
@@ -63,7 +64,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
     event: SelectChangeEvent<any>
   ) => {
     setIsModified(true);
-    const fieldConfig = fields.find((f) => f.name === fieldName);
+    const fieldConfig = filterFields.find((f) => f.name === fieldName);
     if (!fieldConfig) return;
 
     setFilterStates((prev) => {
@@ -113,7 +114,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setIsModified(true);
-    const fieldConfig = fields.find((f) => f.name === fieldName);
+    const fieldConfig = filterFields.find((f) => f.name === fieldName);
     if (!fieldConfig) return;
 
     setFilterStates((prev) => {
@@ -232,7 +233,16 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
 
   return (
     <Box sx={{ width: '100%', p: 2 }}>
-      <Typography variant='subtitle1' sx={{ fontSize: '16px', fontWeight: 600, color: '#2D3E4F', lineHeight: '30px', mb: 1 }}>
+      <Typography
+        variant='subtitle1'
+        sx={{
+          fontSize: '16px',
+          fontWeight: 600,
+          color: '#2D3E4F',
+          lineHeight: '30px',
+          mb: 1,
+        }}
+      >
         Filter Accounts by
       </Typography>
       <TextField
@@ -265,23 +275,25 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
             },
           },
         }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position='start'>
-              <img
-                src={searchIcon}
-                alt='Search'
-                style={{
-                  width: 20,
-                  height: 20,
-                  filter:
-                    'brightness(0) saturate(100%) invert(22%) sepia(15%) saturate(1726%) hue-rotate(169deg) brightness(91%) contrast(87%)', // This filter converts the icon to #2D3E4F
-                }}
-              />
-            </InputAdornment>
-          ),
-          style: {
-            paddingLeft: '12px',
+        slotProps={{
+          htmlInput: {
+            startAdornment: (
+              <InputAdornment position='start'>
+                <img
+                  src={searchIcon}
+                  alt='Search'
+                  style={{
+                    width: 20,
+                    height: 20,
+                    filter:
+                      'brightness(0) saturate(100%) invert(22%) sepia(15%) saturate(1726%) hue-rotate(169deg) brightness(91%) contrast(87%)',
+                  }}
+                />
+              </InputAdornment>
+            ),
+            style: {
+              paddingLeft: '12px',
+            },
           },
         }}
       />
@@ -315,7 +327,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
       {showFilters && (
         <>
           {isModified && (
-            <Box className='flex items-center justify-end gap-2 w-full'>
+            <Box className='flex items-center gap-2 w-full'>
               <Button
                 variant='outlined'
                 color='secondary'
@@ -351,7 +363,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
             </Box>
           )}
 
-          {fields.map((field) => (
+          {filterFields.map((field) => (
             <Box key={field.name}>
               <FormControlLabel
                 control={

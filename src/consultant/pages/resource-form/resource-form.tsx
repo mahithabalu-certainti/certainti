@@ -1,24 +1,24 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { accountHomeIcon, editIcon } from '../../../assets';
-import { CheckErrorMsg, OnChange, useGetAllCountries } from '../../../common-service';
+import {
+  CheckErrorMsg,
+  OnChange,
+  useGetAllCountries,
+} from '../../../common-service';
+import { checkError, checkErrorMsg } from '../../../common-utils';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
-import {
-  useFetchAccountFields,
-  useFetchCurrency,
-  useFetchParentAccounts,
-  useFetchState,
-} from '../../services/account';
-import {
-  useCreateAccount,
-  useUpdateAccount,
-} from '../../services/account-create';
-import { SelectOption } from '../../types';
+import { mockResourceCreatePayload } from '../../mockdata/resource-create';
+import { mockResourceUpdateRequest } from '../../mockdata/resource-update';
+import { useFetchCurrency, useFetchState } from '../../services/account';
+import { useCreateResource } from '../../services/resource-create';
+import { useResourceDetail } from '../../services/resource-details';
+import { useUpdateResource } from '../../services/resource-update';
+import { AccountFormData, SelectOption } from '../../types';
 import { FormData } from './form-data';
 import { transformCostData, transformSkillData } from './utils';
-import { checkError, checkErrorMsg } from '../../../common-utils';
 import { useCreateResourceCost, useFetchResourceCostById, useUpdateResourceCost } from '../../services/resource-cost/resource-cost-service';
 import { useCreateResourceSkill, useFetchResourceSkillById, useUpdateResourceSkill } from '../../services/resource-skill/resource-skill-service';
 
@@ -27,27 +27,10 @@ const ResourceForm: React.FC = () => {
   const [currentCountry, setCurrentCountry] = useState('');
   const { successToast, errorToast } = useToast();
   const location = useLocation();
-  const { state } = location;
-  const { accountid } = useParams();
-
-  // Need to call resource by id api for fetching resource info
-  const getAccount = useFetchAccountFields(accountid as string);
-  const account = getAccount.data?.data;
-  const accountData = useMemo(
-    () => ({
-      ...account?.accountDetails,
-      ...account?.accountById,
-      ...(account?.accountById &&
-        account?.accountDetails && {
-        is_parent: account?.accountById.is_parent ? 'yes' : 'no',
-        autosend_interaction: account?.accountDetails.autosend_interaction
-          ? 'yes'
-          : 'no',
-        auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
-      }),
-    }),
-    [account]
-  );
+  const {state} = location;
+  console.log('location', location);
+  const navigate = useNavigate();
+  const resource = useResourceDetail(location?.state?.data?.accountById?.rid);
 
   //fetch resource cost by id
 
@@ -75,11 +58,10 @@ const ResourceForm: React.FC = () => {
   const skillInfo = getSkillData.data;
 
   const allCountries = useGetAllCountries();
-  const parentAccount = useFetchParentAccounts();
   const currency = useFetchCurrency();
-  const regions = useFetchState(currentCountry);
-  const createAccount = useCreateAccount();
-  const updateAccount = useUpdateAccount();
+  const createResource = useCreateResource();
+  const updateResource = useUpdateResource();
+  const states = useFetchState(currentCountry);
 
   const createResourceCost = useCreateResourceCost();
   const updateResourceCost = useUpdateResourceCost();
@@ -90,12 +72,11 @@ const ResourceForm: React.FC = () => {
 
   // Hook Error Handling
   const errorhandlingData = [
-    createAccount,
+    createResource,
     allCountries,
-    parentAccount,
     currency,
-    regions,
-    updateAccount,
+    states,
+    updateResource,
     createResourceCost,
     updateResourceCost,
     createResourceSkill,
@@ -104,7 +85,7 @@ const ResourceForm: React.FC = () => {
   const commonError = checkError(errorhandlingData);
   const commonErrorMsg = checkErrorMsg(errorhandlingData as CheckErrorMsg[]);
   const costSkillSuccess = createResourceCost.isSuccess || updateResourceCost.isSuccess || createResourceSkill.isSuccess || updateResourceSkill.isSuccess
-  const commonSuccess = createAccount.isSuccess || updateAccount.isSuccess || costSkillSuccess;
+  const commonSuccess = createResource.isSuccess || updateResource.isSuccess || costSkillSuccess;
 
   useEffect(() => {
     if (commonError) {
@@ -149,13 +130,13 @@ const ResourceForm: React.FC = () => {
     [allCountries.data?.data.country]
   );
 
-  const memoizedParentAccounts: SelectOption[] = useMemo(
+  const memoizedStates: SelectOption[] = useMemo(
     () =>
-      parentAccount.data?.data.gloablAcconunt.map((account) => ({
-        label: account.account_name,
+      states.data?.data.states.map((account) => ({
+        label: account.state_name,
         value: account.rid,
       })) || [],
-    [parentAccount.data?.data.gloablAcconunt]
+    [states.data?.data.states]
   );
 
   const memoizedCurrency: SelectOption[] = useMemo(
@@ -167,7 +148,15 @@ const ResourceForm: React.FC = () => {
     [currency.data?.data.currency]
   );
 
-  const submitData = (formValues: any) => {
+  const submitData = (formValues: Partial<AccountFormData>) => {
+    console.log('formValues', formValues);
+    // const resourceData = transformFormData(formValues, isEditView);
+    if (isEditView) {
+      updateResource.mutate(mockResourceUpdateRequest);
+    } else {
+      createResource.mutate(mockResourceCreatePayload);
+    }
+
     const { state } = location;
     if (state.cost) {
       const costData = transformCostData(formValues, isEditView);
@@ -189,14 +178,16 @@ const ResourceForm: React.FC = () => {
 
   const handleExternalSubmit = () => {
     formRef.current?.requestSubmit();
+    formRef.current?.reset();
   };
 
   const goBack = () => {
-    window.history.back();
+    formRef.current?.reset();
+    navigate(-1);
   };
 
   const onChangeField = (data: OnChange) => {
-    if (data.fieldName === 'country_rid') {
+    if (data.fieldName === 'country') {
       setCurrentCountry(data.fieldValue as string);
     }
   };
@@ -214,8 +205,14 @@ const ResourceForm: React.FC = () => {
             {isEditView && (
               <h5 className='text-xs ml-2 text-gray-500 mb-1'>Edit Resource</h5>
             )}
+            <div className=' text-xs ml-2 leading-4 text-gray-500'>
+              {'Account > ' +
+                `${isEditView ? location?.state?.accountDetails?.data?.accountById?.account_name : location?.state?.data?.accountById?.account_name}`}
+            </div>
             <h4 className='font-bold text-lg ml-2 leading-4'>
-              {isEditView ? accountData.account_name : 'Create Resource'}
+              {isEditView
+                ? location?.state?.resource?.resource_fullname
+                : 'New Resource'}
             </h4>
           </div>
         </div>
@@ -229,7 +226,7 @@ const ResourceForm: React.FC = () => {
           <TextButton
             label='Save'
             variant='filled'
-            loading={createAccount.isPending || updateAccount.isPending}
+            loading={createResource.isPending || updateResource.isPending}
             onClick={handleExternalSubmit}
           />
         </div>
@@ -238,16 +235,29 @@ const ResourceForm: React.FC = () => {
         <FormBuilder
           data={FormData(
             memoizedContry,
-            memoizedParentAccounts,
-            memoizedCurrency
+            memoizedCurrency,
+            memoizedStates,
+            states.isLoading
           )}
-          loading={
-            allCountries.isLoading ||
-            parentAccount.isLoading ||
-            currency.isLoading ||
-            regions.isLoading
+          loading={allCountries.isLoading || currency.isLoading}
+          values={
+            isEditView &&
+            (resource.data?.data?.resource as unknown as Record<
+              string,
+              string | number | boolean | string[] | null
+            >)
+              ? (resource.data?.data?.resource as unknown as Record<
+                  string,
+                  string | number | boolean | string[] | null
+                >)
+              : undefined
           }
-          values={isEditView && accountData ? { ...accountData } : undefined}
+          // values={
+          //   resource.data?.data?.resource as unknown as Record<
+          //     string,
+          //     string | number | boolean | string[] | null
+          //   >
+          // }
           outData={submitData}
           formRef={formRef}
           onChange={onChangeField}

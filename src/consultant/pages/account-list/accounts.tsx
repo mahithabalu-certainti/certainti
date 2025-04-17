@@ -9,10 +9,11 @@ import {
   filterIcon,
   refreshIcon,
 } from '../../../assets';
+import { Filter } from '../../../components';
 import ActionsDropdown from '../../../components/actions-dropdown/actions-dropdown';
 import TextButton from '../../../components/button/text-button';
 import { ACCOUNT_CREATE } from '../../../routes';
-import FilterComponent from './filter-component/filter-component';
+import { accountFilterfields } from './helpers';
 import AccountTable from './table/account-table';
 
 const BUTTON_STYLES = {
@@ -41,6 +42,8 @@ export const Accounts: React.FC = () => {
   const handleCreateAcount = () => {
     navigate(ACCOUNT_CREATE);
   };
+
+  const [totalCount, setTotalCount] = useState<number>(0);
   return (
     <div className='flex flex-col w-full h-full'>
       <div className='flex justify-between w-full h-[15%] border-b-2 border-[#CBD6E2] p-4'>
@@ -57,7 +60,9 @@ export const Accounts: React.FC = () => {
               </div>
               <div className='font-medium text-[#7D98B6] text-[11px]'>
                 Total Records found -{' '}
-                <span className='font-semibold text-[#2D3E4F]'>5</span>
+                <span className='font-semibold text-[#2D3E4F]'>
+                  {totalCount}
+                </span>
               </div>
             </div>
             <div
@@ -113,10 +118,11 @@ export const Accounts: React.FC = () => {
             isFilterOpen ? 'w-[20%] opacity-100' : 'w-0 opacity-0'
           }`}
         >
-          <FilterComponent
+          <Filter
             setAppliedFilters={setAppliedFilters}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
+            filterFields={accountFilterfields}
           />
         </div>
 
@@ -132,6 +138,7 @@ export const Accounts: React.FC = () => {
           <AccountTable
             appliedFilters={appliedFilters}
             searchTerm={searchTerm}
+            setTotalCount={setTotalCount}
           />
         </div>
       </div>

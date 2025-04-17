@@ -1,22 +1,31 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Box, Menu, MenuItem, Tab, Tabs } from '@mui/material';
 import React, { Fragment, useState } from 'react';
 import { leftArrowIcon, resourceFilterIcon } from '../../../../assets';
 import { ActionsDropdown, Image } from '../../../../components';
-import { FiscalYearDropdown } from './fiscal-year-dropdown';
 import Filter from '../../../../components/filter/filter';
 import { costFields, skillFields } from '../sidebar-pages/resources/utils';
+import { FiscalYearDropdown } from './fiscal-year-dropdown';
 
 interface TabPanelProps {
   viewMode: boolean;
   onExitView: () => void;
   title: string;
-  handleFilter: () => void
-  value: string
-  showFilter: boolean,
-  setAppliedFilters: (filters: Record<string, any>) => void
+  handleFilter: () => void;
+  value: string;
+  showFilter: boolean;
+  setAppliedFilters: (filters: Record<string, any>) => void;
 }
 
-const TabPanel: React.FC<TabPanelProps> = ({ viewMode, onExitView, title, handleFilter, value, showFilter, setAppliedFilters }) => {
+const TabPanel: React.FC<TabPanelProps> = ({
+  viewMode,
+  onExitView,
+  title,
+  handleFilter,
+  value,
+  showFilter,
+  setAppliedFilters,
+}) => {
   const [tabValue, setTabValue] = useState(0);
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
   const [, setSelectedSort] = useState('Accounts');
@@ -122,7 +131,10 @@ const TabPanel: React.FC<TabPanelProps> = ({ viewMode, onExitView, title, handle
           )}
 
           <Box className='flex items-center space-x-2'>
-            <Box onClick={handleFilter} className='h-[38px] w-[38px] flex items-center justify-center border border-[#CBD6E2]'>
+            <Box
+              onClick={handleFilter}
+              className='h-[38px] w-[38px] flex items-center justify-center border border-[#CBD6E2]'
+            >
               <Image src={resourceFilterIcon} />
             </Box>
             <FiscalYearDropdown />
@@ -143,7 +155,13 @@ const TabPanel: React.FC<TabPanelProps> = ({ viewMode, onExitView, title, handle
           <MenuItem onClick={() => handleSortSelect('User')}>User</MenuItem>
         </Menu>
       </Box>
-      {showFilter && <Filter filterMenu={value === 'cost' ? costFields : skillFields} setAppliedFilters={setAppliedFilters} handleFilter={handleFilter} />}
+      {showFilter && (
+        <Filter
+          filterMenu={value === 'cost' ? costFields : skillFields}
+          setAppliedFilters={setAppliedFilters}
+          handleFilter={handleFilter}
+        />
+      )}
     </Fragment>
   );
 };

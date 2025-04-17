@@ -1,6 +1,21 @@
-import { CircularProgress, Paper, Table, TableBody, TableCell, TableHead, TablePagination, TableRow, TableSortLabel, Typography } from "@mui/material"
-import { convertResourceCost, RenderCostRowProps, ResourceCostType } from "./resource-cost-type";
-import { useEffect, useState } from "react";
+import {
+  CircularProgress,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TablePagination,
+  TableRow,
+  TableSortLabel,
+  Typography,
+} from '@mui/material';
+import { useEffect, useState } from 'react';
+import {
+  convertResourceCost,
+  RenderCostRowProps,
+  ResourceCostType,
+} from './resource-cost-type';
 // import { ResourceCostList } from "../../../types/resourceCost";
 // import { useResourceCost } from "../../../services/resource-cost/resource-cost-service";
 import React from 'react';
@@ -8,7 +23,8 @@ import { useNavigate } from "react-router-dom";
 import { ResourceCostList } from "../../../../../types/resource-cost";
 import { useResourceCost } from "../../../../../services/resource-cost/resource-cost-service";
 import { RESOURCECOST } from "../../../../../../routes";
-import ActionButton from "../../../../accounts/table/action-button";
+import ActionButton from '../../../../account-list/table/action-button';
+// import ActionButton from "../../../../accounts/table/action-button";
 // import { RESOURCECOST } from "../../../../routes";
 // import ActionButton from "../../accounts/table/action-button";
 
@@ -65,16 +81,13 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters, acco
   };
 
   const createSortHandler =
-    (property: keyof ResourceCostList) => (event: React.MouseEvent<unknown>) => {
+    (property: keyof ResourceCostList) =>
+    (event: React.MouseEvent<unknown>) => {
       handleRequestSort(event, property);
     };
 
-  const renderRows = ({
-    resourceCost,
-  }: RenderCostRowProps) => {
-
+  const renderRows = ({ resourceCost }: RenderCostRowProps) => {
     return resourceCost?.map((cost) => {
-
       return (
         <React.Fragment key={cost.resourceCostNumber}>
           <TableRow sx={{
@@ -110,7 +123,6 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters, acco
       );
     });
   };
-
 
   return (
     <Paper sx={{ overflowX: 'scroll', boxShadow: 'none' }}>
@@ -216,9 +228,7 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters, acco
                 Annual
               </TableSortLabel>
             </TableCell>
-            <TableCell>
-              Action
-            </TableCell>
+            <TableCell>Action</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -236,7 +246,7 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters, acco
             </TableRow>
           ) : (
             renderRows({
-              resourceCost: resourceCostList || []
+              resourceCost: resourceCostList || [],
             })
           )}
         </TableBody>
@@ -251,7 +261,7 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters, acco
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
     </Paper>
-  )
-}
+  );
+};
 
 export default ResourceCostTable;

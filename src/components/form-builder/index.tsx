@@ -6,10 +6,11 @@ import dayjs from 'dayjs';
 import { CountryCode, parsePhoneNumberFromString } from 'libphonenumber-js';
 import React, { useEffect } from 'react';
 import PhoneInput, { CountryData } from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 import { calendarIcon, closeIcon, searchBlackIcon } from '../../assets';
+
 import { FieldTypes, OnChange } from '../../common-service';
 import { ALLOWED_COUNTRIES } from '../../common-utils';
-import 'react-phone-input-2/lib/style.css';
 import {
   FormType,
   FormTypeFields,
@@ -140,10 +141,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         }));
       });
 
-      // Queue the state update for after render
-      setTimeout(() => {
-        setConstructFormData(newData);
-      }, 0);
+      setConstructFormData(newData);
     };
 
     if (field.isLoading) {
@@ -299,12 +297,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               minDate={sectionDate ? dayjs(sixYearsAgo) : undefined}
               value={sectionDate ? dayjs(fieldValue) : dayjs(fieldValue, 'DD/MM/YYYY')}
               disabled={field.disabled || readOnly}
+              format='MM/DD'
+              views={['month', 'day']}
+              minDate={dayjs().startOf('year')}
+              maxDate={dayjs().endOf('year')}
               onChange={(newValue) => {
-                if (!newValue) {
-                  handleChange('');
-                } else {
-                  handleChange(dayjs(newValue).format('DD/MM/YYYY'));
-                }
+                handleChange(dayjs(newValue).format('DD/MM/YYYY'));
               }}
               shouldDisableDate={(date) => sectionDate ? dayjs(date).isAfter(dayjs(), 'day') : dayjs(date).isBefore(dayjs(), 'day')}
               slots={{
@@ -316,7 +314,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 ),
               }}
               slotProps={{
-                field: { clearable: true },
+                field: { clearable: !field.disabled },
                 textField: {
                   fullWidth: true,
                   size: 'small',
@@ -328,11 +326,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     },
                     inputProps: {
                       readOnly: true,
-                      onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => {
-                        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-                          e.preventDefault();
-                        }
-                      },
                     },
                   },
                   sx: {

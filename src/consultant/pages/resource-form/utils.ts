@@ -1,4 +1,4 @@
-import { AccountFormData, NewAccountData } from '../../types';
+import { AccountFormData, NewAccountData, SelectOption } from '../../types';
 import { ResourceCostPayload, ResourceCostSkillFormData } from '../../types/resource-cost';
 import { ResourceSkillPayload } from '../../types/resource-skill';
 import { skillLevel } from '../account-details/sidebar-pages/resources/resource-skill/resource-skill-type';
@@ -42,6 +42,26 @@ export const transformFormData = (
   }
   return data;
 };
+
+export const statusOption: SelectOption[] = [
+  { label: 'Active', value: 'active' },
+  { label: 'Inactive', value: 'inactive' },
+];
+
+export const resourceTypeOption: SelectOption[] = [
+  { label: 'Full Time', value: 'FullTime' },
+  { label: 'Contract', value: 'Contract' },
+];
+
+export const frequencyOption: SelectOption[] = [
+  { label: 'Annual', value: 'annual' },
+  { label: 'Semi Annual', value: 'semi_annual' },
+  { label: 'Monthly', value: 'monthly' },
+  { label: 'Bi-Weekly', value: 'bi_weekly' },
+  { label: 'Weekly', value: 'weekly' },
+  { label: 'Daily', value: 'daily' },
+  { label: 'Hourly', value: 'hourly' },
+];
 
 export const transformCostData = (
   formData: Partial<ResourceCostSkillFormData>,

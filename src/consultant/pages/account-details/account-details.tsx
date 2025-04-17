@@ -33,7 +33,6 @@ export const AccountDetails = () => {
   }: { data: any; isLoading: boolean; isError: boolean } = useAccountDetail(
     paramsData?.account?.accountId || ''
   );
-  console.log('data', data);
 
   useEffect(() => {
     if (data?.data) {
@@ -75,7 +74,7 @@ export const AccountDetails = () => {
       case 'details':
         return <Details />;
       case 'resources':
-        return <Resources accountDetails={accountDetails} />;
+        return <Resources accountDetails={data} />;
       case 'attachments':
         return <Attachments />;
       case 'projects':

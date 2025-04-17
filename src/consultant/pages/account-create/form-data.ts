@@ -68,11 +68,11 @@ export const FormData = (
               'Industry should contain only letters and between 5 to 25 characters',
             placeholder: 'Enter Industry',
           }),
-          createTextField('project_manager', 'Project Manager', {
+          createTextField('project_manager', 'Delivery Manager', {
             required: true,
-            regex: REGEX_PATTERNS.EMAIL,
-            regexErrorMessage: 'Enter a valid email address',
-            placeholder: 'Enter Project Manager Email',
+            regex: REGEX_PATTERNS.MANAGER_REGEX,
+            regexErrorMessage: 'Enter a valid name',
+            placeholder: 'Enter Delivery Manager Name',
           }),
           createRadioField('is_parent', 'Is Parent Account', {
             radioOptions: YES_NO_OPTIONS,
@@ -164,11 +164,6 @@ export const FormData = (
           createDateField('fiscal_end_date', 'Fiscal End Date', {
             disabled: disableFields,
             required: true,
-            greaterThan: {
-              key: 'fiscal_start_date',
-              errorMessage:
-                'Date should be greater or equal to Fiscal Start Date',
-            },
           }),
           createTextField('blended_rate_fte', 'Blended Rate - FTE', {
             required: false,
@@ -185,7 +180,8 @@ export const FormData = (
           createTextField('blended_rate_subcon', 'Blended Rate - SubCon', {
             required: false,
             regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
-           regexErrorMessage: 'Enter a valid annual revenue using numbers and commas only',
+            regexErrorMessage:
+              'Enter a valid annual revenue using numbers and commas only',
             placeholder: 'Enter Blended Rate - SubCon',
           }),
           createRadioField('auto_access_rd', 'Auto assess RD', {
@@ -210,7 +206,7 @@ export const FormData = (
           createTextAreaField('account_description', 'Description', {
             required: false,
             regex: REGEX_PATTERNS.ACCOUNT_DESCRIPTION,
-            regexErrorMessage: 'Description must be at least 500 characters',
+            regexErrorMessage: 'Description must be with in 500 characters',
             placeholder: 'Enter Description',
           }),
         ],

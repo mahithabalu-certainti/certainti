@@ -1,25 +1,25 @@
-import React, { useEffect } from 'react';
-import { accountHomeIcon } from '../../../assets/icons';
-import TextButton from '../../../components/button/text-button';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../../store/store';
-import { useManageUserDetail } from '../../../admin/service';
 import { Skeleton } from '@mui/material';
-import { ProfileField } from '../../types';
+import React, { useEffect } from 'react';
+import { useSelector } from 'react-redux';
+import { useManageUserDetail } from '../../../admin/service';
+import { accountHomeIcon } from '../../../assets/icons';
+import { CheckErrorMsg } from '../../../common-service';
 import {
   checkError,
   checkErrorMsg,
   formatAddress,
   getDateTimeFormat,
 } from '../../../common-utils';
+import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
-import { CheckErrorMsg } from '../../../common-service';
+import { RootState } from '../../../store/store';
+import { ProfileField } from '../../types';
 
 export const Profile: React.FC = () => {
   const { errorToast } = useToast();
   const { userId } = useSelector((state: RootState) => state.auth);
   const userDetails = useManageUserDetail(userId as string);
-  const userDatas = userDetails.data?.data?.users[0];
+  const userDatas = userDetails.data?.data?.users;
 
   // Hook Error Handling
   const commonError = checkError([userDetails]);
