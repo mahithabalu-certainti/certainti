@@ -345,7 +345,7 @@ const listResourceSkillSchema = Joi.object({
   sortBy: Joi.string().default("createdAt").optional(),
   sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
   accountNumber: Joi.string().max(255).required(),
-  fiscalYear: Joi.number().required(),
+  fiscalYear: Joi.number().optional(),
 });
 
 const updateResourceCostSchema = Joi.object({

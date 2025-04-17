@@ -537,16 +537,7 @@ private async createResourceSkillHistory(
           SELECT 
             rs.*,
             s.skill_name,
-            json_build_object(
-              'rid', r.rid,
-              'resource_ref_id', r.resource_ref_id,
-              'resource_type', r.resource_type,
-              'first_name', r.resource_firstname,
-              'last_name', r.resource_lastname,
-              'full_name', r.resource_fullname,
-              'email', r.resource_email,
-              'role', r.resource_role
-            ) AS resource_data
+            row_to_json(r) AS resource_data
           FROM "${schemaName}"."resource_skill" rs
           INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
           INNER JOIN "${schemaName}"."skill" s ON rs.skill_rid = s.rid
