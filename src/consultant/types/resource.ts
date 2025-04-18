@@ -1,11 +1,12 @@
 import { Status, YesNo } from './account';
 
 export interface ResourceListURLParams {
-  page: number;
-  limit: number;
-  sortBy: string;
-  sortOrder: 'ASC' | 'DESC';
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
   filters?: object;
+  accountNumber?: string;
 }
 
 export type ResourceList = {

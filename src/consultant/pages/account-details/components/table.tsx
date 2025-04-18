@@ -2,6 +2,7 @@
 import {
   Button,
   Checkbox,
+  CircularProgress,
   IconButton,
   ListItemText,
   Menu,
@@ -14,10 +15,11 @@ import {
   TableHead,
   TableRow,
   TableSortLabel,
+  Typography,
 } from '@mui/material';
 import React, { useState } from 'react';
 
-interface Column {
+interface TableColumn {
   id: string;
   label: string;
   sortable?: boolean;
@@ -26,70 +28,79 @@ interface Column {
   render?: (value: any, row: any) => React.ReactNode;
 }
 
-interface ActionMenuItem {
+interface TableActionMenuItem {
   label: string;
   onClick: (row: any) => void;
+  icon?: React.ReactNode;
 }
 
-interface ReusableTableProps {
+interface TableHeaderButton {
+  label: string;
+  variant: 'text' | 'outlined' | 'contained';
+  onClick: () => void;
+  icon?: React.ReactNode;
+}
+
+interface DataTableProps {
   data: any[];
-  columns: Column[];
-  actionMenuItems?: ActionMenuItem[];
+  columns: TableColumn[];
+  actionMenuItems?: TableActionMenuItem[];
   title?: string;
   titleIcon?: React.ReactNode;
-  headerButtons?: {
-    label: string;
-    variant: 'text' | 'outlined' | 'contained';
-    onClick: () => void;
-  }[];
+  headerButtons?: TableHeaderButton[];
   pagination?: boolean;
   rowsPerPage?: number;
   sortable?: boolean;
-  setViewMode: (viewMode: boolean) => void;
+  onViewModeToggle?: (viewMode: boolean) => void;
   viewMode?: boolean;
+  isLoading?: boolean;
+  error?: Error | null;
+  emptyStateMessage?: string;
+  rowIdentifier?: string; // Key to identify rows uniquely
 }
 
-const ListTable: React.FC<ReusableTableProps> = ({
+const DataTable: React.FC<DataTableProps> = ({
   data = [],
   columns = [],
   actionMenuItems = [],
-  // title = '',
-  // titleIcon,
-  // headerButtons = [],
   pagination = true,
   rowsPerPage = 5,
   sortable = true,
-  setViewMode,
-  viewMode,
+  onViewModeToggle,
+  viewMode = false,
+  isLoading = false,
+  error = null,
+  emptyStateMessage = 'No data available',
+  rowIdentifier = 'id',
 }) => {
-  const [page, setPage] = useState(0);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedRow, setSelectedRow] = useState<any | null>(null);
-  const [order, setOrder] = useState<'asc' | 'desc'>('asc');
-  const [orderBy, setOrderBy] = useState<string>('');
-  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
+  const [currentPage, setCurrentPage] = useState(0);
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [selectedRowData, setSelectedRowData] = useState<any | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortField, setSortField] = useState<string>('');
+  const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
 
-  const handleChangePage = (_event: unknown, newPage: number) => {
-    setPage(newPage);
+  const handlePageChange = (_event: unknown, newPage: number) => {
+    setCurrentPage(newPage);
   };
 
-  const handleMenuOpen = (
+  const handleActionMenuOpen = (
     event: React.MouseEvent<HTMLButtonElement>,
     row: any
   ) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedRow(row);
+    setMenuAnchor(event.currentTarget);
+    setSelectedRowData(row);
   };
 
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setSelectedRow(null);
+  const handleActionMenuClose = () => {
+    setMenuAnchor(null);
+    setSelectedRowData(null);
   };
 
-  const handleRequestSort = (property: string) => {
-    const isAsc = orderBy === property && order === 'asc';
-    setOrder(isAsc ? 'desc' : 'asc');
-    setOrderBy(property);
+  const handleSortRequest = (property: string) => {
+    const isAscending = sortField === property && sortOrder === 'asc';
+    setSortOrder(isAscending ? 'desc' : 'asc');
+    setSortField(property);
   };
 
   const stableSort = (array: any[], comparator: (a: any, b: any) => number) => {
@@ -120,35 +131,35 @@ const ListTable: React.FC<ReusableTableProps> = ({
     return 0;
   };
 
-  const handleRowSelect = (rowId: string) => {
-    const newSelected = new Set(selectedRows);
-    if (newSelected.has(rowId)) {
-      newSelected.delete(rowId);
+  const handleRowSelection = (rowId: string) => {
+    const newSelection = new Set(selectedRowIds);
+    if (newSelection.has(rowId)) {
+      newSelection.delete(rowId);
     } else {
-      newSelected.add(rowId);
+      newSelection.add(rowId);
     }
-    setSelectedRows(newSelected);
+    setSelectedRowIds(newSelection);
   };
 
-  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSelectAllRows = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      const allIds = new Set(data.map((_, index) => index.toString()));
-      setSelectedRows(allIds);
+      const allIds = new Set(data.map((row) => row[rowIdentifier].toString()));
+      setSelectedRowIds(allIds);
     } else {
-      setSelectedRows(new Set());
+      setSelectedRowIds(new Set());
     }
   };
 
   const toggleViewMode = () => {
-    setViewMode(!viewMode);
-    setSelectedRows(new Set());
+    onViewModeToggle?.(!viewMode);
+    setSelectedRowIds(new Set());
   };
 
-  const startIndex = page * rowsPerPage;
+  const startIndex = currentPage * rowsPerPage;
   const endIndex = startIndex + rowsPerPage;
   const sortedData =
-    sortable && orderBy
-      ? stableSort(data, getComparator(order, orderBy))
+    sortable && sortField
+      ? stableSort(data, getComparator(sortOrder, sortField))
       : data;
   const displayedRows =
     pagination && !viewMode
@@ -159,19 +170,56 @@ const ListTable: React.FC<ReusableTableProps> = ({
   const from = data.length === 0 ? 0 : startIndex + 1;
   const to = Math.min(endIndex, data.length);
 
-  const open = Boolean(anchorEl);
+  const isMenuOpen = Boolean(menuAnchor);
+
+  if (isLoading) {
+    return (
+      <div className='flex justify-center items-center h-64'>
+        <CircularProgress />
+        <Typography variant='body1' className='ml-4'>
+          Loading data...
+        </Typography>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className='flex flex-col justify-center items-center h-64 p-4'>
+        <Typography variant='h6' color='error' className='mb-2'>
+          Error loading data
+        </Typography>
+        <Typography
+          variant='body2'
+          color='textSecondary'
+          className='text-center'
+        >
+          {error.message || 'Failed to fetch data. Please try again later.'}
+        </Typography>
+        <Button
+          variant='outlined'
+          color='primary'
+          className='mt-4'
+          onClick={() => window.location.reload()}
+        >
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
+  if (data.length === 0 && !isLoading) {
+    return (
+      <div className='flex flex-col justify-center items-center h-64 p-4'>
+        <Typography variant='h6' color='textSecondary'>
+          {emptyStateMessage}
+        </Typography>
+      </div>
+    );
+  }
 
   return (
-    <div className='border-1 border-gray-300 mr-2'>
-      {/* {viewMode && (
-        <Button
-          variant='text'
-          onClick={toggleViewMode}
-          className='text-blue-600'
-        >
-          Exit View
-        </Button>
-      )} */}
+    <div className='border border-gray-300 rounded-lg mr-2'>
       <TableContainer
         component={Paper}
         style={viewMode ? { maxHeight: '70vh', overflowY: 'auto' } : {}}
@@ -183,12 +231,13 @@ const ListTable: React.FC<ReusableTableProps> = ({
                 <TableCell padding='checkbox'>
                   <Checkbox
                     indeterminate={
-                      selectedRows.size > 0 && selectedRows.size < data.length
+                      selectedRowIds.size > 0 &&
+                      selectedRowIds.size < data.length
                     }
                     checked={
-                      data.length > 0 && selectedRows.size === data.length
+                      data.length > 0 && selectedRowIds.size === data.length
                     }
-                    onChange={handleSelectAll}
+                    onChange={handleSelectAllRows}
                     inputProps={{ 'aria-label': 'select all rows' }}
                   />
                 </TableCell>
@@ -202,9 +251,9 @@ const ListTable: React.FC<ReusableTableProps> = ({
                 >
                   {sortable && column.sortable !== false ? (
                     <TableSortLabel
-                      active={orderBy === column.id}
-                      direction={orderBy === column.id ? order : 'asc'}
-                      onClick={() => handleRequestSort(column.id)}
+                      active={sortField === column.id}
+                      direction={sortField === column.id ? sortOrder : 'asc'}
+                      onClick={() => handleSortRequest(column.id)}
                     >
                       {column.label}
                     </TableSortLabel>
@@ -214,28 +263,39 @@ const ListTable: React.FC<ReusableTableProps> = ({
                 </TableCell>
               ))}
               {!viewMode && actionMenuItems.length > 0 && (
-                <TableCell className='font-bold'>Action</TableCell>
+                <TableCell className='font-bold'>Actions</TableCell>
               )}
             </TableRow>
           </TableHead>
           <TableBody>
-            {displayedRows.map((row, rowIndex) => (
+            {displayedRows.map((row) => (
               <TableRow
-                key={row.id}
+                key={row[rowIdentifier]}
                 className='hover:bg-gray-50'
-                selected={viewMode && selectedRows.has(rowIndex.toString())}
+                selected={
+                  viewMode && selectedRowIds.has(row[rowIdentifier].toString())
+                }
               >
                 {viewMode && (
                   <TableCell padding='checkbox'>
                     <Checkbox
-                      checked={selectedRows.has(rowIndex.toString())}
-                      onChange={() => handleRowSelect(rowIndex.toString())}
-                      inputProps={{ 'aria-labelledby': `row-${rowIndex}` }}
+                      checked={selectedRowIds.has(
+                        row[rowIdentifier].toString()
+                      )}
+                      onChange={() =>
+                        handleRowSelection(row[rowIdentifier].toString())
+                      }
+                      inputProps={{
+                        'aria-labelledby': `row-${row[rowIdentifier]}`,
+                      }}
                     />
                   </TableCell>
                 )}
                 {columns.map((column) => (
-                  <TableCell key={column.id} align={column.align}>
+                  <TableCell
+                    key={`${row[rowIdentifier]}-${column.id}`}
+                    align={column.align}
+                  >
                     {column.render
                       ? column.render(row[column.id], row)
                       : row[column.id]}
@@ -245,10 +305,10 @@ const ListTable: React.FC<ReusableTableProps> = ({
                   <TableCell>
                     <IconButton
                       size='small'
-                      onClick={(e) => handleMenuOpen(e, row)}
-                      aria-controls={open ? 'action-menu' : undefined}
+                      onClick={(e) => handleActionMenuOpen(e, row)}
+                      aria-controls={isMenuOpen ? 'action-menu' : undefined}
                       aria-haspopup='true'
-                      aria-expanded={open ? 'true' : undefined}
+                      aria-expanded={isMenuOpen ? 'true' : undefined}
                     >
                       <span role='img' aria-label='more'>
                         ⋮
@@ -277,8 +337,8 @@ const ListTable: React.FC<ReusableTableProps> = ({
               <span className='text-gray-600'>{`${from}-${to} of ${data.length}`}</span>
               <IconButton
                 size='small'
-                disabled={page === 0}
-                onClick={() => handleChangePage(null, page - 1)}
+                disabled={currentPage === 0}
+                onClick={() => handlePageChange(null, currentPage - 1)}
               >
                 <span role='img' aria-label='previous'>
                   ◀
@@ -286,8 +346,8 @@ const ListTable: React.FC<ReusableTableProps> = ({
               </IconButton>
               <IconButton
                 size='small'
-                disabled={page >= totalPages - 1}
-                onClick={() => handleChangePage(null, page + 1)}
+                disabled={currentPage >= totalPages - 1}
+                onClick={() => handlePageChange(null, currentPage + 1)}
               >
                 <span role='img' aria-label='next'>
                   ▶
@@ -308,9 +368,9 @@ const ListTable: React.FC<ReusableTableProps> = ({
             },
           }}
           id='action-menu'
-          anchorEl={anchorEl}
-          open={open}
-          onClose={handleMenuClose}
+          anchorEl={menuAnchor}
+          open={isMenuOpen}
+          onClose={handleActionMenuClose}
           MenuListProps={{
             'aria-labelledby': 'action-button',
           }}
@@ -333,10 +393,11 @@ const ListTable: React.FC<ReusableTableProps> = ({
               }}
               key={item.label}
               onClick={() => {
-                item.onClick(selectedRow);
-                handleMenuClose();
+                item.onClick(selectedRowData);
+                handleActionMenuClose();
               }}
             >
+              {item.icon && <div className='mr-2'>{item.icon}</div>}
               <ListItemText>{item.label}</ListItemText>
             </MenuItem>
           ))}
@@ -346,4 +407,4 @@ const ListTable: React.FC<ReusableTableProps> = ({
   );
 };
 
-export default ListTable;
+export default DataTable;

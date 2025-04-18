@@ -11,16 +11,22 @@ import ResourceSubComponents from './resource-sub-components';
 import ResourceTableHeader from './resource-table-header';
 
 const Resource = ({ accountDetails }: any) => {
+  console.log('accountDetails-Resource', accountDetails);
   const [viewMode, setViewMode] = useState<boolean>(false);
   const [viewResourceList, setViewResourceList] = useState<boolean>(true);
   const [columns, setColumns] = useState<any>([]);
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [value, setValue] = useState('details');
-  const [, setAppliedFilters] = useState<Record<string, any>>();
+  const [appliesFilters, setAppliedFilters] = useState<Record<string, any>>();
+  console.log('appliesFilters', appliesFilters);
   const [showBackArrow, setShowBackArrow] = useState<boolean>(false);
   const [resourceData, setResourceData] = useState<any>({});
   const navigate = useNavigate();
-  const { data: ResourceList } = useResourceList();
+  const {
+    data: ResourceList,
+    isLoading,
+    error,
+  } = useResourceList(accountDetails?.data?.accountById.r_number);
   const handleFilter = () => {
     setShowFilter(!showFilter);
   };
@@ -49,6 +55,10 @@ const Resource = ({ accountDetails }: any) => {
     navigate(RESOURCE + '/edit/' + resource.rid, {
       state: { resource, accountDetails },
     });
+  };
+
+  const handleCreateResource = () => {
+    navigate(RESOURCE_CREATE, { state: accountDetails });
   };
 
   const actionMenuItems = [
@@ -100,9 +110,6 @@ const Resource = ({ accountDetails }: any) => {
     setShowBackArrow(!showBackArrow);
   };
 
-  const handleCreateResource = () => {
-    navigate(RESOURCE_CREATE, { state: accountDetails });
-  };
   return (
     <div className='w-full'>
       <TabPanel
@@ -127,6 +134,7 @@ const Resource = ({ accountDetails }: any) => {
           handleTabChange={handleTabChange}
           value={value}
           resourceData={resourceData}
+          accountId={accountDetails.data.accountById.r_number}
         />
       ) : (
         <ListTable
@@ -139,8 +147,10 @@ const Resource = ({ accountDetails }: any) => {
           pagination={!viewMode}
           rowsPerPage={5}
           sortable={true}
-          setViewMode={setViewMode}
+          onViewModeToggle={setViewMode}
           viewMode={viewMode}
+          isLoading={isLoading}
+          error={error}
         />
       )}
     </div>

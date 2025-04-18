@@ -1,7 +1,7 @@
-import { mockResourceDetailsApiResponse } from '../types';
+import { ResourceDetailsApiResponse } from '../types';
 
 // Your mock data with type annotation
-export const mockResourceDetails: mockResourceDetailsApiResponse = {
+export const mockResourceDetails: ResourceDetailsApiResponse = {
   statusCode: 200,
   statusCodeValue: 'Success',
   statusMessage: '',

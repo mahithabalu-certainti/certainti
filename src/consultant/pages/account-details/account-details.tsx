@@ -118,9 +118,11 @@ export const AccountDetails = () => {
         loading={isLoading}
         error={isError}
       />
-      <div className='flex w-full'>
-        <Sidebar activeKey={activeKey} onSelect={setActiveKey} />
-        <div className='flex w-screen p-4 '>{renderContent()}</div>
+      <div className='flex flex-row w-full'>
+        <div className='flex w-[17%]'>
+          <Sidebar activeKey={activeKey} onSelect={setActiveKey} />
+        </div>
+        <div className='flex w-[83%] p-4 '>{renderContent()}</div>
       </div>
     </div>
   );

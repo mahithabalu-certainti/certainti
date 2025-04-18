@@ -251,7 +251,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             <DatePicker
               value={dayjs(fieldValue, 'DD/MM/YYYY')}
               disabled={field.disabled}
-              format='MM/DD'
+              format='MM/DD/YYYY'
               views={['month', 'day']}
               minDate={dayjs().startOf('year')}
               maxDate={dayjs().endOf('year')}
