@@ -28,8 +28,15 @@ export const FormData = (
             required: true,
             regex: REGEX_PATTERNS.NAME_REGEX,
             regexErrorMessage:
-              "First name must contain only letters, spaces, apostrophes (') or hyphens (-), and be 3 to 50 characters long.",
+              "First name must contain only letters, spaces, apostrophes (') or hyphens (-).",
             placeholder: 'Enter First name',
+            lengthRequired: {
+              key: 'name_length',
+              minMatchedValue: REGEX_PATTERNS.MIN_NAME_REGEX,
+              minErrorMessage: 'Name must be more than 2 characters long',
+              maxMatchedValue: REGEX_PATTERNS.MAX_NAME_REGEX,
+              maxErrorMessage: 'Max length exceeded',
+            },
           }),
           createTextField('street', 'Street', {
             required: false,
@@ -45,7 +52,14 @@ export const FormData = (
             placeholder: 'Enter Last name',
 
             regexErrorMessage:
-              "Last name must contain only letters, spaces, apostrophes (') or hyphens (-), and be 3 to 50 characters long.",
+              "Last name must contain only letters, spaces, apostrophes (') or hyphens (-).",
+           lengthRequired: {
+              key: 'name_length',
+              minMatchedValue: REGEX_PATTERNS.MIN_NAME_REGEX,
+              minErrorMessage: 'Name must be more than 2 characters long',
+              maxMatchedValue: REGEX_PATTERNS.MAX_NAME_REGEX,
+              maxErrorMessage: 'Max length exceeded',
+            },
           }),
           createTextField('email', 'Email Address', {
             required: true,

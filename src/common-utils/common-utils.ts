@@ -13,6 +13,13 @@ export const createTextField = (
     placeholder?: string;
     disabled?: boolean;
     onChange?: boolean;
+    lengthRequired?: {
+      key: string;
+      minMatchedValue: RegExp;
+      maxMatchedValue: RegExp;
+      minErrorMessage: string;
+      maxErrorMessage: string;
+    };
   } = {}
 ): FieldType => ({
   type: 'text',
@@ -24,6 +31,7 @@ export const createTextField = (
   placeholder: options.placeholder,
   disabled: options.disabled,
   onChange: options.onChange,
+  lengthRequired: options.lengthRequired,
 });
 
 export const createPhoneInputField = (
@@ -144,6 +152,23 @@ export const createDateField = (
   greaterThan: others.greaterThan,
 });
 
+export const createFiscalDateField = (
+  name: string,
+  label: string,
+  others: {
+    required: boolean;
+    disabled?: boolean;
+    greaterThan?: Record<string, string>;
+  }
+): FieldType => ({
+  type: 'fiscalDate',
+  name,
+  label,
+  required: others.required,
+  disabled: others.disabled,
+  greaterThan: others.greaterThan,
+});
+
 export const YES_NO_OPTIONS: SelectOption[] = [
   { label: 'Yes', value: 'yes' },
   { label: 'No', value: 'no' },
@@ -153,7 +178,7 @@ export const YES_NO_OPTIONS: SelectOption[] = [
 export const REGEX_PATTERNS = {
   ALPHANUMERIC: /^[A-Za-z0-9-]+$/,
   LETTERS_SPACES: /^[A-Za-z\s]+$/,
-  ACCOUNT_NAME: /^(?=.{7,25}$)[A-Za-z]+(?:\s[A-Za-z]+)*$/,
+  ACCOUNT_NAME: /^(?=.{7,25}$)[A-Za-z' -]+$/,
   LETTERS_5_TO_25: /^[A-Za-z\s]{5,25}$/,
   LETTERS_3_TO_25: /^(?!.*\s{2,})[A-Za-z\s]{3,25}$/,
   EMAIL:
@@ -165,8 +190,7 @@ export const REGEX_PATTERNS = {
   NUMBER_OPTIONAL_DECIMAL: /^([0-9]{1,10}(\.[0-9]{1,2})?)?$/,
   DESCRIPTION: /^.{0,500}$/,
   ACCOUNT_DESCRIPTION: /^.{0,500}$/,
-  POSTAL_CODE:
-    /^(?![a-zA-Z]+$)(?=(?:[^a-zA-Z]*[a-zA-Z]){0,2}[^a-zA-Z]*$)[a-zA-Z0-9]{6,10}$/,
+  POSTAL_CODE: /^[A-Za-z0-9\s-]{3,9}$/,
   MAX_AI_INTRACTION: /^[3-5]$/,
   NUMBERS: /^[0-9]{1,20}$/,
   NAME_REGEX: /^[A-Za-z\s'-]+$/,
@@ -174,6 +198,10 @@ export const REGEX_PATTERNS = {
   CITY_REGEX: /^[A-Za-z\s]{3,100}$/,
   NUMBERS_GREATER_THAN_ZERO: /^[1-9]\d*$/,
   MANAGER_REGEX: /^(?=.{7,50}$)[A-Za-z0-9!"#$%&'()*+,-./:;<=>?@[\\\]^_`{|}~]+$/,
+  MIN_NAME_REGEX: /^.{3,}$/,
+  MAX_NAME_REGEX: /^.{0,50}$/,
+  MIN_ACCOUNT_NAME_REGEX: /^.{7,}$/,
+  MAX_ACCOUNT_NAME_REGEX: /^.{0,25}$/,
 };
 
 export const ALLOWED_COUNTRIES: AllowedCountry[] = [

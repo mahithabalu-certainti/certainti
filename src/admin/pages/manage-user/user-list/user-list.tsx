@@ -1,13 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ManageUserIcon } from '../../../../assets/icons';
+import { filterIcon, ManageUserIcon } from '../../../../assets/icons';
 import { Filter } from '../../../../components';
 import ActionsDropdown from '../../../../components/actions-dropdown/actions-dropdown';
 import TextButton from '../../../../components/button/text-button';
 import { ADMIN_CREATE_USER } from '../../../../routes';
 import { UserTable } from '../table/user-table';
-import { userFilterfields } from './helpers';
+import { getUserFilterfields } from './helpers';
+import { useManageUserProfile } from '../../../service';
+import { checkError, checkErrorMsg } from '../../../../common-utils';
+import { CheckErrorMsg } from '../../../../common-service';
+import { useToast } from '../../../../hooks';
+import { CircularProgress } from '@mui/material';
 
 const BUTTON_STYLES = {
   height: '35px',
@@ -32,14 +37,36 @@ const MENU_ITEMS = [
 
 const UserList: React.FC = () => {
   const navigate = useNavigate();
+  const { errorToast } = useToast();
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [isFilterOpen, setIsFilterOpen] = useState<boolean>(true);
   const userActionButtons = [
     'Suspend User',
     'Reactive User',
     'Reset Password',
     'Delete',
   ];
+
+  const profileList = useManageUserProfile();
+
+  // Hook Error Handling
+  const errorhandlingData = [ profileList ];
+  const commonError = checkError(errorhandlingData);
+  const commonErrorMsg = checkErrorMsg(errorhandlingData as CheckErrorMsg[]);
+
+  useEffect(() => {
+    if (commonError) {
+      errorToast(commonErrorMsg);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [commonError, commonErrorMsg]);
+
+  const userProfiles = useMemo(() => {
+    return profileList.data?.data.profiles.map(item => item.profile_name) || [];
+  }, [profileList]);
+
+  const userFilterfields = getUserFilterfields(userProfiles);
 
   const handleAction = (action: string) => {
     switch (action) {
@@ -75,6 +102,12 @@ const UserList: React.FC = () => {
               Admin Permission
             </div>
             <div className={HEADER_STYLES.manageUser}>Manage User</div>
+          </div>
+          <div
+            className={`flex items-center justify-center border mt-0.5 ml-2 rounded-xs w-9 h-9 cursor-pointer transition-colors duration-300 ${isFilterOpen ? 'bg-[#EAF0F6] border-[#CBD6E2]' : 'border-[#EAF0F5]'}`}
+            onClick={() => setIsFilterOpen((prev) => !prev)}
+          >
+            <img src={filterIcon} alt='menu-icon' className='h-[13px]' />
           </div>
         </div>
         <div className='flex gap-2 items-center'>
@@ -118,19 +151,28 @@ const UserList: React.FC = () => {
             ))}
           </div>
         </div>
-        <div className='flex flex-row w-full'>
-          <div className='flex w-[20%]'>
-            <Filter
-              setAppliedFilters={setAppliedFilters}
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              filterFields={userFilterfields}
-            />
+        <div className='flex flex-1 transition-all duration-300 ease-in-out'>
+          <div
+            className={`transition-all duration-300 ease-in-out overflow-hidden h-full min-h-[calc(100vh-144px)] ${isFilterOpen ? 'w-[20%] opacity-100' : 'w-0 opacity-0'
+              }`}
+          >
+            {profileList.isLoading ?
+              <div className='w-full min-h-[calc(100vh-144px)] flex justify-center items-center'>
+                <CircularProgress />
+              </div>
+              :
+              <Filter
+                setAppliedFilters={setAppliedFilters}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                filterFields={userFilterfields}
+              />
+            }
           </div>
-          <div className='flex w-[80%]'>
+
+          <div className={`transition-all duration-300 ease-in-out ${isFilterOpen ? 'w-[80%]' : 'w-full'}`}>
             <UserTable
               appliedFilters={appliedFilters}
-              searchTerm={searchTerm}
             />
           </div>
         </div>

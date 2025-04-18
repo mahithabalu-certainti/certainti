@@ -21,7 +21,6 @@ export const UserTable: React.FC<Record<string, any>> = (appliedFilters) => {
     setTableParams((prev) => ({
       ...prev,
       filters: appliedFilters.appliedFilters,
-      search: appliedFilters.searchTerm,
     }));
   }, [appliedFilters]);
 
