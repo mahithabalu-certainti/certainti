@@ -1,21 +1,28 @@
 import { useQuery } from '@tanstack/react-query';
-import { mockResourceDetails } from '../../mockdata/resource-details';
-import { mockResourceDetailsApiResponse } from '../../types';
+import { api } from '../../../api/api';
+import { ResourceDetailsApiResponse } from '../../types';
+import { ResourceDetailURL } from '../urls';
 
 export const fetchResourceDetail = async (
-  resourceId: string
-): Promise<mockResourceDetailsApiResponse> => {
+  resourceId: string,
+  accountNumber: string
+): Promise<ResourceDetailsApiResponse> => {
   console.log('resourceId-fetchResourceDetail', resourceId);
-  // const response = await accountServiceApi.get<any>(
-  //   AccountDetailUrl(resourceId)
-  // );
-  console.log('mockResourceDetails', mockResourceDetails);
-  return mockResourceDetails;
+  const response = await api.get<ResourceDetailsApiResponse>(
+    ResourceDetailURL(resourceId, accountNumber)
+  );
+  // console.log('mockResourceDetails', mockResourceDetails);
+  return response.data;
 };
 
-export const useResourceDetail = (resourceId: string) => {
-  return useQuery<mockResourceDetailsApiResponse, Error>({
-    queryKey: ['resourceDetail', resourceId], // Unique query key
-    queryFn: () => fetchResourceDetail(resourceId),
+export const useResourceDetail = (
+  resourceId: string,
+  accountNumber: string
+) => {
+  return useQuery<ResourceDetailsApiResponse, Error>({
+    queryKey: ['resourceDetail', resourceId, accountNumber],
+    queryFn: () => fetchResourceDetail(resourceId, accountNumber),
+    retry: 0,
+    enabled: !!resourceId,
   });
 };

@@ -58,7 +58,7 @@ export interface CheckErrorMsg {
       data?: {
         statusMessage?: string;
         message?: string;
-      }; 
-    }
+      };
+    };
   };
 }

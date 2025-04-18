@@ -19,6 +19,13 @@ export interface FormTypeFields {
   greaterThan?: Record<string, string>;
   dependsRequired?: Record<string, string>;
   resetDependsFields?: string[];
+  lengthRequired?: {
+    key: string;
+    minMatchedValue: RegExp;
+    maxMatchedValue: RegExp;
+    minErrorMessage: string;
+    maxErrorMessage: string;
+  };
   onChange?: boolean;
   anyOneRequired?:boolean
   isLoading?: boolean;
@@ -37,7 +44,8 @@ export type InputType =
   | 'checkbox'
   | 'date'
   | 'radio'
-  | 'phone';
+  | 'phone'
+  | 'fiscalDate';
 
 export interface SelectOption {
   label: string;
@@ -60,6 +68,13 @@ export interface FieldType {
   greaterThan?: Record<string, string>;
   dependsRequired?: Record<string, string>;
   resetDependsFields?: string[];
+  lengthRequired?: {
+    key: string;
+    minMatchedValue: RegExp;
+    maxMatchedValue: RegExp;
+    minErrorMessage: string;
+    maxErrorMessage: string;
+  };
   onChange?: boolean;
   anyOneRequired?:boolean, // financial information error handling
   isLoading?: boolean;

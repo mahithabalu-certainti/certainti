@@ -53,7 +53,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   );
 
   console.log("values", values);
-  
+
 
   useEffect(() => {
     setFormData(filteredSections);
@@ -94,7 +94,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           skill_start_date: skillInfo?.startDate || '',
           years_of_experience: skillInfo?.yearsOfExperience || '',
         }
-      }     
+      }
 
       setConstructFormData(constructFormData);
     }
@@ -295,10 +295,52 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
               className={fieldDisabled}
-              // maxDate={sectionDate ? dayjs(today) : undefined}
-              // minDate={sectionDate ? dayjs(sixYearsAgo) : undefined}
+              maxDate={sectionDate ? dayjs(today) : undefined}
+              minDate={sectionDate ? dayjs(sixYearsAgo) : undefined}
               value={sectionDate ? dayjs(fieldValue) : dayjs(fieldValue, 'DD/MM/YYYY')}
               disabled={field.disabled || readOnly}
+              onChange={(newValue) => {
+                handleChange(dayjs(newValue).format('DD/MM/YYYY'));
+              }}
+              shouldDisableDate={(date) => dayjs(date).isBefore(dayjs(), 'day')}
+              slots={{
+                openPickerIcon: () => (
+                  <img src={calendarIcon} alt='calendar' className='w-6 h-5' />
+                ),
+                clearIcon: () => (
+                  <img src={closeIcon} alt='calendar' className='w-2.5 h-2.5' />
+                ),
+              }}
+              slotProps={{
+                field: { clearable: !field.disabled },
+                textField: {
+                  fullWidth: true,
+                  size: 'small',
+                  disabled: false,
+                  sx: {
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 0,
+                      '&.Mui-disabled': {
+                        '& input': {
+                          color: 'black',
+                          WebkitTextFillColor: 'black',
+                        },
+                      },
+                    },
+                  },
+                  placeholder: field.placeholder,
+                  error: !!field.error,
+                },
+              }}
+            />
+          </LocalizationProvider>
+        );
+      case 'fiscalDate':
+        return (
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              value={dayjs(fieldValue, 'DD/MM/YYYY')}
+              disabled={field.disabled}
               format='MM/DD'
               views={['month', 'day']}
               minDate={dayjs().startOf('year')}
@@ -321,15 +363,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   fullWidth: true,
                   size: 'small',
                   disabled: false,
-                  InputProps: {
-                    onPaste: (e: React.ClipboardEvent<HTMLInputElement>) => {
-                      e.preventDefault();
-                      return false;
-                    },
-                    inputProps: {
-                      readOnly: true,
-                    },
-                  },
                   sx: {
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 0,
@@ -398,6 +431,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     return { isValid: true, error: '' };
   };
 
+  const isValidDate = (
+    dateString: string,
+    format: string = 'DD/MM/YYYY'
+  ): boolean => {
+    return dayjs(dateString, format, true).isValid();
+  };
+
   const submitData = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     let hasError = false;
@@ -411,8 +451,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       return value !== undefined && value !== null && value.toString().trim() !== '';
     });
 
-    const readOnly = formData?.map((section)=>{
-      if((section.sectionName !== 'Financial Information' && state?.cost) || (section.sectionName !== 'Skill Information' && state?.skill)){
+    const readOnly = formData?.map((section) => {
+      if ((section.sectionName !== 'Financial Information' && state?.cost) || (section.sectionName !== 'Skill Information' && state?.skill)) {
         return true;
       }
       return false;
@@ -428,7 +468,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         if (field.type === 'checkbox') {
           hasValue = (constructFormData[field.name] as string[])?.length > 0;
         }
-        if (field.type === 'date') {
+        if (field.type === 'date' || field.type === 'fiscalDate') {
           hasValue = Boolean(constructFormData[field.name]);
         }
         // Validate required fields
@@ -454,6 +494,22 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               hasError = true;
               return { ...field, error: validation.error };
             }
+          }
+        }
+
+        // Date validation
+        if (
+          (field.type === 'date' || field.type === 'fiscalDate') &&
+          constructFormData[field.name]
+        ) {
+          const dateValue = constructFormData[field.name] as string;
+
+          if (!isValidDate(dateValue)) {
+            hasError = true;
+            return {
+              ...field,
+              error: ' Invalid date',
+            };
           }
         }
 
@@ -507,13 +563,33 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         }
 
         if (field.type === 'text' && value && !readOnly) {
-          const emojiRegex =
-            /[\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD83C-\uDBFF\uDC00-\uDFFF]+|[\u2600-\u26FF]/gu;
+          const emojiRegex = /[\p{Emoji_Presentation}\uFE0F]/gu;
           if (emojiRegex.test(value)) {
             hasError = true;
             return {
               ...field,
               error: 'Emojis are not accepted',
+            };
+          }
+        }
+
+        if (field.lengthRequired?.key && value) {
+          const minPattern = field.lengthRequired.minMatchedValue;
+          const maxPattern = field.lengthRequired.maxMatchedValue;
+
+          if (!minPattern.test(value)) {
+            hasError = true;
+            return {
+              ...field,
+              error: field.lengthRequired.minErrorMessage,
+            };
+          }
+
+          if (!maxPattern.test(value)) {
+            hasError = true;
+            return {
+              ...field,
+              error: field.lengthRequired.maxErrorMessage,
             };
           }
         }

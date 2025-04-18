@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { accountHomeIcon, editIcon } from '../../../assets';
@@ -11,25 +12,36 @@ import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
 import { useFetchCurrency, useFetchState } from '../../services/account';
-import { useCreateResource } from '../../services/resource-create';
 import { useResourceDetail } from '../../services/resource-details';
+
+import { useCreateResource } from '../../services/resource-create';
 import { useUpdateResource } from '../../services/resource-update';
-import { AccountFormData, SelectOption } from '../../types';
+import { SelectOption } from '../../types';
 import { FormData } from './form-data';
-import { transformCostData, transformSkillData } from './utils';
+import { createPayload, transformResourceDataForUpdate, transformSkillData, transformCostData } from './utils.tsx';
 import { useCreateResourceCost, useUpdateResourceCost } from '../../services/resource-cost/resource-cost-service';
 import { useCreateResourceSkill, useUpdateResourceSkill } from '../../services/resource-skill/resource-skill-service';
 
 const ResourceForm: React.FC = () => {
+  // Refs
   const formRef = React.useRef<HTMLFormElement>(null);
+
+  // State
   const [currentCountry, setCurrentCountry] = useState('');
+
+  // Hooks
   const { successToast, errorToast } = useToast();
   const location = useLocation();
   const { state } = location;
   console.log('location', location);
   const navigate = useNavigate();
-  const resource = useResourceDetail(location?.state?.data?.accountById?.rid);
-  const resourceValues = resource?.data?.data?.resource;
+
+  // Data fetching
+  const { data: resource } = useResourceDetail(
+    location?.state?.resource?.rid,
+    location?.state?.accountDetails?.data?.accountById?.r_number
+  );
+  const resourceValues = resource?.data?.resourceDetails;
 
   //fetch resource cost by id
 
@@ -56,21 +68,30 @@ const ResourceForm: React.FC = () => {
   // const getSkillData = useFetchResourceSkillById({ rid: "", accountNumber: "" });
   // const skillInfo = getSkillData.data;
 
+  const userDetails = JSON.parse(localStorage.getItem('auth') || '{}');
   const allCountries = useGetAllCountries();
   const currency = useFetchCurrency();
+  const states = useFetchState(currentCountry);
+
+  // Mutations
   const createResource = useCreateResource();
   const updateResource = useUpdateResource();
-  const states = useFetchState(currentCountry);
+
+  // Derived values
+  const isEditView = location.pathname.includes('/edit');
+  const accountData = isEditView
+    ? location?.state?.accountDetails?.data?.accountById
+    : location?.state?.data?.accountById;
+  const resourceName = isEditView
+    ? location?.state?.resource?.resource_fullname
+    : 'New Resource';
 
   const createResourceCost = useCreateResourceCost();
   const updateResourceCost = useUpdateResourceCost();
   const createResourceSkill = useCreateResourceSkill()
   const updateResourceSkill = useUpdateResourceSkill()
-
-  const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
-
-  // Hook Error Handling
-  const errorhandlingData = [
+  // Error handling
+  const errorHandlers = [
     createResource,
     allCountries,
     currency,
@@ -81,17 +102,45 @@ const ResourceForm: React.FC = () => {
     createResourceSkill,
     updateResourceSkill
   ];
-  const commonError = checkError(errorhandlingData);
-  const commonErrorMsg = checkErrorMsg(errorhandlingData as CheckErrorMsg[]);
+  const commonError = checkError(errorHandlers);
+  const commonErrorMsg = checkErrorMsg(errorHandlers as CheckErrorMsg[]);
   const costSkillSuccess = createResourceCost.isSuccess || updateResourceCost.isSuccess || createResourceSkill.isSuccess || updateResourceSkill.isSuccess
   const commonSuccess = createResource.isSuccess || updateResource.isSuccess || costSkillSuccess;
 
+  // Memoized data transformations
+  const countryOptions: SelectOption[] = useMemo(
+    () =>
+      allCountries.data?.data.country.map((c) => ({
+        label: c.country_name,
+        value: c.rid,
+      })) || [],
+    [allCountries.data]
+  );
+
+  const stateOptions: SelectOption[] = useMemo(
+    () =>
+      states.data?.data.states.map((s) => ({
+        label: s.state_name,
+        value: s.rid,
+      })) || [],
+    [states.data]
+  );
+
+  const currencyOptions: SelectOption[] = useMemo(
+    () =>
+      currency.data?.data.currency.map((c) => ({
+        label: c.currency_name,
+        value: c.rid,
+      })) || [],
+    [currency.data]
+  );
+
+  // Effects
   useEffect(() => {
     if (commonError) {
       errorToast(commonErrorMsg);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [commonError, commonErrorMsg]);
+  }, [commonError, commonErrorMsg, errorToast]);
 
   useEffect(() => {
     if (commonSuccess) {
@@ -113,49 +162,15 @@ const ResourceForm: React.FC = () => {
 
       successToast(
         isEditView
-          ? 'Account update successfully'
-          : 'Account created successfully'
+          ? 'Resource updated successfully'
+          : 'Resource created successfully'
       );
+      navigate(-1);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [commonSuccess, isEditView]);
+  }, [commonSuccess, isEditView, successToast]);
 
-  const memoizedContry: SelectOption[] = useMemo(
-    () =>
-      allCountries.data?.data.country.map((country) => ({
-        label: country.country_name,
-        value: country.rid,
-      })) || [],
-    [allCountries.data?.data.country]
-  );
-
-  const memoizedStates: SelectOption[] = useMemo(
-    () =>
-      states.data?.data.states.map((account) => ({
-        label: account.state_name,
-        value: account.rid,
-      })) || [],
-    [states.data?.data.states]
-  );
-
-  const memoizedCurrency: SelectOption[] = useMemo(
-    () =>
-      currency.data?.data.currency.map((account) => ({
-        label: account.currency_name,
-        value: account.rid,
-      })) || [],
-    [currency.data?.data.currency]
-  );
-  console.log("resourceValues", resourceValues);
-  const submitData = (formValues: Partial<AccountFormData>) => {
-    console.log('formValues', formValues);
-    const { state } = location;
-    // const resourceData = transformFormData(formValues, isEditView);
-    // if (isEditView && !!state?.skill && !!state?.cost) {
-    //   updateResource.mutate(mockResourceUpdateRequest);
-    // } else {
-    //   createResource.mutate(mockResourceCreatePayload);
-    // }
+  // Handlers
+  const handleSubmit = (formValues: any) => {
 
     if (state?.cost) {
       const updateFormValues = {
@@ -189,6 +204,29 @@ const ResourceForm: React.FC = () => {
         createResourceSkill.mutate(skillData);
       }
     }
+
+    if (!!state?.skill && !!state?.cost) {
+      if (isEditView) {
+        const updatedData = transformResourceDataForUpdate(
+          formValues,
+          resource?.data?.resourceDetails, // Adjusted to access the correct property
+          {
+            resource_id: location?.state?.resource?.rid,
+            account_number: accountData?.r_number,
+          }
+        );
+        updateResource.mutate(updatedData as any);
+      } else {
+        const finaldata = createPayload({
+          account_number: accountData?.r_number,
+          account_id: accountData?.rid,
+          created_by: userDetails.userId,
+          ...formValues,
+        });
+        createResource.mutate(finaldata as any);
+      }
+    }
+
   };
 
   const handleExternalSubmit = () => {
@@ -196,19 +234,28 @@ const ResourceForm: React.FC = () => {
     formRef.current?.reset();
   };
 
-  const goBack = () => {
+  const handleGoBack = () => {
     formRef.current?.reset();
     navigate(-1);
   };
 
-  const onChangeField = (data: OnChange) => {
+  const handleFieldChange = (data: OnChange) => {
     if (data.fieldName === 'country') {
       setCurrentCountry(data.fieldValue as string);
     }
   };
 
+  // Form configuration
+  const formConfig = FormData(
+    countryOptions,
+    currencyOptions,
+    stateOptions,
+    states.isLoading,
+    isEditView
+  );
+
   return (
-    <>
+    <div className='resource-form-container'>
       <div className='flex justify-between items-center border-b-2 border-gray-200 px-10 py-6'>
         <div className='flex items-center'>
           <img
@@ -220,16 +267,10 @@ const ResourceForm: React.FC = () => {
             {isEditView && (
               <h5 className='text-xs ml-2 text-gray-500 mb-1'>Edit Resource</h5>
             )}
-            <div className=' text-xs ml-2 leading-4 text-gray-500'>
-              {'Account > ' +
-                `${isEditView ? location?.state?.accountDetails?.data?.accountById?.account_name : location?.state?.data?.accountById?.account_name}`}
+            <div className='text-xs ml-2 leading-4 text-gray-500'>
+              {`Account > ${accountData?.account_name}`}
             </div>
-            <h4 className='font-bold text-lg ml-2 leading-4'>
-              {(isEditView && (state?.skill && state?.cost))
-                ? location?.state?.resource?.resource_fullname :
-                (isEditView && (state?.skill || state?.cost)) ? state?.costInfo?.resource_fullname
-                  : 'New Resource'}
-            </h4>
+            <h4 className='font-bold text-lg ml-2 leading-4'>{resourceName}</h4>
           </div>
         </div>
         <div className='flex gap-3'>
@@ -237,7 +278,7 @@ const ResourceForm: React.FC = () => {
             label='Cancel'
             variant='outlined'
             color='inherit'
-            onClick={goBack}
+            onClick={handleGoBack}
           />
           <TextButton
             label='Save'
@@ -249,27 +290,19 @@ const ResourceForm: React.FC = () => {
       </div>
       <div className='p-10'>
         <FormBuilder
-          data={FormData(
-            memoizedContry,
-            memoizedCurrency,
-            memoizedStates,
-            states.isLoading
-          )}
+          data={formConfig}
           loading={allCountries.isLoading || currency.isLoading}
           values={
             isEditView &&
-              (resource.data?.data?.resource as unknown as Record<
+              (resource?.data?.resourceDetails as unknown as Record<
                 string,
                 string | number | boolean | string[] | null
               >)
-              ? (resource.data?.data?.resource as unknown as Record<
+              ? (resource?.data?.resourceDetails as unknown as Record<
                 string,
                 string | number | boolean | string[] | null
               >)
-              : (state.cost || state.skill) ? (resource.data?.data?.resource as unknown as Record<
-                string,
-                string | number | boolean | string[] | null
-              >) : undefined
+              : undefined
           }
           // values={
           //   resource.data?.data?.resource as unknown as Record<
@@ -277,12 +310,12 @@ const ResourceForm: React.FC = () => {
           //     string | number | boolean | string[] | null
           //   >
           // }
-          outData={submitData}
+          outData={handleSubmit}
           formRef={formRef}
-          onChange={onChangeField}
+          onChange={handleFieldChange}
         />
       </div>
-    </>
+    </div>
   );
 };
 

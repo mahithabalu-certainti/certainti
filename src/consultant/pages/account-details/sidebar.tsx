@@ -18,7 +18,7 @@ const menuItems: MenuItem[] = [
 
 const Sidebar: React.FC<SidebarProps> = ({ activeKey, onSelect }) => {
   return (
-    <div className='w-[20%] bg-white border-r border-gray-300 p-4'>
+    <div className='w-full bg-white border-r border-gray-300 p-4'>
       <h2 className='text-xl font-semibold mb-6'>Related List</h2>
       <ul className='space-y-2'>
         {menuItems.map((item) => (

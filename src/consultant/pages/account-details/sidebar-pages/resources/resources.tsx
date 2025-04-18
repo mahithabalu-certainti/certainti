@@ -11,12 +11,9 @@ import ResourceSubComponents from './resource-sub-components';
 import ResourceTableHeader from './resource-table-header';
 import { AccountData } from '../../utils';
 
-interface ResourceProps {
-  accountDetails?: AccountData
-}
 
-const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
-  const navigate = useNavigate()
+const Resource = ({ accountDetails }: { accountDetails: Record<string, any> }) => {
+  console.log('accountDetails-Resource', accountDetails);
   const [viewMode, setViewMode] = useState<boolean>(false);
   const [viewResourceList, setViewResourceList] = useState<boolean>(true);
   const [columns, setColumns] = useState<any>([]);
@@ -25,7 +22,12 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
   const [showBackArrow, setShowBackArrow] = useState<boolean>(false);
   const [resourceData, setResourceData] = useState<any>({});
-  const { data: ResourceList } = useResourceList();
+  const navigate = useNavigate();
+  const {
+    data: ResourceList,
+    isLoading,
+    error,
+  } = useResourceList(accountDetails?.data?.accountById.r_number);
   const handleFilter = () => {
     setShowFilter(!showFilter);
     if(showFilter === false){
@@ -65,6 +67,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     });
   };
 
+  
   const actionMenuItems = [
     {
       label: 'Edit',
@@ -149,6 +152,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
           handleTabChange={handleTabChange}
           value={value}
           resourceData={resourceData}
+          accountId={accountDetails?.data?.accountById?.r_number}
           appliedFilters={appliedFilters || {}}
           fiscalYearValue={fiscalYearValue}
           accountDetails={accountDetails as AccountData}
@@ -164,8 +168,10 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
           pagination={!viewMode}
           rowsPerPage={5}
           sortable={true}
-          setViewMode={setViewMode}
+          onViewModeToggle={setViewMode}
           viewMode={viewMode}
+          isLoading={isLoading}
+          error={error}
         />
       )}
     </div>

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   accountHomeIcon,
@@ -13,8 +13,13 @@ import { Filter } from '../../../components';
 import ActionsDropdown from '../../../components/actions-dropdown/actions-dropdown';
 import TextButton from '../../../components/button/text-button';
 import { ACCOUNT_CREATE } from '../../../routes';
-import { accountFilterfields } from './helpers';
+import { getAccountFilterfields } from './helpers';
 import AccountTable from './table/account-table';
+import { CheckErrorMsg, useGetAllCountries } from '../../../common-service';
+import { useFetchCurrency } from '../../services/account';
+import { checkError, checkErrorMsg } from '../../../common-utils';
+import { useToast } from '../../../hooks';
+import { CircularProgress } from '@mui/material';
 
 const BUTTON_STYLES = {
   height: '35px',
@@ -22,6 +27,7 @@ const BUTTON_STYLES = {
 };
 
 export const Accounts: React.FC = () => {
+  const { errorToast } = useToast();
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(true);
@@ -42,6 +48,34 @@ export const Accounts: React.FC = () => {
   const handleCreateAcount = () => {
     navigate(ACCOUNT_CREATE);
   };
+
+  const countriesList = useGetAllCountries();
+  const currencyList = useFetchCurrency();
+
+    // Hook Error Handling
+    const errorhandlingData = [
+      countriesList,
+      currencyList,
+    ];
+    const commonError = checkError(errorhandlingData);
+    const commonErrorMsg = checkErrorMsg(errorhandlingData as CheckErrorMsg[]);
+  
+    useEffect(() => {
+      if (commonError) {
+        errorToast(commonErrorMsg);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [commonError, commonErrorMsg]);
+  
+  const allCountries = useMemo(() => {
+    return countriesList.data?.data.country.map(item => item.country_name) || [];
+  }, [countriesList]);
+  
+  const allCurrencies = useMemo(() => {
+    return currencyList.data?.data.currency.map(item => item.currency_code) || [];
+  }, [currencyList]);
+
+  const accountFilterfields = getAccountFilterfields(allCountries, allCurrencies);
 
   const [totalCount, setTotalCount] = useState<number>(0);
   return (
@@ -116,14 +150,19 @@ export const Accounts: React.FC = () => {
         <div
           className={`transition-all duration-300 ease-in-out overflow-hidden h-full border-r-2 border-gray-300 min-h-[calc(100vh-144px)] ${
             isFilterOpen ? 'w-[20%] opacity-100' : 'w-0 opacity-0'
-          }`}
+            }`}
         >
-          <Filter
-            setAppliedFilters={setAppliedFilters}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            filterFields={accountFilterfields}
-          />
+          {countriesList.isLoading || currencyList.isLoading ?
+            <div className='w-full min-h-[calc(100vh-144px)] flex justify-center items-center'>
+              <CircularProgress />
+            </div>
+            :
+            <Filter
+              setAppliedFilters={setAppliedFilters}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              filterFields={accountFilterfields}
+            />}
         </div>
 
         <div

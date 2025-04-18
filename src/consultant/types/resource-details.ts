@@ -1,4 +1,6 @@
-interface Resource {
+export interface ResourceDetailsTypes {
+  account_id: string;
+  account_number: string;
   rid: string;
   r_number: string;
   eid: string | null;
@@ -32,11 +34,11 @@ interface Resource {
   modified_by: string | null;
 }
 
-export interface ResourceData {
-  resource: Resource;
+interface ResourceData {
+  resourceDetails: ResourceDetailsTypes;
 }
 
-export interface mockResourceDetailsApiResponse {
+export interface ResourceDetailsApiResponse {
   statusCode: number;
   statusCodeValue: string;
   statusMessage: string;
@@ -44,5 +46,5 @@ export interface mockResourceDetailsApiResponse {
 }
 
 export interface ResourceDetailsProps {
-  resourceDetails: mockResourceDetailsApiResponse;
+  resourceDetails: ResourceDetailsApiResponse;
 }

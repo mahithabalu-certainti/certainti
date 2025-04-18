@@ -1,0 +1,275 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { ResourceDetailsTypes, SelectOption } from '../../types';
+import {
+  ResourceCostPayload,
+  ResourceCostSkillFormData,
+} from '../../types/resource-cost';
+import { ResourceSkillPayload } from '../../types/resource-skill';
+import { skillLevel } from '../account-details/sidebar-pages/resources/resource-skill/resource-skill-type';
+
+const userDetails = JSON.parse(localStorage.getItem('auth') as any);
+
+// Constants for dropdown options
+export const RESOURCE_STATUS_OPTIONS: SelectOption[] = [
+  { label: 'Active', value: 'Active' },
+  { label: 'Inactive', value: 'Inactive' },
+];
+
+export const RESOURCE_TYPE_OPTIONS: SelectOption[] = [
+  { label: 'Full Time', value: 'FullTime' },
+  { label: 'Contract', value: 'Contract' },
+];
+
+export const FREQUENCY_OPTIONS: SelectOption[] = [
+  { label: 'Annual', value: 'Annual' },
+  { label: 'Semi Annual', value: 'Semi-Annual' },
+  { label: 'Monthly', value: 'Monthly' },
+  { label: 'Bi-Weekly', value: 'Bi-Weekly' },
+  { label: 'Weekly', value: 'Weekly' },
+  { label: 'Daily', value: 'Daily' },
+  { label: 'Hourly', value: 'Hourly' },
+];
+
+// Type definitions
+interface RawResourceData {
+  resource_ref_id?: string;
+  resource_fullname?: string;
+  resource_type?: string;
+  resource_orgname?: string;
+  resource_firstname?: string;
+  resource_middlename?: string;
+  resource_status?: string;
+  resource_lastname?: string;
+  resource_email?: string;
+  resource_mobile?: string;
+  country?: string;
+  region?: string;
+  currency?: string;
+  cost_frequency?: string;
+  fiscal_year: number;
+  cost?: string;
+  resource_startdate?: string;
+  resource_enddate?: string;
+  designation?: string;
+  manager_name?: string;
+  total_years_oexperience?: string;
+  total_years_in_org?: string;
+  resource_desc?: string;
+}
+
+interface TransformedResourceData {
+  resource_id: string;
+  account_number: string;
+  resource_ref_id: string;
+  resource_type: string;
+  first_name: string;
+  middle_name: string;
+  last_name: string;
+  full_name: string;
+  org_name: string;
+  role: string;
+  fiscal_year: number;
+  email: string;
+  mobile: string;
+  country: string;
+  region: string;
+  currency: string;
+  effective_from_date: string;
+  effective_end_date: string;
+  designation: string;
+  manager_name: string;
+  total_years_experience: number;
+  total_years_in_org: number;
+  description: string;
+  cost: string | number;
+  cost_frequency: string;
+  resource_status: string;
+  modified_by: string;
+}
+
+interface ResourceTransformationOptions {
+  resource_id?: string;
+  account_number?: string;
+  [key: string]: unknown; // More type-safe than 'any'
+}
+
+// Helper functions
+const formatDateToDDMMYYYY = (dateString?: string | null): string => {
+  if (!dateString) return '';
+
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+
+  return `${day}/${month}/${year}`;
+};
+
+const capitalizeFirstLetter = (str?: string): string => {
+  return str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '';
+};
+
+const safeParseNumber = (value?: string, fallback = 0): number => {
+  const parsed = Number(value);
+  return isNaN(parsed) ? fallback : parsed;
+};
+
+// Main transformation function
+export function transformResourceDataForUpdate(
+  rawData: RawResourceData,
+  existingResource?: ResourceDetailsTypes,
+  options: ResourceTransformationOptions = {}
+): TransformedResourceData {
+  return {
+    resource_id: options.resource_id || '',
+    account_number: options.account_number || '',
+    resource_ref_id:
+      rawData.resource_ref_id || existingResource?.resource_ref_id || '',
+    resource_type:
+      rawData.resource_type || existingResource?.resource_type || '',
+    first_name:
+      rawData.resource_firstname || existingResource?.resource_firstname || '',
+    middle_name:
+      rawData.resource_middlename ||
+      existingResource?.resource_middlename ||
+      '',
+    last_name:
+      rawData.resource_lastname || existingResource?.resource_lastname || '',
+    full_name:
+      rawData.resource_fullname || existingResource?.resource_fullname || '',
+    org_name:
+      rawData.resource_orgname || existingResource?.resource_orgname || '',
+    role: existingResource?.resource_role || '',
+    fiscal_year: rawData.fiscal_year || existingResource?.fiscal_year || 0,
+    email: rawData.resource_email || existingResource?.resource_email || '',
+    mobile: rawData.resource_mobile || existingResource?.resource_mobile || '',
+    country: rawData.country || existingResource?.country || '',
+    region: rawData.region || existingResource?.region || '',
+    currency: rawData.currency || existingResource?.currency || '',
+    effective_from_date:
+      formatDateToDDMMYYYY(rawData.resource_startdate) ||
+      formatDateToDDMMYYYY(existingResource?.resource_startdate) ||
+      '',
+    effective_end_date:
+      formatDateToDDMMYYYY(rawData.resource_enddate) ||
+      formatDateToDDMMYYYY(existingResource?.resource_enddate) ||
+      '',
+    designation: rawData.designation || existingResource?.designation || '',
+    manager_name: rawData.manager_name || existingResource?.manager_name || '',
+    total_years_experience: safeParseNumber(
+      rawData.total_years_oexperience,
+      existingResource?.total_years_experience || 0
+    ),
+    total_years_in_org: safeParseNumber(
+      rawData.total_years_in_org,
+      existingResource?.total_years_in_org || 0
+    ),
+    description: rawData.resource_desc || existingResource?.resource_desc || '',
+    cost: parseFloat(rawData.cost || '0') || existingResource?.cost || '0',
+    cost_frequency:
+      rawData.cost_frequency || existingResource?.cost_frequency || '',
+    resource_status:
+      capitalizeFirstLetter(rawData.resource_status) ||
+      existingResource?.resource_status ||
+      '',
+    modified_by: userDetails.userId,
+  };
+}
+
+export const createPayload = (formData: ResourceDetailsTypes) => {
+  return {
+    account_id: formData.account_id,
+    account_number: formData.account_number,
+    resource_ref_id: formData.resource_ref_id,
+    resource_type: formData.resource_type,
+    first_name: formData.resource_firstname,
+    middle_name: formData.resource_middlename,
+    last_name: formData.resource_lastname,
+    full_name: formData.resource_fullname,
+    org_name: formData.resource_orgname,
+    role: formData.resource_role,
+    fiscal_year: formData.fiscal_year,
+    email: formData.resource_email,
+    mobile: formData.resource_mobile,
+    country: formData.country,
+    region: formData.region,
+    currency: formData.currency,
+    effective_from_date: formData.resource_startdate,
+    effective_end_date: formData.resource_enddate,
+    designation: formData.designation,
+    manager_name: formData.manager_name,
+    total_years_experience: formData.total_years_experience,
+    total_years_in_org: formData.total_years_in_org,
+    description: formData.resource_desc,
+    cost: formData.cost,
+    cost_frequencty: formData.cost_frequency,
+    resource_status: formData.resource_status,
+    created_by: formData.created_by,
+  };
+};
+
+export const transformCostData = (
+  formData: Partial<ResourceCostSkillFormData>,
+  isEdit: boolean,
+) => {
+  const data: Partial<ResourceCostPayload> = {
+    eid: '',
+    account_rid: formData.account_rid,
+    effective_date: formData.financial_start_date,
+    end_date: formData.financial_end_date,
+    annual_cost: formData.monthly ? Number(formData.annual) : null,
+    semi_annual_cost: Number(formData.semi_annual),
+    monthly_cost: Number(formData.monthly),
+    weekly_cost: Number(formData.weekly),
+    bi_weekly_cost: Number(formData.bi_weekly),
+    daily_cost: Number(formData.daily),
+    hourly_cost: Number(formData.hourly),
+    resource_type: formData.resource_type,
+    resource_ref_id: formData.resource_ref_id,
+    currency_rid: formData.currency,
+    resource_rid: formData.resource_rid,
+    accountNumber: formData.accountNumber,
+  };
+
+  if (isEdit) {
+    delete data.account_rid;
+    delete data.resource_rid;
+    delete data.resource_type,
+    delete data.resource_ref_id,
+
+    data.rid = formData.cost_rid;
+  }
+
+  return data;
+};
+
+export const transformSkillData = (
+  formData: Partial<ResourceCostSkillFormData>,
+  isEdit: boolean
+) => {
+  const data: Partial<ResourceSkillPayload> = {
+    eid: '',
+    account_rid: formData.account_rid,
+    resource_type: formData.resource_type,
+    resource_rid: formData.resource_rid,
+    resource_ref_id: formData.resource_ref_id,
+    start_date: formData.skill_start_date,
+    skill_level: formData.skill_level as skillLevel,
+    years_of_experience: Number(formData.years_of_experience),
+    skill_name: formData.skill_name,
+    accountNumber: formData.accountNumber,
+  };
+
+  if (isEdit) {
+    delete data.resource_rid;
+    delete data.account_rid;
+    delete data.resource_type;
+    delete data.resource_ref_id;
+
+    data.rid = formData.skill_rid;
+  }
+
+  return data;
+};
