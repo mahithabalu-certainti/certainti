@@ -1,15 +1,14 @@
 import { ResourceCostListParams } from '../../types/resource-cost';
 import { ResourceSkillListParams } from '../../types/resource-skill';
 
-const baseUrl = import.meta.env.VITE_RESOURCE_URL;
-export const resourceCostUrl = '/api/resource_cost/';
-export const resourceCostById = '/api/resource_cost/resourcecost/by/id';
-export const createResourceCost = '/api/resource_cost/create';
-export const updateResourceCost = '/api/resource_cost/update';
-export const resourceSkillUrl = '/api/resource_skill';
+export const baseUrl = import.meta.env.VITE_RESOURCE_URL;
+export const resourceCostUrl = 'api/resource_cost/list';
+export const createResourceCost = 'api/resource_cost/create';
+export const updateResourceCost = 'api/resource_cost/update';
+export const resourceSkillUrl = 'api/resource_skill/list';
 
 const returnURL = (url: string, params: Record<string, any>): string => {
-  const { page, limit, sortBy, sortOrder, filters, accountNumber } = params;
+  const { page, limit, sortBy, sortOrder, filters, accountNumber, fiscalYear } = params;
   const searchParams = new URLSearchParams();
 
   searchParams.set('page', page.toString());
@@ -17,6 +16,7 @@ const returnURL = (url: string, params: Record<string, any>): string => {
   searchParams.set('sortBy', sortBy);
   searchParams.set('sortOrder', sortOrder);
   searchParams.set('accountNumber', accountNumber);
+  searchParams.set('fiscalYear', fiscalYear);
 
   // Only add filters if the object has properties
   if (filters && Object.keys(filters).length > 0) {
@@ -33,6 +33,7 @@ export const costListURL = ({
   sortOrder,
   filters,
   accountNumber,
+  fiscalYear,
 }: ResourceCostListParams): string => {
   return returnURL(resourceCostUrl, {
     page,
@@ -41,6 +42,7 @@ export const costListURL = ({
     sortOrder,
     filters,
     accountNumber,
+    fiscalYear
   });
 };
 
@@ -48,7 +50,7 @@ export const fetchResourceCostByIdUrl = ({
   id,
   accountNumber,
 }: ResourceCostListParams): string => {
-  return returnURL(resourceCostById, {
+  return returnURL(resourceCostUrl, {
     id,
     accountNumber,
   });
@@ -70,6 +72,7 @@ export const skillListURL = ({
   sortOrder,
   filters,
   accountNumber,
+  fiscalYear
 }: ResourceSkillListParams): string => {
   return returnURL(resourceSkillUrl, {
     page,
@@ -78,5 +81,6 @@ export const skillListURL = ({
     sortOrder,
     filters,
     accountNumber,
+    fiscalYear
   });
 };

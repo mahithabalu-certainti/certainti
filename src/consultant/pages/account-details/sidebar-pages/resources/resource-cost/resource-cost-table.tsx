@@ -24,26 +24,32 @@ import { ResourceCostList } from "../../../../../types/resource-cost";
 import { useResourceCost } from "../../../../../services/resource-cost/resource-cost-service";
 import { RESOURCECOST } from "../../../../../../routes";
 import ActionButton from '../../../../account-list/table/action-button';
+// import { useSelector } from 'react-redux';
+// import { RootState } from '../../../../../../store/store';
 // import ActionButton from "../../../../accounts/table/action-button";
 // import { RESOURCECOST } from "../../../../routes";
 // import ActionButton from "../../accounts/table/action-button";
 
-const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters, accountDetails }) => {
+const ResourceCostTable: React.FC<Record<string, any>> = ({ fiscalYear, appliedFilters, accountDetails }) => {
   const navigate = useNavigate();
-  const [page, setPage] = useState<number>(0);
+  const [page, setPage] = useState<number>(1);
   const [rowsPerPage, setRowsPerPage] = useState<number>(25);
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
-  const [orderBy, setOrderBy] = useState<keyof ResourceCostList>('resource_rid');
+  const [orderBy, setOrderBy] = useState<keyof ResourceCostList>('r_number');
   const [resourceCostList, setResourceCostList] = useState<ResourceCostType[]>([]);
-  const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
+  const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';    
   const { data: costList, isLoading: loading } = useResourceCost({
     page: page,
     limit: rowsPerPage,
     sortBy: orderBy,
     sortOrder: apiOrder,
     filters: appliedFilters,
-    accountNumber: accountDetails?.accountById?.r_number
+    accountNumber: accountDetails?.data?.accountById?.r_number,
+    fiscalYear: fiscalYear
   });
+
+  console.log("accountDetails", accountDetails);
+  
 
   useEffect(() => {
     setResourceCostList(convertResourceCost(costList?.resourceCost || []));
@@ -51,7 +57,7 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters, acco
 
   const handleEdit = (cost: ResourceCostType) => {
     navigate(RESOURCECOST + '/edit/' + cost.resourceCostNumber, {
-      state: { costInfo: cost, cost: true },
+      state: { accountDetails, costInfo: cost, cost: true },
     });
   };
 
@@ -131,18 +137,18 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ appliedFilters, acco
           <TableRow>
             <TableCell>
               <TableSortLabel
-                active={orderBy === 'resource_rid'}
-                direction={orderBy === 'resource_rid' ? order : 'asc'}
-                onClick={createSortHandler('resource_rid')}
+                active={orderBy === 'r_number'}
+                direction={orderBy === 'r_number' ? order : 'asc'}
+                onClick={createSortHandler('r_number')}
               >
                 Resource Cost Number
               </TableSortLabel>
             </TableCell>
             <TableCell>
               <TableSortLabel
-                active={orderBy === 'currency'}
-                direction={orderBy === 'currency' ? order : 'asc'}
-                onClick={createSortHandler('currency')}
+                active={orderBy === 'currency_code'}
+                direction={orderBy === 'currency_code' ? order : 'asc'}
+                onClick={createSortHandler('currency_code')}
               >
                 Currency
               </TableSortLabel>

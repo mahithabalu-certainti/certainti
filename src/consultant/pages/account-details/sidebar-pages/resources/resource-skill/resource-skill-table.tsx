@@ -19,8 +19,10 @@ import { ResourceSkillList } from "../../../../../types/resource-skill";
 import { useResourceSkill } from "../../../../../services/resource-skill/resource-skill-service";
 import { RESOURCESKILL } from "../../../../../../routes";
 import ActionButton from '../../../../account-list/table/action-button';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../../store/store';
 
-const ResourceSkillTable: React.FC<Record<string, any>> = ({ appliedFilters, accountDetails }) => {
+const ResourceSkillTable: React.FC<Record<string, any>> = ({fiscalYear, appliedFilters, accountDetails }) => {
   const navigate = useNavigate();
   // const location = useLocation();
   const [page, setPage] = useState<number>(0);
@@ -35,7 +37,8 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ appliedFilters, acc
     sortBy: orderBy,
     sortOrder: apiOrder,
     filters: appliedFilters,
-    accountNumber: accountDetails?.accountById?.r_number
+    accountNumber: accountDetails?.data?.accountById?.r_number,
+    fiscalYear
   });
 
   useEffect(() => {
@@ -44,7 +47,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ appliedFilters, acc
 
   const handleEdit = (skill: ResourceSkillType) => {
     navigate(RESOURCESKILL + '/edit/' + skill.resourceRID, {
-      state: { skillInfo: skill, skill: true },
+      state: {accountDetails, skillInfo: skill, skill: true },
     });
   };
 

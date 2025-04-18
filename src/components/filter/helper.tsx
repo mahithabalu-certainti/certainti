@@ -491,8 +491,8 @@ export const formatFilterForApi = (
             const boolOptions = (formatString(choosenOption) === 'Is Empty' || formatString(choosenOption) === 'Is Empty')
             const value = state.number.value
             formattedFilters[fieldKey] = {
-                [choosenOption]: formatString(choosenOption) === "Between" ? [value?.from, value?.to] :
-                    boolOptions ? true : value?.from,
+                [choosenOption]: formatString(choosenOption) === "Between" ? [Number(value?.from), Number(value?.to)] :
+                    boolOptions ? true : Number(value?.from),
             };
         } else if (state.enum && state.enum.option) {
             const choosenOption = state.enum.option

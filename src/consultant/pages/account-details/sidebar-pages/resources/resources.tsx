@@ -11,11 +11,11 @@ import ResourceSubComponents from './resource-sub-components';
 import ResourceTableHeader from './resource-table-header';
 import { AccountData } from '../../utils';
 
-interface ResourceProps{
+interface ResourceProps {
   accountDetails?: AccountData
 }
 
-const Resource:React.FC<ResourceProps> = ({ accountDetails }) => {
+const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
   const navigate = useNavigate()
   const [viewMode, setViewMode] = useState<boolean>(false);
   const [viewResourceList, setViewResourceList] = useState<boolean>(true);
@@ -34,20 +34,16 @@ const Resource:React.FC<ResourceProps> = ({ accountDetails }) => {
     setValue(newValue);
   };
 
+  // fiscalYear change
+
+  const [fiscalYearValue, setFiscalYearValue] = useState<number>(new Date().getFullYear())
+
   const handleResourceClick = (row: any) => {
     setResourceData(row);
     setViewResourceList(!viewResourceList);
     setShowBackArrow(!showBackArrow);
     setValue('details')
   };
-
-  const handleNewCLick = () => {
-    if (value === 'cost') {
-      navigate(`${RESOURCE}/cost/create`, { state: { resourceData, cost: true } })
-    } else if (value === 'skill') {
-      navigate(`${RESOURCE}/skill/create`, { state: { resourceData, skill: true } })
-    }
-  }
 
   useEffect(() => {
     setColumns(
@@ -93,17 +89,17 @@ const Resource:React.FC<ResourceProps> = ({ accountDetails }) => {
     variant: 'text' | 'outlined' | 'contained';
     onClick: () => void;
   }[] = [
-    {
-      label: 'Download',
-      variant: 'outlined',
-      onClick: () => console.log('Download'),
-    },
-    {
-      label: 'New',
-      variant: 'outlined',
-      onClick: () => handleCreateResource(),
-    },
-  ];
+      {
+        label: 'Download',
+        variant: 'outlined',
+        onClick: () => console.log('Download'),
+      },
+      {
+        label: 'New',
+        variant: 'outlined',
+        onClick: () => handleCreateResource(),
+      },
+    ];
 
   const toggleViewMode = () => {
     setViewMode(!viewMode);
@@ -115,7 +111,14 @@ const Resource:React.FC<ResourceProps> = ({ accountDetails }) => {
   };
 
   const handleCreateResource = () => {
-    navigate(RESOURCE_CREATE, { state: accountDetails });
+    if (!value) {
+      navigate(RESOURCE_CREATE, { state: accountDetails });
+    }
+    if (value === 'cost') {
+      navigate(`${RESOURCE}/cost/create`, { state: { ...accountDetails, resourceData, cost: true } })
+    } else if (value === 'skill') {
+      navigate(`${RESOURCE}/skill/create`, { state: { ...accountDetails, resourceData, skill: true } })
+    }
   };
   return (
     <div className='w-full'>
@@ -127,6 +130,7 @@ const Resource:React.FC<ResourceProps> = ({ accountDetails }) => {
         value={value}
         showFilter={showFilter}
         setAppliedFilters={setAppliedFilters}
+        setFiscalYearValue={setFiscalYearValue}
       />
       <ResourceTableHeader
         title='Resource'
@@ -142,6 +146,7 @@ const Resource:React.FC<ResourceProps> = ({ accountDetails }) => {
           value={value}
           resourceData={resourceData}
           appliedFilters={appliedFilters || {}}
+          fiscalYearValue={fiscalYearValue}
           accountDetails={accountDetails as AccountData}
         />
       ) : (

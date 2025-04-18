@@ -16,26 +16,27 @@ import { useFetchCurrency, useFetchState } from '../../services/account';
 import { useCreateResource } from '../../services/resource-create';
 import { useResourceDetail } from '../../services/resource-details';
 import { useUpdateResource } from '../../services/resource-update';
-import { AccountFormData, SelectOption } from '../../types';
+import { AccountFormData, ResourceData, SelectOption } from '../../types';
 import { FormData } from './form-data';
 import { transformCostData, transformSkillData } from './utils';
-import { useCreateResourceCost, useFetchResourceCostById, useUpdateResourceCost } from '../../services/resource-cost/resource-cost-service';
-import { useCreateResourceSkill, useFetchResourceSkillById, useUpdateResourceSkill } from '../../services/resource-skill/resource-skill-service';
+import { useCreateResourceCost, useUpdateResourceCost } from '../../services/resource-cost/resource-cost-service';
+import { useCreateResourceSkill, useUpdateResourceSkill } from '../../services/resource-skill/resource-skill-service';
 
 const ResourceForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [currentCountry, setCurrentCountry] = useState('');
   const { successToast, errorToast } = useToast();
   const location = useLocation();
-  const {state} = location;
+  const { state } = location;
   console.log('location', location);
   const navigate = useNavigate();
   const resource = useResourceDetail(location?.state?.data?.accountById?.rid);
+  const resourceValues = resource?.data?.data?.resource;
 
   //fetch resource cost by id
 
-  const getCostData = useFetchResourceCostById({id:"", accountNumber:""});
-  const costInfo = getCostData.data;
+  // const getCostData = useFetchResourceCostById({ id: "", accountNumber: state?.accountDetails?.data?.accountById?.r_number });
+  // const costInfo = getCostData.data;
   // const costData = useMemo(
   //   () => ({
   //     ...account?.accountDetails,
@@ -54,8 +55,8 @@ const ResourceForm: React.FC = () => {
 
   //fetch resource skill by id
 
-  const getSkillData = useFetchResourceSkillById({rid:"", accountNumber:""});
-  const skillInfo = getSkillData.data;
+  // const getSkillData = useFetchResourceSkillById({ rid: "", accountNumber: "" });
+  // const skillInfo = getSkillData.data;
 
   const allCountries = useGetAllCountries();
   const currency = useFetchCurrency();
@@ -147,27 +148,43 @@ const ResourceForm: React.FC = () => {
       })) || [],
     [currency.data?.data.currency]
   );
-
+  console.log("resourceValues", resourceValues);
   const submitData = (formValues: Partial<AccountFormData>) => {
     console.log('formValues', formValues);
-    // const resourceData = transformFormData(formValues, isEditView);
-    if (isEditView) {
-      updateResource.mutate(mockResourceUpdateRequest);
-    } else {
-      createResource.mutate(mockResourceCreatePayload);
-    }
-
     const { state } = location;
-    if (state.cost) {
-      const costData = transformCostData(formValues, isEditView);
+    // const resourceData = transformFormData(formValues, isEditView);
+    // if (isEditView && !!state?.skill && !!state?.cost) {
+    //   updateResource.mutate(mockResourceUpdateRequest);
+    // } else {
+    //   createResource.mutate(mockResourceCreatePayload);
+    // }
+
+    if (state?.cost) {
+      const updateFormValues = {
+        ...formValues,
+        accountNumber: state?.data?.accountById?.r_number,
+        account_rid: state?.data?.accountById?.rid,
+        "resource_rid": state?.resourceData.rid,
+        "cost_rid": state?.costInfo?.rid
+      }
+      const costData = transformCostData(updateFormValues, isEditView);
+
       if (isEditView) {
         updateResourceCost.mutate(costData)
       } else {
         createResourceCost.mutate(costData);
       }
     }
-    if (state.skill) {
-      const skillData = transformSkillData(formValues, isEditView);
+    if (state?.skill) {
+      const updateFormValues = {
+        ...formValues,
+        accountNumber: state?.data?.accountById?.r_number,
+        account_rid: state?.data?.accountById?.rid,
+        "resource_rid": state?.resourceData.rid,
+        "skill_rid": state?.skillInfo?.rid
+      }
+      const skillData = transformSkillData(updateFormValues, isEditView);
+
       if (isEditView) {
         updateResourceSkill.mutate(skillData);
       } else {
@@ -210,9 +227,10 @@ const ResourceForm: React.FC = () => {
                 `${isEditView ? location?.state?.accountDetails?.data?.accountById?.account_name : location?.state?.data?.accountById?.account_name}`}
             </div>
             <h4 className='font-bold text-lg ml-2 leading-4'>
-              {isEditView
-                ? location?.state?.resource?.resource_fullname
-                : 'New Resource'}
+              {(isEditView && (state?.skill && state?.cost))
+                ? location?.state?.resource?.resource_fullname :
+                (isEditView && (state?.skill || state?.cost)) ? state?.costInfo?.resource_fullname
+                  : 'New Resource'}
             </h4>
           </div>
         </div>
@@ -242,15 +260,18 @@ const ResourceForm: React.FC = () => {
           loading={allCountries.isLoading || currency.isLoading}
           values={
             isEditView &&
-            (resource.data?.data?.resource as unknown as Record<
-              string,
-              string | number | boolean | string[] | null
-            >)
+              (resource.data?.data?.resource as unknown as Record<
+                string,
+                string | number | boolean | string[] | null
+              >)
               ? (resource.data?.data?.resource as unknown as Record<
-                  string,
-                  string | number | boolean | string[] | null
-                >)
-              : undefined
+                string,
+                string | number | boolean | string[] | null
+              >)
+              : (state.cost || state.skill) ? (resource.data?.data?.resource as unknown as Record<
+                string,
+                string | number | boolean | string[] | null
+              >) : undefined
           }
           // values={
           //   resource.data?.data?.resource as unknown as Record<

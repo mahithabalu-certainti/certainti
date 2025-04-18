@@ -32,7 +32,7 @@ interface Resource {
   modified_by: string | null;
 }
 
-interface ResourceData {
+export interface ResourceData {
   resource: Resource;
 }
 

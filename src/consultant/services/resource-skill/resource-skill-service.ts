@@ -14,6 +14,7 @@ import {
 } from '../../types/resource-skill';
 import { api } from '../../../api/api';
 import {
+  baseUrl,
   fetchResourceSkillByIdUrl,
   skillListURL,
 } from '../urls/resource-cost-skill-urls';
@@ -69,10 +70,10 @@ export const useResourceSkill = (
     {
       queryKey: ['resourceSkill', params],
       queryFn: async () => {
-        // const res = await fetchResourceSkill(params);
+        const res = await fetchResourceSkill(params);
         return {
-          resourceSkill: mockData.data.resourceSkill,
-          count: mockData.data.count,
+          resourceSkill: res.data.resourceSkill,
+          count: res.data.count,
         };
       },
       ...options,
@@ -126,7 +127,7 @@ export const useCreateResourceSkill = (
   return useMutation({
     mutationKey: ['create-resource-skill'],
     mutationFn: async (payload) => {
-      const res = await api.post('/api/resource_skill/create', payload);
+      const res = await api.post(`${baseUrl}`+'/api/resource_skill/create', payload);
       return res.data;
     },
     ...options,
@@ -147,7 +148,7 @@ export const useUpdateResourceSkill = (
   return useMutation({
     mutationKey: ['update-resource-skill'],
     mutationFn: async (payload) => {
-      const res = await api.put('/api/resource_skill/update', payload);
+      const res = await api.put(`${baseUrl}`+'/api/resource_skill/update', payload);
       return res.data;
     },
     ...options,

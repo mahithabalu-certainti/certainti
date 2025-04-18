@@ -233,7 +233,7 @@ export const FormData = (
         fillType: 'half',
         fields: [
           createTextField(
-            'total_years_oexperience',
+            'total_years_experience',
             'Total Years of Experience',
             {
               required: false,

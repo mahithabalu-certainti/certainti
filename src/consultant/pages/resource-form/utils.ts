@@ -1,6 +1,15 @@
-import { AccountFormData, NewAccountData, SelectOption } from '../../types';
-import { ResourceCostPayload, ResourceCostSkillFormData } from '../../types/resource-cost';
+import {
+  AccountFormData,
+  NewAccountData,
+  ResourceData,
+  SelectOption,
+} from '../../types';
+import {
+  ResourceCostPayload,
+  ResourceCostSkillFormData,
+} from '../../types/resource-cost';
 import { ResourceSkillPayload } from '../../types/resource-skill';
+import { ResourceCostType } from '../account-details/sidebar-pages/resources/resource-cost/resource-cost-type';
 import { skillLevel } from '../account-details/sidebar-pages/resources/resource-skill/resource-skill-type';
 
 export const transformFormData = (
@@ -44,8 +53,8 @@ export const transformFormData = (
 };
 
 export const statusOption: SelectOption[] = [
-  { label: 'Active', value: 'active' },
-  { label: 'Inactive', value: 'inactive' },
+  { label: 'Active', value: 'Active' },
+  { label: 'Inactive', value: 'Inactive' },
 ];
 
 export const resourceTypeOption: SelectOption[] = [
@@ -65,14 +74,11 @@ export const frequencyOption: SelectOption[] = [
 
 export const transformCostData = (
   formData: Partial<ResourceCostSkillFormData>,
-  isEdit: boolean
+  isEdit: boolean,
 ) => {
   const data: Partial<ResourceCostPayload> = {
     eid: '',
-    // account_rid: formData.account_rid,
-    resource_type: formData.resource_type,
-    resource_rid: formData.resource_ref_id,
-    resource_ref_id: formData.resource_ref_id,
+    account_rid: formData.account_rid,
     effective_date: formData.financial_start_date,
     end_date: formData.financial_end_date,
     annual_cost: Number(formData.annual),
@@ -82,14 +88,20 @@ export const transformCostData = (
     bi_weekly_cost: Number(formData.bi_weekly),
     daily_cost: Number(formData.daily),
     hourly_cost: Number(formData.hourly),
-    // fiscal_year: formData?.fiscal_year,
-    // currency_rid: formData?.currency_rid,
-    // accountNumber: formData?.accountNumber,
-    status: formData?.status,
+    resource_type: formData.resource_type,
+    resource_ref_id: formData.resource_ref_id,
+    currency_rid: formData.currency,
+    resource_rid: formData.resource_rid,
+    accountNumber: formData.accountNumber,
   };
 
   if (isEdit) {
-    data.rid = formData.rid;
+    delete data.account_rid;
+    delete data.resource_rid;
+    delete data.resource_type,
+    delete data.resource_ref_id,
+
+    data.rid = formData.cost_rid;
   }
 
   return data;
@@ -101,23 +113,24 @@ export const transformSkillData = (
 ) => {
   const data: Partial<ResourceSkillPayload> = {
     eid: '',
-    // account_rid: formData.account_rid,
+    account_rid: formData.account_rid,
     resource_type: formData.resource_type,
-    resource_rid: formData.resource_ref_id,
+    resource_rid: formData.resource_rid,
     resource_ref_id: formData.resource_ref_id,
-    // resource_desc: formData.resource_desc,
     start_date: formData.skill_start_date,
-    skill_description: formData.skill_name,
     skill_level: formData.skill_level as skillLevel,
     years_of_experience: Number(formData.years_of_experience),
-    // fiscal_year: formData.fiscal_year,
     skill_name: formData.skill_name,
-    technical_weightage: '',
-    // accountNumber: formData.accountNumber,
+    accountNumber: formData.accountNumber,
   };
 
   if (isEdit) {
-    data.rid = formData.rid;
+    delete data.resource_rid;
+    delete data.account_rid;
+    delete data.resource_type;
+    delete data.resource_ref_id;
+
+    data.rid = formData.skill_rid;
   }
 
   return data;

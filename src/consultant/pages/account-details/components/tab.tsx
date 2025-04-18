@@ -15,6 +15,7 @@ interface TabPanelProps {
   value: string;
   showFilter: boolean;
   setAppliedFilters: (filters: Record<string, any>) => void;
+  setFiscalYearValue:(value:number)=>void;
 }
 
 const TabPanel: React.FC<TabPanelProps> = ({
@@ -25,6 +26,7 @@ const TabPanel: React.FC<TabPanelProps> = ({
   value,
   showFilter,
   setAppliedFilters,
+  setFiscalYearValue,
 }) => {
   const [tabValue, setTabValue] = useState(0);
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
@@ -137,7 +139,7 @@ const TabPanel: React.FC<TabPanelProps> = ({
             >
               <Image src={resourceFilterIcon} />
             </Box>
-            <FiscalYearDropdown />
+            <FiscalYearDropdown setFiscalYearValue={setFiscalYearValue} />
             <ActionsDropdown actions={MENU_ITEMS} />
           </Box>
         </Box>

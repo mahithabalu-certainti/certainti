@@ -5,6 +5,8 @@ import ResourceCostTable from './resource-cost/resource-cost-table';
 import ResourceDetails from './resource-details/resource-details';
 import ResourceSkillTable from './resource-skill/resource-skill-table';
 import { AccountData } from '../../utils';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
 
 
 interface SubcomponentProps {
@@ -12,6 +14,7 @@ interface SubcomponentProps {
   value: string;
   resourceData: any;
   appliedFilters: Record<string, any>
+  fiscalYearValue:number,
   accountDetails: AccountData
 }
 
@@ -20,14 +23,9 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   value,
   resourceData,
   appliedFilters,
+  fiscalYearValue,
   accountDetails
 }) => {
-  // const navigate = useNavigate();
-
-  // const hanleClickNew = () => {
-  //   navigate(`/resource/create`, { state: { value } });
-  // };
-
   return (
     <Fragment>
       <Box className='mr-2 max-w-[100%]'>
@@ -84,13 +82,13 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
           </Box>
         )}
         {value === 'cost' && (
-          <Box sx={{width: '100%', overflowX: 'auto'}}>
-            <ResourceCostTable appliedFilters={appliedFilters} accountDetails={accountDetails} />
+          <Box sx={{ width: '100%', overflowX: 'auto' }}>
+            <ResourceCostTable fiscalYear={fiscalYearValue} appliedFilters={appliedFilters} accountDetails={accountDetails} />
           </Box>
         )}
         {value === 'skill' && (
-          <Box sx={{width: '100%', overflowX: 'auto'}}>
-            <ResourceSkillTable appliedFilters={appliedFilters} accountDetails={accountDetails} />
+          <Box sx={{ width: '100%', overflowX: 'auto' }}>
+            <ResourceSkillTable fiscalYear={fiscalYearValue} appliedFilters={appliedFilters} accountDetails={accountDetails} />
           </Box>
         )}
       </Box>

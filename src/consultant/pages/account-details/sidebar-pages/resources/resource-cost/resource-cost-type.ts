@@ -7,7 +7,10 @@ export interface RenderCostRowProps {
 }
 
 export interface ResourceCostType {
+  accountRid?:string,
   resourceRID?:string,
+  resource_type?:string,
+  resource_fullname?:string,
   resourceCostNumber?: string;
   resourceRefId?: string;
   currency?: string;
@@ -29,9 +32,13 @@ export function convertResourceCost(
 
   function processResourceCost(cost: ResourceCostList): void {
     const convertedCost: ResourceCostType = {
+      accountRid:cost.account_rid,
+      resource_type:cost.resource_type,
+      resource_fullname: cost.resource_fullname,
+      resourceCostNumber:cost.r_number,
       resourceRID: cost.resource_rid,
       resourceRefId: cost.resource_ref_id,
-      currency: cost.currency,
+      currency: cost.currency_code,
       startDate: cost.effective_date,
       endDate: cost.end_date,
       annualCost: cost.annual_cost?.toString() ?? '',

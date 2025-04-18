@@ -7,7 +7,7 @@ export interface ResourceCostListParams {
   sortOrder?: 'ASC' | 'DESC';
   filters?: object;
   accountNumber?: string;
-  fiscalYear?: number;
+  fiscalYear?: string | number;
   id?:string
 }
 
@@ -17,9 +17,10 @@ export type ResourceCostList = {
   status?: string;
   created_datetime?: string;
   modified_datetime?: string;
+  resource_fullname?:string,
   eid?: string;
   account_rid?: string;
-  resource_type?: 'Full-time';
+  resource_type?: string;
   resource_rid?: string;
   resource_ref_id?: string;
   effective_date?: string;
@@ -33,7 +34,7 @@ export type ResourceCostList = {
   hourly_cost?: string | null;
   currency_rid?: string;
   fiscal_year?: string;
-  currency?: string;
+  currency_code?: string;
   r_number?: string;
   created_by?: string | null;
   modified_by?: string | null;
@@ -57,8 +58,13 @@ export interface ResourceCostApiResponse extends CommonApiResponse {
 }
 
 export type ResourceCostSkillFormData = {
+  accountNumber?:string,
+  account_rid?:string,
   rid?: string;
+  cost_rid?:string,
+  skill_rid?:string,
   resource_ref_id?: string;
+  resource_rid?: string;
   resource_full_name?: string;
   resource_type?: string;
   resource_org_name?: string;

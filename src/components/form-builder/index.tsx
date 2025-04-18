@@ -52,6 +52,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     <Skeleton variant='rounded' width='100%' height={36} />
   );
 
+  console.log("values", values);
+  
+
   useEffect(() => {
     setFormData(filteredSections);
     // Only set initial form data if constructFormData is empty
@@ -79,7 +82,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           weekly: costInfo?.weeklyCost || '',
           daily: costInfo?.dailyCost || '',
           hourly: costInfo?.hourlyCost || '',
-          currency: costInfo?.currency || '', // Assuming you want to include currency as well
         };
       }
 
@@ -293,8 +295,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
               className={fieldDisabled}
-              maxDate={sectionDate ? dayjs(today) : undefined}
-              minDate={sectionDate ? dayjs(sixYearsAgo) : undefined}
+              // maxDate={sectionDate ? dayjs(today) : undefined}
+              // minDate={sectionDate ? dayjs(sixYearsAgo) : undefined}
               value={sectionDate ? dayjs(fieldValue) : dayjs(fieldValue, 'DD/MM/YYYY')}
               disabled={field.disabled || readOnly}
               format='MM/DD'
@@ -409,6 +411,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       return value !== undefined && value !== null && value.toString().trim() !== '';
     });
 
+    const readOnly = formData?.map((section)=>{
+      if((section.sectionName !== 'Financial Information' && state?.cost) || (section.sectionName !== 'Skill Information' && state?.skill)){
+        return true;
+      }
+      return false;
+    })
+
     const dataValidation = formData?.map((section) => ({
       ...section,
       fields: section.fields.map((field) => {
@@ -423,7 +432,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           hasValue = Boolean(constructFormData[field.name]);
         }
         // Validate required fields
-        if (field.required && !hasValue) {
+        if (field.required && !hasValue && !readOnly) {
           hasError = true;
           return { ...field, error: 'Field is required' };
         }
@@ -434,7 +443,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             `${field.name}_countryCode`
           ] as string;
 
-          if (field.required && !value) {
+          if (field.required && !value && !readOnly) {
             hasError = true;
             return { ...field, error: 'Phone number is required' };
           }
@@ -497,7 +506,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           }
         }
 
-        if (field.type === 'text' && value) {
+        if (field.type === 'text' && value && !readOnly) {
           const emojiRegex =
             /[\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD83C-\uDBFF\uDC00-\uDFFF]+|[\u2600-\u26FF]/gu;
           if (emojiRegex.test(value)) {
