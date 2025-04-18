@@ -110,6 +110,7 @@ const ResourceForm: React.FC = () => {
           ? 'Resource updated successfully'
           : 'Resource created successfully'
       );
+      navigate(-1);
     }
   }, [commonSuccess, isEditView, successToast]);
 
@@ -157,7 +158,8 @@ const ResourceForm: React.FC = () => {
     countryOptions,
     currencyOptions,
     stateOptions,
-    states.isLoading
+    states.isLoading,
+    isEditView
   );
 
   return (

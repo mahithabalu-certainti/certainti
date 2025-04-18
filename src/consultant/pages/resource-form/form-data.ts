@@ -23,7 +23,8 @@ export const FormData = (
   country: selectOptions[],
   currency: selectOptions[],
   state: selectOptions[],
-  stateLoading?: boolean
+  stateLoading?: boolean,
+  disableFields?: boolean
 ): FormType[] => {
   return useMemo(
     () => [
@@ -36,6 +37,7 @@ export const FormData = (
             regex: REGEX_PATTERNS.ALPHANUMERIC,
             regexErrorMessage: 'Alphanumeric characters only',
             placeholder: 'Enter Resource Ref Id',
+            disabled: disableFields,
           }),
           createTextField('resource_fullname', 'Resource Full Name', {
             required: true,
