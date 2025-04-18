@@ -152,6 +152,23 @@ export const createDateField = (
   greaterThan: others.greaterThan,
 });
 
+export const createFiscalDateField = (
+  name: string,
+  label: string,
+  others: {
+    required: boolean;
+    disabled?: boolean;
+    greaterThan?: Record<string, string>;
+  }
+): FieldType => ({
+  type: 'fiscalDate',
+  name,
+  label,
+  required: others.required,
+  disabled: others.disabled,
+  greaterThan: others.greaterThan,
+});
+
 export const YES_NO_OPTIONS: SelectOption[] = [
   { label: 'Yes', value: 'yes' },
   { label: 'No', value: 'no' },
