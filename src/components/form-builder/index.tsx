@@ -272,15 +272,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   fullWidth: true,
                   size: 'small',
                   disabled: false,
-                  InputProps: {
-                    onPaste: (e: React.ClipboardEvent<HTMLInputElement>) => {
-                      e.preventDefault();
-                      return false;
-                    },
-                    inputProps: {
-                      readOnly: true,
-                    },
-                  },
                   sx: {
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 0,
@@ -350,6 +341,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     return { isValid: true, error: '' };
   };
 
+  const isValidDate = (dateString: string, format: string = 'DD/MM/YYYY'): boolean => {
+    return dayjs(dateString, format, true).isValid();
+  };
+
   const submitData = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     let hasError = false;
@@ -389,6 +384,19 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               hasError = true;
               return { ...field, error: validation.error };
             }
+          }
+        }
+
+        // Date validation
+        if (field.type === 'date' && constructFormData[field.name]) {
+          const dateValue = constructFormData[field.name] as string;
+
+          if (!isValidDate(dateValue)) {
+            hasError = true;
+            return {
+              ...field,
+              error: ' Invalid date'
+            };
           }
         }
 
@@ -433,13 +441,33 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         }
 
         if (field.type === 'text' && value) {
-          const emojiRegex =
-            /[\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD83C-\uDBFF\uDC00-\uDFFF]+|[\u2600-\u26FF]/gu;
+          const emojiRegex = /[\p{Emoji_Presentation}\uFE0F]/gu;
           if (emojiRegex.test(value)) {
             hasError = true;
             return {
               ...field,
               error: 'Emojis are not accepted',
+            };
+          }
+        }
+        
+        if (field.lengthRequired?.key && value) {
+          const minPattern = field.lengthRequired.minMatchedValue;
+          const maxPattern = field.lengthRequired.maxMatchedValue;
+    
+          if (!minPattern.test(value)) {
+            hasError = true;
+            return {
+              ...field,
+              error: field.lengthRequired.minErrorMessage,
+            };
+          }
+    
+          if (!maxPattern.test(value)) {
+            hasError = true;
+            return {
+              ...field,
+              error: field.lengthRequired.maxErrorMessage,
             };
           }
         }

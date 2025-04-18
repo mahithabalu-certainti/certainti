@@ -44,6 +44,7 @@ export interface Cities {
 export interface Currencys {
   rid: string;
   currency_name: string;
+  currency_code: string;
 }
 
 export interface GloablAcconunts {
