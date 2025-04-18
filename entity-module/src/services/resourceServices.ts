@@ -131,6 +131,7 @@ export class ResourceService {
       );
 
       const { whereClause } = this.buildWhereClause(filters, search);
+      const { goeDataFilters, geoDataSort } = this.processGeoDataFilterAndSort(filters, sortBy, sortOrder);
 
       const resources = await this.schemaService.fetchResources(
         accountRNumber,
@@ -138,7 +139,9 @@ export class ResourceService {
         limit,
         [[finalSortBy, finalSortOrder]],
         whereClause,
-        fiscalYear
+        fiscalYear,
+        goeDataFilters,
+        geoDataSort
       );
 
       return {
@@ -292,7 +295,9 @@ export class ResourceService {
       "resource_mobile",
       "resource_email",
       "designation",
-      "total_years_experience"
+      "total_years_experience",
+      "country",
+      "region"
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -428,6 +433,38 @@ export class ResourceService {
     ) {
       return { [Op.between]: fieldFilter.between };
     }
+  }
+
+  processGeoDataFilterAndSort(filters: Record<string, any>, sortBy: string, sortOrder: string){
+    let goeDataFilters: Record<string, any> = {};
+      const geoDataSort: string[][] = [];
+
+      if(filters.currency){
+        goeDataFilters['currency'] = filters.currency;
+      }
+
+      if(filters.country){
+        goeDataFilters['country'] = filters.country;
+      }
+
+      if(filters.region){
+        goeDataFilters['region'] = filters.region;
+      }
+
+      if(sortBy === "country"){
+        geoDataSort.push([sortBy, sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC"])
+      }
+      if(sortBy === "currency"){
+        geoDataSort.push([sortBy, sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC"])
+      }
+      if(sortBy === "region"){
+        geoDataSort.push([sortBy, sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC"])
+      }
+
+      return {
+        goeDataFilters,
+        geoDataSort
+      }
   }
 
   /**

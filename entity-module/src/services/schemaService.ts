@@ -113,11 +113,15 @@ class SchemaService {
     limit: number,
     order: any[],
     whereClause: Record<string, string> = {},
-    fiscalYear: number
+    fiscalYear: number,
+    goeDataFilters: Record<string, any> = {},
+    geoDataSort: string[][]
   ) {
     try {
       const schemaName = `platform_v2_${accountNumber}`;
       const sequelize = await initOrgSequelize();
+      const mainDdSequilze = await initMainDbSequelize();
+      let finalResources = null;
 
       const Resource = Resources.initialize(sequelize, schemaName);
       await Resource.sync({ force: false });
@@ -141,7 +145,10 @@ class SchemaService {
           "resource_mobile",
           "resource_role",
           "designation",
-          "total_years_experience"
+          "total_years_experience",
+          "country",
+          "region",
+          "currency",
         ],
       });
 
@@ -151,7 +158,17 @@ class SchemaService {
           ...whereClause,
         },
       });
-      return {resources, totalCount};
+
+      if (resources) {
+        finalResources = await this.insertGeoData(resources, mainDdSequilze);
+        finalResources = await this.sortAndFilteGeoData(
+          finalResources,
+          goeDataFilters,
+          geoDataSort
+        );
+      }
+
+      return { resources: finalResources, totalCount };
     } catch (err) {
       throw new Error(
         "Error creating table resources: " + (err as Error).message
@@ -328,7 +345,7 @@ class SchemaService {
    * @param resourceId - Resource ID (RID).
    * @param accountNumber - Account number (schema).
    * @returns True if resource exists, false otherwise.
-   */ 
+   */
   async checkIfResourceExists(
     resourceId: string,
     accountNumber: string
@@ -454,7 +471,7 @@ class SchemaService {
     }
   }
 
-   /**
+  /**
    * Updates the fiscal data of a resource.
    * @param resourceData - Updated resource data.
    * @param startDate - Start date (Moment).
@@ -499,7 +516,7 @@ class SchemaService {
     }
   }
 
-   /**
+  /**
    * Fetches the parent account number for a given parent account ID.
    * @param parentAccountId - Parent account RID.
    * @returns Parent account number.
@@ -524,7 +541,7 @@ class SchemaService {
     }
   }
 
-   /**
+  /**
    * Retrieves account metadata by account number.
    * @param accountNumber - Account number.
    * @returns Object with accountNumber and accountId.
@@ -731,6 +748,127 @@ class SchemaService {
     } catch (err) {
       throw new Error("Error adding timeline : " + (err as Error).message);
     }
+  }
+
+  async insertGeoData(resources: any, mainDdSequilze: Sequelize) {
+    try {
+      const countryIds = [...new Set(resources.map((r: any) => r.country))];
+      const regionIds = [...new Set(resources.map((r: any) => r.region))];
+      const currencyIds = [...new Set(resources.map((r: any) => r.currency))];
+
+      const countryRows = await mainDdSequilze.query(
+        `SELECT rid, country_name FROM country WHERE rid IN (:ids)`,
+        {
+          replacements: { ids: countryIds },
+          type: "SELECT",
+        }
+      );
+
+      const regions = await mainDdSequilze.query(
+        `SELECT rid, region_name FROM regions WHERE rid IN (:ids)`,
+        {
+          replacements: { ids: regionIds },
+          type: "SELECT",
+        }
+      );
+
+      const currencies = await mainDdSequilze.query(
+        `SELECT rid, currency_code FROM currency WHERE rid IN (:ids)`,
+        {
+          replacements: { ids: currencyIds },
+          type: "SELECT",
+        }
+      );
+
+      const countryMap = Object.fromEntries(
+        (Array.isArray(countryRows) ? countryRows : []).map((c: any) => [
+          c.rid,
+          c,
+        ])
+      );
+
+      const regionMap = Object.fromEntries(
+        (Array.isArray(regions) ? regions : []).map((s: any) => [s.rid, s])
+      );
+
+      const currencyMap = Object.fromEntries(
+        (Array.isArray(currencies) ? currencies : []).map((s: any) => [
+          s.rid,
+          s,
+        ])
+      );
+
+      const updatedResources = resources.map((res: any) => ({
+        ...res.toJSON(),
+        country_name: countryMap[res.country]?.country_name || null,
+        region_name: regionMap[res.region]?.region_name || null,
+        currency_name: currencyMap[res.currency]?.currency_code || null,
+      }));
+
+      return updatedResources;
+    } catch (err) {
+      throw new Error("Error fetching geo data" + (err as Error).message);
+    }
+  }
+
+  async sortAndFilteGeoData(
+    resources: any[],
+    whereClause: Record<string, any> = {},
+    order: string[][] = []
+  ): Promise<any[]> {
+    const updatedResources = resources
+      .filter((res) => {
+        if (
+          whereClause.currency?.length &&
+          !whereClause.currency.some((c: any) =>
+            res.currency_name?.toLowerCase().includes(c.toLowerCase())
+          )
+        ) {
+          return false;
+        }
+      
+        if (
+          whereClause.country?.length &&
+          !whereClause.country.some((c: any) =>
+            res.country_name?.toLowerCase().includes(c.toLowerCase())
+          )
+        ) {
+          return false;
+        }
+      
+        if (
+          whereClause.region?.length &&
+          !whereClause.region.some((r: any) =>
+            res.region_name?.toLowerCase().includes(r.toLowerCase())
+          )
+        ) {
+          return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        const [field, direction] = order[0] || [];
+        const dir = direction === "ASC" ? 1 : -1;
+
+        if (field === "country") {
+          return (
+            (a.country_name || "").localeCompare(b.country_name || "") * dir
+          );
+        }
+        if (field === "region") {
+          return (a.region_name || "").localeCompare(b.region_name || "") * dir;
+        }
+
+        if (field === "currency") {
+          return (
+            (a.currency_name || "").localeCompare(b.currency_name || "") * dir
+          );
+        }
+
+        return 0;
+      });
+
+    return updatedResources;
   }
 }
 
