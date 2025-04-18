@@ -251,6 +251,48 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             <DatePicker
               value={dayjs(fieldValue, 'DD/MM/YYYY')}
               disabled={field.disabled}
+              onChange={(newValue) => {
+                handleChange(dayjs(newValue).format('DD/MM/YYYY'));
+              }}
+              shouldDisableDate={(date) => dayjs(date).isBefore(dayjs(), 'day')}
+              slots={{
+                openPickerIcon: () => (
+                  <img src={calendarIcon} alt='calendar' className='w-6 h-5' />
+                ),
+                clearIcon: () => (
+                  <img src={closeIcon} alt='calendar' className='w-2.5 h-2.5' />
+                ),
+              }}
+              slotProps={{
+                field: { clearable: !field.disabled },
+                textField: {
+                  fullWidth: true,
+                  size: 'small',
+                  disabled: false,
+                  sx: {
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 0,
+                      '&.Mui-disabled': {
+                        '& input': {
+                          color: 'black',
+                          WebkitTextFillColor: 'black',
+                        },
+                      },
+                    },
+                  },
+                  placeholder: field.placeholder,
+                  error: !!field.error,
+                },
+              }}
+            />
+          </LocalizationProvider>
+        );
+      case 'fiscalDate':
+        return (
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              value={dayjs(fieldValue, 'DD/MM/YYYY')}
+              disabled={field.disabled}
               format='MM/DD'
               views={['month', 'day']}
               minDate={dayjs().startOf('year')}
@@ -341,7 +383,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     return { isValid: true, error: '' };
   };
 
-  const isValidDate = (dateString: string, format: string = 'DD/MM/YYYY'): boolean => {
+  const isValidDate = (
+    dateString: string,
+    format: string = 'DD/MM/YYYY'
+  ): boolean => {
     return dayjs(dateString, format, true).isValid();
   };
 
@@ -358,7 +403,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         if (field.type === 'checkbox') {
           hasValue = (constructFormData[field.name] as string[])?.length > 0;
         }
-        if (field.type === 'date') {
+        if (field.type === 'date' || field.type === 'fiscalDate') {
           hasValue = Boolean(constructFormData[field.name]);
         }
         // Validate required fields
@@ -388,14 +433,17 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         }
 
         // Date validation
-        if (field.type === 'date' && constructFormData[field.name]) {
+        if (
+          (field.type === 'date' || field.type === 'fiscalDate') &&
+          constructFormData[field.name]
+        ) {
           const dateValue = constructFormData[field.name] as string;
 
           if (!isValidDate(dateValue)) {
             hasError = true;
             return {
               ...field,
-              error: ' Invalid date'
+              error: ' Invalid date',
             };
           }
         }
@@ -450,11 +498,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             };
           }
         }
-        
+
         if (field.lengthRequired?.key && value) {
           const minPattern = field.lengthRequired.minMatchedValue;
           const maxPattern = field.lengthRequired.maxMatchedValue;
-    
+
           if (!minPattern.test(value)) {
             hasError = true;
             return {
@@ -462,7 +510,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               error: field.lengthRequired.minErrorMessage,
             };
           }
-    
+
           if (!maxPattern.test(value)) {
             hasError = true;
             return {

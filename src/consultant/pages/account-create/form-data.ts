@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { FormType, SelectOption, YesNo } from '../../types';
 import { DATA_STORAGE_OPTIONS, STATUS_OPTIONS } from './utils';
 import {
-  createDateField,
+  createFiscalDateField,
   createPhoneInputField,
   createRadioField,
   createSelectField,
@@ -158,7 +158,7 @@ export const FormData = (
         sectionName: 'Settings Information',
         fillType: 'half',
         fields: [
-          createDateField('fiscal_start_date', 'Fiscal Start Date', {
+          createFiscalDateField('fiscal_start_date', 'Fiscal Start Date', {
             required: true,
             disabled: disableFields,
           }),
@@ -168,7 +168,7 @@ export const FormData = (
             regexErrorMessage: 'Enter a number between 3 and 5',
             placeholder: 'Enter Max AI Intractions',
           }),
-          createDateField('fiscal_end_date', 'Fiscal End Date', {
+          createFiscalDateField('fiscal_end_date', 'Fiscal End Date', {
             disabled: disableFields,
             required: true,
           }),

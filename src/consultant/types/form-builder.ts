@@ -43,7 +43,8 @@ export type InputType =
   | 'checkbox'
   | 'date'
   | 'radio'
-  | 'phone';
+  | 'phone'
+  | 'fiscalDate';
 
 export interface SelectOption {
   label: string;

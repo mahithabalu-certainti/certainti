@@ -54,11 +54,12 @@ export const Login: React.FC = () => {
       setIsLoading(false);
       const err = error as Error;
       if (err?.message !== 'user_cancelled: User cancelled the flow.') {
-        errorToast(t('core', 'login.signInError'));
+        errorToast(
+          `<strong>${err?.message}</strong><p>${t('core', 'login.signInError')}</p>`
+        );
       }
     }
   };
-
   return (
     <Box className='min-h-screen flex'>
       <Box className='flex-1 grid md:grid-cols-2'>
