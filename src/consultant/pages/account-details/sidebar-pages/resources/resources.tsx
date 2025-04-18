@@ -28,10 +28,14 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
   const { data: ResourceList } = useResourceList();
   const handleFilter = () => {
     setShowFilter(!showFilter);
+    if(showFilter === false){
+      setAppliedFilters({})
+    }
   };
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
     setValue(newValue);
+    setAppliedFilters({})
   };
 
   // fiscalYear change

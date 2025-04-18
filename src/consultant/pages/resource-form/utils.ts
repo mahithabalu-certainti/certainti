@@ -81,7 +81,7 @@ export const transformCostData = (
     account_rid: formData.account_rid,
     effective_date: formData.financial_start_date,
     end_date: formData.financial_end_date,
-    annual_cost: Number(formData.annual),
+    annual_cost: formData.monthly ? Number(formData.annual) : null,
     semi_annual_cost: Number(formData.semi_annual),
     monthly_cost: Number(formData.monthly),
     weekly_cost: Number(formData.weekly),

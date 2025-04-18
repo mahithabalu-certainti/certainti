@@ -32,10 +32,10 @@ import ActionButton from '../../../../account-list/table/action-button';
 
 const ResourceCostTable: React.FC<Record<string, any>> = ({ fiscalYear, appliedFilters, accountDetails }) => {
   const navigate = useNavigate();
-  const [page, setPage] = useState<number>(1);
+  const [page, setPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState<number>(25);
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
-  const [orderBy, setOrderBy] = useState<keyof ResourceCostList>('r_number');
+  const [orderBy, setOrderBy] = useState<keyof ResourceCostList>('resource_cost_number');
   const [resourceCostList, setResourceCostList] = useState<ResourceCostType[]>([]);
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';    
   const { data: costList, isLoading: loading } = useResourceCost({
@@ -137,21 +137,21 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ fiscalYear, appliedF
           <TableRow>
             <TableCell>
               <TableSortLabel
-                active={orderBy === 'r_number'}
-                direction={orderBy === 'r_number' ? order : 'asc'}
-                onClick={createSortHandler('r_number')}
+                active={orderBy === 'resource_cost_number'}
+                direction={orderBy === 'resource_cost_number' ? order : 'asc'}
+                onClick={createSortHandler('resource_cost_number')}
               >
                 Resource Cost Number
               </TableSortLabel>
             </TableCell>
             <TableCell>
-              <TableSortLabel
+              {/* <TableSortLabel
                 active={orderBy === 'currency_code'}
                 direction={orderBy === 'currency_code' ? order : 'asc'}
                 onClick={createSortHandler('currency_code')}
-              >
+              > */}
                 Currency
-              </TableSortLabel>
+              {/* </TableSortLabel> */}
             </TableCell>
             <TableCell>
               <TableSortLabel

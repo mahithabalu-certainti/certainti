@@ -35,6 +35,7 @@ export type ResourceCostList = {
   currency_rid?: string;
   fiscal_year?: string;
   currency_code?: string;
+  resource_cost_number?:string,
   r_number?: string;
   created_by?: string | null;
   modified_by?: string | null;
@@ -109,13 +110,13 @@ export type ResourceCostPayload = {
   resource_ref_id: string;
   effective_date?: string;
   end_date?: string;
-  annual_cost?: number;
-  semi_annual_cost?: number;
-  monthly_cost?: number;
-  weekly_cost?: number;
-  bi_weekly_cost?: number;
-  daily_cost?: number;
-  hourly_cost?: number;
+  annual_cost?: number | null;
+  semi_annual_cost?: number | null;
+  monthly_cost?: number | null;
+  weekly_cost?: number | null;
+  bi_weekly_cost?: number | null;
+  daily_cost?: number | null;
+  hourly_cost?: number | null;
   fiscal_year?: string;
   currency_rid?: string;
   accountNumber?: string;

@@ -3,7 +3,7 @@
 import { FieldConfig, FilterState } from "../../../../../components/filter/filterType";
 
 export const costFields: FieldConfig[] = [
-  { name: 'Resource Number', value: "resourceNumber", type: 'number' },
+  { name: 'Resource Number', value: "resource_cost_number", type: 'text' },
   { name: 'Annual', value: "annual", type: 'number' },
   { name: 'Semi-Annual', value: "semi_annual", type: 'number' },
   { name: 'Monthly', value: "monthly", type: 'number' },
@@ -16,11 +16,11 @@ export const costFields: FieldConfig[] = [
   { name: 'Currency', value: "currency", type: 'text' }
 ];
 export const skillFields: FieldConfig[] = [
-  { name: 'Resource Type', value: 'resourceType', type: 'text' },
-  { name: 'Skill Name', value: "skillName", type: 'text' },
-  { name: 'Skill Level', value: "skillLevel", type: 'enum' },
-  { name: 'Experience', value: 'experience', type: 'number' },
-  { name: 'Start Date', value: 'startDate', type: 'date' },
+  { name: 'Resource Type', value: 'resource_type', type: 'text' },
+  { name: 'Skill Name', value: "skill_name", type: 'text' },
+  { name: 'Skill Level', value: "skill_level", type: 'enum' },
+  { name: 'Experience', value: 'years_of_experience', type: 'number' },
+  { name: 'Start Date', value: 'start_date', type: 'date' },
 ];
 
 
