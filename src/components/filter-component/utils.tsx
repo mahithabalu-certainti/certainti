@@ -62,7 +62,7 @@ export const formatFilterForApi = (
   const formattedFilters: Record<string, any> = {};
 
   Object.entries(filterStates).forEach(([fieldName, state]) => {
-    const fieldKey = fieldName.toLowerCase().replace(/\s+/g, '_');
+    const fieldKey = fieldName === 'Industries' ? 'industry' : fieldName.toLowerCase().replace(/\s+/g, '_');
 
     if (state.text) {
       formattedFilters[fieldKey] = { [state.text.option]: state.text.value.toLowerCase() };

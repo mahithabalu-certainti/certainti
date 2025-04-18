@@ -17,8 +17,7 @@ const Resource = ({ accountDetails }: any) => {
   const [columns, setColumns] = useState<any>([]);
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [value, setValue] = useState('details');
-  const [appliesFilters, setAppliedFilters] = useState<Record<string, any>>();
-  console.log('appliesFilters', appliesFilters);
+  const [, setAppliedFilters] = useState<Record<string, any>>();
   const [showBackArrow, setShowBackArrow] = useState<boolean>(false);
   const [resourceData, setResourceData] = useState<any>({});
   const navigate = useNavigate();

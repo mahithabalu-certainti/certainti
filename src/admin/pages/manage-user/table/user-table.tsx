@@ -14,7 +14,7 @@ export const UserTable: React.FC<Record<string, any>> = (appliedFilters) => {
     page: 1,
     limit: 10,
     sortBy: 'createdAt',
-    sortOrder: 'ASC',
+    sortOrder: 'DESC',
   });
 
   useEffect(() => {
