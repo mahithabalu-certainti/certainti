@@ -20,13 +20,7 @@ import { SelectOption } from '../../types';
 import { FormData } from './form-data';
 import { createPayload, transformResourceDataForUpdate } from './utils';
 
-interface ResourceFormProps {
-  userDetails: {
-    userId: string;
-  };
-}
-
-const ResourceForm: React.FC<ResourceFormProps> = () => {
+const ResourceForm: React.FC = () => {
   // Refs
   const formRef = React.useRef<HTMLFormElement>(null);
 
