@@ -1,14 +1,16 @@
-import { mockResourceDetailsApiResponse } from '../types';
+import { ResourceDetailsApiResponse } from '../types';
 
 // Your mock data with type annotation
-export const mockResourceDetails: mockResourceDetailsApiResponse = {
+export const mockResourceDetails: ResourceDetailsApiResponse = {
   statusCode: 200,
   statusCodeValue: 'Success',
   statusMessage: '',
   data: {
-    resource: {
+    resourceDetails: {
       rid: '4e15cef8-3efb-4e98-8ec7-e16f27ae8d63',
       r_number: 'ACC0001',
+      account_id: '431cfe96-3a5a-4044-8022-086adee1a292',
+      account_number: 'ACC0001',
       eid: null,
       resource_ref_id: 'resource-005',
       resource_type: 'FullTime',

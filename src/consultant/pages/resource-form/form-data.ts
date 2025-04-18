@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMemo } from 'react';
 import {
   createDateField,
@@ -6,14 +7,24 @@ import {
   createTextField,
   REGEX_PATTERNS,
 } from '../../../common-utils';
-import { FormType, SelectOption } from '../../types';
-import { frequencyOption, resourceTypeOption, statusOption } from './utils';
+import { FormType, selectOptions } from '../../types';
+import {
+  FREQUENCY_OPTIONS,
+  RESOURCE_STATUS_OPTIONS,
+  RESOURCE_TYPE_OPTIONS,
+} from './utils';
+
+export const fiscalYears = Array.from({ length: 6 }, (_, i) => {
+  const year = new Date().getFullYear() - i;
+  return { value: year as any, label: `FY-${year}` };
+});
 
 export const FormData = (
-  country: SelectOption[],
-  currency: SelectOption[],
-  state: SelectOption[],
-  stateLoading?: boolean
+  country: selectOptions[],
+  currency: selectOptions[],
+  state: selectOptions[],
+  stateLoading?: boolean,
+  disableFields?: boolean
 ): FormType[] => {
   return useMemo(
     () => [
@@ -26,6 +37,7 @@ export const FormData = (
             regex: REGEX_PATTERNS.ALPHANUMERIC,
             regexErrorMessage: 'Alphanumeric characters only',
             placeholder: 'Enter Resource Ref Id',
+            disabled: disableFields,
           }),
           createTextField('resource_fullname', 'Resource Full Name', {
             required: true,
@@ -34,7 +46,7 @@ export const FormData = (
             placeholder: 'Enter Full Name',
           }),
           createSelectField('resource_type', 'Resource Type', {
-            options: resourceTypeOption,
+            options: RESOURCE_TYPE_OPTIONS,
             placeholder: '-Select-',
             required: true,
           }),
@@ -57,7 +69,7 @@ export const FormData = (
             placeholder: 'Enter Middle Name',
           }),
           createSelectField('resource_status', 'Status', {
-            options: statusOption,
+            options: RESOURCE_STATUS_OPTIONS,
             placeholder: '-Select-',
             required: true,
           }),
@@ -66,6 +78,18 @@ export const FormData = (
             regex: REGEX_PATTERNS.LETTERS_3_TO_25,
             regexErrorMessage: '3-25 letters only',
             placeholder: 'Enter Last Name',
+          }),
+          createSelectField('fiscal_year', 'Fiscal Year', {
+            options: fiscalYears,
+            placeholder: '-Select-',
+            required: true,
+            onChange: true,
+          }),
+          createTextField('resource_role', 'Resource Role', {
+            required: false,
+            regex: REGEX_PATTERNS.LETTERS_3_TO_25,
+            regexErrorMessage: '3-25 letters only',
+            placeholder: 'Enter Resource Role',
           }),
         ],
       },
@@ -115,7 +139,7 @@ export const FormData = (
         fillType: 'half',
         fields: [
           createSelectField('cost_frequency', 'Cost Frequency', {
-            options: frequencyOption,
+            options: FREQUENCY_OPTIONS,
             placeholder: '-Select-',
             required: true,
           }),
@@ -131,13 +155,9 @@ export const FormData = (
         sectionName: 'Employment Details',
         fillType: 'half',
         fields: [
-          createDateField(
-            'resource_effective_from',
-            'Resource Effective From',
-            {
-              required: false,
-            }
-          ),
+          createDateField('resource_startdate', 'Resource Start Date', {
+            required: false,
+          }),
           createDateField('resource_enddate', 'Resource End Date', {
             required: false,
           }),
@@ -160,7 +180,7 @@ export const FormData = (
         fillType: 'half',
         fields: [
           createTextField(
-            'total_years_oexperience',
+            'total_years_experience',
             'Total Years of Experience',
             {
               required: false,
@@ -192,6 +212,6 @@ export const FormData = (
         ],
       },
     ],
-    [country, currency, state]
+    [country, currency, state, stateLoading]
   );
 };

@@ -9,12 +9,14 @@ interface SubcomponentProps {
   handleTabChange: (event: React.SyntheticEvent, newValue: string) => void;
   value: string;
   resourceData: any;
+  accountId: string;
 }
 
 const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   handleTabChange,
   value,
   resourceData,
+  accountId,
 }) => {
   // const navigate = useNavigate();
 
@@ -74,7 +76,10 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
         {/* You can add the content for each tab below */}
         {value === 'details' && (
           <Box>
-            <ResourceDetails resourceDetails={resourceData} />
+            <ResourceDetails
+              resourceDetails={resourceData}
+              accountId={accountId}
+            />
           </Box>
         )}
         {value === 'cost' && (
