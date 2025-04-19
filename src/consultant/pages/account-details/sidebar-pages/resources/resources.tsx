@@ -11,7 +11,6 @@ import ResourceSubComponents from './resource-sub-components';
 import ResourceTableHeader from './resource-table-header';
 
 const Resource = ({ accountDetails }: any) => {
-  console.log('accountDetails-Resource', accountDetails);
   const [viewMode, setViewMode] = useState<boolean>(false);
   const [viewResourceList, setViewResourceList] = useState<boolean>(true);
   const [columns, setColumns] = useState<any>([]);
@@ -150,6 +149,7 @@ const Resource = ({ accountDetails }: any) => {
           viewMode={viewMode}
           isLoading={isLoading}
           error={error}
+          rowIdentifier='rid'
         />
       )}
     </div>
