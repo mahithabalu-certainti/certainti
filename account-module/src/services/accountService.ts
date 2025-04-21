@@ -29,8 +29,6 @@ class AccountService {
     return this.accountRepository;
   }
 
-  private _childNameFilter: any = null;
-
   /**
    * Retrieves an account by its ID.
    *
@@ -62,13 +60,6 @@ class AccountService {
         (filters === '{}' ? {} : JSON.parse(filters)) : filters;
       
       console.log("Filters:", parsedFilters);
-
-      // Check if we need to filter child accounts by name
-      this._childNameFilter = null;
-      if (parsedFilters.account_name && parsedFilters.parent_account) {
-        this._childNameFilter = parsedFilters.account_name;
-        delete parsedFilters.account_name; // Remove from parent filters
-      }
       
       const { whereClause } = this.buildWhereClause(parsedFilters, search);
       console.log("Where Clause:", JSON.stringify(whereClause, this.symbolReplacer));
@@ -109,10 +100,8 @@ class AccountService {
       // Only apply this filter if is_parent_account is not set to "NO"
       const baseWhereClause = { ...allWhereClause };
       
-      // Only filter for parent accounts if explicitly requested with is_parent_account=yes
-      // or if parent_account filter is provided
-      if (parsedFilters.is_parent_account && parsedFilters.is_parent_account.toLowerCase() === 'yes' || 
-          parsedFilters.parent_account) {
+      // If is_parent_account filter is not "NO", only get accounts with null parent_account_rid
+      if (!parsedFilters.is_parent_account || parsedFilters.is_parent_account.toLowerCase() !== 'no') {
         baseWhereClause.parent_account_rid = { [Op.is]: null } as any;
       }
 
@@ -142,32 +131,13 @@ class AccountService {
       const accountIds = parentAccounts.map((account: any) => account.rid);
       
       if(accountIds.length > 0) {
-
-        // Build child where clause
-        let childWhereClause: any = {
-          parent_account_rid: {
-            [Op.in]: accountIds,
-          }
-        };
-        
-        // Apply child name filter if it exists
-        if (this._childNameFilter) {
-          const childNameFilter = this.getFieldFilter(this._childNameFilter, "account_name");
-          if (childNameFilter) {
-            childWhereClause.account_name = childNameFilter;
-          }
-        }
-        
-        // Apply other child filters
-        if (Object.keys(childClause).length > 0) {
-          childWhereClause = {
-            ...childWhereClause,
-            ...childClause
-          };
-        }
-
         const childAccounts = await repository.findAll({
-          where: childWhereClause,  // Use the childWhereClause here instead
+          where: {
+            parent_account_rid: {
+              [Op.in]: accountIds,
+            },
+            ...(Object.keys(childClause).length > 0 ? childClause : {}),
+          },
           include: [
             {
               model: Country,
@@ -200,64 +170,18 @@ class AccountService {
         parentAccounts.forEach((account: any) => {
           account.setDataValue('child_accounts', childAccountsByParent[account.rid] || []);
         });
-
-        if (this._childNameFilter) {
-          const filteredParents = parentAccounts.filter((account: any) => {
-            const children = account.getDataValue('child_accounts') || [];
-            return children.length > 0;
-          });
-          
-          // Update the parent accounts list
-          parentAccounts.length = 0;
-          filteredParents.forEach((account: any) => {
-            parentAccounts.push(account);
-          });
-        }
       } else {
         // If no parent accounts found, set empty child_accounts array
         parentAccounts.forEach((account: any) => {
           account.setDataValue('child_accounts', []);
         });
       }
-      
-      let totalCount = 0;
-      if (this._childNameFilter && parentAccounts.length > 0) {
-        // If we filtered by child name, count should be the number of filtered parents
-        totalCount = parentAccounts.length;
-      } else {
-        // Check if we have country or currency filters that need joins
-        const needsJoins = whereClause["$country.country_name$"] || whereClause["$currency.currency_code$"];
-        
-        if (needsJoins) {
-          // Use findAndCountAll with the same joins when we have country/currency filters
-          const countResult = await repository.findAndCountAll({
-            where: baseWhereClause,
-            include: [
-              {
-                model: Country,
-                as: "country",
-                attributes: [],
-                required: true,
-              },
-              {
-                model: Currency,
-                as: "currency",
-                attributes: [],
-                required: true,
-              }
-            ],
-            distinct: true,
-            limit: 1, // We only need the count
-          });
-          totalCount = countResult.count;
-        } else {
-          // Use simple count for queries without joins
-          totalCount = await repository.count({
-            where: baseWhereClause,
-            distinct: true
-          });
-        }
-      }
+
+      // Get total count without pagination
+      const totalCount = await repository.count({
+        where: baseWhereClause,
+        distinct: true
+      });
 
       return {
         statusCode: HttpStatus.SUCCESS,
