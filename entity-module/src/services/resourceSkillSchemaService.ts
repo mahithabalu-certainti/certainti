@@ -26,7 +26,7 @@ class ResourceSkillSchemaService {
         // Initialize models with the sequelize instance
         Resources.initialize(sequelize, schemaName);
         ResourceFiscal.initialize(sequelize,schemaName);
-        Skill.initialize(sequelize);
+        Skill.initialize(sequelize,schemaName);
         ResourceSkill.initialize(sequelize);
         ResourceSkillTimeline.initialize(sequelize,schemaName);
         ResourceSkillHistory.initialize(sequelize);

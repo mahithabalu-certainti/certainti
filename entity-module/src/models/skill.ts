@@ -31,7 +31,7 @@ export class Skill extends Model<SkillAttributes, SkillCreationAttributes> imple
   modified_by?: string;
   
 
-  static initialize(sequelize: Sequelize) {
+  static initialize(sequelize: Sequelize,schemaName: string) {
     Skill.init(
       {
        rid: {
@@ -80,6 +80,7 @@ export class Skill extends Model<SkillAttributes, SkillCreationAttributes> imple
       },
       {
         sequelize,
+        schema: schemaName, // Replace with your schema name
         modelName: "Skill",
         tableName: "skill",
         timestamps: false,
