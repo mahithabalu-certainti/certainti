@@ -162,6 +162,7 @@ const UserList: React.FC = () => {
               </div>
               :
               <Filter
+                filterKey='user-filters'
                 setAppliedFilters={setAppliedFilters}
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}

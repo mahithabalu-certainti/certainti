@@ -230,7 +230,7 @@ export const checkErrorMsg = (data: CheckErrorMsg[]): string =>
     .filter(({ error }) => error?.message)
     .map(({ error }) => {
       const errorData = error?.response?.data;
-      return `<strong>${error?.message}</strong><p>${
+      return `${
         errorData?.statusMessage
           ? typeof errorData.statusMessage === 'object'
             ? Object.values(errorData.statusMessage).join(', ')
