@@ -276,6 +276,7 @@ class ResourceSkillService {
         start_date,
         skill_description,
         skill_level,
+        skill_name,
         years_of_experience,
         modified_by,
         status,
@@ -315,6 +316,47 @@ class ResourceSkillService {
       };
     }
 
+    // Handle skill_name update if provided
+      let skillRidToUse = originalResourceSkill.skill_rid;
+
+      if (skill_name) {
+        try {
+          const sequelize = await initOrgSequelize();
+          Skill.initialize(sequelize, schemaName);
+          
+          // Find existing skill by name
+          const existingSkill = await Skill.findOne({
+            where: {
+              skill_name: skill_name
+            }
+          });
+          
+          if (existingSkill) {
+            // Use existing skill's RID
+            skillRidToUse = existingSkill.rid;
+          } else {
+            // Create new skill if it doesn't exist
+            const newSkill = await Skill.create({
+              eid,
+              skill_type: resourceSkillData.skill_type || '',
+              skill_name,
+              skill_description,
+              created_by: modified_by,
+              modified_by
+            });
+            
+            skillRidToUse = newSkill.rid;
+          }
+        } catch (skillError) {
+          console.error("Error handling skill:", skillError);
+          return {
+            statusCode: HttpStatus.FAILED,
+            message: HttpStatus.FAILED_MESSAGE,
+            errorMessage: "Failed to process skill information: " + (skillError as Error).message,
+          };
+        }
+      }
+
       try{
       const [affectedCounts, affectedRows] = await repository.update(
         {
@@ -323,7 +365,7 @@ class ResourceSkillService {
           start_date,
           skill_description,
           skill_level,
-          skill_rid:originalResourceSkill.skill_rid,
+          skill_rid:skillRidToUse,
           status,
           years_of_experience,
           modified_by,
