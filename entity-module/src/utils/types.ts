@@ -118,39 +118,39 @@ export interface IUpdateResourceCost {
 }
 
 export interface IResourceSkill {
-   eid: string;
+   eid?: string;
    account_rid: string;
    resource_type: string;
-   resource_rid: string;
+   resource_rid?: string;
    resource_ref_id: string,
-   resource_desc: string;
+   resource_desc?: string;
    skill_rid: string;
-   start_date: Date;
+   start_date?: Date;
    skill_description?: string;
-   skill_level: string;
+   skill_level?: string;
    status?: string;
-   years_of_experience: number,
-   fiscal_year: number,
+   years_of_experience?: number,
+   fiscal_year?: number,
    created_by?: string;
    modified_by?: string;
-   skill_type: string;
+   skill_type?: string;
    skill_name: string;
-   technical_weightage: number;
+   technical_weightage?: number;
    accountNumber: string;
 }
 
 export interface IUpdateResourceSkill {
   rid: string;
-  eid: string;
-  start_date: Date;
+  eid?: string;
+  start_date?: Date;
   skill_description?: string;
-  skill_level: string;
+  skill_level?: string;
   status?: string;
-  years_of_experience: number,
+  years_of_experience?: number,
   modified_by?: string;
   skill_rid: string;
   skill_name: string;
-  skill_type: string;
-  technical_weightage: number;
+  skill_type?: string;
+  technical_weightage?: number;
   accountNumber: string;
 }

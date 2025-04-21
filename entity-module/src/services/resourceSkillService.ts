@@ -101,6 +101,8 @@ class ResourceSkillService {
           if (skill_name) {
             try {
               
+              const sequelize = await initOrgSequelize();
+              Skill.initialize(sequelize,schemaName);
               // Find existing skill by name
               const existingSkill = await Skill.findOne({
                 where: {
@@ -140,17 +142,17 @@ class ResourceSkillService {
               eid,
               account_rid,
               resource_type,
-              resource_rid,
+              resource_rid: resource_rid || '',
               resource_ref_id,
-              resource_desc,
+              resource_desc: resource_desc || '',
               skill_rid: skillRidToUse, // Use the determined skill RID
-              start_date,
+              start_date: start_date || new Date(),
               skill_description,
-              skill_level,
-              years_of_experience,
+              skill_level: skill_level || '',
+              years_of_experience: years_of_experience || 0,
               created_by,
               modified_by,
-              technical_weightage,
+              technical_weightage: technical_weightage || 0,
             });
 
             // Update the resource_fiscal table

@@ -99,8 +99,7 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
        defaultValue: "Beginner", 
        },
        years_of_experience: {
-         type: DataTypes.DECIMAL(10, 2),
-         defaultValue: 0,
+         type: DataTypes.DECIMAL(10, 1),
          allowNull: true,
        },
        resource_ref_id: {
@@ -110,7 +109,6 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
        technical_weightage: {
          type: DataTypes.DECIMAL(10, 2),
          allowNull: true,
-         defaultValue: 0,
        },
        status: {
         type: DataTypes.STRING(255),

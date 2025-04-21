@@ -605,6 +605,10 @@ class ResourceCostSchemaService {
       sortBy = "created_datetime";
     }
 
+    if(sortBy === "resource_cost_number"){
+      sortBy = "r_number";
+    }
+
     sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
     return [sortBy, sortOrder];
   }
