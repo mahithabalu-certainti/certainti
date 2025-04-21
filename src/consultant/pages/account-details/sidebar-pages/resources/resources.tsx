@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { resourceHeaderIcon } from '../../../../../assets';
 import { RESOURCE, RESOURCE_CREATE } from '../../../../../routes';
@@ -11,8 +11,11 @@ import ResourceSubComponents from './resource-sub-components';
 import ResourceTableHeader from './resource-table-header';
 import { AccountData } from '../../utils';
 
+interface ResourceProps {
+  accountDetails?: Record<string, any>;
+}
 
-const Resource = ({ accountDetails }: { accountDetails: Record<string, any> }) => {
+const Resource:React.FC<ResourceProps> = ({ accountDetails }) => {
   const [viewMode, setViewMode] = useState<boolean>(false);
   const [viewResourceList, setViewResourceList] = useState<boolean>(true);
   const [columns, setColumns] = useState<any>([]);

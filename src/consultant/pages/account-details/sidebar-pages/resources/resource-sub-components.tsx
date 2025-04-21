@@ -5,8 +5,6 @@ import ResourceCostTable from './resource-cost/resource-cost-table';
 import ResourceDetails from './resource-details/resource-details';
 import ResourceSkillTable from './resource-skill/resource-skill-table';
 import { AccountData } from '../../utils';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../../../../store/store';
 
 
 interface SubcomponentProps {

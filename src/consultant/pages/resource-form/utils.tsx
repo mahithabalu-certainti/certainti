@@ -280,6 +280,7 @@ export const transformSkillData = (
     delete data.account_rid;
     delete data.resource_type;
     delete data.resource_ref_id;
+    delete data.resource_desc;
 
     data.rid = formData.skill_rid;
   }

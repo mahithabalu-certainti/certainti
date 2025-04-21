@@ -9,7 +9,11 @@ import {
 } from '../../../common-utils';
 import { FormType, selectOptions } from '../../types';
 import { mockSkillLevelOptions } from '../../mockdata/resource-form';
-import { RESOURCE_STATUS_OPTIONS, RESOURCE_TYPE_OPTIONS } from './utils.tsx';
+import {
+  // FREQUENCY_OPTIONS,
+  RESOURCE_STATUS_OPTIONS,
+  RESOURCE_TYPE_OPTIONS,
+} from './utils.tsx';
 
 export const fiscalYears = Array.from({ length: 6 }, (_, i) => {
   const year = new Date().getFullYear() - i;
@@ -141,6 +145,19 @@ export const FormData = (
           createDateField('financial_end_date', 'End Date', {
             required: false,
           }),
+          // createSelectField('cost_frequency', 'Cost Frequency', {
+          //   options: FREQUENCY_OPTIONS,
+          //   placeholder: '-Select-',
+          //   required: true,
+          // }),
+          // createTextField('cost', 'Cost', {
+          //   required: true,
+          //   regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
+          //   regexErrorMessage: 'Numbers only',
+          //   placeholder: 'Enter Cost',
+          //   // anyOneRequired: true,
+          // }),
+
           createTextField('annual', 'Annual', {
             required: false,
             regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
@@ -201,8 +218,8 @@ export const FormData = (
           }),
           createTextField('skill_name', 'Skill Name', {
             required: true,
-            regex: REGEX_PATTERNS.LETTERS_SPACES,
-            regexErrorMessage: 'Letters and spaces only',
+            regex: REGEX_PATTERNS.LETTERS_3_TO_25,
+            regexErrorMessage: '4-25 letters only',
             placeholder: 'Enter Skill Name',
           }),
           createSelectField('skill_level', 'Skill Level', {

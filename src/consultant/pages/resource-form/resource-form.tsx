@@ -57,7 +57,7 @@ const ResourceForm: React.FC = () => {
     location?.state?.accountDetails?.data?.accountById?.r_number || accountNumber
   );
 
-  const resourceValues = resource?.data?.resourceDetails;
+  // const resourceValues = resource?.data?.resourceDetails;
   const userDetails = JSON.parse(localStorage.getItem('auth') || '{}');
   const allCountries = useGetAllCountries();
   const currency = useFetchCurrency();
@@ -174,7 +174,7 @@ const ResourceForm: React.FC = () => {
         ...formValues,
         accountNumber: state?.data?.accountById?.r_number,
         account_rid: state?.data?.accountById?.rid,
-        "resource_rid": state?.resourceData.rid,
+        "resource_rid": state?.resourceData?.rid,
         "skill_rid": state?.skillInfo?.skillRId,
         "resource_desc": state?.skillInfo?.resourceRole
       }

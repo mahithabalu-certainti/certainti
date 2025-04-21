@@ -86,7 +86,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         let skillInfo = state?.skillInfo;
         constructFormData = {
           ...constructFormData,
-          skill_level: skillInfo?.skillLevel.toLowerCase() || '',
+          skill_level: skillInfo?.skillLevel || '',
           skill_name: skillInfo?.skillName || '',
           skill_start_date: skillInfo?.startDate || '',
           years_of_experience: skillInfo?.yearsOfExperience || '',
@@ -124,7 +124,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             newData[f] = '';
           });
         });
-      }      
+      }
 
       if (field.onChange && onChange) {
         onChange({ fieldName: field.name, fieldValue: value });
@@ -536,7 +536,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         if (
           field.greaterThan &&
           (constructFormData[field.name] || '') <=
-            (constructFormData[field.greaterThan.key] || '')
+          (constructFormData[field.greaterThan.key] || '')
         ) {
           hasError = true;
           return {
