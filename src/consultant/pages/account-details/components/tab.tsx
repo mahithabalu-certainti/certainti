@@ -133,7 +133,7 @@ const TabPanel: React.FC<TabPanelProps> = ({
           <Box className='flex items-center space-x-2'>
             <Box
               onClick={handleFilter}
-              className='h-[38px] w-[38px] flex items-center justify-center border border-[#CBD6E2]'
+              className='h-[38px] w-[38px] flex items-center justify-center border border-[#CBD6E2] cursor-pointer'
             >
               <Image src={resourceFilterIcon} />
             </Box>

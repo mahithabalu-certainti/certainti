@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ManageUserIcon } from '../../../assets/icons';
 import { getDateTimeFormat } from '../../../common-utils';
 import ActionsDropdown from '../../../components/actions-dropdown/actions-dropdown';
@@ -7,6 +7,7 @@ import TextButton from '../../../components/button/text-button';
 import { useManageUserDetail } from '../../service/manage-user-detail/manage-user-detail-service';
 import { Detail } from '../../types/admin-user-detail';
 import { BUTTON_STYLES, HEADER_STYLES } from './styles';
+import { ADMIN_CREATE_USER } from '../../../routes';
 
 const MENU_ITEMS = [
   {
@@ -30,7 +31,8 @@ export const ManageUserDetails: React.FC = () => {
     isError,
     error,
   } = useManageUserDetail(userId || '');
-
+  
+  const navigate = useNavigate();
   const userDetail = user?.data.users;
   const userActionButtons: string[] = [
     'Suspend User',
@@ -165,12 +167,13 @@ export const ManageUserDetails: React.FC = () => {
         <div className='flex gap-2 items-center'>
           <ActionsDropdown actions={MENU_ITEMS} />
           <TextButton
-            label='Create Account'
+            label='Create User'
             sx={{
               ...BUTTON_STYLES,
               backgroundColor: 'secondary.main',
               color: '#fff',
             }}
+            onClick={() => navigate(ADMIN_CREATE_USER)}
           />
 
           <TextButton

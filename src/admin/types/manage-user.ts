@@ -14,6 +14,7 @@ export type ManageUserColumn<T> = {
   header: string;
   sortable?: boolean;
   sort?: string;
+  width?: string;
   render?: (row: T) => React.ReactNode;
 };
 
