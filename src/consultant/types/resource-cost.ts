@@ -99,6 +99,7 @@ export type ResourceCostSkillFormData = {
   skill_name?: string;
   skill_start_date?: string;
   years_of_experience?: string;
+  resource_desc?:string
 };
 
 export type ResourceCostPayload = {

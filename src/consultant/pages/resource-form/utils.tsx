@@ -106,6 +106,18 @@ const formatDateToDDMMYYYY = (dateString?: string | null): string => {
 
   return `${day}/${month}/${year}`;
 };
+const formatDateToYYYYMMDD = (dateString?: string | null): string => {
+  if (!dateString) return '';
+
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+
+  return `${year}/${month}/${day}`;
+};
 
 const capitalizeFirstLetter = (str?: string): string => {
   return str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '';
@@ -174,7 +186,7 @@ export function transformResourceDataForUpdate(
       capitalizeFirstLetter(rawData.resource_status) ||
       existingResource?.resource_status ||
       '',
-    modified_by: userDetails.userId,
+    modified_by: userDetails?.userId,
   };
 }
 
@@ -196,8 +208,8 @@ export const createPayload = (formData: ResourceDetailsTypes) => {
     country: formData.country,
     region: formData.region,
     currency: formData.currency,
-    effective_from_date: formData.resource_startdate,
-    effective_end_date: formData.resource_enddate,
+    effective_from_date: formatDateToDDMMYYYY(formData.resource_startdate),
+    effective_end_date: formatDateToDDMMYYYY(formData.resource_enddate),
     designation: formData.designation,
     manager_name: formData.manager_name,
     total_years_experience: formData.total_years_experience,
@@ -217,15 +229,15 @@ export const transformCostData = (
   const data: Partial<ResourceCostPayload> = {
     eid: '',
     account_rid: formData.account_rid,
-    effective_date: formData.financial_start_date,
-    end_date: formData.financial_end_date,
+    effective_date: formatDateToYYYYMMDD(formData.financial_start_date),
+    end_date: formatDateToYYYYMMDD(formData.financial_end_date),
     annual_cost: formData.monthly ? Number(formData.annual) : null,
-    semi_annual_cost: Number(formData.semi_annual),
-    monthly_cost: Number(formData.monthly),
-    weekly_cost: Number(formData.weekly),
-    bi_weekly_cost: Number(formData.bi_weekly),
-    daily_cost: Number(formData.daily),
-    hourly_cost: Number(formData.hourly),
+    semi_annual_cost: formData.semi_annual ? Number(formData.semi_annual) : null,
+    monthly_cost: formData.monthly?  Number(formData.monthly) : null,
+    weekly_cost: formData.weekly ? Number(formData.weekly) :null,
+    bi_weekly_cost: formData.bi_weekly ? Number(formData.bi_weekly): null,
+    daily_cost: formData.daily ? Number(formData.daily) :  null,
+    hourly_cost: formData.hourly ? Number(formData.hourly) : null,
     resource_type: formData.resource_type,
     resource_ref_id: formData.resource_ref_id,
     currency_rid: formData.currency,
@@ -234,12 +246,12 @@ export const transformCostData = (
   };
 
   if (isEdit) {
+    data.rid = formData.cost_rid;
+
     delete data.account_rid;
     delete data.resource_rid;
-    delete data.resource_type,
-    delete data.resource_ref_id,
-
-    data.rid = formData.cost_rid;
+    delete data.resource_type;
+    delete data.resource_ref_id;
   }
 
   return data;
@@ -248,18 +260,19 @@ export const transformCostData = (
 export const transformSkillData = (
   formData: Partial<ResourceCostSkillFormData>,
   isEdit: boolean
-) => {
+) => {  
   const data: Partial<ResourceSkillPayload> = {
     eid: '',
     account_rid: formData.account_rid,
     resource_type: formData.resource_type,
     resource_rid: formData.resource_rid,
     resource_ref_id: formData.resource_ref_id,
-    start_date: formData.skill_start_date,
+    start_date: formatDateToYYYYMMDD(formData.skill_start_date),
     skill_level: formData.skill_level as skillLevel,
-    years_of_experience: Number(formData.years_of_experience),
+    years_of_experience: formData.years_of_experience ? Number(formData.years_of_experience) : null,
     skill_name: formData.skill_name,
     accountNumber: formData.accountNumber,
+    resource_desc: formData.resource_desc,
   };
 
   if (isEdit) {

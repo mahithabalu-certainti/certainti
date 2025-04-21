@@ -36,47 +36,6 @@ const ResourceForm: React.FC = () => {
   console.log('location', location);
   const navigate = useNavigate();
 
-  // Data fetching
-  const { data: resource } = useResourceDetail(
-    location?.state?.resource?.rid,
-    location?.state?.accountDetails?.data?.accountById?.r_number
-  );
-  const resourceValues = resource?.data?.resourceDetails;
-
-  //fetch resource cost by id
-
-  // const getCostData = useFetchResourceCostById({ id: "", accountNumber: state?.accountDetails?.data?.accountById?.r_number });
-  // const costInfo = getCostData.data;
-  // const costData = useMemo(
-  //   () => ({
-  //     ...account?.accountDetails,
-  //     ...account?.accountById,
-  //     ...(account?.accountById &&
-  //       account?.accountDetails && {
-  //       is_parent: account?.accountById.is_parent ? 'yes' : 'no',
-  //       autosend_interaction: account?.accountDetails.autosend_interaction
-  //         ? 'yes'
-  //         : 'no',
-  //       auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
-  //     }),
-  //   }),
-  //   [cost]
-  // );
-
-  //fetch resource skill by id
-
-  // const getSkillData = useFetchResourceSkillById({ rid: "", accountNumber: "" });
-  // const skillInfo = getSkillData.data;
-
-  const userDetails = JSON.parse(localStorage.getItem('auth') || '{}');
-  const allCountries = useGetAllCountries();
-  const currency = useFetchCurrency();
-  const states = useFetchState(currentCountry);
-
-  // Mutations
-  const createResource = useCreateResource();
-  const updateResource = useUpdateResource();
-
   // Derived values
   const isEditView = location.pathname.includes('/edit');
   const accountData = isEditView
@@ -86,6 +45,27 @@ const ResourceForm: React.FC = () => {
     ? location?.state?.resource?.resource_fullname
     : 'New Resource';
 
+  const skillCostResourceId = state?.costInfo?.resourceRID || state?.skillInfo?.resourceRID
+
+  const resourceRId = !isEditView && (state?.cost || state?.skill) ? state?.resourceData?.rid : isEditView && (state?.cost || state?.skill) ? skillCostResourceId : null;
+  const accountNumber = state?.cost || state?.skill ? state?.data?.accountById?.r_number : null;
+
+
+  // Data fetching
+  const { data: resource } = useResourceDetail(
+    location?.state?.resource?.rid || resourceRId,
+    location?.state?.accountDetails?.data?.accountById?.r_number || accountNumber
+  );
+
+  const resourceValues = resource?.data?.resourceDetails;
+  const userDetails = JSON.parse(localStorage.getItem('auth') || '{}');
+  const allCountries = useGetAllCountries();
+  const currency = useFetchCurrency();
+  const states = useFetchState(currentCountry);
+
+  // Mutations
+  const createResource = useCreateResource();
+  const updateResource = useUpdateResource();
   const createResourceCost = useCreateResourceCost();
   const updateResourceCost = useUpdateResourceCost();
   const createResourceSkill = useCreateResourceSkill()
@@ -159,12 +139,13 @@ const ResourceForm: React.FC = () => {
             : 'Resource skill created successfully'
         );
       }
-
-      successToast(
-        isEditView
-          ? 'Resource updated successfully'
-          : 'Resource created successfully'
-      );
+      if (!state.skill && !state.cost) {
+        successToast(
+          isEditView
+            ? 'Resource updated successfully'
+            : 'Resource created successfully'
+        );
+      }
       navigate(-1);
     }
   }, [commonSuccess, isEditView, successToast]);
@@ -177,8 +158,8 @@ const ResourceForm: React.FC = () => {
         ...formValues,
         accountNumber: state?.data?.accountById?.r_number,
         account_rid: state?.data?.accountById?.rid,
-        "resource_rid": state?.resourceData.rid,
-        "cost_rid": state?.costInfo?.rid
+        "resource_rid": state?.resourceData?.rid,
+        "cost_rid": state?.costInfo?.costRid
       }
       const costData = transformCostData(updateFormValues, isEditView);
 
@@ -194,7 +175,8 @@ const ResourceForm: React.FC = () => {
         accountNumber: state?.data?.accountById?.r_number,
         account_rid: state?.data?.accountById?.rid,
         "resource_rid": state?.resourceData.rid,
-        "skill_rid": state?.skillInfo?.rid
+        "skill_rid": state?.skillInfo?.skillRId,
+        "resource_desc": state?.skillInfo?.resourceRole
       }
       const skillData = transformSkillData(updateFormValues, isEditView);
 
@@ -205,7 +187,7 @@ const ResourceForm: React.FC = () => {
       }
     }
 
-    if (!!state?.skill && !!state?.cost) {
+    if (!state?.skill && !state?.cost) {
       if (isEditView) {
         const updatedData = transformResourceDataForUpdate(
           formValues,
@@ -293,7 +275,7 @@ const ResourceForm: React.FC = () => {
           data={formConfig}
           loading={allCountries.isLoading || currency.isLoading}
           values={
-            isEditView &&
+            (isEditView && (!state?.cost || !state?.skill)) &&
               (resource?.data?.resourceDetails as unknown as Record<
                 string,
                 string | number | boolean | string[] | null
@@ -302,7 +284,10 @@ const ResourceForm: React.FC = () => {
                 string,
                 string | number | boolean | string[] | null
               >)
-              : undefined
+              : (state?.cost || state?.skill) ? (resource?.data?.resourceDetails as unknown as Record<
+                string,
+                string | number | boolean | string[] | null
+              >) : undefined
           }
           // values={
           //   resource.data?.data?.resource as unknown as Record<

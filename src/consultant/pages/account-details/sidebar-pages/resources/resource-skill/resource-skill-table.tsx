@@ -19,8 +19,6 @@ import { ResourceSkillList } from "../../../../../types/resource-skill";
 import { useResourceSkill } from "../../../../../services/resource-skill/resource-skill-service";
 import { RESOURCESKILL } from "../../../../../../routes";
 import ActionButton from '../../../../account-list/table/action-button';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../../../../../store/store';
 
 const ResourceSkillTable: React.FC<Record<string, any>> = ({fiscalYear, appliedFilters, accountDetails }) => {
   const navigate = useNavigate();
@@ -47,7 +45,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({fiscalYear, appliedF
 
   const handleEdit = (skill: ResourceSkillType) => {
     navigate(RESOURCESKILL + '/edit/' + skill.resourceRID, {
-      state: {accountDetails, skillInfo: skill, skill: true },
+      state: {...accountDetails, skillInfo: skill, skill: true },
     });
   };
 

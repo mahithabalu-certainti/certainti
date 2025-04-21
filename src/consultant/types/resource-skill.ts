@@ -82,7 +82,7 @@ export type ResourceSkillPayload = {
   start_date?: string;
   skill_description?: string;
   skill_level?: skillLevel;
-  years_of_experience?: number;
+  years_of_experience?: number | null;
   fiscal_year?: string;
   skill_type?: string;
   skill_name: string;

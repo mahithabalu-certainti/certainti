@@ -46,10 +46,7 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ fiscalYear, appliedF
     filters: appliedFilters,
     accountNumber: accountDetails?.data?.accountById?.r_number,
     fiscalYear: fiscalYear
-  });
-
-  console.log("accountDetails", accountDetails);
-  
+  });  
 
   useEffect(() => {
     setResourceCostList(convertResourceCost(costList?.resourceCost || []));
@@ -57,7 +54,7 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ fiscalYear, appliedF
 
   const handleEdit = (cost: ResourceCostType) => {
     navigate(RESOURCECOST + '/edit/' + cost.resourceCostNumber, {
-      state: { accountDetails, costInfo: cost, cost: true },
+      state: { ...accountDetails, costInfo: cost, cost: true },
     });
   };
 

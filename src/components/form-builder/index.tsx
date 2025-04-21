@@ -52,9 +52,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     <Skeleton variant='rounded' width='100%' height={36} />
   );
 
-  console.log("values", values);
-
-
   useEffect(() => {
     setFormData(filteredSections);
     // Only set initial form data if constructFormData is empty
@@ -297,12 +294,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               className={fieldDisabled}
               maxDate={sectionDate ? dayjs(today) : undefined}
               minDate={sectionDate ? dayjs(sixYearsAgo) : undefined}
-              value={sectionDate ? dayjs(fieldValue) : dayjs(fieldValue, 'DD/MM/YYYY')}
+              value={dayjs(fieldValue)}
               disabled={field.disabled || readOnly}
               onChange={(newValue) => {
-                handleChange(dayjs(newValue).format('DD/MM/YYYY'));
+                handleChange(dayjs(newValue).format('MM/DD/YYYY'));
               }}
-              shouldDisableDate={(date) => dayjs(date).isBefore(dayjs(), 'day')}
+              // shouldDisableDate={(date) => dayjs(date).isBefore(dayjs(), 'day')}
               slots={{
                 openPickerIcon: () => (
                   <img src={calendarIcon} alt='calendar' className='w-6 h-5' />
@@ -504,7 +501,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         ) {
           const dateValue = constructFormData[field.name] as string;
 
-          if (!isValidDate(dateValue)) {
+          if (!isValidDate(dateValue) && !readOnly) {
             hasError = true;
             return {
               ...field,
@@ -607,7 +604,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           ([key]) => !key.endsWith('_countryCode')
         )
       );
-      console.log("cleandedData", cleanedData);
       outData(cleanedData);
     }
   };

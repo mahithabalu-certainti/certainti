@@ -8,6 +8,7 @@ export interface RenderCostRowProps {
 
 export interface ResourceCostType {
   accountRid?:string,
+  costRid?:string,
   resourceRID?:string,
   resource_type?:string,
   resource_fullname?:string,
@@ -28,7 +29,7 @@ export interface ResourceCostType {
 export function convertResourceCost(
   resourceCost: ResourceCostList[]
 ): ResourceCostType[] {
-  const resourceCostList: ResourceCostType[] = [];
+  const resourceCostList: ResourceCostType[] = []; 
 
   function processResourceCost(cost: ResourceCostList): void {
     const convertedCost: ResourceCostType = {
@@ -48,6 +49,7 @@ export function convertResourceCost(
       biWeeklyCost: cost.bi_weekly_cost?.toString() ?? '',
       dailyCost: cost.daily_cost?.toString() ?? '',
       hourlyCost: cost.hourly_cost?.toString() ?? '',
+      costRid:cost.rid,
     };
     resourceCostList.push(convertedCost);
   }

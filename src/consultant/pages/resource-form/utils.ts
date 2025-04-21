@@ -1,7 +1,6 @@
 import {
   AccountFormData,
   NewAccountData,
-  ResourceData,
   SelectOption,
 } from '../../types';
 import {
@@ -9,7 +8,6 @@ import {
   ResourceCostSkillFormData,
 } from '../../types/resource-cost';
 import { ResourceSkillPayload } from '../../types/resource-skill';
-import { ResourceCostType } from '../account-details/sidebar-pages/resources/resource-cost/resource-cost-type';
 import { skillLevel } from '../account-details/sidebar-pages/resources/resource-skill/resource-skill-type';
 
 export const transformFormData = (
