@@ -180,7 +180,19 @@ class AccountService {
       // Get total count without pagination
       const totalCount = await repository.count({
         where: baseWhereClause,
-        distinct: true
+        distinct: true,
+        include: [
+          {
+            model: Country,
+            as: "country",
+            attributes: []
+          },
+          {
+            model: Currency,
+            as: "currency",
+            attributes: []
+          }
+        ]
       });
 
       return {
@@ -619,13 +631,15 @@ class AccountService {
   }
 
   private getMultiValueFilter(filter: any): any {
-    if (Array.isArray(filter)) {
+    if (!filter) return null;
+    
+    if (Array.isArray(filter) && filter.length > 0) {
       return {
         [Op.or]: filter.map((value: string) => ({ [Op.iLike]: `%${value}%` })),
       };
     }
     // Handle single value case
-    if (typeof filter === 'string') {
+    if (typeof filter === 'string' && filter.trim() !== '') {
       return { [Op.iLike]: `%${filter}%` };
     }
     return null;

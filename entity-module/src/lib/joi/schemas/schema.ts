@@ -319,6 +319,7 @@ const updateResourceSkillSchema = Joi.object({
   start_date: Joi.string().max(10).optional().allow(null).allow(""),
   skill_description: Joi.string().max(255).optional().allow(null).allow(""),
   skill_level: Joi.string().valid("Beginner","Intermediate","Advanced","-").optional().allow("").allow(null),
+  skill_name: Joi.string().max(255).required().trim(),
   years_of_experience: Joi.number().min(0).optional().allow(null),
   modified_by: Joi.string().max(255).optional(),
   technical_weightage: Joi.number().min(0).optional().allow(null),
