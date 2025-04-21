@@ -76,11 +76,11 @@ export class ResourceCost extends Model<ResourceCostAttributes, ResourceCostCrea
        },
        resource_type: {
         type: DataTypes.STRING(255),
-        allowNull: false,
+        allowNull: true,
        },
        resource_rid: {
         type: DataTypes.UUID,
-        allowNull: false,
+        allowNull: true,
        },
        resource_ref_id: {
         type: DataTypes.STRING(255),
@@ -88,7 +88,7 @@ export class ResourceCost extends Model<ResourceCostAttributes, ResourceCostCrea
        },
        effective_date: {
         type: DataTypes.DATE,
-        allowNull: false,
+        allowNull: true,
         validate: {
           notFuture(value: Date) {
             if (value > new Date()) {

@@ -580,30 +580,33 @@ class ResourceCostSchemaService {
   }
 
   /**
-   * Determines the sort parameters to use
+   * Determines the appropriate sort parameters for resource skill queries.
+   * Validates the sort column and ensures the sort order is either ASC or DESC.
+   * Falls back to default values if invalid parameters are provided.
    *
-   * @param sortBy - Field to sort by
-   * @param sortOrder - Sort order (ASC/DESC)
-   * @returns Tuple with final sort parameters
+   * @param sortBy - Field to sort results by
+   * @param sortOrder - Direction to sort (ASC or DESC)
+   * @returns Tuple containing validated sort column and order
    */
   getSortParameters(sortBy: string, sortOrder: string): [string, string] {
-    // Default sort parameters
-    let finalSortBy = "created_at";
-    let finalSortOrder = "DESC";
-
-    // Use provided sort parameters if valid
-    if (sortBy) {
-      finalSortBy = sortBy;
+    const validSortColumns = [
+      "resource_cost_number",
+      "effective_date",
+      "end_date",
+      "annual_cost",
+      "semi_annual_cost",
+      "monthly_cost",
+      "weekly_cost",
+      "bi_weekly_cost",
+      "daily_cost",
+      "hourly_cost",
+    ];
+    if (!validSortColumns.includes(sortBy)) {
+      sortBy = "created_datetime";
     }
 
-    if (
-      sortOrder &&
-      (sortOrder.toUpperCase() === "ASC" || sortOrder.toUpperCase() === "DESC")
-    ) {
-      finalSortOrder = sortOrder.toUpperCase();
-    }
-
-    return [finalSortBy, finalSortOrder];
+    sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
+    return [sortBy, sortOrder];
   }
 
   // Include the rest of your filter processing methods here...
@@ -623,7 +626,7 @@ class ResourceCostSchemaService {
       "semi_annual_cost",
     ];
     const dateFields = ["effective_date", "end_date"];
-    const specialFields = ["resourceNumber"];
+    const specialFields = ["resource_cost_number"];
 
     // Process each filter
     Object.entries(filters).forEach(([key, value]) => {
@@ -640,7 +643,8 @@ class ResourceCostSchemaService {
           filterConditions += this.processNumericFilter(key, value);
         } else if (dateFields.includes(key)) {
           filterConditions += this.processDateFilter(key, value);
-        } else {
+        } 
+        else {
           filterConditions += this.processDefaultFilter(key, value);
         }
       } else if (value !== undefined && value !== null) {
@@ -650,9 +654,9 @@ class ResourceCostSchemaService {
     });
 
     // Special handling for resource number which might be in the resources table
-    if (filters.resourceNumber) {
-      filterConditions += this.processResourceNumberFilter(
-        filters.resourceNumber
+    if (filters.resource_cost_number) {
+      filterConditions += this.processResourceCostNumberFilter(
+        filters.resource_cost_number
       );
     }
 
@@ -835,52 +839,52 @@ class ResourceCostSchemaService {
     }
   }
 
-  processResourceNumberFilter(resourceNumber: any): string {
+  processResourceCostNumberFilter(resourceCostNumber: any): string {
     // Your existing implementation
     let condition = "";
 
-    if (typeof resourceNumber === "object") {
-      if (resourceNumber.equals) {
-        condition += ` AND r."r_number" = '${resourceNumber.equals}'`;
-      } else if (resourceNumber.not_equals) {
-        condition += ` AND r."r_number" != '${resourceNumber.not_equals}'`;
-      } else if (resourceNumber.contains) {
-        condition += ` AND r."r_number" ILIKE '%${resourceNumber.contains}%'`;
-      } else if (resourceNumber.not_contains) {
-        condition += ` AND r."r_number" NOT ILIKE '%${resourceNumber.not_contains}%'`;
-      } else if (resourceNumber.starts_with) {
-        condition += ` AND r."r_number" ILIKE '${resourceNumber.starts_with}%'`;
-      } else if (resourceNumber.ends_with) {
-        condition += ` AND r."r_number" ILIKE '%${resourceNumber.ends_with}'`;
-      } else if (resourceNumber.is_empty !== undefined) {
-        if (resourceNumber.is_empty) {
-          condition += ` AND (r."r_number" IS NULL OR r."r_number" = '')`;
+    if (typeof resourceCostNumber === "object") {
+      if (resourceCostNumber.equals) {
+        condition += ` AND rc."r_number" = '${resourceCostNumber.equals}'`;
+      } else if (resourceCostNumber.not_equals) {
+        condition += ` AND rc."r_number" != '${resourceCostNumber.not_equals}'`;
+      } else if (resourceCostNumber.contains) {
+        condition += ` AND rc."r_number" ILIKE '%${resourceCostNumber.contains}%'`;
+      } else if (resourceCostNumber.not_contains) {
+        condition += ` AND rc."r_number" NOT ILIKE '%${resourceCostNumber.not_contains}%'`;
+      } else if (resourceCostNumber.starts_with) {
+        condition += ` AND rc."r_number" ILIKE '${resourceCostNumber.starts_with}%'`;
+      } else if (resourceCostNumber.ends_with) {
+        condition += ` AND rc."r_number" ILIKE '%${resourceCostNumber.ends_with}'`;
+      } else if (resourceCostNumber.is_empty !== undefined) {
+        if (resourceCostNumber.is_empty) {
+          condition += ` AND (rc."r_number" IS NULL OR rc."r_number" = '')`;
         }
-      } else if (resourceNumber.is_not_empty !== undefined) {
-        if (resourceNumber.is_not_empty) {
-          condition += ` AND (r."r_number" IS NOT NULL OR r."r_number" != '')`;
+      } else if (resourceCostNumber.is_not_empty !== undefined) {
+        if (resourceCostNumber.is_not_empty) {
+          condition += ` AND (rc."r_number" IS NOT NULL OR rc."r_number" != '')`;
         }
       } else if (
-        resourceNumber.in &&
-        Array.isArray(resourceNumber.in) &&
-        resourceNumber.in.length > 0
+        resourceCostNumber.in &&
+        Array.isArray(resourceCostNumber.in) &&
+        resourceCostNumber.in.length > 0
       ) {
-        const values = resourceNumber.in
+        const values = resourceCostNumber.in
           .map((item: string) => `'${item}'`)
           .join(",");
-        condition += ` AND r."r_number" IN (${values})`;
+        condition += ` AND rc."r_number" IN (${values})`;
       } else if (
-        resourceNumber.not_in &&
-        Array.isArray(resourceNumber.not_in) &&
-        resourceNumber.not_in.length > 0
+        resourceCostNumber.not_in &&
+        Array.isArray(resourceCostNumber.not_in) &&
+        resourceCostNumber.not_in.length > 0
       ) {
-        const values = resourceNumber.not_in
+        const values = resourceCostNumber.not_in
           .map((item: string) => `'${item}'`)
           .join(",");
-        condition += ` AND r."r_number" NOT IN (${values})`;
+        condition += ` AND rc."r_number" NOT IN (${values})`;
       }
-    } else if (resourceNumber) {
-      condition += ` AND r."r_number" = '${resourceNumber}'`;
+    } else if (resourceCostNumber) {
+      condition += ` AND rc."r_number" = '${resourceCostNumber}'`;
     }
 
     return condition;

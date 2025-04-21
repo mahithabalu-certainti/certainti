@@ -5,7 +5,7 @@ export interface IAccountService {
     page: number,
     limit: number,
     search: string,
-    filters: Record<string, string>,
+    filters: Record<string, any>,
     sortBy: string,
     sortOrder: string,
     globalFilters: Record<string, string[]>,

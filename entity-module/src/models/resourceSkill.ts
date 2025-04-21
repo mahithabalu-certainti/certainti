@@ -75,11 +75,11 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
        },
        resource_rid: {
         type: DataTypes.UUID,
-        allowNull: false,
+        allowNull: true,
        },
        resource_desc : {
          type: DataTypes.STRING(255),
-         allowNull: false
+         allowNull: true,
        },
        skill_rid: {
         type: DataTypes.UUID,
@@ -87,7 +87,7 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
        },
        start_date: {
         type: DataTypes.DATE,
-        allowNull: false,
+        allowNull: true,
        },
        skill_description: {
         type: DataTypes.STRING(255),
@@ -95,12 +95,13 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
        },
        skill_level: {
        type: DataTypes.STRING(255),
-       allowNull: false,
-       defaultValue: "beginner", 
+       allowNull: true,
+       defaultValue: "Beginner", 
        },
        years_of_experience: {
          type: DataTypes.DECIMAL(10, 2),
-         allowNull: false,
+         defaultValue: 0,
+         allowNull: true,
        },
        resource_ref_id: {
         type: DataTypes.STRING(255),
@@ -108,7 +109,8 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
        },
        technical_weightage: {
          type: DataTypes.DECIMAL(10, 2),
-         allowNull: false
+         allowNull: true,
+         defaultValue: 0,
        },
        status: {
         type: DataTypes.STRING(255),
