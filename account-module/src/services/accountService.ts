@@ -41,7 +41,7 @@ class AccountService {
     page: number = 1,
     limit: number = 10,
     search: string,
-    filters: Record<string, string> = {},
+    filters: Record<string, any> = {},
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
     globalFilters: Record<string, string[]> = {},
@@ -54,8 +54,19 @@ class AccountService {
   }> {
     try {
       const repository = this.getAccountRepository();
-      const { whereClause } = this.buildWhereClause(filters, search);
-      const {allWhereClause, childClause} = this.applyAccountIDFilter(globalFilters,whereClause )
+      
+      // Parse filters if it's a string
+      const parsedFilters = typeof filters === 'string' ? 
+        (filters === '{}' ? {} : JSON.parse(filters)) : filters;
+      
+      console.log("Filters:", parsedFilters);
+      
+      const { whereClause } = this.buildWhereClause(parsedFilters, search);
+      console.log("Where Clause:", JSON.stringify(whereClause, this.symbolReplacer));
+      
+      const {allWhereClause, childClause} = this.applyAccountIDFilter(globalFilters, whereClause);
+      console.log("All Where Clause:", JSON.stringify(allWhereClause, this.symbolReplacer));
+      
       const offset = (page - 1) * limit;
 
       const [finalSortBy, finalSortOrder] = this.getSortParameters(
@@ -85,37 +96,98 @@ class AccountService {
         ]);
       }
 
-      const account = await repository.findAll({
-        where: {
-          parent_account_rid: {
-            [Op.is]: null,
-          } as any,
-          ...allWhereClause,
-        },
+      // Determine if we should include the parent_account_rid filter
+      // Only apply this filter if is_parent_account is not set to "NO"
+      const baseWhereClause = { ...allWhereClause };
+      
+      // If is_parent_account filter is not "NO", only get accounts with null parent_account_rid
+      if (!parsedFilters.is_parent_account || parsedFilters.is_parent_account.toLowerCase() !== 'no') {
+        baseWhereClause.parent_account_rid = { [Op.is]: null } as any;
+      }
+
+      // First, get accounts based on the filters
+      const parentAccounts = await repository.findAll({
+        where: baseWhereClause,
         limit,
         offset,
         order,
-        subQuery: false,
-        include: this.getAccountIncludeOptions(childClause,globalFilters),
+        include: [
+          {
+            model: Country,
+            as: "country",
+            attributes: ["rid", "country_name"],
+            required: true,
+          },
+          {
+            model: Currency,
+            as: "currency",
+            attributes: ["rid", "currency_code"],
+            required: true,
+          }
+        ],
       });
 
+      // Then, for each account, fetch its child accounts separately
+      const accountIds = parentAccounts.map((account: any) => account.rid);
+      
+      if(accountIds.length > 0) {
+        const childAccounts = await repository.findAll({
+          where: {
+            parent_account_rid: {
+              [Op.in]: accountIds,
+            },
+            ...(Object.keys(childClause).length > 0 ? childClause : {}),
+          },
+          include: [
+            {
+              model: Country,
+              as: "country",
+              attributes: ["rid", "country_name"]
+            },
+            {
+              model: Currency,
+              as: "currency",
+              attributes: ["rid", "currency_code"]
+            },
+            {
+              model: Account,
+              as: "parent_account",
+              attributes: ["rid", "account_name"],
+            },
+          ]
+        });
+
+        // Group child accounts by parent_account_rid
+        const childAccountsByParent = childAccounts.reduce((acc: any, child: any) => {
+          if (!acc[child.parent_account_rid]) {
+            acc[child.parent_account_rid] = [];
+          }
+          acc[child.parent_account_rid].push(child);
+          return acc;
+        }, {});
+
+        // Attach child accounts to their respective parent accounts
+        parentAccounts.forEach((account: any) => {
+          account.setDataValue('child_accounts', childAccountsByParent[account.rid] || []);
+        });
+      } else {
+        // If no parent accounts found, set empty child_accounts array
+        parentAccounts.forEach((account: any) => {
+          account.setDataValue('child_accounts', []);
+        });
+      }
+
       // Get total count without pagination
-    const totalCount = await repository.count({
-      where: {
-        parent_account_rid: {
-          [Op.is]: null,
-        } as any,
-        ...allWhereClause,
-      },
-      include: this.getAccountIncludeOptions(childClause,globalFilters),
-      distinct: true
-    });
+      const totalCount = await repository.count({
+        where: baseWhereClause,
+        distinct: true
+      });
 
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          account,
+          account: parentAccounts,
           count: totalCount,
         },
       };
@@ -435,6 +507,7 @@ class AccountService {
         { industry: { [Op.iLike]: `%${search}%` } },
         { status: { [Op.iLike]: `%${search}%` } },
         { primary_contact_name: { [Op.iLike]: `%${search}%` } },
+        { eid: { [Op.iLike]: `%${search}%` } }, // Added Account ID search
         { "$country.country_name$": { [Op.iLike]: `%${search}%` } },
         { "$currency.currency_code$": { [Op.iLike]: `%${search}%` } },
         ...(isNaN(parseInt(search))
@@ -452,19 +525,7 @@ class AccountService {
     filters: Record<string, any>,
     whereClause: Record<string, any>
   ): Record<string, any> {
-    const filterFields = [
-      { clientField: "parent_account", dbField: "account_name" },
-      { clientField: "account_number", dbField: "r_number" },
-      { clientField: "account_name", dbField: "account_name" },
-      { clientField: "status", dbField: "status" },
-      { clientField: "industry", dbField: "industry" },
-      { clientField: "country", dbField: "$country.country_name$" },
-      { clientField: "currency", dbField: "$currency.currency_code$" },
-      { clientField: "primary_contact", dbField: "primary_contact_name" },
-      { clientField: "is_parent_account", dbField: "is_parent" },
-      { clientField: "annual_revenue", dbField: "annual_revenue" },
-      { clientField: "account_id", dbField: "eid" },
-    ];
+    // Handle special filters first
     if (filters && filters.parent_account) {
       whereClause = this.applyParentAccountFilter(filters, whereClause);
     }
@@ -473,26 +534,50 @@ class AccountService {
       whereClause = this.applyAccountNumberFilter(filters, whereClause);
     }
 
-    filterFields.forEach(({ clientField, dbField }) => {
-      if (filters[clientField]) {
-        const fieldFilter = filters[clientField];
-        whereClause[dbField] = this.getFieldFilter(fieldFilter, dbField);
-      }
-    });
+    // Handle standard filters
+    if (filters.account_name) {
+      whereClause.account_name = this.getFieldFilter(filters.account_name, "account_name");
+    }
 
+    if (filters.account_id) {
+      whereClause.eid = this.getFieldFilter(filters.account_id, "eid");
+    }
+
+    if (filters.industry) {
+      whereClause.industry = this.getFieldFilter(filters.industry, "industry");
+    }
+
+    if (filters.status) {
+      whereClause.status = this.getFieldFilter(filters.status, "status");
+    }
+
+    if (filters.primary_contact) {
+      whereClause.primary_contact_name = this.getFieldFilter(filters.primary_contact, "primary_contact_name");
+    }
+
+    if (filters.is_parent_account) {
+      // Handle Yes/No filter for is_parent_account
+      const isParent = filters.is_parent_account.toLowerCase() === 'yes';
+      whereClause.is_parent = isParent;
+    }
+
+    if (filters.annual_revenue) {
+      whereClause.annual_revenue = this.getAnnualRevenueFilter(filters.annual_revenue);
+    }
+
+    // Handle multi-select filters
     if (filters.country) {
-      whereClause["$country.country_name$"] = this.getMultiValueFilter(
-        filters.country
-      );
+      whereClause["$country.country_name$"] = this.getMultiValueFilter(filters.country);
     }
 
     if (filters.currency) {
-      whereClause["$currency.currency_code$"] = this.getMultiValueFilter(
-        filters.currency
-      );
+      whereClause["$currency.currency_code$"] = this.getMultiValueFilter(filters.currency);
     }
+
     return whereClause;
   }
+
+
 
   private symbolReplacer(key: string, value: any): any {
     if (typeof value === "symbol") {
@@ -508,22 +593,29 @@ class AccountService {
     if (fieldFilter.contains) {
       return { [Op.iLike]: `%${fieldFilter.contains}%` };
     }
-    if (fieldFilter.value) {
-      return fieldFilter.value;
+    // Handle simple value (for dropdown selections like status)
+    if (typeof fieldFilter === 'string') {
+      return { [Op.iLike]: fieldFilter };
     }
-    if (fieldFilter.greaterThan) {
-      return { [Op.gt]: fieldFilter.greaterThan };
+    return null;
+  }
+
+  private getAnnualRevenueFilter(revenueFilter: any): any {
+    if (revenueFilter.greater_than) {
+      return { [Op.gt]: parseFloat(revenueFilter.greater_than) };
     }
-    if (fieldFilter.lesserThan) {
-      return { [Op.lt]: fieldFilter.lesserThan };
+    if (revenueFilter.less_than) {
+      return { [Op.lt]: parseFloat(revenueFilter.less_than) };
     }
     if (
-      fieldFilter.between &&
-      Array.isArray(fieldFilter.between) &&
-      fieldFilter.between.length === 2
+      revenueFilter.between &&
+      Array.isArray(revenueFilter.between) &&
+      revenueFilter.between.length === 2
     ) {
-      return { [Op.between]: fieldFilter.between };
+      const [min, max] = revenueFilter.between.map((val: string | number) => parseFloat(String(val)));
+      return { [Op.between]: [min, max] };
     }
+    return null;
   }
 
   private getMultiValueFilter(filter: any): any {
@@ -531,6 +623,10 @@ class AccountService {
       return {
         [Op.or]: filter.map((value: string) => ({ [Op.iLike]: `%${value}%` })),
       };
+    }
+    // Handle single value case
+    if (typeof filter === 'string') {
+      return { [Op.iLike]: `%${filter}%` };
     }
     return null;
   }
@@ -558,29 +654,12 @@ class AccountService {
     filters: Record<string, any>,
     whereClause: Record<string, any>
   ): Record<string, any> {
+    // Only search in the current account's r_number since child_accounts are fetched separately
     if (filters.account_number.contains) {
-      whereClause = {
-        [Op.or]: [
-          { r_number: { [Op.like]: `%${filters.account_number.contains}%` } },
-          {
-            "$child_accounts.r_number$": {
-              [Op.like]: `%${filters.account_number.contains}%`,
-            },
-          },
-        ],
-      };
+      whereClause.r_number = { [Op.iLike]: `%${filters.account_number.contains}%` };
     }
     if (filters.account_number.equals) {
-      whereClause = {
-        [Op.or]: [
-          { r_number: { [Op.like]: `%${filters.account_number.equals}%` } },
-          {
-            "$child_accounts.r_number$": {
-              [Op.like]: `%${filters.account_number.equals}%`,
-            },
-          },
-        ],
-      };
+      whereClause.r_number = { [Op.iLike]: `${filters.account_number.equals}` };
     }
     return whereClause;
   }
