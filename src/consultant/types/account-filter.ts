@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Define filter options for each field type
 export type TextFilterOption = 'contains' | 'equals';
-export type NumberFilterOption = 'contains' | 'equals';
+export type NumberFilterOption = 'greater_than' | 'less_than' | 'between';
 export type StatusFilterOption = 'equals';
 export type BooleanFilterOption = 'equals';
 
@@ -51,4 +51,5 @@ export interface FilterComponentProps {
   searchTerm: string;
   setSearchTerm: (value: string) => void;
   filterFields: FieldConfig[];
+  filterKey: string;
 }

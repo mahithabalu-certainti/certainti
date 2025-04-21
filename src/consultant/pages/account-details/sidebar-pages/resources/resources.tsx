@@ -13,7 +13,6 @@ import { AccountData } from '../../utils';
 
 
 const Resource = ({ accountDetails }: { accountDetails: Record<string, any> }) => {
-  console.log('accountDetails-Resource', accountDetails);
   const [viewMode, setViewMode] = useState<boolean>(false);
   const [viewResourceList, setViewResourceList] = useState<boolean>(true);
   const [columns, setColumns] = useState<any>([]);
@@ -172,6 +171,7 @@ const Resource = ({ accountDetails }: { accountDetails: Record<string, any> }) =
           viewMode={viewMode}
           isLoading={isLoading}
           error={error}
+          rowIdentifier='rid'
         />
       )}
     </div>

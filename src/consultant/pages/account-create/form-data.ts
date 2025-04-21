@@ -80,6 +80,13 @@ export const FormData = (
             regex: REGEX_PATTERNS.MANAGER_REGEX,
             regexErrorMessage: 'Enter a valid name',
             placeholder: 'Enter Delivery Manager Name',
+            lengthRequired: {
+              key: 'name_length',
+              minMatchedValue: REGEX_PATTERNS.MIN_NAME_REGEX,
+              minErrorMessage: 'Name must be more than 2 characters long',
+              maxMatchedValue: REGEX_PATTERNS.MAX_NAME_REGEX,
+              maxErrorMessage: 'Max length exceeded',
+            },
           }),
           createRadioField('is_parent', 'Is Parent Account', {
             radioOptions: YES_NO_OPTIONS,
@@ -171,6 +178,10 @@ export const FormData = (
           createFiscalDateField('fiscal_end_date', 'Fiscal End Date', {
             disabled: disableFields,
             required: true,
+            greaterThan: {
+              key: 'fiscal_start_date',
+              errorMessage: 'Date must be greater than Fiscal Start Date',
+            },
           }),
           createTextField('blended_rate_fte', 'Blended Rate - FTE', {
             required: false,

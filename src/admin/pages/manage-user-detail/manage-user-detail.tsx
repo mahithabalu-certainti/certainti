@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ManageUserIcon } from '../../../assets/icons';
 import { getDateTimeFormat } from '../../../common-utils';
 import ActionsDropdown from '../../../components/actions-dropdown/actions-dropdown';
@@ -7,6 +7,7 @@ import TextButton from '../../../components/button/text-button';
 import { useManageUserDetail } from '../../service/manage-user-detail/manage-user-detail-service';
 import { Detail } from '../../types/admin-user-detail';
 import { BUTTON_STYLES, HEADER_STYLES } from './styles';
+import { ADMIN_CREATE_USER } from '../../../routes';
 
 const MENU_ITEMS = [
   {
@@ -30,7 +31,8 @@ export const ManageUserDetails: React.FC = () => {
     isError,
     error,
   } = useManageUserDetail(userId || '');
-
+  
+  const navigate = useNavigate();
   const userDetail = user?.data.users;
   const userActionButtons: string[] = [
     'Suspend User',
@@ -63,22 +65,18 @@ export const ManageUserDetails: React.FC = () => {
 
     return Array.from({ length: maxLength }).map((_, index) => (
       <React.Fragment key={index}>
-        <div className='grid grid-cols-2 gap-1 items-center justify-center border-b border-gray-200 py-2'>
-          <div className='font-bold text-center'>
-            {left[index]?.label ?? ''}
-          </div>
+        <div className='grid grid-cols-[1fr_2fr] gap-1  items-center justify-center border-b border-gray-200 py-2'>
+          <div className='font-bold text-left'>{left[index]?.label ?? ''}</div>
           <div className='break-words whitespace-normal max-w-full'>
             {left[index]?.value ?? ''}
           </div>
-       </div>
-        <div className='grid grid-cols-2 gap-1 items-center justify-center border-b border-gray-200 py-2'>
-          <div className='font-bold text-center'>
-            {right[index]?.label ?? ''}
-          </div>
+        </div>
+        <div className='grid grid-cols-[1fr_2fr] gap-1 items-center justify-center border-b border-gray-200 py-2'>
+          <div className='font-bold text-left'>{right[index]?.label ?? ''}</div>
           <div className='break-words whitespace-normal max-w-full'>
             {right[index]?.value ?? ''}
           </div>
-       </div>
+        </div>
       </React.Fragment>
     ));
   };
@@ -165,12 +163,13 @@ export const ManageUserDetails: React.FC = () => {
         <div className='flex gap-2 items-center'>
           <ActionsDropdown actions={MENU_ITEMS} />
           <TextButton
-            label='Create Account'
+            label='Create User'
             sx={{
               ...BUTTON_STYLES,
               backgroundColor: 'secondary.main',
               color: '#fff',
             }}
+            onClick={() => navigate(ADMIN_CREATE_USER)}
           />
 
           <TextButton
@@ -204,7 +203,7 @@ export const ManageUserDetails: React.FC = () => {
           <div className='flex bg-[#CBD6E2] p-2'>
             <div className='mb-3 text-small font-semibold'>User Details</div>
           </div>
-          <div className='grid grid-cols-2 divide-y'>
+          <div className='grid grid-cols-2 divide-y p-2'>
             {renderRows(mappedUserDetails, mappedAdditionalDetails)}
           </div>
         </div>

@@ -4,6 +4,7 @@ export type Column<T> = {
   render?: (row: T) => React.ReactNode;
   sortable?: boolean;
   sort?: string;
+  width?: string;
 };
 
 export type RowData = {

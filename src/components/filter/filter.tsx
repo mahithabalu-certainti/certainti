@@ -266,76 +266,74 @@ const Filter: React.FC<FilterComponentProps> = ({
   };
 
   return (
-    <Box className='fixed top-0 right-0 z-1300 bg-[#0000006e] bg-opacity-10 w-full h-full'>
-      <Box className='absolute top-0 right-0 z-1300 overflow-y-scroll w-[248px] max-h-[568px] bg-white opacity-100'>
-        <Box className='flex justify-between items-center p-2 border-b border-[#CBD6E2]'>
-          <Box>Filters</Box>
-          <Button
+    <Box className='absolute top-67 right-85 z-50 w-[248px] max-h-[568px] bg-white shadow-lg border border-[#CBD6E2] rounded'>
+      <Box className='flex justify-between items-center p-2 border-b border-[#CBD6E2]'>
+        <Box>Filters</Box>
+        <Button
             onClick={resetFilter}
-            label='Reset'
-            variant='text'
-            sx={{
+          label='Reset'
+          variant='text'
+          sx={{
+            textDecoration: 'underline',
+            '&:hover': {
+              background: 'none',
+              color: '#F16137',
               textDecoration: 'underline',
-              '&:hover': {
-                background: 'none',
-                color: '#F16137',
-                textDecoration: 'underline',
-              },
-            }}
-          />
-        </Box>
-        {filterMenu &&
-          filterMenu.map((item, index) => (
-            <>
-              <Box
-                key={index}
-                className='flex gap-2 justify-between items-center p-2 border-b border-[#CBD6E2]'
-                onClick={() => handleClickFilterMenu(item.value as string)}
-              >
-                <Box className='text-[#2D3E4F] font-light text-sm'>
-                  {item.name}
-                </Box>
-                <Box className='text-[#2D3E4F] '>
-                  <img
-                    src={filterArrowRightIcon}
-                    alt='icon'
-                    className='w-[16px] h-[16px]'
-                  />
-                </Box>
+            },
+          }}
+        />
+      </Box>
+      {filterMenu &&
+        filterMenu.map((item, index) => (
+          <>
+            <Box
+              key={index}
+              className='flex gap-2 justify-between items-center p-2 border-b border-[#CBD6E2]'
+              onClick={() => handleClickFilterMenu(item.value as string)}
+            >
+              <Box className='text-[#2D3E4F] font-light text-sm'>
+                {item.name}
               </Box>
-              {renderFilterControls(item)}
-            </>
-          ))}
-        <Box className='flex  justify-end items-center gap-2 p-2'>
-          <Button
-            onClick={handleFilter}
-            label='Cancel'
-            sx={{
-              height: '32px',
-              border: '1px solid #CBD6E2',
+              <Box className='text-[#2D3E4F] '>
+                <img
+                  src={filterArrowRightIcon}
+                  alt='icon'
+                  className='w-[16px] h-[16px]'
+                />
+              </Box>
+            </Box>
+            {renderFilterControls(item)}
+          </>
+        ))}
+      <Box className='flex  justify-end items-center gap-2 p-2'>
+        <Button
+          onClick={handleFilter}
+          label='Cancel'
+          sx={{
+            height: '32px',
+            border: '1px solid #CBD6E2',
+            color: '#7D98B6',
+            borderRadius: '2px',
+            '&:hover': {
+              background: 'none',
               color: '#7D98B6',
-              borderRadius: '2px',
-              '&:hover': {
-                background: 'none',
-                color: '#7D98B6',
-              },
-            }}
-          />
-          <Button
-            label='Find'
-            sx={{
-              height: '32px',
+            },
+          }}
+        />
+        <Button
+          label='Find'
+          sx={{
+            height: '32px',
+            background: '#F16137',
+            color: '#FFFFFF',
+            borderRadius: '2px',
+            '&:hover': {
               background: '#F16137',
               color: '#FFFFFF',
-              borderRadius: '2px',
-              '&:hover': {
-                background: '#F16137',
-                color: '#FFFFFF',
-              },
-            }}
+            },
+          }}
             onClick={handleApplyFilters}
-          />
-        </Box>
+        />
       </Box>
     </Box>
   );

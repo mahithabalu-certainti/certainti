@@ -61,12 +61,13 @@ export const NumberFilterControl: React.FC<{
   <Box sx={{ pl: 3, mt: 1 }}>
     <FormControl fullWidth size='small'>
       <Select
-        value={state.number?.option || 'equals'}
+        value={state.number?.option || 'greater_than'}
         onChange={(e) => onOptionChange(fieldName, e)}
         sx={{ height: '30px', minHeight: 20 }}
       >
-        <MenuItem value='contains'>contains</MenuItem>
-        <MenuItem value='equals'>equals</MenuItem>
+        <MenuItem value='greater_than'>greater than</MenuItem>
+        <MenuItem value='less_than'>less than</MenuItem>
+        <MenuItem value='between'>between</MenuItem>
       </Select>
     </FormControl>
     <TextField

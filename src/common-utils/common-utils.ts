@@ -184,7 +184,7 @@ export const REGEX_PATTERNS = {
   LETTERS_5_TO_25: /^[A-Za-z\s]{5,25}$/,
   LETTERS_3_TO_25: /^(?!.*\s{2,})[A-Za-z\s]{3,25}$/,
   EMAIL:
-    /^(?=.{1,254}$)(?!.*[._%+]{2})[a-zA-Z0-9](?:[a-zA-Z0-9._-]{0,62}[a-zA-Z0-9])?@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+    /^(?!.*[._%+]{2})[a-zA-Z0-9](?:[a-zA-Z0-9._-]{0,62}[a-zA-Z0-9])?@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
   PHONE: /^([0-9]{10})$/,
   WEBSITE:
     /^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]{1,50}(\.[a-zA-Z]{2,})+(\/[^\s]*)?$/i,
@@ -199,11 +199,12 @@ export const REGEX_PATTERNS = {
   STREET_REGEX: /^(?![\W_]+$)(?!\s*$)[\w\W]{3,200}$/,
   CITY_REGEX: /^[A-Za-z\s]{3,100}$/,
   NUMBERS_GREATER_THAN_ZERO: /^[1-9]\d*$/,
-  MANAGER_REGEX: /^(?=.{7,50}$)[A-Za-z0-9!"#$%&'()*+,-./:;<=>?@[\\\]^_`{|}~]+$/,
+  MANAGER_REGEX: /^[A-Za-z0-9\s.'-]*$/,
   MIN_NAME_REGEX: /^.{3,}$/,
   MAX_NAME_REGEX: /^.{0,50}$/,
   MIN_ACCOUNT_NAME_REGEX: /^.{7,}$/,
   MAX_ACCOUNT_NAME_REGEX: /^.{0,25}$/,
+  MAX_EMAIL_REGEX: /^.{0,254}$/,
 };
 
 export const ALLOWED_COUNTRIES: AllowedCountry[] = [
@@ -231,7 +232,7 @@ export const checkErrorMsg = (data: CheckErrorMsg[]): string =>
     .filter(({ error }) => error?.message)
     .map(({ error }) => {
       const errorData = error?.response?.data;
-      return `<strong>${error?.message}</strong><p>${
+      return `${
         errorData?.statusMessage
           ? typeof errorData.statusMessage === 'object'
             ? Object.values(errorData.statusMessage).join(', ')

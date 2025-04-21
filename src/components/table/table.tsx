@@ -147,7 +147,9 @@ const Table = <T extends RowData>({
                   sx={{
                     cursor: 'default',
                     fontWeight: sortBy === column.id ? 'bold' : 'normal',
-                    // minWidth: 120,
+                    width: column.width || 120,
+                    minWidth: column.width || 120,
+                    maxWidth: column.width || 'auto', 
                   }}
                 >
                   <div className='flex items-center'>
@@ -277,7 +279,14 @@ const Table = <T extends RowData>({
 
                     {/* Data cells */}
                     {columns.map((column) => (
-                      <TableCell key={`${rowId}-${column.id}`}>
+                      <TableCell key={`${rowId}-${column.id}`}
+                        sx={{
+                          width: column.width || 120,
+                          minWidth: column.width || 120,
+                          maxWidth: column.width || 'auto',
+                          wordWrap: 'break-word'
+                        }}
+                      >
                         {column.render
                           ? column.render(row)
                           : (row[column.id] as React.ReactNode)}
@@ -286,7 +295,7 @@ const Table = <T extends RowData>({
 
                     {/* Action buttons */}
                     {(onEdit || onDelete || onView) && (
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                      <TableCell sx={{ whiteSpace: 'nowrap', width:'150px', minWidth: '150px', maxWidth: '150px' }}>
                         {onView && (
                           <Tooltip
                             arrow

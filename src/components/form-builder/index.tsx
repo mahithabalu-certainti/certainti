@@ -119,10 +119,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       };
 
       if (field.resetDependsFields?.length) {
-        field.resetDependsFields.forEach((field) => {
-          newData[field] = '';
+        field.resetDependsFields.forEach((fieldEntry) => {
+          fieldEntry.split(',').map(f => f.trim()).forEach((f) => {
+            newData[f] = '';
+          });
         });
-      }
+      }      
 
       if (field.onChange && onChange) {
         onChange({ fieldName: field.name, fieldValue: value });
@@ -533,8 +535,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         // Date custom Validation
         if (
           field.greaterThan &&
-          (constructFormData[field.greaterThan.key] || '') >
-          (constructFormData[field.name] || '')
+          (constructFormData[field.name] || '') <=
+            (constructFormData[field.greaterThan.key] || '')
         ) {
           hasError = true;
           return {

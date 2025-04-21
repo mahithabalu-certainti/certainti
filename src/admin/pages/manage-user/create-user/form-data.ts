@@ -67,6 +67,13 @@ export const FormData = (
             placeholder: 'Enter Email Address',
             regexErrorMessage: 'Invalid email address',
             disabled: disableFields,
+            lengthRequired: {
+              key: 'email_length',
+              minMatchedValue: REGEX_PATTERNS.EMAIL,
+              minErrorMessage: 'Invalid email address',
+              maxMatchedValue: REGEX_PATTERNS.MAX_EMAIL_REGEX,
+              maxErrorMessage: 'Max length exceeded',
+            },
           }),
           createSelectField('profile_rid', 'Profile', {
             options: profile,
@@ -93,6 +100,7 @@ export const FormData = (
             placeholder: 'Select Country',
             required: true,
             onChange: true,
+            resetDependsFields: ['state, city'],
           }),
           createSelectField('state', 'State/Province', {
             options: states,

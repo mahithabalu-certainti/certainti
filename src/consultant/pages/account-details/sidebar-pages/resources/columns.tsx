@@ -38,9 +38,9 @@ const BASE_COLUMNS: ColumnDefinition[] = [
 
 const EXTENDED_COLUMNS: ColumnDefinition[] = [
   ...BASE_COLUMNS,
-  { id: 'mobile', label: 'Resource Mobile', sortable: true },
-  { id: 'email', label: 'Resource Email', sortable: true },
-  { id: 'role', label: 'Resource Role', sortable: true },
+  { id: 'resource_mobile', label: 'Resource Mobile', sortable: true },
+  { id: 'resource_email', label: 'Resource Email', sortable: true },
+  { id: 'resource_role', label: 'Resource Role', sortable: true },
 ];
 
 const createStatusColumn = (activeOnly: boolean = false): ColumnDefinition => ({

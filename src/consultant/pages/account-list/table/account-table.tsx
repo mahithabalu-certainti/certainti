@@ -32,7 +32,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
   const navigate = useNavigate();
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
-  const [page, setPage] = useState<number>(0);
+  const [page, setPage] = useState<number>(1);
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
   const [orderBy, setOrderBy] = useState<keyof AccountList>('account_name');
@@ -150,7 +150,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
 
   // Handle page change
   const handleChangePage = (_event: unknown, newPage: number) => {
-    setPage(newPage);
+    setPage(newPage +1 );
   };
 
   // Handle rows per page change
@@ -158,7 +158,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+    setPage(1);
   };
 
   // Handle sorting
@@ -187,6 +187,17 @@ const AccountTable: React.FC<Record<string, any>> = ({
       openRows,
       handleAccountNameClick,
     });
+
+  const getSortIcon =
+    (orderBy: string, columnKey: string, order: 'asc' | 'desc') => () => {
+      if (orderBy !== columnKey) {
+        return <span className='ml-1 cursor-pointer text-gray-400'>↕</span>;
+      }
+      return order === 'asc' ?
+        <span className='ml-1 cursor-pointer'>↑</span>
+        :
+        <span className='ml-1 cursor-pointer'>↓</span>
+    };
 
   return (
     <>
@@ -218,6 +229,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                   active={orderBy === 'account_name'}
                   direction={orderBy === 'account_name' ? order : 'asc'}
                   onClick={createSortHandler('account_name')}
+                  IconComponent={getSortIcon(orderBy, 'account_name', order)}
                 >
                   Account Name
                 </TableSortLabel>
@@ -227,24 +239,27 @@ const AccountTable: React.FC<Record<string, any>> = ({
                   active={orderBy === 'account_id'}
                   direction={orderBy === 'account_id' ? order : 'asc'}
                   onClick={createSortHandler('account_id')}
+                  IconComponent={getSortIcon(orderBy, 'account_id', order)}
                 >
                   Account ID
                 </TableSortLabel>
               </TableCell>
               <TableCell sx={{ minWidth: '200px' }}>
                 <TableSortLabel
-                  active={orderBy === 'parent_account'}
-                  direction={orderBy === 'parent_account' ? order : 'asc'}
-                  onClick={createSortHandler('parent_account')}
+                  active={orderBy === 'is_parent'}
+                  direction={orderBy === 'is_parent' ? order : 'asc'}
+                  onClick={createSortHandler('is_parent')}
+                  IconComponent={getSortIcon(orderBy, 'is_parent', order)}
                 >
                   Parent Account
                 </TableSortLabel>
               </TableCell>
               <TableCell sx={{ minWidth: '180px' }}>
                 <TableSortLabel
-                  active={orderBy === 'account_number'}
-                  direction={orderBy === 'account_number' ? order : 'asc'}
-                  onClick={createSortHandler('account_number')}
+                  active={orderBy === 'r_number'}
+                  direction={orderBy === 'r_number' ? order : 'asc'}
+                  onClick={createSortHandler('r_number')}
+                  IconComponent={getSortIcon(orderBy, 'r_number', order)}
                 >
                   Account Number
                 </TableSortLabel>
@@ -254,6 +269,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                   active={orderBy === 'industry'}
                   direction={orderBy === 'industry' ? order : 'asc'}
                   onClick={createSortHandler('industry')}
+                  IconComponent={getSortIcon(orderBy, 'industry', order)}
                 >
                   Industry
                 </TableSortLabel>
@@ -263,6 +279,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                   active={orderBy === 'country'}
                   direction={orderBy === 'country' ? order : 'asc'}
                   onClick={createSortHandler('country')}
+                  IconComponent={getSortIcon(orderBy, 'country', order)}
                 >
                   Country
                 </TableSortLabel>
@@ -272,6 +289,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                   active={orderBy === 'currency'}
                   direction={orderBy === 'currency' ? order : 'asc'}
                   onClick={createSortHandler('currency')}
+                  IconComponent={getSortIcon(orderBy, 'currency', order)}
                 >
                   Currency
                 </TableSortLabel>
@@ -281,6 +299,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                   active={orderBy === 'annual_revenue'}
                   direction={orderBy === 'annual_revenue' ? order : 'asc'}
                   onClick={createSortHandler('annual_revenue')}
+                  IconComponent={getSortIcon(orderBy, 'annual_revenue', order)}
                 >
                   Annual Revenue
                 </TableSortLabel>
@@ -290,15 +309,21 @@ const AccountTable: React.FC<Record<string, any>> = ({
                   active={orderBy === 'status'}
                   direction={orderBy === 'status' ? order : 'asc'}
                   onClick={createSortHandler('status')}
+                  IconComponent={getSortIcon(orderBy, 'status', order)}
                 >
                   Status
                 </TableSortLabel>
               </TableCell>
               <TableCell sx={{ minWidth: '180px' }}>
                 <TableSortLabel
-                  active={orderBy === 'primary_contact'}
-                  direction={orderBy === 'primary_contact' ? order : 'asc'}
-                  onClick={createSortHandler('primary_contact')}
+                  active={orderBy === 'primary_contact_name'}
+                  direction={orderBy === 'primary_contact_name' ? order : 'asc'}
+                  onClick={createSortHandler('primary_contact_name')}
+                  IconComponent={getSortIcon(
+                    orderBy,
+                    'primary_contact_name',
+                    order
+                  )}
                 >
                   Primary Contact
                 </TableSortLabel>
@@ -346,11 +371,11 @@ const AccountTable: React.FC<Record<string, any>> = ({
         </Table>
       </Paper>
       <TablePagination
-        rowsPerPageOptions={[5, 10, 25]}
+        rowsPerPageOptions={[5, 10, 25, 50]}
         component='div'
         count={accountList?.count ?? 0}
         rowsPerPage={rowsPerPage}
-        page={page}
+        page={(page ?? 1) - 1}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
