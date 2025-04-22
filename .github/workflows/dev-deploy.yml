@@ -163,8 +163,7 @@ jobs:
   account-module:
     needs:
       - changes
-      - user-module
-    if: ${{ needs.changes.outputs.account-module == 'true' || always()}}
+    if: ${{ needs.changes.outputs.account-module == 'true' }}
     name: Build and Deploy Document Service
     runs-on: ubuntu-latest
     steps:
@@ -273,9 +272,7 @@ jobs:
   entity-module:
     needs:
       - changes
-      - user-module
-      - account-module
-    if: ${{ needs.changes.outputs.entity-module == 'true' || always()}}
+    if: ${{ needs.changes.outputs.entity-module == 'true' }}
     name: Build and Deploy Entity Service
     runs-on: ubuntu-latest
     steps:
