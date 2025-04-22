@@ -47,9 +47,33 @@ import timesheetIcon from './timesheet.svg';
 import arrowBackIcon from './arrowBackIcon.svg';
 import resourceProfileIcon from './resourceProfileIcon.svg';
 import filterArrowRightIcon from './filterArrowRightIcon.svg';
-import resourceFilterIcon from './resourceFilterIcon.svg'
+import resourceFilterIcon from './resourceFilterIcon.svg';
+import checklistTemplateIcon from './checklist-template.svg';
+import emailTemplateIcon from './email-template.svg';
+import importTemplateIcon from './import-template.svg';
+import interactionTemplateIcon from './interaction-template.svg';
+import manageGeoIcon from './manage-geo.svg';
+import manageGroupIcon from './manage-group.svg';
+import manageProfileIcon from './manage-profile.svg';
+import manageSettingsIcon from './manage-settings.svg';
+import manageUserAccessIcon from './manage-user-access.svg';
+import managerUserIcon from './manager-user.svg';
+import surveyTemplateIcon from './survey-template.svg';
+import taskTemplateIcon from './task-template.svg';
 
 export {
+  checklistTemplateIcon,
+  emailTemplateIcon,
+  importTemplateIcon,
+  interactionTemplateIcon,
+  manageGeoIcon,
+  manageGroupIcon,
+  manageProfileIcon,
+  manageSettingsIcon,
+  manageUserAccessIcon,
+  managerUserIcon,
+  surveyTemplateIcon,
+  taskTemplateIcon,
   accountHomeIcon,
   accountSettingsIcon,
   accountsIcon,

@@ -2,17 +2,17 @@ import { AccountList, ConvertedAccount } from '../../types';
 import { FieldConfig } from '../../types/account-filter';
 
 export const getAccountFilterfields = (countryOptions: string[], currencyOptions: string[]): FieldConfig[] => [
-  { name: 'Parent Account', type: 'text' },
-  { name: 'Account Number', type: 'text' },
-  { name: 'Account Name', type: 'text' },
-  { name: 'Account ID', type: 'text' },
-  { name: 'Industries', type: 'text' },
-  { name: 'Country', type: 'multi-select', options: countryOptions },
-  { name: 'Currency', type: 'multi-select', options: currencyOptions },
-  { name: 'Annual Revenue', type: 'number' },
-  { name: 'Status', type: 'status', options: ['Active', 'Inactive'] },
-  { name: 'Primary Contact', type: 'text' },
-  { name: 'is Parent Account', type: 'boolean' },
+  { label: 'Parent Account', name: 'parent_account', type: 'text' },
+  { label: 'Account Number', name: 'account_number', type: 'text' },
+  { label: 'Account Name', name: 'account_name', type: 'text' },
+  { label: 'Record ID', name: 'account_id', type: 'text' },
+  { label: 'Industries', name: 'industry', type: 'text' },
+  { label: 'Country', name: 'country', type: 'multi-select', options: countryOptions },
+  { label: 'Currency', name: 'currency', type: 'multi-select', options: currencyOptions },
+  { label: 'Annual Revenue', name: 'annual_revenue', type: 'number' },
+  { label: 'Status', name: 'status', type: 'status', options: ['Active', 'Inactive'] },
+  { label: 'Primary Contact', name: 'primary_contact', type: 'text' },
+  { label: 'Is Parent Account', name: 'is_parent_account', type: 'boolean' },
 ];
 
 export function convertAccounts(

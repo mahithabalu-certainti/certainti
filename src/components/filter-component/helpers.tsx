@@ -65,9 +65,9 @@ export const NumberFilterControl: React.FC<{
         onChange={(e) => onOptionChange(fieldName, e)}
         sx={{ height: '30px', minHeight: 20 }}
       >
-        <MenuItem value='greater_than'>greater than</MenuItem>
-        <MenuItem value='less_than'>less than</MenuItem>
-        <MenuItem value='between'>between</MenuItem>
+        <MenuItem value='greater_than'>Greater Than</MenuItem>
+        <MenuItem value='less_than'>Less Than</MenuItem>
+        <MenuItem value='between'>Between</MenuItem>
       </Select>
     </FormControl>
     <TextField
@@ -176,13 +176,14 @@ export const MultiSelectFilterControl: React.FC<{
   }, [options, selectedValues]);
 
   return (
-    <Box sx={{ pl: 3, mt: 1 }}>
+    <Box sx={{ pl: 2.5, mt: 1 }}>
       <FormControl fullWidth size="small">
         <Select
           multiple
           value={selectedValues}
           onChange={(e) => onChange(fieldName, e.target.value as string[])}
           sx={{ 
+            width: 200,
             height: 'auto', 
             minHeight: 30,
             '& .MuiSelect-select': {
@@ -194,7 +195,8 @@ export const MultiSelectFilterControl: React.FC<{
           MenuProps={{
             PaperProps: {
               style: {
-                maxHeight: 200
+                maxHeight: 200,
+                width: 200,
               },
             },
           }}
