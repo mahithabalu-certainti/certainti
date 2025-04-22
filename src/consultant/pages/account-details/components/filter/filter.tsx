@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Box, SelectChangeEvent } from '@mui/material';
 import React, { useState } from 'react';
-import { filterArrowRightIcon } from '../../assets';
-import { getInitialStateForField } from '../../consultant/pages/account-details/sidebar-pages/resources/utils';
-import { Button } from '../button';
+import { filterArrowRightIcon } from '../../../../../assets';
+import { Button } from '../../../../../components/button';
+import { getInitialStateForField } from '../../sidebar-pages/resources/utils';
 import {
   DateFilterOption,
   dateOptions,
@@ -37,15 +37,15 @@ const Filter: React.FC<FilterComponentProps> = ({
   );
 
   const handleApplyFilters = () => {
-    setAppliedFilters(formatFilterForApi(filterStates))
-    handleFilter()
-  }
+    setAppliedFilters(formatFilterForApi(filterStates));
+    handleFilter();
+  };
 
   const resetFilter = () => {
-    setAppliedFilters({})
-    setFilterStates({})
-    setSelectedFilters([])
-  }
+    setAppliedFilters({});
+    setFilterStates({});
+    setSelectedFilters([]);
+  };
 
   const handleClickFilterMenu = (fieldName: string) => {
     setSelectedFilters((prev) =>
@@ -205,13 +205,10 @@ const Filter: React.FC<FilterComponentProps> = ({
     });
   };
 
-
   const renderFilterControls = (field: FieldConfig) => {
-
     if (!selectedFilters.includes(field.value)) return null;
 
     const fieldState = filterStates[field.value] || {};
-
 
     switch (field.type) {
       case 'text':
@@ -257,7 +254,7 @@ const Filter: React.FC<FilterComponentProps> = ({
             state={fieldState}
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleDateChange}
-          // onChange={handleBooleanChange}
+            // onChange={handleBooleanChange}
           />
         );
       default:
@@ -266,11 +263,11 @@ const Filter: React.FC<FilterComponentProps> = ({
   };
 
   return (
-    <Box className='absolute top-67 right-85 z-50 w-[248px] max-h-[568px] bg-white shadow-lg border border-[#CBD6E2] rounded'>
+    <Box className='absolute top-100 right-85 z-50 w-[248px] max-h-[568px] bg-white shadow-lg border border-[#CBD6E2] rounded'>
       <Box className='flex justify-between items-center p-2 border-b border-[#CBD6E2]'>
         <Box>Filters</Box>
         <Button
-            onClick={resetFilter}
+          onClick={resetFilter}
           label='Reset'
           variant='text'
           sx={{
@@ -332,7 +329,7 @@ const Filter: React.FC<FilterComponentProps> = ({
               color: '#FFFFFF',
             },
           }}
-            onClick={handleApplyFilters}
+          onClick={handleApplyFilters}
         />
       </Box>
     </Box>

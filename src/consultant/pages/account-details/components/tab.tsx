@@ -3,8 +3,8 @@ import { Box, Menu, MenuItem, Tab, Tabs } from '@mui/material';
 import React, { Fragment, useState } from 'react';
 import { leftArrowIcon, resourceFilterIcon } from '../../../../assets';
 import { ActionsDropdown, Image } from '../../../../components';
-import Filter from '../../../../components/filter/filter';
 import { costFields, skillFields } from '../sidebar-pages/resources/utils';
+import Filter from './filter/filter';
 import { FiscalYearDropdown } from './fiscal-year-dropdown';
 
 interface TabPanelProps {
@@ -15,7 +15,7 @@ interface TabPanelProps {
   value: string;
   showFilter: boolean;
   setAppliedFilters: (filters: Record<string, any>) => void;
-  setFiscalYearValue:(value:number)=>void;
+  setFiscalYearValue: (value: number) => void;
 }
 
 const TabPanel: React.FC<TabPanelProps> = ({
