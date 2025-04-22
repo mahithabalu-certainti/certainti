@@ -1,4 +1,4 @@
-import { Op } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import { HttpStatus } from "../utils/constant";
 import { IAccount, IUpdateAccount } from "../utils/types";
 import SchemaService from "./schemaService";
@@ -548,7 +548,7 @@ class AccountService {
     }
 
     if (filters.account_id) {
-      whereClause.eid = this.getFieldFilter(filters.account_id, "eid");
+      whereClause.rid = this.getFieldFilter(filters.account_id, "rid");
     }
 
     if (filters.industry) {
@@ -595,11 +595,17 @@ class AccountService {
   }
 
   private getFieldFilter(fieldFilter: any, dbField: string): any {
+
+
     if (fieldFilter.equals) {
-      return { [Op.iLike]: fieldFilter.equals };
+      return { [Op.eq]: fieldFilter.equals };
     }
     if (fieldFilter.contains) {
-      return { [Op.iLike]: `%${fieldFilter.contains}%` };
+      return Sequelize.where(
+        Sequelize.cast(Sequelize.col(`Account.${dbField}`), 'TEXT'),
+        'LIKE',
+        `%${fieldFilter.contains}%`
+      );
     }
     // Handle simple value (for dropdown selections like status)
     if (typeof fieldFilter === 'string') {
