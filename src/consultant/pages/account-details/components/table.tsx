@@ -275,8 +275,10 @@ const DataTable: React.FC<DataTableProps> = ({
                       active={sortField === column.id}
                       direction={
                         sortField === column.id
-                          ? sortOrder.toLowerCase()
-                          : 'ASC'.toLowerCase()
+                          ? sortOrder === 'ASC'
+                            ? 'asc'
+                            : 'desc'
+                          : 'desc'
                       }
                       onClick={() => handleSortRequest(column.id)}
                     >
