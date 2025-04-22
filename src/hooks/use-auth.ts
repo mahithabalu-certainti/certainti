@@ -38,6 +38,7 @@ export const useAuthHook = () => {
 
   const logout = () => {
     localStorage.removeItem('auth');
+    localStorage.removeItem('FILTER_STATE');
     dispatch(clearAuthDetail());
     setAuthDetails(DEFAULT_AUTH_DETAIL);
   };
