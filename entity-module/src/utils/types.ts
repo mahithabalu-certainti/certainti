@@ -79,16 +79,11 @@ export interface IResourceCost {
   resource_type: string;
   resource_rid: string;
   resource_ref_id: string;
-  effective_date: Date;
-  end_date: Date;
+  effective_date?: Date;
+  end_date?: Date;
   currency_rid: string;
-  annual_cost: number;
-  monthly_cost: number;
-  weekly_cost: number;
-  daily_cost: number;
-  hourly_cost: number;
-  bi_weekly_cost: number;
-  semi_annual_cost: number;
+  cost_frequency: string;
+  cost: number;
   created_datetime?: string | null;
   modified_datetime?: string | null;
   created_by?: string | null;
@@ -101,16 +96,11 @@ export interface IResourceCost {
 export interface IUpdateResourceCost {
   rid: string,
   eid: string;
-  effective_date: Date;
-  end_date: Date;
+  effective_date?: Date;
+  end_date?: Date;
   currency_rid: string;
-  annual_cost: number;
-  monthly_cost: number;
-  weekly_cost: number;
-  daily_cost: number;
-  hourly_cost: number;
-  bi_weekly_cost: number;
-  semi_annual_cost: number;
+  cost_frequency: string;
+  cost: number;
   modified_datetime?: string | null;
   modified_by?: string | null;
   status?: "active" | "inactive";

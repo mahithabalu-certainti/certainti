@@ -353,42 +353,26 @@ const updateResourceCostSchema = Joi.object({
   rid: Joi.string().pattern(uuidRegex).required(),
   eid: Joi.string().max(255).optional().allow(null).allow(""),
   accountNumber: Joi.string().max(255).required(),
-  effective_date: Joi.string().max(10).optional().allow(null),
-  end_date: Joi.string().max(10).optional().allow(null),
-  annual_cost: Joi.number().min(0).optional(),
-  semi_annual_cost: Joi.number().min(0).optional(),
-  monthly_cost: Joi.number().min(0).optional(),
-  weekly_cost: Joi.number().min(0).optional(),
-  bi_weekly_cost: Joi.number().min(0).optional(),
-  daily_cost: Joi.number().min(0).optional(),
-  hourly_cost: Joi.number().min(0).optional(),
+  effective_date: Joi.string().max(10).optional().allow(null).allow(""),
+  end_date: Joi.string().max(10).optional().allow(null).allow(""),
+  cost_frequency: Joi.string()
+   .valid(
+      "annual",
+      "semi_annual",
+      "monthly",
+      "bi_weekly",
+      "weekly",
+      "daily",
+      "hourly"
+    )
+   .required(),
+  cost: Joi.number().min(0).max(999999999999.99).required(),
   currency_rid: Joi.string().pattern(uuidRegex).required(),
   status: Joi.string().max(255).default("active").optional(),
   modified_datetime: Joi.date()
     .iso()
     .default(() => new Date()),
   modified_by: Joi.string().max(255).optional(),
-}).custom((obj, helpers) => {
-  // Check if at least one cost frequency is provided
-  const costFields = [
-    'annual_cost',
-    'semi_annual_cost',
-    'monthly_cost',
-    'weekly_cost',
-    'bi_weekly_cost',
-    'daily_cost',
-    'hourly_cost'
-  ];
-  
-  const hasAnyCost = costFields.some(field => obj[field] !== undefined);
-  
-  if (!hasAnyCost) {
-    return helpers.message({
-      custom: 'At least one cost frequency (annual, semi-annual, monthly, weekly, bi-weekly, daily, or hourly) must be provided'
-  });
-  }
-  
-  return obj;
 });
 
 const getResourceCostSchema = Joi.object({
@@ -415,18 +399,23 @@ const resourceCostSchema = Joi.object({
   eid: Joi.string().max(255).optional().allow(null).allow(""),
   account_rid: Joi.string().pattern(uuidRegex).required(),
   accountNumber: Joi.string().max(255).required(),
-  resource_type: Joi.string().valid("FullTime", "Contract").optional().allow("").allow(null),
+  resource_type: Joi.string().valid("FullTime", "Contract").required(),
   resource_rid: Joi.string().pattern(uuidRegex).optional().allow(null).allow(""),
   resource_ref_id: Joi.string().max(255).required(),
-  effective_date: Joi.string().max(10).optional().allow(null),
-  end_date: Joi.string().max(10).optional().allow(null),
-  annual_cost: Joi.number().min(0).optional().allow(null),
-  semi_annual_cost: Joi.number().min(0).optional().allow(null),
-  monthly_cost: Joi.number().min(0).optional().allow(null),
-  weekly_cost: Joi.number().min(0).optional().allow(null),
-  bi_weekly_cost: Joi.number().min(0).optional().allow(null),
-  daily_cost: Joi.number().min(0).optional().allow(null),
-  hourly_cost: Joi.number().min(0).optional().allow(null),
+  effective_date: Joi.string().max(10).optional().allow(null).allow(""),
+  end_date: Joi.string().max(10).optional().allow(null).allow(""),
+  cost_frequency: Joi.string()
+   .valid(
+      "annual",
+      "semi_annual",
+      "monthly",
+      "bi_weekly",
+      "weekly",
+      "daily",
+      "hourly"
+    )
+   .required(),
+  cost: Joi.number().min(0).max(999999999999.99).required(),
   fiscalYear: Joi.number().default(new Date().getFullYear()).optional(),
   currency_rid: Joi.string().pattern(uuidRegex).required(),
   status: Joi.string().max(255).default("active"),
@@ -438,27 +427,6 @@ const resourceCostSchema = Joi.object({
     .default(() => new Date()),
   created_by: Joi.string().max(255).optional(),
   modified_by: Joi.string().max(255).optional(),
-}).custom((obj, helpers) => {
-  // Check if at least one cost frequency is provided
-  const costFields = [
-    'annual_cost',
-    'semi_annual_cost',
-    'monthly_cost',
-    'weekly_cost',
-    'bi_weekly_cost',
-    'daily_cost',
-    'hourly_cost'
-  ];
-  
-  const hasAnyCost = costFields.some(field => obj[field] !== undefined);
-  
-  if (!hasAnyCost) {
-    return helpers.message({
-      custom: 'At least one cost frequency (annual, semi-annual, monthly, weekly, bi-weekly, daily, or hourly) must be provided'
-  });
-  }
-  
-  return obj;
 });
 
 export {
