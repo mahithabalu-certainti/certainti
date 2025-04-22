@@ -2,12 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { accountHomeIcon, editIcon } from '../../../assets';
-import {
-  CheckErrorMsg,
-  OnChange,
-  useGetAllCountries,
-} from '../../../common-service';
-import { checkError, checkErrorMsg } from '../../../common-utils';
+import { OnChange, useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
@@ -28,7 +23,7 @@ const ResourceForm: React.FC = () => {
   const [currentCountry, setCurrentCountry] = useState('');
 
   // Hooks
-  const { successToast, errorToast } = useToast();
+  const { successToast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -56,16 +51,6 @@ const ResourceForm: React.FC = () => {
     ? location?.state?.resource?.resource_fullname
     : 'New Resource';
 
-  // Error handling
-  const errorHandlers = [
-    createResource,
-    allCountries,
-    currency,
-    states,
-    updateResource,
-  ];
-  const commonError = checkError(errorHandlers);
-  const commonErrorMsg = checkErrorMsg(errorHandlers as CheckErrorMsg[]);
   const commonSuccess = createResource.isSuccess || updateResource.isSuccess;
 
   // Memoized data transformations
@@ -96,13 +81,6 @@ const ResourceForm: React.FC = () => {
     [currency.data]
   );
 
-  // Effects
-  useEffect(() => {
-    if (commonError) {
-      errorToast(commonErrorMsg);
-    }
-  }, [commonError, commonErrorMsg, errorToast]);
-
   useEffect(() => {
     if (commonSuccess) {
       successToast(
@@ -112,6 +90,7 @@ const ResourceForm: React.FC = () => {
       );
       navigate(-1);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView, successToast]);
 
   // Handlers

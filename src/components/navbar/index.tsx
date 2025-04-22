@@ -162,7 +162,7 @@ export const Navbar: React.FC = () => {
       open={isMenuOpen}
       onClose={handleMenuClose}
     >
-      {isConsultant && <MenuItem onClick={goToProfile}>Profile</MenuItem>}
+      <MenuItem onClick={goToProfile}>Profile</MenuItem>
       <MenuItem onClick={changePassword}>Change Password</MenuItem>
       <MenuItem onClick={handleLogout}>Logout</MenuItem>
     </Menu>

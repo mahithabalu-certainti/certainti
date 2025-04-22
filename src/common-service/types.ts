@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import { User } from '../admin/types/admin-user-detail';
 
 export interface CommonApiResponse {
   statusCode: number;
@@ -51,14 +52,17 @@ export interface CheckError {
   isError: boolean;
 }
 
-export interface CheckErrorMsg {
-  error: {
-    message?: string;
-    response?: {
-      data?: {
-        statusMessage?: string;
-        message?: string;
-      };
+export interface AxiosErrorMsg {
+  message?: string;
+  response?: {
+    data?: {
+      statusMessage?: string;
+      message?: string;
     };
   };
+}
+
+export interface UserDetail {
+  data?: User;
+  loading: boolean;
 }

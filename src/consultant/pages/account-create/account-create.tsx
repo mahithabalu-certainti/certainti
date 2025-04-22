@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { accountHomeIcon, editIcon } from '../../../assets';
 import {
-  CheckErrorMsg,
   OnChange,
   useGetAllCountries,
 } from '../../../common-service';
@@ -23,12 +22,11 @@ import { AccountFormData, SelectOption } from '../../types';
 import { FormData } from './form-data';
 import { transformFormData } from './utils';
 import { ACCOUNT } from '../../../routes';
-import { checkError, checkErrorMsg } from '../../../common-utils';
 
 export const AccountForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [currentCountry, setCurrentCountry] = useState('');
-  const { successToast, errorToast } = useToast();
+  const { successToast } = useToast();
   const location = useLocation();
   const { accountid } = useParams();
 
@@ -60,27 +58,7 @@ export const AccountForm: React.FC = () => {
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
 
-  // Hook Error Handling
-  const errorhandlingData = [
-    getAccount,
-    allCountries,
-    parentAccount,
-    currency,
-    states,
-    updateAccount,
-    createAccount,
-  ];
-  const commonError = checkError(errorhandlingData);
-  const commonErrorMsg = checkErrorMsg(errorhandlingData as CheckErrorMsg[]);
   const commonSuccess = createAccount.isSuccess || updateAccount.isSuccess;
-
-  useEffect(() => {
-    if (commonError) {
-      errorToast(commonErrorMsg);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [commonError, commonErrorMsg]);
-
   useEffect(() => {
     if (commonSuccess) {
       successToast(

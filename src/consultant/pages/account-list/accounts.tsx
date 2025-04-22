@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   accountHomeIcon,
@@ -15,10 +15,8 @@ import TextButton from '../../../components/button/text-button';
 import { ACCOUNT_CREATE } from '../../../routes';
 import { getAccountFilterfields } from './helpers';
 import AccountTable from './table/account-table';
-import { CheckErrorMsg, useGetAllCountries } from '../../../common-service';
+import { useGetAllCountries } from '../../../common-service';
 import { useFetchCurrency } from '../../services/account';
-import { checkError, checkErrorMsg } from '../../../common-utils';
-import { useToast } from '../../../hooks';
 import { CircularProgress } from '@mui/material';
 
 const BUTTON_STYLES = {
@@ -27,7 +25,6 @@ const BUTTON_STYLES = {
 };
 
 export const Accounts: React.FC = () => {
-  const { errorToast } = useToast();
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(true);
@@ -52,21 +49,6 @@ export const Accounts: React.FC = () => {
   const countriesList = useGetAllCountries();
   const currencyList = useFetchCurrency();
 
-    // Hook Error Handling
-    const errorhandlingData = [
-      countriesList,
-      currencyList,
-    ];
-    const commonError = checkError(errorhandlingData);
-    const commonErrorMsg = checkErrorMsg(errorhandlingData as CheckErrorMsg[]);
-  
-    useEffect(() => {
-      if (commonError) {
-        errorToast(commonErrorMsg);
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [commonError, commonErrorMsg]);
-  
   const allCountries = useMemo(() => {
     return countriesList.data?.data.country.map(item => item.country_name) || [];
   }, [countriesList]);

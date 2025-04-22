@@ -13,7 +13,7 @@ type BusinessTeams = {
 };
 
 // Main User type
-type User = {
+export type User = {
   rid: string;
   r_number: string | null;
   eid: string | null;

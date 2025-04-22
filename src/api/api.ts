@@ -3,7 +3,9 @@ import axios, { AxiosError, AxiosResponse } from 'axios';
 import { LOGIN } from '../routes';
 import { PublicClientApplication } from '@azure/msal-browser';
 import { msalConfig } from '../config/msalConfig';
-import { FailedQueueItem } from '../common-service';
+import { AxiosErrorMsg, FailedQueueItem } from '../common-service';
+import { errorHandling } from '../common-utils';
+import { showToast } from '../utils/toast';
 
 // Initialize MSAL instance
 const msalSigninInstance = new PublicClientApplication(msalConfig);
@@ -136,13 +138,20 @@ const processQueue = (error: unknown, token: string | null = null) => {
           processQueue(refreshError, null);
           isRefreshing = false;
           console.error('refreshError', refreshError);
-          localStorage.removeItem('auth');
-          window.location.href = LOGIN;
+          // Show error toast
+          showToast('Session expired. Please login again.', 'error');
+          setTimeout(() => {
+            localStorage.removeItem('auth');
+            window.location.href = LOGIN;
+          }, 3000);
           return Promise.reject(refreshError);
         }
+      } else {
+        //common error handling
+        const errorMsg = errorHandling(error as AxiosErrorMsg);
+        showToast(errorMsg, 'error');
+        return Promise.reject(error);
       }
-
-      return Promise.reject(error);
     }
   );
 });

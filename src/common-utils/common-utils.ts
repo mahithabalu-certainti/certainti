@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import { UserDetail } from '../admin/types/manage-user';
-import { CheckError, CheckErrorMsg } from '../common-service';
+import { AxiosErrorMsg, CheckError } from '../common-service';
 import { AllowedCountry, FieldType, SelectOption } from '../consultant/types';
 
 export const createTextField = (
@@ -225,20 +225,16 @@ export const checkError = (data: CheckError[]) => {
   return data.some((value) => value.isError === true);
 };
 
-export const checkErrorMsg = (data: CheckErrorMsg[]): string =>
-  data
-    .filter(({ error }) => error?.message)
-    .map(({ error }) => {
-      const errorData = error?.response?.data;
-      return `${
-        errorData?.statusMessage
-          ? typeof errorData.statusMessage === 'object'
-            ? Object.values(errorData.statusMessage).join(', ')
-            : errorData.statusMessage
-          : errorData?.message
-      }</p>`;
-    })
-    .join('');
+export const errorHandling = (data: AxiosErrorMsg): string => {
+  const errorData = data.response?.data;
+  return `<p>${
+    errorData?.statusMessage
+      ? typeof errorData.statusMessage === 'object'
+        ? Object.values(errorData.statusMessage).join(', ')
+        : errorData.statusMessage || ''
+      : errorData?.message || data.message
+  }</p>`;
+};
 
 export const formatAddress = (userDatas?: UserDetail) => {
   const addressParts = [
