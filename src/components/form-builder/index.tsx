@@ -92,10 +92,23 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return prevFormData?.map((section) => ({
           ...section,
           fields: section.fields.map((f) => {
+            let updatedField = { ...f };
+
             if (f.name === field.name) {
-              return { ...f, error: '' };
+              updatedField.error = '';
             }
-            return f;
+            
+            if (f.dependsRequired?.key === field.name) {
+              const shouldDisable = value === f.dependsRequired.disableDependsField;
+            
+              updatedField.disabled = shouldDisable;
+            
+              if (shouldDisable) {
+                newData[f.name] = '';
+              }
+            }
+
+            return updatedField;
           }),
         }));
       });

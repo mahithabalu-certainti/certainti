@@ -105,7 +105,7 @@ export const ManageUserDetails: React.FC = () => {
 
   // Map your API data to the mock data structure
   const mappedUserDetails: Detail[] = [
-    { label: 'User ID', value: userDetail?.rid || 'N/A' },
+    { label: 'Record ID', value: userDetail?.rid || 'N/A' },
     { label: 'Full name', value: userDetail?.full_name || 'N/A' },
     { label: 'Email address', value: userDetail?.email || 'N/A' },
     { label: 'Profile', value: userDetail?.profile.profile_name || 'N/A' },
@@ -121,7 +121,7 @@ export const ManageUserDetails: React.FC = () => {
   ];
 
   const mappedAdditionalDetails: Detail[] = [
-    { label: 'User number', value: userDetail?.r_number || 'N/A' },
+    { label: 'User ID', value: userDetail?.r_number || 'N/A' },
     { label: 'State/Province', value: userDetail?.state_name || 'N/A' },
     { label: 'Zip/Postal Code', value: userDetail?.zip_code || 'N/A' },
     { label: 'Country', value: userDetail?.country_name || 'N/A' },
@@ -135,7 +135,7 @@ export const ManageUserDetails: React.FC = () => {
     },
     { label: 'Last Updated by', value: userDetail?.modified_by || 'N/A' },
     {
-      label: 'Last Updated On',
+      label: 'Last Updated on',
       value: getDateTimeFormat(userDetail?.modified_datetime),
     },
     {

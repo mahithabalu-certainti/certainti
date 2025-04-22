@@ -15,6 +15,7 @@ export interface AdminNavItem {
 
 export interface SubItemTitle {
   name: string;
+  icon: string;
   link: string;
   matchLink: string;
 }

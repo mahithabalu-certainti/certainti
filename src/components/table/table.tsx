@@ -315,7 +315,7 @@ const Table = <T extends RowData>({
                               variant='outlined'
                               size='small'
                               color='primary'
-                              sx={{ mr: 1 }}
+                              sx={{ mr: 1, textTransform: 'capitalize' }}
                               onClick={() => onView(row)}
                             >
                               View
@@ -341,7 +341,7 @@ const Table = <T extends RowData>({
                               variant='outlined'
                               size='small'
                               color='secondary'
-                              sx={{ mr: 1 }}
+                              sx={{ mr: 1, textTransform: 'capitalize' }}
                               onClick={() => onEdit(row)}
                             >
                               Edit
@@ -367,6 +367,7 @@ const Table = <T extends RowData>({
                               variant='outlined'
                               size='small'
                               color='error'
+                              sx={{ textTransform: 'capitalize' }}
                               onClick={() => onDelete(row)}
                             >
                               Delete

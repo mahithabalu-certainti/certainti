@@ -1,4 +1,5 @@
 import {
+  Box,
   Collapse,
   Divider,
   Drawer,
@@ -34,6 +35,18 @@ import {
   settingsIcon,
   surveyIcon,
   timesheetIcon,
+  checklistTemplateIcon,
+  emailTemplateIcon,
+  importTemplateIcon,
+  interactionTemplateIcon,
+  manageGeoIcon,
+  manageGroupIcon,
+  manageProfileIcon,
+  manageSettingsIcon,
+  manageUserAccessIcon,
+  managerUserIcon,
+  surveyTemplateIcon,
+  taskTemplateIcon,
 } from '../../assets';
 import {
   AdminNavItem,
@@ -154,21 +167,25 @@ const sideNavAdminItems: AdminNavItem[] = [
     subItemTitle: [
       {
         name: 'Manage User',
+        icon: managerUserIcon,
         link: ADMIN_MANAGE_USER,
         matchLink: ADMIN_MANAGE_USER,
       },
       {
         name: 'Manage Profile',
+        icon: manageProfileIcon,
         link: MANAGE_PROFILE,
         matchLink: MANAGE_PROFILE,
       },
       {
         name: 'Manage User Group',
+        icon: manageGroupIcon,
         link: MANAGE_USER_GROUP,
         matchLink: MANAGE_USER_GROUP,
       },
       {
         name: 'Manage User Access',
+        icon: manageUserAccessIcon,
         link: MANAGE_USER_ACCESS,
         matchLink: MANAGE_USER_ACCESS,
       },
@@ -181,11 +198,13 @@ const sideNavAdminItems: AdminNavItem[] = [
     subItemTitle: [
       {
         name: 'Manage Settings',
+        icon: manageSettingsIcon,
         link: MANAGE_SETTINGS,
         matchLink: MANAGE_SETTINGS,
       },
       {
         name: 'Manage Geo-Based Rule',
+        icon: manageGeoIcon,
         link: MANAGE_GEO_BASED_RULE,
         matchLink: MANAGE_GEO_BASED_RULE,
       },
@@ -198,31 +217,37 @@ const sideNavAdminItems: AdminNavItem[] = [
     subItemTitle: [
       {
         name: 'Import templates',
+        icon: importTemplateIcon,
         link: IMPORT_TEMPLATES,
         matchLink: IMPORT_TEMPLATES,
       },
       {
         name: 'Interaction templates',
+        icon: interactionTemplateIcon,
         link: INTERACTION_TEMPLATES,
         matchLink: '',
       },
       {
         name: 'Email templates',
+        icon: emailTemplateIcon,
         link: EMAIL_TEMPLATES,
         matchLink: EMAIL_TEMPLATES,
       },
       {
         name: 'Survey templates',
+        icon: surveyTemplateIcon,
         link: TASK_TEMPLATES,
         matchLink: TASK_TEMPLATES,
       },
       {
         name: 'Task templates',
+        icon: taskTemplateIcon,
         link: TASK_TEMPLATES,
         matchLink: TASK_TEMPLATES,
       },
       {
         name: 'Checklist templates',
+        icon: checklistTemplateIcon,
         link: CHECKLIST_TEMPLATES,
         matchLink: CHECKLIST_TEMPLATES,
       },
@@ -309,6 +334,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                     sx={{
                       justifyContent: !sidebarExpand ? 'center' : 'flex-start',
                       minHeight: 48,
+                      gap: 1,
                       backgroundColor:
                         item.matchLink === trimmedPathname(1)
                           ? 'primary.dark'
@@ -357,7 +383,17 @@ export const Sidebar: React.FC<SideBarProps> = ({
                         />
                       </ListItemIcon>
                     </Tooltip>
-                    {sidebarExpand && <ListItemText primary={item.name} />}
+                    {sidebarExpand &&
+                      <ListItemText
+                        sx={{
+                          '& .MuiTypography-root': {
+                            fontWeight: 500,
+                            fontSize: '14px',
+                          },
+                        }}
+                        primary={item.name}
+                      />
+                    }
                   </ListItemButton>
                 </ListItem>
               );
@@ -366,8 +402,10 @@ export const Sidebar: React.FC<SideBarProps> = ({
           <ListItem disablePadding>
             <ListItemButton
               sx={{
+                alignItems: 'center',
                 justifyContent: !sidebarExpand ? 'center' : 'flex-start',
                 minHeight: 48,
+                gap: 0.5
               }}
             >
               <ListItemIcon sx={{ justifyContent: 'center' }}>
@@ -381,6 +419,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                 sx={{
                   '& .MuiTypography-root': {
                     fontWeight: 600,
+                    fontSize: '14px',
                   },
                 }}
                 primary={'Administration'}
@@ -432,20 +471,23 @@ export const Sidebar: React.FC<SideBarProps> = ({
                       />
                     </ListItemIcon>
                   </Tooltip>
+                  <Box sx={{ display: 'flex', alignItems: 'center', width:'100%' }}>
                   <ListItemText
                     sx={{
                       '& .MuiTypography-root': {
                         fontWeight: 400,
+                        fontSize: '14px',
                       },
                     }}
                     primary={item.title}
                   />
-                  {item.subItemTitle.length > 0 &&
-                    (item.openStatus ? (
-                      <img src={adminChevronUpIcon} alt='down' />
-                    ) : (
-                      <img src={adminChevronDownIcon} alt='down' />
-                    ))}
+                    {item.subItemTitle.length > 0 &&
+                      (item.openStatus ? (
+                        <img src={adminChevronUpIcon} alt='down' className='h-[18px]'/>
+                      ) : (
+                        <img src={adminChevronDownIcon} alt='down' className='h-[18px]'/>
+                      ))}
+                  </Box>
                 </ListItemButton>
               </ListItem>
               <Collapse in={item.openStatus} timeout='auto' unmountOnExit>
@@ -458,34 +500,41 @@ export const Sidebar: React.FC<SideBarProps> = ({
                       disablePadding
                     >
                       <ListItemButton
-                        sx={{ pl: 9 }}
                         onClick={() => navigate(subItem.link)}
                       >
-                        <ListItemText
-                          sx={{
-                            '& .MuiTypography-root': {
-                              fontWeight: matchCheck(
-                                subItem,
-                                trimmedPathname(2)
-                              )
-                                ? 400
-                                : 300,
-                              color: matchCheck(subItem, trimmedPathname(2))
-                                ? '#F16137'
-                                : '#FFFFFF',
-                            },
-                          }}
-                          primary={subItem.name}
-                        />
-                        {matchCheck(subItem, trimmedPathname(2)) && (
-                          <ListItemIcon>
+                        <ListItemIcon sx={{ justifyContent:'center' }}>
+                          <img
+                            src={subItem.icon}
+                            alt='menu-icon'
+                            className='h-[20px]'
+                          />
+                        </ListItemIcon>
+                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width:'100%' }}>
+                          <ListItemText
+                            sx={{
+                              '& .MuiTypography-root': {
+                                fontWeight: matchCheck(
+                                  subItem,
+                                  trimmedPathname(2)
+                                )
+                                  ? 400
+                                  : 300,
+                                fontSize: '14px',
+                                color: matchCheck(subItem, trimmedPathname(2))
+                                  ? '#F16137'
+                                  : '#FFFFFF',
+                              },
+                            }}
+                            primary={subItem.name}
+                          />
+                          {matchCheck(subItem, trimmedPathname(2)) && (
                             <img
                               src={adminSubmenuActiveIcon}
                               alt='menu-icon'
-                              className='h-[20px]'
+                              className='h-[18px]'
                             />
-                          </ListItemIcon>
-                        )}
+                          )}
+                        </Box>
                       </ListItemButton>
                     </List>
                   ))}
