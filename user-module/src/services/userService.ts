@@ -2,7 +2,7 @@ import { initSequelize } from "../config/dataSource";
 import { models } from "../models/index";
 import { constants } from "../utils/constant";
 import { IUpdateUserData, IUserData } from "../utils/types";
-import { Op } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 
 const { User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams } =
   models;
@@ -736,7 +736,10 @@ class UserService {
         } else if (fieldFilter.contains) {
           whereClause[dbField] = { [Op.iLike]: `%${fieldFilter.contains}%` };
         } else if (fieldFilter.equals) {
-          whereClause[dbField] = { [Op.eq]: fieldFilter.equals };
+          whereClause[dbField] = Sequelize.where(
+            Sequelize.fn('LOWER', Sequelize.col(dbField)),
+            Sequelize.fn('LOWER', fieldFilter.equals)
+          );
         } else if (typeof fieldFilter === 'string') {
           whereClause[dbField] = { [Op.eq]: fieldFilter };
         }
@@ -767,22 +770,9 @@ class UserService {
   
     // Handle profile filters
     if (filters.profile) {
-      if (filters.profile.startsWith) {
+      if (Array.isArray(filters.profile)) {
         whereClause["$profile.profile_name$"] = {
-          [Op.iLike]: `${filters.profile.startsWith}%`,
-        };
-      } else if (filters.profile.endWith) {
-        whereClause["$profile.profile_name$"] = {
-          [Op.iLike]: `%${filters.profile.endWith}`,
-        };
-      } else if (filters.profile.contains) {
-        whereClause["$profile.profile_name$"] = {
-          [Op.iLike]: `%${filters.profile.contains}%`,
-        };
-      } else if (filters.profile.equals) {
-        // Add support for exact matching with equals operator for profile
-        whereClause["$profile.profile_name$"] = {
-          [Op.eq]: filters.profile.equals,
+          [Op.in]: filters.profile
         };
       }
     }

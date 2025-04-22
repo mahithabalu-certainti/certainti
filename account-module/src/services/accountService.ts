@@ -585,21 +585,22 @@ class AccountService {
     return whereClause;
   }
 
-
-
-  private symbolReplacer(key: string, value: any): any {
-    if (typeof value === "symbol") {
-      return value.toString(); // Converts Symbol(Op.or) to "Symbol(Op.or)"
-    }
-    return value;
-  }
-
   private getFieldFilter(fieldFilter: any, dbField: string): any {
 
-
+    const isUuidField = dbField === 'rid';
     if (fieldFilter.equals) {
-      return { [Op.eq]: fieldFilter.equals };
+      if (isUuidField) {
+        // For UUID fields, use direct equality without LOWER function
+        return { [Op.eq]: fieldFilter.equals };
+      } else {
+        // For text fields, use case-insensitive comparison
+        return Sequelize.where(
+          Sequelize.fn('LOWER', Sequelize.col(`Account.${dbField}`)),
+          Sequelize.fn('LOWER', fieldFilter.equals)
+        );
+      }
     }
+    
     if (fieldFilter.contains) {
       return Sequelize.where(
         Sequelize.cast(Sequelize.col(`Account.${dbField}`), 'TEXT'),
