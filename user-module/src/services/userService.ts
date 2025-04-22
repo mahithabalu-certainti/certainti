@@ -66,6 +66,19 @@ class UserService {
 
       const repository = this.getAccountRepository();
 
+      // Check if email already exists
+      const existingUser = await repository.findOne({
+        where: { email }
+      });
+      
+      if (existingUser) {
+        return {
+          statusCode: constants.BAD_REQUEST,
+          message: constants.BAD_REQUEST_MESSAGE,
+          errorMessage: "Email already exists. Please use a different email address.",
+        };
+      }
+
       const user = await repository.create({
         azure_id: azureId,
         first_name,
@@ -712,7 +725,7 @@ class UserService {
     }
   
     const filterFields = [
-      { clientField: "user_name", dbField: "first_name" },
+      { clientField: "username", dbField: "first_name" },
       { clientField: "first_name", dbField: "first_name" },
       { clientField: "last_name", dbField: "last_name" },
       { clientField: "middle_name", dbField: "middle_name" },
