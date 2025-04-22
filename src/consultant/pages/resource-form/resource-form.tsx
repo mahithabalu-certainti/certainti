@@ -13,13 +13,12 @@ import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
 import { useFetchCity, useFetchState } from '../../services/account';
-import { useResourceDetail } from '../../services/resource-details';
-
 import {
   useCreateResourceCost,
   useUpdateResourceCost,
 } from '../../services/resource-cost/resource-cost-service';
 import { useCreateResource } from '../../services/resource-create';
+import { useResourceDetail } from '../../services/resource-details';
 import {
   useCreateResourceSkill,
   useUpdateResourceSkill,
@@ -28,8 +27,8 @@ import { useUpdateResource } from '../../services/resource-update';
 import { SelectOption } from '../../types';
 import { ResourceFormData } from './form-data';
 import {
-  createPayload,
   transformCostData,
+  transformPayloadforCreateResource,
   transformResourceDataForUpdate,
   transformSkillData,
 } from './utils.tsx';
@@ -225,7 +224,7 @@ const ResourceForm: React.FC = () => {
         );
         updateResource.mutate(updatedData as any);
       } else {
-        const finaldata = createPayload({
+        const finaldata = transformPayloadforCreateResource({
           account_number: accountData?.r_number,
           account_id: accountData?.rid,
           created_by: userDetails.userId,

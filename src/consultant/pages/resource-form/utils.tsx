@@ -190,7 +190,9 @@ export function transformResourceDataForUpdate(
   };
 }
 
-export const createPayload = (formData: ResourceDetailsTypes) => {
+export const transformPayloadforCreateResource = (
+  formData: ResourceDetailsTypes
+) => {
   return {
     account_id: formData.account_id,
     account_number: formData.account_number,
@@ -224,7 +226,7 @@ export const createPayload = (formData: ResourceDetailsTypes) => {
 
 export const transformCostData = (
   formData: Partial<ResourceCostSkillFormData>,
-  isEdit: boolean,
+  isEdit: boolean
 ) => {
   const data: Partial<ResourceCostPayload> = {
     eid: '',
@@ -232,11 +234,13 @@ export const transformCostData = (
     effective_date: formatDateToYYYYMMDD(formData.financial_start_date),
     end_date: formatDateToYYYYMMDD(formData.financial_end_date),
     annual_cost: formData.monthly ? Number(formData.annual) : null,
-    semi_annual_cost: formData.semi_annual ? Number(formData.semi_annual) : null,
-    monthly_cost: formData.monthly?  Number(formData.monthly) : null,
-    weekly_cost: formData.weekly ? Number(formData.weekly) :null,
-    bi_weekly_cost: formData.bi_weekly ? Number(formData.bi_weekly): null,
-    daily_cost: formData.daily ? Number(formData.daily) :  null,
+    semi_annual_cost: formData.semi_annual
+      ? Number(formData.semi_annual)
+      : null,
+    monthly_cost: formData.monthly ? Number(formData.monthly) : null,
+    weekly_cost: formData.weekly ? Number(formData.weekly) : null,
+    bi_weekly_cost: formData.bi_weekly ? Number(formData.bi_weekly) : null,
+    daily_cost: formData.daily ? Number(formData.daily) : null,
     hourly_cost: formData.hourly ? Number(formData.hourly) : null,
     resource_type: formData.resource_type,
     resource_ref_id: formData.resource_ref_id,
@@ -260,7 +264,7 @@ export const transformCostData = (
 export const transformSkillData = (
   formData: Partial<ResourceCostSkillFormData>,
   isEdit: boolean
-) => {  
+) => {
   const data: Partial<ResourceSkillPayload> = {
     eid: '',
     account_rid: formData.account_rid,
@@ -269,7 +273,9 @@ export const transformSkillData = (
     resource_ref_id: formData.resource_ref_id,
     start_date: formatDateToYYYYMMDD(formData.skill_start_date),
     skill_level: formData.skill_level as skillLevel,
-    years_of_experience: formData.years_of_experience ? Number(formData.years_of_experience) : null,
+    years_of_experience: formData.years_of_experience
+      ? Number(formData.years_of_experience)
+      : null,
     skill_name: formData.skill_name,
     accountNumber: formData.accountNumber,
     resource_desc: formData.resource_desc,
