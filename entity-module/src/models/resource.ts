@@ -7,35 +7,18 @@ export interface ResourcesAttributes {
   resource_ref_id: string;
   resource_type: "FullTime" | "Contract";
   account_rid: string;
-  resource_firstname?: string;
-  resource_middlename?: string;
-  resource_lastname?: string;
   resource_fullname?: string;
   resource_orgname?: string;
   resource_role?: string;
   fiscal_year?: number;
-  resource_email?: string;
-  resource_mobile?: string;
   country?: string;
-  region?: string;
-  currency?: string;
-  cost_frequency?:
-    | "Annual"
-    | "Semi-Annual"
-    | "Monthly"
-    | "Bi-Weekly"
-    | "Weekly"
-    | "Daily"
-    | "Hourly"
-    | null;
-  cost?: number;
+  state?: string;
+  city?: string;
   resource_startdate?: Date | null;
   resource_enddate?: Date | null;
   designation?: string;
-  manager_name?: string;
   total_years_experience?: number | null;
   total_years_in_org?: number | null;
-  resource_desc?: string;
   resource_status?: "Active" | "Inactive";
   created_datetime?: Date;
   modified_datetime?: Date;
@@ -56,34 +39,17 @@ export class Resources
   public resource_ref_id!: string;
   public resource_type!: "FullTime" | "Contract";
   public fiscal_year!: number;
-  public resource_firstname?: string;
-  public resource_middlename?: string;
-  public resource_lastname?: string;
   public resource_fullname?: string;
   public resource_orgname?: string;
   public resource_role?: string;
-  public resource_email?: string;
-  public resource_mobile?: string;
   public country?: string;
-  public region?: string;
-  public currency?: string;
-  public cost_frequency?:
-  | "Annual"
-  | "Semi-Annual"
-  | "Monthly"
-  | "Bi-Weekly"
-  | "Weekly"
-  | "Daily"
-  | "Hourly" 
-    | null;
-  public cost?: number;
+  public state?: string;
+  public city?: string;
   public resource_startdate?: Date;
   public resource_enddate?: Date;
   public designation?: string;
-  public manager_name?: string;
   public total_years_experience?: number;
   public total_years_in_org?: number;
-  public resource_desc?: string;
   public resource_status?: "Active" | "Inactive";
   public created_datetime?: Date;
   public modified_datetime?: Date;
@@ -122,27 +88,6 @@ export class Resources
           type: DataTypes.ENUM("FullTime", "Contract"),
           allowNull: false,
         },
-        resource_firstname: {
-          type: DataTypes.STRING(100),
-          validate: {
-            len: [0, 100],
-          },
-          allowNull: true,
-        },
-        resource_middlename: {
-          type: DataTypes.STRING(100),
-          validate: {
-            len: [0, 100],
-          },
-          allowNull: true,
-        },
-        resource_lastname: {
-          type: DataTypes.STRING(100),
-          validate: {
-            len: [0, 100],
-          },
-          allowNull: true,
-        },
         resource_fullname: {
           type: DataTypes.STRING(200),
           validate: {
@@ -168,47 +113,16 @@ export class Resources
           type: DataTypes.INTEGER,
           allowNull: false,
         },
-        resource_email: {
-          type: DataTypes.STRING(100),
-          validate: {
-            isEmail: true,
-            len: [0, 255],
-          },
-          allowNull: true,
-        },
-        resource_mobile: {
-          type: DataTypes.STRING(20),
-          validate: {
-            len: [0, 15],
-          },
-          allowNull: true,
-        },
         country: {
           type: DataTypes.UUID,
           allowNull: true,
         },
-        region: {
+        state: {
           type: DataTypes.UUID,
           allowNull: true,
         },
-        currency: {
+        city: {
           type: DataTypes.UUID,
-          allowNull: true,
-        },
-        cost_frequency: {
-          type: DataTypes.ENUM(
-            "Annual",
-            "Semi-Annual",
-            "Monthly",
-            "Bi-Weekly",
-            "Weekly",
-            "Daily",
-            "Hourly"
-          ),
-          allowNull: true,
-        },
-        cost: {
-          type: DataTypes.DECIMAL(12, 2),
           allowNull: true,
         },
         resource_startdate: {
@@ -226,13 +140,6 @@ export class Resources
           },
           allowNull: true,
         },
-        manager_name: {
-          type: DataTypes.STRING(100),
-          validate: {
-            len: [3, 100],
-          },
-          allowNull: true,
-        },
         total_years_experience: {
           type: DataTypes.INTEGER,
           allowNull: true,
@@ -246,10 +153,6 @@ export class Resources
           validate: {
             min: 0,
           },
-        },
-        resource_desc: {
-          type: DataTypes.STRING(1000),
-          allowNull: true,
         },
         resource_status: {
           type: DataTypes.ENUM("Active", "Inactive"),

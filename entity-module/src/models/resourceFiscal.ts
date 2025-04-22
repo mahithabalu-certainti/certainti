@@ -10,7 +10,6 @@ interface ResourceFiscalAttributes {
   fiscal_year?: number;
   country_rid?: string;
   country_region_rid?: string;
-  currency_rid?: string;
   cost_type?:
     | "Annual"
     | "Semi-Annual"
@@ -57,7 +56,6 @@ export class ResourceFiscal
   public fiscal_year?: number;
   public country_rid?: string;
   public country_region_rid?: string;
-  public currency_rid?: string;
   public cost_type?:
     | "Annual"
     | "Semi-Annual"
@@ -126,10 +124,6 @@ export class ResourceFiscal
           allowNull: true,
         },
         country_region_rid: {
-          type: DataTypes.UUID,
-          allowNull: true,
-        },
-        currency_rid: {
           type: DataTypes.UUID,
           allowNull: true,
         },

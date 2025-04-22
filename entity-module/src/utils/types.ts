@@ -2,34 +2,18 @@ export interface ICreateResource {
   account_number: string;
   resource_ref_id: string;
   resource_type: "FullTime" | "Contract";
-  first_name?: string | null;
-  middle_name?: string | null;
-  last_name?: string | null;
   full_name?: string | null;
   org_name?: string | null;
   role?: string | null;
   fiscal_year: number;
-  email?: string | null;
-  mobile?: string | null;
   country?: string | null;
-  region?: string | null;
-  currency?: string | null;
+  state?: string | null;
+  city?: string | null;
   effective_from_date?: Date | null;
   effective_end_date?: Date | null;
   designation?: string | null;
-  manager_name?: string | null;
   total_years_experience?: number | null;
   total_years_in_org?: number | null;
-  cost?: number;
-  cost_frequencty?:
-    | "Annual"
-    | "Semi-Annual"
-    | "Monthly"
-    | "Bi-Weekly"
-    | "Weekly"
-    | "Daily"
-    | "Hourly"
-    | null;
   resource_status?: "Active" | "Inactive";
   created_by: string;
   modified_by?: string | null;
@@ -41,37 +25,20 @@ export interface IUpdateResource {
   account_number: string;
   resource_ref_id: string;
   resource_type: "FullTime" | "Contract";
-  first_name?: string | null;
-  middle_name?: string | null;
-  last_name?: string | null;
   full_name?: string | null;
   org_name?: string | null;
   role?: string | null;
   fiscal_year: number;
-  email?: string | null;
-  mobile?: string | null;
   country?: string | null;
-  region?: string | null;
-  currency?: string | null;
+  state?: string | null;
+  city?: string | null;
   effective_from_date?: string | null;
   effective_end_date?: string | null;
   designation?: string | null;
-  manager_name?: string | null;
   total_years_experience?: number | null;
   total_years_in_org?: number | null;
-  cost?: number;
-  cost_frequency?:
-    | "Annual"
-    | "Semi-Annual"
-    | "Monthly"
-    | "Bi-Weekly"
-    | "Weekly"
-    | "Daily"
-    | "Hourly"
-    | null;
   resource_status?: "Active" | "Inactive";
   modified_by: string;
-  description?: string | null;
 }
 export interface IResourceCost {
   eid: string;

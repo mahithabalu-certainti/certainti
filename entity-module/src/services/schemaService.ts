@@ -141,14 +141,12 @@ class SchemaService {
           "resource_fullname",
           "resource_type",
           "resource_status",
-          "resource_email",
-          "resource_mobile",
           "resource_role",
           "designation",
           "total_years_experience",
           "country",
-          "region",
-          "currency",
+          "state",
+          "city",
         ],
       });
 
@@ -236,34 +234,18 @@ class SchemaService {
         resource_ref_id: resourceData.resource_ref_id,
         resource_type: resourceData.resource_type,
         fiscal_year: resourceData.fiscal_year,
-        resource_firstname: resourceData.first_name || "",
-        resource_middlename: resourceData.middle_name || "",
-        resource_lastname: resourceData.last_name || "",
-        resource_fullname:
-          resourceData.full_name ||
-          [
-            resourceData.first_name,
-            resourceData.middle_name,
-            resourceData.last_name,
-          ]
-            .filter(Boolean)
-            .join(" "),
+        resource_fullname: resourceData.full_name || "",
         resource_status: resourceData.resource_status,
-        resource_email: resourceData.email || "",
-        resource_mobile: resourceData.mobile || "",
         resource_orgname: resourceData.org_name || "",
         resource_startdate: startDate.toDate() || null,
         resource_enddate: endDate.toDate() || null,
         resource_role: resourceData.role || "",
-        region: resourceData.region || "",
+        state: resourceData.state || "",
         country: resourceData.country || "",
-        currency: resourceData.currency || "",
+        city: resourceData.city || "",
         designation: resourceData.designation || "",
-        manager_name: resourceData.manager_name || "",
         total_years_experience: resourceData.total_years_experience || null,
         total_years_in_org: resourceData.total_years_in_org || null,
-        cost_frequency: resourceData.cost_frequencty,
-        cost: resourceData.cost,
         created_by: resourceData.created_by,
         modified_by: resourceData.modified_by,
         account_rid: resourceData.account_id,
@@ -326,10 +308,9 @@ class SchemaService {
         resource_rid: resourceId,
         fiscal_year: resourceData.fiscal_year,
         country_rid: resourceData.country || "",
-        country_region_rid: resourceData.region || "",
+        country_region_rid: resourceData.state || "",
         effective_date: startDate.toDate(),
         end_date: endDate.toDate(),
-        currency_rid: resourceData.currency || "",
         created_by: resourceData.created_by,
       });
     } catch (err) {
@@ -398,34 +379,17 @@ class SchemaService {
       });
 
       const updateResourceObject: any = {
-        resource_fullname:
-          resourceData.full_name ||
-          [
-            resourceData.first_name,
-            resourceData.middle_name,
-            resourceData.last_name,
-          ]
-            .filter(Boolean)
-            .join(" "),
-        resource_firstname: resourceData.first_name || "",
-        resource_middlename: resourceData.middle_name || "",
-        resource_lastname: resourceData.last_name || "",
+        resource_fullname: resourceData.full_name || "",
         resource_orgname: resourceData.org_name || "",
         resource_role: resourceData.role || "",
         resource_type: resourceData.resource_type || "",
         resource_status: resourceData.resource_status,
-        resource_email: resourceData.email || "",
-        resource_mobile: resourceData.mobile || "",
         country: resourceData.country || "",
-        currency: resourceData.currency || "",
-        region: resourceData.region || "",
-        cost_frequency: resourceData.cost_frequency,
-        cost: resourceData.cost,
+        state: resourceData.state || "",
+        city: resourceData.city || "",
         resource_startdate: startDate.toDate() || null,
         resource_enddate: endDate.toDate() || null,
-        manager_name: resourceData.manager_name || "",
         designation: resourceData.designation || "",
-        resource_desc: resourceData.description || "",
         total_years_experience: resourceData.total_years_experience || null,
         total_years_in_org: resourceData.total_years_in_org || null,
         fiscal_year: resourceData.fiscal_year,
@@ -497,10 +461,9 @@ class SchemaService {
           resource_type: resourceData.resource_type || "",
           fiscal_year: resourceData.fiscal_year,
           country_rid: resourceData.country || "",
-          country_region_rid: resourceData.region || "",
+          country_region_rid: resourceData.state || "",
           effective_date: startDate.toDate(),
           end_date: endDate.toDate(),
-          currency_rid: resourceData.currency || "",
           modified_by: resourceData.modified_by,
         },
         {
@@ -681,26 +644,25 @@ class SchemaService {
             type: "SELECT",
           }
         );
-        const [currency]: any[] = await mainDbSequelize.query(
-          `SELECT currency_code FROM currency WHERE rid = :rid`,
+        const [state]: any[] = await mainDbSequelize.query(
+          `SELECT state_name FROM state WHERE rid = :rid`,
           {
-            replacements: { rid: resource.currency },
+            replacements: { rid: resource.state },
             type: "SELECT",
           }
         );
-        const [region]: any[] = await mainDbSequelize.query(
-          `SELECT region_name FROM regions WHERE rid = :rid`,
+        const [city]: any[] = await mainDbSequelize.query(
+          `SELECT city_name FROM city WHERE rid = :rid`,
           {
-            replacements: { rid: resource.region },
+            replacements: { rid: resource.city },
             type: "SELECT",
           }
         );
 
         (resource as any).dataValues.country_code =
           country?.country_code || null;
-        (resource as any).dataValues.currency_code =
-          currency?.currency_code || null;
-        (resource as any).dataValues.region_name = region?.region_name || null;
+        (resource as any).dataValues.state_name = state?.state_name || null;
+        (resource as any).dataValues.city_name = city?.city_name || null;
       }
 
       return resource;
@@ -752,64 +714,76 @@ class SchemaService {
 
   async insertGeoData(resources: any, mainDdSequilze: Sequelize) {
     try {
-      const countryIds = [...new Set(resources.map((r: any) => r.country))];
-      const regionIds = [...new Set(resources.map((r: any) => r.region))];
-      const currencyIds = [...new Set(resources.map((r: any) => r.currency))];
-
-      const countryRows = await mainDdSequilze.query(
-        `SELECT rid, country_name FROM country WHERE rid IN (:ids)`,
-        {
-          replacements: { ids: countryIds },
-          type: "SELECT",
-        }
-      );
-
-      const regions = await mainDdSequilze.query(
-        `SELECT rid, region_name FROM regions WHERE rid IN (:ids)`,
-        {
-          replacements: { ids: regionIds },
-          type: "SELECT",
-        }
-      );
-
-      const currencies = await mainDdSequilze.query(
-        `SELECT rid, currency_code FROM currency WHERE rid IN (:ids)`,
-        {
-          replacements: { ids: currencyIds },
-          type: "SELECT",
-        }
-      );
-
+      const countryIds = [...new Set(resources.map((r: any) => r.country))].filter(Boolean);
+      const stateIds = [...new Set(resources.map((r: any) => r.state))].filter(Boolean);
+      const cityIds = [...new Set(resources.map((r: any) => r.city))].filter(Boolean);
+  
+      let countryRows: any[] = [];
+      let states: any[] = [];
+      let cities: any[] = [];
+  
+      if (countryIds.length > 0) {
+        countryRows = await mainDdSequilze.query(
+          `SELECT rid, country_name FROM country WHERE rid IN (:ids)`,
+          {
+            replacements: { ids: countryIds },
+            type: "SELECT",
+          }
+        );
+      }
+  
+      if (stateIds.length > 0) {
+        states = await mainDdSequilze.query(
+          `SELECT rid, state_name FROM state WHERE rid IN (:ids)`,
+          {
+            replacements: { ids: stateIds },
+            type: "SELECT",
+          }
+        );
+      }
+  
+      if (cityIds.length > 0) {
+        cities = await mainDdSequilze.query(
+          `SELECT rid, city_name FROM city WHERE rid IN (:ids)`,
+          {
+            replacements: { ids: cityIds },
+            type: "SELECT",
+          }
+        );
+      }
+  
       const countryMap = Object.fromEntries(
         (Array.isArray(countryRows) ? countryRows : []).map((c: any) => [
           c.rid,
           c,
         ])
       );
-
-      const regionMap = Object.fromEntries(
-        (Array.isArray(regions) ? regions : []).map((s: any) => [s.rid, s])
+  
+      const statesMap = Object.fromEntries(
+        (Array.isArray(states) ? states : []).map((s: any) => [s.rid, s])
       );
-
-      const currencyMap = Object.fromEntries(
-        (Array.isArray(currencies) ? currencies : []).map((s: any) => [
+  
+      const cityMap = Object.fromEntries(
+        (Array.isArray(cities) ? cities : []).map((s: any) => [
           s.rid,
           s,
         ])
       );
-
+  
       const updatedResources = resources.map((res: any) => ({
         ...res.toJSON(),
         country_name: countryMap[res.country]?.country_name || null,
-        region_name: regionMap[res.region]?.region_name || null,
-        currency_name: currencyMap[res.currency]?.currency_code || null,
+        state_name: statesMap[res.state]?.state_name || null,
+        city_name: cityMap[res.city]?.city_name || null,
       }));
-
+  
       return updatedResources;
     } catch (err) {
-      throw new Error("Error fetching geo data" + (err as Error).message);
+      console.log("Error ", err);
+      throw new Error("Error fetching geo data: " + (err as Error).message);
     }
   }
+  
 
   async sortAndFilteGeoData(
     resources: any[],
@@ -819,9 +793,9 @@ class SchemaService {
     const updatedResources = resources
       .filter((res) => {
         if (
-          whereClause.currency?.length &&
-          !whereClause.currency.some((c: any) =>
-            res.currency_name?.toLowerCase().includes(c.toLowerCase())
+          whereClause.city?.length &&
+          !whereClause.city.some((c: any) =>
+            res.city_name?.toLowerCase().includes(c.toLowerCase())
           )
         ) {
           return false;
@@ -837,9 +811,9 @@ class SchemaService {
         }
       
         if (
-          whereClause.region?.length &&
-          !whereClause.region.some((r: any) =>
-            res.region_name?.toLowerCase().includes(r.toLowerCase())
+          whereClause.state?.length &&
+          !whereClause.state.some((r: any) =>
+            res.state_name?.toLowerCase().includes(r.toLowerCase())
           )
         ) {
           return false;
@@ -855,13 +829,13 @@ class SchemaService {
             (a.country_name || "").localeCompare(b.country_name || "") * dir
           );
         }
-        if (field === "region") {
-          return (a.region_name || "").localeCompare(b.region_name || "") * dir;
+        if (field === "state") {
+          return (a.state_name || "").localeCompare(b.state_name || "") * dir;
         }
 
-        if (field === "currency") {
+        if (field === "city") {
           return (
-            (a.currency_name || "").localeCompare(b.currency_name || "") * dir
+            (a.city_name || "").localeCompare(b.city_name || "") * dir
           );
         }
 

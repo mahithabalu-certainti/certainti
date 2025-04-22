@@ -74,9 +74,6 @@ const createResourcesSchema = Joi.object({
   account_id: Joi.string().guid({ version: ['uuidv4'] }).required(),
   resource_ref_id: Joi.string().max(50).required(),
   resource_type: Joi.string().valid("FullTime", "Contract").required(),
-  first_name: Joi.string().min(2).max(100).optional().allow("").allow(null),
-  middle_name: Joi.string().max(100).optional().allow("").allow(null),
-  last_name: Joi.string().min(2).max(100).optional().allow("").allow(null),
   full_name: Joi.string().min(3).max(200).optional().allow("").allow(null),
   org_name: Joi.string()
     .min(3)
@@ -104,11 +101,9 @@ const createResourcesSchema = Joi.object({
     'number.max': 'Fiscal year must be a 4-digit number',
     'any.required': 'Fiscal year is required',
   }),
-  email: Joi.string().email().max(255).optional().allow("").allow(null),
-  mobile: Joi.string().max(15).optional().allow("").allow(null),
   country: Joi.string().guid({ version: ['uuidv4'] }).optional().allow('', null),
-  region: Joi.string().guid({ version: ['uuidv4'] }).optional().allow('', null),
-  currency: Joi.string().guid({ version: ['uuidv4'] }).optional().allow('', null),
+  state: Joi.string().guid({ version: ['uuidv4'] }).optional().allow('', null),
+  city: Joi.string().guid({ version: ['uuidv4'] }).optional().allow('', null),
   effective_from_date: Joi.string()
     .max(10)
     .optional()
@@ -136,35 +131,11 @@ const createResourcesSchema = Joi.object({
       "date.invalidFormat": "Invalid effective end date.",
     }),
   designation: Joi.string().min(4).max(100).optional().allow("").allow(null),
-  manager_name: Joi.string().min(3).max(100).optional().allow("").allow(null),
   total_years_experience: Joi.number().optional().allow("").allow(null),
   total_years_in_org: Joi.number()
     .optional()
     .allow("")
     .allow(null),
-  description: Joi.string().max(1000).optional().allow("").allow(null),
-  cost: Joi.number()
-    .precision(2)
-    .min(0)
-    .max(999999999999.99)
-    .optional()
-    .messages({
-      "number.base": "Annual cost must be a number.",
-      "number.min": "Annual cost must be a positive number.",
-      "number.max": "Annual cost must not exceed 999999999999.99.",
-      "any.required": "Annual cost is required.",
-    }),
-  cost_frequencty: Joi.string()
-    .valid(
-      "Annual",
-      "Semi_annual",
-      "Monthly",
-      "Bi_weekly",
-      "Weekly",
-      "Daily",
-      "Hourly"
-    )
-    .optional(),
   resource_status: Joi.string().valid("Active", "Inactive").optional(),
   created_by: Joi.string().guid({ version: ['uuidv4'] }).required(),
 });
@@ -174,9 +145,6 @@ const updateResourceSchema = Joi.object({
   account_number: Joi.string().max(50).required(),
   resource_ref_id: Joi.string().max(50).required(),
   resource_type: Joi.string().valid("FullTime", "Contract").required(),
-  first_name: Joi.string().min(2).max(100).optional().allow("").allow(null),
-  middle_name: Joi.string().max(100).optional().allow("").allow(null),
-  last_name: Joi.string().min(2).max(100).optional().allow("").allow(null),
   full_name: Joi.string().min(3).max(200).optional().allow("").allow(null),
   org_name: Joi.string()
     .min(3)
@@ -204,11 +172,9 @@ const updateResourceSchema = Joi.object({
     'number.max': 'Fiscal year must be a 4-digit number',
     'any.required': 'Fiscal year is required',
   }),
-  email: Joi.string().email().max(255).optional().allow("").allow(null),
-  mobile: Joi.string().max(15).optional().allow("").allow(null),
   country: Joi.string().guid({ version: ['uuidv4'] }).optional().allow('', null),
-  region: Joi.string().guid({ version: ['uuidv4'] }).optional().allow('', null),
-  currency: Joi.string().guid({ version: ['uuidv4'] }).optional().allow('', null),
+  state: Joi.string().guid({ version: ['uuidv4'] }).optional().allow('', null),
+  city: Joi.string().guid({ version: ['uuidv4'] }).optional().allow('', null),
   effective_from_date: Joi.string()
     .max(10)
     .optional()
@@ -236,35 +202,11 @@ const updateResourceSchema = Joi.object({
       "date.invalidFormat": "Invalid effective end date.",
     }),
   designation: Joi.string().min(4).max(100).optional().allow("").allow(null),
-  manager_name: Joi.string().min(3).max(100).optional().allow("").allow(null),
   total_years_experience: Joi.number().optional().allow("").allow(null),
   total_years_in_org: Joi.number()
     .optional()
     .allow("")
     .allow(null),
-  description: Joi.string().max(1000).optional().allow("").allow(null),
-  cost: Joi.number()
-    .precision(2)
-    .min(0)
-    .max(999999999999.99)
-    .optional()
-    .messages({
-      "number.base": "Annual cost must be a number.",
-      "number.min": "Annual cost must be a positive number.",
-      "number.max": "Annual cost must not exceed 999999999999.99.",
-      "any.required": "Annual cost is required.",
-    }),
-    cost_frequency: Joi.string()
-    .valid(
-      "Annual",
-      "Semi-Annual",
-      "Monthly",
-      "Bi-Weekly",
-      "Weekly",
-      "Daily",
-      "Hourly"
-    )
-    .optional(),
   resource_status: Joi.string().valid("Active", "Inactive").optional(),
   modified_by: Joi.string().guid({ version: ['uuidv4'] }).required(),
 });
