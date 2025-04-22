@@ -40,7 +40,7 @@ jobs:
   user-module:
     needs: changes
     if: ${{ needs.changes.outputs.user-module == 'true' }}
-    name: Build and Deploy User Service
+    name: Build and Deploy User Module
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -164,7 +164,7 @@ jobs:
     needs:
       - changes
     if: ${{ needs.changes.outputs.account-module == 'true' }}
-    name: Build and Deploy Document Service
+    name: Build and Deploy Account Module
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -273,7 +273,7 @@ jobs:
     needs:
       - changes
     if: ${{ needs.changes.outputs.entity-module == 'true' }}
-    name: Build and Deploy Entity Service
+    name: Build and Deploy Entity Module
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
