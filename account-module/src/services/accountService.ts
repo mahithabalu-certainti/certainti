@@ -604,7 +604,7 @@ class AccountService {
     if (fieldFilter.contains) {
       return Sequelize.where(
         Sequelize.cast(Sequelize.col(`Account.${dbField}`), 'TEXT'),
-        'LIKE',
+        'ILIKE',
         `%${fieldFilter.contains}%`
       );
     }
