@@ -240,7 +240,7 @@ const DataTable: React.FC<DataTableProps> = ({
   }
 
   return (
-    <div className='border border-gray-300 rounded-lg mr-2'>
+    <div className='border border-gray-300 mr-2'>
       <TableContainer
         component={Paper}
         style={viewMode ? { maxHeight: '70vh', overflowY: 'auto' } : {}}

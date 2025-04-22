@@ -15,7 +15,7 @@ import {
   ProjectForm,
   ResourceForm,
 } from './consultant/pages';
-import Resource from './consultant/pages/account-details/sidebar-pages/resources/resources';
+import Resource from './consultant/pages/account-details-sidebar/sidebar-pages/resources/resources';
 import { IApp } from './consultant/types';
 import { useToast } from './hooks';
 import { useAuthHook } from './hooks/use-auth';

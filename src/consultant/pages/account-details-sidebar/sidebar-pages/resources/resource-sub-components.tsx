@@ -1,20 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Box, Tab, Tabs } from '@mui/material';
 import React, { Fragment } from 'react';
+import { AccountData } from '../../../account-details/utils';
 import ResourceCostTable from './resource-cost/resource-cost-table';
 import ResourceDetails from './resource-details/resource-details';
 import ResourceSkillTable from './resource-skill/resource-skill-table';
-import { AccountData } from '../../utils';
-
 
 interface SubcomponentProps {
   handleTabChange: (event: React.SyntheticEvent, newValue: string) => void;
   value: string;
   resourceData: any;
   accountId: string;
-  appliedFilters: Record<string, any>
-  fiscalYearValue:number,
-  accountDetails: AccountData
+  appliedFilters: Record<string, any>;
+  fiscalYearValue: number;
+  accountDetails: AccountData;
 }
 
 const ResourceSubComponents: React.FC<SubcomponentProps> = ({
@@ -24,7 +23,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   accountId,
   appliedFilters,
   fiscalYearValue,
-  accountDetails
+  accountDetails,
 }) => {
   return (
     <Fragment>
@@ -86,12 +85,20 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
         )}
         {value === 'cost' && (
           <Box sx={{ width: '100%', overflowX: 'auto' }}>
-            <ResourceCostTable fiscalYear={fiscalYearValue} appliedFilters={appliedFilters} accountDetails={accountDetails} />
+            <ResourceCostTable
+              fiscalYear={fiscalYearValue}
+              appliedFilters={appliedFilters}
+              accountDetails={accountDetails}
+            />
           </Box>
         )}
         {value === 'skill' && (
           <Box sx={{ width: '100%', overflowX: 'auto' }}>
-            <ResourceSkillTable fiscalYear={fiscalYearValue} appliedFilters={appliedFilters} accountDetails={accountDetails} />
+            <ResourceSkillTable
+              fiscalYear={fiscalYearValue}
+              appliedFilters={appliedFilters}
+              accountDetails={accountDetails}
+            />
           </Box>
         )}
       </Box>

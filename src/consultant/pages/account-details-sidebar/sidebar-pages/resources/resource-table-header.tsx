@@ -27,8 +27,8 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
   const hasButtons = headerButtons.length > 0;
 
   return (
-    <div className='border border-gray-300 mr-2'>
-      <div className='flex items-center border-b border-gray-300 justify-between p-4'>
+    <div className='border-x border-t border-gray-300 mr-2'>
+      <div className='flex items-center justify-between p-4'>
         {hasTitleSection && (
           <div className='flex gap-2 items-center'>
             {showBackArrow && (
