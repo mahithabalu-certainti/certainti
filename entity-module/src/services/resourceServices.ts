@@ -439,25 +439,25 @@ export class ResourceService {
     let goeDataFilters: Record<string, any> = {};
       const geoDataSort: string[][] = [];
 
-      if(filters.currency){
-        goeDataFilters['currency'] = filters.currency;
+      if(filters.state){
+        goeDataFilters['state'] = filters.state;
       }
 
       if(filters.country){
         goeDataFilters['country'] = filters.country;
       }
 
-      if(filters.region){
-        goeDataFilters['region'] = filters.region;
+      if(filters.city){
+        goeDataFilters['city'] = filters.city;
       }
 
       if(sortBy === "country"){
         geoDataSort.push([sortBy, sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC"])
       }
-      if(sortBy === "currency"){
+      if(sortBy === "state"){
         geoDataSort.push([sortBy, sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC"])
       }
-      if(sortBy === "region"){
+      if(sortBy === "city"){
         geoDataSort.push([sortBy, sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC"])
       }
 

@@ -58,14 +58,10 @@ class AccountService {
       // Parse filters if it's a string
       const parsedFilters = typeof filters === 'string' ? 
         (filters === '{}' ? {} : JSON.parse(filters)) : filters;
-      
-      console.log("Filters:", parsedFilters);
-      
+            
       const { whereClause } = this.buildWhereClause(parsedFilters, search);
-      console.log("Where Clause:", JSON.stringify(whereClause, this.symbolReplacer));
       
       const {allWhereClause, childClause} = this.applyAccountIDFilter(globalFilters, whereClause);
-      console.log("All Where Clause:", JSON.stringify(allWhereClause, this.symbolReplacer));
       
       const offset = (page - 1) * limit;
 
