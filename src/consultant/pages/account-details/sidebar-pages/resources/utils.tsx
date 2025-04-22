@@ -3,7 +3,7 @@
 import { FieldConfig, FilterState } from '../../components/filter/filterType';
 
 export const costFields: FieldConfig[] = [
-  { name: 'Resource Number', value: 'resource_cost_number', type: 'text' },
+  { name: 'Resource Cost Number', value: 'resource_cost_number', type: 'text' },
   { name: 'Annual', value: 'annual', type: 'number' },
   { name: 'Semi-Annual', value: 'semi_annual', type: 'number' },
   { name: 'Monthly', value: 'monthly', type: 'number' },

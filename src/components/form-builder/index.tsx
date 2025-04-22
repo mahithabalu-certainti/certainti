@@ -25,6 +25,7 @@ interface FormBuilderProps {
   values?: Record<string, string | string[] | boolean | number | null | object>;
   outData: (e: object) => void;
   onChange?: (params: OnChange) => void;
+  costDetails?: Record<string, any>;
 }
 
 export const FormBuilder: React.FC<FormBuilderProps> = ({
@@ -34,6 +35,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   loading,
   onChange,
   outData,
+  costDetails,
 }) => {
   const location = useLocation();
   const { state } = location;
@@ -67,18 +69,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       });
 
       if (state?.cost) {
-        let costInfo = state?.costInfo;
+        let costInfo = costDetails?.resourceCostById;
         constructFormData = {
           ...constructFormData,
-          financial_start_date: costInfo?.startDate || '',
-          financial_end_date: costInfo?.endDate || '',
-          annual: costInfo?.annualCost || '',
-          semi_annual: costInfo?.semiAnnualCost || '',
-          monthly: costInfo?.monthlyCost || '',
-          bi_weekly: costInfo?.biWeeklyCost || '',
-          weekly: costInfo?.weeklyCost || '',
-          daily: costInfo?.dailyCost || '',
-          hourly: costInfo?.hourlyCost || '',
+          financial_start_date: costInfo?.effective_date || '',
+          financial_end_date: costInfo?.end_date || '',
+          cost: costInfo?.cost || '',
+          cost_frequency: costInfo?.cost_frequency || ''
         };
       }
 
@@ -624,15 +621,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
   return (
     <form onSubmit={submitData} ref={formRef}>
-      {formData?.map((it, i) => {
-        const isHalf = it.fillType === 'half';
+      {formData?.map((section, i) => {
+        const isHalf = section.fillType === 'half';
         return (
           (<div key={i}>
             <h4 className={`font-medium mb-4 ${i !== 0 ? 'mt-10' : ''}`}>
-              {it.sectionName}
+              {section.sectionName}
             </h4>
             <div className={`grid md:grid-cols-${isHalf ? '2' : '1'} gap-4`}>
-              {it.fields.map((field, j) => (
+              {section.fields.map((field, j) => (
                 <div key={j} className='grid md:grid-cols-12 gap-4'>
                   <label
                     className={`text-sm text-gray-500 md:text-right mt-1 ${isHalf ? 'col-span-4' : 'col-span-2'}`}
@@ -642,7 +639,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     {field.required && <span className='text-red-500'> *</span>}
                   </label>
                   <div className={isHalf ? 'col-span-8' : 'col-span-10'}>
-                    {getFields(field, it)}
+                    {getFields(field, section)}
                     {field.error && (
                       <span className='text-red-500 text-sm col-span-full'>
                         {field.error}

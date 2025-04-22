@@ -25,6 +25,14 @@ const returnURL = (url: string, params: Record<string, any>): string => {
 
   return `${baseUrl}/${url}?${searchParams.toString()}`;
 };
+const returnCostIdURL = (url: string, params: Record<string, any>): string => {
+  const { accountNumber, id } = params;
+  const searchParams = new URLSearchParams();
+  searchParams.set('accountNumber', accountNumber);
+  // searchParams.set('id', id );
+
+  return `${baseUrl}/${url}/${id}?${searchParams.toString()}`;
+};
 
 export const costListURL = ({
   page,
@@ -50,7 +58,7 @@ export const fetchResourceCostByIdUrl = ({
   id,
   accountNumber,
 }: ResourceCostListParams): string => {
-  return returnURL(resourceCostUrl, {
+  return returnCostIdURL(resourceCostUrl, {
     id,
     accountNumber,
   });

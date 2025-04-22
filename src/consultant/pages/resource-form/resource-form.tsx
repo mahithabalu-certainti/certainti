@@ -19,7 +19,7 @@ import { useUpdateResource } from '../../services/resource-update';
 import { SelectOption } from '../../types';
 import { FormData } from './form-data';
 import { createPayload, transformResourceDataForUpdate, transformSkillData, transformCostData } from './utils.tsx';
-import { useCreateResourceCost, useUpdateResourceCost } from '../../services/resource-cost/resource-cost-service';
+import { useCreateResourceCost, useFetchResourceCostById, useUpdateResourceCost } from '../../services/resource-cost/resource-cost-service';
 import { useCreateResourceSkill, useUpdateResourceSkill } from '../../services/resource-skill/resource-skill-service';
 
 const ResourceForm: React.FC = () => {
@@ -33,7 +33,6 @@ const ResourceForm: React.FC = () => {
   const { successToast, errorToast } = useToast();
   const location = useLocation();
   const { state } = location;
-  console.log('location', location);
   const navigate = useNavigate();
 
   // Derived values
@@ -49,6 +48,13 @@ const ResourceForm: React.FC = () => {
 
   const resourceRId = !isEditView && (state?.cost || state?.skill) ? state?.resourceData?.rid : isEditView && (state?.cost || state?.skill) ? skillCostResourceId : null;
   const accountNumber = state?.cost || state?.skill ? state?.data?.accountById?.r_number : null;
+
+  //data fetching by cost id
+
+  const { data: costDetails } = useFetchResourceCostById({
+    accountNumber: accountNumber,
+    id: state?.costInfo?.costRid
+  });
 
 
   // Data fetching
@@ -298,6 +304,7 @@ const ResourceForm: React.FC = () => {
           outData={handleSubmit}
           formRef={formRef}
           onChange={handleFieldChange}
+          costDetails={costDetails as Record<string, any> | undefined}
         />
       </div>
     </div>
