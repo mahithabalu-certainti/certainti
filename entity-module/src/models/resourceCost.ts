@@ -76,7 +76,7 @@ export class ResourceCost extends Model<ResourceCostAttributes, ResourceCostCrea
        },
        resource_type: {
         type: DataTypes.STRING(255),
-        allowNull: true,
+        allowNull: false,
        },
        resource_rid: {
         type: DataTypes.UUID,

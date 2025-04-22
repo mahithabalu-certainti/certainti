@@ -321,6 +321,8 @@ class UserService {
 
       const whereClause = this.buildWhereClause(filters, search);
 
+      console.log("whereClause : ",JSON.stringify(whereClause));
+
       const [finalSortBy, finalSortOrder] = this.getSortParameters(
         sortBy,
         sortOrder
@@ -686,17 +688,20 @@ class UserService {
     search: string
   ): Record<string, any> {
     let whereClause: Record<string, any> = {};
-
+  
     if (search) {
       const searchCondition = {
         [Op.or]: [
           { full_name: { [Op.iLike]: `%${search}%` } },
           { first_name: { [Op.iLike]: `%${search}%` } },
+          { last_name: { [Op.iLike]: `%${search}%` } },
+          { middle_name: { [Op.iLike]: `%${search}%` } },
+          { r_number: { [Op.iLike]: `%${search}%` } },
           { email: { [Op.iLike]: `%${search}%` } },
           { "$business_teams.business_teams$": { [Op.iLike]: `%${search}%` } },
         ],
       };
-
+  
       if (Object.keys(whereClause).length > 0) {
         whereClause = {
           [Op.and]: [whereClause, searchCondition],
@@ -705,50 +710,83 @@ class UserService {
         whereClause = searchCondition;
       }
     }
-
+  
     const filterFields = [
       { clientField: "user_name", dbField: "first_name" },
+      { clientField: "first_name", dbField: "first_name" },
+      { clientField: "last_name", dbField: "last_name" },
+      { clientField: "middle_name", dbField: "middle_name" },
       { clientField: "full_name", dbField: "full_name" },
+      { clientField: "r_number", dbField: "r_number" },
       { clientField: "email", dbField: "email" },
-      { clientField: "status", dbField: "status" },
+      // Status is handled separately
     ];
-
+  
+    // Process all fields except status
     filterFields.forEach((fieldMapping) => {
       const { clientField, dbField } = fieldMapping;
-
+  
       if (filters[clientField]) {
         const fieldFilter = filters[clientField];
-
+  
         if (fieldFilter.startsWith) {
           whereClause[dbField] = { [Op.iLike]: `${fieldFilter.startsWith}%` };
         } else if (fieldFilter.endWith) {
           whereClause[dbField] = { [Op.iLike]: `%${fieldFilter.endWith}` };
         } else if (fieldFilter.contains) {
           whereClause[dbField] = { [Op.iLike]: `%${fieldFilter.contains}%` };
-        } else if (fieldFilter.value) {
-          whereClause[dbField] = fieldFilter.value;
+        } else if (fieldFilter.equals) {
+          whereClause[dbField] = { [Op.eq]: fieldFilter.equals };
+        } else if (typeof fieldFilter === 'string') {
+          whereClause[dbField] = { [Op.eq]: fieldFilter };
         }
       }
     });
-
-    if (filters.profile && filters.profile.startsWith) {
-      whereClause["$profile.profile_name$"] = {
-        [Op.iLike]: `${filters.profile.startsWith}%`,
-      };
+  
+    // Special handling for status field
+    if (filters.status) {
+      const statusFilter = filters.status;
+      
+      // If status is a string, use it directly
+      if (typeof statusFilter === 'string') {
+        whereClause['status'] = statusFilter;
+      } 
+      // If status has an equals property, use that value directly
+      else if (statusFilter.equals && typeof statusFilter.equals === 'string') {
+        whereClause['status'] = statusFilter.equals;
+      }
+      // For backward compatibility, check other properties but use direct equality
+      else if (statusFilter.startsWith && typeof statusFilter.startsWith === 'string') {
+        whereClause['status'] = statusFilter.startsWith;
+      } else if (statusFilter.endWith && typeof statusFilter.endWith === 'string') {
+        whereClause['status'] = statusFilter.endWith;
+      } else if (statusFilter.contains && typeof statusFilter.contains === 'string') {
+        whereClause['status'] = statusFilter.contains;
+      }
     }
-
-    if (filters.profile && filters.profile.endWith) {
-      whereClause["$profile.profile_name$"] = {
-        [Op.iLike]: `%${filters.profile.endWith}`,
-      };
+  
+    // Handle profile filters
+    if (filters.profile) {
+      if (filters.profile.startsWith) {
+        whereClause["$profile.profile_name$"] = {
+          [Op.iLike]: `${filters.profile.startsWith}%`,
+        };
+      } else if (filters.profile.endWith) {
+        whereClause["$profile.profile_name$"] = {
+          [Op.iLike]: `%${filters.profile.endWith}`,
+        };
+      } else if (filters.profile.contains) {
+        whereClause["$profile.profile_name$"] = {
+          [Op.iLike]: `%${filters.profile.contains}%`,
+        };
+      } else if (filters.profile.equals) {
+        // Add support for exact matching with equals operator for profile
+        whereClause["$profile.profile_name$"] = {
+          [Op.eq]: filters.profile.equals,
+        };
+      }
     }
-
-    if (filters.profile && filters.profile.contains) {
-      whereClause["$profile.profile_name$"] = {
-        [Op.iLike]: `%${filters.profile.contains}%`,
-      };
-    }
-
+  
     return whereClause;
   }
 

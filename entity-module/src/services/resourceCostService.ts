@@ -153,13 +153,8 @@ class ResourceCostService {
         resource_ref_id,
         effective_date,
         end_date,
-        annual_cost,
-        semi_annual_cost,
-        monthly_cost,
-        weekly_cost,
-        bi_weekly_cost,
-        daily_cost,
-        hourly_cost,
+        cost_frequency,
+        cost,
         currency_rid,
         accountNumber,
       } = resourceCost;
@@ -196,8 +191,36 @@ class ResourceCostService {
       let createdResourceCost;
       let eventStatus = "Success";
       let errorMessage = "";
+      let frequency= {};
 
       try {
+        switch(cost_frequency) {
+          case "annual":
+            frequency = { annual_cost: cost };
+            break;
+          case "semi_annual":
+            frequency = { semi_annual_cost: cost };
+            break;
+          case "monthly":
+            frequency = { monthly_cost: cost };
+            break;
+          case "weekly":
+            frequency = { weekly_cost: cost };
+            break;
+          case "bi_weekly":
+            frequency = { bi_weekly_cost: cost };
+            break;
+          case "daily":
+            frequency = { daily_cost: cost };
+            break;
+          case "hourly":
+            frequency = { hourly_cost: cost };
+            break;
+          default:
+            throw new Error(`Invalid cost frequency: ${cost_frequency}`);
+        }
+    
+    
         // Use the model's create method to leverage default values
         createdResourceCost = await repository.create({
           eid,
@@ -205,15 +228,9 @@ class ResourceCostService {
           resource_type,
           resource_rid,
           resource_ref_id,
-          effective_date,
-          end_date,
-          annual_cost,
-          semi_annual_cost,
-          monthly_cost,
-          weekly_cost,
-          bi_weekly_cost,
-          daily_cost,
-          hourly_cost,
+          effective_date: effective_date || new Date(),
+          end_date: end_date || (effective_date ? new Date(effective_date.getTime() + 86400000) : undefined),
+          ...frequency,
           currency_rid,
         });
 
@@ -231,13 +248,7 @@ class ResourceCostService {
 
             if (existingFiscal) {
               await existingFiscal.update({
-                annual_cost,
-                semiannual_cost:semi_annual_cost,
-                monthly_cost,
-                weekly_cost,
-                bi_weekly_cost,
-                daily_cost,
-                hourly_cost,
+                ...frequency,
                 modified_datetime: new Date(),
               });
             }
@@ -338,13 +349,8 @@ class ResourceCostService {
         eid,
         effective_date,
         end_date,
-        annual_cost,
-        semi_annual_cost,
-        monthly_cost,
-        weekly_cost,
-        bi_weekly_cost,
-        daily_cost,
-        hourly_cost,
+        cost_frequency,
+        cost,
         currency_rid,
         accountNumber,
         rid,
@@ -386,19 +392,42 @@ class ResourceCostService {
         };
       }
 
+      let frequency= {};
+
       try {
+        switch(cost_frequency) {
+          case "annual":
+            frequency = { annual_cost: cost };
+            break;
+          case "semi_annual":
+            frequency = { semi_annual_cost: cost };
+            break;
+          case "monthly":
+            frequency = { monthly_cost: cost };
+            break;
+          case "weekly":
+            frequency = { weekly_cost: cost };
+            break;
+          case "bi_weekly":
+            frequency = { bi_weekly_cost: cost };
+            break;
+          case "daily":
+            frequency = { daily_cost: cost };
+            break;
+          case "hourly":
+            frequency = { hourly_cost: cost };
+            break;
+          default:
+            throw new Error(`Invalid cost frequency: ${cost_frequency}`);
+        }
+    
+
         const [affectedCounts, affectedRows] = await repository.update(
           {
             eid,
             effective_date,
             end_date,
-            annual_cost,
-            semi_annual_cost,
-            monthly_cost,
-            weekly_cost,
-            bi_weekly_cost,
-            daily_cost,
-            hourly_cost,
+            ...frequency,
             currency_rid,
             rid,
             status,
@@ -424,13 +453,7 @@ class ResourceCostService {
 
             if (existingFiscal) {
               await existingFiscal.update({
-                annual_cost,
-                semiannual_cost:semi_annual_cost,
-                monthly_cost,
-                weekly_cost,
-                bi_weekly_cost,
-                daily_cost,
-                hourly_cost,
+                ...frequency,
                 modified_datetime: new Date(),
               });
             }
