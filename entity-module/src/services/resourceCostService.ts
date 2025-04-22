@@ -666,6 +666,59 @@ class ResourceCostService {
         ],
       });
 
+      // Transform the response to simplify cost frequency data
+      if (resourceCostById) {
+        const costData = resourceCostById.toJSON();
+        // Find which cost frequency has a value
+        const frequencyMap: Record<string, string> = {
+          annual_cost: "annual",
+          semi_annual_cost: "semi_annual",
+          monthly_cost: "monthly",
+          weekly_cost: "weekly",
+          bi_weekly_cost: "bi_weekly",
+          daily_cost: "daily",
+          hourly_cost: "hourly"
+        };
+        
+        let foundFrequency = null;
+        let costValue = null;
+        
+        // Check each cost field to find the one with a value
+        for (const [key, value] of Object.entries(frequencyMap)) {
+          // Use type assertion to tell TypeScript this is a valid key access
+          const costFieldValue = (costData as Record<string, any>)[key];
+          if (costFieldValue !== null && costFieldValue !== undefined && costFieldValue !== '') {
+            foundFrequency = value;
+            costValue = costFieldValue;
+            break;
+          }
+        }
+        
+        // Create a new response object with simplified cost data
+        const simplifiedCostData = {
+          ...costData,
+          cost_frequency: foundFrequency,
+          cost: costValue
+        };
+        
+        // Remove the individual cost frequency fields
+        delete (simplifiedCostData as Record<string, any>).annual_cost;
+        delete (simplifiedCostData as Record<string, any>).semi_annual_cost;
+        delete (simplifiedCostData as Record<string, any>).monthly_cost;
+        delete (simplifiedCostData as Record<string, any>).weekly_cost;
+        delete (simplifiedCostData as Record<string, any>).bi_weekly_cost;
+        delete (simplifiedCostData as Record<string, any>).daily_cost;
+        delete (simplifiedCostData as Record<string, any>).hourly_cost;
+        
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.SUCCESS_MESSAGE,
+          data: {
+            resourceCostById: simplifiedCostData,
+          },
+        };
+      }
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
