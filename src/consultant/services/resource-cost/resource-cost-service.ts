@@ -93,13 +93,14 @@ export const fetchResourceCost = async (
 export const useFetchResourceCostById = (
   params: ResourceCostListParams,
   options?: UseQueryOptions
-): UseQueryResult => {
+): UseQueryResult => {  
   return useQuery({
     queryKey: ['resource-cost-byId', params],
     queryFn: async () => {
       const res = await fetchResourceCostById(params);
       return res.data;
     },
+    enabled: !!params.id,
     ...options,
   });
 };

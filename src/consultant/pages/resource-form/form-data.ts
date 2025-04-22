@@ -9,7 +9,7 @@ import {
 import { mockSkillLevelOptions } from '../../mockdata/resource-form';
 import { FormType, selectOptions } from '../../types';
 import {
-  // FREQUENCY_OPTIONS,
+  FREQUENCY_OPTIONS,
   RESOURCE_STATUS_OPTIONS,
   RESOURCE_TYPE_OPTIONS,
 } from './utils.tsx';
@@ -104,7 +104,29 @@ export const ResourceFormData = (
           }),
         ],
       },
-
+      {
+        sectionName: 'Financial Information',
+        fillType: 'half',
+        fields: [
+          createDateField('financial_start_date', 'Effective From', {
+            required: false,
+          }),
+          createDateField('financial_end_date', 'End Date', {
+            required: false,
+          }),
+          createSelectField('cost_frequency', 'Cost Frequency', {
+            options: FREQUENCY_OPTIONS,
+            placeholder: '-Select-',
+            required: true,
+          }),
+          createTextField('cost', 'Cost', {
+            required: true,
+            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
+            regexErrorMessage: 'Numbers only',
+            placeholder: 'Enter Cost',
+          }),
+        ],
+      },
       {
         sectionName: 'Skill Information',
         fillType: 'half',
@@ -147,7 +169,6 @@ export const ResourceFormData = (
             regexErrorMessage: 'Letters and spaces only',
             placeholder: 'Enter Designation',
           }),
-
           createTextField(
             'total_years_experience',
             'Total Years of Experience',

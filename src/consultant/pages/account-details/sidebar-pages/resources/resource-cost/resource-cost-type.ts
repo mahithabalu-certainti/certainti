@@ -10,8 +10,8 @@ export interface ResourceCostType {
   accountRid?:string,
   costRid?:string,
   resourceRID?:string,
-  resource_type?:string,
-  resource_fullname?:string,
+  resourceType?:string,
+  resourceFullName?:string,
   resourceCostNumber?: string;
   resourceRefId?: string;
   currency?: string;
@@ -32,10 +32,11 @@ export function convertResourceCost(
   const resourceCostList: ResourceCostType[] = []; 
 
   function processResourceCost(cost: ResourceCostList): void {
+
     const convertedCost: ResourceCostType = {
       accountRid:cost.account_rid,
-      resource_type:cost.resource_type,
-      resource_fullname: cost.resource_fullname,
+      resourceType:cost.resource_type,
+      resourceFullName: cost.resource_fullname,
       resourceCostNumber:cost.r_number,
       resourceRID: cost.resource_rid,
       resourceRefId: cost.resource_ref_id,

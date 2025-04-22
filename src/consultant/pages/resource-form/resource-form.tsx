@@ -13,16 +13,8 @@ import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
 import { useFetchCity, useFetchState } from '../../services/account';
-import {
-  useCreateResourceCost,
-  useUpdateResourceCost,
-} from '../../services/resource-cost/resource-cost-service';
 import { useCreateResource } from '../../services/resource-create';
 import { useResourceDetail } from '../../services/resource-details';
-import {
-  useCreateResourceSkill,
-  useUpdateResourceSkill,
-} from '../../services/resource-skill/resource-skill-service';
 import { useUpdateResource } from '../../services/resource-update';
 import { SelectOption } from '../../types';
 import { ResourceFormData } from './form-data';
@@ -32,6 +24,8 @@ import {
   transformPayloadforUpdateResource,
   transformSkillData,
 } from './utils.tsx';
+import { useCreateResourceCost, useFetchResourceCostById, useUpdateResourceCost } from '../../services/resource-cost/resource-cost-service';
+import { useCreateResourceSkill, useUpdateResourceSkill } from '../../services/resource-skill/resource-skill-service';
 
 const ResourceForm: React.FC = () => {
   // Refs
@@ -47,7 +41,6 @@ const ResourceForm: React.FC = () => {
   const { successToast, errorToast } = useToast();
   const location = useLocation();
   const { state } = location;
-  console.log('location', location);
   const navigate = useNavigate();
 
   // Derived values
@@ -70,12 +63,19 @@ const ResourceForm: React.FC = () => {
         : null;
   const accountNumber =
     state?.cost || state?.skill ? state?.data?.accountById?.r_number : null;
+  //data fetching by cost id
+
+  const { data: costDetails } = useFetchResourceCostById({
+    accountNumber: accountNumber,
+    id: state?.costInfo?.costRid
+  });
+
 
   // Data fetching
   const { data: resource } = useResourceDetail(
     location?.state?.resource?.rid || resourceRId,
     location?.state?.accountDetails?.data?.accountById?.r_number ||
-      accountNumber
+    accountNumber
   );
 
   // const resourceValues = resource?.data?.resourceDetails;
@@ -304,20 +304,20 @@ const ResourceForm: React.FC = () => {
           loading={allCountries.isLoading}
           values={
             isEditView &&
-            (!state?.cost || !state?.skill) &&
-            (resource?.data?.resourceDetails as unknown as Record<
-              string,
-              string | number | boolean | string[] | null
-            >)
+              (!state?.cost || !state?.skill) &&
+              (resource?.data?.resourceDetails as unknown as Record<
+                string,
+                string | number | boolean | string[] | null
+              >)
               ? (resource?.data?.resourceDetails as unknown as Record<
+                string,
+                string | number | boolean | string[] | null
+              >)
+              : state?.cost || state?.skill
+                ? (resource?.data?.resourceDetails as unknown as Record<
                   string,
                   string | number | boolean | string[] | null
                 >)
-              : state?.cost || state?.skill
-                ? (resource?.data?.resourceDetails as unknown as Record<
-                    string,
-                    string | number | boolean | string[] | null
-                  >)
                 : undefined
           }
           // values={
@@ -329,6 +329,7 @@ const ResourceForm: React.FC = () => {
           outData={handleSubmit}
           formRef={formRef}
           onChange={onChangeField}
+          costDetails={costDetails as Record<string, any> | undefined}
         />
       </div>
     </div>

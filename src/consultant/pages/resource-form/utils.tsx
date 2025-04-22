@@ -189,15 +189,8 @@ export const transformCostData = (
     account_rid: formData.account_rid,
     effective_date: formatDateToYYYYMMDD(formData.financial_start_date),
     end_date: formatDateToYYYYMMDD(formData.financial_end_date),
-    annual_cost: formData.monthly ? Number(formData.annual) : null,
-    semi_annual_cost: formData.semi_annual
-      ? Number(formData.semi_annual)
-      : null,
-    monthly_cost: formData.monthly ? Number(formData.monthly) : null,
-    weekly_cost: formData.weekly ? Number(formData.weekly) : null,
-    bi_weekly_cost: formData.bi_weekly ? Number(formData.bi_weekly) : null,
-    daily_cost: formData.daily ? Number(formData.daily) : null,
-    hourly_cost: formData.hourly ? Number(formData.hourly) : null,
+    cost_frequency: formData.cost_frequency,
+    cost: formData.cost ? Number(formData.cost) : null,
     resource_type: formData.resource_type,
     resource_ref_id: formData.resource_ref_id,
     currency_rid: formData.currency,

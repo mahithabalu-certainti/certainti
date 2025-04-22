@@ -32,6 +32,8 @@ export type ResourceCostList = {
   bi_weekly_cost?: string | null;
   daily_cost?: string | null;
   hourly_cost?: string | null;
+  cost: string | null;
+  cost_frequency?: string | null;
   currency_rid?: string;
   fiscal_year?: string;
   currency_code?: string;
@@ -81,13 +83,8 @@ export type ResourceCostSkillFormData = {
   currency?: string;
   financial_start_date?: string;
   financial_end_date?: string;
-  annual?: string;
-  semi_annual?: string;
-  monthly?: string;
-  bi_weekly?: string;
-  weekly?: string;
-  daily?: string;
-  hourly?: string;
+  cost_frequency?: string;
+  cost?: string;
   resource_effective_from?: string;
   resource_end_date?: string;
   designation?: string;
@@ -111,13 +108,8 @@ export type ResourceCostPayload = {
   resource_ref_id: string;
   effective_date?: string;
   end_date?: string;
-  annual_cost?: number | null;
-  semi_annual_cost?: number | null;
-  monthly_cost?: number | null;
-  weekly_cost?: number | null;
-  bi_weekly_cost?: number | null;
-  daily_cost?: number | null;
-  hourly_cost?: number | null;
+  cost?: number | null;
+  cost_frequency?:string,
   fiscal_year?: string;
   currency_rid?: string;
   accountNumber?: string;

@@ -26,6 +26,8 @@ import {
   TextFilterControl,
 } from './helper';
 
+// filter to use in resource, cost and skill list pages
+
 const Filter: React.FC<FilterComponentProps> = ({
   filterMenu,
   setAppliedFilters,
