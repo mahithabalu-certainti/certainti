@@ -6,16 +6,16 @@ import { RESOURCE, RESOURCE_CREATE } from '../../../../../routes';
 import { useResourceList } from '../../../../services/resource-list';
 import TabPanel from '../../components/tab';
 import ListTable from '../../components/table';
+import { AccountData } from '../../utils';
 import { getResourceColumns } from './columns';
 import ResourceSubComponents from './resource-sub-components';
 import ResourceTableHeader from './resource-table-header';
-import { AccountData } from '../../utils';
 
 interface ResourceProps {
   accountDetails?: Record<string, any>;
 }
 
-const Resource:React.FC<ResourceProps> = ({ accountDetails }) => {
+const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
   const [viewMode, setViewMode] = useState<boolean>(false);
   const [viewResourceList, setViewResourceList] = useState<boolean>(true);
   const [columns, setColumns] = useState<any>([]);
@@ -24,33 +24,47 @@ const Resource:React.FC<ResourceProps> = ({ accountDetails }) => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
   const [showBackArrow, setShowBackArrow] = useState<boolean>(false);
   const [resourceData, setResourceData] = useState<any>({});
+  const [currentPage, setCurrentPage] = useState(0);
+  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
+  const [sortField, setSortField] = useState<string>('rid');
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
   const navigate = useNavigate();
   const {
     data: ResourceList,
     isLoading,
     error,
-  } = useResourceList(accountDetails?.data?.accountById.r_number);
+  } = useResourceList({
+    page: currentPage,
+    limit: rowsPerPage,
+    accountNumber: accountDetails?.data?.accountById.r_number,
+    sortBy: sortField,
+    sortOrder: sortOrder,
+    filters: appliedFilters,
+  });
   const handleFilter = () => {
     setShowFilter(!showFilter);
-    if(showFilter === false){
-      setAppliedFilters({})
+    if (showFilter === false) {
+      setAppliedFilters({});
     }
   };
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
     setValue(newValue);
-    setAppliedFilters({})
+    setAppliedFilters({});
   };
 
   // fiscalYear change
 
-  const [fiscalYearValue, setFiscalYearValue] = useState<number>(new Date().getFullYear())
+  const [fiscalYearValue, setFiscalYearValue] = useState<number>(
+    new Date().getFullYear()
+  );
 
   const handleResourceClick = (row: any) => {
     setResourceData(row);
     setViewResourceList(!viewResourceList);
     setShowBackArrow(!showBackArrow);
-    setValue('details')
+    setValue('details');
   };
 
   useEffect(() => {
@@ -69,7 +83,6 @@ const Resource:React.FC<ResourceProps> = ({ accountDetails }) => {
     });
   };
 
-  
   const actionMenuItems = [
     {
       label: 'Edit',
@@ -98,17 +111,17 @@ const Resource:React.FC<ResourceProps> = ({ accountDetails }) => {
     variant: 'text' | 'outlined' | 'contained';
     onClick: () => void;
   }[] = [
-      {
-        label: 'Download',
-        variant: 'outlined',
-        onClick: () => console.log('Download'),
-      },
-      {
-        label: 'New',
-        variant: 'outlined',
-        onClick: () => handleCreateResource(),
-      },
-    ];
+    {
+      label: 'Download',
+      variant: 'outlined',
+      onClick: () => console.log('Download'),
+    },
+    {
+      label: 'New',
+      variant: 'outlined',
+      onClick: () => handleCreateResource(),
+    },
+  ];
 
   const toggleViewMode = () => {
     setViewMode(!viewMode);
@@ -124,11 +137,16 @@ const Resource:React.FC<ResourceProps> = ({ accountDetails }) => {
       navigate(RESOURCE_CREATE, { state: accountDetails });
     }
     if (value === 'cost') {
-      navigate(`${RESOURCE}/cost/create`, { state: { ...accountDetails, resourceData, cost: true } })
+      navigate(`${RESOURCE}/cost/create`, {
+        state: { ...accountDetails, resourceData, cost: true },
+      });
     } else if (value === 'skill') {
-      navigate(`${RESOURCE}/skill/create`, { state: { ...accountDetails, resourceData, skill: true } })
+      navigate(`${RESOURCE}/skill/create`, {
+        state: { ...accountDetails, resourceData, skill: true },
+      });
     }
   };
+
   return (
     <div className='w-full'>
       <TabPanel
@@ -175,6 +193,13 @@ const Resource:React.FC<ResourceProps> = ({ accountDetails }) => {
           isLoading={isLoading}
           error={error}
           rowIdentifier='rid'
+          setCurrentPage={setCurrentPage}
+          setSortOrder={setSortOrder}
+          setSortField={setSortField}
+          setRowsPerPage={setRowsPerPage}
+          sortField={sortField}
+          sortOrder={sortOrder}
+          currentPage={currentPage}
         />
       )}
     </div>

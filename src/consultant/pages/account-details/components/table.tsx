@@ -3,11 +3,13 @@ import {
   Button,
   Checkbox,
   CircularProgress,
+  FormControl,
   IconButton,
   ListItemText,
   Menu,
   MenuItem,
   Paper,
+  Select,
   Table,
   TableBody,
   TableCell,
@@ -50,13 +52,21 @@ interface DataTableProps {
   headerButtons?: TableHeaderButton[];
   pagination?: boolean;
   rowsPerPage?: number;
+  rowsPerPageOptions?: number[]; // New prop for rows per page options
   sortable?: boolean;
   onViewModeToggle?: (viewMode: boolean) => void;
   viewMode?: boolean;
   isLoading?: boolean;
   error?: Error | null;
   emptyStateMessage?: string;
+  setCurrentPage: (page: number) => void; // Callback to set current page
+  setSortOrder: (order: 'ASC' | 'DESC') => void; // Callback to set sort order
+  setSortField: (field: string) => void; // Callback to set sort field
+  setRowsPerPage: (rows: number) => void; // Callback to set rows per page
+  sortField?: string; // Current sort field
+  currentPage?: number; // Current page number
   rowIdentifier?: string; // Key to identify rows uniquely
+  sortOrder: 'ASC' | 'DESC'; // Current sort order
 }
 
 const DataTable: React.FC<DataTableProps> = ({
@@ -65,6 +75,7 @@ const DataTable: React.FC<DataTableProps> = ({
   actionMenuItems = [],
   pagination = true,
   rowsPerPage = 5,
+  rowsPerPageOptions = [5, 10, 25, 50, 100], // Default rows per page options
   sortable = true,
   onViewModeToggle,
   viewMode = false,
@@ -72,12 +83,16 @@ const DataTable: React.FC<DataTableProps> = ({
   error = null,
   emptyStateMessage = 'No data available',
   rowIdentifier = 'id',
+  setCurrentPage,
+  setSortOrder,
+  setSortField,
+  setRowsPerPage,
+  sortField,
+  currentPage = 0,
+  sortOrder,
 }) => {
-  const [currentPage, setCurrentPage] = useState(0);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [selectedRowData, setSelectedRowData] = useState<any | null>(null);
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [sortField, setSortField] = useState<string>('');
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
 
   const handlePageChange = (_event: unknown, newPage: number) => {
@@ -98,9 +113,15 @@ const DataTable: React.FC<DataTableProps> = ({
   };
 
   const handleSortRequest = (property: string) => {
-    const isAscending = sortField === property && sortOrder === 'asc';
-    setSortOrder(isAscending ? 'desc' : 'asc');
+    const isAscending = sortField === property && sortOrder === 'ASC';
+    setSortOrder(isAscending ? 'DESC' : 'ASC');
     setSortField(property);
+  };
+
+  const handleRowsPerPageChange = (event: any) => {
+    const newRowsPerPage = event.target.value as number;
+    setRowsPerPage(newRowsPerPage);
+    setCurrentPage(0); // Reset to first page when rows per page changes
   };
 
   const stableSort = (array: any[], comparator: (a: any, b: any) => number) => {
@@ -115,8 +136,8 @@ const DataTable: React.FC<DataTableProps> = ({
     return stabilizedThis.map((el) => el[0]);
   };
 
-  const getComparator = (order: 'asc' | 'desc', orderBy: string) => {
-    return order === 'desc'
+  const getComparator = (order: 'ASC' | 'DESC', orderBy: string) => {
+    return order === 'DESC'
       ? (a: any, b: any) => descendingComparator(a, b, orderBy)
       : (a: any, b: any) => -descendingComparator(a, b, orderBy);
   };
@@ -252,7 +273,11 @@ const DataTable: React.FC<DataTableProps> = ({
                   {sortable && column.sortable !== false ? (
                     <TableSortLabel
                       active={sortField === column.id}
-                      direction={sortField === column.id ? sortOrder : 'asc'}
+                      direction={
+                        sortField === column.id
+                          ? sortOrder.toLowerCase()
+                          : 'ASC'.toLowerCase()
+                      }
                       onClick={() => handleSortRequest(column.id)}
                     >
                       {column.label}
@@ -323,7 +348,24 @@ const DataTable: React.FC<DataTableProps> = ({
 
         {pagination && !viewMode && data.length > 0 && (
           <div className='flex items-center justify-between p-2'>
-            <div className='px-4 py-2'>{/* Empty div for spacing */}</div>
+            <div className='flex items-center px-4 py-2'>
+              <Typography variant='body2' className='mr-2'>
+                Rows per page:
+              </Typography>
+              <FormControl variant='standard' size='small'>
+                <Select
+                  value={rowsPerPage}
+                  onChange={handleRowsPerPageChange}
+                  className='text-sm'
+                >
+                  {rowsPerPageOptions.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </div>
             <div className='flex-grow flex justify-center items-center'>
               <Button
                 variant='text'
@@ -333,8 +375,8 @@ const DataTable: React.FC<DataTableProps> = ({
                 View All
               </Button>
             </div>
-            <div className='px-4 py-2'>
-              <span className='text-gray-600'>{`${from}-${to} of ${data.length}`}</span>
+            <div className='flex items-center px-4 py-2'>
+              <span className='text-gray-600 mr-4'>{`${from}-${to} of ${data.length}`}</span>
               <IconButton
                 size='small'
                 disabled={currentPage === 0}

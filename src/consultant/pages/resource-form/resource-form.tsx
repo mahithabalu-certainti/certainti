@@ -29,7 +29,7 @@ import { ResourceFormData } from './form-data';
 import {
   transformCostData,
   transformPayloadforCreateResource,
-  transformResourceDataForUpdate,
+  transformPayloadforUpdateResource,
   transformSkillData,
 } from './utils.tsx';
 
@@ -214,7 +214,7 @@ const ResourceForm: React.FC = () => {
 
     if (!state?.skill && !state?.cost) {
       if (isEditView) {
-        const updatedData = transformResourceDataForUpdate(
+        const updatedData = transformPayloadforUpdateResource(
           formValues,
           resource?.data?.resourceDetails, // Adjusted to access the correct property
           {
