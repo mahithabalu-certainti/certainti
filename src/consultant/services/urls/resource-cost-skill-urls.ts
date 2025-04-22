@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ResourceCostListParams } from '../../types/resource-cost';
 import { ResourceSkillListParams } from '../../types/resource-skill';
 
@@ -8,7 +9,8 @@ export const updateResourceCost = 'api/resource_cost/update';
 export const resourceSkillUrl = 'api/resource_skill/list';
 
 const returnURL = (url: string, params: Record<string, any>): string => {
-  const { page, limit, sortBy, sortOrder, filters, accountNumber, fiscalYear } = params;
+  const { page, limit, sortBy, sortOrder, filters, accountNumber, fiscalYear } =
+    params;
   const searchParams = new URLSearchParams();
 
   searchParams.set('page', page.toString());
@@ -50,7 +52,7 @@ export const costListURL = ({
     sortOrder,
     filters,
     accountNumber,
-    fiscalYear
+    fiscalYear,
   });
 };
 
@@ -80,7 +82,7 @@ export const skillListURL = ({
   sortOrder,
   filters,
   accountNumber,
-  fiscalYear
+  fiscalYear,
 }: ResourceSkillListParams): string => {
   return returnURL(resourceSkillUrl, {
     page,
@@ -89,6 +91,6 @@ export const skillListURL = ({
     sortOrder,
     filters,
     accountNumber,
-    fiscalYear
+    fiscalYear,
   });
 };

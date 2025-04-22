@@ -190,7 +190,9 @@ export function transformResourceDataForUpdate(
   };
 }
 
-export const createPayload = (formData: ResourceDetailsTypes) => {
+export const transformPayloadforCreateResource = (
+  formData: ResourceDetailsTypes
+) => {
   return {
     account_id: formData.account_id,
     account_number: formData.account_number,
@@ -224,7 +226,7 @@ export const createPayload = (formData: ResourceDetailsTypes) => {
 
 export const transformCostData = (
   formData: Partial<ResourceCostSkillFormData>,
-  isEdit: boolean,
+  isEdit: boolean
 ) => {
   const data: Partial<ResourceCostPayload> = {
     eid: '',
@@ -255,7 +257,7 @@ export const transformCostData = (
 export const transformSkillData = (
   formData: Partial<ResourceCostSkillFormData>,
   isEdit: boolean
-) => {  
+) => {
   const data: Partial<ResourceSkillPayload> = {
     eid: '',
     account_rid: formData.account_rid,
@@ -264,7 +266,9 @@ export const transformSkillData = (
     resource_ref_id: formData.resource_ref_id,
     start_date: formatDateToYYYYMMDD(formData.skill_start_date),
     skill_level: formData.skill_level as skillLevel,
-    years_of_experience: formData.years_of_experience ? Number(formData.years_of_experience) : null,
+    years_of_experience: formData.years_of_experience
+      ? Number(formData.years_of_experience)
+      : null,
     skill_name: formData.skill_name,
     accountNumber: formData.accountNumber,
     resource_desc: formData.resource_desc,
