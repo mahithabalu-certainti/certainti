@@ -21,13 +21,13 @@ export const RESOURCE_TYPE_OPTIONS: SelectOption[] = [
 ];
 
 export const FREQUENCY_OPTIONS: SelectOption[] = [
-  { label: 'Annual', value: 'Annual' },
-  { label: 'Semi Annual', value: 'Semi-Annual' },
-  { label: 'Monthly', value: 'Monthly' },
-  { label: 'Bi-Weekly', value: 'Bi-Weekly' },
-  { label: 'Weekly', value: 'Weekly' },
-  { label: 'Daily', value: 'Daily' },
-  { label: 'Hourly', value: 'Hourly' },
+  { label: 'Annual', value: 'annual' },
+  { label: 'Semi Annual', value: 'semi_annual' },
+  { label: 'Monthly', value: 'monthly' },
+  { label: 'Bi-Weekly', value: 'bi_weekly' },
+  { label: 'Weekly', value: 'weekly' },
+  { label: 'Daily', value: 'daily' },
+  { label: 'Hourly', value: 'hourly' },
 ];
 
 // Type definitions

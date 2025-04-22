@@ -176,9 +176,6 @@ export const useCreateUserDetails = () => {
   return useMutation<CommonApiResponse, Error, Partial<UserDetail>>({
     mutationFn: (body) =>
       createUserDetails({ ...body, organization: ORGANIZATION }),
-    onSuccess: () => {
-      
-    },
   });
 };
 

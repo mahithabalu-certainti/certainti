@@ -440,15 +440,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   const submitData = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     let hasError = false;
-    const allAnyOneRequiredFields = formData
-      ?.flatMap(section => section.fields.filter(field => field.anyOneRequired));
+    
+    // const allAnyOneRequiredFields = formData
+    //   ?.flatMap(section => section.fields.filter(field => field.anyOneRequired));
 
     // Step 2: Check if at least one of them has a value
-    const isAnyFieldFilled = allAnyOneRequiredFields?.some(field => {
-      const value = constructFormData[field.name];
-      if (field.type === 'checkbox') return (value as string[])?.length > 0;
-      return value !== undefined && value !== null && value.toString().trim() !== '';
-    });
+    // const isAnyFieldFilled = allAnyOneRequiredFields?.some(field => {
+    //   const value = constructFormData[field.name];
+    //   if (field.type === 'checkbox') return (value as string[])?.length > 0;
+    //   return value !== undefined && value !== null && value.toString().trim() !== '';
+    // });
 
     const readOnly = formData?.map((section) => {
       if ((section.sectionName !== 'Financial Information' && state?.cost) || (section.sectionName !== 'Skill Information' && state?.skill)) {
@@ -487,7 +488,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             return { ...field, error: 'Phone number is required' };
           }
 
-          if (value) {
+          if (value && !readOnly) {
             const validation = validatePhoneNumber(value, countryCode);
             if (!validation.isValid) {
               hasError = true;
@@ -523,14 +524,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           return { ...field, error: field.dependsRequired.errorMessage };
         }
 
-        if (field.anyOneRequired) {
-          if (!isAnyFieldFilled) {
-            hasError = true;
-            return { ...field, error: "Any one cost information is required" }
-          } else {
-            return { ...field, error: "" }; // Clear error if any field is filled
-          }
-        }
+        // if (field.anyOneRequired) {
+        //   if (!isAnyFieldFilled) {
+        //     hasError = true;
+        //     return { ...field, error: "Any one cost information is required" }
+        //   } else {
+        //     return { ...field, error: "" }; // Clear error if any field is filled
+        //   }
+        // }
 
         // Date custom Validation
         if (
@@ -547,7 +548,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
         // Validate regex if present and field has value
         const value = constructFormData[field.name] as string;
-        if (field.regex && value) {
+        if (field.regex && value && !readOnly) {
           const pattern =
             field.regex instanceof RegExp
               ? field.regex
@@ -572,7 +573,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           }
         }
 
-        if (field.lengthRequired?.key && value) {
+        if (field.lengthRequired?.key && value && !readOnly) {
           const minPattern = field.lengthRequired.minMatchedValue;
           const maxPattern = field.lengthRequired.maxMatchedValue;
 
@@ -584,7 +585,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             };
           }
 
-          if (!maxPattern.test(value)) {
+          if (!maxPattern.test(value) && !readOnly) {
             hasError = true;
             return {
               ...field,

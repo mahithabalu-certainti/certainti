@@ -10,6 +10,7 @@ import {
 import { FormType, selectOptions } from '../../types';
 import { mockSkillLevelOptions } from '../../mockdata/resource-form';
 import {
+  FREQUENCY_OPTIONS,
   // FREQUENCY_OPTIONS,
   RESOURCE_STATUS_OPTIONS,
   RESOURCE_TYPE_OPTIONS,
@@ -145,68 +146,68 @@ export const FormData = (
           createDateField('financial_end_date', 'End Date', {
             required: false,
           }),
-          // createSelectField('cost_frequency', 'Cost Frequency', {
-          //   options: FREQUENCY_OPTIONS,
-          //   placeholder: '-Select-',
-          //   required: true,
-          // }),
-          // createTextField('cost', 'Cost', {
-          //   required: true,
+          createSelectField('cost_frequency', 'Cost Frequency', {
+            options: FREQUENCY_OPTIONS,
+            placeholder: '-Select-',
+            required: true,
+          }),
+          createTextField('cost', 'Cost', {
+            required: true,
+            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
+            regexErrorMessage: 'Numbers only',
+            placeholder: 'Enter Cost',
+            // anyOneRequired: true,
+          }),
+
+          // createTextField('annual', 'Annual', {
+          //   required: false,
           //   regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
           //   regexErrorMessage: 'Numbers only',
           //   placeholder: 'Enter Cost',
-          //   // anyOneRequired: true,
+          //   anyOneRequired: true,
           // }),
-
-          createTextField('annual', 'Annual', {
-            required: false,
-            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
-            regexErrorMessage: 'Numbers only',
-            placeholder: 'Enter Cost',
-            anyOneRequired: true,
-          }),
-          createTextField('semi_annual', 'Semi Annual', {
-            required: false,
-            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
-            regexErrorMessage: 'Numbers only',
-            placeholder: 'Enter Cost',
-            anyOneRequired: true,
-          }),
-          createTextField('monthly', 'Monthly', {
-            required: false,
-            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
-            regexErrorMessage: 'Numbers only',
-            placeholder: 'Enter Cost',
-            anyOneRequired: true,
-          }),
-          createTextField('bi_weekly', 'Bi Weekly', {
-            required: false,
-            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
-            regexErrorMessage: 'Numbers only',
-            placeholder: 'Enter Cost',
-            anyOneRequired: true,
-          }),
-          createTextField('weekly', 'Weekly', {
-            required: false,
-            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
-            regexErrorMessage: 'Numbers only',
-            placeholder: 'Enter Cost',
-            anyOneRequired: true,
-          }),
-          createTextField('daily', 'Daily', {
-            required: false,
-            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
-            regexErrorMessage: 'Numbers only',
-            placeholder: 'Enter Cost',
-            anyOneRequired: true,
-          }),
-          createTextField('hourly', 'Hourly', {
-            required: false,
-            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
-            regexErrorMessage: 'Numbers only',
-            placeholder: 'Enter Cost',
-            anyOneRequired: true,
-          }),
+          // createTextField('semi_annual', 'Semi Annual', {
+          //   required: false,
+          //   regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
+          //   regexErrorMessage: 'Numbers only',
+          //   placeholder: 'Enter Cost',
+          //   anyOneRequired: true,
+          // }),
+          // createTextField('monthly', 'Monthly', {
+          //   required: false,
+          //   regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
+          //   regexErrorMessage: 'Numbers only',
+          //   placeholder: 'Enter Cost',
+          //   anyOneRequired: true,
+          // }),
+          // createTextField('bi_weekly', 'Bi Weekly', {
+          //   required: false,
+          //   regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
+          //   regexErrorMessage: 'Numbers only',
+          //   placeholder: 'Enter Cost',
+          //   anyOneRequired: true,
+          // }),
+          // createTextField('weekly', 'Weekly', {
+          //   required: false,
+          //   regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
+          //   regexErrorMessage: 'Numbers only',
+          //   placeholder: 'Enter Cost',
+          //   anyOneRequired: true,
+          // }),
+          // createTextField('daily', 'Daily', {
+          //   required: false,
+          //   regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
+          //   regexErrorMessage: 'Numbers only',
+          //   placeholder: 'Enter Cost',
+          //   anyOneRequired: true,
+          // }),
+          // createTextField('hourly', 'Hourly', {
+          //   required: false,
+          //   regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
+          //   regexErrorMessage: 'Numbers only',
+          //   placeholder: 'Enter Cost',
+          //   anyOneRequired: true,
+          // }),
         ],
       },
       {

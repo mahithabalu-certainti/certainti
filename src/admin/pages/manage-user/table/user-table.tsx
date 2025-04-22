@@ -51,7 +51,7 @@ export const UserTable: React.FC<Record<string, any>> = (appliedFilters) => {
     if (data?.data) {
       setUsers(convertUserListData(data?.data?.users));
     }
-  }, [data]);
+  }, [data?.data]);
 
   const getRowId = (row: ManageUser) => row.id;
 
