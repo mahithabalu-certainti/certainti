@@ -1,4 +1,4 @@
-interface AccountData {
+export interface AccountData {
   accountById: {
     rid: string;
     r_number: string;

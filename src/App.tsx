@@ -37,6 +37,10 @@ import {
   RESOURCE,
   RESOURCE_CREATE,
   RESOURCE_EDIT,
+  RESOURCECOST_CREATE,
+  RESOURCECOST_EDIT,
+  RESOURCESKILL_CREATE,
+  RESOURCESKILL_EDIT,
 } from './routes';
 import { RootState } from './store/store';
 
@@ -73,6 +77,10 @@ export const App: React.FC<IApp> = ({ instance }) => {
             <Route path={PROJECT_CREATE} element={<ProjectForm />} />
             <Route path={RESOURCE_CREATE} element={<ResourceForm />} />
             <Route path={RESOURCE_EDIT} element={<ResourceForm />} />
+            <Route path={RESOURCECOST_CREATE} element={<ResourceForm />} />
+            <Route path={RESOURCESKILL_CREATE} element={<ResourceForm />} />
+            <Route path={RESOURCECOST_EDIT} element={<ResourceForm />} />
+            <Route path={RESOURCESKILL_EDIT} element={<ResourceForm />} />
             <Route path={RESOURCE} element={<Resource />} />
             <Route path={PROFILE} element={<Profile />} />
           </Route>

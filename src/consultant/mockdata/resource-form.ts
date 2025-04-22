@@ -35,3 +35,9 @@ export const mockCostFrequencyOptions: SelectOption[] = [
   { label: 'Annually', value: 'annually' },
   { label: 'Project-based', value: 'project_based' },
 ];
+
+export const mockSkillLevelOptions: SelectOption[] = [
+  { label: 'Beginner', value: 'Beginner' },
+  { label: 'Intermediate', value: 'Intermediate' },
+  { label: 'Advanced', value: 'Advanced' },
+];

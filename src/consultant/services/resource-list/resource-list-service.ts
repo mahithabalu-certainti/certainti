@@ -1,13 +1,17 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { api } from '../../../api/api';
-import { ResourceList, ResourcesListResponse } from '../../types/resource';
+import {
+  ResourceList,
+  ResourceListURLParams,
+  ResourcesListResponse,
+} from '../../types/resource';
 import { ResourceListURL } from '../urls';
 
 export const fetchResourceList = async (
-  accountNumber: string // params: ResourceListURLParams
+  params: ResourceListURLParams
 ): Promise<{ resource: ResourceList[]; count: number }> => {
   const response = await api.get<ResourcesListResponse>(
-    ResourceListURL({ accountNumber })
+    ResourceListURL(params)
   );
   return {
     resource: response.data.data.resources,
@@ -16,13 +20,11 @@ export const fetchResourceList = async (
 };
 
 export const useResourceList = (
-  // params?: ResourceListURLParams,
-  // options?: UseQueryOptions<{ resource: ResourceList[]; count: number }, Error>
-  accountNumber: string
+  params: ResourceListURLParams
 ): UseQueryResult<{ resource: ResourceList[]; count: number }, Error> => {
   return useQuery<{ resource: ResourceList[]; count: number }, Error>({
-    queryKey: ['resourceList', accountNumber],
-    queryFn: () => fetchResourceList(accountNumber),
+    queryKey: ['resourceList', params],
+    queryFn: () => fetchResourceList(params),
     retry: 0,
   });
 };

@@ -4,12 +4,17 @@ import React, { Fragment } from 'react';
 import ResourceCostTable from './resource-cost/resource-cost-table';
 import ResourceDetails from './resource-details/resource-details';
 import ResourceSkillTable from './resource-skill/resource-skill-table';
+import { AccountData } from '../../utils';
+
 
 interface SubcomponentProps {
   handleTabChange: (event: React.SyntheticEvent, newValue: string) => void;
   value: string;
   resourceData: any;
   accountId: string;
+  appliedFilters: Record<string, any>
+  fiscalYearValue:number,
+  accountDetails: AccountData
 }
 
 const ResourceSubComponents: React.FC<SubcomponentProps> = ({
@@ -17,16 +22,13 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   value,
   resourceData,
   accountId,
+  appliedFilters,
+  fiscalYearValue,
+  accountDetails
 }) => {
-  // const navigate = useNavigate();
-
-  // const hanleClickNew = () => {
-  //   navigate(`/resource/create`, { state: { value } });
-  // };
-
   return (
     <Fragment>
-      <Box className='mr-2'>
+      <Box className='mr-2 max-w-[100%]'>
         <Tabs
           value={value}
           onChange={handleTabChange}
@@ -83,13 +85,13 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
           </Box>
         )}
         {value === 'cost' && (
-          <Box>
-            <ResourceCostTable />
+          <Box sx={{ width: '100%', overflowX: 'auto' }}>
+            <ResourceCostTable fiscalYear={fiscalYearValue} appliedFilters={appliedFilters} accountDetails={accountDetails} />
           </Box>
         )}
         {value === 'skill' && (
-          <Box>
-            <ResourceSkillTable />
+          <Box sx={{ width: '100%', overflowX: 'auto' }}>
+            <ResourceSkillTable fiscalYear={fiscalYearValue} appliedFilters={appliedFilters} accountDetails={accountDetails} />
           </Box>
         )}
       </Box>

@@ -13,6 +13,7 @@ export const createTextField = (
     placeholder?: string;
     disabled?: boolean;
     onChange?: boolean;
+    anyOneRequired?:boolean,
     lengthRequired?: {
       key: string;
       minMatchedValue: RegExp;
@@ -31,6 +32,7 @@ export const createTextField = (
   placeholder: options.placeholder,
   disabled: options.disabled,
   onChange: options.onChange,
+  anyOneRequired:options.anyOneRequired,
   lengthRequired: options.lengthRequired,
 });
 

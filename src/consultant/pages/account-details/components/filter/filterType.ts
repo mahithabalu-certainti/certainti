@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Define filter options for each field type
 export type TextFilterOption =
-   'Equals'
+  | 'Equals'
   | 'Not Equals'
   | 'Contains'
   | 'Starts With'
@@ -10,7 +10,7 @@ export type TextFilterOption =
   | 'Is Empty'
   | 'Is Not Empty';
 
-export const textOptions: {option:string, value:string}[] = [
+export const textOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Not Equals', value: 'not_equals' },
   { option: 'Contains', value: 'contains' },
@@ -21,7 +21,7 @@ export const textOptions: {option:string, value:string}[] = [
   { option: 'Is Not Empty', value: 'is_not_empty' },
 ];
 export type NumberFilterOption =
-   'Equals'
+  | 'Equals'
   | 'Not Equals'
   | 'Less Than'
   | 'Greater Than'
@@ -29,7 +29,7 @@ export type NumberFilterOption =
   | 'Is Empty'
   | 'Is Not Empty';
 
-export const numberOptions: {option:string, value:string}[] = [
+export const numberOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Not Equals', value: 'not_equals' },
   { option: 'Less Than', value: 'less_than' },
@@ -39,14 +39,14 @@ export const numberOptions: {option:string, value:string}[] = [
   { option: 'Is Not Empty', value: 'is_not_empty' },
 ];
 export type EnumFilterOption =
-   'Equals'
+  | 'Equals'
   | 'Not Equals'
   | 'In'
   | 'Not In'
   | 'Is Empty'
   | 'Is Not Empty';
 
-export const enumOptions: {option:string, value:string}[] = [
+export const enumOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Not Equals', value: 'not_equals' },
   { option: 'In', value: 'in' },
@@ -55,14 +55,14 @@ export const enumOptions: {option:string, value:string}[] = [
   { option: 'Is Not Empty', value: 'is_not_empty' },
 ];
 
-export const enumValueOptions:{option:string, value:string}[] = [
+export const enumValueOptions: { option: string; value: string }[] = [
   { option: 'Beginner', value: 'beginner' },
   { option: 'Intermediate', value: 'intermediate' },
   { option: 'Advanced', value: 'advanced' },
-]
+];
 
 export type DateFilterOption =
-   'Equals'
+  | 'Equals'
   | 'Before'
   | 'After'
   | 'Between'
@@ -74,7 +74,7 @@ export type DateFilterOption =
   | 'Is Empty'
   | 'Is Not Empty';
 
-export const dateOptions: {option:string, value:string}[] = [
+export const dateOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Before', value: 'before' },
   { option: 'After', value: 'after' },
@@ -124,6 +124,7 @@ export type FilterState = {
 // Define field configuration
 export type FieldConfig = {
   name: string;
+  value: string;
   type: 'text' | 'number' | 'date' | 'enum';
   options?: string[];
 };
