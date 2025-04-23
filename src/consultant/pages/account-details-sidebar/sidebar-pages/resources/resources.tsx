@@ -153,13 +153,13 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
         viewMode={viewMode}
         onExitView={toggleViewMode}
         title='Resource'
-        handleFilter={handleFilter}
-        value={value}
-        showFilter={showFilter}
-        setAppliedFilters={setAppliedFilters}
         setFiscalYearValue={setFiscalYearValue}
       />
       <ResourceTableHeader
+        handleFilter={handleFilter}
+        value={value}
+        setAppliedFilters={setAppliedFilters}
+        showFilter={showFilter}
         title='Resource'
         titleIcon={<img src={resourceHeaderIcon} alt='resource header icon' />}
         headerButtons={viewMode ? [] : headerButtons}
