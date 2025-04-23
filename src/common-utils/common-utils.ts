@@ -13,7 +13,7 @@ export const createTextField = (
     placeholder?: string;
     disabled?: boolean;
     onChange?: boolean;
-    anyOneRequired?:boolean,
+    anyOneRequired?: boolean;
     lengthRequired?: {
       key: string;
       minMatchedValue: RegExp;
@@ -32,7 +32,7 @@ export const createTextField = (
   placeholder: options.placeholder,
   disabled: options.disabled,
   onChange: options.onChange,
-  anyOneRequired:options.anyOneRequired,
+  anyOneRequired: options.anyOneRequired,
   lengthRequired: options.lengthRequired,
 });
 
@@ -142,6 +142,8 @@ export const createDateField = (
   others: {
     required: boolean;
     disabled?: boolean;
+    minDate?: number;
+    maxDate?: Date;
     greaterThan?: Record<string, string>;
   }
 ): FieldType => ({
@@ -150,6 +152,8 @@ export const createDateField = (
   label,
   required: others.required,
   placeholder: 'MM/DD/YYYY',
+  minDate: others.minDate,
+  maxDate: others.maxDate,
   disabled: others.disabled,
   greaterThan: others.greaterThan,
 });
@@ -183,6 +187,7 @@ export const REGEX_PATTERNS = {
   ACCOUNT_NAME: /^[A-Za-z0-9 &'.,-]+$/,
   LETTERS_5_TO_25: /^[A-Za-z\s]{5,25}$/,
   LETTERS_3_TO_25: /^(?!.*\s{2,})[A-Za-z\s]{3,25}$/,
+  LETTERS_3_TO_100: /^(?!.*\s{2,})[A-Za-z\s]{3,100}$/,
   EMAIL:
     /^(?!.*[._%+]{2})[a-zA-Z0-9](?:[a-zA-Z0-9._-]{0,62}[a-zA-Z0-9])?@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
   PHONE: /^([0-9]{10})$/,

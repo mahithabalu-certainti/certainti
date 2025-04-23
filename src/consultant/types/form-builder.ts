@@ -2,6 +2,7 @@ export interface FormType {
   sectionName: string;
   fillType: 'half' | 'full';
   fields: FormTypeFields[];
+  hide?: boolean;
 }
 
 export interface FormTypeFields {
@@ -10,6 +11,8 @@ export interface FormTypeFields {
   label: string;
   required: boolean;
   value?: string;
+  minDate?: number;
+  maxDate?: Date;
   options?: selectOptions[];
   error?: string;
   placeholder?: string;
@@ -27,7 +30,7 @@ export interface FormTypeFields {
     maxErrorMessage: string;
   };
   onChange?: boolean;
-  anyOneRequired?:boolean
+  anyOneRequired?: boolean;
   isLoading?: boolean;
 }
 
@@ -57,7 +60,8 @@ export interface FieldType {
   name: string;
   label: string;
   required: boolean;
-
+  minDate?: number;
+  maxDate?: Date;
   options?: SelectOption[];
   regex?: RegExp;
   regexErrorMessage?: string;
@@ -76,7 +80,7 @@ export interface FieldType {
     maxErrorMessage: string;
   };
   onChange?: boolean;
-  anyOneRequired?:boolean, // financial information error handling
+  anyOneRequired?: boolean; // financial information error handling
   isLoading?: boolean;
 }
 
