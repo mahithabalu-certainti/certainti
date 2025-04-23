@@ -112,9 +112,9 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({fiscalYear, appliedF
           <TableRow>
             <TableCell>
               <TableSortLabel
-                active={orderBy === 'resource_desc'}
-                direction={orderBy === 'resource_desc' ? order : 'asc'}
-                onClick={createSortHandler('resource_desc')}
+                active={orderBy === 'resource_role'}
+                direction={orderBy === 'resource_role' ? order : 'asc'}
+                onClick={createSortHandler('resource_role')}
               >
                 Resource Role
               </TableSortLabel>
