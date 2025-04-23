@@ -8,6 +8,15 @@ const { User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams } =
   models;
 
 class UserService {
+  getUserByEmail(email: string) {
+    const user=User.findOne({
+      where: {
+        email: email,
+      },
+    });
+    return user;
+  }
+
   private accountRepository: typeof User | null = null;
 
   /**
@@ -65,19 +74,6 @@ class UserService {
       } = userData;
 
       const repository = this.getAccountRepository();
-
-      // Check if email already exists
-      const existingUser = await repository.findOne({
-        where: { email }
-      });
-      
-      if (existingUser) {
-        return {
-          statusCode: constants.BAD_REQUEST,
-          message: constants.BAD_REQUEST_MESSAGE,
-          errorMessage: "Email already exists. Please use a different email address.",
-        };
-      }
 
       const user = await repository.create({
         azure_id: azureId,
@@ -860,13 +856,13 @@ class UserService {
 
     if (cityId) {
       const [stateResult]: any[] = await mainDbSequelize.query(
-        `SELECT rid FROM city WHERE rid = :rid`,
+        `SELECT city_name FROM city WHERE rid = :rid`,
         {
           replacements: { rid: cityId },
           type: "SELECT",
         }
       );
-      city = stateResult?.state_name || null;
+      city = stateResult?.city_name || null;
     }
 
     return {

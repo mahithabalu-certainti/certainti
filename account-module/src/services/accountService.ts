@@ -507,6 +507,15 @@ class AccountService {
         primary_contact_name
       } = accountData;
 
+      const isUnique = await this.checkIsAccounUnique(account_name);
+      if(!isUnique){
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: `An account with the name "${account_name}" already exists. Please choose a different name.`
+        };
+      }
+
       const [affectedCounts, affectedRows] = await repository.update(
         {
           account_name,
