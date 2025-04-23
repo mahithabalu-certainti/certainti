@@ -8,25 +8,22 @@ export const ResourceDetailURL = (resourceId: string, accountNumber: string) =>
   `${baseUrl}/api/resources/list/${accountNumber}/${resourceId}`;
 
 export const ResourceListURL = ({
-  // page,
-  // limit,
-  // sortBy,
-  // sortOrder,
-  // filters,
+  page,
+  sortBy,
+  sortOrder,
+  filters,
   accountNumber,
 }: ResourceListURLParams) => {
-  // const searchParams = new URLSearchParams();
+  const searchParams = new URLSearchParams();
 
-  // searchParams.set('page', page.toString());
-  // searchParams.set('limit', limit.toString());
-  // searchParams.set('sortBy', sortBy);
-  // searchParams.set('sortOrder', sortOrder);
+  searchParams.set('page', page.toString());
+  searchParams.set('sortBy', sortBy as string);
+  searchParams.set('sortOrder', sortOrder as string);
 
-  // // Only add filters if the object has properties
-  // if (filters && Object.keys(filters).length > 0) {
-  //   searchParams.set('filters', JSON.stringify(filters));
-  // }
+  // Only add filters if the object has properties
+  if (filters && Object.keys(filters).length > 0) {
+    searchParams.set('filters', JSON.stringify(filters));
+  }
 
-  // return `${baseUrl}/api/resource/list${accountNumber}/?${searchParams.toString()}`;
-  return `${baseUrl}/api/resources/list/${accountNumber}`;
+  return `${baseUrl}/api/resources/list/${accountNumber}/?${searchParams.toString()}`;
 };

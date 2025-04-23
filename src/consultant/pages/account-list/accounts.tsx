@@ -140,7 +140,6 @@ export const Accounts: React.FC = () => {
             </div>
             :
             <Filter
-              filterKey="account-filters"
               setAppliedFilters={setAppliedFilters}
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}

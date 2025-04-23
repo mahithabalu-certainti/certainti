@@ -7,13 +7,14 @@ import {
   FilterState,
 } from '../../consultant/types/account-filter';
 export const fields: FieldConfig[] = [
-  { name: 'Parent Account', type: 'text' },
-  { name: 'Account Number', type: 'number' },
-  { name: 'Account Name', type: 'text' },
-  { name: 'Account ID', type: 'text' },
-  { name: 'Industries', type: 'text' },
+  { label: 'Parent Account', name: 'parent_account', type: 'text' },
+  { label: 'Account Number', name: 'account_number', type: 'number' },
+  { label: 'Account Name', name: 'account_name', type: 'text' },
+  { label: 'Record ID', name: 'account_id', type: 'text' },
+  { label: 'Industries', name: 'industry', type: 'text' },
   {
-    name: 'Country',
+    label: 'Country',
+    name: 'country',
     type: 'multi-select',
     options: [
       'Canada',
@@ -27,14 +28,15 @@ export const fields: FieldConfig[] = [
     ],
   },
   {
-    name: 'Currency',
+    label: 'Currency',
+    name: 'currency',
     type: 'multi-select',
     options: ['CAD', 'USD', 'GBP', 'EUR', 'SEK', 'RON', 'AUD'],
   },
-  { name: 'Annual Revenue', type: 'number' },
-  { name: 'Status', type: 'status', options: ['Active', 'Inactive'] },
-  { name: 'Primary Contact', type: 'text' },
-  { name: 'is Parent Account', type: 'boolean' },
+  { label: 'Annual Revenue', name: 'annual_revenue', type: 'number' },
+  { label: 'Status', name: 'status', type: 'status', options: ['Active', 'Inactive'] },
+  { label: 'Primary Contact', name: 'primary_contact', type: 'text' },
+  { label: 'is Parent Account', name: 'is_parent_account', type: 'boolean' },
 ];
 
 export const getInitialStateForField = (
@@ -62,72 +64,50 @@ export const formatFilterForApi = (
   const formattedFilters: Record<string, any> = {};
 
   Object.entries(filterStates).forEach(([fieldName, state]) => {
-    const fieldKey = fieldName === 'Industries' ? 'industry' : fieldName.toLowerCase().replace(/\s+/g, '_');
-
     if (state.text) {
-      formattedFilters[fieldKey] = { [state.text.option]: state.text.value.toLowerCase() };
+      formattedFilters[fieldName] = { [state.text.option]: state.text.value.toLowerCase() };
     } else if (state.number) {
-      formattedFilters[fieldKey] = {
+      formattedFilters[fieldName] = {
         [state.number.option]: state.number.value,
       };
     } else if (state.status) {
-      formattedFilters[fieldKey] = { value: state.status.value.toLowerCase() };
+      formattedFilters[fieldName] = state.status.value.toLowerCase();
     } else if (state.boolean) {
-      formattedFilters[fieldKey] = state.boolean.value === true ? 'yes' : 'no';
+      formattedFilters[fieldName] = state.boolean.value === true ? 'yes' : 'no';
     } else if (state.multiSelect) {
-      formattedFilters[fieldKey] = state.multiSelect.values;
+      formattedFilters[fieldName] = state.multiSelect.values;
     }
   });
 
   return formattedFilters;
 };
 
-interface FilterEntry {
-  userId: string | null;
-  filter: FilterState;
-}
+const FILTER_KEY = 'FILTER_STATE';
 
-export const getStoredFiltersForUser = (userId: string | null, filterKey: string): FilterState | null => {
-  if (!userId) return null;
-
-  const raw = localStorage.getItem(filterKey);
+export const getStoredFilters = (): FilterState | null => {
+  const raw = localStorage.getItem(FILTER_KEY);
   if (!raw) return null;
 
   try {
-    const parsed: FilterEntry[] = JSON.parse(raw);
-    const userEntry = parsed.find((entry) => entry.userId === userId);
-    return userEntry?.filter || null;
+    const parsed: FilterState = JSON.parse(raw);
+    return parsed;
   } catch {
     return null;
   }
 };
 
-export const storeFiltersForUser = (userId: string | null, filter: FilterState, filterKey: string) => {
-  if (!userId) return;
-  
-  let stored: FilterEntry[] = [];
+export const storeFilters = (filter: FilterState) => {
   try {
-    stored = JSON.parse(localStorage.getItem(filterKey) || '[]');
+    localStorage.setItem(FILTER_KEY, JSON.stringify(filter));
   } catch {
-    stored = [];
+    console.error("Error storing filters in localStorage");
   }
-
-  const updated = stored.filter((entry) => entry.userId !== userId);
-
-  updated.push({ userId, filter });
-  localStorage.setItem(filterKey, JSON.stringify(updated));
 };
 
-export const clearFiltersForUser = (userId: string | null, filterKey: string) => {
-  if (!userId) return;
-
-  let stored: FilterEntry[] = [];
+export const clearFilters = () => {
   try {
-    stored = JSON.parse(localStorage.getItem(filterKey) || '[]');
+    localStorage.removeItem(FILTER_KEY);
   } catch {
-    stored = [];
+    console.error("Error clearing filters from localStorage");
   }
-
-  const updated = stored.filter((entry) => entry.userId !== userId);
-  localStorage.setItem(filterKey, JSON.stringify(updated));
 };

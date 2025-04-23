@@ -33,11 +33,6 @@ const formatKey = (key: string): string => {
     .join(' ');
 };
 
-const formatCurrency = (amount?: number): string => {
-  if (amount === undefined || amount === null) return '-';
-  return `$${amount.toLocaleString()}`;
-};
-
 const DetailsSection: React.FC<{
   title: string;
   data: DetailItem[];
@@ -164,38 +159,19 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
     resource_fullname: resourceData.resource_fullname,
     resource_type: resourceData.resource_type,
     resource_orgname: resourceData.resource_orgname,
-    resource_firstname: resourceData.resource_firstname,
     resource_status: resourceData.resource_status,
-    resource_middlename: resourceData.resource_middlename,
-    resource_lastname: resourceData.resource_lastname,
-  });
-
-  const contactInfo = createSectionData({
-    resource_email: resourceData.resource_email,
-    resource_mobile: resourceData.resource_mobile,
+    fiscal_year: resourceData.fiscal_year,
   });
 
   const locationInfo = createSectionData({
     country: resourceData.country,
-    currency: resourceData.currency,
-    region: resourceData.region,
+    state: resourceData.state,
+    city: resourceData.city,
   });
-
-  const financialInfo = createSectionData(
-    {
-      cost_frequency: resourceData.cost_frequency,
-      cost: resourceData.cost,
-      fiscal_year: resourceData.fiscal_year,
-    },
-    {
-      cost: formatCurrency,
-    }
-  );
 
   const employmentDetails = createSectionData(
     {
       resource_startdate: resourceData.resource_startdate,
-      manager_name: resourceData.manager_name,
       resource_enddate: resourceData.resource_enddate,
       total_years_experience: resourceData.total_years_experience,
       designation: resourceData.designation,
@@ -224,12 +200,10 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   return (
     <div className='mx-auto p-6 max-w-6xl'>
       <DetailsSection title='Basic Information' data={basicInfo} />
-      <DetailsSection title='Contact Information' data={contactInfo} />
       <DetailsSection
         title='Location and Currency Information'
         data={locationInfo}
       />
-      <DetailsSection title='Financial Information' data={financialInfo} />
       <DetailsSection title='Employment Details' data={employmentDetails} />
       <DetailsSection title='System Information' data={systemInfo} />
     </div>

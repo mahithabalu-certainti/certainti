@@ -1,9 +1,9 @@
 import { FieldConfig } from '../../../../consultant/types/account-filter';
 
 export const getUserFilterfields = (userProfiles: string[]): FieldConfig[] => [
-  { name: 'Username', type: 'text' },
-  { name: 'Full name', type: 'text' },
-  { name: 'Email', type: 'text' },
-  { name: 'Profile', type: 'multi-select', options: userProfiles },
-  { name: 'Status', type: 'status', options: ['Active', 'Inactive'] },
+  { label: 'Username', name: 'username', type: 'text' },
+  { label: 'Full name', name: 'full_name', type: 'text' },
+  { label: 'Email', name: 'email', type: 'text' },
+  { label: 'Profile', name: 'profile', type: 'multi-select', options: userProfiles },
+  { label: 'Status', name: 'status', type: 'status', options: ['Active', 'Inactive'] },
 ];

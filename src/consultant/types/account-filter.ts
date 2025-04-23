@@ -42,6 +42,7 @@ export type FilterState = {
 // Define field configuration
 export type FieldConfig = {
   name: string;
+  label: string;
   type: 'text' | 'number' | 'status' | 'boolean' | 'multi-select';
   options?: string[];
 };
@@ -51,5 +52,4 @@ export interface FilterComponentProps {
   searchTerm: string;
   setSearchTerm: (value: string) => void;
   filterFields: FieldConfig[];
-  filterKey: string;
 }

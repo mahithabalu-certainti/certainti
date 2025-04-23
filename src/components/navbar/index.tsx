@@ -127,6 +127,7 @@ export const Navbar: React.FC = () => {
         errorToast(err.errorMessage);
       }
     }
+    handleMenuClose();
   };
 
   const handleLogout = async () => {

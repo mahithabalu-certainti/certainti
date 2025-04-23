@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -6,41 +7,36 @@ import { OnChange, useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
-import { useFetchCurrency, useFetchState } from '../../services/account';
-import { useResourceDetail } from '../../services/resource-details';
-
+import { useFetchCity, useFetchState } from '../../services/account';
 import { useCreateResource } from '../../services/resource-create';
+import { useResourceDetail } from '../../services/resource-details';
 import { useUpdateResource } from '../../services/resource-update';
 import { SelectOption } from '../../types';
-import { FormData } from './form-data';
-import { createPayload, transformResourceDataForUpdate } from './utils';
+import { ResourceFormData } from './form-data';
+import {
+  transformCostData,
+  transformPayloadforCreateResource,
+  transformPayloadforUpdateResource,
+  transformSkillData,
+} from './utils.tsx';
+import { useCreateResourceCost, useFetchResourceCostById, useUpdateResourceCost } from '../../services/resource-cost/resource-cost-service';
+import { useCreateResourceSkill, useUpdateResourceSkill } from '../../services/resource-skill/resource-skill-service';
 
 const ResourceForm: React.FC = () => {
   // Refs
   const formRef = React.useRef<HTMLFormElement>(null);
 
   // State
-  const [currentCountry, setCurrentCountry] = useState('');
+  const [currentCountry, setCurrentCountry] = useState({
+    country: '',
+    state: '',
+  });
 
   // Hooks
   const { successToast } = useToast();
   const location = useLocation();
+  const { state } = location;
   const navigate = useNavigate();
-
-  // Data fetching
-  const { data: resource } = useResourceDetail(
-    location?.state?.resource?.rid,
-    location?.state?.accountDetails?.data?.accountById?.r_number
-  );
-
-  const userDetails = JSON.parse(localStorage.getItem('auth') || '{}');
-  const allCountries = useGetAllCountries();
-  const currency = useFetchCurrency();
-  const states = useFetchState(currentCountry);
-
-  // Mutations
-  const createResource = useCreateResource();
-  const updateResource = useUpdateResource();
 
   // Derived values
   const isEditView = location.pathname.includes('/edit');
@@ -51,68 +47,167 @@ const ResourceForm: React.FC = () => {
     ? location?.state?.resource?.resource_fullname
     : 'New Resource';
 
-  const commonSuccess = createResource.isSuccess || updateResource.isSuccess;
+  const skillCostResourceId =
+    state?.costInfo?.resourceRID || state?.skillInfo?.resourceRID;
+
+  const resourceRId =
+    !isEditView && (state?.cost || state?.skill)
+      ? state?.resourceData?.rid
+      : isEditView && (state?.cost || state?.skill)
+        ? skillCostResourceId
+        : null;
+  const accountNumber =
+    state?.cost || state?.skill ? state?.data?.accountById?.r_number : null;
+  //data fetching by cost id
+
+  const { data: costDetails } = useFetchResourceCostById({
+    accountNumber: accountNumber,
+    id: state?.costInfo?.costRid
+  });
+
+
+  // Data fetching
+  const { data: resource } = useResourceDetail(
+    location?.state?.resource?.rid || resourceRId,
+    location?.state?.accountDetails?.data?.accountById?.r_number ||
+    accountNumber
+  );
+
+  // const resourceValues = resource?.data?.resourceDetails;
+  const userDetails = JSON.parse(localStorage.getItem('auth') || '{}');
+  const allCountries = useGetAllCountries();
+  const states = useFetchState(currentCountry.country);
+  const city = useFetchCity(currentCountry.state);
+  // Mutations
+  const createResource = useCreateResource();
+  const updateResource = useUpdateResource();
+  const createResourceCost = useCreateResourceCost();
+  const updateResourceCost = useUpdateResourceCost();
+  const createResourceSkill = useCreateResourceSkill();
+  const updateResourceSkill = useUpdateResourceSkill();
+
+  const costSkillSuccess =
+    createResourceCost.isSuccess ||
+    updateResourceCost.isSuccess ||
+    createResourceSkill.isSuccess ||
+    updateResourceSkill.isSuccess;
+  const commonSuccess =
+    createResource.isSuccess || updateResource.isSuccess || costSkillSuccess;
 
   // Memoized data transformations
-  const countryOptions: SelectOption[] = useMemo(
+  const memoizedCountry: SelectOption[] = useMemo(() => {
+    const countries = allCountries.data?.data.country || [];
+    return countries
+      .slice() // create a shallow copy to avoid mutating original data
+      .sort((a, b) => a.country_name.localeCompare(b.country_name))
+      .map((country) => ({
+        label: country.country_name,
+        value: country.rid,
+      }));
+  }, [allCountries.data?.data.country]);
+
+  const memoizedState: SelectOption[] = useMemo(
     () =>
-      allCountries.data?.data.country.map((c) => ({
-        label: c.country_name,
-        value: c.rid,
+      states.data?.data.states.map((role) => ({
+        label: role.state_name,
+        value: role.rid,
       })) || [],
-    [allCountries.data]
+    [states.data?.data.states]
   );
 
-  const stateOptions: SelectOption[] = useMemo(
+  const memoizeCity: SelectOption[] = useMemo(
     () =>
-      states.data?.data.states.map((s) => ({
-        label: s.state_name,
-        value: s.rid,
+      city.data?.data.cities.map((role) => ({
+        label: role.city_name,
+        value: role.rid,
       })) || [],
-    [states.data]
-  );
-
-  const currencyOptions: SelectOption[] = useMemo(
-    () =>
-      currency.data?.data.currency.map((c) => ({
-        label: c.currency_name,
-        value: c.rid,
-      })) || [],
-    [currency.data]
+    [city.data?.data.cities]
   );
 
   useEffect(() => {
     if (commonSuccess) {
-      successToast(
-        isEditView
-          ? 'Resource updated successfully'
-          : 'Resource created successfully'
-      );
+      if (state?.cost) {
+        successToast(
+          isEditView
+            ? 'Resource cost updated successfully'
+            : 'Resource cost created successfully'
+        );
+      }
+
+      if (state?.skill) {
+        successToast(
+          isEditView
+            ? 'Resource skill updated successfully'
+            : 'Resource skill created successfully'
+        );
+      }
+      if (!state.skill && !state.cost) {
+        successToast(
+          isEditView
+            ? 'Resource updated successfully'
+            : 'Resource created successfully'
+        );
+      }
       navigate(-1);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [commonSuccess, isEditView, successToast]);
+  }, [commonSuccess, isEditView, state.cost, state.skill]);
 
   // Handlers
   const handleSubmit = (formValues: any) => {
-    if (isEditView) {
-      const updatedData = transformResourceDataForUpdate(
-        formValues,
-        resource?.data.resourceDetails,
-        {
-          resource_id: location?.state?.resource?.rid,
-          account_number: accountData?.r_number,
-        }
-      );
-      updateResource.mutate(updatedData as any);
-    } else {
-      const finaldata = createPayload({
-        account_number: accountData?.r_number,
-        account_id: accountData?.rid,
-        created_by: userDetails.userId,
+    if (state?.cost) {
+      const updateFormValues = {
         ...formValues,
-      });
-      createResource.mutate(finaldata as any);
+        accountNumber: state?.data?.accountById?.r_number,
+        account_rid: state?.data?.accountById?.rid,
+        resource_rid: state?.resourceData?.rid,
+        cost_rid: state?.costInfo?.costRid,
+      };
+      const costData = transformCostData(updateFormValues, isEditView);
+
+      if (isEditView) {
+        updateResourceCost.mutate(costData);
+      } else {
+        createResourceCost.mutate(costData);
+      }
+    }
+    if (state?.skill) {
+      const updateFormValues = {
+        ...formValues,
+        accountNumber: state?.data?.accountById?.r_number,
+        account_rid: state?.data?.accountById?.rid,
+        resource_rid: state?.resourceData?.rid,
+        skill_rid: state?.skillInfo?.skillRId,
+        resource_desc: state?.skillInfo?.resourceRole,
+      };
+      const skillData = transformSkillData(updateFormValues, isEditView);
+
+      if (isEditView) {
+        updateResourceSkill.mutate(skillData);
+      } else {
+        createResourceSkill.mutate(skillData);
+      }
+    }
+
+    if (!state?.skill && !state?.cost) {
+      if (isEditView) {
+        const updatedData = transformPayloadforUpdateResource(
+          formValues,
+          resource?.data?.resourceDetails, // Adjusted to access the correct property
+          {
+            resource_id: location?.state?.resource?.rid,
+            account_number: accountData?.r_number,
+          }
+        );
+        updateResource.mutate(updatedData as any);
+      } else {
+        const finaldata = transformPayloadforCreateResource({
+          account_number: accountData?.r_number,
+          account_id: accountData?.rid,
+          created_by: userDetails.userId,
+          ...formValues,
+        });
+        createResource.mutate(finaldata as any);
+      }
     }
   };
 
@@ -126,18 +221,22 @@ const ResourceForm: React.FC = () => {
     navigate(-1);
   };
 
-  const handleFieldChange = (data: OnChange) => {
-    if (data.fieldName === 'country') {
-      setCurrentCountry(data.fieldValue as string);
+  const onChangeField = ({ fieldName, fieldValue }: OnChange) => {
+    if (fieldName === 'country' || fieldName === 'state') {
+      setCurrentCountry((prev) => ({
+        ...prev,
+        [fieldName]: fieldValue as string,
+      }));
     }
   };
 
   // Form configuration
-  const formConfig = FormData(
-    countryOptions,
-    currencyOptions,
-    stateOptions,
+  const formConfig = ResourceFormData(
+    memoizedCountry,
+    memoizedState,
+    memoizeCity,
     states.isLoading,
+    city.isLoading,
     isEditView
   );
 
@@ -178,13 +277,35 @@ const ResourceForm: React.FC = () => {
       <div className='p-10'>
         <FormBuilder
           data={formConfig}
-          loading={allCountries.isLoading || currency.isLoading}
+          loading={allCountries.isLoading}
           values={
-            isEditView ? resource?.data?.resourceDetails : (undefined as any)
+            isEditView &&
+              (!state?.cost || !state?.skill) &&
+              (resource?.data?.resourceDetails as unknown as Record<
+                string,
+                string | number | boolean | string[] | null
+              >)
+              ? (resource?.data?.resourceDetails as unknown as Record<
+                string,
+                string | number | boolean | string[] | null
+              >)
+              : state?.cost || state?.skill
+                ? (resource?.data?.resourceDetails as unknown as Record<
+                  string,
+                  string | number | boolean | string[] | null
+                >)
+                : undefined
           }
+          // values={
+          //   resource.data?.data?.resource as unknown as Record<
+          //     string,
+          //     string | number | boolean | string[] | null
+          //   >
+          // }
           outData={handleSubmit}
           formRef={formRef}
-          onChange={handleFieldChange}
+          onChange={onChangeField}
+          costDetails={costDetails as Record<string, any> | undefined}
         />
       </div>
     </div>

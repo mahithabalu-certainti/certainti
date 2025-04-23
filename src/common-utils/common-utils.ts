@@ -13,6 +13,7 @@ export const createTextField = (
     placeholder?: string;
     disabled?: boolean;
     onChange?: boolean;
+    anyOneRequired?:boolean,
     lengthRequired?: {
       key: string;
       minMatchedValue: RegExp;
@@ -31,6 +32,7 @@ export const createTextField = (
   placeholder: options.placeholder,
   disabled: options.disabled,
   onChange: options.onChange,
+  anyOneRequired:options.anyOneRequired,
   lengthRequired: options.lengthRequired,
 });
 
@@ -178,7 +180,7 @@ export const YES_NO_OPTIONS: SelectOption[] = [
 export const REGEX_PATTERNS = {
   ALPHANUMERIC: /^[A-Za-z0-9-]+$/,
   LETTERS_SPACES: /^[A-Za-z\s]+$/,
-  ACCOUNT_NAME: /^(?=.{7,25}$)[A-Za-z' -]+$/,
+  ACCOUNT_NAME: /^[A-Za-z0-9 &'.,-]+$/,
   LETTERS_5_TO_25: /^[A-Za-z\s]{5,25}$/,
   LETTERS_3_TO_25: /^(?!.*\s{2,})[A-Za-z\s]{3,25}$/,
   EMAIL:
@@ -193,6 +195,7 @@ export const REGEX_PATTERNS = {
   POSTAL_CODE: /^[A-Za-z0-9\s-]{3,9}$/,
   MAX_AI_INTRACTION: /^[3-5]$/,
   NUMBERS: /^[0-9]{1,20}$/,
+  ANNUAL_REVENUE: /^(\d{1,3}(,\d{3})+|\d{1,2}(,\d{2}){1,2},\d{3}|\d+)(\.\d+)?$/,
   NAME_REGEX: /^[A-Za-z\s'-]+$/,
   STREET_REGEX: /^(?![\W_]+$)(?!\s*$)[\w\W]{3,200}$/,
   CITY_REGEX: /^[A-Za-z\s]{3,100}$/,

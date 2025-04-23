@@ -16,6 +16,7 @@ import {
   FormTypeFields,
   selectOptions,
 } from '../../consultant/types';
+import { useLocation } from 'react-router-dom';
 
 interface FormBuilderProps {
   data: FormType[];
@@ -24,6 +25,7 @@ interface FormBuilderProps {
   values?: Record<string, string | string[] | boolean | number | null | object>;
   outData: (e: object) => void;
   onChange?: (params: OnChange) => void;
+  costDetails?: Record<string, any>;
 }
 
 export const FormBuilder: React.FC<FormBuilderProps> = ({
@@ -33,22 +35,31 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   loading,
   onChange,
   outData,
+  costDetails,
 }) => {
+  const location = useLocation();
+  const { state } = location;
   const [formData, setFormData] = React.useState<FormType[]>();
   const [constructFormData, setConstructFormData] = React.useState<
     Record<string, FieldTypes>
   >({});
+  const sections = data;
+  const filteredSections = sections.filter((section) => {
+    if (section.sectionName === 'Financial Information' && !state.cost) return false;
+    if (section.sectionName === 'Skill Information' && !state.skill) return false;
+    return true;
+  });
 
   const CommonSkeleton = (
     <Skeleton variant='rounded' width='100%' height={36} />
   );
 
   useEffect(() => {
-    setFormData(data);
+    setFormData(filteredSections);
     // Only set initial form data if constructFormData is empty
     if (Object.values(constructFormData).every((value) => !value)) {
       let constructFormData = {};
-      data.forEach((section) => {
+      filteredSections.forEach((section) => {
         section.fields.forEach((field) => {
           constructFormData = {
             ...constructFormData,
@@ -56,16 +67,44 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           };
         });
       });
+
+      if (state?.cost) {
+        let costInfo = costDetails?.resourceCostById;
+        constructFormData = {
+          ...constructFormData,
+          financial_start_date: costInfo?.effective_date || '',
+          financial_end_date: costInfo?.end_date || '',
+          cost: costInfo?.cost || '',
+          cost_frequency: costInfo?.cost_frequency || ''
+        };
+      }
+
+      if (state?.skill) {
+        let skillInfo = state?.skillInfo;
+        constructFormData = {
+          ...constructFormData,
+          skill_level: skillInfo?.skillLevel || '',
+          skill_name: skillInfo?.skillName || '',
+          skill_start_date: skillInfo?.startDate || '',
+          years_of_experience: skillInfo?.yearsOfExperience || '',
+        }
+      }
+
       setConstructFormData(constructFormData);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, values]);
+  }, [data, values, state]);
 
-  const getFields = (field: FormTypeFields) => {
+  const getFields = (field: FormTypeFields, section: FormType) => {
+    const readOnly = (section.sectionName !== 'Financial Information' && state?.cost) || (section.sectionName !== 'Skill Information' && state?.skill)
     const isError = field.error ? 'border-red-500' : 'border-gray-300';
     const fontSize = '0.875rem';
     const fieldValue = (constructFormData[field.name] as string) || '';
-    const fieldDisabled = field.disabled ? ' bg-gray-100' : '';
+    const fieldDisabled = (field.disabled || readOnly) ? ' bg-gray-100' : '';
+    const today = new Date();
+    const sixYearsAgo = new Date();
+    sixYearsAgo.setFullYear(today.getFullYear() - 6)
+    const sectionDate = section.sectionName === "Financial Information" || section.sectionName === "Skill Information";
 
     const handleChange = (value: FieldTypes, countryCode?: FieldTypes) => {
       const newData = {
@@ -82,7 +121,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             newData[f] = '';
           });
         });
-      }      
+      }
 
       if (field.onChange && onChange) {
         onChange({ fieldName: field.name, fieldValue: value });
@@ -92,10 +131,23 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return prevFormData?.map((section) => ({
           ...section,
           fields: section.fields.map((f) => {
+            let updatedField = { ...f };
+
             if (f.name === field.name) {
-              return { ...f, error: '' };
+              updatedField.error = '';
             }
-            return f;
+            
+            if (f.dependsRequired?.key === field.name) {
+              const shouldDisable = value === f.dependsRequired.disableDependsField;
+            
+              updatedField.disabled = shouldDisable;
+            
+              if (shouldDisable) {
+                newData[f.name] = '';
+              }
+            }
+
+            return updatedField;
           }),
         }));
       });
@@ -118,7 +170,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             className={
               'w-full sm:text-sm p-2 border-1 ' + isError + fieldDisabled
             }
-            disabled={field.disabled}
+            disabled={field.disabled || readOnly}
             onChange={(e) => handleChange(e.target.value)}
             value={fieldValue}
           />
@@ -135,7 +187,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
             onChange={(e) => handleChange(e.target.value)}
             value={fieldValue}
-            disabled={field.disabled}
+            disabled={field.disabled || readOnly}
           >
             <option value='' className='text-gray-500'>
               {field.placeholder}
@@ -158,7 +210,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             name={field.name}
             placeholder={field.placeholder}
             onChange={(e) => handleChange(e.target.value)}
-            disabled={field.disabled}
+            disabled={field.disabled || readOnly}
             value={fieldValue}
           />
         );
@@ -212,7 +264,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       option.value
                     ) || false
                   }
-                  disabled={field.disabled}
+                  disabled={field.disabled || readOnly}
                   onChange={() => {
                     const currentValues =
                       (constructFormData[field.name] as string[]) || [];
@@ -237,7 +289,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   name={field.name}
                   value={option.value}
                   checked={constructFormData[field.name] === option.value}
-                  disabled={field.disabled}
+                  disabled={field.disabled || readOnly}
                   onChange={(e) => {
                     handleChange(e.target.value);
                   }}
@@ -251,12 +303,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
-              value={dayjs(fieldValue, 'DD/MM/YYYY')}
-              disabled={field.disabled}
+              className={fieldDisabled}
+              maxDate={sectionDate ? dayjs(today) : undefined}
+              minDate={sectionDate ? dayjs(sixYearsAgo) : undefined}
+              value={dayjs(fieldValue)}
+              disabled={field.disabled || readOnly}
               onChange={(newValue) => {
-                handleChange(dayjs(newValue).format('DD/MM/YYYY'));
+                handleChange(dayjs(newValue).format('MM/DD/YYYY'));
               }}
-              shouldDisableDate={(date) => dayjs(date).isBefore(dayjs(), 'day')}
+              // shouldDisableDate={(date) => dayjs(date).isBefore(dayjs(), 'day')}
               slots={{
                 openPickerIcon: () => (
                   <img src={calendarIcon} alt='calendar' className='w-6 h-5' />
@@ -302,6 +357,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               onChange={(newValue) => {
                 handleChange(dayjs(newValue).format('DD/MM/YYYY'));
               }}
+              shouldDisableDate={(date) => sectionDate ? dayjs(date).isAfter(dayjs(), 'day') : dayjs(date).isBefore(dayjs(), 'day')}
               slots={{
                 openPickerIcon: () => (
                   <img src={calendarIcon} alt='calendar' className='w-6 h-5' />
@@ -343,9 +399,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             onChange={(phone, country: CountryData) =>
               handleChange(phone, country.countryCode)
             }
-            inputClass={`!w-full !text-sm !p-2 !pl-12 !border !h-[38px] !rounded-[0px] ${
-              field.error ? '!border-red-500' : '!border-gray-300'
-            }${field.disabled ? ' !bg-gray-100' : ''}`}
+            inputClass={`!w-full !text-sm !p-2 !pl-12 !border !h-[38px] !rounded-[0px] ${field.error ? '!border-red-500' : '!border-gray-300'
+              }${field.disabled ? ' !bg-gray-100' : ''}`}
             buttonClass={`!bg-transparent !border-r ${field.error ? '!border-red-500' : '!border-gray-300'} !rounded-[0px] !hover:bg-transparent !shadow-none !px-0 !m-0`}
             containerClass='!w-full'
             inputProps={{
@@ -395,6 +450,24 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   const submitData = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     let hasError = false;
+    
+    // const allAnyOneRequiredFields = formData
+    //   ?.flatMap(section => section.fields.filter(field => field.anyOneRequired));
+
+    // Step 2: Check if at least one of them has a value
+    // const isAnyFieldFilled = allAnyOneRequiredFields?.some(field => {
+    //   const value = constructFormData[field.name];
+    //   if (field.type === 'checkbox') return (value as string[])?.length > 0;
+    //   return value !== undefined && value !== null && value.toString().trim() !== '';
+    // });
+
+    const readOnly = formData?.map((section) => {
+      if ((section.sectionName !== 'Financial Information' && state?.cost) || (section.sectionName !== 'Skill Information' && state?.skill)) {
+        return true;
+      }
+      return false;
+    })
+
     const dataValidation = formData?.map((section) => ({
       ...section,
       fields: section.fields.map((field) => {
@@ -409,7 +482,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           hasValue = Boolean(constructFormData[field.name]);
         }
         // Validate required fields
-        if (field.required && !hasValue) {
+        if (field.required && !hasValue && !readOnly) {
           hasError = true;
           return { ...field, error: 'Field is required' };
         }
@@ -420,12 +493,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             `${field.name}_countryCode`
           ] as string;
 
-          if (field.required && !value) {
+          if (field.required && !value && !readOnly) {
             hasError = true;
             return { ...field, error: 'Phone number is required' };
           }
 
-          if (value) {
+          if (value && !readOnly) {
             const validation = validatePhoneNumber(value, countryCode);
             if (!validation.isValid) {
               hasError = true;
@@ -441,7 +514,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         ) {
           const dateValue = constructFormData[field.name] as string;
 
-          if (!isValidDate(dateValue)) {
+          if (!isValidDate(dateValue) && !readOnly) {
             hasError = true;
             return {
               ...field,
@@ -454,18 +527,27 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         if (
           field.dependsRequired?.key &&
           constructFormData[field.dependsRequired.key] ===
-            field.dependsRequired?.matchedValue &&
+          field.dependsRequired?.matchedValue &&
           !hasValue
         ) {
           hasError = true;
           return { ...field, error: field.dependsRequired.errorMessage };
         }
 
+        // if (field.anyOneRequired) {
+        //   if (!isAnyFieldFilled) {
+        //     hasError = true;
+        //     return { ...field, error: "Any one cost information is required" }
+        //   } else {
+        //     return { ...field, error: "" }; // Clear error if any field is filled
+        //   }
+        // }
+
         // Date custom Validation
         if (
           field.greaterThan &&
           (constructFormData[field.name] || '') <=
-            (constructFormData[field.greaterThan.key] || '')
+          (constructFormData[field.greaterThan.key] || '')
         ) {
           hasError = true;
           return {
@@ -476,7 +558,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
         // Validate regex if present and field has value
         const value = constructFormData[field.name] as string;
-        if (field.regex && value) {
+        if (field.regex && value && !readOnly) {
           const pattern =
             field.regex instanceof RegExp
               ? field.regex
@@ -490,7 +572,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           }
         }
 
-        if (field.type === 'text' && value) {
+        if (field.type === 'text' && value && !readOnly) {
           const emojiRegex = /[\p{Emoji_Presentation}\uFE0F]/gu;
           if (emojiRegex.test(value)) {
             hasError = true;
@@ -501,7 +583,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           }
         }
 
-        if (field.lengthRequired?.key && value) {
+        if (field.lengthRequired?.key && value && !readOnly) {
           const minPattern = field.lengthRequired.minMatchedValue;
           const maxPattern = field.lengthRequired.maxMatchedValue;
 
@@ -513,7 +595,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             };
           }
 
-          if (!maxPattern.test(value)) {
+          if (!maxPattern.test(value) && !readOnly) {
             hasError = true;
             return {
               ...field,
@@ -552,15 +634,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
   return (
     <form onSubmit={submitData} ref={formRef}>
-      {formData?.map((it, i) => {
-        const isHalf = it.fillType === 'half';
+      {formData?.map((section, i) => {
+        const isHalf = section.fillType === 'half';
         return (
-          <div key={i}>
+          (<div key={i}>
             <h4 className={`font-medium mb-4 ${i !== 0 ? 'mt-10' : ''}`}>
-              {it.sectionName}
+              {section.sectionName}
             </h4>
             <div className={`grid md:grid-cols-${isHalf ? '2' : '1'} gap-4`}>
-              {it.fields.map((field, j) => (
+              {section.fields.map((field, j) => (
                 <div key={j} className='grid md:grid-cols-12 gap-4'>
                   <label
                     className={`text-sm text-gray-500 md:text-right mt-1 ${isHalf ? 'col-span-4' : 'col-span-2'}`}
@@ -570,7 +652,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     {field.required && <span className='text-red-500'> *</span>}
                   </label>
                   <div className={isHalf ? 'col-span-8' : 'col-span-10'}>
-                    {getFields(field)}
+                    {getFields(field, section)}
                     {field.error && (
                       <span className='text-red-500 text-sm col-span-full'>
                         {field.error}
@@ -580,7 +662,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 </div>
               ))}
             </div>
-          </div>
+          </div>)
         );
       })}
     </form>

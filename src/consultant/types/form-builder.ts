@@ -27,6 +27,7 @@ export interface FormTypeFields {
     maxErrorMessage: string;
   };
   onChange?: boolean;
+  anyOneRequired?:boolean
   isLoading?: boolean;
 }
 
@@ -75,6 +76,7 @@ export interface FieldType {
     maxErrorMessage: string;
   };
   onChange?: boolean;
+  anyOneRequired?:boolean, // financial information error handling
   isLoading?: boolean;
 }
 

@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Box, SelectChangeEvent } from '@mui/material';
 import React, { useState } from 'react';
-import { filterArrowRightIcon } from '../../assets';
-import { getInitialStateForField } from '../../consultant/pages/account-details/sidebar-pages/resources/utils';
-import { Button } from '../button';
+import { filterArrowRightIcon } from '../../../../../assets';
+import { Button } from '../../../../../components/button';
+import { getInitialStateForField } from '../../sidebar-pages/resources/utils';
 import {
   DateFilterOption,
   dateOptions,
@@ -21,20 +21,33 @@ import {
 import {
   DateFilterControl,
   EnumFilterControl,
+  formatFilterForApi,
   NumberFilterControl,
   TextFilterControl,
 } from './helper';
-// import { getInitialStateForField } from '../../consultant/pages/resource/utils';
+
+// filter to use in resource, cost and skill list pages
 
 const Filter: React.FC<FilterComponentProps> = ({
   filterMenu,
+  setAppliedFilters,
   handleFilter,
 }) => {
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
     {}
   );
-  // const [showFilterOption, setShowFilterOption] = useState<boolean>(false);
+
+  const handleApplyFilters = () => {
+    setAppliedFilters(formatFilterForApi(filterStates));
+    handleFilter();
+  };
+
+  const resetFilter = () => {
+    setAppliedFilters({});
+    setFilterStates({});
+    setSelectedFilters([]);
+  };
 
   const handleClickFilterMenu = (fieldName: string) => {
     setSelectedFilters((prev) =>
@@ -44,7 +57,7 @@ const Filter: React.FC<FilterComponentProps> = ({
     );
 
     if (!filterStates[fieldName]) {
-      const fieldConfig = filterMenu.find((f) => f.name === fieldName);
+      const fieldConfig = filterMenu.find((f) => f.value === fieldName);
       if (!fieldConfig) return;
 
       setFilterStates((prev) => ({
@@ -58,7 +71,7 @@ const Filter: React.FC<FilterComponentProps> = ({
     fieldName: string,
     event: SelectChangeEvent<any>
   ) => {
-    const fieldConfig = filterMenu.find((f) => f.name === fieldName);
+    const fieldConfig = filterMenu.find((f) => f.value === fieldName);
     if (!fieldConfig) return;
 
     setFilterStates((prev) => {
@@ -97,6 +110,7 @@ const Filter: React.FC<FilterComponentProps> = ({
               },
             },
           };
+
         case 'date':
           return {
             ...prev,
@@ -119,7 +133,7 @@ const Filter: React.FC<FilterComponentProps> = ({
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     // setIsModified(true);
-    const fieldConfig = filterMenu.find((f) => f.name === fieldName);
+    const fieldConfig = filterMenu.find((f) => f.value === fieldName);
     if (!fieldConfig) return;
 
     setFilterStates((prev) => {
@@ -193,12 +207,10 @@ const Filter: React.FC<FilterComponentProps> = ({
     });
   };
 
-  console.log('filterstate', filterStates);
-
   const renderFilterControls = (field: FieldConfig) => {
-    if (!selectedFilters.includes(field.name)) return null;
+    if (!selectedFilters.includes(field.value)) return null;
 
-    const fieldState = filterStates[field.name] || {};
+    const fieldState = filterStates[field.value] || {};
 
     switch (field.type) {
       case 'text':
@@ -206,7 +218,7 @@ const Filter: React.FC<FilterComponentProps> = ({
           <TextFilterControl
             filterStates={filterStates}
             menuOption={textOptions}
-            fieldName={field.name}
+            fieldName={field.value}
             state={fieldState}
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleFilterValueChange}
@@ -217,7 +229,7 @@ const Filter: React.FC<FilterComponentProps> = ({
           <NumberFilterControl
             filterStates={filterStates}
             menuOption={numberOptions}
-            fieldName={field.name}
+            fieldName={field.value}
             state={fieldState}
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleFilterValueChange}
@@ -229,7 +241,7 @@ const Filter: React.FC<FilterComponentProps> = ({
             filterStates={filterStates}
             menuOption={enumOptions}
             valueOptions={enumValueOptions}
-            fieldName={field.name}
+            fieldName={field.value}
             state={fieldState}
             onOptionChange={handleFilterOptionChange}
             onChange={handleEnumSelectChange}
@@ -240,7 +252,7 @@ const Filter: React.FC<FilterComponentProps> = ({
           <DateFilterControl
             filterStates={filterStates}
             menuOption={dateOptions}
-            fieldName={field.name}
+            fieldName={field.value}
             state={fieldState}
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleDateChange}
@@ -253,10 +265,11 @@ const Filter: React.FC<FilterComponentProps> = ({
   };
 
   return (
-    <Box className='absolute top-67 right-85 z-50 w-[248px] max-h-[568px] bg-white shadow-lg border border-[#CBD6E2] rounded'>
+    <Box className='absolute top-122 right-60 z-50 w-[248px] max-h-[568px] bg-white shadow-lg border border-[#CBD6E2] rounded'>
       <Box className='flex justify-between items-center p-2 border-b border-[#CBD6E2]'>
         <Box>Filters</Box>
         <Button
+          onClick={resetFilter}
           label='Reset'
           variant='text'
           sx={{
@@ -275,7 +288,7 @@ const Filter: React.FC<FilterComponentProps> = ({
             <Box
               key={index}
               className='flex gap-2 justify-between items-center p-2 border-b border-[#CBD6E2]'
-              onClick={() => handleClickFilterMenu(item.name)}
+              onClick={() => handleClickFilterMenu(item.value as string)}
             >
               <Box className='text-[#2D3E4F] font-light text-sm'>
                 {item.name}
@@ -318,6 +331,7 @@ const Filter: React.FC<FilterComponentProps> = ({
               color: '#FFFFFF',
             },
           }}
+          onClick={handleApplyFilters}
         />
       </Box>
     </Box>

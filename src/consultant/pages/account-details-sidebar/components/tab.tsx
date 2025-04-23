@@ -1,31 +1,15 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Box, Menu, MenuItem, Tab, Tabs } from '@mui/material';
 import React, { Fragment, useState } from 'react';
-import { leftArrowIcon, resourceFilterIcon } from '../../../../assets';
-import { ActionsDropdown, Image } from '../../../../components';
-import Filter from '../../../../components/filter/filter';
-import { costFields, skillFields } from '../sidebar-pages/resources/utils';
-import { FiscalYearDropdown } from './fiscal-year-dropdown';
+import { leftArrowIcon } from '../../../../assets';
 
 interface TabPanelProps {
   viewMode: boolean;
   onExitView: () => void;
   title: string;
-  handleFilter: () => void;
-  value: string;
-  showFilter: boolean;
-  setAppliedFilters: (filters: Record<string, any>) => void;
+  setFiscalYearValue: (value: number) => void;
 }
 
-const TabPanel: React.FC<TabPanelProps> = ({
-  viewMode,
-  onExitView,
-  title,
-  handleFilter,
-  value,
-  showFilter,
-  setAppliedFilters,
-}) => {
+const TabPanel: React.FC<TabPanelProps> = ({ viewMode, onExitView, title }) => {
   const [tabValue, setTabValue] = useState(0);
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
   const [, setSelectedSort] = useState('Accounts');
@@ -43,16 +27,16 @@ const TabPanel: React.FC<TabPanelProps> = ({
     handleSortClose();
   };
 
-  const MENU_ITEMS = [
-    {
-      label: 'Assign Permission to User',
-      onClick: () => console.log('user clicked'),
-    },
-    {
-      label: 'View Permissions',
-      onClick: () => console.log('View Permissions clicked'),
-    },
-  ];
+  // const MENU_ITEMS = [
+  //   {
+  //     label: 'Assign Permission to User',
+  //     onClick: () => console.log('user clicked'),
+  //   },
+  //   {
+  //     label: 'View Permissions',
+  //     onClick: () => console.log('View Permissions clicked'),
+  //   },
+  // ];
 
   return (
     <Fragment>
@@ -131,14 +115,7 @@ const TabPanel: React.FC<TabPanelProps> = ({
           )}
 
           <Box className='flex items-center space-x-2'>
-            <Box
-              onClick={handleFilter}
-              className='h-[38px] w-[38px] flex items-center justify-center border border-[#CBD6E2] cursor-pointer'
-            >
-              <Image src={resourceFilterIcon} />
-            </Box>
-            <FiscalYearDropdown />
-            <ActionsDropdown actions={MENU_ITEMS} />
+            {/* <ActionsDropdown actions={MENU_ITEMS} /> */}
           </Box>
         </Box>
 
@@ -155,13 +132,6 @@ const TabPanel: React.FC<TabPanelProps> = ({
           <MenuItem onClick={() => handleSortSelect('User')}>User</MenuItem>
         </Menu>
       </Box>
-      {showFilter && (
-        <Filter
-          filterMenu={value === 'cost' ? costFields : skillFields}
-          setAppliedFilters={setAppliedFilters}
-          handleFilter={handleFilter}
-        />
-      )}
     </Fragment>
   );
 };

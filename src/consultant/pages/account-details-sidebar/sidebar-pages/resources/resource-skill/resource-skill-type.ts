@@ -1,16 +1,24 @@
 // import { ResourceSkillList } from '../../../types/resourceSkill';
 
-import { ResourceSkillList } from "../../../../../types/resourceSkill";
+import { ResourceSkillList } from '../../../../../types/resource-skill';
 
 export interface RenderSkillRowProps {
   resourceSkill: ResourceSkillType[];
 }
 
+export enum skillLevel {
+  Beginner = 'Beginner',
+  Intermediate = 'Intermediate',
+  Advanced = 'Advanced',
+}
+
 export interface ResourceSkillType {
+  skillRId?: string;
   resourceRole?: string;
+  resourceRID?: string;
   startDate?: string;
   skillName?: string;
-  skillLevel?: 'Beginner' | 'Intermediate' | 'Advanced';
+  skillLevel?: skillLevel;
   yearsOfExperience?: string;
 }
 
@@ -21,11 +29,13 @@ export function convertResourceSkill(
 
   function ProcessResourceSkill(skill: ResourceSkillList): void {
     const convertedSkill: ResourceSkillType = {
-      resourceRole: skill.resourceRole,
-      startDate: skill.startDate,
-      skillName: skill.skillName,
-      skillLevel: skill.skillLevel,
-      yearsOfExperience: skill.yearsOfExperience,
+      resourceRole: skill.resource_desc,
+      resourceRID: skill.resource_rid,
+      skillRId: skill.rid,
+      startDate: skill.start_date,
+      skillName: skill.skill_name,
+      skillLevel: skill.skill_level,
+      yearsOfExperience: skill.years_of_experience,
     };
     resourceSkillList.push(convertedSkill);
   }

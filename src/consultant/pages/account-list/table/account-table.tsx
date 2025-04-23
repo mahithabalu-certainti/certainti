@@ -241,7 +241,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                   onClick={createSortHandler('account_id')}
                   IconComponent={getSortIcon(orderBy, 'account_id', order)}
                 >
-                  Account ID
+                  Record ID
                 </TableSortLabel>
               </TableCell>
               <TableCell sx={{ minWidth: '200px' }}>
@@ -271,7 +271,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                   onClick={createSortHandler('industry')}
                   IconComponent={getSortIcon(orderBy, 'industry', order)}
                 >
-                  Industry
+                  Industries
                 </TableSortLabel>
               </TableCell>
               <TableCell sx={{ minWidth: '150px' }}>

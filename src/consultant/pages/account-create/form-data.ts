@@ -35,7 +35,7 @@ export const FormData = (
           // }),
           createTextField('account_name', 'Account Name', {
             required: true,
-            regex: REGEX_PATTERNS.NAME_REGEX,
+            regex: REGEX_PATTERNS.ACCOUNT_NAME,
             regexErrorMessage: 'Invalid Account Name',
             placeholder: 'Enter Account Name',
             lengthRequired: {
@@ -60,6 +60,7 @@ export const FormData = (
               key: 'is_parent',
               matchedValue: YesNo.No,
               errorMessage: 'Field is required',
+              disableDependsField: YesNo.Yes,
             },
           }),
           createTextField('website', 'Website', {
@@ -191,7 +192,7 @@ export const FormData = (
           }),
           createTextField('annual_revenue', 'Annual Revenue', {
             required: true,
-            regex: REGEX_PATTERNS.NUMBERS,
+            regex: REGEX_PATTERNS.ANNUAL_REVENUE,
             regexErrorMessage: 'Enter a valid annual revenue',
             placeholder: 'Enter Annual Revenue',
           }),

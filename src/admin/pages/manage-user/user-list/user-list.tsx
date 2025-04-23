@@ -39,7 +39,7 @@ const UserList: React.FC = () => {
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(true);
   const userActionButtons = [
     'Suspend User',
-    'Reactive User',
+    'Reinstate User',
     'Reset Password',
     'Delete',
   ];
@@ -57,8 +57,8 @@ const UserList: React.FC = () => {
       case 'Suspend User':
         console.log('Suspend User clicked');
         break;
-      case 'Reactive User':
-        console.log('Reactive User clicked');
+      case 'Reinstate User':
+        console.log('Reinstate User clicked');
         break;
       case 'Reset Password':
         console.log('Reset Password clicked');
@@ -146,7 +146,6 @@ const UserList: React.FC = () => {
               </div>
               :
               <Filter
-                filterKey='user-filters'
                 setAppliedFilters={setAppliedFilters}
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}

@@ -25,18 +25,16 @@ import {
   StatusFilterControl,
   TextFilterControl,
 } from './helpers';
-import { clearFiltersForUser, formatFilterForApi, getInitialStateForField, getStoredFiltersForUser, storeFiltersForUser } from './utils';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../store/store';
+import { clearFilters, formatFilterForApi, getInitialStateForField, getStoredFilters, storeFilters } from './utils';
+import { useLocation } from 'react-router-dom';
 
 const FilterComponent: React.FC<FilterComponentProps> = ({
   setAppliedFilters,
   searchTerm,
   setSearchTerm,
-  filterFields,
-  filterKey,
+  filterFields
 }) => {
-  const userId = useSelector((state: RootState) => state.auth.userId);
+  const location = useLocation();
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
     {}
@@ -49,15 +47,33 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
   );
 
   useEffect(() => {
-    if (!userId) return;
-    const saved = getStoredFiltersForUser(userId, filterKey);
+    const saved = getStoredFilters();
     if (saved) {
       const selected = Object.keys(saved);
       setSelectedFilters(selected);
       setFilterStates(saved as Record<string, FilterState>);
       setAppliedFilters(formatFilterForApi(saved as Record<string, FilterState>));
     }
-  }, [userId]);
+  }, []);
+
+  useEffect(() => {
+    const handleRouteChange = () => {
+      clearFilters();
+      setSelectedFilters([]);
+      setFilterStates({});
+      setAppliedFilters({});
+    };
+
+    let currentPathname = location.pathname;
+
+    const unlisten = () => {
+      if (window.location.pathname !== currentPathname) {
+        handleRouteChange();
+      }
+    };
+
+    return unlisten;
+  }, [location.pathname]);
 
   const handleCheckboxChange = (fieldName: string) => {
     setSelectedFilters((prev) =>
@@ -73,9 +89,9 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
         setAppliedFilters(formatFilterForApi(newState));
 
         if (Object.keys(newState).length === 0) {
-          clearFiltersForUser(userId, filterKey);
+          clearFilters();
         } else {
-          storeFiltersForUser(userId, newState, filterKey);
+          storeFilters(newState);
         }
 
         return newState;
@@ -194,14 +210,14 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
 
   const handleApplyFilters = () => {
     setAppliedFilters(formatFilterForApi(filterStates));
-    storeFiltersForUser(userId, filterStates, filterKey);
+    storeFilters(filterStates);
   };
 
   const handleResetFilters = () => {
     setSelectedFilters([]);
     setFilterStates({});
     setAppliedFilters({});
-    clearFiltersForUser(userId, filterKey);
+    clearFilters();
   };
 
   const renderFilterControls = (field: FieldConfig) => {
@@ -409,7 +425,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
                       color: '#2D3E4F',
                     }}
                   >
-                    {field.name}
+                    {field.label}
                   </Typography>
                 }
               />
