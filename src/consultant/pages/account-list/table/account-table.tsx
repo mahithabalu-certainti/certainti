@@ -28,14 +28,16 @@ import { renderChildRows, renderRows } from './utils';
 const AccountTable: React.FC<Record<string, any>> = ({
   appliedFilters,
   setTotalCount,
+  order, 
+  setOrder,
+  orderBy, 
+  setOrderBy,
 }) => {
   const navigate = useNavigate();
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const [page, setPage] = useState<number>(1);
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
-  const [order, setOrder] = useState<'asc' | 'desc'>('asc');
-  const [orderBy, setOrderBy] = useState<keyof AccountList>('account_name');
   const [accounts, setAccounts] = useState<ConvertedAccount[]>();
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
   const { filters, fiscalYear } = useSelector<

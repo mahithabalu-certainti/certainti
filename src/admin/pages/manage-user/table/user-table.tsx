@@ -7,20 +7,20 @@ import { useManageUserList } from '../../../service/manage-user/manage-user-serv
 import { ManageUser, User, UserListParams } from '../../../types/manage-user';
 import { userColumns } from './columns';
 
-export const UserTable: React.FC<Record<string, any>> = (appliedFilters) => {
+interface IUserTableProps {
+  appliedFilters: Record<string, any>;
+  tableParams: UserListParams;
+  setTableParams: React.Dispatch<React.SetStateAction<UserListParams>>;
+}
+
+export const UserTable: React.FC<IUserTableProps> = ({ appliedFilters, tableParams, setTableParams }) => {
   const [users, setUsers] = useState<ManageUser[]>([]);
   const navigate = useNavigate();
-  const [tableParams, setTableParams] = useState<UserListParams>({
-    page: 1,
-    limit: 10,
-    sortBy: 'createdAt',
-    sortOrder: 'DESC',
-  });
 
   useEffect(() => {
     setTableParams((prev) => ({
       ...prev,
-      filters: appliedFilters.appliedFilters,
+      filters: appliedFilters,
     }));
   }, [appliedFilters]);
 

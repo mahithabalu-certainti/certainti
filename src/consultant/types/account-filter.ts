@@ -13,7 +13,8 @@ interface TextFilterState {
 
 interface NumberFilterState {
   option: NumberFilterOption;
-  value: string;
+  value: string | [string, string];
+  error?: boolean;
 }
 
 interface StatusFilterState {

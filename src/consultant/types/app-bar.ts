@@ -24,6 +24,7 @@ export interface SideBarProps {
   showAdminSidebar: boolean;
   sidebarExpand: boolean;
   mobileView: boolean;
+  setSidebarExpand: (expand: boolean) => void;
 }
 
 export interface GlobalModalProps {

@@ -8,7 +8,7 @@ export const getUserListUrl = (params: UserListParams = {}): string => {
     page: 1,
     limit: 10,
     sortBy: 'createdAt',
-    sortOrder: 'ASC',
+    sortOrder: 'DESC',
     ...params,
   };
 
@@ -18,6 +18,17 @@ export const getUserListUrl = (params: UserListParams = {}): string => {
   };
 
   return `/api/user/list?${buildQueryString(queryParams)}`;
+};
+
+export const getUserExportUrl = (params: UserListParams = {}): string => {
+  const queryParams: any = {
+    organization: ORGANIZATION,
+    sortBy: params.sortBy || 'createdAt',
+    sortOrder: params.sortOrder || 'DESC',
+    filters: params.filters,
+  };
+
+  return `/api/user/export?${buildQueryString(queryParams)}`;
 };
 
 export const getUserDetailUrl = (userId: string): string => {

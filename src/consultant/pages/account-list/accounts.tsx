@@ -16,8 +16,9 @@ import { ACCOUNT_CREATE } from '../../../routes';
 import { getAccountFilterfields } from './helpers';
 import AccountTable from './table/account-table';
 import { useGetAllCountries } from '../../../common-service';
-import { useFetchCurrency } from '../../services/account';
+import { exportAccountList, useFetchCurrency } from '../../services/account';
 import { CircularProgress } from '@mui/material';
+import { AccountList } from '../../types';
 
 const BUTTON_STYLES = {
   height: '35px',
@@ -28,6 +29,9 @@ export const Accounts: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(true);
+  const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+  const [orderBy, setOrderBy] = useState<keyof AccountList>('createdAt');
+  const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
 
   const menuItems = [
     {
@@ -36,7 +40,11 @@ export const Accounts: React.FC = () => {
     },
     {
       label: 'Export',
-      onClick: () => console.log('Export clicked'),
+      onClick: () => exportAccountList({
+        sortBy: orderBy,
+        sortOrder: apiOrder,
+        filters: appliedFilters,
+      }),
     },
   ];
 
@@ -160,6 +168,10 @@ export const Accounts: React.FC = () => {
             appliedFilters={appliedFilters}
             searchTerm={searchTerm}
             setTotalCount={setTotalCount}
+            order={order} 
+            setOrder={setOrder}
+            orderBy={orderBy}
+            setOrderBy={setOrderBy}
           />
         </div>
       </div>

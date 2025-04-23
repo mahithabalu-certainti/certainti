@@ -263,6 +263,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
   showAdminSidebar,
   mobileView,
   sidebarExpand,
+  setSidebarExpand,
 }) => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -284,14 +285,36 @@ export const Sidebar: React.FC<SideBarProps> = ({
     logout();
   };
 
-  const handleToggle = (index: number) => {
-    setAdminNavItems((prevItems) =>
-      prevItems.map((item, idx) =>
-        idx === index
-          ? { ...item, openStatus: !item.openStatus }
-          : { ...item, openStatus: false }
-      )
+  const handleSidebarToggle = () => {
+    const newState = !sidebarExpand;
+    setSidebarExpand(newState);
+    localStorage.setItem('sidebarExpand', JSON.stringify(newState));
+    setAdminNavItems(prevItems => 
+      prevItems.map(item => ({ ...item, openStatus: false }))
     );
+  };
+
+  const handleToggle = (index: number) => {
+    if (!sidebarExpand) {
+      handleSidebarToggle();
+      setTimeout(() => {
+        setAdminNavItems((prevItems) =>
+          prevItems.map((item, idx) =>
+            idx === index
+              ? { ...item, openStatus: !item.openStatus }
+              : { ...item, openStatus: false }
+          )
+        );
+      }, 100);
+    } else {
+      setAdminNavItems((prevItems) =>
+        prevItems.map((item, idx) =>
+          idx === index
+            ? { ...item, openStatus: !item.openStatus }
+            : { ...item, openStatus: false }
+        )
+      );
+    }
   };
 
   return (
@@ -301,7 +324,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
       open={mobileView ? sidebarExpand : true}
       // onClose={handleBackdropClick}
       classes={{
-        paper: `transform transition-all duration-300 ease-in-out ${
+        paper: `transform transition-all duration-400 ease-in-out ${
           sidebarExpand ? 'w-[260px]' : 'w-[80px]'
         }`,
       }}
@@ -309,6 +332,11 @@ export const Sidebar: React.FC<SideBarProps> = ({
         '& .MuiDrawer-paper': {
           backgroundColor: 'primary.main',
           color: 'white', // Set text color to white
+          transition: (theme) =>
+            theme.transitions.create(['width', 'background-color'], {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.standard,
+            }),
         },
       }}
     >
@@ -415,15 +443,17 @@ export const Sidebar: React.FC<SideBarProps> = ({
                   className='h-[20px]'
                 />
               </ListItemIcon>
-              <ListItemText
-                sx={{
-                  '& .MuiTypography-root': {
-                    fontWeight: 600,
-                    fontSize: '14px',
-                  },
-                }}
-                primary={'Administration'}
-              />
+              {sidebarExpand &&
+                <ListItemText
+                  sx={{
+                    '& .MuiTypography-root': {
+                      fontWeight: 600,
+                      fontSize: '14px',
+                    },
+                  }}
+                  primary={'Administration'}
+                />
+              }
             </ListItemButton>
           </ListItem>
         )}
@@ -471,26 +501,28 @@ export const Sidebar: React.FC<SideBarProps> = ({
                       />
                     </ListItemIcon>
                   </Tooltip>
-                  <Box sx={{ display: 'flex', alignItems: 'center', width:'100%' }}>
-                  <ListItemText
-                    sx={{
-                      '& .MuiTypography-root': {
-                        fontWeight: 400,
-                        fontSize: '14px',
-                      },
-                    }}
-                    primary={item.title}
-                  />
-                    {item.subItemTitle.length > 0 &&
-                      (item.openStatus ? (
-                        <img src={adminChevronUpIcon} alt='down' className='h-[18px]'/>
-                      ) : (
-                        <img src={adminChevronDownIcon} alt='down' className='h-[18px]'/>
-                      ))}
-                  </Box>
+                  {sidebarExpand &&
+                    <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                      <ListItemText
+                        sx={{
+                          '& .MuiTypography-root': {
+                            fontWeight: 400,
+                            fontSize: '14px',
+                          },
+                        }}
+                        primary={item.title}
+                      />
+                      {item.subItemTitle.length > 0 &&
+                        (item.openStatus ? (
+                          <img src={adminChevronUpIcon} alt='down' className='h-[18px]' />
+                        ) : (
+                          <img src={adminChevronDownIcon} alt='down' className='h-[18px]' />
+                        ))}
+                    </Box>
+                  }
                 </ListItemButton>
               </ListItem>
-              <Collapse in={item.openStatus} timeout='auto' unmountOnExit>
+              <Collapse in={sidebarExpand && item.openStatus} timeout='auto' unmountOnExit>
                 {item.subItemTitle &&
                   item.subItemTitle.map((subItem, subIndex) => (
                     <List
