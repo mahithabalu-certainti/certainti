@@ -352,21 +352,38 @@ class AccountService {
             return user.dataValues;
           }
         });
-        let exportDetails = cleanedUsers.map((account: any) => {
-          return {
-            "Account name":account?.account_name || "",
-            "RecordId":account?.rid || "",
-            "Parent Account":account?.parent_account?.account_name || "",
+        let exportDetails: any[] = [];
+        cleanedUsers.forEach((account: any) => {
+          const baseRow = {
+            "Account name": account?.account_name || "",
+            "RecordId": account?.rid || "",
+            "Parent Account": account?.parent_account?.account_name || "",
             "Account Number": account?.r_number || "",
-            "Indutries":account?.industry || "",
-            "Country":account?.country.country_name || "",
-            "Currency":account?.currency.currency_code || "",
-            "Annual Revenue":account?.annual_revenue || "",
+            "Indutries": account?.industry || "",
+            "Country": account?.country?.country_name || "",
+            "Currency": account?.currency?.currency_code || "",
+            "Annual Revenue": account?.annual_revenue || "",
             "Status": account?.status || "",
-            "Primary Contact":account?.primary_contact_name || ""
+            "Primary Contact": account?.primary_contact_name || ""
           };
+          exportDetails.push(baseRow);
+          if (Array.isArray(account.child_accounts) && account.child_accounts.length > 0) {
+            account.child_accounts.forEach((child: any) => {
+              exportDetails.push({
+                "Account name": child?.account_name || "",
+                "RecordId": child?.rid || "",
+                "Parent Account": account?.account_name || "", // parent is current account
+                "Account Number": child?.r_number || "",
+                "Indutries": child?.industry || "",
+                "Country": child?.country?.country_name || "",
+                "Currency": child?.currency?.currency_code || "",
+                "Annual Revenue": child?.annual_revenue || "",
+                "Status": child?.status || "",
+                "Primary Contact": child?.primary_contact_name || ""
+              });
+            });
+          }
         });
-  
         return {
           statusCode: HttpStatus.SUCCESS,
           message: HttpStatus.SUCCESS_MESSAGE,
@@ -506,15 +523,6 @@ class AccountService {
         industry,
         primary_contact_name
       } = accountData;
-
-      const isUnique = await this.checkIsAccounUnique(account_name);
-      if(!isUnique){
-        return {
-          statusCode: HttpStatus.BAD_REQUEST,
-          message: HttpStatus.BAD_REQUEST_MESSAGE,
-          errorMessage: `An account with the name "${account_name}" already exists. Please choose a different name.`
-        };
-      }
 
       const [affectedCounts, affectedRows] = await repository.update(
         {
