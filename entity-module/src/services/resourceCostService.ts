@@ -8,13 +8,38 @@ import resourceCostSchemaService from "../services/resourceCostSchemaService";
 import SchemaService from "./schemaService";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { ResourceFiscal } from "../models/resourceFiscal";
+import { initMainDbSequelize } from "../config/mainDataSource";
+import { Sequelize } from "sequelize";
 
 class ResourceCostService {
   private schemaService: SchemaService;
+  private orgSequelize: Sequelize | null = null;
+  private mainDbSequelize: Sequelize | null = null;
 
   constructor() {
     this.schemaService = new SchemaService();
   }
+
+  /**
+   * Get the organization database connection
+   */
+  private async getOrgSequelize(): Promise<Sequelize> {
+    if (!this.orgSequelize) {
+      this.orgSequelize = await initOrgSequelize();
+    }
+    return this.orgSequelize;
+  }
+
+  /**
+   * Get the main database connection
+   */
+  private async getMainDbSequelize(): Promise<Sequelize> {
+    if (!this.mainDbSequelize) {
+      this.mainDbSequelize = await initMainDbSequelize();
+    }
+    return this.mainDbSequelize;
+  }
+
 
   /**
    * Retrieves a paginated list of resource costs for a specific account and fiscal year.
@@ -66,9 +91,7 @@ class ResourceCostService {
           "Account schema does not exist"
         );
       }
-
-      const sequelize = await initOrgSequelize();
-      // Get database connection and ensure it's available
+      const sequelize = await this.getOrgSequelize();
       if (!sequelize) {
         return resourceCostSchemaService.createErrorResponse(
           "Database connection not available"
@@ -202,9 +225,8 @@ class ResourceCostService {
             throw new Error(`Invalid cost frequency: ${cost_frequency}`);
         }
     
-    
-        const sequelize = await initOrgSequelize();
-        ResourceCost.initialize(sequelize,schemaName);
+        const sequelize = await this.getOrgSequelize();
+        ResourceCost.initialize(sequelize, schemaName);
         // Use the model's create method to leverage default values
         createdResourceCost = await ResourceCost.create({
           eid,
@@ -221,7 +243,6 @@ class ResourceCostService {
         if (resource_rid) {
           try {
             
-            const sequelize = await initOrgSequelize();
             ResourceFiscal.initialize(sequelize,schemaName);
             // Check if a record already exists for this resource and fiscal year
             const existingFiscal = await ResourceFiscal.findOne({
@@ -299,7 +320,7 @@ class ResourceCostService {
     schemaName: string
   ): Promise<void> {
     try {
-      const sequelize = await initOrgSequelize();
+      const sequelize = await this.getOrgSequelize();
       ResourceCostTimeline.initialize(sequelize,schemaName);
       // Create the timeline entry using Sequelize model
       await ResourceCostTimeline.create({
@@ -362,7 +383,7 @@ class ResourceCostService {
         };
       }
 
-      const sequelize = await initOrgSequelize();
+      const sequelize = await this.getOrgSequelize();
       ResourceCost.initialize(sequelize,schemaName);
       // Get the original resource cost before updating
       const originalResourceCost = await ResourceCost.findOne({
@@ -427,7 +448,6 @@ class ResourceCostService {
 
         if (affectedRows[0].resource_rid) {
           try {
-            const sequelize = await initOrgSequelize();
             ResourceFiscal.initialize(sequelize,schemaName);
             // Check if a record already exists for this resource and fiscal year
             const existingFiscal = await ResourceFiscal.findOne({
@@ -518,8 +538,7 @@ class ResourceCostService {
     accountNumber: string
   ): Promise<void> {
     try {
-      // Get the repository and sequelize instance
-      const sequelize = await initOrgSequelize();
+      const sequelize = await this.getOrgSequelize();
       if (!sequelize) {
         throw new Error("Database connection not available");
       }
@@ -638,7 +657,7 @@ class ResourceCostService {
         };
       }
 
-      const sequelize = await initOrgSequelize();
+      const sequelize = await this.getOrgSequelize();
       ResourceCost.initialize(sequelize,schemaName);
       const resourceCostById = await ResourceCost.findOne({
         where: {
@@ -653,9 +672,28 @@ class ResourceCostService {
         ],
       });
 
+      let currencyName = "";
+      let currencyCode = "";
+      let currencySymbol = "";
       // Transform the response to simplify cost frequency data
       if (resourceCostById) {
         const costData = resourceCostById.toJSON();
+        const sequelize = await this.getMainDbSequelize();
+        // Query the currency table in the main database
+        const [currencyResult] = await sequelize.query(
+          `SELECT currency_name,currency_code,currency_symbol FROM public.currency WHERE rid = :currency_rid`,
+          {
+            replacements: { currency_rid: costData.currency_rid },
+            type: 'SELECT'
+          }
+        );
+        
+        if (currencyResult) {
+          currencyName = (currencyResult as any).currency_name;
+          currencyCode = (currencyResult as any).currency_code;
+          currencySymbol = (currencyResult as any).currency_symbol;
+        }
+    
         // Find which cost frequency has a value
         const frequencyMap: Record<string, string> = {
           annual_cost: "annual",
@@ -685,7 +723,10 @@ class ResourceCostService {
         const simplifiedCostData = {
           ...costData,
           cost_frequency: foundFrequency,
-          cost: costValue
+          cost: costValue,
+          currency_name: currencyName,
+          currency_code: currencyCode,
+          currency_symbol: currencySymbol,
         };
         
         // Remove the individual cost frequency fields
