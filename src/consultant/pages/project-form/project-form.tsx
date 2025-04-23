@@ -1,11 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { accountHomeIcon, editIcon } from '../../../assets';
-import {
-  CheckErrorMsg,
-  OnChange,
-  useGetAllCountries,
-} from '../../../common-service';
+import { OnChange, useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
@@ -21,12 +17,11 @@ import {
 import { AccountFormData, SelectOption } from '../../types';
 import { FormData } from './form-data';
 import { transformFormData } from './utils';
-import { checkError, checkErrorMsg } from '../../../common-utils';
 
 const ProjectForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [currentCountry, setCurrentCountry] = useState('');
-  const { successToast, errorToast } = useToast();
+  const { successToast } = useToast();
   const location = useLocation();
   const { accountid } = useParams();
 
@@ -56,25 +51,7 @@ const ProjectForm: React.FC = () => {
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
 
-  // Hook Error Handling
-  const errorhandlingData = [
-    createAccount,
-    allCountries,
-    currency,
-    state,
-    updateAccount,
-  ];
-  const commonError = checkError(errorhandlingData);
-  const commonErrorMsg = checkErrorMsg(errorhandlingData as CheckErrorMsg[]);
   const commonSuccess = createAccount.isSuccess || updateAccount.isSuccess;
-
-  useEffect(() => {
-    if (commonError) {
-      errorToast(commonErrorMsg);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [commonError, commonErrorMsg]);
-
   useEffect(() => {
     if (commonSuccess) {
       successToast(

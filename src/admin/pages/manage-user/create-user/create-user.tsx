@@ -2,11 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ManageUserIcon } from '../../../../assets/icons';
 import {
-  CheckErrorMsg,
   OnChange,
   useGetAllCountries,
 } from '../../../../common-service';
-import { checkError, checkErrorMsg } from '../../../../common-utils';
 import { FormBuilder } from '../../../../components';
 import TextButton from '../../../../components/button/text-button';
 import {
@@ -32,7 +30,7 @@ export const CreateUser: React.FC = () => {
     country: '',
     state: '',
   });
-  const { successToast, errorToast } = useToast();
+  const { successToast } = useToast();
   const location = useLocation();
   const { userid } = useParams();
   const navigate = useNavigate();
@@ -50,27 +48,7 @@ export const CreateUser: React.FC = () => {
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
 
-  // Hook Error Handling
-  const errorhandlingData = [
-    userDetails,
-    userProfiles,
-    userRoles,
-    allCountries,
-    states,
-    updateUser,
-    createUser,
-  ];
-  const commonError = checkError(errorhandlingData);
-  const commonErrorMsg = checkErrorMsg(errorhandlingData as CheckErrorMsg[]);
   const commonSuccess = updateUser.isSuccess || createUser.isSuccess;
-
-  useEffect(() => {
-    if (commonError) {
-      errorToast(commonErrorMsg);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [commonError, commonErrorMsg]);
-
   useEffect(() => {
     if (commonSuccess) {
       successToast(

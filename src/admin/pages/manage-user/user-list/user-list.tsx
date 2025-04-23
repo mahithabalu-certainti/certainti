@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { filterIcon, ManageUserIcon } from '../../../../assets/icons';
 import { Filter } from '../../../../components';
@@ -9,9 +9,6 @@ import { ADMIN_CREATE_USER } from '../../../../routes';
 import { UserTable } from '../table/user-table';
 import { getUserFilterfields } from './helpers';
 import { useManageUserProfile } from '../../../service';
-import { checkError, checkErrorMsg } from '../../../../common-utils';
-import { CheckErrorMsg } from '../../../../common-service';
-import { useToast } from '../../../../hooks';
 import { CircularProgress } from '@mui/material';
 
 const BUTTON_STYLES = {
@@ -37,7 +34,6 @@ const MENU_ITEMS = [
 
 const UserList: React.FC = () => {
   const navigate = useNavigate();
-  const { errorToast } = useToast();
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(true);
@@ -49,18 +45,6 @@ const UserList: React.FC = () => {
   ];
 
   const profileList = useManageUserProfile();
-
-  // Hook Error Handling
-  const errorhandlingData = [ profileList ];
-  const commonError = checkError(errorhandlingData);
-  const commonErrorMsg = checkErrorMsg(errorhandlingData as CheckErrorMsg[]);
-
-  useEffect(() => {
-    if (commonError) {
-      errorToast(commonErrorMsg);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [commonError, commonErrorMsg]);
 
   const userProfiles = useMemo(() => {
     return profileList.data?.data.profiles.map(item => item.profile_name) || [];
