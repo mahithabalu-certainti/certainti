@@ -19,6 +19,7 @@ import {
   AccountListURL,
   CityUrl,
   CurrencyUrl,
+  getAccountExportUrl,
   ParentAccountUrl,
   StateUrl,
 } from '../urls/account-url';
@@ -83,4 +84,34 @@ export const fetchCity = async (stateId: string): Promise<CitysApiResponse> => {
     CityUrl(stateId)
   );
   return data;
+};
+
+export const exportAccountList = async (params: AccountListURLParams = {}) => {
+  const url = getAccountExportUrl(params);
+  const response = await accountServiceApi.get(url);
+
+  const base64Data = response.data?.data;
+
+  if (!base64Data) {
+    console.error('No base64 data found in the response.');
+    return;
+  }
+
+  const binary = atob(base64Data);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+
+  const blob = new Blob([bytes], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+
+  // Trigger download
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'account_export.xlsx';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 };

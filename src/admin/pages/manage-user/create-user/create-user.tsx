@@ -117,7 +117,22 @@ export const CreateUser: React.FC = () => {
   );
 
   const submitData = (data: Partial<UserDetail>) => {
-    if (isEditView) {
+    if (isEditView && userDatas) {
+      const normalizeValue = (value: any) => {
+        return value === undefined || value === null || value === '' ? '' : value;
+      };
+
+      const compareData = (data: Partial<UserDetail>, userDatas: UserDetail) => {
+        return Object.entries(data).some(([key, value]) => {
+          return normalizeValue(value) !== normalizeValue(userDatas[key as keyof UserDetail]);
+        });
+      };
+
+        if (!compareData(data, userDatas)) {
+        window.history.back();
+        return;
+      }
+
       const constructData = {
         ...data,
         role: data?.role_rid,
@@ -214,6 +229,7 @@ export const CreateUser: React.FC = () => {
           <div className='p-5'>
             <FormBuilder
               loading={
+                userDetails.isLoading ||
                 userProfiles.isLoading ||
                 allCountries.isLoading ||
                 userRoles.isLoading

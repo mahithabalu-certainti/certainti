@@ -9,7 +9,7 @@ import {
   UserProfileApiResponse,
   UserRolesApiResponse,
 } from '../../types/manage-user';
-import { getUserListUrl } from '../urls';
+import { getUserExportUrl, getUserListUrl } from '../urls';
 const ORGANIZATION = import.meta.env.VITE_ORGANIZATION;
 
 export const fetchManageUserList = async (params: UserListParams = {}) => {
@@ -18,7 +18,7 @@ export const fetchManageUserList = async (params: UserListParams = {}) => {
     page: params.page || 1,
     limit: params.limit || 10,
     sortBy: params.sortBy || 'createdAt',
-    sortOrder: params.sortOrder || 'ASC',
+    sortOrder: params.sortOrder || 'DESC',
     filters: params.filters || {},
     ...(params.filters && { filters: params.filters }),
     ...(params.searchTerm && { search: params.searchTerm }),
@@ -36,6 +36,36 @@ export const useManageUserList = (params: UserListParams = {}) => {
     staleTime: 0, // No cache
     gcTime: 0, // Immediately remove from cache
   });
+};
+
+export const exportUserList = async (params: UserListParams = {}) => {
+  const url = getUserExportUrl(params);
+  const response = await userServiceApi.get(url);
+
+  const base64Data = response.data?.data;
+
+  if (!base64Data) {
+    console.error('No base64 data found in the response.');
+    return;
+  }
+
+  const binary = atob(base64Data);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+
+  const blob = new Blob([bytes], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+
+  // Trigger download
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'user_export.xlsx';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 };
 
 export const getUserDetailUrl = (userId: string): string => {
