@@ -65,7 +65,7 @@ export interface IUpdateResourceCost {
   eid: string;
   effective_date?: Date;
   end_date?: Date;
-  currency_rid: string;
+  currency_rid?: string;
   cost_frequency: string;
   cost: number;
   modified_datetime?: string | null;

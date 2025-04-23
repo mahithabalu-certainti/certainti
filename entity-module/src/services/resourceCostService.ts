@@ -237,7 +237,7 @@ class ResourceCostService {
           effective_date: effective_date || new Date(),
           end_date: end_date || (effective_date ? new Date(effective_date.getTime() + 86400000) : undefined),
           ...frequency,
-          currency_rid: currency_rid || '',
+          currency_rid: currency_rid || undefined,
         });
 
         if (resource_rid) {
