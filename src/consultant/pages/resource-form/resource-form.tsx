@@ -96,9 +96,6 @@ const ResourceForm: React.FC = () => {
     skill_start_date: skillInfo?.startDate || '',
     years_of_experience: skillInfo?.yearsOfExperience || '',
   } : null;
-
-  console.log("formValues", formValues);
-
   // const resourceValues = resource?.data?.resourceDetails;
   const userDetails = JSON.parse(localStorage.getItem('auth') || '{}');
   const allCountries = useGetAllCountries();
