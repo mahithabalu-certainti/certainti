@@ -2,14 +2,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { accountHomeIcon, editIcon } from '../../../assets';
+import { createresourceIcon, editIcon } from '../../../assets';
 import { OnChange, useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
 import { useFetchCity, useFetchState } from '../../services/account';
+import {
+  useCreateResourceCost,
+  useFetchResourceCostById,
+  useUpdateResourceCost,
+} from '../../services/resource-cost/resource-cost-service';
 import { useCreateResource } from '../../services/resource-create';
 import { useResourceDetail } from '../../services/resource-details';
+import {
+  useCreateResourceSkill,
+  useUpdateResourceSkill,
+} from '../../services/resource-skill/resource-skill-service';
 import { useUpdateResource } from '../../services/resource-update';
 import { SelectOption } from '../../types';
 import { ResourceFormData } from './form-data';
@@ -19,8 +28,6 @@ import {
   transformPayloadforUpdateResource,
   transformSkillData,
 } from './utils.tsx';
-import { useCreateResourceCost, useFetchResourceCostById, useUpdateResourceCost } from '../../services/resource-cost/resource-cost-service';
-import { useCreateResourceSkill, useUpdateResourceSkill } from '../../services/resource-skill/resource-skill-service';
 
 const ResourceForm: React.FC = () => {
   // Refs
@@ -62,15 +69,14 @@ const ResourceForm: React.FC = () => {
 
   const { data: costDetails } = useFetchResourceCostById({
     accountNumber: accountNumber,
-    id: state?.costInfo?.costRid
+    id: state?.costInfo?.costRid,
   });
-
 
   // Data fetching
   const { data: resource } = useResourceDetail(
     location?.state?.resource?.rid || resourceRId,
     location?.state?.accountDetails?.data?.accountById?.r_number ||
-    accountNumber
+      accountNumber
   );
 
   // const resourceValues = resource?.data?.resourceDetails;
@@ -245,9 +251,9 @@ const ResourceForm: React.FC = () => {
       <div className='flex justify-between items-center border-b-2 border-gray-200 px-10 py-6'>
         <div className='flex items-center'>
           <img
-            src={isEditView ? editIcon : accountHomeIcon}
+            src={isEditView ? editIcon : createresourceIcon}
             alt='menu-icon'
-            className='h-10 w-10 bg-[#7D98B6] p-2.5 rounded'
+            className='h-8 w-8 rounded'
           />
           <div>
             {isEditView && (
@@ -280,20 +286,20 @@ const ResourceForm: React.FC = () => {
           loading={allCountries.isLoading}
           values={
             isEditView &&
-              (!state?.cost || !state?.skill) &&
-              (resource?.data?.resourceDetails as unknown as Record<
-                string,
-                string | number | boolean | string[] | null
-              >)
+            (!state?.cost || !state?.skill) &&
+            (resource?.data?.resourceDetails as unknown as Record<
+              string,
+              string | number | boolean | string[] | null
+            >)
               ? (resource?.data?.resourceDetails as unknown as Record<
-                string,
-                string | number | boolean | string[] | null
-              >)
-              : state?.cost || state?.skill
-                ? (resource?.data?.resourceDetails as unknown as Record<
                   string,
                   string | number | boolean | string[] | null
                 >)
+              : state?.cost || state?.skill
+                ? (resource?.data?.resourceDetails as unknown as Record<
+                    string,
+                    string | number | boolean | string[] | null
+                  >)
                 : undefined
           }
           // values={
