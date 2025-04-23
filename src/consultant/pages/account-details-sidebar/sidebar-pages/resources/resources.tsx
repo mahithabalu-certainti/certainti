@@ -130,6 +130,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
   const handleBackClick = () => {
     setViewResourceList(!viewResourceList);
     setShowBackArrow(!showBackArrow);
+    setValue('');
   };
 
   const handleCreateResource = () => {

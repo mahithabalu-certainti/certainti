@@ -5,7 +5,11 @@ import { leftArrowIcon, resourceFilterIcon } from '../../../../../assets';
 import { Image } from '../../../../../components';
 import TextButton from '../../../../../components/button/text-button';
 import Filter from '../../components/filter/filter';
-import { costFields, skillFields } from './utils';
+import {
+  costFilterFields,
+  resourceFilterFields,
+  skillFilterFields,
+} from './utils';
 
 interface ResourceTableHeaderProps {
   title: string;
@@ -36,6 +40,10 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
   value,
   showFilter,
 }) => {
+  const getFilterFields = () => {
+    if (!value) return resourceFilterFields;
+    return value === 'cost' ? costFilterFields : skillFilterFields;
+  };
   return (
     <div className='border-x border-t border-gray-300 mr-2'>
       <div className='flex items-center justify-between p-4'>
@@ -74,7 +82,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
           <div className='flex gap-2'>
             {showFilter && (
               <Filter
-                filterMenu={value === 'cost' ? costFields : skillFields}
+                filterMenu={getFilterFields()}
                 setAppliedFilters={setAppliedFilters}
                 handleFilter={handleFilter}
               />
