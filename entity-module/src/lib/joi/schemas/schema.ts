@@ -359,7 +359,7 @@ const resourceCostSchema = Joi.object({
    .required(),
   cost: Joi.number().min(0).max(999999999999.99).required(),
   fiscalYear: Joi.number().default(new Date().getFullYear()).optional(),
-  currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null).allow(""),
+  currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
   status: Joi.string().max(255).default("active"),
   created_datetime: Joi.date()
     .iso()
