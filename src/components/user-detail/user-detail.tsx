@@ -1,6 +1,7 @@
 import { Detail } from '../../admin/types/admin-user-detail';
 import { UserDetail } from '../../common-service';
 import { Skeleton } from '@mui/material';
+import { getDateTimeFormat } from '../../common-utils';
 
 export const UserDetailComponent = ({ data, loading }: UserDetail) => {
   const renderRows = (data: Detail[]) => {
@@ -81,6 +82,20 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
       label: 'Country',
       value: getValueOrDefault(data?.country_name),
     },
+    { label: 'Audit Info', value: '', full: true },
+    {
+      label: 'Created on',
+      value: getDateTimeFormat(data?.created_datetime),
+    },
+    {
+      label: 'Created by',
+      value: capitalizeFirstLetter(data?.created_by),
+    },
+    {
+      label: 'Last Updated on',
+      value: getDateTimeFormat(data?.modified_datetime),
+    },
+    { label: 'Last Updated by', value: getValueOrDefault(data?.modified_by) },
   ];
   return (
     <div className='grid grid-cols-2 divide-y'>
