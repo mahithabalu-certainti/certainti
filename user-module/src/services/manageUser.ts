@@ -13,6 +13,7 @@ interface User {
 }
 
 interface UpdateUser {
+  status: string;
   first_name: string;
   last_name: string;
   azure_id?: string;
@@ -133,8 +134,12 @@ const updateAzureUser = async (users: UpdateUser) => {
       displayName: `${users.first_name} ${users.last_name}`,
       givenName: users.first_name,
       surname: users.last_name,
+      accountEnabled: true
     };
-
+    if(users.status === 'inactive')
+    {
+      userPayload.accountEnabled = false;
+    }
     await client.api(`/users/${users.azure_id}`).patch(userPayload);
 
     const userAfterUpdate = await client.api(`/users/${users.azure_id}`).get();
