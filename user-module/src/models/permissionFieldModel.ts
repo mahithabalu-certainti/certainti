@@ -1,0 +1,80 @@
+import { DataTypes, Model, Optional, Sequelize } from "sequelize";
+import { ModulePermission } from "./modulePermissionModel";
+
+interface PermissionFieldAttributes {
+  rid: string;
+  field_name: string;
+  module_permission_id: string;
+  status: string;
+  created_datetime?: Date;
+  modified_datetime?: Date;
+}
+
+interface PermissionFieldCreationAttributes extends Optional<PermissionFieldAttributes, "rid"> {}
+
+export class PermissionField
+  extends Model<PermissionFieldAttributes, PermissionFieldCreationAttributes>
+  implements PermissionFieldAttributes
+{
+  public rid!: string;
+  public field_name!: string;
+  public module_permission_id!: string;
+  public status!: string;
+  public created_datetime?: Date;
+  public modified_datetime?: Date;
+
+  static initialize(sequelize: Sequelize) {
+    PermissionField.init(
+      {
+        rid: {
+          type: DataTypes.UUID,
+          defaultValue: DataTypes.UUIDV4,
+          primaryKey: true,
+        },
+        field_name: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        module_permission_id: {
+          type: DataTypes.UUID,
+          allowNull: false,
+          references: {
+            model: "module_permission",
+            key: "rid",
+          },
+        },
+        status: {
+          type: DataTypes.STRING,
+          allowNull: false,
+          defaultValue: "active",
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: null,
+        },
+      },
+      {
+        sequelize,
+        modelName: "PermissionField",
+        tableName: "permission_fields",
+        timestamps: false,
+        hooks: {
+          beforeUpdate: (field) => {
+            field.setDataValue("modified_datetime", new Date());
+          },
+        },
+      }
+    );
+
+    PermissionField.belongsTo(ModulePermission, {
+      foreignKey: "module_permission_id",
+      as: "module_permission",
+    });
+  }
+}
