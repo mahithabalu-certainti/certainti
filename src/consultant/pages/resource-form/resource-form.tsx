@@ -87,6 +87,7 @@ const ResourceForm: React.FC = () => {
     financial_start_date: costInfo?.effective_date || '',
     financial_end_date: costInfo?.end_date || '',
     cost: costInfo?.cost || '',
+    currency: costInfo?.currency_rid || '',
     cost_frequency: costInfo?.cost_frequency || ''
   } : state?.skill ? {
     ...resource?.data?.resourceDetails,
