@@ -94,8 +94,16 @@ const listUserSchema = Joi.object({
   organization: Joi.string().required().valid(constants.PLATFORM_TWO, constants.PLATFORM_ONE),
 });
 
+const exportUserSchema = Joi.object({
+  search: Joi.string().max(255).optional().allow(""),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("created_datetime"),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("DESC"),
+  organization: Joi.string().required().valid(constants.PLATFORM_TWO, constants.PLATFORM_ONE),
+});
+
 const listUserByIdSchema = Joi.object({
   organization: Joi.string().required().valid(constants.PLATFORM_TWO, constants.PLATFORM_ONE),
 });
 
-export { createUserSchema, updateUserSchema, enterpriseUserSchema, userDetailsUpdateSchema, userReqSchema, listUserSchema, listUserByIdSchema };
+export { createUserSchema, updateUserSchema, enterpriseUserSchema, userDetailsUpdateSchema, userReqSchema, listUserSchema, listUserByIdSchema, exportUserSchema };

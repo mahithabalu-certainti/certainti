@@ -5,6 +5,7 @@ import {
   userDetailsUpdateSchema,
   listUserByIdSchema,
   listUserSchema,
+  exportUserSchema,
   updateUserSchema,
   userReqSchema,
 } from "../lib/joi/schemas/schema";
@@ -22,6 +23,7 @@ import {
   requestErrorMessages,
   successLog,
   validateRequest,
+  generateExcelBase64,
 } from "../utils/helpers";
 
 const services = configurations.getInstance().getServices();
@@ -333,4 +335,74 @@ async function listUserById(req: Request, res: Response): Promise<void> {
   }
 }
 
-export { createUser, updateUser, listUsers, listUserById };
+/**
+ * Exports user data to an Excel file based on the provided filters and search criteria.
+ * The function validates the request parameters, retrieves the filtered user data,
+ * and generates an Excel file containing the user information.
+ *
+ * @param {Request} req - The Express request object containing query parameters for filtering and sorting.
+ * @param {Response} res - The Express response object used to send the Excel file.
+ * @returns {Promise<void>} - A promise that resolves when the export process is complete.
+ *
+ * @throws {Error} - Throws an error if the export process fails at any step.
+ */
+async function exportUsers(req: Request, res: Response): Promise<void> {
+  const methodName = "Export user";
+  try {
+    const value = await validateRequest(req, exportUserSchema, "", res, "GET");
+
+    if (!value) {
+      return;
+    }
+
+    let parsedFilters: Record<string, any> = {};
+
+    if(!value){
+      return;
+    }
+
+    try {
+      parsedFilters = JSON.parse(value.filters);
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    const result = await services.userServices.exportUsers(
+      value.search,
+      parsedFilters,
+      value.sortBy,
+      value.sortOrder,
+      value.organization
+    );
+
+    if (result.statusCode === constants.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, generateExcelBase64(result?.data?.users));
+      return;
+    } else {
+      errorLog(methodName, result.errorMessage);
+      handleErrorResponse(
+        res,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+      return;
+    }
+  } catch (error) {
+    const err = error as Error;
+    errorLog(methodName, err.message);
+    handleErrorResponse(
+      res,
+      constants.FAILED,
+      constants.FAILED_MESSAGE,
+      err.message
+    );
+    return;
+  }
+}
+
+export { createUser, updateUser, listUsers, listUserById, exportUsers };

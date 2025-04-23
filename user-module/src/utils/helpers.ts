@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { constants } from "./constant";
 import { errorResponse, successResponse } from "./apiResponse";
 import configurations from "../config/config";
+import * as XLSX from 'xlsx';
 
 const logger = configurations.getInstance().getLogger();
 
@@ -101,4 +102,20 @@ export function handleErrorResponse(
   message?: any
 ): void {
   errorResponse(res, statusCode, statusCodeValue, message);
+}
+
+export function generateExcelBase64(
+  data: any
+) {
+  const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Users');
+    // generates Uint8Array
+      const excelBuffer = XLSX.write(workbook, {
+        bookType: 'xlsx',
+        type: 'array' 
+      });
+    
+      const buffer = Buffer.from(excelBuffer); 
+      return buffer.toString('base64');
 }

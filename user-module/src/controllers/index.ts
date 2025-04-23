@@ -1,6 +1,7 @@
 import {
   createUser,
   listUsers,
+  exportUsers,
   updateUser,
   listUserById,
 } from "./userController";
@@ -10,7 +11,7 @@ const controller = {
   userController: {
     createUser,
     updateUser,
-
+    exportUsers,
     listUsers,
     listUserById,
   },
