@@ -1,4 +1,4 @@
-import { Op, Sequelize } from "sequelize";
+import { Op, Sequelize,UniqueConstraintError  } from "sequelize";
 import { HttpStatus } from "../utils/constant";
 import { IAccount, IUpdateAccount } from "../utils/types";
 import SchemaService from "./schemaService";
@@ -579,6 +579,13 @@ class AccountService {
         },
       };
     } catch (err) {
+      if (err instanceof UniqueConstraintError) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: `An account with the name "${accountData.account_name}" already exists. Please choose a different name.`
+        }
+      }
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
@@ -926,7 +933,9 @@ class AccountService {
   private async checkIsAccounUnique(account_name: string): Promise<boolean> {
     const response = await Account.findOne({
       where: {
-        account_name,
+        account_name: {
+          [Op.iLike]: account_name,
+        },
       },
     });
     if (response && response.account_name) {
