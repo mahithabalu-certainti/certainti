@@ -7,10 +7,12 @@ import {
   handleSuccessResponse,
   successLog,
   validateRequest,
+  generateExcelBase64
 } from "../utils/helpers";
 import {
   accountSchema,
   listAccountSchema,
+  exportAccountSchema,
   updateAccountSchema,
 } from "../lib/joi/schemas/schema";
 
@@ -74,6 +76,83 @@ async function accounts(req: Request, res: Response): Promise<void> {
       successLog(methodName);
       handleSuccessResponse(res, accounts.data);
       return;
+    } else {
+      errorLog(methodName, accounts.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        accounts.errorMessage!
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
+/**
+ * @async
+ * @function exportAccounts
+ * @description Handles the exporting the account information as base64 encoded.
+ *
+ * @param {Request} req - Express Request object.
+ * @param {Response} res - Express Response object.
+ * @returns {Promise<void>} - Sends a JSON response with account data on success,
+ * or an error message on failure.
+ */
+async function exportAccounts(req: Request, res: Response): Promise<void> {
+  const methodName = "Export user";
+  try {
+    const value = await validateRequest(req, exportAccountSchema, res, "GET");
+    let parsedFilters: Record<string, any> = {};
+    let parsedGlobalFilters: Record<string, string[]> = {}
+
+    if (!value) {
+      return;
+    }
+
+    try {
+      if (value.filters) {
+        parsedFilters = JSON.parse(value.filters);
+      }
+      if (value.globalFilters) {
+        parsedGlobalFilters = JSON.parse(value.globalFilters);
+      }
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    const fiscalYear: number | "FY-All" = value.fiscal_year === "FY-All"
+    ? "FY-All"
+    : parseInt(value.fiscal_year, 10) || new Date().getFullYear();
+  
+
+    const accounts = await accountServices.exportAccountList(
+      value.search,
+      parsedFilters,
+      value.sortBy,
+      value.sortOrder,
+      parsedGlobalFilters,
+      fiscalYear
+    );
+
+    if (accounts.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, generateExcelBase64(accounts?.data?.account));
+
+      return
     } else {
       errorLog(methodName, accounts.errorMessage);
       handleErrorResponse(
@@ -282,6 +361,7 @@ async function accountById(req: Request, res: Response): Promise<void> {
 
 export default {
   accounts,
+  exportAccounts,
   createAccount,
   updateAccount,
   globalAccounts,

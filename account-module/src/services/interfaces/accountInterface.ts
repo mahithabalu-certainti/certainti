@@ -17,6 +17,20 @@ export interface IAccountService {
     data?: { account: any; count: number };
   }>;
 
+  exportAccountList(
+    search: string,
+    filters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    globalFilters: Record<string, string[]>,
+    fiscalYear: number | "FY-All"
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { account: any };
+  }>;
+
   createAccount(accountData: IAccount): Promise<{
     statusCode: number;
     message: string;
