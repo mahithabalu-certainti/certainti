@@ -4,6 +4,7 @@ import { ModulePermission } from "./modulePermissionModel";
 interface PermissionFieldAttributes {
   rid: string;
   field_name: string;
+  field_desc: string;
   module_permission_id: string;
   status: string;
   created_datetime?: Date;
@@ -18,6 +19,7 @@ export class PermissionField
 {
   public rid!: string;
   public field_name!: string;
+  public field_desc!: string;
   public module_permission_id!: string;
   public status!: string;
   public created_datetime?: Date;
@@ -32,6 +34,10 @@ export class PermissionField
           primaryKey: true,
         },
         field_name: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        field_desc: {
           type: DataTypes.STRING,
           allowNull: false,
         },

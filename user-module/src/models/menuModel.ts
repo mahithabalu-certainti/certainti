@@ -3,6 +3,7 @@ import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 interface MenuAttributes {
   rid: string;
   menu_name: string;
+  menu_desc: string;
   status: string;
   created_datetime?: Date;
   modified_datetime?: Date;
@@ -16,6 +17,7 @@ export class Menu
 {
   public rid!: string;
   public menu_name!: string;
+  public menu_desc!: string;
   public status!: string;
   public created_datetime?: Date;
   public modified_datetime?: Date;
@@ -29,6 +31,10 @@ export class Menu
           primaryKey: true,
         },
         menu_name: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        menu_desc: {
           type: DataTypes.STRING,
           allowNull: false,
         },

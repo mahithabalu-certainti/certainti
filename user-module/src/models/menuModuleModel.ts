@@ -4,6 +4,7 @@ import { Menu } from "./menuModel";
 interface MenuModuleAttributes {
   rid: string;
   module_name: string;
+  module_desc: string;
   menu_id: string;
   status: string;
   created_datetime?: Date;
@@ -18,6 +19,7 @@ export class MenuModule
 {
   public rid!: string;
   public module_name!: string;
+  public module_desc!: string;
   public menu_id!: string;
   public status!: string;
   public created_datetime?: Date;
@@ -32,6 +34,10 @@ export class MenuModule
           primaryKey: true,
         },
         module_name: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        module_desc: {
           type: DataTypes.STRING,
           allowNull: false,
         },

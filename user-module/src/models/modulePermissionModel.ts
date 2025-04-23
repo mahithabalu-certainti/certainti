@@ -4,6 +4,7 @@ import { MenuModule } from "./menuModuleModel";
 interface ModulePermissionAttributes {
   rid: string;
   permission_name: string;
+  permission_desc: string;
   menu_module_id: string;
   status: string;
   created_datetime?: Date;
@@ -18,6 +19,7 @@ export class ModulePermission
 {
   public rid!: string;
   public permission_name!: string;
+  public permission_desc!: string;
   public menu_module_id!: string;
   public status!: string;
   public created_datetime?: Date;
@@ -32,6 +34,10 @@ export class ModulePermission
           primaryKey: true,
         },
         permission_name: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        permission_desc: {
           type: DataTypes.STRING,
           allowNull: false,
         },
