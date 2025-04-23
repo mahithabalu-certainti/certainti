@@ -68,11 +68,11 @@ export async function initModels() {
     Department.initialize(sequelize);
     Profile.initialize(sequelize);
     FunctionGroup.initialize(sequelize);
+    Menu.initialize(sequelize);
+    MenuModule.initialize(sequelize);
     ProfileModuleAccess.initialize(sequelize),
     User.initialize(sequelize);    
     UserDetails.initialize(sequelize),
-    Menu.initialize(sequelize);
-    MenuModule.initialize(sequelize);
     ModulePermission.initialize(sequelize);
     PermissionField.initialize(sequelize);
     ProfileMenuAccess.initialize(sequelize);
