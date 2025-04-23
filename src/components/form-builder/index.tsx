@@ -14,7 +14,7 @@ import { ALLOWED_COUNTRIES } from '../../common-utils';
 import {
   FormType,
   FormTypeFields,
-  selectOptions,
+  SelectOption,
 } from '../../consultant/types';
 import { useLocation } from 'react-router-dom';
 
@@ -193,7 +193,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               disableClearable
               popupIcon={null}
               slotProps={{ paper: { style: { fontSize } } }}
-              onChange={(_e, newValue: selectOptions) => {
+              onChange={(_e, newValue: SelectOption) => {
                 handleChange(newValue?.value || '');
               }}
               value={

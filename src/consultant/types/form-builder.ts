@@ -11,9 +11,9 @@ export interface FormTypeFields {
   label: string;
   required: boolean;
   value?: string;
-  minDate?: number;
+  minDate?: Date;
   maxDate?: Date;
-  options?: selectOptions[];
+  options?: SelectOption[];
   error?: string;
   placeholder?: string;
   regex?: string | RegExp;
@@ -34,10 +34,10 @@ export interface FormTypeFields {
   isLoading?: boolean;
 }
 
-export interface selectOptions {
-  label: string;
-  value: string;
-}
+// export interface SelectOptions {
+//   label: string;
+//   value: string;
+// }
 
 export type InputType =
   | 'text'
@@ -60,7 +60,7 @@ export interface FieldType {
   name: string;
   label: string;
   required: boolean;
-  minDate?: number;
+  minDate?: Date;
   maxDate?: Date;
   options?: SelectOption[];
   regex?: RegExp;

@@ -142,7 +142,7 @@ export const createDateField = (
   others: {
     required: boolean;
     disabled?: boolean;
-    minDate?: number;
+    minDate?: Date;
     maxDate?: Date;
     greaterThan?: Record<string, string>;
   }

@@ -8,7 +8,7 @@ import {
   REGEX_PATTERNS,
 } from '../../../common-utils';
 import { mockSkillLevelOptions } from '../../mockdata/resource-form';
-import { FormType, selectOptions } from '../../types';
+import { FormType, SelectOption } from '../../types';
 import {
   FREQUENCY_OPTIONS,
   RESOURCE_STATUS_OPTIONS,
@@ -25,10 +25,10 @@ const minDate = new Date();
 minDate.setFullYear(currentDate.getFullYear() - 6);
 
 export const ResourceFormData = (
-  country: selectOptions[],
-  states: selectOptions[],
-  city: selectOptions[],
-  currency: selectOptions[],
+  country: SelectOption[],
+  states: SelectOption[],
+  city: SelectOption[],
+  currency: SelectOption[],
   stateLoading?: boolean,
   cityLoading?: boolean,
   currencyLoading?: boolean,
@@ -129,12 +129,12 @@ export const ResourceFormData = (
         fields: [
           createDateField('financial_start_date', 'Effective Date', {
             required: false,
-            minDate: minDate.getTime(),
+            minDate: new Date(minDate.getTime()),
             maxDate: currentDate,
           }),
           createDateField('financial_end_date', 'End Date', {
             required: false,
-            minDate: minDate.getTime(),
+            minDate: new Date(minDate.getTime()),
             maxDate: currentDate,
           }),
           createSelectField('cost_frequency', 'Cost Frequency', {
@@ -163,7 +163,7 @@ export const ResourceFormData = (
         fields: [
           createDateField('skill_start_date', 'Start Date', {
             required: false,
-            minDate: minDate.getTime(),
+            minDate: new Date(minDate.getTime()),
             maxDate: currentDate,
           }),
           createTextField('skill_name', 'Skill Name', {
