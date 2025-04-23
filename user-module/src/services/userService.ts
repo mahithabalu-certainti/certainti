@@ -876,6 +876,166 @@ class UserService {
     };
   }
 
+  /**
+   * Retrieves a  list of users based on search and filter criteria  for exporting the data with,
+   *sorting parameters. The method fetches user data either
+   * from the `PLATFORM_TWO` organization or from the `PLATFORM_ONE` organization
+   * using different fetch strategies.
+   *
+   * @param {string} search - The search query to filter users by.
+   * @param {Record<string, string>} filters - The filters applied to user data.
+   * @param {string} sortBy - The field by which to sort the results.
+   * @param {string} sortOrder - The order of sorting ('ASC' or 'DESC').
+   * @param {string} organization - The organization type used to determine the fetch method.
+   *
+   * @returns {Promise<{ statusCode: string, message: string, data: { users: any } }>}
+   * A promise that resolves to an object containing the status, message,
+   * and user data.
+   */
+  async exportUsers(
+    search: string,
+    filters: Record<string, string>,
+    sortBy: string,
+    sortOrder: string,
+    organization: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { users: any; count: number };
+  }> {
+    try {
+      let users = null;
+      let count: number = 0;
+
+      const whereClause = this.buildWhereClause(filters, search);
+
+      console.log("whereClause : ",JSON.stringify(whereClause));
+
+      const [finalSortBy, finalSortOrder] = this.getSortParameters(
+        sortBy,
+        sortOrder
+      );
+
+      if (organization == constants.PLATFORM_TWO) {
+        const { rows, count:totalCount } = await this.fetchUserForExport(
+          whereClause,
+          finalSortBy,
+          finalSortOrder
+        );
+        users = rows;
+        count = totalCount;
+      } else {
+        users = await this.fetchUserDetailsForExport(
+          whereClause,
+          finalSortBy,
+          finalSortOrder
+        );
+      }
+
+const rawResult = users || [];
+      const cleanedUsers = rawResult.map((user:any) => {
+        if (typeof user.get === 'function') {
+          return user.get({ plain: true }); 
+        } else {
+          return user.dataValues;
+        }
+      });
+       users = cleanedUsers.map((user: any) => {
+        const { profile, business_teams, ...basicUserInfo } = user;
+        return {
+          "Username":basicUserInfo.first_name,
+          "Full name":basicUserInfo.full_name,
+          "Email":basicUserInfo.email,
+          "Profile": profile?.profile_name,
+          "Status": basicUserInfo.status
+        };
+      });
+
+      return {
+        statusCode: constants.SUCCESS,
+        message: constants.SUCCESS_MESSAGE,
+        data: {
+          users,
+          count
+        },
+      };
+    } catch (err) {
+      return this.throwServiceError(err as Error);
+    }
+  }
+
+  async fetchUserForExport(
+    whereClause: Record<string, any>,
+    sortBy: string,
+    sortOrder: string
+  ) {
+    const order: any[] = [];
+
+    if (sortBy !== "$profile.profile_name$") {
+      order.push([sortBy, sortOrder]);
+    }
+
+    if (sortBy === "$profile.profile_name$") {
+      order.push([
+        { model: Profile, as: "profile" },
+        "profile_name",
+        sortOrder,
+      ]);
+    }
+
+    const { count, rows } = await User.findAndCountAll({
+      where: whereClause,
+      attributes: ["rid", "email", "status", "full_name", "first_name"],
+      order,
+      include: [
+        {
+          model: Profile,
+          as: "profile",
+          attributes: ["profile_name"],
+          required: true,
+        },
+        {
+          model: BusinessTeams,
+          as: "business_teams",
+          attributes: ["business_teams"],
+          required: true,
+        },
+      ],
+    });
+    return {
+      rows,
+      count,
+    };
+  }
+
+  async fetchUserDetailsForExport(
+    whereClause: Record<string, any>,
+    sortBy: string,
+    sortOrder: string
+  ) {
+    return await UserDetails.findAll({
+      where: whereClause,
+      order: [[sortBy, sortOrder]],
+      include: [
+        {
+          model: User,
+          required: true,
+        },
+        {
+          model: Department,
+          attributes: ["department_name"],
+          required: true,
+        },
+        {
+          model: FunctionGroup,
+          attributes: ["function_group_name"],
+          required: true,
+        },
+      ],
+    });
+  }
+
   private throwServiceError(err: Error): {
     statusCode: number;
     message: string;
@@ -888,5 +1048,7 @@ class UserService {
     };
   }
 }
+
+
 
 export default UserService;

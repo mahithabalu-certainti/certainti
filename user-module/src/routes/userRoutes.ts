@@ -4,6 +4,7 @@ import controller from "../controllers/index"
 const routes = Router();
 
 routes.get("/list", controller.userController.listUsers);
+routes.get("/export", controller.userController.exportUsers);
 routes.get("/roles", controller.userManagementController.userRoles);
 routes.get("/profiles", controller.userManagementController.userProfiles);
 routes.get("/:id", controller.userController.listUserById);
