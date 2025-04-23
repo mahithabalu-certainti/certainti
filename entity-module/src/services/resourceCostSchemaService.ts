@@ -26,9 +26,9 @@ class ResourceCostSchemaService {
         // Initialize models with the sequelize instance
         Resources.initialize(sequelize, schemaName);
         ResourceFiscal.initialize(sequelize, schemaName);
-        ResourceCost.initialize(sequelize);
+        ResourceCost.initialize(sequelize, schemaName);
         ResourceCostTimeline.initialize(sequelize,schemaName);
-        ResourceCostHistory.initialize(sequelize);
+        ResourceCostHistory.initialize(sequelize, schemaName);
 
         this.sequelizeInstance = sequelize;
       }

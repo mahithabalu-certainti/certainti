@@ -48,7 +48,7 @@ export interface IResourceCost {
   resource_ref_id: string;
   effective_date?: Date;
   end_date?: Date;
-  currency_rid: string;
+  currency_rid?: string;
   cost_frequency: string;
   cost: number;
   created_datetime?: string | null;
@@ -78,7 +78,7 @@ export interface IResourceSkill {
    eid?: string;
    account_rid: string;
    resource_type: string;
-   resource_rid?: string;
+   resource_rid: string;
    resource_ref_id: string,
    resource_desc?: string;
    skill_rid: string;
@@ -88,8 +88,8 @@ export interface IResourceSkill {
    status?: string;
    years_of_experience?: number,
    fiscal_year?: number,
-   created_by?: string;
-   modified_by?: string;
+   created_by?: string | null;
+   modified_by?: string | null;
    skill_type?: string;
    skill_name: string;
    technical_weightage?: number;
@@ -104,7 +104,7 @@ export interface IUpdateResourceSkill {
   skill_level?: string;
   status?: string;
   years_of_experience?: number,
-  modified_by?: string;
+  modified_by?: string | null;
   skill_rid: string;
   skill_name: string;
   skill_type?: string;

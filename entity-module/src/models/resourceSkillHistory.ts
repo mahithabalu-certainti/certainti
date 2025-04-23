@@ -25,7 +25,7 @@ export class ResourceSkillHistory extends Model<ResourceSkillHistoryAttributes, 
     modified_datetime?: Date;
     modified_by!: string;
 
-  static initialize(sequelize: Sequelize) {
+  static initialize(sequelize: Sequelize,schemaName:string) {
     ResourceSkillHistory.init(
       {
        rid: {
@@ -65,6 +65,7 @@ export class ResourceSkillHistory extends Model<ResourceSkillHistoryAttributes, 
       },
       {
         sequelize,
+        schema: schemaName,
         modelName: "ResourceSkillHistory",
         tableName: "resource_skill_history",
         timestamps: false,

@@ -49,7 +49,7 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
   modified_by?: string;
   technical_weightage!: number;
 
-  static initialize(sequelize: Sequelize) {
+  static initialize(sequelize: Sequelize,schemaName: string) {
     ResourceSkill.init(
       {
        rid: {
@@ -75,7 +75,7 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
        },
        resource_rid: {
         type: DataTypes.UUID,
-        allowNull: true,
+        allowNull: false,
        },
        resource_desc : {
          type: DataTypes.STRING(255),
@@ -135,6 +135,7 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
       },
       {
         sequelize,
+        schema: schemaName,
         modelName: "ResourceSkill",
         tableName: "resource_skill",
         timestamps: false,

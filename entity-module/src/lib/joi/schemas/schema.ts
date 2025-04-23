@@ -342,7 +342,7 @@ const resourceCostSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
   accountNumber: Joi.string().max(255).required(),
   resource_type: Joi.string().valid("FullTime", "Contract").required(),
-  resource_rid: Joi.string().pattern(uuidRegex).optional().allow(null).allow(""),
+  resource_rid: Joi.string().pattern(uuidRegex).required(),
   resource_ref_id: Joi.string().max(255).required(),
   effective_date: Joi.string().max(10).optional().allow(null).allow(""),
   end_date: Joi.string().max(10).optional().allow(null).allow(""),
@@ -359,7 +359,7 @@ const resourceCostSchema = Joi.object({
    .required(),
   cost: Joi.number().min(0).max(999999999999.99).required(),
   fiscalYear: Joi.number().default(new Date().getFullYear()).optional(),
-  currency_rid: Joi.string().pattern(uuidRegex).required(),
+  currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null).allow(""),
   status: Joi.string().max(255).default("active"),
   created_datetime: Joi.date()
     .iso()

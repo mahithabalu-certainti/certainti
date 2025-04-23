@@ -148,7 +148,7 @@ class UserService {
         middle_name,
         organization,
         phone,
-        updated_by,
+        modified_by,
       } = userData;
 
       const repository = this.getAccountRepository();
@@ -182,7 +182,7 @@ class UserService {
             (middle_name ? " " + middle_name : "") +
             " " +
             last_name,
-          modified_by: updated_by,
+          modified_by: modified_by,
           modified_datetime: new Date(),
         },
         {
