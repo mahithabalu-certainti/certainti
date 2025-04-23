@@ -65,7 +65,15 @@ export const AccountDetails = () => {
     // Add settings logic here
   };
 
-  const [activeKey, setActiveKey] = useState('financial');
+  const [activeKey, setActiveKey] = useState(
+    location.state?.activeKey || 'financial'
+  );
+
+  useEffect(() => {
+    if (location.state?.activeKey) {
+      setActiveKey(location.state.activeKey);
+    }
+  }, [location.state]);
 
   const renderContent = () => {
     switch (activeKey) {
@@ -74,7 +82,9 @@ export const AccountDetails = () => {
       case 'details':
         return <Details />;
       case 'resources':
-        return <Resources accountDetails={data} />;
+        return (
+          <Resources accountDetails={{ ...data, activeKey: 'resources' }} />
+        );
       case 'attachments':
         return <Attachments />;
       case 'projects':
