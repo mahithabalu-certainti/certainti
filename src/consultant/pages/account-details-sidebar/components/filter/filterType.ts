@@ -1,11 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Define filter options for each field type
 
-// Equals
-// Not Equal
-// Contains
-// Doesn't Contain
-// Is Empty
 export type TextFilterOption =
   | 'Equals'
   | 'Not Equals'
