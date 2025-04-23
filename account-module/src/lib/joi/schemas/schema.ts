@@ -245,4 +245,17 @@ const listAccountSchema = Joi.object({
   )
 });
 
-export { accountSchema, updateAccountSchema, listAccountSchema };
+const exportAccountSchema = Joi.object({
+  search: Joi.string().max(255).optional(),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("createdAt"),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("DESC"),
+  globalFilters: Joi.string().default("{}"),
+  fiscalYear: Joi.alternatives()
+  .try(
+    Joi.string().valid("FY-All"),  // Allow "FY-All"
+    Joi.number()  // Allow numbers (years like 2023, 2024, etc.)
+  )
+});
+
+export { accountSchema, updateAccountSchema, listAccountSchema, exportAccountSchema };

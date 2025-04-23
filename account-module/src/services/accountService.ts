@@ -204,6 +204,181 @@ class AccountService {
     }
   }
 
+       /**
+   * Retrieves the all  account details with filters and search for exporting as excel.
+   *
+   * @async
+   * @param {string} search - The search query to filter accounts by.
+   * @param {Record<string, string>} filters - The filters applied to account data.
+   * @param {string} sortBy - The field by which to sort the results.
+   * @param {string} sortOrder - The order of sorting ('ASC' or 'DESC').
+   * @returns {Promise<{ statusCode: number, message: string, data?: { account: any } }>}
+   * - An object containing the status code, message, and retrieved account data.
+   */
+    async exportAccountList(
+      search: string,
+      filters: Record<string, any> = {},
+      sortBy: string = "created_datetime",
+      sortOrder: string = "ASC",
+      globalFilters: Record<string, string[]> = {},
+      fiscalYear: number | "FY-All"
+    ): Promise<{
+      statusCode: number;
+      message: string;
+      errorMessage?: string;
+      data?: { account: any};
+    }> {
+      try {
+        const repository = this.getAccountRepository();
+        
+        // Parse filters if it's a string
+        const parsedFilters = typeof filters === 'string' ? 
+          (filters === '{}' ? {} : JSON.parse(filters)) : filters;
+              
+        const { whereClause } = this.buildWhereClause(parsedFilters, search);
+        
+        const {allWhereClause, childClause} = this.applyAccountIDFilter(globalFilters, whereClause);
+  
+        const [finalSortBy, finalSortOrder] = this.getSortParameters(
+          sortBy,
+          sortOrder
+        );
+  
+        const order: any[] = [];
+  
+        if (finalSortBy !== "country" && finalSortBy !== "currency") {
+          order.push([finalSortBy, finalSortOrder]);
+        }
+  
+        if (finalSortBy === "country") {
+          order.push([
+            { model: Country, as: "country" },
+            "country_name",
+            finalSortOrder,
+          ]);
+        }
+  
+        if (finalSortBy === "currency") {
+          order.push([
+            { model: Currency, as: "currency" },
+            "currency_code",
+            finalSortOrder,
+          ]);
+        }
+  
+        // Determine if we should include the parent_account_rid filter
+        // Only apply this filter if is_parent_account is not set to "NO"
+        const baseWhereClause = { ...allWhereClause };
+        
+        // If is_parent_account filter is not "NO", only get accounts with null parent_account_rid
+        if (!parsedFilters.is_parent_account || parsedFilters.is_parent_account.toLowerCase() !== 'no') {
+          baseWhereClause.parent_account_rid = { [Op.is]: null } as any;
+        }
+  
+        // First, get accounts based on the filters
+        const parentAccounts = await repository.findAll({
+          where: baseWhereClause,
+          order,
+          include: [
+            {
+              model: Country,
+              as: "country",
+              attributes: ["rid", "country_name"],
+              required: true,
+            },
+            {
+              model: Currency,
+              as: "currency",
+              attributes: ["rid", "currency_code"],
+              required: true,
+            }
+          ],
+        });
+  
+        // Then, for each account, fetch its child accounts separately
+        const accountIds = parentAccounts.map((account: any) => account.rid);
+        
+        if(accountIds.length > 0) {
+          const childAccounts = await repository.findAll({
+            where: {
+              parent_account_rid: {
+                [Op.in]: accountIds,
+              },
+              ...(Object.keys(childClause).length > 0 ? childClause : {}),
+            },
+            include: [
+              {
+                model: Country,
+                as: "country",
+                attributes: ["rid", "country_name"]
+              },
+              {
+                model: Currency,
+                as: "currency",
+                attributes: ["rid", "currency_code"]
+              },
+              {
+                model: Account,
+                as: "parent_account",
+                attributes: ["rid", "account_name"],
+              },
+            ]
+          });
+  
+          // Group child accounts by parent_account_rid
+          const childAccountsByParent = childAccounts.reduce((acc: any, child: any) => {
+            if (!acc[child.parent_account_rid]) {
+              acc[child.parent_account_rid] = [];
+            }
+            acc[child.parent_account_rid].push(child);
+            return acc;
+          }, {});
+  
+          // Attach child accounts to their respective parent accounts
+          parentAccounts.forEach((account: any) => {
+            account.setDataValue('child_accounts', childAccountsByParent[account.rid] || []);
+          });
+        } else {
+          // If no parent accounts found, set empty child_accounts array
+          parentAccounts.forEach((account: any) => {
+            account.setDataValue('child_accounts', []);
+          });
+        }
+        const rawResult = parentAccounts || [];
+        const cleanedUsers = rawResult.map((user:any) => {
+          if (typeof user.get === 'function') {
+            return user.get({ plain: true }); 
+          } else {
+            return user.dataValues;
+          }
+        });
+        let exportDetails = cleanedUsers.map((account: any) => {
+          return {
+            "Account name":account?.account_name || "",
+            "RecordId":account?.rid || "",
+            "Parent Account":account?.parent_account?.account_name || "",
+            "Account Number": account?.r_number || "",
+            "Indutries":account?.industry || "",
+            "Country":account?.country.country_name || "",
+            "Currency":account?.currency.currency_code || "",
+            "Annual Revenue":account?.annual_revenue || "",
+            "Status": account?.status || "",
+            "Primary Contact":account?.primary_contact_name || ""
+          };
+        });
+  
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.SUCCESS_MESSAGE,
+          data: {
+            account: exportDetails
+          },
+        };
+      } catch (err) {
+        return this.throwServiceError(err as Error);
+      }
+    }
+  
   async createAccount(accountData: IAccount): Promise<{
     statusCode: number;
     message: string;
