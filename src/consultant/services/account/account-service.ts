@@ -110,7 +110,7 @@ export const exportAccountList = async (params: AccountListURLParams = {}) => {
   // Trigger download
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = 'account_export.xlsx';
+  link.download = 'account_records.xlsx';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

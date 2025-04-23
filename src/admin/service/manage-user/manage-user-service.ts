@@ -62,7 +62,7 @@ export const exportUserList = async (params: UserListParams = {}) => {
   // Trigger download
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = 'user_export.xlsx';
+  link.download = 'user_records.xlsx';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
