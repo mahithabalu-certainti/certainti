@@ -1,24 +1,24 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Define filter options for each field type
+
+// Equals
+// Not Equal
+// Contains
+// Doesn't Contain
+// Is Empty
 export type TextFilterOption =
   | 'Equals'
   | 'Not Equals'
   | 'Contains'
-  | 'Starts With'
-  | 'Ends With'
   | 'Does Not Contain'
-  | 'Is Empty'
-  | 'Is Not Empty';
+  | 'Is Empty';
 
 export const textOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Not Equals', value: 'not_equals' },
   { option: 'Contains', value: 'contains' },
-  { option: 'Starts With', value: 'starts_with' },
-  { option: 'Ends With', value: 'ends_with' },
   { option: 'Does Not Contain', value: 'does_not_contain' },
   { option: 'Is Empty', value: 'is_empty' },
-  { option: 'Is Not Empty', value: 'is_not_empty' },
 ];
 export type NumberFilterOption =
   | 'Equals'
