@@ -3,12 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { accountHomeIcon, editIcon } from '../../../assets';
-import {
-  CheckErrorMsg,
-  OnChange,
-  useGetAllCountries,
-} from '../../../common-service';
-import { checkError, checkErrorMsg } from '../../../common-utils';
+import { OnChange, useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
@@ -38,7 +33,7 @@ const ResourceForm: React.FC = () => {
   });
 
   // Hooks
-  const { successToast, errorToast } = useToast();
+  const { successToast } = useToast();
   const location = useLocation();
   const { state } = location;
   const navigate = useNavigate();
@@ -90,19 +85,7 @@ const ResourceForm: React.FC = () => {
   const updateResourceCost = useUpdateResourceCost();
   const createResourceSkill = useCreateResourceSkill();
   const updateResourceSkill = useUpdateResourceSkill();
-  // Error handling
-  const errorHandlers = [
-    createResource,
-    allCountries,
-    states,
-    updateResource,
-    createResourceCost,
-    updateResourceCost,
-    createResourceSkill,
-    updateResourceSkill,
-  ];
-  const commonError = checkError(errorHandlers);
-  const commonErrorMsg = checkErrorMsg(errorHandlers as CheckErrorMsg[]);
+
   const costSkillSuccess =
     createResourceCost.isSuccess ||
     updateResourceCost.isSuccess ||
@@ -140,13 +123,6 @@ const ResourceForm: React.FC = () => {
       })) || [],
     [city.data?.data.cities]
   );
-
-  // Effects
-  useEffect(() => {
-    if (commonError) {
-      errorToast(commonErrorMsg);
-    }
-  }, [commonError, commonErrorMsg, errorToast]);
 
   useEffect(() => {
     if (commonSuccess) {
