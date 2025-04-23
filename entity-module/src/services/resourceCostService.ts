@@ -234,8 +234,8 @@ class ResourceCostService {
           resource_type,
           resource_rid,
           resource_ref_id,
-          effective_date: effective_date || new Date(),
-          end_date: end_date || (effective_date ? new Date(effective_date.getTime() + 86400000) : undefined),
+          effective_date: effective_date || undefined,
+          end_date: end_date || undefined,         
           ...frequency,
           currency_rid: currency_rid || undefined,
         });
@@ -431,8 +431,8 @@ class ResourceCostService {
         const [affectedCounts, affectedRows] = await ResourceCost.update(
           {
             eid,
-            effective_date,
-            end_date,
+            effective_date: effective_date || undefined,
+            end_date: end_date || undefined,
             ...frequency,
             currency_rid,
             rid,

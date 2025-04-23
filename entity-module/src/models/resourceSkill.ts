@@ -12,7 +12,7 @@ interface ResourceSkillAttributes  {
  resource_ref_id: string, 
  resource_desc: string,
  skill_rid: string,
- start_date: Date,
+ start_date?: Date,
  skill_description?: string,
  skill_level: string,
  status?: string,
@@ -39,7 +39,7 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
   resource_desc!: string;
   status?: string; 
   skill_rid!: string;
-  start_date!: Date;
+  start_date?: Date;
   skill_description?: string;
   skill_level!: string;
   years_of_experience!: number;

@@ -158,7 +158,7 @@ class ResourceSkillService {
               resource_ref_id,
               resource_desc: resource_desc || '',
               skill_rid: skillRidToUse, // Use the determined skill RID
-              start_date: start_date || new Date(),
+              start_date: start_date || undefined,
               skill_description,
               skill_level: skill_level || '',
               years_of_experience: years_of_experience || 0,
@@ -374,7 +374,7 @@ class ResourceSkillService {
         {
           rid,
           eid, 
-          start_date,
+          start_date: start_date || undefined,
           skill_description,
           skill_level,
           skill_rid:skillRidToUse,
