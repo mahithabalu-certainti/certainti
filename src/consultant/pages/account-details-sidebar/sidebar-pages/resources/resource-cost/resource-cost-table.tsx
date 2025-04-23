@@ -16,28 +16,27 @@ import {
   RenderCostRowProps,
   ResourceCostType,
 } from './resource-cost-type';
-// import { ResourceCostList } from "../../../types/resourceCost";
-// import { useResourceCost } from "../../../services/resource-cost/resource-cost-service";
 import React from 'react';
 import { useNavigate } from "react-router-dom";
 import { ResourceCostList } from "../../../../../types/resource-cost";
 import { useResourceCost } from "../../../../../services/resource-cost/resource-cost-service";
 import { RESOURCECOST } from "../../../../../../routes";
 import ActionButton from '../../../../account-list/table/action-button';
-// import { useSelector } from 'react-redux';
-// import { RootState } from '../../../../../../store/store';
-// import ActionButton from "../../../../accounts/table/action-button";
-// import { RESOURCECOST } from "../../../../routes";
-// import ActionButton from "../../accounts/table/action-button";
 
-const ResourceCostTable: React.FC<Record<string, any>> = ({ fiscalYear, appliedFilters, accountDetails }) => {
+interface ResourceCostTableProps {
+  fiscalYear?: number;
+  appliedFilters?: Record<string, any>;
+  accountDetails?: Record<string, any>;
+}
+
+const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appliedFilters, accountDetails }) => {
   const navigate = useNavigate();
   const [page, setPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState<number>(25);
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
   const [orderBy, setOrderBy] = useState<keyof ResourceCostList>('resource_cost_number');
   const [resourceCostList, setResourceCostList] = useState<ResourceCostType[]>([]);
-  const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';    
+  const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
   const { data: costList, isLoading: loading } = useResourceCost({
     page: page,
     limit: rowsPerPage,
@@ -46,7 +45,7 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ fiscalYear, appliedF
     filters: appliedFilters,
     accountNumber: accountDetails?.data?.accountById?.r_number,
     fiscalYear: fiscalYear
-  });  
+  });
 
   useEffect(() => {
     setResourceCostList(convertResourceCost(costList?.resourceCost || []));
@@ -85,9 +84,9 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ fiscalYear, appliedF
 
   const createSortHandler =
     (property: keyof ResourceCostList) =>
-    (event: React.MouseEvent<unknown>) => {
-      handleRequestSort(event, property);
-    };
+      (event: React.MouseEvent<unknown>) => {
+        handleRequestSort(event, property);
+      };
 
   const renderRows = ({ resourceCost }: RenderCostRowProps) => {
     return resourceCost?.map((cost) => {
@@ -147,7 +146,7 @@ const ResourceCostTable: React.FC<Record<string, any>> = ({ fiscalYear, appliedF
                 direction={orderBy === 'currency_code' ? order : 'asc'}
                 onClick={createSortHandler('currency_code')}
               > */}
-                Currency
+              Currency
               {/* </TableSortLabel> */}
             </TableCell>
             <TableCell>

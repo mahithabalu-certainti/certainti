@@ -29,7 +29,7 @@ export function convertResourceSkill(
 
   function ProcessResourceSkill(skill: ResourceSkillList): void {
     const convertedSkill: ResourceSkillType = {
-      resourceRole: skill.resource_desc,
+      resourceRole: skill.resource_role,
       resourceRID: skill.resource_rid,
       skillRId: skill.rid,
       startDate: skill.start_date,

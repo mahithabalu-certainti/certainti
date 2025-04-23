@@ -19,7 +19,7 @@ import {
 import { RootState, useAppDispatch } from '../../store/store';
 import {
   fetchAccountsThunk,
-  resetFilters,
+  // resetFilters,
   setFilters,
 } from '../../store/slices/account-slice';
 import { useToast } from '../../hooks';
@@ -104,7 +104,7 @@ export const GlobalModal = ({
   };
 
   const handleResetFilters = () => {
-    dispatch(resetFilters());
+    // dispatch(resetFilters());
     setSelectedFilters([]);
   };
 

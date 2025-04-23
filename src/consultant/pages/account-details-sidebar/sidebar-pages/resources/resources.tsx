@@ -113,17 +113,17 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     variant: 'text' | 'outlined' | 'contained';
     onClick: () => void;
   }[] = [
-    {
-      label: 'Download',
-      variant: 'outlined',
-      onClick: () => console.log('Download'),
-    },
-    {
-      label: 'New',
-      variant: 'outlined',
-      onClick: () => handleCreateResource(),
-    },
-  ];
+      {
+        label: 'Download',
+        variant: 'outlined',
+        onClick: () => console.log('Download'),
+      },
+      {
+        label: 'New',
+        variant: 'outlined',
+        onClick: () => handleCreateResource(),
+      },
+    ];
 
   const toggleViewMode = () => {
     setViewMode(!viewMode);
@@ -145,11 +145,11 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     }
     if (value === 'cost') {
       navigate(`${RESOURCE}/cost/create`, {
-        state: { ...accountDetails, resourceData, cost: true },
+        state: { ...accountDetails, resourceData, cost: true, sectionName: 'Financial Information' },
       });
     } else if (value === 'skill') {
       navigate(`${RESOURCE}/skill/create`, {
-        state: { ...accountDetails, resourceData, skill: true },
+        state: { ...accountDetails, resourceData, skill: true, sectionName: 'Skill Information' },
       });
     }
   };

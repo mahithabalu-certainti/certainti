@@ -20,7 +20,7 @@ import { useResourceSkill } from "../../../../../services/resource-skill/resourc
 import { RESOURCESKILL } from "../../../../../../routes";
 import ActionButton from '../../../../account-list/table/action-button';
 
-const ResourceSkillTable: React.FC<Record<string, any>> = ({fiscalYear, appliedFilters, accountDetails }) => {
+const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, appliedFilters, accountDetails }) => {
   const navigate = useNavigate();
   // const location = useLocation();
   const [page, setPage] = useState<number>(0);
@@ -45,7 +45,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({fiscalYear, appliedF
 
   const handleEdit = (skill: ResourceSkillType) => {
     navigate(RESOURCESKILL + '/edit/' + skill.resourceRID, {
-      state: {...accountDetails, skillInfo: skill, skill: true },
+      state: { ...accountDetails, skillInfo: skill, skill: true },
     });
   };
 
@@ -112,9 +112,9 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({fiscalYear, appliedF
           <TableRow>
             <TableCell>
               <TableSortLabel
-                active={orderBy === 'resource_desc'}
-                direction={orderBy === 'resource_desc' ? order : 'asc'}
-                onClick={createSortHandler('resource_desc')}
+                active={orderBy === 'resource_role'}
+                direction={orderBy === 'resource_role' ? order : 'asc'}
+                onClick={createSortHandler('resource_role')}
               >
                 Resource Role
               </TableSortLabel>

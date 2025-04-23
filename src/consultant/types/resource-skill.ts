@@ -24,7 +24,7 @@ export type ResourceSkillList = {
   account_rid: string;
   resource_type: string;
   resource_rid: string;
-  resource_desc: string;
+  resource_role: string;
   skill_rid: string;
   start_date: string;
   skill_description?: string;
