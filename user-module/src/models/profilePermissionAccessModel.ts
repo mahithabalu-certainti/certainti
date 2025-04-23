@@ -1,11 +1,11 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { Profile } from "./profileModel";
-import { MenuModule } from "./menuModuleModel";
+import { ModulePermission } from "./modulePermissionModel";
 
-interface ProfileModuleAccessAttributes {
+interface ProfilePermissionAccessAttributes {
   rid: string;
   profile_id: string;
-  menu_module_id: string;
+  module_permission_id: string;
   is_enabled: boolean;
   created_by?: string;
   modified_by?: string;
@@ -13,15 +13,15 @@ interface ProfileModuleAccessAttributes {
   modified_datetime?: Date;
 }
 
-interface ProfileModuleAccessCreationAttributes extends Optional<ProfileModuleAccessAttributes, "rid"> {}
+interface ProfilePermissionAccessCreationAttributes extends Optional<ProfilePermissionAccessAttributes, "rid"> {}
 
-export class ProfileModuleAccess
-  extends Model<ProfileModuleAccessAttributes, ProfileModuleAccessCreationAttributes>
-  implements ProfileModuleAccessAttributes
+export class ProfilePermissionAccess
+  extends Model<ProfilePermissionAccessAttributes, ProfilePermissionAccessCreationAttributes>
+  implements ProfilePermissionAccessAttributes
 {
   public rid!: string;
   public profile_id!: string;
-  public menu_module_id!: string;
+  public module_permission_id!: string;
   public is_enabled!: boolean;
   public created_by?: string;
   public modified_by?: string;
@@ -29,7 +29,7 @@ export class ProfileModuleAccess
   public modified_datetime?: Date;
 
   static initialize(sequelize: Sequelize) {
-    ProfileModuleAccess.init(
+    ProfilePermissionAccess.init(
       {
         rid: {
           type: DataTypes.UUID,
@@ -39,38 +39,29 @@ export class ProfileModuleAccess
         profile_id: {
           type: DataTypes.UUID,
           allowNull: false,
-          references: { model: "profile", key: "rid" },
         },
-        menu_module_id: {
+        module_permission_id: {
           type: DataTypes.UUID,
           allowNull: false,
-          references: { model: "menu_module", key: "rid" },
         },
         is_enabled: {
           type: DataTypes.BOOLEAN,
           allowNull: false,
         },
-        created_by: {
-          type: DataTypes.STRING,
-          allowNull: true,
-        },
-        modified_by: {
-          type: DataTypes.STRING,
-          allowNull: true,
-        },
+        created_by: DataTypes.STRING,
+        modified_by: DataTypes.STRING,
         created_datetime: {
           type: DataTypes.DATE,
           defaultValue: DataTypes.NOW,
         },
         modified_datetime: {
           type: DataTypes.DATE,
-          defaultValue: null,
         },
       },
       {
         sequelize,
-        modelName: "ProfileModuleAccess",
-        tableName: "profile_module_access",
+        modelName: "ProfilePermissionAccess",
+        tableName: "profile_permission_access",
         timestamps: false,
         hooks: {
           beforeUpdate: (record) => {
@@ -80,14 +71,14 @@ export class ProfileModuleAccess
       }
     );
 
-    ProfileModuleAccess.belongsTo(Profile, {
+    ProfilePermissionAccess.belongsTo(Profile, {
       foreignKey: "profile_id",
       as: "profile",
     });
 
-    ProfileModuleAccess.belongsTo(MenuModule, {
-      foreignKey: "menu_module_id",
-      as: "menu_module",
+    ProfilePermissionAccess.belongsTo(ModulePermission, {
+      foreignKey: "module_permission_id",
+      as: "module_permission",
     });
   }
 }

@@ -1,10 +1,10 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
-import { Profile } from "./profileModel";
+import { User } from "./userModel";
 import { MenuModule } from "./menuModuleModel";
 
-interface ProfileModuleAccessAttributes {
+interface UserModuleAccessAttributes {
   rid: string;
-  profile_id: string;
+  user_id: string;
   menu_module_id: string;
   is_enabled: boolean;
   created_by?: string;
@@ -13,14 +13,14 @@ interface ProfileModuleAccessAttributes {
   modified_datetime?: Date;
 }
 
-interface ProfileModuleAccessCreationAttributes extends Optional<ProfileModuleAccessAttributes, "rid"> {}
+interface UserModuleAccessCreationAttributes extends Optional<UserModuleAccessAttributes, "rid"> {}
 
-export class ProfileModuleAccess
-  extends Model<ProfileModuleAccessAttributes, ProfileModuleAccessCreationAttributes>
-  implements ProfileModuleAccessAttributes
+export class UserModuleAccess
+  extends Model<UserModuleAccessAttributes, UserModuleAccessCreationAttributes>
+  implements UserModuleAccessAttributes
 {
   public rid!: string;
-  public profile_id!: string;
+  public user_id!: string;
   public menu_module_id!: string;
   public is_enabled!: boolean;
   public created_by?: string;
@@ -29,48 +29,37 @@ export class ProfileModuleAccess
   public modified_datetime?: Date;
 
   static initialize(sequelize: Sequelize) {
-    ProfileModuleAccess.init(
+    UserModuleAccess.init(
       {
         rid: {
           type: DataTypes.UUID,
           defaultValue: DataTypes.UUIDV4,
           primaryKey: true,
         },
-        profile_id: {
+        user_id: {
           type: DataTypes.UUID,
           allowNull: false,
-          references: { model: "profile", key: "rid" },
         },
         menu_module_id: {
           type: DataTypes.UUID,
           allowNull: false,
-          references: { model: "menu_module", key: "rid" },
         },
         is_enabled: {
           type: DataTypes.BOOLEAN,
           allowNull: false,
         },
-        created_by: {
-          type: DataTypes.STRING,
-          allowNull: true,
-        },
-        modified_by: {
-          type: DataTypes.STRING,
-          allowNull: true,
-        },
+        created_by: DataTypes.STRING,
+        modified_by: DataTypes.STRING,
         created_datetime: {
           type: DataTypes.DATE,
           defaultValue: DataTypes.NOW,
         },
-        modified_datetime: {
-          type: DataTypes.DATE,
-          defaultValue: null,
-        },
+        modified_datetime: DataTypes.DATE,
       },
       {
         sequelize,
-        modelName: "ProfileModuleAccess",
-        tableName: "profile_module_access",
+        modelName: "UserModuleAccess",
+        tableName: "user_module_access",
         timestamps: false,
         hooks: {
           beforeUpdate: (record) => {
@@ -80,14 +69,7 @@ export class ProfileModuleAccess
       }
     );
 
-    ProfileModuleAccess.belongsTo(Profile, {
-      foreignKey: "profile_id",
-      as: "profile",
-    });
-
-    ProfileModuleAccess.belongsTo(MenuModule, {
-      foreignKey: "menu_module_id",
-      as: "menu_module",
-    });
+    UserModuleAccess.belongsTo(User, { foreignKey: "user_id", as: "user" });
+    UserModuleAccess.belongsTo(MenuModule, { foreignKey: "menu_module_id", as: "menu_module" });
   }
 }
