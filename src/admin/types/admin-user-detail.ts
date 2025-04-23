@@ -1,6 +1,7 @@
 export interface Detail {
   label: string;
   value: string | number | undefined;
+  full?: boolean
 }
 
 // Base types for nested objects
@@ -46,6 +47,7 @@ export type User = {
   modified_datetime: string;
   profile: Profile;
   business_teams: BusinessTeams;
+  phone: string;
 };
 
 // Response status types
