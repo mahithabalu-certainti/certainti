@@ -25,7 +25,7 @@ export class ResourceCostHistory extends Model<ResourceCostHistoryAttributes, Re
     modified_datetime?: Date;
     modified_by!: string;
 
-  static initialize(sequelize: Sequelize) {
+  static initialize(sequelize: Sequelize,schemaName:string) {
     ResourceCostHistory.init(
       {
        rid: {
@@ -65,6 +65,7 @@ export class ResourceCostHistory extends Model<ResourceCostHistoryAttributes, Re
       },
       {
         sequelize,
+        schema: schemaName, // Specify the schema name here
         modelName: "ResourceCostHistory",
         tableName: "resource_cost_history",
         timestamps: false,

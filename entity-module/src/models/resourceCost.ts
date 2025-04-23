@@ -18,7 +18,7 @@ interface ResourceCostAttributes {
  bi_weekly_cost?: number,
  daily_cost?: number,
  hourly_cost?: number,
- currency_rid: string,
+ currency_rid?: string,
  status?: string,
  created_datetime?: Date,
  modified_datetime?: Date,
@@ -47,14 +47,14 @@ export class ResourceCost extends Model<ResourceCostAttributes, ResourceCostCrea
   bi_weekly_cost?: number;
   daily_cost?: number;
   hourly_cost?: number;
-  currency_rid!: string;
+  currency_rid?: string;
   status?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
   created_by?: string;
   modified_by?: string;
 
-  static initialize(sequelize: Sequelize) {
+  static initialize(sequelize: Sequelize,schemaName: string) {
     ResourceCost.init(
       {
        rid: {
@@ -131,7 +131,7 @@ export class ResourceCost extends Model<ResourceCostAttributes, ResourceCostCrea
        },
        currency_rid: {
         type: DataTypes.UUID,
-        allowNull: false,
+        allowNull: true,
        },
        status: {
         type: DataTypes.STRING(255),
@@ -158,6 +158,7 @@ export class ResourceCost extends Model<ResourceCostAttributes, ResourceCostCrea
       },
       {
         sequelize,
+        schema: schemaName,
         modelName: "ResourceCost",
         tableName: "resource_cost",
         timestamps: false,

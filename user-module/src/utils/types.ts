@@ -62,5 +62,5 @@ export interface IUpdateUserData {
   function_group_id?: string;
   organization: string
   phone?: string;
-  updated_by: string;
+  modified_by: string;
 }

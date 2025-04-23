@@ -13,22 +13,10 @@ import { initOrgSequelize } from "../config/orgDataSource";
 
 
 class ResourceSkillService {
-    private resourceSkillRepository: typeof ResourceSkill | null;
     private schemaService: SchemaService;
 
     constructor(){
-        this.resourceSkillRepository=null;
         this.schemaService = new SchemaService();
-    }
-
-
-
-
-    private getResourceSkillRepository(): typeof ResourceSkill {
-        if(!this.resourceSkillRepository){
-            this.resourceSkillRepository = ResourceSkill;
-        }
-        return this.resourceSkillRepository;
     }
 
 
@@ -39,7 +27,6 @@ class ResourceSkillService {
         data?: { resourceSkill: any };
       }> {
         try {
-          const repository = this.getResourceSkillRepository();
           const {
             eid,
             account_rid,
@@ -63,7 +50,6 @@ class ResourceSkillService {
           let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
           const schemaName = `platform_v2_${accountNumberFetched}`;
-          
           // Create both tables in parallel for better performance
           const [resourceSkillTableCreated, timelineTableCreated, skillTableCreated] = await Promise.all([
             resourceSkillSchemaService.createTablesInSchema(schemaName, "resource_skill"),
@@ -120,8 +106,8 @@ class ResourceSkillService {
                   skill_type,
                   skill_name,
                   skill_description,
-                  created_by,
-                  modified_by
+                  created_by: created_by || '',
+                  modified_by: modified_by || '',
                 });
                 
                 skillRidToUse = newSkill.rid;
@@ -135,14 +121,16 @@ class ResourceSkillService {
           let createdResourceSkill;
           let eventStatus = "Success";
           let errorMessage = "";
-          
           try {
+            const sequelize = await initOrgSequelize();
+            ResourceSkill.initialize(sequelize,schemaName);
+
             // Use the model's create method to leverage default values
-            createdResourceSkill = await repository.create({
+            createdResourceSkill = await ResourceSkill.create({
               eid,
               account_rid,
               resource_type,
-              resource_rid: resource_rid || '',
+              resource_rid:resource_rid,
               resource_ref_id,
               resource_desc: resource_desc || '',
               skill_rid: skillRidToUse, // Use the determined skill RID
@@ -150,15 +138,14 @@ class ResourceSkillService {
               skill_description,
               skill_level: skill_level || '',
               years_of_experience: years_of_experience || 0,
-              created_by,
-              modified_by,
               technical_weightage: technical_weightage || 0,
+              created_by: created_by || '',
+              modified_by: modified_by || '',
             });
 
             // Update the resource_fiscal table
       if (resource_rid) {
         try {
-          const sequelize = await initOrgSequelize();
           ResourceFiscal.initialize(sequelize,schemaName);
           // Check if a record already exists for this resource and fiscal year
           const existingFiscal = await ResourceFiscal.findOne({
@@ -269,7 +256,6 @@ class ResourceSkillService {
    */
   async updateResourceSkill(resourceSkillData: IUpdateResourceSkill) {
     try {
-      const repository = this.getResourceSkillRepository();
       const {
         rid,
         eid, 
@@ -303,8 +289,10 @@ class ResourceSkillService {
       };
     }
 
+    const sequelize = await initOrgSequelize();
+    ResourceSkill.initialize(sequelize, schemaName);
     // Get the original resource skill before updating
-    const originalResourceSkill = await repository.findOne({
+    const originalResourceSkill = await ResourceSkill.findOne({
       where: { rid: rid }
     });
 
@@ -321,7 +309,6 @@ class ResourceSkillService {
 
       if (skill_name) {
         try {
-          const sequelize = await initOrgSequelize();
           Skill.initialize(sequelize, schemaName);
           
           // Find existing skill by name
@@ -341,8 +328,8 @@ class ResourceSkillService {
               skill_type: resourceSkillData.skill_type || '',
               skill_name,
               skill_description,
-              created_by: modified_by,
-              modified_by
+              created_by: modified_by || '',
+              modified_by: modified_by || '',
             });
             
             skillRidToUse = newSkill.rid;
@@ -358,7 +345,7 @@ class ResourceSkillService {
       }
 
       try{
-      const [affectedCounts, affectedRows] = await repository.update(
+      const [affectedCounts, affectedRows] = await ResourceSkill.update(
         {
           rid,
           eid, 
@@ -368,8 +355,9 @@ class ResourceSkillService {
           skill_rid:skillRidToUse,
           status,
           years_of_experience,
-          modified_by,
           technical_weightage,
+          modified_by: modified_by || '',
+          modified_datetime: new Date(),
         },
         {
           where: {
@@ -445,9 +433,6 @@ private async createResourceSkillHistory(
   accountNumber: string,
 ): Promise<void> {
   try {
-    // Get the repository and sequelize instance
-    const repository = this.getResourceSkillRepository();
-
     // Make sure we're in the right schema context
     const schemaName = `platform_v2_${accountNumber}`;
     const validatedSchema = await resourceSkillSchemaService.validateSchema(schemaName,"resource_skill_history");
@@ -485,6 +470,8 @@ private async createResourceSkillHistory(
             if (newValue) formattedNewValue = new Date(newValue).toISOString().split('T')[0];
           }
           
+          const sequelize = await initOrgSequelize();
+          ResourceSkillHistory.initialize(sequelize, schemaName);
           // Create individual record to isolate errors
           await ResourceSkillHistory.create({
             resource_skill_rid: newResourceSkill.rid,
@@ -558,7 +545,6 @@ private async createResourceSkillHistory(
   }> 
   {
     try {
-      const repository = this.getResourceSkillRepository();
       const offset = (page - 1) * limit;
       const [finalSortBy, finalSortOrder] = resourceSkillSchemaService.getSortParameters(sortBy, sortOrder);
 
@@ -588,7 +574,8 @@ private async createResourceSkillHistory(
           WHERE rs.rid = :rid
         `;
 
-        const results = await repository.sequelize?.query(query, {
+        const sequelize = await initOrgSequelize();
+        const results = await sequelize?.query(query, {
           replacements: { rid },
           type: "SELECT",
         });

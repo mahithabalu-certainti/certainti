@@ -10,26 +10,10 @@ import { initOrgSequelize } from "../config/orgDataSource";
 import { ResourceFiscal } from "../models/resourceFiscal";
 
 class ResourceCostService {
-  private resourceCostRepository: typeof ResourceCost | null;
   private schemaService: SchemaService;
 
   constructor() {
-    this.resourceCostRepository = null;
     this.schemaService = new SchemaService();
-  }
-
-  /**
-   * Retrieves the Resource Cost model instance.
-   * If the repository has not been initialized, it creates a new instance
-   * using the database configuration.
-   *
-   * @returns {typeof ResourceCost} - The model for Resource cost entity.
-   */
-  private getResourceCostRepository(): typeof ResourceCost {
-    if (!this.resourceCostRepository) {
-      this.resourceCostRepository = ResourceCost;
-    }
-    return this.resourceCostRepository;
   }
 
   /**
@@ -62,7 +46,6 @@ class ResourceCostService {
     data?: { resourceCost: any; count: number };
   }> {
     try {
-      const repository = this.getResourceCostRepository();
       const offset = (page - 1) * limit;
       const [finalSortBy, finalSortOrder] =
         resourceCostSchemaService.getSortParameters(sortBy, sortOrder);
@@ -84,8 +67,8 @@ class ResourceCostService {
         );
       }
 
+      const sequelize = await initOrgSequelize();
       // Get database connection and ensure it's available
-      const sequelize = repository.sequelize;
       if (!sequelize) {
         return resourceCostSchemaService.createErrorResponse(
           "Database connection not available"
@@ -144,7 +127,6 @@ class ResourceCostService {
     data?: { resourceCost: any };
   }> {
     try {
-      const repository = this.getResourceCostRepository();
       const {
         eid,
         account_rid,
@@ -221,8 +203,10 @@ class ResourceCostService {
         }
     
     
+        const sequelize = await initOrgSequelize();
+        ResourceCost.initialize(sequelize,schemaName);
         // Use the model's create method to leverage default values
-        createdResourceCost = await repository.create({
+        createdResourceCost = await ResourceCost.create({
           eid,
           account_rid,
           resource_type,
@@ -231,7 +215,7 @@ class ResourceCostService {
           effective_date: effective_date || new Date(),
           end_date: end_date || (effective_date ? new Date(effective_date.getTime() + 86400000) : undefined),
           ...frequency,
-          currency_rid,
+          currency_rid: currency_rid || '',
         });
 
         if (resource_rid) {
@@ -344,7 +328,6 @@ class ResourceCostService {
    */
   async updateResourceCost(resourceCostData: IUpdateResourceCost) {
     try {
-      const repository = this.getResourceCostRepository();
       const {
         eid,
         effective_date,
@@ -379,8 +362,10 @@ class ResourceCostService {
         };
       }
 
+      const sequelize = await initOrgSequelize();
+      ResourceCost.initialize(sequelize,schemaName);
       // Get the original resource cost before updating
-      const originalResourceCost = await repository.findOne({
+      const originalResourceCost = await ResourceCost.findOne({
         where: { rid: rid },
       });
 
@@ -422,7 +407,7 @@ class ResourceCostService {
         }
     
 
-        const [affectedCounts, affectedRows] = await repository.update(
+        const [affectedCounts, affectedRows] = await ResourceCost.update(
           {
             eid,
             effective_date,
@@ -534,8 +519,7 @@ class ResourceCostService {
   ): Promise<void> {
     try {
       // Get the repository and sequelize instance
-      const repository = this.getResourceCostRepository();
-      const sequelize = repository.sequelize;
+      const sequelize = await initOrgSequelize();
       if (!sequelize) {
         throw new Error("Database connection not available");
       }
@@ -597,6 +581,8 @@ class ResourceCostService {
                   .split("T")[0];
             }
 
+            ResourceCostHistory.initialize(sequelize,schemaName);
+
             // Create individual record to isolate errors
             await ResourceCostHistory.create({
               resource_cost_rid: newResourceCost.rid,
@@ -636,7 +622,6 @@ class ResourceCostService {
    */
   async resourceCostById(id: string, accountNumber: string) {
     try {
-      const repository = this.getResourceCostRepository();
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
       const schemaName = `platform_v2_${accountNumberFetched}`;
@@ -653,7 +638,9 @@ class ResourceCostService {
         };
       }
 
-      const resourceCostById = await repository.findOne({
+      const sequelize = await initOrgSequelize();
+      ResourceCost.initialize(sequelize,schemaName);
+      const resourceCostById = await ResourceCost.findOne({
         where: {
           rid: id,
         },
