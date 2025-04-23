@@ -4,9 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { resourceHeaderIcon } from '../../../../../assets';
 import { RESOURCE, RESOURCE_CREATE } from '../../../../../routes';
 import { useResourceList } from '../../../../services/resource-list';
+import { AccountData } from '../../../account-details/utils';
 import TabPanel from '../../components/tab';
 import ListTable from '../../components/table';
-import { AccountData } from '../../utils';
 import { getResourceColumns } from './columns';
 import ResourceSubComponents from './resource-sub-components';
 import ResourceTableHeader from './resource-table-header';
@@ -153,13 +153,13 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
         viewMode={viewMode}
         onExitView={toggleViewMode}
         title='Resource'
-        handleFilter={handleFilter}
-        value={value}
-        showFilter={showFilter}
-        setAppliedFilters={setAppliedFilters}
         setFiscalYearValue={setFiscalYearValue}
       />
       <ResourceTableHeader
+        handleFilter={handleFilter}
+        value={value}
+        setAppliedFilters={setAppliedFilters}
+        showFilter={showFilter}
         title='Resource'
         titleIcon={<img src={resourceHeaderIcon} alt='resource header icon' />}
         headerButtons={viewMode ? [] : headerButtons}
