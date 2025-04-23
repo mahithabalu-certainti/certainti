@@ -1,93 +1,69 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
+import { Profile } from "./profileModel";
+import { MenuModule } from "./menuModuleModel";
 
 interface ProfileModuleAccessAttributes {
-  profile_module_id: number;
-  profile_id: number;
-  module_id: number;
-  is_tab_enabled: boolean;
-  write: boolean;
-  edit: boolean;
-  delete: boolean;
-  read: boolean;
-  list: boolean;
+  rid: string;
+  profile_id: string;
+  menu_module_id: string;
+  is_enabled: boolean;
+  created_by?: string;
+  modified_by?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
 }
 
-interface ProfileModuleAccessCreationAttributes
-  extends Optional<ProfileModuleAccessAttributes, "profile_module_id"> {}
+interface ProfileModuleAccessCreationAttributes extends Optional<ProfileModuleAccessAttributes, "rid"> {}
 
-// Define the ProfileModuleAccess model class extending Sequelize's Model class
 export class ProfileModuleAccess
-  extends Model<
-    ProfileModuleAccessAttributes,
-    ProfileModuleAccessCreationAttributes
-  >
+  extends Model<ProfileModuleAccessAttributes, ProfileModuleAccessCreationAttributes>
   implements ProfileModuleAccessAttributes
 {
-  public profile_module_id!: number;
-  public profile_id!: number;
-  public module_id!: number;
-  public is_tab_enabled!: boolean;
-  public write!: boolean;
-  public edit!: boolean;
-  public delete!: boolean;
-  public read!: boolean;
-  public list!: boolean;
-
-  // Timestamps
-  public readonly created_datetime!: Date;
-  public readonly modified_datetime!: Date;
+  public rid!: string;
+  public profile_id!: string;
+  public menu_module_id!: string;
+  public is_enabled!: boolean;
+  public created_by?: string;
+  public modified_by?: string;
+  public created_datetime?: Date;
+  public modified_datetime?: Date;
 
   static initialize(sequelize: Sequelize) {
-    // Initialize the model
     ProfileModuleAccess.init(
       {
-        profile_module_id: {
-          type: DataTypes.INTEGER,
+        rid: {
+          type: DataTypes.UUID,
+          defaultValue: DataTypes.UUIDV4,
           primaryKey: true,
-          autoIncrement: true,
         },
         profile_id: {
-          type: DataTypes.INTEGER,
+          type: DataTypes.UUID,
+          allowNull: false,
+          references: { model: "profile", key: "rid" },
+        },
+        menu_module_id: {
+          type: DataTypes.UUID,
+          allowNull: false,
+          references: { model: "menu_module", key: "rid" },
+        },
+        is_enabled: {
+          type: DataTypes.BOOLEAN,
           allowNull: false,
         },
-        module_id: {
-          type: DataTypes.INTEGER,
-          allowNull: false,
+        created_by: {
+          type: DataTypes.STRING,
+          allowNull: true,
         },
-        is_tab_enabled: {
-          type: DataTypes.BOOLEAN,
-          defaultValue: false,
-        },
-        write: {
-          type: DataTypes.BOOLEAN,
-          defaultValue: false,
-        },
-        edit: {
-          type: DataTypes.BOOLEAN,
-          defaultValue: false,
-        },
-        delete: {
-          type: DataTypes.BOOLEAN,
-          defaultValue: false,
-        },
-        read: {
-          type: DataTypes.BOOLEAN,
-          defaultValue: false,
-        },
-        list: {
-          type: DataTypes.BOOLEAN,
-          defaultValue: false,
+        modified_by: {
+          type: DataTypes.STRING,
+          allowNull: true,
         },
         created_datetime: {
           type: DataTypes.DATE,
-          allowNull: false,
           defaultValue: DataTypes.NOW,
         },
         modified_datetime: {
           type: DataTypes.DATE,
-          allowNull: true,
           defaultValue: null,
         },
       },
@@ -96,7 +72,22 @@ export class ProfileModuleAccess
         modelName: "ProfileModuleAccess",
         tableName: "profile_module_access",
         timestamps: false,
+        hooks: {
+          beforeUpdate: (record) => {
+            record.setDataValue("modified_datetime", new Date());
+          },
+        },
       }
     );
+
+    ProfileModuleAccess.belongsTo(Profile, {
+      foreignKey: "profile_id",
+      as: "profile",
+    });
+
+    ProfileModuleAccess.belongsTo(MenuModule, {
+      foreignKey: "menu_module_id",
+      as: "menu_module",
+    });
   }
 }
