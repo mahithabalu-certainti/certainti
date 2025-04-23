@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { filterIcon, ManageUserIcon } from '../../../../assets/icons';
 import { Filter } from '../../../../components';
@@ -8,11 +8,9 @@ import TextButton from '../../../../components/button/text-button';
 import { ADMIN_CREATE_USER } from '../../../../routes';
 import { UserTable } from '../table/user-table';
 import { getUserFilterfields } from './helpers';
-import { useManageUserProfile } from '../../../service';
-import { checkError, checkErrorMsg } from '../../../../common-utils';
-import { CheckErrorMsg } from '../../../../common-service';
-import { useToast } from '../../../../hooks';
+import { exportUserList, useManageUserProfile } from '../../../service';
 import { CircularProgress } from '@mui/material';
+import { UserListParams } from '../../../types/manage-user';
 
 const BUTTON_STYLES = {
   height: '35px',
@@ -24,23 +22,18 @@ const HEADER_STYLES = {
   manageUser: 'font-semibold text-[20px] text-[#2D3E4F]',
 };
 
-const MENU_ITEMS = [
-  {
-    label: 'Assign Permission to User',
-    onClick: () => console.log('user clicked'),
-  },
-  {
-    label: 'View Permissions',
-    onClick: () => console.log('View Permissions clicked'),
-  },
-];
-
 const UserList: React.FC = () => {
   const navigate = useNavigate();
-  const { errorToast } = useToast();
-  const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
+  const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(true);
+  const [tableParams, setTableParams] = useState<UserListParams>({
+    page: 1,
+    limit: 10,
+    sortBy: 'createdAt',
+    sortOrder: 'DESC',
+  });
+
   const userActionButtons = [
     'Suspend User',
     'Reinstate User',
@@ -48,19 +41,22 @@ const UserList: React.FC = () => {
     'Delete',
   ];
 
+  const MENU_ITEMS = [
+    {
+      label: 'Assign Permission to User',
+      onClick: () => console.log('user clicked'),
+    },
+    {
+      label: 'View Permissions',
+      onClick: () => console.log('View Permissions clicked'),
+    },
+    {
+      label: 'Export',
+      onClick: () => exportUserList(tableParams),
+    },
+  ];
+
   const profileList = useManageUserProfile();
-
-  // Hook Error Handling
-  const errorhandlingData = [ profileList ];
-  const commonError = checkError(errorhandlingData);
-  const commonErrorMsg = checkErrorMsg(errorhandlingData as CheckErrorMsg[]);
-
-  useEffect(() => {
-    if (commonError) {
-      errorToast(commonErrorMsg);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [commonError, commonErrorMsg]);
 
   const userProfiles = useMemo(() => {
     return profileList.data?.data.profiles.map(item => item.profile_name) || [];
@@ -173,6 +169,8 @@ const UserList: React.FC = () => {
           <div className={`transition-all duration-300 ease-in-out ${isFilterOpen ? 'w-[80%]' : 'w-full'}`}>
             <UserTable
               appliedFilters={appliedFilters}
+              tableParams={tableParams}
+              setTableParams={setTableParams}
             />
           </div>
         </div>

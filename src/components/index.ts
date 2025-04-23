@@ -11,3 +11,4 @@ export * from './navbar';
 export * from './sidebar';
 export * from './text';
 export * from './toast-message';
+export * from './user-detail';

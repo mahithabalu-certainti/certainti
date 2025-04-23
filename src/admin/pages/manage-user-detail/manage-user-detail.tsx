@@ -1,13 +1,13 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ManageUserIcon } from '../../../assets/icons';
-import { getDateTimeFormat } from '../../../common-utils';
 import ActionsDropdown from '../../../components/actions-dropdown/actions-dropdown';
 import TextButton from '../../../components/button/text-button';
 import { useManageUserDetail } from '../../service/manage-user-detail/manage-user-detail-service';
-import { Detail } from '../../types/admin-user-detail';
 import { BUTTON_STYLES, HEADER_STYLES } from './styles';
 import { ADMIN_CREATE_USER } from '../../../routes';
+import { UserDetailComponent } from '../../../components';
+import { Skeleton } from '@mui/material';
 
 const MENU_ITEMS = [
   {
@@ -25,15 +25,10 @@ export const ManageUserDetails: React.FC = () => {
   const location = useLocation();
   const userId = location.state?.user.id;
   // Use the query hook to fetch user details
-  const {
-    data: user,
-    isLoading,
-    isError,
-    error,
-  } = useManageUserDetail(userId || '');
-  
+  const userDetails = useManageUserDetail(userId as string);
   const navigate = useNavigate();
-  const userDetail = user?.data.users;
+  const userDetail = userDetails.data?.data?.users;
+
   const userActionButtons: string[] = [
     'Suspend User',
     'Reactive User',
@@ -60,89 +55,9 @@ export const ManageUserDetails: React.FC = () => {
     }
   };
 
-  const renderRows = (left: Detail[], right: Detail[]) => {
-    const maxLength = Math.max(left.length, right.length);
-
-    return Array.from({ length: maxLength }).map((_, index) => (
-      <React.Fragment key={index}>
-        <div className='grid grid-cols-[1fr_2fr] gap-1  items-center justify-center border-b border-gray-200 py-2'>
-          <div className='font-bold text-left'>{left[index]?.label ?? ''}</div>
-          <div className='break-words whitespace-normal max-w-full'>
-            {left[index]?.value ?? ''}
-          </div>
-        </div>
-        <div className='grid grid-cols-[1fr_2fr] gap-1 items-center justify-center border-b border-gray-200 py-2'>
-          <div className='font-bold text-left'>{right[index]?.label ?? ''}</div>
-          <div className='break-words whitespace-normal max-w-full'>
-            {right[index]?.value ?? ''}
-          </div>
-        </div>
-      </React.Fragment>
-    ));
-  };
   if (!userId) {
     return <div>No user ID provided</div>;
   }
-
-  if (isLoading) {
-    return <div>Loading user details...</div>;
-  }
-
-  if (isError) {
-    return <div>Error loading user details: {error?.message}</div>;
-  }
-
-  if (!user) {
-    return <div>User not found</div>;
-  }
-
-  const capitalizeFirstLetter = (str?: string) => {
-    if (str) {
-      return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-    }
-    return 'N/A';
-  };
-
-  // Map your API data to the mock data structure
-  const mappedUserDetails: Detail[] = [
-    { label: 'Record ID', value: userDetail?.rid || 'N/A' },
-    { label: 'Full name', value: userDetail?.full_name || 'N/A' },
-    { label: 'Email address', value: userDetail?.email || 'N/A' },
-    { label: 'Profile', value: userDetail?.profile.profile_name || 'N/A' },
-    {
-      label: 'Status',
-      value: capitalizeFirstLetter(userDetail?.status),
-    },
-    { label: 'First name', value: userDetail?.first_name || 'N/A' },
-    { label: 'Last name', value: userDetail?.last_name || 'N/A' },
-    { label: 'Street', value: userDetail?.street || 'N/A' },
-    { label: 'City', value: userDetail?.city_name || 'N/A' },
-    // Add other fields as needed
-  ];
-
-  const mappedAdditionalDetails: Detail[] = [
-    { label: 'User ID', value: userDetail?.r_number || 'N/A' },
-    { label: 'State/Province', value: userDetail?.state_name || 'N/A' },
-    { label: 'Zip/Postal Code', value: userDetail?.zip_code || 'N/A' },
-    { label: 'Country', value: userDetail?.country_name || 'N/A' },
-    {
-      label: 'Created by',
-      value: capitalizeFirstLetter(userDetail?.created_by),
-    },
-    {
-      label: 'Created on',
-      value: getDateTimeFormat(userDetail?.created_datetime),
-    },
-    { label: 'Last Updated by', value: userDetail?.modified_by || 'N/A' },
-    {
-      label: 'Last Updated on',
-      value: getDateTimeFormat(userDetail?.modified_datetime),
-    },
-    {
-      label: 'Role',
-      value: userDetail?.business_teams?.business_teams,
-    },
-  ];
 
   const goBack = () => {
     window.history.back();
@@ -185,7 +100,13 @@ export const ManageUserDetails: React.FC = () => {
         <div className='flex justify-between items-center border-b border-gray-300 p-2'>
           <div>
             <div className='text-small text-[#7D98B6]'>User</div>
-            <div className='font-semibold text-xl'>{userDetail?.full_name}</div>
+            <div className='font-semibold text-xl'>
+              {userDetails.isLoading ? (
+                <Skeleton variant='rounded' width={200} />
+              ) : (
+                userDetail?.full_name
+              )}
+            </div>
           </div>
           <div className='flex gap-2 m-2'>
             {userActionButtons.map((label) => (
@@ -199,14 +120,10 @@ export const ManageUserDetails: React.FC = () => {
             ))}
           </div>
         </div>
-        <div className='w-full'>
-          <div className='flex bg-[#CBD6E2] p-2'>
-            <div className='mb-3 text-small font-semibold'>User Details</div>
-          </div>
-          <div className='grid grid-cols-2 divide-y p-2'>
-            {renderRows(mappedUserDetails, mappedAdditionalDetails)}
-          </div>
-        </div>
+        <UserDetailComponent
+          data={userDetail}
+          loading={userDetails.isLoading}
+        />
       </div>
     </div>
   );

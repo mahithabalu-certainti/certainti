@@ -67,8 +67,7 @@ export const App: React.FC<IApp> = ({ instance }) => {
           }
         />
         <Route element={<AppLayout />}>
-          {/* Accounts protected routes */}
-          <Route element={<ProtectedRoute requireConsultant />}>
+          <Route element={<ProtectedRoute />}>
             <Route index element={<HomePage />} />
             <Route index path={ACCOUNT} element={<Accounts />} />
             <Route path={ACCOUNT_CREATE} element={<AccountForm />} />

@@ -158,7 +158,8 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
 
   const handleFilterValueChange = (
     fieldName: string,
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    index?: number
   ) => {
     const fieldConfig = filterFields.find((f) => f.name === fieldName);
     if (!fieldConfig) return;
@@ -178,16 +179,36 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
             },
           };
         case 'number':
-          return {
-            ...prev,
-            [fieldName]: {
-              ...currentState,
-              number: {
-                ...currentState.number!,
-                value: event.target.value,
+          if (currentState.number?.option === 'between') {
+            const valueArray = Array.isArray(currentState.number.value) ? currentState.number.value : ['', ''];
+            
+            if (typeof index === 'number') {
+              valueArray[index] = event.target.value;
+            }
+
+
+            return {
+              ...prev,
+              [fieldName]: {
+                ...currentState,
+                number: {
+                  option: 'between',
+                  value: [...valueArray] as [string, string],
+                },
               },
-            },
-          };
+            };
+          } else {
+            return {
+              ...prev,
+              [fieldName]: {
+                ...currentState,
+                number: {
+                  ...currentState.number!,
+                  value: event.target.value,
+                },
+              },
+            }
+          }
         default:
           return prev;
       }
@@ -209,6 +230,52 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
   };
 
   const handleApplyFilters = () => {
+    const updatedStates = { ...filterStates };
+    let hasInvalid = false;
+  
+    for (const key in updatedStates) {
+      const state = updatedStates[key];
+  
+      if (state.text) {
+        const isEmpty = !state.text.value.trim();
+        if (isEmpty) hasInvalid = true;
+      }
+  
+      if (state.number) {
+        const { option, value } = state.number;
+        let hasError = false;
+  
+        if (option === 'between') {
+          hasError = !Array.isArray(value) || value.some((v) => !v.trim());
+        } else {
+          hasError = !value || (typeof value === 'string' && !value.trim());
+        }
+  
+        state.number.error = hasError;
+        if (hasError) hasInvalid = true;
+      }
+  
+      if (state.status) {
+        const isEmpty = !state.status.value.trim();
+        if (isEmpty) hasInvalid = true;
+      }
+  
+      if (state.boolean) {
+        const isInvalid = typeof state.boolean.value !== 'boolean';
+        if (isInvalid) hasInvalid = true;
+      }
+  
+      if (state.multiSelect) {
+        const isEmpty = !Array.isArray(state.multiSelect.values) || state.multiSelect.values.length === 0;
+        if (isEmpty) hasInvalid = true;
+      }
+    }
+  
+    if (hasInvalid) {
+      setFilterStates(updatedStates);
+      return;
+    }
+
     setAppliedFilters(formatFilterForApi(filterStates));
     storeFilters(filterStates);
   };

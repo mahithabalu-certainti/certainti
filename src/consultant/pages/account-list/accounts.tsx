@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   accountHomeIcon,
@@ -15,11 +15,10 @@ import TextButton from '../../../components/button/text-button';
 import { ACCOUNT_CREATE } from '../../../routes';
 import { getAccountFilterfields } from './helpers';
 import AccountTable from './table/account-table';
-import { CheckErrorMsg, useGetAllCountries } from '../../../common-service';
-import { useFetchCurrency } from '../../services/account';
-import { checkError, checkErrorMsg } from '../../../common-utils';
-import { useToast } from '../../../hooks';
+import { useGetAllCountries } from '../../../common-service';
+import { exportAccountList, useFetchCurrency } from '../../services/account';
 import { CircularProgress } from '@mui/material';
+import { AccountList } from '../../types';
 
 const BUTTON_STYLES = {
   height: '35px',
@@ -27,10 +26,12 @@ const BUTTON_STYLES = {
 };
 
 export const Accounts: React.FC = () => {
-  const { errorToast } = useToast();
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(true);
+  const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+  const [orderBy, setOrderBy] = useState<keyof AccountList>('createdAt');
+  const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
 
   const menuItems = [
     {
@@ -39,7 +40,11 @@ export const Accounts: React.FC = () => {
     },
     {
       label: 'Export',
-      onClick: () => console.log('Export clicked'),
+      onClick: () => exportAccountList({
+        sortBy: orderBy,
+        sortOrder: apiOrder,
+        filters: appliedFilters,
+      }),
     },
   ];
 
@@ -52,21 +57,6 @@ export const Accounts: React.FC = () => {
   const countriesList = useGetAllCountries();
   const currencyList = useFetchCurrency();
 
-    // Hook Error Handling
-    const errorhandlingData = [
-      countriesList,
-      currencyList,
-    ];
-    const commonError = checkError(errorhandlingData);
-    const commonErrorMsg = checkErrorMsg(errorhandlingData as CheckErrorMsg[]);
-  
-    useEffect(() => {
-      if (commonError) {
-        errorToast(commonErrorMsg);
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [commonError, commonErrorMsg]);
-  
   const allCountries = useMemo(() => {
     return countriesList.data?.data.country.map(item => item.country_name) || [];
   }, [countriesList]);
@@ -178,6 +168,10 @@ export const Accounts: React.FC = () => {
             appliedFilters={appliedFilters}
             searchTerm={searchTerm}
             setTotalCount={setTotalCount}
+            order={order} 
+            setOrder={setOrder}
+            orderBy={orderBy}
+            setOrderBy={setOrderBy}
           />
         </div>
       </div>

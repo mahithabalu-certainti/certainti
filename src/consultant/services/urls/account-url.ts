@@ -43,3 +43,21 @@ export const StateUrl = (countryId: string) =>
   `/api/accounts/states/${countryId}`;
 
 export const CityUrl = (stateId: string) => `/api/accounts/cities/${stateId}`;
+
+export const getAccountExportUrl = ({
+  sortBy,
+  sortOrder,
+  filters,
+}: AccountListURLParams): string => {
+  const baseUrl = '/api/accounts/export';
+  const searchParams = new URLSearchParams();
+
+  if (sortBy !== undefined) searchParams.set('sortBy', sortBy);
+  if (sortOrder !== undefined) searchParams.set('sortOrder', sortOrder);
+  if (filters && Object.keys(filters).length > 0) {
+    searchParams.set('filters', JSON.stringify(filters));
+  }
+
+  const queryString = searchParams.toString();
+  return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+};

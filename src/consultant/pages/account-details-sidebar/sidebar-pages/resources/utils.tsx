@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // import { FieldConfig, FilterState } from "../../../components/filter/filterType";
 
 import { FieldConfig, FilterState } from '../../components/filter/filterType';
 
-export const costFields: FieldConfig[] = [
+export const costFilterFields: FieldConfig[] = [
   { name: 'Resource Cost Number', value: 'resource_cost_number', type: 'text' },
   { name: 'Annual', value: 'annual', type: 'number' },
   { name: 'Semi-Annual', value: 'semi_annual', type: 'number' },
@@ -15,14 +16,20 @@ export const costFields: FieldConfig[] = [
   { name: 'End Date', value: 'end_date', type: 'date' },
   { name: 'Currency', value: 'currency', type: 'text' },
 ];
-export const skillFields: FieldConfig[] = [
+export const skillFilterFields: FieldConfig[] = [
   { name: 'Resource Type', value: 'resource_type', type: 'text' },
   { name: 'Skill Name', value: 'skill_name', type: 'text' },
   { name: 'Skill Level', value: 'skill_level', type: 'enum' },
   { name: 'Experience', value: 'years_of_experience', type: 'number' },
   { name: 'Start Date', value: 'start_date', type: 'date' },
 ];
-
+export const resourceFilterFields: FieldConfig[] = [
+  { name: 'Resource Number', value: 'r_number', type: 'text' },
+  { name: 'Resource Ref Id', value: 'resource_ref_id', type: 'text' },
+  { name: 'Resource Full Name', value: 'resource_fullname', type: 'text' },
+  { name: 'Resource Type', value: 'resource_type', type: 'text' },
+  { name: 'Status', value: 'resource_status', type: 'text' },
+];
 export const getInitialStateForField = (
   fieldConfig: FieldConfig
 ): FilterState | any => {

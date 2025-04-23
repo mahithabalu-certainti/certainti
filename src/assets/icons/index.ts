@@ -11,25 +11,38 @@ import administrationIcon from './administration.svg';
 import allAccountIcon from './all-account.svg';
 import arrowDownIcon from './arrow-down.svg';
 import arrowUpIcon from './arrow-up.svg';
+import arrowBackIcon from './arrowBackIcon.svg';
 import attachmentIcon from './attachment.svg';
 import calendarIcon from './calendar.svg';
 import caseIcon from './case.svg';
+import checklistTemplateIcon from './checklist-template.svg';
 import chevronDownIcon from './chevron-down.svg';
 import chevronLeftIcon from './chevron-left.svg';
 import closeCircleIcon from './close-circle.svg';
 import closeIcon from './close.svg';
 import configureSettingIcon from './configure-setting.svg';
+import createresourceIcon from './create-resource.svg';
 import dashboardIcon from './dashboard.svg';
 import downloadIcon from './download.svg';
 import editIcon from './edit.svg';
+import emailTemplateIcon from './email-template.svg';
 import filterIcon from './filter.svg';
+import filterArrowRightIcon from './filterArrowRightIcon.svg';
 import globeIcon from './globe.svg';
 import helpIcon from './help.svg';
+import importTemplateIcon from './import-template.svg';
+import interactionTemplateIcon from './interaction-template.svg';
 import leftArrowIcon from './left-arrow.svg';
 import logoSmall from './logo-small.svg';
 import logo from './logo.svg';
 import logoutIcon from './logout.svg';
+import manageGeoIcon from './manage-geo.svg';
+import manageGroupIcon from './manage-group.svg';
+import manageProfileIcon from './manage-profile.svg';
+import manageSettingsIcon from './manage-settings.svg';
+import manageUserAccessIcon from './manage-user-access.svg';
 import ManageUserIcon from './manage-user.svg';
+import managerUserIcon from './manager-user.svg';
 import menuIcon from './menu-icon.svg';
 import notesIcon from './notes.svg';
 import notificationIcon from './notification.svg';
@@ -39,46 +52,20 @@ import projectHeaderIcon from './projects-header.svg';
 import projectsIcon from './projects.svg';
 import refreshIcon from './refresh.svg';
 import resourceHeaderIcon from './resource-header.svg';
+import resourceFilterIcon from './resourceFilterIcon.svg';
+import resourceProfileIcon from './resourceProfileIcon.svg';
 import searchBlackIcon from './search-black.svg';
 import searchIcon from './search.svg';
 import settingsIcon from './settings.svg';
-import surveyIcon from './survey.svg';
-import timesheetIcon from './timesheet.svg';
-import arrowBackIcon from './arrowBackIcon.svg';
-import resourceProfileIcon from './resourceProfileIcon.svg';
-import filterArrowRightIcon from './filterArrowRightIcon.svg';
-import resourceFilterIcon from './resourceFilterIcon.svg';
-import checklistTemplateIcon from './checklist-template.svg';
-import emailTemplateIcon from './email-template.svg';
-import importTemplateIcon from './import-template.svg';
-import interactionTemplateIcon from './interaction-template.svg';
-import manageGeoIcon from './manage-geo.svg';
-import manageGroupIcon from './manage-group.svg';
-import manageProfileIcon from './manage-profile.svg';
-import manageSettingsIcon from './manage-settings.svg';
-import manageUserAccessIcon from './manage-user-access.svg';
-import managerUserIcon from './manager-user.svg';
 import surveyTemplateIcon from './survey-template.svg';
+import surveyIcon from './survey.svg';
 import taskTemplateIcon from './task-template.svg';
-
+import timesheetIcon from './timesheet.svg';
 export {
-  checklistTemplateIcon,
-  emailTemplateIcon,
-  importTemplateIcon,
-  interactionTemplateIcon,
-  manageGeoIcon,
-  manageGroupIcon,
-  manageProfileIcon,
-  manageSettingsIcon,
-  manageUserAccessIcon,
-  managerUserIcon,
-  surveyTemplateIcon,
-  taskTemplateIcon,
   accountHomeIcon,
   accountSettingsIcon,
   accountsIcon,
   actionIcon,
-  resourceFilterIcon,
   adminChevronDownIcon,
   adminChevronUpIcon,
   administrationIcon,
@@ -86,29 +73,39 @@ export {
   adminSubmenuActiveIcon,
   adminTemplateIcon,
   allAccountIcon,
+  arrowBackIcon,
   arrowDownIcon,
   arrowUpIcon,
-  arrowBackIcon,
-  resourceProfileIcon,
   attachmentIcon,
   calendarIcon,
   caseIcon,
+  checklistTemplateIcon,
   chevronDownIcon,
   chevronLeftIcon,
   closeCircleIcon,
   closeIcon,
   configureSettingIcon,
+  createresourceIcon,
   dashboardIcon,
   downloadIcon,
   editIcon,
-  filterIcon,
+  emailTemplateIcon,
   filterArrowRightIcon,
+  filterIcon,
   globeIcon,
   helpIcon,
+  importTemplateIcon,
+  interactionTemplateIcon,
   leftArrowIcon,
   logo,
   logoSmall,
   logoutIcon,
+  manageGeoIcon,
+  manageGroupIcon,
+  manageProfileIcon,
+  managerUserIcon,
+  manageSettingsIcon,
+  manageUserAccessIcon,
   ManageUserIcon,
   menuIcon,
   notesIcon,
@@ -118,10 +115,14 @@ export {
   projectHeaderIcon,
   projectsIcon,
   refreshIcon,
+  resourceFilterIcon,
   resourceHeaderIcon,
+  resourceProfileIcon,
   searchBlackIcon,
   searchIcon,
   settingsIcon,
   surveyIcon,
+  surveyTemplateIcon,
+  taskTemplateIcon,
   timesheetIcon,
 };

@@ -11,8 +11,6 @@ export const AppLayout: React.FC = () => {
   const userData = useSelector((state: RootState) => state.auth);
   const [mobileView, setMobileView] = useState<boolean>(false);
   const [sidebarExpand, setSidebarExpand] = useState<boolean>(() => {
-    const isAdmin = userData?.role === UserRoles.Admin;
-    if (isAdmin) return true;
     const saved = localStorage.getItem('sidebarExpand');
     return saved ? JSON.parse(saved) : true;
   });
@@ -41,37 +39,38 @@ export const AppLayout: React.FC = () => {
         showAdminSidebar={showAdminSidebar}
         sidebarExpand={sidebarExpand}
         mobileView={mobileView}
+        setSidebarExpand={setSidebarExpand}
       />
 
       {/* Expand/collapse button */}
-      {!showAdminSidebar && (
-        <button
-          className={`fixed cursor-pointer bg-white z-[1300] transform -translate-x-1/2 top-[70px] shadow-md shadow-[#4242429c] rounded-[2px] p-[4px]${sidebarExpand ? ' left-[260px]' : ' left-[80px]'}`}
-          onClick={() => {
-            const newState = !sidebarExpand;
-            setSidebarExpand(newState);
-            localStorage.setItem('sidebarExpand', JSON.stringify(newState));
-          }}
-        >
-          <img
-            src={chevronLeftIcon}
-            alt='rightNav'
-            className={`transition-transform ${sidebarExpand ? 'rotate-180' : ''}`}
-          />
-        </button>
-      )}
+      <button
+        className={`fixed cursor-pointer bg-white z-[1300] transform -translate-x-1/2 top-[70px] shadow-md shadow-[#4242429c] rounded-[2px] p-[4px]
+    transition-all duration-400 ease-in-out 
+    ${sidebarExpand ? 'left-[260px]' : 'left-[80px]'}`}
+        onClick={() => {
+          const newState = !sidebarExpand;
+          setSidebarExpand(newState);
+          localStorage.setItem('sidebarExpand', JSON.stringify(newState));
+        }}
+      >
+        <img
+          src={chevronLeftIcon}
+          alt='rightNav'
+          className={`transition-transform duration-300 ease-in-out ${sidebarExpand ? 'rotate-180' : ''}`}
+        />
+      </button>
 
       {/* Body Content */}
       <div
-        className={`flex-1 ${!mobileView && sidebarExpand ? 'ml-[260px]' : !mobileView ? 'ml-[80px]' : 'ml-0'}`}
+        className={`flex-1 transition-all duration-500 ease-in-out ${!mobileView && sidebarExpand ? 'ml-[260px]' : !mobileView ? 'ml-[80px]' : 'ml-0'
+          }`}
       >
         <Navbar />
         <div
-          className={
-            sidebarExpand
+          className={`transition-all duration-500 ease-in-out ${sidebarExpand
               ? 'max-w-[calc(100vw-260px)]'
               : 'max-w-[calc(100vw-80px)]'
-          }
+            }`}
         >
           <Outlet />
         </div>

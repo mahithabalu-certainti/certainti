@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import {
   createDateField,
   createSelectField,
+  createTextAreaField,
   createTextField,
   REGEX_PATTERNS,
 } from '../../../common-utils';
@@ -49,7 +50,7 @@ export const ResourceFormData = (
             disabled: disableFields || disableCostAndSkill,
           }),
           createTextField('resource_fullname', 'Resource Full Name', {
-            required: true,
+            required: false,
             regex: REGEX_PATTERNS.LETTERS_3_TO_25,
             regexErrorMessage: '3-25 letters only',
             placeholder: 'Enter Full Name',
@@ -62,7 +63,7 @@ export const ResourceFormData = (
             disabled: disableCostAndSkill,
           }),
           createTextField('resource_orgname', 'Resource Org Name', {
-            required: true,
+            required: false,
             regex: REGEX_PATTERNS.LETTERS_3_TO_25,
             regexErrorMessage: '3-25 letters only',
             placeholder: 'Enter Organization Name',
@@ -99,7 +100,7 @@ export const ResourceFormData = (
           createSelectField('country', 'Country', {
             options: country,
             placeholder: 'Select Country',
-            required: true,
+            required: false,
             onChange: true,
             resetDependsFields: ['state, city'],
             disabled: disableCostAndSkill,
@@ -188,7 +189,7 @@ export const ResourceFormData = (
         sectionName: 'Employment Details',
         fillType: 'half',
         fields: [
-          createDateField('resource_startdate', 'Resource Start Date', {
+          createDateField('resource_startdate', 'Resource Effective From', {
             required: false,
             disabled: disableCostAndSkill,
           }),
@@ -225,6 +226,16 @@ export const ResourceFormData = (
               disabled: disableCostAndSkill,
             }
           ),
+        ],
+      },
+      {
+        sectionName: 'Description',
+        fillType: 'full',
+        fields: [
+          createTextAreaField('comments', 'Comments', {
+            required: false,
+            placeholder: 'Enter any additional information...',
+          }),
         ],
       },
     ],

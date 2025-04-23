@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { resourceHeaderIcon } from '../../../../../assets';
 import { RESOURCE, RESOURCE_CREATE } from '../../../../../routes';
 import { useResourceList } from '../../../../services/resource-list';
@@ -13,6 +13,7 @@ import ResourceTableHeader from './resource-table-header';
 
 interface ResourceProps {
   accountDetails?: Record<string, any>;
+  activeKey?: string;
 }
 
 const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
@@ -30,6 +31,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     data: ResourceList,
     isLoading,
@@ -130,6 +132,11 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
   const handleBackClick = () => {
     setViewResourceList(!viewResourceList);
     setShowBackArrow(!showBackArrow);
+    setValue('');
+    navigate(location.pathname, {
+      state: { ...location.state, activeKey: 'resources' },
+      replace: true,
+    });
   };
 
   const handleCreateResource = () => {

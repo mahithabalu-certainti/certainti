@@ -24,6 +24,7 @@ const toastSlice = createSlice({
     },
     hideToast: (state) => {
       state.open = false;
+      state.message = '';
     },
   },
 });

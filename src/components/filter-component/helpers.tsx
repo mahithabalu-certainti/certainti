@@ -27,10 +27,10 @@ export const TextFilterControl: React.FC<{
       <Select
         value={state.text?.option || 'contains'}
         onChange={(e) => onOptionChange(fieldName, e)}
-        sx={{ height: '30px', minHeight: 20 }}
+        sx={{ height: '30px', minHeight: 20, fontSize: '14px'}}
       >
-        <MenuItem value='contains'>contains</MenuItem>
-        <MenuItem value='equals'>equals</MenuItem>
+        <MenuItem value='contains' sx={{ fontSize: '14px' }}>Contains</MenuItem>
+        <MenuItem value='equals' sx={{ fontSize: '14px' }}>Equals</MenuItem>
       </Select>
     </FormControl>
     <TextField
@@ -55,52 +55,95 @@ export const NumberFilterControl: React.FC<{
   onOptionChange: (fieldName: string, event: SelectChangeEvent<string>) => void;
   onValueChange: (
     fieldName: string,
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    index?: number
   ) => void;
-}> = ({ fieldName, state, onOptionChange, onValueChange }) => (
-  <Box sx={{ pl: 3, mt: 1 }}>
-    <FormControl fullWidth size='small'>
-      <Select
-        value={state.number?.option || 'greater_than'}
-        onChange={(e) => onOptionChange(fieldName, e)}
-        sx={{ height: '30px', minHeight: 20 }}
-      >
-        <MenuItem value='greater_than'>Greater Than</MenuItem>
-        <MenuItem value='less_than'>Less Than</MenuItem>
-        <MenuItem value='between'>Between</MenuItem>
-      </Select>
-    </FormControl>
-    <TextField
-      size='small'
-      fullWidth
-      placeholder='Enter number'
-      type='number'
-      value={state.number?.value || ''}
-      onChange={(e) => onValueChange(fieldName, e)}
-      sx={{
-        mt: 1,
-        '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button': {
-          '-webkit-appearance': 'none',
-          margin: 0,
-        },
-        '& input[type=number]': {
-          '-moz-appearance': 'textfield',
-        },
-      }}
-      inputProps={{ min: 0 }}
-      onKeyDown={(e) => {
-        if (e.key === '-' || e.key === 'e') {
-          e.preventDefault();
-        }
-      }}
-      slotProps={{
-        input: {
-          sx: { height: '30px', paddingY: 0, fontSize: '0.75rem' },
-        },
-      }}
-    />
-  </Box>
-);
+}> = ({ fieldName, state, onOptionChange, onValueChange }) => {
+  const option = state.number?.option || 'greater_than';
+  const value = state.number?.value;
+  const hasError = state.number?.error ?? false;
+
+  return (
+    <Box sx={{ pl: 3, mt: 1 }}>
+      <FormControl fullWidth size='small'>
+        <Select
+          value={option}
+          onChange={(e) => onOptionChange(fieldName, e)}
+          sx={{ height: '30px', minHeight: 20 , fontSize: '14px'}}
+        >
+          <MenuItem value='greater_than' sx={{ fontSize: '14px' }}>Greater Than</MenuItem>
+          <MenuItem value='less_than' sx={{ fontSize: '14px' }}>Less Than</MenuItem>
+          <MenuItem value='between' sx={{ fontSize: '14px' }}>Between</MenuItem>
+        </Select>
+      </FormControl>
+
+      {option === 'between' ? (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1.5 }}>
+          {[0, 1].map((i) => (
+            <TextField
+              key={i}
+              size='small'
+              fullWidth
+              placeholder={i === 0 ? 'Min' : 'Max'}
+              type='number'
+              value={Array.isArray(value) ? value[i] : ''}
+              onChange={(e) => onValueChange(fieldName, e, i)}
+              error={hasError && (!value || value[i].trim() === '')}
+              inputProps={{ min: 0 }}
+              sx={{
+                mt: 1,
+                '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button': {
+                  '-webkit-appearance': 'none',
+                  margin: 0,
+                },
+                '& input[type=number]': {
+                  '-moz-appearance': 'textfield',
+                },
+              }}
+              onKeyDown={(e) => {
+                if (e.key === '-' || e.key === 'e') e.preventDefault();
+              }}
+              slotProps={{
+                input: {
+                  sx: { height: '30px', paddingY: 0, fontSize: '0.75rem' },
+                },
+              }}
+            />
+          ))}
+        </Box>
+      ) : (
+        <TextField
+          size='small'
+          fullWidth
+          placeholder='Enter number'
+          type='number'
+          value={typeof value === 'string' ? value : ''}
+          onChange={(e) => onValueChange(fieldName, e)}
+          error={hasError && !value}
+          sx={{
+            mt: 1,
+            '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button': {
+              '-webkit-appearance': 'none',
+              margin: 0,
+            },
+            '& input[type=number]': {
+              '-moz-appearance': 'textfield',
+            },
+          }}
+          inputProps={{ min: 0 }}
+          onKeyDown={(e) => {
+            if (e.key === '-' || e.key === 'e') e.preventDefault();
+          }}
+          slotProps={{
+            input: {
+              sx: { height: '30px', paddingY: 0, fontSize: '0.75rem' },
+            },
+          }}
+        />
+      )}
+    </Box>
+  );
+};
 
 export const StatusFilterControl: React.FC<{
   fieldName: string;
@@ -113,10 +156,10 @@ export const StatusFilterControl: React.FC<{
       <Select
         value={state.status?.value || 'Active'}
         onChange={(e) => onOptionChange(fieldName, e)}
-        sx={{ height: '30px', minHeight: 20 }}
+        sx={{ height: '30px', minHeight: 20, fontSize: '14px' }}
       >
         {options.map((option) => (
-          <MenuItem key={option} value={option}>
+          <MenuItem key={option} value={option} sx={{ fontSize: '14px' }}>
             {option}
           </MenuItem>
         ))}
@@ -142,6 +185,7 @@ export const BooleanFilterControl: React.FC<{
               onChange={() => onChange(fieldName, true)}
             />
           }
+          sx={{ '& .MuiFormControlLabel-label': { fontSize: '14px' } }}
           label='Yes'
         />
         <FormControlLabel
@@ -151,6 +195,7 @@ export const BooleanFilterControl: React.FC<{
               onChange={() => onChange(fieldName, false)}
             />
           }
+          sx={{ '& .MuiFormControlLabel-label': { fontSize: '14px' } }}
           label='No'
         />
       </FormGroup>
@@ -168,7 +213,7 @@ export const MultiSelectFilterControl: React.FC<{
 
   const menuItems = useMemo(() => {
     return options.map((option) => (
-      <MenuItem key={option} value={option} dense>
+      <MenuItem key={option} value={option} dense sx={{ fontSize: '14px' }}>
         <Checkbox checked={selectedValues.includes(option)} size="small" />
         {option}
       </MenuItem>
@@ -188,7 +233,7 @@ export const MultiSelectFilterControl: React.FC<{
             minHeight: 30,
             '& .MuiSelect-select': {
               py: 0.5,
-              fontSize: '0.875rem',
+              fontSize: '14px',
             }
           }}
           renderValue={(selected) => (selected as string[]).join(', ')}
