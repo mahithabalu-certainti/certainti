@@ -5,7 +5,7 @@ import {
   ResourceCostSkillFormData,
 } from '../../types/resource-cost';
 import { ResourceSkillPayload } from '../../types/resource-skill';
-import { skillLevel } from '../account-details/sidebar-pages/resources/resource-skill/resource-skill-type';
+import { skillLevel } from '../account-details-sidebar/sidebar-pages/resources/resource-skill/resource-skill-type';
 
 const userDetails = JSON.parse(localStorage.getItem('auth') as any);
 

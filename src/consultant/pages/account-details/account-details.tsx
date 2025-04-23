@@ -4,8 +4,6 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { PageHeader } from '../../../components';
 import { useAccountDetail } from '../../services/account-details/account-details-service';
-import { AccountInfo } from './account-info';
-import Sidebar from './sidebar';
 import {
   Activities,
   Attachments,
@@ -18,7 +16,9 @@ import {
   Projects,
   Resources,
   Timesheet,
-} from './sidebar-pages';
+} from '../account-details-sidebar';
+import { AccountInfo } from './account-info';
+import Sidebar from './sidebar';
 import { transformAccountData } from './utils';
 
 export const AccountDetails = () => {
