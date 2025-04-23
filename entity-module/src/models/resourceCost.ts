@@ -9,7 +9,7 @@ interface ResourceCostAttributes {
  resource_type: string,
  resource_rid: string,
  resource_ref_id: string, 
- effective_date: Date,
+ effective_date?: Date,
  end_date?: Date,
  annual_cost?: number,
  semi_annual_cost?: number,
@@ -38,7 +38,7 @@ export class ResourceCost extends Model<ResourceCostAttributes, ResourceCostCrea
   resource_type!: string;
   resource_rid!: string;
   resource_ref_id!: string;
-  effective_date!: Date;
+  effective_date?: Date;
   end_date?: Date;
   annual_cost?: number;
   semi_annual_cost?: number;
