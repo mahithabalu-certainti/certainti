@@ -77,6 +77,17 @@ async function createUser(req: Request, res: Response): Promise<void> {
       return;
     }
 
+    const existingUser = await services.userServices.getUserByEmail(value.email);
+    if (existingUser) {
+      handleErrorResponse(
+        res,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        "Email already exists in the system"
+      );
+      return;
+    }
+
     const password = await generateSecurePassword(12);
     const azureUser = await createAzureB2CUser(value, password);
     if (!azureUser) {
