@@ -64,6 +64,13 @@ export class Menu
             menu.setDataValue("modified_datetime", new Date());
           },
         },
+        indexes: [
+          {
+            unique: true,
+            name: "menu_unique_idx",
+            fields: ["menu_name", "menu_desc"],
+          },
+        ],
       }
     );
   }

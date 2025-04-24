@@ -75,6 +75,13 @@ export class MenuModule
             menuModule.setDataValue("modified_datetime", new Date());
           },
         },
+        indexes: [
+          {
+            unique: true,
+            name: "module_unique_idx",
+            fields: ["module_name", "menu_id"],
+          },
+        ],
       }
     );
 
