@@ -20,15 +20,15 @@ const authMiddleware = (req: Request, res: Response, next: NextFunction):void =>
 
 const checkUserStatusMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const userId = req.headers['x_user_id'] as string;
+        const userId = req.headers['x-user-id'] as string;
         console.log("Request Headers: ", req.headers);
         
         if (!userId) {
-            // res.status(HttpStatus.BAD_REQUEST).json({
-            //     error: HttpStatus.BAD_REQUEST_MESSAGE,
-            //     message: 'User ID is required in headers'
-            // });
-            req.headers['x_user_id'] = '00747102-7e96-4274-a8d8-a9ef7e262b68';
+            res.status(HttpStatus.BAD_REQUEST).json({
+                error: HttpStatus.BAD_REQUEST_MESSAGE,
+                message: 'User ID is required in headers'
+            });
+            return;
         }
         
         const sequelize = await initMainDbSequelize()
