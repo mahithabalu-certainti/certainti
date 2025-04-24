@@ -195,7 +195,7 @@ const DataTable: React.FC<DataTableProps> = ({
 
   if (isLoading) {
     return (
-      <div className='flex justify-center items-center h-64'>
+      <div className='flex justify-center border border-gray-300 items-center h-64'>
         <CircularProgress />
         <Typography variant='body1' className='ml-4'>
           Loading data...
@@ -206,7 +206,7 @@ const DataTable: React.FC<DataTableProps> = ({
 
   if (error) {
     return (
-      <div className='flex flex-col justify-center items-center h-64 p-4'>
+      <div className='flex flex-col justify-center border border-gray-300 items-center h-64 p-4'>
         <Typography variant='h6' color='error' className='mb-2'>
           Error loading data
         </Typography>
@@ -231,7 +231,7 @@ const DataTable: React.FC<DataTableProps> = ({
 
   if (data.length === 0 && !isLoading) {
     return (
-      <div className='flex flex-col justify-center items-center h-64 p-4'>
+      <div className='flex flex-col justify-center items-center border border-gray-300 h-64 p-4'>
         <Typography variant='h6' color='textSecondary'>
           {emptyStateMessage}
         </Typography>

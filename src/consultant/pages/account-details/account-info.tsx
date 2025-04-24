@@ -1,5 +1,6 @@
 import { Box, Chip, Skeleton, Typography } from '@mui/material';
 import React from 'react';
+import { TruncateWithTooltip } from '../../../components';
 
 interface AccountInfoColumn {
   items: {
@@ -68,7 +69,7 @@ export const AccountInfo: React.FC<AccountInfoProps> = ({
   };
 
   // Column width configuration
-  const columnWidths = ['25%', '25%', '15%', '20%', '25%'];
+  const columnWidths = ['20%', '20%', '20%', '20%', '20%'];
 
   if (error) {
     return (
@@ -139,7 +140,7 @@ export const AccountInfo: React.FC<AccountInfoProps> = ({
               >
                 {item.label}
               </Typography>
-              <Typography
+              {/* <Typography
                 variant='body2'
                 sx={{
                   color: '#333',
@@ -147,8 +148,19 @@ export const AccountInfo: React.FC<AccountInfoProps> = ({
                   fontWeight: 500,
                 }}
               >
+                <TruncateWithTooltip
+                  text={String(item.value)}
+                  className='font-medium'
+                >
+                  {renderValue(item.value)}
+                </TruncateWithTooltip>
+              </Typography> */}
+              <TruncateWithTooltip
+                text={String(item.value)}
+                className='font-medium'
+              >
                 {renderValue(item.value)}
-              </Typography>
+              </TruncateWithTooltip>
             </Box>
           ))}
         </Box>

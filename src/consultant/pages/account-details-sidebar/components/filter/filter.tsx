@@ -40,7 +40,7 @@ const Filter: React.FC<FilterComponentProps> = ({
 
   const handleApplyFilters = () => {
     setAppliedFilters(formatFilterForApi(filterStates));
-    handleFilter();
+    // handleFilter();
   };
 
   const resetFilter = () => {
