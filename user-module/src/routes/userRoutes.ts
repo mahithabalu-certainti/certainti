@@ -10,7 +10,7 @@ routes.get("/roles", checkUserStatusMiddleware, controller.userManagementControl
 routes.get("/profiles", checkUserStatusMiddleware, controller.userManagementController.userProfiles);
 routes.get("/:id", checkUserStatusMiddleware, controller.userController.listUserById);
 routes.get("/list/:id", checkUserStatusMiddleware, controller.userController.listUserById);
-routes.get("/:id/permission", checkUserStatusMiddleware, controller.userManagementController.userPermissionById);
+routes.get("/:id/permission", controller.userManagementController.userPermissionById);
 routes.post("/create", checkUserStatusMiddleware, controller.userController.createUser);
 routes.put("/update", checkUserStatusMiddleware, controller.userController.updateUser);
 
