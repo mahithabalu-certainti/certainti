@@ -21,7 +21,7 @@ async function creatResource(req: Request, res: Response): Promise<void> {
   const methodName = "Create resource";
   try {
     const value = await validateRequest(req, createResourcesSchema, res);
-    const userId = req.headers["x_user_id"] as string;
+    const userId = req.headers["x-user-id"] as string;
 
     if (!userId) {
       errorLog(methodName, "User Id not found");
@@ -173,7 +173,7 @@ async function updateResource(req: Request, res: Response): Promise<void> {
   const methodName = "Update resource";
   try {
     const value = await validateRequest(req, updateResourceSchema, res);
-    const userId = req.headers["x_user_id"] as string;
+    const userId = req.headers["x-user-id"] as string;
 
     if (!userId) {
       errorLog(methodName, "User Id not found");

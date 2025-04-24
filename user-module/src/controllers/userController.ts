@@ -73,7 +73,7 @@ async function createUser(req: Request, res: Response): Promise<void> {
       res
     );
 
-    const userId = req.headers['x_user_id'] as string;
+    const userId = req.headers['x-user-id'] as string;
     if (!userId) {
       handleErrorResponse(
         res,
@@ -183,7 +183,7 @@ async function updateUser(req: Request, res: Response): Promise<void> {
       res
     );
 
-    const userId = req.headers['x_user_id'] as string;
+    const userId = req.headers['x-user-id'] as string;
     if(!userId){
       handleErrorResponse(
         res,

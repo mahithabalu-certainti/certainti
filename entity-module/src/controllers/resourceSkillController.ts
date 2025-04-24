@@ -36,7 +36,7 @@ async function createResourceSkill(req: Request, res: Response): Promise<void> {
     const methodName = "createResourceCost";
     try {
       const value = await validateRequest(req, createResourceSkillSchema, res);
-      const userId = req.headers["x_user_id"] as string;
+      const userId = req.headers["x-user-id"] as string;
       if(!userId) {
         handleErrorResponse(
           res,
@@ -96,7 +96,7 @@ async function updateResourceSkill(req: Request, res: Response): Promise<void> {
   const methodName = "updateResourceSkill";
   try {
     const value = await validateRequest(req, updateResourceSkillSchema, res);
-    const userId = req.headers["x_user_id"] as string;
+    const userId = req.headers["x-user-id"] as string;
     if(!userId) {
       handleErrorResponse(
         res,

@@ -192,7 +192,7 @@ async function createAccount(req: Request, res: Response): Promise<void> {
   const methodName = "create account";
   try {
     const value = await validateRequest(req, accountSchema, res);
-    const userId = req.headers['x_user_id'] as string;
+    const userId = req.headers['x-user-id'] as string;
 
     if (!userId) {
       handleErrorResponse(
@@ -253,7 +253,7 @@ async function updateAccount(req: Request, res: Response): Promise<void> {
   const methodName = "update account";
   try {
     const value = await validateRequest(req, updateAccountSchema, res);
-    const userId = req.headers['x_user_id'] as string;
+    const userId = req.headers['x-user-id'] as string;
 
     if (!userId) {
       handleErrorResponse(

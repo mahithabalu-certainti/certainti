@@ -110,7 +110,7 @@ async function createResourceCost(req: Request, res: Response): Promise<void> {
   const methodName = "createResourceCost";
   try {
     const value = await validateRequest(req, resourceCostSchema, res);
-    const userId = req.headers["x_user_id"] as string;
+    const userId = req.headers["x-user-id"] as string;
 
     if (!userId) {
       handleErrorResponse(
@@ -171,7 +171,7 @@ async function updateResourceCost(req: Request, res: Response): Promise<void> {
   const methodName = "updateResourceCost";
   try {
     const value = await validateRequest(req, updateResourceCostSchema, res);
-    const userId = req.headers["x_user_id"] as string;
+    const userId = req.headers["x-user-id"] as string;
 
     if (!userId) {
       handleErrorResponse(
