@@ -8,7 +8,7 @@ import {
 } from "../../utils/types";
 
 export interface IResourceService {
-  createResource(resourceData: ICreateResource): Promise<{
+  createResource(resourceData: ICreateResource,userId: string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -38,7 +38,7 @@ export interface IResourceService {
     errorMessage?: string;
     data?: { resourceDetails: any };
   }>;
-  updateResource(resourceData: IUpdateResource): Promise<{
+  updateResource(resourceData: IUpdateResource, userId: string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -63,14 +63,14 @@ export interface IResourceCostService {
     data?: { resourceCost: any; count: number };
   }>;
 
-  createResourceCost(resourceCostData: IResourceCost): Promise<{
+  createResourceCost(resourceCostData: IResourceCost, userId:string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
     data?: { resourceCost: any };
   }>;
 
-  updateResourceCost(resourceCostData: IUpdateResourceCost): Promise<{
+  updateResourceCost(resourceCostData: IUpdateResourceCost, userId:string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -86,14 +86,14 @@ export interface IResourceCostService {
 }
 
 export interface IResourceSkillService {
-  createResourceSkill(resourceSkillData: IResourceSkill): Promise<{
+  createResourceSkill(resourceSkillData: IResourceSkill, userId:string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
     data?: { resourceSkill: any };
   }>;
 
-  updateResourceSkill(resourceSkillData: IUpdateResourceSkill): Promise<{
+  updateResourceSkill(resourceSkillData: IUpdateResourceSkill, userId:string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;

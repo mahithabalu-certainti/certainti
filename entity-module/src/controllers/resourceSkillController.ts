@@ -36,12 +36,22 @@ async function createResourceSkill(req: Request, res: Response): Promise<void> {
     const methodName = "createResourceCost";
     try {
       const value = await validateRequest(req, createResourceSkillSchema, res);
+      const userId = req.headers["x_user_id"] as string;
+      if(!userId) {
+        handleErrorResponse(
+          res,
+          HttpStatus.BAD_REQUEST,
+          HttpStatus.BAD_REQUEST_MESSAGE,
+          "User Id is required in headers."
+        );
+        return;
+      }
   
       if (!value) {
         return;
       }
   
-      const resourceSkill = await resourceSkillService.createResourceSkill(value);
+      const resourceSkill = await resourceSkillService.createResourceSkill(value,userId);
   
       if (resourceSkill.statusCode === HttpStatus.SUCCESS) {
         successLog(methodName);
@@ -86,12 +96,22 @@ async function updateResourceSkill(req: Request, res: Response): Promise<void> {
   const methodName = "updateResourceSkill";
   try {
     const value = await validateRequest(req, updateResourceSkillSchema, res);
+    const userId = req.headers["x_user_id"] as string;
+    if(!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User Id is required in headers."
+      );
+      return;
+    }
 
     if (!value) {
       return;
     }
 
-    const resourceSkill = await resourceSkillService.updateResourceSkill(value);
+    const resourceSkill = await resourceSkillService.updateResourceSkill(value, userId);
 
     if (resourceSkill.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);

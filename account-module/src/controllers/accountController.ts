@@ -192,12 +192,23 @@ async function createAccount(req: Request, res: Response): Promise<void> {
   const methodName = "create account";
   try {
     const value = await validateRequest(req, accountSchema, res);
+    const userId = req.headers['x_user_id'] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User id is required"
+      );
+      return;
+    }
 
     if (!value) {
       return;
     }
 
-    const account = await accountServices.createAccount(value);
+    const account = await accountServices.createAccount(value, userId);
 
     if (account.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -242,12 +253,23 @@ async function updateAccount(req: Request, res: Response): Promise<void> {
   const methodName = "update account";
   try {
     const value = await validateRequest(req, updateAccountSchema, res);
+    const userId = req.headers['x_user_id'] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User id is required"
+      );
+      return;
+    }
 
     if (!value) {
       return;
     }
 
-    const account = await accountServices.updateAccount(value);
+    const account = await accountServices.updateAccount(value, userId);
 
     if (account.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);

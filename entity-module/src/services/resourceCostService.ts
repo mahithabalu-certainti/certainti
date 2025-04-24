@@ -143,7 +143,7 @@ class ResourceCostService {
    * @param resourceCost - Object containing resource cost details including costs, dates, and identifiers
    * @returns Promise resolving to status object with created resource cost data or error message
    */
-  async createResourceCost(resourceCost: IResourceCost): Promise<{
+  async createResourceCost(resourceCost: IResourceCost, userId: string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -238,6 +238,9 @@ class ResourceCostService {
           end_date: end_date || undefined,         
           ...frequency,
           currency_rid: currency_rid || undefined,
+          created_datetime: new Date(),
+          created_by: userId,
+          modified_by: userId,
         });
 
         if (resource_rid) {
@@ -255,6 +258,7 @@ class ResourceCostService {
               await existingFiscal.update({
                 ...frequency,
                 modified_datetime: new Date(),
+                modified_by: userId,
               });
             }
           } catch (fiscalError) {
@@ -273,7 +277,7 @@ class ResourceCostService {
           createdResourceCost ? createdResourceCost : {},
           "Create",
           eventStatus,
-          "",
+          userId,
           account_rid,
           schemaName
         );
@@ -328,6 +332,7 @@ class ResourceCostService {
         event_name: eventName,
         event_status: eventStatus,
         entity_rid: resourceCost.rid || "",
+        modified_datetime: new Date(),
         modified_by: modifiedBy,
       });
     } catch (error) {
@@ -347,7 +352,7 @@ class ResourceCostService {
    * @param resourceCostData - Object containing updated resource cost details and identifiers
    * @returns Promise resolving to status object with updated resource cost data or error message
    */
-  async updateResourceCost(resourceCostData: IUpdateResourceCost) {
+  async updateResourceCost(resourceCostData: IUpdateResourceCost, userId: string ) {
     try {
       const {
         eid,
@@ -437,6 +442,8 @@ class ResourceCostService {
             currency_rid,
             rid,
             status,
+            modified_datetime: new Date(),
+            modified_by: userId,
           },
           {
             where: {
@@ -460,6 +467,7 @@ class ResourceCostService {
               await existingFiscal.update({
                 ...frequency,
                 modified_datetime: new Date(),
+                modified_by: userId,
               });
             }
           } catch (fiscalError) {
@@ -473,7 +481,7 @@ class ResourceCostService {
           await this.createResourceCostHistory(
             originalResourceCost.toJSON(),
             affectedRows[0],
-            "",
+            userId,
             accountNumber
           );
 
@@ -482,7 +490,7 @@ class ResourceCostService {
             affectedRows[0],
             "Update",
             "Success",
-            "",
+            userId,
             originalResourceCost.account_rid,
             schemaName
           );
@@ -615,6 +623,7 @@ class ResourceCostService {
                   ? String(formattedNewValue)
                   : "",
               modified_by: modifiedBy,
+              modified_datetime: new Date(),
             });
           }
         } catch (attrError) {
@@ -693,6 +702,12 @@ class ResourceCostService {
           currencyCode = (currencyResult as any).currency_code;
           currencySymbol = (currencyResult as any).currency_symbol;
         }
+
+        // Fetch user names for created_by and modified_by
+        const userNames = await this.fetchUserNames({
+          created_by: costData.created_by,
+          modified_by: costData.modified_by
+        });
     
         // Find which cost frequency has a value
         const frequencyMap: Record<string, string> = {
@@ -718,6 +733,9 @@ class ResourceCostService {
             break;
           }
         }
+
+        costData.created_by = userNames.created_by_name;
+        costData.modified_by = userNames.modified_by_name;
         
         // Create a new response object with simplified cost data
         const simplifiedCostData = {
@@ -804,6 +822,57 @@ class ResourceCostService {
       errorMessage: err.message,
     };
   }
+
+    /**
+   * Fetches user names for user IDs from the main database
+   * @param userIds - Object containing user IDs (created_by, modified_by)
+   * @returns Promise resolving to object with user names
+   */
+    private async fetchUserNames(userIds: { created_by?: string, modified_by?: string }): Promise<{ created_by_name: string, modified_by_name: string }> {
+      const result = {
+        created_by_name: '',
+        modified_by_name: ''
+      };
+      
+      try {
+        const sequelize = await this.getMainDbSequelize();
+        
+        // Fetch created_by user name if ID exists
+        if (userIds.created_by) {
+          const [createdByUser] = await sequelize.query(
+            `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+            {
+              replacements: { userId: userIds.created_by },
+              type: 'SELECT'
+            }
+          );
+          
+          if (createdByUser) {
+            result.created_by_name = (createdByUser as any).full_name;
+          }
+        }
+        
+        // Fetch modified_by user name if ID exists
+        if (userIds.modified_by) {
+          const [modifiedByUser] = await sequelize.query(
+            `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+            {
+              replacements: { userId: userIds.modified_by },
+              type: 'SELECT'
+            }
+          );
+          
+          if (modifiedByUser) {
+            result.modified_by_name = (modifiedByUser as any).full_name;
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user names:', error);
+        // Return empty strings if there's an error
+      }
+      
+      return result;
+    }
 }
 
 export default ResourceCostService;
