@@ -94,6 +94,7 @@ class UserService {
         full_name:
           first_name + (middle_name ? " " + middle_name : "") + " " + last_name,
         created_by: userId,
+        modified_by: userId,
       });
 
       if (organization === constants.PLATFORM_ONE) {

@@ -240,6 +240,7 @@ class ResourceCostService {
           currency_rid: currency_rid || undefined,
           created_datetime: new Date(),
           created_by: userId,
+          modified_by: userId,
         });
 
         if (resource_rid) {
