@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -153,7 +154,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
 
   return (
     <div className='w-full'>
-      <TabPanel title='Resource' setFiscalYearValue={setFiscalYearValue} />
+      <TabPanel />
       <ResourceTableHeader
         handleFilter={handleFilter}
         value={value}
