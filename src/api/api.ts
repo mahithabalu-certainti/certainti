@@ -47,7 +47,7 @@ const api = axios.create({
         config.headers.Authorization = `Bearer ${authToken}`;
       }
       if (userId) {
-        config.headers['x_user_id'] = userId;
+        config.headers['x-user-id'] = userId;
       }
       return config;
     },
