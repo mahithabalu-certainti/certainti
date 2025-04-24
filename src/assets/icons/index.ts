@@ -61,7 +61,12 @@ import surveyTemplateIcon from './survey-template.svg';
 import surveyIcon from './survey.svg';
 import taskTemplateIcon from './task-template.svg';
 import timesheetIcon from './timesheet.svg';
+import importIcon from './import-icon.svg';
+import uploadIcon from './Vector.svg';
+import addIcon from './addicon.svg';
+
 export {
+  addIcon,
   accountHomeIcon,
   accountSettingsIcon,
   accountsIcon,
@@ -94,6 +99,7 @@ export {
   filterIcon,
   globeIcon,
   helpIcon,
+  importIcon,
   importTemplateIcon,
   interactionTemplateIcon,
   leftArrowIcon,
@@ -125,4 +131,5 @@ export {
   surveyTemplateIcon,
   taskTemplateIcon,
   timesheetIcon,
+  uploadIcon,
 };

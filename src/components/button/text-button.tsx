@@ -20,7 +20,7 @@ const StyledButton = styled(Button)<{
   const colorInherit = color === 'inherit';
   return {
     backgroundColor: isFilled ? secondaryColor : 'transparent',
-    height: '35px',
+    height: '32px',
     color: colorInherit
       ? theme.palette.grey[600]
       : isFilled

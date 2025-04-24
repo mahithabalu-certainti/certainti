@@ -181,8 +181,15 @@ export const BooleanFilterControl: React.FC<{
         <FormControlLabel
           control={
             <Checkbox
+              disableRipple
               checked={value === true}
               onChange={() => onChange(fieldName, true)}
+              sx={{
+                color: '#CBD6E2',
+                '&.Mui-checked': {
+                  color: '#1755E7',
+                },
+              }}
             />
           }
           sx={{ '& .MuiFormControlLabel-label': { fontSize: '14px' } }}
@@ -191,8 +198,15 @@ export const BooleanFilterControl: React.FC<{
         <FormControlLabel
           control={
             <Checkbox
+              disableRipple
               checked={value === false}
               onChange={() => onChange(fieldName, false)}
+              sx={{
+                color: '#CBD6E2',
+                '&.Mui-checked': {
+                  color: '#1755E7',
+                },
+              }}
             />
           }
           sx={{ '& .MuiFormControlLabel-label': { fontSize: '14px' } }}
@@ -214,7 +228,17 @@ export const MultiSelectFilterControl: React.FC<{
   const menuItems = useMemo(() => {
     return options.map((option) => (
       <MenuItem key={option} value={option} dense sx={{ fontSize: '14px' }}>
-        <Checkbox checked={selectedValues.includes(option)} size="small" />
+        <Checkbox
+          disableRipple
+          checked={selectedValues.includes(option)}
+          size="small"
+          sx={{
+            color: '#CBD6E2',
+            '&.Mui-checked': {
+              color: '#1755E7',
+            },
+          }}
+        />
         {option}
       </MenuItem>
     ));

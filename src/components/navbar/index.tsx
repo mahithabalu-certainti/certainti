@@ -163,9 +163,9 @@ export const Navbar: React.FC = () => {
       open={isMenuOpen}
       onClose={handleMenuClose}
     >
-      <MenuItem onClick={goToProfile}>Profile</MenuItem>
-      <MenuItem onClick={changePassword}>Change Password</MenuItem>
-      <MenuItem onClick={handleLogout}>Logout</MenuItem>
+      <MenuItem sx={{ fontSize:'14px' }} onClick={goToProfile}>Profile</MenuItem>
+      <MenuItem sx={{ fontSize:'14px' }} onClick={changePassword}>Change Password</MenuItem>
+      <MenuItem sx={{ fontSize:'14px' }} onClick={handleLogout}>Logout</MenuItem>
     </Menu>
   );
 
@@ -286,20 +286,20 @@ export const Navbar: React.FC = () => {
   return (
     <>
       <AppBar position='sticky'>
-        <Toolbar className='justify-between'>
+        <Toolbar className='justify-between !min-h-[55px]'>
           <div className='relative rounded-md mr-2 flex gap-2'>
             <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
               <img
                 src={searchIcon}
                 alt='search'
-                className='h-5 w-5 text-gray-400'
+                className='h-4.5 w-4.5 text-gray-400'
               />
             </div>
             <input
               type='text'
               placeholder='Search'
               aria-label='search'
-              className='bg-white/10 hover:bg-white/15 text-inherit rounded px-4 py-1 pl-10 focus:outline-none min-w-[300px]'
+              className='bg-[#495E74] text-white text-[13px] font-[300] rounded px-4 h-8 pl-9 focus:outline-none min-w-[320px] placeholder:text-white'
             />
             <img
               src={plusIcon}
@@ -307,7 +307,7 @@ export const Navbar: React.FC = () => {
               onClick={handleSearchMenuOpen}
               aria-controls={notificationId}
               alt='plus'
-              className='cursor-pointer'
+              className='cursor-pointer h-8 w-7'
             />
           </div>
           <Box
@@ -320,14 +320,14 @@ export const Navbar: React.FC = () => {
                   disableRipple
                   onClick={() => setIsGlobalModalOpen(true)}
                 >
-                  <img src={globeIcon} alt='global' className='h-5' />
-                  <span className='text-sm px-2'>Global</span>
+                  <img src={globeIcon} alt='global' className='h-[16px] w-[16px]' />
+                  <span className='text-[13px] font-normal px-2'>Global</span>
                 </IconButton>
-                <div className='border-l border-gray-500 h-6' />
+                <div className='border-l border-[#FFFFFF4D] h-6 mx-1' />
                 <select
                   value={fiscalYear}
                   onChange={(e) => dispatch(setFiscalYear(e.target.value))}
-                  className='px-4 py-2 focus:outline-none cursor-pointer'
+                  className='mx-2 px-1 py-2 focus:outline-none cursor-pointer text-[13px] font-medium'
                   aria-label='Fiscal Year Selector'
                 >
                   {fiscalYearsDropDown.map((fy) => (
@@ -340,11 +340,11 @@ export const Navbar: React.FC = () => {
                     </option>
                   ))}
                 </select>
+                <div className='border-l border-[#FFFFFF4D] mx-2 h-6' />
               </>
             )}
-            <div className='border-l border-gray-500 mx-2  h-6' />
             <IconButton size='large' color='inherit'>
-              <img src={phoneIcon} alt='phone' className='h-5' />
+              <img src={phoneIcon} alt='phone' className='h-[18px] w-[18px]' />
             </IconButton>
             <IconButton
               size='large'
@@ -354,12 +354,12 @@ export const Navbar: React.FC = () => {
               color='inherit'
               aria-controls={notificationId}
             >
-              <img src={notificationIcon} alt='notification' className='h-5' />
+              <img src={notificationIcon} alt='notification' className='h-[22px] w-[22px]' />
             </IconButton>
             <IconButton size='large' color='inherit'>
-              <img src={settingsIcon} alt='settings' className='h-5' />
+              <img src={settingsIcon} alt='settings' className='h-[18px] w-[18px]' />
             </IconButton>
-            <div className='border-l border-gray-500 mx-2  h-6' />
+            <div className='border-l border-[#FFFFFF4D] mx-2 h-6' />
             <IconButton
               size='large'
               edge='end'
@@ -375,7 +375,7 @@ export const Navbar: React.FC = () => {
                 src='https://mui.com/static/images/avatar/2.jpg'
                 alt='User Avatar'
               />
-              <span className='text-sm px-2'>{name}</span>
+              <span className='text-[13px] font-[300] px-2'>{name}</span>
               <img src={chevronDownIcon} alt='down nav' />
             </IconButton>
           </Box>
