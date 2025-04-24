@@ -29,6 +29,11 @@ import {
   transformSkillData,
 } from './utils.tsx';
 
+enum FormSection {
+  COST = 'cost',
+  SKILL = 'skill',
+  NONE = ''
+}
 
 const ResourceForm: React.FC = () => {
   // Refs
@@ -87,7 +92,7 @@ const ResourceForm: React.FC = () => {
     financial_start_date: costInfo?.effective_date || '',
     financial_end_date: costInfo?.end_date || '',
     cost: costInfo?.cost || '',
-    currency: costInfo?.currency_rid || '',
+    currency: costInfo?.currency_rid || null,
     cost_frequency: costInfo?.cost_frequency || ''
   } : state?.skill ? {
     ...resource?.data?.resourceDetails,
@@ -109,20 +114,7 @@ const ResourceForm: React.FC = () => {
   const updateResourceCost = useUpdateResourceCost();
   const createResourceSkill = useCreateResourceSkill();
   const updateResourceSkill = useUpdateResourceSkill();
-  // Error handling
-  // const errorHandlers = [
-  //   createResource,
-  //   allCountries,
-  //   states,
-  //   currency,
-  //   updateResource,
-  //   createResourceCost,
-  //   updateResourceCost,
-  //   createResourceSkill,
-  //   updateResourceSkill,
-  // ];
-  // const commonError = checkError(errorHandlers);
-  // const commonErrorMsg = checkErrorMsg(errorHandlers as CheckErrorMsg[]);
+
   const costSkillSuccess =
     createResourceCost.isSuccess ||
     updateResourceCost.isSuccess ||
@@ -169,13 +161,6 @@ const ResourceForm: React.FC = () => {
       })) || [],
     [currency.data?.data.currency]
   );
-
-  // Effects
-  // useEffect(() => {
-  //   if (commonError) {
-  //     errorToast(commonErrorMsg);
-  //   }
-  // }, [commonError, commonErrorMsg, errorToast]);
 
   useEffect(() => {
     if (commonSuccess) {
@@ -282,7 +267,7 @@ const ResourceForm: React.FC = () => {
       }));
     }
   };
-  const hideSkill = state?.cost ? 'cost' : state?.skill ? 'skill' : '';
+  const activeFormSection = state?.cost ? FormSection.COST : state?.skill ? FormSection.SKILL : FormSection.NONE;
   // Form configuration
   const formConfig = ResourceFormData(
     memoizedCountry,
@@ -293,9 +278,8 @@ const ResourceForm: React.FC = () => {
     city.isLoading,
     currency.isLoading,
     isEditView,
-    hideSkill,
-    state?.cost || state?.skill,
-    // Hide skill and cost section if not in edit mode
+    activeFormSection,
+    state?.cost || state?.skill
   );
 
   return (

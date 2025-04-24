@@ -562,8 +562,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     });
 
     setFormData(dataValidation);
-    console.log("hasError", hasError);
-
 
     if (!hasError) {
       //If there is no error then only submit the data
