@@ -70,10 +70,7 @@ export const useResourceCost = (
   return useQuery<{ resourceCost: ResourceCostList[]; count: number }, Error>({
     queryKey: ['resourceCost', params],
     queryFn: async () => {
-      console.log("params", params);
-      
       const res = await fetchResourceCost(params);
-      console.log('Resource Cost List:', res);
       return {
         resourceCost: res.data.resourceCost,
         count: res.data.count,
@@ -93,7 +90,7 @@ export const fetchResourceCost = async (
 export const useFetchResourceCostById = (
   params: ResourceCostListParams,
   options?: UseQueryOptions
-): UseQueryResult => {  
+): UseQueryResult => {
   return useQuery({
     queryKey: ['resource-cost-byId', params],
     queryFn: async () => {
@@ -128,7 +125,10 @@ export const useCreateResourceCost = (
   return useMutation({
     mutationKey: ['create-resource-cost'],
     mutationFn: async (payload) => {
-      const res = await api.post(`${baseUrl}`+'/api/resource_cost/create', payload);
+      const res = await api.post(
+        `${baseUrl}` + '/api/resource_cost/create',
+        payload
+      );
       return res.data;
     },
     ...options,
@@ -149,7 +149,10 @@ export const useUpdateResourceCost = (
   return useMutation({
     mutationKey: ['update-resource-cost'],
     mutationFn: async (payload) => {
-      const res = await api.put(`${baseUrl}`+'/api/resource_cost/update', payload);
+      const res = await api.put(
+        `${baseUrl}` + '/api/resource_cost/update',
+        payload
+      );
       return res.data;
     },
     ...options,
