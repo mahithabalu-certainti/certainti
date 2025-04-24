@@ -210,7 +210,7 @@ const ResourceForm: React.FC = () => {
             : 'Resource created successfully'
         );
       }
-      navigate(-1 as any);
+      navigate(-1);
     }
   }, [commonSuccess, isEditView, state.cost, state.skill]);
 
