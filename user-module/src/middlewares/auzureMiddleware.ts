@@ -34,7 +34,6 @@ const getAzureB2CToken = async (): Promise<string> => {
 const checkUserStatusMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
       const userId = req.headers['x-user-id'] as string;
-      console.log("Request Headers: ", req.headers);
       
       if (!userId) {
           res.status(constants.BAD_REQUEST).json({
