@@ -234,21 +234,22 @@ class SchemaService {
         resource_ref_id: resourceData.resource_ref_id,
         resource_type: resourceData.resource_type,
         fiscal_year: resourceData.fiscal_year,
-        resource_fullname: resourceData.full_name || "",
+        resource_fullname: resourceData.full_name || null,
         resource_status: resourceData.resource_status,
-        resource_orgname: resourceData.org_name || "",
+        resource_orgname: resourceData.org_name || null,
         resource_startdate: startDate.toDate() || null,
         resource_enddate: endDate.toDate() || null,
-        resource_role: resourceData.role || "",
-        state: resourceData.state || "",
-        country: resourceData.country || "",
-        city: resourceData.city || "",
-        designation: resourceData.designation || "",
+        resource_role: resourceData.role || null,
+        state: resourceData.state || null,
+        country: resourceData.country || null,
+        city: resourceData.city || null,
+        designation: resourceData.designation || null,
         total_years_experience: resourceData.total_years_experience || null,
         total_years_in_org: resourceData.total_years_in_org || null,
         created_by: resourceData.created_by,
         modified_by: resourceData.modified_by,
         account_rid: resourceData.account_id,
+        comments: resourceData.comments || ""
       };
 
       const resource = await Resource.create(resourceObject);
@@ -394,6 +395,7 @@ class SchemaService {
         total_years_in_org: resourceData.total_years_in_org || null,
         fiscal_year: resourceData.fiscal_year,
         modified_by: resourceData.modified_by,
+        comments: resourceData.comments
       };
 
       const updateResource = await Resource.update(
@@ -792,33 +794,47 @@ class SchemaService {
   ): Promise<any[]> {
     const updatedResources = resources
       .filter((res) => {
-        if (
-          whereClause.city?.length &&
-          !whereClause.city.some((c: any) =>
-            res.city_name?.toLowerCase().includes(c.toLowerCase())
-          )
-        ) {
+
+        if (whereClause.city && !this.applyTextFilter(res.city_name, whereClause.city)) {
           return false;
         }
-      
-        if (
-          whereClause.country?.length &&
-          !whereClause.country.some((c: any) =>
-            res.country_name?.toLowerCase().includes(c.toLowerCase())
-          )
-        ) {
+  
+        if (whereClause.country && !this.applyTextFilter(res.country_name, whereClause.country)) {
+          return false; 
+        }
+  
+        if (whereClause.state && !this.applyTextFilter(res.state_name, whereClause.state)) {
           return false;
         }
-      
-        if (
-          whereClause.state?.length &&
-          !whereClause.state.some((r: any) =>
-            res.state_name?.toLowerCase().includes(r.toLowerCase())
-          )
-        ) {
-          return false;
-        }
+  
         return true;
+        // if (
+        //   whereClause.city?.length &&
+        //   !whereClause.city.some((c: any) =>
+        //     res.city_name?.toLowerCase().includes(c.toLowerCase())
+        //   )
+        // ) {
+        //   return false;
+        // }
+      
+        // if (
+        //   whereClause.country?.length &&
+        //   !whereClause.country.some((c: any) =>
+        //     res.country_name?.toLowerCase().includes(c.toLowerCase())
+        //   )
+        // ) {
+        //   return false;
+        // }
+      
+        // if (
+        //   whereClause.state?.length &&
+        //   !whereClause.state.some((r: any) =>
+        //     res.state_name?.toLowerCase().includes(r.toLowerCase())
+        //   )
+        // ) {
+        //   return false;
+        // }
+        // return true;
       })
       .sort((a, b) => {
         const [field, direction] = order[0] || [];
@@ -844,6 +860,32 @@ class SchemaService {
 
     return updatedResources;
   }
+
+  applyTextFilter(value: string | null | undefined, filter: any): boolean {
+    const val = (value || "").toLowerCase();
+
+    if (filter?.contains && !val.includes(filter.contains.toLowerCase())) {
+      return false;
+    }
+
+    if (filter?.notContains && val.includes(filter.notContains.toLowerCase())) {
+      return false;
+    }
+
+    if (filter?.equals && val !== filter.equals.toLowerCase()) {
+      return false;
+    }
+
+    if (filter?.notEqual && val === filter.notEqual.toLowerCase()) {
+      return false;
+    }
+
+    if (filter?.isEmpty === true && val.trim() !== "" && !val.trim() !== null) {
+      return false;
+    }
+
+    return true;
+  };
 }
 
 export default SchemaService;

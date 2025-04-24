@@ -414,9 +414,21 @@ export class ResourceService {
     if (fieldFilter.equals) {
       return { [Op.iLike]: fieldFilter.equals };
     }
+    if (fieldFilter.notEqual) {
+      return { [Op.notILike]: fieldFilter.notEqual };
+    }
+
     if (fieldFilter.contains) {
       return { [Op.iLike]: `%${fieldFilter.contains}%` };
     }
+    if (fieldFilter.notContains) {
+      return { [Op.notILike]: `%${fieldFilter.notContains}%` };
+    }
+
+     if (fieldFilter.isEmpty === true) {
+      return { [Op.or]: [null, ''] };
+    }
+
     if (fieldFilter.value) {
       return fieldFilter.value;
     }

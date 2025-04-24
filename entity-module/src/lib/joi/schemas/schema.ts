@@ -5,12 +5,11 @@ const uuidRegex =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const isNotFutureDate = (value: string, helpers: Joi.CustomHelpers): any => {
+  const startDate = moment(value, "DD/MM/YYYY", true);
 
-  const startDate = moment(value, "DD/MM/YYYY");
-
-  if(!startDate.isValid()){
+  if (!startDate.isValid()) {
     return helpers.error("date.invalidFormat", {
-      message: "Invalid effective from date",
+      message: "Invalid effective from date.",
     });
   }
 
@@ -40,12 +39,11 @@ const isEndDateAfterStartDate = (
   const context = helpers.state?.ancestors[0];
 
   if (context?.effective_from_date && value) {
+    const date = moment(value, "DD/MM/YYYY", true);
 
-    const date = moment(value, "DD/MM/YYYY");
-
-    if(!date.isValid()){
+    if (!date.isValid()) {
       return helpers.error("date.invalidFormat", {
-        message: "Invalid effective end date",
+        message: "Invalid effective end date.",
       });
     }
 
@@ -71,9 +69,13 @@ const isEndDateAfterStartDate = (
 
 const createResourcesSchema = Joi.object({
   account_number: Joi.string().max(50).required(),
-  account_id: Joi.string().guid({ version: ['uuidv4'] }).required(),
-  resource_ref_id: Joi.string().max(50).required(),
-  resource_type: Joi.string().valid("FullTime", "Contract").required(),
+  account_id: Joi.string()
+    .guid({ version: ["uuidv4"] })
+    .required(),
+  resource_ref_id: Joi.string().min(5).max(50).required(),
+  resource_type: Joi.string()
+    .valid("FullTime", "Contract", "Non-Labor")
+    .required(),
   full_name: Joi.string().min(3).max(200).optional().allow("").allow(null),
   org_name: Joi.string()
     .min(3)
@@ -90,20 +92,24 @@ const createResourcesSchema = Joi.object({
       "any.allowOnly": '"organization name" cannot be null or empty',
     }),
   role: Joi.string().min(4).max(100).optional().allow("").allow(null),
-  fiscal_year: Joi.number()
-  .integer()
-  .min(1000)
-  .max(9999)
-  .required()
-  .messages({
-    'number.base': 'Fiscal year must be a number',
-    'number.min': 'Fiscal year must be a 4-digit number',
-    'number.max': 'Fiscal year must be a 4-digit number',
-    'any.required': 'Fiscal year is required',
+  fiscal_year: Joi.number().integer().min(1000).max(9999).required().messages({
+    "number.base": "Fiscal year must be a number",
+    "number.min": "Fiscal year must be a 4-digit number",
+    "number.max": "Fiscal year must be a 4-digit number",
+    "any.required": "Fiscal year is required",
   }),
-  country: Joi.string().guid({ version: ['uuidv4'] }).optional().allow('', null),
-  state: Joi.string().guid({ version: ['uuidv4'] }).optional().allow('', null),
-  city: Joi.string().guid({ version: ['uuidv4'] }).optional().allow('', null),
+  country: Joi.string()
+    .guid({ version: ["uuidv4"] })
+    .optional()
+    .allow("", null),
+  state: Joi.string()
+    .guid({ version: ["uuidv4"] })
+    .optional()
+    .allow("", null),
+  city: Joi.string()
+    .guid({ version: ["uuidv4"] })
+    .optional()
+    .allow("", null),
   effective_from_date: Joi.string()
     .max(10)
     .optional()
@@ -115,7 +121,8 @@ const createResourcesSchema = Joi.object({
       "string.pattern.base":
         "effective_from_date must be in the format DD/MM/YYYY",
       "any.invalid": "Date cannot be in the future.",
-      "date.invalidFormat": "Invalid effective start date.",
+      "date.invalidFormat":
+        "Invalid effective start date. Please use the format DD/MM/YYYY",
     }),
   effective_end_date: Joi.string()
     .max(10)
@@ -128,20 +135,23 @@ const createResourcesSchema = Joi.object({
       "string.pattern.base":
         "effective_end_date must be in the format DD/MM/YYYY",
       "any.invalid": "Effective end date must be after the start date.",
-      "date.invalidFormat": "Invalid effective end date.",
+      "date.invalidFormat":
+        "Invalid effective end date. Please use the format DD/MM/YYYY",
     }),
   designation: Joi.string().min(4).max(100).optional().allow("").allow(null),
-  total_years_experience: Joi.number().optional().allow("").allow(null),
-  total_years_in_org: Joi.number()
-    .optional()
-    .allow("")
-    .allow(null),
+  total_years_experience: Joi.number().max(99).optional().allow("").allow(null),
+  total_years_in_org: Joi.number().max(99).optional().allow("").allow(null),
   resource_status: Joi.string().valid("Active", "Inactive").optional(),
-  created_by: Joi.string().guid({ version: ['uuidv4'] }).required(),
+  created_by: Joi.string()
+    .guid({ version: ["uuidv4"] })
+    .required(),
+  comments: Joi.string().max(1000).optional().allow("").allow(null),
 });
 
 const updateResourceSchema = Joi.object({
-  resource_id: Joi.string().guid({ version: ['uuidv4'] }).required(),
+  resource_id: Joi.string()
+    .guid({ version: ["uuidv4"] })
+    .required(),
   account_number: Joi.string().max(50).required(),
   resource_ref_id: Joi.string().max(50).required(),
   resource_type: Joi.string().valid("FullTime", "Contract").required(),
@@ -161,20 +171,24 @@ const updateResourceSchema = Joi.object({
       "any.allowOnly": '"organization name" cannot be null or empty',
     }),
   role: Joi.string().min(4).max(100).optional().allow("").allow(null),
-  fiscal_year: Joi.number()
-  .integer()
-  .min(1000)
-  .max(9999)
-  .required()
-  .messages({
-    'number.base': 'Fiscal year must be a number',
-    'number.min': 'Fiscal year must be a 4-digit number',
-    'number.max': 'Fiscal year must be a 4-digit number',
-    'any.required': 'Fiscal year is required',
+  fiscal_year: Joi.number().integer().min(1000).max(9999).required().messages({
+    "number.base": "Fiscal year must be a number",
+    "number.min": "Fiscal year must be a 4-digit number",
+    "number.max": "Fiscal year must be a 4-digit number",
+    "any.required": "Fiscal year is required",
   }),
-  country: Joi.string().guid({ version: ['uuidv4'] }).optional().allow('', null),
-  state: Joi.string().guid({ version: ['uuidv4'] }).optional().allow('', null),
-  city: Joi.string().guid({ version: ['uuidv4'] }).optional().allow('', null),
+  country: Joi.string()
+    .guid({ version: ["uuidv4"] })
+    .optional()
+    .allow("", null),
+  state: Joi.string()
+    .guid({ version: ["uuidv4"] })
+    .optional()
+    .allow("", null),
+  city: Joi.string()
+    .guid({ version: ["uuidv4"] })
+    .optional()
+    .allow("", null),
   effective_from_date: Joi.string()
     .max(10)
     .optional()
@@ -202,15 +216,14 @@ const updateResourceSchema = Joi.object({
       "date.invalidFormat": "Invalid effective end date.",
     }),
   designation: Joi.string().min(4).max(100).optional().allow("").allow(null),
-  total_years_experience: Joi.number().optional().allow("").allow(null),
-  total_years_in_org: Joi.number()
-    .optional()
-    .allow("")
-    .allow(null),
+  total_years_experience: Joi.number().max(99).optional().allow("").allow(null),
+  total_years_in_org: Joi.number().max(99).optional().allow("").allow(null),
   resource_status: Joi.string().valid("Active", "Inactive").optional(),
-  modified_by: Joi.string().guid({ version: ['uuidv4'] }).required(),
+  modified_by: Joi.string()
+    .guid({ version: ["uuidv4"] })
+    .required(),
+  comments: Joi.string().max(1000).optional().allow("").allow(null),
 });
-
 
 const listResourceSchema = Joi.object({
   page: Joi.string()
@@ -219,17 +232,12 @@ const listResourceSchema = Joi.object({
   limit: Joi.string()
     .pattern(/^[0-9]+$/)
     .default("10"),
-  fiscal_year: Joi.number()
-    .integer()
-    .min(1000)
-    .max(9999)
-    .optional()
-    .messages({
-      'number.base': 'Fiscal year must be a number',
-      'number.min': 'Fiscal year must be a 4-digit number',
-      'number.max': 'Fiscal year must be a 4-digit number',
-      'any.required': 'Fiscal year is required',
-    }),
+  fiscal_year: Joi.number().integer().min(1000).max(9999).optional().messages({
+    "number.base": "Fiscal year must be a number",
+    "number.min": "Fiscal year must be a 4-digit number",
+    "number.max": "Fiscal year must be a 4-digit number",
+    "any.required": "Fiscal year is required",
+  }),
   search: Joi.string().max(255).optional(),
   filters: Joi.string().default("{}"),
   sortBy: Joi.string().default("createdAt"),
@@ -245,22 +253,30 @@ const createResourceSkillSchema = Joi.object({
   resource_desc: Joi.string().max(100).optional().allow(null).allow(""),
   start_date: Joi.string().max(10).optional().allow(null).allow(""),
   skill_description: Joi.string().max(255).optional().allow(null).allow(""),
-  skill_level: Joi.string().valid("Beginner","Intermediate","Advanced").optional().allow("").allow(null),
+  skill_level: Joi.string()
+    .valid("Beginner", "Intermediate", "Advanced")
+    .optional()
+    .allow("")
+    .allow(null),
   years_of_experience: Joi.number().min(0).optional().allow(null),
   created_by: Joi.string().max(255).optional().allow(null).allow(""),
   modified_by: Joi.string().max(255).optional().allow(null).allow(""),
   technical_weightage: Joi.number().min(0).optional().allow(null),
   skill_name: Joi.string().max(255).required().trim(),
   skill_type: Joi.string().max(255).optional().allow(null).allow(""),
-  accountNumber: Joi.string().max(255).required()
-})
+  accountNumber: Joi.string().max(255).required(),
+});
 
 const updateResourceSkillSchema = Joi.object({
   rid: Joi.string().max(255).required(),
   eid: Joi.string().max(255).optional().allow(null).allow(""),
   start_date: Joi.string().max(10).optional().allow(null).allow(""),
   skill_description: Joi.string().max(255).optional().allow(null).allow(""),
-  skill_level: Joi.string().valid("Beginner","Intermediate","Advanced","-").optional().allow("").allow(null),
+  skill_level: Joi.string()
+    .valid("Beginner", "Intermediate", "Advanced", "-")
+    .optional()
+    .allow("")
+    .allow(null),
   skill_name: Joi.string().max(255).required().trim(),
   years_of_experience: Joi.number().min(0).optional().allow(null),
   modified_by: Joi.string().max(255).optional(),
@@ -268,10 +284,10 @@ const updateResourceSkillSchema = Joi.object({
   skill_type: Joi.string().max(255).optional().allow(null).allow(""),
   status: Joi.string().max(255).default("active").optional(),
   modified_datetime: Joi.date()
-   .iso()
-   .default(() => new Date()),
+    .iso()
+    .default(() => new Date()),
   accountNumber: Joi.string().max(255).required(),
-})
+});
 
 const listResourceSkillSchema = Joi.object({
   rid: Joi.string().pattern(uuidRegex).optional().allow(null).allow(""),
@@ -298,7 +314,7 @@ const updateResourceCostSchema = Joi.object({
   effective_date: Joi.string().max(10).optional().allow(null).allow(""),
   end_date: Joi.string().max(10).optional().allow(null).allow(""),
   cost_frequency: Joi.string()
-   .valid(
+    .valid(
       "annual",
       "semi_annual",
       "monthly",
@@ -307,7 +323,7 @@ const updateResourceCostSchema = Joi.object({
       "daily",
       "hourly"
     )
-   .required(),
+    .required(),
   cost: Joi.number().min(0).max(999999999999.99).required(),
   currency_rid: Joi.string().pattern(uuidRegex).required(),
   status: Joi.string().max(255).default("active").optional(),
@@ -347,7 +363,7 @@ const resourceCostSchema = Joi.object({
   effective_date: Joi.string().max(10).optional().allow(null).allow(""),
   end_date: Joi.string().max(10).optional().allow(null).allow(""),
   cost_frequency: Joi.string()
-   .valid(
+    .valid(
       "annual",
       "semi_annual",
       "monthly",
@@ -356,7 +372,7 @@ const resourceCostSchema = Joi.object({
       "daily",
       "hourly"
     )
-   .required(),
+    .required(),
   cost: Joi.number().min(0).max(999999999999.99).required(),
   fiscalYear: Joi.number().default(new Date().getFullYear()).optional(),
   currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
@@ -381,5 +397,5 @@ export {
   updateResourceCostSchema,
   createResourcesSchema,
   updateResourceSchema,
-  listResourceSchema
+  listResourceSchema,
 };
