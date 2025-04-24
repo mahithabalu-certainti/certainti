@@ -21,7 +21,6 @@ const authMiddleware = (req: Request, res: Response, next: NextFunction):void =>
 const checkUserStatusMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const userId = req.headers['x-user-id'] as string;
-        console.log("Request Headers: ", req.headers);
         
         if (!userId) {
             res.status(HttpStatus.BAD_REQUEST).json({

@@ -237,8 +237,8 @@ class SchemaService {
         resource_fullname: resourceData.full_name || null,
         resource_status: resourceData.resource_status,
         resource_orgname: resourceData.org_name || null,
-        resource_startdate: startDate.toDate() || null,
-        resource_enddate: endDate.toDate() || null,
+        resource_startdate: moment(startDate).isValid() ? moment(startDate).toDate() : null,
+        resource_enddate: moment(endDate).isValid() ? moment(endDate).toDate() : null,
         resource_role: resourceData.role || null,
         state: resourceData.state || null,
         country: resourceData.country || null,
@@ -310,8 +310,8 @@ class SchemaService {
         fiscal_year: resourceData.fiscal_year,
         country_rid: resourceData.country || "",
         country_region_rid: resourceData.state || "",
-        effective_date: startDate.toDate(),
-        end_date: endDate.toDate(),
+        effective_date: moment(startDate).isValid() ? moment(startDate).toDate() : null,
+        end_date: moment(endDate).isValid() ? moment(startDate).toDate() : null,
         created_by: resourceData.created_by,
       });
     } catch (err) {
