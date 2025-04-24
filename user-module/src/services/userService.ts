@@ -428,8 +428,8 @@ class UserService {
 
           // Fetch user names for created_by and modified_by
         const userNames = await this.fetchUserNames({
-          created_by: (users as any).dataValues.created_by,
-          modified_by: (users as any).dataValues.modified_by
+          created_by: users.created_by || "",
+          modified_by: users.modified_by || "",
          });
 
         (users as any).dataValues.created_by = userNames.created_by_name;
