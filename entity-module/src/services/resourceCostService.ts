@@ -403,30 +403,44 @@ class ResourceCostService {
         };
       }
 
-      let frequency= {};
-
+      let frequency = {}
       try {
+        // First, create an object with all cost frequency fields set to null
+      const clearFrequencies = {
+        annual_cost: null as null | number,
+        semi_annual_cost: null as null | number,
+        monthly_cost: null as null | number,
+        weekly_cost: null as null | number,
+        bi_weekly_cost: null as null | number,
+        daily_cost: null as null | number,
+        hourly_cost: null as null | number
+      };
+
+      frequency = {
+        ...clearFrequencies,
+      };
+        
         switch(cost_frequency) {
           case "annual":
-            frequency = { annual_cost: cost };
+            (frequency as { annual_cost: number | null }).annual_cost = cost;
             break;
           case "semi_annual":
-            frequency = { semi_annual_cost: cost };
+            (frequency as { semi_annual_cost: number | null }).semi_annual_cost = cost;
             break;
           case "monthly":
-            frequency = { monthly_cost: cost };
+            (frequency as { monthly_cost: number | null }).monthly_cost = cost;
             break;
           case "weekly":
-            frequency = { weekly_cost: cost };
+            (frequency as { weekly_cost: number | null }).weekly_cost = cost;
             break;
           case "bi_weekly":
-            frequency = { bi_weekly_cost: cost };
+            (frequency as { bi_weekly_cost: number | null }).bi_weekly_cost = cost;
             break;
           case "daily":
-            frequency = { daily_cost: cost };
+            (frequency as { daily_cost: number | null }).daily_cost = cost;
             break;
           case "hourly":
-            frequency = { hourly_cost: cost };
+            (frequency as { hourly_cost: number | null }).hourly_cost = cost;
             break;
           default:
             throw new Error(`Invalid cost frequency: ${cost_frequency}`);
