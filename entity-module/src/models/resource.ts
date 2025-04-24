@@ -5,18 +5,18 @@ export interface ResourcesAttributes {
   eid?: string;
   r_number?: string;
   resource_ref_id: string;
-  resource_type: "FullTime" | "Contract";
+  resource_type: "FullTime" | "Contract" | "Non-Labor";
   account_rid: string;
-  resource_fullname?: string;
-  resource_orgname?: string;
-  resource_role?: string;
+  resource_fullname?: string | null;
+  resource_orgname?: string | null;
+  resource_role?: string | null;
   fiscal_year?: number;
-  country?: string;
-  state?: string;
-  city?: string;
+  country?: string | null;
+  state?: string | null;
+  city?: string | null;
   resource_startdate?: Date | null;
   resource_enddate?: Date | null;
-  designation?: string;
+  designation?: string | null;
   total_years_experience?: number | null;
   total_years_in_org?: number | null;
   resource_status?: "Active" | "Inactive";
@@ -24,6 +24,7 @@ export interface ResourcesAttributes {
   modified_datetime?: Date;
   created_by: string;
   modified_by?: string | null;
+  comments?: string;
 }
 
 interface ResourcesCreationAttributes
@@ -37,17 +38,17 @@ export class Resources
   public eid?: string;
   public r_number?: string;
   public resource_ref_id!: string;
-  public resource_type!: "FullTime" | "Contract";
+  public resource_type!: "FullTime" | "Contract" | "Non-Labor";
   public fiscal_year!: number;
-  public resource_fullname?: string;
+  public resource_fullname?: string | null;
   public resource_orgname?: string;
-  public resource_role?: string;
-  public country?: string;
-  public state?: string;
-  public city?: string;
+  public resource_role?: string | null;
+  public country?: string | null;
+  public state?: string | null;
+  public city?: string | null;
   public resource_startdate?: Date;
   public resource_enddate?: Date;
-  public designation?: string;
+  public designation?: string | null;
   public total_years_experience?: number;
   public total_years_in_org?: number;
   public resource_status?: "Active" | "Inactive";
@@ -56,6 +57,7 @@ export class Resources
   public created_by!: string;
   public modified_by?: string;
   public account_rid!: string;
+  public comments?: string;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
     return Resources.init(
@@ -85,7 +87,7 @@ export class Resources
           unique: true,
         },
         resource_type: {
-          type: DataTypes.ENUM("FullTime", "Contract"),
+          type: DataTypes.ENUM("FullTime", "Contract", "Non-Labor"),
           allowNull: false,
         },
         resource_fullname: {
@@ -174,6 +176,10 @@ export class Resources
         },
         modified_by: {
           type: DataTypes.UUID,
+          allowNull: true,
+        },
+        comments: {
+          type: DataTypes.STRING(1000),
           allowNull: true,
         },
       },

@@ -1,7 +1,7 @@
 export interface ICreateResource {
   account_number: string;
   resource_ref_id: string;
-  resource_type: "FullTime" | "Contract";
+  resource_type: "FullTime" | "Contract"| "Non-Labor";
   full_name?: string | null;
   org_name?: string | null;
   role?: string | null;
@@ -18,13 +18,14 @@ export interface ICreateResource {
   created_by: string;
   modified_by?: string | null;
   account_id: string;
+  comments?: string;
 }
 
 export interface IUpdateResource {
   resource_id: string;
   account_number: string;
   resource_ref_id: string;
-  resource_type: "FullTime" | "Contract";
+  resource_type: "FullTime" | "Contract" | "Non-Labor";
   full_name?: string | null;
   org_name?: string | null;
   role?: string | null;
@@ -39,6 +40,7 @@ export interface IUpdateResource {
   total_years_in_org?: number | null;
   resource_status?: "Active" | "Inactive";
   modified_by: string;
+  comments?: string;
 }
 export interface IResourceCost {
   eid: string;
