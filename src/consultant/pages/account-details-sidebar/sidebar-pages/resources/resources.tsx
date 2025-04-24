@@ -17,7 +17,6 @@ interface ResourceProps {
 }
 
 const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
-  const [viewMode, setViewMode] = useState<boolean>(false);
   const [viewResourceList, setViewResourceList] = useState<boolean>(true);
   const [columns, setColumns] = useState<any>([]);
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -37,18 +36,16 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     isLoading,
     error,
   } = useResourceList({
-    page: currentPage,
+    page: currentPage + 1, // API expects 1-based index
     limit: rowsPerPage,
     accountNumber: accountDetails?.data?.accountById.r_number,
     sortBy: sortField,
     sortOrder: sortOrder,
     filters: appliedFilters,
   });
+
   const handleFilter = () => {
     setShowFilter(!showFilter);
-    if (showFilter === false) {
-      setAppliedFilters({});
-    }
   };
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
@@ -57,7 +54,6 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
   };
 
   // fiscalYear change
-
   const [fiscalYearValue, setFiscalYearValue] = useState<number>(
     new Date().getFullYear()
   );
@@ -73,11 +69,10 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     setColumns(
       getResourceColumns({
         onResourceIdClick: handleResourceClick,
-        view: viewMode,
         onClickId: 'rid',
       })
     );
-  }, [viewMode]);
+  }, []);
 
   const handleEdit = (resource: any) => {
     navigate(RESOURCE + '/edit/' + resource.rid, {
@@ -108,26 +103,18 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     },
   ];
 
-  const headerButtons: {
-    label: string;
-    variant: 'text' | 'outlined' | 'contained';
-    onClick: () => void;
-  }[] = [
-      {
-        label: 'Download',
-        variant: 'outlined',
-        onClick: () => console.log('Download'),
-      },
-      {
-        label: 'New',
-        variant: 'outlined',
-        onClick: () => handleCreateResource(),
-      },
-    ];
-
-  const toggleViewMode = () => {
-    setViewMode(!viewMode);
-  };
+  const headerButtons = [
+    {
+      label: 'Download',
+      variant: 'outlined' as const,
+      onClick: () => console.log('Download'),
+    },
+    {
+      label: 'New',
+      variant: 'outlined' as const,
+      onClick: () => handleCreateResource(),
+    },
+  ];
 
   const handleBackClick = () => {
     setViewResourceList(!viewResourceList);
@@ -145,23 +132,28 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     }
     if (value === 'cost') {
       navigate(`${RESOURCE}/cost/create`, {
-        state: { ...accountDetails, resourceData, cost: true, sectionName: 'Financial Information' },
+        state: {
+          ...accountDetails,
+          resourceData,
+          cost: true,
+          sectionName: 'Financial Information',
+        },
       });
     } else if (value === 'skill') {
       navigate(`${RESOURCE}/skill/create`, {
-        state: { ...accountDetails, resourceData, skill: true, sectionName: 'Skill Information' },
+        state: {
+          ...accountDetails,
+          resourceData,
+          skill: true,
+          sectionName: 'Skill Information',
+        },
       });
     }
   };
 
   return (
     <div className='w-full'>
-      <TabPanel
-        viewMode={viewMode}
-        onExitView={toggleViewMode}
-        title='Resource'
-        setFiscalYearValue={setFiscalYearValue}
-      />
+      <TabPanel title='Resource' setFiscalYearValue={setFiscalYearValue} />
       <ResourceTableHeader
         handleFilter={handleFilter}
         value={value}
@@ -169,8 +161,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
         showFilter={showFilter}
         title='Resource'
         titleIcon={<img src={resourceHeaderIcon} alt='resource header icon' />}
-        headerButtons={viewMode ? [] : headerButtons}
-        toggleViewMode={toggleViewMode}
+        headerButtons={headerButtons}
         showBackArrow={showBackArrow}
         onBackClick={handleBackClick}
       />
@@ -189,14 +180,10 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
           data={ResourceList?.resource as any}
           columns={columns}
           actionMenuItems={actionMenuItems}
-          // title='Resource'
-          // titleIcon={<img src={resourceHeaderIcon} alt='resource header icon' />}
-          // headerButtons={viewMode ? [] : headerButtons}
-          pagination={!viewMode}
-          rowsPerPage={5}
+          pagination={true}
+          rowsPerPage={rowsPerPage}
+          rowsPerPageOptions={[5, 10, 25]}
           sortable={true}
-          onViewModeToggle={setViewMode}
-          viewMode={viewMode}
           isLoading={isLoading}
           error={error}
           rowIdentifier='rid'
@@ -207,6 +194,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
           sortField={sortField}
           sortOrder={sortOrder}
           currentPage={currentPage}
+          totalCount={ResourceList?.count || 0}
         />
       )}
     </div>

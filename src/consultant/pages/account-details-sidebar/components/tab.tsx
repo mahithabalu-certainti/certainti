@@ -3,8 +3,8 @@ import React, { Fragment, useState } from 'react';
 import { leftArrowIcon } from '../../../../assets';
 
 interface TabPanelProps {
-  viewMode: boolean;
-  onExitView: () => void;
+  viewMode?: boolean;
+  onExitView?: () => void;
   title: string;
   setFiscalYearValue: (value: number) => void;
 }

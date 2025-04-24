@@ -1,20 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Button,
-  Checkbox,
   CircularProgress,
-  FormControl,
   IconButton,
   ListItemText,
   Menu,
   MenuItem,
   Paper,
-  Select,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   TableSortLabel,
   Typography,
@@ -52,21 +50,20 @@ interface DataTableProps {
   headerButtons?: TableHeaderButton[];
   pagination?: boolean;
   rowsPerPage?: number;
-  rowsPerPageOptions?: number[]; // New prop for rows per page options
+  rowsPerPageOptions?: number[];
   sortable?: boolean;
-  onViewModeToggle?: (viewMode: boolean) => void;
-  viewMode?: boolean;
   isLoading?: boolean;
   error?: Error | null;
   emptyStateMessage?: string;
-  setCurrentPage: (page: number) => void; // Callback to set current page
-  setSortOrder: (order: 'ASC' | 'DESC') => void; // Callback to set sort order
-  setSortField: (field: string) => void; // Callback to set sort field
-  setRowsPerPage: (rows: number) => void; // Callback to set rows per page
-  sortField?: string; // Current sort field
-  currentPage?: number; // Current page number
-  rowIdentifier?: string; // Key to identify rows uniquely
-  sortOrder: 'ASC' | 'DESC'; // Current sort order
+  setCurrentPage: (page: number) => void;
+  setSortOrder: (order: 'ASC' | 'DESC') => void;
+  setSortField: (field: string) => void;
+  setRowsPerPage: (rows: number) => void;
+  sortField?: string;
+  currentPage?: number;
+  rowIdentifier?: string;
+  sortOrder: 'ASC' | 'DESC';
+  totalCount: number;
 }
 
 const DataTable: React.FC<DataTableProps> = ({
@@ -75,10 +72,8 @@ const DataTable: React.FC<DataTableProps> = ({
   actionMenuItems = [],
   pagination = true,
   rowsPerPage = 5,
-  rowsPerPageOptions = [5, 10, 25, 50, 100], // Default rows per page options
+  rowsPerPageOptions = [5, 10, 25, 50, 100],
   sortable = true,
-  onViewModeToggle,
-  viewMode = false,
   isLoading = false,
   error = null,
   emptyStateMessage = 'No data available',
@@ -90,10 +85,11 @@ const DataTable: React.FC<DataTableProps> = ({
   sortField,
   currentPage = 0,
   sortOrder,
+  totalCount,
 }) => {
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [selectedRowData, setSelectedRowData] = useState<any | null>(null);
-  const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
+  // const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
 
   const handlePageChange = (_event: unknown, newPage: number) => {
     setCurrentPage(newPage);
@@ -118,78 +114,60 @@ const DataTable: React.FC<DataTableProps> = ({
     setSortField(property);
   };
 
-  const handleRowsPerPageChange = (event: any) => {
-    const newRowsPerPage = event.target.value as number;
+  const handleRowsPerPageChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const newRowsPerPage = parseInt(event.target.value, 10);
     setRowsPerPage(newRowsPerPage);
     setCurrentPage(0); // Reset to first page when rows per page changes
   };
 
-  const stableSort = (array: any[], comparator: (a: any, b: any) => number) => {
-    const stabilizedThis = array.map(
-      (el, index) => [el, index] as [any, number]
-    );
-    stabilizedThis.sort((a, b) => {
-      const order = comparator(a[0], b[0]);
-      if (order !== 0) return order;
-      return a[1] - b[1];
-    });
-    return stabilizedThis.map((el) => el[0]);
-  };
+  // const stableSort = (array: any[], comparator: (a: any, b: any) => number) => {
+  //   const stabilizedThis = array.map(
+  //     (el, index) => [el, index] as [any, number]
+  //   );
+  //   stabilizedThis.sort((a, b) => {
+  //     const order = comparator(a[0], b[0]);
+  //     if (order !== 0) return order;
+  //     return a[1] - b[1];
+  //   });
+  //   return stabilizedThis.map((el) => el[0]);
+  // };
 
-  const getComparator = (order: 'ASC' | 'DESC', orderBy: string) => {
-    return order === 'DESC'
-      ? (a: any, b: any) => descendingComparator(a, b, orderBy)
-      : (a: any, b: any) => -descendingComparator(a, b, orderBy);
-  };
+  // const getComparator = (order: 'ASC' | 'DESC', orderBy: string) => {
+  //   return order === 'DESC'
+  //     ? (a: any, b: any) => descendingComparator(a, b, orderBy)
+  //     : (a: any, b: any) => -descendingComparator(a, b, orderBy);
+  // };
 
-  const descendingComparator = (a: any, b: any, orderBy: string) => {
-    if (b[orderBy] < a[orderBy]) {
-      return -1;
-    }
-    if (b[orderBy] > a[orderBy]) {
-      return 1;
-    }
-    return 0;
-  };
+  // const descendingComparator = (a: any, b: any, orderBy: string) => {
+  //   if (b[orderBy] < a[orderBy]) {
+  //     return -1;
+  //   }
+  //   if (b[orderBy] > a[orderBy]) {
+  //     return 1;
+  //   }
+  //   return 0;
+  // };
 
-  const handleRowSelection = (rowId: string) => {
-    const newSelection = new Set(selectedRowIds);
-    if (newSelection.has(rowId)) {
-      newSelection.delete(rowId);
-    } else {
-      newSelection.add(rowId);
-    }
-    setSelectedRowIds(newSelection);
-  };
+  // const handleRowSelection = (rowId: string) => {
+  //   const newSelection = new Set(selectedRowIds);
+  //   if (newSelection.has(rowId)) {
+  //     newSelection.delete(rowId);
+  //   } else {
+  //     newSelection.add(rowId);
+  //   }
+  //   setSelectedRowIds(newSelection);
+  // };
 
-  const handleSelectAllRows = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) {
-      const allIds = new Set(data.map((row) => row[rowIdentifier].toString()));
-      setSelectedRowIds(allIds);
-    } else {
-      setSelectedRowIds(new Set());
-    }
-  };
-
-  const toggleViewMode = () => {
-    onViewModeToggle?.(!viewMode);
-    setSelectedRowIds(new Set());
-  };
-
-  const startIndex = currentPage * rowsPerPage;
-  const endIndex = startIndex + rowsPerPage;
-  const sortedData =
-    sortable && sortField
-      ? stableSort(data, getComparator(sortOrder, sortField))
-      : data;
-  const displayedRows =
-    pagination && !viewMode
-      ? sortedData.slice(startIndex, endIndex)
-      : sortedData;
-  const totalPages = Math.ceil(data.length / rowsPerPage);
-
-  const from = data.length === 0 ? 0 : startIndex + 1;
-  const to = Math.min(endIndex, data.length);
+  // const handleSelectAllRows = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   if (e.target.checked) {
+  //     const allIds = new Set(data.map((row) => row[rowIdentifier].toString()));
+  //     setSelectedRowIds(allIds);
+  //   } else {
+  //     setSelectedRowIds(new Set());
+  //   }
+  // };
 
   const isMenuOpen = Boolean(menuAnchor);
 
@@ -241,28 +219,10 @@ const DataTable: React.FC<DataTableProps> = ({
 
   return (
     <div className='border border-gray-300 mr-2'>
-      <TableContainer
-        component={Paper}
-        style={viewMode ? { maxHeight: '70vh', overflowY: 'auto' } : {}}
-      >
+      <TableContainer component={Paper}>
         <Table>
           <TableHead className='bg-gray-50'>
             <TableRow>
-              {viewMode && (
-                <TableCell padding='checkbox'>
-                  <Checkbox
-                    indeterminate={
-                      selectedRowIds.size > 0 &&
-                      selectedRowIds.size < data.length
-                    }
-                    checked={
-                      data.length > 0 && selectedRowIds.size === data.length
-                    }
-                    onChange={handleSelectAllRows}
-                    inputProps={{ 'aria-label': 'select all rows' }}
-                  />
-                </TableCell>
-              )}
               {columns.map((column) => (
                 <TableCell
                   key={column.id}
@@ -289,35 +249,14 @@ const DataTable: React.FC<DataTableProps> = ({
                   )}
                 </TableCell>
               ))}
-              {!viewMode && actionMenuItems.length > 0 && (
+              {actionMenuItems.length > 0 && (
                 <TableCell className='font-bold'>Actions</TableCell>
               )}
             </TableRow>
           </TableHead>
           <TableBody>
-            {displayedRows.map((row) => (
-              <TableRow
-                key={row[rowIdentifier]}
-                className='hover:bg-gray-50'
-                selected={
-                  viewMode && selectedRowIds.has(row[rowIdentifier].toString())
-                }
-              >
-                {viewMode && (
-                  <TableCell padding='checkbox'>
-                    <Checkbox
-                      checked={selectedRowIds.has(
-                        row[rowIdentifier].toString()
-                      )}
-                      onChange={() =>
-                        handleRowSelection(row[rowIdentifier].toString())
-                      }
-                      inputProps={{
-                        'aria-labelledby': `row-${row[rowIdentifier]}`,
-                      }}
-                    />
-                  </TableCell>
-                )}
+            {data.map((row) => (
+              <TableRow key={row[rowIdentifier]} className='hover:bg-gray-50'>
                 {columns.map((column) => (
                   <TableCell
                     key={`${row[rowIdentifier]}-${column.id}`}
@@ -328,7 +267,7 @@ const DataTable: React.FC<DataTableProps> = ({
                       : row[column.id]}
                   </TableCell>
                 ))}
-                {!viewMode && actionMenuItems.length > 0 && (
+                {actionMenuItems.length > 0 && (
                   <TableCell>
                     <IconButton
                       size='small'
@@ -347,60 +286,19 @@ const DataTable: React.FC<DataTableProps> = ({
             ))}
           </TableBody>
         </Table>
-
-        {pagination && !viewMode && data.length > 0 && (
-          <div className='flex items-center justify-between p-2'>
-            <div className='flex items-center px-4 py-2'>
-              <Typography variant='body2' className='mr-2'>
-                Rows per page:
-              </Typography>
-              <FormControl variant='standard' size='small'>
-                <Select
-                  value={rowsPerPage}
-                  onChange={handleRowsPerPageChange}
-                  className='text-sm'
-                >
-                  {rowsPerPageOptions.map((option) => (
-                    <MenuItem key={option} value={option}>
-                      {option}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </div>
-            <div className='flex-grow flex justify-center items-center'>
-              <Button
-                variant='text'
-                className='text-blue-600'
-                onClick={toggleViewMode}
-              >
-                View All
-              </Button>
-            </div>
-            <div className='flex items-center px-4 py-2'>
-              <span className='text-gray-600 mr-4'>{`${from}-${to} of ${data.length}`}</span>
-              <IconButton
-                size='small'
-                disabled={currentPage === 0}
-                onClick={() => handlePageChange(null, currentPage - 1)}
-              >
-                <span role='img' aria-label='previous'>
-                  ◀
-                </span>
-              </IconButton>
-              <IconButton
-                size='small'
-                disabled={currentPage >= totalPages - 1}
-                onClick={() => handlePageChange(null, currentPage + 1)}
-              >
-                <span role='img' aria-label='next'>
-                  ▶
-                </span>
-              </IconButton>
-            </div>
-          </div>
-        )}
       </TableContainer>
+
+      {pagination && data.length > 0 && (
+        <TablePagination
+          rowsPerPageOptions={rowsPerPageOptions}
+          component='div'
+          count={totalCount}
+          rowsPerPage={rowsPerPage}
+          page={currentPage}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+        />
+      )}
 
       {actionMenuItems.length > 0 && (
         <Menu
