@@ -75,6 +75,13 @@ export class PermissionField
             field.setDataValue("modified_datetime", new Date());
           },
         },
+        indexes: [
+          {
+            unique: true,
+            name: "field_unique_idx",
+            fields: ["field_name", "module_permission_id"],
+          },
+        ],
       }
     );
 

@@ -75,6 +75,13 @@ export class ModulePermission
             permission.setDataValue("modified_datetime", new Date());
           },
         },
+        indexes: [
+          {
+            unique: true,
+            name: "permission_unique_idx",
+            fields: ["permission_name", "menu_module_id"],
+          },
+        ],
       }
     );
 
