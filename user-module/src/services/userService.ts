@@ -47,7 +47,8 @@ class UserService {
    */
   async createUser(
     userData: IUserData,
-    azureId: string
+    azureId: string,
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -92,7 +93,8 @@ class UserService {
         phone,
         full_name:
           first_name + (middle_name ? " " + middle_name : "") + " " + last_name,
-        created_by,
+        created_by: userId,
+        modified_by: userId,
       });
 
       if (organization === constants.PLATFORM_ONE) {
@@ -126,7 +128,8 @@ class UserService {
    */
   async updateUser(
     userData: IUpdateUserData,
-    userId: string
+    userId: string,
+    loggedInUser: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -182,7 +185,7 @@ class UserService {
             (middle_name ? " " + middle_name : "") +
             " " +
             last_name,
-          modified_by: modified_by,
+          modified_by: loggedInUser,
           modified_datetime: new Date(),
         },
         {
@@ -413,6 +416,7 @@ class UserService {
             },
           ],
         });
+
         if (users) {
           const { country, state, city } = await this.getGeoData(
             users.country || "",
@@ -422,6 +426,16 @@ class UserService {
           (users as any).dataValues.country_name = country;
           (users as any).dataValues.state_name = state;
           (users as any).dataValues.city_name = city;
+
+          // Fetch user names for created_by and modified_by
+        const userNames = await this.fetchUserNames({
+          created_by: users.created_by || "",
+          modified_by: users.modified_by || "",
+         });
+
+        (users as any).dataValues.created_by = userNames.created_by_name;
+        (users as any).dataValues.modified_by = userNames.modified_by_name;
+
         }
       } else {
         users = UserDetails.findAll({
@@ -445,7 +459,7 @@ class UserService {
             },
           ],
         });
-      }
+      }  
       return {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
@@ -1043,6 +1057,58 @@ const rawResult = users || [];
       errorMessage: err.message,
     };
   }
+
+  /**
+   * Fetches user names for user IDs from the main database
+   * @param userIds - Object containing user IDs (created_by, modified_by)
+   * @returns Promise resolving to object with user names
+   */
+  private async fetchUserNames(userIds: { created_by?: string, modified_by?: string }): Promise<{ created_by_name: string, modified_by_name: string }> {
+    const result = {
+      created_by_name: '',
+      modified_by_name: ''
+    };
+    
+    try {
+      const sequelize = await initSequelize();
+      
+      // Fetch created_by user name if ID exists
+      if (userIds.created_by) {
+        const [createdByUser] = await sequelize.query(
+          `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          {
+            replacements: { userId: userIds.created_by },
+            type: 'SELECT'
+          }
+        );
+        
+        if (createdByUser) {
+          result.created_by_name = (createdByUser as any).full_name;
+        }
+      }
+      
+      // Fetch modified_by user name if ID exists
+      if (userIds.modified_by) {
+        const [modifiedByUser] = await sequelize.query(
+          `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          {
+            replacements: { userId: userIds.modified_by },
+            type: 'SELECT'
+          }
+        );
+        
+        if (modifiedByUser) {
+          result.modified_by_name = (modifiedByUser as any).full_name;
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user names:', error);
+      // Return empty strings if there's an error
+    }
+    
+    return result;
+  }
+
 }
 
 

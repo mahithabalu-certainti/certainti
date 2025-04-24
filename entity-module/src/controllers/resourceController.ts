@@ -21,12 +21,24 @@ async function creatResource(req: Request, res: Response): Promise<void> {
   const methodName = "Create resource";
   try {
     const value = await validateRequest(req, createResourcesSchema, res);
+    const userId = req.headers["x_user_id"] as string;
+
+    if (!userId) {
+      errorLog(methodName, "User Id not found");
+      handleErrorResponse(
+        res,
+        HttpStatus.UNAUTHORIZED,
+        HttpStatus.UNAUTHORIZED_MESSAGE,
+        "User Id not found in headers"
+      );
+      return;
+    }
 
     if (!value) {
       return;
     }
 
-    const resources = await resourceService.createResource(value);
+    const resources = await resourceService.createResource(value, userId);
 
     if (resources.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -161,12 +173,24 @@ async function updateResource(req: Request, res: Response): Promise<void> {
   const methodName = "Update resource";
   try {
     const value = await validateRequest(req, updateResourceSchema, res);
+    const userId = req.headers["x_user_id"] as string;
+
+    if (!userId) {
+      errorLog(methodName, "User Id not found");
+      handleErrorResponse(
+        res,
+        HttpStatus.UNAUTHORIZED,
+        HttpStatus.UNAUTHORIZED_MESSAGE,
+        "User Id not found in headers"
+      );
+      return;
+    }
 
     if (!value) {
       return;
     }
 
-    const updateResource = await resourceService.updateResource(value);
+    const updateResource = await resourceService.updateResource(value, userId);
 
     if (updateResource.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);

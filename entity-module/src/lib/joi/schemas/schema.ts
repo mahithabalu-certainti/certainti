@@ -139,8 +139,13 @@ const createResourcesSchema = Joi.object({
         "Invalid effective end date. Please use the format DD/MM/YYYY",
     }),
   designation: Joi.string().min(4).max(100).optional().allow("").allow(null),
-  total_years_experience: Joi.number().max(99).optional().allow("").allow(null),
-  total_years_in_org: Joi.number().max(99).optional().allow("").allow(null),
+  total_years_experience: Joi.number().min(0).max(99).optional().allow("").allow(null),
+  total_years_in_org: Joi.number()
+    .optional()
+    .min(0)
+    .max(99)
+    .allow("")
+    .allow(null),
   resource_status: Joi.string().valid("Active", "Inactive").optional(),
   created_by: Joi.string()
     .guid({ version: ["uuidv4"] })
@@ -216,8 +221,13 @@ const updateResourceSchema = Joi.object({
       "date.invalidFormat": "Invalid effective end date.",
     }),
   designation: Joi.string().min(4).max(100).optional().allow("").allow(null),
-  total_years_experience: Joi.number().max(99).optional().allow("").allow(null),
-  total_years_in_org: Joi.number().max(99).optional().allow("").allow(null),
+  total_years_experience: Joi.number().optional().min(0).max(99).allow("").allow(null),
+  total_years_in_org: Joi.number()
+    .optional()
+    .min(0)
+    .max(99)
+    .allow("")
+    .allow(null),
   resource_status: Joi.string().valid("Active", "Inactive").optional(),
   modified_by: Joi.string()
     .guid({ version: ["uuidv4"] })
@@ -253,12 +263,8 @@ const createResourceSkillSchema = Joi.object({
   resource_desc: Joi.string().max(100).optional().allow(null).allow(""),
   start_date: Joi.string().max(10).optional().allow(null).allow(""),
   skill_description: Joi.string().max(255).optional().allow(null).allow(""),
-  skill_level: Joi.string()
-    .valid("Beginner", "Intermediate", "Advanced")
-    .optional()
-    .allow("")
-    .allow(null),
-  years_of_experience: Joi.number().min(0).optional().allow(null),
+  skill_level: Joi.string().valid("Beginner","Intermediate","Advanced").optional().allow("").allow(null),
+  years_of_experience: Joi.number().min(0).max(99).optional().allow(null),
   created_by: Joi.string().max(255).optional().allow(null).allow(""),
   modified_by: Joi.string().max(255).optional().allow(null).allow(""),
   technical_weightage: Joi.number().min(0).optional().allow(null),
@@ -278,7 +284,7 @@ const updateResourceSkillSchema = Joi.object({
     .allow("")
     .allow(null),
   skill_name: Joi.string().max(255).required().trim(),
-  years_of_experience: Joi.number().min(0).optional().allow(null),
+  years_of_experience: Joi.number().min(0).max(99).optional().allow(null),
   modified_by: Joi.string().max(255).optional(),
   technical_weightage: Joi.number().min(0).optional().allow(null),
   skill_type: Joi.string().max(255).optional().allow(null).allow(""),
@@ -325,7 +331,7 @@ const updateResourceCostSchema = Joi.object({
     )
     .required(),
   cost: Joi.number().min(0).max(999999999999.99).required(),
-  currency_rid: Joi.string().pattern(uuidRegex).required(),
+  currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
   status: Joi.string().max(255).default("active").optional(),
   modified_datetime: Joi.date()
     .iso()

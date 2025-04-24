@@ -31,14 +31,14 @@ export interface IAccountService {
     data?: { account: any };
   }>;
 
-  createAccount(accountData: IAccount): Promise<{
+  createAccount(accountData: IAccount, userId: string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
     data?: { account: any };
   }>;
 
-  updateAccount(accountData: IUpdateAccount): Promise<{
+  updateAccount(accountData: IUpdateAccount, userId: string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;

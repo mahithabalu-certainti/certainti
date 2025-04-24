@@ -1,3 +1,4 @@
+import { initMainDbSequelize } from "../config/mainDataSource";
 import { HttpStatus } from "../utils/constants";
 import { ICreateResource, IUpdateResource } from "../utils/types";
 import SchemaService from "./schemaService";
@@ -18,7 +19,7 @@ export class ResourceService {
    * @param {ICreateResource} resourceData - The data required to create a resource.
    * @returns {Promise<object>} - A response object with status, message, and created resource.
    */
-  async createResource(resourceData: ICreateResource): Promise<{
+  async createResource(resourceData: ICreateResource, userId: string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -61,6 +62,9 @@ export class ResourceService {
 
       const startDate = moment(resourceData.effective_from_date, "DD/MM/YYYY");
       const endDate = moment(resourceData.effective_end_date, "DD/MM/YYYY");
+
+      resourceData.created_by = userId;
+      resourceData.modified_by = userId;
 
       const resource = await this.schemaService.insertResourcesTable(
         resourceData,
@@ -164,7 +168,7 @@ export class ResourceService {
    * @param {IUpdateResource} resourceData - Updated data for the resource.
    * @returns {Promise<object>} - Response containing the updated resource data.
    */
-  async updateResource(resourceData: IUpdateResource): Promise<{
+  async updateResource(resourceData: IUpdateResource, userId: string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -197,6 +201,7 @@ export class ResourceService {
         );
       }
 
+      resourceData.modified_by = userId;
       const resource = await this.schemaService.updateResource(
         resourceData,
         accountNumber,
@@ -261,6 +266,17 @@ export class ResourceService {
         accountNumber,
         resourceId
       );
+
+      // Fetch user names for created_by and modified_by
+      const userNames = await this.fetchUserNames({
+        created_by: resourceDetails?.created_by,
+        modified_by: resourceDetails?.modified_by
+      });
+
+      if (resourceDetails) {
+        resourceDetails.created_by = userNames.created_by_name;
+        resourceDetails.modified_by = userNames.modified_by_name;
+      }
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -496,4 +512,56 @@ export class ResourceService {
       errorMessage: err.message,
     };
   }
+
+  /**
+   * Fetches user names for user IDs from the main database
+   * @param userIds - Object containing user IDs (created_by, modified_by)
+   * @returns Promise resolving to object with user names
+   */
+  private async fetchUserNames(userIds: { created_by?: string, modified_by?: string }): Promise<{ created_by_name: string, modified_by_name: string }> {
+    const result = {
+      created_by_name: '',
+      modified_by_name: ''
+    };
+    
+    try {
+      const sequelize = await initMainDbSequelize();
+      
+      // Fetch created_by user name if ID exists
+      if (userIds.created_by) {
+        const [createdByUser] = await sequelize.query(
+          `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          {
+            replacements: { userId: userIds.created_by },
+            type: 'SELECT'
+          }
+        );
+        
+        if (createdByUser) {
+          result.created_by_name = (createdByUser as any).full_name;
+        }
+      }
+      
+      // Fetch modified_by user name if ID exists
+      if (userIds.modified_by) {
+        const [modifiedByUser] = await sequelize.query(
+          `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          {
+            replacements: { userId: userIds.modified_by },
+            type: 'SELECT'
+          }
+        );
+        
+        if (modifiedByUser) {
+          result.modified_by_name = (modifiedByUser as any).full_name;
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user names:', error);
+      // Return empty strings if there's an error
+    }
+    
+    return result;
+  }
+
 }

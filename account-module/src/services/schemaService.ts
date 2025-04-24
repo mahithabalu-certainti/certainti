@@ -48,7 +48,8 @@ class SchemaService {
   async insertAccountDetails(
     account_number: string,
     accountData: IAccount,
-    account_rid: string
+    account_rid: string,
+    userId: string
   ) {
     const schemaName = `platform_v2_${account_number}`;
     const sequelize = await initOrgSequelize();
@@ -83,8 +84,8 @@ class SchemaService {
           interaction_cc_list: accountData.interaction_cc_list ?? null,
           blended_rate_fte: accountData.blended_rate_fte ?? null,
           blended_rate_subcon: accountData.blended_rate_subcon ?? null,
-          created_by: "Admin",
-          modified_by: "Admin",
+          created_by: userId,
+          modified_by: userId,
           primary_contact_email: accountData.primary_contact_email,
           primary_contact_number: accountData.primary_contact_number,
           finance_poc_name: accountData.finance_poc_name,
@@ -103,7 +104,8 @@ class SchemaService {
   async updateAccountDetails(
     account_rid: string,
     accountData: IUpdateAccount,
-    account_number: string
+    account_number: string,
+    userId: string
   ) {
     const schemaName = `platform_v2_${account_number}`;
 
@@ -138,7 +140,7 @@ class SchemaService {
           interaction_cc_list: accountData.interaction_cc_list ?? null,
           blended_rate_fte: accountData.blended_rate_fte ?? null,
           blended_rate_subcon: accountData.blended_rate_subcon ?? null,
-          modified_by: "Admin",
+          modified_by: userId,
           primary_contact_email: accountData.primary_contact_email,
           primary_contact_number: accountData.primary_contact_number,
           finance_poc_name: accountData.finance_poc_name,

@@ -100,7 +100,7 @@ const resourceCostResolvers: IResolvers = {
     createResourceCost: async (_, { input }, ctx) => {
       try {
         const result =
-          await ctx.services.resourceCostServices.createResourceCost(input);
+          await ctx.services.resourceCostServices.createResourceCost(input,"");
         if (result.statusCode !== HttpStatus.SUCCESS) {
           throw new Error("Unable to create resourceCost");
         }
@@ -113,7 +113,7 @@ const resourceCostResolvers: IResolvers = {
     updateResourceCost: async (_, { input }, ctx) => {
       try {
         const result =
-          await ctx.services.resourceCostServices.updateResourceCost(input);
+          await ctx.services.resourceCostServices.updateResourceCost(input,"");
         console.log("Result : ", result);
         if (result.statusCode !== HttpStatus.SUCCESS) {
           throw new Error("Unable to update resourceCost");
