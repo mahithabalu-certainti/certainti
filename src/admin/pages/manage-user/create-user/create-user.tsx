@@ -201,6 +201,7 @@ export const CreateUser: React.FC = () => {
               variant='outlined'
               color='inherit'
               onClick={goBack}
+              sx={{ width: '45px', fontWeight:400,fontSize: '12px' }}
             />
           </div>
         </div>
@@ -216,14 +217,16 @@ export const CreateUser: React.FC = () => {
                 variant='outlined'
                 color='inherit'
                 onClick={goBack}
+                sx={{ width: '56px', fontWeight:400,fontSize: '12px' }}
               />
               <TextButton
                 label='Save'
                 variant='filled'
                 loading={updateUser.isPending || createUser.isPending}
                 onClick={handleExternalSubmit}
+                sx={{ width: '64px', fontWeight:400,fontSize: '13px' }}
               />
-              {isEditView && <TextButton label='Delete' variant='outlined' />}
+              {isEditView && <TextButton label='Delete' variant='outlined' sx={{ width: '73px', fontWeight:400,fontSize: '13px' }}/>}
             </div>
           </div>
           <div className='p-5'>

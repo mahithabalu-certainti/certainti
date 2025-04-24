@@ -17,7 +17,8 @@ const StyledButton = styled(Button)<{ variantType: 'filled' | 'outlined' }>(
   ({ variantType, theme }) => ({
     backgroundColor:
       variantType === 'filled' ? theme.palette.secondary.main : 'transparent',
-    height: '35px',
+    height: '32px',
+    width: '95px',
     color: variantType === 'filled' ? '#fff' : theme.palette.secondary.main,
     border:
       variantType === 'outlined'
@@ -26,7 +27,7 @@ const StyledButton = styled(Button)<{ variantType: 'filled' | 'outlined' }>(
     textTransform: 'none',
     fontSize: '13px',
     fontWeight: 400,
-    padding: '8px 16px',
+    // padding: '8px 14px',
     borderRadius: '2px',
     '&:hover': {
       backgroundColor: theme.palette.secondary.main,
@@ -87,6 +88,7 @@ const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
               handleClose();
               action.onClick();
             }}
+            sx={{ fontSize:'14px', fontWeight: 400, color: '#2D3E4F' }}
           >
             {action.label}
           </MenuItem>
