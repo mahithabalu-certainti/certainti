@@ -110,12 +110,23 @@ async function createResourceCost(req: Request, res: Response): Promise<void> {
   const methodName = "createResourceCost";
   try {
     const value = await validateRequest(req, resourceCostSchema, res);
+    const userId = req.headers["x_user_id"] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
 
     if (!value) {
       return;
     }
 
-    const resourceCost = await resourceCostService.createResourceCost(value);
+    const resourceCost = await resourceCostService.createResourceCost(value,userId);
 
     if (resourceCost.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -160,12 +171,23 @@ async function updateResourceCost(req: Request, res: Response): Promise<void> {
   const methodName = "updateResourceCost";
   try {
     const value = await validateRequest(req, updateResourceCostSchema, res);
+    const userId = req.headers["x_user_id"] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
 
     if (!value) {
       return;
     }
 
-    const resourceCost = await resourceCostService.updateResourceCost(value);
+    const resourceCost = await resourceCostService.updateResourceCost(value,userId);
 
     if (resourceCost.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);

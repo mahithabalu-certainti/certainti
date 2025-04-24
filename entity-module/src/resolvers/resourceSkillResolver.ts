@@ -59,7 +59,7 @@ const resourceSkillResolvers = {
      * Create a new resource skill
      */
     createResourceSkill: async (_: any, { input }: any) => {
-      const result = await resourceSkillService.createResourceSkill(input);
+      const result = await resourceSkillService.createResourceSkill(input,"");
       
       if (result.statusCode !== 200) {
         throw new Error(result.errorMessage || "Failed to create resource skill");
@@ -72,7 +72,7 @@ const resourceSkillResolvers = {
      * Update an existing resource skill
      */
     updateResourceSkill: async (_: any, { input }: any) => {
-      const result = await resourceSkillService.updateResourceSkill(input);
+      const result = await resourceSkillService.updateResourceSkill(input,"");
       
       if (result.statusCode !== 200) {
         throw new Error(result.errorMessage || "Failed to update resource skill");

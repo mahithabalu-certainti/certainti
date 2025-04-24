@@ -73,6 +73,16 @@ async function createUser(req: Request, res: Response): Promise<void> {
       res
     );
 
+    const userId = req.headers['x_user_id'] as string;
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        "User ID is required"
+      );
+      return;
+    }
     if (!value) {
       return;
     }
@@ -101,7 +111,7 @@ async function createUser(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const user = await services.userServices.createUser(value, azureUser.id);
+    const user = await services.userServices.createUser(value, azureUser.id, userId);
     const mailContent = mailTemplate(value, password);
     await sendEmail(mailContent);
 
@@ -173,6 +183,16 @@ async function updateUser(req: Request, res: Response): Promise<void> {
       res
     );
 
+    const userId = req.headers['x_user_id'] as string;
+    if(!userId){
+      handleErrorResponse(
+        res,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        "User ID is required"
+      );
+      return;
+    }
     if (!value) {
       return;
     }
@@ -189,7 +209,7 @@ async function updateUser(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const user = await services.userServices.updateUser(value, value.rid);
+    const user = await services.userServices.updateUser(value, value.rid, userId);
 
     if (user.statusCode === constants.SUCCESS) {
       successLog(methodName);

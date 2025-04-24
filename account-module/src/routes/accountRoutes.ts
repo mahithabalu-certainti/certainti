@@ -1,18 +1,19 @@
 import { Router } from 'express';
 import controller from '../controllers';
+import { checkUserStatusMiddleware } from '../middlewares/authMiddleware';
 
 const routes: Router = Router();
 
-routes.get('/list', controller.accountController.accounts);
-routes.get('/export', controller.accountController.exportAccounts);
-routes.get('/global', controller.accountController.globalAccounts);
-routes.get('/country', controller.geoDataController.country);
-routes.get('/currency', controller.geoDataController.currency);
-routes.get('/regions', controller.geoDataController.regions);
-routes.get('/states/:countryId', controller.geoDataController.states);
-routes.get('/cities/:stateId', controller.geoDataController.cities);
-routes.get('/list/:id', controller.accountController.accountById);
-routes.post('/new', controller.accountController.createAccount);
-routes.put('/update', controller.accountController.updateAccount);
+routes.get('/list', checkUserStatusMiddleware, controller.accountController.accounts);
+routes.get('/export', checkUserStatusMiddleware, controller.accountController.exportAccounts);
+routes.get('/global', checkUserStatusMiddleware, controller.accountController.globalAccounts);
+routes.get('/country', checkUserStatusMiddleware, controller.geoDataController.country);
+routes.get('/currency', checkUserStatusMiddleware, controller.geoDataController.currency);
+routes.get('/regions', checkUserStatusMiddleware, controller.geoDataController.regions);
+routes.get('/states/:countryId', checkUserStatusMiddleware, controller.geoDataController.states);
+routes.get('/cities/:stateId', checkUserStatusMiddleware, controller.geoDataController.cities);
+routes.get('/list/:id', checkUserStatusMiddleware, controller.accountController.accountById);
+routes.post('/new', checkUserStatusMiddleware, controller.accountController.createAccount);
+routes.put('/update', checkUserStatusMiddleware, controller.accountController.updateAccount);
 
 export default routes;

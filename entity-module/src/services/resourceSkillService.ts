@@ -44,7 +44,7 @@ class ResourceSkillService {
   }
 
 
-    async createResourceSkill(resourceSkill: IResourceSkill): Promise<{
+    async createResourceSkill(resourceSkill: IResourceSkill, userId: string): Promise<{
         statusCode: number;
         message: string;
         errorMessage?: string;
@@ -130,8 +130,8 @@ class ResourceSkillService {
                   skill_type,
                   skill_name,
                   skill_description,
-                  created_by: created_by || '',
-                  modified_by: modified_by || '',
+                  created_by: userId,
+                  modified_by: userId,
                 });
                 
                 skillRidToUse = newSkill.rid;
@@ -163,8 +163,7 @@ class ResourceSkillService {
               skill_level: skill_level || '',
               years_of_experience: years_of_experience || 0,
               technical_weightage: technical_weightage || 0,
-              created_by: created_by || '',
-              modified_by: modified_by || '',
+              created_by: userId,
             });
 
             // Update the resource_fiscal table
@@ -180,7 +179,7 @@ class ResourceSkillService {
           
           if (existingFiscal) {
             await existingFiscal.update({
-              modified_by,
+              modified_by: userId,
               modified_datetime: new Date()
             });
           }
@@ -201,7 +200,7 @@ class ResourceSkillService {
               createdResourceSkill ? createdResourceSkill : {},
               "Create",
               eventStatus,
-              "",
+              userId,
               account_rid,
               schemaName
             );
@@ -278,7 +277,7 @@ class ResourceSkillService {
    * @param resourceSkillData - Object containing updated resource skill details and identifiers
    * @returns Promise resolving to status object with updated resource skill data or error message
    */
-  async updateResourceSkill(resourceSkillData: IUpdateResourceSkill) {
+  async updateResourceSkill(resourceSkillData: IUpdateResourceSkill, userId: string) {
     try {
       const {
         rid,
@@ -353,8 +352,7 @@ class ResourceSkillService {
               skill_type: resourceSkillData.skill_type || '',
               skill_name,
               skill_description,
-              created_by: modified_by || '',
-              modified_by: modified_by || '',
+              created_by: userId,
             });
             
             skillRidToUse = newSkill.rid;
@@ -381,7 +379,7 @@ class ResourceSkillService {
           status,
           years_of_experience,
           technical_weightage,
-          modified_by: modified_by || '',
+          modified_by: userId,
           modified_datetime: new Date(),
         },
         {
@@ -396,7 +394,7 @@ class ResourceSkillService {
       await this.createResourceSkillHistory(
         originalResourceSkill.toJSON(),
         affectedRows[0],
-        "",
+        userId,
         accountNumberFetched
       );
 
@@ -405,7 +403,7 @@ class ResourceSkillService {
         affectedRows[0],
         "Update",
         "Success",
-        "",
+        userId,
         originalResourceSkill.account_rid,
         schemaName
       );
@@ -426,7 +424,7 @@ class ResourceSkillService {
           originalResourceSkill,
           "Update",
           "Failed",
-          "",
+          userId,
           originalResourceSkill.account_rid,
           schemaName
         );
@@ -605,6 +603,20 @@ private async createResourceSkillHistory(
           type: "SELECT",
         });
 
+        if (results && results.length > 0) {
+          // Fetch user names for created_by and modified_by
+          const userNames = await this.fetchUserNames({
+            created_by: (results[0] as any).created_by,
+            modified_by: (results[0]as any).modified_by
+          });
+          
+          // Add user names to the result
+          (results[0] as any).created_by = userNames.created_by_name;
+          (results[0]as any).modified_by = userNames.modified_by_name;
+        }
+
+       
+
         return {
           statusCode: HttpStatus.SUCCESS,
           message: HttpStatus.SUCCESS_MESSAGE,
@@ -634,6 +646,57 @@ private async createResourceSkillHistory(
       console.log("Error ", err);
       return this.throwServiceError(err as Error);
     }
+  }
+
+  /**
+   * Fetches user names for user IDs from the main database
+   * @param userIds - Object containing user IDs (created_by, modified_by)
+   * @returns Promise resolving to object with user names
+   */
+  private async fetchUserNames(userIds: { created_by?: string, modified_by?: string }): Promise<{ created_by_name: string, modified_by_name: string }> {
+    const result = {
+      created_by_name: '',
+      modified_by_name: ''
+    };
+    
+    try {
+      const sequelize = await this.getMainDbSequelize();
+      
+      // Fetch created_by user name if ID exists
+      if (userIds.created_by) {
+        const [createdByUser] = await sequelize.query(
+          `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          {
+            replacements: { userId: userIds.created_by },
+            type: 'SELECT'
+          }
+        );
+        
+        if (createdByUser) {
+          result.created_by_name = (createdByUser as any).full_name;
+        }
+      }
+      
+      // Fetch modified_by user name if ID exists
+      if (userIds.modified_by) {
+        const [modifiedByUser] = await sequelize.query(
+          `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          {
+            replacements: { userId: userIds.modified_by },
+            type: 'SELECT'
+          }
+        );
+        
+        if (modifiedByUser) {
+          result.modified_by_name = (modifiedByUser as any).full_name;
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user names:', error);
+      // Return empty strings if there's an error
+    }
+    
+    return result;
   }
 
 }

@@ -396,7 +396,7 @@ class AccountService {
       }
     }
   
-  async createAccount(accountData: IAccount): Promise<{
+  async createAccount(accountData: IAccount, userId:string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -479,14 +479,16 @@ class AccountService {
         await this.schemaService.insertAccountDetails(
           parent_account?.r_number,
           accountData,
-          account.rid
+          account.rid,
+          userId
         );
       } else {
         await this.schemaService.createNewSchema(account.r_number);
         await this.schemaService.insertAccountDetails(
           account.r_number,
           accountData,
-          account.rid
+          account.rid,
+          userId
         );
       }
 
@@ -502,7 +504,7 @@ class AccountService {
     }
   }
 
-  async updateAccount(accountData: IUpdateAccount): Promise<{
+  async updateAccount(accountData: IUpdateAccount, userId: string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -551,7 +553,8 @@ class AccountService {
         this.schemaService.updateAccountDetails(
           account_rid,
           accountData,
-          default_r_number
+          default_r_number,
+          userId
         );
       }
 
@@ -559,7 +562,8 @@ class AccountService {
         this.schemaService.updateAccountDetails(
           default_parent_id,
           accountData,
-          default_r_number
+          default_r_number,
+          userId
         );
       }
 
@@ -567,7 +571,8 @@ class AccountService {
         this.schemaService.updateAccountDetails(
           account_rid,
           accountData,
-          default_r_number
+          default_r_number,
+          userId
         );
       }
 
@@ -674,6 +679,7 @@ class AccountService {
         acconuntNumber,
         accountById?.rid || "",
       );
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,

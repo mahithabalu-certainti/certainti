@@ -1,11 +1,12 @@
 import { Router } from "express";
 import resourceCostController from "../controllers/resourceCostController";
+import { checkUserStatusMiddleware } from "../middlewares/authMiddleware";
 
 const routes: Router = Router();
 
-routes.get("/list", resourceCostController.resourceCosts);
-routes.get("/list/:id", resourceCostController.resourceCostById);
-routes.post("/create", resourceCostController.createResourceCost);
-routes.put("/update", resourceCostController.updateResourceCost);
+routes.get("/list", checkUserStatusMiddleware, resourceCostController.resourceCosts);
+routes.get("/list/:id", checkUserStatusMiddleware, resourceCostController.resourceCostById);
+routes.post("/create", checkUserStatusMiddleware, resourceCostController.createResourceCost);
+routes.put("/update", checkUserStatusMiddleware, resourceCostController.updateResourceCost);
 
 export default routes;
