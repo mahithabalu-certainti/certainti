@@ -8,7 +8,7 @@ export interface ResourceCostListParams {
   filters?: object;
   accountNumber?: string;
   fiscalYear?: string | number;
-  id?:string
+  id?: string;
 }
 
 export type ResourceCostList = {
@@ -17,7 +17,7 @@ export type ResourceCostList = {
   status?: string;
   created_datetime?: string;
   modified_datetime?: string;
-  resource_fullname?:string,
+  resource_fullname?: string;
   eid?: string;
   account_rid?: string;
   resource_type?: string;
@@ -37,7 +37,7 @@ export type ResourceCostList = {
   currency_rid?: string;
   fiscal_year?: string;
   currency_code?: string;
-  resource_cost_number?:string,
+  resource_cost_number?: string;
   r_number?: string;
   created_by?: string | null;
   modified_by?: string | null;
@@ -61,11 +61,11 @@ export interface ResourceCostApiResponse extends CommonApiResponse {
 }
 
 export type ResourceCostSkillFormData = {
-  accountNumber?:string,
-  account_rid?:string,
+  accountNumber?: string;
+  account_rid?: string;
   rid?: string;
-  cost_rid?:string,
-  skill_rid?:string,
+  cost_rid?: string;
+  skill_rid?: string;
   resource_ref_id?: string;
   resource_rid?: string;
   resource_full_name?: string;
@@ -96,7 +96,7 @@ export type ResourceCostSkillFormData = {
   skill_name?: string;
   skill_start_date?: string;
   years_of_experience?: string;
-  resource_desc?:string
+  resource_desc?: string;
 };
 
 export type ResourceCostPayload = {
@@ -109,9 +109,9 @@ export type ResourceCostPayload = {
   effective_date?: string;
   end_date?: string;
   cost?: number | null;
-  cost_frequency?:string,
+  cost_frequency?: string;
   fiscal_year?: string;
-  currency_rid?: string;
+  currency_rid?: string | null;
   accountNumber?: string;
   status?: string;
 };

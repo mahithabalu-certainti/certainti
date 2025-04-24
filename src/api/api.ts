@@ -42,9 +42,12 @@ const api = axios.create({
   api.interceptors.request.use(
     (config) => {
       const auth = localStorage.getItem('auth');
-      const { authToken } = auth ? JSON.parse(auth) : {};
+      const { authToken, userId } = auth ? JSON.parse(auth) : {};
       if (authToken) {
         config.headers.Authorization = `Bearer ${authToken}`;
+      }
+      if (userId) {
+        config.headers['x_user_id'] = userId;
       }
       return config;
     },

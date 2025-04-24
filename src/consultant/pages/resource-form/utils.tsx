@@ -194,7 +194,7 @@ export const transformCostData = (
     cost: formData.cost ? Number(formData.cost) : null,
     resource_type: formData.resource_type,
     resource_ref_id: formData.resource_ref_id,
-    currency_rid: formData.currency,
+    currency_rid: formData.currency ? formData.currency : null,
     resource_rid: formData.resource_rid,
     accountNumber: formData.accountNumber,
   };

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMemo } from 'react';
 import {
   createDateField,
@@ -15,14 +14,31 @@ import {
   RESOURCE_TYPE_OPTIONS,
 } from './utils.tsx';
 
-export const fiscalYears = Array.from({ length: 6 }, (_, i) => {
-  const year = new Date().getFullYear() - i;
-  return { value: year as any, label: `FY-${year}` };
-});
+// 1. Extract date constants
+const DATE_CONFIG = {
+  FISCAL_YEARS_RANGE: 6,
+  MIN_YEARS_BACK: 6,
+} as const;
 
-const currentDate = new Date();
-const minDate = new Date();
-minDate.setFullYear(currentDate.getFullYear() - 6);
+// 2. Extract fiscal years calculation
+const getFiscalYears = (range: number) => {
+  const currentYear = new Date().getFullYear();
+  return Array.from({ length: range }, (_, i) => {
+    const year = currentYear - i;
+    return { label: `FY-${year}`, value: String(year) };
+  });
+};
+
+// 3. Extract date calculations
+const getDateConstraints = (yearsBack: number) => {
+  const currentDate = new Date();
+  const minDate = new Date();
+  minDate.setFullYear(currentDate.getFullYear() - yearsBack);
+  return { currentDate, minDate };
+};
+
+export const fiscalYears = getFiscalYears(DATE_CONFIG.FISCAL_YEARS_RANGE);
+const { currentDate, minDate } = getDateConstraints(DATE_CONFIG.MIN_YEARS_BACK);
 
 export const ResourceFormData = (
   country: SelectOption[],
@@ -251,9 +267,9 @@ export const ResourceFormData = (
       stateLoading,
       city,
       cityLoading,
-      hideSkill,
       currency,
       currencyLoading,
+      hideSkill,
     ]
   );
 };
