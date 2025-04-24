@@ -1,6 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
+  Box,
+  Checkbox,
   CircularProgress,
   Paper,
   Table,
@@ -150,6 +152,35 @@ const AccountTable: React.FC<Record<string, any>> = ({
     setSelectedRows(newSelectedRows);
   };
 
+  const handleSelectAllRows = (selectAll: boolean) => {
+    if (!accounts) return;
+
+    const newSelectedRows = new Set<number>();
+
+    if (selectAll) {
+      accounts.forEach((account, index) => {
+        const hasParent = !!account.parentAccount;
+
+        if (!hasParent) {
+          newSelectedRows.add(index);
+
+          const children = accounts.filter(
+            (acc) => acc.parentAccount === account.accountName
+          );
+
+          children.forEach((child) => {
+            const childIndex = accounts.findIndex(
+              (acc) => acc.accountName === child.accountName
+            );
+            newSelectedRows.add(childIndex);
+          });
+        }
+      });
+    }
+
+    setSelectedRows(newSelectedRows);
+  };  
+  
   // Handle page change
   const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage +1 );
@@ -225,7 +256,32 @@ const AccountTable: React.FC<Record<string, any>> = ({
             }}
           >
             <TableRow>
-              <TableCell sx={{ maxWidth: '50px' }} />
+              <TableCell sx={{ maxWidth: '50px' }}>
+                <Box className='flex items-center justify-center'>
+                  <Checkbox
+                    disableRipple
+                    checked={Boolean(
+                      accounts?.length && selectedRows.size === accounts.length
+                    )}
+                    indeterminate={Boolean(
+                      accounts?.length &&
+                      selectedRows.size > 0 &&
+                      selectedRows.size < accounts.length
+                    )}
+                    onChange={(e) => handleSelectAllRows(e.target.checked)}
+                    disabled={!accounts?.length}
+                    sx={{
+                      color: '#CBD6E2',
+                      '&.Mui-checked': {
+                        color: '#1755E7',
+                      },
+                      '&.MuiCheckbox-indeterminate': {
+                        color: '#1755E7',
+                      },
+                    }}
+                  />
+                </Box>
+              </TableCell>
               <TableCell sx={{ minWidth: '300px' }}>
                 <TableSortLabel
                   active={orderBy === 'account_name'}

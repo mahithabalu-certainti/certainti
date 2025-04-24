@@ -32,7 +32,8 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
   setAppliedFilters,
   searchTerm,
   setSearchTerm,
-  filterFields
+  filterFields,
+  filterLable,
 }) => {
   const location = useLocation();
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
@@ -354,7 +355,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
           mb: 1,
         }}
       >
-        Filter Accounts by
+        {filterLable}
       </Typography>
       <TextField
         placeholder='Search'
@@ -366,6 +367,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
         sx={{
           mb: 2,
           '& .MuiOutlinedInput-root': {
+            maxWidth: '220px',
             borderRadius: '26px',
             color: '#2D3E4F',
             fontSize: '12px',
@@ -386,26 +388,21 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
             },
           },
         }}
-        slotProps={{
-          htmlInput: {
-            startAdornment: (
-              <InputAdornment position='start'>
-                <img
-                  src={searchIcon}
-                  alt='Search'
-                  style={{
-                    width: 20,
-                    height: 20,
-                    filter:
-                      'brightness(0) saturate(100%) invert(22%) sepia(15%) saturate(1726%) hue-rotate(169deg) brightness(91%) contrast(87%)',
-                  }}
-                />
-              </InputAdornment>
-            ),
-            style: {
-              paddingLeft: '12px',
-            },
-          },
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <img
+                src={searchIcon}
+                alt='Search'
+                style={{
+                  width: 20,
+                  height: 20,
+                  filter:
+                    'brightness(0) saturate(100%) invert(22%) sepia(15%) saturate(1726%) hue-rotate(169deg) brightness(91%) contrast(87%)',
+                }}
+              />
+            </InputAdornment>
+          ),
         }}
       />
 
@@ -479,8 +476,15 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
               <FormControlLabel
                 control={
                   <Checkbox
+                    disableRipple
                     checked={selectedFilters.includes(field.name)}
                     onChange={() => handleCheckboxChange(field.name)}
+                    sx={{
+                      color: '#CBD6E2',
+                      '&.Mui-checked': {
+                        color: '#1755E7',
+                      },
+                    }}
                   />
                 }
                 label={

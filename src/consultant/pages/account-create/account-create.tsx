@@ -147,13 +147,13 @@ export const AccountForm: React.FC = () => {
           <img
             src={isEditView ? editIcon : accountHomeIcon}
             alt='menu-icon'
-            className='h-10 w-10 bg-[#7D98B6] p-2.5 rounded'
+            className='h-8 w-8 bg-[#7D98B6] p-2.5 rounded'
           />
           <div>
             {isEditView && (
-              <h5 className='text-xs ml-2 text-gray-500 mb-1'>Edit Account</h5>
+              <h5 className='text-[20px] font-semibold ml-2 text-[#2D3E4F] mb-1'>Edit Account</h5>
             )}
-            <h4 className='font-bold text-lg ml-2 leading-4'>
+            <h4 className='text-[20px] font-semibold text-[#2D3E4F]  ml-2 leading-4'>
               {isEditView ? accountData.account_name : 'Create Account'}
             </h4>
           </div>
@@ -164,12 +164,14 @@ export const AccountForm: React.FC = () => {
             variant='outlined'
             color='inherit'
             onClick={goBack}
+            sx={{ height: '32px', width: '56px', fontSize:'12px', fontWeight: 400 }}
           />
           <TextButton
             label='Save'
             variant='filled'
             loading={createAccount.isPending || updateAccount.isPending}
             onClick={handleExternalSubmit}
+            sx={{ height: '32px', width: '64px', fontSize:'13px', fontWeight: 400 }}
           />
         </div>
       </div>

@@ -21,7 +21,7 @@ import { CircularProgress } from '@mui/material';
 import { AccountList } from '../../types';
 
 const BUTTON_STYLES = {
-  height: '35px',
+  height: '32px',
   color: '#F15A29',
 };
 
@@ -70,19 +70,19 @@ export const Accounts: React.FC = () => {
   const [totalCount, setTotalCount] = useState<number>(0);
   return (
     <div className='flex flex-col w-full h-full'>
-      <div className='flex justify-between w-full h-[15%] border-b-2 border-[#CBD6E2] p-4'>
+      <div className='flex justify-between w-full h-[110px] border-b-2 border-[#CBD6E2] px-4'>
         <div className='flex'>
           <div className='flex items-center justify-center'>
             <img
               src={accountHomeIcon}
               alt='menu-icon'
-              className='h-10 w-10 bg-[#d16dd3] p-2.5 rounded'
+              className='h-8 w-8 bg-[#d16dd3] p-[9px] rounded'
             />
-            <div className='flex flex-col mx-2'>
+            <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-semibold text-[20px] text-[#2D3E4F]'>
                 All Accounts
               </div>
-              <div className='font-medium text-[#7D98B6] text-[11px]'>
+              <div className='font-medium text-[#7D98B6] text-[11px] -mt-1'>
                 Total Records found -{' '}
                 <span className='font-semibold text-[#2D3E4F]'>
                   {totalCount}
@@ -90,10 +90,10 @@ export const Accounts: React.FC = () => {
               </div>
             </div>
             <div
-              className={`flex items-center justify-center border mt-0.5 ml-2 rounded-xs w-9 h-9 cursor-pointer transition-colors duration-300 ${isFilterOpen ? 'bg-[#EAF0F6] border-[#CBD6E2]' : 'border-[#EAF0F5]'}`}
+              className={`flex items-center justify-center border mt-0.5 ml-2 rounded-xs w-8 h-8 cursor-pointer transition-colors duration-300 ${isFilterOpen ? 'bg-[#EAF0F6] border-[#CBD6E2]' : 'border-[#EAF0F5]'}`}
               onClick={() => setIsFilterOpen((prev) => !prev)}
             >
-              <img src={filterIcon} alt='menu-icon' className='h-[13px]' />
+              <img src={filterIcon} alt='menu-icon' className='h-[12px]' />
             </div>
           </div>
         </div>
@@ -111,27 +111,27 @@ export const Accounts: React.FC = () => {
               fontWeight: 400,
             }}
           />
-          <div className='flex items-center justify-center border border-[#EAF0F5] w-20 h-[35px]'>
+          <div className='flex items-center justify-center border border-[#EAF0F5] w-16 h-8'>
             <div className='flex items-center justify-center w-1/2'>
-              <img src={refreshIcon} alt='refresh-icon' className='h-[17px]' />
+              <img src={refreshIcon} alt='refresh-icon' className='h-4' />
             </div>
             <div className='border-l border-[#EAF0F5] h-full'></div>
             <div className='flex items-center justify-center w-1/2'>
               <img
                 src={downloadIcon}
                 alt='download-icon'
-                className='h-[19px]'
+                className='h-4'
               />
             </div>
           </div>
-          <div className='flex border border-[#EAF0F5] w-9 h-[35px] justify-center items-center bg-[#EAF0F6]'>
-            <img src={actionIcon} alt='menu-icon' className='h-[16px]' />
+          <div className='flex border border-[#EAF0F5] w-8 h-8 justify-center items-center bg-[#EAF0F6]'>
+            <img src={actionIcon} alt='menu-icon' className='h-4' />
           </div>
-          <div className='flex border border-[#EAF0F5] w-9 h-[35px] justify-center items-center bg-[#EAF0F6]'>
+          <div className='flex border border-[#EAF0F5] w-8 h-8 justify-center items-center bg-[#EAF0F6]'>
             <img
               src={accountSettingsIcon}
               alt='menu-icon'
-              className='h-[18px]'
+              className='h-4'
             />
           </div>
         </div>
@@ -139,7 +139,7 @@ export const Accounts: React.FC = () => {
       <div className='flex flex-1 transition-all duration-300 ease-in-out'>
         <div
           className={`transition-all duration-300 ease-in-out overflow-hidden h-full border-r-2 border-gray-300 min-h-[calc(100vh-144px)] ${
-            isFilterOpen ? 'w-[20%] opacity-100' : 'w-0 opacity-0'
+            isFilterOpen ? 'w-[260px] opacity-100' : 'w-0 opacity-0'
             }`}
         >
           {countriesList.isLoading || currencyList.isLoading ?
@@ -152,17 +152,18 @@ export const Accounts: React.FC = () => {
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
               filterFields={accountFilterfields}
+              filterLable='Filter Accounts by'
             />}
         </div>
 
         <div
           className={`transition-all duration-300 ease-in-out flex flex-col ${
-            isFilterOpen ? 'w-[80%]' : 'w-full'
-          } p-5 border-l-2 border-gray-300 -ml-[2px]`}
+            isFilterOpen ? 'w-[calc(100%-260px)]' : 'w-full'
+          } p-5 -ml-[2px]`}
         >
           <div className='font-semibold text-[16px] leading-5 text-[#2D3E4F] mb-6'>
             All Accounts
-            {/* <span className='font-normal'>• 10 items</span> */}
+            <span className='font-normal'> • {totalCount} items</span>
           </div>
           <AccountTable
             appliedFilters={appliedFilters}

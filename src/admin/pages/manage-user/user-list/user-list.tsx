@@ -13,13 +13,13 @@ import { CircularProgress } from '@mui/material';
 import { UserListParams } from '../../../types/manage-user';
 
 const BUTTON_STYLES = {
-  height: '35px',
+  height: '32px',
   color: '#F15A29',
 };
 
 const HEADER_STYLES = {
-  adminPermission: 'font-medium text-[#7D98B6] text-[11px]',
-  manageUser: 'font-semibold text-[20px] text-[#2D3E4F]',
+  adminPermission: 'font-medium text-[#7D98B6] text-[11px] leading-5 tracking-normal',
+  manageUser: 'font-semibold text-[20px] text-[#2D3E4F] leading-5 tracking-normal',
 };
 
 const UserList: React.FC = () => {
@@ -35,10 +35,10 @@ const UserList: React.FC = () => {
   });
 
   const userActionButtons = [
-    'Suspend User',
-    'Reinstate User',
-    'Reset Password',
-    'Delete',
+    { label: 'Suspend User', width: '119px' },
+    { label: 'Reinstate User', width: '120px' },
+    { label: 'Reset Password', width: '132px' },
+    { label: 'Delete', width: '73px' },
   ];
 
   const MENU_ITEMS = [
@@ -91,19 +91,19 @@ const UserList: React.FC = () => {
           <img
             src={ManageUserIcon}
             alt='manage user'
-            className='h-10 w-10 rounded'
+            className='h-8 w-8 rounded'
           />
-          <div className='flex flex-col'>
+          <div className='flex flex-col mb-1'>
             <div className={HEADER_STYLES.adminPermission}>
               Admin Permission
             </div>
             <div className={HEADER_STYLES.manageUser}>Manage User</div>
           </div>
           <div
-            className={`flex items-center justify-center border mt-0.5 ml-2 rounded-xs w-9 h-9 cursor-pointer transition-colors duration-300 ${isFilterOpen ? 'bg-[#EAF0F6] border-[#CBD6E2]' : 'border-[#EAF0F5]'}`}
+            className={`flex items-center justify-center border mt-0.5 ml-2 rounded-xs w-8 h-8 cursor-pointer transition-colors duration-300 ${isFilterOpen ? 'bg-[#EAF0F6] border-[#CBD6E2]' : 'border-[#EAF0F5]'}`}
             onClick={() => setIsFilterOpen((prev) => !prev)}
           >
-            <img src={filterIcon} alt='menu-icon' className='h-[13px]' />
+            <img src={filterIcon} alt='menu-icon' className='h-[12px]' />
           </div>
         </div>
         <div className='flex gap-2 items-center'>
@@ -131,17 +131,19 @@ const UserList: React.FC = () => {
             All Users
           </div>
           <div className='flex gap-3'>
-            {userActionButtons.map((label) => (
+            {userActionButtons.map((button) => (
               <TextButton
-                key={label}
-                label={label}
+                key={button.label}
+                label={button.label}
                 variant='outlined'
-                onClick={() => handleAction(label)}
+                onClick={() => handleAction(button.label)}
                 sx={{
                   ...BUTTON_STYLES,
                   borderRadius: '2px',
                   fontSize: '13px',
                   fontWeight: 400,
+                  padding: '4px',
+                  width: button.width,
                 }}
               />
             ))}
@@ -162,6 +164,7 @@ const UserList: React.FC = () => {
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
                 filterFields={userFilterfields}
+                filterLable="Filter User by"
               />
             }
           </div>
