@@ -19,7 +19,7 @@ interface ResourceTableHeaderProps {
     variant: 'text' | 'outlined' | 'contained';
     onClick: () => void;
   }[];
-  toggleViewMode: () => void;
+  toggleViewMode?: () => void;
   showBackArrow?: boolean;
   onBackClick?: () => void;
   handleFilter: () => void;
