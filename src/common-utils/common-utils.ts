@@ -218,6 +218,51 @@ export const REGEX_PATTERNS = {
   MAX_EMAIL_REGEX: /^.{0,254}$/,
 };
 
+/**
+ * Resource Form Field Regex Patterns
+ *
+ * Each pattern is optimized for its specific field requirements with:
+ * - Exact character allowances
+ * - Proper length validation
+ * - Prevention of edge cases
+ */
+
+export const RESOURCE_REGEX = {
+  // Full Name: Alphanumeric with hyphen/apostrophe, 3-100 chars
+  FULL_NAME: /^(?=(.*[a-zA-Z0-9]){3})[a-zA-Z0-9][a-zA-Z0-9 '-]{1,99}$/,
+
+  // Organization Name: Extended chars for org names, 4-100 chars
+  ORG_NAME: /^(?=(.*[a-zA-Z0-9]){4})[a-zA-Z0-9][a-zA-Z0-9 &.,'-]{2,99}$/,
+
+  // Email: Standard format with length limit
+  EMAIL: /^[a-zA-Z0-9._%+-]{1,64}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+
+  // Mobile: International phone format, 5-15 digits
+  MOBILE: /^\+?[0-9][0-9\- ]{3,14}[0-9]$/,
+
+  // Manager Name: Alphanumeric with titles, 3-100 chars
+  MANAGER_NAME: /^(?=(.*[a-zA-Z0-9]){3})[a-zA-Z0-9][a-zA-Z0-9 .'-]{1,99}$/,
+
+  // Designation: Job titles with special chars, 4-100 chars
+  DESIGNATION: /^(?=(.*[a-zA-Z0-9]){4})[a-zA-Z0-9][a-zA-Z0-9 /&.,'-]{2,99}$/,
+
+  // Years Experience: Non-negative integers
+  YEARS_EXPERIENCE: /^[0-9]{1,2}$/,
+
+  // Description: Multiline text, 0-1000 chars
+  DESCRIPTION: /^[\s\S]{0,1000}$/,
+
+  // Status/Type: For enum validation
+  ENUM_VALIDATION: /^(Active|Inactive|Full-time|Contract|Mandatory)$/,
+
+  // Country: Standard name validation
+  COUNTRY:
+    /^(?![\s-])(?!.*[\s-]{2})[A-Za-zÀ-ÖØ-öø-ÿ\s-]{2,49}[A-Za-zÀ-ÖØ-öø-ÿ]$/,
+
+  // Date Validation (format only)
+  DATE_FORMAT: /^\d{4}-\d{2}-\d{2}$/,
+};
+
 export const ALLOWED_COUNTRIES: AllowedCountry[] = [
   'us',
   'ca',
