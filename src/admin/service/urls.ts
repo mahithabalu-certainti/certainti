@@ -20,6 +20,23 @@ export const getUserListUrl = (params: UserListParams = {}): string => {
   return `/api/user/list?${buildQueryString(queryParams)}`;
 };
 
+export const getProfileListUrl = (params: UserListParams = {}): string => {
+  const defaultParams: UserListParams = {
+    page: 1,
+    limit: 10,
+    sortBy: 'createdAt',
+    sortOrder: 'DESC',
+    ...params,
+  };
+
+  const queryParams = {
+    organization: ORGANIZATION,
+    ...defaultParams,
+  };
+
+  return `/api/profile/list?${buildQueryString(queryParams)}`;
+};
+
 export const getUserExportUrl = (params: UserListParams = {}): string => {
   const queryParams: any = {
     organization: ORGANIZATION,

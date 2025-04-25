@@ -64,6 +64,7 @@ import timesheetIcon from './timesheet.svg';
 import importIcon from './import-icon.svg';
 import uploadIcon from './Vector.svg';
 import addIcon from './addicon.svg';
+import userIcon from './user.svg';
 
 export {
   addIcon,
@@ -132,4 +133,5 @@ export {
   taskTemplateIcon,
   timesheetIcon,
   uploadIcon,
+  userIcon,
 };

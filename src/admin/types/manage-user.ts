@@ -60,6 +60,13 @@ export interface User {
   business_teams: BusinessTeams;
 }
 
+export interface Profile {
+  rid: string;
+  createdBy: string;
+  createdOn: string;
+  profileName: string;
+}
+
 // User details
 export interface UserDetail {
   rid: string;
@@ -121,6 +128,13 @@ export interface UsersData {
 export interface ManageUserApiResponse extends CommonApiResponse {
   data: {
     users: User[];
+    count: number;
+  };
+}
+
+export interface ManageProfileApiResponse extends CommonApiResponse {
+  data: {
+    profile: Profile[];
     count: number;
   };
 }

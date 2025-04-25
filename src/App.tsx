@@ -2,7 +2,12 @@ import { MsalProvider } from '@azure/msal-react';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { CreateUser, ManageUserDetails, UserList } from './admin/pages';
+import {
+  CreateUser,
+  ManageUserDetails,
+  ProfileList,
+  UserList,
+} from './admin/pages';
 import { AppLayout, Toast } from './components';
 import {
   AccountDetails,
@@ -30,6 +35,7 @@ import {
   ADMIN_MANAGE_USER_DETAILS,
   LOGIN,
   MAIN_ROUTE,
+  MANAGE_PROFILE,
   NOT_MATCH,
   PROFILE,
   PROJECT_CREATE,
@@ -93,6 +99,7 @@ export const App: React.FC<IApp> = ({ instance }) => {
             />
             <Route path={ADMIN_CREATE_USER} element={<CreateUser />} />
             <Route path={ADMIN_EDIT_USER} element={<CreateUser />} />
+            <Route path={MANAGE_PROFILE} element={<ProfileList />} />
           </Route>
 
           {/* Page not found */}
