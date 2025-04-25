@@ -69,6 +69,7 @@ export type ResourceCostSkillFormData = {
   resource_ref_id?: string;
   resource_rid?: string;
   resource_full_name?: string;
+  resource_number?: string;
   resource_type?: string;
   resource_org_name?: string;
   resource_first_name?: string;
@@ -104,6 +105,7 @@ export type ResourceCostPayload = {
   rid?: string;
   account_rid?: string;
   resource_type?: string;
+  resource_number?: string;
   resource_rid: string;
   resource_ref_id: string;
   effective_date?: string;

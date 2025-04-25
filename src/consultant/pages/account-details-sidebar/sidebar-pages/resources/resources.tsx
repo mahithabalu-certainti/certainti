@@ -10,6 +10,8 @@ import ListTable from '../../components/table';
 import { getResourceColumns } from './columns';
 import ResourceSubComponents from './resource-sub-components';
 import ResourceTableHeader from './resource-table-header';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
 
 interface ResourceProps {
   accountDetails?: Record<string, any>;
@@ -28,6 +30,10 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
   const [sortField, setSortField] = useState<string>('rid');
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const { fiscalYear } = useSelector<
+    RootState,
+    { fiscalYear: string }
+  >((state: RootState) => state.account);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -42,6 +48,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     sortBy: sortField,
     sortOrder: sortOrder,
     filters: appliedFilters,
+    fiscalYear: fiscalYear ? Number(fiscalYear) : 0
   });
 
   const handleFilter = () => {
@@ -52,9 +59,6 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     setValue(newValue);
     setAppliedFilters({});
   };
-
-  // fiscalYear change
-  const [fiscalYearValue] = useState<number>(new Date().getFullYear());
 
   const handleResourceClick = (row: any) => {
     setResourceData(row);
@@ -170,7 +174,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
           resourceData={resourceData}
           accountId={accountDetails?.data?.accountById?.r_number}
           appliedFilters={appliedFilters || {}}
-          fiscalYearValue={fiscalYearValue}
+          fiscalYearValue={fiscalYear}
           accountDetails={accountDetails as AccountData}
         />
       ) : (

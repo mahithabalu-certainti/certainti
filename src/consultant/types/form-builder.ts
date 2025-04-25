@@ -31,6 +31,7 @@ export interface FormTypeFields {
   };
   onChange?: boolean;
   anyOneRequired?: boolean;
+  hide?: boolean;
   isLoading?: boolean;
 }
 
@@ -72,6 +73,7 @@ export interface FieldType {
   greaterThan?: Record<string, string>;
   dependsRequired?: Record<string, string>;
   resetDependsFields?: string[];
+  hide?: boolean;
   lengthRequired?: {
     key: string;
     minMatchedValue: RegExp;
