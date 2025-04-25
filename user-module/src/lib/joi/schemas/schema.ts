@@ -60,7 +60,7 @@ const updateUserSchema = Joi.object({
   zip_code: Joi.string().max(255).allow('', null).optional(),
   country: Joi.string().max(255).allow('', null).optional(),
   phone: Joi.string().pattern(/^[1-9]\d{9,14}$/).optional(),
-  modified_by: Joi.string().max(255).required(),
+  modified_by: Joi.string().max(255).allow('', null).optional(),
 });
 
 const userDetailsUpdateSchema = Joi.object({
