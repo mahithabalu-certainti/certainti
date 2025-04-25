@@ -1,5 +1,5 @@
 import { getDateFormat } from '../../../../common-utils';
-import { ManageProfile } from '../../../types/manage-profile';
+import { ManageProfile } from '../../../types';
 import { ManageUserColumn } from '../../../types/manage-user';
 
 export const profileColumns: ManageUserColumn<ManageProfile>[] = [

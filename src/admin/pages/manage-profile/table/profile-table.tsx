@@ -4,9 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { Table } from '../../../../components/table';
 import { ADMIN_MANAGE_USER } from '../../../../routes';
 import { Profile, UserListParams } from '../../../types/manage-user';
-import { profileColumns } from './columns';
-import { ManageProfile } from '../../../types/manage-profile';
-import { useManageProfileList } from '../../../service/manage-profile';
+import { profileColumns } from './';
+import { ManageProfile } from '../../../types';
+import { useManageProfileList } from '../../../service';
 
 interface IUserTableProps {
   appliedFilters: Record<string, any>;

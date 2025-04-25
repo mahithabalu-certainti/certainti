@@ -4,9 +4,9 @@ import TextButton from '../../../../components/button/text-button';
 import { useNavigate } from 'react-router-dom';
 import { MANAGE_PROFILE_CREATE } from '../../../../routes';
 import { Filter } from '../../../../components';
-import { getManageProfileFilterfields } from './helpers';
+import { getManageProfileFilterfields } from './';
 import { UserListParams } from '../../../types/manage-user';
-import { ProfileTable } from '../table';
+import { ProfileTable } from '../';
 import { FilterType } from '../../../types';
 
 const BUTTON_STYLES = {
