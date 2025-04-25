@@ -128,7 +128,7 @@ export const CreateUser: React.FC = () => {
         });
       };
 
-        if (!compareData(data, userDatas)) {
+      if (!compareData(data, userDatas)) {
         window.history.back();
         return;
       }
@@ -138,7 +138,7 @@ export const CreateUser: React.FC = () => {
         role: data?.role_rid,
         rid: userDatas?.rid,
         azure_id: userDatas?.azure_id,
-        updated_by: UserRole.Admin,
+        // modified_by: UserRole.Admin,
         profile_id: data.profile_rid,
       } as Partial<UserDetail>;
       delete constructData.profile_rid;
