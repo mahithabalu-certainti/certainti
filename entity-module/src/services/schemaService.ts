@@ -227,7 +227,7 @@ class SchemaService {
       });
 
       if (isRefIdExist) {
-        throw new Error("Resource reference ID must be unique.");
+        throw new Error("Resource ref ID must be unique.");
       }
 
       const resourceObject = {
@@ -275,7 +275,7 @@ class SchemaService {
       return resource;
     } catch (err) {
       throw new Error(
-        "Error inserting records into resources :" + (err as Error).message
+        (err as Error).message
       );
     }
   }
@@ -308,8 +308,8 @@ class SchemaService {
         resource_type: resourceData.resource_type,
         resource_rid: resourceId,
         fiscal_year: resourceData.fiscal_year,
-        country_rid: resourceData.country || "",
-        country_region_rid: resourceData.state || "",
+        country_rid: resourceData.country || null,
+        country_region_rid: resourceData.state || null,
         effective_date: moment(startDate).isValid() ? moment(startDate).toDate() : null,
         end_date: moment(endDate).isValid() ? moment(startDate).toDate() : null,
         created_by: resourceData.created_by,
@@ -380,22 +380,22 @@ class SchemaService {
       });
 
       const updateResourceObject: any = {
-        resource_fullname: resourceData.full_name || "",
-        resource_orgname: resourceData.org_name || "",
-        resource_role: resourceData.role || "",
+        resource_fullname: resourceData.full_name || null,
+        resource_orgname: resourceData.org_name || null,
+        resource_role: resourceData.role || null,
         resource_type: resourceData.resource_type || "",
         resource_status: resourceData.resource_status,
-        country: resourceData.country || "",
-        state: resourceData.state || "",
-        city: resourceData.city || "",
-        resource_startdate: startDate.toDate() || null,
-        resource_enddate: endDate.toDate() || null,
-        designation: resourceData.designation || "",
+        country: resourceData.country || null,
+        state: resourceData.state || null,
+        city: resourceData.city || null,
+        resource_startdate: moment(startDate).isValid() ? moment(startDate).toDate() : null,
+        resource_enddate: moment(endDate).isValid() ? moment(endDate).toDate() : null,
+        designation: resourceData.designation || null,
         total_years_experience: resourceData.total_years_experience || null,
         total_years_in_org: resourceData.total_years_in_org || null,
         fiscal_year: resourceData.fiscal_year,
         modified_by: resourceData.modified_by,
-        comments: resourceData.comments
+        comments: resourceData.comments || ""
       };
 
       const updateResource = await Resource.update(
@@ -462,10 +462,10 @@ class SchemaService {
         {
           resource_type: resourceData.resource_type || "",
           fiscal_year: resourceData.fiscal_year,
-          country_rid: resourceData.country || "",
-          country_region_rid: resourceData.state || "",
-          effective_date: startDate.toDate(),
-          end_date: endDate.toDate(),
+          country_rid: resourceData.country || null,
+          country_region_rid: resourceData.state || null,
+          effective_date: moment(startDate).isValid() ? moment(startDate).toDate() : null,
+          end_date: moment(endDate).isValid() ? moment(endDate).toDate() : null,
           modified_by: resourceData.modified_by,
         },
         {
