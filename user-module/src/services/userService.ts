@@ -151,7 +151,6 @@ class UserService {
         middle_name,
         organization,
         phone,
-        modified_by,
       } = userData;
 
       const repository = this.getAccountRepository();
