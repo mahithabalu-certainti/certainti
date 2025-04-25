@@ -1,6 +1,6 @@
 import { Box, Checkbox, IconButton, TableCell, TableRow } from '@mui/material';
 import React from 'react';
-import { arrowDownIcon, arrowUpIcon } from '../../../../assets';
+import { allAccountIcon, arrowDownIcon, arrowUpIcon } from '../../../../assets';
 import { Account, ConvertedAccount } from '../../../types';
 import ActionButton from './action-button';
 
@@ -64,10 +64,17 @@ export const renderRows = ({
           <TableCell sx={{ maxWidth: '50px' }}>
             <Box className='flex items-center justify-center'>
               <Checkbox
+                disableRipple
                 checked={
                   allChildrenSelected || selectedRows.has(globalIndex as number)
                 }
                 onChange={() => handleSelectRow(globalIndex as number)}
+                sx={{
+                  color: '#CBD6E2',
+                  '&.Mui-checked': {
+                    color: '#1755E7',
+                  },
+                }}
               />
             </Box>
           </TableCell>
@@ -81,6 +88,7 @@ export const renderRows = ({
               <IconButton
                 aria-label='expand row'
                 size='small'
+                disableRipple
                 onClick={() => handleRowClick(account.accountName)}
               >
                 {openRows.has(account.accountName) ? (
@@ -91,6 +99,7 @@ export const renderRows = ({
                       filter:
                         'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
                     }}
+                    className='h-[18px] w-[18px] mb-2'
                   />
                 ) : (
                   <img
@@ -100,16 +109,28 @@ export const renderRows = ({
                       filter:
                         'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
                     }}
+                    className='h-[18px] w-[18px] mb-2'
                   />
                 )}
               </IconButton>
             ) : null}
-            <span
-              className={`cursor-pointer ${hasChildren ? '' : 'ml-8'} no-underline hover:underline`}
-              onClick={() => handleAccountNameClick(account)}
-            >
-              {account.accountName}
-            </span>
+            <Box className='inline-flex items-center gap-1'>
+              <img
+                src={allAccountIcon}
+                alt='accountIcon'
+                style={{
+                  filter:
+                    'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
+                }}
+                className='w-[18px] h-4'
+              />
+              <span
+                className={`cursor-pointer no-underline hover:underline hover:text-[#1755E7]`}
+                onClick={() => handleAccountNameClick(account)}
+              >
+                {account.accountName}
+              </span>
+            </Box>
           </TableCell>
           <TableCell sx={{ minWidth: '350px' }}>{account.accountId}</TableCell>
           <TableCell sx={{ minWidth: '200px' }}>
@@ -122,7 +143,7 @@ export const renderRows = ({
           <TableCell sx={{ minWidth: '150px' }}>{account.country}</TableCell>
           <TableCell sx={{ minWidth: '100px' }}>{account.currency}</TableCell>
           <TableCell sx={{ minWidth: '160px' }}>{account.annualRevenue}</TableCell>
-          <TableCell>{account.status}</TableCell>
+          <TableCell sx={{color: account.status === 'Active' ? '#199806 !important' : '#f44336 !important'}}>{account.status}</TableCell>
           <TableCell sx={{ minWidth: '180px' }}>
             {account.primaryContact}
           </TableCell>
@@ -165,16 +186,34 @@ export const renderChildRows = ({
               color: '#2D3E4F !important',
             }}
           >
+          <Box className='inline-flex items-center -ml-1.5'>
             <Checkbox
+              disableRipple
               checked={selectedRows.has(globalIndex)}
               onChange={() => handleSelectRow(globalIndex)}
+              sx={{
+                color: '#CBD6E2',
+                '&.Mui-checked': {
+                  color: '#1755E7',
+                },
+              }}
             />
+              <img
+                src={allAccountIcon}
+                alt='accountIcon'
+                style={{
+                  filter:
+                    'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
+                }}
+                className='w-[18px] h-4'
+              />
             <span
-              className={`cursor-pointer hover:underline`}
+              className={`cursor-pointer hover:underline hover:text-[#1755E7]`}
               onClick={() => handleAccountNameClick(account)}
             >
               {account.accountName}
             </span>
+            </Box>
           </TableCell>
           <TableCell sx={{ minWidth: '350px' }}>{account.accountId}</TableCell>
           <TableCell sx={{ minWidth: '200px' }}>

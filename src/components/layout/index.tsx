@@ -44,9 +44,9 @@ export const AppLayout: React.FC = () => {
 
       {/* Expand/collapse button */}
       <button
-        className={`fixed cursor-pointer bg-white z-[1300] transform -translate-x-1/2 top-[70px] shadow-md shadow-[#4242429c] rounded-[2px] p-[4px]
+        className={`fixed cursor-pointer bg-white z-[1300] transform -translate-x-1/2 top-[62px] shadow-md shadow-[#4242429c] rounded-[2px] p-[4px]
     transition-all duration-400 ease-in-out 
-    ${sidebarExpand ? 'left-[260px]' : 'left-[80px]'}`}
+    ${sidebarExpand ? 'left-[240px]' : 'left-[74px]'}`}
         onClick={() => {
           const newState = !sidebarExpand;
           setSidebarExpand(newState);
@@ -62,14 +62,14 @@ export const AppLayout: React.FC = () => {
 
       {/* Body Content */}
       <div
-        className={`flex-1 transition-all duration-500 ease-in-out ${!mobileView && sidebarExpand ? 'ml-[260px]' : !mobileView ? 'ml-[80px]' : 'ml-0'
+        className={`flex-1 transition-all duration-500 ease-in-out ${!mobileView && sidebarExpand ? 'ml-[240px]' : !mobileView ? 'ml-[74px]' : 'ml-0'
           }`}
       >
         <Navbar />
         <div
           className={`transition-all duration-500 ease-in-out ${sidebarExpand
-              ? 'max-w-[calc(100vw-260px)]'
-              : 'max-w-[calc(100vw-80px)]'
+              ? 'max-w-[calc(100vw-240px)]'
+              : 'max-w-[calc(100vw-74px)]'
             }`}
         >
           <Outlet />

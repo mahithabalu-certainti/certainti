@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMemo } from 'react';
 import {
   createDateField,
@@ -61,8 +60,8 @@ export const ResourceFormData = (
         fields: [
           createTextField('resource_ref_id', 'Resource Ref Id', {
             required: true,
-            regex: REGEX_PATTERNS.ALPHANUMERIC,
-            regexErrorMessage: 'Alphanumeric characters only',
+            regex: REGEX_PATTERNS.ALPHANUMERIC_SPEC_5_TO_50,
+            regexErrorMessage: '5-50 letters only',
             placeholder: 'Enter Resource Ref Id',
             disabled: disableFields || disableCostAndSkill,
           }),
@@ -81,7 +80,7 @@ export const ResourceFormData = (
           }),
           createTextField('resource_orgname', 'Resource Org Name', {
             required: false,
-            regex: REGEX_PATTERNS.LETTERS_3_TO_25,
+            regex: REGEX_PATTERNS.LETTERS_3_TO_100,
             regexErrorMessage: '3-25 letters only',
             placeholder: 'Enter Organization Name',
             disabled: disableCostAndSkill,
@@ -90,7 +89,7 @@ export const ResourceFormData = (
           createSelectField('resource_status', 'Status', {
             options: RESOURCE_STATUS_OPTIONS,
             placeholder: '-Select-',
-            required: true,
+            required: false,
             disabled: disableCostAndSkill,
           }),
 
@@ -196,7 +195,7 @@ export const ResourceFormData = (
           }),
           createTextField('years_of_experience', 'Years of Experience', {
             required: false,
-            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
+            regex: REGEX_PATTERNS.NUMBERS_GREATER_THAN_ZERO,
             regexErrorMessage: 'Numbers only',
             placeholder: 'Enter years of experience',
           }),
@@ -209,15 +208,17 @@ export const ResourceFormData = (
           createDateField('resource_startdate', 'Resource Effective From', {
             required: false,
             disabled: disableCostAndSkill,
+            maxDate: currentDate,
           }),
           createDateField('resource_enddate', 'Resource End Date', {
             required: false,
             disabled: disableCostAndSkill,
+            minDate: new Date(currentDate.getTime()),
           }),
           createTextField('designation', 'Designation', {
             required: false,
-            regex: REGEX_PATTERNS.LETTERS_SPACES,
-            regexErrorMessage: 'Letters and spaces only',
+            regex: REGEX_PATTERNS.CITY_REGEX,
+            regexErrorMessage: 'should have 4-100 letters',
             placeholder: 'Enter Designation',
             disabled: disableCostAndSkill,
           }),
@@ -252,20 +253,22 @@ export const ResourceFormData = (
           createTextAreaField('comments', 'Comments', {
             required: false,
             placeholder: 'Enter any additional information...',
+            regexErrorMessage: '1-1000 letters only',
+            regex: REGEX_PATTERNS.RESOURCE_DESCRIPTION,
           }),
         ],
       },
     ],
     [
+      disableFields,
+      disableCostAndSkill,
+      country,
+      states,
+      stateLoading,
       city,
       cityLoading,
-      country,
-      disableFields,
       currency,
       currencyLoading,
-      stateLoading,
-      states,
-      disableCostAndSkill,
       hideSkill,
     ]
   );

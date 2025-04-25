@@ -34,7 +34,7 @@ export const transformAccountData = (data: AccountData): DisplayColumn[] => {
     {
       // Column 1 (15%)
       items: [
-        { label: 'Account ID', value: account?.rid },
+        { label: 'Account ID', value: account?.r_number },
         { label: 'Country', value: account?.country?.country_name },
       ],
     },

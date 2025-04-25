@@ -325,7 +325,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
       // onClose={handleBackdropClick}
       classes={{
         paper: `transform transition-all duration-400 ease-in-out ${
-          sidebarExpand ? 'w-[260px]' : 'w-[80px]'
+          sidebarExpand ? 'w-[240px]' : 'w-[74px]'
         }`,
       }}
       sx={{
@@ -340,36 +340,42 @@ export const Sidebar: React.FC<SideBarProps> = ({
         },
       }}
     >
-      <div className='flex items-center justify-center h-[68px]'>
+      <div className='flex items-center justify-center h-[64px]'>
         <Link aria-label='logo'>
           <img
             src={sidebarExpand ? logo : logoSmall}
             alt='logo'
-            className='h-[20px]'
+            className={sidebarExpand ? 'h-[19px]' : 'h-[22px]'}
           />
         </Link>
       </div>
 
-      <List>
+      <List sx={{ mx: !sidebarExpand ? 'auto' : 'none' }}>
         {!showAdminSidebar &&
           accountNavItems.map((item, i) => {
             if (item.type === 'divider') {
               return <Divider key={i} />;
             } else
               return (
-                <ListItem key={i} disablePadding>
+                <ListItem key={i} disablePadding sx={{maxWidth: '200px', mx: 'auto'}}>
                   <ListItemButton
                     sx={{
                       justifyContent: !sidebarExpand ? 'center' : 'flex-start',
-                      minHeight: 48,
-                      gap: 1,
+                      minHeight: 40,
+                      width: !sidebarExpand ? '40px' : '100%',
+                      height: !sidebarExpand ? '40px' : '40px',
+                      px: '3px',
+                      mt: 1,
+                      gap: 2,
+                      borderRadius: '2px',
                       backgroundColor:
                         item.matchLink === trimmedPathname(1)
-                          ? 'primary.dark'
+                          ? '#FFFFFF33'
                           : '',
                       '&:hover': {
-                        backgroundColor: 'primary.dark',
+                        backgroundColor: '#FFFFFF33',
                       },
+                      transition: 'all 0.3s ease-in-out',
                     }}
                     onClick={() => {
                       if (item.name === 'Logout') {
@@ -403,11 +409,11 @@ export const Sidebar: React.FC<SideBarProps> = ({
                         },
                       }}
                     >
-                      <ListItemIcon sx={{ justifyContent: 'center' }}>
+                      <ListItemIcon sx={{minWidth: '40px', height:'40px', alignItems:'center', justifyContent:'center'}}>
                         <img
                           src={item.icon}
                           alt='menu-icon'
-                          className='h-[20px]'
+                          className='h-[18px]'
                         />
                       </ListItemIcon>
                     </Tooltip>
@@ -427,20 +433,24 @@ export const Sidebar: React.FC<SideBarProps> = ({
               );
           })}
         {showAdminSidebar && (
-          <ListItem disablePadding>
+          <ListItem disablePadding sx={{maxWidth: '200px', mx: 'auto'}}>
             <ListItemButton
               sx={{
-                alignItems: 'center',
                 justifyContent: !sidebarExpand ? 'center' : 'flex-start',
-                minHeight: 48,
-                gap: 0.5
+                minHeight: 40,
+                width: !sidebarExpand ? '40px' : '100%',
+                height: !sidebarExpand ? '40px' : '40px',
+                px: '3px',
+                mt: 1,
+                gap: 2,
+                borderRadius: '2px',
               }}
             >
-              <ListItemIcon sx={{ justifyContent: 'center' }}>
+              <ListItemIcon sx={{minWidth: '40px', height:'40px', alignItems:'center', justifyContent:'center'}}>
                 <img
                   src={administrationIcon}
                   alt='menu-icon'
-                  className='h-[20px]'
+                  className='h-[18px]'
                 />
               </ListItemIcon>
               {sidebarExpand &&
@@ -460,12 +470,21 @@ export const Sidebar: React.FC<SideBarProps> = ({
         {showAdminSidebar &&
           adminNavItems.map((item, index) => (
             <div key={index}>
-              <ListItem key={index} disablePadding>
+              <ListItem key={index} disablePadding sx={{maxWidth: '200px', mx: 'auto'}}>
                 <ListItemButton
                   sx={{
                     justifyContent: !sidebarExpand ? 'center' : 'flex-start',
-                    minHeight: 48,
-                    fontSize: '14px',
+                    minHeight: 40,
+                    width: !sidebarExpand ? '40px' : '100%',
+                    height: !sidebarExpand ? '40px' : '40px',
+                    px: '3px',
+                    mt: 1,
+                    borderRadius: '2px',
+                    backgroundColor: item.openStatus ? '#FFFFFF33' : '',
+                    '&:hover': {
+                      backgroundColor: '#FFFFFF33',
+                    },
+                    transition: 'all 0.3s ease-in-out',
                   }}
                   onClick={() => handleToggle(index)}
                 >
@@ -493,11 +512,11 @@ export const Sidebar: React.FC<SideBarProps> = ({
                       },
                     }}
                   >
-                    <ListItemIcon sx={{ justifyContent: 'center' }}>
+                    <ListItemIcon sx={{minWidth: '40px', height:'40px', alignItems:'center', justifyContent:'center'}}>
                       <img
                         src={item.icon}
                         alt='menu-icon'
-                        className='h-[20px]'
+                        className='h-[18px]'
                       />
                     </ListItemIcon>
                   </Tooltip>
@@ -514,9 +533,9 @@ export const Sidebar: React.FC<SideBarProps> = ({
                       />
                       {item.subItemTitle.length > 0 &&
                         (item.openStatus ? (
-                          <img src={adminChevronUpIcon} alt='down' className='h-[18px]' />
+                          <img src={adminChevronUpIcon} alt='down' className='h-[18px] mr-0.5' />
                         ) : (
-                          <img src={adminChevronDownIcon} alt='down' className='h-[18px]' />
+                          <img src={adminChevronDownIcon} alt='down' className='h-[18px] mr-0.5' />
                         ))}
                     </Box>
                   }
@@ -528,22 +547,27 @@ export const Sidebar: React.FC<SideBarProps> = ({
                     <List
                       key={subIndex}
                       component='div'
-                      sx={{ fontWeight: 300, fontSize: '14px' }}
+                      sx={{ fontWeight: 300, fontSize: '14px', maxWidth: '200px', mx: 'auto' }}
                       disablePadding
                     >
                       <ListItemButton
+                      sx={{
+                        justifyContent: !sidebarExpand ? 'center' : 'flex-start',
+                        px: '3px',
+                      }}
                         onClick={() => navigate(subItem.link)}
                       >
-                        <ListItemIcon sx={{ justifyContent:'center' }}>
+                        <ListItemIcon sx={{minWidth: '40px', height:'35px', alignItems:'center', justifyContent:'center'}}>
                           <img
                             src={subItem.icon}
                             alt='menu-icon'
-                            className='h-[20px]'
+                            className='h-[18px]'
                           />
                         </ListItemIcon>
-                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width:'100%' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-start', gap: 1, alignItems: 'center', width:'100%' }}>
                           <ListItemText
                             sx={{
+                              flex: 'unset',
                               '& .MuiTypography-root': {
                                 fontWeight: matchCheck(
                                   subItem,
@@ -563,7 +587,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                             <img
                               src={adminSubmenuActiveIcon}
                               alt='menu-icon'
-                              className='h-[18px]'
+                              className='h-[16px] w-[16px] mr-0.5'
                             />
                           )}
                         </Box>

@@ -117,6 +117,16 @@ const Table = <T extends RowData>({
                     onChange={handleSelectAll}
                     disabled={data.length === 0 || loading}
                     inputProps={{ 'aria-label': 'select all rows' }}
+                    disableRipple
+                    sx={{
+                      color: '#CBD6E2',
+                      '&.Mui-checked': {
+                        color: '#1755E7',
+                      },
+                      '&.MuiCheckbox-indeterminate': {
+                        color: '#1755E7',
+                      },
+                    }}
                   />
                 </TableCell>
               )}
@@ -273,6 +283,13 @@ const Table = <T extends RowData>({
                           checked={selectedRows.has(rowId)}
                           onChange={() => handleRowSelect(rowId)}
                           inputProps={{ 'aria-label': `select row ${rowId}` }}
+                          disableRipple
+                          sx={{
+                            color: '#CBD6E2',
+                            '&.Mui-checked': {
+                              color: '#1755E7',
+                            },
+                          }}
                         />
                       </TableCell>
                     )}

@@ -7,7 +7,11 @@ import { OnChange, useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
-import { useFetchCity, useFetchCurrency, useFetchState } from '../../services/account';
+import {
+  useFetchCity,
+  useFetchCurrency,
+  useFetchState,
+} from '../../services/account';
 import {
   useCreateResourceCost,
   useFetchResourceCostById,
@@ -32,7 +36,7 @@ import {
 enum FormSection {
   COST = 'cost',
   SKILL = 'skill',
-  NONE = ''
+  NONE = '',
 }
 
 const ResourceForm: React.FC = () => {
@@ -77,30 +81,36 @@ const ResourceForm: React.FC = () => {
     accountNumber: accountNumber,
     id: state?.costInfo?.costRid,
   });
-  const costInfo = (costDetails as { resourceCostById?: Record<string, any> })?.resourceCostById || {};
+  const costInfo =
+    (costDetails as { resourceCostById?: Record<string, any> })
+      ?.resourceCostById || {};
   const skillInfo = state?.skillInfo || {};
 
   // Data fetching
   const { data: resource } = useResourceDetail(
     location?.state?.resource?.rid || resourceRId,
     location?.state?.accountDetails?.data?.accountById?.r_number ||
-    accountNumber
+      accountNumber
   );
 
-  const formValues = state?.cost ? {
-    ...resource?.data?.resourceDetails,
-    financial_start_date: costInfo?.effective_date || '',
-    financial_end_date: costInfo?.end_date || '',
-    cost: costInfo?.cost || '',
-    currency: costInfo?.currency_rid || null,
-    cost_frequency: costInfo?.cost_frequency || ''
-  } : state?.skill ? {
-    ...resource?.data?.resourceDetails,
-    skill_level: skillInfo?.skillLevel || '',
-    skill_name: skillInfo?.skillName || '',
-    skill_start_date: skillInfo?.startDate || '',
-    years_of_experience: skillInfo?.yearsOfExperience || '',
-  } : null;
+  const formValues = state?.cost
+    ? {
+        ...resource?.data?.resourceDetails,
+        financial_start_date: costInfo?.effective_date || '',
+        financial_end_date: costInfo?.end_date || '',
+        cost: costInfo?.cost || '',
+        currency: costInfo?.currency_rid || null,
+        cost_frequency: costInfo?.cost_frequency || '',
+      }
+    : state?.skill
+      ? {
+          ...resource?.data?.resourceDetails,
+          skill_level: skillInfo?.skillLevel || '',
+          skill_name: skillInfo?.skillName || '',
+          skill_start_date: skillInfo?.startDate || '',
+          years_of_experience: skillInfo?.yearsOfExperience || '',
+        }
+      : null;
   // const resourceValues = resource?.data?.resourceDetails;
   const userDetails = JSON.parse(localStorage.getItem('auth') || '{}');
   const allCountries = useGetAllCountries();
@@ -256,7 +266,10 @@ const ResourceForm: React.FC = () => {
 
   const handleGoBack = () => {
     formRef.current?.reset();
-    navigate(-1);
+    navigate(-1 as any, {
+      state: { ...location.state, activeKey: 'resources' },
+      replace: true,
+    });
   };
 
   const onChangeField = ({ fieldName, fieldValue }: OnChange) => {
@@ -267,7 +280,11 @@ const ResourceForm: React.FC = () => {
       }));
     }
   };
-  const activeFormSection = state?.cost ? FormSection.COST : state?.skill ? FormSection.SKILL : FormSection.NONE;
+  const activeFormSection = state?.cost
+    ? FormSection.COST
+    : state?.skill
+      ? FormSection.SKILL
+      : FormSection.NONE;
   // Form configuration
   const formConfig = ResourceFormData(
     memoizedCountry,
@@ -322,20 +339,21 @@ const ResourceForm: React.FC = () => {
           loading={allCountries.isLoading}
           values={
             isEditView &&
-              (!state?.cost && !state?.skill) &&
-              (resource?.data?.resourceDetails as unknown as Record<
-                string,
-                string | number | boolean | string[] | null
-              >)
+            !state?.cost &&
+            !state?.skill &&
+            (resource?.data?.resourceDetails as unknown as Record<
+              string,
+              string | number | boolean | string[] | null
+            >)
               ? (resource?.data?.resourceDetails as unknown as Record<
-                string,
-                string | number | boolean | string[] | null
-              >)
-              : (state?.cost || state?.skill)
-                ? (formValues as unknown as Record<
                   string,
                   string | number | boolean | string[] | null
                 >)
+              : state?.cost || state?.skill
+                ? (formValues as unknown as Record<
+                    string,
+                    string | number | boolean | string[] | null
+                  >)
                 : undefined
           }
           // values={

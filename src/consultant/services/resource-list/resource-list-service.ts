@@ -26,5 +26,6 @@ export const useResourceList = (
     queryKey: ['resourceList', params],
     queryFn: () => fetchResourceList(params),
     retry: 0,
+    enabled: !!params.accountNumber,
   });
 };
