@@ -2,69 +2,72 @@ import { useState } from "react";
 import ActionImportDropdown from "./importdropdown";
 import Overview from "./overview";
 import Timeline from "./TimeLine";
+interface ImportProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  accountDetails?: Record<string,any>;
+  activeKey?: string;
+}
 
-
-const Import = () => {
-  const [isActive , setIsActive]= useState("overView")
-
-    const menuYear = [
-      {
-        label: '2024',
-        onClick: () => console.log('manage user clicked'),
-      },
-      {
-        label: '2023',
-        onClick: () => console.log('Export clicked'),
-      },
-      {
-        label: '2023',
-        onClick: () => console.log('Export clicked'),
-      },
-      {
-        label: '2022',
-        onClick: () => console.log('Export clicked'),
-      },
-      {
-        label: '2021',
-        onClick: () => console.log('Export clicked'),
-      },
-    ];
-    const menuActivity = [
-      {
-        label: 'Cretae Task',
-        onClick: () => console.log('manage user clicked'),
-      },
-      {
-        label: 'Draft Email',
-        onClick: () => console.log('Export clicked'),
-      },
-      {
-        label: 'Schedule Meeting',
-        onClick: () => console.log('Export clicked'),
-      },
-      {
-        label: 'Log a call',
-        onClick: () => console.log('Export clicked'),
-      },
-    ];
-    const menuAccounts = [
-      {
-        label: 'Recently Added',
-        onClick: () => console.log('manage user clicked'),
-      },
-      {
-        label: 'Ascending',
-        onClick: () => console.log('Export clicked'),
-      },
-      {
-        label: 'Descending',
-        onClick: () => console.log('Export clicked'),
-      },
-      {
-        label: 'Popularity',
-        onClick: () => console.log('Export clicked'),
-      },
-    ];
+const Import: React.FC<ImportProps> = ({ accountDetails }) => {
+  const [isActive, setIsActive] = useState('overView');
+  const menuYear = [
+    {
+      label: '2024',
+      onClick: () => console.log('manage user clicked'),
+    },
+    {
+      label: '2023',
+      onClick: () => console.log('Export clicked'),
+    },
+    {
+      label: '2023',
+      onClick: () => console.log('Export clicked'),
+    },
+    {
+      label: '2022',
+      onClick: () => console.log('Export clicked'),
+    },
+    {
+      label: '2021',
+      onClick: () => console.log('Export clicked'),
+    },
+  ];
+  const menuActivity = [
+    {
+      label: 'Create Task',
+      onClick: () => console.log('manage user clicked'),
+    },
+    {
+      label: 'Draft Email',
+      onClick: () => console.log('Export clicked'),
+    },
+    {
+      label: 'Schedule Meeting',
+      onClick: () => console.log('Export clicked'),
+    },
+    {
+      label: 'Log a call',
+      onClick: () => console.log('Export clicked'),
+    },
+  ];
+  const menuAccounts = [
+    {
+      label: 'Recently Added',
+      onClick: () => console.log('manage user clicked'),
+    },
+    {
+      label: 'Ascending',
+      onClick: () => console.log('Export clicked'),
+    },
+    {
+      label: 'Descending',
+      onClick: () => console.log('Export clicked'),
+    },
+    {
+      label: 'Popularity',
+      onClick: () => console.log('Export clicked'),
+    },
+  ];
 
   return (
     <div className='p-1 w-full'>
@@ -115,7 +118,12 @@ const Import = () => {
         </div>
       </div>
       <div className='mt-4'>
-        {isActive === 'overView' && <Overview />}
+        {isActive === 'overView' && (
+          <Overview
+            accountNo={accountDetails?.data?.accountById.r_number}
+            accountId={accountDetails?.data?.accountDetails?.account_rid}
+          />
+        )}
         {isActive === 'TimeLine' && <Timeline />}
       </div>
     </div>

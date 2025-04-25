@@ -10,9 +10,9 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
         key={index}
         className={`${detail.full ? 'col-span-2 border-t -mt-[1px] bg-[#CBD6E2]' : ''} grid ${detail.full ? 'grid-cols-1' : 'grid-cols-[1fr_2fr]'} gap-1 items-center justify-center border-gray-200 p-2`}
       >
-        <div className='font-bold text-left'>{detail.label ?? ''}</div>
+        <div className='font-medium text-[14px] text-[#425A76] text-left'>{detail.label ?? ''}</div>
         {!detail.full && (
-          <div className='break-words whitespace-normal max-w-full'>
+          <div className='break-words whitespace-normal font-light text-[#425A76] text-[14px] max-w-full'>
             {loading ? (
               <Skeleton variant='rounded' width='100%' />
             ) : (
@@ -41,9 +41,9 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
 
   const mappedUserDetails: Detail[] = [
     { label: 'Identity', value: '', full: true },
-    { label: 'User ID', value: getValueOrDefault(data?.rid) },
+    { label: 'Record ID', value: getValueOrDefault(data?.rid) },
     {
-      label: 'User number',
+      label: 'User ID',
       value: getValueOrDefault(data?.r_number),
     },
     { label: 'Full name', value: getValueOrDefault(data?.full_name) },

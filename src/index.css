@@ -3,3 +3,14 @@
 * {
   font-family: 'Lexend', sans-serif;
 }
+
+.placeholder-custom-color::placeholder{
+  color:#7D98B6;
+}
+
+.custom-select-no-arrow {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: none;
+}

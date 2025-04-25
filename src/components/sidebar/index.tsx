@@ -1,7 +1,6 @@
 import {
   Box,
   Collapse,
-  Divider,
   Drawer,
   Link,
   List,
@@ -350,14 +349,16 @@ export const Sidebar: React.FC<SideBarProps> = ({
         </Link>
       </div>
 
-      <List sx={{ mx: !sidebarExpand ? 'auto' : 'none' }}>
+      <List sx={{ mx: !sidebarExpand ? 'auto' : 'none', mt: 1, flexGrow: 1,  display: 'flex', flexDirection: 'column', height: '100%' }}>
         {!showAdminSidebar &&
           accountNavItems.map((item, i) => {
             if (item.type === 'divider') {
-              return <Divider key={i} />;
-            } else
+              return <React.Fragment key={i} />;
+            } 
+            const isAfterDivider = i > 0 && accountNavItems[i - 1]?.type === 'divider';
+
               return (
-                <ListItem key={i} disablePadding sx={{maxWidth: '200px', mx: 'auto'}}>
+                <ListItem key={i} disablePadding sx={{maxWidth: '200px', mx: 'auto', ...(isAfterDivider && { mt: 'auto' }),}}>
                   <ListItemButton
                     sx={{
                       justifyContent: !sidebarExpand ? 'center' : 'flex-start',
@@ -365,7 +366,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                       width: !sidebarExpand ? '40px' : '100%',
                       height: !sidebarExpand ? '40px' : '40px',
                       px: '3px',
-                      mt: 1,
+                      mt: '9px',
                       gap: 2,
                       borderRadius: '2px',
                       backgroundColor:
@@ -444,6 +445,9 @@ export const Sidebar: React.FC<SideBarProps> = ({
                 mt: 1,
                 gap: 2,
                 borderRadius: '2px',
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                },
               }}
             >
               <ListItemIcon sx={{minWidth: '40px', height:'40px', alignItems:'center', justifyContent:'center'}}>
@@ -473,6 +477,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
               <ListItem key={index} disablePadding sx={{maxWidth: '200px', mx: 'auto'}}>
                 <ListItemButton
                   sx={{
+                    display: (!sidebarExpand && item.subItemTitle.length > 0 && !item.openStatus) ? 'none' : 'flex',
                     justifyContent: !sidebarExpand ? 'center' : 'flex-start',
                     minHeight: 40,
                     width: !sidebarExpand ? '40px' : '100%',
@@ -541,7 +546,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                   }
                 </ListItemButton>
               </ListItem>
-              <Collapse in={sidebarExpand && item.openStatus} timeout='auto' unmountOnExit>
+              <Collapse in={item.openStatus} timeout='auto' unmountOnExit>
                 {item.subItemTitle &&
                   item.subItemTitle.map((subItem, subIndex) => (
                     <List
@@ -553,7 +558,15 @@ export const Sidebar: React.FC<SideBarProps> = ({
                       <ListItemButton
                       sx={{
                         justifyContent: !sidebarExpand ? 'center' : 'flex-start',
+                        mt: 1,
+                        minHeight: 40,
+                        height: '40px',
+                        width: !sidebarExpand ? '40px' : '100%',
                         px: '3px',
+                        borderRadius: '2px',
+                        '&:hover': {
+                        backgroundColor: '#FFFFFF33',
+                      },
                       }}
                         onClick={() => navigate(subItem.link)}
                       >
@@ -562,8 +575,14 @@ export const Sidebar: React.FC<SideBarProps> = ({
                             src={subItem.icon}
                             alt='menu-icon'
                             className='h-[18px]'
+                            style={{
+                              filter: !sidebarExpand && matchCheck(subItem, trimmedPathname(2))
+                                ? 'brightness(0) saturate(100%) invert(53%) sepia(89%) saturate(1295%) hue-rotate(340deg) brightness(99%) contrast(93%)'
+                                : 'none',
+                            }}
                           />
                         </ListItemIcon>
+                        {sidebarExpand &&
                         <Box sx={{ display: 'flex', justifyContent: 'flex-start', gap: 1, alignItems: 'center', width:'100%' }}>
                           <ListItemText
                             sx={{
@@ -591,6 +610,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                             />
                           )}
                         </Box>
+                        }
                       </ListItemButton>
                     </List>
                   ))}

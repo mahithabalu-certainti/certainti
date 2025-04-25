@@ -101,7 +101,7 @@ export const AccountDetails = () => {
       case 'timesheet':
         return <Timesheet />;
       case 'imports':
-        return <Import />;
+        return <Import accountDetails={{ ...data, activeKey: 'imports' }} />;
       default:
         return <div className='p-6'>Page Not Found</div>;
     }

@@ -38,3 +38,12 @@ export interface TableProps<T extends RowData> {
   sortOrder?: SortDirection;
   onSort?: (sortBy: string, sortOrder: SortDirection) => void;
 }
+
+export interface ITablePaginationProps {
+  count: number;
+  rowsPerPage: number;
+  page: number;
+  onPageChange: (newPage: number) => void;
+  onRowsPerPageChange: (newPageSize: number) => void;
+  rowsPerPageOptions?: number[];
+}
