@@ -4,8 +4,9 @@ import {
   ManageProfileApiResponse,
   UserListParams,
 } from '../../types/manage-user';
-import { getProfileListUrl } from '../urls';
+import { getProfileExportUrl, getProfileListUrl } from '../urls';
 // import { manageProfileMockData } from '../../mockdata';
+import { generateFile } from '../helpers';
 
 const ORGANIZATION = import.meta.env.VITE_ORGANIZATION;
 
@@ -35,4 +36,12 @@ export const useManageProfileList = (params: UserListParams = {}) => {
     gcTime: 0, // Immediately remove from cache
     retry: 0,
   });
+};
+
+export const exportProfileList = async (params: UserListParams = {}) => {
+  const url = getProfileExportUrl(params);
+  const response = await userServiceApi.get(url);
+  const base64Data = response.data?.data;
+  generateFile(base64Data);
+  return response; // Return the response to track completion
 };

@@ -48,6 +48,17 @@ export const getUserExportUrl = (params: UserListParams = {}): string => {
   return `/api/user/export?${buildQueryString(queryParams)}`;
 };
 
+export const getProfileExportUrl = (params: UserListParams = {}): string => {
+  const queryParams: Record<string, unknown> = {
+    organization: ORGANIZATION,
+    sortBy: params.sortBy || 'createdAt',
+    sortOrder: params.sortOrder || 'DESC',
+    filters: params.filters,
+  };
+
+  return `/api/profile/export?${buildQueryString(queryParams)}`;
+};
+
 export const getUserDetailUrl = (userId: string): string => {
   return `/api/user/list/${userId}?organization=${ORGANIZATION}`;
 };

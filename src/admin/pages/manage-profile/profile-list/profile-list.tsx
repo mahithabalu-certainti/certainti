@@ -8,6 +8,7 @@ import { getManageProfileFilterfields } from './';
 import { UserListParams } from '../../../types/manage-user';
 import { ProfileTable } from '../';
 import { FilterType } from '../../../types';
+import { exportProfileList } from '../../../service';
 
 const BUTTON_STYLES = {
   height: '35px',
@@ -32,6 +33,18 @@ export const ProfileList: React.FC = () => {
     sortOrder: 'DESC',
   });
   const navigate = useNavigate();
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      await exportProfileList(tableParams);
+    } catch (error) {
+      console.error('Export failed:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <div className='flex flex-col h-[calc(100vh-64px)] overflow-y-auto w-full p-4 gap-3'>
@@ -89,6 +102,8 @@ export const ProfileList: React.FC = () => {
                 fontSize: '13px',
                 fontWeight: 400,
               }}
+              onClick={handleExport}
+              loading={isExporting}
             />
           </div>
         </div>
