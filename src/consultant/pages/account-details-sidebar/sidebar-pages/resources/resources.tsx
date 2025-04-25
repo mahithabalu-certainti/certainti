@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -55,9 +54,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
   };
 
   // fiscalYear change
-  const [fiscalYearValue, setFiscalYearValue] = useState<number>(
-    new Date().getFullYear()
-  );
+  const [fiscalYearValue] = useState<number>(new Date().getFullYear());
 
   const handleResourceClick = (row: any) => {
     setResourceData(row);
