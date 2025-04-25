@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { accountDetailsIcon } from '../../../assets';
 import { PageHeader } from '../../../components';
 import { useAccountDetail } from '../../services/account-details/account-details-service';
 import {
@@ -112,6 +113,9 @@ export const AccountDetails = () => {
         <PageHeader
           variant='sub'
           placeholder='Account Name'
+          icon={accountDetailsIcon}
+          iconBackgroundColor='#4B9BFF'
+          iconClasses='h-[30px] w-[30px] rounded'
           title={data?.data?.accountById?.account_name || 'Account Title'}
           totalRecords={5}
           actionItems={menuItems}

@@ -5,6 +5,7 @@ import {
   createTextAreaField,
   createTextField,
   REGEX_PATTERNS,
+  RESOURCE_REGEX,
 } from '../../../common-utils';
 import { mockSkillLevelOptions } from '../../mockdata/resource-form';
 import { FormType, SelectOption } from '../../types';
@@ -61,14 +62,15 @@ export const ResourceFormData = (
           createTextField('resource_ref_id', 'Resource Ref Id', {
             required: true,
             regex: REGEX_PATTERNS.ALPHANUMERIC_SPEC_5_TO_50,
-            regexErrorMessage: '5-50 letters only',
+            regexErrorMessage: '5 to 50 alphanumeric characters',
             placeholder: 'Enter Resource Ref Id',
             disabled: disableFields || disableCostAndSkill,
           }),
           createTextField('resource_fullname', 'Resource Full Name', {
             required: false,
-            regex: REGEX_PATTERNS.LETTERS_3_TO_25,
-            regexErrorMessage: '3-25 letters only',
+            regex: RESOURCE_REGEX.FULL_NAME,
+            regexErrorMessage:
+              '3 to 100 characters using letters, numbers, spaces, hyphens or apostrophes',
             placeholder: 'Enter Full Name',
             disabled: disableCostAndSkill,
           }),
@@ -80,13 +82,13 @@ export const ResourceFormData = (
           }),
           createTextField('resource_orgname', 'Resource Org Name', {
             required: false,
-            regex: REGEX_PATTERNS.LETTERS_3_TO_100,
-            regexErrorMessage: '3-25 letters only',
+            regex: RESOURCE_REGEX.ORG_NAME,
+            regexErrorMessage: '4 to 100 characters',
             placeholder: 'Enter Organization Name',
             disabled: disableCostAndSkill,
           }),
 
-          createSelectField('resource_status', 'Status', {
+          createSelectField('resource_status', 'Resource Status', {
             options: RESOURCE_STATUS_OPTIONS,
             placeholder: '-Select-',
             required: true,
@@ -103,7 +105,7 @@ export const ResourceFormData = (
           createTextField('resource_role', 'Resource Role', {
             required: false,
             regex: REGEX_PATTERNS.LETTERS_3_TO_25,
-            regexErrorMessage: '3-25 letters only',
+            regexErrorMessage: '3 to 25 characters without special symbols',
             placeholder: 'Enter Resource Role',
             disabled: disableCostAndSkill,
           }),
@@ -217,8 +219,8 @@ export const ResourceFormData = (
           }),
           createTextField('designation', 'Designation', {
             required: false,
-            regex: REGEX_PATTERNS.CITY_REGEX,
-            regexErrorMessage: 'should have 4-100 letters',
+            regex: RESOURCE_REGEX.DESIGNATION,
+            regexErrorMessage: '4 to 100 characters',
             placeholder: 'Enter Designation',
             disabled: disableCostAndSkill,
           }),
@@ -227,9 +229,8 @@ export const ResourceFormData = (
             'Total Years of Experience',
             {
               required: false,
-              regex: REGEX_PATTERNS.NUMBERS_GREATER_THAN_ZERO,
-              regexErrorMessage:
-                'Please enter a valid two-digit number greater than zero.',
+              regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
+              regexErrorMessage: 'Enter whole numbers between 0 and 99',
               placeholder: 'Enter Years',
               disabled: disableCostAndSkill,
             }
@@ -239,9 +240,8 @@ export const ResourceFormData = (
             'Total Years in the Organisation',
             {
               required: false,
-              regex: REGEX_PATTERNS.NUMBERS_GREATER_THAN_ZERO,
-              regexErrorMessage:
-                'Please enter a valid two-digit number greater than zero.',
+              regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
+              regexErrorMessage: 'Enter whole numbers between 0 and 99',
               placeholder: 'Enter Years',
               disabled: disableCostAndSkill,
             }
@@ -255,8 +255,8 @@ export const ResourceFormData = (
           createTextAreaField('comments', 'Comments', {
             required: false,
             placeholder: 'Enter any additional information...',
-            regexErrorMessage: '1-1000 letters only',
-            regex: REGEX_PATTERNS.RESOURCE_DESCRIPTION,
+            regexErrorMessage: 'Maximum 1000 characters allowed',
+            regex: RESOURCE_REGEX.DESCRIPTION,
           }),
         ],
       },
