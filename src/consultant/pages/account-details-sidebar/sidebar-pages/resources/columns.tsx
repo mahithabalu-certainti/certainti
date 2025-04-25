@@ -19,7 +19,7 @@ const displayValue = (value: any) => {
 
 const BASE_COLUMNS: ColumnDefinition[] = [
   {
-    id: 'r_number',
+    id: 'rid',
     label: 'Resource Id',
     sortable: true,
     render: (value: string, row: any) => (
