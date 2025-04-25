@@ -9,7 +9,6 @@ import {
   TableBody,
   TableCell,
   TableHead,
-  TablePagination,
   TableRow,
   TableSortLabel,
   Typography,
@@ -26,6 +25,7 @@ import { Account, AccountList, ConvertedAccount } from '../../../types/account';
 import { convertAccounts } from '../helpers';
 import './styles.css';
 import { renderChildRows, renderRows } from './utils';
+import { TablePagination } from '../../../../components/table';
 
 const AccountTable: React.FC<Record<string, any>> = ({
   appliedFilters,
@@ -182,15 +182,13 @@ const AccountTable: React.FC<Record<string, any>> = ({
   };  
   
   // Handle page change
-  const handleChangePage = (_event: unknown, newPage: number) => {
-    setPage(newPage +1 );
+  const handleChangePage = (newPage: number) => {
+    setPage(newPage + 1);
   };
 
   // Handle rows per page change
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
+  const handleChangeRowsPerPage = (newPageSize: number) => {
+    setRowsPerPage(newPageSize);
     setPage(1);
   };
 
@@ -233,14 +231,13 @@ const AccountTable: React.FC<Record<string, any>> = ({
     };
 
   return (
-    <>
-      <Paper sx={{ overflowX: 'auto', boxShadow: 'none' }}>
+    <div className='border border-[#CBD6E2]'>
+      <Paper sx={{ overflowX: 'auto', boxShadow: 'none', borderBottom: '1px solid #CBD6E2', borderRadius: '0px' }}> 
         <Table
           sx={{
-            border: '1px solid #CBD6E2',
             borderCollapse: 'collapse',
             '& .MuiTableCell-root': {
-              border: '1px solid #CBD6E2',
+              borderBottom: '1px solid #CBD6E2',
             },
           }}
         >
@@ -251,12 +248,14 @@ const AccountTable: React.FC<Record<string, any>> = ({
                 fontSize: '14px',
                 lineHeight: '21px',
                 color: '#2A2A2A',
-                padding: '8px',
+                padding: '0px',
+                pl: 1,
+                height: '42px',
               },
             }}
           >
             <TableRow>
-              <TableCell sx={{ maxWidth: '50px' }}>
+              <TableCell sx={{ maxWidth: '50px', padding: '0px !important' }}>
                 <Box className='flex items-center justify-center'>
                   <Checkbox
                     disableRipple
@@ -290,16 +289,6 @@ const AccountTable: React.FC<Record<string, any>> = ({
                   IconComponent={getSortIcon(orderBy, 'account_name', order)}
                 >
                   Account Name
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ minWidth: '350px' }}>
-                <TableSortLabel
-                  active={orderBy === 'account_id'}
-                  direction={orderBy === 'account_id' ? order : 'asc'}
-                  onClick={createSortHandler('account_id')}
-                  IconComponent={getSortIcon(orderBy, 'account_id', order)}
-                >
-                  Record ID
                 </TableSortLabel>
               </TableCell>
               <TableCell sx={{ minWidth: '200px' }}>
@@ -396,7 +385,9 @@ const AccountTable: React.FC<Record<string, any>> = ({
                 fontSize: '14px',
                 lineHeight: '21px',
                 color: '#425A76',
-                padding: '6px',
+                padding: '0px',
+                pl: 1,
+                minHeight: '36px',
               },
             }}
           >
@@ -430,14 +421,13 @@ const AccountTable: React.FC<Record<string, any>> = ({
       </Paper>
       <TablePagination
         rowsPerPageOptions={[5, 10, 25, 50]}
-        component='div'
         count={accountList?.count ?? 0}
         rowsPerPage={rowsPerPage}
         page={(page ?? 1) - 1}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
-    </>
+    </div>
   );
 };
 

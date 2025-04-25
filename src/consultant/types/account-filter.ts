@@ -53,5 +53,5 @@ export interface FilterComponentProps {
   searchTerm: string;
   setSearchTerm: (value: string) => void;
   filterFields: FieldConfig[];
-  filterLable?: string;
+  filterLabel?: string;
 }

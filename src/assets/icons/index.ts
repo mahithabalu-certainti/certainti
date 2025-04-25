@@ -3,7 +3,6 @@ import accountHomeIcon from './account-home.svg';
 import accountSettingsIcon from './account-settings.svg';
 import accountsIcon from './accounts.svg';
 import actionIcon from './action.svg';
-import addIcon from './addicon.svg';
 import adminChevronDownIcon from './admin-chevron-down.svg';
 import adminChevronUpIcon from './admin-chevron-up.svg';
 import adminPermissionIcon from './admin-permission.svg';
@@ -65,6 +64,9 @@ import surveyIcon from './survey.svg';
 import taskTemplateIcon from './task-template.svg';
 import timesheetIcon from './timesheet.svg';
 import uploadIcon from './Vector.svg';
+import addIcon from './addicon.svg';
+import eyeIcon from './eye-icon.svg';
+
 export {
   accountDetailsIcon,
   accountHomeIcon,
@@ -94,6 +96,7 @@ export {
   createresourceIcon,
   dashboardIcon,
   downloadIcon,
+  eyeIcon,
   editIcon,
   emailTemplateIcon,
   filterArrowRightIcon,

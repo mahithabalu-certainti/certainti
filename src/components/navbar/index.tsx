@@ -13,6 +13,7 @@ import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   accountsIcon,
+  arrowDownIcon,
   chevronDownIcon,
   globeIcon,
   menuIcon,
@@ -324,22 +325,34 @@ export const Navbar: React.FC = () => {
                   <span className='text-[13px] font-normal px-2'>Global</span>
                 </IconButton>
                 <div className='border-l border-[#FFFFFF4D] h-6 mx-1' />
-                <select
-                  value={fiscalYear}
-                  onChange={(e) => dispatch(setFiscalYear(e.target.value))}
-                  className='mx-2 px-1 py-2 focus:outline-none cursor-pointer text-[13px] font-medium'
-                  aria-label='Fiscal Year Selector'
-                >
-                  {fiscalYearsDropDown.map((fy) => (
-                    <option
-                      key={fy.value}
-                      value={fy.value}
-                      className='text-black'
-                    >
-                      {fy.label}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative w-full">
+                  <select
+                    value={fiscalYear}
+                    onChange={(e) => dispatch(setFiscalYear(e.target.value))}
+                    className='custom-select-no-arrow w-[90px] mx-2 px-3 py-2 focus:outline-none cursor-pointer text-[13px] font-medium'
+                    aria-label='Fiscal Year Selector'
+                  >
+                    {fiscalYearsDropDown.map((fy) => (
+                      <option
+                        key={fy.value}
+                        value={fy.value}
+                        className='text-black'
+                      >
+                        {fy.label}
+                      </option>
+                    ))}
+                  </select>
+                  <img
+                    src={arrowDownIcon}
+                    alt="dropdown arrow"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                    style={{
+                      width: 15,
+                      height: 15,
+                      filter: 'brightness(0) invert(1)',
+                    }}
+                  />
+                </div>
                 <div className='border-l border-[#FFFFFF4D] mx-2 h-6' />
               </>
             )}

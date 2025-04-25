@@ -17,7 +17,7 @@ const StyledButton = styled(Button)<{ variantType: 'filled' | 'outlined' }>(
   ({ variantType, theme }) => ({
     backgroundColor:
       variantType === 'filled' ? theme.palette.secondary.main : 'transparent',
-    height: '32px',
+    height: '32px !important',
     width: '95px',
     color: variantType === 'filled' ? '#fff' : theme.palette.secondary.main,
     border:

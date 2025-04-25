@@ -51,6 +51,17 @@ export const FormData = (
             options: STATUS_OPTIONS,
             placeholder: 'Choose Status',
           }),
+          createRadioField('is_parent', 'Is Parent Account', {
+            radioOptions: YES_NO_OPTIONS,
+            disabled: disableFields,
+            required: true,
+          }),
+          createTextField('website', 'Website', {
+            required: false,
+            regex: REGEX_PATTERNS.WEBSITE,
+            regexErrorMessage: 'Enter a valid website URL',
+            placeholder: 'Enter Website',
+          }),
           createSelectField('parent_account_rid', 'Parent Account', {
             options: parentAccount,
             placeholder: 'Choose Parent Account',
@@ -62,12 +73,6 @@ export const FormData = (
               errorMessage: 'Field is required',
               disableDependsField: YesNo.Yes,
             },
-          }),
-          createTextField('website', 'Website', {
-            required: false,
-            regex: REGEX_PATTERNS.WEBSITE,
-            regexErrorMessage: 'Enter a valid website URL',
-            placeholder: 'Enter Website',
           }),
           createTextField('industry', 'Industry', {
             required: true,
@@ -88,11 +93,6 @@ export const FormData = (
               maxMatchedValue: REGEX_PATTERNS.MAX_NAME_REGEX,
               maxErrorMessage: 'Max length exceeded',
             },
-          }),
-          createRadioField('is_parent', 'Is Parent Account', {
-            radioOptions: YES_NO_OPTIONS,
-            disabled: disableFields,
-            required: true,
           }),
         ],
       },

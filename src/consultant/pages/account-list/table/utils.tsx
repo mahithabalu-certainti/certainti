@@ -60,8 +60,8 @@ export const renderRows = ({
 
     return (
       <React.Fragment key={account.accountName}>
-        <TableRow>
-          <TableCell sx={{ maxWidth: '50px' }}>
+        <TableRow hover  selected={selectedRows.has(globalIndex as number)}>
+          <TableCell sx={{ maxWidth: '50px', padding: '0 !important' }}>
             <Box className='flex items-center justify-center'>
               <Checkbox
                 disableRipple
@@ -89,6 +89,7 @@ export const renderRows = ({
                 aria-label='expand row'
                 size='small'
                 disableRipple
+                className='!p-0 !pr-1'
                 onClick={() => handleRowClick(account.accountName)}
               >
                 {openRows.has(account.accountName) ? (
@@ -132,7 +133,6 @@ export const renderRows = ({
               </span>
             </Box>
           </TableCell>
-          <TableCell sx={{ minWidth: '350px' }}>{account.accountId}</TableCell>
           <TableCell sx={{ minWidth: '200px' }}>
             {account.parentAccount || '-'}
           </TableCell>
@@ -178,7 +178,7 @@ export const renderChildRows = ({
         (acc) => acc.accountName === account.accountName
       );
       return (
-        <TableRow key={account.accountName}>
+        <TableRow key={account.accountName} hover selected={selectedRows.has(globalIndex)}>
           <TableCell className='no-border' />
           <TableCell
             sx={{
@@ -215,7 +215,6 @@ export const renderChildRows = ({
             </span>
             </Box>
           </TableCell>
-          <TableCell sx={{ minWidth: '350px' }}>{account.accountId}</TableCell>
           <TableCell sx={{ minWidth: '200px' }}>
             {account.parentAccount || '-'}
           </TableCell>

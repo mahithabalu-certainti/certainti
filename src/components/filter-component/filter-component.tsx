@@ -33,7 +33,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
   searchTerm,
   setSearchTerm,
   filterFields,
-  filterLable,
+  filterLabel,
 }) => {
   const location = useLocation();
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
@@ -355,7 +355,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
           mb: 1,
         }}
       >
-        {filterLable}
+        {filterLabel || 'Filter by'}
       </Typography>
       <TextField
         placeholder='Search'
@@ -365,9 +365,10 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         sx={{
-          mb: 2,
+          mb: 1,
           '& .MuiOutlinedInput-root': {
             maxWidth: '220px',
+            height: '36px',
             borderRadius: '26px',
             color: '#2D3E4F',
             fontSize: '12px',
