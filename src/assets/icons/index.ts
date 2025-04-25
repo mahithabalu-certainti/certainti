@@ -1,7 +1,9 @@
+import accountDetailsIcon from './account-details.svg';
 import accountHomeIcon from './account-home.svg';
 import accountSettingsIcon from './account-settings.svg';
 import accountsIcon from './accounts.svg';
 import actionIcon from './action.svg';
+import addIcon from './addicon.svg';
 import adminChevronDownIcon from './admin-chevron-down.svg';
 import adminChevronUpIcon from './admin-chevron-up.svg';
 import adminPermissionIcon from './admin-permission.svg';
@@ -30,6 +32,7 @@ import filterIcon from './filter.svg';
 import filterArrowRightIcon from './filterArrowRightIcon.svg';
 import globeIcon from './globe.svg';
 import helpIcon from './help.svg';
+import importIcon from './import-icon.svg';
 import importTemplateIcon from './import-template.svg';
 import interactionTemplateIcon from './interaction-template.svg';
 import leftArrowIcon from './left-arrow.svg';
@@ -61,16 +64,14 @@ import surveyTemplateIcon from './survey-template.svg';
 import surveyIcon from './survey.svg';
 import taskTemplateIcon from './task-template.svg';
 import timesheetIcon from './timesheet.svg';
-import importIcon from './import-icon.svg';
 import uploadIcon from './Vector.svg';
-import addIcon from './addicon.svg';
-
 export {
-  addIcon,
+  accountDetailsIcon,
   accountHomeIcon,
   accountSettingsIcon,
   accountsIcon,
   actionIcon,
+  addIcon,
   adminChevronDownIcon,
   adminChevronUpIcon,
   administrationIcon,

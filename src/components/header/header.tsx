@@ -41,6 +41,7 @@ interface HeaderProps {
     button?: React.CSSProperties;
     header?: React.CSSProperties;
   };
+  iconClasses?: string;
   onFilterClick?: () => void;
   onRefreshClick?: () => void;
   onDownloadClick?: () => void;
@@ -55,7 +56,8 @@ export const PageHeader: React.FC<HeaderProps> = ({
   placeholder,
   totalRecords,
   icon = accountHomeIcon,
-  iconBackgroundColor = '#d16dd3',
+  iconClasses = 'h-10 w-10 p-2.5 rounded',
+  iconBackgroundColor,
   actionItems = [],
   primaryButton,
   showFilter = false,
@@ -82,7 +84,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
             <img
               src={icon}
               alt='menu-icon'
-              className='h-10 w-10 p-2.5 rounded'
+              className={iconClasses}
               style={{ backgroundColor: iconBackgroundColor }}
             />
             <div className='flex flex-col'>
