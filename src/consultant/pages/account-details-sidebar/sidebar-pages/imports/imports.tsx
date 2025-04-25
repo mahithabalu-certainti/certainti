@@ -34,7 +34,7 @@ const Import: React.FC<ImportProps> = ({ accountDetails }) => {
   ];
   const menuActivity = [
     {
-      label: 'Cretae Task',
+      label: 'Create Task',
       onClick: () => console.log('manage user clicked'),
     },
     {
