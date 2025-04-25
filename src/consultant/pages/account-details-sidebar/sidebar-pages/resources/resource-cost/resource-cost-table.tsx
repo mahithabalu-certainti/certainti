@@ -24,7 +24,7 @@ import { RESOURCECOST } from "../../../../../../routes";
 import ActionButton from '../../../../account-list/table/action-button';
 
 interface ResourceCostTableProps {
-  fiscalYear?: number;
+  fiscalYear?: string;
   appliedFilters?: Record<string, any>;
   accountDetails?: Record<string, any>;
 }

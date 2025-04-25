@@ -7,6 +7,7 @@ export interface ResourceListURLParams {
   sortOrder?: 'ASC' | 'DESC';
   filters?: object;
   accountNumber: string;
+  fiscalYear: number;
 }
 
 export type ResourceList = {

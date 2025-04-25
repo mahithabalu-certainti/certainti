@@ -197,6 +197,7 @@ export const transformCostData = (
     currency_rid: formData.currency ? formData.currency : null,
     resource_rid: formData.resource_rid,
     accountNumber: formData.accountNumber,
+    resource_number: formData?.resource_number,
   };
 
   if (isEdit) {
@@ -206,6 +207,7 @@ export const transformCostData = (
     delete data.resource_rid;
     delete data.resource_type;
     delete data.resource_ref_id;
+    delete data.resource_number;
   }
 
   return data;
@@ -229,6 +231,7 @@ export const transformSkillData = (
     skill_name: formData.skill_name,
     accountNumber: formData.accountNumber,
     resource_desc: formData.resource_desc,
+    resource_number: formData?.resource_number,
   };
 
   if (isEdit) {
@@ -237,6 +240,7 @@ export const transformSkillData = (
     delete data.resource_type;
     delete data.resource_ref_id;
     delete data.resource_desc;
+    delete data.resource_number;
 
     data.rid = formData.skill_rid;
   }

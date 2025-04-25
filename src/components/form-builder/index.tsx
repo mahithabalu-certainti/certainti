@@ -423,6 +423,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         {
           ...section,
           fields: section.fields.map((field) => {
+            if (field.hide) return field;
             // Check if field has a value based on its type
             let hasValue: boolean = Boolean(
               constructFormData[field.name]?.toString().trim()
@@ -596,25 +597,28 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               {section.sectionName}
             </h4>
             <div className={`grid md:grid-cols-${isHalf ? '2' : '1'} gap-4`}>
-              {section.fields.map((field, j) => (
-                <div key={j} className='grid md:grid-cols-12 gap-4'>
-                  <label
-                    className={`text-sm text-gray-500 md:text-right mt-1 ${isHalf ? 'col-span-4' : 'col-span-2'}`}
-                    htmlFor={field.name}
-                  >
-                    {field.label}
-                    {field.required && <span className='text-red-500'> *</span>}
-                  </label>
-                  <div className={isHalf ? 'col-span-8' : 'col-span-10'}>
-                    {getFields(field)}
-                    {field.error && (
-                      <span className='text-red-500 text-sm col-span-full'>
-                        {field.error}
-                      </span>
-                    )}
+              {section.fields.map((field, j) => {
+                if (field.hide) return null;
+                return (
+                  <div key={j} className='grid md:grid-cols-12 gap-4'>
+                    <label
+                      className={`text-sm text-gray-500 md:text-right mt-1 ${isHalf ? 'col-span-4' : 'col-span-2'}`}
+                      htmlFor={field.name}
+                    >
+                      {field.label}
+                      {field.required && <span className='text-red-500'> *</span>}
+                    </label>
+                    <div className={isHalf ? 'col-span-8' : 'col-span-10'}>
+                      {getFields(field)}
+                      {field.error && (
+                        <span className='text-red-500 text-sm col-span-full'>
+                          {field.error}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>)
         );

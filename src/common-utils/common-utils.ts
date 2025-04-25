@@ -14,6 +14,7 @@ export const createTextField = (
     disabled?: boolean;
     onChange?: boolean;
     anyOneRequired?: boolean;
+    hide?: boolean;
     lengthRequired?: {
       key: string;
       minMatchedValue: RegExp;
@@ -33,6 +34,7 @@ export const createTextField = (
   disabled: options.disabled,
   onChange: options.onChange,
   anyOneRequired: options.anyOneRequired,
+  hide: options.hide,
   lengthRequired: options.lengthRequired,
 });
 

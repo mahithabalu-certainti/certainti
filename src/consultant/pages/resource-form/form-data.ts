@@ -107,6 +107,12 @@ export const ResourceFormData = (
             placeholder: 'Enter Resource Role',
             disabled: disableCostAndSkill,
           }),
+          createTextField('r_number', 'Resource Number', {
+            required: false,
+            placeholder: 'Enter Resource Number',
+            disabled: disableCostAndSkill,
+            hide: !disableCostAndSkill,
+          }),
         ],
       },
       {
