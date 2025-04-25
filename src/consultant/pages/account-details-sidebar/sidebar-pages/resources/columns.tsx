@@ -7,14 +7,19 @@ interface ColumnDefinition {
 }
 
 interface ResourceColumnsProps {
-  onResourceIdClick: (row: any) => void; // Now mandatory
+  onResourceIdClick: (row: any) => void;
   view?: boolean;
   onClickId?: string;
 }
 
+// Helper function to display value or NA
+const displayValue = (value: any) => {
+  return value ? value : <span className='text-gray-400'>NA</span>;
+};
+
 const BASE_COLUMNS: ColumnDefinition[] = [
   {
-    id: 'rid',
+    id: 'r_number',
     label: 'Resource Id',
     sortable: true,
     render: (value: string, row: any) => (
@@ -22,25 +27,31 @@ const BASE_COLUMNS: ColumnDefinition[] = [
         className='text-blue-600 hover:text-blue-800 hover:underline cursor-pointer'
         onClick={(e) => {
           e.stopPropagation();
-          // Handler will be replaced in getResourceColumns
           (row.onResourceIdClick || (() => {}))(row);
         }}
       >
-        {value}
+        {displayValue(value)}
       </span>
     ),
   },
-  { id: 'r_number', label: 'Resource Number', sortable: true },
-  { id: 'resource_ref_id', label: 'Resource Ref Id', sortable: true },
-  { id: 'resource_fullname', label: 'Resource Full Name', sortable: true },
-  { id: 'resource_type', label: 'Resource Type', sortable: true },
-];
-
-const EXTENDED_COLUMNS: ColumnDefinition[] = [
-  ...BASE_COLUMNS,
-  { id: 'resource_mobile', label: 'Resource Mobile', sortable: true },
-  { id: 'resource_email', label: 'Resource Email', sortable: true },
-  { id: 'resource_role', label: 'Resource Role', sortable: true },
+  {
+    id: 'resource_ref_id',
+    label: 'Resource Ref Id',
+    sortable: true,
+    render: (value: string) => displayValue(value),
+  },
+  {
+    id: 'resource_fullname',
+    label: 'Resource Full Name',
+    sortable: true,
+    render: (value: string) => displayValue(value),
+  },
+  {
+    id: 'resource_type',
+    label: 'Resource Type',
+    sortable: true,
+    render: (value: string) => displayValue(value),
+  },
 ];
 
 const createStatusColumn = (activeOnly: boolean = false): ColumnDefinition => ({
@@ -57,22 +68,17 @@ const createStatusColumn = (activeOnly: boolean = false): ColumnDefinition => ({
             : 'text-red-600'
       }`}
     >
-      {value}
+      {displayValue(value)}
     </span>
   ),
 });
-
-const resourceColumnsAll: ColumnDefinition[] = [
-  ...EXTENDED_COLUMNS,
-  createStatusColumn(),
-];
 
 export const getResourceColumns = ({
   onResourceIdClick,
   view = false,
   onClickId,
 }: ResourceColumnsProps): ColumnDefinition[] => {
-  // Common function to apply click handler to ID column
+  // Apply click handler to the specified ID column
   const applyClickHandler = (columns: ColumnDefinition[]) => {
     return columns.map((column) =>
       column.id === (onClickId || 'rid')
@@ -86,7 +92,7 @@ export const getResourceColumns = ({
                   onResourceIdClick(row);
                 }}
               >
-                {value}
+                {displayValue(value)}
               </span>
             ),
           }
@@ -94,12 +100,8 @@ export const getResourceColumns = ({
     );
   };
 
-  if (view) {
-    return applyClickHandler([...resourceColumnsAll]);
-  }
-
   const columns = applyClickHandler([...BASE_COLUMNS]);
-  columns.push(createStatusColumn(true));
+  columns.push(createStatusColumn(!view));
 
   return columns;
 };
