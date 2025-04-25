@@ -8,8 +8,8 @@ interface ResourceFiscalAttributes {
   resource_rid: string;
   resource_type: "FullTime" | "Contract" | "Non-Labor";
   fiscal_year?: number;
-  country_rid?: string;
-  country_region_rid?: string;
+  country_rid?: string | null;
+  country_region_rid?: string | null;
   cost_type?:
     | "Annual"
     | "Semi-Annual"
@@ -54,8 +54,8 @@ export class ResourceFiscal
   public resource_rid!: string;
   public resource_type!: "FullTime" | "Contract" | "Non-Labor";
   public fiscal_year?: number;
-  public country_rid?: string;
-  public country_region_rid?: string;
+  public country_rid?: string | null;
+  public country_region_rid?: string | null;
   public cost_type?:
     | "Annual"
     | "Semi-Annual"
