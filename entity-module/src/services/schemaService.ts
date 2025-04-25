@@ -127,8 +127,8 @@ class SchemaService {
       await Resource.sync({ force: false });
       const resources = await Resource.findAll({
         where: {
-          fiscal_year: fiscalYear,
           ...whereClause,
+          ...(fiscalYear && fiscalYear !== 0 ? { fiscal_year: fiscalYear } : {})
         },
         limit,
         offset,
@@ -152,8 +152,8 @@ class SchemaService {
 
       const totalCount = await Resource.count({
         where: {
-          fiscal_year: fiscalYear,
           ...whereClause,
+          ...(fiscalYear && fiscalYear !== 0 ? { fiscal_year: fiscalYear } : {})
         },
       });
 
@@ -169,7 +169,7 @@ class SchemaService {
       return { resources: finalResources, totalCount };
     } catch (err) {
       throw new Error(
-        "Error creating table resources: " + (err as Error).message
+        "Error fetching resources: " + (err as Error).message
       );
     }
   }
