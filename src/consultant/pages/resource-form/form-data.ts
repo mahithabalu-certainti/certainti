@@ -89,7 +89,7 @@ export const ResourceFormData = (
           createSelectField('resource_status', 'Status', {
             options: RESOURCE_STATUS_OPTIONS,
             placeholder: '-Select-',
-            required: false,
+            required: true,
             disabled: disableCostAndSkill,
           }),
 
@@ -228,7 +228,8 @@ export const ResourceFormData = (
             {
               required: false,
               regex: REGEX_PATTERNS.NUMBERS_GREATER_THAN_ZERO,
-              regexErrorMessage: 'Numbers Greater than Zero',
+              regexErrorMessage:
+                'Please enter a valid two-digit number greater than zero.',
               placeholder: 'Enter Years',
               disabled: disableCostAndSkill,
             }
@@ -239,7 +240,8 @@ export const ResourceFormData = (
             {
               required: false,
               regex: REGEX_PATTERNS.NUMBERS_GREATER_THAN_ZERO,
-              regexErrorMessage: 'Numbers Greater than Zero',
+              regexErrorMessage:
+                'Please enter a valid two-digit number greater than zero.',
               placeholder: 'Enter Years',
               disabled: disableCostAndSkill,
             }
