@@ -157,6 +157,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   const basicInfo = createSectionData({
     resource_ref_id: resourceData.resource_ref_id,
     resource_fullname: resourceData.resource_fullname,
+    designation: resourceData.designation,
     resource_type: resourceData.resource_type,
     resource_orgname: resourceData.resource_orgname,
     resource_status: resourceData.resource_status,
@@ -174,7 +175,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
       resource_startdate: resourceData.resource_startdate,
       resource_enddate: resourceData.resource_enddate,
       total_years_experience: resourceData.total_years_experience,
-      designation: resourceData.designation,
+
       total_years_in_org: resourceData.total_years_in_org,
       resource_role: resourceData.resource_role,
     },

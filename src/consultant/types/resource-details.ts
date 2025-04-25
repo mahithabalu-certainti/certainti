@@ -23,6 +23,7 @@ export interface ResourceDetailsTypes {
   modified_datetime: string; // ISO date string
   created_by: string; // UUID format
   modified_by: string | null;
+  comments: string;
 }
 
 interface ResourceData {

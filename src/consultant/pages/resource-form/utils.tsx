@@ -48,6 +48,7 @@ interface RawResourceData {
   designation?: string;
   total_years_oexperience?: string;
   total_years_in_org?: string;
+  comments?: string;
 }
 
 interface TransformedResourceData {
@@ -68,6 +69,7 @@ interface TransformedResourceData {
   total_years_experience: number;
   total_years_in_org: number;
   modified_by: string;
+  comments: string;
 }
 
 interface ResourceTransformationOptions {
@@ -134,6 +136,7 @@ export function transformPayloadforUpdateResource(
     country: rawData.country || existingResource?.country || '',
     state: rawData.state || existingResource?.state || '',
     city: rawData.city || existingResource?.city || '',
+    comments: rawData.comments || existingResource?.comments || '',
     effective_from_date:
       formatDateToDDMMYYYY(rawData.resource_startdate) ||
       formatDateToDDMMYYYY(existingResource?.resource_startdate) ||
@@ -177,6 +180,7 @@ export const transformPayloadforCreateResource = (
     total_years_experience: formData.total_years_experience,
     total_years_in_org: formData.total_years_in_org,
     resource_status: formData.resource_status,
+    comments: formData.comments,
     created_by: formData.created_by,
   };
 };
