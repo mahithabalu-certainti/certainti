@@ -96,7 +96,7 @@ async function resourcesList(req: Request, res: Response): Promise<void> {
 
     const resourcesList = await resourceService.resourcesList(
       accountNumber,
-      value.fiscal_year,
+      value.fiscalYear !== "" && value.fiscalYear !== null ? value.fiscalYear : 0,
       pageNum,
       limitNum,
       value.search,

@@ -242,7 +242,7 @@ const listResourceSchema = Joi.object({
   limit: Joi.string()
     .pattern(/^[0-9]+$/)
     .default("10"),
-  fiscal_year: Joi.number().integer().min(1000).max(9999).optional().messages({
+  fiscalYear: Joi.number().min(1000).max(9999).optional().allow(0).messages({
     "number.base": "Fiscal year must be a number",
     "number.min": "Fiscal year must be a 4-digit number",
     "number.max": "Fiscal year must be a 4-digit number",

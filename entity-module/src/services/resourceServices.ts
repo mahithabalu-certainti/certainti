@@ -100,7 +100,7 @@ export class ResourceService {
    */
   async resourcesList(
     accountNumber: string,
-    fiscalYear: number = moment().year(),
+    fiscalYear: number = 0,
     page: number = 1,
     limit: number = 10,
     search: string,
