@@ -77,6 +77,7 @@ export const useResourceCost = (
       };
     },
     ...options,
+    retry: 0,
   });
 };
 
