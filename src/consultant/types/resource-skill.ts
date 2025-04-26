@@ -9,7 +9,7 @@ export interface ResourceSkillListParams {
   accountNumber?: string;
   fiscalYear?: string | number;
   rid?: string;
-  resourceRid: string;
+  resourceRid?: string;
 }
 
 enum skillLevel {

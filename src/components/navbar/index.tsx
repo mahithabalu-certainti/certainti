@@ -109,7 +109,7 @@ export const Navbar: React.FC = () => {
     try {
       await msalResetInstance.initialize();
       await msalResetInstance.loginPopup();
-      successToast('Password changed successfully');
+      successToast('Your password has been updated successfully');
 
       await msalSigninInstance.initialize();
       await msalSigninInstance.logoutPopup();

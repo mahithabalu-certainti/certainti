@@ -9,8 +9,16 @@ export const updateResourceCost = 'api/resource_cost/update';
 export const resourceSkillUrl = 'api/resource_skill/list';
 
 const returnURL = (url: string, params: Record<string, any>): string => {
-  const { page, limit, sortBy, sortOrder, filters, accountNumber, fiscalYear, resourceRid } =
-    params;
+  const {
+    page,
+    limit,
+    sortBy,
+    sortOrder,
+    filters,
+    accountNumber,
+    fiscalYear,
+    resourceRid,
+  } = params;
   const searchParams = new URLSearchParams();
 
   searchParams.set('page', page.toString());
@@ -18,8 +26,10 @@ const returnURL = (url: string, params: Record<string, any>): string => {
   searchParams.set('sortBy', sortBy);
   searchParams.set('sortOrder', sortOrder);
   searchParams.set('accountNumber', accountNumber);
-  searchParams.set('resourceRid', resourceRid);
-  if (fiscalYear && fiscalYear !== undefined) {
+  if (resourceRid) {
+    searchParams.set('resourceRid', resourceRid);
+  }
+  if (fiscalYear) {
     searchParams.set('fiscalYear', fiscalYear);
   }
 
@@ -47,7 +57,7 @@ export const costListURL = ({
   filters,
   accountNumber,
   fiscalYear,
-  resourceRid
+  resourceRid,
 }: ResourceCostListParams): string => {
   return returnURL(resourceCostUrl, {
     page,
@@ -57,7 +67,7 @@ export const costListURL = ({
     filters,
     accountNumber,
     fiscalYear,
-    resourceRid
+    resourceRid,
   });
 };
 
@@ -98,6 +108,6 @@ export const skillListURL = ({
     filters,
     accountNumber,
     fiscalYear,
-    resourceRid
+    resourceRid,
   });
 };
