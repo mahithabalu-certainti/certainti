@@ -57,7 +57,7 @@ export class ResourceCost extends Model<ResourceCostAttributes, ResourceCostCrea
   modified_by?: string;
 
   static initialize(sequelize: Sequelize,schemaName: string) {
-    return ResourceCost.init(
+    ResourceCost.init(
       {
        rid: {
         type: DataTypes.UUID,
@@ -115,31 +115,31 @@ export class ResourceCost extends Model<ResourceCostAttributes, ResourceCostCrea
         }
        },
        annual_cost: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.DECIMAL(12, 2),
         allowNull: true,
        },
        semi_annual_cost: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.DECIMAL(12, 2),
         allowNull: true,
        },
        monthly_cost: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.DECIMAL(12, 2),
         allowNull: true,
        },
        weekly_cost: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.DECIMAL(12, 2),
         allowNull: true,
        },
        bi_weekly_cost: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.DECIMAL(12, 2),
         allowNull: true,
        },
        daily_cost: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.DECIMAL(12, 2),
         allowNull: true,
        },
        hourly_cost: {
-        type: DataTypes.DECIMAL(10, 2),
+        type: DataTypes.DECIMAL(12, 2),
         allowNull: true,
        },
        currency_rid: {
@@ -212,5 +212,7 @@ export class ResourceCost extends Model<ResourceCostAttributes, ResourceCostCrea
       foreignKey: "resource_rid",
       sourceKey: "rid",
     });
+
+    return ResourceCost;
   }
 }

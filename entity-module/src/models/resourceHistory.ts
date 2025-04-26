@@ -30,7 +30,7 @@ export class ResourcesHistory
   public created_datetime?: Date;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
-    return ResourcesHistory.init(
+    ResourcesHistory.init(
       {
         rid: {
           type: DataTypes.UUID,
@@ -99,5 +99,6 @@ export class ResourcesHistory
         },
       }
     );
+    return ResourcesHistory;
   }
 }
