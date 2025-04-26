@@ -351,10 +351,9 @@ const updateResourceCostSchema = Joi.object({
     "date.invalidFormat":
       "Invalid effective date. Please use the format DD/MM/YYYY",
   }),
-  end_date: Joi.string().max(10).custom(isNotFutureDate, "End date validation").optional().allow(null).allow("").messages({
+  end_date: Joi.string().max(10).custom(isValidDate, "End date validation").optional().allow(null).allow("").messages({
     "string.pattern.base":
       "end_date must be in the format DD/MM/YYYY",
-    "any.invalid": "Date cannot be in the future.",
     "date.invalidFormat":
       "Invalid end date. Please use the format DD/MM/YYYY",
   }),
