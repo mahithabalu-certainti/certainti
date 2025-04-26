@@ -26,7 +26,7 @@ export class ResourceSkillHistory extends Model<ResourceSkillHistoryAttributes, 
     modified_by!: string;
 
   static initialize(sequelize: Sequelize,schemaName:string) {
-    ResourceSkillHistory.init(
+    return ResourceSkillHistory.init(
       {
        rid: {
         type: DataTypes.UUID,

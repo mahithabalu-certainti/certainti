@@ -32,7 +32,7 @@ export class Skill extends Model<SkillAttributes, SkillCreationAttributes> imple
   
 
   static initialize(sequelize: Sequelize,schemaName: string) {
-    Skill.init(
+    return Skill.init(
       {
        rid: {
         type: DataTypes.UUID,

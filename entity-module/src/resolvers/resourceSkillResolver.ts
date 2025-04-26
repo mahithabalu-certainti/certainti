@@ -13,7 +13,7 @@ const resourceSkillResolvers = {
      */
     getResourceSkill: async (_: any, args:any) => {
       const { 
-        rid, 
+        rid,
         page = 1, 
         limit = 10, 
         search = "", 
@@ -21,7 +21,8 @@ const resourceSkillResolvers = {
         sortBy = "created_datetime", 
         sortOrder = "DESC", 
         accountNumber, 
-        fiscalYear 
+        fiscalYear,
+        resourceRid 
       } = args;
 
       let parsedFilters = filters;
@@ -43,7 +44,8 @@ const resourceSkillResolvers = {
         sortBy,
         sortOrder,
         accountNumber,
-        fiscalYear
+        fiscalYear,
+        resourceRid
       );
 
       if (result.statusCode !== 200) {

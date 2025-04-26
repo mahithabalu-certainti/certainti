@@ -10,6 +10,7 @@ type PaginationInput = {
   filters?: Record<string, any>;
   accountNumber: string;
   fiscalYear: number;
+  resourceRid: string;
 };
 
 const resourceCostResolvers: IResolvers = {
@@ -59,7 +60,7 @@ const resourceCostResolvers: IResolvers = {
       ctx
     ) => {
       try {
-        const { limit, page, search, sortBy, sortOrder, filters, accountNumber, fiscalYear } =
+        const { limit, page, search, sortBy, sortOrder, filters, accountNumber, fiscalYear, resourceRid } =
           params.pagination;
 
         const result = await ctx.services.resourceCostServices.resourceCostList(
@@ -70,7 +71,8 @@ const resourceCostResolvers: IResolvers = {
           sortBy,
           sortOrder,
           accountNumber,
-          fiscalYear
+          fiscalYear,
+          resourceRid,
         );
         if (result.statusCode !== HttpStatus.SUCCESS) {
           throw new Error("ResourceCost not found");

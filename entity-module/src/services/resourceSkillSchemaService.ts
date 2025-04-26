@@ -277,6 +277,7 @@ class ResourceSkillSchemaService {
     searchCondition: string,
     finalSortBy: string,
     finalSortOrder: string,
+    resource_rid: string,
     limit: number,
     offset: number,
     search: string
@@ -285,11 +286,11 @@ class ResourceSkillSchemaService {
 
     // Build the query to get data from the account-specific schema
     const query = `
-      SELECT rs.*, r.r_number, r.resource_fullname, s.skill_name, r.resource_role, r.resource_type, r.resource_status, r.fiscal_year
+      SELECT rs.*, r.resource_fullname, s.skill_name, r.resource_role, r.resource_type, r.resource_status, r.fiscal_year
       FROM "${schemaName}"."resource_skill" rs
       INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
       INNER JOIN "${schemaName}"."skill" s ON rs.skill_rid = s.rid
-      WHERE 1=1
+      WHERE 1=1 AND rs.resource_rid = :resource_rid
       ${filterConditions}
       ${searchCondition}
       ORDER BY rs."${finalSortBy}" ${finalSortOrder}
@@ -302,7 +303,7 @@ class ResourceSkillSchemaService {
       FROM "${schemaName}"."resource_skill" rs
       INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
       INNER JOIN "${schemaName}"."skill" s ON rs.skill_rid = s.rid
-      WHERE 1=1
+      WHERE 1=1 AND rs.resource_rid = :resource_rid
       ${filterConditions}
       ${searchCondition}
     `;
@@ -311,6 +312,7 @@ class ResourceSkillSchemaService {
       limit,
       offset,
       searchTerm: search ? `%${search}%` : null,
+      resource_rid,
     };
 
     // Execute the queries
@@ -396,6 +398,10 @@ class ResourceSkillSchemaService {
 
     if (filters && Object.keys(filters).length > 0) {
       filterConditions = this.processFiltersForRawQuery(filters);
+    }
+
+    if (fiscalYear === 0 || fiscalYear === undefined){
+      return filterConditions;
     }
 
     const fiscalYearCondition = `

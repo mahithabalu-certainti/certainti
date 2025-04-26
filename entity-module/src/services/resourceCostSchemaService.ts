@@ -254,65 +254,15 @@ class ResourceCostSchemaService {
    * @returns Promise with currency RIDs or null
    */
   async processCurrencyFilter(filters: Record<string, any>) {
-    // Initialize variables to hold different filter operations
-    let currencyValue = null;
-    let operation = "contains"; // Default operation
-    let isEmpty = null;
-    let isNotEmpty = null;
-
-    // Extract filter values based on the filter structure
-    if (typeof filters.currency === "object") {
-      // Handle different operations
-      if (filters.currency.equals !== undefined) {
-        currencyValue = filters.currency.equals;
-        operation = "equals";
-      } else if (filters.currency.not_equals !== undefined) {
-        currencyValue = filters.currency.not_equals;
-        operation = "not_equals";
-      } else if (filters.currency.contains !== undefined) {
-        currencyValue = filters.currency.contains;
-        operation = "contains";
-      } else if (filters.currency.not_contains !== undefined) {
-        currencyValue = filters.currency.not_contains;
-        operation = "not_contains";
-      } else if (filters.currency.starts_with !== undefined) {
-        currencyValue = filters.currency.starts_with;
-        operation = "starts_with";
-      } else if (filters.currency.ends_with !== undefined) {
-        currencyValue = filters.currency.ends_with;
-        operation = "ends_with";
-      } else if (filters.currency.is_empty !== undefined) {
-        isEmpty = filters.currency.is_empty;
-        operation = "is_empty";
-      } else if (filters.currency.is_not_empty !== undefined) {
-        isNotEmpty = filters.currency.is_not_empty;
-        operation = "is_not_empty";
-      }
-    } else {
-      // Simple string value - treat as 'contains'
-      currencyValue = filters.currency;
-    }
-
-    // Handle isEmpty/isNotEmpty separately
-    if (operation === "is_empty") {
-      delete filters.currency;
-
-      if (isEmpty) {
-        // Is Empty
-        filters.currency_rid = {
-          is_empty: true,
-        };
-      } else if (isNotEmpty) {
-        // Is Not Empty
-        filters.currency_rid = {
-          is_not_empty: true,
-        };
-      }
+    // Check if currency filter exists
+    if (!filters.currency || !Array.isArray(filters.currency)) {
       return null;
     }
-
-    // For other operations, we need to query the database
-    if (currencyValue) {
+    
+    const currencyValues = filters.currency;
+    
+    // If we have currency values to filter by
+    if (currencyValues.length > 0) {
       const mainDbSequelize = await initMainDbSequelize();
       if (!mainDbSequelize) {
         return {
@@ -322,46 +272,19 @@ class ResourceCostSchemaService {
         };
       }
 
-      // Build the query based on the operation
-      let currencyQuery = `SELECT rid FROM "public"."currency" WHERE `;
-
-      switch (operation) {
-        case "equals":
-          currencyQuery += `LOWER(currency_code) = LOWER(:currencyValue) OR LOWER(currency_name) = LOWER(:currencyValue)`;
-          break;
-        case "not_equals":
-          currencyQuery += `LOWER(currency_code) != LOWER(:currencyValue) OR LOWER(currency_name) != LOWER(:currencyValue)`;
-          break;
-        case "contains":
-          currencyQuery += `LOWER(currency_code) LIKE LOWER(:likeValue) OR LOWER(currency_name) LIKE LOWER(:likeValue)`;
-          break;
-        case "not_contains":
-          currencyQuery += `LOWER(currency_code) NOT LIKE LOWER(:likeValue) AND LOWER(currency_name) NOT LIKE LOWER(:likeValue)`;
-          break;
-        case "starts_with":
-          currencyQuery += `LOWER(currency_code) LIKE LOWER(:startsWithValue) OR LOWER(currency_name) LIKE LOWER(:startsWithValue)`;
-          break;
-        case "ends_with":
-          currencyQuery += `LOWER(currency_code) LIKE LOWER(:endsWithValue) OR LOWER(currency_name) LIKE LOWER(:endsWithValue)`;
-          break;
-      }
-
-      // Prepare replacements based on the operation
-      const replacements: any = {
-        currencyValue: currencyValue,
-      };
-
-      if (operation === "contains" || operation === "not_contains") {
-        replacements.likeValue = `%${currencyValue}%`;
-      } else if (operation === "starts_with") {
-        replacements.startsWithValue = `${currencyValue}%`;
-      } else if (operation === "ends_with") {
-        replacements.endsWithValue = `%${currencyValue}`;
-      }
-
+      // Build query to find matching currencies
+      const currencyQuery = `
+        SELECT rid FROM "public"."currency" 
+        WHERE LOWER(currency_code) IN (:currencyValues) 
+        OR LOWER(currency_name) IN (:currencyValues)
+      `;
+      
+      // Convert all values to lowercase for case-insensitive comparison
+      const lowerCaseValues = currencyValues.map((val: string) => val.toLowerCase());
+      
       // Execute the query
       const currencyResults = await mainDbSequelize.query(currencyQuery, {
-        replacements: replacements,
+        replacements: { currencyValues: lowerCaseValues },
         type: "SELECT",
       });
 
@@ -379,23 +302,12 @@ class ResourceCostSchemaService {
 
         return null;
       } else {
-        // For 'not' operations, if no matches found, we should include all records
-        if (operation === "not_equals" || operation === "not_contains") {
-          delete filters.currency;
-          return null;
-        }
-
-        // For other operations, if no matches found, return empty result
-        return {
-          statusCode: HttpStatus.SUCCESS,
-          message: HttpStatus.SUCCESS_MESSAGE,
-          data: {
-            resourceCost: [],
-            count: 0,
-          },
-        };
+        return null;
       }
     }
+    
+    // If currency array is empty, remove the filter
+    delete filters.currency;
     return null;
   }
 
@@ -418,6 +330,7 @@ class ResourceCostSchemaService {
     searchCondition: string,
     sortBy: string,
     sortOrder: string,
+    resource_rid: string,
     limit: number,
     offset: number,
     search: string
@@ -427,10 +340,10 @@ class ResourceCostSchemaService {
 
       // Build the query to get data from the account-specific schema
       const query = `
-        SELECT rc.*,rc.r_number as r_number, r.r_number as resourceNumber, r.resource_fullname
+        SELECT rc.*,rc.r_number as r_number, r.resource_fullname
         FROM "${schemaName}"."resource_cost" rc
         INNER JOIN "${schemaName}"."resources" r ON rc.resource_rid = r.rid
-        WHERE 1=1
+        WHERE 1=1 AND rc.resource_rid = :resource_rid
         ${filterConditions}
         ${searchCondition}
         ORDER BY rc."${sortBy}" ${sortOrder}
@@ -442,7 +355,7 @@ class ResourceCostSchemaService {
         SELECT COUNT(*) as total
         FROM "${schemaName}"."resource_cost" rc
         INNER JOIN "${schemaName}"."resources" r ON rc.resource_rid = r.rid
-        WHERE 1=1
+        WHERE 1=1 AND rc.resource_rid = :resource_rid
         ${filterConditions}
         ${searchCondition}
       `;
@@ -451,6 +364,7 @@ class ResourceCostSchemaService {
         limit,
         offset,
         searchTerm: search ? `%${search}%` : null,
+        resource_rid,
       };
 
       // Execute the queries
@@ -520,8 +434,6 @@ class ResourceCostSchemaService {
     }
   }
 
-  // ... rest of the methods from your original ResourceCostSchemaService ...
-
   /**
    * Builds SQL search condition for resource cost queries
    *
@@ -554,6 +466,10 @@ class ResourceCostSchemaService {
 
     if (filters && Object.keys(filters).length > 0) {
       filterConditions = this.processFiltersForRawQuery(filters);
+    }
+
+    if (fiscalYear === 0 || fiscalYear === undefined){
+      return filterConditions;
     }
 
     const fiscalYearCondition = `

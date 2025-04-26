@@ -56,6 +56,7 @@ export interface IResourceCostService {
     sortOrder: string,
     accountNumber: string,
     fiscalYear: number,
+    resourceRid: string,
   ): Promise<{
     statusCode: number;
     message: string;
@@ -110,6 +111,7 @@ export interface IResourceSkillService {
     sortOrder: string,
     accountNumber: string,
     fiscalYear: number,
+    resourceRid: string,
   ): Promise<{
     statusCode: number;
     message: string;

@@ -7,6 +7,8 @@ import { ResourceFiscal } from "../models/resourceFiscal";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { ResourcesHistory } from "../models/resourceHistory";
 import { ResourcesTimeline } from "../models/resourceTimeline";
+import { ResourceCost } from "../models/resourceCost";
+import { ResourceSkill } from "../models/resourceSkill";
 
 class SchemaService {
   /**
@@ -87,9 +89,15 @@ class SchemaService {
         schemaName
       );
 
+      const ResourceCostModel = await ResourceCost.initialize(sequelize, schemaName);
+      const ResourceSkillModel = await ResourceSkill.initialize(sequelize, schemaName);
+
+
       await Resource.sync({ force: false });
       await ResourcesHistoryModel.sync({ force: false });
       await ResourcesTimelineModel.sync({ force: false });
+      await ResourceCostModel.sync({ force: false });
+      await ResourceSkillModel.sync({ force: false });
     } catch (err) {
       throw new Error(
         "Error creating table resources: " + (err as Error).message

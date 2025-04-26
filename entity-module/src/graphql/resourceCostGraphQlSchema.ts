@@ -13,6 +13,7 @@ const typeDefs = gql`
     account_rid: String!
     resource_type: String!
     resource_rid: String!
+    resource_number: String!
     resource_ref_id: String!
     effective_date: String!
     end_date: String
@@ -49,6 +50,7 @@ const typeDefs = gql`
     filters: JSON
     accountNumber: String!
     fiscalYear: Int!
+    resourceRid: String!
   }
 
   type ResourceCostPaginatedResponse {
@@ -62,6 +64,7 @@ const typeDefs = gql`
     account_rid: String!
     resource_type: String!
     resource_rid: String!
+    resource_number: String!
     resource_ref_id: String!
     effective_date: String!
     end_date: String
