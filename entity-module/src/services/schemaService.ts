@@ -2,7 +2,7 @@ import moment, { Moment } from "moment";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Resources } from "../models/resource";
 import { ICreateResource, IUpdateResource } from "../utils/types";
-import { Sequelize } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import { ResourceFiscal } from "../models/resourceFiscal";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { ResourcesHistory } from "../models/resourceHistory";
@@ -222,7 +222,9 @@ class SchemaService {
 
       const isRefIdExist = await Resource.findOne({
         where: {
-          resource_ref_id: resourceData.resource_ref_id,
+          resource_ref_id: {
+            [Op.iLike]: resourceData.resource_ref_id,
+          },
         },
       });
 
