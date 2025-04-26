@@ -344,18 +344,29 @@ const updateResourceCostSchema = Joi.object({
   rid: Joi.string().pattern(uuidRegex).required(),
   eid: Joi.string().max(255).optional().allow(null).allow(""),
   accountNumber: Joi.string().max(255).required(),
-  effective_date: Joi.string().max(10).custom(isNotFutureDate, "Effective date validation").optional().allow(null).allow("").messages({
-    "string.pattern.base":
-      "effective_date must be in the format DD/MM/YYYY",
+  currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
+  effective_date: Joi.string().max(10).custom(isNotFutureDate, "Effective date validation")
+  .when('end_date', {
+    is: Joi.exist().not(null).not(''),
+    then: Joi.required().messages({
+      'any.required': 'Effective date is required when end date is provided'
+    }),
+    otherwise: Joi.optional().allow(null).allow('')
+  }).messages({
+    "string.pattern.base": "effective_date must be in the format DD/MM/YYYY",
     "any.invalid": "Date cannot be in the future.",
-    "date.invalidFormat":
-      "Invalid effective date. Please use the format DD/MM/YYYY",
+    "date.invalidFormat": "Invalid effective date. Please use the format DD/MM/YYYY",
   }),
-  end_date: Joi.string().max(10).custom(isValidDate, "End date validation").optional().allow(null).allow("").messages({
-    "string.pattern.base":
-      "end_date must be in the format DD/MM/YYYY",
-    "date.invalidFormat":
-      "Invalid end date. Please use the format DD/MM/YYYY",
+end_date: Joi.string().max(10).custom(isValidDate, "End date validation")
+  .when('effective_date', {
+    is: Joi.exist().not(null).not(''),
+    then: Joi.required().messages({
+      'any.required': 'End date is required when effective date is provided'
+    }),
+    otherwise: Joi.optional().allow(null).allow('')
+  }).messages({
+    "string.pattern.base": "end_date must be in the format DD/MM/YYYY",
+    "date.invalidFormat": "Invalid end date. Please use the format DD/MM/YYYY",
   }),
   cost_frequency: Joi.string()
     .valid(
@@ -415,18 +426,28 @@ const resourceCostSchema = Joi.object({
   resource_type: Joi.string().valid("FullTime", "Contract").required(),
   resource_rid: Joi.string().pattern(uuidRegex).required(),
   resource_ref_id: Joi.string().max(255).required(),
-  effective_date: Joi.string().max(10).custom(isNotFutureDate, "Effective date validation").optional().allow(null).allow("").messages({
-    "string.pattern.base":
-      "effective_date must be in the format DD/MM/YYYY",
+  effective_date: Joi.string().max(10).custom(isNotFutureDate, "Effective date validation")
+  .when('end_date', {
+    is: Joi.exist().not(null).not(''),
+    then: Joi.required().messages({
+      'any.required': 'Effective date is required when end date is provided'
+    }),
+    otherwise: Joi.optional().allow(null).allow('')
+  }).messages({
+    "string.pattern.base": "effective_date must be in the format DD/MM/YYYY",
     "any.invalid": "Date cannot be in the future.",
-    "date.invalidFormat":
-      "Invalid effective date. Please use the format DD/MM/YYYY",
+    "date.invalidFormat": "Invalid effective date. Please use the format DD/MM/YYYY",
   }),
-  end_date: Joi.string().max(10).custom(isValidDate, "End date validation").optional().allow(null).allow("").messages({
-    "string.pattern.base":
-      "end_date must be in the format DD/MM/YYYY",
-    "date.invalidFormat":
-      "Invalid end date. Please use the format DD/MM/YYYY",
+end_date: Joi.string().max(10).custom(isValidDate, "End date validation")
+  .when('effective_date', {
+    is: Joi.exist().not(null).not(''),
+    then: Joi.required().messages({
+      'any.required': 'End date is required when effective date is provided'
+    }),
+    otherwise: Joi.optional().allow(null).allow('')
+  }).messages({
+    "string.pattern.base": "end_date must be in the format DD/MM/YYYY",
+    "date.invalidFormat": "Invalid end date. Please use the format DD/MM/YYYY",
   }),
   cost_frequency: Joi.string()
     .valid(
