@@ -52,7 +52,7 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
   technical_weightage!: number;
 
   static initialize(sequelize: Sequelize,schemaName: string) {
-    return ResourceSkill.init(
+    ResourceSkill.init(
       {
        rid: {
         type: DataTypes.UUID,
@@ -193,5 +193,7 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
       foreignKey: "skill_rid",
       sourceKey: "rid",
     });
+
+    return ResourceSkill;
   }
 }

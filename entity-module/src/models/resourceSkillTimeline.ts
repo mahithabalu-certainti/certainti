@@ -30,7 +30,7 @@ export class ResourceSkillTimeline extends Model<ResourceSkillTimelineAttributes
  modified_by!: string;
 
   static initialize(sequelize: Sequelize,schemaName: string) {
-    return ResourceSkillTimeline.init(
+    ResourceSkillTimeline.init(
       {
        rid: {
         type: DataTypes.UUID,
@@ -108,5 +108,6 @@ export class ResourceSkillTimeline extends Model<ResourceSkillTimelineAttributes
         }
       }
     );
+    return ResourceSkillTimeline;
   }
 }

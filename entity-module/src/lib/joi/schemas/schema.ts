@@ -368,8 +368,12 @@ const updateResourceCostSchema = Joi.object({
       "hourly"
     )
     .required(),
-  cost: Joi.number().min(0).max(9999999999.99).required(),
-  currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
+  cost: Joi.number().precision(2).min(0).max(9999999999.99).required().messages({
+    'number.base': 'Cost must be a number',
+    'number.min': 'Cost cannot be negative',
+    'number.max': 'Cost cannot exceed 9999999999.99',
+    'number.precision': 'Cost can only have up to 2 decimal places'
+  }),
   status: Joi.string().max(255).default("active").optional(),
   modified_datetime: Joi.date()
     .iso()
@@ -435,7 +439,12 @@ const resourceCostSchema = Joi.object({
       "hourly"
     )
     .required(),
-  cost: Joi.number().min(0).max(9999999999.99).required(),
+    cost: Joi.number().precision(2).min(0).max(9999999999.99).required().messages({
+      'number.base': 'Cost must be a number',
+      'number.min': 'Cost cannot be negative',
+      'number.max': 'Cost cannot exceed 9999999999.99',
+      'number.precision': 'Cost can only have up to 2 decimal places'
+    }),  
   fiscalYear: Joi.number().optional(),
   currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
   status: Joi.string().max(255).default("active"),
