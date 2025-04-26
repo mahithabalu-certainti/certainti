@@ -89,6 +89,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               fiscalYear={fiscalYearValue}
               appliedFilters={appliedFilters}
               accountDetails={accountDetails}
+              resourceRid={resourceData?.rid}
             />
           </Box>
         )}
@@ -98,6 +99,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               fiscalYear={fiscalYearValue}
               appliedFilters={appliedFilters}
               accountDetails={accountDetails}
+              resourceRid={resourceData?.rid}
             />
           </Box>
         )}

@@ -9,6 +9,7 @@ export interface ResourceCostListParams {
   accountNumber?: string;
   fiscalYear?: string | number;
   id?: string;
+  resourceRid: string;
 }
 
 export type ResourceCostList = {
