@@ -9,7 +9,7 @@ import SchemaService from "./schemaService";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { ResourceFiscal } from "../models/resourceFiscal";
 import { initMainDbSequelize } from "../config/mainDataSource";
-import { Sequelize } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import moment from "moment";
 
 class ResourceCostService {
@@ -203,27 +203,35 @@ class ResourceCostService {
       let frequency= {};
 
       try {
-        switch(cost_frequency) {
+        let costField;
+        switch (cost_frequency) {
           case "annual":
             frequency = { annual_cost: cost };
+            costField = "annual_cost";
             break;
           case "semi_annual":
             frequency = { semi_annual_cost: cost };
+            costField = "semi_annual_cost";
             break;
           case "monthly":
             frequency = { monthly_cost: cost };
+            costField = "monthly_cost";
             break;
           case "weekly":
             frequency = { weekly_cost: cost };
+            costField = "weekly_cost";
             break;
           case "bi_weekly":
             frequency = { bi_weekly_cost: cost };
+            costField = "bi_weekly_cost";
             break;
           case "daily":
             frequency = { daily_cost: cost };
+            costField = "daily_cost";
             break;
           case "hourly":
             frequency = { hourly_cost: cost };
+            costField = "hourly_cost";
             break;
           default:
             throw new Error(`Invalid cost frequency: ${cost_frequency}`);
@@ -233,6 +241,20 @@ class ResourceCostService {
         ResourceCost.initialize(sequelize, schemaName);
         const effectiveDate = this.formatDateForDb(effective_date as string);
         const endDate = this.formatDateForDb(end_date as string);
+
+        const existingCost = await ResourceCost.findOne({
+          where: {
+            resource_rid,
+            effective_date: effectiveDate || null,
+            end_date: endDate || null,
+            [costField]: { [Op.ne]: null }
+          },
+        });
+        
+        if (existingCost) {
+          throw new Error("Compensation already exists for this duration.");
+        }
+
         // Use the model's create method to leverage default values
         createdResourceCost = await ResourceCost.create({
           eid,
