@@ -107,8 +107,8 @@ export const ManageUserDetails: React.FC = () => {
       <div className='flex flex-col border border-[#CBD6E2] rounded-[4px]'>
         <div className='flex justify-between items-center border-b border-[#CBD6E2] p-2'>
           <div>
-            <div className='text-small text-[#7D98B6]'>User</div>
-            <div className='font-semibold text-[14px] text-[#2D3E4F] leading-5 tracking-normal'>
+          <div className='text-[11px] text-[#7D98B6]'>User</div>
+          <div className='font-semibold text-[16px] text-[#2D3E4F] leading-5 tracking-normal'>
               {userDetails.isLoading ? (
                 <Skeleton variant='rounded' width={200} />
               ) : (

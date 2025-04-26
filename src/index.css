@@ -4,8 +4,10 @@
   font-family: 'Lexend', sans-serif;
 }
 
-.placeholder-custom-color::placeholder{
-  color:#7D98B6;
+.placeholder-custom-color::placeholder {
+  color: #7d98b6;
+  font-size: 13px;
+  font-weight: 400;
 }
 
 .custom-select-no-arrow {
@@ -13,4 +15,6 @@
   -moz-appearance: none;
   appearance: none;
   background-image: none;
+  font-size: 13px;
+  font-weight: 400;
 }

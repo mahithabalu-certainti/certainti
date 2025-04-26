@@ -251,7 +251,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     handleChange(newValues);
                   }}
                 />
-                <span className='text-sm text-[#7D98B6]'>{option.label}</span>
+                <span className='text-[13px] text-[#7D98B6]'>
+                  {option.label}
+                </span>
               </label>
             ))}
           </div>
@@ -271,7 +273,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     handleChange(e.target.value);
                   }}
                 />
-                <span className='text-sm text-[#7D98B6]'>{option.label}</span>
+                <span className='text-[13px] text-[#7D98B6]'>
+                  {option.label}
+                </span>
               </label>
             ))}
           </div>
@@ -392,8 +396,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             onChange={(phone, country: CountryData) =>
               handleChange(phone, country.countryCode)
             }
-            inputClass={`placeholder-custom-color !w-full !text-sm !p-2 !pl-12 !border !h-[32px] !rounded-xs ${field.error ? '!border-red-500' : '!border-gray-300'
-              }${field.disabled ? ' !bg-gray-100' : ''}`}
+            inputClass={`placeholder-custom-color !w-full !text-[13px] !p-2 !pl-12 !border !h-[32px] !rounded-xs ${
+              field.error ? '!border-red-500' : '!border-gray-300'
+            }${field.disabled ? ' !bg-gray-100' : ''}`}
             buttonClass={`!bg-transparent !border-r ${field.error ? '!border-red-500' : '!border-gray-300'} !rounded-tl-xs !rounded-bl-xs !hover:bg-transparent !shadow-none !px-0 !m-0`}
             containerClass='!w-full'
             inputProps={{

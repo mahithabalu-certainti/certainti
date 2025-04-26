@@ -8,9 +8,13 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     return data.map((detail, index) => (
       <div
         key={index}
-        className={`${detail.full ? 'col-span-2 border-t -mt-[1px] bg-[#CBD6E2]' : ''} grid ${detail.full ? 'grid-cols-1' : 'grid-cols-[1fr_2fr]'} gap-1 items-center justify-center border-gray-200 p-2`}
+        className={`${detail.full ? 'col-span-2 border-t -mt-[1px] bg-[#DCE8FF]' : ''} grid ${detail.full ? 'grid-cols-1' : 'grid-cols-[1fr_2fr]'} gap-1 items-center justify-center border-gray-200 p-2`}
       >
-        <div className='font-medium text-[14px] text-[#425A76] text-left'>{detail.label ?? ''}</div>
+        <div
+          className={`text-[14px] text-left ${detail.full ? 'font-semibold text-[#2D3E4F] ' : 'font-medium text-[#425A76] '}`}
+        >
+          {detail.label ?? ''}
+        </div>
         {!detail.full && (
           <div className='break-words whitespace-normal font-light text-[#425A76] text-[14px] max-w-full'>
             {loading ? (
