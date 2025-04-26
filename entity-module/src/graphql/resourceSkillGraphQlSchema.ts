@@ -8,6 +8,7 @@ type ResourceSkill {
   account_rid: String
   resource_type: String
   resource_rid: String
+  resource_number: String
   resource_desc: String
   skill_rid: String
   start_date: String
@@ -22,7 +23,6 @@ type ResourceSkill {
   modified_datetime: String
   created_by: String
   modified_by: String
-  resource_number: String
   resource_full_name: String
   skill_name: String
   resource_data: ResourceData
@@ -44,6 +44,7 @@ input ResourceSkillInput {
   account_rid: String!
   resource_type: String!
   resource_rid: String!
+  resource_number: String!
   resource_desc: String
   skill_rid: String
   start_date: String!
@@ -85,6 +86,7 @@ type Query {
     sortOrder: String
     accountNumber: String!
     fiscalYear: Int!
+    resourceRid: String!
   ): ResourceSkillResponse
 }
 

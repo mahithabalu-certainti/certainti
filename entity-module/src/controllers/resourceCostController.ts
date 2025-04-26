@@ -66,7 +66,8 @@ async function resourceCosts(req: Request, res: Response): Promise<void> {
       value.sortBy,
       value.sortOrder,
       value.accountNumber,
-      value.fiscalYear
+      value.fiscalYear,
+      value.resourceRid
     );
 
     if (resourceCost.statusCode === HttpStatus.SUCCESS) {

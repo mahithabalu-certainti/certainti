@@ -178,7 +178,8 @@ async function resourceSkill(req: Request, res: Response): Promise<void> {
         "createdAt",  // Default sort
         "DESC",  // Default order
         value.accountNumber,
-        value.fiscalYear || new Date().getFullYear().toString()
+        value.fiscalYear || 0,
+        ""
       );
 
       if (resourceSkill.statusCode === HttpStatus.SUCCESS) {
@@ -220,7 +221,8 @@ async function resourceSkill(req: Request, res: Response): Promise<void> {
       value.sortBy,
       value.sortOrder,
       value.accountNumber,
-      value.fiscalYear
+      value.fiscalYear,
+      value.resourceRid
     );
 
     if (resourceSkill.statusCode === HttpStatus.SUCCESS) {

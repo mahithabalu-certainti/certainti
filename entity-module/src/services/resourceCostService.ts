@@ -10,6 +10,7 @@ import { initOrgSequelize } from "../config/orgDataSource";
 import { ResourceFiscal } from "../models/resourceFiscal";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { Sequelize } from "sequelize";
+import moment from "moment";
 
 class ResourceCostService {
   private schemaService: SchemaService;
@@ -63,7 +64,8 @@ class ResourceCostService {
     sortBy: string,
     sortOrder: string,
     accountNumber: string,
-    fiscalYear: number
+    fiscalYear: number,
+    resourceRid: string,
   ): Promise<{
     statusCode: number;
     message: string;
@@ -122,6 +124,7 @@ class ResourceCostService {
         searchCondition,
         finalSortBy,
         finalSortOrder,
+        resourceRid,
         limit,
         offset,
         search
@@ -162,6 +165,7 @@ class ResourceCostService {
         cost,
         currency_rid,
         accountNumber,
+        resource_number,
       } = resourceCost;
 
       let { accountNumber: accountNumberFetched, accountId } =
@@ -227,15 +231,18 @@ class ResourceCostService {
     
         const sequelize = await this.getOrgSequelize();
         ResourceCost.initialize(sequelize, schemaName);
+        const effectiveDate = this.formatDateForDb(effective_date as string);
+        const endDate = this.formatDateForDb(end_date as string);
         // Use the model's create method to leverage default values
         createdResourceCost = await ResourceCost.create({
           eid,
           account_rid,
           resource_type,
           resource_rid,
+          resource_number,
           resource_ref_id,
-          effective_date: effective_date || undefined,
-          end_date: end_date || undefined,         
+          effective_date: effectiveDate || null,
+          end_date: endDate || null,         
           ...frequency,
           currency_rid: currency_rid || undefined,
           created_datetime: new Date(),
@@ -445,13 +452,14 @@ class ResourceCostService {
           default:
             throw new Error(`Invalid cost frequency: ${cost_frequency}`);
         }
-    
 
+        const effectiveDate = this.formatDateForDb(effective_date as string);
+        const endDate = this.formatDateForDb(end_date as string);
         const [affectedCounts, affectedRows] = await ResourceCost.update(
           {
             eid,
-            effective_date: effective_date || undefined,
-            end_date: end_date || undefined,
+            effective_date:  effectiveDate || null,
+            end_date: endDate || null,
             ...frequency,
             currency_rid,
             rid,
@@ -887,6 +895,24 @@ class ResourceCostService {
       
       return result;
     }
+
+   /**
+ * Properly formats a date string for database storage
+ * @param dateString Date string in DD/MM/YYYY format
+ * @returns Properly formatted date for database storage
+ */
+private formatDateForDb(dateString?: string): Date | null {
+  if (!dateString) return null;
+  
+  // Parse the date using moment to ensure consistent handling
+  const date = moment(dateString, "DD/MM/YYYY", true);
+  if (!date.isValid()) return null;
+  
+  // Set the time to noon to avoid timezone issues
+  date.hour(12).minute(0).second(0).millisecond(0);
+  
+  return date.toDate();
+}
 }
 
 export default ResourceCostService;

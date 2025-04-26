@@ -9,10 +9,11 @@ interface ResourceSkillAttributes  {
  account_rid: string,
  resource_type: string,
  resource_rid: string,
+ resource_number: string,
  resource_ref_id: string, 
  resource_desc: string,
  skill_rid: string,
- start_date?: Date,
+ start_date?: Date | null,
  skill_description?: string,
  skill_level: string,
  status?: string,
@@ -35,6 +36,7 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
   account_rid!: string;
   resource_type!: string;
   resource_rid!: string;
+  resource_number!: string;
   resource_ref_id!: string;
   resource_desc!: string;
   status?: string; 
@@ -50,7 +52,7 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
   technical_weightage!: number;
 
   static initialize(sequelize: Sequelize,schemaName: string) {
-    ResourceSkill.init(
+    return ResourceSkill.init(
       {
        rid: {
         type: DataTypes.UUID,
@@ -75,6 +77,10 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
        },
        resource_rid: {
         type: DataTypes.UUID,
+        allowNull: false,
+       },
+       resource_number: {
+        type: DataTypes.STRING(255),
         allowNull: false,
        },
        resource_desc : {

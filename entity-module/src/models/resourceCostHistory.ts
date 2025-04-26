@@ -26,7 +26,7 @@ export class ResourceCostHistory extends Model<ResourceCostHistoryAttributes, Re
     modified_by!: string;
 
   static initialize(sequelize: Sequelize,schemaName:string) {
-    ResourceCostHistory.init(
+    return ResourceCostHistory.init(
       {
        rid: {
         type: DataTypes.UUID,

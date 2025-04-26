@@ -30,7 +30,7 @@ export class ResourceCostTimeline extends Model<ResourceCostTimelineAttributes, 
  modified_by!: string;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
-    ResourceCostTimeline.init(
+    return ResourceCostTimeline.init(
       {
        rid: {
         type: DataTypes.UUID,

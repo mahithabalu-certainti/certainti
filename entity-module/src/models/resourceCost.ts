@@ -8,9 +8,10 @@ interface ResourceCostAttributes {
  account_rid: string,
  resource_type: string,
  resource_rid: string,
+ resource_number: string,
  resource_ref_id: string, 
- effective_date?: Date,
- end_date?: Date,
+ effective_date?: Date | null,
+ end_date?: Date | null,
  annual_cost?: number,
  semi_annual_cost?: number,
  monthly_cost?: number,
@@ -37,6 +38,7 @@ export class ResourceCost extends Model<ResourceCostAttributes, ResourceCostCrea
   account_rid!: string;
   resource_type!: string;
   resource_rid!: string;
+  resource_number!: string;
   resource_ref_id!: string;
   effective_date?: Date;
   end_date?: Date;
@@ -55,7 +57,7 @@ export class ResourceCost extends Model<ResourceCostAttributes, ResourceCostCrea
   modified_by?: string;
 
   static initialize(sequelize: Sequelize,schemaName: string) {
-    ResourceCost.init(
+    return ResourceCost.init(
       {
        rid: {
         type: DataTypes.UUID,
@@ -86,6 +88,10 @@ export class ResourceCost extends Model<ResourceCostAttributes, ResourceCostCrea
         type: DataTypes.STRING(255),
         allowNull: false,
        },
+       resource_number: {
+        type: DataTypes.STRING(255),
+        allowNull: false,
+       },
        effective_date: {
         type: DataTypes.DATE,
         allowNull: true,
@@ -100,6 +106,13 @@ export class ResourceCost extends Model<ResourceCostAttributes, ResourceCostCrea
        end_date: {
         type: DataTypes.DATE,
         allowNull: true,
+        validate: {
+          isAfterEffectiveDate(value: Date) {
+            if (value && this.effective_date && value <= this.effective_date) {
+              throw new Error('End date must be greater than effective date');
+            }
+          }
+        }
        },
        annual_cost: {
         type: DataTypes.DECIMAL(10, 2),

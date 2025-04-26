@@ -10,8 +10,7 @@ import { ResourceFiscal } from "../models/resourceFiscal";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Sequelize } from "sequelize";
 import { initMainDbSequelize } from "../config/mainDataSource";
-
-
+import moment from "moment";
 
 
 class ResourceSkillService {
@@ -69,6 +68,7 @@ class ResourceSkillService {
             skill_name,
             technical_weightage,
             accountNumber,
+            resource_number,
           } = resourceSkill;
       
           let { accountNumber: accountNumberFetched, accountId } =
@@ -149,21 +149,25 @@ class ResourceSkillService {
             const sequelizeInstance = await this.getOrgSequelize();
             ResourceSkill.initialize(sequelizeInstance,schemaName);
 
+            const startDate = this.formatDateForDb(start_date as string);
+
             // Use the model's create method to leverage default values
             createdResourceSkill = await ResourceSkill.create({
               eid,
               account_rid,
               resource_type,
-              resource_rid:resource_rid,
+              resource_rid,
+              resource_number,
               resource_ref_id,
               resource_desc: resource_desc || '',
               skill_rid: skillRidToUse, // Use the determined skill RID
-              start_date: start_date || undefined,
+              start_date: startDate || null,
               skill_description,
               skill_level: skill_level || '',
               years_of_experience: years_of_experience || 0,
               technical_weightage: technical_weightage || 0,
               created_by: userId,
+              modified_by: userId,
             });
 
             // Update the resource_fiscal table
@@ -353,6 +357,7 @@ class ResourceSkillService {
               skill_name,
               skill_description,
               created_by: userId,
+              modified_by: userId,
             });
             
             skillRidToUse = newSkill.rid;
@@ -368,11 +373,13 @@ class ResourceSkillService {
       }
 
       try{
+      const startDate = this.formatDateForDb(start_date as string);
+ 
       const [affectedCounts, affectedRows] = await ResourceSkill.update(
         {
           rid,
           eid, 
-          start_date: start_date || undefined,
+          start_date: startDate || null,
           skill_description,
           skill_level,
           skill_rid:skillRidToUse,
@@ -558,7 +565,8 @@ private async createResourceSkillHistory(
     sortBy: string,
     sortOrder: string,
     accountNumber: string,
-    fiscalYear: number
+    fiscalYear: number,
+    resourceRid: string,
   )
   : Promise<{
     statusCode: number;
@@ -582,8 +590,8 @@ private async createResourceSkillHistory(
         return resourceSkillSchemaService.createErrorResponse("Account schema does not exist");
       }
 
-      // If rid is provided, we can optimize by directly querying for that specific record
-      if (rid) {
+      // If rid is only provided, we can optimize by directly querying for that specific record
+      if (rid && !resourceRid) {
         
         // Direct query for the specific resource skill by rid
         const query = `
@@ -638,6 +646,7 @@ private async createResourceSkillHistory(
         searchCondition,
         finalSortBy,
         finalSortOrder,
+        resourceRid,
         limit,
         offset,
         search
@@ -698,6 +707,24 @@ private async createResourceSkillHistory(
     
     return result;
   }
+
+   /**
+ * Properly formats a date string for database storage
+ * @param dateString Date string in DD/MM/YYYY format
+ * @returns Properly formatted date for database storage
+ */
+private formatDateForDb(dateString?: string): Date | null {
+  if (!dateString) return null;
+  
+  // Parse the date using moment to ensure consistent handling
+  const date = moment(dateString, "DD/MM/YYYY", true);
+  if (!date.isValid()) return null;
+  
+  // Set the time to noon to avoid timezone issues
+  date.hour(12).minute(0).second(0).millisecond(0);
+  
+  return date.toDate();
+}
 
 }
 
