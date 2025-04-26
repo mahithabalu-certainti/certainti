@@ -229,9 +229,6 @@ const updateResourceSchema = Joi.object({
     .allow("")
     .allow(null),
   resource_status: Joi.string().valid("Active", "Inactive").optional(),
-  modified_by: Joi.string()
-    .guid({ version: ["uuidv4"] })
-    .required(),
   comments: Joi.string().max(1000).optional().allow("").allow(null),
 });
 
