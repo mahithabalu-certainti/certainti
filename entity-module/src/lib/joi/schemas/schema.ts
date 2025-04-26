@@ -28,7 +28,6 @@ const isNotFutureDate = (value: string, helpers: Joi.CustomHelpers): any => {
       message: "Date cannot be in the future.",
     });
   }
-  console.log("value : " , value);
   return value;
 };
 
