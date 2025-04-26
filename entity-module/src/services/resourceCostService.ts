@@ -231,8 +231,8 @@ class ResourceCostService {
     
         const sequelize = await this.getOrgSequelize();
         ResourceCost.initialize(sequelize, schemaName);
-        const effectiveDate = this.formatDateForDb(resourceCost.effective_date as string);
-        const endDate = this.formatDateForDb(resourceCost.end_date as string);
+        const effectiveDate = this.formatDateForDb(effective_date as string);
+        const endDate = this.formatDateForDb(end_date as string);
         // Use the model's create method to leverage default values
         createdResourceCost = await ResourceCost.create({
           eid,
@@ -373,15 +373,6 @@ class ResourceCostService {
         status,
       } = resourceCostData;
 
-      // Validate that effective_date and end_date are not the same
-      if (effective_date && end_date && new Date(effective_date).getTime() === new Date(end_date).getTime()) {
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: "Effective date and end date cannot be the same",
-        };
-      }
-
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
 
@@ -462,8 +453,8 @@ class ResourceCostService {
             throw new Error(`Invalid cost frequency: ${cost_frequency}`);
         }
 
-        const effectiveDate = this.formatDateForDb(resourceCostData.effective_date as string);
-        const endDate = this.formatDateForDb(resourceCostData.end_date as string);
+        const effectiveDate = this.formatDateForDb(effective_date as string);
+        const endDate = this.formatDateForDb(end_date as string);
         const [affectedCounts, affectedRows] = await ResourceCost.update(
           {
             eid,
