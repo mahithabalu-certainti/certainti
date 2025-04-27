@@ -16,9 +16,9 @@ export const RESOURCE_STATUS_OPTIONS: SelectOption[] = [
 ];
 
 export const RESOURCE_TYPE_OPTIONS: SelectOption[] = [
-  { label: 'Full Time', value: 'FullTime' },
-  { label: 'Contract', value: 'Contract' },
-  { label: 'Non Labour', value: 'NonLabour' },
+  { label: 'Full-Time', value: 'FullTime' },
+  { label: 'Sub Contract', value: 'Contract' },
+  { label: 'Non-Labour', value: 'NonLabour' },
 ];
 
 export const FREQUENCY_OPTIONS: SelectOption[] = [

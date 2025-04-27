@@ -104,8 +104,8 @@ export const ResourceFormData = (
           }),
           createTextField('resource_role', 'Resource Role', {
             required: false,
-            regex: REGEX_PATTERNS.LETTERS_3_TO_25,
-            regexErrorMessage: '3 to 25 characters without special symbols',
+            regex: RESOURCE_REGEX.DESIGNATION,
+            regexErrorMessage: '4 to 100 characters',
             placeholder: 'Enter Resource Role',
             disabled: disableCostAndSkill,
           }),
@@ -215,7 +215,12 @@ export const ResourceFormData = (
           createDateField('resource_enddate', 'Resource End Date', {
             required: false,
             disabled: disableCostAndSkill,
-            minDate: new Date(currentDate.getTime()),
+            minDate: currentDate,
+            greaterThan: {
+              field: 'resource_startdate',
+              message:
+                'Resource End Date must be after Resource Effective From',
+            },
           }),
           createTextField('designation', 'Designation', {
             required: false,
@@ -231,7 +236,7 @@ export const ResourceFormData = (
               required: false,
               regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
               regexErrorMessage: 'Enter whole numbers between 0 and 99',
-              placeholder: 'Enter Years',
+              placeholder: 'Enter total years of experience',
               disabled: disableCostAndSkill,
             }
           ),
@@ -242,7 +247,7 @@ export const ResourceFormData = (
               required: false,
               regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
               regexErrorMessage: 'Enter whole numbers between 0 and 99',
-              placeholder: 'Enter Years',
+              placeholder: 'Enter total years in the organisation',
               disabled: disableCostAndSkill,
             }
           ),
