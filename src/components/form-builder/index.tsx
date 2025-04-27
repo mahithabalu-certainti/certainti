@@ -7,7 +7,12 @@ import { CountryCode, parsePhoneNumberFromString } from 'libphonenumber-js';
 import React, { useEffect } from 'react';
 import PhoneInput, { CountryData } from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
-import { calendarIcon, closeIcon, searchBlackIcon } from '../../assets';
+import {
+  arrowDownIcon,
+  calendarIcon,
+  closeIcon,
+  searchBlackIcon,
+} from '../../assets';
 
 import { useLocation } from 'react-router-dom';
 import { FieldTypes, OnChange } from '../../common-service';
@@ -39,7 +44,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   >({});
 
   const CommonSkeleton = (
-    <Skeleton variant='rounded' width='100%' height={36} />
+    <Skeleton variant='rounded' width='100%' height={32} />
   );
   useEffect(() => {
     setFormData(data);
@@ -132,7 +137,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             placeholder={field.placeholder}
             autoComplete='off'
             className={
-              'w-full sm:text-sm p-2 border-1 ' + isError + fieldDisabled
+              'placeholder-custom-color w-full sm:text-sm px-2 h-[32px] border border-[#CBD6E2] rounded-xs' +
+              isError +
+              fieldDisabled
             }
             disabled={field.disabled}
             onChange={(e) => handleChange(e.target.value)}
@@ -141,33 +148,44 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         );
       case 'select':
         return (
-          <select
-            name={field.name}
-            className={
-              'w-full sm:text-sm p-2 border-1 ' +
-              (fieldValue === '' ? 'text-gray-500 ' : '') +
-              isError +
-              fieldDisabled
-            }
-            onChange={(e) => handleChange(e.target.value)}
-            value={fieldValue}
-            disabled={field.disabled}
-          >
-            <option value='' className='text-gray-500'>
-              {field.placeholder}
-            </option>
-            {field?.options?.map((option, i) => (
-              <option key={i} value={option.value}>
-                {option.label}
+          <div className='relative w-full'>
+            <select
+              name={field.name}
+              className={
+                'custom-select-no-arrow w-full sm:text-sm p-1.5 border-1 ' +
+                (fieldValue === '' ? 'text-[#7D98B6] ' : '') +
+                isError +
+                fieldDisabled
+              }
+              onChange={(e) => handleChange(e.target.value)}
+              value={fieldValue}
+              disabled={field.disabled}
+            >
+              <option value='' className='text-gray-500'>
+                {field.placeholder}
               </option>
-            ))}
-          </select>
+              {field?.options?.map((option, i) => (
+                <option key={i} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <img
+              src={arrowDownIcon}
+              alt='dropdown arrow'
+              className='absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none'
+              style={{
+                width: 15,
+                height: 15,
+              }}
+            />
+          </div>
         );
       case 'textarea':
         return (
           <textarea
             className={
-              'w-full sm:text-sm p-2 border-1 resize-none ' +
+              'placeholder-custom-color w-full sm:text-sm p-2 border border-[#CBD6E2] rounded-xs h-[95px] resize-none ' +
               isError +
               fieldDisabled
             }
@@ -238,14 +256,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     handleChange(newValues);
                   }}
                 />
-                <span className='text-sm text-gray-400'>{option.label}</span>
+                <span className='text-[13px] text-[#7D98B6]'>
+                  {option.label}
+                </span>
               </label>
             ))}
           </div>
         );
       case 'radio':
         return (
-          <div className='flex gap-4 mt-1'>
+          <div className='flex gap-4 mt-1.5'>
             {field?.options?.map((option, i) => (
               <label key={i} className='flex gap-2 cursor-pointer'>
                 <input
@@ -258,7 +278,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     handleChange(e.target.value);
                   }}
                 />
-                <span className='text-sm text-gray-400'>{option.label}</span>
+                <span className='text-[13px] text-[#7D98B6]'>
+                  {option.label}
+                </span>
               </label>
             ))}
           </div>
@@ -278,7 +300,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               // shouldDisableDate={(date) => dayjs(date).isBefore(dayjs(), 'day')}
               slots={{
                 openPickerIcon: () => (
-                  <img src={calendarIcon} alt='calendar' className='w-6 h-5' />
+                  <img src={calendarIcon} alt='calendar' className='w-4 h-4' />
                 ),
                 clearIcon: () => (
                   <img src={closeIcon} alt='calendar' className='w-2.5 h-2.5' />
@@ -324,7 +346,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               shouldDisableDate={(date) => dayjs(date).isBefore(dayjs(), 'day')}
               slots={{
                 openPickerIcon: () => (
-                  <img src={calendarIcon} alt='calendar' className='w-6 h-5' />
+                  <img src={calendarIcon} alt='calendar' className='w-4 h-4' />
                 ),
                 clearIcon: () => (
                   <img src={closeIcon} alt='calendar' className='w-2.5 h-2.5' />
@@ -338,7 +360,23 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   disabled: false,
                   sx: {
                     '& .MuiOutlinedInput-root': {
-                      borderRadius: 0,
+                      height: '32px',
+                      borderRadius: '2px',
+                      '& input': {
+                        fontWeight: 400,
+                        fontSize: '13px',
+                        lineHeight: '21px',
+                        '& ::placeholder': {
+                          color: '#7D98B6 !important',
+                        },
+                        color: 'black !important',
+                        WebkitTextFillColor: 'black !important',
+
+                        '&[value="MM/DD"]': {
+                          color: '#7D98B6 !important',
+                          WebkitTextFillColor: '#7D98B6 !important',
+                        },
+                      },
                       '&.Mui-disabled': {
                         '& input': {
                           color: 'black',
@@ -363,10 +401,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             onChange={(phone, country: CountryData) =>
               handleChange(phone, country.countryCode)
             }
-            inputClass={`!w-full !text-sm !p-2 !pl-12 !border !h-[38px] !rounded-[0px] ${
+            inputClass={`placeholder-custom-color !w-full !text-[13px] !p-2 !pl-12 !border !h-[32px] !rounded-xs ${
               field.error ? '!border-red-500' : '!border-gray-300'
             }${field.disabled ? ' !bg-gray-100' : ''}`}
-            buttonClass={`!bg-transparent !border-r ${field.error ? '!border-red-500' : '!border-gray-300'} !rounded-[0px] !hover:bg-transparent !shadow-none !px-0 !m-0`}
+            buttonClass={`!bg-transparent !border-r ${field.error ? '!border-red-500' : '!border-gray-300'} !rounded-tl-xs !rounded-bl-xs !hover:bg-transparent !shadow-none !px-0 !m-0`}
             containerClass='!w-full'
             inputProps={{
               name: field.name,
@@ -421,6 +459,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       return {
         ...section,
         fields: section.fields.map((field) => {
+          if (field.hide) return field;
           // Check if field has a value based on its type
           let hasValue: boolean = Boolean(
             constructFormData[field.name]?.toString().trim()
@@ -585,16 +624,20 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       {formData?.map((section, i) => {
         const isHalf = section.fillType === 'half';
         if (section.hide) return null;
-        return (
-          <div key={i}>
-            <h4 className={`font-medium mb-4 ${i !== 0 ? 'mt-10' : ''}`}>
-              {section.sectionName}
-            </h4>
-            <div className={`grid md:grid-cols-${isHalf ? '2' : '1'} gap-4`}>
-              {section.fields.map((field, j) => (
+        return;
+        <div key={i}>
+          <h4
+            className={`font-semibold text-base text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle mb-8 ml-3 ${i !== 0 ? 'mt-10' : ''}`}
+          >
+            {section.sectionName}
+          </h4>
+          <div className={`grid md:grid-cols-${isHalf ? '2' : '1'} gap-4`}>
+            {section.fields.map((field, j) => {
+              if (field.hide) return null;
+              return (
                 <div key={j} className='grid md:grid-cols-12 gap-4'>
                   <label
-                    className={`text-sm text-gray-500 md:text-right mt-1 ${isHalf ? 'col-span-4' : 'col-span-2'}`}
+                    className={`text-sm text-[#425A76] font-medium md:text-right mt-1.5 ${isHalf ? 'col-span-4' : 'col-span-2'}`}
                     htmlFor={field.name}
                   >
                     {field.label}
@@ -609,10 +652,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     )}
                   </div>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
-        );
+        </div>;
       })}
     </form>
   );

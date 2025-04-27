@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ResourceDetailsTypes, SelectOption } from '../../types';
 import {
   ResourceCostPayload,
@@ -6,8 +5,6 @@ import {
 } from '../../types/resource-cost';
 import { ResourceSkillPayload } from '../../types/resource-skill';
 import { skillLevel } from '../account-details-sidebar/sidebar-pages/resources/resource-skill/resource-skill-type';
-
-const userDetails = JSON.parse(localStorage.getItem('auth') as any);
 
 // Constants for dropdown options
 export const RESOURCE_STATUS_OPTIONS: SelectOption[] = [
@@ -68,8 +65,8 @@ interface TransformedResourceData {
   designation: string;
   total_years_experience: number;
   total_years_in_org: number;
-  modified_by: string;
   comments: string;
+  modified_by?: string;
 }
 
 interface ResourceTransformationOptions {
@@ -90,18 +87,6 @@ const formatDateToDDMMYYYY = (dateString?: string | null): string => {
   const year = date.getFullYear();
 
   return `${day}/${month}/${year}`;
-};
-const formatDateToYYYYMMDD = (dateString?: string | null): string => {
-  if (!dateString) return '';
-
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return '';
-
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-
-  return `${year}/${month}/${day}`;
 };
 
 // const capitalizeFirstLetter = (str?: string): string => {
@@ -154,8 +139,6 @@ export function transformPayloadforUpdateResource(
       rawData.total_years_in_org,
       existingResource?.total_years_in_org || 0
     ),
-
-    modified_by: userDetails?.userId,
   };
 }
 
@@ -192,8 +175,8 @@ export const transformCostData = (
   const data: Partial<ResourceCostPayload> = {
     eid: '',
     account_rid: formData.account_rid,
-    effective_date: formatDateToYYYYMMDD(formData.financial_start_date),
-    end_date: formatDateToYYYYMMDD(formData.financial_end_date),
+    effective_date: formatDateToDDMMYYYY(formData.financial_start_date),
+    end_date: formatDateToDDMMYYYY(formData.financial_end_date),
     cost_frequency: formData.cost_frequency,
     cost: formData.cost ? Number(formData.cost) : null,
     resource_type: formData.resource_type,
@@ -201,6 +184,7 @@ export const transformCostData = (
     currency_rid: formData.currency ? formData.currency : null,
     resource_rid: formData.resource_rid,
     accountNumber: formData.accountNumber,
+    resource_number: formData?.resource_number,
   };
 
   if (isEdit) {
@@ -210,6 +194,7 @@ export const transformCostData = (
     delete data.resource_rid;
     delete data.resource_type;
     delete data.resource_ref_id;
+    delete data.resource_number;
   }
 
   return data;
@@ -225,7 +210,7 @@ export const transformSkillData = (
     resource_type: formData.resource_type,
     resource_rid: formData.resource_rid,
     resource_ref_id: formData.resource_ref_id,
-    start_date: formatDateToYYYYMMDD(formData.skill_start_date),
+    start_date: formatDateToDDMMYYYY(formData.skill_start_date),
     skill_level: formData.skill_level as skillLevel,
     years_of_experience: formData.years_of_experience
       ? Number(formData.years_of_experience)
@@ -233,6 +218,7 @@ export const transformSkillData = (
     skill_name: formData.skill_name,
     accountNumber: formData.accountNumber,
     resource_desc: formData.resource_desc,
+    resource_number: formData?.resource_number,
   };
 
   if (isEdit) {
@@ -241,6 +227,7 @@ export const transformSkillData = (
     delete data.resource_type;
     delete data.resource_ref_id;
     delete data.resource_desc;
+    delete data.resource_number;
 
     data.rid = formData.skill_rid;
   }

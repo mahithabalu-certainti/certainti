@@ -2,19 +2,21 @@ import {
   Button,
   Checkbox,
   CircularProgress,
+  IconButton,
   Table as MuiTable,
   Paper,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
-  TablePagination,
   TableRow,
   Tooltip,
   Typography,
 } from '@mui/material';
 import React, { useState } from 'react';
 import { RowData, SortDirection, TableProps } from './types';
+import TablePagination from './pagination';
+import { editIcon, eyeIcon } from '../../assets';
 
 const Table = <T extends RowData>({
   data = [],
@@ -89,7 +91,8 @@ const Table = <T extends RowData>({
     : data.slice(currentPage * rowsPerPage, (currentPage + 1) * rowsPerPage);
 
   return (
-    <Paper sx={{ overflowX: 'auto', width: '100%' }}>
+    <>
+    <Paper sx={{ overflowX: 'auto', boxShadow: 'none', width: '100%', borderBottom: '1px solid #CBD6E2',borderRadius: '0px' }}>
       <TableContainer>
         <MuiTable>
           <TableHead
@@ -99,14 +102,16 @@ const Table = <T extends RowData>({
                 fontSize: '14px',
                 lineHeight: '21px',
                 color: '#2A2A2A',
-                padding: '8px',
+                padding: '0px',
+                pl: 1,
+                minHeight: '42px',
               },
             }}
           >
             <TableRow>
               {/* Select all checkbox */}
               {selectable && (
-                <TableCell padding='checkbox'>
+                <TableCell padding='checkbox' sx={{ padding: '0px !important' }}>
                   <Checkbox
                     indeterminate={
                       selectedRows.size > 0 && selectedRows.size < data.length
@@ -213,7 +218,9 @@ const Table = <T extends RowData>({
                 fontSize: '14px',
                 lineHeight: '21px',
                 color: '#425A76',
-                padding: '6px',
+                padding: '0px',
+                pl: 1,
+                minHeight: '36px',
               },
             }}
           >
@@ -275,10 +282,11 @@ const Table = <T extends RowData>({
                     key={rowId}
                     hover
                     selected={selectedRows.has(rowId)}
+                    className='group'
                   >
                     {/* Row checkbox */}
                     {selectable && (
-                      <TableCell padding='checkbox'>
+                      <TableCell padding='checkbox' sx={{ padding: '0px !important' }}>
                         <Checkbox
                           checked={selectedRows.has(rowId)}
                           onChange={() => handleRowSelect(rowId)}
@@ -295,7 +303,11 @@ const Table = <T extends RowData>({
                     )}
 
                     {/* Data cells */}
-                    {columns.map((column) => (
+                    {columns.map((column) => {
+                      const isStatus = column.id === 'status';
+                      const statusValue = row[column.id];
+                                  
+                     return (
                       <TableCell key={`${rowId}-${column.id}`}
                         sx={{
                           width: column.width || 120,
@@ -303,16 +315,21 @@ const Table = <T extends RowData>({
                           maxWidth: column.width || 'auto',
                           wordWrap: 'break-word'
                         }}
+                        className={`${
+                          isStatus
+                            ? `${statusValue === 'Active' ? 'group-hover:!text-[#199806]' : 'group-hover:!text-[#f44336]'} group-hover:underline`
+                            : 'group-hover:!text-blue-600 group-hover:underline'
+                        }`}
                       >
                         {column.render
                           ? column.render(row)
                           : (row[column.id] as React.ReactNode)}
                       </TableCell>
-                    ))}
+                    )})}
 
                     {/* Action buttons */}
                     {(onEdit || onDelete || onView) && (
-                      <TableCell sx={{ whiteSpace: 'nowrap', width:'150px', minWidth: '150px', maxWidth: '150px' }}>
+                      <TableCell sx={{ whiteSpace: 'nowrap', width:'100px', minWidth: '100px', maxWidth: '100px' }}>
                         {onView && (
                           <Tooltip
                             arrow
@@ -328,15 +345,13 @@ const Table = <T extends RowData>({
                               },
                             }}
                           >
-                            <Button
-                              variant='outlined'
+                            <IconButton
                               size='small'
-                              color='primary'
-                              sx={{ mr: 1, textTransform: 'capitalize' }}
+                              sx={{ mr: 1.5 }}
                               onClick={() => onView(row)}
                             >
-                              View
-                            </Button>
+                              <img src={eyeIcon} alt='viewIcon' className='w-5 h-5' />
+                            </IconButton>
                           </Tooltip>
                         )}
                         {onEdit && (
@@ -354,15 +369,21 @@ const Table = <T extends RowData>({
                               },
                             }}
                           >
-                            <Button
-                              variant='outlined'
+                            <IconButton
                               size='small'
-                              color='secondary'
-                              sx={{ mr: 1, textTransform: 'capitalize' }}
                               onClick={() => onEdit(row)}
                             >
-                              Edit
-                            </Button>
+                              <img 
+                              src={editIcon} 
+                              alt='editIcon'
+                              style={{
+                                filter:
+                                  'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
+                              }}
+ 
+                              className='w-4 h-4'
+                              />
+                            </IconButton>
                           </Tooltip>
                         )}
                         {onDelete && (
@@ -399,22 +420,19 @@ const Table = <T extends RowData>({
           </TableBody>
         </MuiTable>
       </TableContainer>
-
+    </Paper>
       {/* Pagination */}
       {(onPageChange || onRowsPerPageChange) && (
         <TablePagination
           rowsPerPageOptions={[5, 10, 25, 50]}
-          component='div'
           count={totalItems}
           rowsPerPage={rowsPerPage}
           page={currentPage}
-          onPageChange={(_, newPage) => onPageChange?.(newPage)}
-          onRowsPerPageChange={(e) =>
-            onRowsPerPageChange?.(parseInt(e.target.value, 10))
-          }
+          onPageChange={(newPage) => onPageChange?.(newPage)}
+          onRowsPerPageChange={(newPageSize) => onRowsPerPageChange?.(newPageSize)}
         />
       )}
-    </Paper>
+  </>
   );
 };
 

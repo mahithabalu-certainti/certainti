@@ -41,6 +41,7 @@ export const useResourceSkill = (
         };
       },
       ...options,
+      retry: 0,
     }
   );
 };

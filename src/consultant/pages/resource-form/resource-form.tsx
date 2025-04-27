@@ -90,26 +90,26 @@ const ResourceForm: React.FC = () => {
   const { data: resource } = useResourceDetail(
     location?.state?.resource?.rid || resourceRId,
     location?.state?.accountDetails?.data?.accountById?.r_number ||
-      accountNumber
+    accountNumber
   );
 
   const formValues = state?.cost
     ? {
-        ...resource?.data?.resourceDetails,
-        financial_start_date: costInfo?.effective_date || '',
-        financial_end_date: costInfo?.end_date || '',
-        cost: costInfo?.cost || '',
-        currency: costInfo?.currency_rid || null,
-        cost_frequency: costInfo?.cost_frequency || '',
-      }
+      ...resource?.data?.resourceDetails,
+      financial_start_date: costInfo?.effective_date || '',
+      financial_end_date: costInfo?.end_date || '',
+      cost: costInfo?.cost || '',
+      currency: costInfo?.currency_rid || null,
+      cost_frequency: costInfo?.cost_frequency || '',
+    }
     : state?.skill
       ? {
-          ...resource?.data?.resourceDetails,
-          skill_level: skillInfo?.skillLevel || '',
-          skill_name: skillInfo?.skillName || '',
-          skill_start_date: skillInfo?.startDate || '',
-          years_of_experience: skillInfo?.yearsOfExperience || '',
-        }
+        ...resource?.data?.resourceDetails,
+        skill_level: skillInfo?.skillLevel || '',
+        skill_name: skillInfo?.skillName || '',
+        skill_start_date: skillInfo?.startDate || '',
+        years_of_experience: skillInfo?.yearsOfExperience || '',
+      }
       : null;
   // const resourceValues = resource?.data?.resourceDetails;
   const userDetails = JSON.parse(localStorage.getItem('auth') || '{}');
@@ -208,6 +208,7 @@ const ResourceForm: React.FC = () => {
         accountNumber: state?.data?.accountById?.r_number,
         account_rid: state?.data?.accountById?.rid,
         resource_rid: state?.resourceData?.rid,
+        resource_number: state?.resourceData?.r_number,
         cost_rid: state?.costInfo?.costRid,
       };
       const costData = transformCostData(updateFormValues, isEditView);
@@ -224,6 +225,7 @@ const ResourceForm: React.FC = () => {
         accountNumber: state?.data?.accountById?.r_number,
         account_rid: state?.data?.accountById?.rid,
         resource_rid: state?.resourceData?.rid,
+        resource_number: state?.resourceData?.r_number,
         skill_rid: state?.skillInfo?.skillRId,
         resource_desc: state?.skillInfo?.resourceRole,
       };
@@ -340,21 +342,21 @@ const ResourceForm: React.FC = () => {
           loading={false}
           values={
             isEditView &&
-            !state?.cost &&
-            !state?.skill &&
-            (resource?.data?.resourceDetails as unknown as Record<
-              string,
-              string | number | boolean | string[] | null
-            >)
+              !state?.cost &&
+              !state?.skill &&
+              (resource?.data?.resourceDetails as unknown as Record<
+                string,
+                string | number | boolean | string[] | null
+              >)
               ? (resource?.data?.resourceDetails as unknown as Record<
+                string,
+                string | number | boolean | string[] | null
+              >)
+              : state?.cost || state?.skill
+                ? (formValues as unknown as Record<
                   string,
                   string | number | boolean | string[] | null
                 >)
-              : state?.cost || state?.skill
-                ? (formValues as unknown as Record<
-                    string,
-                    string | number | boolean | string[] | null
-                  >)
                 : undefined
           }
           // values={

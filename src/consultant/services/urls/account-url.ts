@@ -44,6 +44,8 @@ export const StateUrl = (countryId: string) =>
 
 export const CityUrl = (stateId: string) => `/api/accounts/cities/${stateId}`;
 
+export const uploadUrl = () => (`/importService`);
+
 export const getAccountExportUrl = ({
   sortBy,
   sortOrder,

@@ -20,7 +20,7 @@ import { useResourceSkill } from "../../../../../services/resource-skill/resourc
 import { RESOURCESKILL } from "../../../../../../routes";
 import ActionButton from '../../../../account-list/table/action-button';
 
-const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, appliedFilters, accountDetails }) => {
+const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, appliedFilters, accountDetails, resourceRid }) => {
   const navigate = useNavigate();
   // const location = useLocation();
   const [page, setPage] = useState<number>(0);
@@ -36,7 +36,8 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
     sortOrder: apiOrder,
     filters: appliedFilters,
     accountNumber: accountDetails?.data?.accountById?.r_number,
-    fiscalYear
+    fiscalYear,
+    resourceRid
   });
 
   useEffect(() => {

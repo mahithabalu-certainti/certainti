@@ -24,12 +24,13 @@ import { RESOURCECOST } from "../../../../../../routes";
 import ActionButton from '../../../../account-list/table/action-button';
 
 interface ResourceCostTableProps {
-  fiscalYear?: number;
+  fiscalYear?: string;
   appliedFilters?: Record<string, any>;
   accountDetails?: Record<string, any>;
+  resourceRid: string;
 }
 
-const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appliedFilters, accountDetails }) => {
+const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appliedFilters, accountDetails, resourceRid }) => {
   const navigate = useNavigate();
   const [page, setPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState<number>(25);
@@ -44,7 +45,8 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
     sortOrder: apiOrder,
     filters: appliedFilters,
     accountNumber: accountDetails?.data?.accountById?.r_number,
-    fiscalYear: fiscalYear
+    fiscalYear,
+    resourceRid
   });
 
   useEffect(() => {

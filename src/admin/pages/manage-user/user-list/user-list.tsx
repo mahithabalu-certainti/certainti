@@ -38,6 +38,7 @@ const UserList: React.FC = () => {
     { label: 'Suspend User', width: '119px' },
     { label: 'Reinstate User', width: '120px' },
     { label: 'Reset Password', width: '132px' },
+    { label: 'Edit', width: '57px' },
     { label: 'Delete', width: '73px' },
   ];
 
@@ -75,6 +76,9 @@ const UserList: React.FC = () => {
       case 'Reset Password':
         console.log('Reset Password clicked');
         break;
+      case 'Edit':
+        console.log('Edit clicked');
+        break;
       case 'Delete':
         console.log('Delete clicked');
         break;
@@ -84,9 +88,9 @@ const UserList: React.FC = () => {
   };
 
   return (
-    <div className='flex flex-col h-[calc(100vh-64px)] overflow-y-auto w-full p-4 gap-3'>
+    <div className='flex flex-col h-[calc(100vh-55px)] overflow-y-auto w-full p-4 gap-3'>
       {/* Header Section */}
-      <div className='flex h-[12%] w-full p-4 items-center justify-between border border-[#EAF0F5] rounded'>
+      <div className='w-full min-h-[75px] h-[75px] px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
         <div className='flex items-center gap-2'>
           <img
             src={ManageUserIcon}
@@ -125,9 +129,9 @@ const UserList: React.FC = () => {
       </div>
 
       {/* User Table Section */}
-      <div className='border border-[#EAF0F5] rounded'>
-        <div className='flex justify-between items-center border-b border-[#EAF0F5] p-4'>
-          <div className='font-semibold text-[20px] leading-5 text-[#2D3E4F]'>
+      <div className='border border-[#CBD6E2] rounded-[4px]'>
+        <div className='flex justify-between items-center border-b border-[#CBD6E2] h-[50px] px-4'>
+          <div className='font-semibold text-base leading-[32px] tracking-[0%] align-middle text-[#2D3E4F]'>
             All Users
           </div>
           <div className='flex gap-3'>
@@ -164,12 +168,12 @@ const UserList: React.FC = () => {
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
                 filterFields={userFilterfields}
-                filterLable="Filter User by"
+                filterLabel="Filter User by"
               />
             }
           </div>
 
-          <div className={`transition-all duration-300 ease-in-out ${isFilterOpen ? 'w-[80%]' : 'w-full'}`}>
+          <div className={`transition-all duration-300 ease-in-out border-l border-[#CBD6E2] ${isFilterOpen ? 'w-[80%]' : 'w-full border-none'}`}>
             <UserTable
               appliedFilters={appliedFilters}
               tableParams={tableParams}
