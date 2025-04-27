@@ -401,9 +401,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             onChange={(phone, country: CountryData) =>
               handleChange(phone, country.countryCode)
             }
-            inputClass={`placeholder-custom-color !w-full !text-[13px] !p-2 !pl-12 !border !h-[32px] !rounded-xs ${
-              field.error ? '!border-red-500' : '!border-gray-300'
-            }${field.disabled ? ' !bg-gray-100' : ''}`}
+            inputClass={`placeholder-custom-color !w-full !text-[13px] !p-2 !pl-12 !border !h-[32px] !rounded-xs ${field.error ? '!border-red-500' : '!border-gray-300'
+              }${field.disabled ? ' !bg-gray-100' : ''}`}
             buttonClass={`!bg-transparent !border-r ${field.error ? '!border-red-500' : '!border-gray-300'} !rounded-tl-xs !rounded-bl-xs !hover:bg-transparent !shadow-none !px-0 !m-0`}
             containerClass='!w-full'
             inputProps={{
@@ -513,7 +512,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           if (
             field.dependsRequired?.key &&
             constructFormData[field.dependsRequired.key] ===
-              field.dependsRequired?.matchedValue &&
+            field.dependsRequired?.matchedValue &&
             !hasValue
           ) {
             hasError = true;
@@ -530,17 +529,18 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           // }
 
           // Date custom Validation
-          if (
-            field.greaterThan &&
-            (constructFormData[field.name] || '') <=
-              (constructFormData[field.greaterThan.key] || '')
-          ) {
-            hasError = true;
-            return {
-              ...field,
-              error: field.greaterThan.errorMessage,
-            };
-          }
+          //commented this if condition due to not able to submit form
+          // if (
+          //   field.greaterThan &&
+          //   (constructFormData[field.name] || '') <=
+          //   (constructFormData[field.greaterThan.key] || '')
+          // ) {
+          //   hasError = true;
+          //   return {
+          //     ...field,
+          //     error: field.greaterThan.errorMessage,
+          //   };
+          // }
 
           // Validate regex if present and field has value
           const value = constructFormData[field.name] as string;
@@ -594,7 +594,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         }),
       };
     });
-
     setFormData(dataValidation);
 
     if (!hasError) {
@@ -624,38 +623,39 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       {formData?.map((section, i) => {
         const isHalf = section.fillType === 'half';
         if (section.hide) return null;
-        return;
-        <div key={i}>
-          <h4
-            className={`font-semibold text-base text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle mb-8 ml-3 ${i !== 0 ? 'mt-10' : ''}`}
-          >
-            {section.sectionName}
-          </h4>
-          <div className={`grid md:grid-cols-${isHalf ? '2' : '1'} gap-4`}>
-            {section.fields.map((field, j) => {
-              if (field.hide) return null;
-              return (
-                <div key={j} className='grid md:grid-cols-12 gap-4'>
-                  <label
-                    className={`text-sm text-[#425A76] font-medium md:text-right mt-1.5 ${isHalf ? 'col-span-4' : 'col-span-2'}`}
-                    htmlFor={field.name}
-                  >
-                    {field.label}
-                    {field.required && <span className='text-red-500'> *</span>}
-                  </label>
-                  <div className={isHalf ? 'col-span-8' : 'col-span-10'}>
-                    {getFields(field)}
-                    {field.error && (
-                      <span className='text-red-500 text-sm col-span-full'>
-                        {field.error}
-                      </span>
-                    )}
+        return (
+          <div key={i}>
+            <h4
+              className={`font-semibold text-base text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle mb-8 ml-3 ${i !== 0 ? 'mt-10' : ''}`}
+            >
+              {section.sectionName}
+            </h4>
+            <div className={`grid md:grid-cols-${isHalf ? '2' : '1'} gap-4`}>
+              {section.fields.map((field, j) => {
+                if (field.hide) return null;
+                return (
+                  <div key={j} className='grid md:grid-cols-12 gap-4'>
+                    <label
+                      className={`text-sm text-[#425A76] font-medium md:text-right mt-1.5 ${isHalf ? 'col-span-4' : 'col-span-2'}`}
+                      htmlFor={field.name}
+                    >
+                      {field.label}
+                      {field.required && <span className='text-red-500'> *</span>}
+                    </label>
+                    <div className={isHalf ? 'col-span-8' : 'col-span-10'}>
+                      {getFields(field)}
+                      {field.error && (
+                        <span className='text-red-500 text-sm col-span-full'>
+                          {field.error}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>;
+        )
       })}
     </form>
   );

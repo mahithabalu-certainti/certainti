@@ -90,6 +90,11 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
         handleRequestSort(event, property);
       };
 
+  const CostDisplay = (cost: string | number) => {
+    const formattedCost = Number(cost).toLocaleString('en-US', { minimumFractionDigits: 2 });
+    return <>{formattedCost}</>;
+  }
+
   const renderRows = ({ resourceCost }: RenderCostRowProps) => {
     return resourceCost?.map((cost) => {
       return (
@@ -108,13 +113,13 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
             </TableCell>
             <TableCell>{cost.startDate}</TableCell>
             <TableCell>{cost.endDate}</TableCell>
-            <TableCell>{cost.hourlyCost ? cost.hourlyCost : '-'}</TableCell>
-            <TableCell>{cost.dailyCost ? cost.dailyCost : "-"}</TableCell>
-            <TableCell>{cost.biWeeklyCost ? cost.biWeeklyCost : "-"}</TableCell>
-            <TableCell>{cost.weeklyCost ? cost.weeklyCost : "-"}</TableCell>
-            <TableCell>{cost.monthlyCost ? cost.monthlyCost : "-"}</TableCell>
-            <TableCell>{cost.semiAnnualCost ? cost.semiAnnualCost : "-"}</TableCell>
-            <TableCell>{cost.annualCost ? cost.annualCost : "-"}</TableCell>
+            <TableCell>{cost.hourlyCost ? CostDisplay(cost.hourlyCost) : '-'}</TableCell>
+            <TableCell>{cost.dailyCost ? CostDisplay(cost.dailyCost) : "-"}</TableCell>
+            <TableCell>{cost.biWeeklyCost ? CostDisplay(cost.biWeeklyCost) : "-"}</TableCell>
+            <TableCell>{cost.weeklyCost ? CostDisplay(cost.weeklyCost) : "-"}</TableCell>
+            <TableCell>{cost.monthlyCost ? CostDisplay(cost.monthlyCost) : "-"}</TableCell>
+            <TableCell>{cost.semiAnnualCost ? CostDisplay(cost.semiAnnualCost) : "-"}</TableCell>
+            <TableCell>{cost.annualCost ? CostDisplay(cost.annualCost) : "-"}</TableCell>
             <TableCell>
               <ActionButton
                 onEdit={() => handleEdit(cost)}
@@ -220,7 +225,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
                 direction={orderBy === 'semi_annual_cost' ? order : 'asc'}
                 onClick={createSortHandler('semi_annual_cost')}
               >
-                Semin Annual
+                Semi Annual
               </TableSortLabel>
             </TableCell>
             <TableCell>
