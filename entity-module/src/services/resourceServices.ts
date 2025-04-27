@@ -60,8 +60,8 @@ export class ResourceService {
 
       await this.schemaService.createResourceTable(accountNumber);
 
-      const startDate = moment(resourceData.effective_from_date, "DD/MM/YYYY");
-      const endDate = moment(resourceData.effective_end_date, "DD/MM/YYYY");
+      const startDate = moment(resourceData.effective_from_date, "MM/DD/YYYY");
+      const endDate = moment(resourceData.effective_end_date, "MM/DD/YYYY");
 
       resourceData.created_by = userId;
       resourceData.modified_by = userId;
