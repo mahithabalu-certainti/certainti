@@ -59,7 +59,7 @@ export const ResourceFormData = (
         sectionName: 'Basic Information',
         fillType: 'half',
         fields: [
-          createTextField('resource_ref_id', 'Resource Ref Id', {
+          createTextField('resource_ref_id', 'Resource Ref ID', {
             required: true,
             regex: REGEX_PATTERNS.ALPHANUMERIC_SPEC_5_TO_50,
             regexErrorMessage: '5 to 50 alphanumeric characters',
@@ -168,8 +168,8 @@ export const ResourceFormData = (
           }),
           createTextField('cost', 'Cost', {
             required: true,
-            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
-            regexErrorMessage: 'Numbers only',
+            regex: REGEX_PATTERNS.COST_REGEX,
+            regexErrorMessage: 'Numbers only with up to 2 decimal places',
             placeholder: 'Enter Cost',
           }),
           createSelectField('currency', 'Currency', {

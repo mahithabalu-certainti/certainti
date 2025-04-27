@@ -366,10 +366,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                         },
                         color: 'black !important',
                         WebkitTextFillColor: 'black !important',
-                        
+
                         '&[value="MM/DD"]': {
                           color: '#7D98B6 !important',
-                          WebkitTextFillColor: '#7D98B6 !important', 
+                          WebkitTextFillColor: '#7D98B6 !important',
                         },
                       },
                       '&.Mui-disabled': {
@@ -396,9 +396,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             onChange={(phone, country: CountryData) =>
               handleChange(phone, country.countryCode)
             }
-            inputClass={`placeholder-custom-color !w-full !text-[13px] !p-2 !pl-12 !border !h-[32px] !rounded-xs ${
-              field.error ? '!border-red-500' : '!border-gray-300'
-            }${field.disabled ? ' !bg-gray-100' : ''}`}
+            inputClass={`placeholder-custom-color !w-full !text-[13px] !p-2 !pl-12 !border !h-[32px] !rounded-xs ${field.error ? '!border-red-500' : '!border-gray-300'
+              }${field.disabled ? ' !bg-gray-100' : ''}`}
             buttonClass={`!bg-transparent !border-r ${field.error ? '!border-red-500' : '!border-gray-300'} !rounded-tl-xs !rounded-bl-xs !hover:bg-transparent !shadow-none !px-0 !m-0`}
             containerClass='!w-full'
             inputProps={{
@@ -593,6 +592,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           }),
         })
     });
+    console.log("daatavalidation", constructFormData);
+
 
     setFormData(dataValidation);
 
