@@ -5,7 +5,7 @@ const uuidRegex =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const isNotFutureDate = (value: string, helpers: Joi.CustomHelpers): any => {
-  const startDate = moment(value, "DD/MM/YYYY", true);
+  const startDate = moment(value, "MM/DD/YYYY", true);
 
   if (!startDate.isValid()) {
     return helpers.error("date.invalidFormat", {
@@ -32,7 +32,7 @@ const isNotFutureDate = (value: string, helpers: Joi.CustomHelpers): any => {
 };
 
 const isValidDate = (value: string, helpers: Joi.CustomHelpers): any => {
-  const startDate = moment(value, "DD/MM/YYYY", true);
+  const startDate = moment(value, "MM/DD/YYYY", true);
 
   if (!startDate.isValid()) {
     return helpers.error("date.invalidFormat", {
@@ -130,10 +130,10 @@ const createResourcesSchema = Joi.object({
     .optional()
     .messages({
       "string.pattern.base":
-        "effective_from_date must be in the format DD/MM/YYYY",
+        "effective_from_date must be in the format MM/DD/YYYY",
       "any.invalid": "Date cannot be in the future.",
       "date.invalidFormat":
-        "Invalid effective start date. Please use the format DD/MM/YYYY",
+        "Invalid effective start date. Please use the format MM/DD/YYYY",
     }),
   effective_end_date: Joi.string()
     .max(10)
@@ -144,10 +144,10 @@ const createResourcesSchema = Joi.object({
     .optional()
     .messages({
       "string.pattern.base":
-        "effective_end_date must be in the format DD/MM/YYYY",
+        "effective_end_date must be in the format MM/DD/YYYY",
       "any.invalid": "Effective end date must be after the start date.",
       "date.invalidFormat":
-        "Invalid effective end date. Please use the format DD/MM/YYYY",
+        "Invalid effective end date. Please use the format MM/DD/YYYY",
     }),
   designation: Joi.string().min(4).max(100).optional().allow("").allow(null),
   total_years_experience: Joi.number()
@@ -219,7 +219,7 @@ const updateResourceSchema = Joi.object({
     .optional()
     .messages({
       "string.pattern.base":
-        "effective_from_date must be in the format DD/MM/YYYY",
+        "effective_from_date must be in the format MM/DD/YYYY",
       "any.invalid": "Date cannot be in the future.",
       "date.invalidFormat": "Invalid effective start date.",
     }),
@@ -232,7 +232,7 @@ const updateResourceSchema = Joi.object({
     .optional()
     .messages({
       "string.pattern.base":
-        "effective_end_date must be in the format DD/MM/YYYY",
+        "effective_end_date must be in the format MM/DD/YYYY",
       "any.invalid": "Effective end date must be after the start date.",
       "date.invalidFormat": "Invalid effective end date.",
     }),
@@ -287,10 +287,10 @@ const createResourceSkillSchema = Joi.object({
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "start_date must be in the format DD/MM/YYYY",
+      "string.pattern.base": "start_date must be in the format MM/DD/YYYY",
       "any.invalid": "Date cannot be in the future.",
       "date.invalidFormat":
-        "Invalid start date. Please use the format DD/MM/YYYY",
+        "Invalid start date. Please use the format MM/DD/YYYY",
     }),
   skill_description: Joi.string().max(255).optional().allow(null).allow(""),
   skill_level: Joi.string()
@@ -317,9 +317,9 @@ const updateResourceSkillSchema = Joi.object({
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "start_date must be in the format DD/MM/YYYY",
+      "string.pattern.base": "start_date must be in the format MM/DD/YYYY",
       "any.invalid": "Date cannot be in the future.",
-      "date.invalidFormat": "start date. Please use the format DD/MM/YYYY",
+      "date.invalidFormat": "start date. Please use the format MM/DD/YYYY",
     }),
   skill_description: Joi.string().max(255).optional().allow(null).allow(""),
   skill_level: Joi.string()
@@ -381,10 +381,10 @@ const updateResourceCostSchema = Joi.object({
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "effective_date must be in the format DD/MM/YYYY",
+      "string.pattern.base": "effective_date must be in the format MM/DD/YYYY",
       "any.invalid": "Date cannot be in the future.",
       "date.invalidFormat":
-        "Invalid effective date. Please use the format DD/MM/YYYY",
+        "Invalid effective date. Please use the format MM/DD/YYYY",
     }),
   end_date: Joi.string()
     .max(10)
@@ -393,9 +393,9 @@ const updateResourceCostSchema = Joi.object({
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "end_date must be in the format DD/MM/YYYY",
+      "string.pattern.base": "end_date must be in the format MM/DD/YYYY",
       "date.invalidFormat":
-        "Invalid end date. Please use the format DD/MM/YYYY",
+        "Invalid end date. Please use the format MM/DD/YYYY",
     }),
   cost_frequency: Joi.string()
     .valid(
@@ -408,29 +408,16 @@ const updateResourceCostSchema = Joi.object({
       "hourly"
     )
     .required(),
-  cost: Joi.string()
-    .pattern(/^[0-9,]+(\.[0-9]{1,2})?$/)
-    .custom((value, helpers) => {
-      // Remove commas and convert to number
-      const numValue = parseFloat(value.replace(/,/g, ""));
-      if (isNaN(numValue)) {
-        return helpers.error("number.base");
-      }
-      if (numValue < 0) {
-        return helpers.error("number.min");
-      }
-      if (numValue > 9999999999.99) {
-        return helpers.error("number.max");
-      }
-      return numValue;
-    })
+    cost: Joi.number()
+    .precision(2)
+    .min(0)
+    .max(9999999999.99)
     .required()
     .messages({
-      "string.pattern.base":
-        "Cost must be a number with optional commas and up to 2 decimal places",
       "number.base": "Cost must be a valid number",
       "number.min": "Cost cannot be negative",
       "number.max": "Cost cannot exceed 9,999,999,999.99",
+      "number.precision": "Cost can only have up to 2 decimal places"
     }),
   status: Joi.string().max(255).default("active").optional(),
   modified_datetime: Joi.date()
@@ -497,10 +484,10 @@ const resourceCostSchema = Joi.object({
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "effective_date must be in the format DD/MM/YYYY",
+      "string.pattern.base": "effective_date must be in the format MM/DD/YYYY",
       "any.invalid": "Date cannot be in the future.",
       "date.invalidFormat":
-        "Invalid effective date. Please use the format DD/MM/YYYY",
+        "Invalid effective date. Please use the format MM/DD/YYYY",
     }),
   end_date: Joi.string()
     .max(10)
@@ -509,9 +496,9 @@ const resourceCostSchema = Joi.object({
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "end_date must be in the format DD/MM/YYYY",
+      "string.pattern.base": "end_date must be in the format MM/DD/YYYY",
       "date.invalidFormat":
-        "Invalid end date. Please use the format DD/MM/YYYY",
+        "Invalid end date. Please use the format MM/DD/YYYY",
     }),
   cost_frequency: Joi.string()
     .valid(
@@ -524,29 +511,16 @@ const resourceCostSchema = Joi.object({
       "hourly"
     )
     .required(),
-  cost: Joi.string()
-    .pattern(/^[0-9,]+(\.[0-9]{1,2})?$/)
-    .custom((value, helpers) => {
-      // Remove commas and convert to number
-      const numValue = parseFloat(value.replace(/,/g, ""));
-      if (isNaN(numValue)) {
-        return helpers.error("number.base");
-      }
-      if (numValue < 0) {
-        return helpers.error("number.min");
-      }
-      if (numValue > 9999999999.99) {
-        return helpers.error("number.max");
-      }
-      return numValue;
-    })
+  cost: Joi.number()
+    .precision(2)
+    .min(0)
+    .max(9999999999.99)
     .required()
     .messages({
-      "string.pattern.base":
-        "Cost must be a number with optional commas and up to 2 decimal places",
       "number.base": "Cost must be a valid number",
       "number.min": "Cost cannot be negative",
       "number.max": "Cost cannot exceed 9,999,999,999.99",
+      "number.precision": "Cost can only have up to 2 decimal places"
     }),
   fiscalYear: Joi.number().optional(),
   currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),

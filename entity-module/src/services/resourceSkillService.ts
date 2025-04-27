@@ -717,7 +717,7 @@ private formatDateForDb(dateString?: string): Date | null {
   if (!dateString) return null;
   
   // Parse the date using moment to ensure consistent handling
-  const date = moment(dateString, "DD/MM/YYYY", true);
+  const date = moment(dateString, "MM/DD/YYYY", true);
   if (!date.isValid()) return null;
   
   // Set the time to noon to avoid timezone issues
