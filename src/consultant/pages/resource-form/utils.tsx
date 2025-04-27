@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ResourceDetailsTypes, SelectOption } from '../../types';
 import {
   ResourceCostPayload,
@@ -14,9 +13,9 @@ export const RESOURCE_STATUS_OPTIONS: SelectOption[] = [
 ];
 
 export const RESOURCE_TYPE_OPTIONS: SelectOption[] = [
-  { label: 'Full Time', value: 'FullTime' },
-  { label: 'Contract', value: 'Contract' },
-  { label: 'Non Labour', value: 'NonLabour' },
+  { label: 'Full-Time', value: 'FullTime' },
+  { label: 'Sub Contract', value: 'Contract' },
+  { label: 'Non-Labour', value: 'NonLabour' },
 ];
 
 export const FREQUENCY_OPTIONS: SelectOption[] = [
@@ -46,6 +45,7 @@ interface RawResourceData {
   designation?: string;
   total_years_oexperience?: string;
   total_years_in_org?: string;
+  comments?: string;
 }
 
 interface TransformedResourceData {
@@ -65,6 +65,7 @@ interface TransformedResourceData {
   designation: string;
   total_years_experience: number;
   total_years_in_org: number;
+  comments: string;
   modified_by?: string;
 }
 
@@ -120,6 +121,7 @@ export function transformPayloadforUpdateResource(
     country: rawData.country || existingResource?.country || '',
     state: rawData.state || existingResource?.state || '',
     city: rawData.city || existingResource?.city || '',
+    comments: rawData.comments || existingResource?.comments || '',
     effective_from_date:
       formatDateToDDMMYYYY(rawData.resource_startdate) ||
       formatDateToDDMMYYYY(existingResource?.resource_startdate) ||
@@ -161,6 +163,7 @@ export const transformPayloadforCreateResource = (
     total_years_experience: formData.total_years_experience,
     total_years_in_org: formData.total_years_in_org,
     resource_status: formData.resource_status,
+    comments: formData.comments,
     created_by: formData.created_by,
   };
 };
