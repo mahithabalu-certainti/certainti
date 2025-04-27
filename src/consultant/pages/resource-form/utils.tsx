@@ -178,7 +178,7 @@ export const transformCostData = (
     effective_date: formData.financial_start_date,
     end_date: formData.financial_end_date,
     cost_frequency: formData.cost_frequency,
-    cost: formData.cost ? formData.cost : null,
+    cost: formData.cost ? Number(formData.cost.replace(',', "")) : null,
     resource_type: formData.resource_type,
     resource_ref_id: formData.resource_ref_id,
     currency_rid: formData.currency ? formData.currency : null,
