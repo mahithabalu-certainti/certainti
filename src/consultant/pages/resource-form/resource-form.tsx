@@ -212,7 +212,6 @@ const ResourceForm: React.FC = () => {
         cost_rid: state?.costInfo?.costRid,
       };
       const costData = transformCostData(updateFormValues, isEditView);
-      console.log("costData", costData);
 
       if (isEditView) {
         updateResourceCost.mutate(costData);
