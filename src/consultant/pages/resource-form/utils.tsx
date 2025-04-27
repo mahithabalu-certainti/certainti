@@ -175,8 +175,8 @@ export const transformCostData = (
   const data: Partial<ResourceCostPayload> = {
     eid: '',
     account_rid: formData.account_rid,
-    effective_date: formatDateToDDMMYYYY(formData.financial_start_date),
-    end_date: formatDateToDDMMYYYY(formData.financial_end_date),
+    effective_date: formData.financial_start_date,
+    end_date: formData.financial_end_date,
     cost_frequency: formData.cost_frequency,
     cost: formData.cost ? formData.cost : null,
     resource_type: formData.resource_type,
@@ -210,7 +210,7 @@ export const transformSkillData = (
     resource_type: formData.resource_type,
     resource_rid: formData.resource_rid,
     resource_ref_id: formData.resource_ref_id,
-    start_date: formatDateToDDMMYYYY(formData.skill_start_date),
+    start_date: formData.skill_start_date,
     skill_level: formData.skill_level as skillLevel,
     years_of_experience: formData.years_of_experience
       ? Number(formData.years_of_experience)
