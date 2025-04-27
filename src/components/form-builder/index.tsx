@@ -7,16 +7,17 @@ import { CountryCode, parsePhoneNumberFromString } from 'libphonenumber-js';
 import React, { useEffect } from 'react';
 import PhoneInput, { CountryData } from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
-import { arrowDownIcon, calendarIcon, closeIcon, searchBlackIcon } from '../../assets';
+import {
+  arrowDownIcon,
+  calendarIcon,
+  closeIcon,
+  searchBlackIcon,
+} from '../../assets';
 
+import { useLocation } from 'react-router-dom';
 import { FieldTypes, OnChange } from '../../common-service';
 import { ALLOWED_COUNTRIES } from '../../common-utils';
-import {
-  FormType,
-  FormTypeFields,
-  SelectOption,
-} from '../../consultant/types';
-import { useLocation } from 'react-router-dom';
+import { FormType, FormTypeFields, SelectOption } from '../../consultant/types';
 
 interface FormBuilderProps {
   data: FormType[];
@@ -31,9 +32,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   data,
   formRef,
   values,
-  loading,
+  loading = false,
   onChange,
-  outData
+  outData,
 }) => {
   const location = useLocation();
   const { state } = location;
@@ -59,8 +60,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         });
       });
 
-
-
       setConstructFormData(constructFormData);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,7 +69,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     const isError = field.error ? 'border-red-500' : 'border-gray-300';
     const fontSize = '0.875rem';
     const fieldValue = (constructFormData[field.name] as string) || '';
-    const fieldDisabled = (field.disabled) ? ' bg-gray-100' : '';
+    const fieldDisabled = field.disabled ? ' bg-gray-100' : '';
 
     const handleChange = (value: FieldTypes, countryCode?: FieldTypes) => {
       const newData = {
@@ -83,9 +82,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
       if (field.resetDependsFields?.length) {
         field.resetDependsFields.forEach((fieldEntry) => {
-          fieldEntry.split(',').map(f => f.trim()).forEach((f) => {
-            newData[f] = '';
-          });
+          fieldEntry
+            .split(',')
+            .map((f) => f.trim())
+            .forEach((f) => {
+              newData[f] = '';
+            });
         });
       }
 
@@ -104,7 +106,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
 
             if (f.dependsRequired?.key === field.name) {
-              const shouldDisable = value === f.dependsRequired.disableDependsField;
+              const shouldDisable =
+                value === f.dependsRequired.disableDependsField;
 
               updatedField.disabled = shouldDisable;
 
@@ -134,7 +137,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             placeholder={field.placeholder}
             autoComplete='off'
             className={
-              'placeholder-custom-color w-full sm:text-sm px-2 h-[32px] border border-[#CBD6E2] rounded-xs' + isError + fieldDisabled
+              'placeholder-custom-color w-full sm:text-sm px-2 h-[32px] border border-[#CBD6E2] rounded-xs' +
+              isError +
+              fieldDisabled
             }
             disabled={field.disabled}
             onChange={(e) => handleChange(e.target.value)}
@@ -143,7 +148,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         );
       case 'select':
         return (
-          <div className="relative w-full">
+          <div className='relative w-full'>
             <select
               name={field.name}
               className={
@@ -167,8 +172,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             </select>
             <img
               src={arrowDownIcon}
-              alt="dropdown arrow"
-              className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"
+              alt='dropdown arrow'
+              className='absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none'
               style={{
                 width: 15,
                 height: 15,
@@ -450,147 +455,143 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
     const dataValidation = formData?.map((section) => {
       if (section.hide) return section;
-      return (
-        {
-          ...section,
-          fields: section.fields.map((field) => {
-            if (field.hide) return field;
-            // Check if field has a value based on its type
-            let hasValue: boolean = Boolean(
-              constructFormData[field.name]?.toString().trim()
-            );
-            if (field.type === 'checkbox') {
-              hasValue = (constructFormData[field.name] as string[])?.length > 0;
-            }
-            if (field.type === 'date' || field.type === 'fiscalDate') {
-              hasValue = Boolean(constructFormData[field.name]);
-            }
-            // Validate required fields
-            if (field.required && !hasValue) {
+      return {
+        ...section,
+        fields: section.fields.map((field) => {
+          if (field.hide) return field;
+          // Check if field has a value based on its type
+          let hasValue: boolean = Boolean(
+            constructFormData[field.name]?.toString().trim()
+          );
+          if (field.type === 'checkbox') {
+            hasValue = (constructFormData[field.name] as string[])?.length > 0;
+          }
+          if (field.type === 'date' || field.type === 'fiscalDate') {
+            hasValue = Boolean(constructFormData[field.name]);
+          }
+          // Validate required fields
+          if (field.required && !hasValue) {
+            hasError = true;
+            return { ...field, error: 'Field is required' };
+          }
+
+          if (field.type === 'phone') {
+            const value = constructFormData[field.name] as string;
+            const countryCode = constructFormData[
+              `${field.name}_countryCode`
+            ] as string;
+
+            if (field.required && !value) {
               hasError = true;
-              return { ...field, error: 'Field is required' };
+              return { ...field, error: 'Phone number is required' };
             }
 
-            if (field.type === 'phone') {
-              const value = constructFormData[field.name] as string;
-              const countryCode = constructFormData[
-                `${field.name}_countryCode`
-              ] as string;
-
-              if (field.required && !value) {
+            if (value) {
+              const validation = validatePhoneNumber(value, countryCode);
+              if (!validation.isValid) {
                 hasError = true;
-                return { ...field, error: 'Phone number is required' };
-              }
-
-              if (value) {
-                const validation = validatePhoneNumber(value, countryCode);
-                if (!validation.isValid) {
-                  hasError = true;
-                  return { ...field, error: validation.error };
-                }
+                return { ...field, error: validation.error };
               }
             }
+          }
 
-            // Date validation
-            if (
-              field.type === 'fiscalDate' &&
-              constructFormData[field.name]
-            ) {
-              const dateValue = constructFormData[field.name] as string;
+          // Date validation
+          if (field.type === 'fiscalDate' && constructFormData[field.name]) {
+            const dateValue = constructFormData[field.name] as string;
 
-              if (!isValidDate(dateValue)) {
-                hasError = true;
-                return {
-                  ...field,
-                  error: 'Invalid date',
-                };
-              }
-            }
-
-            // Depends Required Validation
-            if (
-              field.dependsRequired?.key &&
-              constructFormData[field.dependsRequired.key] ===
-              field.dependsRequired?.matchedValue &&
-              !hasValue
-            ) {
-              hasError = true;
-              return { ...field, error: field.dependsRequired.errorMessage };
-            }
-
-            // if (field.anyOneRequired) {
-            //   if (!isAnyFieldFilled) {
-            //     hasError = true;
-            //     return { ...field, error: "Any one cost information is required" }
-            //   } else {
-            //     return { ...field, error: "" }; // Clear error if any field is filled
-            //   }
-            // }
-
-            // Date custom Validation
-            if (
-              field.greaterThan &&
-              (constructFormData[field.name] || '') <=
-              (constructFormData[field.greaterThan.key] || '')
-            ) {
+            if (!isValidDate(dateValue)) {
               hasError = true;
               return {
                 ...field,
-                error: field.greaterThan.errorMessage,
+                error: 'Invalid date',
+              };
+            }
+          }
+
+          // Depends Required Validation
+          if (
+            field.dependsRequired?.key &&
+            constructFormData[field.dependsRequired.key] ===
+              field.dependsRequired?.matchedValue &&
+            !hasValue
+          ) {
+            hasError = true;
+            return { ...field, error: field.dependsRequired.errorMessage };
+          }
+
+          // if (field.anyOneRequired) {
+          //   if (!isAnyFieldFilled) {
+          //     hasError = true;
+          //     return { ...field, error: "Any one cost information is required" }
+          //   } else {
+          //     return { ...field, error: "" }; // Clear error if any field is filled
+          //   }
+          // }
+
+          // Date custom Validation
+          if (
+            field.greaterThan &&
+            (constructFormData[field.name] || '') <=
+              (constructFormData[field.greaterThan.key] || '')
+          ) {
+            hasError = true;
+            return {
+              ...field,
+              error: field.greaterThan.errorMessage,
+            };
+          }
+
+          // Validate regex if present and field has value
+          const value = constructFormData[field.name] as string;
+          if (field.regex && value) {
+            const pattern =
+              field.regex instanceof RegExp
+                ? field.regex
+                : new RegExp(field.regex);
+            if (!pattern.test(value)) {
+              hasError = true;
+              return {
+                ...field,
+                error: field.regexErrorMessage || 'Invalid format',
+              };
+            }
+          }
+
+          if (field.type === 'text' && value) {
+            const emojiRegex = /[\p{Emoji_Presentation}\uFE0F]/gu;
+            if (emojiRegex.test(value)) {
+              hasError = true;
+              return {
+                ...field,
+                error: 'Emojis are not accepted',
+              };
+            }
+          }
+
+          if (field.lengthRequired?.key && value) {
+            const minPattern = field.lengthRequired.minMatchedValue;
+            const maxPattern = field.lengthRequired.maxMatchedValue;
+
+            if (!minPattern.test(value)) {
+              hasError = true;
+              return {
+                ...field,
+                error: field.lengthRequired.minErrorMessage,
               };
             }
 
-            // Validate regex if present and field has value
-            const value = constructFormData[field.name] as string;
-            if (field.regex && value) {
-              const pattern =
-                field.regex instanceof RegExp
-                  ? field.regex
-                  : new RegExp(field.regex);
-              if (!pattern.test(value)) {
-                hasError = true;
-                return {
-                  ...field,
-                  error: field.regexErrorMessage || 'Invalid format',
-                };
-              }
+            if (!maxPattern.test(value)) {
+              hasError = true;
+              return {
+                ...field,
+                error: field.lengthRequired.maxErrorMessage,
+              };
             }
+          }
 
-            if (field.type === 'text' && value) {
-              const emojiRegex = /[\p{Emoji_Presentation}\uFE0F]/gu;
-              if (emojiRegex.test(value)) {
-                hasError = true;
-                return {
-                  ...field,
-                  error: 'Emojis are not accepted',
-                };
-              }
-            }
-
-            if (field.lengthRequired?.key && value) {
-              const minPattern = field.lengthRequired.minMatchedValue;
-              const maxPattern = field.lengthRequired.maxMatchedValue;
-
-              if (!minPattern.test(value)) {
-                hasError = true;
-                return {
-                  ...field,
-                  error: field.lengthRequired.minErrorMessage,
-                };
-              }
-
-              if (!maxPattern.test(value)) {
-                hasError = true;
-                return {
-                  ...field,
-                  error: field.lengthRequired.maxErrorMessage,
-                };
-              }
-            }
-
-            return { ...field, error: '' };
-          }),
-        })
+          return { ...field, error: '' };
+        }),
+      };
     });
     console.log("daatavalidation", constructFormData);
 
@@ -624,37 +625,38 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       {formData?.map((section, i) => {
         const isHalf = section.fillType === 'half';
         if (section.hide) return null;
-        return (
-          (<div key={i}>
-            <h4 className={`font-semibold text-base text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle mb-8 ml-3 ${i !== 0 ? 'mt-10' : ''}`}>
-              {section.sectionName}
-            </h4>
-            <div className={`grid md:grid-cols-${isHalf ? '2' : '1'} gap-4`}>
-              {section.fields.map((field, j) => {
-                if (field.hide) return null;
-                return (
-                  <div key={j} className='grid md:grid-cols-12 gap-4'>
-                    <label
-                      className={`text-sm text-[#425A76] font-medium md:text-right mt-1.5 ${isHalf ? 'col-span-4' : 'col-span-2'}`}
-                      htmlFor={field.name}
-                    >
-                      {field.label}
-                      {field.required && <span className='text-red-500'> *</span>}
-                    </label>
-                    <div className={isHalf ? 'col-span-8' : 'col-span-10'}>
-                      {getFields(field)}
-                      {field.error && (
-                        <span className='text-red-500 text-sm col-span-full'>
-                          {field.error}
-                        </span>
-                      )}
-                    </div>
+        return;
+        <div key={i}>
+          <h4
+            className={`font-semibold text-base text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle mb-8 ml-3 ${i !== 0 ? 'mt-10' : ''}`}
+          >
+            {section.sectionName}
+          </h4>
+          <div className={`grid md:grid-cols-${isHalf ? '2' : '1'} gap-4`}>
+            {section.fields.map((field, j) => {
+              if (field.hide) return null;
+              return (
+                <div key={j} className='grid md:grid-cols-12 gap-4'>
+                  <label
+                    className={`text-sm text-[#425A76] font-medium md:text-right mt-1.5 ${isHalf ? 'col-span-4' : 'col-span-2'}`}
+                    htmlFor={field.name}
+                  >
+                    {field.label}
+                    {field.required && <span className='text-red-500'> *</span>}
+                  </label>
+                  <div className={isHalf ? 'col-span-8' : 'col-span-10'}>
+                    {getFields(field)}
+                    {field.error && (
+                      <span className='text-red-500 text-sm col-span-full'>
+                        {field.error}
+                      </span>
+                    )}
                   </div>
-                )
-              })}
-            </div>
-          </div>)
-        );
+                </div>
+              );
+            })}
+          </div>
+        </div>;
       })}
     </form>
   );

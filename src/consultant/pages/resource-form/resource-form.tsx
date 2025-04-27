@@ -338,7 +338,8 @@ const ResourceForm: React.FC = () => {
       <div className='p-10'>
         <FormBuilder
           data={formConfig}
-          loading={allCountries.isLoading}
+          // loading={allCountries.isLoading}
+          loading={false}
           values={
             isEditView &&
               !state?.cost &&
