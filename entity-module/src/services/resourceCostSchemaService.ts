@@ -338,16 +338,14 @@ class ResourceCostSchemaService {
     try {
       const sequelize = await this.getDbConnection(schemaName);
 
-      // Build the query to get data from the account-specific schema
-      const query = `
+      //Build the base query without sorting or pagination
+      let query = `
         SELECT rc.*,rc.r_number as r_number, r.resource_fullname
         FROM "${schemaName}"."resource_cost" rc
         INNER JOIN "${schemaName}"."resources" r ON rc.resource_rid = r.rid
         WHERE 1=1 AND rc.resource_rid = :resource_rid
         ${filterConditions}
         ${searchCondition}
-        ORDER BY rc."${sortBy}" ${sortOrder}
-        LIMIT :limit OFFSET :offset
       `;
 
       // Count query to get total records
@@ -367,18 +365,70 @@ class ResourceCostSchemaService {
         resource_rid,
       };
 
-      // Execute the queries
-      const [results, countResult] = await Promise.all([
-        sequelize.query(query, {
+      // Execute count query first
+      const countResult = await sequelize.query(countQuery, {
+        replacements,
+        type: "SELECT",
+        plain: true,
+      });
+
+      // Execute main query without sorting
+      let results = await sequelize.query(query, {
+        replacements,
+        type: "SELECT",
+      });
+
+      const mainDbSequelize = await initMainDbSequelize();
+
+      // If sorting by currency_code, we need to fetch currency info first
+      if (sortBy === 'currency') {
+        // Get all currency RIDs from results
+        const currencyIds = [...new Set(results.map((rc: any) => rc.currency_rid))].filter(Boolean);
+        
+        if (currencyIds.length > 0) {
+          // Fetch currency info from main database
+          const currencies = await mainDbSequelize.query(`
+            SELECT rid, currency_code 
+            FROM public.currency 
+            WHERE rid IN (:currencyIds)
+          `, {
+            replacements: { currencyIds },
+            type: "SELECT"
+          });
+
+          // Create currency map
+          const currencyMap = currencies.reduce((map: any, curr: any) => {
+            map[curr.rid] = curr.currency_code || '';
+            return map;
+          }, {});
+
+          // Add currency_code to each resource cost
+          results.forEach((rc: any) => {
+            rc.currency_code = rc.currency_rid ? (currencyMap as any)[rc.currency_rid] : '';
+          });
+
+          // Sort in memory
+          results.sort((a: any, b: any) => {
+            const aCode = a.currency_code || '';
+            const bCode = b.currency_code || '';
+            return sortOrder === 'ASC' 
+              ? aCode.localeCompare(bCode) 
+              : bCode.localeCompare(aCode);
+          });
+        }
+      } else {
+        // For other sort fields, add sorting to the original query
+        query += ` ORDER BY rc."${sortBy}" ${sortOrder} LIMIT :limit OFFSET :offset`;
+        results = await sequelize.query(query, {
           replacements,
           type: "SELECT",
-        }),
-        sequelize.query(countQuery, {
-          replacements,
-          type: "SELECT",
-          plain: true,
-        }),
-      ]);
+        });
+      }
+
+      // Apply pagination if sorting was done in memory
+      if (sortBy === 'currency') {
+        results = results.slice(offset, offset + limit)  as any;
+      }
 
       const resourceCost = results;
       const totalCount = countResult ? (countResult as any).total : 0;
@@ -395,7 +445,6 @@ class ResourceCostSchemaService {
             WHERE rid IN (:currencyIds)
           `;
           
-          const mainDbSequelize = await initMainDbSequelize();
           const currencies = await mainDbSequelize.query(currencyQuery, {
             replacements: { currencyIds },
             type: "SELECT"
@@ -516,6 +565,7 @@ class ResourceCostSchemaService {
       "bi_weekly_cost",
       "daily_cost",
       "hourly_cost",
+      "currency"
     ];
     if (!validSortColumns.includes(sortBy)) {
       sortBy = "created_datetime";
