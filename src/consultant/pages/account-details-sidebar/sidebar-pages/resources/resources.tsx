@@ -35,6 +35,8 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     { fiscalYear: string }
   >((state: RootState) => state.account);
 
+  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0
+
   const navigate = useNavigate();
   const location = useLocation();
   const {
@@ -48,7 +50,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     sortBy: sortField,
     sortOrder: sortOrder,
     filters: appliedFilters,
-    fiscalYear: fiscalYear ? Number(fiscalYear) : 0
+    fiscalYear: convertedFiscalYear
   });
 
   const handleFilter = () => {
@@ -174,7 +176,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
           resourceData={resourceData}
           accountId={accountDetails?.data?.accountById?.r_number}
           appliedFilters={appliedFilters || {}}
-          fiscalYearValue={fiscalYear}
+          fiscalYearValue={convertedFiscalYear}
           accountDetails={accountDetails as AccountData}
         />
       ) : (
