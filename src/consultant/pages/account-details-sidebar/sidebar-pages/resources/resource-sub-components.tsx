@@ -12,7 +12,7 @@ interface SubcomponentProps {
   resourceData: any;
   accountId: string;
   appliedFilters: Record<string, any>;
-  fiscalYearValue: string;
+  fiscalYearValue: number;
   accountDetails: AccountData;
 }
 
