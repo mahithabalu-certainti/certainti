@@ -148,13 +148,13 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
               </TableSortLabel>
             </TableCell>
             <TableCell>
-              {/* <TableSortLabel
+              <TableSortLabel
                 active={orderBy === 'currency_code'}
                 direction={orderBy === 'currency_code' ? order : 'asc'}
                 onClick={createSortHandler('currency_code')}
-              > */}
-              Currency
-              {/* </TableSortLabel> */}
+              >
+                Currency
+              </TableSortLabel>
             </TableCell>
             <TableCell>
               <TableSortLabel

@@ -48,6 +48,7 @@ const ResourceForm: React.FC = () => {
     country: '',
     state: '',
   });
+  const [formValues, setFormValues] = useState<Record<string, any>>({});
 
   // Hooks
   const { successToast } = useToast();
@@ -93,24 +94,30 @@ const ResourceForm: React.FC = () => {
     accountNumber
   );
 
-  const formValues = state?.cost
-    ? {
-      ...resource?.data?.resourceDetails,
-      financial_start_date: costInfo?.effective_date || '',
-      financial_end_date: costInfo?.end_date || '',
-      cost: costInfo?.cost || '',
-      currency: costInfo?.currency_rid || null,
-      cost_frequency: costInfo?.cost_frequency || '',
-    }
-    : state?.skill
-      ? {
+  useEffect(() => {
+    if (state?.cost) {
+      const formValues = {
+        ...resource?.data?.resourceDetails,
+        financial_start_date: costInfo?.effective_date || '',
+        financial_end_date: costInfo?.end_date || '',
+        cost: costInfo?.cost || '',
+        currency: costInfo?.currency_rid || null,
+        cost_frequency: costInfo?.cost_frequency || '',
+      };
+      setFormValues(formValues);
+    } else if (state?.skill) {
+      const formValues = {
         ...resource?.data?.resourceDetails,
         skill_level: skillInfo?.skillLevel || '',
         skill_name: skillInfo?.skillName || '',
         skill_start_date: skillInfo?.startDate || '',
         years_of_experience: skillInfo?.yearsOfExperience || '',
-      }
-      : null;
+      };
+      setFormValues(formValues);
+    }
+  }, [state, costDetails, resource]);
+
+
   // const resourceValues = resource?.data?.resourceDetails;
   const userDetails = JSON.parse(localStorage.getItem('auth') || '{}');
   const allCountries = useGetAllCountries();
