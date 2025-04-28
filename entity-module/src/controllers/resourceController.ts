@@ -17,7 +17,7 @@ import configurations from "../config/config";
 const services = configurations.getInstance().getServices();
 const resourceService = services.resourceService;
 
-async function creatResource(req: Request, res: Response): Promise<void> {
+async function createResource(req: Request, res: Response): Promise<void> {
   const methodName = "Create resource";
   try {
     const value = await validateRequest(req, createResourcesSchema, res);
@@ -220,7 +220,7 @@ async function updateResource(req: Request, res: Response): Promise<void> {
 }
 
 export default {
-  creatResource,
+  createResource,
   resourcesList,
   resourcesById,
   updateResource,

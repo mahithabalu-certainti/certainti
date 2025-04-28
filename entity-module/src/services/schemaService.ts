@@ -9,6 +9,7 @@ import { ResourcesHistory } from "../models/resourceHistory";
 import { ResourcesTimeline } from "../models/resourceTimeline";
 import { ResourceCost } from "../models/resourceCost";
 import { ResourceSkill } from "../models/resourceSkill";
+import { Skill } from "../models/skill";
 
 class SchemaService {
   /**
@@ -90,13 +91,14 @@ class SchemaService {
       );
 
       const ResourceCostModel = await ResourceCost.initialize(sequelize, schemaName);
+      const SkillModel = await Skill.initialize(sequelize, schemaName);
       const ResourceSkillModel = await ResourceSkill.initialize(sequelize, schemaName);
-
 
       await Resource.sync({ force: false });
       await ResourcesHistoryModel.sync({ force: false });
       await ResourcesTimelineModel.sync({ force: false });
       await ResourceCostModel.sync({ force: false });
+      await SkillModel.sync({ force: false });
       await ResourceSkillModel.sync({ force: false });
     } catch (err) {
       throw new Error(
@@ -254,8 +256,8 @@ class SchemaService {
         country: resourceData.country || null,
         city: resourceData.city || null,
         designation: resourceData.designation || null,
-        total_years_experience: resourceData.total_years_experience || null,
-        total_years_in_org: resourceData.total_years_in_org || null,
+        total_years_experience: resourceData.total_years_experience || 0,
+        total_years_in_org: resourceData.total_years_in_org || 0,
         created_by: resourceData.created_by,
         modified_by: resourceData.modified_by,
         account_rid: resourceData.account_id,
@@ -791,7 +793,6 @@ class SchemaService {
   
       return updatedResources;
     } catch (err) {
-      console.log("Error ", err);
       throw new Error("Error fetching geo data: " + (err as Error).message);
     }
   }

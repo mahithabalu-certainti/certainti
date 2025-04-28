@@ -58,6 +58,13 @@ export interface IAccountService {
     errorMessage?: string;
     data?: { accountById: any; accountDetails: any };
   }>;
+
+  listGlobalAccounts(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { gloablAcconunt: any; count: number };
+  }>;
 }
 
 export interface GeoDataResponse<T> {
