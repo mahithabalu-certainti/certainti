@@ -19,7 +19,6 @@ import { ResourceSkillList } from "../../../../../types/resource-skill";
 import { useResourceSkill } from "../../../../../services/resource-skill/resource-skill-service";
 import { RESOURCESKILL } from "../../../../../../routes";
 import ActionButton from '../../../../account-list/table/action-button';
-import { getDateFormat } from '../../../../../../common-utils';
 
 const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, appliedFilters, accountDetails, resourceRid }) => {
   const navigate = useNavigate();

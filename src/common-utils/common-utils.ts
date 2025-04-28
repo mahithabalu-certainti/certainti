@@ -312,8 +312,3 @@ export const getDateTimeFormat = (date?: string) => {
   if (!date) return '';
   return dayjs(date).format('MM-DD-YYYY HH:mm:ss');
 };
-
-export const getDateFormat = (date?: string) => {
-  if (!date) return '';
-  return dayjs(date).format('MM/DD/YYYY');
-};
