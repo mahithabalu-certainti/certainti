@@ -98,7 +98,7 @@ const ResourceForm: React.FC = () => {
       ...resource?.data?.resourceDetails,
       financial_start_date: costInfo?.effective_date || '',
       financial_end_date: costInfo?.end_date || '',
-      cost: Number(costInfo?.cost?.replace(',', "")).toLocaleString('en-US', { minimumFractionDigits: 2 }) || '',
+      cost: costInfo?.cost || '',
       currency: costInfo?.currency_rid || null,
       cost_frequency: costInfo?.cost_frequency || '',
     }
