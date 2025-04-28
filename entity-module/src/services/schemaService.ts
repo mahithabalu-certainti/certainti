@@ -642,7 +642,7 @@ class SchemaService {
 
       const ResourcesModel = await Resources.initialize(sequelize, schemaName);
 
-      const resource = await ResourcesModel.findOne({
+      let resource:any = await ResourcesModel.findOne({
         where: {
           rid: resourceId,
         },
@@ -675,6 +675,12 @@ class SchemaService {
           country?.country_code || null;
         (resource as any).dataValues.state_name = state?.state_name || null;
         (resource as any).dataValues.city_name = city?.city_name || null;
+        //Added to format date as MM/DD/YYYY
+        resource = {
+          ...resource.toJSON(),
+          resource_startdate: resource.resource_startdate ? moment(resource.resource_startdate).format('MM/DD/YYYY') : null,
+          resource_enddate: resource.resource_enddate ? moment(resource.resource_enddate).format('MM/DD/YYYY') : null,
+        };
       }
 
       return resource;

@@ -5,29 +5,34 @@ const uuidRegex =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const isNotFutureDate = (value: string, helpers: Joi.CustomHelpers): any => {
+  // Parse the date using moment with strict parsing
   const startDate = moment(value, "MM/DD/YYYY", true);
 
+  // Check if the date format is valid
   if (!startDate.isValid()) {
     return helpers.error("date.invalidFormat", {
       message: "Invalid effective from date.",
     });
   }
 
-  const [day, month, year] = value.split("/").map(Number);
+  // Split the date string and convert to numbers
+  const [month, day, year] = value.split("/").map(Number);
 
+  // Create Date objects for comparison
   const inputDate = new Date(year, month - 1, day);
-
   const currentDate = new Date();
+
+  // Normalize both dates to start of day for accurate comparison
+  inputDate.setHours(0, 0, 0, 0);
   currentDate.setHours(0, 0, 0, 0);
 
-  const comparisonDate = new Date(inputDate);
-  comparisonDate.setHours(0, 0, 0, 0);
-
-  if (comparisonDate > currentDate) {
+  // Check if date is in the future
+  if (inputDate > currentDate) {
     return helpers.error("any.invalid", {
       message: "Date cannot be in the future.",
     });
   }
+
   return value;
 };
 
