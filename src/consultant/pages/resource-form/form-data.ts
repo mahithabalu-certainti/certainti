@@ -169,7 +169,7 @@ export const ResourceFormData = (
           createTextField('cost', 'Cost', {
             required: true,
             regex: REGEX_PATTERNS.COST_REGEX,
-            regexErrorMessage: 'Numbers with up to 2 decimal places',
+            regexErrorMessage: '10 digit numbers with 2 decimal places only',
             placeholder: 'Enter Cost',
           }),
           createSelectField('currency', 'Currency', {
@@ -204,7 +204,7 @@ export const ResourceFormData = (
           createTextField('years_of_experience', 'Years of Experience', {
             required: false,
             regex: REGEX_PATTERNS.NUMBERS_GREATER_THAN_ZERO,
-            regexErrorMessage: 'Numbers only',
+            regexErrorMessage: 'Numbers only and decimal not allowed',
             placeholder: 'Enter years of experience',
           }),
         ],

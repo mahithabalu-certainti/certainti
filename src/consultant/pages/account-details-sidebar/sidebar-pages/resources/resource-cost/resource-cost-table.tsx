@@ -5,7 +5,7 @@ import {
   TableBody,
   TableCell,
   TableHead,
-  TablePagination,
+  // TablePagination,
   TableRow,
   TableSortLabel,
   Typography,
@@ -22,6 +22,8 @@ import { ResourceCostList } from "../../../../../types/resource-cost";
 import { useResourceCost } from "../../../../../services/resource-cost/resource-cost-service";
 import { RESOURCECOST } from "../../../../../../routes";
 import ActionButton from '../../../../account-list/table/action-button';
+import { arrowDownIcon, arrowUpIcon } from '../../../../../../assets';
+import { TablePagination } from '../../../../../../components/table';
 
 interface ResourceCostTableProps {
   fiscalYear?: number;
@@ -32,10 +34,10 @@ interface ResourceCostTableProps {
 
 const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appliedFilters, accountDetails, resourceRid }) => {
   const navigate = useNavigate();
-  const [page, setPage] = useState<number>(0);
+  const [page, setPage] = useState<number>(1);
   const [rowsPerPage, setRowsPerPage] = useState<number>(25);
-  const [order, setOrder] = useState<'asc' | 'desc'>('asc');
-  const [orderBy, setOrderBy] = useState<keyof ResourceCostList>('resource_cost_number');
+  const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+  const [orderBy, setOrderBy] = useState<keyof ResourceCostList>('created_datetime');
   const [resourceCostList, setResourceCostList] = useState<ResourceCostType[]>([]);
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
   const { data: costList, isLoading: loading } = useResourceCost({
@@ -63,16 +65,14 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
   //   console.log('Delete account', cost.resourceCostNumber);
   // };
 
-  const handleChangePage = (_event: unknown, newPage: number) => {
+  const handleChangePage = (newPage: number) => {
     setPage(newPage);
   };
 
   // handles page limit change
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+  const handleChangeRowsPerPage = (newPageSize: number) => {
+    setRowsPerPage(newPageSize)
+    setPage(1);
   };
 
   const handleRequestSort = (
@@ -105,22 +105,22 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
               color: '#425A76',
             }
           }}>
-            <TableCell>
+            <TableCell sx={{ minWidth: '250px' }}>
               {cost.resourceCostNumber}
             </TableCell>
-            <TableCell>
+            <TableCell sx={{ minWidth: '100px' }}>
               {cost.currency}
             </TableCell>
-            <TableCell>{cost.startDate}</TableCell>
-            <TableCell>{cost.endDate}</TableCell>
-            <TableCell>{cost.hourlyCost ? CostDisplay(cost.hourlyCost) : '-'}</TableCell>
-            <TableCell>{cost.dailyCost ? CostDisplay(cost.dailyCost) : "-"}</TableCell>
-            <TableCell>{cost.biWeeklyCost ? CostDisplay(cost.biWeeklyCost) : "-"}</TableCell>
-            <TableCell>{cost.weeklyCost ? CostDisplay(cost.weeklyCost) : "-"}</TableCell>
-            <TableCell>{cost.monthlyCost ? CostDisplay(cost.monthlyCost) : "-"}</TableCell>
-            <TableCell>{cost.semiAnnualCost ? CostDisplay(cost.semiAnnualCost) : "-"}</TableCell>
-            <TableCell>{cost.annualCost ? CostDisplay(cost.annualCost) : "-"}</TableCell>
-            <TableCell>
+            <TableCell sx={{ minWidth: '200px' }}>{cost.startDate}</TableCell>
+            <TableCell sx={{ minWidth: '200px' }}>{cost.endDate}</TableCell>
+            <TableCell sx={{ minWidth: '150px' }}>{cost.hourlyCost ? CostDisplay(cost.hourlyCost) : '-'}</TableCell>
+            <TableCell sx={{ minWidth: '150px' }}>{cost.dailyCost ? CostDisplay(cost.dailyCost) : "-"}</TableCell>
+            <TableCell sx={{ minWidth: '150px' }}>{cost.biWeeklyCost ? CostDisplay(cost.biWeeklyCost) : "-"}</TableCell>
+            <TableCell sx={{ minWidth: '150px' }}>{cost.weeklyCost ? CostDisplay(cost.weeklyCost) : "-"}</TableCell>
+            <TableCell sx={{ minWidth: '150px' }}>{cost.monthlyCost ? CostDisplay(cost.monthlyCost) : "-"}</TableCell>
+            <TableCell sx={{ minWidth: '150px' }}>{cost.semiAnnualCost ? CostDisplay(cost.semiAnnualCost) : "-"}</TableCell>
+            <TableCell sx={{ minWidth: '150px' }}>{cost.annualCost ? CostDisplay(cost.annualCost) : "-"}</TableCell>
+            <TableCell sx={{ minWidth: '80px' }}>
               <ActionButton
                 onEdit={() => handleEdit(cost)}
                 onDelete={() => { }}
@@ -133,143 +133,243 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
     });
   };
 
+  const getSortIcon =
+    (orderBy: string, columnKey: keyof ResourceCostList, order: 'asc' | 'desc') => () => {
+
+      if (orderBy !== columnKey) {
+        return (
+          <div
+            className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
+            onClick={createSortHandler(columnKey)}
+          >
+            <img
+              src={arrowUpIcon}
+              alt='sort-up'
+              className='w-4 h-4 filter grayscale brightness-0 opacity-50'
+            />
+            <img
+              src={arrowDownIcon}
+              alt='sort-down'
+              className='w-4 h-4 filter grayscale brightness-0 opacity-50 mt-[-9px]'
+            />
+          </div>
+        );
+      }
+      return order === 'asc' ? (
+        <div
+          className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
+          onClick={createSortHandler(columnKey)}
+        >
+          <img
+            src={arrowUpIcon}
+            alt='sort-up-active'
+            className='w-4 h-4'
+            style={{
+              filter: 'brightness(0) saturate(100%)',
+            }}
+          />
+          <img
+            src={arrowDownIcon}
+            alt='sort-down-inactive'
+            className='w-4 h-4 filter grayscale brightness-0 opacity-50 mt-[-9px]'
+          />
+        </div>
+      ) : (
+        <div
+          className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
+          onClick={createSortHandler(columnKey)}
+        >
+          <img
+            src={arrowUpIcon}
+            alt='sort-up-inactive'
+            className='w-4 h-4 filter grayscale brightness-0 opacity-50'
+          />
+          <img
+            src={arrowDownIcon}
+            alt='sort-down-active'
+            className='w-4 h-4 mt-[-9px]'
+            style={{
+              filter: 'brightness(0) saturate(100%)',
+            }}
+          />
+        </div>
+      )
+    };
+
   return (
-    <Paper sx={{ overflowX: 'scroll', boxShadow: 'none' }}>
-      <Table className='border border-[#E0E0E0]'>
-        <TableHead>
-          <TableRow>
-            <TableCell>
-              <TableSortLabel
-                active={orderBy === 'resource_cost_number'}
-                direction={orderBy === 'resource_cost_number' ? order : 'asc'}
-                onClick={createSortHandler('resource_cost_number')}
-              >
-                Resource Cost Number
-              </TableSortLabel>
-            </TableCell>
-            <TableCell>
-              <TableSortLabel
-                active={orderBy === 'currency_code'}
-                direction={orderBy === 'currency_code' ? order : 'asc'}
-                onClick={createSortHandler('currency_code')}
-              >
-                Currency
-              </TableSortLabel>
-            </TableCell>
-            <TableCell>
-              <TableSortLabel
-                active={orderBy === 'effective_date'}
-                direction={orderBy === 'effective_date' ? order : 'asc'}
-                onClick={createSortHandler('effective_date')}
-              >
-                Start Date
-              </TableSortLabel>
-            </TableCell>
-            <TableCell>
-              <TableSortLabel
-                active={orderBy === 'end_date'}
-                direction={orderBy === 'end_date' ? order : 'asc'}
-                onClick={createSortHandler('end_date')}
-              >
-                End Date
-              </TableSortLabel>
-            </TableCell>
-            <TableCell>
-              <TableSortLabel
-                active={orderBy === 'hourly_cost'}
-                direction={orderBy === 'hourly_cost' ? order : 'asc'}
-                onClick={createSortHandler('hourly_cost')}
-              >
-                Hourly
-              </TableSortLabel>
-            </TableCell>
-            <TableCell>
-              <TableSortLabel
-                active={orderBy === 'daily_cost'}
-                direction={orderBy === 'daily_cost' ? order : 'asc'}
-                onClick={createSortHandler('daily_cost')}
-              >
-                Daily
-              </TableSortLabel>
-            </TableCell>
-            <TableCell>
-              <TableSortLabel
-                active={orderBy === 'bi_weekly_cost'}
-                direction={orderBy === 'bi_weekly_cost' ? order : 'asc'}
-                onClick={createSortHandler('bi_weekly_cost')}
-              >
-                Bi-Weekly
-              </TableSortLabel>
-            </TableCell>
-            <TableCell>
-              <TableSortLabel
-                active={orderBy === 'weekly_cost'}
-                direction={orderBy === 'weekly_cost' ? order : 'asc'}
-                onClick={createSortHandler('weekly_cost')}
-              >
-                Weekly
-              </TableSortLabel>
-            </TableCell>
-            <TableCell>
-              <TableSortLabel
-                active={orderBy === 'monthly_cost'}
-                direction={orderBy === 'monthly_cost' ? order : 'asc'}
-                onClick={createSortHandler('monthly_cost')}
-              >
-                Monthly
-              </TableSortLabel>
-            </TableCell>
-            <TableCell>
-              <TableSortLabel
-                active={orderBy === 'semi_annual_cost'}
-                direction={orderBy === 'semi_annual_cost' ? order : 'asc'}
-                onClick={createSortHandler('semi_annual_cost')}
-              >
-                Semi Annual
-              </TableSortLabel>
-            </TableCell>
-            <TableCell>
-              <TableSortLabel
-                active={orderBy === 'annual_cost'}
-                direction={orderBy === 'annual_cost' ? order : 'asc'}
-                onClick={createSortHandler('annual_cost')}
-              >
-                Annual
-              </TableSortLabel>
-            </TableCell>
-            <TableCell>Action</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {loading ? (
+    <div className='border border-[#CBD6E2]'>
+      <Paper sx={{ overflowX: 'scroll', boxShadow: 'none', borderBottom: '1px solid #CBD6E2', borderRadius: '0px' }}>
+        <Table sx={{
+          borderCollapse: 'collapse',
+          '& .MuiTableCell-root': {
+            borderBottom: '1px solid #CBD6E2',
+          },
+        }}>
+          <TableHead sx={{
+            '& .MuiTableCell-root': {
+              fontWeight: 500,
+              fontSize: '14px',
+              lineHeight: '21px',
+              color: '#2A2A2A',
+              padding: '0px',
+              pl: 1,
+              height: '50px',
+            },
+            '& .MuiTableSortLabel-root': {
+              '&:hover': {
+                color: 'inherit',
+                cursor: 'auto',
+              },
+            }
+          }}>
             <TableRow>
-              <TableCell colSpan={11} align='center'>
-                <CircularProgress />
+              <TableCell sx={{ minWidth: '250px' }}>
+                <TableSortLabel
+                  active={orderBy === 'resource_cost_number'}
+                  direction={orderBy === 'resource_cost_number' ? order : 'asc'}
+                  IconComponent={getSortIcon(orderBy, 'resource_cost_number', order)}
+                // onClick={createSortHandler('resource_cost_number')}
+                >
+                  Resource Cost Number
+                </TableSortLabel>
               </TableCell>
-            </TableRow>
-          ) : resourceCostList?.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={11} align='center'>
-                <Typography variant='body1'>No data available</Typography>
+              <TableCell sx={{ minWidth: '100px' }}>
+                <TableSortLabel
+                  active={orderBy === 'currency_code'}
+                  direction={orderBy === 'currency_code' ? order : 'asc'}
+                  IconComponent={getSortIcon(orderBy, 'currency_code', order)}
+                >
+                  Currency
+                </TableSortLabel>
               </TableCell>
+              <TableCell sx={{ minWidth: '200px' }}>
+                <TableSortLabel
+                  active={orderBy === 'effective_date'}
+                  direction={orderBy === 'effective_date' ? order : 'asc'}
+                  IconComponent={getSortIcon(orderBy, 'effective_date', order)}
+                >
+                  Start Date
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ minWidth: '200px' }}>
+                <TableSortLabel
+                  active={orderBy === 'end_date'}
+                  direction={orderBy === 'end_date' ? order : 'asc'}
+                  IconComponent={getSortIcon(orderBy, 'end_date', order)}
+                >
+                  End Date
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ minWidth: '150px' }}>
+                <TableSortLabel
+                  active={orderBy === 'hourly_cost'}
+                  direction={orderBy === 'hourly_cost' ? order : 'asc'}
+                  IconComponent={getSortIcon(orderBy, 'hourly_cost', order)}
+                >
+                  Hourly
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ minWidth: '150px' }}>
+                <TableSortLabel
+                  active={orderBy === 'daily_cost'}
+                  direction={orderBy === 'daily_cost' ? order : 'asc'}
+                  IconComponent={getSortIcon(orderBy, 'daily_cost', order)}
+                >
+                  Daily
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ minWidth: '150px' }}>
+                <TableSortLabel
+                  active={orderBy === 'bi_weekly_cost'}
+                  direction={orderBy === 'bi_weekly_cost' ? order : 'asc'}
+                  IconComponent={getSortIcon(orderBy, 'bi_weekly_cost', order)}
+                >
+                  Bi-Weekly
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ minWidth: '150px' }}>
+                <TableSortLabel
+                  active={orderBy === 'weekly_cost'}
+                  direction={orderBy === 'weekly_cost' ? order : 'asc'}
+                  IconComponent={getSortIcon(orderBy, 'weekly_cost', order)}
+                >
+                  Weekly
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ minWidth: '150px' }}>
+                <TableSortLabel
+                  active={orderBy === 'monthly_cost'}
+                  direction={orderBy === 'monthly_cost' ? order : 'asc'}
+                  IconComponent={getSortIcon(orderBy, 'monthly_cost', order)}
+                >
+                  Monthly
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ minWidth: '200px' }}>
+                <TableSortLabel
+                  active={orderBy === 'semi_annual_cost'}
+                  direction={orderBy === 'semi_annual_cost' ? order : 'asc'}
+                  IconComponent={getSortIcon(orderBy, 'semi_annual_cost', order)}
+                >
+                  Semi Annual
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ minWidth: '150px' }}>
+                <TableSortLabel
+                  active={orderBy === 'annual_cost'}
+                  direction={orderBy === 'annual_cost' ? order : 'asc'}
+                  IconComponent={getSortIcon(orderBy, 'annual_cost', order)}
+                >
+                  Annual
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ minWidth: '80px' }}>Actions</TableCell>
             </TableRow>
-          ) : (
-            renderRows({
-              resourceCost: resourceCostList || [],
-            })
-          )}
-        </TableBody>
-      </Table>
+          </TableHead>
+          <TableBody sx={{
+            '& .MuiTableCell-root': {
+              fontWeight: 300,
+              fontSize: '14px',
+              lineHeight: '21px',
+              color: '#425A76',
+              padding: '0px',
+              pl: 1,
+              minHeight: '42px',
+              maxHeight: '42px',
+              height: '42px',
+            },
+          }}>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={11} align='center'>
+                  <CircularProgress />
+                </TableCell>
+              </TableRow>
+            ) : resourceCostList?.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={11} align='center'>
+                  <Typography variant='body1'>No data available</Typography>
+                </TableCell>
+              </TableRow>
+            ) : (
+              renderRows({
+                resourceCost: resourceCostList || [],
+              })
+            )}
+          </TableBody>
+        </Table>
+      </Paper>
       <TablePagination
         rowsPerPageOptions={[25, 30, 40, 50]}
-        component='div'
+        // component='div'
         count={costList?.count ?? 0}
         rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
-    </Paper>
+    </div>
+
   );
 };
 

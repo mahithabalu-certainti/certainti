@@ -95,26 +95,31 @@ const ResourceForm: React.FC = () => {
   );
 
   useEffect(() => {
-    if (state?.cost) {
-      const formValues = {
-        ...resource?.data?.resourceDetails,
+    const formValues = resource?.data?.resourceDetails;
+    if (state?.cost && costDetails && isEditView) {
+      const costValues = {
+        ...formValues,
         financial_start_date: costInfo?.effective_date || '',
         financial_end_date: costInfo?.end_date || '',
         cost: costInfo?.cost || '',
         currency: costInfo?.currency_rid || null,
         cost_frequency: costInfo?.cost_frequency || '',
       };
-      setFormValues(formValues);
-    } else if (state?.skill) {
-      const formValues = {
-        ...resource?.data?.resourceDetails,
+      setFormValues(costValues);
+    } else if (state?.skill && skillInfo && isEditView) {
+      const skillValues = {
+        ...formValues,
         skill_level: skillInfo?.skillLevel || '',
         skill_name: skillInfo?.skillName || '',
         skill_start_date: skillInfo?.startDate || '',
         years_of_experience: skillInfo?.yearsOfExperience || '',
       };
+      setFormValues(skillValues);
+    } else if (formValues && !isEditView) {
+      // Set form values with resource details when creataing cost and skill
       setFormValues(formValues);
     }
+
   }, [state, costDetails, resource]);
 
 
@@ -219,7 +224,6 @@ const ResourceForm: React.FC = () => {
         cost_rid: state?.costInfo?.costRid,
       };
       const costData = transformCostData(updateFormValues, isEditView);
-
       if (isEditView) {
         updateResourceCost.mutate(costData);
       } else {
