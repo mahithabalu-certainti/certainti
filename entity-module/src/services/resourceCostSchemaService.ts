@@ -340,7 +340,9 @@ class ResourceCostSchemaService {
 
       //Build the base query without sorting or pagination
       let query = `
-        SELECT rc.*,rc.r_number as r_number, r.resource_fullname
+        SELECT rc.*,rc.r_number as r_number, r.resource_fullname,
+        TO_CHAR(rc.effective_date, 'MM/DD/YYYY') as effective_date,
+        TO_CHAR(rc.end_date, 'MM/DD/YYYY') as end_date
         FROM "${schemaName}"."resource_cost" rc
         INNER JOIN "${schemaName}"."resources" r ON rc.resource_rid = r.rid
         WHERE 1=1 AND rc.resource_rid = :resource_rid
