@@ -63,14 +63,14 @@ const accountSchema = Joi.object({
     .required()
     .messages({
       "string.pattern.base":
-        "fiscal_start_date must be in the format DD/MM/YYYY",
+        "fiscal_start_date must be in the format MM/DD/YYYY",
     }),
 
   fiscal_end_date: Joi.string()
     .pattern(/^\d{2}\/\d{2}\/\d{4}$/)
     .required()
     .messages({
-      "string.pattern.base": "fiscal_end_date must be in the format DD/MM/YYYY",
+      "string.pattern.base": "fiscal_end_date must be in the format MM/DD/YYYY",
     }),
   interaction_cc_list: Joi.string().allow(null),
   blended_rate_fte: Joi.string()
@@ -165,14 +165,14 @@ const updateAccountSchema = Joi.object({
     .required()
     .messages({
       "string.pattern.base":
-        "fiscal_start_date must be in the format DD/MM/YYYY",
+        "fiscal_start_date must be in the format MM/DD/YYYY",
     }),
 
   fiscal_end_date: Joi.string()
     .pattern(/^\d{2}\/\d{2}\/\d{4}$/)
     .required()
     .messages({
-      "string.pattern.base": "fiscal_end_date must be in the format DD/MM/YYYY",
+      "string.pattern.base": "fiscal_end_date must be in the format MM/DD/YYYY",
     }),
   interaction_cc_list: Joi.string().allow(null),
   blended_rate_fte: Joi.string()

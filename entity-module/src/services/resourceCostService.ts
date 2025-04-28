@@ -920,7 +920,7 @@ class ResourceCostService {
 
    /**
  * Properly formats a date string for database storage
- * @param dateString Date string in DD/MM/YYYY format
+ * @param dateString Date string in MM/DD/YYYY format
  * @returns Properly formatted date for database storage
  */
 private formatDateForDb(dateString?: string): Date | null {
