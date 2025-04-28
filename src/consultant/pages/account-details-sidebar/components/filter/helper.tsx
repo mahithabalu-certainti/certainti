@@ -356,14 +356,14 @@ export const DateFilterControl: React.FC<{
                 name='from'
                 maxDate={dayjs(today)}
                 minDate={dayjs(sixYearsAgo)}
-                value={dayjs(state.date?.value.from, 'YYYY/MM/DD')}
+                value={dayjs(state.date?.value.from, 'MM/DD/YYYY')}
                 disabled={disableInput}
-                format='YYYY/MM/DD'
+                format='MM/DD/YYYY'
                 onChange={(newValue) => {
                   onValueChange(
                     'from',
                     fieldName,
-                    dayjs(newValue).format('YYYY/MM/DD')
+                    dayjs(newValue).format('MM/DD/YYYY')
                   );
                 }}
                 shouldDisableDate={(date) => dayjs(date).isAfter(dayjs(), 'day')}
