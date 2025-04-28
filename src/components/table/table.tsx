@@ -16,7 +16,7 @@ import {
 import React, { useState } from 'react';
 import { RowData, SortDirection, TableProps } from './types';
 import TablePagination from './pagination';
-import { editIcon, eyeIcon } from '../../assets';
+import { arrowDownIcon, arrowUpIcon, editIcon, eyeIcon } from '../../assets';
 
 const Table = <T extends RowData>({
   data = [],
@@ -174,7 +174,7 @@ const Table = <T extends RowData>({
                       <>
                         {sortBy === column.sort && (
                           <span
-                            className='ml-1 cursor-pointer'
+                            className='cursor-pointer'
                             onClick={(e) => {
                               e.stopPropagation();
                               if (column.sort) {
@@ -184,22 +184,63 @@ const Table = <T extends RowData>({
                               }
                             }}
                           >
-                            {sortOrder === 'ASC' ? '↑' : '↓'}
+                            {sortOrder === 'ASC' ? (
+                                <div className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'>
+                                  <img
+                                    src={arrowUpIcon}
+                                    alt='sort-up-active'
+                                    className='w-4 h-4'
+                                    style={{
+                                      filter: 'brightness(0) saturate(100%)',
+                                    }}
+                                  />
+                                  <img
+                                    src={arrowDownIcon}
+                                    alt='sort-down-inactive'
+                                    className='w-4 h-4 filter grayscale brightness-0 opacity-50 mt-[-9px]'
+                                  />
+                                </div>
+                              ) : (
+                                <div className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'>
+                                  <img
+                                    src={arrowUpIcon}
+                                    alt='sort-up-inactive'
+                                    className='w-4 h-4 filter grayscale brightness-0 opacity-50'
+                                  />
+                                  <img
+                                    src={arrowDownIcon}
+                                    alt='sort-down-active'
+                                    className='w-4 h-4 mt-[-9px]'
+                                    style={{
+                                      filter: 'brightness(0) saturate(100%)',
+                                    }}
+                                  />
+                                </div>
+                              )}
                           </span>
                         )}
                         {sortBy !== column.sort && (
-                          <span
-                            className='ml-1 cursor-pointer text-gray-400'
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (column.sort) {
-                                handleSort(column.sort);
-                              }
-                            }}
-                          >
-                            ↕
-                          </span>
-                        )}
+                            <div
+                              className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (column.sort) {
+                                  handleSort(column.sort);
+                                }
+                              }}
+                            >
+                              <img
+                                src={arrowUpIcon}
+                                alt='sort-up'
+                                className='w-4 h-4 filter grayscale brightness-0 opacity-50'
+                              />
+                              <img
+                                src={arrowDownIcon}
+                                alt='sort-down'
+                                className='w-4 h-4 filter grayscale brightness-0 opacity-50 mt-[-9px]'
+                              />
+                            </div>
+                          )}
                       </>
                     )}
                   </div>
