@@ -242,7 +242,7 @@ export const ResourceFormData = (
             {
               required: false,
               regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
-              regexErrorMessage: 'Enter whole numbers between 0 and 99',
+              regexErrorMessage: 'Please enter a valid number between 0 and 99',
               placeholder: 'Enter Total Years of Experience',
               disabled: disableCostAndSkill,
             }
@@ -253,7 +253,7 @@ export const ResourceFormData = (
             {
               required: false,
               regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
-              regexErrorMessage: 'Enter whole numbers between 0 and 99',
+              regexErrorMessage: 'Please enter a valid number between 0 and 99',
               placeholder: 'Enter total years in the organisation',
               disabled: disableCostAndSkill,
             }

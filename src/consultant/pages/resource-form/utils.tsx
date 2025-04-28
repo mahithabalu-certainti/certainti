@@ -80,7 +80,7 @@ interface ResourceTransformationOptions {
 }
 
 // Helper functions
-const formatDateToDDMMYYYY = (dateString?: string | null): string => {
+const formatDateToMMDDYYYY = (dateString?: string | null): string => {
   if (!dateString) return '';
 
   const date = new Date(dateString);
@@ -90,7 +90,7 @@ const formatDateToDDMMYYYY = (dateString?: string | null): string => {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = date.getFullYear();
 
-  return `${day}/${month}/${year}`;
+  return `${month}/${day}/${year}`;
 };
 
 // const capitalizeFirstLetter = (str?: string): string => {
@@ -127,12 +127,12 @@ export function transformPayloadforUpdateResource(
     city: rawData.city || existingResource?.city_name || '',
     comments: rawData.comments || existingResource?.comments || '',
     effective_from_date:
-      formatDateToDDMMYYYY(rawData.resource_startdate) ||
-      formatDateToDDMMYYYY(existingResource?.resource_startdate) ||
+      formatDateToMMDDYYYY(rawData.resource_startdate) ||
+      formatDateToMMDDYYYY(existingResource?.resource_startdate) ||
       '',
     effective_end_date:
-      formatDateToDDMMYYYY(rawData.resource_enddate) ||
-      formatDateToDDMMYYYY(existingResource?.resource_enddate) ||
+      formatDateToMMDDYYYY(rawData.resource_enddate) ||
+      formatDateToMMDDYYYY(existingResource?.resource_enddate) ||
       '',
     designation: rawData.designation || existingResource?.designation || '',
     total_years_experience: safeParseNumber(
@@ -161,8 +161,8 @@ export const transformPayloadforCreateResource = (
     country: formData.country,
     state: formData.state,
     city: formData.city,
-    effective_from_date: formatDateToDDMMYYYY(formData.resource_startdate),
-    effective_end_date: formatDateToDDMMYYYY(formData.resource_enddate),
+    effective_from_date: formatDateToMMDDYYYY(formData.resource_startdate),
+    effective_end_date: formatDateToMMDDYYYY(formData.resource_enddate),
     designation: formData.designation,
     total_years_experience: formData.total_years_experience,
     total_years_in_org: formData.total_years_in_org,

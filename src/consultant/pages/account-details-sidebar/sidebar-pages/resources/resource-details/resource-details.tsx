@@ -16,14 +16,17 @@ interface DetailItem {
   value: React.ReactNode;
 }
 
-const formatDate = (dateString?: string): string => {
-  if (!dateString) return '-';
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleDateString();
-  } catch {
-    return '-';
-  }
+const formatDateToMMDDYYYY = (dateString?: string | null): string => {
+  if (!dateString) return '';
+
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+
+  return `${month}/${day}/${year}`;
 };
 
 const formatKey = (key: string): string => {
@@ -117,6 +120,20 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
           };
         }
 
+        if (key === 'resource_startdate' && !Array.isArray(value)) {
+          return {
+            label: 'Resource Effective From',
+            value: formatDateToMMDDYYYY(value as string), // or handle nested objects differently
+          };
+        }
+
+        if (key === 'resource_enddate' && !Array.isArray(value)) {
+          return {
+            label: 'Resource End Date',
+            value: formatDateToMMDDYYYY(value as string), // or handle nested objects differently
+          };
+        }
+
         return {
           label: formatKey(key),
           value: customMappings?.[key] ? customMappings[key](value) : value,
@@ -191,8 +208,8 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
       resource_role: resourceData.resource_role,
     },
     {
-      resource_effective_from: formatDate,
-      resource_end_date: formatDate,
+      resource_effective_from: formatDateToMMDDYYYY,
+      resource_end_date: formatDateToMMDDYYYY,
     }
   );
 
@@ -204,8 +221,8 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
       modified_by: resourceData.modified_by,
     },
     {
-      created_datetime: formatDate,
-      modified_datetime: formatDate,
+      created_datetime: formatDateToMMDDYYYY,
+      modified_datetime: formatDateToMMDDYYYY,
     }
   );
 

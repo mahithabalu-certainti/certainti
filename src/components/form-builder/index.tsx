@@ -295,31 +295,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               value={fieldValue ? dayjs(fieldValue) : null}
               disabled={field.disabled}
               onChange={(newValue) => {
-                const dateString = dayjs(newValue).format('MM/DD/YYYY');
-                // Clear error when valid date is selected
-                setFormData((prev) =>
-                  prev?.map((sec) => ({
-                    ...sec,
-                    fields: sec.fields.map((f) =>
-                      f.name === field.name ? { ...f, error: '' } : f
-                    ),
-                  }))
-                );
-                handleChange(dateString);
-              }}
-              onError={(error) => {
-                if (error === 'disableFuture' && field.disableFutureDates) {
-                  setFormData((prev) =>
-                    prev?.map((sec) => ({
-                      ...sec,
-                      fields: sec.fields.map((f) =>
-                        f.name === field.name
-                          ? { ...f, error: 'Future dates are not allowed' }
-                          : f
-                      ),
-                    }))
-                  );
-                }
+                handleChange(dayjs(newValue).format('MM/DD/YYYY'));
               }}
               shouldDisableDate={
                 field.disableFutureDates
@@ -382,7 +358,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               minDate={dayjs().startOf('year')}
               onChange={(newValue) => {
                 handleChange(dayjs(newValue).format('DD/MM/YYYY'));
-              }}             
+              }}
               slots={{
                 openPickerIcon: () => (
                   <img src={calendarIcon} alt='calendar' className='w-4 h-4' />
@@ -550,7 +526,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
           if (field.type === 'date' && constructFormData[field.name]) {
             const dateValue = constructFormData[field.name] as string;
-
             if (
               field.disableFutureDates &&
               dayjs(dateValue).isAfter(dayjs(), 'day')
@@ -599,10 +574,19 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
           // Fiscal Date custom Validation
           if (field.differentThan) {
-            const currentFieldDate = dayjs(constructFormData[field.name]?.toString() || '', 'MM/DD');
-            const differentThanFieldDate = dayjs(constructFormData[field.differentThan.key]?.toString() || '', 'MM/DD');
+            const currentFieldDate = dayjs(
+              constructFormData[field.name]?.toString() || '',
+              'MM/DD'
+            );
+            const differentThanFieldDate = dayjs(
+              constructFormData[field.differentThan.key]?.toString() || '',
+              'MM/DD'
+            );
 
-            if (currentFieldDate.isValid() && differentThanFieldDate.isValid()) {
+            if (
+              currentFieldDate.isValid() &&
+              differentThanFieldDate.isValid()
+            ) {
               if (
                 currentFieldDate.date() === differentThanFieldDate.date() &&
                 currentFieldDate.month() === differentThanFieldDate.month()
@@ -614,7 +598,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 };
               }
             }
-          }                   
+          }
 
           // Validate regex if present and field has value
           const value = constructFormData[field.name] as string;

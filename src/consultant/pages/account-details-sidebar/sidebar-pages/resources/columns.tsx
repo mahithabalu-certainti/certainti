@@ -19,7 +19,7 @@ const displayValue = (value: any) => {
 
 const BASE_COLUMNS: ColumnDefinition[] = [
   {
-    id: 'rid',
+    id: 'r_number',
     label: 'Resource Id',
     sortable: true,
     render: (value: string, row: any) => (
@@ -52,6 +52,24 @@ const BASE_COLUMNS: ColumnDefinition[] = [
     sortable: true,
     render: (value: string) => displayValue(value),
   },
+  {
+    id: 'designation',
+    label: 'Resource Designation',
+    sortable: true,
+    render: (value: string) => displayValue(value),
+  },
+  {
+    id: 'country',
+    label: 'Resource Country',
+    sortable: true,
+    render: (value: string) => displayValue(value),
+  },
+  {
+    id: 'state',
+    label: 'Resource Region',
+    sortable: true,
+    render: (value: string) => displayValue(value),
+  },
 ];
 
 const createStatusColumn = (activeOnly: boolean = false): ColumnDefinition => ({
@@ -81,7 +99,7 @@ export const getResourceColumns = ({
   // Apply click handler to the specified ID column
   const applyClickHandler = (columns: ColumnDefinition[]) => {
     return columns.map((column) =>
-      column.id === (onClickId || 'rid')
+      column.id === (onClickId || 'r_number')
         ? {
             ...column,
             render: (value: string, row: any) => (

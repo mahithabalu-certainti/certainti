@@ -76,7 +76,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     setColumns(
       getResourceColumns({
         onResourceIdClick: handleResourceClick,
-        onClickId: 'rid',
+        onClickId: 'r_number',
       })
     );
   }, []);
