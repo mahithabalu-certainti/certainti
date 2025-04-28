@@ -193,7 +193,7 @@ export const ResourceFormData = (
           createTextField('skill_name', 'Skill Name', {
             required: true,
             regex: REGEX_PATTERNS.LETTERS_3_TO_100,
-            regexErrorMessage: '4-25 letters only',
+            regexErrorMessage: '3 to 100 letters only',
             placeholder: 'Enter Skill Name',
           }),
           createSelectField('skill_level', 'Skill Level', {
@@ -204,7 +204,7 @@ export const ResourceFormData = (
           createTextField('years_of_experience', 'Years of Experience', {
             required: false,
             regex: REGEX_PATTERNS.NUMBERS_GREATER_THAN_ZERO,
-            regexErrorMessage: 'Numbers only',
+            regexErrorMessage: 'Must be a valid positive number.',
             placeholder: 'Enter years of experience',
           }),
         ],
