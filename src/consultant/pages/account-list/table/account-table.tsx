@@ -26,6 +26,7 @@ import { convertAccounts } from '../helpers';
 import './styles.css';
 import { renderChildRows, renderRows } from './utils';
 import { TablePagination } from '../../../../components/table';
+import { arrowDownIcon, arrowUpIcon } from '../../../../assets';
 
 const AccountTable: React.FC<Record<string, any>> = ({
   appliedFilters,
@@ -220,14 +221,65 @@ const AccountTable: React.FC<Record<string, any>> = ({
     });
 
   const getSortIcon =
-    (orderBy: string, columnKey: string, order: 'asc' | 'desc') => () => {
+    (orderBy: string, columnKey: keyof AccountList, order: 'asc' | 'desc') => () => {
       if (orderBy !== columnKey) {
-        return <span className='ml-1 cursor-pointer text-gray-400'>↕</span>;
+        return (
+          <div
+            className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
+            onClick={createSortHandler(columnKey)}
+          >
+            <img
+              src={arrowUpIcon}
+              alt='sort-up'
+              className='w-4 h-4 filter grayscale brightness-0 opacity-50'
+            />
+            <img
+              src={arrowDownIcon}
+              alt='sort-down'
+              className='w-4 h-4 filter grayscale brightness-0 opacity-50 mt-[-9px]'
+            />
+          </div>
+        );
       }
-      return order === 'asc' ?
-        <span className='ml-1 cursor-pointer'>↑</span>
-        :
-        <span className='ml-1 cursor-pointer'>↓</span>
+      return order === 'asc' ? (
+        <div
+          className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
+          onClick={createSortHandler(columnKey)}
+        >
+          <img
+            src={arrowUpIcon}
+            alt='sort-up-active'
+            className='w-4 h-4'
+            style={{
+              filter: 'brightness(0) saturate(100%)',
+            }}
+          />
+          <img
+            src={arrowDownIcon}
+            alt='sort-down-inactive'
+            className='w-4 h-4 filter grayscale brightness-0 opacity-50 mt-[-9px]'
+          />
+        </div>
+      ) : (
+        <div
+          className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
+          onClick={createSortHandler(columnKey)}
+        >
+          <img
+            src={arrowUpIcon}
+            alt='sort-up-inactive'
+            className='w-4 h-4 filter grayscale brightness-0 opacity-50'
+          />
+          <img
+            src={arrowDownIcon}
+            alt='sort-down-active'
+            className='w-4 h-4 mt-[-9px]'
+            style={{
+              filter: 'brightness(0) saturate(100%)',
+            }}
+          />
+        </div>
+      )
     };
 
   return (
@@ -250,8 +302,14 @@ const AccountTable: React.FC<Record<string, any>> = ({
                 color: '#2A2A2A',
                 padding: '0px',
                 pl: 1,
-                height: '42px',
+                height: '50px',
               },
+              '& .MuiTableSortLabel-root': {
+                '&:hover': {
+                  color: 'inherit',
+                  cursor: 'auto',
+                },
+              }
             }}
           >
             <TableRow>
@@ -285,7 +343,6 @@ const AccountTable: React.FC<Record<string, any>> = ({
                 <TableSortLabel
                   active={orderBy === 'account_name'}
                   direction={orderBy === 'account_name' ? order : 'asc'}
-                  onClick={createSortHandler('account_name')}
                   IconComponent={getSortIcon(orderBy, 'account_name', order)}
                 >
                   Account Name
@@ -295,7 +352,6 @@ const AccountTable: React.FC<Record<string, any>> = ({
                 <TableSortLabel
                   active={orderBy === 'is_parent'}
                   direction={orderBy === 'is_parent' ? order : 'asc'}
-                  onClick={createSortHandler('is_parent')}
                   IconComponent={getSortIcon(orderBy, 'is_parent', order)}
                 >
                   Parent Account
@@ -305,7 +361,6 @@ const AccountTable: React.FC<Record<string, any>> = ({
                 <TableSortLabel
                   active={orderBy === 'r_number'}
                   direction={orderBy === 'r_number' ? order : 'asc'}
-                  onClick={createSortHandler('r_number')}
                   IconComponent={getSortIcon(orderBy, 'r_number', order)}
                 >
                   Account Number
@@ -315,7 +370,6 @@ const AccountTable: React.FC<Record<string, any>> = ({
                 <TableSortLabel
                   active={orderBy === 'industry'}
                   direction={orderBy === 'industry' ? order : 'asc'}
-                  onClick={createSortHandler('industry')}
                   IconComponent={getSortIcon(orderBy, 'industry', order)}
                 >
                   Industries
@@ -325,7 +379,6 @@ const AccountTable: React.FC<Record<string, any>> = ({
                 <TableSortLabel
                   active={orderBy === 'country'}
                   direction={orderBy === 'country' ? order : 'asc'}
-                  onClick={createSortHandler('country')}
                   IconComponent={getSortIcon(orderBy, 'country', order)}
                 >
                   Country
@@ -335,7 +388,6 @@ const AccountTable: React.FC<Record<string, any>> = ({
                 <TableSortLabel
                   active={orderBy === 'currency'}
                   direction={orderBy === 'currency' ? order : 'asc'}
-                  onClick={createSortHandler('currency')}
                   IconComponent={getSortIcon(orderBy, 'currency', order)}
                 >
                   Currency
@@ -345,7 +397,6 @@ const AccountTable: React.FC<Record<string, any>> = ({
                 <TableSortLabel
                   active={orderBy === 'annual_revenue'}
                   direction={orderBy === 'annual_revenue' ? order : 'asc'}
-                  onClick={createSortHandler('annual_revenue')}
                   IconComponent={getSortIcon(orderBy, 'annual_revenue', order)}
                 >
                   Annual Revenue
@@ -355,7 +406,6 @@ const AccountTable: React.FC<Record<string, any>> = ({
                 <TableSortLabel
                   active={orderBy === 'status'}
                   direction={orderBy === 'status' ? order : 'asc'}
-                  onClick={createSortHandler('status')}
                   IconComponent={getSortIcon(orderBy, 'status', order)}
                 >
                   Status
@@ -365,7 +415,6 @@ const AccountTable: React.FC<Record<string, any>> = ({
                 <TableSortLabel
                   active={orderBy === 'primary_contact_name'}
                   direction={orderBy === 'primary_contact_name' ? order : 'asc'}
-                  onClick={createSortHandler('primary_contact_name')}
                   IconComponent={getSortIcon(
                     orderBy,
                     'primary_contact_name',
@@ -387,7 +436,9 @@ const AccountTable: React.FC<Record<string, any>> = ({
                 color: '#425A76',
                 padding: '0px',
                 pl: 1,
-                minHeight: '36px',
+                minHeight: '42px',
+                maxHeight: '42px',
+                height: '42px',
               },
             }}
           >

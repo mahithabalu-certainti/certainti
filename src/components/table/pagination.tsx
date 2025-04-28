@@ -64,7 +64,7 @@ const TablePagination: React.FC<ITablePaginationProps> = ({
         onChange={handlePageChange}
         shape="rounded"
         size={'medium'}
-        siblingCount={1}
+        siblingCount={0}
         boundaryCount={1}
         sx={{
           '& .MuiPaginationItem-root': {

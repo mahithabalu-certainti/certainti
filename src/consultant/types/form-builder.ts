@@ -20,6 +20,7 @@ export interface FormTypeFields {
   regexErrorMessage?: string;
   disabled?: boolean;
   greaterThan?: Record<string, string>;
+  differentThan?: Record<string, string>;
   dependsRequired?: Record<string, string>;
   resetDependsFields?: string[];
   lengthRequired?: {
@@ -71,6 +72,7 @@ export interface FieldType {
   disabled?: boolean;
   defaultValue?: string;
   greaterThan?: Record<string, string>;
+  differentThan?: Record<string, string>;
   dependsRequired?: Record<string, string>;
   resetDependsFields?: string[];
   hide?: boolean;
