@@ -311,20 +311,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 ),
               }}
               slotProps={{
-                field: {
-                  clearable: !field.disabled,
-                  onKeyDown: (e) => {
-                    // Only prevent manual typing if future dates are disabled
-                    if (
-                      field.disableFutureDates &&
-                      e.key !== 'Tab' &&
-                      e.key !== 'Enter' &&
-                      e.key !== 'Escape'
-                    ) {
-                      e.preventDefault();
-                    }
-                  },
-                },
+                field: { clearable: !field.disabled },
                 textField: {
                   fullWidth: true,
                   size: 'small',
