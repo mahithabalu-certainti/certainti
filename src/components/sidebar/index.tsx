@@ -323,8 +323,8 @@ export const Sidebar: React.FC<SideBarProps> = ({
       open={mobileView ? sidebarExpand : true}
       // onClose={handleBackdropClick}
       classes={{
-        paper: `transform transition-all duration-400 ease-in-out ${
-          sidebarExpand ? 'w-[240px]' : 'w-[74px]'
+        paper: `transform transition-all ease-in-out ${
+          sidebarExpand ? 'w-[240px] duration-400' : 'w-[74px] duration-300'
         }`,
       }}
       sx={{

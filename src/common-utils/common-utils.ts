@@ -169,6 +169,7 @@ export const createFiscalDateField = (
     required: boolean;
     disabled?: boolean;
     greaterThan?: Record<string, string>;
+    differentThan?: Record<string, string>;
   }
 ): FieldType => ({
   type: 'fiscalDate',
@@ -177,6 +178,7 @@ export const createFiscalDateField = (
   required: others.required,
   disabled: others.disabled,
   greaterThan: others.greaterThan,
+  differentThan: others.differentThan,
 });
 
 export const YES_NO_OPTIONS: SelectOption[] = [

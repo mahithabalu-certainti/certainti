@@ -380,11 +380,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               format='MM/DD'
               views={['month', 'day']}
               minDate={dayjs().startOf('year')}
-              maxDate={dayjs().endOf('year')}
               onChange={(newValue) => {
                 handleChange(dayjs(newValue).format('DD/MM/YYYY'));
-              }}
-              shouldDisableDate={(date) => dayjs(date).isBefore(dayjs(), 'day')}
+              }}             
               slots={{
                 openPickerIcon: () => (
                   <img src={calendarIcon} alt='calendar' className='w-4 h-4' />
@@ -598,6 +596,25 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           //     error: field.greaterThan.errorMessage,
           //   };
           // }
+
+          // Fiscal Date custom Validation
+          if (field.differentThan) {
+            const currentFieldDate = dayjs(constructFormData[field.name]?.toString() || '', 'MM/DD');
+            const differentThanFieldDate = dayjs(constructFormData[field.differentThan.key]?.toString() || '', 'MM/DD');
+
+            if (currentFieldDate.isValid() && differentThanFieldDate.isValid()) {
+              if (
+                currentFieldDate.date() === differentThanFieldDate.date() &&
+                currentFieldDate.month() === differentThanFieldDate.month()
+              ) {
+                hasError = true;
+                return {
+                  ...field,
+                  error: field.differentThan.errorMessage,
+                };
+              }
+            }
+          }                   
 
           // Validate regex if present and field has value
           const value = constructFormData[field.name] as string;

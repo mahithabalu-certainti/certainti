@@ -61,7 +61,7 @@ export const renderRows = ({
     return (
       <React.Fragment key={account.accountName}>
         <TableRow hover  selected={selectedRows.has(globalIndex as number)}>
-          <TableCell sx={{ maxWidth: '50px', padding: '0 !important' }}>
+          <TableCell sx={{ maxWidth: '50px', padding: '0 !important' }} className={`${openRows.has(account.accountName) ? 'no-border' : '' }`}>
             <Box className='flex items-center justify-center'>
               <Checkbox
                 disableRipple
@@ -144,7 +144,15 @@ export const renderRows = ({
           <TableCell sx={{ minWidth: '100px' }}>{account.currency}</TableCell>
           <TableCell sx={{ minWidth: '160px' }}>{account.annualRevenue}</TableCell>
           <TableCell sx={{color: account.status === 'Active' ? '#199806 !important' : '#f44336 !important'}}>{account.status}</TableCell>
-          <TableCell sx={{ minWidth: '180px' }}>
+          <TableCell
+            sx={{
+              minWidth: '180px',
+              maxWidth: '180px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {account.primaryContact}
           </TableCell>
           <TableCell>
@@ -186,7 +194,7 @@ export const renderChildRows = ({
               color: '#2D3E4F !important',
             }}
           >
-          <Box className='inline-flex items-center -ml-1.5'>
+          <Box className='inline-flex items-center -ml-2.5'>
             <Checkbox
               disableRipple
               checked={selectedRows.has(globalIndex)}
@@ -233,7 +241,15 @@ export const renderChildRows = ({
           </TableCell>
           <TableCell sx={{ minWidth: '160px' }}>{account.annualRevenue}</TableCell>
           <TableCell sx={{ minWidth: '100px' }}>{account.status}</TableCell>
-          <TableCell sx={{ minWidth: '180px' }}>
+          <TableCell
+            sx={{
+              minWidth: '180px',
+              maxWidth: '180px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {account.primaryContact}
           </TableCell>
           <TableCell sx={{ minWidth: '80px' }}>

@@ -252,7 +252,6 @@ export const MultiSelectFilterControl: React.FC<{
           value={selectedValues}
           onChange={(e) => onChange(fieldName, e.target.value as string[])}
           sx={{ 
-            width: 200,
             height: 'auto', 
             minHeight: 30,
             '& .MuiSelect-select': {

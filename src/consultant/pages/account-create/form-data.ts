@@ -179,9 +179,9 @@ export const FormData = (
           createFiscalDateField('fiscal_end_date', 'Fiscal End Date', {
             disabled: disableFields,
             required: true,
-            greaterThan: {
+            differentThan: {
               key: 'fiscal_start_date',
-              errorMessage: 'Date must be greater than Fiscal Start Date',
+              errorMessage: 'Fiscal End Date cannot be the same as the Fiscal Start Date',
             },
           }),
           createTextField('blended_rate_fte', 'Blended Rate - FTE', {
