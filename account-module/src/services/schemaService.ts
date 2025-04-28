@@ -8,6 +8,7 @@ class SchemaService {
       await sequelize.createSchema(`platform_v2_${account_number}`, {});
       await this.createAccountTables(account_number);
     } catch (err) {
+      console.log(err)
       throw new Error("Error creating schema and tables.");
     }
   }
@@ -15,34 +16,235 @@ class SchemaService {
   async createAccountTables(account_number: string) {
     const schemaName = `platform_v2_${account_number}`;
     const sequelize = await initOrgSequelize();
+    await this.createAccountDetailsTable(schemaName, sequelize);
+    await this.createAccountFiscalTable(schemaName, sequelize);
+    await this.createProjectTable(schemaName, sequelize);
+    await this.createDocumentTable(schemaName, sequelize);
+    await this.createImportTable(schemaName, sequelize);
+    await this.createKafkaEventsTable(schemaName, sequelize);
+  }
+
+  private async createAccountDetailsTable(schemaName: string, sequelize: any) {
     await sequelize.query(`
-        CREATE TABLE IF NOT EXISTS "${schemaName}"."account_details" (
-          rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          account_rid UUID NOT NULL,
-          tax_claim_level VARCHAR(50) NULL,
-          max_ai_interactions INT CHECK (max_ai_interactions BETWEEN 3 AND 5) NOT NULL,
-          autosend_interaction BOOLEAN NOT NULL,
-          fiscal_start_date VARCHAR(10) NOT NULL,
-          fiscal_end_date VARCHAR(10) NOT NULL,
-          interaction_cc_list VARCHAR,
-          blended_rate_fte VARCHAR(10),
-          blended_rate_subcon VARCHAR(10),
-          created_by VARCHAR(255),
-          modified_by VARCHAR(255),
-          primary_contact_email VARCHAR(50) NOT NULL,
-          primary_contact_number VARCHAR(50) NOT NULL,
-          finance_poc_name VARCHAR(25) NOT NULL,
-          finance_poc_email VARCHAR(50) NOT NULL,
-          finanace_poc_number VARCHAR(50) NOT NULL,
-          website VARCHAR(50),
-          project_manager VARCHAR(50) NOT NULL,
-          data_residency VARCHAR(255),
-          data_storage VARCHAR(255) CHECK (data_storage IN ('separate_db', 'store_in_parent')),
-          auto_access_rd BOOLEAN NOT NULL,
-          created_datetime DATE DEFAULT CURRENT_TIMESTAMP NULL,
-          modified_datetime DATE DEFAULT CURRENT_TIMESTAMP NULL
-        );
-      `);
+      CREATE TABLE IF NOT EXISTS "${schemaName}"."account_details" (
+        rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        account_rid UUID NOT NULL UNIQUE,
+        tax_claim_level VARCHAR(50) NULL,
+        max_ai_interactions INT CHECK (max_ai_interactions BETWEEN 3 AND 5) NOT NULL,
+        autosend_interaction BOOLEAN NOT NULL,
+        fiscal_start_date VARCHAR(10) NOT NULL,
+        fiscal_end_date VARCHAR(10) NOT NULL,
+        interaction_cc_list VARCHAR,
+        blended_rate_fte VARCHAR(10),
+        blended_rate_subcon VARCHAR(10),
+        created_by VARCHAR(255),
+        modified_by VARCHAR(255),
+        primary_contact_email VARCHAR(50) NOT NULL,
+        primary_contact_number VARCHAR(50) NOT NULL,
+        finance_poc_name VARCHAR(25) NOT NULL,
+        finance_poc_email VARCHAR(50) NOT NULL,
+        finanace_poc_number VARCHAR(50) NOT NULL,
+        website VARCHAR(50),
+        project_manager VARCHAR(50) NOT NULL,
+        data_residency VARCHAR(255),
+        data_storage VARCHAR(255) CHECK (data_storage IN ('separate_db', 'store_in_parent')),
+        auto_access_rd BOOLEAN NOT NULL,
+        created_datetime DATE DEFAULT CURRENT_TIMESTAMP NULL,
+        modified_datetime DATE DEFAULT CURRENT_TIMESTAMP NULL
+      );
+    `);
+  }
+
+  private async createAccountFiscalTable(schemaName: string, sequelize: any) {
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}"."account_fiscal" (
+        rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        r_number VARCHAR(100) NOT NULL,
+        eid UUID,
+        fiscal_year VARCHAR(10) NOT NULL,
+        account_rid UUID NOT NULL REFERENCES "${schemaName}"."account_details"(account_rid),
+        parent_account_rid UUID,
+        tax_claim_level VARCHAR(50),
+        blended_rate_fte VARCHAR(10),
+        blended_rate_subcon VARCHAR(10),
+        total_projects INT,
+        total_fte INT,
+        total_subcon INT,
+        total_project_hours_fte INT,
+        total_project_hours_subcon INT,
+        total_project_hours INT,
+        total_project_cost_fte VARCHAR(20),
+        total_project_cost_subcon VARCHAR(20),
+        total_project_cost_nonlabor VARCHAR(20),
+        total_project_cost VARCHAR(20),
+        total_project_qre_fte VARCHAR(20),
+        total_project_qre_subcon VARCHAR(20),
+        total_projects_qre VARCHAR(20),
+        total_projects_rd_credits_fte VARCHAR(20),
+        total_projects_rd_credits_subcon VARCHAR(20),
+        total_projects_rd_credits VARCHAR(20),
+        total_qualifying_projects_fed INT,
+        qualifying_fte_fed INT,
+        qualifying_subcon_fed INT,
+        qualifying_project_hours_fte_fed INT,
+        qualifying_project_hours_subcon_fed INT,
+        qualifying_project_hours_fed INT,
+        qualifying_project_cost_fte_fed VARCHAR(20),
+        qualifying_project_cost_subcon_fed VARCHAR(20),
+        qualifying_project_cost_nonlabor_fed VARCHAR(20),
+        qualifying_project_cost_fed VARCHAR(20),
+        qualifying_project_qre_fte_fed VARCHAR(20),
+        qualifying_project_qre_subcon_fed VARCHAR(20),
+        qualifying_project_qre_fed VARCHAR(20),
+        qualifying_project_rd_credits_fte_fed VARCHAR(20),
+        qualifying_project_rd_credits_subcon_fed VARCHAR(20),
+        qualifying_project_rd_credits_fed VARCHAR(20),
+        created_datetime TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        modified_datetime TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+  }
+
+  private async createProjectTable(schemaName: string, sequelize: any) {
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}"."project" (
+        rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        r_number VARCHAR(100) NOT NULL,
+        project_name VARCHAR(255) NOT NULL,
+        eid UUID,
+        account_rid UUID NOT NULL REFERENCES "${schemaName}"."account_details"(account_rid),
+        account_fiscal_rid UUID REFERENCES "${schemaName}"."account_fiscal"(rid),
+        project_description TEXT,
+        project_status VARCHAR(50),
+        project_startdate DATE,
+        project_enddate DATE,
+        blended_rate DECIMAL(18,2),
+        project_summary TEXT,
+        industry VARCHAR(100),
+        project_ref_id VARCHAR(100) NOT NULL,
+        country VARCHAR(100),
+        currency VARCHAR(3),
+        city VARCHAR(100),
+        region VARCHAR(100),
+        project_manager VARCHAR(100),
+        project_lead VARCHAR(100),
+        spoc_name VARCHAR(100),
+        spoc_email VARCHAR(100),
+        spoc_mobile VARCHAR(20),
+        ptp_contact_name VARCHAR(100),
+        ptp_email VARCHAR(100),
+        ptp_contact_mobile VARCHAR(20),
+        project_cc_list TEXT,
+        account_billing_type VARCHAR(50),
+        total_effort INT CHECK (total_effort >= 0),
+        total_cost DECIMAL(18,2) CHECK (total_cost >= 0),
+        total_fte INT CHECK (total_fte >= 0),
+        total_sub_con INT CHECK (total_sub_con >= 0),
+        totalnon_labor_cost DECIMAL(18,2) CHECK (totalnon_labor_cost >= 0),
+        total_fte_effort INT CHECK (total_fte_effort >= 0),
+        total_subcon_effort INT CHECK (total_subcon_effort >= 0),
+        total_fte_cost DECIMAL(18,2) CHECK (total_fte_cost >= 0),
+        total_subcon_cost DECIMAL(18,2) CHECK (total_subcon_cost >= 0),
+        last_rd_ai_assessed_on TIMESTAMPTZ,
+        last_rd_ai_assessed_by VARCHAR(100),
+        program_name VARCHAR(100),
+        client_organization VARCHAR(100),
+        project_classification VARCHAR(100),
+        project_client_group VARCHAR(100),
+        project_group VARCHAR(100),
+        created_datetime TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        modified_datetime TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+  }
+
+
+  private async createDocumentTable(schemaName: string, sequelize: any) {
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}"."document" (
+        rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        r_number VARCHAR(100) NOT NULL,
+        eid UUID,
+        account_rid UUID REFERENCES "${schemaName}"."account_details"(account_rid),
+        related_to VARCHAR(50) NOT NULL,
+        related_to_rid UUID,
+        document_source VARCHAR(100) NOT NULL,
+        document_type VARCHAR(50) NOT NULL,
+        document_format VARCHAR(10) NOT NULL,
+        document_version VARCHAR(10),
+        document_url VARCHAR(2048) NOT NULL,
+        bypass_rd_assessment BOOLEAN DEFAULT false,
+        document_size VARCHAR(100) NOT NULL,
+        document_status VARCHAR(100) NOT NULL,
+        failure_reason TEXT,
+        created_by UUID,
+        modified_by UUID,
+        created_datetime TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        modified_datetime TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+  }
+
+  private async createImportTable(schemaName: string, sequelize: any) {
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}"."import" (
+        rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        r_number VARCHAR(100) NOT NULL,
+        eid UUID,
+        account_rid UUID REFERENCES "${schemaName}"."account_details"(account_rid),
+        project_rid UUID REFERENCES "${schemaName}"."project"(rid),
+        uploaded_by_user_rid UUID,
+        related_to VARCHAR(50) NOT NULL,
+        related_to_rid UUID,
+        entity_type VARCHAR(100),
+        uploaded_datetime TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        document_name VARCHAR(255) NOT NULL,
+        document_rid UUID REFERENCES "${schemaName}"."document"(rid),
+        upload_status VARCHAR(100) NOT NULL,
+        upload_failure_reason TEXT,
+        staging_table VARCHAR(100),
+        staging_status VARCHAR(100),
+        staging_start_timestamp TIMESTAMPTZ,
+        staging_end_timestamp TIMESTAMPTZ,
+        staging_error TEXT,
+        total_records INT,
+        total_staging_processed INT,
+        target_load_status VARCHAR(100),
+        target_load_start_timestamp TIMESTAMPTZ,
+        target_load_end_timestamp TIMESTAMPTZ,
+        target_load_error_records_count INT,
+        target_ai_records_processed INT,
+        target_ai_error_records_count INT,
+        created_by UUID,
+        modified_by UUID,
+        created_datetime TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        modified_datetime TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+  }
+
+  private async createKafkaEventsTable(schemaName: string, sequelize: any) {
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}"."kafka_events" (
+        rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        r_number VARCHAR(100) NOT NULL,
+        eid UUID,
+        source_name VARCHAR(100) NOT NULL,
+        producer_id UUID,
+        document_rid UUID REFERENCES "${schemaName}"."document"(rid),
+        document_name VARCHAR(255),
+        document_upload_rid UUID REFERENCES "${schemaName}"."import"(rid),
+        topic_name VARCHAR(255) NOT NULL,
+        related_to VARCHAR(50),
+        related_to_rid UUID,
+        consumer_id UUID,
+        message_on_timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        status VARCHAR(50) NOT NULL,
+        error_description TEXT,
+        created_datetime TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        modified_datetime TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
   }
 
   async insertAccountDetails(
