@@ -286,7 +286,9 @@ class ResourceSkillSchemaService {
 
     // Build the query to get data from the account-specific schema
     const query = `
-      SELECT rs.*, r.resource_fullname, s.skill_name, r.resource_role, r.resource_type, r.resource_status, r.fiscal_year
+      SELECT rs.*,
+      TO_CHAR(rs.start_date, 'MM/DD/YYYY') as start_date,
+       r.resource_fullname, s.skill_name, r.resource_role, r.resource_type, r.resource_status, r.fiscal_year
       FROM "${schemaName}"."resource_skill" rs
       INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
       INNER JOIN "${schemaName}"."skill" s ON rs.skill_rid = s.rid
