@@ -8,7 +8,7 @@ import resourceSkillSchemaService from "./resourceSkillSchemaService";
 import SchemaService from "./schemaService";
 import { ResourceFiscal } from "../models/resourceFiscal";
 import { initOrgSequelize } from "../config/orgDataSource";
-import { Sequelize } from "sequelize";
+import { Sequelize,Op } from "sequelize";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import moment from "moment";
 import { Resources } from "../models/resource";
@@ -92,7 +92,11 @@ class ResourceSkillService {
         try {
           // First get the skill rid from skill table
           const skill = await SkillModel.findOne({
-            where: { skill_name },
+            where: {
+              skill_name: {
+                [Op.iLike]: skill_name // Case insensitive comparison
+              }
+            },
             attributes: ["rid"], // Only fetch the rid
           });
 
