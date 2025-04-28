@@ -396,7 +396,7 @@ export const DateFilterControl: React.FC<{
                         },
                       },
                     },
-                    placeholder: 'YYYY/MM/DD',
+                    placeholder: 'MM/DD/YYYY',
                   },
                 }}
               />
@@ -409,14 +409,14 @@ export const DateFilterControl: React.FC<{
                 maxDate={dayjs(today)}
                 minDate={dayjs(sixYearsAgo)}
                 sx={{ mt: 1 }}
-                value={dayjs(state.date?.value.to, 'YYYY/MM/DD')}
+                value={dayjs(state.date?.value.to, 'MM/DD/YYYY')}
                 disabled={disableInput}
-                format='YYYY/MM/DD'
+                format='MM/DD/YYYY'
                 onChange={(newValue) => {
                   onValueChange(
                     'to',
                     fieldName,
-                    dayjs(newValue).format('YYYY/MM/DD')
+                    dayjs(newValue).format('MM/DD/YYYY')
                   );
                 }}
                 shouldDisableDate={(date) => dayjs(date).isAfter(dayjs(), 'day')}
@@ -450,7 +450,7 @@ export const DateFilterControl: React.FC<{
                         },
                       },
                     },
-                    placeholder: 'YYYY/MM/DD',
+                    placeholder: 'MM/DD/YYYY',
                   },
                 }}
               />
