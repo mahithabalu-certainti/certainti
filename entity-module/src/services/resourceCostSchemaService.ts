@@ -433,8 +433,6 @@ class ResourceCostSchemaService {
       }
 
       const resourceCost = results;
-      console.log("Resorce cost")
-      console.log(results);
       const totalCount = countResult ? (countResult as any).total : 0;
 
             
