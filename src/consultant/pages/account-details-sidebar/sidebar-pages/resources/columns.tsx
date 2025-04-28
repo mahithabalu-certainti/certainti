@@ -59,13 +59,13 @@ const BASE_COLUMNS: ColumnDefinition[] = [
     render: (value: string) => displayValue(value),
   },
   {
-    id: 'country',
+    id: 'country_name',
     label: 'Resource Country',
     sortable: true,
     render: (value: string) => displayValue(value),
   },
   {
-    id: 'state',
+    id: 'state_name',
     label: 'Resource Region',
     sortable: true,
     render: (value: string) => displayValue(value),
