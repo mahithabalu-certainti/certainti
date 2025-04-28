@@ -692,6 +692,43 @@ class AccountService {
       return this.throwServiceError(err as Error);
     }
   }
+  
+  async listGlobalAccounts(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { gloablAcconunt: any; count: number };
+  }> {
+    try {
+      const repository = await this.getAccountRepository();
+      const gloablAcconunt = await repository.findAll({
+        where: {
+          parent_account_rid: {
+            [Op.is]: null,
+          } as any,
+        },
+        attributes: ["rid", "account_name"],
+        include: [
+          {
+            model: Account,
+            as: "child_accounts",
+            attributes: ["rid", "account_name"],
+            required: false
+          }
+        ]
+      });
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          gloablAcconunt,
+          count: gloablAcconunt.length,
+        },
+      };
+    } catch (err) {
+      return this.throwServiceError(err as Error);
+    }
+  }
 
   buildWhereClause(
     filters: Record<string, any>,
@@ -912,9 +949,6 @@ class AccountService {
       childClause
     };
   }
-  
-  
-  
 
   getSortParameters(sortBy: string, sortOrder: string): [string, string] {
     const validSortColumns = [

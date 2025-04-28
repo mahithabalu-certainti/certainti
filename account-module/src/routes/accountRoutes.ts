@@ -5,6 +5,7 @@ import { checkUserStatusMiddleware } from '../middlewares/authMiddleware';
 const routes: Router = Router();
 
 routes.get('/list', checkUserStatusMiddleware, controller.accountController.accounts);
+routes.get('/list/global',checkUserStatusMiddleware, controller.accountController.ListGlobalAccounts);
 routes.get('/export', checkUserStatusMiddleware, controller.accountController.exportAccounts);
 routes.get('/global', checkUserStatusMiddleware, controller.accountController.globalAccounts);
 routes.get('/country', checkUserStatusMiddleware, controller.geoDataController.country);

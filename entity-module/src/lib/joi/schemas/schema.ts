@@ -273,8 +273,8 @@ const listResourceSchema = Joi.object({
   }),
   search: Joi.string().max(255).optional(),
   filters: Joi.string().default("{}"),
-  sortBy: Joi.string().default("createdAt"),
-  sortOrder: Joi.string().valid("ASC", "DESC").default("DESC"),
+  sortBy: Joi.string().default("created_datetime").optional().allow(""),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional().allow(""),
 });
 
 const createResourceSkillSchema = Joi.object({
