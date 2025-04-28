@@ -33,7 +33,6 @@ export const ManageUserDetails: React.FC = () => {
     { label: 'Suspend User', width: '119px' },
     { label: 'Reinstate User', width: '120px' },
     { label: 'Reset Password', width: '132px' },
-    { label: 'Edit', width: '57px' },
     { label: 'Delete', width: '73px' },
   ];
 
@@ -47,9 +46,6 @@ export const ManageUserDetails: React.FC = () => {
         break;
       case 'Reset Password':
         console.log('Reset Password clicked');
-        break;
-      case 'Edit':
-        console.log('Edit clicked');
         break;
       case 'Delete':
         console.log('Delete clicked');
