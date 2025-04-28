@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { resourceHeaderIcon } from '../../../../../assets';
 import { RESOURCE, RESOURCE_CREATE } from '../../../../../routes';
+import { RootState } from '../../../../../store/store';
 import { useResourceList } from '../../../../services/resource-list';
 import { AccountData } from '../../../account-details/utils';
 import TabPanel from '../../components/tab';
@@ -10,8 +12,6 @@ import ListTable from '../../components/table';
 import { getResourceColumns } from './columns';
 import ResourceSubComponents from './resource-sub-components';
 import ResourceTableHeader from './resource-table-header';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../../../../store/store';
 
 interface ResourceProps {
   accountDetails?: Record<string, any>;
@@ -22,6 +22,8 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
   const [viewResourceList, setViewResourceList] = useState<boolean>(true);
   const [columns, setColumns] = useState<any>([]);
   const [showFilter, setShowFilter] = useState<boolean>(false);
+  const [filterVisibility, setFilterVisibility] = useState<boolean>(true);
+  console.log('showFilter', showFilter);
   const [value, setValue] = useState('');
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
   const [showBackArrow, setShowBackArrow] = useState<boolean>(false);
@@ -30,12 +32,11 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
   const [sortField, setSortField] = useState<string>('rid');
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const { fiscalYear } = useSelector<
-    RootState,
-    { fiscalYear: string }
-  >((state: RootState) => state.account);
+  const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
+    (state: RootState) => state.account
+  );
 
-  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0
+  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -50,7 +51,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     sortBy: sortField,
     sortOrder: sortOrder,
     filters: appliedFilters,
-    fiscalYear: convertedFiscalYear
+    fiscalYear: convertedFiscalYear,
   });
 
   const handleFilter = () => {
@@ -67,6 +68,8 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     setViewResourceList(!viewResourceList);
     setShowBackArrow(!showBackArrow);
     setValue('details');
+    setShowFilter(false);
+    setFilterVisibility(false);
   };
 
   useEffect(() => {
@@ -79,6 +82,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
   }, []);
 
   const handleEdit = (resource: any) => {
+    setFilterVisibility(false);
     navigate(RESOURCE + '/edit/' + resource.rid, {
       state: { resource, accountDetails },
     });
@@ -124,10 +128,12 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     setViewResourceList(!viewResourceList);
     setShowBackArrow(!showBackArrow);
     setValue('');
+    setShowFilter(false);
     navigate(location.pathname, {
       state: { ...location.state, activeKey: 'resources' },
       replace: true,
     });
+    setFilterVisibility(true);
   };
 
   const handleCreateResource = () => {
@@ -162,12 +168,13 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
         handleFilter={handleFilter}
         value={value}
         setAppliedFilters={setAppliedFilters}
-        showFilter={showFilter}
+        showFilter={showFilter && viewResourceList}
         title='Resource'
         titleIcon={<img src={resourceHeaderIcon} alt='resource header icon' />}
         headerButtons={headerButtons}
         showBackArrow={showBackArrow}
         onBackClick={handleBackClick}
+        filterVisibility={filterVisibility}
       />
       {!viewResourceList ? (
         <ResourceSubComponents
