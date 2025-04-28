@@ -144,6 +144,7 @@ export const createDateField = (
   others: {
     required: boolean;
     disabled?: boolean;
+    disableFutureDates?: boolean;
     minDate?: Date;
     maxDate?: Date;
     greaterThan?: Record<string, string>;
@@ -157,6 +158,7 @@ export const createDateField = (
   minDate: others.minDate,
   maxDate: others.maxDate,
   disabled: others.disabled,
+  disableFutureDates: others.disableFutureDates,
   greaterThan: others.greaterThan,
 });
 
@@ -245,7 +247,9 @@ export const RESOURCE_REGEX = {
   MANAGER_NAME: /^(?=(.*[a-zA-Z0-9]){3})[a-zA-Z0-9][a-zA-Z0-9 .'-]{1,99}$/,
 
   // Designation: Job titles with special chars, 4-100 chars
-  DESIGNATION: /^(?!\s)(?!.*\s$)(?=.*[a-zA-Z])[a-zA-Z\s]{4,100}$/,
+  ROLE: /^(?!\s)(?!.*\s$)(?=.*[a-zA-Z])[a-zA-Z\s]{4,100}$/,
+
+  DESIGNATION: /^(?!\s+$)[\x20-\x7E]{4,100}$/,
 
   // Years Experience: Non-negative integers
   YEARS_EXPERIENCE: /^[0-9]{1,2}$/,

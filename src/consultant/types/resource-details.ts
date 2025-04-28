@@ -10,7 +10,38 @@ export interface ResourceDetailsTypes {
   resource_orgname: string;
   resource_role: string;
   fiscal_year: number;
-  country: string; // UUID format
+  country: {
+    country_name: string;
+  };
+  state_name: string; // UUID format
+  city_name: string; // UUID format
+  resource_startdate: string; // ISO date string
+  resource_enddate: string; // ISO date string
+  designation: string;
+  total_years_experience: number;
+  total_years_in_org: number;
+  resource_status: string;
+  created_datetime: string; // ISO date string
+  modified_datetime: string; // ISO date string
+  created_by: string; // UUID format
+  modified_by: string | null;
+  comments: string;
+  resource_number?: string;
+}
+
+export interface ResourceDetailsforpayload {
+  account_id: string;
+  account_number: string;
+  rid: string;
+  r_number: string;
+  eid: string | null;
+  resource_ref_id: string;
+  resource_type: string;
+  resource_fullname: string;
+  resource_orgname: string;
+  resource_role: string;
+  fiscal_year: number;
+  country: string;
   state: string; // UUID format
   city: string; // UUID format
   resource_startdate: string; // ISO date string
@@ -24,8 +55,37 @@ export interface ResourceDetailsTypes {
   created_by: string; // UUID format
   modified_by: string | null;
   comments: string;
+  resource_number?: string;
 }
 
+export interface createSectionData {
+  account_id: string;
+  account_number: string;
+  rid: string;
+  r_number: string;
+  eid: string | null;
+  resource_ref_id: string;
+  resource_type: string;
+  resource_fullname: string;
+  resource_orgname: string;
+  resource_role: string;
+  fiscal_year: number;
+  country: string;
+  state: string; // UUID format
+  city: string; // UUID format
+  resource_startdate: string; // ISO date string
+  resource_enddate: string; // ISO date string
+  designation: string;
+  total_years_experience: number;
+  total_years_in_org: number;
+  resource_status: string;
+  created_datetime: string; // ISO date string
+  modified_datetime: string; // ISO date string
+  created_by: string; // UUID format
+  modified_by: string | null;
+  comments: string;
+  resource_number?: string;
+}
 interface ResourceData {
   resourceDetails: ResourceDetailsTypes;
 }

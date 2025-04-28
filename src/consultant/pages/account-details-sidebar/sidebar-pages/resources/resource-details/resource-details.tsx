@@ -2,7 +2,7 @@
 import { CircularProgress, Typography } from '@mui/material';
 import React from 'react';
 import { useResourceDetail } from '../../../../../services/resource-details';
-import { ResourceDetailsTypes } from '../../../../../types';
+import { createSectionData } from '../../../../../types';
 
 interface ResourceDetailsProps {
   resourceDetails: {
@@ -103,15 +103,25 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   const resourceData = resource?.data?.resourceDetails;
 
   const createSectionData = (
-    dataObj: Partial<ResourceDetailsTypes>,
+    dataObj: Partial<createSectionData>,
     customMappings?: Record<string, (val: any) => React.ReactNode>
-  ): DetailItem[] => {
+  ) => {
     return Object.entries(dataObj)
       .filter(([, value]) => value !== undefined)
-      .map(([key, value]) => ({
-        label: formatKey(key),
-        value: customMappings?.[key] ? customMappings[key](value) : value,
-      }));
+      .map(([key, value]) => {
+        // Handle nested objects
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          return {
+            label: formatKey(key),
+            value: Object.values(value).join(', '), // or handle nested objects differently
+          };
+        }
+
+        return {
+          label: formatKey(key),
+          value: customMappings?.[key] ? customMappings[key](value) : value,
+        };
+      });
   };
 
   if (isLoading) {
@@ -156,6 +166,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   // Section data with custom formatting where needed
   const basicInfo = createSectionData({
     resource_ref_id: resourceData.resource_ref_id,
+    resource_number: resourceData.r_number,
     resource_fullname: resourceData.resource_fullname,
     designation: resourceData.designation,
     resource_type: resourceData.resource_type,
@@ -165,9 +176,9 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   });
 
   const locationInfo = createSectionData({
-    country: resourceData.country,
-    state: resourceData.state,
-    city: resourceData.city,
+    country: resourceData.country.country_name,
+    state: resourceData.state_name,
+    city: resourceData.city_name,
   });
 
   const employmentDetails = createSectionData(
@@ -198,6 +209,10 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
     }
   );
 
+  const description = createSectionData({
+    comments: resourceData.comments,
+  });
+
   return (
     <div className='mx-auto p-6 max-w-6xl'>
       <DetailsSection title='Basic Information' data={basicInfo} />
@@ -207,6 +222,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
       />
       <DetailsSection title='Employment Details' data={employmentDetails} />
       <DetailsSection title='System Information' data={systemInfo} />
+      <DetailsSection title='Description' data={description} />
     </div>
   );
 };

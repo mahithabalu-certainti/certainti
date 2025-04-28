@@ -1,4 +1,8 @@
-import { ResourceDetailsTypes, SelectOption } from '../../types';
+import {
+  ResourceDetailsforpayload,
+  ResourceDetailsTypes,
+  SelectOption,
+} from '../../types';
 import {
   ResourceCostPayload,
   ResourceCostSkillFormData,
@@ -13,9 +17,9 @@ export const RESOURCE_STATUS_OPTIONS: SelectOption[] = [
 ];
 
 export const RESOURCE_TYPE_OPTIONS: SelectOption[] = [
-  { label: 'Full-Time', value: 'FullTime' },
-  { label: 'Sub Contract', value: 'Contract' },
-  { label: 'Non-Labour', value: 'NonLabour' },
+  { label: 'Full-Time', value: 'Full-Time' },
+  { label: 'SubCon', value: 'SubCon' },
+  { label: 'Non-Labour', value: 'Non-Labour' },
 ];
 
 export const FREQUENCY_OPTIONS: SelectOption[] = [
@@ -118,9 +122,9 @@ export function transformPayloadforUpdateResource(
       rawData.resource_orgname || existingResource?.resource_orgname || '',
     role: existingResource?.resource_role || '',
     fiscal_year: rawData.fiscal_year || existingResource?.fiscal_year || 0,
-    country: rawData.country || existingResource?.country || '',
-    state: rawData.state || existingResource?.state || '',
-    city: rawData.city || existingResource?.city || '',
+    country: rawData.country || existingResource?.country?.country_name || '',
+    state: rawData.state || existingResource?.state_name || '',
+    city: rawData.city || existingResource?.city_name || '',
     comments: rawData.comments || existingResource?.comments || '',
     effective_from_date:
       formatDateToDDMMYYYY(rawData.resource_startdate) ||
@@ -143,7 +147,7 @@ export function transformPayloadforUpdateResource(
 }
 
 export const transformPayloadforCreateResource = (
-  formData: ResourceDetailsTypes
+  formData: ResourceDetailsforpayload
 ) => {
   return {
     account_id: formData.account_id,
@@ -178,7 +182,7 @@ export const transformCostData = (
     effective_date: formData.financial_start_date,
     end_date: formData.financial_end_date,
     cost_frequency: formData.cost_frequency,
-    cost: formData.cost ? Number(formData.cost.replace(',', "")) : null,
+    cost: formData.cost ? Number(formData.cost.replace(',', '')) : null,
     resource_type: formData.resource_type,
     resource_ref_id: formData.resource_ref_id,
     currency_rid: formData.currency ? formData.currency : null,

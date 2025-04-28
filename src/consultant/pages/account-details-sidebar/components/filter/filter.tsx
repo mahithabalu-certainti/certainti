@@ -265,7 +265,7 @@ const Filter: React.FC<FilterComponentProps> = ({
   };
 
   return (
-    <Box className='absolute top-117 right-60 z-50 w-[248px] max-h-[568px] bg-white shadow-lg border border-[#CBD6E2] rounded'>
+    <Box className='absolute top-110 right-60 z-50 w-[248px] max-h-[568px] bg-white shadow-lg border border-[#CBD6E2] rounded'>
       <Box className='flex justify-between items-center p-2 border-b border-[#CBD6E2]'>
         <Box>Filters</Box>
         <Button

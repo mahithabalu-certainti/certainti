@@ -207,15 +207,15 @@ const DataTable: React.FC<DataTableProps> = ({
     );
   }
 
-  if (data.length === 0 && !isLoading) {
-    return (
-      <div className='flex flex-col justify-center items-center border border-gray-300 h-64 p-4'>
-        <Typography variant='h6' color='textSecondary'>
-          {emptyStateMessage}
-        </Typography>
-      </div>
-    );
-  }
+  // if (data.length === 0 && !isLoading) {
+  //   return (
+  //     <div className='flex flex-col justify-center items-center border border-gray-300 h-64 p-4'>
+  //       <Typography variant='h6' color='textSecondary'>
+  //         {emptyStateMessage}
+  //       </Typography>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className='border border-gray-300 mr-2'>
@@ -255,35 +255,49 @@ const DataTable: React.FC<DataTableProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {data.map((row) => (
-              <TableRow key={row[rowIdentifier]} className='hover:bg-gray-50'>
-                {columns.map((column) => (
-                  <TableCell
-                    key={`${row[rowIdentifier]}-${column.id}`}
-                    align={column.align}
-                  >
-                    {column.render
-                      ? column.render(row[column.id], row)
-                      : row[column.id]}
-                  </TableCell>
-                ))}
-                {actionMenuItems.length > 0 && (
-                  <TableCell>
-                    <IconButton
-                      size='small'
-                      onClick={(e) => handleActionMenuOpen(e, row)}
-                      aria-controls={isMenuOpen ? 'action-menu' : undefined}
-                      aria-haspopup='true'
-                      aria-expanded={isMenuOpen ? 'true' : undefined}
+            {data.length > 0 ? (
+              data.map((row) => (
+                <TableRow key={row[rowIdentifier]} className='hover:bg-gray-50'>
+                  {columns.map((column) => (
+                    <TableCell
+                      key={`${row[rowIdentifier]}-${column.id}`}
+                      align={column.align}
                     >
-                      <span role='img' aria-label='more'>
-                        ⋮
-                      </span>
-                    </IconButton>
-                  </TableCell>
-                )}
+                      {column.render
+                        ? column.render(row[column.id], row)
+                        : row[column.id]}
+                    </TableCell>
+                  ))}
+                  {actionMenuItems.length > 0 && (
+                    <TableCell>
+                      <IconButton
+                        size='small'
+                        onClick={(e) => handleActionMenuOpen(e, row)}
+                        aria-controls={isMenuOpen ? 'action-menu' : undefined}
+                        aria-haspopup='true'
+                        aria-expanded={isMenuOpen ? 'true' : undefined}
+                      >
+                        <span role='img' aria-label='more'>
+                          ⋮
+                        </span>
+                      </IconButton>
+                    </TableCell>
+                  )}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  align='center'
+                  className='text-center py-8'
+                >
+                  <Typography variant='h6' color='textSecondary'>
+                    {emptyStateMessage}
+                  </Typography>
+                </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </TableContainer>
