@@ -90,7 +90,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
             }}
           >
             <TableCell>{skill.resourceRole}</TableCell>
-            <TableCell>{getDateFormat(skill.startDate)}</TableCell>
+            <TableCell>{skill.startDate}</TableCell>
             <TableCell>{skill.skillName}</TableCell>
             <TableCell>{skill.skillLevel}</TableCell>
             <TableCell>{skill.yearsOfExperience}</TableCell>
