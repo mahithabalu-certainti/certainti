@@ -50,7 +50,7 @@ const isEndDateAfterStartDate = (
   const context = helpers.state?.ancestors[0];
 
   if (context?.effective_from_date && value) {
-    const date = moment(value, "DD/MM/YYYY", true);
+    const date = moment(value, "MM/DD/YYYY", true);
 
     if (!date.isValid()) {
       return helpers.error("date.invalidFormat", {
@@ -376,7 +376,7 @@ const updateResourceCostSchema = Joi.object({
   currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
   effective_date: Joi.string()
     .max(10)
-    .custom(isNotFutureDate, "Effective date validation")
+    .custom(isValidDate, "Effective date validation")
     .optional()
     .allow(null)
     .allow("")
@@ -435,6 +435,15 @@ const updateResourceCostSchema = Joi.object({
   }
 
   return obj;
+}).error((errors) => {
+  return errors.map(error => {
+    if (error.code === 'any.custom') {
+      // Add proper field name to the error
+      (error as any).context = { label: 'date_validation' };
+      error.message = 'Both effective date and end date must be provided together, or neither should be provided';
+    }
+    return error;
+  });
 });
 
 const getResourceCostSchema = Joi.object({
@@ -479,7 +488,7 @@ const resourceCostSchema = Joi.object({
   resource_ref_id: Joi.string().max(255).required(),
   effective_date: Joi.string()
     .max(10)
-    .custom(isNotFutureDate, "Effective date validation")
+    .custom(isValidDate, "Effective date validation")
     .optional()
     .allow(null)
     .allow("")
@@ -533,7 +542,8 @@ const resourceCostSchema = Joi.object({
     .default(() => new Date()),
   created_by: Joi.string().max(255).optional(),
   modified_by: Joi.string().max(255).optional(),
-}).custom((obj) => {
+})
+.custom((obj) => {
   const hasEffectiveDate = Boolean(obj.effective_date);
   const hasEndDate = Boolean(obj.end_date);
 
@@ -544,6 +554,15 @@ const resourceCostSchema = Joi.object({
   }
 
   return obj;
+}).error((errors) => {
+  return errors.map(error => {
+    if (error.code === 'any.custom') {
+      // Add proper field name to the error
+      (error as any).context = { label: 'date_validation' };
+      error.message = 'Both effective date and end date must be provided together, or neither should be provided';
+    }
+    return error;
+  });
 });
 
 export {
