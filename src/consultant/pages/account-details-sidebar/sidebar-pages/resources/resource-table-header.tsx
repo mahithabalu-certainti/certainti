@@ -83,14 +83,17 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
               <Image src={resourceFilterIcon} />
             </Box>
           )}
-          <div className='flex gap-2'>
-            {showFilter && value !== 'details' && (
+
+          {showFilter && value !== 'details' && (
+            <Box className='absolute right-0 z-50'>
               <Filter
                 filterMenu={getFilterFields()}
                 setAppliedFilters={setAppliedFilters}
                 handleFilter={handleFilter}
               />
-            )}
+            </Box>
+          )}
+          <div className='flex gap-2'>
             {headerButtons?.map((button, index) => (
               <TextButton
                 key={`header-button-${index}`}
