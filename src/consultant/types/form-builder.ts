@@ -23,6 +23,7 @@ export interface FormTypeFields {
   differentThan?: Record<string, string>;
   dependsRequired?: Record<string, string>;
   resetDependsFields?: string[];
+  disableFutureDates?: boolean;
   lengthRequired?: {
     key: string;
     minMatchedValue: RegExp;
@@ -68,7 +69,7 @@ export interface FieldType {
   regex?: RegExp;
   regexErrorMessage?: string;
   placeholder?: string;
-
+  disableFutureDates?: boolean;
   disabled?: boolean;
   defaultValue?: string;
   greaterThan?: Record<string, string>;

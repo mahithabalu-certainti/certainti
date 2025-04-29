@@ -3,7 +3,7 @@ interface ColumnDefinition {
   id: string;
   label: string;
   sortable: boolean;
-  render?: (value: any, row?: any) => React.ReactNode;
+  render: (value: any, row?: any) => JSX.Element;
 }
 
 interface ResourceColumnsProps {
@@ -19,12 +19,12 @@ const displayValue = (value: any) => {
 
 const BASE_COLUMNS: ColumnDefinition[] = [
   {
-    id: 'rid',
+    id: 'r_number',
     label: 'Resource Id',
     sortable: true,
     render: (value: string, row: any) => (
       <span
-        className='text-blue-600 hover:text-blue-800 hover:underline cursor-pointer'
+        className='text-[#425A76] font-normal text-sm hover:underline cursor-pointer'
         onClick={(e) => {
           e.stopPropagation();
           (row.onResourceIdClick || (() => {}))(row);
@@ -38,19 +38,61 @@ const BASE_COLUMNS: ColumnDefinition[] = [
     id: 'resource_ref_id',
     label: 'Resource Ref Id',
     sortable: true,
-    render: (value: string) => displayValue(value),
+    render: (value: string) => (
+      <span className='font-light text-sm text-[#425A76]'>
+        {displayValue(value)}
+      </span>
+    ),
   },
   {
     id: 'resource_fullname',
     label: 'Resource Full Name',
     sortable: true,
-    render: (value: string) => displayValue(value),
+    render: (value: string) => (
+      <span className='font-light text-sm text-[#425A76]'>
+        {displayValue(value)}
+      </span>
+    ),
   },
   {
     id: 'resource_type',
     label: 'Resource Type',
     sortable: true,
-    render: (value: string) => displayValue(value),
+    render: (value: string) => (
+      <span className='font-light text-sm text-[#425A76]'>
+        {displayValue(value)}
+      </span>
+    ),
+  },
+  {
+    id: 'designation',
+    label: 'Resource Designation',
+    sortable: true,
+    render: (value: string) => (
+      <span className='font-light text-sm text-[#425A76]'>
+        {displayValue(value)}
+      </span>
+    ),
+  },
+  {
+    id: 'country_name',
+    label: 'Resource Country',
+    sortable: true,
+    render: (value: string) => (
+      <span className='font-light text-sm text-[#425A76]'>
+        {displayValue(value)}
+      </span>
+    ),
+  },
+  {
+    id: 'state_name',
+    label: 'Resource Region',
+    sortable: true,
+    render: (value: string) => (
+      <span className='font-light text-sm text-[#425A76]'>
+        {displayValue(value)}
+      </span>
+    ),
   },
 ];
 
@@ -81,7 +123,7 @@ export const getResourceColumns = ({
   // Apply click handler to the specified ID column
   const applyClickHandler = (columns: ColumnDefinition[]) => {
     return columns.map((column) =>
-      column.id === (onClickId || 'rid')
+      column.id === (onClickId || 'r_number')
         ? {
             ...column,
             render: (value: string, row: any) => (

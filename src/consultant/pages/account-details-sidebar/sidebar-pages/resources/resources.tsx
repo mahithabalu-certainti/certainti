@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { resourceHeaderIcon } from '../../../../../assets';
 import { RESOURCE, RESOURCE_CREATE } from '../../../../../routes';
+import { RootState } from '../../../../../store/store';
 import { useResourceList } from '../../../../services/resource-list';
 import { AccountData } from '../../../account-details/utils';
 import TabPanel from '../../components/tab';
@@ -10,8 +12,6 @@ import ListTable from '../../components/table';
 import { getResourceColumns } from './columns';
 import ResourceSubComponents from './resource-sub-components';
 import ResourceTableHeader from './resource-table-header';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../../../../store/store';
 
 interface ResourceProps {
   accountDetails?: Record<string, any>;
@@ -22,6 +22,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
   const [viewResourceList, setViewResourceList] = useState<boolean>(true);
   const [columns, setColumns] = useState<any>([]);
   const [showFilter, setShowFilter] = useState<boolean>(false);
+  const [filterVisibility, setFilterVisibility] = useState<boolean>(true);
   const [value, setValue] = useState('');
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
   const [showBackArrow, setShowBackArrow] = useState<boolean>(false);
@@ -29,13 +30,12 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
   const [sortField, setSortField] = useState<string>('rid');
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const { fiscalYear } = useSelector<
-    RootState,
-    { fiscalYear: string }
-  >((state: RootState) => state.account);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
+    (state: RootState) => state.account
+  );
 
-  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0
+  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -50,7 +50,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     sortBy: sortField,
     sortOrder: sortOrder,
     filters: appliedFilters,
-    fiscalYear: convertedFiscalYear
+    fiscalYear: convertedFiscalYear,
   });
 
   const handleFilter = () => {
@@ -68,18 +68,21 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     setViewResourceList(!viewResourceList);
     setShowBackArrow(!showBackArrow);
     setValue('details');
+    setShowFilter(false);
+    setFilterVisibility(false);
   };
 
   useEffect(() => {
     setColumns(
       getResourceColumns({
         onResourceIdClick: handleResourceClick,
-        onClickId: 'rid',
+        onClickId: 'r_number',
       })
     );
   }, []);
 
   const handleEdit = (resource: any) => {
+    setFilterVisibility(false);
     navigate(RESOURCE + '/edit/' + resource.rid, {
       state: { resource, accountDetails },
     });
@@ -125,16 +128,15 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     setViewResourceList(!viewResourceList);
     setShowBackArrow(!showBackArrow);
     setValue('');
+    setShowFilter(false);
     navigate(location.pathname, {
       state: { ...location.state, activeKey: 'resources' },
       replace: true,
     });
+    setFilterVisibility(true);
   };
 
   const handleCreateResource = () => {
-    if (!value) {
-      navigate(RESOURCE_CREATE, { state: accountDetails });
-    }
     if (value === 'cost') {
       navigate(`${RESOURCE}/cost/create`, {
         state: {
@@ -153,6 +155,8 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
           sectionName: 'Skill Information',
         },
       });
+    } else {
+      navigate(RESOURCE_CREATE, { state: accountDetails });
     }
   };
 
@@ -172,9 +176,11 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
         headerButtons={headerButtons}
         showBackArrow={showBackArrow}
         onBackClick={handleBackClick}
+        filterVisibility={filterVisibility}
       />
       {!viewResourceList ? (
         <ResourceSubComponents
+          setFilterVisibility={setFilterVisibility}
           handleTabChange={handleTabChange}
           value={value}
           resourceData={resourceData}
@@ -182,6 +188,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
           appliedFilters={appliedFilters || {}}
           fiscalYearValue={convertedFiscalYear}
           accountDetails={accountDetails as AccountData}
+          setShowFilter={setShowFilter}
         />
       ) : (
         <ListTable
@@ -190,7 +197,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
           actionMenuItems={actionMenuItems}
           pagination={true}
           rowsPerPage={rowsPerPage}
-          rowsPerPageOptions={[5, 10, 25]}
+          rowsPerPageOptions={[25, 30, 40, 50]}
           sortable={true}
           isLoading={isLoading}
           error={error}

@@ -292,7 +292,7 @@ const Filter: React.FC<FilterComponentProps> = ({
             state={fieldState}
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleDateChange}
-          // onChange={handleBooleanChange}
+            // onChange={handleBooleanChange}
           />
         );
       default:

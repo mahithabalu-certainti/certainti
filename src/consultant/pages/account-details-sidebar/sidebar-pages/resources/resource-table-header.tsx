@@ -12,6 +12,7 @@ import {
 } from './utils';
 
 interface ResourceTableHeaderProps {
+  filterVisibility: boolean;
   title: string;
   titleIcon: React.ReactNode;
   headerButtons: {
@@ -39,6 +40,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
   setAppliedFilters,
   value,
   showFilter,
+  filterVisibility,
 }) => {
   const getFilterFields = () => {
     if (!value) return resourceFilterFields;
@@ -74,12 +76,14 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
 
         <div className='flex gap-2'>
           <Box className='relative'>
-            {value !== 'details' && <Box
-              onClick={handleFilter}
-              className='h-[35px] w-[38px] flex items-center justify-center border border-[#CBD6E2] cursor-pointer'
-            >
-              <Image src={resourceFilterIcon} />
-            </Box>}
+            {filterVisibility && (
+              <Box
+                onClick={handleFilter}
+                className='h-[35px] w-[38px] flex items-center justify-center border border-[#CBD6E2] cursor-pointer'
+              >
+                <Image src={resourceFilterIcon} />
+              </Box>
+            )}
             {showFilter && value !== 'details' && (
               <Box className='absolute right-0 z-50'>
                 <Filter

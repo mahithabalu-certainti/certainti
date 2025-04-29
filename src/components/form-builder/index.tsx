@@ -292,12 +292,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               className={fieldDisabled}
               maxDate={field?.maxDate ? dayjs(field?.maxDate) : undefined}
               minDate={field?.minDate ? dayjs(field?.minDate) : undefined}
-              value={dayjs(fieldValue)}
+              value={fieldValue ? dayjs(fieldValue) : null}
               disabled={field.disabled}
               onChange={(newValue) => {
                 handleChange(dayjs(newValue).format('MM/DD/YYYY'));
               }}
-              // shouldDisableDate={(date) => dayjs(date).isBefore(dayjs(), 'day')}
+              shouldDisableDate={
+                field.disableFutureDates
+                  ? (date) => dayjs(date).isAfter(dayjs(), 'day')
+                  : undefined
+              }
               slots={{
                 openPickerIcon: () => (
                   <img src={calendarIcon} alt='calendar' className='w-4 h-4' />
@@ -399,8 +403,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             onChange={(phone, country: CountryData) =>
               handleChange(phone, country.countryCode)
             }
-            inputClass={`placeholder-custom-color !w-full !text-[13px] !p-2 !pl-12 !border !h-[32px] !rounded-xs ${field.error ? '!border-red-500' : '!border-gray-300'
-              }${field.disabled ? ' !bg-gray-100' : ''}`}
+            inputClass={`placeholder-custom-color !w-full !text-[13px] !p-2 !pl-12 !border !h-[32px] !rounded-xs ${
+              field.error ? '!border-red-500' : '!border-gray-300'
+            }${field.disabled ? ' !bg-gray-100' : ''}`}
             buttonClass={`!bg-transparent !border-r ${field.error ? '!border-red-500' : '!border-gray-300'} !rounded-tl-xs !rounded-bl-xs !hover:bg-transparent !shadow-none !px-0 !m-0`}
             containerClass='!w-full'
             inputProps={{
@@ -506,11 +511,25 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
           }
 
+          if (field.type === 'date' && constructFormData[field.name]) {
+            const dateValue = constructFormData[field.name] as string;
+            if (
+              field.disableFutureDates &&
+              dayjs(dateValue).isAfter(dayjs(), 'day')
+            ) {
+              hasError = true;
+              return {
+                ...field,
+                error: 'Future dates are not allowed',
+              };
+            }
+          }
+
           // Depends Required Validation
           if (
             field.dependsRequired?.key &&
             constructFormData[field.dependsRequired.key] ===
-            field.dependsRequired?.matchedValue &&
+              field.dependsRequired?.matchedValue &&
             !hasValue
           ) {
             hasError = true;
@@ -542,10 +561,19 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
           // Fiscal Date custom Validation
           if (field.differentThan) {
-            const currentFieldDate = dayjs(constructFormData[field.name]?.toString() || '', 'MM/DD');
-            const differentThanFieldDate = dayjs(constructFormData[field.differentThan.key]?.toString() || '', 'MM/DD');
+            const currentFieldDate = dayjs(
+              constructFormData[field.name]?.toString() || '',
+              'MM/DD'
+            );
+            const differentThanFieldDate = dayjs(
+              constructFormData[field.differentThan.key]?.toString() || '',
+              'MM/DD'
+            );
 
-            if (currentFieldDate.isValid() && differentThanFieldDate.isValid()) {
+            if (
+              currentFieldDate.isValid() &&
+              differentThanFieldDate.isValid()
+            ) {
               if (
                 currentFieldDate.date() === differentThanFieldDate.date() &&
                 currentFieldDate.month() === differentThanFieldDate.month()
@@ -657,7 +685,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       htmlFor={field.name}
                     >
                       {field.label}
-                      {field.required && <span className='text-red-500'> *</span>}
+                      {field.required && (
+                        <span className='text-red-500'> *</span>
+                      )}
                     </label>
                     <div className={isHalf ? 'col-span-8' : 'col-span-10'}>
                       {getFields(field)}
@@ -672,7 +702,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               })}
             </div>
           </div>
-        )
+        );
       })}
     </form>
   );

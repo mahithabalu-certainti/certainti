@@ -1,4 +1,8 @@
-import { ResourceDetailsTypes, SelectOption } from '../../types';
+import {
+  ResourceDetailsForPayload,
+  ResourceDetailsTypes,
+  SelectOption,
+} from '../../types';
 import {
   ResourceCostPayload,
   ResourceCostSkillFormData,
@@ -13,9 +17,9 @@ export const RESOURCE_STATUS_OPTIONS: SelectOption[] = [
 ];
 
 export const RESOURCE_TYPE_OPTIONS: SelectOption[] = [
-  { label: 'Full-Time', value: 'FullTime' },
-  { label: 'Sub Contract', value: 'Contract' },
-  { label: 'Non-Labour', value: 'NonLabour' },
+  { label: 'Full-Time', value: 'Full-Time' },
+  { label: 'SubCon', value: 'SubCon' },
+  { label: 'Non-Labour', value: 'Non-Labour' },
 ];
 
 export const FREQUENCY_OPTIONS: SelectOption[] = [
@@ -76,7 +80,7 @@ interface ResourceTransformationOptions {
 }
 
 // Helper functions
-const formatDateToDDMMYYYY = (dateString?: string | null): string => {
+const formatDateToMMDDYYYY = (dateString?: string | null): string => {
   if (!dateString) return '';
 
   const date = new Date(dateString);
@@ -86,7 +90,7 @@ const formatDateToDDMMYYYY = (dateString?: string | null): string => {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = date.getFullYear();
 
-  return `${day}/${month}/${year}`;
+  return `${month}/${day}/${year}`;
 };
 
 // const capitalizeFirstLetter = (str?: string): string => {
@@ -118,17 +122,17 @@ export function transformPayloadforUpdateResource(
       rawData.resource_orgname || existingResource?.resource_orgname || '',
     role: existingResource?.resource_role || '',
     fiscal_year: rawData.fiscal_year || existingResource?.fiscal_year || 0,
-    country: rawData.country || existingResource?.country || '',
-    state: rawData.state || existingResource?.state || '',
-    city: rawData.city || existingResource?.city || '',
+    country: rawData.country || existingResource?.country_name || '',
+    state: rawData.state || existingResource?.state_name || '',
+    city: rawData.city || existingResource?.city_name || '',
     comments: rawData.comments || existingResource?.comments || '',
     effective_from_date:
-      formatDateToDDMMYYYY(rawData.resource_startdate) ||
-      formatDateToDDMMYYYY(existingResource?.resource_startdate) ||
+      formatDateToMMDDYYYY(rawData.resource_startdate) ||
+      formatDateToMMDDYYYY(existingResource?.resource_startdate) ||
       '',
     effective_end_date:
-      formatDateToDDMMYYYY(rawData.resource_enddate) ||
-      formatDateToDDMMYYYY(existingResource?.resource_enddate) ||
+      formatDateToMMDDYYYY(rawData.resource_enddate) ||
+      formatDateToMMDDYYYY(existingResource?.resource_enddate) ||
       '',
     designation: rawData.designation || existingResource?.designation || '',
     total_years_experience: safeParseNumber(
@@ -143,7 +147,7 @@ export function transformPayloadforUpdateResource(
 }
 
 export const transformPayloadforCreateResource = (
-  formData: ResourceDetailsTypes
+  formData: ResourceDetailsForPayload
 ) => {
   return {
     account_id: formData.account_id,
@@ -157,8 +161,8 @@ export const transformPayloadforCreateResource = (
     country: formData.country,
     state: formData.state,
     city: formData.city,
-    effective_from_date: formatDateToDDMMYYYY(formData.resource_startdate),
-    effective_end_date: formatDateToDDMMYYYY(formData.resource_enddate),
+    effective_from_date: formatDateToMMDDYYYY(formData.resource_startdate),
+    effective_end_date: formatDateToMMDDYYYY(formData.resource_enddate),
     designation: formData.designation,
     total_years_experience: formData.total_years_experience,
     total_years_in_org: formData.total_years_in_org,
@@ -178,7 +182,7 @@ export const transformCostData = (
     effective_date: formData.financial_start_date,
     end_date: formData.financial_end_date,
     cost_frequency: formData.cost_frequency,
-    cost: formData.cost ? Number(formData.cost.replace(',', "")) : null,
+    cost: formData.cost ? Number(formData.cost.replace(',', '')) : null,
     resource_type: formData.resource_type,
     resource_ref_id: formData.resource_ref_id,
     currency_rid: formData.currency ? formData.currency : null,

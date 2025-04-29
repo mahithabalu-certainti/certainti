@@ -2,7 +2,7 @@
 import { CircularProgress, Typography } from '@mui/material';
 import React from 'react';
 import { useResourceDetail } from '../../../../../services/resource-details';
-import { ResourceDetailsTypes } from '../../../../../types';
+import { CreateSectionData } from '../../../../../types';
 
 interface ResourceDetailsProps {
   resourceDetails: {
@@ -16,14 +16,17 @@ interface DetailItem {
   value: React.ReactNode;
 }
 
-const formatDate = (dateString?: string): string => {
-  if (!dateString) return '-';
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleDateString();
-  } catch {
-    return '-';
-  }
+const formatDateToMMDDYYYY = (dateString?: string | null): string => {
+  if (!dateString) return '';
+
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+
+  return `${month}/${day}/${year}`;
 };
 
 const formatKey = (key: string): string => {
@@ -53,20 +56,22 @@ const DetailsSection: React.FC<{
     if (typeof value === 'string' && value.toLowerCase() === 'active') {
       return <span className='text-green-600'>Active</span>;
     }
-    return value || '-';
+    return (
+      <span className='font-light text-sm text-[#2D3E4F]'>{value || '-'}</span>
+    );
   };
 
   return (
     <div className='mb-8'>
-      <Typography variant='h6' className='mb-4 pb-2 border-b border-gray-200'>
+      <Typography className='mb-4 pb-2 border-b border-gray-200 font-semibold text-base'>
         {title}
       </Typography>
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-x-6'>
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-x-6 text-sm'>
         {/* Left column */}
         <div>
           {leftColumn.map((item, index) => (
             <div key={`left-${index}`} className='grid grid-cols-2 py-2'>
-              <div className='text-right pr-4 text-gray-600 font-medium'>
+              <div className='text-right pr-4 font-normal text-[#65686F]'>
                 {item.label}
               </div>
               <div>{renderValue(item.value)}</div>
@@ -78,7 +83,7 @@ const DetailsSection: React.FC<{
         <div>
           {rightColumn.map((item, index) => (
             <div key={`right-${index}`} className='grid grid-cols-2 py-2'>
-              <div className='text-right pr-4 text-gray-600 font-medium'>
+              <div className='text-right pr-4 text-[#65686F] font-normal'>
                 {item.label}
               </div>
               <div>{renderValue(item.value)}</div>
@@ -102,16 +107,66 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   const resourceData = resource?.data?.resourceDetails;
 
-  const createSectionData = (
-    dataObj: Partial<ResourceDetailsTypes>,
+  const CreateSectionData = (
+    dataObj: Partial<CreateSectionData>,
     customMappings?: Record<string, (val: any) => React.ReactNode>
-  ): DetailItem[] => {
-    return Object.entries(dataObj)
-      .filter(([, value]) => value !== undefined)
-      .map(([key, value]) => ({
+  ) => {
+    return Object.entries(dataObj).map(([key, value]) => {
+      // Handle nested objects
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        return {
+          label: formatKey(key),
+          value: Object.values(value).join(', '), // or handle nested objects differently
+        };
+      }
+
+      if (key === 'resource_startdate' && !Array.isArray(value)) {
+        return {
+          label: 'Resource Effective From',
+          value: formatDateToMMDDYYYY(value as string), // or handle nested objects differently
+        };
+      }
+
+      if (key === 'resource_enddate' && !Array.isArray(value)) {
+        return {
+          label: 'Resource End Date',
+          value: formatDateToMMDDYYYY(value as string), // or handle nested objects differently
+        };
+      }
+
+      if (key === 'total_years_in_org' && !Array.isArray(value)) {
+        return {
+          label: 'Total Years in Organization',
+          value: formatDateToMMDDYYYY(value as string), // or handle nested objects differently
+        };
+      }
+
+      if (key === 'total_years_experience' && !Array.isArray(value)) {
+        return {
+          label: 'Total Years of Experience',
+          value: formatDateToMMDDYYYY(value as string), // or handle nested objects differently
+        };
+      }
+
+      if (key === 'resource_fullname' && !Array.isArray(value)) {
+        return {
+          label: 'Resource Full Name',
+          value: value, // or handle nested objects differently
+        };
+      }
+
+      if (key === 'resource_orgname' && !Array.isArray(value)) {
+        return {
+          label: 'Resource Org Name',
+          value: value, // or handle nested objects differently
+        };
+      }
+
+      return {
         label: formatKey(key),
         value: customMappings?.[key] ? customMappings[key](value) : value,
-      }));
+      };
+    });
   };
 
   if (isLoading) {
@@ -154,49 +209,38 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   }
 
   // Section data with custom formatting where needed
-  const basicInfo = createSectionData({
+  const basicInfo = CreateSectionData({
     resource_ref_id: resourceData.resource_ref_id,
+    resource_number: resourceData.r_number,
     resource_fullname: resourceData.resource_fullname,
-    designation: resourceData.designation,
     resource_type: resourceData.resource_type,
-    resource_org_name: resourceData.resource_orgname,
+    resource_orgname: resourceData.resource_orgname,
     resource_status: resourceData.resource_status,
-    fiscal_year: resourceData.fiscal_year,
   });
 
-  const locationInfo = createSectionData({
-    country: resourceData.country,
-    state: resourceData.state,
-    city: resourceData.city,
+  const locationInfo = CreateSectionData({
+    country: resourceData?.country_name,
+    region: resourceData.state_name,
+    city: resourceData.city_name,
   });
 
-  const employmentDetails = createSectionData(
+  const employmentDetails = CreateSectionData(
     {
-      resource_effective_from: resourceData.resource_startdate,
-      resource_end_date: resourceData.resource_enddate,
-      total_years_of_experience: resourceData.total_years_experience,
-
+      resource_startdate: resourceData.resource_startdate,
+      resource_enddate: resourceData.resource_enddate,
+      total_years_experience: resourceData.total_years_experience,
+      designation: resourceData.designation,
       total_years_in_org: resourceData.total_years_in_org,
-      resource_role: resourceData.resource_role,
     },
     {
-      resource_effective_from: formatDate,
-      resource_end_date: formatDate,
+      resource_effective_from: formatDateToMMDDYYYY,
+      resource_end_date: formatDateToMMDDYYYY,
     }
   );
 
-  const systemInfo = createSectionData(
-    {
-      created_datetime: resourceData.created_datetime,
-      created_by: resourceData.created_by,
-      modified_datetime: resourceData.modified_datetime,
-      modified_by: resourceData.modified_by,
-    },
-    {
-      created_datetime: formatDate,
-      modified_datetime: formatDate,
-    }
-  );
+  const description = CreateSectionData({
+    comments: resourceData.comments,
+  });
 
   return (
     <div className='mx-auto p-6 max-w-6xl'>
@@ -206,7 +250,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
         data={locationInfo}
       />
       <DetailsSection title='Employment Details' data={employmentDetails} />
-      <DetailsSection title='System Information' data={systemInfo} />
+      <DetailsSection title='Description' data={description} />
     </div>
   );
 };
