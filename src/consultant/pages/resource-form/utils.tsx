@@ -13,7 +13,7 @@ import { skillLevel } from '../account-details-sidebar/sidebar-pages/resources/r
 // Constants for dropdown options
 export const RESOURCE_STATUS_OPTIONS: SelectOption[] = [
   { label: 'Active', value: 'Active' },
-  { label: 'Inactive', value: 'Inactive' },
+  { label: 'In-Active', value: 'Inactive' },
 ];
 
 export const RESOURCE_TYPE_OPTIONS: SelectOption[] = [
@@ -49,28 +49,8 @@ interface RawResourceData {
   designation?: string;
   total_years_oexperience?: string;
   total_years_in_org?: string;
+  resource_status?: string;
   comments?: string;
-}
-
-interface TransformedResourceData {
-  resource_id: string;
-  account_number: string;
-  resource_ref_id: string;
-  resource_type: string;
-  full_name: string;
-  org_name: string;
-  role: string;
-  fiscal_year: number;
-  country: string;
-  state: string;
-  city: string;
-  effective_from_date: string;
-  effective_end_date: string;
-  designation: string;
-  total_years_experience: number;
-  total_years_in_org: number;
-  comments: string;
-  modified_by?: string;
 }
 
 interface ResourceTransformationOptions {
@@ -107,7 +87,7 @@ export function transformPayloadforUpdateResource(
   rawData: RawResourceData,
   existingResource?: ResourceDetailsTypes,
   options: ResourceTransformationOptions = {}
-): TransformedResourceData {
+) {
   return {
     resource_id: options.resource_id || '',
     account_number: options.account_number || '',
@@ -121,6 +101,8 @@ export function transformPayloadforUpdateResource(
     org_name:
       rawData.resource_orgname || existingResource?.resource_orgname || '',
     role: existingResource?.resource_role || '',
+    resource_status:
+      rawData.resource_status || existingResource?.resource_status,
     fiscal_year: rawData.fiscal_year || existingResource?.fiscal_year || 0,
     country: rawData.country || existingResource?.country_name || '',
     state: rawData.state || existingResource?.state_name || '',

@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { resourceHeaderIcon } from '../../../../../assets';
+import { resourceProfileIcon } from '../../../../../assets';
 import { RESOURCE, RESOURCE_CREATE } from '../../../../../routes';
 import { RootState } from '../../../../../store/store';
 import { useResourceList } from '../../../../services/resource-list';
@@ -172,7 +172,8 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
         }}
         showFilter={showFilter}
         title='Resources'
-        titleIcon={<img src={resourceHeaderIcon} alt='resource header icon' />}
+        resourceNumber={resourceData?.r_number}
+        titleIcon={<img src={resourceProfileIcon} alt='resource header icon' />}
         headerButtons={headerButtons}
         showBackArrow={showBackArrow}
         onBackClick={handleBackClick}

@@ -105,7 +105,8 @@ export const ResourceFormData = (
           createTextField('resource_role', 'Resource Role', {
             required: false,
             regex: RESOURCE_REGEX.ROLE,
-            regexErrorMessage: '4 to 100 characters',
+            regexErrorMessage:
+              'Role must be 4-100 characters long and can include special characters and numbers',
             placeholder: 'Enter Resource Role',
             disabled: disableCostAndSkill,
           }),
@@ -129,7 +130,7 @@ export const ResourceFormData = (
             resetDependsFields: ['state, city'],
             disabled: disableCostAndSkill,
           }),
-          createSelectField('state', 'State/Province', {
+          createSelectField('state', 'Region', {
             options: states,
             placeholder: 'Select State',
             required: false,
@@ -216,6 +217,7 @@ export const ResourceFormData = (
           createDateField('resource_startdate', 'Resource Effective From', {
             required: false,
             disabled: disableCostAndSkill,
+            minDate: new Date('1950-01-01'),
             maxDate: currentDate,
             disableFutureDates: true,
           }),
@@ -232,7 +234,8 @@ export const ResourceFormData = (
           createTextField('designation', 'Designation', {
             required: false,
             regex: RESOURCE_REGEX.DESIGNATION,
-            regexErrorMessage: '4 to 100 characters',
+            regexErrorMessage:
+              'Designation must be 4-100 characters, including special characters and numbers.',
             placeholder: 'Enter Designation',
             disabled: disableCostAndSkill,
           }),

@@ -103,6 +103,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
             '.MuiTableCell-root': {
               fontWeight: 300,
               color: '#425A76',
+              borderRight: 'none',
             }
           }}>
             <TableCell sx={{ minWidth: '250px' }}>
@@ -214,6 +215,8 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
               padding: '0px',
               pl: 1,
               height: '50px',
+              borderRight: 'none',
+              bgcolor: '#FCFCFC',
             },
             '& .MuiTableSortLabel-root': {
               '&:hover': {
