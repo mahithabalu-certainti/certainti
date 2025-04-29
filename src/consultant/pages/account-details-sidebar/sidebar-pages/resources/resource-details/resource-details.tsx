@@ -63,10 +63,10 @@ const DetailsSection: React.FC<{
 
   return (
     <div className='mb-8'>
-      <Typography variant='h6' className='mb-4 pb-2 border-b border-gray-200'>
+      <Typography className='mb-4 pb-2 border-b border-gray-200 font-semibold text-base'>
         {title}
       </Typography>
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-x-6 font-medium text-sm'>
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-x-6 font-light text-sm'>
         {/* Left column */}
         <div>
           {leftColumn.map((item, index) => (
