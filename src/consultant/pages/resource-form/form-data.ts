@@ -105,7 +105,8 @@ export const ResourceFormData = (
           createTextField('resource_role', 'Resource Role', {
             required: false,
             regex: RESOURCE_REGEX.ROLE,
-            regexErrorMessage: '4 to 100 characters',
+            regexErrorMessage:
+              'Role must be 4-100 characters long and can include special characters and numbers',
             placeholder: 'Enter Resource Role',
             disabled: disableCostAndSkill,
           }),
