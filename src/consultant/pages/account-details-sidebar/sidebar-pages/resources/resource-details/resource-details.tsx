@@ -218,7 +218,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   const locationInfo = CreateSectionData({
     country: resourceData?.country_name,
-    state: resourceData.state_name,
+    region: resourceData.state_name,
     city: resourceData.city_name,
   });
 

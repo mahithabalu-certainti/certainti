@@ -75,6 +75,7 @@ export interface CreateSectionData {
   country: string;
   country_name: string;
   state: string; // UUID format
+  region?: string; // UUID format
   city: string; // UUID format
   resource_startdate: string; // ISO date string
   resource_enddate: string; // ISO date string
