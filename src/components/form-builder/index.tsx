@@ -582,7 +582,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               hasError = true;
               return {
                 ...field,
-                error: `Date cannot be before ${dayjs(field.minDate).format('YYYY-MM-DD')}`,
+                error: `Date cannot be before ${dayjs(field.minDate).format('DD-MM-YYYY')}`,
               };
             }
 
