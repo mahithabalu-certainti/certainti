@@ -36,8 +36,8 @@ const TabPanel = () => {
         <Tabs
           value={tabValue}
           onChange={handleTabChange}
-          className='border-1 border-gray-300'
           sx={{
+            border: '1px solid #CBD6E27D',
             padding: '3px',
             minHeight: '36px',
             '& .MuiTabs-indicator': {
@@ -53,15 +53,18 @@ const TabPanel = () => {
             sx={{
               textTransform: 'none',
               fontSize: '14px',
-              fontWeight: 600,
-              color: tabValue === 0 ? '#0BBFB726' : '',
-              backgroundColor: tabValue === 0 ? '#0BBFB726' : '',
+              fontWeight: 400,
+              color: '#2D3E4F',
+              backgroundColor: tabValue === 0 ? '#0BBFB70D' : '',
               margin: '0',
-              border: tabValue === 0 ? '2px solid #0BBFB7' : '',
-              minHeight: '36px',
+              border: tabValue === 0 ? '1px solid #0BBFB7' : '1px solid transparent',
+              width: '120px',
+              height: '28px',
+              borderRadius: '4px',
+              minHeight: '28px',
               padding: '8px 16px',
-              '&.Mui-selected': {
-                color: '#1A3D6F',
+              '&:hover': {
+                color: tabValue !== 0 ? '#0BBFB7' : undefined,
               },
             }}
           />
@@ -70,15 +73,18 @@ const TabPanel = () => {
             sx={{
               textTransform: 'none',
               fontSize: '14px',
-              fontWeight: 600,
-              color: tabValue === 1 ? '#0BBFB726' : '',
-              backgroundColor: tabValue === 1 ? '#0BBFB726' : '',
+              fontWeight: 400,
+              color: '#2D3E4F',
+              backgroundColor: tabValue === 1 ? '#0BBFB70D' : '',
               margin: '0',
-              border: tabValue === 1 ? '2px solid #0BBFB7' : '',
-              minHeight: '36px',
+              border: tabValue === 1 ? '1px solid #0BBFB7' : '1px solid transparent',
+              width: '120px',
+              height: '28px',
+              borderRadius: '4px',
+              minHeight: '28px',
               padding: '8px 16px',
-              '&.Mui-selected': {
-                color: '#1A3D6F',
+              '&:hover': {
+                color: tabValue !== 1 ? '#0BBFB7' : undefined,
               },
             }}
           />

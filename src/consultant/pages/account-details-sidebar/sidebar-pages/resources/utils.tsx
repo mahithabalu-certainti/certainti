@@ -28,7 +28,7 @@ export const resourceFilterFields: FieldConfig[] = [
   { name: 'Resource Ref Id', value: 'resource_ref_id', type: 'text' },
   { name: 'Resource Full Name', value: 'resource_fullname', type: 'text' },
   { name: 'Resource Type', value: 'resource_type', type: 'text' },
-  { name: 'Status', value: 'resource_status', type: 'text' },
+  { name: ' Resource Status', value: 'resource_status', type: 'text' },
 ];
 export const getInitialStateForField = (
   fieldConfig: FieldConfig
