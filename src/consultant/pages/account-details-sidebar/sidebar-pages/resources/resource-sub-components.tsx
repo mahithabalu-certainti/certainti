@@ -14,6 +14,8 @@ interface SubcomponentProps {
   appliedFilters: Record<string, any>;
   fiscalYearValue: number;
   accountDetails: AccountData;
+  setFilterVisibility: (value: boolean) => void;
+  setShowFilter: (value: boolean) => void;
 }
 
 const ResourceSubComponents: React.FC<SubcomponentProps> = ({
@@ -24,6 +26,8 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   appliedFilters,
   fiscalYearValue,
   accountDetails,
+  setFilterVisibility,
+  setShowFilter,
 }) => {
   return (
     <Fragment>
@@ -42,6 +46,10 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
           <Tab
             label='Details'
             value={'details'}
+            onClick={() => {
+              setFilterVisibility(false);
+              setShowFilter(false);
+            }}
             sx={{
               textTransform: 'none',
               '&.Mui-selected': {
@@ -53,6 +61,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
           <Tab
             label='Resource Cost'
             value={'cost'}
+            onClick={() => setFilterVisibility(true)}
             sx={{
               textTransform: 'none',
               '&.Mui-selected': {
@@ -64,6 +73,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
           <Tab
             label='Resource Skill'
             value={'skill'}
+            onClick={() => setFilterVisibility(true)}
             sx={{
               textTransform: 'none',
               '&.Mui-selected': {

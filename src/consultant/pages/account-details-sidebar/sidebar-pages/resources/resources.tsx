@@ -169,7 +169,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
           setAppliedFilters(data);
           setShowFilter(false);
         }}
-        showFilter={showFilter && viewResourceList}
+        showFilter={showFilter}
         title='Resource'
         titleIcon={<img src={resourceHeaderIcon} alt='resource header icon' />}
         headerButtons={headerButtons}
@@ -179,6 +179,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
       />
       {!viewResourceList ? (
         <ResourceSubComponents
+          setFilterVisibility={setFilterVisibility}
           handleTabChange={handleTabChange}
           value={value}
           resourceData={resourceData}
@@ -186,6 +187,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
           appliedFilters={appliedFilters || {}}
           fiscalYearValue={convertedFiscalYear}
           accountDetails={accountDetails as AccountData}
+          setShowFilter={setShowFilter}
         />
       ) : (
         <ListTable
