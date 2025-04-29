@@ -320,7 +320,7 @@ const ResourceForm: React.FC = () => {
           <img
             src={isEditView ? editIcon : createresourceIcon}
             alt='menu-icon'
-            className='h-8 w-8 rounded bg-[#7D98B6] p-2.5'
+            className={`${isEditView ? 'bg-[#7D98B6] p-2.5' : ''} h-8 w-8 rounded`}
           />
           <div>
             {isEditView && !state?.skill && !state?.cost && (
