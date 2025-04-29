@@ -193,7 +193,7 @@ export const REGEX_PATTERNS = {
   ACCOUNT_NAME: /^[A-Za-z0-9 &'.,-]+$/,
   LETTERS_5_TO_25: /^[A-Za-z\s]{5,25}$/,
   LETTERS_3_TO_25: /^(?!.*\s{2,-'})[A-Za-z\s]{3,25}$/,
-  LETTERS_3_TO_100: /^(?!.*\s{2,})[A-Za-z\s]{3,100}$/,
+  LETTERS_3_TO_100: /^[\s\S]{3,100}$/,
   ALPHANUMERIC_SPEC_5_TO_50: /^[\s\S]{5,50}$/,
   EMAIL:
     /^(?!.*[._%+]{2})[a-zA-Z0-9](?:[a-zA-Z0-9._-]{0,62}[a-zA-Z0-9])?@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,

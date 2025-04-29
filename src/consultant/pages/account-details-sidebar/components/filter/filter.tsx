@@ -314,8 +314,8 @@ const Filter: React.FC<FilterComponentProps> = ({
             color: '#7D98B6',
             borderRadius: '2px',
             '&:hover': {
-              background: 'none',
-              color: '#7D98B6',
+              background: 'rgb(203 214 226)',
+              color: 'rgb(46 63 80)',
             },
           }}
         />
@@ -327,7 +327,7 @@ const Filter: React.FC<FilterComponentProps> = ({
             color: '#FFFFFF',
             borderRadius: '2px',
             '&:hover': {
-              background: '#F16137',
+              background: 'rgb(255 139 105)',
               color: '#FFFFFF',
             },
           }}
