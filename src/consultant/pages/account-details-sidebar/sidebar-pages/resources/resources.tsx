@@ -161,7 +161,10 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
       <ResourceTableHeader
         handleFilter={handleFilter}
         value={value}
-        setAppliedFilters={setAppliedFilters}
+        setAppliedFilters={(data) => {
+          setAppliedFilters(data);
+          setShowFilter(false);
+        }}
         showFilter={showFilter}
         title='Resources'
         titleIcon={<img src={resourceHeaderIcon} alt='resource header icon' />}
