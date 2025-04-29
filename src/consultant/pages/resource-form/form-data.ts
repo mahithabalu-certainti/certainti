@@ -70,7 +70,7 @@ export const ResourceFormData = (
             required: false,
             regex: RESOURCE_REGEX.FULL_NAME,
             regexErrorMessage:
-              '3 to 100 characters using letters, numbers, spaces, hyphens or apostrophes',
+              '3 to 200 characters using letters, numbers, spaces, hyphens or apostrophes',
             placeholder: 'Enter Full Name',
             disabled: disableCostAndSkill,
           }),

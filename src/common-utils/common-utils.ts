@@ -234,7 +234,7 @@ export const REGEX_PATTERNS = {
 
 export const RESOURCE_REGEX = {
   // Full Name: Alphanumeric with hyphen/apostrophe, 3-100 chars
-  FULL_NAME: /^(?!\s)(?!.*\s$)(?=.*[a-zA-Z])[a-zA-Z0-9][a-zA-Z0-9 '-]{3,99}$/,
+  FULL_NAME: /^(?!\s)(?!.*\s$)(?=.*[a-zA-Z])[a-zA-Z0-9][a-zA-Z0-9 '-]{3,200}$/,
 
   // Organization Name: Extended chars for org names, 4-100 chars
   ORG_NAME: /^(?=(.*[a-zA-Z0-9]){4})[a-zA-Z0-9][a-zA-Z0-9 &.,'-]{2,99}$/,
