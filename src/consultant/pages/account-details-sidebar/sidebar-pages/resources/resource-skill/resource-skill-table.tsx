@@ -283,7 +283,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
         rowsPerPageOptions={[25, 30, 40, 50]}
         count={skillList?.count ?? 0}
         rowsPerPage={rowsPerPage}
-        page={page}
+        page={(page ?? 1) - 1}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />

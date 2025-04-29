@@ -364,7 +364,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
         // component='div'
         count={costList?.count ?? 0}
         rowsPerPage={rowsPerPage}
-        page={page}
+        page={(page ?? 1) - 1}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />

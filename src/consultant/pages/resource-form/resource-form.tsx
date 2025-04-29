@@ -65,6 +65,7 @@ const ResourceForm: React.FC = () => {
     ? location?.state?.resource?.resource_fullname
     : 'New Resource';
 
+  const costAndSKillAccountInfo = state?.data?.accountById;
   const skillCostResourceId =
     state?.costInfo?.resourceRID || state?.skillInfo?.resourceRID;
 
@@ -319,16 +320,17 @@ const ResourceForm: React.FC = () => {
           <img
             src={isEditView ? editIcon : createresourceIcon}
             alt='menu-icon'
-            className='h-8 w-8 rounded'
+            className='h-8 w-8 rounded bg-[#7D98B6] p-2.5'
           />
           <div>
-            {isEditView && (
+            {isEditView && !state?.skill && !state?.cost && (
               <h5 className='text-xs ml-2 text-gray-500 mb-1'>Edit Resource</h5>
             )}
             <div className='text-xs ml-2 leading-4 text-gray-500'>
-              {`Account > ${accountData?.account_name}`}
+              {!state?.skill && !state?.cost ? `Account > ${accountData?.account_name}` : `Account > ${costAndSKillAccountInfo?.account_name}`}
             </div>
-            <h4 className='font-bold text-lg ml-2 leading-4'>{resourceName}</h4>
+            {!isEditView && <h4 className='font-bold text-lg ml-2 leading-4'>{state?.cost ? `${resourceName} Cost` : state?.skill ? `${resourceName} Skill` : resourceName}</h4>}
+            {isEditView && <h4 className='font-bold text-lg ml-2 leading-4'>{state?.cost ? 'Edit Resource Cost' : state?.skill ? `Edit Resource Skill` : resourceName}</h4>}
           </div>
         </div>
         <div className='flex gap-3'>
