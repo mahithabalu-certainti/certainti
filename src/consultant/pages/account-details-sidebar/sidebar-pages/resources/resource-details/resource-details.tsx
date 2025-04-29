@@ -109,36 +109,34 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
     dataObj: Partial<createSectionData>,
     customMappings?: Record<string, (val: any) => React.ReactNode>
   ) => {
-    return Object.entries(dataObj)
-      .filter(([, value]) => value !== undefined)
-      .map(([key, value]) => {
-        // Handle nested objects
-        if (value && typeof value === 'object' && !Array.isArray(value)) {
-          return {
-            label: formatKey(key),
-            value: Object.values(value).join(', '), // or handle nested objects differently
-          };
-        }
-
-        if (key === 'resource_startdate' && !Array.isArray(value)) {
-          return {
-            label: 'Resource Effective From',
-            value: formatDateToMMDDYYYY(value as string), // or handle nested objects differently
-          };
-        }
-
-        if (key === 'resource_enddate' && !Array.isArray(value)) {
-          return {
-            label: 'Resource End Date',
-            value: formatDateToMMDDYYYY(value as string), // or handle nested objects differently
-          };
-        }
-
+    return Object.entries(dataObj).map(([key, value]) => {
+      // Handle nested objects
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
         return {
           label: formatKey(key),
-          value: customMappings?.[key] ? customMappings[key](value) : value,
+          value: Object.values(value).join(', '), // or handle nested objects differently
         };
-      });
+      }
+
+      if (key === 'resource_startdate' && !Array.isArray(value)) {
+        return {
+          label: 'Resource Effective From',
+          value: formatDateToMMDDYYYY(value as string), // or handle nested objects differently
+        };
+      }
+
+      if (key === 'resource_enddate' && !Array.isArray(value)) {
+        return {
+          label: 'Resource End Date',
+          value: formatDateToMMDDYYYY(value as string), // or handle nested objects differently
+        };
+      }
+
+      return {
+        label: formatKey(key),
+        value: customMappings?.[key] ? customMappings[key](value) : value,
+      };
+    });
   };
 
   if (isLoading) {
@@ -190,10 +188,11 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
     resource_orgname: resourceData.resource_orgname,
     resource_status: resourceData.resource_status,
     fiscal_year: resourceData.fiscal_year,
+    resource_role: resourceData.resource_role,
   });
 
   const locationInfo = createSectionData({
-    country: resourceData?.country?.country_name,
+    country: resourceData?.country_name,
     state: resourceData.state_name,
     city: resourceData.city_name,
   });
@@ -205,7 +204,6 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
       total_years_experience: resourceData.total_years_experience,
 
       total_years_in_org: resourceData.total_years_in_org,
-      resource_role: resourceData.resource_role,
     },
     {
       resource_effective_from: formatDateToMMDDYYYY,

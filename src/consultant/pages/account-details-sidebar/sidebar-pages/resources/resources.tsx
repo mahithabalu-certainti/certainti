@@ -23,7 +23,6 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
   const [columns, setColumns] = useState<any>([]);
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [filterVisibility, setFilterVisibility] = useState<boolean>(true);
-  console.log('showFilter', showFilter);
   const [value, setValue] = useState('');
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
   const [showBackArrow, setShowBackArrow] = useState<boolean>(false);
@@ -31,7 +30,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
   const [sortField, setSortField] = useState<string>('rid');
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
   );
@@ -137,9 +136,6 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
   };
 
   const handleCreateResource = () => {
-    if (!value) {
-      navigate(RESOURCE_CREATE, { state: accountDetails });
-    }
     if (value === 'cost') {
       navigate(`${RESOURCE}/cost/create`, {
         state: {
@@ -158,6 +154,8 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
           sectionName: 'Skill Information',
         },
       });
+    } else {
+      navigate(RESOURCE_CREATE, { state: accountDetails });
     }
   };
 
@@ -193,7 +191,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
           actionMenuItems={actionMenuItems}
           pagination={true}
           rowsPerPage={rowsPerPage}
-          rowsPerPageOptions={[5, 10, 25]}
+          rowsPerPageOptions={[25, 30, 40, 50]}
           sortable={true}
           isLoading={isLoading}
           error={error}

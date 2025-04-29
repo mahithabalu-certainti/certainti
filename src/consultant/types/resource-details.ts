@@ -10,9 +10,7 @@ export interface ResourceDetailsTypes {
   resource_orgname: string;
   resource_role: string;
   fiscal_year: number;
-  country: {
-    country_name: string;
-  };
+  country_name: string;
   state_name: string; // UUID format
   city_name: string; // UUID format
   resource_startdate: string; // ISO date string
@@ -71,6 +69,7 @@ export interface createSectionData {
   resource_role: string;
   fiscal_year: number;
   country: string;
+  country_name: string;
   state: string; // UUID format
   city: string; // UUID format
   resource_startdate: string; // ISO date string
