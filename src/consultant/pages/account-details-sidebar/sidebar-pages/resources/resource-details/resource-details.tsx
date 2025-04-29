@@ -63,10 +63,10 @@ const DetailsSection: React.FC<{
 
   return (
     <div className='mb-8'>
-      <Typography className='mb-4 pb-2 border-b border-gray-200 font-semibold text-base'>
+      <Typography variant='h6' className='pb-2 mb-4 text-base font-semibold'>
         {title}
       </Typography>
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-x-6 text-sm'>
+      <div className='grid grid-cols-1 text-sm md:grid-cols-2 gap-x-6'>
         {/* Left column */}
         <div>
           {leftColumn.map((item, index) => (
@@ -177,7 +177,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   if (isLoading) {
     return (
-      <div className='flex justify-center items-center h-64'>
+      <div className='flex items-center justify-center h-64'>
         <CircularProgress />
         <Typography variant='body1' className='ml-4'>
           Loading resource details...
@@ -188,7 +188,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   if (error) {
     return (
-      <div className='flex flex-col justify-center items-center h-64 p-4'>
+      <div className='flex flex-col items-center justify-center h-64 p-4'>
         <Typography variant='h6' color='error' className='mb-2'>
           Error loading resource details
         </Typography>
@@ -206,7 +206,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   if (!resourceData) {
     return (
-      <div className='flex flex-col justify-center items-center h-64 p-4'>
+      <div className='flex flex-col items-center justify-center h-64 p-4'>
         <Typography variant='h6' color='textSecondary'>
           No resource details available
         </Typography>
@@ -249,7 +249,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   });
 
   return (
-    <div className='mx-auto p-6 max-w-6xl'>
+    <div className='max-w-6xl p-6 mx-auto'>
       <DetailsSection title='Basic Information' data={basicInfo} />
       <DetailsSection
         title='Location and Currency Information'

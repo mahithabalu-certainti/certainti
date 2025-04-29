@@ -47,12 +47,12 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
     return value === 'cost' ? costFilterFields : skillFilterFields;
   };
   return (
-    <div className='border-x border-t border-gray-300'>
+    <div className='mr-2 border-t border-[1px] border-b-0 border-[#CBD6E2] rounded-tl-[2px] rounded-tr-[2px]'>
       <div className='flex items-center justify-between p-4'>
-        <div className='flex gap-2 items-center'>
+        <div className='flex items-center gap-2'>
           {showBackArrow && (
-            <div className='cursor-pointer' onClick={onBackClick}>
-              <img src={leftArrowIcon} alt='leftArrowIcon' />
+            <div className='cursor-pointer w-[24px] h-[24px] flex justify-center items-center -ml-2' onClick={onBackClick}>
+              <img src={leftArrowIcon} className='h-[16px]' alt='leftArrowIcon' />
             </div>
             //   <button
             //     onClick={onBackClick}
@@ -63,15 +63,11 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
             //   </button>
           )}
           {titleIcon && (
-            <div
-              className='bg-pink-100 p-2 rounded-lg mr-2'
-              role='img'
-              aria-hidden='true'
-            >
+            < div className='w-[24px] h-[24px] flex items-center justify-center'>
               {titleIcon}
             </div>
           )}
-          <h1 className='text-xl font-medium'>{title}</h1>
+          <h1 className='text-sm font-medium leading-none tracking-normal text-[#2D3E4F]'>{title}</h1>
         </div>
 
         <div className='flex gap-2'>

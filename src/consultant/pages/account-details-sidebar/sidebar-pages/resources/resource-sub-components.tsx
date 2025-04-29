@@ -31,12 +31,12 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
 }) => {
   return (
     <Fragment>
-      <Box className='max-w-[100%]'>
+      <Box className='mr-2 max-w-[100%]  border-b border-[1px] border-t-0 border-[#CBD6E2] rounded-bl-[2px] rounded-br-[2px] bg-white'>
         <Tabs
           value={value}
           onChange={handleTabChange}
           aria-label='navigation tabs'
-          className='border border-solid border-[#CBD6E2]'
+          className='border-l-0 border-r-0 border-[1px] border-solid border-[#CBD6E2]'
           sx={{
             '& .MuiTabs-indicator': {
               backgroundColor: '#0B5CAB',
