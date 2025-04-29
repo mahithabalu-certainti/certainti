@@ -73,20 +73,24 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
         </div>
 
         <div className='flex gap-2'>
-          {value !== 'details' && <Box
-            onClick={handleFilter}
-            className='h-[35px] w-[38px] flex items-center justify-center border border-[#CBD6E2] cursor-pointer'
-          >
-            <Image src={resourceFilterIcon} />
-          </Box>}
-          <div className='flex gap-2'>
+          <Box className='relative'>
+            {value !== 'details' && <Box
+              onClick={handleFilter}
+              className='h-[35px] w-[38px] flex items-center justify-center border border-[#CBD6E2] cursor-pointer'
+            >
+              <Image src={resourceFilterIcon} />
+            </Box>}
             {showFilter && value !== 'details' && (
-              <Filter
-                filterMenu={getFilterFields()}
-                setAppliedFilters={setAppliedFilters}
-                handleFilter={handleFilter}
-              />
+              <Box className='absolute right-0 z-50'>
+                <Filter
+                  filterMenu={getFilterFields()}
+                  setAppliedFilters={setAppliedFilters}
+                  handleFilter={handleFilter}
+                />
+              </Box>
             )}
+          </Box>
+          <div className='flex gap-2'>
             {headerButtons?.map((button, index) => (
               <TextButton
                 key={`header-button-${index}`}
