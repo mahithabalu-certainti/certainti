@@ -66,6 +66,7 @@ import timesheetIcon from './timesheet.svg';
 import uploadIcon from './Vector.svg';
 import addIcon from './addicon.svg';
 import eyeIcon from './eye-icon.svg';
+import backIcon from './chevron-double-left.svg';
 
 export {
   accountDetailsIcon,
@@ -85,6 +86,7 @@ export {
   arrowDownIcon,
   arrowUpIcon,
   attachmentIcon,
+  backIcon,
   calendarIcon,
   caseIcon,
   checklistTemplateIcon,

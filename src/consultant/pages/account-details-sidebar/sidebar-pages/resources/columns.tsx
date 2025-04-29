@@ -14,7 +14,7 @@ interface ResourceColumnsProps {
 
 // Helper function to display value or NA
 const displayValue = (value: any) => {
-  return value ? value : <span className='text-gray-400'>NA</span>;
+  return value ? value === 'FullTime' ? 'Full-Time' : value : <span className='text-gray-400'>NA</span>;
 };
 
 const BASE_COLUMNS: ColumnDefinition[] = [
@@ -96,28 +96,25 @@ const BASE_COLUMNS: ColumnDefinition[] = [
   },
 ];
 
-const createStatusColumn = (activeOnly: boolean = false): ColumnDefinition => ({
+const createStatusColumn = (): ColumnDefinition => ({
   id: 'resource_status',
   label: 'Status',
   sortable: true,
   render: (value: string) => (
     <span
       className={`font-medium ${
-        activeOnly
-          ? 'text-green-600'
-          : value === 'Active'
-            ? 'text-green-600'
-            : 'text-red-600'
+         value === 'Active'
+            ? 'text-[#199806]'
+            : 'text-[#f44336]'
       }`}
     >
-      {displayValue(value)}
+      {value === 'Active' ? 'Active' : 'In-Active'}
     </span>
   ),
 });
 
 export const getResourceColumns = ({
   onResourceIdClick,
-  view = false,
   onClickId,
 }: ResourceColumnsProps): ColumnDefinition[] => {
   // Apply click handler to the specified ID column
@@ -128,7 +125,7 @@ export const getResourceColumns = ({
             ...column,
             render: (value: string, row: any) => (
               <span
-                className='text-blue-600 hover:text-blue-800 hover:underline cursor-pointer'
+                className='cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
                 onClick={(e) => {
                   e.stopPropagation();
                   onResourceIdClick(row);
@@ -143,7 +140,7 @@ export const getResourceColumns = ({
   };
 
   const columns = applyClickHandler([...BASE_COLUMNS]);
-  columns.push(createStatusColumn(!view));
+  columns.push(createStatusColumn());
 
   return columns;
 };
