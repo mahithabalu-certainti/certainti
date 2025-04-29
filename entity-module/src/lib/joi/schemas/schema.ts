@@ -172,6 +172,26 @@ const createResourcesSchema = Joi.object({
     .guid({ version: ["uuidv4"] })
     .required(),
   comments: Joi.string().max(1000).optional().allow("").allow(null),
+}).custom((obj) => {
+  const hasEffectiveDate = Boolean(obj.effective_from_date);
+  const hasEndDate = Boolean(obj.effective_end_date);
+
+  if (hasEffectiveDate !== hasEndDate) {
+    throw new Error(
+      "Both effective from date and end date must be provided together, or neither should be provided"
+    );
+  }
+
+  return obj;
+}).error((errors) => {
+  return errors.map(error => {
+    if (error.code === 'any.custom') {
+      // Add proper field name to the error
+      (error as any).context = { label: 'date_validation' };
+      error.message = 'Both effective from date and end date must be provided together, or neither should be provided';
+    }
+    return error;
+  });
 });
 
 const updateResourceSchema = Joi.object({
@@ -256,6 +276,26 @@ const updateResourceSchema = Joi.object({
     .allow(null),
   resource_status: Joi.string().valid("Active", "Inactive").optional(),
   comments: Joi.string().max(1000).optional().allow("").allow(null),
+}).custom((obj) => {
+  const hasEffectiveDate = Boolean(obj.effective_from_date);
+  const hasEndDate = Boolean(obj.effective_end_date);
+
+  if (hasEffectiveDate !== hasEndDate) {
+    throw new Error(
+      "Both effective from date and end date must be provided together, or neither should be provided"
+    );
+  }
+
+  return obj;
+}).error((errors) => {
+  return errors.map(error => {
+    if (error.code === 'any.custom') {
+      // Add proper field name to the error
+      (error as any).context = { label: 'date_validation' };
+      error.message = 'Both effective from date and end date must be provided together, or neither should be provided';
+    }
+    return error;
+  });
 });
 
 const listResourceSchema = Joi.object({

@@ -2,35 +2,37 @@ import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { Resources } from "./resource";
 
 interface ResourceCostAttributes {
- rid: string,
- r_number?: string,
- eid?: string,
- account_rid: string,
- resource_type: string,
- resource_rid: string,
- resource_number: string,
- resource_ref_id: string, 
- effective_date?: Date | null,
- end_date?: Date | null,
- annual_cost?: number,
- semi_annual_cost?: number,
- monthly_cost?: number,
- weekly_cost?: number,
- bi_weekly_cost?: number,
- daily_cost?: number,
- hourly_cost?: number,
- currency_rid?: string,
- status?: string,
- created_datetime?: Date,
- modified_datetime?: Date,
- created_by?: string,
- modified_by?: string,
+  rid: string;
+  r_number?: string;
+  eid?: string;
+  account_rid: string;
+  resource_type: string;
+  resource_rid: string;
+  resource_number: string;
+  resource_ref_id: string;
+  effective_date?: Date | null;
+  end_date?: Date | null;
+  annual_cost?: number;
+  semi_annual_cost?: number;
+  monthly_cost?: number;
+  weekly_cost?: number;
+  bi_weekly_cost?: number;
+  daily_cost?: number;
+  hourly_cost?: number;
+  currency_rid?: string;
+  status?: string;
+  created_datetime?: Date;
+  modified_datetime?: Date;
+  created_by?: string;
+  modified_by?: string;
 }
 
 interface ResourceCostCreationAttributes
   extends Optional<ResourceCostAttributes, "rid"> {}
 
-export class ResourceCost extends Model<ResourceCostAttributes, ResourceCostCreationAttributes> implements ResourceCostAttributes 
+export class ResourceCost
+  extends Model<ResourceCostAttributes, ResourceCostCreationAttributes>
+  implements ResourceCostAttributes
 {
   rid!: string;
   r_number?: string;
@@ -56,118 +58,134 @@ export class ResourceCost extends Model<ResourceCostAttributes, ResourceCostCrea
   created_by?: string;
   modified_by?: string;
 
-  static initialize(sequelize: Sequelize,schemaName: string) {
+  static initialize(sequelize: Sequelize, schemaName: string) {
     ResourceCost.init(
       {
-       rid: {
-        type: DataTypes.UUID,
-        defaultValue: UUIDV4,
-        primaryKey: true,
-       },
-       r_number: {
-        type: DataTypes.STRING(255),
-        allowNull: true,
-       },
-       eid: {
-        type: DataTypes.STRING(255),
-        allowNull: true,
-       },
-       account_rid: {
-        type: DataTypes.UUID,
-        allowNull: false,
-       },
-       resource_type: {
-        type: DataTypes.STRING(255),
-        allowNull: false,
-       },
-       resource_rid: {
-        type: DataTypes.UUID,
-        allowNull: true,
-       },
-       resource_ref_id: {
-        type: DataTypes.STRING(255),
-        allowNull: false,
-       },
-       resource_number: {
-        type: DataTypes.STRING(255),
-        allowNull: false,
-       },
-       effective_date: {
-        type: DataTypes.DATE,
-        allowNull: true,
-        validate: {
-          notFuture(value: Date) {
-            if (value > new Date()) {
-              throw new Error('Effective date cannot be in the future');
-            }
-          }
-        }
-       },
-       end_date: {
-        type: DataTypes.DATE,
-        allowNull: true,
-        validate: {
-          isAfterEffectiveDate(value: Date) {
-            if (value && this.effective_date && value <= this.effective_date) {
-              throw new Error('End date must be greater than effective date');
-            }
-          }
-        }
-       },
-       annual_cost: {
-        type: DataTypes.DECIMAL(12, 2),
-        allowNull: true,
-       },
-       semi_annual_cost: {
-        type: DataTypes.DECIMAL(12, 2),
-        allowNull: true,
-       },
-       monthly_cost: {
-        type: DataTypes.DECIMAL(12, 2),
-        allowNull: true,
-       },
-       weekly_cost: {
-        type: DataTypes.DECIMAL(12, 2),
-        allowNull: true,
-       },
-       bi_weekly_cost: {
-        type: DataTypes.DECIMAL(12, 2),
-        allowNull: true,
-       },
-       daily_cost: {
-        type: DataTypes.DECIMAL(12, 2),
-        allowNull: true,
-       },
-       hourly_cost: {
-        type: DataTypes.DECIMAL(12, 2),
-        allowNull: true,
-       },
-       currency_rid: {
-        type: DataTypes.UUID,
-        allowNull: true,
-       },
-       status: {
-        type: DataTypes.STRING(255),
-        defaultValue: "active",
-       },
-       created_datetime: {
-        type: DataTypes.DATE,
-        allowNull: true,
-        defaultValue: DataTypes.NOW,
-       },
-       modified_datetime: {
-        type: DataTypes.DATE,
-        allowNull: true,
-        defaultValue: DataTypes.NOW,
-       },
-       created_by: {
-        type: DataTypes.UUID,
-        allowNull: true,
-       },
-       modified_by: {
-        type: DataTypes.UUID,
-        allowNull: true,
-       },
+        rid: {
+          type: DataTypes.UUID,
+          defaultValue: UUIDV4,
+          primaryKey: true,
+        },
+        r_number: {
+          type: DataTypes.STRING(255),
+          allowNull: true,
+        },
+        eid: {
+          type: DataTypes.STRING(255),
+          allowNull: true,
+        },
+        account_rid: {
+          type: DataTypes.UUID,
+          allowNull: false,
+        },
+        resource_type: {
+          type: DataTypes.STRING(255),
+          allowNull: false,
+        },
+        resource_rid: {
+          type: DataTypes.UUID,
+          allowNull: true,
+        },
+        resource_ref_id: {
+          type: DataTypes.STRING(255),
+          allowNull: false,
+        },
+        resource_number: {
+          type: DataTypes.STRING(255),
+          allowNull: false,
+        },
+        effective_date: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          validate: {
+            notFuture(value: Date) {
+              if (value) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const inputDate = new Date(value);
+                inputDate.setHours(0, 0, 0, 0);
+
+                if (inputDate > today) {
+                  throw new Error("Effective date cannot be in the future");
+                }
+              }
+            },
+          },
+        },
+        end_date: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          validate: {
+            isAfterEffectiveDate(value: Date) {
+              if (value && this.effective_date) {
+                const effectiveDate = new Date(this.effective_date as Date);
+                effectiveDate.setHours(0, 0, 0, 0);
+                const endDate = new Date(value);
+                endDate.setHours(0, 0, 0, 0);
+
+                if (endDate <= effectiveDate) {
+                  throw new Error(
+                    "End date must be greater than effective date"
+                  );
+                }
+              }
+            },
+          },
+        },
+        annual_cost: {
+          type: DataTypes.DECIMAL(12, 2),
+          allowNull: true,
+        },
+        semi_annual_cost: {
+          type: DataTypes.DECIMAL(12, 2),
+          allowNull: true,
+        },
+        monthly_cost: {
+          type: DataTypes.DECIMAL(12, 2),
+          allowNull: true,
+        },
+        weekly_cost: {
+          type: DataTypes.DECIMAL(12, 2),
+          allowNull: true,
+        },
+        bi_weekly_cost: {
+          type: DataTypes.DECIMAL(12, 2),
+          allowNull: true,
+        },
+        daily_cost: {
+          type: DataTypes.DECIMAL(12, 2),
+          allowNull: true,
+        },
+        hourly_cost: {
+          type: DataTypes.DECIMAL(12, 2),
+          allowNull: true,
+        },
+        currency_rid: {
+          type: DataTypes.UUID,
+          allowNull: true,
+        },
+        status: {
+          type: DataTypes.STRING(255),
+          defaultValue: "active",
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: DataTypes.NOW,
+        },
+        created_by: {
+          type: DataTypes.UUID,
+          allowNull: true,
+        },
+        modified_by: {
+          type: DataTypes.UUID,
+          allowNull: true,
+        },
       },
       {
         sequelize,
@@ -181,9 +199,9 @@ export class ResourceCost extends Model<ResourceCostAttributes, ResourceCostCrea
             if (!resourceCost.r_number) {
               // Get the latest resource cost to determine the next number
               const latestResourceCost = await ResourceCost.findOne({
-                order: [['created_datetime', 'DESC']],
+                order: [["created_datetime", "DESC"]],
               });
-              
+
               // Extract the numeric part if a previous record exists, or start with 1
               let nextNumber = 1;
               if (latestResourceCost && latestResourceCost.r_number) {
@@ -192,12 +210,14 @@ export class ResourceCost extends Model<ResourceCostAttributes, ResourceCostCrea
                   nextNumber = parseInt(match[1], 10) + 1;
                 }
               }
-              
+
               // Format the r_number with leading zeros (e.g., RC00001)
-              resourceCost.r_number = `RC${nextNumber.toString().padStart(5, '0')}`;
+              resourceCost.r_number = `RC${nextNumber
+                .toString()
+                .padStart(5, "0")}`;
             }
-          }
-        }
+          },
+        },
       }
     );
 
