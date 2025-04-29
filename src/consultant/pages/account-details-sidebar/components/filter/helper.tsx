@@ -116,10 +116,6 @@ export const TextFilterControlForCostAndSKill: React.FC<{
   onValueChange,
 }) => {
     const option = formatString(filterStates?.[fieldName]?.textCostAndSkill?.option);
-    console.log("state", state);
-
-    console.log("fieldName", state.textCostAndSkill?.option);
-
     const hideInput = option === 'Is Empty' || option === 'Is Not Empty';
     return (
       <Box sx={{ p: 1, mt: 1, borderBottom: '1px solid #CBD6E2' }}>
@@ -631,8 +627,6 @@ export const formatFilterForApi = (
       };
     }
   });
-
-  console.log('formattedfilters', formattedFilters);
 
   return formattedFilters;
 };
