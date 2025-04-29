@@ -27,6 +27,7 @@ interface ResourceTableHeaderProps {
   value: string;
   showFilter: boolean;
   setAppliedFilters: (filters: Record<string, any>) => void;
+  resourceNumber?: string;
 }
 
 const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
@@ -41,6 +42,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
   value,
   showFilter,
   filterVisibility,
+  resourceNumber,
 }) => {
   const getFilterFields = () => {
     if (!value) return resourceFilterFields;
@@ -67,7 +69,10 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
               {titleIcon}
             </div>
           )}
-          <h1 className='text-sm font-medium leading-none tracking-normal text-[#2D3E4F]'>{title}</h1>
+          <h1 className='text-sm font-medium text-[#2D3E4F]'>{title}</h1>
+          <div className='text-sm font-medium text-[#2D3E4F]'>
+            {value === 'details' && resourceNumber}
+          </div>
         </div>
 
         <div className='flex gap-2'>

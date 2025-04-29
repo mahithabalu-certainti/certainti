@@ -172,6 +172,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
         }}
         showFilter={showFilter}
         title='Resources'
+        resourceNumber={resourceData?.r_number}
         titleIcon={<img src={resourceProfileIcon} alt='resource header icon' />}
         headerButtons={headerButtons}
         showBackArrow={showBackArrow}

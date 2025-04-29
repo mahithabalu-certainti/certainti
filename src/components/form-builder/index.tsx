@@ -559,6 +559,64 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           //   };
           // }
 
+          if (field.type === 'date' && constructFormData[field.name]) {
+            const dateValue = constructFormData[field.name] as string;
+
+            // Check if future dates are disabled
+            if (
+              field.disableFutureDates &&
+              dayjs(dateValue).isAfter(dayjs(), 'day')
+            ) {
+              hasError = true;
+              return {
+                ...field,
+                error: 'Future dates are not allowed',
+              };
+            }
+
+            // Check if date is before the minimum allowed date
+            if (
+              field.minDate &&
+              dayjs(dateValue).isBefore(dayjs(field.minDate), 'day')
+            ) {
+              hasError = true;
+              return {
+                ...field,
+                error: `Date cannot be before ${dayjs(field.minDate).format('DD-MM-YYYY')}`,
+              };
+            }
+
+            // Check if end date is provided without a start date
+            if (
+              field.name === 'resource_enddate' &&
+              !constructFormData['resource_startdate']
+            ) {
+              hasError = true;
+              return {
+                ...field,
+                error:
+                  'Effective From date is required when providing an End Date',
+              };
+            }
+
+            // Check if end date is after start date (strictly greater)
+            if (
+              field.greaterThan &&
+              constructFormData[field.greaterThan.field] &&
+              !dayjs(dateValue).isAfter(
+                dayjs(constructFormData[field.greaterThan.field] as string)
+              )
+            ) {
+              hasError = true;
+              return {
+                ...field,
+                error:
+                  field.greaterThan.message ||
+                  'Date must be strictly after the reference field',
+              };
+            }
+          }
+
           // Fiscal Date custom Validation
           if (field.differentThan) {
             const currentFieldDate = dayjs(
