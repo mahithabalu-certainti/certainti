@@ -315,7 +315,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 textField: {
                   fullWidth: true,
                   size: 'small',
-                  disabled: false,
+                  disabled: field.disabled,
                   sx: {
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 0,

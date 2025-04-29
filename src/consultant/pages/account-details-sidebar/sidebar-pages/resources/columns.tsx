@@ -75,8 +75,18 @@ const BASE_COLUMNS: ColumnDefinition[] = [
     ),
   },
   {
-    id: 'country_name',
-    label: 'Resource Country',
+    id: 'total_years_experience',
+    label: 'Total Experience',
+    sortable: true,
+    render: (value: string) => (
+      <span className='font-light text-sm text-[#425A76]'>
+        {displayValue(value)}
+      </span>
+    ),
+  },
+  {
+    id: 'city_name',
+    label: 'Resource City',
     sortable: true,
     render: (value: string) => (
       <span className='font-light text-sm text-[#425A76]'>
@@ -87,6 +97,16 @@ const BASE_COLUMNS: ColumnDefinition[] = [
   {
     id: 'state_name',
     label: 'Resource Region',
+    sortable: true,
+    render: (value: string) => (
+      <span className='font-light text-sm text-[#425A76]'>
+        {displayValue(value)}
+      </span>
+    ),
+  },
+  {
+    id: 'country_name',
+    label: 'Resource Country',
     sortable: true,
     render: (value: string) => (
       <span className='font-light text-sm text-[#425A76]'>
