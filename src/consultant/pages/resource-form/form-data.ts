@@ -129,7 +129,7 @@ export const ResourceFormData = (
             resetDependsFields: ['state, city'],
             disabled: disableCostAndSkill,
           }),
-          createSelectField('state', 'State/Province', {
+          createSelectField('state', 'Region', {
             options: states,
             placeholder: 'Select State',
             required: false,

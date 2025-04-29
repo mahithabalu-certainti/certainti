@@ -92,7 +92,7 @@ const ResourceForm: React.FC = () => {
   const { data: resource } = useResourceDetail(
     location?.state?.resource?.rid || resourceRId,
     location?.state?.accountDetails?.data?.accountById?.r_number ||
-    accountNumber
+      accountNumber
   );
 
   useEffect(() => {
@@ -120,9 +120,7 @@ const ResourceForm: React.FC = () => {
       // Set form values with resource details when creataing cost and skill
       setFormValues(formValues);
     }
-
   }, [state, costDetails, resource]);
-
 
   // const resourceValues = resource?.data?.resourceDetails;
   const userDetails = JSON.parse(localStorage.getItem('auth') || '{}');
@@ -327,10 +325,28 @@ const ResourceForm: React.FC = () => {
               <h5 className='text-xs ml-2 text-gray-500 mb-1'>Edit Resource</h5>
             )}
             <div className='text-xs ml-2 leading-4 text-gray-500'>
-              {!state?.skill && !state?.cost ? `Account > ${accountData?.account_name}` : `Account > ${costAndSKillAccountInfo?.account_name}`}
+              {!state?.skill && !state?.cost
+                ? `Account > ${accountData?.account_name}`
+                : `Account > ${costAndSKillAccountInfo?.account_name}`}
             </div>
-            {!isEditView && <h4 className='font-bold text-lg ml-2 leading-4'>{state?.cost ? `${resourceName} Cost` : state?.skill ? `${resourceName} Skill` : resourceName}</h4>}
-            {isEditView && <h4 className='font-bold text-lg ml-2 leading-4'>{state?.cost ? 'Edit Resource Cost' : state?.skill ? `Edit Resource Skill` : resourceName}</h4>}
+            {!isEditView && (
+              <h4 className='font-bold text-lg ml-2 leading-4'>
+                {state?.cost
+                  ? `${resourceName} Cost`
+                  : state?.skill
+                    ? `${resourceName} Skill`
+                    : resourceName}
+              </h4>
+            )}
+            {isEditView && (
+              <h4 className='font-bold text-lg ml-2 leading-4'>
+                {state?.cost
+                  ? 'Edit Resource Cost'
+                  : state?.skill
+                    ? `Edit Resource Skill`
+                    : resourceName}
+              </h4>
+            )}
           </div>
         </div>
         <div className='flex gap-3'>
@@ -351,25 +367,24 @@ const ResourceForm: React.FC = () => {
       <div className='p-10'>
         <FormBuilder
           data={formConfig}
-          // loading={allCountries.isLoading}
-          loading={false}
+          loading={allCountries.isLoading}
           values={
             isEditView &&
-              !state?.cost &&
-              !state?.skill &&
-              (resource?.data?.resourceDetails as unknown as Record<
-                string,
-                string | number | boolean | string[] | null
-              >)
+            !state?.cost &&
+            !state?.skill &&
+            (resource?.data?.resourceDetails as unknown as Record<
+              string,
+              string | number | boolean | string[] | null
+            >)
               ? (resource?.data?.resourceDetails as unknown as Record<
-                string,
-                string | number | boolean | string[] | null
-              >)
-              : state?.cost || state?.skill
-                ? (formValues as unknown as Record<
                   string,
                   string | number | boolean | string[] | null
                 >)
+              : state?.cost || state?.skill
+                ? (formValues as unknown as Record<
+                    string,
+                    string | number | boolean | string[] | null
+                  >)
                 : undefined
           }
           // values={
