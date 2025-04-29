@@ -303,7 +303,7 @@ const ResourceForm: React.FC = () => {
 
   return (
     <div className='resource-form-container'>
-      <div className='flex justify-between items-center border-b-2 border-gray-200 px-10 py-6'>
+      <div className='flex justify-between items-center border-b-2 h-[108px] border-gray-200 px-10 py-6'>
         <div className='flex items-center'>
           <img
             src={isEditView ? editIcon : createresourceIcon}

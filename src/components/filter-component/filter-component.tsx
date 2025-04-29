@@ -434,7 +434,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
       </Typography>
 
       {showFilters && (
-        <>
+        <div className={`${filterLabel === 'Filter User by' ? 'max-h-[calc(85vh-280px)]' : 'max-h-[calc(85vh-200px)]'} overflow-y-auto`}>
           {filterApplied && (
             <Box className='flex items-center gap-2 w-full'>
               <Button
@@ -504,7 +504,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
               {renderFilterControls(field)}
             </Box>
           ))}
-        </>
+        </div>
       )}
     </Box>
   );

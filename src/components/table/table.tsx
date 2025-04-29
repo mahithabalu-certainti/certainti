@@ -1,4 +1,5 @@
 import {
+  Box,
   Button,
   Checkbox,
   CircularProgress,
@@ -92,9 +93,9 @@ const Table = <T extends RowData>({
 
   return (
     <>
-    <Paper sx={{ overflowX: 'auto', boxShadow: 'none', width: '100%', borderBottom: '1px solid #CBD6E2',borderRadius: '0px' }}>
-      <TableContainer>
-        <MuiTable>
+    <Paper sx={{ boxShadow: 'none', borderBottom: '1px solid #CBD6E2',borderRadius: '0px' }}>
+      <TableContainer sx={{ maxHeight: 'calc(85vh - 200px)', minHeight: 'calc(85vh - 200px)', overflow:'auto', position:'relative' }}>
+        <MuiTable stickyHeader>
           <TableHead
             sx={{
               '& .MuiTableCell-root': {
@@ -111,7 +112,20 @@ const Table = <T extends RowData>({
             <TableRow>
               {/* Select all checkbox */}
               {selectable && (
-                <TableCell padding='checkbox' sx={{ padding: '0px !important' }}>
+                <TableCell 
+                padding='checkbox' 
+                sx={{
+                  position: 'sticky',
+                  left: 0,
+                  background: '#fff',
+                  zIndex: 11,
+                  maxWidth: '40px',
+                  minWidth: '40px',
+                  padding: '0px !important',
+                  borderRight: '1px solid #CBD6E2',
+                }}
+                >
+                  <Box className='flex items-center justify-center'>
                   <Checkbox
                     indeterminate={
                       selectedRows.size > 0 && selectedRows.size < data.length
@@ -133,11 +147,12 @@ const Table = <T extends RowData>({
                       },
                     }}
                   />
+                  </Box>
                 </TableCell>
               )}
 
               {/* Column headers */}
-              {columns.map((column) => (
+              {columns.map((column, idx) => (
                 // <TableCell
                 //   key={column.id}
                 //   onClick={() => column.sortable && handleSort(column.id)}
@@ -165,6 +180,11 @@ const Table = <T extends RowData>({
                     width: column.width || 120,
                     minWidth: column.width || 120,
                     maxWidth: column.width || 'auto', 
+                    position: idx === 0 ? 'sticky' : 'auto',
+                    left: idx === 0 ? '40px' : '0px',
+                    background: idx === 0 ? '#fff' : 'auto',
+                    zIndex: idx === 0 ? 10 : 'auto',
+                    borderRight: '1px solid #CBD6E2',
                   }}
                 >
                   <div className='flex items-center'>
@@ -267,7 +287,7 @@ const Table = <T extends RowData>({
           >
             {/* Loading state */}
             {loading && (
-              <TableRow>
+              <TableRow sx={{ height: 'calc(85vh - 200px)' }}>
                 <TableCell
                   colSpan={
                     columns.length +
@@ -283,7 +303,7 @@ const Table = <T extends RowData>({
 
             {/* Error state */}
             {error && !loading && (
-              <TableRow>
+              <TableRow sx={{ height: 'calc(85vh - 200px)' }}>
                 <TableCell
                   colSpan={
                     columns.length +
@@ -298,8 +318,8 @@ const Table = <T extends RowData>({
             )}
 
             {/* Empty state */}
-            {!loading && !error && data.length === 0 && (
-              <TableRow>
+            {!loading && !error && data.length == 0 && (
+              <TableRow sx={{ height: 'calc(85vh - 200px)' }}>
                 <TableCell
                   colSpan={
                     columns.length +
@@ -324,10 +344,34 @@ const Table = <T extends RowData>({
                     hover
                     selected={selectedRows.has(rowId)}
                     className='group'
+                    sx={{
+                      '&:hover td': {
+                        backgroundColor: '#f5f7fa',
+                      },
+                      '&.Mui-selected td': {
+                        backgroundColor: '#f5f7fa',
+                      },
+                      '&.Mui-selected:hover td': {
+                        backgroundColor: '#f5f7fa',
+                      },
+                    }}
                   >
                     {/* Row checkbox */}
                     {selectable && (
-                      <TableCell padding='checkbox' sx={{ padding: '0px !important' }}>
+                      <TableCell
+                       padding='checkbox' 
+                       sx={{
+                        position: 'sticky',
+                        left: 0,
+                        background: '#fff',
+                        zIndex: 7,
+                        maxWidth: '40px',
+                        minWidth: '40px',
+                        padding: '0 !important',
+                        borderRight: '1px solid #CBD6E2',
+                      }}
+                       >
+                        <Box className='flex items-center justify-center'>
                         <Checkbox
                           checked={selectedRows.has(rowId)}
                           onChange={() => handleRowSelect(rowId)}
@@ -340,11 +384,12 @@ const Table = <T extends RowData>({
                             },
                           }}
                         />
+                        </Box>
                       </TableCell>
                     )}
 
                     {/* Data cells */}
-                    {columns.map((column) => {
+                    {columns.map((column, idx) => {
                       const isStatus = column.id === 'status';
                       const statusValue = row[column.id];
                                   
@@ -354,13 +399,18 @@ const Table = <T extends RowData>({
                           width: column.width || 120,
                           minWidth: column.width || 120,
                           maxWidth: column.width || 'auto',
-                          wordWrap: 'break-word'
+                          wordWrap: 'break-word',
+                          position: idx === 0 ? 'sticky' : 'static',
+                          left: idx === 0 ? '40px' : '0px',
+                          background: idx === 0 ? '#fff' : 'inherit',
+                          zIndex: idx === 0 ? 6 : 'auto',
+                          borderRight: '1px solid #CBD6E2',
                         }}
                         className={`${
                           isStatus
                             ? `${statusValue === 'Active' ? 'group-hover:!text-[#199806]' : 'group-hover:!text-[#f44336]'} group-hover:underline`
                             : 'group-hover:!text-blue-600 group-hover:underline'
-                        }`}
+                        } cursor-context-menu`}
                       >
                         {column.render
                           ? column.render(row)

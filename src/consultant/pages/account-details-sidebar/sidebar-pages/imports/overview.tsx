@@ -23,7 +23,7 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [entityType, setEntityType] = useState<string>('Select Type');
   const [fiscalYear, setFiscalYear] = useState<string>('Select Year');
-
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (
@@ -98,26 +98,32 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId }) => {
 
  
   const handleSubmit = async () => {
+    const file = selectedFiles[0];
+    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      showError(`"${file.name}" exceeds the 50MB limit. Please upload a smaller file.`);
+      return;
+    }
+
     if (entityType === 'Select Type') {
       showError('Please select an Entity Type.');
       return;
     }
-
+ 
     if (fiscalYear === 'Select Year') {
       showError('Please select a Fiscal Year.');
       return;
     }
-
+ 
     if (selectedFiles.length === 0) {
       showError('Please select a file before submitting.');
       return;
     }
-
+ 
     if (!accountId || !accountNo) {
       showError('Missing account information.');
       return;
     }
-
+ 
     try {
       const payload: UploadImportPayload = {
         entity_type: entityType,
@@ -129,14 +135,27 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId }) => {
         uploaded_by_user_rid: userId,
         account_r_number: accountNo,
       };
-
- const response  = await uploadImportFile(payload);
- console.log(response)
-      successToast('File uploaded successfully.');
+      setLoading(true)
+      const response = await uploadImportFile(payload);
+      if (
+        response?.data.statusCode === 201 ||
+        response?.data.statusCode === 200
+      ) {
+        successToast(response.data.message);
+        fileInputRef.current!.value = '';
+        setSelectedFiles([])
+        setEntityType('Select Type')
+        setFiscalYear('Select Year')
+        setLoading(false)
+        setMessage(null);
+      } else if (response?.data.statusCode === 400) {
+        errorToast(response.data.message);
+         setLoading(false);
+      }
     } catch (error) {
       console.error('Upload failed:', error);
       showError('Failed to upload the file.');
-      errorToast('Failed to upload the file.');
+       setLoading(false);
     }
   };
 
@@ -186,7 +205,7 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId }) => {
             color='inherit'
             onClick={goBack}
           />
-          <TextButton label='Save' variant='filled' onClick={handleSubmit} />
+          <TextButton label='Save' loading={loading} variant='filled' onClick={handleSubmit} />
         </div>
       </div>
 
@@ -206,14 +225,14 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId }) => {
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onClick={openFileDialog}
-          className='h-[116px] w-[502px] border-[2px] border-dashed border-[#0176D3] flex flex-col items-center justify-center gap-2 cursor-pointer bg-[#F4F6F9]'
+          className='h-[116px] w-[502px] border-[2px] border-dashed border-[#0176D3] rounded-[8px] flex flex-col items-center justify-center gap-2 cursor-pointer bg-[#F4F6F9]'
         >
           <img
             src={uploadIcon}
             alt='Upload Icon'
             className='w-[36px] h-[24px]'
           />
-          <div>
+          <div className='text-[14px] text-[#0B0B0B]'>
             Drag your file(s) or{' '}
             <span
               className='text-[#0176D3] underline cursor-pointer'

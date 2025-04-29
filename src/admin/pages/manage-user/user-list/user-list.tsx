@@ -84,7 +84,7 @@ const UserList: React.FC = () => {
   };
 
   return (
-    <div className='flex flex-col h-[calc(100vh-55px)] overflow-y-auto w-full p-4 gap-3'>
+    <div className='flex flex-col h-full w-full p-4 gap-3'>
       {/* Header Section */}
       <div className='w-full min-h-[75px] h-[75px] px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
         <div className='flex items-center gap-2'>
@@ -125,7 +125,7 @@ const UserList: React.FC = () => {
       </div>
 
       {/* User Table Section */}
-      <div className='border border-[#CBD6E2] rounded-[4px]'>
+      <div className='flex flex-col flex-1 border border-[#CBD6E2] rounded-[4px]'>
         <div className='flex justify-between items-center border-b border-[#CBD6E2] h-[50px] px-4'>
           <div className='font-semibold text-base leading-[32px] tracking-[0%] align-middle text-[#2D3E4F]'>
             All Users
@@ -151,11 +151,11 @@ const UserList: React.FC = () => {
         </div>
         <div className='flex flex-1 transition-all duration-300 ease-in-out'>
           <div
-            className={`transition-all duration-300 ease-in-out overflow-hidden h-full min-h-[calc(100vh-144px)] ${isFilterOpen ? 'w-[20%] opacity-100' : 'w-0 opacity-0'
+            className={`flex flex-1 transition-all duration-300 ease-in-out overflow-hidden ${isFilterOpen ? 'w-[20%] opacity-100' : 'w-0 opacity-0'
               }`}
           >
             {profileList.isLoading ?
-              <div className='w-full min-h-[calc(100vh-144px)] flex justify-center items-center'>
+              <div className='w-full flex flex-1 justify-center items-center'>
                 <CircularProgress />
               </div>
               :

@@ -111,7 +111,7 @@ export const AccountInfo: React.FC<AccountInfoProps> = ({
 
   return (
     <Box
-      className={`flex p-6 bg-white border-b-1 border-gray-300 ${className}`}
+      className={`h-[161px] flex p-6 border-b-2 border-[#CBD6E2] bg-white ${className}`}
       sx={{
         gap: '0 16px',
       }}
