@@ -8,6 +8,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
   TableRow,
   TableSortLabel,
@@ -283,11 +284,14 @@ const AccountTable: React.FC<Record<string, any>> = ({
     };
 
   return (
-    <div className='border border-[#CBD6E2]'>
-      <Paper sx={{ overflowX: 'auto', boxShadow: 'none', borderBottom: '1px solid #CBD6E2', borderRadius: '0px' }}> 
-        <Table
+    <div className='border border-[#CBD6E2] h-full'>
+      <Paper sx={{ boxShadow: 'none', borderBottom: '1px solid #CBD6E2', borderRadius: '0px' }}> 
+        <TableContainer sx={{ maxHeight: 'calc(85vh - 200px)', minHeight: 'calc(85vh - 200px)', overflow: 'auto' }}>
+          <Table
+          stickyHeader
           sx={{
-            borderCollapse: 'collapse',
+            borderCollapse: 'separate !important',
+            borderSpacing: 0,
             '& .MuiTableCell-root': {
               borderBottom: '1px solid #CBD6E2',
             },
@@ -313,7 +317,18 @@ const AccountTable: React.FC<Record<string, any>> = ({
             }}
           >
             <TableRow>
-              <TableCell sx={{ maxWidth: '50px', padding: '0px !important' }}>
+              <TableCell 
+               sx={{
+                position: 'sticky',
+                left: 0,
+                background: '#fff',
+                zIndex: 11,
+                maxWidth: '50px',
+                minWidth: '50px',
+                padding: '0px !important',
+                borderRight: '1px solid #CBD6E2',
+              }}
+              >
                 <Box className='flex items-center justify-center'>
                   <Checkbox
                     disableRipple
@@ -339,7 +354,16 @@ const AccountTable: React.FC<Record<string, any>> = ({
                   />
                 </Box>
               </TableCell>
-              <TableCell sx={{ minWidth: '300px' }}>
+              <TableCell 
+               sx={{
+                position: 'sticky',
+                left: '50px',
+                background: '#fff',
+                zIndex: 10,
+                minWidth: '300px',
+                borderRight: '1px solid #CBD6E2',
+              }}
+              >
                 <TableSortLabel
                   active={orderBy === 'account_name'}
                   direction={orderBy === 'account_name' ? order : 'asc'}
@@ -443,13 +467,13 @@ const AccountTable: React.FC<Record<string, any>> = ({
             }}
           >
             {loading ? (
-              <TableRow>
+              <TableRow sx={{ height: 'calc(85vh - 200px)' }}>
                 <TableCell colSpan={11} align='center'>
                   <CircularProgress />
                 </TableCell>
               </TableRow>
             ) : accounts?.length === 0 ? (
-              <TableRow>
+              <TableRow sx={{ height: 'calc(85vh - 200px)' }}>
                 <TableCell colSpan={11} align='center'>
                   <Typography variant='body1'>No data available</Typography>
                 </TableCell>
@@ -469,6 +493,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
             )}
           </TableBody>
         </Table>
+        </TableContainer>
       </Paper>
       <TablePagination
         rowsPerPageOptions={[5, 10, 25, 50]}

@@ -16,6 +16,8 @@ import {
   NumberFilterOption,
   numberOptions,
   TextFilterOption,
+  TextFilterOptionForCostAndSkill,
+  textOptionForCostAndSkill,
   textOptions,
 } from './filterType';
 import {
@@ -24,6 +26,7 @@ import {
   formatFilterForApi,
   NumberFilterControl,
   TextFilterControl,
+  TextFilterControlForCostAndSKill,
 } from './helper';
 
 // filter to use in resource, cost and skill list pages
@@ -88,6 +91,17 @@ const Filter: React.FC<FilterComponentProps> = ({
               },
             },
           };
+        case 'textCostAndSkill':
+          return {
+            ...prev,
+            [fieldName]: {
+              ...currentState,
+              textCostAndSkill: {
+                ...currentState.textCostAndSkill!,
+                option: event.target.value as TextFilterOptionForCostAndSkill,
+              },
+            },
+          };
         case 'number':
           return {
             ...prev,
@@ -146,6 +160,17 @@ const Filter: React.FC<FilterComponentProps> = ({
               ...currentState,
               text: {
                 ...currentState.text!,
+                value: event.target.value,
+              },
+            },
+          };
+        case 'textCostAndSkill':
+          return {
+            ...prev,
+            [fieldName]: {
+              ...currentState,
+              textCostAndSkill: {
+                ...currentState.textCostAndSkill!,
                 value: event.target.value,
               },
             },
@@ -224,6 +249,17 @@ const Filter: React.FC<FilterComponentProps> = ({
             onValueChange={handleFilterValueChange}
           />
         );
+      case 'textCostAndSkill':
+        return (
+          <TextFilterControlForCostAndSKill
+            filterStates={filterStates}
+            menuOption={textOptionForCostAndSkill}
+            fieldName={field.value}
+            state={fieldState}
+            onOptionChange={handleFilterOptionChange}
+            onValueChange={handleFilterValueChange}
+          />
+        );
       case 'number':
         return (
           <NumberFilterControl
@@ -265,7 +301,7 @@ const Filter: React.FC<FilterComponentProps> = ({
   };
 
   return (
-    <Box className='absolute top-110 right-60 z-50 w-[248px] max-h-[568px] bg-white shadow-lg border border-[#CBD6E2] rounded'>
+    <Box className='absolute top-107 right-50 z-50 w-[248px] max-h-[568px] overflow-y-scroll bg-white shadow-lg border border-[#CBD6E2] rounded'>
       <Box className='flex justify-between items-center p-2 border-b border-[#CBD6E2]'>
         <Box>Filters</Box>
         <Button

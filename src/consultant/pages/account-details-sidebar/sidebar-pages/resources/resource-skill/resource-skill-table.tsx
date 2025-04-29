@@ -5,7 +5,7 @@ import {
   TableBody,
   TableCell,
   TableHead,
-  TablePagination,
+  // TablePagination,
   TableRow,
   TableSortLabel,
   Typography,
@@ -19,14 +19,16 @@ import { ResourceSkillList } from "../../../../../types/resource-skill";
 import { useResourceSkill } from "../../../../../services/resource-skill/resource-skill-service";
 import { RESOURCESKILL } from "../../../../../../routes";
 import ActionButton from '../../../../account-list/table/action-button';
+import { TablePagination } from '../../../../../../components/table';
+import { arrowDownIcon, arrowUpIcon } from '../../../../../../assets';
 
 const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, appliedFilters, accountDetails, resourceRid }) => {
   const navigate = useNavigate();
   // const location = useLocation();
-  const [page, setPage] = useState<number>(0);
+  const [page, setPage] = useState<number>(1);
   const [rowsPerPage, setRowsPerPage] = useState<number>(25);
-  const [order, setOrder] = useState<'asc' | 'desc'>('asc');
-  const [orderBy, setOrderBy] = useState<keyof ResourceSkillList>('start_date');
+  const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+  const [orderBy, setOrderBy] = useState<keyof ResourceSkillList>('created_datetime');
   const [resourceSkillList, setResourceSkillList] = useState<ResourceSkillType[]>([]);
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
   const { data: skillList, isLoading: loading } = useResourceSkill({
@@ -50,16 +52,14 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
     });
   };
 
-  const handleChangePage = (_event: unknown, newPage: number) => {
+  const handleChangePage = (newPage: number) => {
     setPage(newPage);
   };
 
   // handles page limit change
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+  const handleChangeRowsPerPage = (newPageSize: number) => {
+    setRowsPerPage(newPageSize);
+    setPage(1);
   };
 
   const handleRequestSort = (
@@ -88,12 +88,12 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
               },
             }}
           >
-            <TableCell>{skill.resourceRole}</TableCell>
-            <TableCell>{skill.startDate}</TableCell>
-            <TableCell>{skill.skillName}</TableCell>
-            <TableCell>{skill.skillLevel}</TableCell>
-            <TableCell>{skill.yearsOfExperience}</TableCell>
-            <TableCell>
+            <TableCell sx={{ minWidth: '200px' }}>{skill.resourceRole}</TableCell>
+            <TableCell sx={{ minWidth: '200px' }}>{skill.startDate}</TableCell>
+            <TableCell sx={{ minWidth: '200px' }}>{skill.skillName}</TableCell>
+            <TableCell sx={{ minWidth: '200px' }}>{skill.skillLevel}</TableCell>
+            <TableCell sx={{ minWidth: '250px' }}>{skill.yearsOfExperience}</TableCell>
+            <TableCell sx={{ minWidth: '80px' }}>
               <ActionButton
                 onEdit={() => handleEdit(skill)}
                 onDelete={() => { }}
@@ -106,91 +106,188 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
     });
   };
 
+  const getSortIcon =
+    (orderBy: string, columnKey: keyof ResourceSkillList, order: 'asc' | 'desc') => () => {
+
+      if (orderBy !== columnKey) {
+        return (
+          <div
+            className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
+            onClick={createSortHandler(columnKey)}
+          >
+            <img
+              src={arrowUpIcon}
+              alt='sort-up'
+              className='w-4 h-4 filter grayscale brightness-0 opacity-50'
+            />
+            <img
+              src={arrowDownIcon}
+              alt='sort-down'
+              className='w-4 h-4 filter grayscale brightness-0 opacity-50 mt-[-9px]'
+            />
+          </div>
+        );
+      }
+      return order === 'asc' ? (
+        <div
+          className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
+          onClick={createSortHandler(columnKey)}
+        >
+          <img
+            src={arrowUpIcon}
+            alt='sort-up-active'
+            className='w-4 h-4'
+            style={{
+              filter: 'brightness(0) saturate(100%)',
+            }}
+          />
+          <img
+            src={arrowDownIcon}
+            alt='sort-down-inactive'
+            className='w-4 h-4 filter grayscale brightness-0 opacity-50 mt-[-9px]'
+          />
+        </div>
+      ) : (
+        <div
+          className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
+          onClick={createSortHandler(columnKey)}
+        >
+          <img
+            src={arrowUpIcon}
+            alt='sort-up-inactive'
+            className='w-4 h-4 filter grayscale brightness-0 opacity-50'
+          />
+          <img
+            src={arrowDownIcon}
+            alt='sort-down-active'
+            className='w-4 h-4 mt-[-9px]'
+            style={{
+              filter: 'brightness(0) saturate(100%)',
+            }}
+          />
+        </div>
+      )
+    };
+
   return (
-    <Paper sx={{ overflowX: 'auto', boxShadow: 'none' }}>
-      <Table className='border border-[#E0E0E0]'>
-        <TableHead>
-          <TableRow>
-            <TableCell>
-              <TableSortLabel
-                active={orderBy === 'resource_role'}
-                direction={orderBy === 'resource_role' ? order : 'asc'}
-                onClick={createSortHandler('resource_role')}
-              >
-                Resource Role
-              </TableSortLabel>
-            </TableCell>
-            <TableCell>
-              <TableSortLabel
-                active={orderBy === 'start_date'}
-                direction={orderBy === 'start_date' ? order : 'asc'}
-                onClick={createSortHandler('start_date')}
-              >
-                Start Date
-              </TableSortLabel>
-            </TableCell>
-            <TableCell>
-              <TableSortLabel
-                active={orderBy === 'skill_name'}
-                direction={orderBy === 'skill_name' ? order : 'asc'}
-                onClick={createSortHandler('skill_name')}
-              >
-                Skill Name
-              </TableSortLabel>
-            </TableCell>
-            <TableCell>
-              <TableSortLabel
-                active={orderBy === 'skill_level'}
-                direction={orderBy === 'skill_level' ? order : 'asc'}
-                onClick={createSortHandler('skill_level')}
-              >
-                Skill Level
-              </TableSortLabel>
-            </TableCell>
-            <TableCell>
-              <TableSortLabel
-                active={orderBy === 'years_of_experience'}
-                direction={orderBy === 'years_of_experience' ? order : 'asc'}
-                onClick={createSortHandler('years_of_experience')}
-              >
-                Years of Experience
-              </TableSortLabel>
-            </TableCell>
-            <TableCell>Action</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {loading ? (
+    <div className='border border-[#CBD6E2]'>
+      <Paper sx={{ overflowX: 'scroll', boxShadow: 'none', borderBottom: '1px solid #CBD6E2', borderRadius: '0px' }}>
+        <Table sx={{
+          borderCollapse: 'collapse',
+          '& .MuiTableCell-root': {
+            borderBottom: '1px solid #CBD6E2',
+          },
+        }}>
+          <TableHead sx={{
+            '& .MuiTableCell-root': {
+              fontWeight: 500,
+              fontSize: '14px',
+              lineHeight: '21px',
+              color: '#2A2A2A',
+              padding: '0px',
+              pl: 1,
+              height: '50px',
+            },
+            '& .MuiTableSortLabel-root': {
+              '&:hover': {
+                color: 'inherit',
+                cursor: 'auto',
+              },
+            }
+          }}>
             <TableRow>
-              <TableCell colSpan={11} align='center'>
-                <CircularProgress />
+              <TableCell sx={{ minWidth: '200px' }}>
+                <TableSortLabel
+                  active={orderBy === 'resource_role'}
+                  direction={orderBy === 'resource_role' ? order : 'asc'}
+                  IconComponent={getSortIcon(orderBy, 'resource_role', order)}
+                >
+                  Resource Role
+                </TableSortLabel>
               </TableCell>
-            </TableRow>
-          ) : resourceSkillList?.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={11} align='center'>
-                <Typography variant='body1'>No data available</Typography>
+              <TableCell sx={{ minWidth: '200px' }}>
+                <TableSortLabel
+                  active={orderBy === 'start_date'}
+                  direction={orderBy === 'start_date' ? order : 'asc'}
+                  IconComponent={getSortIcon(orderBy, 'start_date', order)}
+                >
+                  Start Date
+                </TableSortLabel>
               </TableCell>
+              <TableCell sx={{ minWidth: '200px' }}>
+                <TableSortLabel
+                  active={orderBy === 'skill_name'}
+                  direction={orderBy === 'skill_name' ? order : 'asc'}
+                  IconComponent={getSortIcon(orderBy, 'skill_name', order)}
+                >
+                  Skill Name
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ minWidth: '200px' }}>
+                <TableSortLabel
+                  active={orderBy === 'skill_level'}
+                  direction={orderBy === 'skill_level' ? order : 'asc'}
+                  IconComponent={getSortIcon(orderBy, 'skill_level', order)}
+                >
+                  Skill Level
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ minWidth: '250px' }}>
+                <TableSortLabel
+                  active={orderBy === 'years_of_experience'}
+                  direction={orderBy === 'years_of_experience' ? order : 'asc'}
+                  IconComponent={getSortIcon(orderBy, 'years_of_experience', order)}
+                >
+                  Years of Experience
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ minWidth: '80px' }}>Action</TableCell>
             </TableRow>
-          ) : (
-            renderRows({
-              resourceSkill: resourceSkillList || [],
-              // handleEdit,
-              // handleDelete,
-            })
-          )}
-        </TableBody>
-      </Table>
+          </TableHead>
+          <TableBody sx={{
+            '& .MuiTableCell-root': {
+              fontWeight: 300,
+              fontSize: '14px',
+              lineHeight: '21px',
+              color: '#425A76',
+              padding: '0px',
+              pl: 1,
+              minHeight: '42px',
+              maxHeight: '42px',
+              height: '42px',
+            },
+          }}>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={11} align='center'>
+                  <CircularProgress />
+                </TableCell>
+              </TableRow>
+            ) : resourceSkillList?.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={11} align='center'>
+                  <Typography variant='body1'>No data available</Typography>
+                </TableCell>
+              </TableRow>
+            ) : (
+              renderRows({
+                resourceSkill: resourceSkillList || [],
+                // handleEdit,
+                // handleDelete,
+              })
+            )}
+          </TableBody>
+        </Table>
+      </Paper>
       <TablePagination
         rowsPerPageOptions={[25, 30, 40, 50]}
-        component='div'
         count={skillList?.count ?? 0}
         rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
-    </Paper>
+    </div>
   );
 };
 

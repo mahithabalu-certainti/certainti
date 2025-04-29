@@ -4,24 +4,24 @@
 import { FieldConfig, FilterState } from '../../components/filter/filterType';
 
 export const costFilterFields: FieldConfig[] = [
-  { name: 'Resource Cost Number', value: 'resource_cost_number', type: 'text' },
-  { name: 'Annual', value: 'annual', type: 'number' },
-  { name: 'Semi-Annual', value: 'semi_annual', type: 'number' },
-  { name: 'Monthly', value: 'monthly', type: 'number' },
-  { name: 'Bi-Weekly', value: 'bi-weekly', type: 'number' },
-  { name: 'Weekly', value: 'weekly', type: 'number' },
-  { name: 'Daily', value: 'daily', type: 'number' },
-  { name: 'Hourly', value: 'hourly', type: 'number' },
+  { name: 'Resource Cost Number', value: 'resource_cost_number', type: 'textCostAndSkill' },
+  { name: 'Currency', value: 'currency', type: 'textCostAndSkill' },
   { name: 'Start Date', value: 'effective_date', type: 'date' },
   { name: 'End Date', value: 'end_date', type: 'date' },
-  { name: 'Currency', value: 'currency', type: 'text' },
+  { name: 'Hourly', value: 'hourly', type: 'number' },
+  { name: 'Daily', value: 'daily', type: 'number' },
+  { name: 'Weekly', value: 'weekly', type: 'number' },
+  { name: 'Bi-Weekly', value: 'bi-weekly', type: 'number' },
+  { name: 'Monthly', value: 'monthly', type: 'number' },
+  { name: 'Semi-Annual', value: 'semi_annual', type: 'number' },
+  { name: 'Annual', value: 'annual', type: 'number' },
 ];
 export const skillFilterFields: FieldConfig[] = [
-  { name: 'Resource Type', value: 'resource_type', type: 'text' },
-  { name: 'Skill Name', value: 'skill_name', type: 'text' },
+  { name: 'Resource Type', value: 'resource_type', type: 'textCostAndSkill' },
+  { name: 'Start Date', value: 'start_date', type: 'date' },
+  { name: 'Skill Name', value: 'skill_name', type: 'textCostAndSkill' },
   { name: 'Skill Level', value: 'skill_level', type: 'enum' },
   { name: 'Experience', value: 'years_of_experience', type: 'number' },
-  { name: 'Start Date', value: 'start_date', type: 'date' },
 ];
 export const resourceFilterFields: FieldConfig[] = [
   { name: 'Resource Number', value: 'r_number', type: 'text' },
@@ -36,6 +36,8 @@ export const getInitialStateForField = (
   switch (fieldConfig.type) {
     case 'text':
       return { text: { option: 'equals', value: '' } };
+    case 'textCostAndSkill':
+      return { textCostAndSkill: { option: 'equals', value: '' } };
     case 'number':
       return { number: { option: 'equals', value: { from: '', to: '' } } };
     case 'date':

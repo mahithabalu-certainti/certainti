@@ -84,7 +84,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
             </Box>
           )}
           <div className='flex gap-2'>
-            {showFilter && (
+            {showFilter && value !== 'details' && (
               <Filter
                 filterMenu={getFilterFields()}
                 setAppliedFilters={setAppliedFilters}

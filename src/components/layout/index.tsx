@@ -34,7 +34,7 @@ export const AppLayout: React.FC = () => {
   }, []);
 
   return (
-    <div className='flex overflow-x-hidden'>
+    <div className='flex h-screen overflow-x-hidden'>
       <Sidebar
         showAdminSidebar={showAdminSidebar}
         sidebarExpand={sidebarExpand}
@@ -62,12 +62,12 @@ export const AppLayout: React.FC = () => {
 
       {/* Body Content */}
       <div
-        className={`flex-1 transition-all ease-in-out ${!mobileView && sidebarExpand ? 'ml-[240px] duration-500' : !mobileView ? 'ml-[74px] duration-300' : 'ml-0'
+        className={`flex flex-col flex-1 transition-all ease-in-out ${!mobileView && sidebarExpand ? 'ml-[240px] duration-500' : !mobileView ? 'ml-[74px] duration-300' : 'ml-0'
           }`}
       >
         <Navbar />
         <div
-          className={`transition-all ease-in-out ${sidebarExpand
+          className={`flex-1 overflow-y-auto transition-all ease-in-out ${sidebarExpand
               ? 'max-w-[calc(100vw-240px)] duration-500'
               : 'max-w-[calc(100vw-74px)] duration-300'
             }`}

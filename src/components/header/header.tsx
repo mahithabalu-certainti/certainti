@@ -75,7 +75,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
 }) => {
   return (
     <div
-      className='flex w-full border-b-1 border-gray-300 p-4'
+      className='flex w-full border-b-2 border-[#CBD6E2] p-4'
       style={customStyles.header}
     >
       <div className='flex justify-between w-full'>
