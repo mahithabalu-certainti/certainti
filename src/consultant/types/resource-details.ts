@@ -8,14 +8,18 @@ export interface ResourceDetailsTypes {
   resource_type: string;
   resource_fullname: string;
   resource_orgname: string;
+  resource_org_name?: string;
   resource_role: string;
   fiscal_year: number;
   country: string; // UUID format
   state: string; // UUID format
   city: string; // UUID format
   resource_startdate: string; // ISO date string
+  resource_effective_from?: string; // ISO date string
+  resource_end_date?: string; // ISO date string
   resource_enddate: string; // ISO date string
   designation: string;
+  total_years_of_experience?: number;
   total_years_experience: number;
   total_years_in_org: number;
   resource_status: string;

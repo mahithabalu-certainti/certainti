@@ -167,7 +167,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
           setShowFilter(false);
         }}
         showFilter={showFilter}
-        title='Resource'
+        title='Resources'
         titleIcon={<img src={resourceHeaderIcon} alt='resource header icon' />}
         headerButtons={headerButtons}
         showBackArrow={showBackArrow}

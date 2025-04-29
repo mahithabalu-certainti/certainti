@@ -72,11 +72,11 @@ const Import: React.FC<ImportProps> = ({ accountDetails }) => {
   return (
     <div className='p-1 w-full'>
       <div className='w-full h-12  flex justify-between items-center'>
-        <div className='bg-white border border-[#CBD6E266] p-1 flex gap-2'>
+        <div className='bg-white border border-[#CBD6E27D] p-1 flex gap-2'>
           <button
-            className={`flex items-center justify-center rounded w-[120px] h-[28px] border whitespace-nowrap ${
+            className={`flex items-center justify-center text-[#2D3E4F] text-[14px] rounded w-[120px] h-[28px] border whitespace-nowrap ${
               isActive === 'overView'
-                ? 'border-[#0BBFB7] text-[#0BBFB7]'
+                ? 'border-[#0BBFB7]'
                 : 'border-transparent hover:text-[#0BBFB7]'
             }`}
             onClick={() => setIsActive('overView')}
@@ -84,9 +84,9 @@ const Import: React.FC<ImportProps> = ({ accountDetails }) => {
             Overview
           </button>
           <button
-            className={`flex items-center justify-center rounded w-[120px] h-[28px] border whitespace-nowrap ${
+            className={`flex items-center justify-center text-[#2D3E4F] text-[14px] rounded w-[120px] h-[28px] border whitespace-nowrap ${
               isActive === 'TimeLine'
-                ? 'border-[#0BBFB7] text-[#0BBFB7]'
+                ? 'border-[#0BBFB7]'
                 : 'border-transparent hover:text-[#0BBFB7]'
             }`}
             onClick={() => setIsActive('TimeLine')}

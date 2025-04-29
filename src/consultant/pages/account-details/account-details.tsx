@@ -109,7 +109,7 @@ export const AccountDetails = () => {
 
   return (
     <div className='flex flex-col'>
-      <div className='flex h-[12%]'>
+      <div className='flex h-[108px]'>
         <PageHeader
           variant='sub'
           placeholder='Account Name'

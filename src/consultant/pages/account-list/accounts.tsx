@@ -138,12 +138,12 @@ export const Accounts: React.FC = () => {
       </div>
       <div className='flex flex-1 transition-all duration-300 ease-in-out'>
         <div
-          className={`transition-all duration-300 ease-in-out overflow-hidden h-full min-h-[calc(100vh-144px)] ${
+          className={`flex flex-1 transition-all duration-300 ease-in-out overflow-hidden ${
             isFilterOpen ? 'w-[260px] opacity-100' : 'w-0 opacity-0'
             }`}
         >
           {countriesList.isLoading || currencyList.isLoading ?
-            <div className='w-full min-h-[calc(100vh-144px)] flex justify-center items-center'>
+            <div className='w-full flex flex-1 justify-center items-center'>
               <CircularProgress />
             </div>
             :
@@ -157,7 +157,7 @@ export const Accounts: React.FC = () => {
         </div>
 
         <div
-          className={`transition-all duration-300 ease-in-out flex flex-col border-l-2 border-[#CBD6E2] bg-[#FCFCFC] ${
+          className={`transition-all duration-300 ease-in-out flex flex-1 flex-col border-l-2 border-[#CBD6E2] bg-[#FCFCFC] ${
             isFilterOpen ? 'w-[calc(100%-260px)]' : 'w-full'
           } p-5 -ml-[2px]`}
         >
