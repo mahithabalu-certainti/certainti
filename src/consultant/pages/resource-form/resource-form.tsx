@@ -48,6 +48,7 @@ const ResourceForm: React.FC = () => {
     country: '',
     state: '',
   });
+  const [formValues, setFormValues] = useState<Record<string, any>>({});
 
   // Hooks
   const { successToast } = useToast();
@@ -93,24 +94,35 @@ const ResourceForm: React.FC = () => {
     accountNumber
   );
 
-  const formValues = state?.cost
-    ? {
-      ...resource?.data?.resourceDetails,
-      financial_start_date: costInfo?.effective_date || '',
-      financial_end_date: costInfo?.end_date || '',
-      cost: costInfo?.cost || '',
-      currency: costInfo?.currency_rid || null,
-      cost_frequency: costInfo?.cost_frequency || '',
-    }
-    : state?.skill
-      ? {
-        ...resource?.data?.resourceDetails,
+  useEffect(() => {
+    const formValues = resource?.data?.resourceDetails;
+    if (state?.cost && costDetails && isEditView) {
+      const costValues = {
+        ...formValues,
+        financial_start_date: costInfo?.effective_date || '',
+        financial_end_date: costInfo?.end_date || '',
+        cost: costInfo?.cost || '',
+        currency: costInfo?.currency_rid || null,
+        cost_frequency: costInfo?.cost_frequency || '',
+      };
+      setFormValues(costValues);
+    } else if (state?.skill && skillInfo && isEditView) {
+      const skillValues = {
+        ...formValues,
         skill_level: skillInfo?.skillLevel || '',
         skill_name: skillInfo?.skillName || '',
         skill_start_date: skillInfo?.startDate || '',
         years_of_experience: skillInfo?.yearsOfExperience || '',
-      }
-      : null;
+      };
+      setFormValues(skillValues);
+    } else if (formValues && !isEditView) {
+      // Set form values with resource details when creataing cost and skill
+      setFormValues(formValues);
+    }
+
+  }, [state, costDetails, resource]);
+
+
   // const resourceValues = resource?.data?.resourceDetails;
   const userDetails = JSON.parse(localStorage.getItem('auth') || '{}');
   const allCountries = useGetAllCountries();
@@ -212,7 +224,6 @@ const ResourceForm: React.FC = () => {
         cost_rid: state?.costInfo?.costRid,
       };
       const costData = transformCostData(updateFormValues, isEditView);
-
       if (isEditView) {
         updateResourceCost.mutate(costData);
       } else {

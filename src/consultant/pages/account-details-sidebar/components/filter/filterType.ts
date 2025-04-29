@@ -15,6 +15,27 @@ export const textOptions: { option: string; value: string }[] = [
   { option: 'Does Not Contain', value: 'notContains' },
   { option: 'Is Empty', value: 'isEmpty' },
 ];
+
+export type TextFilterOptionForCostAndSkill =
+  | 'Equals'
+  | 'Not Equals'
+  | 'Contains'
+  | 'Does Not Contain'
+  | 'Starts With'
+  | 'Ends With'
+  | 'Is Empty'
+  | 'Is Not Empty';
+
+export const textOptionForCostAndSkill: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not Equals', value: 'not_equals' },
+  { option: 'Contains', value: 'contains' },
+  { option: 'Does Not Contain', value: 'does_not_contain' },
+  { option: 'Starts With', value: 'starts_with' },
+  { option: 'Ends With', value: 'ends_with' },
+  { option: 'Is Empty', value: 'is_empty' },
+  { option: 'Is Not Empty', value: 'is_not_empty' },
+];
 export type NumberFilterOption =
   | 'Equals'
   | 'Not Equals'
@@ -88,6 +109,10 @@ export interface TextFilterState {
   option: TextFilterOption;
   value: string;
 }
+export interface TextFilterStateForCostAndSkill {
+  option: TextFilterOptionForCostAndSkill;
+  value: string;
+}
 
 export interface NumberFilterState {
   option: NumberFilterOption;
@@ -114,13 +139,14 @@ export type FilterState = {
   number?: NumberFilterState;
   date?: DateFilterState;
   enum?: EnumFilterState;
+  textCostAndSkill?: TextFilterStateForCostAndSkill;
 };
 
 // Define field configuration
 export type FieldConfig = {
   name: string;
   value: string;
-  type: 'text' | 'number' | 'date' | 'enum';
+  type: 'text' | 'number' | 'date' | 'enum' | 'textCostAndSkill';
   options?: string[];
 };
 

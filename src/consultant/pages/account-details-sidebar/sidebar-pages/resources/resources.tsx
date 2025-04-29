@@ -59,6 +59,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
     setValue(newValue);
+    setShowFilter(false);
     setAppliedFilters({});
   };
 
