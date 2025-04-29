@@ -243,7 +243,7 @@ export const ResourceFormData = (
               required: false,
               regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
               regexErrorMessage: 'Please enter a valid number between 0 and 99',
-              placeholder: 'Enter Total Years of Experience',
+              placeholder: 'Enter Total Years Of Experience',
               disabled: disableCostAndSkill,
             }
           ),
@@ -254,7 +254,7 @@ export const ResourceFormData = (
               required: false,
               regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
               regexErrorMessage: 'Please enter a valid number between 0 and 99',
-              placeholder: 'Enter total years in the organisation',
+              placeholder: 'Enter Total Years In The Organisation',
               disabled: disableCostAndSkill,
             }
           ),
@@ -266,7 +266,7 @@ export const ResourceFormData = (
         fields: [
           createTextAreaField('comments', 'Comments', {
             required: false,
-            placeholder: 'Enter any additional information...',
+            placeholder: 'Enter Any Additional Information...',
             regexErrorMessage: 'Maximum 1000 characters allowed',
             regex: RESOURCE_REGEX.DESCRIPTION,
           }),

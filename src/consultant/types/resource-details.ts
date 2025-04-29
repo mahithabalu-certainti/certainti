@@ -27,7 +27,7 @@ export interface ResourceDetailsTypes {
   resource_number?: string;
 }
 
-export interface ResourceDetailsforpayload {
+export interface ResourceDetailsForPayload {
   account_id: string;
   account_number: string;
   rid: string;
@@ -56,7 +56,7 @@ export interface ResourceDetailsforpayload {
   resource_number?: string;
 }
 
-export interface createSectionData {
+export interface CreateSectionData {
   account_id: string;
   account_number: string;
   rid: string;

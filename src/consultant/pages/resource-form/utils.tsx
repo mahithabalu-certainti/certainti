@@ -1,5 +1,5 @@
 import {
-  ResourceDetailsforpayload,
+  ResourceDetailsForPayload,
   ResourceDetailsTypes,
   SelectOption,
 } from '../../types';
@@ -122,7 +122,7 @@ export function transformPayloadforUpdateResource(
       rawData.resource_orgname || existingResource?.resource_orgname || '',
     role: existingResource?.resource_role || '',
     fiscal_year: rawData.fiscal_year || existingResource?.fiscal_year || 0,
-    country: rawData.country || existingResource?.country?.country_name || '',
+    country: rawData.country || existingResource?.country_name || '',
     state: rawData.state || existingResource?.state_name || '',
     city: rawData.city || existingResource?.city_name || '',
     comments: rawData.comments || existingResource?.comments || '',
@@ -147,7 +147,7 @@ export function transformPayloadforUpdateResource(
 }
 
 export const transformPayloadforCreateResource = (
-  formData: ResourceDetailsforpayload
+  formData: ResourceDetailsForPayload
 ) => {
   return {
     account_id: formData.account_id,

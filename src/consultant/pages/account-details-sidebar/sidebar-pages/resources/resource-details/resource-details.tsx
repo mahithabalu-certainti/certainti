@@ -2,7 +2,7 @@
 import { CircularProgress, Typography } from '@mui/material';
 import React from 'react';
 import { useResourceDetail } from '../../../../../services/resource-details';
-import { createSectionData } from '../../../../../types';
+import { CreateSectionData } from '../../../../../types';
 
 interface ResourceDetailsProps {
   resourceDetails: {
@@ -105,11 +105,12 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   const resourceData = resource?.data?.resourceDetails;
 
-  const createSectionData = (
-    dataObj: Partial<createSectionData>,
+  const CreateSectionData = (
+    dataObj: Partial<CreateSectionData>,
     customMappings?: Record<string, (val: any) => React.ReactNode>
   ) => {
     return Object.entries(dataObj).map(([key, value]) => {
+      console.log('key', key);
       // Handle nested objects
       if (value && typeof value === 'object' && !Array.isArray(value)) {
         return {
@@ -129,6 +130,27 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
         return {
           label: 'Resource End Date',
           value: formatDateToMMDDYYYY(value as string), // or handle nested objects differently
+        };
+      }
+
+      if (key === 'total_years_in_org' && !Array.isArray(value)) {
+        return {
+          label: 'Total Years in Organization',
+          value: formatDateToMMDDYYYY(value as string), // or handle nested objects differently
+        };
+      }
+
+      if (key === 'total_years_experience' && !Array.isArray(value)) {
+        return {
+          label: 'Total Years of Experience',
+          value: formatDateToMMDDYYYY(value as string), // or handle nested objects differently
+        };
+      }
+
+      if (key === 'resource_fullname' && !Array.isArray(value)) {
+        return {
+          label: 'Resource Full Name',
+          value: value, // or handle nested objects differently
         };
       }
 
@@ -179,30 +201,27 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   }
 
   // Section data with custom formatting where needed
-  const basicInfo = createSectionData({
+  const basicInfo = CreateSectionData({
     resource_ref_id: resourceData.resource_ref_id,
     resource_number: resourceData.r_number,
     resource_fullname: resourceData.resource_fullname,
-    designation: resourceData.designation,
     resource_type: resourceData.resource_type,
     resource_orgname: resourceData.resource_orgname,
     resource_status: resourceData.resource_status,
-    fiscal_year: resourceData.fiscal_year,
-    resource_role: resourceData.resource_role,
   });
 
-  const locationInfo = createSectionData({
+  const locationInfo = CreateSectionData({
     country: resourceData?.country_name,
     state: resourceData.state_name,
     city: resourceData.city_name,
   });
 
-  const employmentDetails = createSectionData(
+  const employmentDetails = CreateSectionData(
     {
       resource_startdate: resourceData.resource_startdate,
       resource_enddate: resourceData.resource_enddate,
       total_years_experience: resourceData.total_years_experience,
-
+      designation: resourceData.designation,
       total_years_in_org: resourceData.total_years_in_org,
     },
     {
@@ -211,20 +230,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
     }
   );
 
-  const systemInfo = createSectionData(
-    {
-      created_datetime: resourceData.created_datetime,
-      created_by: resourceData.created_by,
-      modified_datetime: resourceData.modified_datetime,
-      modified_by: resourceData.modified_by,
-    },
-    {
-      created_datetime: formatDateToMMDDYYYY,
-      modified_datetime: formatDateToMMDDYYYY,
-    }
-  );
-
-  const description = createSectionData({
+  const description = CreateSectionData({
     comments: resourceData.comments,
   });
 
@@ -236,7 +242,6 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
         data={locationInfo}
       />
       <DetailsSection title='Employment Details' data={employmentDetails} />
-      <DetailsSection title='System Information' data={systemInfo} />
       <DetailsSection title='Description' data={description} />
     </div>
   );
