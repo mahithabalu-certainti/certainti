@@ -4,7 +4,7 @@
 import { FieldConfig, FilterState } from '../../components/filter/filterType';
 
 export const costFilterFields: FieldConfig[] = [
-  { name: 'Resource Cost Number', value: 'resource_cost_number', type: 'textCostAndSkill' },
+  // { name: 'Resource Cost Number', value: 'resource_cost_number', type: 'textCostAndSkill' },
   { name: 'Currency', value: 'currency', type: 'textCostAndSkill' },
   { name: 'Start Date', value: 'effective_date', type: 'date' },
   { name: 'End Date', value: 'end_date', type: 'date' },
@@ -17,7 +17,7 @@ export const costFilterFields: FieldConfig[] = [
   { name: 'Annual', value: 'annual', type: 'number' },
 ];
 export const skillFilterFields: FieldConfig[] = [
-  { name: 'Resource Type', value: 'resource_type', type: 'textCostAndSkill' },
+  // { name: 'Resource Type', value: 'resource_type', type: 'textCostAndSkill' },
   { name: 'Start Date', value: 'start_date', type: 'date' },
   { name: 'Skill Name', value: 'skill_name', type: 'textCostAndSkill' },
   { name: 'Skill Level', value: 'skill_level', type: 'enum' },

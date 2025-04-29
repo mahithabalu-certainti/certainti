@@ -88,7 +88,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
               },
             }}
           >
-            <TableCell sx={{ minWidth: '200px' }}>{skill.resourceRole}</TableCell>
+            {/* <TableCell sx={{ minWidth: '200px' }}>{skill.resourceRole}</TableCell> */}
             <TableCell sx={{ minWidth: '200px' }}>{skill.startDate}</TableCell>
             <TableCell sx={{ minWidth: '200px' }}>{skill.skillName}</TableCell>
             <TableCell sx={{ minWidth: '200px' }}>{skill.skillLevel}</TableCell>
@@ -196,7 +196,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
             }
           }}>
             <TableRow>
-              <TableCell sx={{ minWidth: '200px' }}>
+              {/* <TableCell sx={{ minWidth: '200px' }}>
                 <TableSortLabel
                   active={orderBy === 'resource_role'}
                   direction={orderBy === 'resource_role' ? order : 'asc'}
@@ -204,7 +204,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
                 >
                   Resource Role
                 </TableSortLabel>
-              </TableCell>
+              </TableCell> */}
               <TableCell sx={{ minWidth: '200px' }}>
                 <TableSortLabel
                   active={orderBy === 'start_date'}
@@ -266,7 +266,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
             ) : resourceSkillList?.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={11} align='center'>
-                  <Typography variant='body1'>No data available</Typography>
+                  <Typography variant='body1'>No skill information found</Typography>
                 </TableCell>
               </TableRow>
             ) : (
