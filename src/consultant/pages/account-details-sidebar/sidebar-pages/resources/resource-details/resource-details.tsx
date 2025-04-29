@@ -153,6 +153,13 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
         };
       }
 
+      if (key === 'resource_orgname' && !Array.isArray(value)) {
+        return {
+          label: 'Resource Org Name',
+          value: value, // or handle nested objects differently
+        };
+      }
+
       return {
         label: formatKey(key),
         value: customMappings?.[key] ? customMappings[key](value) : value,
