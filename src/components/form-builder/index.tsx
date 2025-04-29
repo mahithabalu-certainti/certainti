@@ -341,7 +341,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               minDate={dayjs().startOf('year')}
               onChange={(newValue) => {
                 handleChange(dayjs(newValue).format('DD/MM/YYYY'));
-              }}             
+              }}
               slots={{
                 openPickerIcon: () => (
                   <img src={calendarIcon} alt='calendar' className='w-4 h-4' />
@@ -557,7 +557,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 };
               }
             }
-          }                   
+          }
 
           // Validate regex if present and field has value
           const value = constructFormData[field.name] as string;

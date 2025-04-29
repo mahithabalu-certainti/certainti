@@ -73,14 +73,14 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
         </div>
 
         <div className='flex gap-2'>
-          <Box
+          {value !== 'details' && <Box
             onClick={handleFilter}
             className='h-[35px] w-[38px] flex items-center justify-center border border-[#CBD6E2] cursor-pointer'
           >
             <Image src={resourceFilterIcon} />
-          </Box>
+          </Box>}
           <div className='flex gap-2'>
-            {showFilter && (
+            {showFilter && value !== 'details' && (
               <Filter
                 filterMenu={getFilterFields()}
                 setAppliedFilters={setAppliedFilters}
