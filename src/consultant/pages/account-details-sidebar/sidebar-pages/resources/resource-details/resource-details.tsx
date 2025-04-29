@@ -66,12 +66,12 @@ const DetailsSection: React.FC<{
       <Typography className='mb-4 pb-2 border-b border-gray-200 font-semibold text-base'>
         {title}
       </Typography>
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-x-6 font-light text-sm'>
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-x-6 text-sm'>
         {/* Left column */}
         <div>
           {leftColumn.map((item, index) => (
             <div key={`left-${index}`} className='grid grid-cols-2 py-2'>
-              <div className='text-right pr-4 font-medium text-[#65686F]'>
+              <div className='text-right pr-4 font-normal text-[#65686F]'>
                 {item.label}
               </div>
               <div>{renderValue(item.value)}</div>
@@ -83,7 +83,7 @@ const DetailsSection: React.FC<{
         <div>
           {rightColumn.map((item, index) => (
             <div key={`right-${index}`} className='grid grid-cols-2 py-2'>
-              <div className='text-right pr-4  text-[#65686F] font-medium'>
+              <div className='text-right pr-4 text-[#65686F] font-normal'>
                 {item.label}
               </div>
               <div>{renderValue(item.value)}</div>
