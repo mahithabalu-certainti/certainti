@@ -53,8 +53,8 @@ export const transformAccountData = (data: AccountData): DisplayColumn[] => {
       items: [
         { label: 'Account Number', value: account?.r_number },
         {
-          label: 'Is Parent Account',
-          value: account?.is_parent ? 'YES' : 'NO',
+          label: 'is Parent Account',
+          value: account?.is_parent ? 'Yes' : 'No',
         },
       ],
     },
