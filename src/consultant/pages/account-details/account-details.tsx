@@ -133,10 +133,10 @@ export const AccountDetails = () => {
         error={isError}
       />
       <div className='flex flex-row w-full'>
-        <div className='flex w-[17%]'>
+        <div className='flex w-[261px]'>
           <Sidebar activeKey={activeKey} onSelect={setActiveKey} />
         </div>
-        <div className='flex w-[83%] p-4 '>{renderContent()}</div>
+        <div className='flex w-[80%] p-4 '>{renderContent()}</div>
       </div>
     </div>
   );

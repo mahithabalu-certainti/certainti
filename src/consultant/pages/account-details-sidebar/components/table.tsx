@@ -12,12 +12,13 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TablePagination,
   TableRow,
   TableSortLabel,
   Typography,
 } from '@mui/material';
 import React, { useState } from 'react';
+import { arrowDownIcon, arrowUpIcon } from '../../../../assets';
+import { TablePagination } from '../../../../components/table';
 
 interface TableColumn {
   id: string;
@@ -91,7 +92,7 @@ const DataTable: React.FC<DataTableProps> = ({
   const [selectedRowData, setSelectedRowData] = useState<any | null>(null);
   // const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
 
-  const handlePageChange = (_event: unknown, newPage: number) => {
+  const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };
 
@@ -114,11 +115,8 @@ const DataTable: React.FC<DataTableProps> = ({
     setSortField(property);
   };
 
-  const handleRowsPerPageChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const newRowsPerPage = parseInt(event.target.value, 10);
-    setRowsPerPage(newRowsPerPage);
+  const handleRowsPerPageChange = (newPageSize: number) => {
+    setRowsPerPage(newPageSize);
     setCurrentPage(0); // Reset to first page when rows per page changes
   };
 
@@ -169,6 +167,46 @@ const DataTable: React.FC<DataTableProps> = ({
   //   }
   // };
 
+  const getSortIcon = (
+    activeField: string,
+    columnKey: string,
+    sortOrder: 'asc' | 'desc',
+    handleClick: () => void
+  ) => {
+    const isActive = activeField === columnKey;
+  
+    return (
+      <div
+        className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
+        onClick={handleClick}
+      >
+        <img
+          src={arrowUpIcon}
+          alt={isActive && sortOrder === 'asc' ? 'sort-up-active' : 'sort-up-inactive'}
+          className='w-4 h-4'
+          style={{
+            filter:
+              isActive && sortOrder === 'asc'
+                ? 'brightness(0) saturate(100%)'
+                : 'grayscale(100%) brightness(0) opacity(50%)',
+          }}
+        />
+        <img
+          src={arrowDownIcon}
+          alt={isActive && sortOrder === 'desc' ? 'sort-down-active' : 'sort-down-inactive'}
+          className='w-4 h-4 mt-[-9px]'
+          style={{
+            filter:
+              isActive && sortOrder === 'desc'
+                ? 'brightness(0) saturate(100%)'
+                : 'grayscale(100%) brightness(0) opacity(50%)',
+          }}
+        />
+      </div>
+    );
+  };
+  
+
   const isMenuOpen = Boolean(menuAnchor);
 
   if (isLoading) {
@@ -218,10 +256,20 @@ const DataTable: React.FC<DataTableProps> = ({
   // }
 
   return (
-    <div className='border border-gray-300 mr-2'>
+    <div className='border border-gray-300'>
       <TableContainer component={Paper}>
         <Table>
-          <TableHead className='bg-gray-50'>
+          <TableHead 
+          className='bg-gray-50'
+          sx={{
+            '& .MuiTableSortLabel-root': {
+                '&:hover': {
+                  color: 'inherit',
+                  cursor: 'auto',
+                },
+              }
+          }}
+          >
             <TableRow>
               {columns.map((column) => (
                 <TableCell
@@ -240,7 +288,14 @@ const DataTable: React.FC<DataTableProps> = ({
                             : 'desc'
                           : 'desc'
                       }
-                      onClick={() => handleSortRequest(column.id)}
+                      IconComponent={() =>
+                        getSortIcon(
+                          sortField!,
+                          column.id!,
+                          sortOrder.toLowerCase() as 'asc' | 'desc',
+                          () => handleSortRequest(column.id!)
+                        )
+                      }
                     >
                       {column.label}
                     </TableSortLabel>
@@ -257,7 +312,14 @@ const DataTable: React.FC<DataTableProps> = ({
           <TableBody>
             {data.length > 0 ? (
               data.map((row) => (
-                <TableRow key={row[rowIdentifier]} className='hover:bg-gray-50'>
+                <TableRow
+                key={row[rowIdentifier]}
+                sx={{
+                  '&:hover td': {
+                    backgroundColor: '#f5f7fa',
+                  },
+                }}
+              >
                   {columns.map((column) => (
                     <TableCell
                       key={`${row[rowIdentifier]}-${column.id}`}
@@ -305,7 +367,6 @@ const DataTable: React.FC<DataTableProps> = ({
       {pagination && data.length > 0 && (
         <TablePagination
           rowsPerPageOptions={rowsPerPageOptions}
-          component='div'
           count={totalCount}
           rowsPerPage={rowsPerPage}
           page={currentPage}
