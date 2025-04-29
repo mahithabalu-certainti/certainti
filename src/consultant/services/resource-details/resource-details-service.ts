@@ -7,11 +7,9 @@ export const fetchResourceDetail = async (
   resourceId: string,
   accountNumber: string
 ): Promise<ResourceDetailsApiResponse> => {
-  console.log('resourceId-fetchResourceDetail', resourceId);
   const response = await api.get<ResourceDetailsApiResponse>(
     ResourceDetailURL(resourceId, accountNumber)
   );
-  // console.log('mockResourceDetails', mockResourceDetails);
   return response.data;
 };
 

@@ -110,7 +110,6 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
     customMappings?: Record<string, (val: any) => React.ReactNode>
   ) => {
     return Object.entries(dataObj).map(([key, value]) => {
-      console.log('key', key);
       // Handle nested objects
       if (value && typeof value === 'object' && !Array.isArray(value)) {
         return {

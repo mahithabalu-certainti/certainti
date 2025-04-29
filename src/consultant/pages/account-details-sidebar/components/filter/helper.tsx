@@ -546,7 +546,5 @@ export const formatFilterForApi = (
     }
   });
 
-  console.log('formattedfilters', formattedFilters);
-
   return formattedFilters;
 };
