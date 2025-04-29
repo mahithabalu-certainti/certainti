@@ -47,7 +47,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
     return value === 'cost' ? costFilterFields : skillFilterFields;
   };
   return (
-    <div className='border-x border-t border-gray-300 mr-2'>
+    <div className='border-x border-t border-gray-300'>
       <div className='flex items-center justify-between p-4'>
         <div className='flex gap-2 items-center'>
           {showBackArrow && (

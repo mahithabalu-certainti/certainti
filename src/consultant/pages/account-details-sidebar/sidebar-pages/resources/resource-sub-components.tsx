@@ -31,7 +31,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
 }) => {
   return (
     <Fragment>
-      <Box className='mr-2 max-w-[100%]'>
+      <Box className='max-w-[100%]'>
         <Tabs
           value={value}
           onChange={handleTabChange}

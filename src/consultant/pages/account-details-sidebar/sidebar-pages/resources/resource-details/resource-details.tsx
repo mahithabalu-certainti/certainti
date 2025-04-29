@@ -116,55 +116,61 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
       if (value && typeof value === 'object' && !Array.isArray(value)) {
         return {
           label: formatKey(key),
-          value: Object.values(value).join(', '), // or handle nested objects differently
+          value: Object.values(value).join(', ') || 'NA', // or handle nested objects differently
         };
       }
 
       if (key === 'resource_startdate' && !Array.isArray(value)) {
         return {
           label: 'Resource Effective From',
-          value: formatDateToMMDDYYYY(value as string), // or handle nested objects differently
+          value: formatDateToMMDDYYYY(value as string) || 'NA', // or handle nested objects differently
         };
       }
 
       if (key === 'resource_enddate' && !Array.isArray(value)) {
         return {
           label: 'Resource End Date',
-          value: formatDateToMMDDYYYY(value as string), // or handle nested objects differently
+          value: formatDateToMMDDYYYY(value as string) || 'NA', // or handle nested objects differently
         };
       }
 
       if (key === 'total_years_in_org' && !Array.isArray(value)) {
         return {
           label: 'Total Years in Organization',
-          value: formatDateToMMDDYYYY(value as string), // or handle nested objects differently
+          value: formatDateToMMDDYYYY(value as string) || 'NA', // or handle nested objects differently
         };
       }
 
       if (key === 'total_years_experience' && !Array.isArray(value)) {
         return {
           label: 'Total Years of Experience',
-          value: formatDateToMMDDYYYY(value as string), // or handle nested objects differently
+          value: formatDateToMMDDYYYY(value as string) || 'NA', // or handle nested objects differently
         };
       }
 
       if (key === 'resource_fullname' && !Array.isArray(value)) {
         return {
           label: 'Resource Full Name',
-          value: value, // or handle nested objects differently
+          value: value ?? 'NA', // or handle nested objects differently
         };
       }
 
       if (key === 'resource_orgname' && !Array.isArray(value)) {
         return {
           label: 'Resource Org Name',
-          value: value, // or handle nested objects differently
+          value: value ?? 'NA', // or handle nested objects differently
         };
       }
 
+      const displayValue = value === null || value === '' || value === undefined
+      ? 'NA'
+      : customMappings?.[key]
+      ? customMappings[key](value)
+      : value;
+
       return {
         label: formatKey(key),
-        value: customMappings?.[key] ? customMappings[key](value) : value,
+        value: displayValue,
       };
     });
   };

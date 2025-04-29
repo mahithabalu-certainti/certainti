@@ -339,12 +339,14 @@ const ResourceForm: React.FC = () => {
             variant='outlined'
             color='inherit'
             onClick={handleGoBack}
+            sx={{ width: '56px', minWidth: '56px', fontSize:'12px', fontWeight: 400 }}
           />
           <TextButton
             label='Save'
             variant='filled'
             loading={createResource.isPending || updateResource.isPending}
             onClick={handleExternalSubmit}
+            sx={{ width: '64px', minWidth: '64px', fontSize:'13px', fontWeight: 400 }}
           />
         </div>
       </div>
