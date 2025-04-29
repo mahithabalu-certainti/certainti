@@ -586,42 +586,52 @@ export const formatFilterForApi = (
       const choosenOption = state.text.option;
       const value =
         formatString(choosenOption) === 'Is Empty' ||
-          formatString(choosenOption) === 'Is Not Empty'
+        formatString(choosenOption) === 'Is Not Empty'
           ? true
           : state.text.value;
-      formattedFilters[fieldKey] = { [choosenOption]: value };
+      const trimmedValue = value?.toString().trim();
+      if (value !== '' && trimmedValue !== '') {
+        formattedFilters[fieldKey] = { [choosenOption]: trimmedValue };
+      }
     } else if (state.textCostAndSkill) {
       const choosenOption = state.textCostAndSkill.option;
       const value =
         formatString(choosenOption) === 'Is Empty' ||
-          formatString(choosenOption) === 'Is Not Empty'
+        formatString(choosenOption) === 'Is Not Empty'
           ? true
           : state.textCostAndSkill.value;
-      formattedFilters[fieldKey] = { [choosenOption]: value };
+      const trimmedValue = value?.toString().trim();
+      if (value !== '' && trimmedValue !== '') {
+        formattedFilters[fieldKey] = { [choosenOption]: trimmedValue };
+      }
     } else if (state.number) {
       const choosenOption = state.number.option;
       const boolOptions =
         formatString(choosenOption) === 'Is Empty' ||
         formatString(choosenOption) === 'Is Empty';
       const value = state.number.value;
-      formattedFilters[fieldKey] = {
-        [choosenOption]:
-          formatString(choosenOption) === 'Between'
-            ? [Number(value?.from), Number(value?.to)]
-            : boolOptions
-              ? true
-              : Number(value?.from),
-      };
+      if (!boolOptions || value?.from || value?.to) {
+        formattedFilters[fieldKey] = {
+          [choosenOption]:
+            formatString(choosenOption) === 'Between'
+              ? [Number(value?.from), Number(value?.to)]
+              : boolOptions
+                ? true
+                : Number(value?.from),
+        };
+      }
     } else if (state.enum && state.enum.option) {
       const choosenOption = state.enum.option;
       const value =
         formatString(choosenOption) === 'Is Empty' ||
-          formatString(choosenOption) === 'Is Not Empty'
+        formatString(choosenOption) === 'Is Not Empty'
           ? true
           : state.enum.value;
-      formattedFilters[fieldKey] = {
-        [choosenOption]: value,
-      };
+      if (value && (Array.isArray(value) ? value.length > 0 : true)) {
+        formattedFilters[fieldKey] = {
+          [choosenOption]: value,
+        };
+      }
     } else if (state.date) {
       const option = state.date.option;
       const value = state.date.value;
@@ -633,14 +643,16 @@ export const formatFilterForApi = (
         formatString(option) === 'This Quarter' ||
         formatString(option) === 'Last 7 Days' ||
         formatString(option) === 'Last 30 Days';
-      formattedFilters[fieldKey] = {
-        [option]:
-          formatString(option) === 'Between'
-            ? [value.from?.toString(), value.to?.toString()]
-            : boolOptions
-              ? true
-              : value.from?.toString(),
-      };
+      if (value?.from || value?.to || boolOptions) {
+        formattedFilters[fieldKey] = {
+          [option]:
+            formatString(option) === 'Between'
+              ? [value.from?.toString(), value.to?.toString()]
+              : boolOptions
+                ? true
+                : value.from?.toString(),
+        };
+      }
     }
   });
 
