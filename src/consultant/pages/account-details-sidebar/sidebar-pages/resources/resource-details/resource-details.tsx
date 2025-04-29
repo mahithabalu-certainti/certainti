@@ -56,7 +56,9 @@ const DetailsSection: React.FC<{
     if (typeof value === 'string' && value.toLowerCase() === 'active') {
       return <span className='text-green-600'>Active</span>;
     }
-    return value || '-';
+    return (
+      <span className='font-light text-sm text-[#2D3E4F]'>{value || '-'}</span>
+    );
   };
 
   return (
@@ -64,12 +66,12 @@ const DetailsSection: React.FC<{
       <Typography variant='h6' className='mb-4 pb-2 border-b border-gray-200'>
         {title}
       </Typography>
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-x-6'>
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-x-6 font-medium text-sm'>
         {/* Left column */}
         <div>
           {leftColumn.map((item, index) => (
             <div key={`left-${index}`} className='grid grid-cols-2 py-2'>
-              <div className='text-right pr-4 text-gray-600 font-medium'>
+              <div className='text-right pr-4 font-medium text-[#65686F]'>
                 {item.label}
               </div>
               <div>{renderValue(item.value)}</div>
@@ -81,7 +83,7 @@ const DetailsSection: React.FC<{
         <div>
           {rightColumn.map((item, index) => (
             <div key={`right-${index}`} className='grid grid-cols-2 py-2'>
-              <div className='text-right pr-4 text-gray-600 font-medium'>
+              <div className='text-right pr-4  text-[#65686F] font-medium'>
                 {item.label}
               </div>
               <div>{renderValue(item.value)}</div>
