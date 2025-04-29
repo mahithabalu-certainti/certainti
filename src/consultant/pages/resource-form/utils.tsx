@@ -13,7 +13,7 @@ import { skillLevel } from '../account-details-sidebar/sidebar-pages/resources/r
 // Constants for dropdown options
 export const RESOURCE_STATUS_OPTIONS: SelectOption[] = [
   { label: 'Active', value: 'Active' },
-  { label: 'Inactive', value: 'Inactive' },
+  { label: 'In-Active', value: 'Inactive' },
 ];
 
 export const RESOURCE_TYPE_OPTIONS: SelectOption[] = [
