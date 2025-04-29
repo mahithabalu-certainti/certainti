@@ -23,7 +23,7 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [entityType, setEntityType] = useState<string>('Select Type');
   const [fiscalYear, setFiscalYear] = useState<string>('Select Year');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     if (

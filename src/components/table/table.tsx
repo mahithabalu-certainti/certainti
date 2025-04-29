@@ -152,7 +152,7 @@ const Table = <T extends RowData>({
               )}
 
               {/* Column headers */}
-              {columns.map((column, idx) => (
+              {columns.map((column, index) => (
                 // <TableCell
                 //   key={column.id}
                 //   onClick={() => column.sortable && handleSort(column.id)}
@@ -180,10 +180,10 @@ const Table = <T extends RowData>({
                     width: column.width || 120,
                     minWidth: column.width || 120,
                     maxWidth: column.width || 'auto', 
-                    position: idx === 0 ? 'sticky' : 'auto',
-                    left: idx === 0 ? '40px' : '0px',
-                    background: idx === 0 ? '#fff' : 'auto',
-                    zIndex: idx === 0 ? 10 : 'auto',
+                    position: index === 0 ? 'sticky' : 'auto',
+                    left: index === 0 ? '40px' : '0px',
+                    background: index === 0 ? '#fff' : 'auto',
+                    zIndex: index === 0 ? 10 : 'auto',
                     borderRight: '1px solid #CBD6E2',
                   }}
                 >
@@ -389,7 +389,7 @@ const Table = <T extends RowData>({
                     )}
 
                     {/* Data cells */}
-                    {columns.map((column, idx) => {
+                    {columns.map((column, index) => {
                       const isStatus = column.id === 'status';
                       const statusValue = row[column.id];
                                   
@@ -400,10 +400,10 @@ const Table = <T extends RowData>({
                           minWidth: column.width || 120,
                           maxWidth: column.width || 'auto',
                           wordWrap: 'break-word',
-                          position: idx === 0 ? 'sticky' : 'static',
-                          left: idx === 0 ? '40px' : '0px',
-                          background: idx === 0 ? '#fff' : 'inherit',
-                          zIndex: idx === 0 ? 6 : 'auto',
+                          position: index === 0 ? 'sticky' : 'static',
+                          left: index === 0 ? '40px' : '0px',
+                          background: index === 0 ? '#fff' : 'inherit',
+                          zIndex: index === 0 ? 6 : 'auto',
                           borderRight: '1px solid #CBD6E2',
                         }}
                         className={`${
