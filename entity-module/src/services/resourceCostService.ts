@@ -780,6 +780,21 @@ class ResourceCostService {
 
         costData.created_by = userNames.created_by_name;
         costData.modified_by = userNames.modified_by_name;
+
+        // Format dates to MM/DD/YYYY
+        if (costData.effective_date) {
+          costData.effective_date = moment(costData.effective_date).format('MM/DD/YYYY') as any;
+        }
+        if (costData.end_date) {
+          costData.end_date = moment(costData.end_date).format('MM/DD/YYYY') as any;
+        }
+
+        const resourceInfo = (costData as any).Resource;
+
+        if(resourceInfo){
+          resourceInfo.resource_startdate = moment(resourceInfo.resource_startdate).format('MM/DD/YYYY') as any;
+          resourceInfo.resource_enddate = moment(resourceInfo.resource_enddate).format('MM/DD/YYYY') as any;
+        }
         
         // Create a new response object with simplified cost data
         const simplifiedCostData = {
