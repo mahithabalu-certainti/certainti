@@ -341,23 +341,48 @@ class SchemaService {
    * @returns True if resource exists, false otherwise.
    */
   async checkIfResourceExists(
-    resourceId: string,
+    resourceId: string, 
     accountNumber: string
   ): Promise<boolean> {
     try {
+      // Validate inputs
+      if (!resourceId || !accountNumber) {
+        throw new Error('Resource ID and account number are required');
+      }
+
       const schemaName = `platform_v2_${accountNumber}`;
       const sequelize = await initOrgSequelize();
 
+      // Verify schema exists before querying
+      const schemaExists = await sequelize.query(
+        `SELECT schema_name FROM information_schema.schemata WHERE schema_name = :schemaName`,
+        {
+          replacements: { schemaName },
+          type: "SELECT"
+        }
+      );
+
+      if (!schemaExists || (schemaExists as any[]).length === 0) {
+        throw new Error(`Schema ${schemaName} does not exist`);
+      }
+
       const Resource = Resources.initialize(sequelize, schemaName);
 
-      const resource = await Resource.findOne({
-        where: {
-          rid: resourceId,
-        },
+      // Add transaction to ensure data consistency
+      const resource = await sequelize.transaction(async (t) => {
+        return await Resource.findOne({
+          where: {
+            rid: resourceId,
+          },
+          transaction: t,
+          lock: true
+        });
       });
 
       return resource !== null;
     } catch (err) {
+      // Log error for debugging
+      console.error('Resource existence check failed:', err);
       throw new Error(
         "Error checking if resource exists: " + (err as Error).message
       );

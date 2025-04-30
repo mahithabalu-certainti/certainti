@@ -1,30 +1,27 @@
 import Joi from "joi";
-import moment from "moment";
 
 const uuidRegex =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const isNotFutureDate = (value: string, helpers: Joi.CustomHelpers): any => {
-  // Parse the date using moment with strict parsing
-  const startDate = moment(value, "MM/DD/YYYY", true);
+  if (!value) return value;
 
-  // Check if the date format is valid
-  if (!startDate.isValid()) {
+  // Parse the date in MM/DD/YYYY format
+  const [month, day, year] = value.split("/").map(Number);
+
+  // Create date objects with time set to noon UTC
+  const inputDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+  const currentDate = new Date();
+
+  // Check if the date is valid
+  if (isNaN(inputDate.getTime())) {
     return helpers.error("date.invalidFormat", {
-      message: "Invalid effective from date.",
+      message: "Invalid date format. Please use MM/DD/YYYY.",
     });
   }
 
-  // Split the date string and convert to numbers
-  const [month, day, year] = value.split("/").map(Number);
-
-  // Create Date objects for comparison
-  const inputDate = new Date(year, month - 1, day);
-  const currentDate = new Date();
-
-  // Normalize both dates to start of day for accurate comparison
-  inputDate.setHours(0, 0, 0, 0);
-  currentDate.setHours(0, 0, 0, 0);
+  // Normalize current date to start of day UTC
+  currentDate.setUTCHours(12, 0, 0, 0);
 
   // Check if date is in the future
   if (inputDate > currentDate) {
@@ -37,11 +34,18 @@ const isNotFutureDate = (value: string, helpers: Joi.CustomHelpers): any => {
 };
 
 const isValidDate = (value: string, helpers: Joi.CustomHelpers): any => {
-  const startDate = moment(value, "MM/DD/YYYY", true);
+  if (!value) return value;
 
-  if (!startDate.isValid()) {
+  // Parse the date in MM/DD/YYYY format
+  const [month, day, year] = value.split("/").map(Number);
+
+  // Create a date object with time set to noon UTC
+  const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+
+  // Check if the date is valid
+  if (isNaN(date.getTime())) {
     return helpers.error("date.invalidFormat", {
-      message: "Invalid date.",
+      message: "Invalid date format. Please use MM/DD/YYYY.",
     });
   }
 
@@ -54,30 +58,42 @@ const isEndDateAfterStartDate = (
 ): any => {
   const context = helpers.state?.ancestors[0];
 
-  if (context?.effective_from_date && value) {
-    const date = moment(value, "MM/DD/YYYY", true);
+  // If either value or effective_from_date is missing, return the value as-is
+  if (!context?.effective_from_date || !value) {
+    return value;
+  }
 
-    if (!date.isValid()) {
-      return helpers.error("date.invalidFormat", {
-        message: "Invalid effective end date.",
-      });
-    }
+  // Parse dates in MM/DD/YYYY format
+  const [endMonth, endDay, endYear] = value.split("/").map(Number);
+  const [startMonth, startDay, startYear] = context.effective_from_date
+    .split("/")
+    .map(Number);
 
-    const [startDay, startMonth, startYear] = context.effective_from_date
-      .split("/")
-      .map(Number);
-    const startDate = new Date(startYear, startMonth - 1, startDay);
-    startDate.setHours(0, 0, 0, 0);
+  // Create date objects with time set to noon UTC to avoid timezone issues
+  const endDate = new Date(Date.UTC(endYear, endMonth - 1, endDay, 12, 0, 0));
+  const startDate = new Date(
+    Date.UTC(startYear, startMonth - 1, startDay, 12, 0, 0)
+  );
 
-    const [endDay, endMonth, endYear] = value.split("/").map(Number);
-    const endDate = new Date(endYear, endMonth - 1, endDay);
-    endDate.setHours(0, 0, 0, 0);
+  // Check if the end date is valid
+  if (isNaN(endDate.getTime())) {
+    return helpers.error("date.invalidFormat", {
+      message: "Invalid effective end date.",
+    });
+  }
 
-    if (endDate <= startDate) {
-      return helpers.error("any.invalid", {
-        message: "Effective end date must be after the start date.",
-      });
-    }
+  // Check if the start date is valid
+  if (isNaN(startDate.getTime())) {
+    return helpers.error("date.invalidFormat", {
+      message: "Invalid effective start date.",
+    });
+  }
+
+  // Compare dates
+  if (endDate <= startDate) {
+    return helpers.error("any.invalid", {
+      message: "Effective end date must be after the start date.",
+    });
   }
 
   return value;
@@ -90,7 +106,7 @@ const createResourcesSchema = Joi.object({
     .required(),
   resource_ref_id: Joi.string().min(5).max(50).required(),
   resource_type: Joi.string()
-    .valid("FullTime", "Contract", "Non-Labor")
+    .valid("Full-time", "SubCon", "Non-Labor")
     .required(),
   full_name: Joi.string().min(3).max(200).optional().allow("").allow(null),
   org_name: Joi.string()
@@ -180,7 +196,7 @@ const updateResourceSchema = Joi.object({
     .required(),
   account_number: Joi.string().max(50).required(),
   resource_ref_id: Joi.string().max(50).required(),
-  resource_type: Joi.string().valid("FullTime", "Contract").required(),
+  resource_type: Joi.string().valid("Full-time", "SubCon", "Non-Labor").required(),
   full_name: Joi.string().min(3).max(200).optional().allow("").allow(null),
   org_name: Joi.string()
     .min(3)
@@ -274,13 +290,17 @@ const listResourceSchema = Joi.object({
   search: Joi.string().max(255).optional(),
   filters: Joi.string().default("{}"),
   sortBy: Joi.string().default("created_datetime").optional().allow(""),
-  sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional().allow(""),
+  sortOrder: Joi.string()
+    .valid("ASC", "DESC")
+    .default("DESC")
+    .optional()
+    .allow(""),
 });
 
 const createResourceSkillSchema = Joi.object({
   eid: Joi.string().max(255).optional().allow(null).allow(""),
   account_rid: Joi.string().max(255).required(),
-  resource_type: Joi.string().valid("FullTime", "Contract").required(),
+  resource_type: Joi.string().valid("Full-time", "SubCon", "Non-Labor").required(),
   resource_rid: Joi.string().max(255).optional().allow(null).allow(""),
   resource_number: Joi.string().max(255).required(),
   resource_ref_id: Joi.string().max(255).required(),
@@ -413,7 +433,7 @@ const updateResourceCostSchema = Joi.object({
       "hourly"
     )
     .required(),
-    cost: Joi.number()
+  cost: Joi.number()
     .precision(2)
     .min(0)
     .max(9999999999.99)
@@ -422,33 +442,13 @@ const updateResourceCostSchema = Joi.object({
       "number.base": "Cost must be a valid number",
       "number.min": "Cost cannot be negative",
       "number.max": "Cost cannot exceed 9,999,999,999.99",
-      "number.precision": "Cost can only have up to 2 decimal places"
+      "number.precision": "Cost can only have up to 2 decimal places",
     }),
   status: Joi.string().max(255).default("active").optional(),
   modified_datetime: Joi.date()
     .iso()
     .default(() => new Date()),
   modified_by: Joi.string().max(255).optional(),
-}).custom((obj) => {
-  const hasEffectiveDate = Boolean(obj.effective_date);
-  const hasEndDate = Boolean(obj.end_date);
-
-  if (hasEffectiveDate !== hasEndDate) {
-    throw new Error(
-      "Both effective date and end date must be provided together, or neither should be provided"
-    );
-  }
-
-  return obj;
-}).error((errors) => {
-  return errors.map(error => {
-    if (error.code === 'any.custom') {
-      // Add proper field name to the error
-      (error as any).context = { label: 'date_validation' };
-      error.message = 'Both effective date and end date must be provided together, or neither should be provided';
-    }
-    return error;
-  });
 });
 
 const getResourceCostSchema = Joi.object({
@@ -488,7 +488,7 @@ const resourceCostSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
   accountNumber: Joi.string().max(255).required(),
   resource_number: Joi.string().max(255).required(),
-  resource_type: Joi.string().valid("FullTime", "Contract").required(),
+  resource_type: Joi.string().valid("Full-time", "SubCon", "Non-Labor").required(),
   resource_rid: Joi.string().pattern(uuidRegex).required(),
   resource_ref_id: Joi.string().max(255).required(),
   effective_date: Joi.string()
@@ -534,7 +534,7 @@ const resourceCostSchema = Joi.object({
       "number.base": "Cost must be a valid number",
       "number.min": "Cost cannot be negative",
       "number.max": "Cost cannot exceed 9,999,999,999.99",
-      "number.precision": "Cost can only have up to 2 decimal places"
+      "number.precision": "Cost can only have up to 2 decimal places",
     }),
   fiscalYear: Joi.number().optional(),
   currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
@@ -547,27 +547,6 @@ const resourceCostSchema = Joi.object({
     .default(() => new Date()),
   created_by: Joi.string().max(255).optional(),
   modified_by: Joi.string().max(255).optional(),
-})
-.custom((obj) => {
-  const hasEffectiveDate = Boolean(obj.effective_date);
-  const hasEndDate = Boolean(obj.end_date);
-
-  if (hasEffectiveDate !== hasEndDate) {
-    throw new Error(
-      "Both effective date and end date must be provided together, or neither should be provided"
-    );
-  }
-
-  return obj;
-}).error((errors) => {
-  return errors.map(error => {
-    if (error.code === 'any.custom') {
-      // Add proper field name to the error
-      (error as any).context = { label: 'date_validation' };
-      error.message = 'Both effective date and end date must be provided together, or neither should be provided';
-    }
-    return error;
-  });
 });
 
 export {
