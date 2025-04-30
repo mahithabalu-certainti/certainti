@@ -162,7 +162,16 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
 
   return (
     <div className='w-full'>
-      <TabPanel />
+      <TabPanel
+        value={value}
+        setAppliedFilters={(data) => {
+          setAppliedFilters(data);
+          setShowFilter(false);
+        }}
+        showFilter={showFilter}
+        filterVisibility={filterVisibility}
+        handleFilter={handleFilter}
+      />
       <ResourceTableHeader
         handleFilter={handleFilter}
         value={value}

@@ -34,6 +34,7 @@ export const AccountInfo: React.FC<AccountInfoProps> = ({
               backgroundColor: '#E6F7EE',
               color: '#00A854',
               fontWeight: 500,
+              fontSize:"18px"
             }}
           />
         );
@@ -47,6 +48,7 @@ export const AccountInfo: React.FC<AccountInfoProps> = ({
               backgroundColor: '#FFEBEE',
               color: '#F44336',
               fontWeight: 500,
+              fontSize: '18px',
             }}
           />
         );
@@ -132,8 +134,8 @@ export const AccountInfo: React.FC<AccountInfoProps> = ({
                 variant='caption'
                 sx={{
                   color: '#7D98B6',
-                  fontSize: '0.75rem',
-                  fontWeight: 500,
+                  fontSize: '13px',
+                  fontWeight: 400,
                   display: 'block',
                   mb: 0.5,
                 }}
@@ -157,7 +159,7 @@ export const AccountInfo: React.FC<AccountInfoProps> = ({
               </Typography> */}
               <TruncateWithTooltip
                 text={String(item.value)}
-                className='font-medium'
+                className='font-medium text-[20px] text=[#2D3E4F] '
               >
                 {renderValue(item.value)}
               </TruncateWithTooltip>

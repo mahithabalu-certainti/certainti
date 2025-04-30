@@ -283,7 +283,7 @@ const DataTable: React.FC<DataTableProps> = ({
                   key={column.id}
                   className='font-bold'
                   align={column.align}
-                  style={{ width: column.width }}
+                  style={{ width: column.width}}
                 >
                   {sortable && column.sortable !== false ? (
                     <TableSortLabel
@@ -312,7 +312,7 @@ const DataTable: React.FC<DataTableProps> = ({
                 </TableCell>
               ))}
               {actionMenuItems.length > 0 && (
-                <TableCell className='font-bold'>Actions</TableCell>
+                <TableCell className='font-bold'>Action</TableCell>
               )}
             </TableRow>
           </TableHead>

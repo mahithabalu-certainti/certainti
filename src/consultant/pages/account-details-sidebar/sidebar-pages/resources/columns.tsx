@@ -3,6 +3,7 @@ interface ColumnDefinition {
   id: string;
   label: string;
   sortable: boolean;
+  width?: string;
   render: (value: any, row?: any) => JSX.Element;
 }
 
@@ -21,6 +22,7 @@ const BASE_COLUMNS: ColumnDefinition[] = [
   {
     id: 'r_number',
     label: 'Resource Id',
+    width: '150px',
     sortable: true,
     render: (value: string, row: any) => (
       <span
@@ -37,6 +39,7 @@ const BASE_COLUMNS: ColumnDefinition[] = [
   {
     id: 'resource_ref_id',
     label: 'Resource Ref Id',
+    width: '170px',
     sortable: true,
     render: (value: string) => (
       <span className='font-light text-sm text-[#425A76]'>
@@ -47,6 +50,7 @@ const BASE_COLUMNS: ColumnDefinition[] = [
   {
     id: 'resource_fullname',
     label: 'Resource Full Name',
+    width: '200px',
     sortable: true,
     render: (value: string) => (
       <span className='font-light text-sm text-[#425A76]'>
@@ -57,6 +61,7 @@ const BASE_COLUMNS: ColumnDefinition[] = [
   {
     id: 'resource_type',
     label: 'Resource Type',
+    width: '170px',
     sortable: true,
     render: (value: string) => (
       <span className='font-light text-sm text-[#425A76]'>
@@ -67,6 +72,7 @@ const BASE_COLUMNS: ColumnDefinition[] = [
   {
     id: 'designation',
     label: 'Resource Designation',
+    width: '210px',
     sortable: true,
     render: (value: string) => (
       <span className='font-light text-sm text-[#425A76]'>
@@ -77,6 +83,7 @@ const BASE_COLUMNS: ColumnDefinition[] = [
   {
     id: 'total_years_experience',
     label: 'Total Experience',
+    width: '170px',
     sortable: true,
     render: (value: string) => (
       <span className='font-light text-sm text-[#425A76]'>
@@ -87,6 +94,7 @@ const BASE_COLUMNS: ColumnDefinition[] = [
   {
     id: 'city_name',
     label: 'Resource City',
+    width: '150px',
     sortable: true,
     render: (value: string) => (
       <span className='font-light text-sm text-[#425A76]'>
@@ -97,6 +105,7 @@ const BASE_COLUMNS: ColumnDefinition[] = [
   {
     id: 'state_name',
     label: 'Resource Region',
+    width: '170px',
     sortable: true,
     render: (value: string) => (
       <span className='font-light text-sm text-[#425A76]'>
@@ -107,6 +116,7 @@ const BASE_COLUMNS: ColumnDefinition[] = [
   {
     id: 'country_name',
     label: 'Resource Country',
+    width: '180px',
     sortable: true,
     render: (value: string) => (
       <span className='font-light text-sm text-[#425A76]'>
@@ -119,6 +129,7 @@ const BASE_COLUMNS: ColumnDefinition[] = [
 const createStatusColumn = (): ColumnDefinition => ({
   id: 'resource_status',
   label: 'Status',
+  width: '100px',
   sortable: true,
   render: (value: string) => (
     <span

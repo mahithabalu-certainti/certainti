@@ -56,7 +56,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
   placeholder,
   totalRecords,
   icon = accountHomeIcon,
-  iconClasses = 'h-10 w-10 p-2.5 rounded',
+  iconClasses = 'h-[32px] w-[32px]  p-2.5 rounded',
   iconBackgroundColor,
   actionItems = [],
   primaryButton,
@@ -89,13 +89,13 @@ export const PageHeader: React.FC<HeaderProps> = ({
             />
             <div className='flex flex-col'>
               {variant === 'sub' && placeholder ? (
-                <div className='font-medium text-[#7D98B6] text-[11px]'>
+                <div className='font-semibold text-[#7D98B6] text-[11px]'>
                   {placeholder}
                 </div>
               ) : (
                 <>
                   {subtitle && (
-                    <div className='font-medium text-[#7D98B6] text-[11px]'>
+                    <div className='font-medium text-[#7D98B6] bg-amber-400 text-[11px]'>
                       {subtitle}
                     </div>
                   )}
@@ -106,7 +106,9 @@ export const PageHeader: React.FC<HeaderProps> = ({
                   )}
                 </>
               )}
-              <div className='font-semibold text-[20px]'>{title}</div>
+              <div className='font-semibold text-[20px] text-[#2D3E4F]'>
+                {title}
+              </div>
             </div>
             {showFilter && (
               <button
