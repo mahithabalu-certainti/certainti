@@ -538,6 +538,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 error: 'Future dates are not allowed',
               };
             }
+            if (dateValue && !isValidDate(dateValue, 'MM/DD/YYYY')) {
+              hasError = true;
+              return {
+                ...field,
+                error: 'Invalid date',
+              };
+            }
           }
 
           // Depends Required Validation

@@ -26,6 +26,8 @@ export interface ResourceDetailsTypes {
   modified_by: string | null;
   comments: string;
   resource_number?: string;
+  country?: string;
+  state?: string;
 }
 
 export interface ResourceDetailsForPayload {
