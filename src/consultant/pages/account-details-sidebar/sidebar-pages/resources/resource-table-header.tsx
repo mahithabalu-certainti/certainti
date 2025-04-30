@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { SxProps } from '@mui/material';
 import React from 'react';
 import { leftArrowIcon } from '../../../../../assets';
 import TextButton from '../../../../../components/button/text-button';
+import { Theme } from '@emotion/react';
 interface ResourceTableHeaderProps {
   filterVisibility: boolean;
   title: string;
@@ -10,6 +12,7 @@ interface ResourceTableHeaderProps {
     label: string;
     variant: 'text' | 'outlined' | 'contained';
     onClick: () => void;
+    sx?: SxProps<Theme>;
   }[];
   toggleViewMode?: () => void;
   showBackArrow?: boolean;
@@ -33,12 +36,12 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
 }) => {
 
   return (
-    <div className='mr-2 border-t border-[1px] border-b-0 border-[#CBD6E2] rounded-tl-[2px] rounded-tr-[2px]'>
-      <div className='flex items-center justify-between p-4'>
+    <div className='border-t border-[1px] border-b-0 border-[#CBD6E2] rounded-tl-[2px] h-[50px] rounded-tr-[2px]'>
+      <div className='flex items-center justify-between h-full px-4'>
         <div className='flex items-center gap-2'>
           {showBackArrow && (
             <div className='cursor-pointer w-[24px] h-[24px] flex justify-center items-center -ml-2' onClick={onBackClick}>
-              <img src={leftArrowIcon} className='h-[16px]' alt='leftArrowIcon' />
+              <img src={leftArrowIcon} className='h-[14px]' alt='leftArrowIcon' />
             </div>
             //   <button
             //     onClick={onBackClick}
@@ -59,7 +62,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
           </div>
         </div>
 
-        <div className='flex gap-2'>
+        <div className='flex items-center gap-2'>
           <div className='flex gap-2'>
             {headerButtons?.map((button, index) => (
               <TextButton
@@ -72,6 +75,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
                     : button.onClick
                 }
                 aria-label={button.label}
+                sx={button.sx}
               />
             ))}
           </div>

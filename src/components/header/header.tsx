@@ -127,11 +127,11 @@ export const PageHeader: React.FC<HeaderProps> = ({
             <TextButton
               label={primaryButton.label}
               onClick={primaryButton.onClick}
+              variant='outlined'
               sx={{
                 ...DEFAULT_BUTTON_STYLES,
-                backgroundColor: 'secondary.main',
-                color: '#fff',
                 ...customStyles.button,
+                width: '57px', minWidth: '57px', fontSize:'13px', fontWeight: 400,
               }}
             />
           )}

@@ -19,7 +19,7 @@ const StyledButton = styled(Button)<{ variantType: 'filled' | 'outlined' }>(
   ({ variantType, theme }) => ({
     backgroundColor:
       variantType === 'filled' ? theme.palette.secondary.main : 'transparent',
-    height: '35px',
+    height: '32px',
     color: variantType === 'filled' ? '#fff' : '#64707D',
     border: variantType === 'outlined' ? `1px solid #CBD6E2` : 'none',
     textTransform: 'none',

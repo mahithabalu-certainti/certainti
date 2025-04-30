@@ -31,7 +31,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
 }) => {
   return (
     <Fragment>
-      <Box className='mr-2 max-w-[100%]  border-b border-[1px] border-t-0 border-[#CBD6E2] rounded-bl-[2px] rounded-br-[2px] bg-white'>
+      <Box className='max-w-[100%]  border-b border-[1px] border-t-0 border-[#CBD6E2] rounded-bl-[2px] rounded-br-[2px] bg-white'>
         <Tabs
           value={value}
           onChange={handleTabChange}

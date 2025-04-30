@@ -312,7 +312,7 @@ const ResourceForm: React.FC = () => {
 
   return (
     <div className='resource-form-container'>
-      <div className='flex justify-between items-center border-b-2 h-[108px] border-gray-200 px-10 py-6'>
+      <div className='flex justify-between items-center border-b-2 h-[108px] border-gray-200 px-4 py-6'>
         <div className='flex items-center'>
           <img
             src={isEditView ? editIcon : createresourceIcon}
@@ -320,9 +320,9 @@ const ResourceForm: React.FC = () => {
             className={`${isEditView ? 'bg-[#7D98B6] p-2.5' : ''} h-8 w-8 rounded`}
           />
           <div>
-            {isEditView && !state?.skill && !state?.cost && (
+            {/* {isEditView && !state?.skill && !state?.cost && (
               <h5 className='mb-1 ml-2 text-xs text-gray-500'>Edit Resource</h5>
-            )}
+            )} */}
             <div className='font-semibold text-[11px] leading-[20px] ml-2 text-[#7D98B6]'>
               {!state?.skill && !state?.cost
                 ? `Account > ${accountData?.account_name}`
@@ -343,7 +343,7 @@ const ResourceForm: React.FC = () => {
                   ? 'Edit Resource Cost'
                   : state?.skill
                     ? `Edit Resource Skill`
-                    : resourceName}
+                    : resourceName ?? 'Edit Resource'}
               </h4>
             )}
           </div>
@@ -375,7 +375,7 @@ const ResourceForm: React.FC = () => {
           />
         </div>
       </div>
-      <div className='p-10'>
+      <div className='p-8'>
         <FormBuilder
           data={formConfig}
           loading={allCountries.isLoading}
