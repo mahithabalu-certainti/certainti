@@ -69,8 +69,8 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
               {titleIcon}
             </div>
           )}
-          <h1 className='text-sm font-medium text-[#2D3E4F]'>{title}</h1>
-          <div className='text-sm font-medium text-[#2D3E4F]'>
+          <h1 className='text-[14px] font-medium text-[#2D3E4F]'>{title}</h1>
+          <div className='text-[14px] font-medium text-[#2D3E4F]'>
             {value === 'details' && resourceNumber}
           </div>
         </div>
