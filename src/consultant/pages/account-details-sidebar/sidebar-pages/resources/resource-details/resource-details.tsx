@@ -53,28 +53,34 @@ const DetailsSection: React.FC<{
   });
 
   const renderValue = (value: React.ReactNode) => {
-    if (typeof value === 'string' && value.toLowerCase() === 'active') {
-      return <span className='text-green-600'>Active</span>;
+    if (typeof value === 'string') {
+      const status = value.toLowerCase();
+      if (status === 'active') {
+        return <span className='text-[#199806]'>Active</span>;
+      }
+      if (status === 'inactive') {
+        return <span className='text-[#f44336]'>In-Active</span>;
+      }
     }
     return (
-      <span className='font-light text-sm text-[#2D3E4F]'>{value || '-'}</span>
+      <span className='font-light text-[14px] text-[#2D3E4F]'>{value || 'NA'}</span>
     );
   };
 
   return (
-    <div className='mb-8'>
-      <Typography variant='h6' className='pb-2 mb-4 text-base font-semibold'>
-        {title}
-      </Typography>
-      <div className='grid grid-cols-1 text-sm md:grid-cols-2 gap-x-6'>
+    <div className={title === 'Basic Information' ? 'mt-0' : 'mt-6'}>
+      <div className=' text-[16px] text-[#2D3E4F] font-semibold'>{title}</div>
+      <div className='grid grid-cols-1 text-sm md:grid-cols-2 my-0.5 gap-x-6'>
         {/* Left column */}
         <div>
           {leftColumn.map((item, index) => (
-            <div key={`left-${index}`} className='grid grid-cols-2 py-2'>
-              <div className='text-right pr-4 font-normal text-[#65686F]'>
+            <div key={`left-${index}`} className='grid grid-cols-2 py-2 gap-11'>
+              <div className='text-right  font-normal text-[14px]  text-[#65686F]'>
                 {item.label}
               </div>
-              <div>{renderValue(item.value)}</div>
+              <div className=' font-light text-[14px]'>
+                {renderValue(item.value)}
+              </div>
             </div>
           ))}
         </div>
@@ -82,11 +88,16 @@ const DetailsSection: React.FC<{
         {/* Right column */}
         <div>
           {rightColumn.map((item, index) => (
-            <div key={`right-${index}`} className='grid grid-cols-2 py-2'>
-              <div className='text-right pr-4 text-[#65686F] font-normal'>
+            <div
+              key={`right-${index}`}
+              className='grid grid-cols-2 py-0.5 gap-11'
+            >
+              <div className='text-right  font-normal text-[14px]  text-[#65686F]'>
                 {item.label}
               </div>
-              <div>{renderValue(item.value)}</div>
+              <div className=' font-light text-[14px]'>
+                {renderValue(item.value)}
+              </div>
             </div>
           ))}
         </div>

@@ -95,13 +95,7 @@ export const dateOptions: { option: string; value: string }[] = [
   { option: 'Before', value: 'before' },
   { option: 'After', value: 'after' },
   { option: 'Between', value: 'between' },
-  { option: 'This Week', value: 'this_week' },
-  { option: 'This Month', value: 'this_month' },
-  { option: 'This Quarter', value: 'this_quarter' },
-  { option: 'Last 7 Days', value: 'last_7_days' },
-  { option: 'Last 30 Days', value: 'last_30_days' },
   { option: 'Is Empty', value: 'is_empty' },
-  { option: 'Is Not Empty', value: 'is_not_empty' },
 ];
 
 // Define filter state types for each field type
