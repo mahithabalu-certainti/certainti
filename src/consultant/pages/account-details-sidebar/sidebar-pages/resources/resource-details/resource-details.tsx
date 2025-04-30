@@ -90,7 +90,7 @@ const DetailsSection: React.FC<{
           {rightColumn.map((item, index) => (
             <div
               key={`right-${index}`}
-              className='grid grid-cols-2 py-0.5 gap-11'
+              className='grid grid-cols-2 py-2 gap-11'
             >
               <div className='text-right  font-normal text-[14px]  text-[#65686F]'>
                 {item.label}

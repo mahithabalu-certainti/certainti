@@ -1,4 +1,4 @@
-import { Box, Chip, Skeleton, Typography } from '@mui/material';
+import { Box, Skeleton, Typography } from '@mui/material';
 import React from 'react';
 import { TruncateWithTooltip } from '../../../components';
 
@@ -25,30 +25,18 @@ export const AccountInfo: React.FC<AccountInfoProps> = ({
   const renderValue = (value: string | React.ReactNode) => {
     if (typeof value === 'string') {
       const lowerValue = value.toLowerCase();
-      if (lowerValue === 'active') {
+      if (lowerValue === 'active' || lowerValue === 'inactive') {
         return (
-          <Chip
-            label={value}
-            size='small'
+          <Typography
+            component='span'
             sx={{
-              backgroundColor: '#E6F7EE',
-              color: '#00A854',
+              fontSize: '16px',
+              color: lowerValue === 'active' ? '#199806' : '#f44336',
               fontWeight: 500,
             }}
-          />
-        );
-      }
-      if (lowerValue === 'inactive') {
-        return (
-          <Chip
-            label={value}
-            size='small'
-            sx={{
-              backgroundColor: '#FFEBEE',
-              color: '#F44336',
-              fontWeight: 500,
-            }}
-          />
+          >
+            {value === 'Active'? 'Active' : 'In-Active'}
+          </Typography>
         );
       }
       if (lowerValue === 'yes' || lowerValue === 'no') {
@@ -111,7 +99,7 @@ export const AccountInfo: React.FC<AccountInfoProps> = ({
 
   return (
     <Box
-      className={`h-[161px] flex p-6 border-b-2 border-[#CBD6E2] bg-white ${className}`}
+      className={`h-[161px] flex items-center px-4 border-b-2 border-[#CBD6E2] bg-white ${className}`}
       sx={{
         gap: '0 16px',
       }}
@@ -132,8 +120,8 @@ export const AccountInfo: React.FC<AccountInfoProps> = ({
                 variant='caption'
                 sx={{
                   color: '#7D98B6',
-                  fontSize: '0.75rem',
-                  fontWeight: 500,
+                  fontSize: '13px',
+                  fontWeight: 400,
                   display: 'block',
                   mb: 0.5,
                 }}
@@ -157,7 +145,7 @@ export const AccountInfo: React.FC<AccountInfoProps> = ({
               </Typography> */}
               <TruncateWithTooltip
                 text={String(item.value)}
-                className='font-medium'
+                className='font-medium text-[18px] text-[#2D3E4F] '
               >
                 {renderValue(item.value)}
               </TruncateWithTooltip>

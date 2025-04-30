@@ -104,6 +104,10 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
               fontWeight: 300,
               color: '#425A76',
               borderRight: 'none',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              maxWidth: '140px',
             }
           }}>
             <TableCell sx={{ minWidth: '160px' }}>
@@ -326,7 +330,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
                   Annual
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ minWidth: '80px' }}>Actions</TableCell>
+              <TableCell sx={{ minWidth: '80px' }}>Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody sx={{

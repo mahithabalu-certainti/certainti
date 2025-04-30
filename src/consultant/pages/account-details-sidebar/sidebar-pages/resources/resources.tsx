@@ -13,6 +13,15 @@ import { getResourceColumns } from './columns';
 import ResourceSubComponents from './resource-sub-components';
 import ResourceTableHeader from './resource-table-header';
 
+const BUTTON_STYLES = {
+  height: '26px !important',
+  fontSize: '13px',
+  fontWeight: 400,
+  color: '#F16137',
+  bgcolor: '#FFF8F6',
+  borderRadius: '2px',
+};
+
 interface ResourceProps {
   accountDetails?: Record<string, any>;
   activeKey?: string;
@@ -116,11 +125,13 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
       label: 'Download',
       variant: 'outlined' as const,
       onClick: () => console.log('Download'),
+      sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
     },
     {
       label: 'New',
       variant: 'outlined' as const,
       onClick: () => handleCreateResource(),
+      sx: { ...BUTTON_STYLES, width: '61px', minWidth: '61px' },
     },
   ];
 
@@ -162,7 +173,16 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
 
   return (
     <div className='w-full'>
-      <TabPanel />
+      <TabPanel
+        value={value}
+        setAppliedFilters={(data) => {
+          setAppliedFilters(data);
+          setShowFilter(false);
+        }}
+        showFilter={showFilter}
+        filterVisibility={filterVisibility}
+        handleFilter={handleFilter}
+      />
       <ResourceTableHeader
         handleFilter={handleFilter}
         value={value}

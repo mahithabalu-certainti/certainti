@@ -152,7 +152,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             <select
               name={field.name}
               className={
-                'custom-select-no-arrow w-full sm:text-sm p-1.5 border-1 ' +
+                'custom-select-no-arrow w-full sm:text-sm px-1.5 py-[6px] border-1 ' +
                 (fieldValue === '' ? 'text-[#7D98B6] ' : '') +
                 isError +
                 fieldDisabled
@@ -292,7 +292,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               className={fieldDisabled}
               maxDate={field?.maxDate ? dayjs(field?.maxDate) : undefined}
               minDate={field?.minDate ? dayjs(field?.minDate) : undefined}
-              value={fieldValue ? dayjs(fieldValue) : null}
+              value={dayjs(fieldValue)}
               disabled={field.disabled}
               onChange={(newValue) => {
                 handleChange(newValue ? dayjs(newValue).format('MM/DD/YYYY') : null);
@@ -318,7 +318,23 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   disabled: field.disabled,
                   sx: {
                     '& .MuiOutlinedInput-root': {
-                      borderRadius: 0,
+                      height: '32px',
+                      borderRadius: '2px',
+                      '& input': {
+                        fontWeight: 400,
+                        fontSize: '13px',
+                        lineHeight: '21px',
+                        '& ::placeholder': {
+                          color: '#7D98B6 !important',
+                        },
+                        color: 'black !important',
+                        WebkitTextFillColor: 'black !important',
+
+                        '&[value="MM/DD/YYYY"]': {
+                          color: '#7D98B6 !important',
+                          WebkitTextFillColor: '#7D98B6 !important',
+                        },
+                      },
                       '&.Mui-disabled': {
                         '& input': {
                           color: 'black',
@@ -733,9 +749,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         const isHalf = section.fillType === 'half';
         if (section.hide) return null;
         return (
-          <div key={i}>
+          <div key={i} className='pb-3'>
             <h4
-              className={`font-semibold text-base text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle mb-8 ml-3 ${i !== 0 ? 'mt-10' : ''}`}
+              className={`font-semibold text-base text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle mb-6 ml-3 ${i !== 0 ? 'mt-10' : ''}`}
             >
               {section.sectionName}
             </h4>
@@ -745,7 +761,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 return (
                   <div key={j} className='grid md:grid-cols-12 gap-4'>
                     <label
-                      className={`text-sm text-[#425A76] font-medium md:text-right mt-1.5 ${isHalf ? 'col-span-4' : 'col-span-2'}`}
+                      className={`text-sm text-[#65686F] font-normal leading-[21px] tracking-[0] md:text-right mt-1.5 ${isHalf ? 'col-span-4' : 'col-span-2'}`}
                       htmlFor={field.name}
                     >
                       {field.label}
