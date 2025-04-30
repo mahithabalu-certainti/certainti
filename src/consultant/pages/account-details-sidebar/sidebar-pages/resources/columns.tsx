@@ -14,7 +14,7 @@ interface ResourceColumnsProps {
 
 // Helper function to display value or NA
 const displayValue = (value: any) => {
-  return value ? value === 'FullTime' ? 'Full-Time' : value : <span className='text-gray-400'>NA</span>;
+  return value ? value : <span className='text-gray-400'>NA</span>;
 };
 
 const BASE_COLUMNS: ColumnDefinition[] = [
@@ -123,9 +123,7 @@ const createStatusColumn = (): ColumnDefinition => ({
   render: (value: string) => (
     <span
       className={`font-medium ${
-         value === 'Active'
-            ? 'text-[#199806]'
-            : 'text-[#f44336]'
+        value === 'Active' ? 'text-[#199806]' : 'text-[#f44336]'
       }`}
     >
       {value === 'Active' ? 'Active' : 'In-Active'}

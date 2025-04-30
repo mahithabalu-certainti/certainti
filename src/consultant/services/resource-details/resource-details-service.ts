@@ -21,6 +21,7 @@ export const useResourceDetail = (
     queryKey: ['resourceDetail', resourceId, accountNumber],
     queryFn: () => fetchResourceDetail(resourceId, accountNumber),
     retry: 0,
+    gcTime: 0,
     enabled: !!resourceId,
   });
 };
