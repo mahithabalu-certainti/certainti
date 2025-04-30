@@ -107,7 +107,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
             }
           }}>
             <TableCell sx={{ minWidth: '250px' }}>
-              {cost.resourceCostNumber}
+              {cost.resourceFullName}
             </TableCell>
             <TableCell sx={{ minWidth: '100px' }}>
               {cost.currency}
@@ -228,12 +228,12 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
             <TableRow>
               <TableCell sx={{ minWidth: '250px' }}>
                 <TableSortLabel
-                  active={orderBy === 'resource_cost_number'}
-                  direction={orderBy === 'resource_cost_number' ? order : 'asc'}
-                  IconComponent={getSortIcon(orderBy, 'resource_cost_number', order)}
+                  active={orderBy === 'resource_fullname'}
+                  direction={orderBy === 'resource_fullname' ? order : 'asc'}
+                  IconComponent={getSortIcon(orderBy, 'resource_fullname', order)}
                 // onClick={createSortHandler('resource_cost_number')}
                 >
-                  Resource Cost Number
+                  Resource Name
                 </TableSortLabel>
               </TableCell>
               <TableCell sx={{ minWidth: '100px' }}>
@@ -351,7 +351,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
             ) : resourceCostList?.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={11} align='center'>
-                  <Typography variant='body1'>No data available</Typography>
+                  <Typography variant='body1'>No cost information found</Typography>
                 </TableCell>
               </TableRow>
             ) : (

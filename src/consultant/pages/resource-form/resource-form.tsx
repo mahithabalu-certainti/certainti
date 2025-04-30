@@ -188,8 +188,8 @@ const ResourceForm: React.FC = () => {
       if (state?.cost) {
         successToast(
           isEditView
-            ? 'Resource cost updated successfully'
-            : 'Resource cost created successfully'
+            ? 'Resource cost details updated successfully'
+            : 'Resource cost details added successfully'
         );
       }
 

@@ -239,7 +239,15 @@ export const NumberFilterControl: React.FC<{
                 name='from'
                 value={state.number?.value?.from || ''}
                 onChange={(e) => onValueChange(fieldName, e)}
-                sx={{ mt: 1 }}
+                sx={{
+                  mt: 1,
+                  '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button': {
+                    '-webkit-appearance': 'none'
+                  },
+                  '& input[type=number]': {
+                    '-moz-appearance': 'textfield',
+                  },
+                }}
                 slotProps={{
                   input: {
                     sx: { height: '30px', paddingY: 0, fontSize: '0.75rem' },
@@ -256,7 +264,15 @@ export const NumberFilterControl: React.FC<{
                 name='to'
                 value={state.number?.value?.to || ''}
                 onChange={(e) => onValueChange(fieldName, e)}
-                sx={{ mt: 1 }}
+                sx={{
+                  mt: 1,
+                  '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button': {
+                    '-webkit-appearance': 'none'
+                  },
+                  '& input[type=number]': {
+                    '-moz-appearance': 'textfield',
+                  },
+                }}
                 slotProps={{
                   input: {
                     sx: { height: '30px', paddingY: 0, fontSize: '0.75rem' },

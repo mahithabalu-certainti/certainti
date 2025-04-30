@@ -292,7 +292,7 @@ const Filter: React.FC<FilterComponentProps> = ({
             state={fieldState}
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleDateChange}
-            // onChange={handleBooleanChange}
+          // onChange={handleBooleanChange}
           />
         );
       default:
@@ -302,7 +302,7 @@ const Filter: React.FC<FilterComponentProps> = ({
 
   return (
     // absolute top-107 right-50 z-50
-    <Box className='w-[248px] max-h-[568px] overflow-y-scroll bg-white shadow-lg border border-[#CBD6E2] rounded'>
+    <Box className='w-[248px] max-h-[568px] overflow-y-auto bg-white shadow-lg border border-[#CBD6E2] rounded'>
       <Box className='flex justify-between items-center p-2 border-b border-[#CBD6E2]'>
         <Box>Filters</Box>
         <Button
