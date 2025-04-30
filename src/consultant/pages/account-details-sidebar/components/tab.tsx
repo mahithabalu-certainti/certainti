@@ -69,24 +69,7 @@ const TabPanel: React.FC<TabProps>  = ({
       onClick: () => console.log('Export clicked'),
     },
   ];
-  const menuAccounts = [
-    {
-      label: 'Recently Added',
-      onClick: () => console.log('manage user clicked'),
-    },
-    {
-      label: 'Ascending',
-      onClick: () => console.log('Export clicked'),
-    },
-    {
-      label: 'Descending',
-      onClick: () => console.log('Export clicked'),
-    },
-    {
-      label: 'Popularity',
-      onClick: () => console.log('Export clicked'),
-    },
-  ];
+
     const getFilterFields = () => {
       if (!value) return resourceFilterFields;
       return value === 'cost' ? costFilterFields : skillFilterFields;
@@ -181,11 +164,11 @@ const TabPanel: React.FC<TabProps>  = ({
             label='Add Activity'
           />
 
-          <ActionImportDropdown
+          {/* <ActionImportDropdown
             actions={menuAccounts}
             label='Sort By: Accounts'
             split='true'
-          />
+          /> */}
         </Box>
       </Box>
 

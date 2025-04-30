@@ -101,6 +101,8 @@ const ActionImportDropdown: React.FC<ImportDropdownItemProps> = ({
             }}
             sx={{
               minWidth: '130px',
+              fontSize: '14px',
+              color:'#2D3E4F',
               borderBottom:
                 index !== actions.length - 1 ? '1px solid #CBD6E2' : 'none',
             }}
