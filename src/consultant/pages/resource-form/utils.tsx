@@ -38,6 +38,7 @@ interface RawResourceData {
   resource_fullname?: string;
   resource_type?: string;
   resource_orgname?: string;
+  resource_role?: string;
   resource_lastname?: string;
   country?: string;
   state?: string;
@@ -100,7 +101,7 @@ export function transformPayloadforUpdateResource(
       rawData.resource_fullname || existingResource?.resource_fullname || '',
     org_name:
       rawData.resource_orgname || existingResource?.resource_orgname || '',
-    role: existingResource?.resource_role || '',
+    role: rawData.resource_role || existingResource?.resource_role,
     resource_status:
       rawData.resource_status || existingResource?.resource_status,
     fiscal_year: rawData.fiscal_year || existingResource?.fiscal_year || 0,
