@@ -1,5 +1,5 @@
 import request from "supertest";
-import { initExpressServer } from "../src/expressServer";
+import { initExpressServer } from "../src/servers/expressServer";
 import { generateSecurePassword } from "../src/utils/generatePassword";
 import {
   createAzureB2CUser,

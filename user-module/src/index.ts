@@ -1,7 +1,8 @@
 import dotenv from 'dotenv';
 dotenv.config(); 
-import { initExpressServer } from './expressServer';
+import { initExpressServer } from './servers/expressServer';
 import { initModels } from './models';
+import initGraphQLServer from "./servers/graphqlServer";
 
 
 const PORT: number = Number(process.env.SERVER_PORT) || 3000;
@@ -11,8 +12,11 @@ async function startServer() {
     await initModels();
 
     const { app } = await initExpressServer();
+    const { graphqlPath } = await initGraphQLServer(app);
+
 
     app.listen(PORT, () => {
+      console.log(`Graphql Server ready at: ${graphqlPath}`);
       console.log(`Server running on port : ${PORT}`);
     });
   } catch (err) {

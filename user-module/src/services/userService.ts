@@ -4,8 +4,11 @@ import { constants } from "../utils/constant";
 import { IUpdateUserData, IUserData } from "../utils/types";
 import { Op, Sequelize } from "sequelize";
 
-const { User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams } =
-  models;
+  const { 
+    User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams,
+    ProfileMenuAccess, Menu, ProfileModuleAccess, MenuModule, ProfilePermissionAccess, ModulePermission,
+    UserMenuAccess, UserModuleAccess, UserPermissionAccess
+  } = models;
 
 class UserService {
   getUserByEmail(email: string) {
@@ -514,11 +517,11 @@ class UserService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { rid: string; user_role: string; user_id: string } | null;
+    data?: { rid: string; user_role: string; user_id: string; permissions: any[] } | null;
   }> {
     try {
       const roles = await User.findOne({
-        attributes: ["role_rid", "rid"],
+        attributes: ["role_rid", "rid", "profile_rid"],
         where: { azure_id: azureId },
         include: [
           {
@@ -538,6 +541,9 @@ class UserService {
         };
       }
 
+      // Call getAllUserPermission here
+      const permissions = await this.getAllUserPermission(roles.rid, roles.profile_rid || "");
+
       return {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
@@ -545,13 +551,143 @@ class UserService {
           rid: roles.role_rid || "",
           user_role: roles.business_teams?.business_teams,
           user_id: roles.rid,
+          permissions
         },
       };
     } catch (err) {
-      console.log;
+      console.log(err);
       return this.throwServiceError(err as Error);
     }
   }
+
+  // Consolidate all permissions for a user
+  async getAllUserPermission(userId: string, profileId: string) {
+    const [profilePermissions, userPermissions] = await Promise.all([
+      this.getProfilePermission(profileId),
+      this.getUserPermission(userId)
+    ]);
+    // Merge and deduplicate if needed
+    return [...profilePermissions, ...userPermissions];
+  }
+
+  // Get all profile-based permissions
+  async getProfilePermission(profileId: string) {
+    const permissions: any[] = [];
+
+    // Menus
+    const menuAccess = await ProfileMenuAccess.findAll({
+      where: { profile_id: profileId, is_enabled: true },
+      include: [{ model: Menu, as: "menu" }]
+    });
+    menuAccess.forEach(ma => {
+      const maWithMenu = ma as any;
+      if (maWithMenu.menu) {
+        permissions.push({
+          type: "menu",
+          name: maWithMenu.menu.menu_name,
+          desc: maWithMenu.menu.menu_desc,
+          is_enabled: maWithMenu.is_enabled
+        });
+      }
+    });
+
+    // Modules
+    const moduleAccess = await ProfileModuleAccess.findAll({
+      where: { profile_id: profileId, is_enabled: true },
+      include: [{ model: MenuModule, as: "menu_module" }]
+    });
+    moduleAccess.forEach(mo => {
+      const moWithModule = mo as any;
+      if (moWithModule.menu_module) {
+        permissions.push({
+          type: "module",
+          name: moWithModule.menu_module.module_name,
+          desc: moWithModule.menu_module.module_desc,
+          is_enabled: moWithModule.is_enabled
+        });
+      }
+    });
+
+    // Permissions
+    const permissionAccess = await ProfilePermissionAccess.findAll({
+      where: { profile_id: profileId, is_enabled: true },
+      include: [{ model: ModulePermission, as: "module_permission" }]
+    });
+    permissionAccess.forEach(pa => {
+      const paWithPerm = pa as any;
+      if (paWithPerm.module_permission) {
+        permissions.push({
+          type: "permission",
+          permission_id: paWithPerm.module_permission_id,
+          name: paWithPerm.module_permission.permission_name,
+          desc: paWithPerm.module_permission.permission_desc,
+          is_enabled: paWithPerm.is_enabled
+        });
+      }
+    });
+
+    return permissions;
+  }
+
+  // Get all user-based permissions
+  async getUserPermission(userId: string) {
+    const permissions: any[] = [];
+
+    // Menus
+    const menuAccess = await UserMenuAccess.findAll({
+      where: { user_id: userId, is_enabled: true },
+      include: [{ model: Menu, as: "menu" }]
+    });
+    menuAccess.forEach(ma => {
+      const maWithMenu = ma as any;
+      if (maWithMenu.menu) {
+        permissions.push({
+          type: "menu",
+          name: maWithMenu.menu.menu_name,
+          desc: maWithMenu.menu.menu_desc,
+          is_enabled: maWithMenu.is_enabled
+        });
+      }
+    });
+
+    // Modules
+    const moduleAccess = await UserModuleAccess.findAll({
+      where: { user_id: userId, is_enabled: true },
+      include: [{ model: MenuModule, as: "menu_module" }]
+    });
+    moduleAccess.forEach(mo => {
+      const moWithModule = mo as any;
+      if (moWithModule.menu_module) {
+        permissions.push({
+          type: "module",
+          name: moWithModule.menu_module.module_name,
+          desc: moWithModule.menu_module.module_desc,
+          is_enabled: moWithModule.is_enabled
+        });
+      }
+    });
+
+    // Permissions
+    const permissionAccess = await UserPermissionAccess.findAll({
+      where: { user_id: userId, is_enabled: true },
+      include: [{ model: ModulePermission, as: "module_permission" }]
+    });
+    permissionAccess.forEach(pa => {
+      const paWithPerm = pa as any;
+      if (paWithPerm.module_permission) {
+        permissions.push({
+          type: "permission",
+          permission_id: paWithPerm.module_permission_id,
+          name: paWithPerm.module_permission.permission_name,
+          desc: paWithPerm.module_permission.permission_desc,
+          is_enabled: paWithPerm.is_enabled
+        });
+      }
+    });
+
+    return permissions;
+  }
+
 
   /**
    * Retrieves a list of all profiles from the `Profile` model.

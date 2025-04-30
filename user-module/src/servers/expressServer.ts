@@ -1,8 +1,8 @@
 import express, { Express } from "express";
 import cors, { CorsOptions } from "cors";
-import routes from "./routes";
-import requestLogger from "./middlewares/requestLogger";
-import { rateLimiter } from "./utils/rateLimiter";
+import routes from "../routes";
+import requestLogger from "../middlewares/requestLogger";
+import { rateLimiter } from "../utils/rateLimiter";
 
 export const initExpressServer = (): { app: Express } => {
   const app: Express = express();
