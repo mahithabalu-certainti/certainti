@@ -91,7 +91,7 @@ const ResourceForm: React.FC = () => {
   const { data: resource } = useResourceDetail(
     location?.state?.resource?.rid || resourceRId,
     location?.state?.accountDetails?.data?.accountById?.r_number ||
-      accountNumber
+    accountNumber
   );
 
   useEffect(() => {
@@ -195,8 +195,8 @@ const ResourceForm: React.FC = () => {
       if (state?.skill) {
         successToast(
           isEditView
-            ? 'Resource skill updated successfully'
-            : 'Resource skill created successfully'
+            ? 'Resource skill details updated successfully'
+            : 'Resource skill details added successfully'
         );
       }
       if (!state.skill && !state.cost) {
@@ -381,21 +381,21 @@ const ResourceForm: React.FC = () => {
           loading={allCountries.isLoading}
           values={
             isEditView &&
-            !state?.cost &&
-            !state?.skill &&
-            (resource?.data?.resourceDetails as unknown as Record<
-              string,
-              string | number | boolean | string[] | null
-            >)
+              !state?.cost &&
+              !state?.skill &&
+              (resource?.data?.resourceDetails as unknown as Record<
+                string,
+                string | number | boolean | string[] | null
+              >)
               ? (resource?.data?.resourceDetails as unknown as Record<
+                string,
+                string | number | boolean | string[] | null
+              >)
+              : state?.cost || state?.skill
+                ? (formValues as unknown as Record<
                   string,
                   string | number | boolean | string[] | null
                 >)
-              : state?.cost || state?.skill
-                ? (formValues as unknown as Record<
-                    string,
-                    string | number | boolean | string[] | null
-                  >)
                 : undefined
           }
           // values={
