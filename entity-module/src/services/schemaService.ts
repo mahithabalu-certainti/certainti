@@ -407,8 +407,9 @@ class SchemaService {
 
       const Resource = Resources.initialize(sequelize, schemaName);
 
-      const startDate = moment(resourceData.effective_from_date, "MM/DD/YYYY");
-      const endDate = moment(resourceData.effective_end_date, "MM/DD/YYYY");
+      // Parse dates and set to UTC midnight to avoid timezone issues
+      const startDate = moment.utc(resourceData.effective_from_date, "MM/DD/YYYY").startOf('day');
+      const endDate = moment.utc(resourceData.effective_end_date, "MM/DD/YYYY").startOf('day');
 
       const existingResourceData = await Resource.findOne({
         where: {

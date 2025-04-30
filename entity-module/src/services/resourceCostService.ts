@@ -841,30 +841,6 @@ class ResourceCostService {
   }
 
   /**
-   * Determines the appropriate sort parameters for resource cost queries.
-   * Validates the sort column and ensures the sort order is either ASC or DESC.
-   * Falls back to default values if invalid parameters are provided.
-   *
-   * @param sortBy - Field to sort results by
-   * @param sortOrder - Direction to sort (ASC or DESC)
-   * @returns Tuple containing validated sort column and order
-   */
-  getSortParameters(sortBy: string, sortOrder: string): [string, string] {
-    const validSortColumns = [
-      "r_number",
-      "resource_rid",
-      "effective_date",
-      "end_date",
-    ];
-    if (!validSortColumns.includes(sortBy)) {
-      sortBy = "created_datetime";
-    }
-
-    sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
-    return [sortBy, sortOrder];
-  }
-
-  /**
    * Creates a standardized error response object for service errors.
    *
    * @param err - Error object that was caught
