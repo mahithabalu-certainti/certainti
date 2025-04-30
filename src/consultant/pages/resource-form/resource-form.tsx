@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { useQueryClient } from '@tanstack/react-query';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { createresourceIcon, editIcon } from '../../../assets';
@@ -42,7 +43,7 @@ enum FormSection {
 const ResourceForm: React.FC = () => {
   // Refs
   const formRef = React.useRef<HTMLFormElement>(null);
-
+  const queryClient = useQueryClient();
   // State
   const [currentCountry, setCurrentCountry] = useState({
     country: '',
@@ -258,7 +259,11 @@ const ResourceForm: React.FC = () => {
             account_number: accountData?.r_number,
           }
         );
-        updateResource.mutate(updatedData as any);
+        updateResource.mutate(updatedData as any, {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['resourceDetail'] });
+          },
+        });
       } else {
         const finaldata = transformPayloadforCreateResource({
           account_number: accountData?.r_number,
