@@ -19,7 +19,7 @@ const StyledButton = styled(Button)<{ variantType: 'filled' | 'outlined' }>(
   ({ variantType, theme }) => ({
     backgroundColor:
       variantType === 'filled' ? theme.palette.secondary.main : 'transparent',
-    height: '35px',
+    height: '32px',
     color: variantType === 'filled' ? '#fff' : '#64707D',
     border: variantType === 'outlined' ? `1px solid #CBD6E2` : 'none',
     textTransform: 'none',
@@ -101,6 +101,8 @@ const ActionImportDropdown: React.FC<ImportDropdownItemProps> = ({
             }}
             sx={{
               minWidth: '130px',
+              fontSize: '14px',
+              color:'#2D3E4F',
               borderBottom:
                 index !== actions.length - 1 ? '1px solid #CBD6E2' : 'none',
             }}

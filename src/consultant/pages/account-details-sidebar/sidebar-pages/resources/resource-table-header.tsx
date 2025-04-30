@@ -1,16 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Box } from '@mui/material';
+import { SxProps } from '@mui/material';
 import React from 'react';
-import { leftArrowIcon, resourceFilterIcon } from '../../../../../assets';
-import { Image } from '../../../../../components';
+import { leftArrowIcon } from '../../../../../assets';
 import TextButton from '../../../../../components/button/text-button';
-import Filter from '../../components/filter/filter';
-import {
-  costFilterFields,
-  resourceFilterFields,
-  skillFilterFields,
-} from './utils';
-
+import { Theme } from '@emotion/react';
 interface ResourceTableHeaderProps {
   filterVisibility: boolean;
   title: string;
@@ -19,6 +12,7 @@ interface ResourceTableHeaderProps {
     label: string;
     variant: 'text' | 'outlined' | 'contained';
     onClick: () => void;
+    sx?: SxProps<Theme>;
   }[];
   toggleViewMode?: () => void;
   showBackArrow?: boolean;
@@ -37,24 +31,17 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
   toggleViewMode,
   showBackArrow = false,
   onBackClick,
-  handleFilter,
-  setAppliedFilters,
   value,
-  showFilter,
-  filterVisibility,
   resourceNumber,
 }) => {
-  const getFilterFields = () => {
-    if (!value) return resourceFilterFields;
-    return value === 'cost' ? costFilterFields : skillFilterFields;
-  };
+
   return (
-    <div className='mr-2 border-t border-[1px] border-b-0 border-[#CBD6E2] rounded-tl-[2px] rounded-tr-[2px]'>
-      <div className='flex items-center justify-between p-4'>
+    <div className='border-t border-[1px] border-b-0 border-[#CBD6E2] rounded-tl-[2px] h-[50px] rounded-tr-[2px]'>
+      <div className='flex items-center justify-between h-full px-4'>
         <div className='flex items-center gap-2'>
           {showBackArrow && (
             <div className='cursor-pointer w-[24px] h-[24px] flex justify-center items-center -ml-2' onClick={onBackClick}>
-              <img src={leftArrowIcon} className='h-[16px]' alt='leftArrowIcon' />
+              <img src={leftArrowIcon} className='h-[14px]' alt='leftArrowIcon' />
             </div>
             //   <button
             //     onClick={onBackClick}
@@ -75,26 +62,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
           </div>
         </div>
 
-        <div className='flex gap-2'>
-          <Box className='relative'>
-            {filterVisibility && (
-              <Box
-                onClick={handleFilter}
-                className='h-[35px] w-[38px] flex items-center justify-center border border-[#CBD6E2] cursor-pointer'
-              >
-                <Image src={resourceFilterIcon} />
-              </Box>
-            )}
-            {showFilter && value !== 'details' && (
-              <Box className='absolute right-0 z-50'>
-                <Filter
-                  filterMenu={getFilterFields()}
-                  setAppliedFilters={setAppliedFilters}
-                  handleFilter={handleFilter}
-                />
-              </Box>
-            )}
-          </Box>
+        <div className='flex items-center gap-2'>
           <div className='flex gap-2'>
             {headerButtons?.map((button, index) => (
               <TextButton
@@ -107,6 +75,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
                     : button.onClick
                 }
                 aria-label={button.label}
+                sx={button.sx}
               />
             ))}
           </div>

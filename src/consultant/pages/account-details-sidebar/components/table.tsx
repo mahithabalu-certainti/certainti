@@ -17,7 +17,7 @@ import {
   Typography,
 } from '@mui/material';
 import React, { useState } from 'react';
-import { arrowDownIcon, arrowUpIcon } from '../../../../assets';
+import { actionIcon, arrowDownIcon, arrowUpIcon } from '../../../../assets';
 import { TablePagination } from '../../../../components/table';
 
 interface TableColumn {
@@ -263,13 +263,27 @@ const DataTable: React.FC<DataTableProps> = ({
   // }
 
   return (
-    <div className='border border-gray-300'>
-      <TableContainer component={Paper}>
+    <Paper sx={{ boxShadow: 'none', border: '1px solid #CBD6E2', borderRadius: '0px' }}>
+      <TableContainer sx={{ overflowX:'auto', borderBottom: '1px solid #CBD6E2' }}>
         <Table>
-          <TableHead
-            className='bg-gray-50'
-            sx={{
-              '& .MuiTableSortLabel-root': {
+          <TableHead 
+          className='bg-gray-50'
+          sx={{
+            '& .MuiTableCell-root': {
+                fontWeight: 500,
+                fontSize: '14px',
+                lineHeight: '21px',
+                color: '#2A2A2A',
+                padding: '0px',
+                pl: 1,
+                minHeight: '50px',
+                maxHeight: '50px',
+                height: '50px',
+              },
+            '& .MuiTableCell-root:last-child': {
+                borderRight: 'none',
+              },
+            '& .MuiTableSortLabel-root': {
                 '&:hover': {
                   color: 'inherit',
                   cursor: 'auto',
@@ -283,7 +297,11 @@ const DataTable: React.FC<DataTableProps> = ({
                   key={column.id}
                   className='font-bold'
                   align={column.align}
-                  style={{ width: column.width }}
+                  sx={{ 
+                    width: column.width || 120,
+                    maxWidth: column.width || 120,
+                    minWidth: column.width || 120,
+                  }}
                 >
                   {sortable && column.sortable !== false ? (
                     <TableSortLabel
@@ -312,11 +330,28 @@ const DataTable: React.FC<DataTableProps> = ({
                 </TableCell>
               ))}
               {actionMenuItems.length > 0 && (
-                <TableCell className='font-bold'>Actions</TableCell>
+                <TableCell sx={{pl: '22px !important'}}>Action</TableCell>
               )}
             </TableRow>
           </TableHead>
-          <TableBody>
+          <TableBody
+           sx={{
+            '& .MuiTableCell-root': {
+              fontWeight: 300,
+              fontSize: '14px',
+              lineHeight: '21px',
+              color: '#425A76',
+              padding: '0px',
+              pl: 1,
+              minHeight: '42px',
+              maxHeight: '42px',
+              height: '42px',
+              },
+              '& .MuiTableCell-root:last-child': {
+                borderRight: 'none',
+              },
+            }}
+          >
             {data.length > 0 ? (
               data.map((row) => (
                 <TableRow
@@ -331,6 +366,14 @@ const DataTable: React.FC<DataTableProps> = ({
                     <TableCell
                       key={`${row[rowIdentifier]}-${column.id}`}
                       align={column.align}
+                      sx={{ 
+                        width: column.width || 120,
+                        maxWidth: column.width || 120,
+                        minWidth: column.width || 120,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
                     >
                       {column.render
                         ? column.render(row[column.id], row)
@@ -338,18 +381,21 @@ const DataTable: React.FC<DataTableProps> = ({
                     </TableCell>
                   ))}
                   {actionMenuItems.length > 0 && (
-                    <TableCell>
-                      <IconButton
-                        size='small'
-                        onClick={(e) => handleActionMenuOpen(e, row)}
-                        aria-controls={isMenuOpen ? 'action-menu' : undefined}
-                        aria-haspopup='true'
-                        aria-expanded={isMenuOpen ? 'true' : undefined}
-                      >
-                        <span role='img' aria-label='more'>
-                          ⋮
-                        </span>
-                      </IconButton>
+                    <TableCell sx={{ whiteSpace: 'nowrap', width: '100px', minWidth: '100px', maxWidth: '100px' }}>
+                      <div className='inline-flex justify-center items-center w-[80px]'>
+                        <IconButton
+                          size='small'
+                          onClick={(e) => handleActionMenuOpen(e, row)}
+                          aria-controls={isMenuOpen ? 'action-menu' : undefined}
+                          disableRipple
+                          aria-haspopup='true'
+                          aria-expanded={isMenuOpen ? 'true' : undefined}
+                        >
+                          <div className={`${isMenuOpen ? 'bg-[#EAF0F5]' : ''} border border-[#CBD6E2] rounded-[3px] w-5 h-5 flex items-center justify-center`}>
+                            <img src={actionIcon} alt='menu-icon' className='h-[13px]' />
+                          </div>
+                        </IconButton>
+                      </div>
                     </TableCell>
                   )}
                 </TableRow>
@@ -406,14 +452,25 @@ const DataTable: React.FC<DataTableProps> = ({
             vertical: 'top',
             horizontal: 'right',
           }}
+          PaperProps={{
+            elevation: 0,
+            sx: {
+              boxShadow: 'none',
+              border: '1px solid #CBD6E2',
+              borderRadius: '6px',
+            },
+          }}
         >
           {actionMenuItems.map((item) => (
             <MenuItem
               sx={{
                 display: 'flex',
                 borderBottom: '1px solid',
-                borderColor: 'grey.300',
-                backgroundColor: 'grey.100',
+                borderColor: '#CBD6E2',
+                backgroundColor: '#fff',
+                '&:last-child': {
+                  borderBottom: 'none',
+                }
               }}
               key={item.label}
               onClick={() => {
@@ -422,12 +479,22 @@ const DataTable: React.FC<DataTableProps> = ({
               }}
             >
               {item.icon && <div className='mr-2'>{item.icon}</div>}
-              <ListItemText>{item.label}</ListItemText>
+              <ListItemText
+                sx={{
+                  span: {
+                    fontSize: '14px',
+                    fontWeight: 400,
+                    color: '#2D3E4F',
+                  },
+                }}
+              >
+                {item.label}
+              </ListItemText>
             </MenuItem>
           ))}
         </Menu>
       )}
-    </div>
+    </Paper>
   );
 };
 

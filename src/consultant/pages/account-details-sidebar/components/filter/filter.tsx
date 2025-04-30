@@ -301,8 +301,7 @@ const Filter: React.FC<FilterComponentProps> = ({
   };
 
   return (
-    // absolute top-107 right-50 z-50
-    <Box className='w-[248px] max-h-[568px] overflow-y-auto bg-white shadow-lg border border-[#CBD6E2] rounded'>
+    <Box className='w-[248px] max-h-[450px] bg-white shadow-lg border border-[#CBD6E2] rounded flex flex-col'>
       <Box className='flex justify-between items-center p-2 border-b border-[#CBD6E2]'>
         <Box>Filters</Box>
         <Button
@@ -319,9 +318,10 @@ const Filter: React.FC<FilterComponentProps> = ({
           }}
         />
       </Box>
+      <Box className='flex-1 overflow-y-auto'>
       {filterMenu &&
         filterMenu.map((item, index) => (
-          <>
+          <React.Fragment key={index}>
             <Box
               key={index}
               className='flex gap-2 justify-between items-center p-2 border-b border-[#CBD6E2] cursor-pointer'
@@ -339,9 +339,10 @@ const Filter: React.FC<FilterComponentProps> = ({
               </Box>
             </Box>
             {renderFilterControls(item)}
-          </>
+          </React.Fragment>
         ))}
-      <Box className='flex  justify-end items-center gap-2 p-2'>
+        </Box>
+      <Box className='flex justify-end items-center gap-2 p-2 border-t border-[#CBD6E2]'>
         <Button
           onClick={handleFilter}
           label='Cancel'
