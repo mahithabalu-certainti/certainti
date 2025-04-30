@@ -652,7 +652,7 @@ class SchemaService {
 
       if (resource) {
         const [country]: any[] = await mainDbSequelize.query(
-          `SELECT country_code FROM country WHERE rid = :rid`,
+          `SELECT country_code,country_name FROM country WHERE rid = :rid`,
           {
             replacements: { rid: resource.country },
             type: "SELECT",
@@ -675,6 +675,8 @@ class SchemaService {
 
         (resource as any).dataValues.country_code =
           country?.country_code || null;
+          (resource as any).dataValues.country_name =
+          country?.country_name || null;
         (resource as any).dataValues.state_name = state?.state_name || null;
         (resource as any).dataValues.city_name = city?.city_name || null;
         //Added to format date as MM/DD/YYYY
