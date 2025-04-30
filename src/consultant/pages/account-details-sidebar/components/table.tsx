@@ -330,7 +330,7 @@ const DataTable: React.FC<DataTableProps> = ({
                 </TableCell>
               ))}
               {actionMenuItems.length > 0 && (
-                <TableCell sx={{pl: '22px !important'}}>Actions</TableCell>
+                <TableCell sx={{pl: '22px !important'}}>Action</TableCell>
               )}
             </TableRow>
           </TableHead>
