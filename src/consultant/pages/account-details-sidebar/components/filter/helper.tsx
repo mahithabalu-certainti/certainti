@@ -310,14 +310,7 @@ export const DateFilterControl: React.FC<{
     const today = new Date();
     const sixYearsAgo = new Date();
     sixYearsAgo.setFullYear(today.getFullYear() - 6);
-    const disableInput =
-      option === 'Is Empty' ||
-      option === 'Is Not Empty' ||
-      option === 'This Month' ||
-      option === 'This Week' ||
-      option === 'This Quarter' ||
-      option === 'Last 7 Days' ||
-      option === 'Last 30 Days';
+    const disableInput = option === 'Is Empty';
     return (
       <Box sx={{ p: 1, mt: 1, borderBottom: '1px solid #CBD6E2' }}>
         <FormControl
