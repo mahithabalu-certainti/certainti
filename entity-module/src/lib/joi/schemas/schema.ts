@@ -5,26 +5,24 @@ const uuidRegex =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const isNotFutureDate = (value: string, helpers: Joi.CustomHelpers): any => {
-  // Parse the date using moment with strict parsing
-  const startDate = moment(value, "MM/DD/YYYY", true);
+  if (!value) return value;
 
-  // Check if the date format is valid
-  if (!startDate.isValid()) {
+  // Parse the date in MM/DD/YYYY format
+  const [month, day, year] = value.split("/").map(Number);
+
+  // Create date objects with time set to noon UTC
+  const inputDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+  const currentDate = new Date();
+
+  // Check if the date is valid
+  if (isNaN(inputDate.getTime())) {
     return helpers.error("date.invalidFormat", {
-      message: "Invalid effective from date.",
+      message: "Invalid date format. Please use MM/DD/YYYY.",
     });
   }
 
-  // Split the date string and convert to numbers
-  const [month, day, year] = value.split("/").map(Number);
-
-  // Create Date objects for comparison
-  const inputDate = new Date(year, month - 1, day);
-  const currentDate = new Date();
-
-  // Normalize both dates to start of day for accurate comparison
-  inputDate.setHours(0, 0, 0, 0);
-  currentDate.setHours(0, 0, 0, 0);
+  // Normalize current date to start of day UTC
+  currentDate.setUTCHours(12, 0, 0, 0);
 
   // Check if date is in the future
   if (inputDate > currentDate) {
@@ -37,11 +35,18 @@ const isNotFutureDate = (value: string, helpers: Joi.CustomHelpers): any => {
 };
 
 const isValidDate = (value: string, helpers: Joi.CustomHelpers): any => {
-  const startDate = moment(value, "MM/DD/YYYY", true);
+  if (!value) return value;
 
-  if (!startDate.isValid()) {
+  // Parse the date in MM/DD/YYYY format
+  const [month, day, year] = value.split("/").map(Number);
+
+  // Create a date object with time set to noon UTC
+  const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+
+  // Check if the date is valid
+  if (isNaN(date.getTime())) {
     return helpers.error("date.invalidFormat", {
-      message: "Invalid date.",
+      message: "Invalid date format. Please use MM/DD/YYYY.",
     });
   }
 
@@ -59,24 +64,34 @@ const isEndDateAfterStartDate = (
     return value;
   }
 
-  // Validate end date format using moment
-  const endDate = moment(value, "MM/DD/YYYY", true);
-  if (!endDate.isValid()) {
+  // Parse dates in MM/DD/YYYY format
+  const [endMonth, endDay, endYear] = value.split("/").map(Number);
+  const [startMonth, startDay, startYear] = context.effective_from_date
+    .split("/")
+    .map(Number);
+
+  // Create date objects with time set to noon UTC to avoid timezone issues
+  const endDate = new Date(Date.UTC(endYear, endMonth - 1, endDay, 12, 0, 0));
+  const startDate = new Date(
+    Date.UTC(startYear, startMonth - 1, startDay, 12, 0, 0)
+  );
+
+  // Check if the end date is valid
+  if (isNaN(endDate.getTime())) {
     return helpers.error("date.invalidFormat", {
       message: "Invalid effective end date.",
     });
   }
 
-  // Validate start date format using moment
-  const startDate = moment(context.effective_from_date, "MM/DD/YYYY", true);
-  if (!startDate.isValid()) {
+  // Check if the start date is valid
+  if (isNaN(startDate.getTime())) {
     return helpers.error("date.invalidFormat", {
       message: "Invalid effective start date.",
     });
   }
 
-  // Compare dates using moment for more reliable date comparison
-  if (!endDate.isAfter(startDate)) {
+  // Compare dates
+  if (endDate <= startDate) {
     return helpers.error("any.invalid", {
       message: "Effective end date must be after the start date.",
     });
@@ -276,7 +291,11 @@ const listResourceSchema = Joi.object({
   search: Joi.string().max(255).optional(),
   filters: Joi.string().default("{}"),
   sortBy: Joi.string().default("created_datetime").optional().allow(""),
-  sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional().allow(""),
+  sortOrder: Joi.string()
+    .valid("ASC", "DESC")
+    .default("DESC")
+    .optional()
+    .allow(""),
 });
 
 const createResourceSkillSchema = Joi.object({
@@ -415,7 +434,7 @@ const updateResourceCostSchema = Joi.object({
       "hourly"
     )
     .required(),
-    cost: Joi.number()
+  cost: Joi.number()
     .precision(2)
     .min(0)
     .max(9999999999.99)
@@ -424,7 +443,7 @@ const updateResourceCostSchema = Joi.object({
       "number.base": "Cost must be a valid number",
       "number.min": "Cost cannot be negative",
       "number.max": "Cost cannot exceed 9,999,999,999.99",
-      "number.precision": "Cost can only have up to 2 decimal places"
+      "number.precision": "Cost can only have up to 2 decimal places",
     }),
   status: Joi.string().max(255).default("active").optional(),
   modified_datetime: Joi.date()
@@ -516,7 +535,7 @@ const resourceCostSchema = Joi.object({
       "number.base": "Cost must be a valid number",
       "number.min": "Cost cannot be negative",
       "number.max": "Cost cannot exceed 9,999,999,999.99",
-      "number.precision": "Cost can only have up to 2 decimal places"
+      "number.precision": "Cost can only have up to 2 decimal places",
     }),
   fiscalYear: Joi.number().optional(),
   currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
