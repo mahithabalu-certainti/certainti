@@ -194,8 +194,9 @@ export const ResourceFormData = (
           }),
           createTextField('skill_name', 'Skill Name', {
             required: true,
-            regex: REGEX_PATTERNS.LETTERS_3_TO_100,
-            regexErrorMessage: '3 to 100 letters only',
+            regex: REGEX_PATTERNS.LETTERS_1_TO_100,
+            regexErrorMessage:
+              'Please enter a valid Skill Name using letters, numbers, or special characters, up to 100 characters.',
             placeholder: 'Enter Skill Name',
           }),
           createSelectField('skill_level', 'Skill Level', {
@@ -273,6 +274,7 @@ export const ResourceFormData = (
             placeholder: 'Enter Any Additional Information...',
             regexErrorMessage: 'Maximum 1000 characters allowed',
             regex: RESOURCE_REGEX.DESCRIPTION,
+            disabled: disableCostAndSkill,
           }),
         ],
       },

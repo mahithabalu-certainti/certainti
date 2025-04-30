@@ -122,6 +122,17 @@ const ResourceForm: React.FC = () => {
     }
   }, [state, costDetails, resource]);
 
+  const countryId = resource?.data?.resourceDetails.country;
+  const stateId = resource?.data?.resourceDetails.state;
+  useEffect(() => {
+    if (countryId) {
+      setCurrentCountry((prev) => ({ ...prev, country: countryId }));
+    }
+    if (stateId) {
+      setCurrentCountry((prev) => ({ ...prev, state: stateId }));
+    }
+  }, [countryId, stateId]);
+
   // const resourceValues = resource?.data?.resourceDetails;
   const userDetails = JSON.parse(localStorage.getItem('auth') || '{}');
   const allCountries = useGetAllCountries();
