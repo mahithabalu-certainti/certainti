@@ -5,7 +5,7 @@ export interface ResourcesAttributes {
   eid?: string;
   r_number?: string;
   resource_ref_id: string;
-  resource_type: "FullTime" | "Contract" | "Non-Labor";
+  resource_type: "Full-time" | "SubCon" | "Non-Labor";
   account_rid: string;
   resource_fullname?: string | null;
   resource_orgname?: string | null;
@@ -38,7 +38,7 @@ export class Resources
   public eid?: string;
   public r_number?: string;
   public resource_ref_id!: string;
-  public resource_type!: "FullTime" | "Contract" | "Non-Labor";
+  public resource_type!: "Full-time" | "SubCon" | "Non-Labor";
   public fiscal_year!: number;
   public resource_fullname?: string | null;
   public resource_orgname?: string;
@@ -87,7 +87,7 @@ export class Resources
           unique: true,
         },
         resource_type: {
-          type: DataTypes.ENUM("FullTime", "Contract", "Non-Labor"),
+          type: DataTypes.ENUM("Full-time", "SubCon", "Non-Labor"),
           allowNull: false,
         },
         resource_fullname: {
@@ -189,6 +189,16 @@ export class Resources
         tableName: "resources",
         timestamps: false,
         underscored: true,
+        validate: {
+          bothDatesOrNeither() {
+            const hasEffectiveDate = this.resource_startdate !== null && this.resource_startdate !== undefined;
+            const hasEndDate = this.resource_enddate !== null && this.resource_enddate !== undefined;
+            
+            if (hasEffectiveDate !== hasEndDate) {
+              throw new Error("Both resource start date and end date must be provided together, or neither should be provided");
+            }
+          }
+        },
         hooks: {
           beforeUpdate: (resources) => {
             resources.setDataValue("created_datetime", new Date());

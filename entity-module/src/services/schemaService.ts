@@ -345,19 +345,44 @@ class SchemaService {
     accountNumber: string
   ): Promise<boolean> {
     try {
+      // Validate inputs
+      if (!resourceId || !accountNumber) {
+        throw new Error('Resource ID and account number are required');
+      }
+
       const schemaName = `platform_v2_${accountNumber}`;
       const sequelize = await initOrgSequelize();
 
+      // Verify schema exists before querying
+      const schemaExists = await sequelize.query(
+        `SELECT schema_name FROM information_schema.schemata WHERE schema_name = :schemaName`,
+        {
+          replacements: { schemaName },
+          type: "SELECT"
+        }
+      );
+
+      if (!schemaExists || (schemaExists as any[]).length === 0) {
+        throw new Error(`Schema ${schemaName} does not exist`);
+      }
+
       const Resource = Resources.initialize(sequelize, schemaName);
 
-      const resource = await Resource.findOne({
+      // Add transaction to ensure data consistency
+      const resource = await sequelize.transaction(async (t) => {
+        return await Resource.findOne({
         where: {
           rid: resourceId,
         },
+          transaction: t,
+          lock: true
+        });
       });
 
       return resource !== null;
     } catch (err) {
+      // Log error for debugging
+      console.error('Resource existence check failed:', err);
       throw new Error(
         "Error checking if resource exists: " + (err as Error).message
       );
@@ -382,8 +407,9 @@ class SchemaService {
 
       const Resource = Resources.initialize(sequelize, schemaName);
 
-      const startDate = moment(resourceData.effective_from_date, "MM/DD/YYYY");
-      const endDate = moment(resourceData.effective_end_date, "MM/DD/YYYY");
+      // Parse dates and set to UTC midnight to avoid timezone issues
+      const startDate = moment.utc(resourceData.effective_from_date, "MM/DD/YYYY").startOf('day');
+      const endDate = moment.utc(resourceData.effective_end_date, "MM/DD/YYYY").startOf('day');
 
       const existingResourceData = await Resource.findOne({
         where: {
@@ -652,7 +678,7 @@ class SchemaService {
 
       if (resource) {
         const [country]: any[] = await mainDbSequelize.query(
-          `SELECT country_code FROM country WHERE rid = :rid`,
+          `SELECT country_code,country_name FROM country WHERE rid = :rid`,
           {
             replacements: { rid: resource.country },
             type: "SELECT",
@@ -673,8 +699,8 @@ class SchemaService {
           }
         );
 
-        (resource as any).dataValues.country_code =
-          country?.country_code || null;
+        (resource as any).dataValues.country_code = country?.country_code || null;
+        (resource as any).dataValues.country_name = country?.country_name || null;
         (resource as any).dataValues.state_name = state?.state_name || null;
         (resource as any).dataValues.city_name = city?.city_name || null;
         //Added to format date as MM/DD/YYYY
