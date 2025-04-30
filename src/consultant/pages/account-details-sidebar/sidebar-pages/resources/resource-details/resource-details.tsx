@@ -3,6 +3,7 @@ import { CircularProgress, Typography } from '@mui/material';
 import React from 'react';
 import { useResourceDetail } from '../../../../../services/resource-details';
 import { CreateSectionData } from '../../../../../types';
+import { formatDateToMMDDYYYY } from '../utils';
 
 interface ResourceDetailsProps {
   resourceDetails: {
@@ -15,19 +16,6 @@ interface DetailItem {
   label: string;
   value: React.ReactNode;
 }
-
-const formatDateToMMDDYYYY = (dateString?: string | null): string => {
-  if (!dateString) return '';
-
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return '';
-
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-
-  return `${month}/${day}/${year}`;
-};
 
 const formatKey = (key: string): string => {
   return key

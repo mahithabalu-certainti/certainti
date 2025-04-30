@@ -21,6 +21,7 @@ import { RESOURCESKILL } from "../../../../../../routes";
 import ActionButton from '../../../../account-list/table/action-button';
 import { TablePagination } from '../../../../../../components/table';
 import { arrowDownIcon, arrowUpIcon } from '../../../../../../assets';
+import { formatDateToMMDDYYYY } from '../utils';
 
 const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, appliedFilters, accountDetails, resourceRid }) => {
   const navigate = useNavigate();
@@ -78,6 +79,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
 
   const renderRows = ({ resourceSkill }: RenderSkillRowProps) => {
     return resourceSkill?.map((skill, i) => {
+      const startDate = formatDateToMMDDYYYY(skill.startDate as string);
       return (
         <React.Fragment key={i}>
           <TableRow
@@ -85,14 +87,21 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
               '.MuiTableCell-root': {
                 fontWeight: 300,
                 color: '#425A76',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                maxWidth: '140px',
+              },
+              '& .MuiTableCell-root:last-child': {
+                borderRight: 'none',
               },
             }}
           >
             {/* <TableCell sx={{ minWidth: '200px' }}>{skill.resourceRole}</TableCell> */}
-            <TableCell sx={{ minWidth: '200px' }}>{skill.startDate}</TableCell>
-            <TableCell sx={{ minWidth: '200px' }}>{skill.skillName}</TableCell>
-            <TableCell sx={{ minWidth: '200px' }}>{skill.skillLevel}</TableCell>
-            <TableCell sx={{ minWidth: '250px' }}>{skill.yearsOfExperience}</TableCell>
+            <TableCell sx={{ minWidth: '120px' }}>{startDate}</TableCell>
+            <TableCell sx={{ minWidth: '140px' }}>{skill.skillName}</TableCell>
+            <TableCell sx={{ minWidth: '120px' }}>{skill.skillLevel}</TableCell>
+            <TableCell sx={{ minWidth: '160px' }}>{skill.yearsOfExperience}</TableCell>
             <TableCell sx={{ minWidth: '80px' }}>
               <ActionButton
                 onEdit={() => handleEdit(skill)}
@@ -170,8 +179,8 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
     };
 
   return (
-    <div className='border border-[#CBD6E2]'>
-      <Paper sx={{ overflowX: 'scroll', boxShadow: 'none', borderBottom: '1px solid #CBD6E2', borderRadius: '0px' }}>
+    <div>
+      <Paper sx={{ overflowX: 'auto', boxShadow: 'none', borderRadius: '0px' }}>
         <Table sx={{
           borderCollapse: 'collapse',
           '& .MuiTableCell-root': {
@@ -188,6 +197,9 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
               pl: 1,
               height: '50px',
             },
+            '& .MuiTableCell-root:last-child': {
+                borderRight: 'none',
+              },
             '& .MuiTableSortLabel-root': {
               '&:hover': {
                 color: 'inherit',
@@ -205,7 +217,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
                   Resource Role
                 </TableSortLabel>
               </TableCell> */}
-              <TableCell sx={{ minWidth: '200px' }}>
+              <TableCell sx={{ minWidth: '120px' }}>
                 <TableSortLabel
                   active={orderBy === 'start_date'}
                   direction={orderBy === 'start_date' ? order : 'asc'}
@@ -214,7 +226,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
                   Start Date
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ minWidth: '200px' }}>
+              <TableCell sx={{ minWidth: '140px' }}>
                 <TableSortLabel
                   active={orderBy === 'skill_name'}
                   direction={orderBy === 'skill_name' ? order : 'asc'}
@@ -223,7 +235,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
                   Skill Name
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ minWidth: '200px' }}>
+              <TableCell sx={{ minWidth: '120px' }}>
                 <TableSortLabel
                   active={orderBy === 'skill_level'}
                   direction={orderBy === 'skill_level' ? order : 'asc'}
@@ -232,7 +244,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
                   Skill Level
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ minWidth: '250px' }}>
+              <TableCell sx={{ minWidth: '160px' }}>
                 <TableSortLabel
                   active={orderBy === 'years_of_experience'}
                   direction={orderBy === 'years_of_experience' ? order : 'asc'}
