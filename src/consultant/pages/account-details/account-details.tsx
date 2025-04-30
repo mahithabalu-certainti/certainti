@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { accountDetailsIcon } from '../../../assets';
 import { PageHeader } from '../../../components';
+import { ACCOUNT } from '../../../routes';
 import { useAccountDetail } from '../../services/account-details/account-details-service';
 import {
   Activities,
@@ -24,9 +25,10 @@ import { transformAccountData } from './utils';
 
 export const AccountDetails = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const paramsData = location.state;
   const [accountDetails, setAccountDetails] = useState<any>(null);
-
+  const [accountDetailsForEdit, setAccountDetailsForEdit] = useState<any>(null);
   const {
     data,
     isLoading,
@@ -38,6 +40,7 @@ export const AccountDetails = () => {
   useEffect(() => {
     if (data?.data) {
       setAccountDetails(transformAccountData(data.data));
+      setAccountDetailsForEdit(data.data);
     }
   }, [data]);
 
@@ -53,7 +56,9 @@ export const AccountDetails = () => {
   ];
 
   const handleEditAccount = () => {
-    // Add your logic for edit an account
+    navigate(ACCOUNT + '/edit/' + data.data.accountById.rid, {
+      state: { accountDetailsForEdit },
+    });
   };
 
   const handleActionsClick = () => {
