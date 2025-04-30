@@ -70,7 +70,7 @@ export const ResourceFormData = (
             required: false,
             regex: RESOURCE_REGEX.FULL_NAME,
             regexErrorMessage:
-              '3 to 200 characters using letters, numbers, spaces, hyphens or apostrophes',
+              'Input must be 3-200 characters, and cannot be only numbers, special characters, or spaces.',
             placeholder: 'Enter Full Name',
             disabled: disableCostAndSkill,
           }),
@@ -83,7 +83,8 @@ export const ResourceFormData = (
           createTextField('resource_orgname', 'Resource Org Name', {
             required: false,
             regex: RESOURCE_REGEX.ORG_NAME,
-            regexErrorMessage: '4 to 100 characters',
+            regexErrorMessage:
+              'Input must be 3-100 characters, and cannot be only numbers, special characters, or spaces.',
             placeholder: 'Enter Organization Name',
             disabled: disableCostAndSkill,
           }),
@@ -106,7 +107,7 @@ export const ResourceFormData = (
             required: false,
             regex: RESOURCE_REGEX.ROLE,
             regexErrorMessage:
-              'Role must be 4-100 characters long and can include special characters and numbers',
+              'Input must be 4-100 characters, and cannot be only numbers, special characters, or spaces.',
             placeholder: 'Enter Resource Role',
             disabled: disableCostAndSkill,
           }),
@@ -236,7 +237,7 @@ export const ResourceFormData = (
             required: false,
             regex: RESOURCE_REGEX.DESIGNATION,
             regexErrorMessage:
-              'Designation must be 4-100 characters, including special characters and numbers.',
+              'Input must be 4-100 characters, and cannot be only numbers, special characters, or spaces.',
             placeholder: 'Enter Designation',
             disabled: disableCostAndSkill,
           }),

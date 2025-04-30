@@ -17,9 +17,9 @@ export const RESOURCE_STATUS_OPTIONS: SelectOption[] = [
 ];
 
 export const RESOURCE_TYPE_OPTIONS: SelectOption[] = [
-  { label: 'Full-Time', value: 'Full-Time' },
+  { label: 'Full-time', value: 'Full-time' },
   { label: 'SubCon', value: 'SubCon' },
-  { label: 'Non-Labour', value: 'Non-Labour' },
+  { label: 'Non-Labor', value: 'Non-Labor' },
 ];
 
 export const FREQUENCY_OPTIONS: SelectOption[] = [
@@ -47,7 +47,7 @@ interface RawResourceData {
   resource_startdate?: string;
   resource_enddate?: string;
   designation?: string;
-  total_years_oexperience?: string;
+  total_years_experience?: string;
   total_years_in_org?: string;
   resource_status?: string;
   comments?: string;
@@ -118,7 +118,7 @@ export function transformPayloadforUpdateResource(
       '',
     designation: rawData.designation || existingResource?.designation || '',
     total_years_experience: safeParseNumber(
-      rawData.total_years_oexperience,
+      rawData.total_years_experience,
       existingResource?.total_years_experience || 0
     ),
     total_years_in_org: safeParseNumber(
