@@ -116,7 +116,7 @@ export const TextFilterControlForCostAndSKill: React.FC<{
   onValueChange,
 }) => {
     const option = formatString(filterStates?.[fieldName]?.textCostAndSkill?.option);
-    const hideInput = option === 'Is Empty' || option === 'Is Not Empty';
+    const hideInput = option === 'Is Empty';
     return (
       <Box sx={{ p: 1, mt: 1, borderBottom: '1px solid #CBD6E2' }}>
         <FormControl
@@ -191,7 +191,7 @@ export const NumberFilterControl: React.FC<{
 }) => {
     const option = formatString(filterStates?.[fieldName]?.number?.option);
     const isBetween = option === 'Between';
-    const hideInput = option === 'Is Empty' || option === 'Is Not Empty';
+    const hideInput = option === 'Is Empty';
     return (
       <Box sx={{ p: 1, mt: 1, borderBottom: '1px solid #CBD6E2' }}>
         <FormControl
@@ -310,7 +310,14 @@ export const DateFilterControl: React.FC<{
     const today = new Date();
     const sixYearsAgo = new Date();
     sixYearsAgo.setFullYear(today.getFullYear() - 6);
-    const disableInput = option === 'Is Empty';
+    const disableInput =
+      option === 'Is Empty'
+    // option === 'Is Not Empty' ||
+    // option === 'This Month' ||
+    // option === 'This Week' ||
+    // option === 'This Quarter' ||
+    // option === 'Last 7 Days' ||
+    // option === 'Last 30 Days';
     return (
       <Box sx={{ p: 1, mt: 1, borderBottom: '1px solid #CBD6E2' }}>
         <FormControl
@@ -484,8 +491,8 @@ export const EnumFilterControl: React.FC<{
   onChange,
 }) => {
     const option = formatString(filterStates?.[fieldName]?.enum?.option);
-    const isMultiple = option === 'In' || option === 'Not In';
-    const hideInput = option === 'Is Empty' || option === 'Is Not Empty';
+    const isMultiple = option === 'In'
+    const hideInput = option === 'Is Empty';
 
     return (
       <Fragment>
@@ -579,7 +586,7 @@ export const formatFilterForApi = (
       const choosenOption = state.text.option;
       const value =
         formatString(choosenOption) === 'Is Empty' ||
-        formatString(choosenOption) === 'Is Not Empty'
+          formatString(choosenOption) === 'Is Not Empty'
           ? true
           : state.text.value;
       const trimmedValue = value?.toString().trim();
@@ -589,8 +596,9 @@ export const formatFilterForApi = (
     } else if (state.textCostAndSkill) {
       const choosenOption = state.textCostAndSkill.option;
       const value =
-        formatString(choosenOption) === 'Is Empty' ||
-        formatString(choosenOption) === 'Is Not Empty'
+        formatString(choosenOption) === 'Is Empty'
+          // ||
+          //   formatString(choosenOption) === 'Is Not Empty'
           ? true
           : state.textCostAndSkill.value;
       const trimmedValue = value?.toString().trim();
@@ -600,8 +608,8 @@ export const formatFilterForApi = (
     } else if (state.number) {
       const choosenOption = state.number.option;
       const boolOptions =
-        formatString(choosenOption) === 'Is Empty' ||
-        formatString(choosenOption) === 'Is Empty';
+        formatString(choosenOption) === 'Is Empty'
+      // || formatString(choosenOption) === 'Is Empty';
       const value = state.number.value;
       if (!boolOptions || value?.from || value?.to) {
         formattedFilters[fieldKey] = {
@@ -616,8 +624,8 @@ export const formatFilterForApi = (
     } else if (state.enum && state.enum.option) {
       const choosenOption = state.enum.option;
       const value =
-        formatString(choosenOption) === 'Is Empty' ||
-        formatString(choosenOption) === 'Is Not Empty'
+        formatString(choosenOption) === 'Is Empty'
+          // ||formatString(choosenOption) === 'Is Not Empty'
           ? true
           : state.enum.value;
       if (value && (Array.isArray(value) ? value.length > 0 : true)) {
@@ -629,13 +637,13 @@ export const formatFilterForApi = (
       const option = state.date.option;
       const value = state.date.value;
       const boolOptions =
-        formatString(option) === 'Is Empty' ||
-        formatString(option) === 'Is Not Empty' ||
-        formatString(option) === 'This Month' ||
-        formatString(option) === 'This Week' ||
-        formatString(option) === 'This Quarter' ||
-        formatString(option) === 'Last 7 Days' ||
-        formatString(option) === 'Last 30 Days';
+        formatString(option) === 'Is Empty'
+      // || formatString(option) === 'Is Not Empty' ||
+      // formatString(option) === 'This Month' ||
+      // formatString(option) === 'This Week' ||
+      // formatString(option) === 'This Quarter' ||
+      // formatString(option) === 'Last 7 Days' ||
+      // formatString(option) === 'Last 30 Days';
       if (value?.from || value?.to || boolOptions) {
         formattedFilters[fieldKey] = {
           [option]:

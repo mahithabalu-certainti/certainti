@@ -53,7 +53,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
   };
 
   const handleChangePage = (newPage: number) => {
-    setPage(newPage);
+    setPage(newPage + 1);
   };
 
   // handles page limit change
