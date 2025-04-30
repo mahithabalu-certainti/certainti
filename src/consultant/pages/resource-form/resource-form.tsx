@@ -42,7 +42,6 @@ enum FormSection {
 const ResourceForm: React.FC = () => {
   // Refs
   const formRef = React.useRef<HTMLFormElement>(null);
-
   // State
   const [currentCountry, setCurrentCountry] = useState({
     country: '',

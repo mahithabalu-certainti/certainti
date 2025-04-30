@@ -148,14 +148,14 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
       if (key === 'total_years_in_org' && !Array.isArray(value)) {
         return {
           label: 'Total Years in Organization',
-          value: formatDateToMMDDYYYY(value as string) || 'NA', // or handle nested objects differently
+          value: value || 'NA', // or handle nested objects differently
         };
       }
 
       if (key === 'total_years_experience' && !Array.isArray(value)) {
         return {
           label: 'Total Years of Experience',
-          value: formatDateToMMDDYYYY(value as string) || 'NA', // or handle nested objects differently
+          value: value || 'NA', // or handle nested objects differently
         };
       }
 
@@ -173,11 +173,12 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
         };
       }
 
-      const displayValue = value === null || value === '' || value === undefined
-      ? 'NA'
-      : customMappings?.[key]
-      ? customMappings[key](value)
-      : value;
+      const displayValue =
+        value === null || value === '' || value === undefined
+          ? 'NA'
+          : customMappings?.[key]
+            ? customMappings[key](value)
+            : value;
 
       return {
         label: formatKey(key),

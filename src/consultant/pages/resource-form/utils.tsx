@@ -17,9 +17,9 @@ export const RESOURCE_STATUS_OPTIONS: SelectOption[] = [
 ];
 
 export const RESOURCE_TYPE_OPTIONS: SelectOption[] = [
-  { label: 'Full-Time', value: 'Full-Time' },
+  { label: 'Full-time', value: 'Full-time' },
   { label: 'SubCon', value: 'SubCon' },
-  { label: 'Non-Labour', value: 'Non-Labour' },
+  { label: 'Non-Labor', value: 'Non-Labor' },
 ];
 
 export const FREQUENCY_OPTIONS: SelectOption[] = [
@@ -38,6 +38,7 @@ interface RawResourceData {
   resource_fullname?: string;
   resource_type?: string;
   resource_orgname?: string;
+  resource_role?: string;
   resource_lastname?: string;
   country?: string;
   state?: string;
@@ -47,7 +48,7 @@ interface RawResourceData {
   resource_startdate?: string;
   resource_enddate?: string;
   designation?: string;
-  total_years_oexperience?: string;
+  total_years_experience?: string;
   total_years_in_org?: string;
   resource_status?: string;
   comments?: string;
@@ -100,7 +101,7 @@ export function transformPayloadforUpdateResource(
       rawData.resource_fullname || existingResource?.resource_fullname || '',
     org_name:
       rawData.resource_orgname || existingResource?.resource_orgname || '',
-    role: existingResource?.resource_role || '',
+    role: rawData.resource_role || existingResource?.resource_role,
     resource_status:
       rawData.resource_status || existingResource?.resource_status,
     fiscal_year: rawData.fiscal_year || existingResource?.fiscal_year || 0,
@@ -118,7 +119,7 @@ export function transformPayloadforUpdateResource(
       '',
     designation: rawData.designation || existingResource?.designation || '',
     total_years_experience: safeParseNumber(
-      rawData.total_years_oexperience,
+      rawData.total_years_experience,
       existingResource?.total_years_experience || 0
     ),
     total_years_in_org: safeParseNumber(
@@ -161,8 +162,8 @@ export const transformCostData = (
   const data: Partial<ResourceCostPayload> = {
     eid: '',
     account_rid: formData.account_rid,
-    effective_date: formData.financial_start_date,
-    end_date: formData.financial_end_date,
+    effective_date: formData.financial_start_date ? formData.financial_start_date : '',
+    end_date: formData.financial_end_date ? formData.financial_end_date : "",
     cost_frequency: formData.cost_frequency,
     cost: formData.cost ? Number(formData.cost.replace(',', '')) : null,
     resource_type: formData.resource_type,
@@ -196,7 +197,7 @@ export const transformSkillData = (
     resource_type: formData.resource_type,
     resource_rid: formData.resource_rid,
     resource_ref_id: formData.resource_ref_id,
-    start_date: formData.skill_start_date,
+    start_date: formData.skill_start_date ? formData.skill_start_date : '',
     skill_level: formData.skill_level as skillLevel,
     years_of_experience: formData.years_of_experience
       ? Number(formData.years_of_experience)

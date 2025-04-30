@@ -37,6 +37,7 @@ export type ResourceCostList = {
   cost_frequency?: string | null;
   currency_rid?: string;
   fiscal_year?: string;
+  currency?: string;
   currency_code?: string;
   resource_cost_number?: string;
   r_number?: string;

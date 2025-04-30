@@ -66,7 +66,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
   // };
 
   const handleChangePage = (newPage: number) => {
-    setPage(newPage);
+    setPage(newPage + 1);
   };
 
   // handles page limit change
@@ -238,9 +238,9 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
               </TableCell>
               <TableCell sx={{ minWidth: '100px' }}>
                 <TableSortLabel
-                  active={orderBy === 'currency_code'}
-                  direction={orderBy === 'currency_code' ? order : 'asc'}
-                  IconComponent={getSortIcon(orderBy, 'currency_code', order)}
+                  active={orderBy === 'currency'}
+                  direction={orderBy === 'currency' ? order : 'asc'}
+                  IconComponent={getSortIcon(orderBy, 'currency', order)}
                 >
                   Currency
                 </TableSortLabel>

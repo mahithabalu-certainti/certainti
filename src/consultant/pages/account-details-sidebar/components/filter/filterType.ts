@@ -20,21 +20,21 @@ export type TextFilterOptionForCostAndSkill =
   | 'Equals'
   | 'Not Equals'
   | 'Contains'
-  | 'Does Not Contain'
-  | 'Starts With'
-  | 'Ends With'
-  | 'Is Empty'
-  | 'Is Not Empty';
+  | 'Is Empty';
+// | 'Does Not Contain'
+// | 'Starts With'
+// | 'Ends With'
+// | 'Is Not Empty';
 
 export const textOptionForCostAndSkill: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Not Equals', value: 'not_equals' },
   { option: 'Contains', value: 'contains' },
-  { option: 'Does Not Contain', value: 'does_not_contain' },
-  { option: 'Starts With', value: 'starts_with' },
-  { option: 'Ends With', value: 'ends_with' },
   { option: 'Is Empty', value: 'is_empty' },
-  { option: 'Is Not Empty', value: 'is_not_empty' },
+  // { option: 'Does Not Contain', value: 'does_not_contain' },
+  // { option: 'Starts With', value: 'starts_with' },
+  // { option: 'Ends With', value: 'ends_with' },
+  // { option: 'Is Not Empty', value: 'is_not_empty' },
 ];
 export type NumberFilterOption =
   | 'Equals'
@@ -42,8 +42,8 @@ export type NumberFilterOption =
   | 'Less Than'
   | 'Greater Than'
   | 'Between'
-  | 'Is Empty'
-  | 'Is Not Empty';
+  | 'Is Empty';
+// | 'Is Not Empty';
 
 export const numberOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
@@ -52,23 +52,19 @@ export const numberOptions: { option: string; value: string }[] = [
   { option: 'Greater Than', value: 'greater_than' },
   { option: 'Between', value: 'between' },
   { option: 'Is Empty', value: 'is_empty' },
-  { option: 'Is Not Empty', value: 'is_not_empty' },
+  // { option: 'Is Not Empty', value: 'is_not_empty' },
 ];
-export type EnumFilterOption =
-  | 'Equals'
-  | 'Not Equals'
-  | 'In'
-  | 'Not In'
-  | 'Is Empty'
-  | 'Is Not Empty';
+export type EnumFilterOption = 'Equals' | 'Not Equals' | 'In' | 'Is Empty';
+// | 'Not In'
+// | 'Is Not Empty';
 
 export const enumOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Not Equals', value: 'not_equals' },
   { option: 'In', value: 'in' },
-  { option: 'Not In', value: 'not_in' },
   { option: 'Is Empty', value: 'is_empty' },
-  { option: 'Is Not Empty', value: 'is_not_empty' },
+  // { option: 'Not In', value: 'not_in' },
+  // { option: 'Is Not Empty', value: 'is_not_empty' },
 ];
 
 export const enumValueOptions: { option: string; value: string }[] = [
@@ -82,13 +78,13 @@ export type DateFilterOption =
   | 'Before'
   | 'After'
   | 'Between'
-  | 'This week'
-  | 'This month'
-  | 'This Quarter'
-  | 'Last 7 days'
-  | 'Last 30 days'
-  | 'Is Empty'
-  | 'Is Not Empty';
+  | 'Is Empty';
+// | 'This week'
+// | 'This month'
+// | 'This Quarter'
+// | 'Last 7 days'
+// | 'Last 30 days'
+// | 'Is Not Empty';
 
 export const dateOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
@@ -96,6 +92,12 @@ export const dateOptions: { option: string; value: string }[] = [
   { option: 'After', value: 'after' },
   { option: 'Between', value: 'between' },
   { option: 'Is Empty', value: 'is_empty' },
+  // { option: 'This Week', value: 'this_week' },
+  // { option: 'This Month', value: 'this_month' },
+  // { option: 'This Quarter', value: 'this_quarter' },
+  // { option: 'Last 7 Days', value: 'last_7_days' },
+  // { option: 'Last 30 Days', value: 'last_30_days' },
+  // { option: 'Is Not Empty', value: 'is_not_empty' },
 ];
 
 // Define filter state types for each field type

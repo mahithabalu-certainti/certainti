@@ -174,7 +174,7 @@ const DataTable: React.FC<DataTableProps> = ({
     handleClick: () => void
   ) => {
     const isActive = activeField === columnKey;
-  
+
     return (
       <div
         className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
@@ -182,7 +182,11 @@ const DataTable: React.FC<DataTableProps> = ({
       >
         <img
           src={arrowUpIcon}
-          alt={isActive && sortOrder === 'asc' ? 'sort-up-active' : 'sort-up-inactive'}
+          alt={
+            isActive && sortOrder === 'asc'
+              ? 'sort-up-active'
+              : 'sort-up-inactive'
+          }
           className='w-4 h-4'
           style={{
             filter:
@@ -193,7 +197,11 @@ const DataTable: React.FC<DataTableProps> = ({
         />
         <img
           src={arrowDownIcon}
-          alt={isActive && sortOrder === 'desc' ? 'sort-down-active' : 'sort-down-inactive'}
+          alt={
+            isActive && sortOrder === 'desc'
+              ? 'sort-down-active'
+              : 'sort-down-inactive'
+          }
           className='w-4 h-4 mt-[-9px]'
           style={{
             filter:
@@ -205,7 +213,6 @@ const DataTable: React.FC<DataTableProps> = ({
       </div>
     );
   };
-  
 
   const isMenuOpen = Boolean(menuAnchor);
 
@@ -259,16 +266,16 @@ const DataTable: React.FC<DataTableProps> = ({
     <div className='border border-gray-300'>
       <TableContainer component={Paper}>
         <Table>
-          <TableHead 
-          className='bg-gray-50'
-          sx={{
-            '& .MuiTableSortLabel-root': {
+          <TableHead
+            className='bg-gray-50'
+            sx={{
+              '& .MuiTableSortLabel-root': {
                 '&:hover': {
                   color: 'inherit',
                   cursor: 'auto',
                 },
-              }
-          }}
+              },
+            }}
           >
             <TableRow>
               {columns.map((column) => (
@@ -313,13 +320,13 @@ const DataTable: React.FC<DataTableProps> = ({
             {data.length > 0 ? (
               data.map((row) => (
                 <TableRow
-                key={row[rowIdentifier]}
-                sx={{
-                  '&:hover td': {
-                    backgroundColor: '#f5f7fa',
-                  },
-                }}
-              >
+                  key={row[rowIdentifier]}
+                  sx={{
+                    '&:hover td': {
+                      backgroundColor: '#f5f7fa',
+                    },
+                  }}
+                >
                   {columns.map((column) => (
                     <TableCell
                       key={`${row[rowIdentifier]}-${column.id}`}
@@ -364,7 +371,7 @@ const DataTable: React.FC<DataTableProps> = ({
         </Table>
       </TableContainer>
 
-      {pagination && data.length > 0 && (
+      {pagination && (
         <TablePagination
           rowsPerPageOptions={rowsPerPageOptions}
           count={totalCount}
