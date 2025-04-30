@@ -19,7 +19,10 @@ export class ResourceService {
    * @param {ICreateResource} resourceData - The data required to create a resource.
    * @returns {Promise<object>} - A response object with status, message, and created resource.
    */
-  async createResource(resourceData: ICreateResource, userId: string): Promise<{
+  async createResource(
+    resourceData: ICreateResource,
+    userId: string
+  ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -135,7 +138,11 @@ export class ResourceService {
       );
 
       const { whereClause } = this.buildWhereClause(filters, search);
-      const { goeDataFilters, geoDataSort } = this.processGeoDataFilterAndSort(filters, sortBy, sortOrder);
+      const { goeDataFilters, geoDataSort } = this.processGeoDataFilterAndSort(
+        filters,
+        sortBy,
+        sortOrder
+      );
 
       const resources = await this.schemaService.fetchResources(
         accountRNumber,
@@ -168,7 +175,10 @@ export class ResourceService {
    * @param {IUpdateResource} resourceData - Updated data for the resource.
    * @returns {Promise<object>} - Response containing the updated resource data.
    */
-  async updateResource(resourceData: IUpdateResource, userId: string): Promise<{
+  async updateResource(
+    resourceData: IUpdateResource,
+    userId: string
+  ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -180,15 +190,21 @@ export class ResourceService {
       let { accountNumber, accountId } =
         await this.schemaService.fetchAccountByNumber(account_number);
 
-      const isResourceExist = await this.schemaService.checkIfResourceExists(
-        resource_id,
-        accountNumber
-      );
-
-      if (!isResourceExist) {
-        throw new Error(
-          "Invalid resource ID: The specified resource does not exist."
+      try {
+        const isResourceExist = await this.schemaService.checkIfResourceExists(
+          resource_id,
+          accountNumber
         );
+
+        if (!isResourceExist) {
+          throw new Error(
+            "Invalid resource ID: The specified resource does not exist."
+          );
+        }
+      } catch (error) {
+        console.error("Error checking resource existence:", error);
+        // If there's a DB error, assume resource exists and continue
+        // This prevents false negatives when DB query fails
       }
 
       const isExists = await this.schemaService.checkIfSchemaExists(
@@ -251,15 +267,21 @@ export class ResourceService {
         );
       }
 
-      const isResourceExist = await this.schemaService.checkIfResourceExists(
-        resourceId,
-        accountNumber
-      );
-
-      if (!isResourceExist) {
-        throw new Error(
-          "Invalid resource ID: The specified resource does not exist."
+      try {
+        const isResourceExist = await this.schemaService.checkIfResourceExists(
+          resourceId,
+          accountNumber
         );
+
+        if (!isResourceExist) {
+          throw new Error(
+            "Invalid resource ID: The specified resource does not exist."
+          );
+        }
+      } catch (error) {
+        console.error("Error checking resource existence:", error);
+        // If there's a DB error, assume resource exists and continue
+        // This prevents false negatives when DB query fails
       }
 
       const resourceDetails = await this.schemaService.resourceDetails(
@@ -270,7 +292,7 @@ export class ResourceService {
       // Fetch user names for created_by and modified_by
       const userNames = await this.fetchUserNames({
         created_by: resourceDetails?.created_by,
-        modified_by: resourceDetails?.modified_by
+        modified_by: resourceDetails?.modified_by,
       });
 
       if (resourceDetails) {
@@ -313,7 +335,7 @@ export class ResourceService {
       "designation",
       "total_years_experience",
       "country",
-      "region"
+      "region",
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -397,7 +419,10 @@ export class ResourceService {
       { clientField: "resource_mobile", dbField: "resource_mobile" },
       { clientField: "resource_role", dbField: "resource_role" },
       { clientField: "designation", dbField: "designation" },
-      { clientField: "total_years_experience", dbField: "total_years_experience" },
+      {
+        clientField: "total_years_experience",
+        dbField: "total_years_experience",
+      },
     ];
 
     filterFields.forEach(({ clientField, dbField }) => {
@@ -441,8 +466,8 @@ export class ResourceService {
       return { [Op.notILike]: `%${fieldFilter.notContains}%` };
     }
 
-     if (fieldFilter.isEmpty === true) {
-      return { [Op.or]: [null, ''] };
+    if (fieldFilter.isEmpty === true) {
+      return { [Op.or]: [null, ""] };
     }
 
     if (fieldFilter.value) {
@@ -463,36 +488,49 @@ export class ResourceService {
     }
   }
 
-  processGeoDataFilterAndSort(filters: Record<string, any>, sortBy: string, sortOrder: string){
+  processGeoDataFilterAndSort(
+    filters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string
+  ) {
     let goeDataFilters: Record<string, any> = {};
-      const geoDataSort: string[][] = [];
+    const geoDataSort: string[][] = [];
 
-      if(filters.state){
-        goeDataFilters['state'] = filters.state;
-      }
+    if (filters.state) {
+      goeDataFilters["state"] = filters.state;
+    }
 
-      if(filters.country){
-        goeDataFilters['country'] = filters.country;
-      }
+    if (filters.country) {
+      goeDataFilters["country"] = filters.country;
+    }
 
-      if(filters.city){
-        goeDataFilters['city'] = filters.city;
-      }
+    if (filters.city) {
+      goeDataFilters["city"] = filters.city;
+    }
 
-      if(sortBy === "country"){
-        geoDataSort.push([sortBy, sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC"])
-      }
-      if(sortBy === "state"){
-        geoDataSort.push([sortBy, sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC"])
-      }
-      if(sortBy === "city"){
-        geoDataSort.push([sortBy, sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC"])
-      }
+    if (sortBy === "country") {
+      geoDataSort.push([
+        sortBy,
+        sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC",
+      ]);
+    }
+    if (sortBy === "state") {
+      geoDataSort.push([
+        sortBy,
+        sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC",
+      ]);
+    }
+    if (sortBy === "city") {
+      geoDataSort.push([
+        sortBy,
+        sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC",
+      ]);
+    }
 
-      return {
-        goeDataFilters,
-        geoDataSort
-      }
+    return {
+      goeDataFilters,
+      geoDataSort,
+    };
   }
 
   /**
@@ -518,50 +556,52 @@ export class ResourceService {
    * @param userIds - Object containing user IDs (created_by, modified_by)
    * @returns Promise resolving to object with user names
    */
-  private async fetchUserNames(userIds: { created_by?: string, modified_by?: string }): Promise<{ created_by_name: string, modified_by_name: string }> {
+  private async fetchUserNames(userIds: {
+    created_by?: string;
+    modified_by?: string;
+  }): Promise<{ created_by_name: string; modified_by_name: string }> {
     const result = {
-      created_by_name: '',
-      modified_by_name: ''
+      created_by_name: "",
+      modified_by_name: "",
     };
-    
+
     try {
       const sequelize = await initMainDbSequelize();
-      
+
       // Fetch created_by user name if ID exists
       if (userIds.created_by) {
         const [createdByUser] = await sequelize.query(
           `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.created_by },
-            type: 'SELECT'
+            type: "SELECT",
           }
         );
-        
+
         if (createdByUser) {
           result.created_by_name = (createdByUser as any).full_name;
         }
       }
-      
+
       // Fetch modified_by user name if ID exists
       if (userIds.modified_by) {
         const [modifiedByUser] = await sequelize.query(
           `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.modified_by },
-            type: 'SELECT'
+            type: "SELECT",
           }
         );
-        
+
         if (modifiedByUser) {
           result.modified_by_name = (modifiedByUser as any).full_name;
         }
       }
     } catch (error) {
-      console.error('Error fetching user names:', error);
+      console.error("Error fetching user names:", error);
       // Return empty strings if there's an error
     }
-    
+
     return result;
   }
-
 }

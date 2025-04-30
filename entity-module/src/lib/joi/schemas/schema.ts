@@ -54,30 +54,32 @@ const isEndDateAfterStartDate = (
 ): any => {
   const context = helpers.state?.ancestors[0];
 
-  if (context?.effective_from_date && value) {
-    const date = moment(value, "MM/DD/YYYY", true);
+  // If either value or effective_from_date is missing, return the value as-is
+  if (!context?.effective_from_date || !value) {
+    return value;
+  }
 
-    if (!date.isValid()) {
-      return helpers.error("date.invalidFormat", {
-        message: "Invalid effective end date.",
-      });
-    }
+  // Validate end date format using moment
+  const endDate = moment(value, "MM/DD/YYYY", true);
+  if (!endDate.isValid()) {
+    return helpers.error("date.invalidFormat", {
+      message: "Invalid effective end date.",
+    });
+  }
 
-    const [startDay, startMonth, startYear] = context.effective_from_date
-      .split("/")
-      .map(Number);
-    const startDate = new Date(startYear, startMonth - 1, startDay);
-    startDate.setHours(0, 0, 0, 0);
+  // Validate start date format using moment
+  const startDate = moment(context.effective_from_date, "MM/DD/YYYY", true);
+  if (!startDate.isValid()) {
+    return helpers.error("date.invalidFormat", {
+      message: "Invalid effective start date.",
+    });
+  }
 
-    const [endDay, endMonth, endYear] = value.split("/").map(Number);
-    const endDate = new Date(endYear, endMonth - 1, endDay);
-    endDate.setHours(0, 0, 0, 0);
-
-    if (endDate <= startDate) {
-      return helpers.error("any.invalid", {
-        message: "Effective end date must be after the start date.",
-      });
-    }
+  // Compare dates using moment for more reliable date comparison
+  if (!endDate.isAfter(startDate)) {
+    return helpers.error("any.invalid", {
+      message: "Effective end date must be after the start date.",
+    });
   }
 
   return value;
@@ -172,26 +174,6 @@ const createResourcesSchema = Joi.object({
     .guid({ version: ["uuidv4"] })
     .required(),
   comments: Joi.string().max(1000).optional().allow("").allow(null),
-}).custom((obj) => {
-  const hasEffectiveDate = Boolean(obj.effective_from_date);
-  const hasEndDate = Boolean(obj.effective_end_date);
-
-  if (hasEffectiveDate !== hasEndDate) {
-    throw new Error(
-      "Both effective from date and end date must be provided together, or neither should be provided"
-    );
-  }
-
-  return obj;
-}).error((errors) => {
-  return errors.map(error => {
-    if (error.code === 'any.custom') {
-      // Add proper field name to the error
-      (error as any).context = { label: 'date_validation' };
-      error.message = 'Both effective from date and end date must be provided together, or neither should be provided';
-    }
-    return error;
-  });
 });
 
 const updateResourceSchema = Joi.object({
@@ -276,26 +258,6 @@ const updateResourceSchema = Joi.object({
     .allow(null),
   resource_status: Joi.string().valid("Active", "Inactive").optional(),
   comments: Joi.string().max(1000).optional().allow("").allow(null),
-}).custom((obj) => {
-  const hasEffectiveDate = Boolean(obj.effective_from_date);
-  const hasEndDate = Boolean(obj.effective_end_date);
-
-  if (hasEffectiveDate !== hasEndDate) {
-    throw new Error(
-      "Both effective from date and end date must be provided together, or neither should be provided"
-    );
-  }
-
-  return obj;
-}).error((errors) => {
-  return errors.map(error => {
-    if (error.code === 'any.custom') {
-      // Add proper field name to the error
-      (error as any).context = { label: 'date_validation' };
-      error.message = 'Both effective from date and end date must be provided together, or neither should be provided';
-    }
-    return error;
-  });
 });
 
 const listResourceSchema = Joi.object({
@@ -469,26 +431,6 @@ const updateResourceCostSchema = Joi.object({
     .iso()
     .default(() => new Date()),
   modified_by: Joi.string().max(255).optional(),
-}).custom((obj) => {
-  const hasEffectiveDate = Boolean(obj.effective_date);
-  const hasEndDate = Boolean(obj.end_date);
-
-  if (hasEffectiveDate !== hasEndDate) {
-    throw new Error(
-      "Both effective date and end date must be provided together, or neither should be provided"
-    );
-  }
-
-  return obj;
-}).error((errors) => {
-  return errors.map(error => {
-    if (error.code === 'any.custom') {
-      // Add proper field name to the error
-      (error as any).context = { label: 'date_validation' };
-      error.message = 'Both effective date and end date must be provided together, or neither should be provided';
-    }
-    return error;
-  });
 });
 
 const getResourceCostSchema = Joi.object({
@@ -587,27 +529,6 @@ const resourceCostSchema = Joi.object({
     .default(() => new Date()),
   created_by: Joi.string().max(255).optional(),
   modified_by: Joi.string().max(255).optional(),
-})
-.custom((obj) => {
-  const hasEffectiveDate = Boolean(obj.effective_date);
-  const hasEndDate = Boolean(obj.end_date);
-
-  if (hasEffectiveDate !== hasEndDate) {
-    throw new Error(
-      "Both effective date and end date must be provided together, or neither should be provided"
-    );
-  }
-
-  return obj;
-}).error((errors) => {
-  return errors.map(error => {
-    if (error.code === 'any.custom') {
-      // Add proper field name to the error
-      (error as any).context = { label: 'date_validation' };
-      error.message = 'Both effective date and end date must be provided together, or neither should be provided';
-    }
-    return error;
-  });
 });
 
 export {

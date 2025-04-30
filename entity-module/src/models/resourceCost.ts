@@ -193,6 +193,16 @@ export class ResourceCost
         modelName: "ResourceCost",
         tableName: "resource_cost",
         timestamps: false,
+        validate: {
+          bothDatesOrNeither() {
+            const hasEffectiveDate = this.effective_date !== null && this.effective_date !== undefined;
+            const hasEndDate = this.end_date !== null && this.end_date !== undefined;
+            
+            if (hasEffectiveDate !== hasEndDate) {
+              throw new Error("Both effective date and end date must be provided together, or neither should be provided");
+            }
+          }
+        },
         hooks: {
           beforeCreate: async (resourceCost: ResourceCost) => {
             // Generate r_number if not provided

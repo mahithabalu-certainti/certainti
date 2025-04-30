@@ -50,7 +50,7 @@ async function createResource(req: Request, res: Response): Promise<void> {
         res,
         HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
-        resources.errorMessage
+        resources.errorMessage?.replace(/(Validation error:|Validation failed)/g, '').trim()
       );
       return;
     }
@@ -202,7 +202,7 @@ async function updateResource(req: Request, res: Response): Promise<void> {
         res,
         HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
-        updateResource.errorMessage
+        updateResource.errorMessage?.replace(/(Validation error:|Validation failed)/g, '').trim()
       );
       return;
     }

@@ -189,6 +189,16 @@ export class Resources
         tableName: "resources",
         timestamps: false,
         underscored: true,
+        validate: {
+          bothDatesOrNeither() {
+            const hasEffectiveDate = this.resource_startdate !== null && this.resource_startdate !== undefined;
+            const hasEndDate = this.resource_enddate !== null && this.resource_enddate !== undefined;
+            
+            if (hasEffectiveDate !== hasEndDate) {
+              throw new Error("Both resource start date and end date must be provided together, or neither should be provided");
+            }
+          }
+        },
         hooks: {
           beforeUpdate: (resources) => {
             resources.setDataValue("created_datetime", new Date());
