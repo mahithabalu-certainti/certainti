@@ -1,5 +1,4 @@
 import Joi from "joi";
-import moment from "moment";
 
 const uuidRegex =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -107,7 +106,7 @@ const createResourcesSchema = Joi.object({
     .required(),
   resource_ref_id: Joi.string().min(5).max(50).required(),
   resource_type: Joi.string()
-    .valid("FullTime", "Contract", "Non-Labor")
+    .valid("Full-time", "SubCon", "Non-Labor")
     .required(),
   full_name: Joi.string().min(3).max(200).optional().allow("").allow(null),
   org_name: Joi.string()
@@ -197,7 +196,7 @@ const updateResourceSchema = Joi.object({
     .required(),
   account_number: Joi.string().max(50).required(),
   resource_ref_id: Joi.string().max(50).required(),
-  resource_type: Joi.string().valid("FullTime", "Contract").required(),
+  resource_type: Joi.string().valid("Full-time", "SubCon", "Non-Labor").required(),
   full_name: Joi.string().min(3).max(200).optional().allow("").allow(null),
   org_name: Joi.string()
     .min(3)
@@ -301,7 +300,7 @@ const listResourceSchema = Joi.object({
 const createResourceSkillSchema = Joi.object({
   eid: Joi.string().max(255).optional().allow(null).allow(""),
   account_rid: Joi.string().max(255).required(),
-  resource_type: Joi.string().valid("FullTime", "Contract").required(),
+  resource_type: Joi.string().valid("Full-time", "SubCon", "Non-Labor").required(),
   resource_rid: Joi.string().max(255).optional().allow(null).allow(""),
   resource_number: Joi.string().max(255).required(),
   resource_ref_id: Joi.string().max(255).required(),
@@ -489,7 +488,7 @@ const resourceCostSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
   accountNumber: Joi.string().max(255).required(),
   resource_number: Joi.string().max(255).required(),
-  resource_type: Joi.string().valid("FullTime", "Contract").required(),
+  resource_type: Joi.string().valid("Full-time", "SubCon", "Non-Labor").required(),
   resource_rid: Joi.string().pattern(uuidRegex).required(),
   resource_ref_id: Joi.string().max(255).required(),
   effective_date: Joi.string()
