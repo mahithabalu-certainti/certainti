@@ -341,7 +341,7 @@ class SchemaService {
    * @returns True if resource exists, false otherwise.
    */
   async checkIfResourceExists(
-    resourceId: string, 
+    resourceId: string,
     accountNumber: string
   ): Promise<boolean> {
     try {
@@ -371,9 +371,9 @@ class SchemaService {
       // Add transaction to ensure data consistency
       const resource = await sequelize.transaction(async (t) => {
         return await Resource.findOne({
-          where: {
-            rid: resourceId,
-          },
+        where: {
+          rid: resourceId,
+        },
           transaction: t,
           lock: true
         });
@@ -698,10 +698,8 @@ class SchemaService {
           }
         );
 
-        (resource as any).dataValues.country_code =
-          country?.country_code || null;
-          (resource as any).dataValues.country_name =
-          country?.country_name || null;
+        (resource as any).dataValues.country_code = country?.country_code || null;
+        (resource as any).dataValues.country_name = country?.country_name || null;
         (resource as any).dataValues.state_name = state?.state_name || null;
         (resource as any).dataValues.city_name = city?.city_name || null;
         //Added to format date as MM/DD/YYYY
