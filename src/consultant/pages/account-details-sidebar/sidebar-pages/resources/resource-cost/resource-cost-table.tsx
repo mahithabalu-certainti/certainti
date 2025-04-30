@@ -106,21 +106,21 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
               borderRight: 'none',
             }
           }}>
-            <TableCell sx={{ minWidth: '250px' }}>
+            <TableCell sx={{ minWidth: '160px' }}>
               {cost.resourceFullName}
             </TableCell>
             <TableCell sx={{ minWidth: '100px' }}>
               {cost.currency}
             </TableCell>
-            <TableCell sx={{ minWidth: '200px' }}>{cost.startDate}</TableCell>
-            <TableCell sx={{ minWidth: '200px' }}>{cost.endDate}</TableCell>
-            <TableCell sx={{ minWidth: '150px' }}>{cost.hourlyCost ? CostDisplay(cost.hourlyCost) : '-'}</TableCell>
-            <TableCell sx={{ minWidth: '150px' }}>{cost.dailyCost ? CostDisplay(cost.dailyCost) : "-"}</TableCell>
-            <TableCell sx={{ minWidth: '150px' }}>{cost.biWeeklyCost ? CostDisplay(cost.biWeeklyCost) : "-"}</TableCell>
-            <TableCell sx={{ minWidth: '150px' }}>{cost.weeklyCost ? CostDisplay(cost.weeklyCost) : "-"}</TableCell>
-            <TableCell sx={{ minWidth: '150px' }}>{cost.monthlyCost ? CostDisplay(cost.monthlyCost) : "-"}</TableCell>
-            <TableCell sx={{ minWidth: '150px' }}>{cost.semiAnnualCost ? CostDisplay(cost.semiAnnualCost) : "-"}</TableCell>
-            <TableCell sx={{ minWidth: '150px' }}>{cost.annualCost ? CostDisplay(cost.annualCost) : "-"}</TableCell>
+            <TableCell sx={{ minWidth: '130px' }}>{cost.startDate}</TableCell>
+            <TableCell sx={{ minWidth: '130px' }}>{cost.endDate}</TableCell>
+            <TableCell sx={{ minWidth: '130px' }}>{cost.hourlyCost ? CostDisplay(cost.hourlyCost) : '-'}</TableCell>
+            <TableCell sx={{ minWidth: '130px' }}>{cost.dailyCost ? CostDisplay(cost.dailyCost) : "-"}</TableCell>
+            <TableCell sx={{ minWidth: '130px' }}>{cost.biWeeklyCost ? CostDisplay(cost.biWeeklyCost) : "-"}</TableCell>
+            <TableCell sx={{ minWidth: '130px' }}>{cost.weeklyCost ? CostDisplay(cost.weeklyCost) : "-"}</TableCell>
+            <TableCell sx={{ minWidth: '130px' }}>{cost.monthlyCost ? CostDisplay(cost.monthlyCost) : "-"}</TableCell>
+            <TableCell sx={{ minWidth: '140px' }}>{cost.semiAnnualCost ? CostDisplay(cost.semiAnnualCost) : "-"}</TableCell>
+            <TableCell sx={{ minWidth: '130px' }}>{cost.annualCost ? CostDisplay(cost.annualCost) : "-"}</TableCell>
             <TableCell sx={{ minWidth: '80px' }}>
               <ActionButton
                 onEdit={() => handleEdit(cost)}
@@ -226,7 +226,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
             }
           }}>
             <TableRow>
-              <TableCell sx={{ minWidth: '250px' }}>
+              <TableCell sx={{ minWidth: '160px' }}>
                 <TableSortLabel
                   active={orderBy === 'resource_fullname'}
                   direction={orderBy === 'resource_fullname' ? order : 'asc'}
@@ -245,7 +245,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
                   Currency
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ minWidth: '200px' }}>
+              <TableCell sx={{ minWidth: '130px' }}>
                 <TableSortLabel
                   active={orderBy === 'effective_date'}
                   direction={orderBy === 'effective_date' ? order : 'asc'}
@@ -254,7 +254,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
                   Start Date
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ minWidth: '200px' }}>
+              <TableCell sx={{ minWidth: '130px' }}>
                 <TableSortLabel
                   active={orderBy === 'end_date'}
                   direction={orderBy === 'end_date' ? order : 'asc'}
@@ -263,7 +263,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
                   End Date
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ minWidth: '150px' }}>
+              <TableCell sx={{ minWidth: '130px' }}>
                 <TableSortLabel
                   active={orderBy === 'hourly_cost'}
                   direction={orderBy === 'hourly_cost' ? order : 'asc'}
@@ -272,7 +272,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
                   Hourly
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ minWidth: '150px' }}>
+              <TableCell sx={{ minWidth: '130px' }}>
                 <TableSortLabel
                   active={orderBy === 'daily_cost'}
                   direction={orderBy === 'daily_cost' ? order : 'asc'}
@@ -281,7 +281,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
                   Daily
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ minWidth: '150px' }}>
+              <TableCell sx={{ minWidth: '130px' }}>
                 <TableSortLabel
                   active={orderBy === 'bi_weekly_cost'}
                   direction={orderBy === 'bi_weekly_cost' ? order : 'asc'}
@@ -290,7 +290,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
                   Bi-Weekly
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ minWidth: '150px' }}>
+              <TableCell sx={{ minWidth: '130px' }}>
                 <TableSortLabel
                   active={orderBy === 'weekly_cost'}
                   direction={orderBy === 'weekly_cost' ? order : 'asc'}
@@ -299,7 +299,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
                   Weekly
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ minWidth: '150px' }}>
+              <TableCell sx={{ minWidth: '130px' }}>
                 <TableSortLabel
                   active={orderBy === 'monthly_cost'}
                   direction={orderBy === 'monthly_cost' ? order : 'asc'}
@@ -308,7 +308,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
                   Monthly
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ minWidth: '200px' }}>
+              <TableCell sx={{ minWidth: '140px' }}>
                 <TableSortLabel
                   active={orderBy === 'semi_annual_cost'}
                   direction={orderBy === 'semi_annual_cost' ? order : 'asc'}
@@ -317,7 +317,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
                   Semi Annual
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ minWidth: '150px' }}>
+              <TableCell sx={{ minWidth: '130px' }}>
                 <TableSortLabel
                   active={orderBy === 'annual_cost'}
                   direction={orderBy === 'annual_cost' ? order : 'asc'}
@@ -339,6 +339,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
               pl: 1,
               minHeight: '42px',
               maxHeight: '42px',
+              borderRight: 'none',
               height: '42px',
             },
           }}>

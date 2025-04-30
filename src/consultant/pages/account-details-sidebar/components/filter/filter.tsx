@@ -324,7 +324,7 @@ const Filter: React.FC<FilterComponentProps> = ({
           <>
             <Box
               key={index}
-              className='flex gap-2 justify-between items-center p-2 border-b border-[#CBD6E2]'
+              className='flex gap-2 justify-between items-center p-2 border-b border-[#CBD6E2] cursor-pointer'
               onClick={() => handleClickFilterMenu(item.value as string)}
             >
               <Box className='text-[#2D3E4F] font-light text-sm'>
@@ -345,29 +345,14 @@ const Filter: React.FC<FilterComponentProps> = ({
         <Button
           onClick={handleFilter}
           label='Cancel'
-          sx={{
-            height: '32px',
-            border: '1px solid #CBD6E2',
-            color: '#7D98B6',
-            borderRadius: '2px',
-            '&:hover': {
-              background: 'rgb(203 214 226)',
-              color: 'rgb(46 63 80)',
-            },
-          }}
+          variant='outlined'
+          color='inherit'
+          sx={{ width: '55px', minWidth: '55px', fontSize:'12px', fontWeight: 400 }}
         />
         <Button
           label='Find'
-          sx={{
-            height: '32px',
-            background: '#F16137',
-            color: '#FFFFFF',
-            borderRadius: '2px',
-            '&:hover': {
-              background: 'rgb(255 139 105)',
-              color: '#FFFFFF',
-            },
-          }}
+          variant='filled'
+          sx={{ width: '60px', minWidth: '60px', fontSize:'13px', fontWeight: 400 }}
           onClick={handleApplyFilters}
         />
       </Box>

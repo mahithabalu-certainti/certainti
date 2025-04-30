@@ -24,7 +24,7 @@ export const skillFilterFields: FieldConfig[] = [
   { name: 'Experience', value: 'years_of_experience', type: 'number' },
 ];
 export const resourceFilterFields: FieldConfig[] = [
-  { name: 'Resource Number', value: 'r_number', type: 'text' },
+  { name: 'Resource ID', value: 'r_number', type: 'text' },
   { name: 'Resource Ref Id', value: 'resource_ref_id', type: 'text' },
   { name: 'Resource Full Name', value: 'resource_fullname', type: 'text' },
   { name: 'Resource Type', value: 'resource_type', type: 'text' },
