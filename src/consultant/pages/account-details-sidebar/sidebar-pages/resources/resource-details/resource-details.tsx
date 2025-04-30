@@ -53,11 +53,17 @@ const DetailsSection: React.FC<{
   });
 
   const renderValue = (value: React.ReactNode) => {
-    if (typeof value === 'string' && value.toLowerCase() === 'active') {
-      return <span className='text-green-600'>Active</span>;
+    if (typeof value === 'string') {
+      const status = value.toLowerCase();
+      if (status === 'active') {
+        return <span className='text-[#199806]'>Active</span>;
+      }
+      if (status === 'inactive') {
+        return <span className='text-[#f44336]'>In-Active</span>;
+      }
     }
     return (
-      <span className='font-light text-sm text-[#2D3E4F]'>{value || '-'}</span>
+      <span className='font-light text-[14px] text-[#2D3E4F]'>{value || 'NA'}</span>
     );
   };
 
