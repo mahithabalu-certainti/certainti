@@ -348,10 +348,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   },
                   placeholder: field.placeholder,
                   error: !!field.error,
-                  onBlur: (event) => { //For cache typed data
+                  onBlur: (event) => {
+                    //For cache typed data
                     const value = event.target.value;
-                    if (value !== 'MM/DD/YYYY') { //For Avoid default data
-                      handleChange(value)
+                    if (value !== 'MM/DD/YYYY') {
+                      //For Avoid default data
+                      handleChange(value);
                     }
                   },
                 },
@@ -536,24 +538,69 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
           }
 
-          if (field.type === 'date' && constructFormData[field.name]) {
-            const dateValue = constructFormData[field.name] as string;
-            if (
-              field.disableFutureDates &&
-              dayjs(dateValue).isAfter(dayjs(), 'day')
-            ) {
-              hasError = true;
-              return {
-                ...field,
-                error: 'Future dates are not allowed',
-              };
+          if (field.type === 'date') {
+            // cost date validation
+            if (field?.startValue) {
+              const dateValue = constructFormData[field.name] as string;
+              if (
+                dayjs(dateValue).isBefore(dayjs(field?.minDate)) ||
+                dayjs(dateValue).isAfter(dayjs(field?.maxDate))
+              ) {
+                hasError = true;
+                return {
+                  ...field,
+                  error:
+                    'Invalid date. Please enter a valid date in given range.',
+                };
+              }
             }
-            if (dateValue && !isValidDate(dateValue, 'MM/DD/YYYY')) {
-              hasError = true;
-              return {
-                ...field,
-                error: 'Please enter a valid date.',
-              };
+            // Check if this date must be after another (start date vs end date)
+            if (field.endDateValue) {
+              const endDateRaw = constructFormData[field.name] as string;
+              const startDateRaw = field.startDateLabel
+                ? (constructFormData[field.startDateLabel] as string)
+                : '';
+              console.log('field', field);
+
+              const endDate = dayjs(endDateRaw?.trim());
+              const startDate = dayjs(startDateRaw?.trim());
+              if (
+                endDate.isValid() &&
+                (dayjs(endDate).isBefore(dayjs(field?.minDate)) ||
+                  dayjs(endDate).isAfter(dayjs(field?.maxDate)))
+              ) {
+                hasError = true;
+                return {
+                  ...field,
+                  error:
+                    'Invalid date. Please enter a valid date in given range.',
+                };
+              }
+              if (endDate.isValid() && !endDate.isAfter(startDate)) {
+                hasError = true;
+                return { ...field, error: 'End Date must be after Start Date' };
+              }
+            }
+
+            const dateValue = constructFormData[field.name] as string;
+            if (dateValue) {
+              if (
+                field.disableFutureDates &&
+                dayjs(dateValue).isAfter(dayjs(), 'day')
+              ) {
+                hasError = true;
+                return {
+                  ...field,
+                  error: 'Future dates are not allowed',
+                };
+              }
+              if (dateValue && !isValidDate(dateValue, 'MM/DD/YYYY')) {
+                hasError = true;
+                return {
+                  ...field,
+                  error: 'Please enter a valid date.',
+                };
+              }
             }
           }
 

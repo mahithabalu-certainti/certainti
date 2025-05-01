@@ -196,7 +196,9 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId }) => {
             alt='Import Icon'
             className='w-[24px] h-[24px]'
           />
-          <span className='font-medium'>Import</span>
+          <span className='font-normal text-[14px] text-[#000000] '>
+            Import
+          </span>
         </div>
         <div className='flex gap-2'>
           <TextButton
@@ -204,18 +206,39 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId }) => {
             variant='outlined'
             color='inherit'
             onClick={goBack}
+            sx={{
+              width: '56px',
+              minWidth: '56px',
+              fontWeight: 400,
+              fontSize: '12px',
+            }}
           />
-          <TextButton label='Save' loading={loading} variant='filled' onClick={handleSubmit} />
+          <TextButton
+            label='Save'
+            loading={loading}
+            variant='filled'
+            onClick={handleSubmit}
+            sx={{
+              width: '64px',
+              minWidth: '64px',
+              fontWeight: 400,
+              fontSize: '13px',
+            }}
+          />
         </div>
       </div>
 
       <div className='h-[50px] px-4  border-b border-[#CBD6E2] flex items-center gap-6'>
         <div className='flex items-center gap-2'>
-          <label className='text-sm font-medium'>Entity Type</label>
+          <label className='font-normal text-[14px] text-[#2D3E4F] '>
+            Entity Type
+          </label>
           <ActionImportDropdown actions={menuItems} label={entityType} />
         </div>
         <div className='flex items-center gap-2'>
-          <label className='text-sm font-medium'>Fiscal Year</label>
+          <label className='font-normal text-[14px] text-[#2D3E4F] '>
+            Fiscal Year
+          </label>
           <ActionImportDropdown actions={fiscalYears} label={fiscalYear} />
         </div>
       </div>

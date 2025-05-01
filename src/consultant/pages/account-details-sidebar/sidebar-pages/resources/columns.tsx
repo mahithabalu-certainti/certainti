@@ -21,7 +21,7 @@ const displayValue = (value: any) => {
 const BASE_COLUMNS: ColumnDefinition[] = [
   {
     id: 'r_number',
-    label: 'Resource Id',
+    label: 'Resource ID',
     sortable: true,
     width: '130px',
     render: (value: string, row: any) => (
@@ -38,7 +38,7 @@ const BASE_COLUMNS: ColumnDefinition[] = [
   },
   {
     id: 'resource_ref_id',
-    label: 'Resource Ref Id',
+    label: 'Resource Ref ID',
     sortable: true,
     width: '150px',
     render: (value: string) => (

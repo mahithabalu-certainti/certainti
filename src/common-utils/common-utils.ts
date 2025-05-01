@@ -149,7 +149,13 @@ export const createDateField = (
     disableFutureDates?: boolean;
     minDate?: Date;
     maxDate?: Date;
+    endDateValue?: boolean;
+    startDateLabel?: string;
+    endDateLabel?: string;
     greaterThan?: Record<string, string>;
+    dateRangeError?: boolean;
+    startValue?: boolean;
+    errorMessage?: string;
   }
 ): FieldType => ({
   type: 'date',
@@ -162,6 +168,12 @@ export const createDateField = (
   disabled: others.disabled,
   disableFutureDates: others.disableFutureDates,
   greaterThan: others.greaterThan,
+  dateRangeError: others.dateRangeError,
+  startValue: others.startValue,
+  endDateValue: others.endDateValue,
+  startDateLabel: others.startDateLabel,
+  endDateLabel: others.endDateLabel,
+  errorMessage: others.errorMessage,
 });
 
 export const createFiscalDateField = (
