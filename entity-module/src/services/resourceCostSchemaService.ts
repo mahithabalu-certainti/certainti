@@ -27,7 +27,7 @@ class ResourceCostSchemaService {
         Resources.initialize(sequelize, schemaName);
         ResourceFiscal.initialize(sequelize, schemaName);
         ResourceCost.initialize(sequelize, schemaName);
-        ResourceCostTimeline.initialize(sequelize,schemaName);
+        ResourceCostTimeline.initialize(sequelize, schemaName);
         ResourceCostHistory.initialize(sequelize, schemaName);
 
         this.sequelizeInstance = sequelize;
@@ -186,7 +186,7 @@ class ResourceCostSchemaService {
                 force: false,
                 schema: schemaName, // Explicitly set schema
               });
-              break;  
+              break;
             default:
               throw new Error(`Table model ${tableName} not found`);
           }
@@ -258,9 +258,9 @@ class ResourceCostSchemaService {
     if (!filters.currency || !Array.isArray(filters.currency)) {
       return null;
     }
-    
+
     const currencyValues = filters.currency;
-    
+
     // If we have currency values to filter by
     if (currencyValues.length > 0) {
       const mainDbSequelize = await initMainDbSequelize();
@@ -278,10 +278,12 @@ class ResourceCostSchemaService {
         WHERE LOWER(currency_code) IN (:currencyValues) 
         OR LOWER(currency_name) IN (:currencyValues)
       `;
-      
+
       // Convert all values to lowercase for case-insensitive comparison
-      const lowerCaseValues = currencyValues.map((val: string) => val.toLowerCase());
-      
+      const lowerCaseValues = currencyValues.map((val: string) =>
+        val.toLowerCase()
+      );
+
       // Execute the query
       const currencyResults = await mainDbSequelize.query(currencyQuery, {
         replacements: { currencyValues: lowerCaseValues },
@@ -305,7 +307,7 @@ class ResourceCostSchemaService {
         return null;
       }
     }
-    
+
     // If currency array is empty, remove the filter
     delete filters.currency;
     return null;
@@ -383,38 +385,45 @@ class ResourceCostSchemaService {
       const mainDbSequelize = await initMainDbSequelize();
 
       // If sorting by currency_code, we need to fetch currency info first
-      if (sortBy === 'currency') {
+      if (sortBy === "currency") {
         // Get all currency RIDs from results
-        const currencyIds = [...new Set(results.map((rc: any) => rc.currency_rid))].filter(Boolean);
-        
+        const currencyIds = [
+          ...new Set(results.map((rc: any) => rc.currency_rid)),
+        ].filter(Boolean);
+
         if (currencyIds.length > 0) {
           // Fetch currency info from main database
-          const currencies = await mainDbSequelize.query(`
+          const currencies = await mainDbSequelize.query(
+            `
             SELECT rid, currency_code 
             FROM public.currency 
             WHERE rid IN (:currencyIds)
-          `, {
-            replacements: { currencyIds },
-            type: "SELECT"
-          });
+          `,
+            {
+              replacements: { currencyIds },
+              type: "SELECT",
+            }
+          );
 
           // Create currency map
           const currencyMap = currencies.reduce((map: any, curr: any) => {
-            map[curr.rid] = curr.currency_code || '';
+            map[curr.rid] = curr.currency_code || "";
             return map;
           }, {});
 
           // Add currency_code to each resource cost
           results.forEach((rc: any) => {
-            rc.currency_code = rc.currency_rid ? (currencyMap as any)[rc.currency_rid] : '';
+            rc.currency_code = rc.currency_rid
+              ? (currencyMap as any)[rc.currency_rid]
+              : "";
           });
 
           // Sort in memory
           results.sort((a: any, b: any) => {
-            const aCode = a.currency_code || '';
-            const bCode = b.currency_code || '';
-            return sortOrder === 'ASC' 
-              ? aCode.localeCompare(bCode) 
+            const aCode = a.currency_code || "";
+            const bCode = b.currency_code || "";
+            return sortOrder === "ASC"
+              ? aCode.localeCompare(bCode)
               : bCode.localeCompare(aCode);
           });
         }
@@ -428,48 +437,48 @@ class ResourceCostSchemaService {
       }
 
       // Apply pagination if sorting was done in memory
-      if (sortBy === 'currency') {
-        results = results.slice(offset, offset + limit)  as any;
+      if (sortBy === "currency") {
+        results = results.slice(offset, offset + limit) as any;
       }
 
       const resourceCost = results;
       const totalCount = countResult ? (countResult as any).total : 0;
 
-            
-        // Extract all unique currency_rid values
-        const currencyIds = [...new Set(resourceCost.map((rc: any) => rc.currency_rid))].filter(Boolean);
-        
-        if (currencyIds.length > 0) {
-          // Use raw query to fetch currency information
-          const currencyQuery = `
+      // Extract all unique currency_rid values
+      const currencyIds = [
+        ...new Set(resourceCost.map((rc: any) => rc.currency_rid)),
+      ].filter(Boolean);
+
+      if (currencyIds.length > 0) {
+        // Use raw query to fetch currency information
+        const currencyQuery = `
             SELECT rid, currency_code, currency_name, currency_symbol 
             FROM public.currency 
             WHERE rid IN (:currencyIds)
           `;
-          
-          const currencies = await mainDbSequelize.query(currencyQuery, {
-            replacements: { currencyIds },
-            type: "SELECT"
-          });
-          
-          // Create a map for quick lookup
-          const currencyMap:any = currencies.reduce((map: any, curr: any) => {
-            map[curr.rid] = curr;
-            return map;
-          }, {});
-          
-          // Add currency info to each resource cost
-          resourceCost.forEach((rc: any) => {
-            if (rc.currency_rid && currencyMap[rc.currency_rid]) {
-                rc.currency_code = currencyMap[rc.currency_rid].currency_code;
-                rc.currency_name = currencyMap[rc.currency_rid].currency_name;
-                rc.currency_symbol = currencyMap[rc.currency_rid].currency_symbol;
-            } else {
-              rc.currency = null;
-            }
-          });
-        }
-      
+
+        const currencies = await mainDbSequelize.query(currencyQuery, {
+          replacements: { currencyIds },
+          type: "SELECT",
+        });
+
+        // Create a map for quick lookup
+        const currencyMap: any = currencies.reduce((map: any, curr: any) => {
+          map[curr.rid] = curr;
+          return map;
+        }, {});
+
+        // Add currency info to each resource cost
+        resourceCost.forEach((rc: any) => {
+          if (rc.currency_rid && currencyMap[rc.currency_rid]) {
+            rc.currency_code = currencyMap[rc.currency_rid].currency_code;
+            rc.currency_name = currencyMap[rc.currency_rid].currency_name;
+            rc.currency_symbol = currencyMap[rc.currency_rid].currency_symbol;
+          } else {
+            rc.currency = null;
+          }
+        });
+      }
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -519,7 +528,7 @@ class ResourceCostSchemaService {
       filterConditions = this.processFiltersForRawQuery(filters);
     }
 
-    if (fiscalYear === 0 || fiscalYear === undefined){
+    if (fiscalYear === 0 || fiscalYear === undefined) {
       return filterConditions;
     }
 
@@ -567,13 +576,13 @@ class ResourceCostSchemaService {
       "bi_weekly_cost",
       "daily_cost",
       "hourly_cost",
-      "currency"
+      "currency",
     ];
     if (!validSortColumns.includes(sortBy)) {
       sortBy = "created_datetime";
     }
 
-    if(sortBy === "resource_cost_number"){
+    if (sortBy === "resource_cost_number") {
       sortBy = "r_number";
     }
 
@@ -587,15 +596,15 @@ class ResourceCostSchemaService {
     let filterConditions = "";
 
     // Define field types for proper filter handling
-    const alphanumericFields = ["currency_rid"];
+    const alphanumericFields: string[] = [];
     const numericFields = [
-      "annual_cost",
-      "monthly_cost",
-      "weekly_cost",
-      "daily_cost",
-      "hourly_cost",
-      "bi_weekly_cost",
-      "semi_annual_cost",
+      "annual",
+      "monthly",
+      "weekly",
+      "daily",
+      "hourly",
+      "bi_weekly",
+      "semi_annual",
     ];
     const dateFields = ["effective_date", "end_date"];
     const specialFields = ["resource_cost_number"];
@@ -611,12 +620,11 @@ class ResourceCostSchemaService {
       if (typeof value === "object") {
         if (alphanumericFields.includes(key)) {
           filterConditions += this.processAlphanumericFilter(key, value);
-        } else if (numericFields.includes(key)) {
+        }else if (numericFields.includes(key)) {
           filterConditions += this.processNumericFilter(key, value);
         } else if (dateFields.includes(key)) {
           filterConditions += this.processDateFilter(key, value);
-        } 
-        else {
+        } else {
           filterConditions += this.processDefaultFilter(key, value);
         }
       } else if (value !== undefined && value !== null) {
@@ -635,23 +643,21 @@ class ResourceCostSchemaService {
     return filterConditions;
   }
 
-  // Include your other filter processing methods here...
   processAlphanumericFilter(key: string, value: any): string {
-    // Your existing implementation
     let condition = "";
 
     if (value.equals) {
-      condition += ` AND rc."${key}" = '${value.equals}'`;
+      condition += ` AND LOWER(rc."${key}") = LOWER('${value.equals}')`;
     } else if (value.not_equals) {
-      condition += ` AND rc."${key}" != '${value.not_equals}'`;
+      condition += ` AND LOWER(rc."${key}") != LOWER('${value.not_equals}')`;
     } else if (value.contains) {
-      condition += ` AND rc."${key}" ILIKE '%${value.contains}%'`;
+      condition += ` AND LOWER(rc."${key}") LIKE LOWER('%${value.contains}%')`;
     } else if (value.not_contains) {
-      condition += ` AND rc."${key}" NOT ILIKE '%${value.not_contains}%'`;
+      condition += ` AND LOWER(rc."${key}") NOT LIKE LOWER('%${value.not_contains}%')`;
     } else if (value.starts_with) {
-      condition += ` AND rc."${key}" ILIKE '${value.starts_with}%'`;
+      condition += ` AND LOWER(rc."${key}") LIKE LOWER('${value.starts_with}%')`;
     } else if (value.ends_with) {
-      condition += ` AND rc."${key}" ILIKE '%${value.ends_with}'`;
+      condition += ` AND LOWER(rc."${key}") LIKE LOWER('%${value.ends_with}')`;
     } else if (value.is_empty !== undefined) {
       if (value.is_empty) {
         condition += ` AND (rc."${key}" IS NULL OR rc."${key}" = '')`;
@@ -661,15 +667,19 @@ class ResourceCostSchemaService {
         condition += ` AND rc."${key}" IS NOT NULL AND rc."${key}" != ''`;
       }
     } else if (value.in && Array.isArray(value.in) && value.in.length > 0) {
-      const values = value.in.map((item: string) => `'${item}'`).join(",");
-      condition += ` AND rc."${key}" IN (${values})`;
+      const values = value.in
+        .map((item: string) => `'${item.toLowerCase()}'`)
+        .join(",");
+      condition += ` AND LOWER(rc."${key}") IN (${values})`;
     } else if (
       value.not_in &&
       Array.isArray(value.not_in) &&
       value.not_in.length > 0
     ) {
-      const values = value.not_in.map((item: string) => `'${item}'`).join(",");
-      condition += ` AND rc."${key}" NOT IN (${values})`;
+      const values = value.not_in
+        .map((item: string) => `'${item.toLowerCase()}'`)
+        .join(",");
+      condition += ` AND LOWER(rc."${key}") NOT IN (${values})`;
     }
 
     return condition;
@@ -678,14 +688,14 @@ class ResourceCostSchemaService {
   processNumericFilter(key: string, value: any): string {
     // Your existing implementation
     let condition = "";
-
+    key = `${key}_cost`;
     if (value.equals !== undefined) {
       condition += ` AND rc."${key}" = ${value.equals}`;
     } else if (value.not_equals !== undefined) {
       condition += ` AND rc."${key}" != ${value.not_equals}`;
     } else if (value.greater_than !== undefined) {
       condition += ` AND rc."${key}" > ${value.greater_than}`;
-    } else if (value.less_Than !== undefined) {
+    } else if (value.less_than !== undefined) {
       condition += ` AND rc."${key}" < ${value.less_than}`;
     } else if (
       value.between &&
@@ -765,76 +775,91 @@ class ResourceCostSchemaService {
     return condition;
   }
 
-  processDefaultFilter(key: string, value: any): string {
-    // Your existing implementation
-    let condition = "";
+processDefaultFilter(key: string, value: any): string {
+  let condition = "";
+  const isUuidField = key.toLowerCase().includes('rid');
 
-    if (value.equals !== undefined) {
-      if (typeof value.equals === "string") {
+  if (value.equals !== undefined) {
+    if (typeof value.equals === "string") {
+      if (isUuidField) {
         condition += ` AND rc."${key}" = '${value.equals}'`;
       } else {
-        condition += ` AND rc."${key}" = ${value.equals}`;
+        condition += ` AND LOWER(rc."${key}") = LOWER('${value.equals}')`;
       }
-    } else if (value.in && Array.isArray(value.in) && value.in.length > 0) {
-      if (typeof value.in[0] === "string") {
+    } else {
+      condition += ` AND rc."${key}" = ${value.equals}`;
+    }
+  } else if (value.in && Array.isArray(value.in) && value.in.length > 0) {
+    if (typeof value.in[0] === "string") {
+      if (isUuidField) {
         const values = value.in.map((item: string) => `'${item}'`).join(",");
         condition += ` AND rc."${key}" IN (${values})`;
       } else {
-        const values = value.in.join(",");
-        condition += ` AND rc."${key}" IN (${values})`;
-      }
-    } else if (
-      value.not_in &&
-      Array.isArray(value.not_in) &&
-      value.not_in.length > 0
-    ) {
-      if (typeof value.not_in[0] === "string") {
-        const values = value.not_in
-          .map((item: string) => `'${item}'`)
+        const values = value.in
+          .map((item: string) => `'${item.toLowerCase()}'`)
           .join(",");
+        condition += ` AND LOWER(rc."${key}") IN (${values})`;
+      }
+    } else {
+      const values = value.in.join(",");
+      condition += ` AND rc."${key}" IN (${values})`;
+    }
+  } else if (
+    value.not_in &&
+    Array.isArray(value.not_in) &&
+    value.not_in.length > 0
+  ) {
+    if (typeof value.not_in[0] === "string") {
+      if (isUuidField) {
+        const values = value.not_in.map((item: string) => `'${item}'`).join(",");
         condition += ` AND rc."${key}" NOT IN (${values})`;
       } else {
-        const values = value.not_in.join(",");
-        condition += ` AND rc."${key}" NOT IN (${values})`;
+        const values = value.not_in
+          .map((item: string) => `'${item.toLowerCase()}'`)
+          .join(",");
+        condition += ` AND LOWER(rc."${key}") NOT IN (${values})`;
       }
+    } else {
+      const values = value.not_in.join(",");
+      condition += ` AND rc."${key}" NOT IN (${values})`;
     }
-
-    return condition;
   }
+
+  return condition;
+}
 
   processSimpleEqualityFilter(key: string, value: any): string {
     // Your existing implementation
     if (typeof value === "string") {
-      return ` AND rc."${key}" = '${value}'`;
+      return ` AND LOWER(rc."${key}") = LOWER('${value}')`;
     } else {
       return ` AND rc."${key}" = ${value}`;
     }
   }
 
   processResourceCostNumberFilter(resourceCostNumber: any): string {
-    // Your existing implementation
     let condition = "";
 
     if (typeof resourceCostNumber === "object") {
       if (resourceCostNumber.equals) {
-        condition += ` AND rc."r_number" = '${resourceCostNumber.equals}'`;
+        condition += ` AND LOWER(rc."r_number") = LOWER('${resourceCostNumber.equals}')`;
       } else if (resourceCostNumber.not_equals) {
-        condition += ` AND rc."r_number" != '${resourceCostNumber.not_equals}'`;
+        condition += ` AND LOWER(rc."r_number") != LOWER('${resourceCostNumber.not_equals}')`;
       } else if (resourceCostNumber.contains) {
-        condition += ` AND rc."r_number" ILIKE '%${resourceCostNumber.contains}%'`;
+        condition += ` AND LOWER(rc."r_number") LIKE LOWER('%${resourceCostNumber.contains}%')`;
       } else if (resourceCostNumber.not_contains) {
-        condition += ` AND rc."r_number" NOT ILIKE '%${resourceCostNumber.not_contains}%'`;
+        condition += ` AND LOWER(rc."r_number") NOT LIKE LOWER('%${resourceCostNumber.not_contains}%')`;
       } else if (resourceCostNumber.starts_with) {
-        condition += ` AND rc."r_number" ILIKE '${resourceCostNumber.starts_with}%'`;
+        condition += ` AND LOWER(rc."r_number") LIKE LOWER('${resourceCostNumber.starts_with}%')`;
       } else if (resourceCostNumber.ends_with) {
-        condition += ` AND rc."r_number" ILIKE '%${resourceCostNumber.ends_with}'`;
+        condition += ` AND LOWER(rc."r_number") LIKE LOWER('%${resourceCostNumber.ends_with}')`;
       } else if (resourceCostNumber.is_empty !== undefined) {
         if (resourceCostNumber.is_empty) {
           condition += ` AND (rc."r_number" IS NULL OR rc."r_number" = '')`;
         }
       } else if (resourceCostNumber.is_not_empty !== undefined) {
         if (resourceCostNumber.is_not_empty) {
-          condition += ` AND (rc."r_number" IS NOT NULL OR rc."r_number" != '')`;
+          condition += ` AND (rc."r_number" IS NOT NULL AND rc."r_number" != '')`;
         }
       } else if (
         resourceCostNumber.in &&
@@ -842,21 +867,21 @@ class ResourceCostSchemaService {
         resourceCostNumber.in.length > 0
       ) {
         const values = resourceCostNumber.in
-          .map((item: string) => `'${item}'`)
+          .map((item: string) => `'${item.toLowerCase()}'`)
           .join(",");
-        condition += ` AND rc."r_number" IN (${values})`;
+        condition += ` AND LOWER(rc."r_number") IN (${values})`;
       } else if (
         resourceCostNumber.not_in &&
         Array.isArray(resourceCostNumber.not_in) &&
         resourceCostNumber.not_in.length > 0
       ) {
         const values = resourceCostNumber.not_in
-          .map((item: string) => `'${item}'`)
+          .map((item: string) => `'${item.toLowerCase()}'`)
           .join(",");
-        condition += ` AND rc."r_number" NOT IN (${values})`;
+        condition += ` AND LOWER(rc."r_number") NOT IN (${values})`;
       }
     } else if (resourceCostNumber) {
-      condition += ` AND rc."r_number" = '${resourceCostNumber}'`;
+      condition += ` AND LOWER(rc."r_number") = LOWER('${resourceCostNumber}')`;
     }
 
     return condition;

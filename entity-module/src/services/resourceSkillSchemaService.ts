@@ -295,7 +295,7 @@ class ResourceSkillSchemaService {
       WHERE 1=1 AND rs.resource_rid = :resource_rid
       ${filterConditions}
       ${searchCondition}
-      ORDER BY rs."${finalSortBy}" ${finalSortOrder}
+      ORDER BY ${finalSortBy === 'skill_name' ? 's' : 'rs'}."${finalSortBy}" ${finalSortOrder}
       LIMIT :limit OFFSET :offset
     `;
 
@@ -354,7 +354,6 @@ class ResourceSkillSchemaService {
    */
   getSortParameters(sortBy: string, sortOrder: string): [string, string] {
     const validSortColumns = [
-      "resource_type",
       "skill_name",
       "skill_level",
       "years_of_experience",
@@ -379,7 +378,7 @@ class ResourceSkillSchemaService {
 
     return `
       AND (
-        rs.skill_name ILIKE :searchTerm 
+        s.skill_name ILIKE :searchTerm 
         OR r.resource_full_name ILIKE :searchTerm
       )
     `;
@@ -429,7 +428,7 @@ class ResourceSkillSchemaService {
     const alphanumericFields = ["skill_name"];
     const numericFields = ["years_of_experience"];
     const dateFields = ["start_date"];
-    const enumFields = ["resource_type", "skill_level"];
+    const enumFields = ["skill_level"];
 
     // Process each filter
     Object.entries(filters).forEach(([key, value]) => {
@@ -461,21 +460,21 @@ class ResourceSkillSchemaService {
    * @param value - The filter value object
    * @returns SQL condition string
    */
-  processAlphanumericFilter(key: string, value: any): string {
+processAlphanumericFilter(key: string, value: any): string {
     let condition = "";
 
     if (value.equals) {
-      condition += ` AND s."${key}" = '${value.equals}'`;
+      condition += ` AND LOWER(s."${key}") = LOWER('${value.equals}')`;
     } else if (value.not_equals) {
-      condition += ` AND s."${key}" != '${value.not_equals}'`;
+      condition += ` AND LOWER(s."${key}") != LOWER('${value.not_equals}')`;
     } else if (value.contains) {
-      condition += ` AND s."${key}" ILIKE '%${value.contains}%'`;
+      condition += ` AND LOWER(s."${key}") LIKE LOWER('%${value.contains}%')`;
     } else if (value.not_contains) {
-      condition += ` AND s."${key}" NOT ILIKE '%${value.not_contains}%'`;
+      condition += ` AND LOWER(s."${key}") NOT LIKE LOWER('%${value.not_contains}%')`;
     } else if (value.starts_with) {
-      condition += ` AND s."${key}" ILIKE '${value.starts_with}%'`;
+      condition += ` AND LOWER(s."${key}") LIKE LOWER('${value.starts_with}%')`;
     } else if (value.ends_with) {
-      condition += ` AND s."${key}" ILIKE '%${value.ends_with}'`;
+      condition += ` AND LOWER(s."${key}") LIKE LOWER('%${value.ends_with}')`;
     } else if (value.is_empty !== undefined) {
       if (value.is_empty) {
         condition += ` AND (s."${key}" IS NULL OR s."${key}" = '')`;
@@ -485,15 +484,15 @@ class ResourceSkillSchemaService {
         condition += ` AND s."${key}" IS NOT NULL AND s."${key}" != ''`;
       }
     } else if (value.in && Array.isArray(value.in) && value.in.length > 0) {
-      const values = value.in.map((item: string) => `'${item}'`).join(",");
-      condition += ` AND s."${key}" IN (${values})`;
+      const values = value.in.map((item: string) => `'${item.toLowerCase()}'`).join(",");
+      condition += ` AND LOWER(s."${key}") IN (${values})`;
     } else if (
       value.not_in &&
       Array.isArray(value.not_in) &&
       value.not_in.length > 0
     ) {
-      const values = value.not_in.map((item: string) => `'${item}'`).join(",");
-      condition += ` AND s."${key}" NOT IN (${values})`;
+      const values = value.not_in.map((item: string) => `'${item.toLowerCase()}'`).join(",");
+      condition += ` AND LOWER(s."${key}") NOT IN (${values})`;
     }
 
     return condition;
@@ -514,7 +513,7 @@ class ResourceSkillSchemaService {
       condition += ` AND rs."${key}" != ${value.not_equals}`;
     } else if (value.greater_than !== undefined) {
       condition += ` AND rs."${key}" > ${value.greater_than}`;
-    } else if (value.less_Than !== undefined) {
+    } else if (value.less_than !== undefined) {
       condition += ` AND rs."${key}" < ${value.less_than}`;
     } else if (
       value.between &&
@@ -605,42 +604,27 @@ class ResourceSkillSchemaService {
    * @param value - The filter value object
    * @returns SQL condition string
    */
-  processEnumFilter(key: string, value: any): string {
-    let condition = "";
-    let tableAlias = "";
-    // Determine the table alias based on the field
-    if (key === "resource_type") {
-      tableAlias = "r";
-    } else if (key === "skill_level") {
-      tableAlias = "rs";
-    }
+processEnumFilter(key: string, value: any) {
+  let condition = "";
+  let tableAlias = "rs"; // Default to rs since we're only handling skill_level
 
-    if (value.equals !== undefined) {
-      condition += ` AND ${tableAlias}."${key}" = '${value.equals}'`;
-    } else if (value.not_equals !== undefined) {
-      condition += ` AND ${tableAlias}."${key}" != '${value.not_equals}'`;
-    } else if (value.in && Array.isArray(value.in) && value.in.length > 0) {
-      const values = value.in.map((item: string) => `'${item}'`).join(",");
-      condition += ` AND ${tableAlias}."${key}" IN (${values})`;
-    } else if (
-      value.not_in &&
-      Array.isArray(value.not_in) &&
-      value.not_in.length > 0
-    ) {
-      const values = value.not_in.map((item: string) => `'${item}'`).join(",");
-      condition += ` AND ${tableAlias}."${key}" NOT IN (${values})`;
-    } else if (value.is_empty !== undefined) {
-      if (value.is_empty) {
-        condition += ` AND (${tableAlias}."${key}" IS NULL OR ${tableAlias}."${key}" = '')`;
-      }
-    } else if (value.is_not_empty !== undefined) {
-      if (value.is_not_empty) {
-        condition += ` AND ${tableAlias}."${key}" IS NOT NULL AND ${tableAlias}."${key}" != ''`;
-      }
+  if (value.equals !== undefined) {
+    condition += ` AND ${tableAlias}."${key}" = '${value.equals}'`;
+  } else if (value.not_equals !== undefined) {
+    condition += ` AND ${tableAlias}."${key}" != '${value.not_equals}'`;
+  } else if (value.in && Array.isArray(value.in) && value.in.length > 0) {
+    const values = value.in.map((item: string) => `'${item}'`).join(",");
+    condition += ` AND ${tableAlias}."${key}" IN (${values})`;
+  } else if (value.is_empty !== undefined) {
+    if (value.is_empty) {
+      condition += ` AND (${tableAlias}."${key}" IS NULL OR ${tableAlias}."${key}" = '')`;
+    } else {
+      condition += ` AND ${tableAlias}."${key}" IS NOT NULL AND ${tableAlias}."${key}" != ''`;
     }
-
-    return condition;
   }
+  return condition;
+}
+
 
   /**
    * Process default field filters
@@ -653,7 +637,7 @@ class ResourceSkillSchemaService {
 
     if (value.equals !== undefined) {
       if (typeof value.equals === "string") {
-        condition += ` AND rs."${key}" = '${value.equals}'`;
+        condition += ` AND LOWER(rs."${key}") = LOWER('${value.equals}')`;
       } else {
         condition += ` AND rs."${key}" = ${value.equals}`;
       }
@@ -670,7 +654,7 @@ class ResourceSkillSchemaService {
    */
   processSimpleEqualityFilter(key: string, value: any): string {
     if (typeof value === "string") {
-      return ` AND rs."${key}" = '${value}'`;
+      return ` AND LOWER(rs."${key}") = LOWER('${value}')`;
     } else {
       return ` AND rs."${key}" = ${value}`;
     }
