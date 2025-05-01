@@ -30,7 +30,7 @@ export const useAccountDetail = (accountId: string) => {
     queryKey: ['accountDetail', accountId], // Unique query key
     queryFn: () => fetchAccountDetail(accountId),
     enabled: !!accountId, // Only fetch if userId exists
-    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    gcTime: 0, // 5 minutes cache
     retry: 2, // Retry up to 2 times on failure
   });
 };

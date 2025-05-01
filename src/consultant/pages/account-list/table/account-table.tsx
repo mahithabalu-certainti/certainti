@@ -17,7 +17,9 @@ import {
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { generatePath, useNavigate } from 'react-router-dom';
+import { arrowDownIcon, arrowUpIcon } from '../../../../assets';
 import { reshapeGlobalFilter } from '../../../../common-utils';
+import { TablePagination } from '../../../../components/table';
 import { ACCOUNT, ACCOUNT_DETAILS } from '../../../../routes';
 import { RootState } from '../../../../store/store';
 import { useAccounts } from '../../../services/account';
@@ -26,15 +28,13 @@ import { Account, AccountList, ConvertedAccount } from '../../../types/account';
 import { convertAccounts } from '../helpers';
 import './styles.css';
 import { renderChildRows, renderRows } from './utils';
-import { TablePagination } from '../../../../components/table';
-import { arrowDownIcon, arrowUpIcon } from '../../../../assets';
 
 const AccountTable: React.FC<Record<string, any>> = ({
   appliedFilters,
   setTotalCount,
-  order, 
+  order,
   setOrder,
-  orderBy, 
+  orderBy,
   setOrderBy,
 }) => {
   const navigate = useNavigate();
@@ -181,8 +181,8 @@ const AccountTable: React.FC<Record<string, any>> = ({
     }
 
     setSelectedRows(newSelectedRows);
-  };  
-  
+  };
+
   // Handle page change
   const handleChangePage = (newPage: number) => {
     setPage(newPage + 1);
@@ -222,7 +222,8 @@ const AccountTable: React.FC<Record<string, any>> = ({
     });
 
   const getSortIcon =
-    (orderBy: string, columnKey: keyof AccountList, order: 'asc' | 'desc') => () => {
+    (orderBy: string, columnKey: keyof AccountList, order: 'asc' | 'desc') =>
+    () => {
       if (orderBy !== columnKey) {
         return (
           <div
@@ -280,219 +281,238 @@ const AccountTable: React.FC<Record<string, any>> = ({
             }}
           />
         </div>
-      )
+      );
     };
 
   return (
     <div className='border border-[#CBD6E2] h-full'>
-      <Paper sx={{ boxShadow: 'none', borderBottom: '1px solid #CBD6E2', borderRadius: '0px' }}> 
-        <TableContainer sx={{ maxHeight: 'calc(85vh - 200px)', minHeight: 'calc(85vh - 200px)', overflow: 'auto' }}>
-          <Table
-          stickyHeader
+      <Paper
+        sx={{
+          boxShadow: 'none',
+          borderBottom: '1px solid #CBD6E2',
+          borderRadius: '0px',
+        }}
+      >
+        <TableContainer
           sx={{
-            borderCollapse: 'separate !important',
-            borderSpacing: 0,
-            '& .MuiTableCell-root': {
-              borderBottom: '1px solid #CBD6E2',
-            },
+            maxHeight: 'calc(85vh - 200px)',
+            minHeight: 'calc(85vh - 200px)',
+            overflow: 'auto',
           }}
         >
-          <TableHead
+          <Table
+            stickyHeader
             sx={{
+              borderCollapse: 'separate !important',
+              borderSpacing: 0,
               '& .MuiTableCell-root': {
-                fontWeight: 500,
-                fontSize: '14px',
-                lineHeight: '21px',
-                color: '#2A2A2A',
-                padding: '0px',
-                pl: 1,
-                height: '50px',
+                borderBottom: '1px solid #CBD6E2',
               },
-              '& .MuiTableSortLabel-root': {
-                '&:hover': {
-                  color: 'inherit',
-                  cursor: 'auto',
+            }}
+          >
+            <TableHead
+              sx={{
+                '& .MuiTableCell-root': {
+                  fontWeight: 500,
+                  fontSize: '14px',
+                  lineHeight: '21px',
+                  color: '#2A2A2A',
+                  padding: '0px',
+                  pl: 1,
+                  height: '50px',
                 },
-              }
-            }}
-          >
-            <TableRow>
-              <TableCell 
-               sx={{
-                position: 'sticky',
-                left: 0,
-                background: '#fff',
-                zIndex: 11,
-                maxWidth: '50px',
-                minWidth: '50px',
-                padding: '0px !important',
-                borderRight: '1px solid #CBD6E2',
+                '& .MuiTableSortLabel-root': {
+                  '&:hover': {
+                    color: 'inherit',
+                    cursor: 'auto',
+                  },
+                },
               }}
-              >
-                <Box className='flex items-center justify-center'>
-                  <Checkbox
-                    disableRipple
-                    checked={Boolean(
-                      accounts?.length && selectedRows.size === accounts.length
+            >
+              <TableRow>
+                <TableCell
+                  sx={{
+                    position: 'sticky',
+                    left: 0,
+                    background: '#fff',
+                    zIndex: 11,
+                    maxWidth: '50px',
+                    minWidth: '50px',
+                    padding: '0px !important',
+                    borderRight: '1px solid #CBD6E2',
+                  }}
+                >
+                  <Box className='flex items-center justify-center'>
+                    <Checkbox
+                      disableRipple
+                      checked={Boolean(
+                        accounts?.length &&
+                          selectedRows.size === accounts.length
+                      )}
+                      indeterminate={Boolean(
+                        accounts?.length &&
+                          selectedRows.size > 0 &&
+                          selectedRows.size < accounts.length
+                      )}
+                      onChange={(e) => handleSelectAllRows(e.target.checked)}
+                      disabled={!accounts?.length}
+                      sx={{
+                        color: '#CBD6E2',
+                        '&.Mui-checked': {
+                          color: '#1755E7',
+                        },
+                        '&.MuiCheckbox-indeterminate': {
+                          color: '#1755E7',
+                        },
+                      }}
+                    />
+                  </Box>
+                </TableCell>
+                <TableCell
+                  sx={{
+                    position: 'sticky',
+                    left: '50px',
+                    background: '#fff',
+                    zIndex: 10,
+                    minWidth: '300px',
+                    borderRight: '1px solid #CBD6E2',
+                  }}
+                >
+                  <TableSortLabel
+                    active={orderBy === 'account_name'}
+                    direction={orderBy === 'account_name' ? order : 'asc'}
+                    IconComponent={getSortIcon(orderBy, 'account_name', order)}
+                  >
+                    Account Name
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell sx={{ minWidth: '200px' }}>
+                  <TableSortLabel
+                    active={orderBy === 'is_parent'}
+                    direction={orderBy === 'is_parent' ? order : 'asc'}
+                    IconComponent={getSortIcon(orderBy, 'is_parent', order)}
+                  >
+                    Parent Account
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell sx={{ minWidth: '180px' }}>
+                  <TableSortLabel
+                    active={orderBy === 'r_number'}
+                    direction={orderBy === 'r_number' ? order : 'asc'}
+                    IconComponent={getSortIcon(orderBy, 'r_number', order)}
+                  >
+                    Account Number
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell sx={{ minWidth: '200px' }}>
+                  <TableSortLabel
+                    active={orderBy === 'industry'}
+                    direction={orderBy === 'industry' ? order : 'asc'}
+                    IconComponent={getSortIcon(orderBy, 'industry', order)}
+                  >
+                    Industries
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell sx={{ minWidth: '150px' }}>
+                  <TableSortLabel
+                    active={orderBy === 'country'}
+                    direction={orderBy === 'country' ? order : 'asc'}
+                    IconComponent={getSortIcon(orderBy, 'country', order)}
+                  >
+                    Country
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell sx={{ minWidth: '100px' }}>
+                  <TableSortLabel
+                    active={orderBy === 'currency'}
+                    direction={orderBy === 'currency' ? order : 'asc'}
+                    IconComponent={getSortIcon(orderBy, 'currency', order)}
+                  >
+                    Currency
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell sx={{ minWidth: '160px' }}>
+                  <TableSortLabel
+                    active={orderBy === 'annual_revenue'}
+                    direction={orderBy === 'annual_revenue' ? order : 'asc'}
+                    IconComponent={getSortIcon(
+                      orderBy,
+                      'annual_revenue',
+                      order
                     )}
-                    indeterminate={Boolean(
-                      accounts?.length &&
-                      selectedRows.size > 0 &&
-                      selectedRows.size < accounts.length
+                  >
+                    Annual Revenue
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell sx={{ minWidth: '100px' }}>
+                  <TableSortLabel
+                    active={orderBy === 'status'}
+                    direction={orderBy === 'status' ? order : 'asc'}
+                    IconComponent={getSortIcon(orderBy, 'status', order)}
+                  >
+                    Status
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell sx={{ minWidth: '180px' }}>
+                  <TableSortLabel
+                    active={orderBy === 'primary_contact_name'}
+                    direction={
+                      orderBy === 'primary_contact_name' ? order : 'asc'
+                    }
+                    IconComponent={getSortIcon(
+                      orderBy,
+                      'primary_contact_name',
+                      order
                     )}
-                    onChange={(e) => handleSelectAllRows(e.target.checked)}
-                    disabled={!accounts?.length}
-                    sx={{
-                      color: '#CBD6E2',
-                      '&.Mui-checked': {
-                        color: '#1755E7',
-                      },
-                      '&.MuiCheckbox-indeterminate': {
-                        color: '#1755E7',
-                      },
-                    }}
-                  />
-                </Box>
-              </TableCell>
-              <TableCell 
-               sx={{
-                position: 'sticky',
-                left: '50px',
-                background: '#fff',
-                zIndex: 10,
-                minWidth: '300px',
-                borderRight: '1px solid #CBD6E2',
+                  >
+                    Primary Contact
+                  </TableSortLabel>
+                </TableCell>
+                <TableCell sx={{ minWidth: '80px' }}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody
+              sx={{
+                '& .MuiTableCell-root': {
+                  fontWeight: 300,
+                  fontSize: '14px',
+                  lineHeight: '21px',
+                  color: '#425A76',
+                  padding: '0px',
+                  pl: 1,
+                  minHeight: '42px',
+                  maxHeight: '42px',
+                  height: '42px',
+                },
               }}
-              >
-                <TableSortLabel
-                  active={orderBy === 'account_name'}
-                  direction={orderBy === 'account_name' ? order : 'asc'}
-                  IconComponent={getSortIcon(orderBy, 'account_name', order)}
-                >
-                  Account Name
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ minWidth: '200px' }}>
-                <TableSortLabel
-                  active={orderBy === 'is_parent'}
-                  direction={orderBy === 'is_parent' ? order : 'asc'}
-                  IconComponent={getSortIcon(orderBy, 'is_parent', order)}
-                >
-                  Parent Account
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ minWidth: '180px' }}>
-                <TableSortLabel
-                  active={orderBy === 'r_number'}
-                  direction={orderBy === 'r_number' ? order : 'asc'}
-                  IconComponent={getSortIcon(orderBy, 'r_number', order)}
-                >
-                  Account Number
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ minWidth: '200px' }}>
-                <TableSortLabel
-                  active={orderBy === 'industry'}
-                  direction={orderBy === 'industry' ? order : 'asc'}
-                  IconComponent={getSortIcon(orderBy, 'industry', order)}
-                >
-                  Industries
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ minWidth: '150px' }}>
-                <TableSortLabel
-                  active={orderBy === 'country'}
-                  direction={orderBy === 'country' ? order : 'asc'}
-                  IconComponent={getSortIcon(orderBy, 'country', order)}
-                >
-                  Country
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ minWidth: '100px' }}>
-                <TableSortLabel
-                  active={orderBy === 'currency'}
-                  direction={orderBy === 'currency' ? order : 'asc'}
-                  IconComponent={getSortIcon(orderBy, 'currency', order)}
-                >
-                  Currency
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ minWidth: '160px' }}>
-                <TableSortLabel
-                  active={orderBy === 'annual_revenue'}
-                  direction={orderBy === 'annual_revenue' ? order : 'asc'}
-                  IconComponent={getSortIcon(orderBy, 'annual_revenue', order)}
-                >
-                  Annual Revenue
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ minWidth: '100px' }}>
-                <TableSortLabel
-                  active={orderBy === 'status'}
-                  direction={orderBy === 'status' ? order : 'asc'}
-                  IconComponent={getSortIcon(orderBy, 'status', order)}
-                >
-                  Status
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ minWidth: '180px' }}>
-                <TableSortLabel
-                  active={orderBy === 'primary_contact_name'}
-                  direction={orderBy === 'primary_contact_name' ? order : 'asc'}
-                  IconComponent={getSortIcon(
-                    orderBy,
-                    'primary_contact_name',
-                    order
-                  )}
-                >
-                  Primary Contact
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ minWidth: '80px' }}>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody
-            sx={{
-              '& .MuiTableCell-root': {
-                fontWeight: 300,
-                fontSize: '14px',
-                lineHeight: '21px',
-                color: '#425A76',
-                padding: '0px',
-                pl: 1,
-                minHeight: '42px',
-                maxHeight: '42px',
-                height: '42px',
-              },
-            }}
-          >
-            {loading ? (
-              <TableRow sx={{ height: 'calc(85vh - 200px)' }}>
-                <TableCell colSpan={11} align='center'>
-                  <CircularProgress />
-                </TableCell>
-              </TableRow>
-            ) : accounts?.length === 0 ? (
-              <TableRow sx={{ height: 'calc(85vh - 200px)' }}>
-                <TableCell colSpan={11} align='center'>
-                  <Typography variant='body1'>No data available</Typography>
-                </TableCell>
-              </TableRow>
-            ) : (
-              renderRows({
-                accounts: accounts || [],
-                openRows,
-                selectedRows,
-                handleRowClick,
-                handleSelectRow,
-                handleEdit,
-                handleDelete,
-                renderChildRows: childRowsRenderer,
-                handleAccountNameClick,
-              })
-            )}
-          </TableBody>
-        </Table>
+            >
+              {loading ? (
+                <TableRow sx={{ height: 'calc(85vh - 200px)' }}>
+                  <TableCell colSpan={11} align='center'>
+                    <CircularProgress />
+                  </TableCell>
+                </TableRow>
+              ) : accounts?.length === 0 ? (
+                <TableRow sx={{ height: 'calc(85vh - 200px)' }}>
+                  <TableCell colSpan={11} align='center'>
+                    <Typography variant='body1'>No data available</Typography>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                renderRows({
+                  accounts: accounts || [],
+                  openRows,
+                  selectedRows,
+                  handleRowClick,
+                  handleSelectRow,
+                  handleEdit,
+                  handleDelete,
+                  renderChildRows: childRowsRenderer,
+                  handleAccountNameClick,
+                })
+              )}
+            </TableBody>
+          </Table>
         </TableContainer>
       </Paper>
       <TablePagination
