@@ -456,28 +456,28 @@ export class ResourceService {
     if (fieldFilter.equals) {
       return { [Op.iLike]: fieldFilter.equals };
     }
-    if (fieldFilter.notEqual) {
+    if (fieldFilter.not_equals) {
       return { [Op.notILike]: fieldFilter.notEqual };
     }
 
     if (fieldFilter.contains) {
       return { [Op.iLike]: `%${fieldFilter.contains}%` };
     }
-    if (fieldFilter.notContains) {
+    if (fieldFilter.not_contains) {
       return { [Op.notILike]: `%${fieldFilter.notContains}%` };
     }
 
-    if (fieldFilter.isEmpty === true) {
+    if (fieldFilter.is_empty === true) {
       return { [Op.or]: [null, ""] };
     }
 
     if (fieldFilter.value) {
       return fieldFilter.value;
     }
-    if (fieldFilter.greaterThan) {
+    if (fieldFilter.greater_than) {
       return { [Op.gt]: fieldFilter.greaterThan };
     }
-    if (fieldFilter.lesserThan) {
+    if (fieldFilter.lesser_than) {
       return { [Op.lt]: fieldFilter.lesserThan };
     }
     if (
