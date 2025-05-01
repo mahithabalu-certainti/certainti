@@ -560,7 +560,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               const startDateRaw = field.startDateLabel
                 ? (constructFormData[field.startDateLabel] as string)
                 : '';
-              console.log('field', field);
 
               const endDate = dayjs(endDateRaw?.trim());
               const startDate = dayjs(startDateRaw?.trim());
