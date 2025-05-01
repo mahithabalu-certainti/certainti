@@ -111,9 +111,9 @@ export const ResourceFormData = (
             placeholder: 'Enter Resource Role',
             disabled: disableCostAndSkill,
           }),
-          createTextField('r_number', 'Resource Number', {
+          createTextField('r_number', 'Resource ID', {
             required: false,
-            placeholder: 'Enter Resource Number',
+            placeholder: 'Enter Resource ID',
             disabled: disableCostAndSkill,
             hide: !disableCostAndSkill,
           }),
@@ -157,11 +157,14 @@ export const ResourceFormData = (
             required: false,
             minDate: new Date(minDate.getTime()),
             maxDate: currentDate,
+            startValue: true,
           }),
           createDateField('financial_end_date', 'End Date', {
             required: false,
             minDate: new Date(minDate.getTime()),
             maxDate: currentDate,
+            endDateValue: true,
+            startDateLabel: 'financial_start_date',
           }),
           createSelectField('cost_frequency', 'Cost Frequency', {
             options: FREQUENCY_OPTIONS,
@@ -192,6 +195,7 @@ export const ResourceFormData = (
             required: false,
             minDate: new Date(minDate.getTime()),
             maxDate: currentDate,
+            startValue: true,
           }),
           createTextField('skill_name', 'Skill Name', {
             required: true,
