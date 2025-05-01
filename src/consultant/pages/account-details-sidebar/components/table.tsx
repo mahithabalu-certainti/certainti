@@ -283,6 +283,7 @@ const DataTable: React.FC<DataTableProps> = ({
                 lineHeight: '21px',
                 color: '#2A2A2A',
                 padding: '0px',
+                pl: 1,
                 minHeight: '50px',
                 maxHeight: '50px',
                 height: '50px',
@@ -299,16 +300,33 @@ const DataTable: React.FC<DataTableProps> = ({
             }}
           >
             <TableRow>
-              {columns.map((column) => (
+              {columns.map((column, index) => (
                 <TableCell
                   key={column.id}
                   className='font-bold'
                   align={column.align}
                   sx={{
-                    width: column.width || 120,
-                    maxWidth: column.width || 120,
-                    minWidth: column.width || 120,
-                    pl: 1,
+                    width: column.width ?? 120,
+                    maxWidth: column.width ?? 120,
+                    minWidth: column.width ?? 120,
+                    position: index === 0 ? 'sticky' : undefined,
+                    background: index === 0 ? '#fff' : "#fff",
+                    zIndex: index === 0 ? 10 : undefined,
+                    left: index === 0 ? 0 : undefined,
+                    borderRight: index === 0 ? 'none' : '1px solid #CBD6E2',
+                    '&::after':
+                      index === 0
+                        ? {
+                            content: '""',
+                            position: 'absolute',
+                            top: 0,
+                            right: 0,
+                            width: '0.5px',
+                            height: '100%',
+                            backgroundColor: '#CBD6E2',
+                            zIndex: 20,
+                          }
+                        : undefined,
                   }}
                 >
                   {sortable && column.sortable !== false ? (
@@ -338,7 +356,9 @@ const DataTable: React.FC<DataTableProps> = ({
                 </TableCell>
               ))}
               {actionMenuItems.length > 0 && (
-                <TableCell sx={{ textAlign: 'center' }}>Action</TableCell>
+                <TableCell sx={{ textAlign: 'center', pl: '0 !important' }}>
+                  Action
+                </TableCell>
               )}
             </TableRow>
           </TableHead>
@@ -370,17 +390,35 @@ const DataTable: React.FC<DataTableProps> = ({
                     },
                   }}
                 >
-                  {columns.map((column) => (
+                  {columns.map((column, index) => (
                     <TableCell
                       key={`${row[rowIdentifier]}-${column.id}`}
                       align={column.align}
                       sx={{
-                        width: column.width || 120,
-                        maxWidth: column.width || 120,
-                        minWidth: column.width || 120,
+                        width: column.width ?? 120,
+                        maxWidth: column.width ?? 120,
+                        minWidth: column.width ?? 120,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
+                        position: index === 0 ? 'sticky' : undefined,
+                        background: index === 0 ? '#fff' : undefined,
+                        zIndex: index === 0 ? 10 : undefined,
+                        left: index === 0 ? 0 : undefined,
+                        borderRight: index === 0 ? 'none' : '1px solid #CBD6E2',
+                        '&::after':
+                          index === 0
+                            ? {
+                                content: '""',
+                                position: 'absolute',
+                                top: 0,
+                                right: 0,
+                                width: '0.5px',
+                                height: '100%',
+                                backgroundColor: '#CBD6E2',
+                                zIndex: 20,
+                              }
+                            : undefined,
                       }}
                     >
                       {column.render
@@ -397,7 +435,7 @@ const DataTable: React.FC<DataTableProps> = ({
                         // maxWidth: '100px',
                         position: 'relative',
                         textAlign: 'center',
-                        pl: "0 !important",
+                        pl: '0 !important',
                       }}
                     >
                       <div
