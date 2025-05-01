@@ -5,7 +5,7 @@ export interface ResourcesAttributes {
   eid?: string;
   r_number?: string;
   resource_ref_id: string;
-  resource_type: "Full-time" | "SubCon" | "Non-Labor";
+  resource_type: "Full-Time" | "Sub Con" | "Non-Labor";
   account_rid: string;
   resource_fullname?: string | null;
   resource_orgname?: string | null;
@@ -38,7 +38,7 @@ export class Resources
   public eid?: string;
   public r_number?: string;
   public resource_ref_id!: string;
-  public resource_type!: "Full-time" | "SubCon" | "Non-Labor";
+  public resource_type!: "Full-Time" | "Sub Con" | "Non-Labor";
   public fiscal_year!: number;
   public resource_fullname?: string | null;
   public resource_orgname?: string;
@@ -87,7 +87,7 @@ export class Resources
           unique: true,
         },
         resource_type: {
-          type: DataTypes.ENUM("Full-time", "SubCon", "Non-Labor"),
+          type: DataTypes.ENUM("Full-Time", "Sub Con", "Non-Labor"),
           allowNull: false,
         },
         resource_fullname: {

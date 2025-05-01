@@ -6,7 +6,7 @@ interface ResourceFiscalAttributes {
   account_rid: string;
   r_number?: string;
   resource_rid: string;
-  resource_type: "Full-time" | "SubCon" | "Non-Labor";
+  resource_type: "Full-Time" | "Sub Con" | "Non-Labor";
   fiscal_year?: number;
   country_rid?: string | null;
   country_region_rid?: string | null;
@@ -52,7 +52,7 @@ export class ResourceFiscal
   public account_rid!: string;
   public r_number?: string;
   public resource_rid!: string;
-  public resource_type!: "Full-time" | "SubCon" | "Non-Labor";
+  public resource_type!: "Full-Time" | "Sub Con" | "Non-Labor";
   public fiscal_year?: number;
   public country_rid?: string | null;
   public country_region_rid?: string | null;
@@ -112,7 +112,7 @@ export class ResourceFiscal
           allowNull: false,
         },
         resource_type: {
-          type: DataTypes.ENUM("Full-time", "SubCon", "Non-Labor"),
+          type: DataTypes.ENUM("Full-Time", "Sub Con", "Non-Labor"),
           allowNull: false,
         },
         fiscal_year: {
