@@ -37,8 +37,19 @@ const BASE_COLUMNS: ColumnDefinition[] = [
     ),
   },
   {
+    id: 'resource_ref_id',
+    label: 'Resource Ref Id',
+    sortable: true,
+    width: '150px',
+    render: (value: string) => (
+      <span className='font-light text-sm text-[#425A76]'>
+        {displayValue(value)}
+      </span>
+    ),
+  },
+  {
     id: 'resource_fullname',
-    label: 'Resource Name',
+    label: 'Resource Full Name',
     sortable: true,
     width: '200px',
     render: (value: string) => (
