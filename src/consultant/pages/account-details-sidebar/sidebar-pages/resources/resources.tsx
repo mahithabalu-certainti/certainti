@@ -218,7 +218,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
           actionMenuItems={actionMenuItems}
           pagination={true}
           rowsPerPage={rowsPerPage}
-          rowsPerPageOptions={[25, 30, 40, 50]}
+          rowsPerPageOptions={[25, 30, 40, 50, 100]}
           sortable={true}
           isLoading={isLoading}
           error={error}
