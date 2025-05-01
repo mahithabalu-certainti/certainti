@@ -81,21 +81,10 @@ const BASE_COLUMNS: ColumnDefinition[] = [
     ),
   },
   {
-    id: 'total_years_experience',
-    label: 'Total Experience',
+    id: 'country_name',
+    label: 'Resource Country',
     sortable: true,
-    width: '150px',
-    render: (value: string) => (
-      <span className='font-light text-sm text-[#425A76]'>
-        {displayValue(value)}
-      </span>
-    ),
-  },
-  {
-    id: 'city_name',
-    label: 'Resource City',
-    sortable: true,
-    width: '140px',
+    width: '160px',
     render: (value: string) => (
       <span className='font-light text-sm text-[#425A76]'>
         {displayValue(value)}
@@ -113,17 +102,6 @@ const BASE_COLUMNS: ColumnDefinition[] = [
       </span>
     ),
   },
-  {
-    id: 'country_name',
-    label: 'Resource Country',
-    sortable: true,
-    width: '160px',
-    render: (value: string) => (
-      <span className='font-light text-sm text-[#425A76]'>
-        {displayValue(value)}
-      </span>
-    ),
-  },
 ];
 
 const createStatusColumn = (): ColumnDefinition => ({
@@ -134,9 +112,7 @@ const createStatusColumn = (): ColumnDefinition => ({
   render: (value: string) => (
     <span
       className={`font-normal text-[14px] ${
-         value === 'Active'
-            ? 'text-[#199806]'
-            : 'text-[#f44336]'
+        value === 'Active' ? 'text-[#199806]' : 'text-[#f44336]'
       }`}
     >
       {value === 'Active' ? 'Active' : 'In-Active'}

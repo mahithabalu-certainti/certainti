@@ -61,8 +61,9 @@ export const ResourceFormData = (
         fields: [
           createTextField('resource_ref_id', 'Resource Ref ID', {
             required: true,
-            regex: REGEX_PATTERNS.ALPHANUMERIC_SPEC_5_TO_50,
-            regexErrorMessage: '5 to 50 alphanumeric characters',
+            regex: RESOURCE_REGEX.RESOURCE_REF_ID,
+            regexErrorMessage:
+              'Please enter 1-50 characters, including at least one letter. Special characters and numbers alone are not allowed.',
             placeholder: 'Enter Resource Ref Id',
             disabled: disableFields || disableCostAndSkill,
           }),
@@ -231,7 +232,6 @@ export const ResourceFormData = (
           createDateField('resource_enddate', 'Resource End Date', {
             required: false,
             disabled: disableCostAndSkill,
-            minDate: currentDate,
             greaterThan: {
               field: 'resource_startdate',
               message:

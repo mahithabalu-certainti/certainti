@@ -294,8 +294,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               minDate={field?.minDate ? dayjs(field?.minDate) : undefined}
               value={dayjs(fieldValue)}
               disabled={field.disabled}
+              format='MM/DD/YYYY'
               onChange={(newValue) => {
-                handleChange(newValue ? dayjs(newValue).format('MM/DD/YYYY') : null);
+                handleChange(
+                  newValue ? dayjs(newValue).format('MM/DD/YYYY') : null
+                );
               }}
               shouldDisableDate={
                 field.disableFutureDates
@@ -419,8 +422,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             onChange={(phone, country: CountryData) =>
               handleChange(phone, country.countryCode)
             }
-            inputClass={`placeholder-custom-color !w-full !text-[13px] !p-2 !pl-12 !border !h-[32px] !rounded-xs ${field.error ? '!border-red-500' : '!border-gray-300'
-              }${field.disabled ? ' !bg-gray-100' : ''}`}
+            inputClass={`placeholder-custom-color !w-full !text-[13px] !p-2 !pl-12 !border !h-[32px] !rounded-xs ${
+              field.error ? '!border-red-500' : '!border-gray-300'
+            }${field.disabled ? ' !bg-gray-100' : ''}`}
             buttonClass={`!bg-transparent !border-r ${field.error ? '!border-red-500' : '!border-gray-300'} !rounded-tl-xs !rounded-bl-xs !hover:bg-transparent !shadow-none !px-0 !m-0`}
             containerClass='!w-full'
             inputProps={{
@@ -579,35 +583,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           if (
             field.dependsRequired?.key &&
             constructFormData[field.dependsRequired.key] ===
-            field.dependsRequired?.matchedValue &&
+              field.dependsRequired?.matchedValue &&
             !hasValue
           ) {
             hasError = true;
             return { ...field, error: field.dependsRequired.errorMessage };
           }
-
-          // if (field.anyOneRequired) {
-          //   if (!isAnyFieldFilled) {
-          //     hasError = true;
-          //     return { ...field, error: "Any one cost information is required" }
-          //   } else {
-          //     return { ...field, error: "" }; // Clear error if any field is filled
-          //   }
-          // }
-
-          // Date custom Validation
-          //commented this if condition due to not able to submit form
-          // if (
-          //   field.greaterThan &&
-          //   (constructFormData[field.name] || '') <=
-          //   (constructFormData[field.greaterThan.key] || '')
-          // ) {
-          //   hasError = true;
-          //   return {
-          //     ...field,
-          //     error: field.greaterThan.errorMessage,
-          //   };
-          // }
 
           if (field.type === 'date' && constructFormData[field.name]) {
             const dateValue = constructFormData[field.name] as string;
@@ -624,29 +605,58 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               };
             }
 
-            // Check if date is before the minimum allowed date
-            if (
-              field.minDate &&
-              dayjs(dateValue).isBefore(dayjs(field.minDate), 'day')
-            ) {
+            // Check if date is before the minimum allowed date (1-1-1950)
+            const minAllowedDate = dayjs('1-1-1950', 'D-M-YYYY');
+            if (dayjs(dateValue).isBefore(minAllowedDate, 'day')) {
               hasError = true;
               return {
                 ...field,
-                error: `Date cannot be before ${dayjs(field.minDate).format('DD-MM-YYYY')}`,
+                error: 'Date cannot be before 1-1-1950',
               };
             }
 
-            // Check if end date is provided without a start date
+            // Check if both start and end dates are either provided or not provided
             if (
-              field.name === 'resource_enddate' &&
-              !constructFormData['resource_startdate']
+              field.name === 'resource_startdate' ||
+              field.name === 'resource_enddate'
             ) {
-              hasError = true;
-              return {
-                ...field,
-                error:
-                  'Effective From date is required when providing an End Date',
-              };
+              const startDate = constructFormData[
+                'resource_startdate'
+              ] as string;
+              const endDate = constructFormData['resource_enddate'] as string;
+
+              // Check if one is provided without the other
+              if ((startDate && !endDate) || (!startDate && endDate)) {
+                hasError = true;
+                return {
+                  ...field,
+                  error: 'Both start and end dates must be provided',
+                };
+              }
+
+              // If both are provided, validate the relationship
+              if (startDate && endDate) {
+                const start = dayjs(startDate);
+                const end = dayjs(endDate);
+
+                // Check if dates are the same
+                if (start.isSame(end, 'day')) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error: 'Start date and end date cannot be the same',
+                  };
+                }
+
+                // Check if start date is after end date
+                if (start.isAfter(end, 'day')) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error: 'Start date cannot be after end date',
+                  };
+                }
+              }
             }
 
             // Check if end date is after start date (strictly greater)

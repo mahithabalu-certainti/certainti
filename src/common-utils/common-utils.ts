@@ -250,7 +250,8 @@ export const RESOURCE_REGEX = {
   // Full Name: Alphanumeric with hyphen/apostrophe, 3-100 chars
   FULL_NAME:
     /^(?=[\s\S]{3,200}$)(?=.*[a-zA-Z])(?!^\d+$)(?!^[^\w\s]+$)(?!^\s+$)[\w\s\-,.!?@#$%^&*()+=;:'"/\\<>{}[\]|~`]+$/,
-
+  RESOURCE_REF_ID:
+    /^(?=.{1,50}$)(?!^[^\w]*$)[a-zA-Z0-9\s\-,.!?@#$%^&*()+=;:'"/\\<>{}[\]|~`]+$/,
   // Organization Name: Extended chars for org names, 4-100 chars
   ORG_NAME:
     /^(?=[\s\S]{3,100}$)(?=.*[a-zA-Z])(?!^\d+$)(?!^[^\w\s]+$)(?!^\s+$)[\w\s\-,.!?@#$%^&*()+=;:'"/\\<>{}[\]|~`]+$/,

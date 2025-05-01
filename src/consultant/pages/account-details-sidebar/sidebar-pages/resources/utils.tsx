@@ -27,8 +27,12 @@ export const resourceFilterFields: FieldConfig[] = [
   { name: 'Resource ID', value: 'r_number', type: 'text' },
   { name: 'Resource Ref Id', value: 'resource_ref_id', type: 'text' },
   { name: 'Resource Full Name', value: 'resource_fullname', type: 'text' },
+  // { name: 'Resource Name', value: 'resource_fullname', type: 'text' },
   { name: 'Resource Type', value: 'resource_type', type: 'text' },
-  { name: ' Resource Status', value: 'resource_status', type: 'text' },
+  { name: 'Resource Designation', value: 'designation', type: 'text' },
+  { name: 'Resource Country', value: 'country_name', type: 'text' },
+  { name: 'Resource Region', value: 'state_name', type: 'text' },
+  { name: 'Resource Status', value: 'resource_status', type: 'text' },
 ];
 export const getInitialStateForField = (
   fieldConfig: FieldConfig
