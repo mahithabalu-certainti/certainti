@@ -17,8 +17,8 @@ export const RESOURCE_STATUS_OPTIONS: SelectOption[] = [
 ];
 
 export const RESOURCE_TYPE_OPTIONS: SelectOption[] = [
-  { label: 'Full-time', value: 'Full-time' },
-  { label: 'SubCon', value: 'SubCon' },
+  { label: 'Full-Time', value: 'Full-Time' },
+  { label: 'Sub Con', value: 'Sub Con' },
   { label: 'Non-Labor', value: 'Non-Labor' },
 ];
 
@@ -162,8 +162,10 @@ export const transformCostData = (
   const data: Partial<ResourceCostPayload> = {
     eid: '',
     account_rid: formData.account_rid,
-    effective_date: formData.financial_start_date ? formData.financial_start_date : '',
-    end_date: formData.financial_end_date ? formData.financial_end_date : "",
+    effective_date: formData.financial_start_date
+      ? formData.financial_start_date
+      : '',
+    end_date: formData.financial_end_date ? formData.financial_end_date : '',
     cost_frequency: formData.cost_frequency,
     cost: formData.cost ? Number(formData.cost.replace(',', '')) : null,
     resource_type: formData.resource_type,

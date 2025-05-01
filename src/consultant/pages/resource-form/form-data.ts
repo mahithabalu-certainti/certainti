@@ -70,7 +70,7 @@ export const ResourceFormData = (
             required: false,
             regex: RESOURCE_REGEX.FULL_NAME,
             regexErrorMessage:
-              'Input must be 3-200 characters, and cannot be only numbers, special characters, or spaces.',
+              'Please enter 3-200 characters, including at least one letter. Special characters and numbers alone are not allowed.',
             placeholder: 'Enter Full Name',
             disabled: disableCostAndSkill,
           }),
@@ -84,7 +84,7 @@ export const ResourceFormData = (
             required: false,
             regex: RESOURCE_REGEX.ORG_NAME,
             regexErrorMessage:
-              'Input must be 3-100 characters, and cannot be only numbers, special characters, or spaces.',
+              'Please enter 3-100 characters, including at least one letter. Special characters and numbers alone are not allowed.',
             placeholder: 'Enter Organization Name',
             disabled: disableCostAndSkill,
           }),
@@ -107,7 +107,7 @@ export const ResourceFormData = (
             required: false,
             regex: RESOURCE_REGEX.ROLE,
             regexErrorMessage:
-              'Input must be 4-100 characters, and cannot be only numbers, special characters, or spaces.',
+              'Please enter 4-100 characters, including at least one letter. Special characters and numbers alone are not allowed.',
             placeholder: 'Enter Resource Role',
             disabled: disableCostAndSkill,
           }),
@@ -238,7 +238,7 @@ export const ResourceFormData = (
             required: false,
             regex: RESOURCE_REGEX.DESIGNATION,
             regexErrorMessage:
-              'Input must be 4-100 characters, and cannot be only numbers, special characters, or spaces.',
+              'Please enter 4-100 characters, including at least one letter. Special characters and numbers alone are not allowed.',
             placeholder: 'Enter Designation',
             disabled: disableCostAndSkill,
           }),
