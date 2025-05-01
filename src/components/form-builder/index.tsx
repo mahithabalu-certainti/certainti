@@ -292,7 +292,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               className={fieldDisabled}
               maxDate={field?.maxDate ? dayjs(field?.maxDate) : undefined}
               minDate={field?.minDate ? dayjs(field?.minDate) : undefined}
-              value={dayjs(fieldValue)}
+              value={dayjs(fieldValue, 'MM/DD/YYYY')}
               disabled={field.disabled}
               onChange={(newValue) => {
                 handleChange(newValue ? dayjs(newValue).format('MM/DD/YYYY') : null);
@@ -345,6 +345,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   },
                   placeholder: field.placeholder,
                   error: !!field.error,
+                  onBlur: (event) => { //For cache typed data
+                    const value = event.target.value;
+                    if (value !== 'MM/DD/YYYY') { //For Avoid default data
+                      handleChange(value)
+                    }
+                  },
                 },
               }}
             />
@@ -542,7 +548,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               hasError = true;
               return {
                 ...field,
-                error: 'Invalid date',
+                error: 'Please enter a valid date.',
               };
             }
           }
