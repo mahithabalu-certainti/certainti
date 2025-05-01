@@ -374,6 +374,7 @@ const DataTable: React.FC<DataTableProps> = ({
                 minHeight: '42px',
                 maxHeight: '42px',
                 height: '42px',
+                borderBottom: '1px solid #CBD6E2 !important'
               },
               '& .MuiTableCell-root:last-child': {
                 borderRight: 'none',
