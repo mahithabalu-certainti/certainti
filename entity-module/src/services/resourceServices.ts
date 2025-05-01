@@ -457,14 +457,14 @@ export class ResourceService {
       return { [Op.iLike]: fieldFilter.equals };
     }
     if (fieldFilter.not_equals) {
-      return { [Op.notILike]: fieldFilter.notEqual };
+      return { [Op.notILike]: fieldFilter.not_equals };
     }
 
     if (fieldFilter.contains) {
       return { [Op.iLike]: `%${fieldFilter.contains}%` };
     }
     if (fieldFilter.not_contains) {
-      return { [Op.notILike]: `%${fieldFilter.notContains}%` };
+      return { [Op.notILike]: `%${fieldFilter.not_contains}%` };
     }
 
     if (fieldFilter.is_empty === true) {
@@ -475,10 +475,10 @@ export class ResourceService {
       return fieldFilter.value;
     }
     if (fieldFilter.greater_than) {
-      return { [Op.gt]: fieldFilter.greaterThan };
+      return { [Op.gt]: fieldFilter.greater_than };
     }
     if (fieldFilter.lesser_than) {
-      return { [Op.lt]: fieldFilter.lesserThan };
+      return { [Op.lt]: fieldFilter.lesser_than };
     }
     if (
       fieldFilter.between &&
