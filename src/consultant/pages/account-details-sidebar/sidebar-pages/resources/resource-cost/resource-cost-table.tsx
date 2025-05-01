@@ -24,6 +24,7 @@ import { RESOURCECOST } from "../../../../../../routes";
 import ActionButton from '../../../../account-list/table/action-button';
 import { arrowDownIcon, arrowUpIcon } from '../../../../../../assets';
 import { TablePagination } from '../../../../../../components/table';
+import { formatDateToMMDDYYYY } from '../utils';
 
 interface ResourceCostTableProps {
   fiscalYear?: number;
@@ -97,6 +98,8 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
 
   const renderRows = ({ resourceCost }: RenderCostRowProps) => {
     return resourceCost?.map((cost) => {
+      const startDate = formatDateToMMDDYYYY(cost.startDate as string);
+      const endDate = formatDateToMMDDYYYY(cost.endDate as string);
       return (
         <React.Fragment key={cost.resourceCostNumber}>
           <TableRow sx={{
@@ -116,8 +119,8 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
             <TableCell sx={{ minWidth: '100px' }}>
               {cost.currency}
             </TableCell>
-            <TableCell sx={{ minWidth: '130px' }}>{cost.startDate}</TableCell>
-            <TableCell sx={{ minWidth: '130px' }}>{cost.endDate}</TableCell>
+            <TableCell sx={{ minWidth: '130px' }}>{startDate}</TableCell>
+            <TableCell sx={{ minWidth: '130px' }}>{endDate}</TableCell>
             <TableCell sx={{ minWidth: '130px' }}>{cost.hourlyCost ? CostDisplay(cost.hourlyCost) : '-'}</TableCell>
             <TableCell sx={{ minWidth: '130px' }}>{cost.dailyCost ? CostDisplay(cost.dailyCost) : "-"}</TableCell>
             <TableCell sx={{ minWidth: '130px' }}>{cost.biWeeklyCost ? CostDisplay(cost.biWeeklyCost) : "-"}</TableCell>
@@ -202,8 +205,8 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
     };
 
   return (
-    <div className='border border-[#CBD6E2]'>
-      <Paper sx={{ overflowX: 'scroll', boxShadow: 'none', borderBottom: '1px solid #CBD6E2', borderRadius: '0px' }}>
+    <div>
+      <Paper sx={{ overflowX: 'auto', boxShadow: 'none', borderBottom: '1px solid #CBD6E2', borderRadius: '0px' }}>
         <Table sx={{
           borderCollapse: 'collapse',
           '& .MuiTableCell-root': {

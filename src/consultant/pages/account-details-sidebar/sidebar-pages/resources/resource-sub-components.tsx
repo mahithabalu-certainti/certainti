@@ -36,7 +36,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
           value={value}
           onChange={handleTabChange}
           aria-label='navigation tabs'
-          className='border-l-0 border-r-0 border-[1px] border-solid border-[#CBD6E2]'
+          className='border-l-0 border-r-0 border-[1px] pl-4.5 border-solid border-[#CBD6E2]'
           sx={{
             '& .MuiTabs-indicator': {
               backgroundColor: '#0B5CAB',
