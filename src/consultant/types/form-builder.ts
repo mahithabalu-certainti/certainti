@@ -35,6 +35,12 @@ export interface FormTypeFields {
   anyOneRequired?: boolean;
   hide?: boolean;
   isLoading?: boolean;
+  dateRangeError?: boolean;
+  startValue?: boolean;
+  endDateValue?: boolean;
+  errorMessage?: string;
+  startDateLabel?: string;
+  endDateLabel?: string;
 }
 
 // export interface SelectOptions {
@@ -76,6 +82,12 @@ export interface FieldType {
   differentThan?: Record<string, string>;
   dependsRequired?: Record<string, string>;
   resetDependsFields?: string[];
+  dateRangeError?: boolean;
+  startValue?: boolean;
+  endDateValue?: boolean;
+  errorMessage?: string;
+  startDateLabel?: string;
+  endDateLabel?: string;
   hide?: boolean;
   lengthRequired?: {
     key: string;
