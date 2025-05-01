@@ -58,7 +58,7 @@ const DetailsSection: React.FC<{
   return (
     <div className={title === 'Basic Information' ? 'mt-0' : 'mt-6'}>
       <div className=' text-[16px] text-[#2D3E4F] font-semibold'>{title}</div>
-      <div className='grid grid-cols-1 text-sm md:grid-cols-2 my-0.5 gap-x-6'>
+      <div className='grid grid-cols-1 text-sm md:grid-cols-2 my-1.5 gap-x-6'>
         {/* Left column */}
         <div>
           {leftColumn.map((item, index) => (
@@ -249,7 +249,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   });
 
   return (
-    <div className='max-w-6xl p-6 mx-auto'>
+    <div className='max-w-6xl p-6 pl-10 mx-auto'>
       <DetailsSection title='Basic Information' data={basicInfo} />
       <DetailsSection
         title='Location and Currency Information'
