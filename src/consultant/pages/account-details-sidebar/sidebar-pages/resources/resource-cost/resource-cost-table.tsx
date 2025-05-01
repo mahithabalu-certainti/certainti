@@ -107,7 +107,6 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
               '.MuiTableCell-root': {
                 fontWeight: 300,
                 color: '#425A76',
-                borderRight: 'none',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -119,16 +118,16 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
               sx={{
                 minWidth: '160px',
                 position: 'sticky',
-                left: '1px',
+                left: 0,
                 background: '#fff',
                 zIndex: 10,
-                borderRight: '1px solid #CBD6E2',
+                borderRight: 'none !important',
                 '&::after': {
                   content: '""',
                   position: 'absolute',
                   top: 0,
                   right: 0,
-                  width: '0.5px',
+                  width: '1px',
                   height: '100%',
                   backgroundColor: '#CBD6E2',
                   zIndex: 20,
@@ -254,8 +253,10 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
                 padding: '0px',
                 pl: 1,
                 height: '50px',
-                borderRight: 'none',
                 bgcolor: '#FCFCFC',
+              },
+              '& .MuiTableCell-root:last-child': {
+                borderRight: 'none',
               },
               '& .MuiTableSortLabel-root': {
                 '&:hover': {
@@ -270,19 +271,19 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
                 sx={{
                   minWidth: '160px',
                   position: 'sticky',
-                  left: '1px',
+                  left: 0,
                   background: '#fff',
-                  zIndex: 10,
-                  borderRight: '1px solid #CBD6E2',
+                  zIndex: 8,
+                  borderRight: 'none !important',
                   '&::after': {
                     content: '""',
                     position: 'absolute',
                     top: 0,
                     right: 0,
-                    width: '0.5px',
+                    width: '1px',
                     height: '100%',
                     backgroundColor: '#CBD6E2',
-                    zIndex: 20,
+                    zIndex: 10,
                   },
                 }}
               >
@@ -399,8 +400,10 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
                 pl: 1,
                 minHeight: '42px',
                 maxHeight: '42px',
-                borderRight: 'none',
                 height: '42px',
+              },
+              '& .MuiTableCell-root:last-child': {
+                borderRight: 'none',
               },
             }}
           >

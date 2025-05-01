@@ -313,7 +313,7 @@ const DataTable: React.FC<DataTableProps> = ({
                     background: index === 0 ? '#fff' : "#fff",
                     zIndex: index === 0 ? 10 : undefined,
                     left: index === 0 ? 0 : undefined,
-                    borderRight: index === 0 ? 'none' : '1px solid #CBD6E2',
+                    borderRight: index === 0 ? 'none !important' : '1px solid #CBD6E2',
                     '&::after':
                       index === 0
                         ? {
@@ -321,7 +321,7 @@ const DataTable: React.FC<DataTableProps> = ({
                             position: 'absolute',
                             top: 0,
                             right: 0,
-                            width: '0.5px',
+                            width: '1px',
                             height: '100%',
                             backgroundColor: '#CBD6E2',
                             zIndex: 20,
@@ -374,6 +374,7 @@ const DataTable: React.FC<DataTableProps> = ({
                 minHeight: '42px',
                 maxHeight: '42px',
                 height: '42px',
+                borderBottom: '1px solid #CBD6E2 !important'
               },
               '& .MuiTableCell-root:last-child': {
                 borderRight: 'none',
@@ -405,7 +406,7 @@ const DataTable: React.FC<DataTableProps> = ({
                         background: index === 0 ? '#fff' : undefined,
                         zIndex: index === 0 ? 10 : undefined,
                         left: index === 0 ? 0 : undefined,
-                        borderRight: index === 0 ? 'none' : '1px solid #CBD6E2',
+                        borderRight: index === 0 ? 'none !important' : '1px solid #CBD6E2',
                         '&::after':
                           index === 0
                             ? {
@@ -413,7 +414,7 @@ const DataTable: React.FC<DataTableProps> = ({
                                 position: 'absolute',
                                 top: 0,
                                 right: 0,
-                                width: '0.5px',
+                                width: '1px',
                                 height: '100%',
                                 backgroundColor: '#CBD6E2',
                                 zIndex: 20,

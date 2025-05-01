@@ -84,7 +84,6 @@ export const renderRows = ({
             maxWidth: '50px',
             minWidth: '50px',
             padding: '0 !important',
-            borderRight: '1px solid #CBD6E2',
           }}
           className={`${openRows.has(account.accountName) ? 'no-border' : '' }`}
           >
