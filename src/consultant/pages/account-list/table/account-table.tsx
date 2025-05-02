@@ -340,6 +340,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     minWidth: '50px',
                     padding: '0px !important',
                     borderRight: '1px solid #CBD6E2',
+                    borderBottom: '1px solid #CBD6E2 !important',
                   }}
                 >
                   <Box className='flex items-center justify-center'>
@@ -376,6 +377,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     zIndex: 10,
                     minWidth: '300px',
                     borderRight: '1px solid #CBD6E2',
+                    borderBottom: '1px solid #CBD6E2 !important',
                   }}
                 >
                   <TableSortLabel
@@ -468,7 +470,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     Primary Contact
                   </TableSortLabel>
                 </TableCell>
-                <TableCell sx={{ minWidth: '80px' }}>Actions</TableCell>
+                <TableCell sx={{ minWidth: '100px', textAlign: 'center', pl: '0px !important' }}>Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody
@@ -483,6 +485,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                   minHeight: '42px',
                   maxHeight: '42px',
                   height: '42px',
+                  borderBottom: '1px solid #CBD6E2 !important',
                 },
               }}
             >

@@ -216,7 +216,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   // Section data with custom formatting where needed
   const basicInfo = CreateSectionData({
-    resource_ref_id: resourceData.resource_ref_id,
+    resource_ref_ID: resourceData.resource_ref_id,
     resource_number: resourceData.r_number,
     resource_fullname: resourceData.resource_fullname,
     resource_type: resourceData.resource_type,
