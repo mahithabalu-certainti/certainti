@@ -15,6 +15,7 @@ import {
   FilterState,
   NumberFilterOption,
   numberOptions,
+  statusOptions,
   TextFilterOption,
   TextFilterOptionForCostAndSkill,
   textOptionForCostAndSkill,
@@ -25,6 +26,7 @@ import {
   EnumFilterControl,
   formatFilterForApi,
   NumberFilterControl,
+  StatusFilterControl,
   TextFilterControl,
   TextFilterControlForCostAndSKill,
 } from './helper';
@@ -133,6 +135,17 @@ const Filter: React.FC<FilterComponentProps> = ({
               date: {
                 ...currentState.date!,
                 option: event.target.value as DateFilterOption,
+              },
+            },
+          };
+         case 'status':
+          return {
+            ...prev,
+            [fieldName]: {
+              ...currentState,
+              status: {
+                ...currentState.status!,
+                value: event.target.value,
               },
             },
           };
@@ -293,6 +306,15 @@ const Filter: React.FC<FilterComponentProps> = ({
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleDateChange}
           // onChange={handleBooleanChange}
+          />
+        );
+      case 'status':
+        return (
+          <StatusFilterControl
+            menuOption={statusOptions}
+            fieldName={field.value}
+            state={fieldState}
+            onOptionChange={handleFilterOptionChange}
           />
         );
       default:

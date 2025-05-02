@@ -106,6 +106,7 @@ const Table = <T extends RowData>({
                 padding: '0px',
                 pl: 1,
                 minHeight: '42px',
+                borderBottom: '1px solid #CBD6E2 !important',
               },
             }}
           >
@@ -123,6 +124,7 @@ const Table = <T extends RowData>({
                   minWidth: '40px',
                   padding: '0px !important',
                   borderRight: '1px solid #CBD6E2',
+                  borderBottom: '1px solid #CBD6E2 !important',
                 }}
                 >
                   <Box className='flex items-center justify-center'>
@@ -184,7 +186,8 @@ const Table = <T extends RowData>({
                     left: index === 0 ? '40px' : '0px',
                     background: index === 0 ? '#fff' : 'auto',
                     zIndex: index === 0 ? 10 : 'auto',
-                    borderRight: '1px solid #CBD6E2',
+                    borderRight: '1px solid #CBD6E2 !important',
+                    borderBottom: '1px solid #CBD6E2 !important',
                   }}
                 >
                   <div className='flex items-center'>
@@ -268,7 +271,7 @@ const Table = <T extends RowData>({
               ))}
 
               {/* Action column */}
-              {(onEdit || onDelete || onView) && <TableCell>Actions</TableCell>}
+              {(onEdit || onDelete || onView) && <TableCell sx={{ minWidth: '100px', textAlign: 'center', pl: '0px !important' }}>Action</TableCell>}
             </TableRow>
           </TableHead>
 
@@ -282,6 +285,7 @@ const Table = <T extends RowData>({
                 padding: '0px',
                 pl: 1,
                 minHeight: '36px',
+                borderBottom: '1px solid #CBD6E2 !important',
               },
             }}
           >
@@ -369,6 +373,7 @@ const Table = <T extends RowData>({
                         minWidth: '40px',
                         padding: '0 !important',
                         borderRight: '1px solid #CBD6E2',
+                        borderBottom: '1px solid #CBD6E2 !important',
                       }}
                        >
                         <Box className='flex items-center justify-center'>
@@ -404,7 +409,8 @@ const Table = <T extends RowData>({
                           left: index === 0 ? '40px' : '0px',
                           background: index === 0 ? '#fff' : 'inherit',
                           zIndex: index === 0 ? 6 : 'auto',
-                          borderRight: '1px solid #CBD6E2',
+                          borderRight: '1px solid #CBD6E2 !important',
+                          borderBottom: '1px solid #CBD6E2 !important',
                         }}
                         className={`${
                           isStatus
@@ -420,7 +426,8 @@ const Table = <T extends RowData>({
 
                     {/* Action buttons */}
                     {(onEdit || onDelete || onView) && (
-                      <TableCell sx={{ whiteSpace: 'nowrap', width:'100px', minWidth: '100px', maxWidth: '100px' }}>
+                      <TableCell sx={{ padding: '0px !important', whiteSpace: 'nowrap', width:'100px', minWidth: '100px', maxWidth: '100px' }}>
+                        <Box className='w-full inline-flex items-center justify-center'>
                         {onView && (
                           <Tooltip
                             arrow
@@ -503,6 +510,7 @@ const Table = <T extends RowData>({
                             </Button>
                           </Tooltip>
                         )}
+                        </Box>
                       </TableCell>
                     )}
                   </TableRow>

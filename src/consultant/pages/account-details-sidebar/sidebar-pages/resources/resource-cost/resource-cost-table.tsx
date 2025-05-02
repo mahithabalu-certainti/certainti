@@ -427,7 +427,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
         </Table>
       </Paper>
       <TablePagination
-        rowsPerPageOptions={[25, 30, 40, 50]}
+        rowsPerPageOptions={[25, 30, 40, 50, 100]}
         // component='div'
         count={costList?.count ?? 0}
         rowsPerPage={rowsPerPage}

@@ -100,6 +100,13 @@ export const dateOptions: { option: string; value: string }[] = [
   // { option: 'Is Not Empty', value: 'is_not_empty' },
 ];
 
+export type StatusFilterOption = 'equals';
+
+export const statusOptions: { option: string; value: string }[] = [
+  { option: 'Active', value: 'active' },
+  { option: 'In-Active', value: 'inactive' },
+];
+
 // Define filter state types for each field type
 export interface TextFilterState {
   option: TextFilterOption;
@@ -129,6 +136,11 @@ export interface DateFilterState {
   };
 }
 
+interface StatusFilterState {
+  option: StatusFilterOption;
+  value: string;
+}
+
 // Union type for all possible filter states
 export type FilterState = {
   text?: TextFilterState;
@@ -136,13 +148,14 @@ export type FilterState = {
   date?: DateFilterState;
   enum?: EnumFilterState;
   textCostAndSkill?: TextFilterStateForCostAndSkill;
+  status?: StatusFilterState;
 };
 
 // Define field configuration
 export type FieldConfig = {
   name: string;
   value: string;
-  type: 'text' | 'number' | 'date' | 'enum' | 'textCostAndSkill';
+  type: 'text' | 'number' | 'date' | 'enum' | 'textCostAndSkill' | 'status';
   options?: string[];
 };
 

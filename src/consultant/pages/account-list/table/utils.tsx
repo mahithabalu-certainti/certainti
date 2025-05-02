@@ -84,6 +84,7 @@ export const renderRows = ({
             maxWidth: '50px',
             minWidth: '50px',
             padding: '0 !important',
+            borderBottom: '1px solid #CBD6E2 !important',
           }}
           className={`${openRows.has(account.accountName) ? 'no-border' : '' }`}
           >
@@ -112,6 +113,7 @@ export const renderRows = ({
               fontWeight: '400 !important',
               color: '#2D3E4F !important',
               borderRight: '1px solid #CBD6E2',
+              borderBottom: '1px solid #CBD6E2 !important',
               minWidth: '300px',
             }}
           >
@@ -242,6 +244,7 @@ export const renderChildRows = ({
             maxWidth: '50px',
             minWidth: '50px',
             padding: '0 !important',
+            borderBottom: '1px solid #CBD6E2 !important',
           }}
            className='no-border' />
           <TableCell
@@ -254,6 +257,7 @@ export const renderChildRows = ({
             color: '#2D3E4F !important',
             borderRight: '1px solid #CBD6E2',
             minWidth: '300px',
+            borderBottom: '1px solid #CBD6E2 !important',
           }}
           >
           <Box className='inline-flex items-center -ml-2.5'>
