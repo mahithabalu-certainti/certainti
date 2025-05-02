@@ -141,6 +141,16 @@ class SchemaService {
 
       const Resource = Resources.initialize(sequelize, schemaName);
       await Resource.sync({ force: false });
+
+      // Handle special case for resource_type sorting
+      let queryOrder = order;
+      const isResourceTypeSort = order?.length && order[0][0] === 'resource_type';
+      
+      if (isResourceTypeSort) {
+        // Remove resource_type from order to handle manually
+        queryOrder = [];
+      }
+
       const resources = await Resource.findAll({
         where: {
           ...whereClause,
@@ -150,7 +160,7 @@ class SchemaService {
         },
         limit,
         offset,
-        order,
+        order: queryOrder, 
         subQuery: false,
         attributes: [
           "rid",
@@ -179,6 +189,17 @@ class SchemaService {
 
       if (resources) {
         finalResources = await this.insertGeoData(resources, mainDdSequilze);
+        
+        // Handle resource_type sorting if needed
+        if (isResourceTypeSort) {
+          const direction = order[0][1]?.toUpperCase() === 'DESC' ? -1 : 1;
+          finalResources = finalResources.sort((a: any, b: any) => {
+            const aType = (a.resource_type || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+            const bType = (b.resource_type || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+            return aType.localeCompare(bType) * direction;
+          });
+        }
+
         finalResources = await this.sortAndFilteGeoData(
           finalResources,
           goeDataFilters,

@@ -424,7 +424,7 @@ export class ResourceService {
       "designation",
       "total_years_experience",
       "country",
-      "region",
+      "state",
     ];
 
     if (!validSortColumns.includes(sortBy)) {
