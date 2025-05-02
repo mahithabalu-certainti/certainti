@@ -1,14 +1,15 @@
 import { Box, Menu, MenuItem, Tab, Tabs } from '@mui/material';
 import React, { useState } from 'react';
+import { resourceFilterIcon } from '../../../../assets';
+import { Image } from '../../../../components';
 import ActionImportDropdown from '../sidebar-pages/imports/importdropdown';
 import {
   costFilterFields,
   resourceFilterFields,
   skillFilterFields,
 } from '../sidebar-pages/resources/utils';
-import { Image } from '../../../../components';
-import { resourceFilterIcon } from '../../../../assets';
 import Filter from './filter/filter';
+import { FilterState } from './filter/filterType';
 interface TabProps {
   filterVisibility: boolean;
   handleFilter: () => void;
@@ -17,7 +18,7 @@ interface TabProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setAppliedFilters: (filters: Record<string, any>) => void;
 }
-const TabPanel: React.FC<TabProps>  = ({
+const TabPanel: React.FC<TabProps> = ({
   handleFilter,
   setAppliedFilters,
   value,
@@ -27,7 +28,10 @@ const TabPanel: React.FC<TabProps>  = ({
   const [tabValue, setTabValue] = useState(0);
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
   const [, setSelectedSort] = useState('Accounts');
-
+  const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
+    {}
+  );
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
@@ -70,10 +74,10 @@ const TabPanel: React.FC<TabProps>  = ({
     },
   ];
 
-    const getFilterFields = () => {
-      if (!value) return resourceFilterFields;
-      return value === 'cost' ? costFilterFields : skillFilterFields;
-    };
+  const getFilterFields = () => {
+    if (!value) return resourceFilterFields;
+    return value === 'cost' ? costFilterFields : skillFilterFields;
+  };
 
   return (
     <Box className=' rounded-lg'>
@@ -154,6 +158,10 @@ const TabPanel: React.FC<TabProps>  = ({
                   filterMenu={getFilterFields()}
                   setAppliedFilters={setAppliedFilters}
                   handleFilter={handleFilter}
+                  savedFilterStates={filterStates}
+                  onFilterStatesChange={setFilterStates}
+                  savedSelectedFilters={selectedFilters}
+                  onSelectedFiltersChange={setSelectedFilters}
                 />
               </Box>
             )}

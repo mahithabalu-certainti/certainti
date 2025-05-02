@@ -1,7 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // import { FieldConfig, FilterState } from "../../../components/filter/filterType";
 
-import { FieldConfig, FilterState } from '../../components/filter/filterType';
+import {
+  FieldConfig,
+  FilterState,
+  resourceTypeOptions,
+  statusOptions,
+} from '../../components/filter/filterType';
 
 export const costFilterFields: FieldConfig[] = [
   // { name: 'Resource Cost Number', value: 'resource_cost_number', type: 'textCostAndSkill' },
@@ -28,11 +33,21 @@ export const resourceFilterFields: FieldConfig[] = [
   { name: 'Resource Ref ID', value: 'resource_ref_id', type: 'text' },
   { name: 'Resource Full Name', value: 'resource_fullname', type: 'text' },
   // { name: 'Resource Name', value: 'resource_fullname', type: 'text' },
-  { name: 'Resource Type', value: 'resource_type', type: 'text' },
+  {
+    name: 'Resource Type',
+    value: 'resource_type',
+    type: 'select',
+    options: resourceTypeOptions,
+  },
   { name: 'Resource Designation', value: 'designation', type: 'text' },
   { name: 'Resource Country', value: 'country_name', type: 'text' },
   { name: 'Resource Region', value: 'state_name', type: 'text' },
-  { name: 'Resource Status', value: 'resource_status', type: 'status' },
+  {
+    name: 'Resource Status',
+    value: 'resource_status',
+    type: 'select',
+    options: statusOptions,
+  },
 ];
 export const getInitialStateForField = (
   fieldConfig: FieldConfig
@@ -48,7 +63,7 @@ export const getInitialStateForField = (
       return { date: { option: 'equals', value: { from: '', to: '' } } };
     case 'enum':
       return { enum: { option: 'equals', value: [] } };
-    case 'status':
+    case 'select':
       return { status: { option: 'equals', value: 'active' } };
     default:
       return {};
