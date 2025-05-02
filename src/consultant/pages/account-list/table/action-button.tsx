@@ -1,55 +1,14 @@
 import IconButton from '@mui/material/IconButton';
-import Menu, { MenuProps } from '@mui/material/Menu';
+import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { alpha, styled } from '@mui/material/styles';
 import * as React from 'react';
 import { actionIcon } from '../../../../assets';
+import { ListItemText } from '@mui/material';
 
 interface ActionButtonProps {
   onEdit: () => void;
   onDelete: () => void;
 }
-
-const StyledMenu = styled((props: MenuProps) => (
-  <Menu
-    anchorOrigin={{
-      vertical: 'bottom',
-      horizontal: 'right',
-    }}
-    transformOrigin={{
-      vertical: 'top',
-      horizontal: 'right',
-    }}
-    {...props}
-  />
-))(({ theme }) => ({
-  '& .MuiPaper-root': {
-    borderRadius: 6,
-    marginTop: 1,
-    color: 'rgb(55, 65, 81)',
-    boxShadow:
-      'rgb(255, 255, 255) 0px 0px 0px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
-    '& .MuiMenu-list': {
-      padding: '4px 0',
-    },
-    '& .MuiMenuItem-root': {
-      '& .MuiSvgIcon-root': {
-        fontSize: 18,
-        color: theme.palette.text.secondary,
-        marginRight: theme.spacing(1.5),
-      },
-      '&:active': {
-        backgroundColor: alpha(
-          theme.palette.primary.main,
-          theme.palette.action.selectedOpacity
-        ),
-      },
-    },
-    ...theme.applyStyles('dark', {
-      color: theme.palette.grey[300],
-    }),
-  },
-}));
 
 export default function ActionButton({ onEdit, onDelete }: ActionButtonProps) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -61,48 +20,103 @@ export default function ActionButton({ onEdit, onDelete }: ActionButtonProps) {
     setAnchorEl(null);
   };
 
+  const actionMenuItems = [
+    {
+      label: 'Edit',
+      onClick: () => onEdit(),
+    },
+    {
+      label: 'Delete',
+      onClick: () =>  onDelete(),
+    },
+  ]
+
   return (
-    <div className='flex justify-center items-center'>
+    <div className='relative inline-flex justify-center items-center w-full'>
       <IconButton
+        disableRipple
         aria-label='more'
         id='long-button'
+        size='small'
         aria-controls={open ? 'long-menu' : undefined}
         aria-expanded={open ? 'true' : undefined}
         aria-haspopup='true'
         onClick={handleClick}
       >
-        <div className='border border-gray-300 p-2'>
-          <img src={actionIcon} alt='menu-icon' className='h-[15px]' />
+        <div
+          className={`${open ? 'bg-[#EAF0F5]' : ''} border border-[#CBD6E2] rounded-[3px] w-5 h-5 flex items-center justify-center`}
+        >
+          <img
+            src={actionIcon}
+            alt='menu-icon'
+            className='h-[13px]'
+          />
         </div>
       </IconButton>
-      <StyledMenu
-        id='demo-customized-menu'
-        MenuListProps={{
-          'aria-labelledby': 'demo-customized-button',
-        }}
-        anchorEl={anchorEl}
-        open={open}
-        onClose={handleClose}
-      >
-        <MenuItem
-          onClick={() => {
-            handleClose();
-            onEdit();
+      <Menu
+          sx={{
+            paddingTop: '0px',
+            paddingBottom: '0px',
+            '& .MuiList-root': {
+              padding: 0,
+            },
           }}
-          disableRipple
-        >
-          Edit
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            handleClose();
-            onDelete();
+          id='action-menu'
+          anchorEl={anchorEl}
+          open={open}
+          onClose={handleClose}
+          MenuListProps={{
+            'aria-labelledby': 'action-button',
           }}
-          disableRipple
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'center',
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'center',
+          }}
+          PaperProps={{
+            elevation: 0,
+            sx: {
+              boxShadow: 'none',
+              border: '1px solid #CBD6E2',
+              borderRadius: '6px',
+              position: 'absolute',
+            },
+          }}
         >
-          Delete
-        </MenuItem>
-      </StyledMenu>
+          {actionMenuItems.map((item) => (
+            <MenuItem
+              sx={{
+                display: 'flex',
+                borderBottom: '1px solid',
+                borderColor: '#CBD6E2',
+                backgroundColor: '#fff',
+                '&:last-child': {
+                  borderBottom: 'none',
+                },
+              }}
+              key={item.label}
+              onClick={() => {
+                item.onClick();
+                handleClose();
+              }}
+            >
+              <ListItemText
+                sx={{
+                  span: {
+                    fontSize: '14px',
+                    fontWeight: 400,
+                    color: '#2D3E4F',
+                  },
+                }}
+              >
+                {item.label}
+              </ListItemText>
+            </MenuItem>
+          ))}
+        </Menu>
     </div>
   );
 }

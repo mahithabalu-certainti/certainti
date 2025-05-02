@@ -64,7 +64,7 @@ export const ResourceFormData = (
             regex: RESOURCE_REGEX.RESOURCE_REF_ID,
             regexErrorMessage:
               'Please enter 1-50 characters, including at least one letter. Special characters and numbers alone are not allowed.',
-            placeholder: 'Enter Resource Ref Id',
+            placeholder: 'Enter Resource Ref ID',
             disabled: disableFields || disableCostAndSkill,
           }),
           createTextField('resource_fullname', 'Resource Full Name', {
@@ -212,7 +212,7 @@ export const ResourceFormData = (
           }),
           createTextField('years_of_experience', 'Years of Experience', {
             required: false,
-            regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
+            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
             regexErrorMessage: 'Please enter a valid number between 0 and 99',
             placeholder: 'Enter years of experience',
           }),

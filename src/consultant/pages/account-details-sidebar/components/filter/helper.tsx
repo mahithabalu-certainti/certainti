@@ -601,7 +601,7 @@ export const formatFilterForApi = (
         formatString(choosenOption) === 'Is Empty' ||
         formatString(choosenOption) === 'Is Not Empty'
           ? true
-          : state.text.value?.toString().trim();
+          : state.text.value?.toString().trim().toLowerCase();
       if (value) {
         formattedFilters[fieldKey] = { [choosenOption]: value };
       }
@@ -612,7 +612,7 @@ export const formatFilterForApi = (
           ? // ||
             //   formatString(choosenOption) === 'Is Not Empty'
             true
-          : state.textCostAndSkill.value?.toString().trim();
+          : state.textCostAndSkill.value?.toString().trim().toLowerCase();
       if (value) {
         formattedFilters[fieldKey] = { [choosenOption]: value };
       }
@@ -660,11 +660,53 @@ export const formatFilterForApi = (
               ? [value.from?.toString(), value.to?.toString()]
               : boolOptions
                 ? true
-                : value.from?.toString(),
+                : value.from?.toString().toLowerCase(),
         };
       }
+    } else if (state.status) {
+      formattedFilters[fieldKey] = state.status.value.toLowerCase();
     }
   });
 
   return formattedFilters;
 };
+
+export const StatusFilterControl: React.FC<{
+  fieldName: string;
+  state: FilterState;
+  menuOption: { option: string; value: string }[];
+  onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
+}> = ({ fieldName, state, menuOption, onOptionChange }) => (
+  <Box sx={{ p: 1, mt: 1, borderBottom: '1px solid #CBD6E2' }}>
+    <FormControl
+      fullWidth
+      size='small'
+      sx={{
+        '.MuiInputBase-root': {
+          fontSize: '12px',
+          fontWeight: 300,
+        },
+      }}
+    >
+      <Select
+        value={state.status?.value || 'active'}
+        onChange={(e) => onOptionChange(fieldName, e)}
+        sx={{ height: '30px', minHeight: 20 }}
+        MenuProps={{
+          sx: {
+            '& .MuiMenuItem-root': {
+              fontSize: '12px',
+              fontWeight: 300,
+            },
+          },
+        }}
+      >
+        {menuOption.map((menu) => (
+          <MenuItem key={menu.option} value={menu.value}>
+            {menu.option}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+  </Box>
+);

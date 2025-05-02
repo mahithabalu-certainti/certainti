@@ -21,6 +21,7 @@ import { useCreateResource } from '../../services/resource-create';
 import { useResourceDetail } from '../../services/resource-details';
 import {
   useCreateResourceSkill,
+  // useFetchResourceSkillById,
   useUpdateResourceSkill,
 } from '../../services/resource-skill/resource-skill-service';
 import { useUpdateResource } from '../../services/resource-update';
@@ -77,18 +78,23 @@ const ResourceForm: React.FC = () => {
   const accountNumber =
     state?.cost || state?.skill ? state?.data?.accountById?.r_number : null;
   //data fetching by cost id
-
-  const { data: costDetails } = useFetchResourceCostById({
+  const { data: costDetails, isSuccess: costSuccess } = useFetchResourceCostById({
     accountNumber: accountNumber,
     id: state?.costInfo?.costRid,
   });
+  // const { data: skillDetails, isSuccess: skillSuccess } = useFetchResourceSkillById({
+  //   accountNumber: accountNumber,
+  //   rid: state?.skillInfo?.skillRId,
+  // });
+  // console.log("skillDetails", skillDetails);
+
   const costInfo =
     (costDetails as { resourceCostById?: Record<string, any> })
       ?.resourceCostById || {};
   const skillInfo = state?.skillInfo || {};
 
   // Data fetching
-  const { data: resource } = useResourceDetail(
+  const { data: resource, isSuccess } = useResourceDetail(
     location?.state?.resource?.rid || resourceRId,
     location?.state?.accountDetails?.data?.accountById?.r_number ||
     accountNumber
@@ -96,7 +102,7 @@ const ResourceForm: React.FC = () => {
 
   useEffect(() => {
     const formValues = resource?.data?.resourceDetails;
-    if (state?.cost && costDetails && isEditView) {
+    if (state?.cost && isSuccess && costSuccess && isEditView) {
       const costValues = {
         ...formValues,
         financial_start_date: costInfo?.effective_date || '',
@@ -106,7 +112,7 @@ const ResourceForm: React.FC = () => {
         cost_frequency: costInfo?.cost_frequency || '',
       };
       setFormValues(costValues);
-    } else if (state?.skill && skillInfo && isEditView) {
+    } else if (state?.skill && isSuccess && skillInfo && isEditView) {
       const skillValues = {
         ...formValues,
         skill_level: skillInfo?.skillLevel || '',
