@@ -90,9 +90,15 @@ class SchemaService {
         schemaName
       );
 
-      const ResourceCostModel = await ResourceCost.initialize(sequelize, schemaName);
+      const ResourceCostModel = await ResourceCost.initialize(
+        sequelize,
+        schemaName
+      );
       const SkillModel = await Skill.initialize(sequelize, schemaName);
-      const ResourceSkillModel = await ResourceSkill.initialize(sequelize, schemaName);
+      const ResourceSkillModel = await ResourceSkill.initialize(
+        sequelize,
+        schemaName
+      );
 
       await Resource.sync({ force: false });
       await ResourcesHistoryModel.sync({ force: false });
@@ -138,7 +144,9 @@ class SchemaService {
       const resources = await Resource.findAll({
         where: {
           ...whereClause,
-          ...(fiscalYear && fiscalYear !== 0 ? { fiscal_year: fiscalYear } : {})
+          ...(fiscalYear && fiscalYear !== 0
+            ? { fiscal_year: fiscalYear }
+            : {}),
         },
         limit,
         offset,
@@ -163,7 +171,9 @@ class SchemaService {
       const totalCount = await Resource.count({
         where: {
           ...whereClause,
-          ...(fiscalYear && fiscalYear !== 0 ? { fiscal_year: fiscalYear } : {})
+          ...(fiscalYear && fiscalYear !== 0
+            ? { fiscal_year: fiscalYear }
+            : {}),
         },
       });
 
@@ -178,9 +188,7 @@ class SchemaService {
 
       return { resources: finalResources, totalCount };
     } catch (err) {
-      throw new Error(
-        "Error fetching resources: " + (err as Error).message
-      );
+      throw new Error("Error fetching resources: " + (err as Error).message);
     }
   }
 
@@ -249,8 +257,12 @@ class SchemaService {
         resource_fullname: resourceData.full_name || null,
         resource_status: resourceData.resource_status,
         resource_orgname: resourceData.org_name || null,
-        resource_startdate: moment(startDate).isValid() ? moment(startDate).toDate() : null,
-        resource_enddate: moment(endDate).isValid() ? moment(endDate).toDate() : null,
+        resource_startdate: moment(startDate).isValid()
+          ? moment(startDate).toDate()
+          : null,
+        resource_enddate: moment(endDate).isValid()
+          ? moment(endDate).toDate()
+          : null,
         resource_role: resourceData.role || null,
         state: resourceData.state || null,
         country: resourceData.country || null,
@@ -261,7 +273,7 @@ class SchemaService {
         created_by: resourceData.created_by,
         modified_by: resourceData.modified_by,
         account_rid: resourceData.account_id,
-        comments: resourceData.comments || ""
+        comments: resourceData.comments || "",
       };
 
       const resource = await Resource.create(resourceObject);
@@ -286,9 +298,7 @@ class SchemaService {
 
       return resource;
     } catch (err) {
-      throw new Error(
-        (err as Error).message
-      );
+      throw new Error((err as Error).message);
     }
   }
 
@@ -322,7 +332,9 @@ class SchemaService {
         fiscal_year: resourceData.fiscal_year,
         country_rid: resourceData.country || null,
         country_region_rid: resourceData.state || null,
-        effective_date: moment(startDate).isValid() ? moment(startDate).toDate() : null,
+        effective_date: moment(startDate).isValid()
+          ? moment(startDate).toDate()
+          : null,
         end_date: moment(endDate).isValid() ? moment(startDate).toDate() : null,
         created_by: resourceData.created_by,
       });
@@ -400,14 +412,18 @@ class SchemaService {
         country: resourceData.country || null,
         state: resourceData.state || null,
         city: resourceData.city || null,
-        resource_startdate: moment(startDate).isValid() ? moment(startDate).toDate() : null,
-        resource_enddate: moment(endDate).isValid() ? moment(endDate).toDate() : null,
+        resource_startdate: moment(startDate).isValid()
+          ? moment(startDate).toDate()
+          : null,
+        resource_enddate: moment(endDate).isValid()
+          ? moment(endDate).toDate()
+          : null,
         designation: resourceData.designation || null,
         total_years_experience: resourceData.total_years_experience || null,
         total_years_in_org: resourceData.total_years_in_org || null,
         fiscal_year: resourceData.fiscal_year,
         modified_by: resourceData.modified_by,
-        comments: resourceData.comments || ""
+        comments: resourceData.comments || "",
       };
 
       const updateResource = await Resource.update(
@@ -476,7 +492,9 @@ class SchemaService {
           fiscal_year: resourceData.fiscal_year,
           country_rid: resourceData.country || null,
           country_region_rid: resourceData.state || null,
-          effective_date: moment(startDate).isValid() ? moment(startDate).toDate() : null,
+          effective_date: moment(startDate).isValid()
+            ? moment(startDate).toDate()
+            : null,
           end_date: moment(endDate).isValid() ? moment(endDate).toDate() : null,
           modified_by: resourceData.modified_by,
         },
@@ -551,6 +569,7 @@ class SchemaService {
       return {
         accountNumber: accountRnumber,
         accountId: account?.rid,
+        accountName: account.account_name
       };
     } catch (err) {
       throw new Error("Error fetching account : " + (err as Error).message);
@@ -644,7 +663,7 @@ class SchemaService {
 
       const ResourcesModel = await Resources.initialize(sequelize, schemaName);
 
-      let resource:any = await ResourcesModel.findOne({
+      let resource: any = await ResourcesModel.findOne({
         where: {
           rid: resourceId,
         },
@@ -680,8 +699,12 @@ class SchemaService {
         //Added to format date as MM/DD/YYYY
         resource = {
           ...resource.toJSON(),
-          resource_startdate: resource.resource_startdate ? moment(resource.resource_startdate).format('MM/DD/YYYY') : null,
-          resource_enddate: resource.resource_enddate ? moment(resource.resource_enddate).format('MM/DD/YYYY') : null,
+          resource_startdate: resource.resource_startdate
+            ? moment(resource.resource_startdate).format("MM/DD/YYYY")
+            : null,
+          resource_enddate: resource.resource_enddate
+            ? moment(resource.resource_enddate).format("MM/DD/YYYY")
+            : null,
         };
       }
 
@@ -734,14 +757,20 @@ class SchemaService {
 
   async insertGeoData(resources: any, mainDdSequilze: Sequelize) {
     try {
-      const countryIds = [...new Set(resources.map((r: any) => r.country))].filter(Boolean);
-      const stateIds = [...new Set(resources.map((r: any) => r.state))].filter(Boolean);
-      const cityIds = [...new Set(resources.map((r: any) => r.city))].filter(Boolean);
-  
+      const countryIds = [
+        ...new Set(resources.map((r: any) => r.country)),
+      ].filter(Boolean);
+      const stateIds = [...new Set(resources.map((r: any) => r.state))].filter(
+        Boolean
+      );
+      const cityIds = [...new Set(resources.map((r: any) => r.city))].filter(
+        Boolean
+      );
+
       let countryRows: any[] = [];
       let states: any[] = [];
       let cities: any[] = [];
-  
+
       if (countryIds.length > 0) {
         countryRows = await mainDdSequilze.query(
           `SELECT rid, country_name FROM country WHERE rid IN (:ids)`,
@@ -751,7 +780,7 @@ class SchemaService {
           }
         );
       }
-  
+
       if (stateIds.length > 0) {
         states = await mainDdSequilze.query(
           `SELECT rid, state_name FROM state WHERE rid IN (:ids)`,
@@ -761,7 +790,7 @@ class SchemaService {
           }
         );
       }
-  
+
       if (cityIds.length > 0) {
         cities = await mainDdSequilze.query(
           `SELECT rid, city_name FROM city WHERE rid IN (:ids)`,
@@ -771,38 +800,34 @@ class SchemaService {
           }
         );
       }
-  
+
       const countryMap = Object.fromEntries(
         (Array.isArray(countryRows) ? countryRows : []).map((c: any) => [
           c.rid,
           c,
         ])
       );
-  
+
       const statesMap = Object.fromEntries(
         (Array.isArray(states) ? states : []).map((s: any) => [s.rid, s])
       );
-  
+
       const cityMap = Object.fromEntries(
-        (Array.isArray(cities) ? cities : []).map((s: any) => [
-          s.rid,
-          s,
-        ])
+        (Array.isArray(cities) ? cities : []).map((s: any) => [s.rid, s])
       );
-  
+
       const updatedResources = resources.map((res: any) => ({
         ...res.toJSON(),
         country_name: countryMap[res.country]?.country_name || null,
         state_name: statesMap[res.state]?.state_name || null,
         city_name: cityMap[res.city]?.city_name || null,
       }));
-  
+
       return updatedResources;
     } catch (err) {
       throw new Error("Error fetching geo data: " + (err as Error).message);
     }
   }
-  
 
   async sortAndFilteGeoData(
     resources: any[],
@@ -811,19 +836,27 @@ class SchemaService {
   ): Promise<any[]> {
     const updatedResources = resources
       .filter((res) => {
+        if (
+          whereClause.city &&
+          !this.applyTextFilter(res.city_name, whereClause.city)
+        ) {
+          return false;
+        }
 
-        if (whereClause.city && !this.applyTextFilter(res.city_name, whereClause.city)) {
+        if (
+          whereClause.country &&
+          !this.applyTextFilter(res.country_name, whereClause.country)
+        ) {
           return false;
         }
-  
-        if (whereClause.country && !this.applyTextFilter(res.country_name, whereClause.country)) {
-          return false; 
-        }
-  
-        if (whereClause.state && !this.applyTextFilter(res.state_name, whereClause.state)) {
+
+        if (
+          whereClause.state &&
+          !this.applyTextFilter(res.state_name, whereClause.state)
+        ) {
           return false;
         }
-  
+
         return true;
         // if (
         //   whereClause.city?.length &&
@@ -833,7 +866,7 @@ class SchemaService {
         // ) {
         //   return false;
         // }
-      
+
         // if (
         //   whereClause.country?.length &&
         //   !whereClause.country.some((c: any) =>
@@ -842,7 +875,7 @@ class SchemaService {
         // ) {
         //   return false;
         // }
-      
+
         // if (
         //   whereClause.state?.length &&
         //   !whereClause.state.some((r: any) =>
@@ -867,9 +900,7 @@ class SchemaService {
         }
 
         if (field === "city") {
-          return (
-            (a.city_name || "").localeCompare(b.city_name || "") * dir
-          );
+          return (a.city_name || "").localeCompare(b.city_name || "") * dir;
         }
 
         return 0;
@@ -902,7 +933,83 @@ class SchemaService {
     }
 
     return true;
-  };
+  }
+
+  async insertProjectGeoData(project: any, mainDdSequilze: Sequelize) {
+    try {
+      const countryId = project.country;
+      const regionId = project.region;
+      const currencyId = project.currency;
+
+      let countryRow: any = null;
+      let regionRow: any = null;
+      let currencyRow: any = null;
+
+      if (countryId) {
+        const result = await mainDdSequilze.query(
+          `SELECT rid, country_name FROM country WHERE rid = :id`,
+          {
+            replacements: { id: countryId },
+            type: "SELECT",
+          }
+        );
+        countryRow =
+          Array.isArray(result) && result.length > 0 ? result[0] : null;
+      }
+
+      if (regionId) {
+        const result = await mainDdSequilze.query(
+          `SELECT rid, state_name FROM state WHERE rid = :id`,
+          {
+            replacements: { id: regionId },
+            type: "SELECT",
+          }
+        );
+        regionRow =
+          Array.isArray(result) && result.length > 0 ? result[0] : null;
+      }
+
+      if (currencyId) {
+        const result = await mainDdSequilze.query(
+          `SELECT rid, currency_name FROM currency WHERE rid = :id`,
+          {
+            replacements: { id: currencyId },
+            type: "SELECT",
+          }
+        );
+        currencyRow =
+          Array.isArray(result) && result.length > 0 ? result[0] : null;
+      }
+
+
+      project.dataValues = {
+        ...project.dataValues,
+        country_name: countryRow?.country_name || null,
+        state_name: regionRow?.region_name || null,
+        city_name: currencyRow?.currency_name || null,
+      };
+
+      return project;
+    } catch (err) {
+      throw new Error("Error fetching geo data: " + (err as Error).message);
+    }
+  }
+
+  async fetchAccountById(accountId: string){
+    try{
+      const mainDbSequelize = await initMainDbSequelize();
+      const [accountData]: any[] = await mainDbSequelize.query(
+        `SELECT * FROM account WHERE rid = :rid`,
+        {
+          replacements: { rid: accountId },
+          type: "SELECT",
+        }
+      );
+      return accountData;
+    }catch(err){
+      throw new Error("Error fetching Accounts: " + (err as Error).message);
+    }
+  }
 }
 
 export default SchemaService;
