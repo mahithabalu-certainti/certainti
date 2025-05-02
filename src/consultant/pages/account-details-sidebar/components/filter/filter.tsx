@@ -15,7 +15,6 @@ import {
   FilterState,
   NumberFilterOption,
   numberOptions,
-  statusOptions,
   TextFilterOption,
   TextFilterOptionForCostAndSkill,
   textOptionForCostAndSkill,
@@ -162,13 +161,13 @@ const Filter: React.FC<FilterComponentProps> = ({
               },
             },
           };
-         case 'status':
+        case 'select':
           return {
             ...prev,
             [fieldName]: {
               ...currentState,
-              status: {
-                ...currentState.status!,
+              select: {
+                ...currentState.select!,
                 value: event.target.value,
               },
             },
@@ -332,10 +331,10 @@ const Filter: React.FC<FilterComponentProps> = ({
             // onChange={handleBooleanChange}
           />
         );
-      case 'status':
+      case 'select':
         return (
           <StatusFilterControl
-            menuOption={statusOptions}
+            menuOption={field.options as { option: string; value: string }[]}
             fieldName={field.value}
             state={fieldState}
             onOptionChange={handleFilterOptionChange}

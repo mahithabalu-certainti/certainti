@@ -663,8 +663,8 @@ export const formatFilterForApi = (
                 : value.from?.toString().toLowerCase(),
         };
       }
-    } else if (state.status) {
-      formattedFilters[fieldKey] = state.status.value.toLowerCase();
+    } else if (state.select) {
+      formattedFilters[fieldKey] = state.select.value.toLowerCase();
     }
   });
 
@@ -689,7 +689,14 @@ export const StatusFilterControl: React.FC<{
       }}
     >
       <Select
-        value={state.status?.value || 'active'}
+        value={state.select?.value}
+        displayEmpty
+        renderValue={(selected) => {
+          if (!selected) {
+            return <span style={{ color: '#aaa' }}>Select an option</span>;
+          }
+          return selected;
+        }}
         onChange={(e) => onOptionChange(fieldName, e)}
         sx={{ height: '30px', minHeight: 20 }}
         MenuProps={{
@@ -701,6 +708,9 @@ export const StatusFilterControl: React.FC<{
           },
         }}
       >
+        <MenuItem value='' disabled hidden>
+          Select
+        </MenuItem>
         {menuOption.map((menu) => (
           <MenuItem key={menu.option} value={menu.value}>
             {menu.option}
