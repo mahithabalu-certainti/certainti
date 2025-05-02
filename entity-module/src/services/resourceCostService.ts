@@ -101,7 +101,7 @@ class ResourceCostService {
       }
 
       // Process currency filters if present
-      if (filters && filters.currency) {
+      if (filters && filters.currency !== undefined) {
         const currencyFilterResult =
           await resourceCostSchemaService.processCurrencyFilter(filters);
         if (currencyFilterResult) {
