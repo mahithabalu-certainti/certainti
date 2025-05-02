@@ -931,7 +931,7 @@ export {
   listResourceSchema,
   exportResourceSchema,
   exportResourceCostSchema,
-  exportResourceSkillSchema
+  exportResourceSkillSchema,
   createProjectSchema,
   updateProjectSchema
 
