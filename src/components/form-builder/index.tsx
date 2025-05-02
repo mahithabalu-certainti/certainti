@@ -365,6 +365,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
+              className={fieldDisabled}
               value={dayjs(fieldValue, 'DD/MM/YYYY')}
               disabled={field.disabled}
               format='MM/DD'
@@ -386,7 +387,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 textField: {
                   fullWidth: true,
                   size: 'small',
-                  disabled: false,
+                  disabled: field.disabled,
                   sx: {
                     '& .MuiOutlinedInput-root': {
                       height: '32px',
@@ -430,8 +431,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             onChange={(phone, country: CountryData) =>
               handleChange(phone, country.countryCode)
             }
-            inputClass={`placeholder-custom-color !w-full !text-[13px] !p-2 !pl-12 !border !h-[32px] !rounded-xs ${field.error ? '!border-red-500' : '!border-gray-300'
-              }${field.disabled ? ' !bg-gray-100' : ''}`}
+            inputClass={`placeholder-custom-color !w-full !text-[13px] !p-2 !pl-12 !border !h-[32px] !rounded-xs ${
+              field.error ? '!border-red-500' : '!border-gray-300'
+            }${field.disabled ? ' !bg-gray-100' : ''}`}
             buttonClass={`!bg-transparent !border-r ${field.error ? '!border-red-500' : '!border-gray-300'} !rounded-tl-xs !rounded-bl-xs !hover:bg-transparent !shadow-none !px-0 !m-0`}
             containerClass='!w-full'
             inputProps={{
@@ -548,8 +550,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 hasError = true;
                 return {
                   ...field,
-                  error:
-                    'Date must be within the last 7 years from today',
+                  error: 'Date must be within the last 7 years from today',
                 };
               }
             }
@@ -570,11 +571,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 hasError = true;
                 return {
                   ...field,
-                  error:
-                    'Date must be within the last 7 years from today',
+                  error: 'Date must be within the last 7 years from today',
                 };
               }
-              if (endDate.isValid() && !endDate.isSame(startDate) && !endDate.isAfter(startDate)) {
+              if (
+                endDate.isValid() &&
+                !endDate.isSame(startDate) &&
+                !endDate.isAfter(startDate)
+              ) {
                 hasError = true;
                 return { ...field, error: 'End Date must be after Start Date' };
               }
@@ -606,7 +610,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           if (
             field.dependsRequired?.key &&
             constructFormData[field.dependsRequired.key] ===
-            field.dependsRequired?.matchedValue &&
+              field.dependsRequired?.matchedValue &&
             !hasValue
           ) {
             hasError = true;

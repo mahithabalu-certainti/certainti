@@ -36,6 +36,8 @@ export const AccountListURL = ({
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };
 
+export const GlobalAccountUrl = '/api/accounts/list/global';
+
 export const AccountDetailUrl = (accountId: string) =>
   `/api/accounts/list/${accountId}`;
 

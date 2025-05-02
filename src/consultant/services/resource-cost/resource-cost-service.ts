@@ -78,6 +78,7 @@ export const useResourceCost = (
     },
     ...options,
     retry: 0,
+    enabled: !!params.resourceRid && !!params.accountNumber,
   });
 };
 

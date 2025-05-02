@@ -11,6 +11,7 @@ import {
   AccountListURLParams,
   CitysApiResponse,
   CurrencyApiResponse,
+  GlobalAccountListResponse,
   ParentAccountApiResponse,
   StatesApiResponse,
 } from '../../types';
@@ -20,6 +21,7 @@ import {
   CityUrl,
   CurrencyUrl,
   getAccountExportUrl,
+  GlobalAccountUrl,
   ParentAccountUrl,
   StateUrl,
 } from '../urls/account-url';
@@ -31,6 +33,18 @@ export const fetchAccountFields = async (
     AccountDetailUrl(acctounId)
   );
   return data;
+};
+
+export const fetchGlobalAccounts = async (): Promise<{
+  accounts: AccountList[];
+  count: number;
+}> => {
+  const response =
+    await accountServiceApi.get<GlobalAccountListResponse>(GlobalAccountUrl);
+  return {
+    accounts: response.data.data.gloablAcconunt,
+    count: response.data.data.count,
+  };
 };
 
 export const fetchAccounts = async (

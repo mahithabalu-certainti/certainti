@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { accountDetailsIcon } from '../../../assets';
 import { PageHeader } from '../../../components';
 import { ACCOUNT } from '../../../routes';
@@ -24,17 +24,29 @@ import Sidebar from './sidebar';
 import { transformAccountData } from './utils';
 
 export const AccountDetails = () => {
+  const [searchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const paramsData = location.state;
   const [accountDetails, setAccountDetails] = useState<any>(null);
   const [accountDetailsForEdit, setAccountDetailsForEdit] = useState<any>(null);
+  const { accountid } = useParams();
+
+  const defaultTab = searchParams.get('list') || 'financial';
+  const [activeKey, setActiveKey] = useState(defaultTab);
+
+  useEffect(() => {
+    const list = searchParams.get('list');
+    if (list) {
+      setActiveKey(list);
+    }
+  }, [searchParams]);
+
   const {
     data,
     isLoading,
     isError,
   }: { data: any; isLoading: boolean; isError: boolean } = useAccountDetail(
-    paramsData?.account?.accountId || ''
+    accountid as string
   );
 
   useEffect(() => {
@@ -70,10 +82,6 @@ export const AccountDetails = () => {
     console.log('Settings clicked');
     // Add settings logic here
   };
-
-  const [activeKey, setActiveKey] = useState(
-    location.state?.activeKey || 'financial'
-  );
 
   useEffect(() => {
     if (location.state?.activeKey) {

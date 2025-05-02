@@ -9,7 +9,7 @@ import ResourceSkillTable from './resource-skill/resource-skill-table';
 interface SubcomponentProps {
   handleTabChange: (event: React.SyntheticEvent, newValue: string) => void;
   value: string;
-  resourceData: any;
+  resourceId: string;
   accountId: string;
   appliedFilters: Record<string, any>;
   fiscalYearValue: number;
@@ -21,7 +21,7 @@ interface SubcomponentProps {
 const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   handleTabChange,
   value,
-  resourceData,
+  resourceId,
   accountId,
   appliedFilters,
   fiscalYearValue,
@@ -88,28 +88,30 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
         {value === 'details' && (
           <Box>
             <ResourceDetails
-              resourceDetails={resourceData}
+              resourceId={resourceId}
               accountId={accountId}
             />
           </Box>
         )}
+
         {value === 'cost' && (
           <Box sx={{ width: '100%', overflowX: 'auto' }}>
             <ResourceCostTable
               fiscalYear={fiscalYearValue}
               appliedFilters={appliedFilters}
               accountDetails={accountDetails}
-              resourceRid={resourceData?.rid}
+              resourceRid={resourceId}
             />
           </Box>
         )}
+
         {value === 'skill' && (
           <Box sx={{ width: '100%', overflowX: 'auto' }}>
             <ResourceSkillTable
               fiscalYear={fiscalYearValue}
               appliedFilters={appliedFilters}
               accountDetails={accountDetails}
-              resourceRid={resourceData?.rid}
+              resourceRid={resourceId}
             />
           </Box>
         )}

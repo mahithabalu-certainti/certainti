@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { resourceProfileIcon } from '../../../../../assets';
 import { RESOURCE, RESOURCE_CREATE } from '../../../../../routes';
 import { RootState } from '../../../../../store/store';
@@ -48,6 +48,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const {
     data: ResourceList,
     isLoading,
@@ -70,6 +71,9 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     setValue(newValue);
     setShowFilter(false);
     setAppliedFilters({});
+    // update the URL with the tab value
+    searchParams.set('tab', newValue);
+    navigate({ search: searchParams.toString() });
   };
 
   const handleResourceClick = (row: any) => {
@@ -82,6 +86,16 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
   };
 
   useEffect(() => {
+    // update the URL when open a resource sub tab
+    if (!viewResourceList && resourceData.rid) {
+      searchParams.set('res_id', resourceData.rid);
+      searchParams.set('tab', 'details');
+      navigate({ search: searchParams.toString() });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resourceData.rid, viewResourceList]);
+
+  useEffect(() => {
     setColumns(
       getResourceColumns({
         onResourceIdClick: handleResourceClick,
@@ -89,6 +103,16 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
       })
     );
   }, []);
+
+  useEffect(() => {
+    // update sub tab when refereshing the page
+    const tab = searchParams.get('tab');
+    if (tab) {
+      setValue(tab);
+      setViewResourceList(false);
+      setShowBackArrow(true);
+    }
+  }, [searchParams]);
 
   const handleEdit = (resource: any) => {
     setFilterVisibility(false);
@@ -140,7 +164,13 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     setShowBackArrow(!showBackArrow);
     setValue('');
     setShowFilter(false);
-    navigate(location.pathname, {
+    // clear query params
+    searchParams.delete('res_id');
+    searchParams.delete('tab');
+    navigate({
+      pathname: location.pathname,
+      search: searchParams.toString(),
+    }, {
       state: { ...location.state, activeKey: 'resources' },
       replace: true,
     });
@@ -204,7 +234,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
           setFilterVisibility={setFilterVisibility}
           handleTabChange={handleTabChange}
           value={value}
-          resourceData={resourceData}
+          resourceId={searchParams.get('res_id') as string}
           accountId={accountDetails?.data?.accountById?.r_number}
           appliedFilters={appliedFilters || {}}
           fiscalYearValue={convertedFiscalYear}
