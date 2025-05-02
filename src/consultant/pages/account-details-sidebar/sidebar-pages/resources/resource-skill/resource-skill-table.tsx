@@ -253,7 +253,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
                   Years of Experience
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ minWidth: '80px' }}>Action</TableCell>
+              <TableCell sx={{ minWidth: '80px',textAlign:"center" }}>Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody sx={{
