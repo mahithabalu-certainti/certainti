@@ -67,6 +67,13 @@ const Filter: React.FC<FilterComponentProps> = ({
     setAppliedFilters({});
     setFilterStates({});
     setSelectedFilters([]);
+    if (onFilterStatesChange) {
+      onFilterStatesChange({});
+    }
+
+    if (onSelectedFiltersChange) {
+      onSelectedFiltersChange([]);
+    }
   };
 
   const handleClickFilterMenu = (fieldName: string) => {

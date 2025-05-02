@@ -129,6 +129,10 @@ export interface DateFilterState {
   };
 }
 
+interface MultiSelectFilterState {
+  values: string[];
+}
+
 // Union type for all possible filter states
 export type FilterState = {
   text?: TextFilterState;
@@ -136,13 +140,20 @@ export type FilterState = {
   date?: DateFilterState;
   enum?: EnumFilterState;
   textCostAndSkill?: TextFilterStateForCostAndSkill;
+  multiSelect?: MultiSelectFilterState;
 };
 
 // Define field configuration
 export type FieldConfig = {
   name: string;
   value: string;
-  type: 'text' | 'number' | 'date' | 'enum' | 'textCostAndSkill';
+  type:
+    | 'text'
+    | 'number'
+    | 'date'
+    | 'enum'
+    | 'textCostAndSkill'
+    | 'multi-select';
   options?: string[];
 };
 
