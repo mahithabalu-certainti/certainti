@@ -1,4 +1,4 @@
-import { Sequelize } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import { ResourceCost } from "../models/resourceCost";
 import { ResourceCostTimeline } from "../models/resourceCostTimeline";
 import { ResourceCostHistory } from "../models/resourceCostHistory";
@@ -254,62 +254,103 @@ class ResourceCostSchemaService {
    * @returns Promise with currency RIDs or null
    */
   async processCurrencyFilter(filters: Record<string, any>) {
-    // Check if currency filter exists
-    if (!filters.currency || !Array.isArray(filters.currency)) {
+    // Check if currency filter exists and has valid operators
+    if (!filters.currency || typeof filters.currency !== "object") {
       return null;
     }
 
-    const currencyValues = filters.currency;
+    const currencyFilter = filters.currency;
+    const mainDbSequelize = await initMainDbSequelize();
 
-    // If we have currency values to filter by
-    if (currencyValues.length > 0) {
-      const mainDbSequelize = await initMainDbSequelize();
-      if (!mainDbSequelize) {
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: "Main database connection not available",
-        };
-      }
-
-      // Build query to find matching currencies
-      const currencyQuery = `
-        SELECT rid FROM "public"."currency" 
-        WHERE LOWER(currency_code) IN (:currencyValues) 
-        OR LOWER(currency_name) IN (:currencyValues)
-      `;
-
-      // Convert all values to lowercase for case-insensitive comparison
-      const lowerCaseValues = currencyValues.map((val: string) =>
-        val.toLowerCase()
-      );
-
-      // Execute the query
-      const currencyResults = await mainDbSequelize.query(currencyQuery, {
-        replacements: { currencyValues: lowerCaseValues },
-        type: "SELECT",
-      });
-
-      // Extract the RIDs from the results
-      const currencyRids = currencyResults.map((result: any) => result.rid);
-
-      // If we found matching currencies, add them to the filters
-      if (currencyRids.length > 0) {
-        // Remove the original currency filter
-        delete filters.currency;
-
-        filters.currency_rid = {
-          in: currencyRids,
-        };
-
-        return null;
-      } else {
-        return null;
-      }
+    if (!mainDbSequelize) {
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: "Main database connection not available",
+      };
     }
 
-    // If currency array is empty, remove the filter
-    delete filters.currency;
+    // Handle is_empty operator first
+    if (currencyFilter.is_empty !== undefined) {
+      delete filters.currency;
+      if (currencyFilter.is_empty) {
+        // For is_empty: true, we want records where currency_rid IS NULL or empty
+        filters.currency_rid = {
+          is_empty: true
+        };
+      } else {
+        // For is_empty: false, we want records where currency_rid IS NOT NULL and not empty
+        filters.currency_rid = {
+          is_not_empty: true
+        };
+      }
+      return null;
+    }
+
+    let currencyResults: any[] = [];
+
+    // Handle equals operator
+    if (currencyFilter.equals) {
+      const query = `
+      SELECT rid FROM "public"."currency" 
+      WHERE LOWER(currency_code) = LOWER(:value) 
+      OR LOWER(currency_name) = LOWER(:value)
+    `;
+      currencyResults = await mainDbSequelize.query(query, {
+        replacements: { value: currencyFilter.equals },
+        type: "SELECT",
+      });
+    }
+
+    // Handle not_equals operator
+    else if (currencyFilter.not_equals) {
+      const query = `
+      SELECT rid FROM "public"."currency" 
+      WHERE LOWER(currency_code) != LOWER(:value) 
+      AND LOWER(currency_name) != LOWER(:value)
+    `;
+      currencyResults = await mainDbSequelize.query(query, {
+        replacements: { value: currencyFilter.not_equals },
+        type: "SELECT",
+      });
+    }
+
+    // Handle contains operator
+    else if (currencyFilter.contains) {
+      const query = `
+      SELECT rid FROM "public"."currency" 
+      WHERE LOWER(currency_code) LIKE LOWER(:value) 
+      OR LOWER(currency_name) LIKE LOWER(:value)
+    `;
+      currencyResults = await mainDbSequelize.query(query, {
+        replacements: { value: `%${currencyFilter.contains}%` },
+        type: "SELECT",
+      });
+    }
+
+    // Handle in operator
+    else if (currencyFilter.in && Array.isArray(currencyFilter.in)) {
+      const values = currencyFilter.in.map((val: string) => val.toLowerCase());
+      const query = `
+      SELECT rid FROM "public"."currency" 
+      WHERE LOWER(currency_code) IN (:values)
+      OR LOWER(currency_name) IN (:values)
+    `;
+      currencyResults = await mainDbSequelize.query(query, {
+        replacements: { values },
+        type: "SELECT",
+      });
+    }
+
+    // Extract RIDs and update filters
+    if (currencyResults.length > 0) {
+      const currencyRids = currencyResults.map((result) => result.rid);
+      delete filters.currency;
+      filters.currency_rid = {
+        in: currencyRids,
+      };
+    }
+
     return null;
   }
 
@@ -620,7 +661,7 @@ class ResourceCostSchemaService {
       if (typeof value === "object") {
         if (alphanumericFields.includes(key)) {
           filterConditions += this.processAlphanumericFilter(key, value);
-        }else if (numericFields.includes(key)) {
+        } else if (numericFields.includes(key)) {
           filterConditions += this.processNumericFilter(key, value);
         } else if (dateFields.includes(key)) {
           filterConditions += this.processDateFilter(key, value);
@@ -776,57 +817,72 @@ class ResourceCostSchemaService {
   }
 
 processDefaultFilter(key: string, value: any): string {
-  let condition = "";
-  const isUuidField = key.toLowerCase().includes('rid');
+    let condition = "";
+    const isUuidField = key.toLowerCase().includes("rid");
 
-  if (value.equals !== undefined) {
-    if (typeof value.equals === "string") {
-      if (isUuidField) {
-        condition += ` AND rc."${key}" = '${value.equals}'`;
+    if (value.equals !== undefined) {
+      if (typeof value.equals === "string") {
+        if (isUuidField) {
+          condition += ` AND LOWER(rc."${key}") = LOWER('${value.equals}')`;
+        } else {
+          condition += ` AND LOWER(rc."${key}") = LOWER('${value.equals}')`;
+        }
       } else {
-        condition += ` AND LOWER(rc."${key}") = LOWER('${value.equals}')`;
+        condition += ` AND rc."${key}" = ${value.equals}`;
       }
-    } else {
-      condition += ` AND rc."${key}" = ${value.equals}`;
-    }
-  } else if (value.in && Array.isArray(value.in) && value.in.length > 0) {
-    if (typeof value.in[0] === "string") {
-      if (isUuidField) {
-        const values = value.in.map((item: string) => `'${item}'`).join(",");
+    } else if (value.is_empty !== undefined) {
+      if (value.is_empty) {
+        if (isUuidField) {
+          condition += ` AND rc."${key}" IS NULL`;
+        } else {
+          condition += ` AND (rc."${key}" IS NULL OR rc."${key}" = '')`;
+        }
+      }
+    } else if (value.is_not_empty !== undefined) {
+      if (value.is_not_empty) {
+        if (isUuidField) {
+          condition += ` AND rc."${key}" IS NOT NULL`;
+        } else {
+          condition += ` AND rc."${key}" IS NOT NULL AND rc."${key}" != ''`;
+        }
+      }
+    } else if (value.in && Array.isArray(value.in) && value.in.length > 0) {
+      if (typeof value.in[0] === "string") {
+        if (isUuidField) {
+          const values = value.in.map((item: string) => `LOWER('${item}')`).join(",");
+          condition += ` AND LOWER(rc."${key}") IN (${values})`;
+        } else {
+          const values = value.in
+            .map((item: string) => `LOWER('${item}')`).join(",");
+          condition += ` AND LOWER(rc."${key}") IN (${values})`;
+        }
+      } else {
+        const values = value.in.join(",");
         condition += ` AND rc."${key}" IN (${values})`;
-      } else {
-        const values = value.in
-          .map((item: string) => `'${item.toLowerCase()}'`)
-          .join(",");
-        condition += ` AND LOWER(rc."${key}") IN (${values})`;
       }
-    } else {
-      const values = value.in.join(",");
-      condition += ` AND rc."${key}" IN (${values})`;
-    }
-  } else if (
-    value.not_in &&
-    Array.isArray(value.not_in) &&
-    value.not_in.length > 0
-  ) {
-    if (typeof value.not_in[0] === "string") {
-      if (isUuidField) {
-        const values = value.not_in.map((item: string) => `'${item}'`).join(",");
+    } else if (
+      value.not_in &&
+      Array.isArray(value.not_in) &&
+      value.not_in.length > 0
+    ) {
+      if (typeof value.not_in[0] === "string") {
+        if (isUuidField) {
+          const values = value.not_in
+            .map((item: string) => `LOWER('${item}')`).join(",");
+          condition += ` AND LOWER(rc."${key}") NOT IN (${values})`;
+        } else {
+          const values = value.not_in
+            .map((item: string) => `LOWER('${item}')`).join(",");
+          condition += ` AND LOWER(rc."${key}") NOT IN (${values})`;
+        }
+      } else {
+        const values = value.not_in.join(",");
         condition += ` AND rc."${key}" NOT IN (${values})`;
-      } else {
-        const values = value.not_in
-          .map((item: string) => `'${item.toLowerCase()}'`)
-          .join(",");
-        condition += ` AND LOWER(rc."${key}") NOT IN (${values})`;
       }
-    } else {
-      const values = value.not_in.join(",");
-      condition += ` AND rc."${key}" NOT IN (${values})`;
     }
-  }
 
-  return condition;
-}
+    return condition;
+  }
 
   processSimpleEqualityFilter(key: string, value: any): string {
     // Your existing implementation

@@ -25,7 +25,7 @@ type ResourceSkill {
   modified_by: String
   resource_full_name: String
   skill_name: String
-  resource_data: ResourceData
+  Resource: ResourceData
 }
 
 type ResourceData {
@@ -76,7 +76,7 @@ input UpdateResourceSkillInput {
 }
 
 type Query {
-  getResourceSkill(
+  getResourceSkills(
     rid: String
     page: Int
     limit: Int
@@ -88,6 +88,7 @@ type Query {
     fiscalYear: Int!
     resourceRid: String!
   ): ResourceSkillResponse
+  getResourceSkill(id: String!,accountNumber: String!): ResourceSkill
 }
 
 type Mutation {
