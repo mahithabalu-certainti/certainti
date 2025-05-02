@@ -266,20 +266,16 @@ class ResourceSkillSchemaService {
    * @param searchCondition - SQL search condition
    * @param finalSortBy - Field to sort by
    * @param finalSortOrder - Sort order (ASC/DESC)
-   * @param limit - Number of records per page
-   * @param offset - Offset for pagination
    * @param search - Search term
    * @returns Promise with query results
    */
-  async executeQueries(
+  async exportResoucreSkill(
     schemaName: string,
     filterConditions: string,
     searchCondition: string,
     finalSortBy: string,
     finalSortOrder: string,
     resource_rid: string,
-    limit: number,
-    offset: number,
     search: string
   ) {
     const sequelize = await this.getDbConnection(schemaName);
@@ -296,52 +292,121 @@ class ResourceSkillSchemaService {
       ${filterConditions}
       ${searchCondition}
       ORDER BY ${finalSortBy === 'skill_name' ? 's' : 'rs'}."${finalSortBy}" ${finalSortOrder}
-      LIMIT :limit OFFSET :offset
-    `;
-
-    // Count query to get total records
-    const countQuery = `
-      SELECT COUNT(*) as total
-      FROM "${schemaName}"."resource_skill" rs
-      INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
-      INNER JOIN "${schemaName}"."skill" s ON rs.skill_rid = s.rid
-      WHERE 1=1 AND rs.resource_rid = :resource_rid
-      ${filterConditions}
-      ${searchCondition}
     `;
 
     const replacements = {
-      limit,
-      offset,
       searchTerm: search ? `%${search}%` : null,
       resource_rid,
     };
 
     // Execute the queries
-    const [results, countResult] = await Promise.all([
-      sequelize.query(query, {
-        replacements,
-        type: "SELECT",
-      }),
-      sequelize.query(countQuery, {
-        replacements,
-        type: "SELECT",
-        plain: true,
-      }),
-    ]);
-
-    const resourceSkill = results;
-    const totalCount = countResult ? (countResult as any).total : 0;
-
+    const results = await sequelize.query(query, {
+      replacements,
+      type: "SELECT",
+    });
+  
+    const resourceSkill = results.map((resource: any) => {
+      return {
+        "Start Date":resource.start_date,
+        "Skill Name":resource.skill_name,
+        "Skill Level":resource.skill_level,
+        "Years of Experience":resource.years_of_experience
+      };
+    });
     return {
       statusCode: HttpStatus.SUCCESS,
       message: HttpStatus.SUCCESS_MESSAGE,
       data: {
-        resourceSkill: resourceSkill,
-        count: parseInt(totalCount, 10),
+        resourceSkill: resourceSkill
       },
     };
   }
+
+/**
+   * Executes the main and count queries and formats the response
+   *
+   * @param sequelize - The Sequelize instance
+   * @param schemaName - The schema name
+   * @param filterConditions - SQL filter conditions
+   * @param searchCondition - SQL search condition
+   * @param finalSortBy - Field to sort by
+   * @param finalSortOrder - Sort order (ASC/DESC)
+   * @param limit - Number of records per page
+   * @param offset - Offset for pagination
+   * @param search - Search term
+   * @returns Promise with query results
+   */
+async executeQueries(
+  schemaName: string,
+  filterConditions: string,
+  searchCondition: string,
+  finalSortBy: string,
+  finalSortOrder: string,
+  resource_rid: string,
+  limit: number,
+  offset: number,
+  search: string
+) {
+  const sequelize = await this.getDbConnection(schemaName);
+
+  // Build the query to get data from the account-specific schema
+  const query = `
+    SELECT rs.*,
+    TO_CHAR(rs.start_date, 'MM/DD/YYYY') as start_date,
+     r.resource_fullname, s.skill_name, r.resource_role, r.resource_type, r.resource_status, r.fiscal_year
+    FROM "${schemaName}"."resource_skill" rs
+    INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
+    INNER JOIN "${schemaName}"."skill" s ON rs.skill_rid = s.rid
+    WHERE 1=1 AND rs.resource_rid = :resource_rid
+    ${filterConditions}
+    ${searchCondition}
+    ORDER BY ${finalSortBy === 'skill_name' ? 's' : 'rs'}."${finalSortBy}" ${finalSortOrder}
+    LIMIT :limit OFFSET :offset
+  `;
+
+  // Count query to get total records
+  const countQuery = `
+    SELECT COUNT(*) as total
+    FROM "${schemaName}"."resource_skill" rs
+    INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
+    INNER JOIN "${schemaName}"."skill" s ON rs.skill_rid = s.rid
+    WHERE 1=1 AND rs.resource_rid = :resource_rid
+    ${filterConditions}
+    ${searchCondition}
+  `;
+
+  const replacements = {
+    limit,
+    offset,
+    searchTerm: search ? `%${search}%` : null,
+    resource_rid,
+  };
+
+  // Execute the queries
+  const [results, countResult] = await Promise.all([
+    sequelize.query(query, {
+      replacements,
+      type: "SELECT",
+    }),
+    sequelize.query(countQuery, {
+      replacements,
+      type: "SELECT",
+      plain: true,
+    }),
+  ]);
+
+  const resourceSkill = results;
+  const totalCount = countResult ? (countResult as any).total : 0;
+
+  return {
+    statusCode: HttpStatus.SUCCESS,
+    message: HttpStatus.SUCCESS_MESSAGE,
+    data: {
+      resourceSkill: resourceSkill,
+      count: parseInt(totalCount, 10),
+    },
+  };
+}
 
   /**
    * Determines the appropriate sort parameters for resource skill queries.

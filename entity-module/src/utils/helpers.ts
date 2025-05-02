@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import { HttpStatus } from "./constants";
 import { errorResponse,successResponse } from "./apiResponse";
 import configurations from "../config/config";
-
+import * as XLSX from 'xlsx';
 const logger = configurations.getInstance().getLogger();
 
 export async function validateRequest(
@@ -74,4 +74,20 @@ export function handleErrorResponse(
   message?: string
 ): void {
   errorResponse(res, statusCode, statusCodeValue, message);
+}
+
+export function generateExcelBase64(
+  data: any,sheetName:string
+) {
+  const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+    // generates Uint8Array
+      const excelBuffer = XLSX.write(workbook, {
+        bookType: 'xlsx',
+        type: 'array' 
+      });
+    
+      const buffer = Buffer.from(excelBuffer); 
+      return buffer.toString('base64');
 }

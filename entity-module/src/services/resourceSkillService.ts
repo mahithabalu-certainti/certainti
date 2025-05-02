@@ -8,7 +8,7 @@ import resourceSkillSchemaService from "./resourceSkillSchemaService";
 import SchemaService from "./schemaService";
 import { ResourceFiscal } from "../models/resourceFiscal";
 import { initOrgSequelize } from "../config/orgDataSource";
-import { Sequelize,Op } from "sequelize";
+import { Sequelize, Op } from "sequelize";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import moment from "moment";
 import { Resources } from "../models/resource";
@@ -94,8 +94,8 @@ class ResourceSkillService {
           const skill = await SkillModel.findOne({
             where: {
               skill_name: {
-                [Op.iLike]: skill_name // Case insensitive comparison
-              }
+                [Op.iLike]: skill_name, // Case insensitive comparison
+              },
             },
             attributes: ["rid"], // Only fetch the rid
           });
@@ -642,7 +642,6 @@ class ResourceSkillService {
    * @returns Promise with status code and resource skill data or error message
    */
   async resourceSkillList(
-    rid: string,
     page: number,
     limit: number,
     search: string,
@@ -680,48 +679,6 @@ class ResourceSkillService {
         );
       }
 
-      // If rid is only provided, we can optimize by directly querying for that specific record
-      if (rid && !resourceRid) {
-        // Direct query for the specific resource skill by rid
-        const query = `
-          SELECT 
-            rs.*,
-            s.skill_name,
-            row_to_json(r) AS resource_data
-          FROM "${schemaName}"."resource_skill" rs
-          INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
-          INNER JOIN "${schemaName}"."skill" s ON rs.skill_rid = s.rid
-          WHERE rs.rid = :rid
-        `;
-
-        const sequelizeInstance = await this.getOrgSequelize();
-        const results = await sequelizeInstance?.query(query, {
-          replacements: { rid },
-          type: "SELECT",
-        });
-
-        if (results && results.length > 0) {
-          // Fetch user names for created_by and modified_by
-          const userNames = await this.fetchUserNames({
-            created_by: (results[0] as any).created_by,
-            modified_by: (results[0] as any).modified_by,
-          });
-
-          // Add user names to the result
-          (results[0] as any).created_by = userNames.created_by_name;
-          (results[0] as any).modified_by = userNames.modified_by_name;
-        }
-
-        return {
-          statusCode: HttpStatus.SUCCESS,
-          message: HttpStatus.SUCCESS_MESSAGE,
-          data: {
-            resourceSkill: results,
-            count: results?.length || 0,
-          },
-        };
-      }
-
       // Build query components
       const searchCondition =
         resourceSkillSchemaService.buildSearchCondition(search);
@@ -745,6 +702,171 @@ class ResourceSkillService {
     } catch (err) {
       console.log("Error ", err);
       return this.throwServiceError(err as Error);
+    }
+  }
+
+
+  /**
+   * Retrieves a  list of resource skills for a specific account and fiscal year for excel download.
+   * Supports filtering, sorting, and searching functionality.
+   *
+   * @param rid - Optional specific resource skill RID to retrieve
+   * @param search - Search term to filter results
+   * @param filters - Object containing filter criteria
+   * @param sortBy - Field to sort results by
+   * @param sortOrder - Direction to sort (ASC or DESC)
+   * @param accountNumber - Account identifier for schema selection
+   * @param fiscalYear - Fiscal year to filter results
+   * @returns Promise with status code and resource skill data or error message
+   */
+  async exportResourceSkillList(
+    search: string,
+    filters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    accountNumber: string,
+    fiscalYear: number,
+    resourceRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resourceSkill: any; };
+  }> {
+    try {
+      const [finalSortBy, finalSortOrder] =
+        resourceSkillSchemaService.getSortParameters(sortBy, sortOrder);
+
+      let { accountNumber: accountNumberFetched, accountId } =
+        await this.schemaService.fetchAccountByNumber(accountNumber);
+      // Check if account-specific schema exists
+      const schemaName = `platform_v2_${accountNumberFetched}`;
+      const tableName = "resource_skill";
+      const schemaAndTableValidation =
+        await resourceSkillSchemaService.validateSchema(
+          accountNumberFetched,
+          tableName
+        );
+
+      if (!schemaAndTableValidation) {
+        return resourceSkillSchemaService.createErrorResponse(
+          "Account schema does not exist"
+        );
+      }
+
+      // Build query components
+      const searchCondition =
+        resourceSkillSchemaService.buildSearchCondition(search);
+      let filterConditions = resourceSkillSchemaService.buildFilterConditions(
+        filters,
+        fiscalYear
+      );
+
+      // Execute queries and return results using the schema service
+      return await resourceSkillSchemaService.exportResoucreSkill(
+        schemaName,
+        filterConditions,
+        searchCondition,
+        finalSortBy,
+        finalSortOrder,
+        resourceRid,
+        search
+      );
+    } catch (err) {
+      console.log("Error ", err);
+      return this.throwServiceError(err as Error);
+    }
+  }
+
+  /**
+   * Retrieves a specific resource skill record by ID from the specified account schema.
+   * Includes the associated Resource skill record in the result.
+   *
+   * @param id - Unique identifier of the resource skill record
+   * @param accountNumber - Account identifier for schema selection
+   * @returns Promise resolving to status object with resource skill data or error message
+   */
+  async resourceSkillById(id: string, accountNumber: string) {
+    try {
+      let { accountNumber: accountNumberFetched, accountId } =
+        await this.schemaService.fetchAccountByNumber(accountNumber);
+      const schemaName = `platform_v2_${accountNumberFetched}`;
+      const validateSchema = await resourceSkillSchemaService.validateSchema(
+        schemaName,
+        "resource_skill"
+      );
+
+      if (!validateSchema) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Account schema does not exist",
+        };
+      }
+
+      const sequelize = await this.getOrgSequelize();
+      ResourceSkill.initialize(sequelize, schemaName);
+      const resourceSkillById = await ResourceSkill.findOne({
+        where: {
+          rid: id,
+        },
+        include: [
+          {
+            model: Resources,
+            required: true,
+            as: "Resource",
+          },
+        ],
+      });
+
+      // Fetch user names for created_by and modified_by
+      const userNames = await this.fetchUserNames({
+        created_by: resourceSkillById?.created_by,
+        modified_by: resourceSkillById?.modified_by,
+      });
+
+      if (resourceSkillById) {
+        resourceSkillById.created_by = userNames.created_by_name;
+        resourceSkillById.modified_by = userNames.modified_by_name;
+      }
+
+      // Format dates to MM/DD/YYYY with proper parsing
+      if (resourceSkillById?.start_date) {
+        resourceSkillById.dataValues.start_date = moment(resourceSkillById.start_date, "YYYY-MM-DD").format("MM/DD/YYYY") as any;
+      }
+
+      const resourceInfo = (resourceSkillById as any).Resource;
+
+      if (resourceInfo) {
+        // Safely format dates with null checks and validation
+        if (resourceInfo.resource_startdate) {
+          const startDate = moment(resourceInfo.resource_startdate);
+          if (startDate.isValid()) {
+            resourceInfo.dataValues.resource_startdate = startDate.format('MM/DD/YYYY') as any;
+          }
+        }
+        
+        if (resourceInfo.resource_enddate) {
+          const endDate = moment(resourceInfo.resource_enddate);
+          if (endDate.isValid()) {
+            resourceInfo.dataValues.resource_enddate = endDate.format('MM/DD/YYYY') as any;
+          }
+        }
+      }
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          resourceSkillById,
+        },
+      };
+    } catch (err) {
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: (err as Error).message,
+      };
     }
   }
 

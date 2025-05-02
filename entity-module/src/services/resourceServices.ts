@@ -169,6 +169,94 @@ export class ResourceService {
     }
   }
 
+
+  /**
+   * Fetches a  list of resources for a given account with optional filters, search, and sorting for downloading.
+   *
+   * @param {string} accountNumber - The account number to fetch resources from.
+   * @param {number} fiscal_year - The fiscal year (currently unused).
+   * @param {string} search - Global search term.
+   * @param {Record<string, string>} filters - Filter object mapping fields to values.
+   * @param {string} [sortBy="created_datetime"] - Field to sort by.
+   * @param {string} [sortOrder="ASC"] - Sort order, either ASC or DESC.
+   * @returns {Promise<object>} - Response with resource list and count.
+   */
+  async exportResourcesList(
+    accountNumber: string,
+    fiscalYear: number = 0,
+    search: string,
+    filters: Record<string, string> = {},
+    sortBy: string = "created_datetime",
+    sortOrder: string = "ASC"
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resources: any };
+  }> {
+    try {
+      const { accountNumber: accountRNumber } =
+        await this.schemaService.fetchAccountByNumber(accountNumber);
+
+      const isExists = await this.schemaService.checkIfSchemaExists(
+        accountRNumber
+      );
+
+      if (!isExists) {
+        throw new Error(
+          "Invalid account number: The account number does not exist."
+        );
+      }
+
+      const [finalSortBy, finalSortOrder] = this.getSortParameters(
+        sortBy,
+        sortOrder
+      );
+
+      const { whereClause } = this.buildWhereClause(filters, search);
+      const { goeDataFilters, geoDataSort } = this.processGeoDataFilterAndSort(
+        filters,
+        sortBy,
+        sortOrder
+      );
+
+      const resources = await this.schemaService.fetchResourcesForExport(
+        accountRNumber,
+        [[finalSortBy, finalSortOrder]],
+        whereClause,
+        fiscalYear,
+        goeDataFilters,
+        geoDataSort
+      );
+      const rawResult = resources.resources || [];
+      let exportData = rawResult.map((resource: any) => {
+        return {
+          "Resource ID":resource.r_number,
+          "Resource Ref ID":resource.resource_ref_id,
+          "Resource Full Name":resource.resource_fullname,
+          "Resource Type": resource?.resource_type,
+          "Resource Designation": resource.designation,
+          "Resource Country": resource.country_name,
+          "Resource Region": resource.region,
+          "Status": resource.resource_status,
+          
+
+        };
+      });
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          resources: exportData
+        },
+      };
+    } catch (err) {
+      return this.throwServiceError(err as Error);
+    }
+  }
+
+
+
   /**
    * Updates an existing resource's data for a given account.
    * Validates that the resource and schema exist.
@@ -336,7 +424,7 @@ export class ResourceService {
       "designation",
       "total_years_experience",
       "country",
-      "region",
+      "state",
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -407,34 +495,42 @@ export class ResourceService {
     filters: Record<string, any>,
     whereClause: Record<string, any>
   ): Record<string, any> {
-    const castToTextFields = ["resource_type", "resource_status", "rid"];
+    const castToTextFields = ["resource_type", "resource_fullname", "designation", "r_number", "resource_ref_id"];
+    const uuidFields = ["country", "region"];
 
     const filterFields = [
-      { clientField: "rid", dbField: "rid" },
       { clientField: "resource_ref_id", dbField: "resource_ref_id" },
       { clientField: "r_number", dbField: "r_number" },
       { clientField: "resource_fullname", dbField: "resource_fullname" },
       { clientField: "resource_type", dbField: "resource_type" },
       { clientField: "resource_status", dbField: "resource_status" },
-      { clientField: "resource_email", dbField: "resource_email" },
-      { clientField: "resource_mobile", dbField: "resource_mobile" },
-      { clientField: "resource_role", dbField: "resource_role" },
       { clientField: "designation", dbField: "designation" },
-      {
-        clientField: "total_years_experience",
-        dbField: "total_years_experience",
-      },
+      { clientField: "country", dbField: "country" },
+      { clientField: "region", dbField: "region" },
     ];
 
     filterFields.forEach(({ clientField, dbField }) => {
       if (filters[clientField]) {
         const fieldFilter = filters[clientField];
 
-        if (castToTextFields.includes(dbField)) {
+        // Special handling for resource_status which comes as direct value
+        if (clientField === "resource_status") {
+          whereClause[dbField] = Sequelize.where(
+            Sequelize.cast(Sequelize.col(dbField), "TEXT"),
+            { [Op.iLike]: fieldFilter }
+          );
+        }
+        // Handle other fields
+        else if (castToTextFields.includes(dbField)) {
           whereClause[dbField] = Sequelize.where(
             Sequelize.cast(Sequelize.col(dbField), "TEXT"),
             this.getFieldFilter(fieldFilter, dbField)
           );
+        } else if (uuidFields.includes(dbField)) {
+          // Handle UUID fields directly without casting
+          whereClause[dbField] = fieldFilter.value 
+            ? fieldFilter.value // For exact UUID matches
+            : this.getFieldFilter(fieldFilter, dbField);
         } else {
           whereClause[dbField] = this.getFieldFilter(fieldFilter, dbField);
         }

@@ -101,7 +101,7 @@ class ResourceCostService {
       }
 
       // Process currency filters if present
-      if (filters && filters.currency) {
+      if (filters && filters.currency !== undefined) {
         const currencyFilterResult =
           await resourceCostSchemaService.processCurrencyFilter(filters);
         if (currencyFilterResult) {
@@ -127,6 +127,91 @@ class ResourceCostService {
         resourceRid,
         limit,
         offset,
+        search
+      );
+    } catch (err) {
+      console.log("Error ", err);
+      return this.throwServiceError(err as Error);
+    }
+  }
+
+  /**
+   * Retrieves a  list of resource costs for a specific account and fiscal year for downloadind  as excel.
+   * Supports filtering, sorting, and searching functionality.
+   * @param search - Search term to filter results
+   * @param filters - Object containing filter criteria
+   * @param sortBy - Field to sort results by
+   * @param sortOrder - Direction to sort (ASC or DESC)
+   * @param accountNumber - Account identifier for schema selection
+   * @param fiscalYear - Fiscal year to filter results
+   * @returns Promise with status code and resource cost data or error message
+   */
+  async exportResourceCostList(
+    search: string,
+    filters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    accountNumber: string,
+    fiscalYear: number,
+    resourceRid: string,
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resourceCost: any; };
+  }> {
+    try {
+      const [finalSortBy, finalSortOrder] =
+        resourceCostSchemaService.getSortParameters(sortBy, sortOrder);
+
+        let { accountNumber: accountNumberFetched, accountId } =
+        await this.schemaService.fetchAccountByNumber(accountNumber);  
+      // Check if account-specific schema exists
+      const schemaName = `platform_v2_${accountNumberFetched}`;
+      const tableName = "resource_cost";
+      const schemaAndTableValidation =
+        await resourceCostSchemaService.validateSchema(
+          accountNumberFetched,
+          tableName
+        );
+
+      if (!schemaAndTableValidation) {
+        return resourceCostSchemaService.createErrorResponse(
+          "Account schema does not exist"
+        );
+      }
+      const sequelize = await this.getOrgSequelize();
+      if (!sequelize) {
+        return resourceCostSchemaService.createErrorResponse(
+          "Database connection not available"
+        );
+      }
+
+      // Process currency filters if present
+      if (filters && filters.currency) {
+        const currencyFilterResult =
+          await resourceCostSchemaService.processCurrencyFilter(filters);
+        if (currencyFilterResult) {
+          return currencyFilterResult;
+        }
+      }
+
+      // Build query components
+      const searchCondition =
+        resourceCostSchemaService.buildSearchCondition(search);
+      let filterConditions = resourceCostSchemaService.buildFilterConditions(
+        filters,
+        fiscalYear
+      );
+
+      // Execute queries and return results
+      return await resourceCostSchemaService.exportresourceCostDetails(
+        schemaName,
+        filterConditions,
+        searchCondition,
+        finalSortBy,
+        finalSortOrder,
+        resourceRid,
         search
       );
     } catch (err) {
