@@ -102,7 +102,6 @@ export interface IResourceSkillService {
   }>;
 
   resourceSkillList(
-    rid: string,
     page: number,
     limit: number,
     search: string,
@@ -117,5 +116,12 @@ export interface IResourceSkillService {
     message: string;
     errorMessage?: string;
     data?: { resourceSkill: any; count: number };
+  }>;
+
+  resourceSkillById(id: string,accountNumber: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resourceSkillById: any };
   }>;
 }
