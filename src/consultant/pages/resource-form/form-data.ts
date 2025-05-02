@@ -112,12 +112,12 @@ export const ResourceFormData = (
             placeholder: 'Enter Resource Role',
             disabled: disableCostAndSkill,
           }),
-          createTextField('r_number', 'Resource Number', {
-            required: false,
-            placeholder: 'Enter Resource Number',
-            disabled: disableCostAndSkill,
-            hide: !disableCostAndSkill,
-          }),
+          // createTextField('r_number', 'Resource ID', {
+          //   required: false,
+          //   placeholder: 'Enter Resource ID',
+          //   disabled: disableCostAndSkill,
+          //   hide: !disableCostAndSkill,
+          // }),
         ],
       },
       {
@@ -158,11 +158,14 @@ export const ResourceFormData = (
             required: false,
             minDate: new Date(minDate.getTime()),
             maxDate: currentDate,
+            startValue: true,
           }),
           createDateField('financial_end_date', 'End Date', {
             required: false,
             minDate: new Date(minDate.getTime()),
             maxDate: currentDate,
+            endDateValue: true,
+            startDateLabel: 'financial_start_date',
           }),
           createSelectField('cost_frequency', 'Cost Frequency', {
             options: FREQUENCY_OPTIONS,
@@ -193,6 +196,7 @@ export const ResourceFormData = (
             required: false,
             minDate: new Date(minDate.getTime()),
             maxDate: currentDate,
+            startValue: true,
           }),
           createTextField('skill_name', 'Skill Name', {
             required: true,
@@ -208,8 +212,8 @@ export const ResourceFormData = (
           }),
           createTextField('years_of_experience', 'Years of Experience', {
             required: false,
-            regex: REGEX_PATTERNS.NUMBERS_GREATER_THAN_ZERO,
-            regexErrorMessage: 'Must be a valid positive number.',
+            regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
+            regexErrorMessage: 'Please enter a valid number between 0 and 99',
             placeholder: 'Enter years of experience',
           }),
         ],
@@ -272,7 +276,7 @@ export const ResourceFormData = (
         fields: [
           createTextAreaField('comments', 'Comments', {
             required: false,
-            placeholder: 'Enter Any Additional Information...',
+            placeholder: 'Enter Any Additional Information',
             regexErrorMessage: 'Maximum 1000 characters allowed',
             regex: RESOURCE_REGEX.DESCRIPTION,
             disabled: disableCostAndSkill,

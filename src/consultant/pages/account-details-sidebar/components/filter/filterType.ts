@@ -10,10 +10,10 @@ export type TextFilterOption =
 
 export const textOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
-  { option: 'Not Equals', value: 'notEqual' },
+  { option: 'Not Equals', value: 'not_equals' },
   { option: 'Contains', value: 'contains' },
-  { option: 'Does Not Contain', value: 'notContains' },
-  { option: 'Is Empty', value: 'isEmpty' },
+  { option: 'Does Not Contain', value: 'not_contains' },
+  { option: 'Is Empty', value: 'is_empty' },
 ];
 
 export type TextFilterOptionForCostAndSkill =

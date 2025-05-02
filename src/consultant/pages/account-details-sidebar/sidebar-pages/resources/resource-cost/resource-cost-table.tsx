@@ -24,6 +24,7 @@ import { RESOURCECOST } from "../../../../../../routes";
 import ActionButton from '../../../../account-list/table/action-button';
 import { arrowDownIcon, arrowUpIcon } from '../../../../../../assets';
 import { TablePagination } from '../../../../../../components/table';
+import { formatDateToMMDDYYYY } from '../utils';
 
 interface ResourceCostTableProps {
   fiscalYear?: number;
@@ -97,27 +98,49 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
 
   const renderRows = ({ resourceCost }: RenderCostRowProps) => {
     return resourceCost?.map((cost) => {
+      const startDate = formatDateToMMDDYYYY(cost.startDate as string);
+      const endDate = formatDateToMMDDYYYY(cost.endDate as string);
       return (
         <React.Fragment key={cost.resourceCostNumber}>
-          <TableRow sx={{
-            '.MuiTableCell-root': {
-              fontWeight: 300,
-              color: '#425A76',
-              borderRight: 'none',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              maxWidth: '140px',
-            }
-          }}>
-            <TableCell sx={{ minWidth: '160px' }}>
+          <TableRow
+            sx={{
+              '.MuiTableCell-root': {
+                fontWeight: 300,
+                color: '#425A76',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                maxWidth: '140px',
+              },
+            }}
+          >
+            <TableCell
+              sx={{
+                minWidth: '160px',
+                position: 'sticky',
+                left: 0,
+                background: '#fff',
+                zIndex: 10,
+                borderRight: 'none !important',
+                '&::after': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  width: '1px',
+                  height: '100%',
+                  backgroundColor: '#CBD6E2',
+                  zIndex: 20,
+                },
+              }}
+            >
               {cost.resourceFullName}
             </TableCell>
             <TableCell sx={{ minWidth: '100px' }}>
               {cost.currency}
             </TableCell>
-            <TableCell sx={{ minWidth: '130px' }}>{cost.startDate}</TableCell>
-            <TableCell sx={{ minWidth: '130px' }}>{cost.endDate}</TableCell>
+            <TableCell sx={{ minWidth: '130px' }}>{startDate}</TableCell>
+            <TableCell sx={{ minWidth: '130px' }}>{endDate}</TableCell>
             <TableCell sx={{ minWidth: '130px' }}>{cost.hourlyCost ? CostDisplay(cost.hourlyCost) : '-'}</TableCell>
             <TableCell sx={{ minWidth: '130px' }}>{cost.dailyCost ? CostDisplay(cost.dailyCost) : "-"}</TableCell>
             <TableCell sx={{ minWidth: '130px' }}>{cost.biWeeklyCost ? CostDisplay(cost.biWeeklyCost) : "-"}</TableCell>
@@ -202,35 +225,68 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
     };
 
   return (
-    <div className='border border-[#CBD6E2]'>
-      <Paper sx={{ overflowX: 'scroll', boxShadow: 'none', borderBottom: '1px solid #CBD6E2', borderRadius: '0px' }}>
-        <Table sx={{
-          borderCollapse: 'collapse',
-          '& .MuiTableCell-root': {
-            borderBottom: '1px solid #CBD6E2',
-          },
-        }}>
-          <TableHead sx={{
+    <div>
+      <Paper
+        sx={{
+          overflowX: 'auto',
+          boxShadow: 'none',
+          borderBottom: '1px solid #CBD6E2',
+          borderRadius: '0px',
+        }}
+      >
+        <Table
+          sx={{
+            borderCollapse: 'collapse',
             '& .MuiTableCell-root': {
-              fontWeight: 500,
-              fontSize: '14px',
-              lineHeight: '21px',
-              color: '#2A2A2A',
-              padding: '0px',
-              pl: 1,
-              height: '50px',
-              borderRight: 'none',
-              bgcolor: '#FCFCFC',
+              borderBottom: '1px solid #CBD6E2',
+              borderRight: '1px solid #CBD6E2',
             },
-            '& .MuiTableSortLabel-root': {
-              '&:hover': {
-                color: 'inherit',
-                cursor: 'auto',
+          }}
+        >
+          <TableHead
+            sx={{
+              '& .MuiTableCell-root': {
+                fontWeight: 500,
+                fontSize: '14px',
+                lineHeight: '21px',
+                color: '#2A2A2A',
+                padding: '0px',
+                pl: 1,
+                height: '50px',
+                bgcolor: '#FCFCFC',
               },
-            }
-          }}>
+              '& .MuiTableCell-root:last-child': {
+                borderRight: 'none',
+              },
+              '& .MuiTableSortLabel-root': {
+                '&:hover': {
+                  color: 'inherit',
+                  cursor: 'auto',
+                },
+              },
+            }}
+          >
             <TableRow>
-              <TableCell sx={{ minWidth: '160px' }}>
+              <TableCell
+                sx={{
+                  minWidth: '160px',
+                  position: 'sticky',
+                  left: 0,
+                  background: '#fff',
+                  zIndex: 8,
+                  borderRight: 'none !important',
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    width: '1px',
+                    height: '100%',
+                    backgroundColor: '#CBD6E2',
+                    zIndex: 10,
+                  },
+                }}
+              >
                 <TableSortLabel
                   active={orderBy === 'resource_fullname'}
                   direction={orderBy === 'resource_fullname' ? order : 'asc'}
@@ -333,20 +389,24 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
               <TableCell sx={{ minWidth: '80px' }}>Action</TableCell>
             </TableRow>
           </TableHead>
-          <TableBody sx={{
-            '& .MuiTableCell-root': {
-              fontWeight: 300,
-              fontSize: '14px',
-              lineHeight: '21px',
-              color: '#425A76',
-              padding: '0px',
-              pl: 1,
-              minHeight: '42px',
-              maxHeight: '42px',
-              borderRight: 'none',
-              height: '42px',
-            },
-          }}>
+          <TableBody
+            sx={{
+              '& .MuiTableCell-root': {
+                fontWeight: 300,
+                fontSize: '14px',
+                lineHeight: '21px',
+                color: '#425A76',
+                padding: '0px',
+                pl: 1,
+                minHeight: '42px',
+                maxHeight: '42px',
+                height: '42px',
+              },
+              '& .MuiTableCell-root:last-child': {
+                borderRight: 'none',
+              },
+            }}
+          >
             {loading ? (
               <TableRow>
                 <TableCell colSpan={11} align='center'>

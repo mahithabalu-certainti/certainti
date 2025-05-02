@@ -102,7 +102,7 @@ const TabPanel: React.FC<TabProps> = ({
             sx={{
               textTransform: 'none',
               fontSize: '14px',
-              fontWeight: 400,
+              fontWeight: 500,
               color: '#2D3E4F',
               backgroundColor: tabValue === 0 ? '#0BBFB70D' : '',
               margin: '0',
@@ -123,7 +123,7 @@ const TabPanel: React.FC<TabProps> = ({
             sx={{
               textTransform: 'none',
               fontSize: '14px',
-              fontWeight: 400,
+              fontWeight: 500,
               color: '#2D3E4F',
               backgroundColor: tabValue === 1 ? '#0BBFB70D' : '',
               margin: '0',

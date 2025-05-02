@@ -601,10 +601,9 @@ export const formatFilterForApi = (
         formatString(choosenOption) === 'Is Empty' ||
         formatString(choosenOption) === 'Is Not Empty'
           ? true
-          : state.text.value;
-      const trimmedValue = value?.toString().trim();
-      if (value !== '' && trimmedValue !== '') {
-        formattedFilters[fieldKey] = { [choosenOption]: trimmedValue };
+          : state.text.value?.toString().trim();
+      if (value) {
+        formattedFilters[fieldKey] = { [choosenOption]: value };
       }
     } else if (state.textCostAndSkill) {
       const choosenOption = state.textCostAndSkill.option;
@@ -613,10 +612,9 @@ export const formatFilterForApi = (
           ? // ||
             //   formatString(choosenOption) === 'Is Not Empty'
             true
-          : state.textCostAndSkill.value;
-      const trimmedValue = value?.toString().trim();
-      if (value !== '' && trimmedValue !== '') {
-        formattedFilters[fieldKey] = { [choosenOption]: trimmedValue };
+          : state.textCostAndSkill.value?.toString().trim();
+      if (value) {
+        formattedFilters[fieldKey] = { [choosenOption]: value };
       }
     } else if (state.number) {
       const choosenOption = state.number.option;
