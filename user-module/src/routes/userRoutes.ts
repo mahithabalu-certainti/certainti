@@ -13,5 +13,5 @@ routes.get("/list/:id", checkUserStatusMiddleware, controller.userController.lis
 routes.get("/:id/permission", controller.userManagementController.userPermissionById);
 routes.post("/create", checkUserStatusMiddleware, controller.userController.createUser);
 routes.put("/update", checkUserStatusMiddleware, controller.userController.updateUser);
-
+routes.get("/:userId/permission/fields", controller.userManagementController.userPermissionFields);
 export default routes;
