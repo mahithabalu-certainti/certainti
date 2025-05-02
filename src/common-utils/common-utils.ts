@@ -250,11 +250,9 @@ export const RESOURCE_REGEX = {
   // Full Name: Alphanumeric with hyphen/apostrophe, 3-100 chars
   FULL_NAME:
     /^(?=[\s\S]{3,200}$)(?=.*[a-zA-Z])(?!^\d+$)(?!^[^\w\s]+$)(?!^\s+$)[\w\s\-,.!?@#$%^&*()+=;:'"/\\<>{}[\]|~`]+$/,
-  RESOURCE_REF_ID:
-    /^(?=.{1,50}$)(?!^[^\w]*$)[a-zA-Z0-9\s\-,.!?@#$%^&*()+=;:'"/\\<>{}[\]|~`]+$/,
+  RESOURCE_REF_ID: /^(?=.*[a-zA-Z0-9])[\w\W]{1,50}$/,
   // Organization Name: Extended chars for org names, 4-100 chars
-  ORG_NAME:
-    /^(?=[\s\S]{3,100}$)(?=.*[a-zA-Z])(?!^\d+$)(?!^[^\w\s]+$)(?!^\s+$)[\w\s\-,.!?@#$%^&*()+=;:'"/\\<>{}[\]|~`]+$/,
+  ORG_NAME: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{3,100}$/,
 
   // Email: Standard format with length limit
   EMAIL: /^[a-zA-Z0-9._%+-]{1,64}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
@@ -266,10 +264,9 @@ export const RESOURCE_REGEX = {
   MANAGER_NAME: /^(?=(.*[a-zA-Z0-9]){3})[a-zA-Z0-9][a-zA-Z0-9 .'-]{1,99}$/,
 
   // Designation: Job titles with special chars, 4-100 chars
-  ROLE: /^(?=[\s\S]{4,100}$)(?=.*[a-zA-Z])(?!^\d+$)(?!^[^\w\s]+$)(?!^\s+$)[\w\s\-,.!?@#$%^&*()+=;:'"/\\<>{}[\]|~`]+$/,
+  ROLE: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{4,100}$/,
 
-  DESIGNATION:
-    /^(?=[\s\S]{4,100}$)(?=.*[a-zA-Z])(?!^\d+$)(?!^[^\w\s]+$)(?!^\s+$)[\w\s\-,.!?@#$%^&*()+=;:'"/\\<>{}[\]|~`]+$/,
+  DESIGNATION: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{4,100}$/,
 
   // Years Experience: Non-negative integers
   YEARS_EXPERIENCE: /^[0-9]{1,2}$/,
