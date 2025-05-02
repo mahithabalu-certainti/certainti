@@ -148,7 +148,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
             <TableCell sx={{ minWidth: '130px' }}>{cost.monthlyCost ? CostDisplay(cost.monthlyCost) : "-"}</TableCell>
             <TableCell sx={{ minWidth: '140px' }}>{cost.semiAnnualCost ? CostDisplay(cost.semiAnnualCost) : "-"}</TableCell>
             <TableCell sx={{ minWidth: '130px' }}>{cost.annualCost ? CostDisplay(cost.annualCost) : "-"}</TableCell>
-            <TableCell sx={{ minWidth: '80px' }}>
+            <TableCell sx={{ padding: '0px !important' }}>
               <ActionButton
                 onEdit={() => handleEdit(cost)}
                 onDelete={() => { }}
@@ -253,7 +253,6 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
                 padding: '0px',
                 pl: 1,
                 height: '50px',
-                bgcolor: '#FCFCFC',
               },
               '& .MuiTableCell-root:last-child': {
                 borderRight: 'none',
@@ -386,7 +385,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
                   Annual
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ minWidth: '80px' }}>Action</TableCell>
+              <TableCell sx={{ minWidth: '80px', textAlign: 'center', pl: '0 !important' }}>Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody
@@ -428,7 +427,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
         </Table>
       </Paper>
       <TablePagination
-        rowsPerPageOptions={[25, 30, 40, 50]}
+        rowsPerPageOptions={[25, 30, 40, 50, 100]}
         // component='div'
         count={costList?.count ?? 0}
         rowsPerPage={rowsPerPage}

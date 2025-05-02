@@ -32,7 +32,7 @@ export const resourceFilterFields: FieldConfig[] = [
   { name: 'Resource Designation', value: 'designation', type: 'text' },
   { name: 'Resource Country', value: 'country_name', type: 'text' },
   { name: 'Resource Region', value: 'state_name', type: 'text' },
-  { name: 'Resource Status', value: 'resource_status', type: 'text' },
+  { name: 'Resource Status', value: 'resource_status', type: 'status' },
 ];
 export const getInitialStateForField = (
   fieldConfig: FieldConfig
@@ -48,6 +48,8 @@ export const getInitialStateForField = (
       return { date: { option: 'equals', value: { from: '', to: '' } } };
     case 'enum':
       return { enum: { option: 'equals', value: [] } };
+    case 'status':
+      return { status: { option: 'equals', value: 'active' } };
     default:
       return {};
   }
