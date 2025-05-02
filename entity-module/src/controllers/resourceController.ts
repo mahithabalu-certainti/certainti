@@ -5,11 +5,13 @@ import {
   handleSuccessResponse,
   successLog,
   validateRequest,
+  generateExcelBase64,
 } from "../utils/helpers";
 import { HttpStatus } from "../utils/constants";
 import {
   createResourcesSchema,
   listResourceSchema,
+  exportResourceSchema,
   updateResourceSchema,
 } from "../lib/joi/schemas/schema";
 import configurations from "../config/config";
@@ -132,6 +134,66 @@ async function resourcesList(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function exportResourcesList(req: Request, res: Response): Promise<void> {
+  const methodName = "export ResourcesList";
+  try {
+    const { accountNumber } = req.params;
+
+    const value = await validateRequest(req, exportResourceSchema, res, "GET");
+
+    let parsedFilters: Record<string, any> = {};
+
+    if (!value) {
+      return;
+    }
+
+    try {
+      if (value.filters) {
+        parsedFilters = JSON.parse(value.filters);
+      }
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    const resourcesList = await resourceService.exportResourcesList(
+      accountNumber,
+      value.fiscalYear !== "" && value.fiscalYear !== null ? value.fiscalYear : 0,
+      value.search,
+      parsedFilters,
+      value.sortBy,
+      value.sortOrder
+    );
+
+    if (resourcesList.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, generateExcelBase64(resourcesList?.data?.resources,"Resources"));
+      return;
+    } else {
+      errorLog(methodName, resourcesList.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        resourcesList.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 async function resourcesById(req: Request, res: Response): Promise<void> {
   const methodName = "Resource By Id";
   try {
@@ -222,6 +284,7 @@ async function updateResource(req: Request, res: Response): Promise<void> {
 export default {
   createResource,
   resourcesList,
+  exportResourcesList,
   resourcesById,
   updateResource,
 };

@@ -169,6 +169,94 @@ export class ResourceService {
     }
   }
 
+
+  /**
+   * Fetches a  list of resources for a given account with optional filters, search, and sorting for downloading.
+   *
+   * @param {string} accountNumber - The account number to fetch resources from.
+   * @param {number} fiscal_year - The fiscal year (currently unused).
+   * @param {string} search - Global search term.
+   * @param {Record<string, string>} filters - Filter object mapping fields to values.
+   * @param {string} [sortBy="created_datetime"] - Field to sort by.
+   * @param {string} [sortOrder="ASC"] - Sort order, either ASC or DESC.
+   * @returns {Promise<object>} - Response with resource list and count.
+   */
+  async exportResourcesList(
+    accountNumber: string,
+    fiscalYear: number = 0,
+    search: string,
+    filters: Record<string, string> = {},
+    sortBy: string = "created_datetime",
+    sortOrder: string = "ASC"
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resources: any };
+  }> {
+    try {
+      const { accountNumber: accountRNumber } =
+        await this.schemaService.fetchAccountByNumber(accountNumber);
+
+      const isExists = await this.schemaService.checkIfSchemaExists(
+        accountRNumber
+      );
+
+      if (!isExists) {
+        throw new Error(
+          "Invalid account number: The account number does not exist."
+        );
+      }
+
+      const [finalSortBy, finalSortOrder] = this.getSortParameters(
+        sortBy,
+        sortOrder
+      );
+
+      const { whereClause } = this.buildWhereClause(filters, search);
+      const { goeDataFilters, geoDataSort } = this.processGeoDataFilterAndSort(
+        filters,
+        sortBy,
+        sortOrder
+      );
+
+      const resources = await this.schemaService.fetchResourcesForExport(
+        accountRNumber,
+        [[finalSortBy, finalSortOrder]],
+        whereClause,
+        fiscalYear,
+        goeDataFilters,
+        geoDataSort
+      );
+      const rawResult = resources.resources || [];
+      let exportData = rawResult.map((resource: any) => {
+        return {
+          "Resource ID":resource.r_number,
+          "Resource Ref ID":resource.resource_ref_id,
+          "Resource Full Name":resource.resource_fullname,
+          "Resource Type": resource?.resource_type,
+          "Resource Designation": resource.designation,
+          "Resource Country": resource.country_name,
+          "Resource Region": resource.region,
+          "Status": resource.resource_status,
+          
+
+        };
+      });
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          resources: exportData
+        },
+      };
+    } catch (err) {
+      return this.throwServiceError(err as Error);
+    }
+  }
+
+
+
   /**
    * Updates an existing resource's data for a given account.
    * Validates that the resource and schema exist.
@@ -336,7 +424,7 @@ export class ResourceService {
       "designation",
       "total_years_experience",
       "country",
-      "region",
+      "state",
     ];
 
     if (!validSortColumns.includes(sortBy)) {

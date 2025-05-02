@@ -141,6 +141,16 @@ class SchemaService {
 
       const Resource = Resources.initialize(sequelize, schemaName);
       await Resource.sync({ force: false });
+
+      // Handle special case for resource_type sorting
+      let queryOrder = order;
+      const isResourceTypeSort = order?.length && order[0][0] === 'resource_type';
+      
+      if (isResourceTypeSort) {
+        // Remove resource_type from order to handle manually
+        queryOrder = [];
+      }
+
       const resources = await Resource.findAll({
         where: {
           ...whereClause,
@@ -150,7 +160,7 @@ class SchemaService {
         },
         limit,
         offset,
-        order,
+        order: queryOrder, 
         subQuery: false,
         attributes: [
           "rid",
@@ -179,6 +189,17 @@ class SchemaService {
 
       if (resources) {
         finalResources = await this.insertGeoData(resources, mainDdSequilze);
+        
+        // Handle resource_type sorting if needed
+        if (isResourceTypeSort) {
+          const direction = order[0][1]?.toUpperCase() === 'DESC' ? -1 : 1;
+          finalResources = finalResources.sort((a: any, b: any) => {
+            const aType = (a.resource_type || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+            const bType = (b.resource_type || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+            return aType.localeCompare(bType) * direction;
+          });
+        }
+
         finalResources = await this.sortAndFilteGeoData(
           finalResources,
           goeDataFilters,
@@ -301,6 +322,79 @@ class SchemaService {
       throw new Error((err as Error).message);
     }
   }
+
+  /**
+   * Fetches paginated and filtered list of resources for excel download.
+   * @param accountNumber - Account number.
+   * @param order - Sorting order array (e.g., [['name', 'ASC']]).
+   * @param whereClause - Filters applied on query.
+   * @param fiscalYear - Fiscal year to filter resources.
+   * @returns List of matching resources.
+   */
+  async fetchResourcesForExport(
+    accountNumber: string,
+    order: any[],
+    whereClause: Record<string, string> = {},
+    fiscalYear: number,
+    goeDataFilters: Record<string, any> = {},
+    geoDataSort: string[][]
+  ) {
+    try {
+      const schemaName = `platform_v2_${accountNumber}`;
+      const sequelize = await initOrgSequelize();
+      const mainDdSequilze = await initMainDbSequelize();
+      let finalResources = null;
+
+      const Resource = Resources.initialize(sequelize, schemaName);
+      await Resource.sync({ force: false });
+      const resources = await Resource.findAll({
+        where: {
+          ...whereClause,
+          ...(fiscalYear && fiscalYear !== 0 ? { fiscal_year: fiscalYear } : {})
+        },
+        order,
+        subQuery: false,
+        attributes: [
+          "rid",
+          "r_number",
+          "resource_ref_id",
+          "resource_fullname",
+          "resource_type",
+          "resource_status",
+          "resource_role",
+          "designation",
+          "total_years_experience",
+          "country",
+          "state",
+          "city",
+        ],
+      });
+
+      const totalCount = await Resource.count({
+        where: {
+          ...whereClause,
+          ...(fiscalYear && fiscalYear !== 0 ? { fiscal_year: fiscalYear } : {})
+        },
+      });
+
+      if (resources) {
+        finalResources = await this.insertGeoData(resources, mainDdSequilze);
+        finalResources = await this.sortAndFilteGeoData(
+          finalResources,
+          goeDataFilters,
+          geoDataSort
+        );
+      }
+
+      return { resources: finalResources, totalCount };
+    } catch (err) {
+      throw new Error(
+        "Error fetching resources: " + (err as Error).message
+      );
+    }
+  }
+
+
 
   /**
    * Inserts a record into the resource fiscal table.

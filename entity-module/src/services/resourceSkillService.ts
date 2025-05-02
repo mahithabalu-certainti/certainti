@@ -705,6 +705,79 @@ class ResourceSkillService {
     }
   }
 
+
+  /**
+   * Retrieves a  list of resource skills for a specific account and fiscal year for excel download.
+   * Supports filtering, sorting, and searching functionality.
+   *
+   * @param rid - Optional specific resource skill RID to retrieve
+   * @param search - Search term to filter results
+   * @param filters - Object containing filter criteria
+   * @param sortBy - Field to sort results by
+   * @param sortOrder - Direction to sort (ASC or DESC)
+   * @param accountNumber - Account identifier for schema selection
+   * @param fiscalYear - Fiscal year to filter results
+   * @returns Promise with status code and resource skill data or error message
+   */
+  async exportResourceSkillList(
+    search: string,
+    filters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    accountNumber: string,
+    fiscalYear: number,
+    resourceRid: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resourceSkill: any; };
+  }> {
+    try {
+      const [finalSortBy, finalSortOrder] =
+        resourceSkillSchemaService.getSortParameters(sortBy, sortOrder);
+
+      let { accountNumber: accountNumberFetched, accountId } =
+        await this.schemaService.fetchAccountByNumber(accountNumber);
+      // Check if account-specific schema exists
+      const schemaName = `platform_v2_${accountNumberFetched}`;
+      const tableName = "resource_skill";
+      const schemaAndTableValidation =
+        await resourceSkillSchemaService.validateSchema(
+          accountNumberFetched,
+          tableName
+        );
+
+      if (!schemaAndTableValidation) {
+        return resourceSkillSchemaService.createErrorResponse(
+          "Account schema does not exist"
+        );
+      }
+
+      // Build query components
+      const searchCondition =
+        resourceSkillSchemaService.buildSearchCondition(search);
+      let filterConditions = resourceSkillSchemaService.buildFilterConditions(
+        filters,
+        fiscalYear
+      );
+
+      // Execute queries and return results using the schema service
+      return await resourceSkillSchemaService.exportResoucreSkill(
+        schemaName,
+        filterConditions,
+        searchCondition,
+        finalSortBy,
+        finalSortOrder,
+        resourceRid,
+        search
+      );
+    } catch (err) {
+      console.log("Error ", err);
+      return this.throwServiceError(err as Error);
+    }
+  }
+
   /**
    * Retrieves a specific resource skill record by ID from the specified account schema.
    * Includes the associated Resource skill record in the result.

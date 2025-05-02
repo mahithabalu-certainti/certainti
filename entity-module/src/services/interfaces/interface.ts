@@ -35,6 +35,20 @@ export interface IResourceService {
     errorMessage?: string;
     data?: { resources: any };
   }>;
+
+  exportResourcesList(
+    accountNumber: string,
+    fiscal_year: number,
+    search: string,
+    filters: Record<string, string>,
+    sortBy: string,
+    sortOrder: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resources: any };
+  }>;
   resourceById(
     accountNumber: string,
     resourceId: string
@@ -56,6 +70,19 @@ export interface IResourceService {
 }
 
 export interface IResourceCostService {
+  exportResourceCostList(
+    search: any, 
+    parsedFilters: Record<string, any>, 
+    sortBy: any, 
+    sortOrder: any, 
+    accountNumber: any, 
+    fiscalYear: any, 
+    resourceRid: any): Promise<{
+      statusCode: number;
+      message: string;
+      errorMessage?: string;
+      data?: { resourceCost: any };
+    }>;
   resourceCostList(
     page: number,
     limit: number,
@@ -147,6 +174,21 @@ export interface IResourceSkillService {
     message: string;
     errorMessage?: string;
     data?: { resourceSkillById: any };
+  }>;
+
+  exportResourceSkillList(
+    search: string,
+    filters: Record<string, any>,
+    sortBy: string,
+    sortOrder: string,
+    accountNumber: string,
+    fiscalYear: number,
+    resourceRid: string,
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { resourceSkill: any; };
   }>;
 }
 
