@@ -286,14 +286,14 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
                   },
                 }}
               >
-                <TableSortLabel
+                Resource Full Name
+                {/* <TableSortLabel
                   active={orderBy === 'resource_fullname'}
                   direction={orderBy === 'resource_fullname' ? order : 'asc'}
                   IconComponent={getSortIcon(orderBy, 'resource_fullname', order)}
-                // onClick={createSortHandler('resource_cost_number')}
                 >
-                  Resource Name
-                </TableSortLabel>
+                  
+                </TableSortLabel> */}
               </TableCell>
               <TableCell sx={{ minWidth: '100px' }}>
                 <TableSortLabel

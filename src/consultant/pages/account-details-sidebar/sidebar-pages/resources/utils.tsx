@@ -21,7 +21,7 @@ export const skillFilterFields: FieldConfig[] = [
   { name: 'Start Date', value: 'start_date', type: 'date' },
   { name: 'Skill Name', value: 'skill_name', type: 'textCostAndSkill' },
   { name: 'Skill Level', value: 'skill_level', type: 'enum' },
-  { name: 'Experience', value: 'years_of_experience', type: 'number' },
+  { name: 'Years of Experience', value: 'years_of_experience', type: 'number' },
 ];
 export const resourceFilterFields: FieldConfig[] = [
   { name: 'Resource ID', value: 'r_number', type: 'text' },
