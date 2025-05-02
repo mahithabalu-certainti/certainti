@@ -134,8 +134,8 @@ async function resourcesList(req: Request, res: Response): Promise<void> {
   }
 }
 
-async function exportresourcesList(req: Request, res: Response): Promise<void> {
-  const methodName = "Export resources list";
+async function exportResourcesList(req: Request, res: Response): Promise<void> {
+  const methodName = "export ResourcesList";
   try {
     const { accountNumber } = req.params;
 
@@ -158,10 +158,7 @@ async function exportresourcesList(req: Request, res: Response): Promise<void> {
       );
     }
 
-    const pageNum: number = parseInt(value.page, 10) || 1;
-    const limitNum: number = parseInt(value.limit, 10) || 25;
-
-    const resourcesList = await resourceService.exportresourcesList(
+    const resourcesList = await resourceService.exportResourcesList(
       accountNumber,
       value.fiscalYear !== "" && value.fiscalYear !== null ? value.fiscalYear : 0,
       value.search,
@@ -287,7 +284,7 @@ async function updateResource(req: Request, res: Response): Promise<void> {
 export default {
   createResource,
   resourcesList,
-  exportresourcesList,
+  exportResourcesList,
   resourcesById,
   updateResource,
 };

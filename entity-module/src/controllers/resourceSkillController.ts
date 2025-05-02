@@ -233,7 +233,7 @@ async function resourceSkill(req: Request, res: Response): Promise<void> {
  * or an error message on failure.
  */
 async function exportResourceSkill(req: Request, res: Response): Promise<void> {
-  const methodName = "resourceSkill";
+  const methodName = "export ResourceSkill";
   try {
     const value = await validateRequest(
       req,

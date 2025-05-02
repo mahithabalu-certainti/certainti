@@ -181,7 +181,7 @@ export class ResourceService {
    * @param {string} [sortOrder="ASC"] - Sort order, either ASC or DESC.
    * @returns {Promise<object>} - Response with resource list and count.
    */
-  async exportresourcesList(
+  async exportResourcesList(
     accountNumber: string,
     fiscalYear: number = 0,
     search: string,

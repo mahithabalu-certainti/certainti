@@ -30,7 +30,7 @@ export interface IResourceService {
     data?: { resources: any };
   }>;
 
-  exportresourcesList(
+  exportResourcesList(
     accountNumber: string,
     fiscal_year: number,
     search: string,

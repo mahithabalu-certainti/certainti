@@ -636,7 +636,6 @@ class ResourceCostSchemaService {
         });
       }
 
-
       const resourceCost = results;
 
       // Extract all unique currency_rid values
