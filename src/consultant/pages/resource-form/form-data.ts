@@ -212,7 +212,7 @@ export const ResourceFormData = (
           }),
           createTextField('years_of_experience', 'Years of Experience', {
             required: false,
-            regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
+            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
             regexErrorMessage: 'Please enter a valid number between 0 and 99',
             placeholder: 'Enter years of experience',
           }),
