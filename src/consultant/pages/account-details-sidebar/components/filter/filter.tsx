@@ -29,8 +29,6 @@ import {
   TextFilterControlForCostAndSKill,
 } from './helper';
 
-// Extended FilterComponentProps to include saved filter states
-
 // filter to use in resource, cost and skill list pages
 const Filter: React.FC<FilterComponentProps> = ({
   filterMenu,
