@@ -623,6 +623,300 @@ const resourceCostSchema = Joi.object({
   modified_by: Joi.string().max(255).optional(),
 });
 
+const createProjectSchema = Joi.object({
+  account_number: Joi.string().max(50).required(),
+  account_id: Joi.string()
+    .guid({ version: ["uuidv4"] })
+    .required(),
+  project_ref_id: Joi.string().min(5).max(50).required(),
+  industry: Joi.string().min(4).max(100).required(),
+  program_name: Joi.string().min(4).max(100).optional().allow("").allow(null),
+  client_organization: Joi.string().min(4).max(100).required(),
+  project_start_date: Joi.string()
+    .max(10)
+    .optional()
+    .allow("")
+    .allow(null)
+    .custom(isNotFutureDate, "Future Date Validation")
+    .optional()
+    .messages({
+      "string.pattern.base":
+        "project start date must be in the format DD/MM/YYYY",
+      "any.invalid": "Date cannot be in the future.",
+      "date.invalidFormat": "Invalid project start date.",
+    }),
+  project_end_date: Joi.string()
+    .max(10)
+    .optional()
+    .allow("")
+    .allow(null)
+    .custom(isEndDateAfterStartDate, "End Date Validation")
+    .optional()
+    .messages({
+      "string.pattern.base":
+        "Project end date must be in the format DD/MM/YYYY",
+      "any.invalid": "Project end date must be after the start date.",
+      "date.invalidFormat": "Invalid Project end date.",
+    }),
+  project_type: Joi.string().valid("Fixed", "Time & Material").required(),
+  project_classification: Joi.string()
+    .max(100)
+    .optional()
+    .allow("")
+    .allow(null),
+  project_client_group: Joi.string().max(200).optional().allow("").allow(null),
+  project_group: Joi.string().max(150).optional().allow("").allow(null),
+  project_summary: Joi.string().max(1000).optional().allow("").allow(null),
+  status: Joi.string().valid("Active", "Inactive").optional(),
+  fiscal_year: Joi.number().integer().min(1000).max(9999).required().messages({
+    "number.base": "Fiscal year must be a number",
+    "number.min": "Fiscal year must be a 4-digit number",
+    "number.max": "Fiscal year must be a 4-digit number",
+    "any.required": "Fiscal year is required",
+  }),
+  country: Joi.string()
+    .guid({ version: ["uuidv4"] })
+    .optional()
+    .allow("", null),
+  region: Joi.string()
+    .guid({ version: ["uuidv4"] })
+    .optional()
+    .allow("", null),
+  currency: Joi.string()
+    .guid({ version: ["uuidv4"] })
+    .optional()
+    .allow("", null),
+  project_manager: Joi.string().min(3).max(100).required(),
+  project_lead: Joi.string().min(3).max(100).required(),
+  spoc_name: Joi.string().min(3).max(100).required(),
+  spoc_email: Joi.string().email().max(255).optional().allow("").allow(null),
+  spoc_mobile: Joi.string().max(15).optional().allow("").allow(null),
+  project_tpc_name: Joi.string()
+    .min(3)
+    .max(100)
+    .optional()
+    .allow("")
+    .allow(null),
+  project_tpc_email: Joi.string()
+    .email()
+    .max(255)
+    .optional()
+    .allow("")
+    .allow(null),
+  project_tpc_mobile: Joi.string().max(15).optional().allow("").allow(null),
+  project_cc_list: Joi.string()
+    .allow("")
+    .allow(null)
+    .optional()
+    .custom((value, helpers) => {
+      if (!value) return value;
+
+      const emails = value.split(",").map((e: string) => e.trim());
+      const invalidEmails = emails.filter(
+        (email: string) => Joi.string().email().validate(email).error
+      );
+
+      if (invalidEmails.length > 0) {
+        return helpers.message({
+          custom: `Invalid email(s) in Project CC List: ${invalidEmails.join(
+            ", "
+          )}`,
+        });
+      }
+
+      return value;
+    }, "Comma-separated email validator"),
+  total_effort: Joi.number().greater(0).optional().allow(null),
+  total_cost: Joi.number()
+    .precision(2)
+    .positive()
+    .max(9999999999.99)
+    .allow(null)
+    .optional(),
+  total_fte: Joi.number().greater(0).optional().allow(null),
+  total_sub_con: Joi.number().greater(0).optional().allow(null),
+  total_non_labor_cost: Joi.number()
+    .precision(2)
+    .positive()
+    .max(9999999999.99)
+    .optional()
+    .allow(null),
+  total_fte_effort: Joi.number().greater(0).optional().allow(null),
+  total_sub_con_effort: Joi.number().greater(0).optional().allow(null),
+  total_fte_cost: Joi.number()
+    .precision(2)
+    .positive()
+    .max(9999999999.99)
+    .optional()
+    .allow(null),
+  total_sub_con_cost: Joi.number()
+    .precision(2)
+    .positive()
+    .max(9999999999.99)
+    .optional()
+    .allow(null),
+  last_rd_ai_assess_on: Joi.string()
+  .max(10)
+  .custom(isValidDate, "Effective date validation")
+  .optional()
+  .allow(null)
+  .allow("")
+  .messages({
+    "string.pattern.base": "Last rd ai assess date must be in the format MM/DD/YYYY",
+    "any.invalid": "Date cannot be in the future.",
+    "date.invalidFormat":
+      "Last rd ai assess date. Please use the format MM/DD/YYYY",
+  }),
+  last_rd_ai_assess_by: Joi.string()
+    .guid({ version: ["uuidv4"] })
+    .optional()
+    .allow("", null),
+  auto_send_ai_interaction: Joi.boolean().optional().allow(null).default(false),
+  auto_access_rd: Joi.boolean().optional().allow(null).default(false),
+  max_ai_interaction: Joi.number().greater(0).optional().allow(null),
+  blended_rate_fte: Joi.string()
+    .pattern(/^\d+(\.\d{1,2})?\s+\$\s*\/\s*Hour$/, { name: "currencyPattern" })
+    .messages({
+      "string.pattern.name": `Blended Rate FTE must be in the format like "36 $/Hour"`,
+    })
+    .optional()
+    .allow("")
+    .allow(null),
+  blended_rate_sub_con: Joi.string()
+    .pattern(/^\d+(\.\d{1,2})?\s+\$\s*\/\s*Hour$/, { name: "currencyPattern" })
+    .messages({
+      "string.pattern.name": `Blended Rate Sub Con must be in the format like "40 $/Hour"`,
+    })
+    .optional()
+    .allow(null)
+    .allow(""),
+  project_description: Joi.string().max(2000).allow(null).allow(""),
+  created_by: Joi.string()
+  .guid({ version: ["uuidv4"] })
+  .required(),
+});
+
+const updateProjectSchema = Joi.object({
+  project_id: Joi.string().guid({ version: ["uuidv4"] }).required(),
+  account_number: Joi.string().max(50).required(),
+  account_id: Joi.string().guid({ version: ["uuidv4"] }).required(),
+  project_ref_id: Joi.string().min(5).max(50).required(),
+  industry: Joi.string().min(4).max(100).required(),
+  program_name: Joi.string().min(4).max(100).optional().allow("").allow(null),
+  client_organization: Joi.string().min(4).max(100).required(),
+
+  project_start_date: Joi.string()
+    .max(10)
+    .optional()
+    .allow("")
+    .allow(null)
+    .custom(isNotFutureDate, "Future Date Validation")
+    .messages({
+      "string.pattern.base": "project start date must be in the format DD/MM/YYYY",
+      "any.invalid": "Date cannot be in the future.",
+      "date.invalidFormat": "Invalid project start date.",
+    }),
+
+  project_end_date: Joi.string()
+    .max(10)
+    .optional()
+    .allow("")
+    .allow(null)
+    .custom(isEndDateAfterStartDate, "End Date Validation")
+    .messages({
+      "string.pattern.base": "Project end date must be in the format DD/MM/YYYY",
+      "any.invalid": "Project end date must be after the start date.",
+      "date.invalidFormat": "Invalid Project end date.",
+    }),
+
+  project_type: Joi.string().valid("Fixed", "Time & Material").required(),
+  project_classification: Joi.string().max(100).optional().allow("").allow(null),
+  project_client_group: Joi.string().max(200).optional().allow("").allow(null),
+  project_group: Joi.string().max(150).optional().allow("").allow(null),
+  project_summary: Joi.string().max(1000).optional().allow("").allow(null),
+  status: Joi.string().valid("Active", "Inactive").optional(),
+  fiscal_year: Joi.number().integer().min(1000).max(9999).required().messages({
+    "number.base": "Fiscal year must be a number",
+    "number.min": "Fiscal year must be a 4-digit number",
+    "number.max": "Fiscal year must be a 4-digit number",
+    "any.required": "Fiscal year is required",
+  }),
+  country: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("", null),
+  region: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("", null),
+  currency: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("", null),
+  project_manager: Joi.string().min(3).max(100).required(),
+  project_lead: Joi.string().min(3).max(100).required(),
+  spoc_name: Joi.string().min(3).max(100).required(),
+  spoc_email: Joi.string().email().max(255).optional().allow("").allow(null),
+  spoc_mobile: Joi.string().max(15).optional().allow("").allow(null),
+  project_tpc_name: Joi.string().min(3).max(100).optional().allow("").allow(null),
+  project_tpc_email: Joi.string().email().max(255).optional().allow("").allow(null),
+  project_tpc_mobile: Joi.string().max(15).optional().allow("").allow(null),
+
+  project_cc_list: Joi.string()
+    .allow("")
+    .allow(null)
+    .optional()
+    .custom((value, helpers) => {
+      if (!value) return value;
+      const emails = value.split(",").map((e: string) => e.trim());
+      const invalid = emails.filter((e: any) => Joi.string().email().validate(e).error);
+      if (invalid.length > 0) {
+        return helpers.message({
+          custom: `Invalid email(s) in Project CC List: ${invalid.join(", ")}`,
+        });
+      }
+      return value;
+    }),
+
+  total_effort: Joi.number().greater(0).optional().allow(null),
+  total_cost: Joi.number().precision(2).positive().max(9999999999.99).optional().allow(null),
+  total_fte: Joi.number().greater(0).optional().allow(null),
+  total_sub_con: Joi.number().greater(0).optional().allow(null),
+  total_non_labor_cost: Joi.number().precision(2).positive().max(9999999999.99).optional().allow(null),
+  total_fte_effort: Joi.number().greater(0).optional().allow(null),
+  total_sub_con_effort: Joi.number().greater(0).optional().allow(null),
+  total_fte_cost: Joi.number().precision(2).positive().max(9999999999.99).optional().allow(null),
+  total_sub_con_cost: Joi.number().precision(2).positive().max(9999999999.99).optional().allow(null),
+
+  last_rd_ai_assess_on: Joi.string()
+  .max(10)
+  .custom(isValidDate, "Effective date validation")
+  .optional()
+  .allow(null)
+  .allow("")
+  .messages({
+    "string.pattern.base": "Last rd ai assess date must be in the format MM/DD/YYYY",
+    "any.invalid": "Date cannot be in the future.",
+    "date.invalidFormat":
+      "Last rd ai assess date. Please use the format MM/DD/YYYY",
+  }),
+  last_rd_ai_assess_by: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("", null),
+  auto_send_ai_interaction: Joi.boolean().optional().allow(null).default(false),
+  auto_access_rd: Joi.boolean().optional().allow(null).default(false),
+  max_ai_interaction: Joi.number().greater(0).optional().allow(null),
+
+  blended_rate_fte: Joi.string()
+    .pattern(/^\d+(\.\d{1,2})?\s+\$\s*\/\s*Hour$/, { name: "currencyPattern" })
+    .messages({
+      "string.pattern.name": `Blended Rate FTE must be in the format like "36 $/Hour"`,
+    })
+    .optional()
+    .allow("")
+    .allow(null),
+
+  blended_rate_sub_con: Joi.string()
+    .pattern(/^\d+(\.\d{1,2})?\s+\$\s*\/\s*Hour$/, { name: "currencyPattern" })
+    .messages({
+      "string.pattern.name": `Blended Rate Sub Con must be in the format like "40 $/Hour"`,
+    })
+    .optional()
+    .allow("")
+    .allow(null),
+
+  project_description: Joi.string().max(2000).allow(null).allow(""),
+});
+
 export {
   listResourceSkillSchema,
   updateResourceSkillSchema,
@@ -638,4 +932,7 @@ export {
   exportResourceSchema,
   exportResourceCostSchema,
   exportResourceSkillSchema
+  createProjectSchema,
+  updateProjectSchema
+
 };
