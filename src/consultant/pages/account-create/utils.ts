@@ -41,7 +41,7 @@ export const transformFormData = (
     industry: formData.industry,
     website: formData.website || null,
     project_manager: formData.project_manager,
-    annual_revenue: Number(formData.annual_revenue),
+    annual_revenue: Number((formData.annual_revenue ?? '').toString().replace(/[^\d.]/g, '')),
     data_storage: formData.data_storage,
   };
   if (isEdit) {

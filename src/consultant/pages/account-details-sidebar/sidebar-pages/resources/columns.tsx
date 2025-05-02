@@ -3,6 +3,7 @@ import { TruncateWithTooltip } from '../../../../../components';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 interface ColumnDefinition {
   id: string;
+  sortId?: string;
   label: string;
   sortable: boolean;
   width?: string;
@@ -23,6 +24,7 @@ const displayValue = (value: any) => {
 const BASE_COLUMNS: ColumnDefinition[] = [
   {
     id: 'r_number',
+    sortId: 'r_number',
     label: 'Resource ID',
     sortable: true,
     width: '130px',
@@ -46,6 +48,7 @@ const BASE_COLUMNS: ColumnDefinition[] = [
   },
   {
     id: 'resource_ref_id',
+    sortId: 'resource_ref_id',
     label: 'Resource Ref ID',
     sortable: true,
     width: '150px',
@@ -62,6 +65,7 @@ const BASE_COLUMNS: ColumnDefinition[] = [
   },
   {
     id: 'resource_fullname',
+    sortId: 'resource_fullname',
     label: 'Resource Full Name',
     sortable: true,
     width: '200px',
@@ -78,6 +82,7 @@ const BASE_COLUMNS: ColumnDefinition[] = [
   },
   {
     id: 'resource_type',
+    sortId: 'resource_type',
     label: 'Resource Type',
     sortable: true,
     width: '140px',
@@ -94,6 +99,7 @@ const BASE_COLUMNS: ColumnDefinition[] = [
   },
   {
     id: 'designation',
+    sortId: 'designation',
     label: 'Resource Designation',
     sortable: true,
     width: '200px',
@@ -110,6 +116,7 @@ const BASE_COLUMNS: ColumnDefinition[] = [
   },
   {
     id: 'country_name',
+    sortId: 'country',
     label: 'Resource Country',
     sortable: true,
     width: '160px',
@@ -126,6 +133,7 @@ const BASE_COLUMNS: ColumnDefinition[] = [
   },
   {
     id: 'state_name',
+    sortId: 'state',
     label: 'Resource Region',
     sortable: true,
     width: '150px',
@@ -144,6 +152,7 @@ const BASE_COLUMNS: ColumnDefinition[] = [
 
 const createStatusColumn = (): ColumnDefinition => ({
   id: 'resource_status',
+  sortId: 'resource_status',
   label: 'Resource Status',
   sortable: true,
   width: '150px',
