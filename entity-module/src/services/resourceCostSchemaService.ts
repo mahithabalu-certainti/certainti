@@ -816,14 +816,14 @@ class ResourceCostSchemaService {
     return condition;
   }
 
-  processDefaultFilter(key: string, value: any): string {
+processDefaultFilter(key: string, value: any): string {
     let condition = "";
     const isUuidField = key.toLowerCase().includes("rid");
 
     if (value.equals !== undefined) {
       if (typeof value.equals === "string") {
         if (isUuidField) {
-          condition += ` AND rc."${key}" = '${value.equals}'`;
+          condition += ` AND LOWER(rc."${key}") = LOWER('${value.equals}')`;
         } else {
           condition += ` AND LOWER(rc."${key}") = LOWER('${value.equals}')`;
         }
@@ -849,12 +849,11 @@ class ResourceCostSchemaService {
     } else if (value.in && Array.isArray(value.in) && value.in.length > 0) {
       if (typeof value.in[0] === "string") {
         if (isUuidField) {
-          const values = value.in.map((item: string) => `'${item}'`).join(",");
-          condition += ` AND rc."${key}" IN (${values})`;
+          const values = value.in.map((item: string) => `LOWER('${item}')`).join(",");
+          condition += ` AND LOWER(rc."${key}") IN (${values})`;
         } else {
           const values = value.in
-            .map((item: string) => `'${item.toLowerCase()}'`)
-            .join(",");
+            .map((item: string) => `LOWER('${item}')`).join(",");
           condition += ` AND LOWER(rc."${key}") IN (${values})`;
         }
       } else {
@@ -869,13 +868,11 @@ class ResourceCostSchemaService {
       if (typeof value.not_in[0] === "string") {
         if (isUuidField) {
           const values = value.not_in
-            .map((item: string) => `'${item}'`)
-            .join(",");
-          condition += ` AND rc."${key}" NOT IN (${values})`;
+            .map((item: string) => `LOWER('${item}')`).join(",");
+          condition += ` AND LOWER(rc."${key}") NOT IN (${values})`;
         } else {
           const values = value.not_in
-            .map((item: string) => `'${item.toLowerCase()}'`)
-            .join(",");
+            .map((item: string) => `LOWER('${item}')`).join(",");
           condition += ` AND LOWER(rc."${key}") NOT IN (${values})`;
         }
       } else {
