@@ -570,9 +570,13 @@ export const EnumFilterControl: React.FC<{
                 onChange(fieldName, isMultiple, e.target.value as string[])
               }
               sx={{ height: '30px', minHeight: 20 }}
-              renderValue={(selected) =>
-                Array.isArray(selected) ? selected.join(', ') : ''
-              }
+              renderValue={(selected) => {
+                if (option === 'In') {
+                  return Array.isArray(selected) ? selected.join(', ') : '';
+                } else {
+                  return selected;
+                }
+              }}
             >
               {valueOptions.map((item) => (
                 <MenuItem key={item.option} value={item.value}>
