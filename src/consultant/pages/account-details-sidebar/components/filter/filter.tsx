@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Box, SelectChangeEvent } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { filterArrowRightIcon } from '../../../../../assets';
 import { Button } from '../../../../../components/button';
 import { getInitialStateForField } from '../../sidebar-pages/resources/utils';
@@ -15,7 +15,6 @@ import {
   FilterState,
   NumberFilterOption,
   numberOptions,
-  statusOptions,
   TextFilterOption,
   TextFilterOptionForCostAndSkill,
   textOptionForCostAndSkill,
@@ -32,19 +31,36 @@ import {
 } from './helper';
 
 // filter to use in resource, cost and skill list pages
-
 const Filter: React.FC<FilterComponentProps> = ({
   filterMenu,
   setAppliedFilters,
   handleFilter,
+  savedFilterStates = {},
+  onFilterStatesChange,
+  savedSelectedFilters = [],
+  onSelectedFiltersChange,
 }) => {
-  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
-  const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
-    {}
-  );
+  const [selectedFilters, setSelectedFilters] =
+    useState<string[]>(savedSelectedFilters);
+  const [filterStates, setFilterStates] =
+    useState<Record<string, FilterState>>(savedFilterStates);
+
+  // Update parent component when local states change
+  useEffect(() => {
+    if (onFilterStatesChange) {
+      onFilterStatesChange(filterStates);
+    }
+  }, [filterStates, onFilterStatesChange]);
+
+  useEffect(() => {
+    if (onSelectedFiltersChange) {
+      onSelectedFiltersChange(selectedFilters);
+    }
+  }, [selectedFilters, onSelectedFiltersChange]);
 
   const handleApplyFilters = () => {
-    setAppliedFilters(formatFilterForApi(filterStates));
+    const formattedFilters = formatFilterForApi(filterStates);
+    setAppliedFilters(formattedFilters);
     // handleFilter();
   };
 
@@ -52,6 +68,13 @@ const Filter: React.FC<FilterComponentProps> = ({
     setAppliedFilters({});
     setFilterStates({});
     setSelectedFilters([]);
+    if (onFilterStatesChange) {
+      onFilterStatesChange({});
+    }
+
+    if (onSelectedFiltersChange) {
+      onSelectedFiltersChange([]);
+    }
   };
 
   const handleClickFilterMenu = (fieldName: string) => {
@@ -138,13 +161,13 @@ const Filter: React.FC<FilterComponentProps> = ({
               },
             },
           };
-         case 'status':
+        case 'select':
           return {
             ...prev,
             [fieldName]: {
               ...currentState,
-              status: {
-                ...currentState.status!,
+              select: {
+                ...currentState.select!,
                 value: event.target.value,
               },
             },
@@ -305,13 +328,13 @@ const Filter: React.FC<FilterComponentProps> = ({
             state={fieldState}
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleDateChange}
-          // onChange={handleBooleanChange}
+            // onChange={handleBooleanChange}
           />
         );
-      case 'status':
+      case 'select':
         return (
           <StatusFilterControl
-            menuOption={statusOptions}
+            menuOption={field.options as { option: string; value: string }[]}
             fieldName={field.value}
             state={fieldState}
             onOptionChange={handleFilterOptionChange}
@@ -341,41 +364,51 @@ const Filter: React.FC<FilterComponentProps> = ({
         />
       </Box>
       <Box className='flex-1 overflow-y-auto'>
-      {filterMenu &&
-        filterMenu.map((item, index) => (
-          <React.Fragment key={index}>
-            <Box
-              key={index}
-              className='flex gap-2 justify-between items-center p-2 border-b border-[#CBD6E2] cursor-pointer'
-              onClick={() => handleClickFilterMenu(item.value as string)}
-            >
-              <Box className='text-[#2D3E4F] font-light text-sm'>
-                {item.name}
+        {filterMenu &&
+          filterMenu.map((item, index) => (
+            <React.Fragment key={index}>
+              <Box
+                key={index}
+                className='flex gap-2 justify-between items-center p-2 border-b border-[#CBD6E2] cursor-pointer'
+                onClick={() => handleClickFilterMenu(item.value as string)}
+              >
+                <Box className='text-[#2D3E4F] font-light text-sm'>
+                  {item.name}
+                </Box>
+                <Box className='text-[#2D3E4F] '>
+                  <img
+                    src={filterArrowRightIcon}
+                    alt='icon'
+                    className='w-[16px] h-[16px]'
+                  />
+                </Box>
               </Box>
-              <Box className='text-[#2D3E4F] '>
-                <img
-                  src={filterArrowRightIcon}
-                  alt='icon'
-                  className='w-[16px] h-[16px]'
-                />
-              </Box>
-            </Box>
-            {renderFilterControls(item)}
-          </React.Fragment>
-        ))}
-        </Box>
+              {renderFilterControls(item)}
+            </React.Fragment>
+          ))}
+      </Box>
       <Box className='flex justify-end items-center gap-2 p-2 border-t border-[#CBD6E2]'>
         <Button
           onClick={handleFilter}
           label='Cancel'
           variant='outlined'
           color='inherit'
-          sx={{ width: '55px', minWidth: '55px', fontSize:'12px', fontWeight: 400 }}
+          sx={{
+            width: '55px',
+            minWidth: '55px',
+            fontSize: '12px',
+            fontWeight: 400,
+          }}
         />
         <Button
           label='Find'
           variant='filled'
-          sx={{ width: '60px', minWidth: '60px', fontSize:'13px', fontWeight: 400 }}
+          sx={{
+            width: '60px',
+            minWidth: '60px',
+            fontSize: '13px',
+            fontWeight: 400,
+          }}
           onClick={handleApplyFilters}
         />
       </Box>

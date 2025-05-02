@@ -1,3 +1,5 @@
+import { TruncateWithTooltip } from '../../../../../components';
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 interface ColumnDefinition {
   id: string;
@@ -32,7 +34,13 @@ const BASE_COLUMNS: ColumnDefinition[] = [
           (row.onResourceIdClick || (() => {}))(row);
         }}
       >
-        {displayValue(value)}
+        <TruncateWithTooltip
+          text={String(value)}
+          // className='font-medium text-[18px] text-[#2D3E4F] '
+        >
+          {displayValue(value)}
+        </TruncateWithTooltip>
+        {/* {displayValue(value)} */}
       </span>
     ),
   },
@@ -42,9 +50,14 @@ const BASE_COLUMNS: ColumnDefinition[] = [
     sortable: true,
     width: '150px',
     render: (value: string) => (
-      <span className='font-light text-sm text-[#425A76]'>
-        {displayValue(value)}
-      </span>
+      <TruncateWithTooltip
+        text={String(value)}
+        // className='font-medium text-[18px] text-[#2D3E4F] '
+      >
+        <span className='font-light text-sm text-[#425A76]'>
+          {displayValue(value)}
+        </span>
+      </TruncateWithTooltip>
     ),
   },
   {
@@ -53,9 +66,14 @@ const BASE_COLUMNS: ColumnDefinition[] = [
     sortable: true,
     width: '200px',
     render: (value: string) => (
-      <span className='font-light text-sm text-[#425A76]'>
-        {displayValue(value)}
-      </span>
+      <TruncateWithTooltip
+        text={String(value)}
+        // className='font-medium text-[18px] text-[#2D3E4F] '
+      >
+        <span className='font-light text-sm text-[#425A76]'>
+          {displayValue(value)}
+        </span>
+      </TruncateWithTooltip>
     ),
   },
   {
@@ -64,9 +82,14 @@ const BASE_COLUMNS: ColumnDefinition[] = [
     sortable: true,
     width: '140px',
     render: (value: string) => (
-      <span className='font-light text-sm text-[#425A76]'>
-        {displayValue(value)}
-      </span>
+      <TruncateWithTooltip
+        text={String(value)}
+        // className='font-medium text-[18px] text-[#2D3E4F] '
+      >
+        <span className='font-light text-sm text-[#425A76]'>
+          {displayValue(value)}
+        </span>
+      </TruncateWithTooltip>
     ),
   },
   {
@@ -75,9 +98,14 @@ const BASE_COLUMNS: ColumnDefinition[] = [
     sortable: true,
     width: '200px',
     render: (value: string) => (
-      <span className='font-light text-sm text-[#425A76]'>
-        {displayValue(value)}
-      </span>
+      <TruncateWithTooltip
+        text={String(value)}
+        // className='font-medium text-[18px] text-[#2D3E4F] '
+      >
+        <span className='font-light text-sm text-[#425A76]'>
+          {displayValue(value)}
+        </span>
+      </TruncateWithTooltip>
     ),
   },
   {
@@ -86,9 +114,14 @@ const BASE_COLUMNS: ColumnDefinition[] = [
     sortable: true,
     width: '160px',
     render: (value: string) => (
-      <span className='font-light text-sm text-[#425A76]'>
-        {displayValue(value)}
-      </span>
+      <TruncateWithTooltip
+        text={String(value)}
+        // className='font-medium text-[18px] text-[#2D3E4F] '
+      >
+        <span className='font-light text-sm text-[#425A76]'>
+          {displayValue(value)}
+        </span>
+      </TruncateWithTooltip>
     ),
   },
   {
@@ -97,9 +130,14 @@ const BASE_COLUMNS: ColumnDefinition[] = [
     sortable: true,
     width: '150px',
     render: (value: string) => (
-      <span className='font-light text-sm text-[#425A76]'>
-        {displayValue(value)}
-      </span>
+      <TruncateWithTooltip
+        text={String(value)}
+        // className='font-medium text-[18px] text-[#2D3E4F] '
+      >
+        <span className='font-light text-sm text-[#425A76]'>
+          {displayValue(value)}
+        </span>
+      </TruncateWithTooltip>
     ),
   },
 ];

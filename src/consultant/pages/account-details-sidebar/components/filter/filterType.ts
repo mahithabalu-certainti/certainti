@@ -107,6 +107,12 @@ export const statusOptions: { option: string; value: string }[] = [
   { option: 'In-Active', value: 'inactive' },
 ];
 
+export const resourceTypeOptions: { option: string; value: string }[] = [
+  { option: 'Full-Time', value: 'Full-Time' },
+  { option: 'Sub Con', value: 'Sub Con' },
+  { option: 'Non-Labor', value: 'Non-Labor' },
+];
+
 // Define filter state types for each field type
 export interface TextFilterState {
   option: TextFilterOption;
@@ -148,19 +154,23 @@ export type FilterState = {
   date?: DateFilterState;
   enum?: EnumFilterState;
   textCostAndSkill?: TextFilterStateForCostAndSkill;
-  status?: StatusFilterState;
+  select?: StatusFilterState;
 };
 
 // Define field configuration
 export type FieldConfig = {
   name: string;
   value: string;
-  type: 'text' | 'number' | 'date' | 'enum' | 'textCostAndSkill' | 'status';
-  options?: string[];
+  type: 'text' | 'number' | 'date' | 'enum' | 'textCostAndSkill' | 'select';
+  options?: { option: string; value: string }[];
 };
 
 export interface FilterComponentProps {
   filterMenu: FieldConfig[];
   setAppliedFilters: (filters: Record<string, any>) => void;
   handleFilter: () => void;
+  savedFilterStates?: Record<string, FilterState>;
+  onFilterStatesChange?: (filterStates: Record<string, FilterState>) => void;
+  savedSelectedFilters?: string[];
+  onSelectedFiltersChange?: (selectedFilters: string[]) => void;
 }

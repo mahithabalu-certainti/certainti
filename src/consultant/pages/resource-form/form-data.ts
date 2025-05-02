@@ -63,7 +63,7 @@ export const ResourceFormData = (
             required: true,
             regex: RESOURCE_REGEX.RESOURCE_REF_ID,
             regexErrorMessage:
-              'Please enter 1-50 characters, including at least one letter. Special characters and numbers alone are not allowed.',
+              'Please enter 1-50 characters, Special characters and spaces alone are not allowed.',
             placeholder: 'Enter Resource Ref ID',
             disabled: disableFields || disableCostAndSkill,
           }),
