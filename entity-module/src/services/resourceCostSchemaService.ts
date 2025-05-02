@@ -253,65 +253,101 @@ class ResourceCostSchemaService {
    * @param filters - The filters object containing currency filter
    * @returns Promise with currency RIDs or null
    */
-  async processCurrencyFilter(filters: Record<string, any>) {
-    // Check if currency filter exists
-    if (!filters.currency || !Array.isArray(filters.currency)) {
-      return null;
-    }
-
-    const currencyValues = filters.currency;
-
-    // If we have currency values to filter by
-    if (currencyValues.length > 0) {
-      const mainDbSequelize = await initMainDbSequelize();
-      if (!mainDbSequelize) {
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: "Main database connection not available",
-        };
-      }
-
-      // Build query to find matching currencies
-      const currencyQuery = `
-        SELECT rid FROM "public"."currency" 
-        WHERE LOWER(currency_code) IN (:currencyValues) 
-        OR LOWER(currency_name) IN (:currencyValues)
-      `;
-
-      // Convert all values to lowercase for case-insensitive comparison
-      const lowerCaseValues = currencyValues.map((val: string) =>
-        val.toLowerCase()
-      );
-
-      // Execute the query
-      const currencyResults = await mainDbSequelize.query(currencyQuery, {
-        replacements: { currencyValues: lowerCaseValues },
-        type: "SELECT",
-      });
-
-      // Extract the RIDs from the results
-      const currencyRids = currencyResults.map((result: any) => result.rid);
-
-      // If we found matching currencies, add them to the filters
-      if (currencyRids.length > 0) {
-        // Remove the original currency filter
-        delete filters.currency;
-
-        filters.currency_rid = {
-          in: currencyRids,
-        };
-
-        return null;
-      } else {
-        return null;
-      }
-    }
-
-    // If currency array is empty, remove the filter
-    delete filters.currency;
+async processCurrencyFilter(filters: Record<string, any>) {
+  // Check if currency filter exists and has valid operators
+  if (!filters.currency || typeof filters.currency !== 'object') {
     return null;
   }
+
+  const currencyFilter = filters.currency;
+  const mainDbSequelize = await initMainDbSequelize();
+  
+  if (!mainDbSequelize) {
+    return {
+      statusCode: HttpStatus.FAILED,
+      message: HttpStatus.FAILED_MESSAGE,
+      errorMessage: "Main database connection not available",
+    };
+  }
+
+  let currencyResults: any[] = [];
+
+  // Handle equals operator
+  if (currencyFilter.equals) {
+    const query = `
+      SELECT rid FROM "public"."currency" 
+      WHERE LOWER(currency_code) = LOWER(:value) 
+      OR LOWER(currency_name) = LOWER(:value)
+    `;
+    currencyResults = await mainDbSequelize.query(query, {
+      replacements: { value: currencyFilter.equals },
+      type: "SELECT",
+    });
+  }
+  
+  // Handle not_equals operator
+  else if (currencyFilter.not_equals) {
+    const query = `
+      SELECT rid FROM "public"."currency" 
+      WHERE LOWER(currency_code) != LOWER(:value) 
+      AND LOWER(currency_name) != LOWER(:value)
+    `;
+    currencyResults = await mainDbSequelize.query(query, {
+      replacements: { value: currencyFilter.not_equals },
+      type: "SELECT",
+    });
+  }
+
+  // Handle contains operator
+  else if (currencyFilter.contains) {
+    const query = `
+      SELECT rid FROM "public"."currency" 
+      WHERE LOWER(currency_code) LIKE LOWER(:value) 
+      OR LOWER(currency_name) LIKE LOWER(:value)
+    `;
+    currencyResults = await mainDbSequelize.query(query, {
+      replacements: { value: `%${currencyFilter.contains}%` },
+      type: "SELECT",
+    });
+  }
+  
+  // Handle in operator
+  else if (currencyFilter.in && Array.isArray(currencyFilter.in)) {
+    const values = currencyFilter.in.map((val: string) => val.toLowerCase());
+    const query = `
+      SELECT rid FROM "public"."currency" 
+      WHERE LOWER(currency_code) IN (:values)
+      OR LOWER(currency_name) IN (:values)
+    `;
+    currencyResults = await mainDbSequelize.query(query, {
+      replacements: { values },
+      type: "SELECT",
+    });
+  }
+
+  // Handle is_empty operator
+  else if (currencyFilter.is_empty !== undefined) {
+    const query = `
+      SELECT rid FROM "public"."currency" 
+      WHERE currency_code IS NULL 
+      OR currency_name IS NULL
+    `;
+    currencyResults = await mainDbSequelize.query(query, {
+      type: "SELECT",
+    });
+  }
+
+  // Extract RIDs and update filters
+  if (currencyResults.length > 0) {
+    const currencyRids = currencyResults.map(result => result.rid);
+    delete filters.currency;
+    filters.currency_rid = {
+      in: currencyRids
+    };
+  }
+
+  return null;
+}
 
   /**
    * Executes the main and count queries and formats the response

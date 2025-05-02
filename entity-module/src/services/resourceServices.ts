@@ -407,34 +407,42 @@ export class ResourceService {
     filters: Record<string, any>,
     whereClause: Record<string, any>
   ): Record<string, any> {
-    const castToTextFields = ["resource_type", "resource_status", "rid"];
+    const castToTextFields = ["resource_type", "resource_fullname", "designation", "r_number", "resource_ref_id"];
+    const uuidFields = ["country", "region"];
 
     const filterFields = [
-      { clientField: "rid", dbField: "rid" },
       { clientField: "resource_ref_id", dbField: "resource_ref_id" },
       { clientField: "r_number", dbField: "r_number" },
       { clientField: "resource_fullname", dbField: "resource_fullname" },
       { clientField: "resource_type", dbField: "resource_type" },
       { clientField: "resource_status", dbField: "resource_status" },
-      { clientField: "resource_email", dbField: "resource_email" },
-      { clientField: "resource_mobile", dbField: "resource_mobile" },
-      { clientField: "resource_role", dbField: "resource_role" },
       { clientField: "designation", dbField: "designation" },
-      {
-        clientField: "total_years_experience",
-        dbField: "total_years_experience",
-      },
+      { clientField: "country", dbField: "country" },
+      { clientField: "region", dbField: "region" },
     ];
 
     filterFields.forEach(({ clientField, dbField }) => {
       if (filters[clientField]) {
         const fieldFilter = filters[clientField];
 
-        if (castToTextFields.includes(dbField)) {
+        // Special handling for resource_status which comes as direct value
+        if (clientField === "resource_status") {
+          whereClause[dbField] = Sequelize.where(
+            Sequelize.cast(Sequelize.col(dbField), "TEXT"),
+            { [Op.iLike]: fieldFilter }
+          );
+        }
+        // Handle other fields
+        else if (castToTextFields.includes(dbField)) {
           whereClause[dbField] = Sequelize.where(
             Sequelize.cast(Sequelize.col(dbField), "TEXT"),
             this.getFieldFilter(fieldFilter, dbField)
           );
+        } else if (uuidFields.includes(dbField)) {
+          // Handle UUID fields directly without casting
+          whereClause[dbField] = fieldFilter.value 
+            ? fieldFilter.value // For exact UUID matches
+            : this.getFieldFilter(fieldFilter, dbField);
         } else {
           whereClause[dbField] = this.getFieldFilter(fieldFilter, dbField);
         }

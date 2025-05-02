@@ -105,9 +105,10 @@ const createResourcesSchema = Joi.object({
     .guid({ version: ["uuidv4"] })
     .required(),
   resource_ref_id: Joi.string().min(5).max(50).required(),
-  resource_type: Joi.string()
-    .valid("Full-Time", "Sub Con", "Non-Labor")
-    .required(),
+  resource_type: Joi.string().valid("Full-Time", "Sub Con", "Non-Labor").required().messages({
+    'any.only': 'Resource type must be one of: Full-Time, Sub Con, or Non-Labor',
+    'any.required': 'Resource type is required'
+  }),
   full_name: Joi.string().min(3).max(200).optional().allow("").allow(null),
   org_name: Joi.string()
     .min(3)
@@ -196,7 +197,10 @@ const updateResourceSchema = Joi.object({
     .required(),
   account_number: Joi.string().max(50).required(),
   resource_ref_id: Joi.string().max(50).required(),
-  resource_type: Joi.string().valid("Full-Time", "Sub Con", "Non-Labor").required(),
+  resource_type: Joi.string().valid("Full-Time", "Sub Con", "Non-Labor").required().messages({
+    'any.only': 'Resource type must be one of: Full-Time, Sub Con, or Non-Labor',
+    'any.required': 'Resource type is required'
+  }),
   full_name: Joi.string().min(3).max(200).optional().allow("").allow(null),
   org_name: Joi.string()
     .min(3)
@@ -300,7 +304,10 @@ const listResourceSchema = Joi.object({
 const createResourceSkillSchema = Joi.object({
   eid: Joi.string().max(255).optional().allow(null).allow(""),
   account_rid: Joi.string().max(255).required(),
-  resource_type: Joi.string().valid("Full-Time", "Sub Con", "Non-Labor").required(),
+  resource_type: Joi.string().valid("Full-Time", "Sub Con", "Non-Labor").required().messages({
+    'any.only': 'Resource type must be one of: Full-Time, Sub Con, or Non-Labor',
+    'any.required': 'Resource type is required'
+  }),
   resource_rid: Joi.string().max(255).optional().allow(null).allow(""),
   resource_number: Joi.string().max(255).required(),
   resource_ref_id: Joi.string().max(255).required(),
@@ -364,9 +371,13 @@ const updateResourceSkillSchema = Joi.object({
   accountNumber: Joi.string().max(255).required(),
 });
 
+const getResourceSkillSchema = Joi.object({
+  id: Joi.string().pattern(uuidRegex).required(),
+  accountNumber: Joi.string().max(255).required(),
+});
+
 const listResourceSkillSchema = Joi.object({
-  rid: Joi.string().pattern(uuidRegex).max(255).optional().allow(null),
-  resourceRid: Joi.string().pattern(uuidRegex).max(255).optional().allow(null),
+  resourceRid: Joi.string().pattern(uuidRegex).max(255).required(),
   page: Joi.string()
     .pattern(/^[0-9]+$/)
     .default("1")
@@ -488,7 +499,10 @@ const resourceCostSchema = Joi.object({
   account_rid: Joi.string().pattern(uuidRegex).required(),
   accountNumber: Joi.string().max(255).required(),
   resource_number: Joi.string().max(255).required(),
-  resource_type: Joi.string().valid("Full-Time", "Sub Con", "Non-Labor").required(),
+  resource_type: Joi.string().valid("Full-Time", "Sub Con", "Non-Labor").required().messages({
+    'any.only': 'Resource type must be one of: Full-Time, Sub Con, or Non-Labor',
+    'any.required': 'Resource type is required'
+  }),
   resource_rid: Joi.string().pattern(uuidRegex).required(),
   resource_ref_id: Joi.string().max(255).required(),
   effective_date: Joi.string()
@@ -553,6 +567,7 @@ export {
   listResourceSkillSchema,
   updateResourceSkillSchema,
   createResourceSkillSchema,
+  getResourceSkillSchema,
   resourceCostSchema,
   listResourceCostSchema,
   getResourceCostSchema,
