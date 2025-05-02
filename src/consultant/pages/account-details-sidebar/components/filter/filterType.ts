@@ -150,4 +150,8 @@ export interface FilterComponentProps {
   filterMenu: FieldConfig[];
   setAppliedFilters: (filters: Record<string, any>) => void;
   handleFilter: () => void;
+  savedFilterStates?: Record<string, FilterState>;
+  onFilterStatesChange?: (filterStates: Record<string, FilterState>) => void;
+  savedSelectedFilters?: string[];
+  onSelectedFiltersChange?: (selectedFilters: string[]) => void;
 }
