@@ -1,7 +1,7 @@
 export interface ICreateResource {
   account_number: string;
   resource_ref_id: string;
-  resource_type: "FullTime" | "Contract"| "Non-Labor";
+  resource_type: "Full-Time" | "Sub Con"| "Non-Labor";
   full_name?: string | null;
   org_name?: string | null;
   role?: string | null;
@@ -25,7 +25,7 @@ export interface IUpdateResource {
   resource_id: string;
   account_number: string;
   resource_ref_id: string;
-  resource_type: "FullTime" | "Contract" | "Non-Labor";
+  resource_type: "Full-Time" | "Sub Con" | "Non-Labor";
   full_name?: string | null;
   org_name?: string | null;
   role?: string | null;

@@ -780,6 +780,21 @@ class ResourceCostService {
 
         costData.created_by = userNames.created_by_name;
         costData.modified_by = userNames.modified_by_name;
+
+        // Format dates to MM/DD/YYYY
+        if (costData.effective_date) {
+          costData.effective_date = moment(costData.effective_date).format('MM/DD/YYYY') as any;
+        }
+        if (costData.end_date) {
+          costData.end_date = moment(costData.end_date).format('MM/DD/YYYY') as any;
+        }
+
+        const resourceInfo = (costData as any).Resource;
+
+        if(resourceInfo){
+          resourceInfo.resource_startdate = moment(resourceInfo.resource_startdate).format('MM/DD/YYYY') as any;
+          resourceInfo.resource_enddate = moment(resourceInfo.resource_enddate).format('MM/DD/YYYY') as any;
+        }
         
         // Create a new response object with simplified cost data
         const simplifiedCostData = {
@@ -823,30 +838,6 @@ class ResourceCostService {
         errorMessage: (err as Error).message,
       };
     }
-  }
-
-  /**
-   * Determines the appropriate sort parameters for resource cost queries.
-   * Validates the sort column and ensures the sort order is either ASC or DESC.
-   * Falls back to default values if invalid parameters are provided.
-   *
-   * @param sortBy - Field to sort results by
-   * @param sortOrder - Direction to sort (ASC or DESC)
-   * @returns Tuple containing validated sort column and order
-   */
-  getSortParameters(sortBy: string, sortOrder: string): [string, string] {
-    const validSortColumns = [
-      "r_number",
-      "resource_rid",
-      "effective_date",
-      "end_date",
-    ];
-    if (!validSortColumns.includes(sortBy)) {
-      sortBy = "created_datetime";
-    }
-
-    sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
-    return [sortBy, sortOrder];
   }
 
   /**

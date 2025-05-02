@@ -139,7 +139,7 @@ async function createResourceCost(req: Request, res: Response): Promise<void> {
         res,
         HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
-        resourceCost.errorMessage
+        resourceCost.errorMessage?.replace(/(Validation error:|Validation failed)/g, '').trim()
       );
       return;
     }
@@ -200,7 +200,7 @@ async function updateResourceCost(req: Request, res: Response): Promise<void> {
         res,
         HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
-        resourceCost.errorMessage
+        resourceCost.errorMessage?.replace(/(Validation error:|Validation failed)/g, '').trim()
       );
       return;
     }
