@@ -301,6 +301,23 @@ const listResourceSchema = Joi.object({
     .allow(""),
 });
 
+const exportResourceSchema = Joi.object({
+  fiscalYear: Joi.number().min(1000).max(9999).optional().allow(0).messages({
+    "number.base": "Fiscal year must be a number",
+    "number.min": "Fiscal year must be a 4-digit number",
+    "number.max": "Fiscal year must be a 4-digit number",
+    "any.required": "Fiscal year is required",
+  }),
+  search: Joi.string().max(255).optional(),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("created_datetime").optional().allow(""),
+  sortOrder: Joi.string()
+    .valid("ASC", "DESC")
+    .default("DESC")
+    .optional()
+    .allow(""),
+});
+
 const createResourceSkillSchema = Joi.object({
   eid: Joi.string().max(255).optional().allow(null).allow(""),
   account_rid: Joi.string().max(255).required(),
@@ -405,6 +422,28 @@ const listResourceSkillSchema = Joi.object({
     }),
 });
 
+
+const exportResourceSkillSchema = Joi.object({
+  rid: Joi.string().pattern(uuidRegex).max(255).optional().allow(null),
+  resourceRid: Joi.string().pattern(uuidRegex).max(255).optional().allow(null),
+  search: Joi.string().max(255).optional().allow("").allow(null),
+  filters: Joi.string().default("{}").optional(),
+  sortBy: Joi.string().default("created_datetime").optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+  accountNumber: Joi.string().max(255).required(),
+  fiscalYear: Joi.number()
+    .integer()
+    .min(1000)
+    .max(9999)
+    .allow(0)
+    .optional()
+    .messages({
+      "number.base": "Fiscal year must be a number",
+      "number.min": "Fiscal year must be a 4-digit number",
+      "number.max": "Fiscal year must be a 4-digit number",
+      "any.required": "Fiscal year is required",
+    }),
+});
 const updateResourceCostSchema = Joi.object({
   rid: Joi.string().pattern(uuidRegex).required(),
   eid: Joi.string().max(255).optional().allow(null).allow(""),
@@ -475,6 +514,27 @@ const listResourceCostSchema = Joi.object({
   limit: Joi.string()
     .pattern(/^[0-9]+$/)
     .default("10"),
+  search: Joi.string().max(255).optional().allow("").allow(null),
+  filters: Joi.string().default("{}").optional(),
+  sortBy: Joi.string().default("created_datetime").optional(),
+  sortOrder: Joi.string().valid("ASC", "DESC").default("DESC").optional(),
+  accountNumber: Joi.string().max(255).required(),
+  fiscalYear: Joi.number()
+    .integer()
+    .min(1000)
+    .max(9999)
+    .allow(0)
+    .optional()
+    .messages({
+      "number.base": "Fiscal year must be a number",
+      "number.min": "Fiscal year must be a 4-digit number",
+      "number.max": "Fiscal year must be a 4-digit number",
+      "any.required": "Fiscal year is required",
+    }),
+});
+
+const exportResourceCostSchema = Joi.object({
+  resourceRid: Joi.string().pattern(uuidRegex).max(255).required(),
   search: Joi.string().max(255).optional().allow("").allow(null),
   filters: Joi.string().default("{}").optional(),
   sortBy: Joi.string().default("created_datetime").optional(),
@@ -575,4 +635,7 @@ export {
   createResourcesSchema,
   updateResourceSchema,
   listResourceSchema,
+  exportResourceSchema,
+  exportResourceCostSchema,
+  exportResourceSkillSchema
 };
