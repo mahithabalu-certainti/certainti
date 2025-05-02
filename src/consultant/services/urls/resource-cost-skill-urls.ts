@@ -48,6 +48,15 @@ const returnCostIdURL = (url: string, params: Record<string, any>): string => {
 
   return `${baseUrl}/${url}/${id}?${searchParams.toString()}`;
 };
+const returnSkillIdURL = (url: string, params: Record<string, any>): string => {
+  const { accountNumber, rid } = params;
+  const searchParams = new URLSearchParams();
+  searchParams.set('accountNumber', accountNumber);
+  searchParams.set('rid', rid);
+  // searchParams.set('id', id );
+
+  return `${baseUrl}/${url}/?${searchParams.toString()}`;
+};
 
 export const costListURL = ({
   page,
@@ -84,7 +93,7 @@ export const fetchResourceSkillByIdUrl = ({
   rid,
   accountNumber,
 }: ResourceSkillListParams): string => {
-  return returnURL(resourceSkillUrl, {
+  return returnSkillIdURL(resourceSkillUrl, {
     rid,
     accountNumber,
   });

@@ -143,7 +143,7 @@ const TabPanel: React.FC<TabProps>  = ({
             {filterVisibility && (
               <Box
                 onClick={handleFilter}
-                className='h-[32px] w-[32px] flex items-center justify-center border border-[#CBD6E2] cursor-pointer'
+                className='h-[32px] w-[32px] flex items-center justify-center border border-[#CBD6E2] rounded-[2px] cursor-pointer'
               >
                 <Image src={resourceFilterIcon} />
               </Box>

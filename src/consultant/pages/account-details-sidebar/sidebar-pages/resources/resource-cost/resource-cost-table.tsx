@@ -107,7 +107,6 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
               '.MuiTableCell-root': {
                 fontWeight: 300,
                 color: '#425A76',
-                borderRight: 'none',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -119,16 +118,16 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
               sx={{
                 minWidth: '160px',
                 position: 'sticky',
-                left: '1px',
+                left: 0,
                 background: '#fff',
                 zIndex: 10,
-                borderRight: '1px solid #CBD6E2',
+                borderRight: 'none !important',
                 '&::after': {
                   content: '""',
                   position: 'absolute',
                   top: 0,
                   right: 0,
-                  width: '0.5px',
+                  width: '1px',
                   height: '100%',
                   backgroundColor: '#CBD6E2',
                   zIndex: 20,
@@ -149,7 +148,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
             <TableCell sx={{ minWidth: '130px' }}>{cost.monthlyCost ? CostDisplay(cost.monthlyCost) : "-"}</TableCell>
             <TableCell sx={{ minWidth: '140px' }}>{cost.semiAnnualCost ? CostDisplay(cost.semiAnnualCost) : "-"}</TableCell>
             <TableCell sx={{ minWidth: '130px' }}>{cost.annualCost ? CostDisplay(cost.annualCost) : "-"}</TableCell>
-            <TableCell sx={{ minWidth: '80px' }}>
+            <TableCell sx={{ padding: '0px !important' }}>
               <ActionButton
                 onEdit={() => handleEdit(cost)}
                 onDelete={() => { }}
@@ -254,8 +253,9 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
                 padding: '0px',
                 pl: 1,
                 height: '50px',
+              },
+              '& .MuiTableCell-root:last-child': {
                 borderRight: 'none',
-                bgcolor: '#FCFCFC',
               },
               '& .MuiTableSortLabel-root': {
                 '&:hover': {
@@ -270,30 +270,30 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
                 sx={{
                   minWidth: '160px',
                   position: 'sticky',
-                  left: '1px',
+                  left: 0,
                   background: '#fff',
-                  zIndex: 10,
-                  borderRight: '1px solid #CBD6E2',
+                  zIndex: 8,
+                  borderRight: 'none !important',
                   '&::after': {
                     content: '""',
                     position: 'absolute',
                     top: 0,
                     right: 0,
-                    width: '0.5px',
+                    width: '1px',
                     height: '100%',
                     backgroundColor: '#CBD6E2',
-                    zIndex: 20,
+                    zIndex: 10,
                   },
                 }}
               >
-                <TableSortLabel
+                Resource Full Name
+                {/* <TableSortLabel
                   active={orderBy === 'resource_fullname'}
                   direction={orderBy === 'resource_fullname' ? order : 'asc'}
                   IconComponent={getSortIcon(orderBy, 'resource_fullname', order)}
-                // onClick={createSortHandler('resource_cost_number')}
                 >
-                  Resource Name
-                </TableSortLabel>
+                  
+                </TableSortLabel> */}
               </TableCell>
               <TableCell sx={{ minWidth: '100px' }}>
                 <TableSortLabel
@@ -385,7 +385,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
                   Annual
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ minWidth: '80px' }}>Action</TableCell>
+              <TableCell sx={{ minWidth: '80px', textAlign: 'center', pl: '0 !important' }}>Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody
@@ -399,8 +399,10 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
                 pl: 1,
                 minHeight: '42px',
                 maxHeight: '42px',
-                borderRight: 'none',
                 height: '42px',
+              },
+              '& .MuiTableCell-root:last-child': {
+                borderRight: 'none',
               },
             }}
           >
@@ -425,7 +427,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
         </Table>
       </Paper>
       <TablePagination
-        rowsPerPageOptions={[25, 30, 40, 50]}
+        rowsPerPageOptions={[25, 30, 40, 50, 100]}
         // component='div'
         count={costList?.count ?? 0}
         rowsPerPage={rowsPerPage}

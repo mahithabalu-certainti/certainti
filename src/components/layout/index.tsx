@@ -39,7 +39,6 @@ export const AppLayout: React.FC = () => {
         showAdminSidebar={showAdminSidebar}
         sidebarExpand={sidebarExpand}
         mobileView={mobileView}
-        setSidebarExpand={setSidebarExpand}
       />
 
       {/* Expand/collapse button */}

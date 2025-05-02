@@ -68,7 +68,7 @@ export interface CreateSectionData {
   rid: string;
   r_number: string;
   eid: string | null;
-  resource_ref_id: string;
+  resource_ref_ID: string;
   resource_type: string;
   resource_fullname: string;
   resource_orgname: string;

@@ -430,9 +430,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             onChange={(phone, country: CountryData) =>
               handleChange(phone, country.countryCode)
             }
-            inputClass={`placeholder-custom-color !w-full !text-[13px] !p-2 !pl-12 !border !h-[32px] !rounded-xs ${
-              field.error ? '!border-red-500' : '!border-gray-300'
-            }${field.disabled ? ' !bg-gray-100' : ''}`}
+            inputClass={`placeholder-custom-color !w-full !text-[13px] !p-2 !pl-12 !border !h-[32px] !rounded-xs ${field.error ? '!border-red-500' : '!border-gray-300'
+              }${field.disabled ? ' !bg-gray-100' : ''}`}
             buttonClass={`!bg-transparent !border-r ${field.error ? '!border-red-500' : '!border-gray-300'} !rounded-tl-xs !rounded-bl-xs !hover:bg-transparent !shadow-none !px-0 !m-0`}
             containerClass='!w-full'
             inputProps={{
@@ -540,7 +539,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
           if (field.type === 'date') {
             // cost date validation
-            if (field?.startValue) {
+            if (field?.startValue && constructFormData[field.name]) {
               const dateValue = constructFormData[field.name] as string;
               if (
                 dayjs(dateValue).isBefore(dayjs(field?.minDate)) ||
@@ -550,12 +549,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 return {
                   ...field,
                   error:
-                    'Invalid date. Please enter a valid date in given range.',
+                    'Date must be within the last 7 years from today',
                 };
               }
             }
             // Check if this date must be after another (start date vs end date)
-            if (field.endDateValue) {
+            if (field.endDateValue && constructFormData[field.name]) {
               const endDateRaw = constructFormData[field.name] as string;
               const startDateRaw = field.startDateLabel
                 ? (constructFormData[field.startDateLabel] as string)
@@ -572,10 +571,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 return {
                   ...field,
                   error:
-                    'Invalid date. Please enter a valid date in given range.',
+                    'Date must be within the last 7 years from today',
                 };
               }
-              if (endDate.isValid() && !endDate.isAfter(startDate)) {
+              if (endDate.isValid() && !endDate.isSame(startDate) && !endDate.isAfter(startDate)) {
                 hasError = true;
                 return { ...field, error: 'End Date must be after Start Date' };
               }
@@ -607,7 +606,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           if (
             field.dependsRequired?.key &&
             constructFormData[field.dependsRequired.key] ===
-              field.dependsRequired?.matchedValue &&
+            field.dependsRequired?.matchedValue &&
             !hasValue
           ) {
             hasError = true;

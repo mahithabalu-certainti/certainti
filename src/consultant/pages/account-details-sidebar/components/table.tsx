@@ -216,16 +216,17 @@ const DataTable: React.FC<DataTableProps> = ({
 
   const isMenuOpen = Boolean(menuAnchor);
 
-  if (isLoading) {
-    return (
-      <div className='flex justify-center border border-gray-300 items-center h-64'>
-        <CircularProgress />
-        <Typography variant='body1' className='ml-4'>
-          Loading data...
-        </Typography>
-      </div>
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     <div className='flex justify-center border border-gray-300 items-center h-64'>
+  //       <CircularProgress />
+  //       <Typography variant='body1' className='ml-4'>
+  //         Loading data...
+  //       </Typography>
+  //     </div>
+  //   );
+  // }
+  
 
   if (error) {
     return (
@@ -275,7 +276,6 @@ const DataTable: React.FC<DataTableProps> = ({
       >
         <Table>
           <TableHead
-            className='bg-gray-50'
             sx={{
               '& .MuiTableCell-root': {
                 fontWeight: 500,
@@ -310,10 +310,11 @@ const DataTable: React.FC<DataTableProps> = ({
                     maxWidth: column.width ?? 120,
                     minWidth: column.width ?? 120,
                     position: index === 0 ? 'sticky' : undefined,
-                    background: index === 0 ? '#fff' : "#fff",
+                    background: index === 0 ? '#fff' : '#fff',
                     zIndex: index === 0 ? 10 : undefined,
                     left: index === 0 ? 0 : undefined,
-                    borderRight: index === 0 ? 'none' : '1px solid #CBD6E2',
+                    borderRight:
+                      index === 0 ? 'none !important' : '1px solid #CBD6E2',
                     '&::after':
                       index === 0
                         ? {
@@ -321,7 +322,7 @@ const DataTable: React.FC<DataTableProps> = ({
                             position: 'absolute',
                             top: 0,
                             right: 0,
-                            width: '0.5px',
+                            width: '1px',
                             height: '100%',
                             backgroundColor: '#CBD6E2',
                             zIndex: 20,
@@ -374,6 +375,7 @@ const DataTable: React.FC<DataTableProps> = ({
                 minHeight: '42px',
                 maxHeight: '42px',
                 height: '42px',
+                borderBottom: '1px solid #CBD6E2 !important',
               },
               '& .MuiTableCell-root:last-child': {
                 borderRight: 'none',
@@ -405,7 +407,8 @@ const DataTable: React.FC<DataTableProps> = ({
                         background: index === 0 ? '#fff' : undefined,
                         zIndex: index === 0 ? 10 : undefined,
                         left: index === 0 ? 0 : undefined,
-                        borderRight: index === 0 ? 'none' : '1px solid #CBD6E2',
+                        borderRight:
+                          index === 0 ? 'none !important' : '1px solid #CBD6E2',
                         '&::after':
                           index === 0
                             ? {
@@ -413,7 +416,7 @@ const DataTable: React.FC<DataTableProps> = ({
                                 position: 'absolute',
                                 top: 0,
                                 right: 0,
-                                width: '0.5px',
+                                width: '1px',
                                 height: '100%',
                                 backgroundColor: '#CBD6E2',
                                 zIndex: 20,
@@ -455,7 +458,7 @@ const DataTable: React.FC<DataTableProps> = ({
                           aria-expanded={isMenuOpen ? 'true' : undefined}
                         >
                           <div
-                            className={`${isMenuOpen ? 'bg-[#EAF0F5]' : ''} border border-[#CBD6E2] rounded-[3px] w-5 h-5 flex items-center justify-center`}
+                            className={`${isMenuOpen && selectedRowData === row ? 'bg-[#EAF0F5]' : ''} border border-[#CBD6E2] rounded-[3px] w-5 h-5 flex items-center justify-center`}
                           >
                             <img
                               src={actionIcon}
@@ -470,15 +473,19 @@ const DataTable: React.FC<DataTableProps> = ({
                 </TableRow>
               ))
             ) : (
-              <TableRow>
+              <TableRow style={{ height: '300px' }}>
                 <TableCell
                   colSpan={columns.length}
                   align='center'
                   className='text-center py-8'
                 >
-                  <Typography variant='h6' color='textSecondary'>
-                    {emptyStateMessage}
-                  </Typography>
+                  {isLoading ? (
+                    <CircularProgress />
+                  ) : (
+                    <Typography variant='h6' color='textSecondary'>
+                      {emptyStateMessage}
+                    </Typography>
+                  )}
                 </TableCell>
               </TableRow>
             )}
