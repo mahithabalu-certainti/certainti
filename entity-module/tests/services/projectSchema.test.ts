@@ -86,6 +86,7 @@ jest.mock("../../src/config/mainDataSource");
 describe("ProjectService", () => {
   let projectService: ProjectService;
   let mockSchemaService: jest.Mocked<SchemaService>;
+  let mockUserId = "bfee7234-b0aa-4bb3-95f1-fb435be5c42f";
 
   const validProjectData = {
     account_number: "12345",
@@ -165,7 +166,7 @@ describe("ProjectService", () => {
         create: mockCreate,
       });
 
-      const response = await projectService.createProject(mockProjectData);
+      const response = await projectService.createProject(mockProjectData, mockUserId);
 
       expect(response.statusCode).toBe(HttpStatus.SUCCESS);
       expect(response.message).toBe(HttpStatus.SUCCESS_MESSAGE);
@@ -180,7 +181,7 @@ describe("ProjectService", () => {
         parentAccountId: "",
       });
 
-      const response = await projectService.createProject(mockProjectData);
+      const response = await projectService.createProject(mockProjectData, mockUserId);
 
       expect(response.statusCode).toBe(HttpStatus.FAILED);
       expect(response.message).toBe(HttpStatus.FAILED_MESSAGE);
@@ -196,7 +197,7 @@ describe("ProjectService", () => {
 
       mockSchemaService.checkIfSchemaExists.mockResolvedValue(false);
 
-      const response = await projectService.createProject(mockProjectData);
+      const response = await projectService.createProject(mockProjectData, mockUserId);
 
       expect(response.statusCode).toBe(HttpStatus.FAILED);
       expect(response.errorMessage).toMatch(
@@ -224,7 +225,7 @@ describe("ProjectService", () => {
         create: jest.fn(),
       });
 
-      const response = await projectService.createProject(mockProjectData);
+      const response = await projectService.createProject(mockProjectData, mockUserId);
 
       expect(response.statusCode).toBe(HttpStatus.FAILED);
       expect(response.errorMessage).toMatch(/reference ID must be unique/i);
@@ -302,7 +303,8 @@ describe("ProjectService", () => {
       });
 
       const response = await projectService.updateProjectRecords(
-        mockUpdateData
+        mockUpdateData,
+        mockUserId
       );
 
       expect(response.statusCode).toBe(HttpStatus.SUCCESS);
@@ -318,7 +320,7 @@ describe("ProjectService", () => {
       });
 
       await expect(
-        projectService.updateProjectRecords(mockUpdateData)
+        projectService.updateProjectRecords(mockUpdateData, mockUserId)
       ).rejects.toThrow(
         /Error updating project: Invalid account number or account ID. The specified account was not found./i
       );
@@ -343,7 +345,7 @@ describe("ProjectService", () => {
       });
 
       await expect(
-        projectService.updateProjectRecords(mockUpdateData)
+        projectService.updateProjectRecords(mockUpdateData, mockUserId)
       ).rejects.toThrow(/Duplicate Project Ref ID/i);
     });
 
@@ -366,7 +368,7 @@ describe("ProjectService", () => {
       });
 
       await expect(
-        projectService.updateProjectRecords(mockUpdateData)
+        projectService.updateProjectRecords(mockUpdateData, mockUserId)
       ).rejects.toThrow(/Invalid project ID/i);
     });
   });

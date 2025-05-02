@@ -1,5 +1,4 @@
 import Joi from "joi";
-import moment from "moment";
 
 const uuidRegex =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
