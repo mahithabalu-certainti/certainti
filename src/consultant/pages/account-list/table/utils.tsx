@@ -186,7 +186,7 @@ export const renderRows = ({
           >
             {account.primaryContact}
           </TableCell>
-          <TableCell>
+          <TableCell sx={{ padding: '0px !important' }}>
             <ActionButton
               onEdit={() => handleEdit(account)}
               onDelete={() => handleDelete(account)}

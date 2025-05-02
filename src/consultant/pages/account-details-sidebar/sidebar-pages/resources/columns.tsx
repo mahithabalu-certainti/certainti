@@ -106,9 +106,9 @@ const BASE_COLUMNS: ColumnDefinition[] = [
 
 const createStatusColumn = (): ColumnDefinition => ({
   id: 'resource_status',
-  label: 'Status',
+  label: 'Resource Status',
   sortable: true,
-  width: '100px',
+  width: '150px',
   render: (value: string) => (
     <span
       className={`font-normal text-[14px] ${

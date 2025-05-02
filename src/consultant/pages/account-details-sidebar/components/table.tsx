@@ -458,7 +458,7 @@ const DataTable: React.FC<DataTableProps> = ({
                           aria-expanded={isMenuOpen ? 'true' : undefined}
                         >
                           <div
-                            className={`${isMenuOpen ? 'bg-[#EAF0F5]' : ''} border border-[#CBD6E2] rounded-[3px] w-5 h-5 flex items-center justify-center`}
+                            className={`${isMenuOpen && selectedRowData === row ? 'bg-[#EAF0F5]' : ''} border border-[#CBD6E2] rounded-[3px] w-5 h-5 flex items-center justify-center`}
                           >
                             <img
                               src={actionIcon}

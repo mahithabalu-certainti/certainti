@@ -262,7 +262,6 @@ export const Sidebar: React.FC<SideBarProps> = ({
   showAdminSidebar,
   mobileView,
   sidebarExpand,
-  setSidebarExpand,
 }) => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -284,37 +283,17 @@ export const Sidebar: React.FC<SideBarProps> = ({
     logout();
   };
 
-  const handleSidebarToggle = () => {
-    const newState = !sidebarExpand;
-    setSidebarExpand(newState);
-    localStorage.setItem('sidebarExpand', JSON.stringify(newState));
-    setAdminNavItems(prevItems => 
-      prevItems.map(item => ({ ...item, openStatus: false }))
+  const handleToggle = (index: number) => {
+    setAdminNavItems((prevItems) =>
+      prevItems.map((item, idx) =>
+        idx === index
+          ? { ...item, openStatus: !item.openStatus }
+          : { ...item, openStatus: false }
+      )
     );
   };
 
-  const handleToggle = (index: number) => {
-    if (!sidebarExpand) {
-      handleSidebarToggle();
-      setTimeout(() => {
-        setAdminNavItems((prevItems) =>
-          prevItems.map((item, idx) =>
-            idx === index
-              ? { ...item, openStatus: !item.openStatus }
-              : { ...item, openStatus: false }
-          )
-        );
-      }, 100);
-    } else {
-      setAdminNavItems((prevItems) =>
-        prevItems.map((item, idx) =>
-          idx === index
-            ? { ...item, openStatus: !item.openStatus }
-            : { ...item, openStatus: false }
-        )
-      );
-    }
-  };
+  const noItemsOpen = adminNavItems.every(item => !item.openStatus);
 
   return (
     <Drawer
@@ -477,7 +456,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
               <ListItem key={index} disablePadding sx={{maxWidth: '200px', mx: 'auto'}}>
                 <ListItemButton
                   sx={{
-                    display: (!sidebarExpand && item.subItemTitle.length > 0 && !item.openStatus) ? 'none' : 'flex',
+                    display: !sidebarExpand && !noItemsOpen && !item.openStatus ? 'none' : 'flex',
                     justifyContent: !sidebarExpand ? 'center' : 'flex-start',
                     minHeight: 40,
                     width: !sidebarExpand ? '40px' : '100%',
@@ -570,18 +549,43 @@ export const Sidebar: React.FC<SideBarProps> = ({
                       }}
                         onClick={() => navigate(subItem.link)}
                       >
-                        <ListItemIcon sx={{minWidth: '40px', height:'35px', alignItems:'center', justifyContent:'center'}}>
-                          <img
-                            src={subItem.icon}
-                            alt='menu-icon'
-                            className='h-[18px]'
-                            style={{
-                              filter: !sidebarExpand && matchCheck(subItem, trimmedPathname(2))
-                                ? 'brightness(0) saturate(100%) invert(53%) sepia(89%) saturate(1295%) hue-rotate(340deg) brightness(99%) contrast(93%)'
-                                : 'none',
-                            }}
-                          />
-                        </ListItemIcon>
+                        <Tooltip
+                          title={subItem.name}
+                          placement='right-end'
+                          slotProps={{
+                            tooltip: {
+                              sx: {
+                                backgroundColor: '#fff',
+                                color: 'rgba(0, 0, 0, 0.87)',
+                                boxShadow: 2,
+                                borderRadius: '4px',
+                              },
+                            },
+                            popper: {
+                              modifiers: [
+                                {
+                                  name: 'offset',
+                                  options: {
+                                    offset: [30, -40],
+                                  },
+                                },
+                              ],
+                            },
+                          }}
+                        >
+                          <ListItemIcon sx={{ minWidth: '40px', height: '35px', alignItems: 'center', justifyContent: 'center' }}>
+                            <img
+                              src={subItem.icon}
+                              alt='menu-icon'
+                              className='h-[18px]'
+                              style={{
+                                filter: !sidebarExpand && matchCheck(subItem, trimmedPathname(2))
+                                  ? 'brightness(0) saturate(100%) invert(53%) sepia(89%) saturate(1295%) hue-rotate(340deg) brightness(99%) contrast(93%)'
+                                  : 'none',
+                              }}
+                            />
+                          </ListItemIcon>
+                        </Tooltip>
                         {sidebarExpand &&
                         <Box sx={{ display: 'flex', justifyContent: 'flex-start', gap: 1, alignItems: 'center', width:'100%' }}>
                           <ListItemText

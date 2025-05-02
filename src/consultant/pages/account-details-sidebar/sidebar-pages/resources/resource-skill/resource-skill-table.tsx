@@ -102,7 +102,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
             <TableCell sx={{ minWidth: '140px' }}>{skill.skillName}</TableCell>
             <TableCell sx={{ minWidth: '120px' }}>{skill.skillLevel}</TableCell>
             <TableCell sx={{ minWidth: '160px' }}>{skill.yearsOfExperience}</TableCell>
-            <TableCell sx={{ minWidth: '80px' }}>
+            <TableCell sx={{ padding: '0px !important' }}>
               <ActionButton
                 onEdit={() => handleEdit(skill)}
                 onDelete={() => { }}
@@ -253,7 +253,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
                   Years of Experience
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ minWidth: '80px',textAlign:"center" }}>Action</TableCell>
+              <TableCell sx={{ minWidth: '80px', textAlign:"center", pl: '0 !important' }}>Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody sx={{
