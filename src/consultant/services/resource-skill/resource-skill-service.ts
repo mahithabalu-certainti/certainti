@@ -42,6 +42,7 @@ export const useResourceSkill = (
       },
       ...options,
       retry: 0,
+      enabled: !!params.accountNumber && !!params.resourceRid,
     }
   );
 };

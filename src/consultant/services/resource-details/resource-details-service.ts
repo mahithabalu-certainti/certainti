@@ -22,6 +22,6 @@ export const useResourceDetail = (
     queryFn: () => fetchResourceDetail(resourceId, accountNumber),
     retry: 0,
     gcTime: 0,
-    enabled: !!resourceId,
+    enabled: !!resourceId && !!accountNumber,
   });
 };

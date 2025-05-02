@@ -6,9 +6,7 @@ import { CreateSectionData } from '../../../../../types';
 import { formatDateToMMDDYYYY } from '../utils';
 
 interface ResourceDetailsProps {
-  resourceDetails: {
-    rid: string;
-  };
+  resourceId: string;
   accountId: string;
 }
 
@@ -95,14 +93,15 @@ const DetailsSection: React.FC<{
 };
 
 const ResourceDetails: React.FC<ResourceDetailsProps> = ({
-  resourceDetails,
+  resourceId,
   accountId,
 }) => {
+
   const {
     data: resource,
     isLoading,
     error,
-  } = useResourceDetail(resourceDetails.rid, accountId);
+  } = useResourceDetail(resourceId, accountId);
 
   const resourceData = resource?.data?.resourceDetails;
 

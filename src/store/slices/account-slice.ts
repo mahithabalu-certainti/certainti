@@ -3,7 +3,7 @@ import {
   getFiltersFromStorage,
   saveFiltersToStorage,
 } from '../../common-utils';
-import { fetchAccounts } from '../../consultant/services/account';
+import { fetchGlobalAccounts } from '../../consultant/services/account';
 import { AccountList, FilterState } from '../../consultant/types';
 
 export interface AccountState {
@@ -27,9 +27,9 @@ const initialState: AccountState = {
 };
 
 export const fetchAccountsThunk = createAsyncThunk(
-  'account/fetchAccounts',
+  'account/fetchGlobalAccounts',
   async () => {
-    return await fetchAccounts();
+    return await fetchGlobalAccounts();
   }
 );
 
