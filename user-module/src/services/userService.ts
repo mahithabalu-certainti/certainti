@@ -7,7 +7,7 @@ import { Op, Sequelize } from "sequelize";
   const { 
     User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams,
     ProfileMenuAccess, Menu, ProfileModuleAccess, MenuModule, ProfilePermissionAccess, ModulePermission,
-    UserMenuAccess, UserModuleAccess, UserPermissionAccess
+    UserMenuAccess, UserModuleAccess, UserPermissionAccess, PermissionField, ProfileFieldsAccess, UserFieldsAccess
   } = models;
 
 class UserService {
@@ -212,6 +212,67 @@ class UserService {
       return this.throwServiceError(err as Error);
     }
   }
+
+// ... existing code ...
+// ... existing code ...
+// ... existing code ...
+async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
+  // 1. Get profile id for user
+  const user = await User.findOne({ where: { rid: userId }, attributes: ["profile_rid"] });
+  const profileId = user?.profile_rid;
+  if (!profileId) return {};
+
+  // 2. Get all fields for the given permission ids
+  const fields = await PermissionField.findAll({
+    where: { module_permission_id: permissionIds },
+    raw: true,
+  });
+
+  // Collect all field IDs
+  const fieldIds = fields.map(f => f.rid);
+
+  // 3. Get profile field access for these fields
+  const profileFieldAccess = await ProfileFieldsAccess.findAll({
+    where: { profile_id: profileId, permission_field_id: fieldIds },
+    raw: true,
+  });
+
+  // 4. Get user field access for these fields
+  const userFieldAccess = await UserFieldsAccess.findAll({
+    where: { user_id: userId, permission_field_id: fieldIds },
+    raw: true,
+  });
+
+  // 5. Build access maps for quick lookup (by field_id)
+  const profileAccessMap: { [key: string]: { read: boolean; edit: boolean } } = {};
+  profileFieldAccess.forEach(acc => {
+    profileAccessMap[acc.permission_field_id] = { read: acc.read, edit: acc.edit };
+  });
+  const userAccessMap: { [key: string]: { read: boolean; edit: boolean } } = {};
+  userFieldAccess.forEach(acc => {
+    userAccessMap[acc.permission_field_id] = { read: acc.read, edit: acc.edit };
+  });
+
+  // 6. Build the response
+  const result: { [key: string]: any[] } = {};
+  permissionIds.forEach(pid => {
+    const fieldObjs = fields.filter(f => f.module_permission_id === pid);
+    result[pid] = fieldObjs.map(f => {
+      const profile = profileAccessMap[f.rid] || { read: false, edit: false };
+      const user = userAccessMap[f.rid] || { read: false, edit: false };
+      // Logic: If either profile or user access is true, set to true
+      return {
+        name: f.field_name,
+        desc: f.field_desc,
+        read: profile.read || user.read,
+        edit: profile.edit || user.edit
+      };
+    });
+  });
+  return result;
+}
+// ... existing code ...
+
 
   /**
    * Creates a new UserDetails record associated with the given user.
@@ -561,14 +622,32 @@ class UserService {
   }
 
   // Consolidate all permissions for a user
-  async getAllUserPermission(userId: string, profileId: string) {
-    const [profilePermissions, userPermissions] = await Promise.all([
-      this.getProfilePermission(profileId),
-      this.getUserPermission(userId)
-    ]);
-    // Merge and deduplicate if needed
-    return [...profilePermissions, ...userPermissions];
-  }
+// ... existing code ...
+async getAllUserPermission(userId: string, profileId: string) {
+  console.log("userId : ",userId);
+  console.log("profileId : ",profileId);
+  const [profilePermissions, userPermissions] = await Promise.all([
+    this.getProfilePermission(profileId),
+    this.getUserPermission(userId)
+  ]);
+
+  const merged = [...profilePermissions, ...userPermissions];
+  console.log("merged : ",merged);
+  const uniqueByNameType: { [key: string]: any } = {};
+
+  merged.forEach(item => {
+    const key = `${item.type}::${item.name}`;
+    const existingItem = uniqueByNameType[key];
+
+    if (!existingItem) {
+      uniqueByNameType[key] = item;
+    } else if (item.is_enabled && !existingItem.is_enabled) {
+      uniqueByNameType[key] = item;
+    }
+  });
+  console.log("After duplicate remove : ",Object.values(uniqueByNameType));
+  return Object.values(uniqueByNameType);
+}
 
   // Get all profile-based permissions
   async getProfilePermission(profileId: string) {
@@ -576,7 +655,7 @@ class UserService {
 
     // Menus
     const menuAccess = await ProfileMenuAccess.findAll({
-      where: { profile_id: profileId, is_enabled: true },
+      where: { profile_id: profileId},
       include: [{ model: Menu, as: "menu" }]
     });
     menuAccess.forEach(ma => {
@@ -593,7 +672,7 @@ class UserService {
 
     // Modules
     const moduleAccess = await ProfileModuleAccess.findAll({
-      where: { profile_id: profileId, is_enabled: true },
+      where: { profile_id: profileId},
       include: [{ model: MenuModule, as: "menu_module" }]
     });
     moduleAccess.forEach(mo => {
@@ -610,7 +689,7 @@ class UserService {
 
     // Permissions
     const permissionAccess = await ProfilePermissionAccess.findAll({
-      where: { profile_id: profileId, is_enabled: true },
+      where: { profile_id: profileId},
       include: [{ model: ModulePermission, as: "module_permission" }]
     });
     permissionAccess.forEach(pa => {
@@ -635,7 +714,7 @@ class UserService {
 
     // Menus
     const menuAccess = await UserMenuAccess.findAll({
-      where: { user_id: userId, is_enabled: true },
+      where: { user_id: userId},
       include: [{ model: Menu, as: "menu" }]
     });
     menuAccess.forEach(ma => {
@@ -652,7 +731,7 @@ class UserService {
 
     // Modules
     const moduleAccess = await UserModuleAccess.findAll({
-      where: { user_id: userId, is_enabled: true },
+      where: { user_id: userId},
       include: [{ model: MenuModule, as: "menu_module" }]
     });
     moduleAccess.forEach(mo => {
@@ -669,7 +748,7 @@ class UserService {
 
     // Permissions
     const permissionAccess = await UserPermissionAccess.findAll({
-      where: { user_id: userId, is_enabled: true },
+      where: { user_id: userId},
       include: [{ model: ModulePermission, as: "module_permission" }]
     });
     permissionAccess.forEach(pa => {

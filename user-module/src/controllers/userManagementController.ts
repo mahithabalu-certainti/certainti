@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { constants } from "../utils/constant";
 import { errorResponse, successResponse } from "../utils/apiResponse";
 import configurations from "../config/config";
+import { ParsedQs } from "qs";
 import {
   errorLog,
   handleErrorResponse,
@@ -83,6 +84,49 @@ async function userProfiles(req: Request, res: Response): Promise<void> {
   }
 }
 
+// ... existing code ...
+async function userPermissionFields(req: Request, res: Response): Promise<void> {
+  const methodName = "User permission fields";
+  try {
+    const userId: string = req.params.userId;
+    let permissionIds = req.query.id;
+
+    if (!userId || !permissionIds) {
+      errorLog(methodName, "userId and permission ids are required");
+      handleErrorResponse(
+        res,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        "userId and permission ids are required"
+      );
+      return;
+    }
+
+    if (typeof permissionIds === "string") {
+      permissionIds = permissionIds.split(",");
+    } else {
+      permissionIds = [];
+    }
+
+    // Ensure permissionIds is string[]
+    const permissionIdsArr: string[] = (permissionIds as Array<string | ParsedQs>)
+      .map(id => typeof id === "string" ? id : String(id));
+
+    const result = await services.userServices.getPermissionFieldsByIds(userId, permissionIdsArr);
+
+    successLog(methodName);
+    handleSuccessResponse(res, result);
+  } catch (err: any) {
+    errorLog("User permission fields", err.message);
+    handleErrorResponse(
+      res,
+      constants.FAILED,
+      constants.FAILED_MESSAGE,
+      err.message
+    );
+  }
+}
+// ... existing code ...
 async function userPermissionById(req: Request, res: Response): Promise<void> {
   const methodName = "User permission by ID";
   try {
@@ -112,4 +156,4 @@ async function userPermissionById(req: Request, res: Response): Promise<void> {
   }
 }
 
-export { userProfiles, userRoles, userPermissionById };
+export { userProfiles, userRoles, userPermissionById, userPermissionFields};
