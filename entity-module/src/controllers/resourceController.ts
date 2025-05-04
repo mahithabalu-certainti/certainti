@@ -169,7 +169,7 @@ async function exportResourcesList(req: Request, res: Response): Promise<void> {
 
     if (resourcesList.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, generateExcelBase64(resourcesList?.data?.resources,"Resources"));
+      handleSuccessResponse(res, await generateExcelBase64(resourcesList?.data?.resources,"Resources"));
       return;
     } else {
       errorLog(methodName, resourcesList.errorMessage);

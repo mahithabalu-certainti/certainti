@@ -144,7 +144,7 @@ async function exportResourceCosts(req: Request, res: Response): Promise<void> {
 
     if (resourceCost.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-       handleSuccessResponse(res, generateExcelBase64(resourceCost?.data?.resourceCost,"Resource Cost"));
+       handleSuccessResponse(res, await generateExcelBase64(resourceCost?.data?.resourceCost,"Resource Cost"));
     } else {
       errorLog(methodName, resourceCost.errorMessage);
       handleErrorResponse(
