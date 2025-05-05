@@ -89,3 +89,13 @@ export type ResourceSkillPayload = {
   technical_weightage?: string;
   accountNumber?: string;
 };
+
+export type ExportModule = {
+  sortBy?: string;
+  sortOrder?: string;
+  fiscalYear?: string  ;
+  rNumber?: string;
+  resourceRid?:string;
+};
+
+

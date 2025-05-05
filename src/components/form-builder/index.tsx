@@ -2,7 +2,9 @@ import { Autocomplete, Checkbox, Skeleton, TextField } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import dayjs from 'dayjs';
+// import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
+
 import { CountryCode, parsePhoneNumberFromString } from 'libphonenumber-js';
 import React, { useEffect } from 'react';
 import PhoneInput, { CountryData } from 'react-phone-input-2';
@@ -308,13 +310,36 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             ))}
           </div>
         );
-      case 'date':
+      case 'date': {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const startDateValue: string | undefined | any =
+          constructFormData['financial_start_date'];
+        const today: Dayjs = dayjs();
+
+        const parsedStartDate = startDateValue
+          ? dayjs(startDateValue, 'MM/DD/YYYY')
+          : undefined;
+
+        const customMinDate: Dayjs | undefined =
+          field.name === 'financial_end_date' && parsedStartDate
+            ? parsedStartDate.add(1, 'day')
+            : field?.minDate
+              ? dayjs(field.minDate)
+              : undefined;
+
+        const customMaxDate: Dayjs | undefined =
+          field.name === 'financial_end_date' && startDateValue
+            ? today
+            : field?.maxDate
+              ? dayjs(field.maxDate)
+              : undefined;
+
         return (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
               className={fieldDisabled}
-              maxDate={field?.maxDate ? dayjs(field?.maxDate) : undefined}
-              minDate={field?.minDate ? dayjs(field?.minDate) : undefined}
+              minDate={customMinDate}
+              maxDate={customMaxDate}
               value={dayjs(fieldValue, 'MM/DD/YYYY')}
               disabled={field.disabled}
               format='MM/DD/YYYY'
@@ -325,7 +350,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               }}
               shouldDisableDate={
                 field.disableFutureDates
-                  ? (date) => dayjs(date).isAfter(dayjs(), 'day')
+                  ? (date) => dayjs(date).isAfter(today, 'day')
                   : undefined
               }
               slots={{
@@ -384,6 +409,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             />
           </LocalizationProvider>
         );
+      }
+
       case 'fiscalDate':
         return (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
