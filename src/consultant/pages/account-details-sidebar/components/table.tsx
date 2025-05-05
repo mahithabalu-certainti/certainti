@@ -56,7 +56,7 @@ interface DataTableProps {
   isLoading?: boolean;
   error?: Error | null;
   emptyStateMessage?: string;
-  setCurrentPage: (page: number) => void;
+  setCurrentPage?: (page: number) => void;
   setSortOrder: (order: 'ASC' | 'DESC') => void;
   setSortField: (field: string) => void;
   setRowsPerPage: (rows: number) => void;

@@ -23,17 +23,16 @@ import { TablePagination } from '../../../../../../components/table';
 import { arrowDownIcon, arrowUpIcon } from '../../../../../../assets';
 import { formatDateToMMDDYYYY } from '../utils';
 
-const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, appliedFilters, accountDetails, resourceRid }) => {
+const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, appliedFilters, accountDetails, resourceRid, currentPage, setCurrentPage }) => {
   const navigate = useNavigate();
   // const location = useLocation();
-  const [page, setPage] = useState<number>(1);
   const [rowsPerPage, setRowsPerPage] = useState<number>(25);
   const [order, setOrder] = useState<'asc' | 'desc'>('desc');
   const [orderBy, setOrderBy] = useState<keyof ResourceSkillList>('created_datetime');
   const [resourceSkillList, setResourceSkillList] = useState<ResourceSkillType[]>([]);
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
   const { data: skillList, isLoading: loading } = useResourceSkill({
-    page: page,
+    page: currentPage,
     limit: rowsPerPage,
     sortBy: orderBy,
     sortOrder: apiOrder,
@@ -54,13 +53,13 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
   };
 
   const handleChangePage = (newPage: number) => {
-    setPage(newPage + 1);
+    setCurrentPage(newPage + 1);
   };
 
   // handles page limit change
   const handleChangeRowsPerPage = (newPageSize: number) => {
     setRowsPerPage(newPageSize);
-    setPage(1);
+    setCurrentPage(1);
   };
 
   const handleRequestSort = (
@@ -295,7 +294,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
         rowsPerPageOptions={[25, 30, 40, 50, 100]}
         count={skillList?.count ?? 0}
         rowsPerPage={rowsPerPage}
-        page={(page ?? 1) - 1}
+        page={(currentPage ?? 1) - 1}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />

@@ -36,6 +36,7 @@ const TabPanel: React.FC<TabProps> = ({
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
+    setCurrentPage(1)
   };
 
   const handleSortClose = () => {
