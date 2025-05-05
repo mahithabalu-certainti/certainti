@@ -493,7 +493,7 @@ async executeQueries(
     const alphanumericFields = ["skill_name"];
     const numericFields = ["years_of_experience"];
     const dateFields = ["start_date"];
-    const enumFields = ["skill_level"];
+    const enumFields = ["skill_level","status"];
 
     // Process each filter
     Object.entries(filters).forEach(([key, value]) => {
@@ -674,12 +674,12 @@ processEnumFilter(key: string, value: any) {
   let tableAlias = "rs"; // Default to rs since we're only handling skill_level
 
   if (value.equals !== undefined) {
-    condition += ` AND ${tableAlias}."${key}" = '${value.equals}'`;
+    condition += ` AND LOWER(${tableAlias}."${key}") = LOWER('${value.equals}')`;
   } else if (value.not_equals !== undefined) {
-    condition += ` AND ${tableAlias}."${key}" != '${value.not_equals}'`;
+    condition += ` AND LOWER(${tableAlias}."${key}") != LOWER('${value.not_equals}')`;
   } else if (value.in && Array.isArray(value.in) && value.in.length > 0) {
-    const values = value.in.map((item: string) => `'${item}'`).join(",");
-    condition += ` AND ${tableAlias}."${key}" IN (${values})`;
+    const values = value.in.map((item: string) => `'${item.toLowerCase()}'`).join(",");
+    condition += ` AND LOWER(${tableAlias}."${key}") IN (${values})`;
   } else if (value.is_empty !== undefined) {
     if (value.is_empty) {
       condition += ` AND (${tableAlias}."${key}" IS NULL OR ${tableAlias}."${key}" = '')`;

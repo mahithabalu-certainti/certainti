@@ -805,7 +805,7 @@ class ResourceCostSchemaService {
     let filterConditions = "";
 
     // Define field types for proper filter handling
-    const alphanumericFields: string[] = [];
+    const alphanumericFields = ["status"];
     const numericFields = [
       "annual",
       "monthly",
