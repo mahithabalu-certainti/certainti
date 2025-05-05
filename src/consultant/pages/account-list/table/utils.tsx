@@ -178,6 +178,7 @@ export const renderRows = ({
           <TableCell sx={{ minWidth: '160px' }}>{account.annualRevenue}</TableCell>
           <TableCell sx={{color: account.status === 'Active' ? '#199806 !important' : '#f44336 !important'}}>{account.status}</TableCell>
           <TableCell
+            title={account.primaryContact}
             sx={{
               minWidth: '180px',
               maxWidth: '180px',
@@ -308,6 +309,7 @@ export const renderChildRows = ({
           <TableCell sx={{ minWidth: '160px' }}>{account.annualRevenue}</TableCell>
           <TableCell sx={{color: account.status === 'Active' ? '#199806 !important' : '#f44336 !important', minWidth: '100px' }}>{account.status}</TableCell>
           <TableCell
+            title={account.primaryContact}
             sx={{
               minWidth: '180px',
               maxWidth: '180px',

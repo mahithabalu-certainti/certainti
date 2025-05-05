@@ -408,13 +408,13 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
             }}
           >
             {loading ? (
-              <TableRow>
+              <TableRow style={{ height: '300px'}}>
                 <TableCell colSpan={11} align='center'>
                   <CircularProgress />
                 </TableCell>
               </TableRow>
             ) : resourceCostList?.length === 0 ? (
-              <TableRow>
+              <TableRow style={{ height: loading ? '300px': "auto" }}>
                 <TableCell colSpan={11} align='center'>
                   <Typography variant='body1'>No cost information found</Typography>
                 </TableCell>
