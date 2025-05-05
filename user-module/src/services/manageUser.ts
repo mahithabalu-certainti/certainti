@@ -1,5 +1,5 @@
 import { Client } from "@microsoft/microsoft-graph-client";
-import { getAzureB2CToken } from "../middlewares/auzureMiddleware";
+import { getAzureB2CToken } from "../middlewares/azureMiddleware";
 import configurations from "../config/config";
 import { Logger } from "winston";
 

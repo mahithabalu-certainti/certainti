@@ -6,7 +6,7 @@ import {
   createAzureB2CUser,
   updateAzureUser,
 } from "../src/services/manageUser";
-import { getAzureB2CToken } from "../src/middlewares/auzureMiddleware";
+import { getAzureB2CToken } from "../src/middlewares/azureMiddleware";
 
 jest.mock("@microsoft/microsoft-graph-client", () => ({
   Client: {
