@@ -36,7 +36,6 @@ const getAzureB2CToken = async (): Promise<string> => {
 const checkUserStatusMiddleware = (permissionName?: string) => {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    console.log("permissionName=>",permissionName);
     const azureId = req.headers['x-azure-id'] as string;
     const userIdHeader = req.headers['x-user-id'] as string;
     let userId: string | undefined;
@@ -62,9 +61,7 @@ const checkUserStatusMiddleware = (permissionName?: string) => {
         replacements: { userId },
         type: SELECT
       }
-    ) as Array<{ status: string; rid: string; email: string; profile_rid: string }>;
-      console.log("users=>",users);
-      
+    ) as Array<{ status: string; rid: string; email: string; profile_rid: string }>;      
       // Get the first user from the array
       const user = users[0];
       
@@ -83,7 +80,6 @@ const checkUserStatusMiddleware = (permissionName?: string) => {
           permissionName,
           req.originalUrl
         );
-        console.log("hasPermission=>",hasPermission);
         if (!hasPermission) {
           res.status(constants.FORBIDDEN).json({
             error: constants.FORBIDDEN_MESSAGE,
