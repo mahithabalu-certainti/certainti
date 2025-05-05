@@ -22,6 +22,7 @@ import {
 import { AccountInfo } from './account-info';
 import Sidebar from './sidebar';
 import { transformAccountData } from './utils';
+import { CircularProgress } from '@mui/material';
 
 export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
@@ -149,7 +150,15 @@ export const AccountDetails = () => {
         <div className='flex w-[261px] min-w-[261px] max-w-[261px]'>
           <Sidebar activeKey={activeKey} onSelect={setActiveKey} />
         </div>
-        <div className='flex-1 p-4 overflow-hidden'>{renderContent()}</div>
+        <div className='flex-1 p-4 overflow-hidden'>
+          {isLoading ?
+            <div className='flex items-center justify-center w-full h-full'>
+              <CircularProgress />
+            </div>
+            :
+            <>{renderContent()}</>
+          }
+        </div>
       </div>
     </div>
   );

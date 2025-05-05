@@ -270,13 +270,13 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
             },
           }}>
             {loading ? (
-              <TableRow>
+              <TableRow style={{ height:'300px' }}>
                 <TableCell colSpan={11} align='center'>
                   <CircularProgress />
                 </TableCell>
               </TableRow>
             ) : resourceSkillList?.length === 0 ? (
-              <TableRow>
+              <TableRow style={{ height: loading ? '300px' : "auto" }}>
                 <TableCell colSpan={11} align='center'>
                   <Typography variant='body1'>No skill information found</Typography>
                 </TableCell>

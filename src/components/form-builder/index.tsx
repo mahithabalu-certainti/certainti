@@ -47,7 +47,30 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     <Skeleton variant='rounded' width='100%' height={32} />
   );
   useEffect(() => {
-    setFormData(data);
+    setFormData((prevFormData = []) => {
+      return data.map((newSection) => {
+        const oldSection = prevFormData.find(
+          (s) => s.sectionName === newSection.sectionName
+        );
+    
+        return {
+          ...newSection,
+          fields: newSection.fields.map((newField) => {
+            const oldField = oldSection?.fields.find(
+              (f) => f.name === newField.name
+            );
+    
+            return {
+              ...newField,
+              error: oldField?.error ?? newField.error,
+              disabled: oldField?.disabled?? newField.disabled,
+              value: oldField?.value ?? newField.value,
+            };
+          }),
+        };
+      });
+    });
+      
     // Only set initial form data if constructFormData is empty
     if (Object.values(constructFormData).every((value) => !value)) {
       let constructFormData = {};

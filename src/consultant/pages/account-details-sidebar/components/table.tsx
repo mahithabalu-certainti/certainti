@@ -474,7 +474,7 @@ const DataTable: React.FC<DataTableProps> = ({
                 </TableRow>
               ))
             ) : (
-              <TableRow style={{ height: '300px' }}>
+              <TableRow style={{ height: isLoading ? '300px' : "auto" }}>
                 <TableCell
                   colSpan={columns.length}
                   align='center'
