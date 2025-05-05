@@ -505,21 +505,38 @@ export const EnumFilterControl: React.FC<{
 }) => {
   const option = formatString(filterStates?.[fieldName]?.enum?.option);
   const isMultiple = option === 'In';
-  const hideInput = option === 'Is Empty' || option === 'Is Not Empty';
+  const hideInput = option === 'Is Empty';
+
+  const handleOptionChange = (e: SelectChangeEvent<any>) => {
+    const newOption = e.target.value;
+    const newOptionFormatted = formatString(newOption);
+    const willBeMultiple = newOptionFormatted === 'In';
+    const willHideInput = newOptionFormatted === 'Is Empty';
+
+    // Reset values based on the new option type
+    if (willHideInput) {
+      onChange(fieldName, false, newOptionFormatted.toLowerCase());
+    } else if (willBeMultiple) {
+      onChange(fieldName, true, []);
+    } else {
+      onChange(fieldName, false, '');
+    }
+
+    // Then update the option
+    onOptionChange(fieldName, e);
+  };
 
   // Handle value normalization based on selection mode
   const currentValue = state.enum?.value as string | string[];
   let normalizedValue: string | string[];
 
   if (isMultiple) {
-    // For "In" option, ensure array type
     normalizedValue = Array.isArray(currentValue) 
       ? currentValue 
       : currentValue !== undefined && currentValue !== null
         ? [currentValue]
         : [];
   } else {
-    // For other options, use string type
     normalizedValue = Array.isArray(currentValue)
       ? currentValue[0] || ''
       : currentValue || '';
@@ -527,14 +544,11 @@ export const EnumFilterControl: React.FC<{
 
   const handleValueChange = (newValue: any) => {
     if (isMultiple) {
-      // For "In" option, pass as array
       const values = typeof newValue === 'string' ? newValue.split(',') : newValue;
       onChange(fieldName, true, values);
     } else if (hideInput) {
-      // For "Is Empty" or "Is Not Empty", pass the option as string
       onChange(fieldName, false, option.toLowerCase());
     } else {
-      // For other options, pass as string
       onChange(fieldName, false, newValue);
     }
   };
@@ -554,7 +568,7 @@ export const EnumFilterControl: React.FC<{
         >
           <Select
             value={state?.enum?.option?.toLowerCase() ?? 'equals'}
-            onChange={(e) => onOptionChange(fieldName, e)}
+            onChange={handleOptionChange}  // Updated to use our custom handler
             sx={{ height: '30px', minHeight: 20 }}
             MenuProps={{
               sx: {
