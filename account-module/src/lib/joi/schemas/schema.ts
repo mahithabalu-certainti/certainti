@@ -74,25 +74,23 @@ const accountSchema = Joi.object({
     }),
   interaction_cc_list: Joi.string().allow(null),
   blended_rate_fte: Joi.string()
-    .pattern(/^\d{1,8}(\.\d{0,2})?$/)
+    .pattern(/^\d{1,10}$/)
     .max(10)
     .optional()
     .messages({
-      "string.pattern.base":
-        "blended_rate_fte must be a number with up to 10 characters, including decimal places",
-      "string.max": "blended_rate_fte must be at most 10 characters long",
+      "string.pattern.base":"Blended Rate - FTE must be a whole number with up to 10 digits",
+      "string.max": "Blended Rate - FTE must not exceed 10 digits"
     })
     .allow(null)
     .allow(""),
 
   blended_rate_subcon: Joi.string()
-    .pattern(/^\d{1,8}(\.\d{0,2})?$/)
+    .pattern(/^\d{1,10}$/)
     .max(10)
     .optional()
     .messages({
-      "string.pattern.base":
-        "blended_rate_subcon must be a number with up to 10 characters, including decimal places",
-      "string.max": "blended_rate_subcon must be at most 10 characters long",
+      "string.pattern.base":"Blended Rate - SubCon must be a whole number with up to 10 digits",
+      "string.max": "Blended Rate - SubCon must not exceed 10 digits",
     })
     .allow(null)
     .allow(""),
@@ -176,25 +174,23 @@ const updateAccountSchema = Joi.object({
     }),
   interaction_cc_list: Joi.string().allow(null),
   blended_rate_fte: Joi.string()
-    .pattern(/^\d{1,8}(\.\d{0,2})?$/)
+    .pattern(/^\d{1,10}$/)
     .max(10)
     .optional()
     .messages({
-      "string.pattern.base":
-        "blended_rate_fte must be a number with up to 10 characters, including decimal places",
-      "string.max": "blended_rate_fte must be at most 10 characters long",
+      "string.pattern.base":"Blended Rate - FTE must be a whole number with up to 10 digits",
+      "string.max": "Blended Rate - FTE must not exceed 10 digits",
     })
     .allow(null)
     .allow(""),
 
   blended_rate_subcon: Joi.string()
-    .pattern(/^\d{1,8}(\.\d{0,2})?$/)
+    .pattern(/^\d{1,10}$/)
     .max(10)
     .optional()
     .messages({
-      "string.pattern.base":
-        "blended_rate_subcon must be a number with up to 10 characters, including decimal places",
-      "string.max": "blended_rate_subcon must be at most 10 characters long",
+      "string.pattern.base":"Blended Rate - SubCon must be a whole number with up to 10 digits",
+      "string.max": "Blended Rate - SubCon must not exceed 10 digits",
     })
     .allow(null)
     .allow(""),
