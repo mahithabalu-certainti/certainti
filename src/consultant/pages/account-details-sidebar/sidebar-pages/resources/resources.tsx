@@ -54,7 +54,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     isLoading,
     error,
   } = useResourceList({
-    page: currentPage+ 1, // API expects 1-based index
+    page: currentPage+1, // API expects 1-based index
     limit: rowsPerPage,
     accountNumber: accountDetails?.data?.accountById.r_number,
     sortBy: sortField,
@@ -74,6 +74,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     // update the URL with the tab value
     searchParams.set('tab', newValue);
     navigate({ search: searchParams.toString() });
+    setCurrentPage(0)
   };
 
   const handleResourceClick = (row: any) => {

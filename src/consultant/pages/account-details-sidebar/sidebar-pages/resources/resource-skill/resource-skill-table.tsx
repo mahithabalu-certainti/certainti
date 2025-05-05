@@ -53,13 +53,13 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
   };
 
   const handleChangePage = (newPage: number) => {
-    setCurrentPage(newPage + 1);
+    setCurrentPage(newPage);
   };
 
   // handles page limit change
   const handleChangeRowsPerPage = (newPageSize: number) => {
     setRowsPerPage(newPageSize);
-    setCurrentPage(1);
+    setCurrentPage(0);
   };
 
   const handleRequestSort = (
@@ -294,7 +294,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
         rowsPerPageOptions={[25, 30, 40, 50, 100]}
         count={skillList?.count ?? 0}
         rowsPerPage={rowsPerPage}
-        page={(currentPage ?? 1) - 1}
+        page={currentPage}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />

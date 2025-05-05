@@ -43,7 +43,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
   const [resourceCostList, setResourceCostList] = useState<ResourceCostType[]>([]);
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
   const { data: costList, isLoading: loading } = useResourceCost({
-    page: currentPage + 1,
+    page: currentPage+1,
     limit: rowsPerPage,
     sortBy: orderBy,
     sortOrder: apiOrder,
@@ -68,13 +68,13 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
   // };
 
   const handleChangePage = (newPage: number) => {
-    setCurrentPage(newPage + 1);
+    setCurrentPage(newPage);
   };
 
   // handles page limit change
   const handleChangeRowsPerPage = (newPageSize: number) => {
     setRowsPerPage(newPageSize)
-    setCurrentPage(1);
+    setCurrentPage(0);
   };
 
   const handleRequestSort = (
@@ -432,7 +432,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
         // component='div'
         count={costList?.count ?? 0}
         rowsPerPage={rowsPerPage}
-        page={(currentPage ?? 1) - 1}
+        page={currentPage}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
