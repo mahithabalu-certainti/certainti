@@ -260,15 +260,6 @@ class ResourceCostSchemaService {
     }
 
     const currencyFilter = filters.currency;
-    const mainDbSequelize = await initMainDbSequelize();
-
-      if (!mainDbSequelize) {
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: "Main database connection not available",
-        };
-      }
 
     // Handle is_empty operator first
     if (currencyFilter.is_empty !== undefined) {
@@ -276,79 +267,55 @@ class ResourceCostSchemaService {
       if (currencyFilter.is_empty) {
         // For is_empty: true, we want records where currency_rid IS NULL or empty
         filters.currency_rid = {
-          is_empty: true
+          is_empty: true,
         };
       } else {
         // For is_empty: false, we want records where currency_rid IS NOT NULL and not empty
         filters.currency_rid = {
-          is_not_empty: true
+          is_not_empty: true,
         };
       }
       return null;
     }
 
-    let currencyResults: any[] = [];
-
-    // Handle equals operator
+    // Handle equals operator for UUID
     if (currencyFilter.equals) {
-      const query = `
-        SELECT rid FROM "public"."currency" 
-      WHERE LOWER(currency_code) = LOWER(:value) 
-      OR LOWER(currency_name) = LOWER(:value)
-    `;
-      currencyResults = await mainDbSequelize.query(query, {
-        replacements: { value: currencyFilter.equals },
-        type: "SELECT",
-      });
+      delete filters.currency;
+      filters.currency_rid = {
+        equals: currencyFilter.equals,
+      };
     }
 
-    // Handle not_equals operator
+    // Handle not_equals operator for UUID
     else if (currencyFilter.not_equals) {
-      const query = `
-      SELECT rid FROM "public"."currency" 
-      WHERE LOWER(currency_code) != LOWER(:value) 
-      AND LOWER(currency_name) != LOWER(:value)
-    `;
-      currencyResults = await mainDbSequelize.query(query, {
-        replacements: { value: currencyFilter.not_equals },
-        type: "SELECT",
-      });
+      delete filters.currency;
+      filters.currency_rid = {
+        not_equals: currencyFilter.not_equals,
+      };
     }
 
-    // Handle contains operator
+    // Handle contains operator for UUID
     else if (currencyFilter.contains) {
-      const query = `
-      SELECT rid FROM "public"."currency" 
-      WHERE LOWER(currency_code) LIKE LOWER(:value) 
-      OR LOWER(currency_name) LIKE LOWER(:value)
-    `;
-      currencyResults = await mainDbSequelize.query(query, {
-        replacements: { value: `%${currencyFilter.contains}%` },
-        type: "SELECT",
-      });
+      delete filters.currency;
+      filters.currency_rid = {
+        contains: currencyFilter.contains,
+      };
     }
 
-    // Handle in operator
+    // Handle in operator for array of UUIDs
     else if (currencyFilter.in && Array.isArray(currencyFilter.in)) {
-      const values = currencyFilter.in.map((val: string) => val.toLowerCase());
-      const query = `
-      SELECT rid FROM "public"."currency" 
-      WHERE LOWER(currency_code) IN (:values)
-      OR LOWER(currency_name) IN (:values)
-    `;
-      currencyResults = await mainDbSequelize.query(query, {
-        replacements: { values },
-        type: "SELECT",
-      });
+      delete filters.currency;
+      filters.currency_rid = {
+        in: currencyFilter.in,
+      };
     }
 
-    // Extract RIDs and update filters
-    if (currencyResults.length > 0) {
-      const currencyRids = currencyResults.map((result) => result.rid);
-        delete filters.currency;
-        filters.currency_rid = {
-          in: currencyRids,
-        };
+    // Handle not_in operator for array of UUIDs
+    else if (currencyFilter.not_in && Array.isArray(currencyFilter.not_in)) {
+      delete filters.currency;
+      filters.currency_rid = {
+        not_in: currencyFilter.not_in,
+      };
     }
 
     return null;
@@ -535,7 +502,6 @@ class ResourceCostSchemaService {
     }
   }
 
-
   /**
    * Executes the main and count queries and formats the response
    *
@@ -676,25 +642,25 @@ class ResourceCostSchemaService {
       const rawResult = resourceCost || [];
       let exportData = rawResult.map((resource: any) => {
         return {
-          "Resource Full Name":resource.resource_fullname,
-          "Currency":resource.currency_code,
-          "Start Date":resource.effective_date,
-          "End Date":resource.end_date,
-          "Hourly":resource.hourly_cost,
-          "Daily":resource.daily_cost,
-          "Bi-Weekly":resource.bi_weekly_cost,
-          "Weekly":resource.weekly_cost,
-          "Monthly":resource.monthly_cost,
-          "Semi Annual":resource.semi_annual_cost,
-          "Annual":resource.annual_cost
+          "Resource Full Name": resource.resource_fullname,
+          Currency: resource.currency_code,
+          "Start Date": resource.effective_date,
+          "End Date": resource.end_date,
+          Hourly: resource.hourly_cost,
+          Daily: resource.daily_cost,
+          "Bi-Weekly": resource.bi_weekly_cost,
+          Weekly: resource.weekly_cost,
+          Monthly: resource.monthly_cost,
+          "Semi Annual": resource.semi_annual_cost,
+          Annual: resource.annual_cost,
         };
       });
-        
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          resourceCost: exportData
+          resourceCost: exportData,
         },
       };
     } catch (error) {
@@ -805,7 +771,7 @@ class ResourceCostSchemaService {
     let filterConditions = "";
 
     // Define field types for proper filter handling
-    const alphanumericFields: string[] = [];
+    const alphanumericFields = ["status"];
     const numericFields = [
       "annual",
       "monthly",
@@ -984,20 +950,34 @@ class ResourceCostSchemaService {
     return condition;
   }
 
-processDefaultFilter(key: string, value: any): string {
-  let condition = "";
+  processDefaultFilter(key: string, value: any): string {
+    let condition = "";
     const isUuidField = key.toLowerCase().includes("rid");
 
-  if (value.equals !== undefined) {
-    if (typeof value.equals === "string") {
-      if (isUuidField) {
+    if (value.equals !== undefined) {
+      if (typeof value.equals === "string") {
+        if (isUuidField) {
           condition += ` AND rc."${key}" = '${value.equals}'`;
+        } else {
+          condition += ` AND LOWER(rc."${key}") = LOWER('${value.equals}')`;
+        }
       } else {
-        condition += ` AND LOWER(rc."${key}") = LOWER('${value.equals}')`;
+        condition += ` AND rc."${key}" = ${value.equals}`;
       }
-    } else {
-      condition += ` AND rc."${key}" = ${value.equals}`;
-    }
+    } else if (value.not_equals !== undefined) {
+      if (typeof value.not_equals === "string") {
+        if (isUuidField) {
+          condition += ` AND rc."${key}" != '${value.not_equals}'`;
+        } else {
+          condition += ` AND LOWER(rc."${key}") != LOWER('${value.not_equals}')`;
+        }
+      } else {
+        condition += ` AND rc."${key}" != ${value.not_equals}`;
+      }
+    } else if (value.contains !== undefined) {
+      condition += ` AND LOWER(rc."${key}") LIKE LOWER('%${value.contains}%')`;
+    } else if (value.not_contains !== undefined) {
+      condition += ` AND LOWER(rc."${key}") NOT LIKE LOWER('%${value.not_contains}%')`;
     } else if (value.is_empty !== undefined) {
       if (value.is_empty) {
         if (isUuidField) {
@@ -1014,43 +994,46 @@ processDefaultFilter(key: string, value: any): string {
           condition += ` AND rc."${key}" IS NOT NULL AND rc."${key}" != ''`;
         }
       }
-  } else if (value.in && Array.isArray(value.in) && value.in.length > 0) {
-    if (typeof value.in[0] === "string") {
-      if (isUuidField) {
+    } else if (value.in && Array.isArray(value.in) && value.in.length > 0) {
+      if (typeof value.in[0] === "string") {
+        if (isUuidField) {
           const values = value.in.map((item: string) => `'${item}'`).join(",");
           condition += ` AND rc."${key}" IN (${values})`;
+        } else {
+          const values = value.in
+            .map((item: string) => `LOWER('${item}')`)
+            .join(",");
+          condition += ` AND LOWER(rc."${key}") IN (${values})`;
+        }
       } else {
-        const values = value.in
-            .map((item: string) => `LOWER('${item}')`).join(",");
-        condition += ` AND LOWER(rc."${key}") IN (${values})`;
+        const values = value.in.join(",");
+        condition += ` AND rc."${key}" IN (${values})`;
       }
-    } else {
-      const values = value.in.join(",");
-      condition += ` AND rc."${key}" IN (${values})`;
-    }
-  } else if (
-    value.not_in &&
-    Array.isArray(value.not_in) &&
-    value.not_in.length > 0
-  ) {
-    if (typeof value.not_in[0] === "string") {
-      if (isUuidField) {
+    } else if (
+      value.not_in &&
+      Array.isArray(value.not_in) &&
+      value.not_in.length > 0
+    ) {
+      if (typeof value.not_in[0] === "string") {
+        if (isUuidField) {
           const values = value.not_in
-            .map((item: string) => `'${item}'`).join(",");
+            .map((item: string) => `'${item}'`)
+            .join(",");
           condition += ` AND rc."${key}" NOT IN (${values})`;
+        } else {
+          const values = value.not_in
+            .map((item: string) => `LOWER('${item}')`)
+            .join(",");
+          condition += ` AND LOWER(rc."${key}") NOT IN (${values})`;
+        }
       } else {
-        const values = value.not_in
-            .map((item: string) => `LOWER('${item}')`).join(",");
-        condition += ` AND LOWER(rc."${key}") NOT IN (${values})`;
+        const values = value.not_in.join(",");
+        condition += ` AND rc."${key}" NOT IN (${values})`;
       }
-    } else {
-      const values = value.not_in.join(",");
-      condition += ` AND rc."${key}" NOT IN (${values})`;
     }
-  }
 
-  return condition;
-}
+    return condition;
+  }
 
   processSimpleEqualityFilter(key: string, value: any): string {
     // Your existing implementation
