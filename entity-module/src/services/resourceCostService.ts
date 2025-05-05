@@ -1,6 +1,6 @@
 import { ResourceCost } from "../models/resourceCost";
 import { Resources } from "../models/resource";
-import  {IResourceCost, IUpdateResourceCost} from "../utils/types";
+import { IResourceCost, IUpdateResourceCost } from "../utils/types";
 import { HttpStatus } from "../utils/constants";
 import { ResourceCostTimeline } from "../models/resourceCostTimeline";
 import { ResourceCostHistory } from "../models/resourceCostHistory";
@@ -41,7 +41,6 @@ class ResourceCostService {
     return this.mainDbSequelize;
   }
 
-
   /**
    * Retrieves a paginated list of resource costs for a specific account and fiscal year.
    * Supports filtering, sorting, and searching functionality.
@@ -65,7 +64,7 @@ class ResourceCostService {
     sortOrder: string,
     accountNumber: string,
     fiscalYear: number,
-    resourceRid: string,
+    resourceRid: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -77,8 +76,8 @@ class ResourceCostService {
       const [finalSortBy, finalSortOrder] =
         resourceCostSchemaService.getSortParameters(sortBy, sortOrder);
 
-        let { accountNumber: accountNumberFetched, accountId } =
-        await this.schemaService.fetchAccountByNumber(accountNumber);  
+      let { accountNumber: accountNumberFetched, accountId } =
+        await this.schemaService.fetchAccountByNumber(accountNumber);
       // Check if account-specific schema exists
       const schemaName = `platform_v2_${accountNumberFetched}`;
       const tableName = "resource_cost";
@@ -153,19 +152,19 @@ class ResourceCostService {
     sortOrder: string,
     accountNumber: string,
     fiscalYear: number,
-    resourceRid: string,
+    resourceRid: string
   ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { resourceCost: any; };
+    data?: { resourceCost: any };
   }> {
     try {
       const [finalSortBy, finalSortOrder] =
         resourceCostSchemaService.getSortParameters(sortBy, sortOrder);
 
-        let { accountNumber: accountNumberFetched, accountId } =
-        await this.schemaService.fetchAccountByNumber(accountNumber);  
+      let { accountNumber: accountNumberFetched, accountId } =
+        await this.schemaService.fetchAccountByNumber(accountNumber);
       // Check if account-specific schema exists
       const schemaName = `platform_v2_${accountNumberFetched}`;
       const tableName = "resource_cost";
@@ -231,7 +230,10 @@ class ResourceCostService {
    * @param resourceCost - Object containing resource cost details including costs, dates, and identifiers
    * @returns Promise resolving to status object with created resource cost data or error message
    */
-  async createResourceCost(resourceCost: IResourceCost, userId: string): Promise<{
+  async createResourceCost(
+    resourceCost: IResourceCost,
+    userId: string
+  ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -285,7 +287,7 @@ class ResourceCostService {
       let createdResourceCost;
       let eventStatus = "Success";
       let errorMessage = "";
-      let frequency= {};
+      let frequency = {};
 
       try {
         let costField;
@@ -321,23 +323,25 @@ class ResourceCostService {
           default:
             throw new Error(`Invalid cost frequency: ${cost_frequency}`);
         }
-    
+
         const sequelize = await this.getOrgSequelize();
         ResourceCost.initialize(sequelize, schemaName);
         const effectiveDate = this.formatDateForDb(effective_date as string);
         const endDate = this.formatDateForDb(end_date as string);
 
-        const existingCost = await ResourceCost.findOne({
-          where: {
-            resource_rid,
-            effective_date: effectiveDate || null,
-            end_date: endDate || null,
-            [costField]: { [Op.ne]: null }
-          },
-        });
-        
-        if (existingCost) {
-          throw new Error("Compensation already exists for this duration.");
+        if (effectiveDate && endDate) {
+          const existingCost = await ResourceCost.findOne({
+            where: {
+              resource_rid,
+              effective_date: effectiveDate,
+              end_date: endDate,
+              [costField]: { [Op.ne]: null },
+            },
+          });
+
+          if (existingCost) {
+            throw new Error("Compensation already exists for this duration.");
+          }
         }
 
         // Use the model's create method to leverage default values
@@ -349,7 +353,7 @@ class ResourceCostService {
           resource_number,
           resource_ref_id,
           effective_date: effectiveDate || null,
-          end_date: endDate || null,         
+          end_date: endDate || null,
           ...frequency,
           currency_rid: currency_rid || undefined,
           created_datetime: new Date(),
@@ -359,8 +363,7 @@ class ResourceCostService {
 
         if (resource_rid) {
           try {
-            
-            ResourceFiscal.initialize(sequelize,schemaName);
+            ResourceFiscal.initialize(sequelize, schemaName);
             // Check if a record already exists for this resource and fiscal year
             const existingFiscal = await ResourceFiscal.findOne({
               where: {
@@ -439,7 +442,7 @@ class ResourceCostService {
   ): Promise<void> {
     try {
       const sequelize = await this.getOrgSequelize();
-      ResourceCostTimeline.initialize(sequelize,schemaName);
+      ResourceCostTimeline.initialize(sequelize, schemaName);
       // Create the timeline entry using Sequelize model
       await ResourceCostTimeline.create({
         account_rid: account_rid,
@@ -466,7 +469,10 @@ class ResourceCostService {
    * @param resourceCostData - Object containing updated resource cost details and identifiers
    * @returns Promise resolving to status object with updated resource cost data or error message
    */
-  async updateResourceCost(resourceCostData: IUpdateResourceCost, userId: string ) {
+  async updateResourceCost(
+    resourceCostData: IUpdateResourceCost,
+    userId: string
+  ) {
     try {
       const {
         eid,
@@ -503,7 +509,7 @@ class ResourceCostService {
       }
 
       const sequelize = await this.getOrgSequelize();
-      ResourceCost.initialize(sequelize,schemaName);
+      ResourceCost.initialize(sequelize, schemaName);
       // Get the original resource cost before updating
       const originalResourceCost = await ResourceCost.findOne({
         where: { rid: rid },
@@ -517,29 +523,31 @@ class ResourceCostService {
         };
       }
 
-      let frequency = {}
+      let frequency = {};
       try {
         // First, create an object with all cost frequency fields set to null
-      const clearFrequencies = {
-        annual_cost: null as null | number,
-        semi_annual_cost: null as null | number,
-        monthly_cost: null as null | number,
-        weekly_cost: null as null | number,
-        bi_weekly_cost: null as null | number,
-        daily_cost: null as null | number,
-        hourly_cost: null as null | number
-      };
+        const clearFrequencies = {
+          annual_cost: null as null | number,
+          semi_annual_cost: null as null | number,
+          monthly_cost: null as null | number,
+          weekly_cost: null as null | number,
+          bi_weekly_cost: null as null | number,
+          daily_cost: null as null | number,
+          hourly_cost: null as null | number,
+        };
 
-      frequency = {
-        ...clearFrequencies,
-      };
-        
-        switch(cost_frequency) {
+        frequency = {
+          ...clearFrequencies,
+        };
+
+        switch (cost_frequency) {
           case "annual":
             (frequency as { annual_cost: number | null }).annual_cost = cost;
             break;
           case "semi_annual":
-            (frequency as { semi_annual_cost: number | null }).semi_annual_cost = cost;
+            (
+              frequency as { semi_annual_cost: number | null }
+            ).semi_annual_cost = cost;
             break;
           case "monthly":
             (frequency as { monthly_cost: number | null }).monthly_cost = cost;
@@ -548,7 +556,8 @@ class ResourceCostService {
             (frequency as { weekly_cost: number | null }).weekly_cost = cost;
             break;
           case "bi_weekly":
-            (frequency as { bi_weekly_cost: number | null }).bi_weekly_cost = cost;
+            (frequency as { bi_weekly_cost: number | null }).bi_weekly_cost =
+              cost;
             break;
           case "daily":
             (frequency as { daily_cost: number | null }).daily_cost = cost;
@@ -562,10 +571,31 @@ class ResourceCostService {
 
         const effectiveDate = this.formatDateForDb(effective_date as string);
         const endDate = this.formatDateForDb(end_date as string);
+        if (effectiveDate && endDate) {
+          const existingRow = await ResourceCost.findOne({
+            where: {
+              rid: rid,
+            },
+          });
+          if (existingRow && existingRow.effective_date !== effectiveDate && existingRow.end_date!== endDate) {
+            const existingCost = await ResourceCost.findOne({
+              where: {
+                resource_rid: existingRow.resource_rid,
+                effective_date: effectiveDate,
+                end_date: endDate,
+                [cost_frequency]: { [Op.ne]: null },
+              },
+            });
+
+            if (existingCost) {
+              throw new Error("Compensation already exists for this duration.");
+            }
+          }
+        }
         const [affectedCounts, affectedRows] = await ResourceCost.update(
           {
             eid,
-            effective_date:  effectiveDate || null,
+            effective_date: effectiveDate || null,
             end_date: endDate || null,
             ...frequency,
             currency_rid,
@@ -584,7 +614,7 @@ class ResourceCostService {
 
         if (affectedRows[0].resource_rid) {
           try {
-            ResourceFiscal.initialize(sequelize,schemaName);
+            ResourceFiscal.initialize(sequelize, schemaName);
             // Check if a record already exists for this resource and fiscal year
             const existingFiscal = await ResourceFiscal.findOne({
               where: {
@@ -737,7 +767,7 @@ class ResourceCostService {
                   .split("T")[0];
             }
 
-            ResourceCostHistory.initialize(sequelize,schemaName);
+            ResourceCostHistory.initialize(sequelize, schemaName);
 
             // Create individual record to isolate errors
             await ResourceCostHistory.create({
@@ -796,7 +826,7 @@ class ResourceCostService {
       }
 
       const sequelize = await this.getOrgSequelize();
-      ResourceCost.initialize(sequelize,schemaName);
+      ResourceCost.initialize(sequelize, schemaName);
       const resourceCostById = await ResourceCost.findOne({
         where: {
           rid: id,
@@ -822,10 +852,10 @@ class ResourceCostService {
           `SELECT currency_name,currency_code,currency_symbol FROM public.currency WHERE rid = :currency_rid`,
           {
             replacements: { currency_rid: costData.currency_rid },
-            type: 'SELECT'
+            type: "SELECT",
           }
         );
-        
+
         if (currencyResult) {
           currencyName = (currencyResult as any).currency_name;
           currencyCode = (currencyResult as any).currency_code;
@@ -835,9 +865,9 @@ class ResourceCostService {
         // Fetch user names for created_by and modified_by
         const userNames = await this.fetchUserNames({
           created_by: costData.created_by,
-          modified_by: costData.modified_by
+          modified_by: costData.modified_by,
         });
-    
+
         // Find which cost frequency has a value
         const frequencyMap: Record<string, string> = {
           annual_cost: "annual",
@@ -846,17 +876,21 @@ class ResourceCostService {
           weekly_cost: "weekly",
           bi_weekly_cost: "bi_weekly",
           daily_cost: "daily",
-          hourly_cost: "hourly"
+          hourly_cost: "hourly",
         };
-        
+
         let foundFrequency = null;
         let costValue = null;
-        
+
         // Check each cost field to find the one with a value
         for (const [key, value] of Object.entries(frequencyMap)) {
           // Use type assertion to tell TypeScript this is a valid key access
           const costFieldValue = (costData as Record<string, any>)[key];
-          if (costFieldValue !== null && costFieldValue !== undefined && costFieldValue !== '') {
+          if (
+            costFieldValue !== null &&
+            costFieldValue !== undefined &&
+            costFieldValue !== ""
+          ) {
             foundFrequency = value;
             costValue = costFieldValue;
             break;
@@ -868,19 +902,27 @@ class ResourceCostService {
 
         // Format dates to MM/DD/YYYY
         if (costData.effective_date) {
-          costData.effective_date = moment(costData.effective_date).format('MM/DD/YYYY') as any;
+          costData.effective_date = moment(costData.effective_date).format(
+            "MM/DD/YYYY"
+          ) as any;
         }
         if (costData.end_date) {
-          costData.end_date = moment(costData.end_date).format('MM/DD/YYYY') as any;
+          costData.end_date = moment(costData.end_date).format(
+            "MM/DD/YYYY"
+          ) as any;
         }
 
         const resourceInfo = (costData as any).Resource;
 
-        if(resourceInfo){
-          resourceInfo.resource_startdate = moment(resourceInfo.resource_startdate).format('MM/DD/YYYY') as any;
-          resourceInfo.resource_enddate = moment(resourceInfo.resource_enddate).format('MM/DD/YYYY') as any;
+        if (resourceInfo) {
+          resourceInfo.resource_startdate = moment(
+            resourceInfo.resource_startdate
+          ).format("MM/DD/YYYY") as any;
+          resourceInfo.resource_enddate = moment(
+            resourceInfo.resource_enddate
+          ).format("MM/DD/YYYY") as any;
         }
-        
+
         // Create a new response object with simplified cost data
         const simplifiedCostData = {
           ...costData,
@@ -890,7 +932,7 @@ class ResourceCostService {
           currency_code: currencyCode,
           currency_symbol: currencySymbol,
         };
-        
+
         // Remove the individual cost frequency fields
         delete (simplifiedCostData as Record<string, any>).annual_cost;
         delete (simplifiedCostData as Record<string, any>).semi_annual_cost;
@@ -899,7 +941,7 @@ class ResourceCostService {
         delete (simplifiedCostData as Record<string, any>).bi_weekly_cost;
         delete (simplifiedCostData as Record<string, any>).daily_cost;
         delete (simplifiedCostData as Record<string, any>).hourly_cost;
-        
+
         return {
           statusCode: HttpStatus.SUCCESS,
           message: HttpStatus.SUCCESS_MESSAGE,
@@ -943,74 +985,77 @@ class ResourceCostService {
     };
   }
 
-    /**
+  /**
    * Fetches user names for user IDs from the main database
    * @param userIds - Object containing user IDs (created_by, modified_by)
    * @returns Promise resolving to object with user names
    */
-    private async fetchUserNames(userIds: { created_by?: string, modified_by?: string }): Promise<{ created_by_name: string, modified_by_name: string }> {
-      const result = {
-        created_by_name: '',
-        modified_by_name: ''
-      };
-      
-      try {
-        const sequelize = await this.getMainDbSequelize();
-        
-        // Fetch created_by user name if ID exists
-        if (userIds.created_by) {
-          const [createdByUser] = await sequelize.query(
-            `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
-            {
-              replacements: { userId: userIds.created_by },
-              type: 'SELECT'
-            }
-          );
-          
-          if (createdByUser) {
-            result.created_by_name = (createdByUser as any).full_name;
+  private async fetchUserNames(userIds: {
+    created_by?: string;
+    modified_by?: string;
+  }): Promise<{ created_by_name: string; modified_by_name: string }> {
+    const result = {
+      created_by_name: "",
+      modified_by_name: "",
+    };
+
+    try {
+      const sequelize = await this.getMainDbSequelize();
+
+      // Fetch created_by user name if ID exists
+      if (userIds.created_by) {
+        const [createdByUser] = await sequelize.query(
+          `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          {
+            replacements: { userId: userIds.created_by },
+            type: "SELECT",
           }
+        );
+
+        if (createdByUser) {
+          result.created_by_name = (createdByUser as any).full_name;
         }
-        
-        // Fetch modified_by user name if ID exists
-        if (userIds.modified_by) {
-          const [modifiedByUser] = await sequelize.query(
-            `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
-            {
-              replacements: { userId: userIds.modified_by },
-              type: 'SELECT'
-            }
-          );
-          
-          if (modifiedByUser) {
-            result.modified_by_name = (modifiedByUser as any).full_name;
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching user names:', error);
-        // Return empty strings if there's an error
       }
-      
-      return result;
+
+      // Fetch modified_by user name if ID exists
+      if (userIds.modified_by) {
+        const [modifiedByUser] = await sequelize.query(
+          `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          {
+            replacements: { userId: userIds.modified_by },
+            type: "SELECT",
+          }
+        );
+
+        if (modifiedByUser) {
+          result.modified_by_name = (modifiedByUser as any).full_name;
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching user names:", error);
+      // Return empty strings if there's an error
     }
 
-   /**
- * Properly formats a date string for database storage
- * @param dateString Date string in MM/DD/YYYY format
- * @returns Properly formatted date for database storage
- */
-private formatDateForDb(dateString?: string): Date | null {
-  if (!dateString) return null;
-  
-  // Parse the date using moment to ensure consistent handling
-  const date = moment(dateString, "MM/DD/YYYY", true);
-  if (!date.isValid()) return null;
-  
-  // Set the time to noon to avoid timezone issues
-  date.hour(12).minute(0).second(0).millisecond(0);
-  
-  return date.toDate();
-}
+    return result;
+  }
+
+  /**
+   * Properly formats a date string for database storage
+   * @param dateString Date string in MM/DD/YYYY format
+   * @returns Properly formatted date for database storage
+   */
+  private formatDateForDb(dateString?: string): Date | null {
+    if (!dateString) return null;
+
+    // Parse the date using moment to ensure consistent handling
+    const date = moment(dateString, "MM/DD/YYYY", true);
+    if (!date.isValid()) return null;
+
+    // Set the time to noon to avoid timezone issues
+    date.hour(12).minute(0).second(0).millisecond(0);
+
+    return date.toDate();
+  }
 }
 
 export default ResourceCostService;
