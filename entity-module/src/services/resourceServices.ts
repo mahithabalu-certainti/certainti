@@ -495,8 +495,7 @@ export class ResourceService {
     filters: Record<string, any>,
     whereClause: Record<string, any>
   ): Record<string, any> {
-    const castToTextFields = ["resource_type", "resource_fullname", "designation", "r_number", "resource_ref_id"];
-    const uuidFields = ["country", "region"];
+    const castToTextFields = ["resource_type", "resource_fullname", "designation", "r_number", "resource_ref_id","resource_status"];
 
     const filterFields = [
       { clientField: "resource_ref_id", dbField: "resource_ref_id" },
@@ -505,33 +504,19 @@ export class ResourceService {
       { clientField: "resource_type", dbField: "resource_type" },
       { clientField: "resource_status", dbField: "resource_status" },
       { clientField: "designation", dbField: "designation" },
-      { clientField: "country", dbField: "country" },
-      { clientField: "region", dbField: "region" },
     ];
 
     filterFields.forEach(({ clientField, dbField }) => {
       if (filters[clientField]) {
         const fieldFilter = filters[clientField];
 
-        // Special handling for resource_status which comes as direct value
-        if (clientField === "resource_status") {
-          whereClause[dbField] = Sequelize.where(
-            Sequelize.cast(Sequelize.col(dbField), "TEXT"),
-            { [Op.iLike]: fieldFilter }
-          );
-        }
-        // Handle other fields
-        else if (castToTextFields.includes(dbField)) {
+        if (castToTextFields.includes(dbField)) {
           whereClause[dbField] = Sequelize.where(
             Sequelize.cast(Sequelize.col(dbField), "TEXT"),
             this.getFieldFilter(fieldFilter, dbField)
           );
-        } else if (uuidFields.includes(dbField)) {
-          // Handle UUID fields directly without casting
-          whereClause[dbField] = fieldFilter.value 
-            ? fieldFilter.value // For exact UUID matches
-            : this.getFieldFilter(fieldFilter, dbField);
-        } else {
+        } 
+        else {
           whereClause[dbField] = this.getFieldFilter(fieldFilter, dbField);
         }
       }

@@ -178,7 +178,7 @@ class SchemaService {
         ],
       });
 
-      const totalCount = await Resource.count({
+      let totalCount = await Resource.count({
         where: {
           ...whereClause,
           ...(fiscalYear && fiscalYear !== 0
@@ -192,21 +192,50 @@ class SchemaService {
         
         // Handle resource_type sorting if needed
         if (isResourceTypeSort) {
+          // Sort all resources first before applying pagination
+          const allResources = await Resource.findAll({
+            where: {
+              ...whereClause,
+              ...(fiscalYear && fiscalYear !== 0 ? { fiscal_year: fiscalYear } : {})
+            },
+            attributes: [
+              "rid",
+              "r_number", 
+              "resource_ref_id",
+              "resource_fullname",
+              "resource_type",
+              "resource_status",
+              "resource_role",
+              "designation", 
+              "total_years_experience",
+              "country",
+              "state",
+              "city"
+            ]
+          });
+
+          const final = await this.insertGeoData(allResources, mainDdSequilze);
+
           const direction = order[0][1]?.toUpperCase() === 'DESC' ? -1 : 1;
-          finalResources = finalResources.sort((a: any, b: any) => {
+          
+          // Sort all resources
+          const sortedResources = final.sort((a: any, b: any) => {
             const aType = (a.resource_type || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
             const bType = (b.resource_type || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
             return aType.localeCompare(bType) * direction;
           });
-        }
 
+          // Apply pagination after sorting
+          finalResources = sortedResources.slice(offset, offset + limit);
+        }
         finalResources = await this.sortAndFilteGeoData(
           finalResources,
           goeDataFilters,
           geoDataSort
         );
+        totalCount = finalResources.length;
       }
-
+      
       return { resources: finalResources, totalCount };
     } catch (err) {
       throw new Error("Error fetching resources: " + (err as Error).message);
@@ -1036,7 +1065,7 @@ class SchemaService {
       return false;
     }
 
-    if (filter?.notContains && val.includes(filter.notContains.toLowerCase())) {
+    if (filter?.not_contains && val.includes(filter.not_contains.toLowerCase())) {
       return false;
     }
 
@@ -1044,11 +1073,11 @@ class SchemaService {
       return false;
     }
 
-    if (filter?.notEqual && val === filter.notEqual.toLowerCase()) {
+    if (filter?.not_equals && val === filter.not_equals.toLowerCase()) {
       return false;
     }
 
-    if (filter?.isEmpty === true && val.trim() !== "" && !val.trim() !== null) {
+    if (filter?.is_empty === true && val.trim() !== "" && !val.trim() !== null) {
       return false;
     }
 
