@@ -493,7 +493,7 @@ export const EnumFilterControl: React.FC<{
   fieldName: string;
   state: FilterState;
   onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
-  onChange: (fieldName: string, isMultiple: boolean, values: string[]) => void;
+  onChange: (fieldName: string, isMultiple: boolean, values: string | string[]) => void;
 }> = ({
   filterStates,
   menuOption,
@@ -505,7 +505,39 @@ export const EnumFilterControl: React.FC<{
 }) => {
   const option = formatString(filterStates?.[fieldName]?.enum?.option);
   const isMultiple = option === 'In';
-  const hideInput = option === 'Is Empty';
+  const hideInput = option === 'Is Empty' || option === 'Is Not Empty';
+
+  // Handle value normalization based on selection mode
+  const currentValue = state.enum?.value as string | string[];
+  let normalizedValue: string | string[];
+
+  if (isMultiple) {
+    // For "In" option, ensure array type
+    normalizedValue = Array.isArray(currentValue) 
+      ? currentValue 
+      : currentValue !== undefined && currentValue !== null
+        ? [currentValue]
+        : [];
+  } else {
+    // For other options, use string type
+    normalizedValue = Array.isArray(currentValue)
+      ? currentValue[0] || ''
+      : currentValue || '';
+  }
+
+  const handleValueChange = (newValue: any) => {
+    if (isMultiple) {
+      // For "In" option, pass as array
+      const values = typeof newValue === 'string' ? newValue.split(',') : newValue;
+      onChange(fieldName, true, values);
+    } else if (hideInput) {
+      // For "Is Empty" or "Is Not Empty", pass the option as string
+      onChange(fieldName, false, option.toLowerCase());
+    } else {
+      // For other options, pass as string
+      onChange(fieldName, false, newValue);
+    }
+  };
 
   return (
     <Fragment>
@@ -556,7 +588,7 @@ export const EnumFilterControl: React.FC<{
           >
             <Select
               multiple={isMultiple}
-              value={state.enum?.value || []}
+              value={normalizedValue}
               MenuProps={{
                 sx: {
                   '& .MuiMenuItem-root': {
@@ -566,21 +598,19 @@ export const EnumFilterControl: React.FC<{
                 },
               }}
               name='value'
-              onChange={(e) =>
-                onChange(fieldName, isMultiple, e.target.value as string[])
-              }
+              onChange={(e) => handleValueChange(e.target.value)}
               sx={{ height: '30px', minHeight: 20 }}
               renderValue={(selected) => {
-                if (option === 'In') {
-                  return Array.isArray(selected) && selected.length > 0
-                    ? selected.join(', ')
+                if (isMultiple) {
+                  const selectedArray = selected as string[];
+                  return selectedArray.length > 0
+                    ? selectedArray
+                        .map(val => valueOptions.find(m => m.value === val)?.option || val)
+                        .join(', ')
                     : 'Select';
                 } else {
-                  if (typeof selected === 'string' && selected !== '') {
-                    const found = valueOptions.find((m) => m.value === selected);
-                    return found ? found.option : 'Select';
-                  }
-                  return 'Select';
+                  const selectedValue = selected as string;
+                  return valueOptions.find(m => m.value === selectedValue)?.option || 'Select';
                 }
               }}
               displayEmpty
