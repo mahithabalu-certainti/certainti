@@ -225,6 +225,9 @@ class SchemaService {
             return aType.localeCompare(bType) * direction;
           });
 
+          // Update total count to reflect sorted results
+          totalCount = sortedResources.length;
+
           // Apply pagination after sorting
           finalResources = sortedResources.slice(offset, offset + limit);
         }
@@ -233,7 +236,6 @@ class SchemaService {
           goeDataFilters,
           geoDataSort
         );
-        totalCount = finalResources.length;
       }
       
       return { resources: finalResources, totalCount };
@@ -241,7 +243,6 @@ class SchemaService {
       throw new Error("Error fetching resources: " + (err as Error).message);
     }
   }
-
   /**
    * Fetches a single resource by ID.
    * @param accountNumber - Account number (schema).
