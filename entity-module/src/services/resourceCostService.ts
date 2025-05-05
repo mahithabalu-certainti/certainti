@@ -577,7 +577,12 @@ class ResourceCostService {
               rid: rid,
             },
           });
-          if (existingRow && existingRow.effective_date !== effectiveDate && existingRow.end_date!== endDate) {
+          if (
+            existingRow &&
+            existingRow.effective_date !== effectiveDate &&
+            existingRow.end_date !== endDate &&
+            existingRow[`${cost_frequency}_cost`] !== cost
+          ) {
             const existingCost = await ResourceCost.findOne({
               where: {
                 resource_rid: existingRow.resource_rid,
