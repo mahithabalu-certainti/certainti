@@ -36,11 +36,13 @@ const AccountTable: React.FC<Record<string, any>> = ({
   setOrder,
   orderBy,
   setOrderBy,
+  page,
+  setPage
 }) => {
   const navigate = useNavigate();
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
-  const [page, setPage] = useState<number>(1);
+ 
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
   const [accounts, setAccounts] = useState<ConvertedAccount[]>();
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';

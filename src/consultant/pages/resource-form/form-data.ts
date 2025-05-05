@@ -240,6 +240,7 @@ export const ResourceFormData = (
           createDateField('resource_enddate', 'Resource End Date', {
             required: false,
             disabled: disableCostAndSkill,
+            maxDate: currentDate,
             greaterThan: {
               field: 'resource_startdate',
               message:
