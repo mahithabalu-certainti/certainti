@@ -480,6 +480,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     return dayjs(dateString, format, true).isValid();
   };
 
+  const validateRegex = (regex: RegExp | string, value: string) => {
+    const pattern = regex instanceof RegExp ? regex : new RegExp(regex || '');
+    return !pattern.test(value);
+  };
+
   const submitData = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     let hasError = false;
@@ -735,15 +740,24 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           // Validate regex if present and field has value
           const value = constructFormData[field.name] as string;
           if (field.regex && value) {
-            const pattern =
-              field.regex instanceof RegExp
-                ? field.regex
-                : new RegExp(field.regex);
-            if (!pattern.test(value)) {
+            if (validateRegex(field.regex, value)) {
               hasError = true;
               return {
                 ...field,
                 error: field.regexErrorMessage || 'Invalid format',
+              };
+            }
+          }
+          // Validate Dynamic Error Handling
+          if (field.errorHandling && value) {
+            const errorHandler = field.errorHandling.find((handler) => {
+              return validateRegex(handler.regex, value);
+            });
+            if (errorHandler) {
+              hasError = true;
+              return {
+                ...field,
+                error: errorHandler.errorMessage,
               };
             }
           }
