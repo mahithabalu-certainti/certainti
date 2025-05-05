@@ -597,6 +597,7 @@ class ResourceCostService {
             }
           }
         }
+        
         const [affectedCounts, affectedRows] = await ResourceCost.update(
           {
             eid,
