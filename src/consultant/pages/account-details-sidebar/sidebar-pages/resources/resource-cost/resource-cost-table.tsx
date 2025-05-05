@@ -32,7 +32,7 @@ interface ResourceCostTableProps {
   accountDetails?: Record<string, any>;
   resourceRid: string;
   currentPage?: number;
-  setCurrentPage?: (page: number) => void;
+  setCurrentPage: (page: number) => void;
 }
 
 const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appliedFilters, accountDetails, resourceRid, currentPage, setCurrentPage }) => {

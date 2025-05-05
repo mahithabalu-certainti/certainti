@@ -56,7 +56,7 @@ interface DataTableProps {
   isLoading?: boolean;
   error?: Error | null;
   emptyStateMessage?: string;
-  setCurrentPage?: (page: number) => void;
+  setCurrentPage: (page: number) => void;
   setSortOrder: (order: 'ASC' | 'DESC') => void;
   setSortField: (field: string) => void;
   setRowsPerPage: (rows: number) => void;
@@ -117,7 +117,7 @@ const DataTable: React.FC<DataTableProps> = ({
 
   const handleRowsPerPageChange = (newPageSize: number) => {
     setRowsPerPage(newPageSize);
-    setCurrentPage(0); // Reset to first page when rows per page changes
+    setCurrentPage(1); // Reset to first page when rows per page changes
   };
 
   // const stableSort = (array: any[], comparator: (a: any, b: any) => number) => {
