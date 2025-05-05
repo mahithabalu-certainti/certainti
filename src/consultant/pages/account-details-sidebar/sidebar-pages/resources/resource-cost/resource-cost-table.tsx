@@ -31,7 +31,7 @@ interface ResourceCostTableProps {
   appliedFilters?: Record<string, any>;
   accountDetails?: Record<string, any>;
   resourceRid: string;
-  currentPage?: number;
+  currentPage: number;
   setCurrentPage: (page: number) => void;
 }
 
@@ -43,7 +43,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
   const [resourceCostList, setResourceCostList] = useState<ResourceCostType[]>([]);
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
   const { data: costList, isLoading: loading } = useResourceCost({
-    page: currentPage,
+    page: currentPage + 1,
     limit: rowsPerPage,
     sortBy: orderBy,
     sortOrder: apiOrder,

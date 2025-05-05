@@ -16,7 +16,7 @@ interface SubcomponentProps {
   accountDetails: AccountData;
   setFilterVisibility: (value: boolean) => void;
   setShowFilter: (value: boolean) => void;
-  currentPage?: number;
+  currentPage: number;
   setCurrentPage: (page: number) => void;
 }
 

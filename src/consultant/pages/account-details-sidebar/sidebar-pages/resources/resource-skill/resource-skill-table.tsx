@@ -32,7 +32,7 @@ const ResourceSkillTable: React.FC<Record<string, any>> = ({ fiscalYear, applied
   const [resourceSkillList, setResourceSkillList] = useState<ResourceSkillType[]>([]);
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
   const { data: skillList, isLoading: loading } = useResourceSkill({
-    page: currentPage,
+    page: currentPage+1,
     limit: rowsPerPage,
     sortBy: orderBy,
     sortOrder: apiOrder,
