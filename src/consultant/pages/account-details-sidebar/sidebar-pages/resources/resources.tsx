@@ -179,8 +179,9 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
   };
 
   const handleCreateResource = () => {
+    const resId = searchParams.get('res_id');
     if (value === 'cost') {
-      navigate(`${RESOURCE}/cost/create`, {
+      navigate(`${RESOURCE}/cost/create${resId ? `?res_id=${resId}` : ''}`, {
         state: {
           ...accountDetails,
           resourceData,
@@ -189,7 +190,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
         },
       });
     } else if (value === 'skill') {
-      navigate(`${RESOURCE}/skill/create`, {
+      navigate(`${RESOURCE}/skill/create${resId ? `?res_id=${resId}` : ''}`, {
         state: {
           ...accountDetails,
           resourceData,
@@ -198,7 +199,9 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
         },
       });
     } else {
-      navigate(RESOURCE_CREATE, { state: accountDetails });
+      navigate(`${RESOURCE_CREATE}${resId ? `?res_id=${resId}` : ''}`, { 
+        state: accountDetails 
+      });
     }
   };
 

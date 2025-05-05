@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { createresourceIcon, editIcon } from '../../../assets';
 import { OnChange, useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
@@ -55,6 +55,8 @@ const ResourceForm: React.FC = () => {
   const location = useLocation();
   const { state } = location;
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const resourceId = searchParams.get('res_id');
 
   // Derived values
   const isEditView = location.pathname.includes('/edit');
@@ -78,10 +80,11 @@ const ResourceForm: React.FC = () => {
   const accountNumber =
     state?.cost || state?.skill ? state?.data?.accountById?.r_number : null;
   //data fetching by cost id
-  const { data: costDetails, isSuccess: costSuccess } = useFetchResourceCostById({
-    accountNumber: accountNumber,
-    id: state?.costInfo?.costRid,
-  });
+  const { data: costDetails, isSuccess: costSuccess } =
+    useFetchResourceCostById({
+      accountNumber: accountNumber,
+      id: state?.costInfo?.costRid,
+    });
   // const { data: skillDetails, isSuccess: skillSuccess } = useFetchResourceSkillById({
   //   accountNumber: accountNumber,
   //   rid: state?.skillInfo?.skillRId,
@@ -95,9 +98,9 @@ const ResourceForm: React.FC = () => {
 
   // Data fetching
   const { data: resource, isSuccess } = useResourceDetail(
-    location?.state?.resource?.rid || resourceRId,
+    resourceId || location?.state?.resource?.rid || resourceRId,
     location?.state?.accountDetails?.data?.accountById?.r_number ||
-    accountNumber
+      accountNumber
   );
 
   useEffect(() => {
@@ -234,8 +237,8 @@ const ResourceForm: React.FC = () => {
         ...formValues,
         accountNumber: state?.data?.accountById?.r_number,
         account_rid: state?.data?.accountById?.rid,
-        resource_rid: state?.resourceData?.rid,
-        resource_number: state?.resourceData?.r_number,
+        resource_rid: resourceId,
+        resource_number: resource?.data.resourceDetails.r_number,
         cost_rid: state?.costInfo?.costRid,
       };
       const costData = transformCostData(updateFormValues, isEditView);
@@ -250,10 +253,10 @@ const ResourceForm: React.FC = () => {
         ...formValues,
         accountNumber: state?.data?.accountById?.r_number,
         account_rid: state?.data?.accountById?.rid,
-        resource_rid: state?.resourceData?.rid,
-        resource_number: state?.resourceData?.r_number,
+        resource_rid: resourceId,
+        resource_number: resource?.data.resourceDetails.r_number,
         skill_rid: state?.skillInfo?.skillRId,
-        resource_desc: state?.skillInfo?.resourceRole,
+        resource_desc: resource?.data.resourceDetails.resource_role,
       };
       const skillData = transformSkillData(updateFormValues, isEditView);
 
@@ -360,7 +363,7 @@ const ResourceForm: React.FC = () => {
                   ? 'Edit Resource Cost'
                   : state?.skill
                     ? `Edit Resource Skill`
-                    : resourceName ?? 'Edit Resource'}
+                    : (resourceName ?? 'Edit Resource')}
               </h4>
             )}
           </div>
@@ -381,7 +384,14 @@ const ResourceForm: React.FC = () => {
           <TextButton
             label='Save'
             variant='filled'
-            loading={createResource.isPending || updateResource.isPending}
+            loading={
+              createResource.isPending ||
+              updateResource.isPending ||
+              createResourceSkill.isPending ||
+              updateResourceSkill.isPending ||
+              createResourceCost.isPending ||
+              updateResourceCost.isPending
+            }
             onClick={handleExternalSubmit}
             sx={{
               width: '64px',
@@ -398,21 +408,21 @@ const ResourceForm: React.FC = () => {
           loading={allCountries.isLoading}
           values={
             isEditView &&
-              !state?.cost &&
-              !state?.skill &&
-              (resource?.data?.resourceDetails as unknown as Record<
-                string,
-                string | number | boolean | string[] | null
-              >)
+            !state?.cost &&
+            !state?.skill &&
+            (resource?.data?.resourceDetails as unknown as Record<
+              string,
+              string | number | boolean | string[] | null
+            >)
               ? (resource?.data?.resourceDetails as unknown as Record<
-                string,
-                string | number | boolean | string[] | null
-              >)
-              : state?.cost || state?.skill
-                ? (formValues as unknown as Record<
                   string,
                   string | number | boolean | string[] | null
                 >)
+              : state?.cost || state?.skill
+                ? (formValues as unknown as Record<
+                    string,
+                    string | number | boolean | string[] | null
+                  >)
                 : undefined
           }
           // values={
