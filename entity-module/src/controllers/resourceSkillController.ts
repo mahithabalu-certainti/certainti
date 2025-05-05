@@ -270,7 +270,7 @@ async function exportResourceSkill(req: Request, res: Response): Promise<void> {
 
     if (resourceSkill.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, generateExcelBase64(resourceSkill?.data?.resourceSkill,"Resource Skill"));
+      handleSuccessResponse(res, await generateExcelBase64(resourceSkill?.data?.resourceSkill,"Resource Skill"));
       return;
     } else {
       errorLog(methodName, resourceSkill.errorMessage);

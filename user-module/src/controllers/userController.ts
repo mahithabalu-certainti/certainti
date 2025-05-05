@@ -411,7 +411,7 @@ async function exportUsers(req: Request, res: Response): Promise<void> {
 
     if (result.statusCode === constants.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, generateExcelBase64(result?.data?.users));
+      handleSuccessResponse(res, await generateExcelBase64(result?.data?.users,'Users'));
       return;
     } else {
       errorLog(methodName, result.errorMessage);
