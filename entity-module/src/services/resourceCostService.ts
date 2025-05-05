@@ -581,14 +581,14 @@ class ResourceCostService {
             existingRow &&
             existingRow.effective_date !== effectiveDate &&
             existingRow.end_date !== endDate &&
-            existingRow[`${cost_frequency}_cost`] !== cost
+            Number(existingRow[`${cost_frequency}_cost`]) !== Number(cost)
           ) {
             const existingCost = await ResourceCost.findOne({
               where: {
                 resource_rid: existingRow.resource_rid,
                 effective_date: effectiveDate,
                 end_date: endDate,
-                [cost_frequency]: { [Op.ne]: null },
+                [`${cost_frequency}_cost`]: { [Op.ne]: null },
               },
             });
 
