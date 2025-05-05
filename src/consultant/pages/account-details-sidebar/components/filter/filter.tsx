@@ -38,6 +38,7 @@ const Filter: React.FC<FilterComponentProps> = ({
   onFilterStatesChange,
   savedSelectedFilters = [],
   onSelectedFiltersChange,
+  setCurrentPage
 }) => {
   const [selectedFilters, setSelectedFilters] =
     useState<string[]>(savedSelectedFilters);
@@ -60,6 +61,7 @@ const Filter: React.FC<FilterComponentProps> = ({
   const handleApplyFilters = () => {
     const formattedFilters = formatFilterForApi(filterStates);
     setAppliedFilters(formattedFilters);
+    setCurrentPage(0)
     // handleFilter();
   };
 

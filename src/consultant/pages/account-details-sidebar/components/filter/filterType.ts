@@ -12,7 +12,6 @@ export const textOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Not Equals', value: 'not_equals' },
   { option: 'Contains', value: 'contains' },
-  { option: 'Does Not Contain', value: 'not_contains' },
   { option: 'Is Empty', value: 'is_empty' },
 ];
 
@@ -173,4 +172,5 @@ export interface FilterComponentProps {
   onFilterStatesChange?: (filterStates: Record<string, FilterState>) => void;
   savedSelectedFilters?: string[];
   onSelectedFiltersChange?: (selectedFilters: string[]) => void;
+  setCurrentPage: (page: number) => void;
 }

@@ -118,7 +118,7 @@ const DataTable: React.FC<DataTableProps> = ({
 
   const handleRowsPerPageChange = (newPageSize: number) => {
     setRowsPerPage(newPageSize);
-    setCurrentPage(0); // Reset to first page when rows per page changes
+    setCurrentPage(1); // Reset to first page when rows per page changes
   };
 
   // const stableSort = (array: any[], comparator: (a: any, b: any) => number) => {

@@ -16,6 +16,8 @@ interface SubcomponentProps {
   accountDetails: AccountData;
   setFilterVisibility: (value: boolean) => void;
   setShowFilter: (value: boolean) => void;
+  currentPage: number;
+  setCurrentPage: (page: number) => void;
 }
 
 const ResourceSubComponents: React.FC<SubcomponentProps> = ({
@@ -28,6 +30,8 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   accountDetails,
   setFilterVisibility,
   setShowFilter,
+  currentPage,
+  setCurrentPage
 }) => {
   return (
     <Fragment>
@@ -101,6 +105,8 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               appliedFilters={appliedFilters}
               accountDetails={accountDetails}
               resourceRid={resourceId}
+              setCurrentPage={setCurrentPage}
+              currentPage={currentPage}
             />
           </Box>
         )}
@@ -112,6 +118,8 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               appliedFilters={appliedFilters}
               accountDetails={accountDetails}
               resourceRid={resourceId}
+              setCurrentPage={setCurrentPage}
+              currentPage={currentPage}
             />
           </Box>
         )}

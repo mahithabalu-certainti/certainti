@@ -31,18 +31,19 @@ interface ResourceCostTableProps {
   appliedFilters?: Record<string, any>;
   accountDetails?: Record<string, any>;
   resourceRid: string;
+  currentPage: number;
+  setCurrentPage: (page: number) => void;
 }
 
-const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appliedFilters, accountDetails, resourceRid }) => {
+const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appliedFilters, accountDetails, resourceRid, currentPage, setCurrentPage }) => {
   const navigate = useNavigate();
-  const [page, setPage] = useState<number>(1);
   const [rowsPerPage, setRowsPerPage] = useState<number>(25);
   const [order, setOrder] = useState<'asc' | 'desc'>('desc');
   const [orderBy, setOrderBy] = useState<keyof ResourceCostList>('created_datetime');
   const [resourceCostList, setResourceCostList] = useState<ResourceCostType[]>([]);
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
   const { data: costList, isLoading: loading } = useResourceCost({
-    page: page,
+    page: currentPage+1,
     limit: rowsPerPage,
     sortBy: orderBy,
     sortOrder: apiOrder,
@@ -67,13 +68,13 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
   // };
 
   const handleChangePage = (newPage: number) => {
-    setPage(newPage + 1);
+    setCurrentPage(newPage);
   };
 
   // handles page limit change
   const handleChangeRowsPerPage = (newPageSize: number) => {
     setRowsPerPage(newPageSize)
-    setPage(1);
+    setCurrentPage(0);
   };
 
   const handleRequestSort = (
@@ -431,7 +432,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({ fiscalYear, appli
         // component='div'
         count={costList?.count ?? 0}
         rowsPerPage={rowsPerPage}
-        page={(page ?? 1) - 1}
+        page={currentPage}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
