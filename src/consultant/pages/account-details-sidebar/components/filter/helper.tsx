@@ -572,11 +572,18 @@ export const EnumFilterControl: React.FC<{
               sx={{ height: '30px', minHeight: 20 }}
               renderValue={(selected) => {
                 if (option === 'In') {
-                  return Array.isArray(selected) ? selected.join(', ') : '';
+                  return Array.isArray(selected) && selected.length > 0
+                    ? selected.join(', ')
+                    : 'Select';
                 } else {
-                  return selected;
+                  if (typeof selected === 'string' && selected !== '') {
+                    const found = valueOptions.find((m) => m.value === selected);
+                    return found ? found.option : 'Select';
+                  }
+                  return 'Select';
                 }
               }}
+              displayEmpty
             >
               {valueOptions.map((item) => (
                 <MenuItem key={item.option} value={item.value}>
@@ -605,7 +612,7 @@ export const formatFilterForApi = (
         formatString(choosenOption) === 'Is Empty' ||
         formatString(choosenOption) === 'Is Not Empty'
           ? true
-          : state.text.value?.toString().trim().toLowerCase();
+          : state.text.value?.toString().trim();
       if (value) {
         formattedFilters[fieldKey] = { [choosenOption]: value };
       }
@@ -616,7 +623,7 @@ export const formatFilterForApi = (
           ? // ||
             //   formatString(choosenOption) === 'Is Not Empty'
             true
-          : state.textCostAndSkill.value?.toString().trim().toLowerCase();
+          : state.textCostAndSkill.value?.toString().trim();
       if (value) {
         formattedFilters[fieldKey] = { [choosenOption]: value };
       }
@@ -664,11 +671,11 @@ export const formatFilterForApi = (
               ? [value.from?.toString(), value.to?.toString()]
               : boolOptions
                 ? true
-                : value.from?.toString().toLowerCase(),
+                : value.from?.toString(),
         };
       }
     } else if (state.select) {
-      formattedFilters[fieldKey] = state.select.value.toLowerCase();
+      formattedFilters[fieldKey] = state.select.value;
     }
   });
 
