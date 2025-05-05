@@ -57,7 +57,7 @@ export const CreateUser: React.FC = () => {
   useEffect(() => {
     if (commonSuccess) {
       successToast(
-        isEditView ? 'User update successfully' : 'User created successfully'
+        isEditView ? 'User updated successfully' : 'User created successfully'
       );
       navigate(ADMIN_MANAGE_USER);
     }
