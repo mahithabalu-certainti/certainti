@@ -200,10 +200,18 @@ export const ResourceFormData = (
           }),
           createTextField('skill_name', 'Skill Name', {
             required: true,
-            regex: REGEX_PATTERNS.LETTERS_1_TO_100,
-            regexErrorMessage:
-              'Please enter a valid Skill Name using letters, numbers, or special characters, up to 100 characters.',
             placeholder: 'Enter Skill Name',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.NOT_ALLOW_ONLY_SYMBOLS,
+                errorMessage: 'Only Symbols are not allowed',
+              },
+              {
+                regex: REGEX_PATTERNS.LETTERS_3_TO_100,
+                errorMessage:
+                  'Please enter a valid Skill Name 3 to 100 characters.',
+              },
+            ],
           }),
           createSelectField('skill_level', 'Skill Level', {
             options: mockSkillLevelOptions,
