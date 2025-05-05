@@ -715,7 +715,8 @@ class AccountService {
             attributes: ["rid", "account_name"],
             required: false
           }
-        ]
+        ],
+        order: [["created_datetime", "DESC"]]
       });
       return {
         statusCode: HttpStatus.SUCCESS,
