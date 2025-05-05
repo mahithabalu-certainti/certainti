@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import { HttpStatus } from "./constant";
 import { errorResponse, successResponse } from "./apiResponse";
 import configurations from "../config/config";
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 const logger = configurations.getInstance().getLogger();
 
@@ -76,18 +76,24 @@ export function handleErrorResponse(
   errorResponse(res, statusCode, statusCodeValue, message);
 }
 
-export function generateExcelBase64(
-  data: any
+
+export async function generateExcelBase64(
+  data: any,
+  sheetName: string
 ) {
-  const worksheet = XLSX.utils.json_to_sheet(data);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Accounts');
-    // generates Uint8Array
-      const excelBuffer = XLSX.write(workbook, {
-        bookType: 'xlsx',
-        type: 'array' 
-      });
-    
-      const buffer = Buffer.from(excelBuffer); 
-      return buffer.toString('base64');
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet(sheetName);
+  
+  // Get headers from the first object in data
+  const headers = Object.keys(data[0] || {});
+  worksheet.addRow(headers);
+  
+  // Add data rows
+  data.forEach((row: any) => {
+    worksheet.addRow(Object.values(row));
+  });
+
+  // Generate buffer
+  const buffer = await workbook.xlsx.writeBuffer();
+  return Buffer.from(buffer).toString('base64');
 }
