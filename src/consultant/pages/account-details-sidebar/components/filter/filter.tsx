@@ -9,7 +9,6 @@ import {
   dateOptions,
   EnumFilterOption,
   enumOptions,
-  enumValueOptions,
   FieldConfig,
   FilterComponentProps,
   FilterState,
@@ -236,7 +235,7 @@ const Filter: React.FC<FilterComponentProps> = ({
   const handleEnumSelectChange = (
     fieldName: string,
     isMultiple: boolean,
-    value: string[]
+    value: string[] | string
   ) => {
     setFilterStates((prev: any) => {
       return {
@@ -245,7 +244,7 @@ const Filter: React.FC<FilterComponentProps> = ({
           ...prev[fieldName],
           enum: {
             ...prev[fieldName].enum,
-            value: isMultiple ? value : [value],
+            value: isMultiple ? value : value,
           },
         },
       };
@@ -314,7 +313,7 @@ const Filter: React.FC<FilterComponentProps> = ({
           <EnumFilterControl
             filterStates={filterStates}
             menuOption={enumOptions}
-            valueOptions={enumValueOptions}
+            valueOptions={field.options as { option: string; value: string }[]}
             fieldName={field.value}
             state={fieldState}
             onOptionChange={handleFilterOptionChange}

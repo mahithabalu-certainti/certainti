@@ -41,6 +41,7 @@ export interface FormTypeFields {
   errorMessage?: string;
   startDateLabel?: string;
   endDateLabel?: string;
+  errorHandling?: ErrorHandling[];
 }
 
 // export interface SelectOptions {
@@ -62,6 +63,11 @@ export type InputType =
 export interface SelectOption {
   label: string;
   value: string;
+}
+
+export interface ErrorHandling {
+  regex: RegExp;
+  errorMessage: string;
 }
 
 export interface FieldType {
@@ -99,6 +105,7 @@ export interface FieldType {
   onChange?: boolean;
   anyOneRequired?: boolean; // financial information error handling
   isLoading?: boolean;
+  errorHandling?: ErrorHandling[];
 }
 
 export type AllowedCountry =

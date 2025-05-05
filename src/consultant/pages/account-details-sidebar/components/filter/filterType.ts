@@ -67,9 +67,9 @@ export const enumOptions: { option: string; value: string }[] = [
 ];
 
 export const enumValueOptions: { option: string; value: string }[] = [
-  { option: 'Beginner', value: 'beginner' },
-  { option: 'Intermediate', value: 'intermediate' },
-  { option: 'Advanced', value: 'advanced' },
+  { option: 'Beginner', value: 'Beginner' },
+  { option: 'Intermediate', value: 'Intermediate' },
+  { option: 'Advanced', value: 'Advanced' },
 ];
 
 export type DateFilterOption =
