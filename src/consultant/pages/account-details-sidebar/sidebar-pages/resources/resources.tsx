@@ -212,6 +212,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
         showFilter={showFilter}
         filterVisibility={filterVisibility}
         handleFilter={handleFilter}
+        setCurrentPage={setCurrentPage}
       />
       <ResourceTableHeader
         handleFilter={handleFilter}

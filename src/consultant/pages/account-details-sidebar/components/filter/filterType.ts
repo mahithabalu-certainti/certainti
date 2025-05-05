@@ -173,4 +173,5 @@ export interface FilterComponentProps {
   onFilterStatesChange?: (filterStates: Record<string, FilterState>) => void;
   savedSelectedFilters?: string[];
   onSelectedFiltersChange?: (selectedFilters: string[]) => void;
+  setCurrentPage: (page: number) => void;
 }
