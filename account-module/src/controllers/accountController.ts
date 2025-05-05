@@ -150,7 +150,7 @@ async function exportAccounts(req: Request, res: Response): Promise<void> {
 
     if (accounts.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, generateExcelBase64(accounts?.data?.account));
+      handleSuccessResponse(res, await generateExcelBase64(accounts?.data?.account,"Accounts"));
 
       return
     } else {
