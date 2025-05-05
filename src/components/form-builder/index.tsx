@@ -396,14 +396,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   },
                   placeholder: field.placeholder,
                   error: !!field.error,
-                  onBlur: (event) => {
-                    //For cache typed data
-                    const value = event.target.value;
-                    if (value !== 'MM/DD/YYYY') {
-                      //For Avoid default data
-                      handleChange(value);
-                    }
-                  },
+                  // onBlur: (event) => {
+                  //   //For cache typed data
+                  //   const value = event.target.value;
+                  //   if (value !== 'MM/DD/YYYY') {
+                  //     //For Avoid default data
+                  //     handleChange(value);
+                  //   }
+                  // },
                 },
               }}
             />

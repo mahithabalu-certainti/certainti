@@ -41,7 +41,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   setFilterVisibility,
   setShowFilter,
   currentPage,
-  setCurrentPage
+  setCurrentPage,
   costOrder,
   setCostOrder,
   costorderBy,

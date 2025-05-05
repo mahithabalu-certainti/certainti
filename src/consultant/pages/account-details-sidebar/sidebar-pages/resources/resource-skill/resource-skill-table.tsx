@@ -34,6 +34,8 @@ interface ResourceSkillTableProps {
   setSkillOrder: (skillOrder: 'asc' | 'desc') => void;
   SkillOrderBy: string;
   setSkillOrderBy: (field: keyof ResourceSkillList) => void;
+  currentPage: number;
+  setCurrentPage: (page: number) => void;
 }
 const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   fiscalYear,
