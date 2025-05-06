@@ -20,6 +20,7 @@ export const UserTable: React.FC<IUserTableProps> = ({ appliedFilters, tablePara
   useEffect(() => {
     setTableParams((prev) => ({
       ...prev,
+      page: 1,
       filters: appliedFilters,
     }));
   }, [appliedFilters]);

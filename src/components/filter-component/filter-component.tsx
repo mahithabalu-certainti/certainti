@@ -34,6 +34,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
   setSearchTerm,
   filterFields,
   filterLabel,
+  setPage
 }) => {
   const location = useLocation();
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
@@ -65,7 +66,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
       setAppliedFilters({});
     };
 
-    let currentPathname = location.pathname;
+    const currentPathname = location.pathname;
 
     const unlisten = () => {
       if (window.location.pathname !== currentPathname) {
@@ -112,6 +113,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
     fieldName: string,
     event: SelectChangeEvent<any>
   ) => {
+    setPage(1);
     const fieldConfig = filterFields.find((f) => f.name === fieldName);
     if (!fieldConfig) return;
 
@@ -162,6 +164,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     index?: number
   ) => {
+    setPage(1);
     const fieldConfig = filterFields.find((f) => f.name === fieldName);
     if (!fieldConfig) return;
 
@@ -231,6 +234,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
   };
 
   const handleApplyFilters = () => {
+    setPage(1);
     const updatedStates = { ...filterStates };
     let hasInvalid = false;
   

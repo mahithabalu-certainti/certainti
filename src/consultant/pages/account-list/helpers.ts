@@ -6,7 +6,7 @@ export const getAccountFilterfields = (countryOptions: string[], currencyOptions
   { label: 'Account Number', name: 'account_number', type: 'text' },
   { label: 'Account Name', name: 'account_name', type: 'text' },
   // { label: 'Record ID', name: 'account_id', type: 'text' },
-  { label: 'Industries', name: 'industry', type: 'text' },
+  { label: 'Industry', name: 'industry', type: 'text' },
   { label: 'Country', name: 'country', type: 'multi-select', options: countryOptions },
   { label: 'Currency', name: 'currency', type: 'multi-select', options: currencyOptions },
   { label: 'Annual Revenue', name: 'annual_revenue', type: 'number' },
