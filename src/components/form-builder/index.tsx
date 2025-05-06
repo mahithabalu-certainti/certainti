@@ -692,7 +692,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               hasError = true;
               return {
                 ...field,
-                error: 'Resource End Date Date Cannot be in the Future',
+                error: 'Resource End Date Cannot be in the Future',
               };
             }
 
