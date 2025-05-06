@@ -11,14 +11,14 @@ export interface ResourcesAttributes {
   resource_orgname?: string | null;
   resource_role?: string | null;
   fiscal_year?: number;
-  country?: string | null;
-  state?: string | null;
-  city?: string | null;
+  resource_country?: string | null;
+  resource_region?: string | null;
+  resource_city?: string | null;
   resource_startdate?: Date | null;
   resource_enddate?: Date | null;
-  designation?: string | null;
-  total_years_experience?: number | null;
-  total_years_in_org?: number | null;
+  resource_designation?: string | null;
+  resource_total_experience?: number | null;
+  resource_total_experience_organization?: number | null;
   resource_status?: "Active" | "Inactive";
   created_datetime?: Date;
   modified_datetime?: Date;
@@ -43,14 +43,14 @@ export class Resources
   public resource_fullname?: string | null;
   public resource_orgname?: string;
   public resource_role?: string | null;
-  public country?: string | null;
-  public state?: string | null;
+  public resource_country?: string | null;
+  public resource_region?: string | null;
   public city?: string | null;
   public resource_startdate?: Date;
   public resource_enddate?: Date;
-  public designation?: string | null;
-  public total_years_experience?: number;
-  public total_years_in_org?: number;
+  public resource_designation?: string | null;
+  public resource_total_experience?: number;
+  public resource_total_experience_organization?: number;
   public resource_status?: "Active" | "Inactive";
   public created_datetime?: Date;
   public modified_datetime?: Date;
@@ -115,15 +115,15 @@ export class Resources
           type: DataTypes.INTEGER,
           allowNull: false,
         },
-        country: {
+        resource_country: {
           type: DataTypes.UUID,
           allowNull: true,
         },
-        state: {
+        resource_region: {
           type: DataTypes.UUID,
           allowNull: true,
         },
-        city: {
+        resource_city: {
           type: DataTypes.UUID,
           allowNull: true,
         },
@@ -135,21 +135,21 @@ export class Resources
           type: DataTypes.DATE,
           allowNull: true,
         },
-        designation: {
+        resource_designation: {
           type: DataTypes.STRING(100),
           validate: {
             len: [4, 100],
           },
           allowNull: true,
         },
-        total_years_experience: {
+        resource_total_experience: {
           type: DataTypes.INTEGER,
           allowNull: true,
           validate: {
             min: 0,
           },
         },
-        total_years_in_org: {
+        resource_total_experience_organization: {
           type: DataTypes.INTEGER,
           allowNull: true,
           validate: {

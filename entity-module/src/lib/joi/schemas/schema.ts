@@ -141,7 +141,7 @@ const createResourcesSchema = Joi.object({
     .guid({ version: ["uuidv4"] })
     .optional()
     .allow("", null),
-  state: Joi.string()
+  region: Joi.string()
     .guid({ version: ["uuidv4"] })
     .optional()
     .allow("", null),
@@ -233,7 +233,7 @@ const updateResourceSchema = Joi.object({
     .guid({ version: ["uuidv4"] })
     .optional()
     .allow("", null),
-  state: Joi.string()
+  region: Joi.string()
     .guid({ version: ["uuidv4"] })
     .optional()
     .allow("", null),

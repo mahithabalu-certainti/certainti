@@ -7,7 +7,7 @@ export interface ICreateResource {
   role?: string | null;
   fiscal_year: number;
   country?: string | null;
-  state?: string | null;
+  region?: string | null;
   city?: string | null;
   effective_from_date?: Date | null;
   effective_end_date?: Date | null;
