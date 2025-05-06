@@ -217,6 +217,7 @@ class UserService {
 // ... existing code ...
 // ... existing code ...
 async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
+  try {
   console.log(`[getPermissionFieldsByIds] DB operation started at: ${new Date(Date.now()).toISOString()}`);
   // 1. Get profile id for user
   const user = await User.findOne({ where: { rid: userId }, attributes: ["profile_rid"] });
@@ -288,6 +289,10 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
   console.log(`After build response: ${new Date(Date.now()).toISOString()}`);
 
   return result;
+} catch (err) {
+  console.log(err);
+  return this.throwServiceError(err as Error);
+}
 }
 // ... existing code ...
 

@@ -3,7 +3,6 @@ import {constants} from "../utils/constant"
 import {Request, Response, NextFunction} from 'express';
 import { initSequelize } from "../config/dataSource";
 import { v4 as uuidv4 } from 'uuid';
-import { SQL_GET_USER, SQL_GET_PERMISSION, SQL_GET_PROFILE_ACCESS, SQL_GET_USER_ACCESS, SQL_INSERT_API_DENIAL, SELECT, INSERT} from "../utils/constant";
 /**
  * Retrieves an access token for Azure AD B2C using client credentials.
  *
@@ -56,10 +55,10 @@ const checkUserStatusMiddleware = (permissionName?: string) => {
 
     const sequelize = await initSequelize();
     const users = await sequelize.query(
-      SQL_GET_USER.replace("{whereClause}", whereClause),
+      constants.SQL_GET_USER.replace("{whereClause}", whereClause),
       {
         replacements: { userId },
-        type: SELECT
+        type: constants.SELECT
       }
     ) as Array<{ status: string; rid: string; email: string; profile_rid: string }>;      
       // Get the first user from the array
@@ -110,10 +109,10 @@ const checkUserAPIPermission = async (
 
   // Get permissionId from module_permission table
   const permissionResult = await sequelize.query(
-    SQL_GET_PERMISSION,
+    constants.SQL_GET_PERMISSION,
     {
       replacements: { permissionName },
-      type: SELECT
+      type: constants.SELECT
     }
   ) as Array<{ rid: string }>;
   if (!permissionResult.length) return false;
@@ -122,19 +121,19 @@ const checkUserAPIPermission = async (
 
   // Check enable status for profile access
   const profileAccessResult = await sequelize.query(
-    SQL_GET_PROFILE_ACCESS,
+    constants.SQL_GET_PROFILE_ACCESS,
     {
       replacements: { profileId, permissionId },
-      type: SELECT
+      type: constants.SELECT
     }
   ) as Array<{ is_enabled: boolean }>;
 
   // Check enable status for user access
   const userAccessResult = await sequelize.query(
-    SQL_GET_USER_ACCESS,
+    constants.SQL_GET_USER_ACCESS,
     {
       replacements: { userId, permissionId },
-      type: SELECT
+      type: constants.SELECT
     }
   ) as Array<{ is_enabled: boolean }>;
 
@@ -145,10 +144,10 @@ const checkUserAPIPermission = async (
   // If not enabled, log denial
   if (!isEnabled) {
     await sequelize.query(
-      SQL_INSERT_API_DENIAL,
+      constants.SQL_INSERT_API_DENIAL,
       {
         replacements: { rid: uuidv4(), userId, permissionId, permissionName, apiEndpoint },
-        type: INSERT
+        type: constants.INSERT
       }
     );
   }
