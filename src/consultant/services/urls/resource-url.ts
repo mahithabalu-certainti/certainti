@@ -1,4 +1,5 @@
 import { ResourceListURLParams } from '../../types/resource';
+import { ExportModule } from '../../types/resource-skill';
 
 const baseUrl = import.meta.env.VITE_RESOURCE_URL;
 
@@ -29,4 +30,19 @@ export const ResourceListURL = ({
   }
 
   return `${baseUrl}/api/resources/list/${accountNumber}/?${searchParams.toString()}`;
+};
+export const ExportResourcelUrl = ({
+  sortBy,
+  sortOrder,
+  fiscalYear,
+  rNumber
+}: ExportModule): string => {
+  const baseUrl = `entityService/api/resources/export/${rNumber}/`;
+  const searchParams = new URLSearchParams();
+
+  if (sortBy !== undefined) searchParams.set('sortBy', sortBy);
+  if (sortOrder !== undefined) searchParams.set('sortOrder', sortOrder);
+  if (fiscalYear !== undefined) searchParams.set('fiscalYear', fiscalYear);
+  const queryString = searchParams.toString();
+  return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };

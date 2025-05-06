@@ -12,6 +12,9 @@ import ListTable from '../../components/table';
 import { getResourceColumns } from './columns';
 import ResourceSubComponents from './resource-sub-components';
 import ResourceTableHeader from './resource-table-header';
+// import { exportData} from '../../../../services/resource-details/resource-details-service';
+import { ResourceCostList } from '../../../../types/resource-cost';
+import { ResourceSkillList } from '../../../../types/resource-skill';
 
 const BUTTON_STYLES = {
   height: '26px !important',
@@ -39,6 +42,10 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
   const [sortField, setSortField] = useState<string>('created_datetime');
+  const [costOrder, setCostOrder] = useState<'asc' | 'desc'>('desc');
+  const [costorderBy, setCostOrderBy] = useState<keyof ResourceCostList>('created_datetime');
+    const [skillOrder, setSkillOrder] = useState<'asc' | 'desc'>('desc');
+  const [SkillOrderBy, setSkillOrderBy] = useState<keyof ResourceSkillList>('created_datetime');
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
@@ -205,6 +212,36 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     }
   };
 
+  // export function need handle in download btn export droopdown in parent 
+
+  // const handleExport = () => {
+  //   const commonParams = {
+  //     fiscalYear: String(convertedFiscalYear),
+  //     rNumber: accountDetails?.data?.accountById.r_number,
+  //     resourceRid: searchParams.get('res_id') as string,
+  //   };
+
+  //   if (value === 'cost') {
+  //     exportData('cost', {
+  //       ...commonParams,
+  //       sortBy: costorderBy,
+  //       sortOrder: costOrder.toUpperCase() as 'ASC' | 'DESC',
+  //     });
+  //   } else if (value === 'skill') {
+  //     exportData('skill', {
+  //       ...commonParams,
+  //       sortBy: SkillOrderBy,
+  //       sortOrder: skillOrder.toUpperCase() as 'ASC' | 'DESC',
+  //     });
+  //   } else {
+  //     exportData('resource', {
+  //       ...commonParams,
+  //       sortBy: sortField,
+  //       sortOrder: sortOrder,
+  //     });
+  //   }
+  // };
+
   return (
     <div className='w-full'>
       <TabPanel
@@ -247,6 +284,14 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
           setShowFilter={setShowFilter}
           currentPage={currentPage}
           setCurrentPage={setCurrentPage}
+          costOrder={costOrder}
+          setCostOrder={setCostOrder}
+          costorderBy={costorderBy}
+          setCostorderBy={setCostOrderBy}
+          skillOrder={skillOrder}
+          setSkillOrder={setSkillOrder}
+          SkillOrderBy={SkillOrderBy}
+          setSkillOrderBy={setSkillOrderBy}
         />
       ) : (
         <ListTable

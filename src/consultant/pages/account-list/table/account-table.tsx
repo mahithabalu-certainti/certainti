@@ -287,7 +287,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
     };
 
   return (
-    <div className='border border-[#CBD6E2] h-full'>
+    <div className='border border-[#CBD6E2] h-auto'>
       <Paper
         sx={{
           boxShadow: 'none',
@@ -298,7 +298,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
         <TableContainer
           sx={{
             maxHeight: 'calc(85vh - 200px)',
-            minHeight: 'calc(85vh - 200px)',
+            minHeight: accounts?.length === 0 ? 'auto' : 'calc(85vh - 200px)',
             overflow: 'auto',
           }}
         >
@@ -498,7 +498,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                   </TableCell>
                 </TableRow>
               ) : accounts?.length === 0 ? (
-                <TableRow sx={{ height: 'calc(85vh - 200px)' }}>
+                <TableRow>
                   <TableCell colSpan={11} align='center'>
                     <Typography variant='body1'>No data available</Typography>
                   </TableCell>

@@ -1,4 +1,10 @@
-import { Box, MenuItem, Pagination, Select, SelectChangeEvent } from '@mui/material';
+import {
+  Box,
+  MenuItem,
+  Pagination,
+  Select,
+  SelectChangeEvent,
+} from '@mui/material';
 import { ITablePaginationProps } from './types';
 
 const TablePagination: React.FC<ITablePaginationProps> = ({
@@ -51,18 +57,19 @@ const TablePagination: React.FC<ITablePaginationProps> = ({
             </MenuItem>
           ))}
         </Select>
-
-        <span className='text-center hidden sm:block font-medium text-[#6B6C7E] text-[14px]'>
-          Showing {page * rowsPerPage + 1} to{' '}
-          {Math.min(count, (page + 1) * rowsPerPage)} of {count} entries.
-        </span>
+        {count > 0 && (
+          <span className='text-center hidden sm:block font-medium text-[#6B6C7E] text-[14px]'>
+            Showing {page * rowsPerPage + 1} to{' '}
+            {Math.min(count, (page + 1) * rowsPerPage)} of {count} entries.
+          </span>
+        )}
       </Box>
 
       <Pagination
         count={totalPages}
         page={page + 1}
         onChange={handlePageChange}
-        shape="rounded"
+        shape='rounded'
         size={'medium'}
         siblingCount={0}
         boundaryCount={1}
@@ -85,9 +92,9 @@ const TablePagination: React.FC<ITablePaginationProps> = ({
           '& .MuiPaginationItem-ellipsis': {
             color: '#7D98B6',
           },
-        '& .MuiPaginationItem-icon': {
-        color: '#425A76',
-        },
+          '& .MuiPaginationItem-icon': {
+            color: '#425A76',
+          },
         }}
       />
     </Box>
