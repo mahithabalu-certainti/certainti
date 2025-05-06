@@ -217,16 +217,27 @@ class UserService {
 // ... existing code ...
 // ... existing code ...
 async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
+  try {
+  console.log(`[getPermissionFieldsByIds] DB operation started at: ${new Date(Date.now()).toISOString()}`);
   // 1. Get profile id for user
   const user = await User.findOne({ where: { rid: userId }, attributes: ["profile_rid"] });
+  console.log(`After Profile retrieve: ${new Date(Date.now()).toISOString()}`);
   const profileId = user?.profile_rid;
-  if (!profileId) return {};
+  if (!profileId) {
+    return {
+      statusCode: constants.NOT_FOUND,
+      message: constants.NOT_FOUND_MESSAGE,
+      errorMessage: "No profile found for the given userId",
+      data: {}
+    };
+  }
 
   // 2. Get all fields for the given permission ids
   const fields = await PermissionField.findAll({
     where: { module_permission_id: permissionIds },
     raw: true,
   });
+  console.log(`After Permission fields retrieve: ${new Date(Date.now()).toISOString()}`);
 
   // Collect all field IDs
   const fieldIds = fields.map(f => f.rid);
@@ -236,12 +247,16 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
     where: { profile_id: profileId, permission_field_id: fieldIds },
     raw: true,
   });
+  console.log(`After profileFieldAccess retrieve: ${new Date(Date.now()).toISOString()}`);
+
 
   // 4. Get user field access for these fields
   const userFieldAccess = await UserFieldsAccess.findAll({
     where: { user_id: userId, permission_field_id: fieldIds },
     raw: true,
   });
+  console.log(`After userFieldAccess retrieve: ${new Date(Date.now()).toISOString()}`);
+
 
   // 5. Build access maps for quick lookup (by field_id)
   const profileAccessMap: { [key: string]: { read: boolean; edit: boolean } } = {};
@@ -252,6 +267,8 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
   userFieldAccess.forEach(acc => {
     userAccessMap[acc.permission_field_id] = { read: acc.read, edit: acc.edit };
   });
+  console.log(`After profileFieldAccess userFieldAccess map: ${new Date(Date.now()).toISOString()}`);
+
 
   // 6. Build the response
   const result: { [key: string]: any[] } = {};
@@ -269,7 +286,13 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
       };
     });
   });
+  console.log(`After build response: ${new Date(Date.now()).toISOString()}`);
+
   return result;
+} catch (err) {
+  console.log(err);
+  return this.throwServiceError(err as Error);
+}
 }
 // ... existing code ...
 
@@ -593,6 +616,8 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
           },
         ],
       });
+      console.log(`After Profile retrieve: ${new Date(Date.now()).toISOString()}`);
+
 
       if (!roles || !roles.business_teams) {
         return {
@@ -632,7 +657,6 @@ async getAllUserPermission(userId: string, profileId: string) {
   ]);
 
   const merged = [...profilePermissions, ...userPermissions];
-  console.log("merged : ",merged);
   const uniqueByNameType: { [key: string]: any } = {};
 
   merged.forEach(item => {
@@ -643,9 +667,10 @@ async getAllUserPermission(userId: string, profileId: string) {
       uniqueByNameType[key] = item;
     } else if (item.is_enabled && !existingItem.is_enabled) {
       uniqueByNameType[key] = item;
+    } else {
+      console.log(`[getAllUserPermission] Duplicate found for key: ${key}`);
     }
   });
-  console.log("After duplicate remove : ",Object.values(uniqueByNameType));
   return Object.values(uniqueByNameType);
 }
 
@@ -658,6 +683,8 @@ async getAllUserPermission(userId: string, profileId: string) {
       where: { profile_id: profileId},
       include: [{ model: Menu, as: "menu" }]
     });
+    console.log(`After menuAccess retrieve: ${new Date(Date.now()).toISOString()}`);
+
     menuAccess.forEach(ma => {
       const maWithMenu = ma as any;
       if (maWithMenu.menu) {
@@ -669,12 +696,16 @@ async getAllUserPermission(userId: string, profileId: string) {
         });
       }
     });
+    console.log(`After menuAccess response map: ${new Date(Date.now()).toISOString()}`);
+
 
     // Modules
     const moduleAccess = await ProfileModuleAccess.findAll({
       where: { profile_id: profileId},
       include: [{ model: MenuModule, as: "menu_module" }]
     });
+    console.log(`After module access retrieve: ${new Date(Date.now()).toISOString()}`);
+
     moduleAccess.forEach(mo => {
       const moWithModule = mo as any;
       if (moWithModule.menu_module) {
@@ -686,12 +717,15 @@ async getAllUserPermission(userId: string, profileId: string) {
         });
       }
     });
+    console.log(`After module access map: ${new Date(Date.now()).toISOString()}`);
 
     // Permissions
     const permissionAccess = await ProfilePermissionAccess.findAll({
       where: { profile_id: profileId},
       include: [{ model: ModulePermission, as: "module_permission" }]
     });
+    console.log(`After permission access retrieve: ${new Date(Date.now()).toISOString()}`);
+
     permissionAccess.forEach(pa => {
       const paWithPerm = pa as any;
       if (paWithPerm.module_permission) {
@@ -704,6 +738,7 @@ async getAllUserPermission(userId: string, profileId: string) {
         });
       }
     });
+    console.log(`After permission access response map: ${new Date(Date.now()).toISOString()}`);
 
     return permissions;
   }

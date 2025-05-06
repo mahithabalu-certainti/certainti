@@ -1,35 +1,35 @@
-import { Request, Response, NextFunction } from "express";
-import { HttpStatus } from "../utils/constant";
+import { ClientSecretCredential } from "@azure/identity";
 import {constants} from "../utils/constant"
+import {Request, Response, NextFunction} from 'express';
+import { initSequelize } from "../config/dataSource";
 import { v4 as uuidv4 } from 'uuid';
-
-import {initSequelize} from "../config/maindbDataSource";
-
 /**
- * Middleware to authenticate the request by checking the 'Authorization' header.
- * If the token is missing or invalid, it returns a 401 Unauthorized response.
+ * Retrieves an access token for Azure AD B2C using client credentials.
  *
- * @param {Request} req - The Express Request object.
- * @param {Response} res - The Express Response object.
- * @param {NextFunction} next - The next middleware function to be called if the token is valid.
+ * @returns {Promise<string>} - Returns the access token as a string.
+ * @throws {Error} - Throws an error if token retrieval fails.
  */
-const authMiddleware = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void => {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
+const getAzureB2CToken = async (): Promise<string> => {
+  const tenantId = process.env.AZURE_B2C_TENANT_ID;
+  const clientId = process.env.AZURE_B2C_CLIENT_ID;
+  const clientSecret = process.env.AZURE_B2C_CLIENT_SECRET;
+  const scope = process.env.AZURE_SCOPE;
 
-  if (!token) {
-    res.status(HttpStatus.UNAUTHORIZED).json({
-      error: HttpStatus.UNAUTHORIZED_MESSAGE,
-      message: "Invalid token",
-    });
-    return;
+  if (!tenantId || !clientId || !clientSecret || !scope) {
+    throw new Error("Missing required environment variables");
   }
 
-  next();
+  try {
+    const credential = new ClientSecretCredential(
+      tenantId,
+      clientId,
+      clientSecret
+    );
+    const tokenResponse = await credential.getToken(scope);
+    return tokenResponse.token;
+  } catch (error: any) {
+    throw new Error("Failed to retrieve Azure B2C token: " + error.message);
+  }
 };
 
 const checkUserStatusMiddleware = (permissionName?: string) => {
@@ -46,8 +46,8 @@ const checkUserStatusMiddleware = (permissionName?: string) => {
       userId = userIdHeader;
       whereClause = 'rid = :userId';
     } else {
-      res.status(HttpStatus.BAD_REQUEST).json({
-        error: HttpStatus.BAD_REQUEST_MESSAGE,
+      res.status(constants.BAD_REQUEST).json({
+        error: constants.BAD_REQUEST_MESSAGE,
         message: 'User ID is required in headers'
       });
       return;
@@ -65,8 +65,8 @@ const checkUserStatusMiddleware = (permissionName?: string) => {
       const user = users[0];
       
       if ((typeof user === 'object' && user !== null && 'status' in user && (user as { status: string }).status !== 'active')||!user) {
-          res.status(HttpStatus.FORBIDDEN).json({
-              error: HttpStatus.FORBIDDEN_MESSAGE,
+          res.status(constants.FORBIDDEN).json({
+              error: constants.FORBIDDEN_MESSAGE,
               message: 'User account is inactive. Please contact administrator.'
           });
           return;
@@ -80,8 +80,8 @@ const checkUserStatusMiddleware = (permissionName?: string) => {
           req.originalUrl
         );
         if (!hasPermission) {
-          res.status(HttpStatus.FORBIDDEN).json({
-            error: HttpStatus.FORBIDDEN_MESSAGE,
+          res.status(constants.FORBIDDEN).json({
+            error: constants.FORBIDDEN_MESSAGE,
             message: "User API access denied. Please contact administrator."
           });
           return;
@@ -91,8 +91,8 @@ const checkUserStatusMiddleware = (permissionName?: string) => {
       next();
   } catch (error) {
       console.error('Error checking user status:', error);
-      res.status(HttpStatus.FAILED).json({
-          error: HttpStatus.FAILED_MESSAGE,
+      res.status(constants.FAILED).json({
+          error: constants.FAILED_MESSAGE,
           message: 'Failed to verify user status'
       });
   }
@@ -154,4 +154,4 @@ const checkUserAPIPermission = async (
   return !!isEnabled;
 };
 
-export { authMiddleware, checkUserStatusMiddleware};
+export { getAzureB2CToken, checkUserStatusMiddleware };

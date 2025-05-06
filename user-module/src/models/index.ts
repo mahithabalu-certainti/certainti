@@ -18,6 +18,7 @@ import { UserMenuAccess } from "./userMenuAccessModel";
 import { UserModuleAccess } from "./userModuleAccessModel";
 import { UserPermissionAccess } from "./userPermissionAccessModel";
 import { UserFieldsAccess } from "./userFieldsAccessModel";
+import { UserApiAccessDenials } from "./userApiAccessDenialsModel";
 
 
 export const models: {
@@ -39,6 +40,7 @@ export const models: {
   UserModuleAccess: typeof UserModuleAccess;
   UserPermissionAccess: typeof UserPermissionAccess;
   UserFieldsAccess: typeof UserFieldsAccess;
+  UserApiAccessDenials: typeof UserApiAccessDenials;
 
 } = {
   BusinessTeams: BusinessTeams,
@@ -59,6 +61,7 @@ export const models: {
   UserModuleAccess: UserModuleAccess,
   UserPermissionAccess: UserPermissionAccess,
   UserFieldsAccess: UserFieldsAccess,
+  UserApiAccessDenials: UserApiAccessDenials
 };
 
 export async function initModels() {
@@ -82,7 +85,7 @@ export async function initModels() {
     UserModuleAccess.initialize(sequelize);
     UserPermissionAccess.initialize(sequelize);
     UserFieldsAccess.initialize(sequelize);
-    
+    UserApiAccessDenials.initialize(sequelize);
     await sequelize.sync({ force: false });
   } catch (err) {
     console.log("Errr loading models", err);

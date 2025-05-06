@@ -4,7 +4,7 @@ import { checkUserStatusMiddleware } from "../middlewares/authMiddleware";
 
 const routes: Router = Router();
 
-routes.use(checkUserStatusMiddleware);
+routes.use(checkUserStatusMiddleware("NA"));
 
 routes.get("/list/:accountNumber", controller.projectController.projectList);
 routes.get("/list/:accountNumber/:projectId", controller.projectController.projectById);
