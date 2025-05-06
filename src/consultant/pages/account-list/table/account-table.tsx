@@ -414,7 +414,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     direction={orderBy === 'industry' ? order : 'asc'}
                     IconComponent={getSortIcon(orderBy, 'industry', order)}
                   >
-                    Industries
+                    Industry
                   </TableSortLabel>
                 </TableCell>
                 <TableCell sx={{ minWidth: '150px' }}>

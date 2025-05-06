@@ -596,6 +596,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
           if (field.type === 'date') {
             // cost date validation
+            const dateValue = constructFormData[field.name] as string;
             if (field?.startValue && constructFormData[field.name]) {
               const dateValue = constructFormData[field.name] as string;
               if (
@@ -639,7 +640,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               }
             }
 
-            const dateValue = constructFormData[field.name] as string;
             if (dateValue) {
               if (
                 field.disableFutureDates &&
@@ -684,6 +684,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               return {
                 ...field,
                 error: 'Future dates are not allowed',
+              };
+            }
+            const currentDate = dayjs();
+
+            if (field.name === 'resource_enddate' && !dayjs(dateValue).isBefore(currentDate, 'day')) {
+              hasError = true;
+              return {
+                ...field,
+                error: 'Date Cannot be in the Future',
               };
             }
 
