@@ -313,22 +313,24 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       case 'date': {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const startDateValue: string | undefined | any =
-          constructFormData['financial_start_date'];
+          constructFormData['financial_start_date'] ||
+          constructFormData['resource_startdate'];
         const today: Dayjs = dayjs();
-
+        const isEndDateField =
+          field.name === 'financial_end_date' || field.name === 'resource_enddate';
         const parsedStartDate = startDateValue
           ? dayjs(startDateValue, 'MM/DD/YYYY')
           : undefined;
 
         const customMinDate: Dayjs | undefined =
-          field.name === 'financial_end_date' && parsedStartDate
+          isEndDateField && parsedStartDate
             ? parsedStartDate.add(1, 'day')
             : field?.minDate
               ? dayjs(field.minDate)
               : undefined;
 
         const customMaxDate: Dayjs | undefined =
-          field.name === 'financial_end_date' && startDateValue
+          isEndDateField && startDateValue
             ? today
             : field?.maxDate
               ? dayjs(field.maxDate)
@@ -363,6 +365,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               }}
               slotProps={{
                 field: { clearable: !field.disabled },
+                day: {
+                  sx: {
+                    '&.MuiPickersDay-today': {
+                      border: 'none',
+                      backgroundColor: 'inherit',
+                    },
+                  },
+                },
                 textField: {
                   fullWidth: true,
                   size: 'small',
@@ -721,7 +731,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 hasError = true;
                 return {
                   ...field,
-                  error: 'Both start and end dates must be provided',
+                  error: 'Both resource effective from and resource end dates must be provided',
                 };
               }
 
@@ -735,7 +745,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   hasError = true;
                   return {
                     ...field,
-                    error: 'Start date and end date cannot be the same',
+                    error:
+                    field.name === 'resource_startdate'
+                      ? 'Resource effective from cannot be the same as resource end date'
+                      : 'Resource end date cannot be the same as resource effective from',
                   };
                 }
 
@@ -744,7 +757,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   hasError = true;
                   return {
                     ...field,
-                    error: 'Start date cannot be after end date',
+                    error:
+                      field.name === 'resource_startdate'
+                        ? 'Resource effective from cannot be after resource end date'
+                        : 'Resource end date cannot be before resource effective from',
                   };
                 }
               }
