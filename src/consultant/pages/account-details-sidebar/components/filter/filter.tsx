@@ -248,6 +248,7 @@ const Filter: React.FC<FilterComponentProps> = ({
 
   const handleEnumSelectChange = (
     fieldName: string,
+    // isMultiple: boolean,
     value: string[] | string
   ) => {
     setFilterStates((prev: any) => {
@@ -257,6 +258,7 @@ const Filter: React.FC<FilterComponentProps> = ({
           ...prev[fieldName],
           enum: {
             ...prev[fieldName].enum,
+            // value: isMultiple ? value : [value]
             value: value,
           },
         },
