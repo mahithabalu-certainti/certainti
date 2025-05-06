@@ -420,9 +420,11 @@ class AccountService {
       } = accountData;
 
       if (data_storage === "store_in_parent" && !parent_account_rid) {
-        throw new Error(
-          "Please select global account to store in parent account"
-        );
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: "Parent account is required for data storage in parent",
+        };
       }
 
       const isUnique = await this.checkIsAccounUnique(account_name);
@@ -441,7 +443,11 @@ class AccountService {
           },
         });
         if (!parent_account) {
-          throw new Error("Invalid parent account");
+          return {
+            statusCode: HttpStatus.BAD_REQUEST,
+            message: HttpStatus.BAD_REQUEST_MESSAGE,
+            errorMessage: "Parent account not found",
+          };
         }
       }
 
@@ -500,7 +506,12 @@ class AccountService {
         },
       };
     } catch (err) {
-      return this.throwServiceError(err as Error);
+      console.error(err);
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: "Account creation failed.",
+      }
     }
   }
 
