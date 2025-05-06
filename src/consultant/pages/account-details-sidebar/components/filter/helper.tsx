@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Box,
+  Checkbox,
   FormControl,
   MenuItem,
   Select,
@@ -41,61 +42,61 @@ export const TextFilterControl: React.FC<{
   onOptionChange,
   onValueChange,
 }) => {
-  const option = formatString(filterStates?.[fieldName]?.text?.option);
-  const hideInput = option === 'Is Empty' || option === 'Is Not Empty';
-  return (
-    <Box sx={{ p: 1, mt: 1, borderBottom: '1px solid #CBD6E2' }}>
-      <FormControl
-        fullWidth
-        size='small'
-        sx={{
-          '.MuiInputBase-root': {
-            fontSize: '12px',
-            fontWeight: 300,
-          },
-        }}
-      >
-        <Select
-          value={state.text?.option.toLowerCase() || 'equals'}
-          onChange={(e) => onOptionChange(fieldName, e)}
-          sx={{ height: '30px', minHeight: 20 }}
-          MenuProps={{
-            sx: {
-              '& .MuiMenuItem-root': {
-                fontSize: '12px',
-                fontWeight: 300,
-              },
+    const option = formatString(filterStates?.[fieldName]?.text?.option);
+    const hideInput = option === 'Is Empty' || option === 'Is Not Empty';
+    return (
+      <Box sx={{ p: 1, mt: 1, borderBottom: '1px solid #CBD6E2' }}>
+        <FormControl
+          fullWidth
+          size='small'
+          sx={{
+            '.MuiInputBase-root': {
+              fontSize: '12px',
+              fontWeight: 300,
             },
           }}
         >
-          {menuOption &&
-            menuOption.map((menu) => (
-              <MenuItem key={menu.option} value={menu.value}>
-                {menu.option}
-              </MenuItem>
-            ))}
-          {/* <MenuItem value='equals'>equals</MenuItem>
+          <Select
+            value={state.text?.option || 'equals'}
+            onChange={(e) => onOptionChange(fieldName, e)}
+            sx={{ height: '30px', minHeight: 20 }}
+            MenuProps={{
+              sx: {
+                '& .MuiMenuItem-root': {
+                  fontSize: '12px',
+                  fontWeight: 300,
+                },
+              },
+            }}
+          >
+            {menuOption &&
+              menuOption.map((menu) => (
+                <MenuItem key={menu.option} value={menu.value}>
+                  {menu.option}
+                </MenuItem>
+              ))}
+            {/* <MenuItem value='equals'>equals</MenuItem>
                     <MenuItem value='startsWith'>starts with</MenuItem> */}
-        </Select>
-      </FormControl>
-      {!hideInput && (
-        <TextField
-          size='small'
-          fullWidth
-          placeholder='Type here'
-          value={state.text?.value || ''}
-          onChange={(e) => onValueChange(fieldName, e)}
-          sx={{ mt: 1 }}
-          slotProps={{
-            input: {
-              sx: { height: '30px', paddingY: 0, fontSize: '0.75rem' },
-            },
-          }}
-        />
-      )}
-    </Box>
-  );
-};
+          </Select>
+        </FormControl>
+        {!hideInput && (
+          <TextField
+            size='small'
+            fullWidth
+            placeholder='Type here'
+            value={state.text?.value || ''}
+            onChange={(e) => onValueChange(fieldName, e)}
+            sx={{ mt: 1 }}
+            slotProps={{
+              input: {
+                sx: { height: '30px', paddingY: 0, fontSize: '0.75rem' },
+              },
+            }}
+          />
+        )}
+      </Box>
+    );
+  };
 
 export const TextFilterControlForCostAndSKill: React.FC<{
   filterStates: Record<string, FilterState>;
@@ -115,63 +116,63 @@ export const TextFilterControlForCostAndSKill: React.FC<{
   onOptionChange,
   onValueChange,
 }) => {
-  const option = formatString(
-    filterStates?.[fieldName]?.textCostAndSkill?.option
-  );
-  const hideInput = option === 'Is Empty';
-  return (
-    <Box sx={{ p: 1, mt: 1, borderBottom: '1px solid #CBD6E2' }}>
-      <FormControl
-        fullWidth
-        size='small'
-        sx={{
-          '.MuiInputBase-root': {
-            fontSize: '12px',
-            fontWeight: 300,
-          },
-        }}
-      >
-        <Select
-          value={state.textCostAndSkill?.option.toLowerCase() || 'equals'}
-          onChange={(e) => onOptionChange(fieldName, e)}
-          sx={{ height: '30px', minHeight: 20 }}
-          MenuProps={{
-            sx: {
-              '& .MuiMenuItem-root': {
-                fontSize: '12px',
-                fontWeight: 300,
-              },
+    const option = formatString(
+      filterStates?.[fieldName]?.textCostAndSkill?.option
+    );
+    const hideInput = option === 'Is Empty';
+    return (
+      <Box sx={{ p: 1, mt: 1, borderBottom: '1px solid #CBD6E2' }}>
+        <FormControl
+          fullWidth
+          size='small'
+          sx={{
+            '.MuiInputBase-root': {
+              fontSize: '12px',
+              fontWeight: 300,
             },
           }}
         >
-          {menuOption &&
-            menuOption.map((menu) => (
-              <MenuItem key={menu.option} value={menu.value}>
-                {menu.option}
-              </MenuItem>
-            ))}
-          {/* <MenuItem value='equals'>equals</MenuItem>
+          <Select
+            value={state.textCostAndSkill?.option.toLowerCase() || 'equals'}
+            onChange={(e) => onOptionChange(fieldName, e)}
+            sx={{ height: '30px', minHeight: 20 }}
+            MenuProps={{
+              sx: {
+                '& .MuiMenuItem-root': {
+                  fontSize: '12px',
+                  fontWeight: 300,
+                },
+              },
+            }}
+          >
+            {menuOption &&
+              menuOption.map((menu) => (
+                <MenuItem key={menu.option} value={menu.value}>
+                  {menu.option}
+                </MenuItem>
+              ))}
+            {/* <MenuItem value='equals'>equals</MenuItem>
                     <MenuItem value='startsWith'>starts with</MenuItem> */}
-        </Select>
-      </FormControl>
-      {!hideInput && (
-        <TextField
-          size='small'
-          fullWidth
-          placeholder='Type here'
-          value={state.textCostAndSkill?.value || ''}
-          onChange={(e) => onValueChange(fieldName, e)}
-          sx={{ mt: 1 }}
-          slotProps={{
-            input: {
-              sx: { height: '30px', paddingY: 0, fontSize: '0.75rem' },
-            },
-          }}
-        />
-      )}
-    </Box>
-  );
-};
+          </Select>
+        </FormControl>
+        {!hideInput && (
+          <TextField
+            size='small'
+            fullWidth
+            placeholder='Type here'
+            value={state.textCostAndSkill?.value || ''}
+            onChange={(e) => onValueChange(fieldName, e)}
+            sx={{ mt: 1 }}
+            slotProps={{
+              input: {
+                sx: { height: '30px', paddingY: 0, fontSize: '0.75rem' },
+              },
+            }}
+          />
+        )}
+      </Box>
+    );
+  };
 
 export const NumberFilterControl: React.FC<{
   filterStates: Record<string, FilterState>;
@@ -191,114 +192,114 @@ export const NumberFilterControl: React.FC<{
   onOptionChange,
   onValueChange,
 }) => {
-  const option = formatString(filterStates?.[fieldName]?.number?.option);
-  const isBetween = option === 'Between';
-  const hideInput = option === 'Is Empty';
-  return (
-    <Box sx={{ p: 1, mt: 1, borderBottom: '1px solid #CBD6E2' }}>
-      <FormControl
-        fullWidth
-        size='small'
-        sx={{
-          '.MuiInputBase-root': {
-            fontSize: '12px',
-            fontWeight: 300,
-          },
-        }}
-      >
-        <Select
-          value={state.number?.option.toLowerCase() || 'equals'}
-          onChange={(e) => onOptionChange(fieldName, e)}
+    const option = formatString(filterStates?.[fieldName]?.number?.option);
+    const isBetween = option === 'Between';
+    const hideInput = option === 'Is Empty';
+    return (
+      <Box sx={{ p: 1, mt: 1, borderBottom: '1px solid #CBD6E2' }}>
+        <FormControl
+          fullWidth
+          size='small'
           sx={{
-            height: '30px',
-            minHeight: 20,
-          }}
-          MenuProps={{
-            sx: {
-              '& .MuiMenuItem-root': {
-                fontSize: '12px',
-                fontWeight: 300,
-              },
+            '.MuiInputBase-root': {
+              fontSize: '12px',
+              fontWeight: 300,
             },
           }}
         >
-          {menuOption &&
-            menuOption.map((menu) => (
-              <MenuItem key={menu.option} value={menu.value}>
-                {menu.option}
-              </MenuItem>
-            ))}
-        </Select>
-      </FormControl>
-      {
-        <Box>
-          {!hideInput && (
-            <TextField
-              size='small'
-              fullWidth
-              placeholder='Enter number'
-              type='number'
-              name='from'
-              value={state.number?.value?.from || ''}
-              onChange={(e) => onValueChange(fieldName, e)}
-              inputProps={{ min: 0 }}
-              sx={{
-                mt: 1,
-                '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button':
+          <Select
+            value={state.number?.option.toLowerCase() || 'equals'}
+            onChange={(e) => onOptionChange(fieldName, e)}
+            sx={{
+              height: '30px',
+              minHeight: 20,
+            }}
+            MenuProps={{
+              sx: {
+                '& .MuiMenuItem-root': {
+                  fontSize: '12px',
+                  fontWeight: 300,
+                },
+              },
+            }}
+          >
+            {menuOption &&
+              menuOption.map((menu) => (
+                <MenuItem key={menu.option} value={menu.value}>
+                  {menu.option}
+                </MenuItem>
+              ))}
+          </Select>
+        </FormControl>
+        {
+          <Box>
+            {!hideInput && (
+              <TextField
+                size='small'
+                fullWidth
+                placeholder='Enter number'
+                type='number'
+                name='from'
+                value={state.number?.value?.from || ''}
+                onChange={(e) => onValueChange(fieldName, e)}
+                inputProps={{ min: 0 }}
+                sx={{
+                  mt: 1,
+                  '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button':
                   {
                     '-webkit-appearance': 'none',
                     margin: 0,
                   },
-                '& input[type=number]': {
-                  '-moz-appearance': 'textfield',
-                },
-              }}
-              onKeyDown={(e) => {
-                if (e.key === '-' || e.key === 'e') e.preventDefault();
-              }}
-              slotProps={{
-                input: {
-                  sx: { height: '30px', paddingY: 0, fontSize: '0.75rem' },
-                },
-              }}
-            />
-          )}
-          {isBetween && (
-            <TextField
-              size='small'
-              fullWidth
-              placeholder='Enter number'
-              type='number'
-              name='to'
-              value={state.number?.value?.to || ''}
-              onChange={(e) => onValueChange(fieldName, e)}
-              inputProps={{ min: 0 }}
-              sx={{
-                mt: 1,
-                '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button':
+                  '& input[type=number]': {
+                    '-moz-appearance': 'textfield',
+                  },
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === '-' || e.key === 'e') e.preventDefault();
+                }}
+                slotProps={{
+                  input: {
+                    sx: { height: '30px', paddingY: 0, fontSize: '0.75rem' },
+                  },
+                }}
+              />
+            )}
+            {isBetween && (
+              <TextField
+                size='small'
+                fullWidth
+                placeholder='Enter number'
+                type='number'
+                name='to'
+                value={state.number?.value?.to || ''}
+                onChange={(e) => onValueChange(fieldName, e)}
+                inputProps={{ min: 0 }}
+                sx={{
+                  mt: 1,
+                  '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button':
                   {
                     '-webkit-appearance': 'none',
                     margin: 0,
                   },
-                '& input[type=number]': {
-                  '-moz-appearance': 'textfield',
-                },
-              }}
-              onKeyDown={(e) => {
-                if (e.key === '-' || e.key === 'e') e.preventDefault();
-              }}
-              slotProps={{
-                input: {
-                  sx: { height: '30px', paddingY: 0, fontSize: '0.75rem' },
-                },
-              }}
-            />
-          )}
-        </Box>
-      }
-    </Box>
-  );
-};
+                  '& input[type=number]': {
+                    '-moz-appearance': 'textfield',
+                  },
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === '-' || e.key === 'e') e.preventDefault();
+                }}
+                slotProps={{
+                  input: {
+                    sx: { height: '30px', paddingY: 0, fontSize: '0.75rem' },
+                  },
+                }}
+              />
+            )}
+          </Box>
+        }
+      </Box>
+    );
+  };
 
 export const DateFilterControl: React.FC<{
   filterStates: Record<string, FilterState>;
@@ -319,242 +320,19 @@ export const DateFilterControl: React.FC<{
   onOptionChange,
   onValueChange,
 }) => {
-  const option = formatString(filterStates?.[fieldName]?.date?.option);
-  const isBetween = option === 'Between';
-  const today = new Date();
-  const sixYearsAgo = new Date();
-  sixYearsAgo.setFullYear(today.getFullYear() - 6);
-  const disableInput = option === 'Is Empty';
-  // option === 'Is Not Empty' ||
-  // option === 'This Month' ||
-  // option === 'This Week' ||
-  // option === 'This Quarter' ||
-  // option === 'Last 7 Days' ||
-  // option === 'Last 30 Days';
-  return (
-    <Box sx={{ p: 1, mt: 1, borderBottom: '1px solid #CBD6E2' }}>
-      <FormControl
-        fullWidth
-        size='small'
-        sx={{
-          '.MuiInputBase-root': {
-            fontSize: '12px',
-            fontWeight: 300,
-          },
-        }}
-      >
-        <Select
-          value={state.date?.option.toLowerCase() || 'equals'}
-          onChange={(e) => onOptionChange(fieldName, e)}
-          sx={{
-            height: '30px',
-            minHeight: 20,
-          }}
-          MenuProps={{
-            sx: {
-              '& .MuiMenuItem-root': {
-                fontSize: '12px',
-                fontWeight: 300,
-              },
-            },
-          }}
-        >
-          {menuOption &&
-            menuOption.map((menu) => (
-              <MenuItem key={menu.option} value={menu.value}>
-                {menu.option}
-              </MenuItem>
-            ))}
-        </Select>
-      </FormControl>
-      <Box
-        sx={{
-          borderBottom: '1px solid #CBD6E2',
-          '.MuiFormControl-root': {
-            marginTop: '8px',
-          },
-        }}
-      >
-        {!disableInput && (
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DatePicker
-              name='from'
-              maxDate={dayjs(today)}
-              minDate={dayjs(sixYearsAgo)}
-              value={dayjs(state.date?.value.from, 'MM/DD/YYYY')}
-              disabled={disableInput}
-              format='MM/DD/YYYY'
-              onChange={(newValue) => {
-                onValueChange(
-                  'from',
-                  fieldName,
-                  dayjs(newValue).format('MM/DD/YYYY')
-                );
-              }}
-              shouldDisableDate={(date) => dayjs(date).isAfter(dayjs(), 'day')}
-              slots={{
-                openPickerIcon: () => (
-                  <img src={calendarIcon} alt='calendar' className='w-6 h-5' />
-                ),
-              }}
-              slotProps={{
-                textField: {
-                  fullWidth: true,
-                  size: 'small',
-                  InputProps: {
-                    disabled: true,
-                    onPaste: (e: React.ClipboardEvent<HTMLInputElement>) => {
-                      e.preventDefault();
-                      return false;
-                    },
-                  },
-                  sx: {
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 0,
-                      fontSize: '12px',
-                      fontWeight: 300,
-                      '&.Mui-disabled': {
-                        '& input': {
-                          color: 'black',
-                          WebkitTextFillColor: 'black',
-                        },
-                      },
-                    },
-                  },
-                  placeholder: 'MM/DD/YYYY',
-                },
-              }}
-            />
-          </LocalizationProvider>
-        )}
-        {isBetween && (
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DatePicker
-              name='to'
-              maxDate={dayjs(today)}
-              minDate={dayjs(sixYearsAgo)}
-              sx={{ mt: 1 }}
-              value={dayjs(state.date?.value.to, 'MM/DD/YYYY')}
-              disabled={disableInput}
-              format='MM/DD/YYYY'
-              onChange={(newValue) => {
-                onValueChange(
-                  'to',
-                  fieldName,
-                  dayjs(newValue).format('MM/DD/YYYY')
-                );
-              }}
-              shouldDisableDate={(date) => dayjs(date).isAfter(dayjs(), 'day')}
-              slots={{
-                openPickerIcon: () => (
-                  <img src={calendarIcon} alt='calendar' className='w-6 h-5' />
-                ),
-              }}
-              slotProps={{
-                textField: {
-                  fullWidth: true,
-                  size: 'small',
-                  InputProps: {
-                    disabled: true,
-                    onPaste: (e: React.ClipboardEvent<HTMLInputElement>) => {
-                      e.preventDefault();
-                      return false;
-                    },
-                  },
-                  sx: {
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 0,
-                      fontSize: '12px',
-                      fontWeight: 300,
-
-                      '&.Mui-disabled': {
-                        '& input': {
-                          color: 'black',
-                          WebkitTextFillColor: 'black',
-                        },
-                      },
-                    },
-                  },
-                  placeholder: 'MM/DD/YYYY',
-                },
-              }}
-            />
-          </LocalizationProvider>
-        )}
-      </Box>
-    </Box>
-  );
-};
-
-export const EnumFilterControl: React.FC<{
-  filterStates: Record<string, FilterState>;
-  menuOption: { option: string; value: string }[];
-  valueOptions: { option: string; value: string }[];
-  fieldName: string;
-  state: FilterState;
-  onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
-  onChange: (fieldName: string, isMultiple: boolean, values: string | string[]) => void;
-}> = ({
-  filterStates,
-  menuOption,
-  valueOptions,
-  fieldName,
-  state,
-  onOptionChange,
-  onChange,
-}) => {
-  const option = formatString(filterStates?.[fieldName]?.enum?.option);
-  const isMultiple = option === 'In';
-  const hideInput = option === 'Is Empty';
-
-  const handleOptionChange = (e: SelectChangeEvent<any>) => {
-    const newOption = e.target.value;
-    const newOptionFormatted = formatString(newOption);
-    const willBeMultiple = newOptionFormatted === 'In';
-    const willHideInput = newOptionFormatted === 'Is Empty';
-
-    // Reset values based on the new option type
-    if (willHideInput) {
-      onChange(fieldName, false, newOptionFormatted.toLowerCase());
-    } else if (willBeMultiple) {
-      onChange(fieldName, true, []);
-    } else {
-      onChange(fieldName, false, '');
-    }
-
-    // Then update the option
-    onOptionChange(fieldName, e);
-  };
-
-  // Handle value normalization based on selection mode
-  const currentValue = state.enum?.value as string | string[];
-  let normalizedValue: string | string[];
-
-  if (isMultiple) {
-    normalizedValue = Array.isArray(currentValue) 
-      ? currentValue 
-      : currentValue !== undefined && currentValue !== null
-        ? [currentValue]
-        : [];
-  } else {
-    normalizedValue = Array.isArray(currentValue)
-      ? currentValue[0] || ''
-      : currentValue || '';
-  }
-
-  const handleValueChange = (newValue: any) => {
-    if (isMultiple) {
-      const values = typeof newValue === 'string' ? newValue.split(',') : newValue;
-      onChange(fieldName, true, values);
-    } else if (hideInput) {
-      onChange(fieldName, false, option.toLowerCase());
-    } else {
-      onChange(fieldName, false, newValue);
-    }
-  };
-
-  return (
-    <Fragment>
+    const option = formatString(filterStates?.[fieldName]?.date?.option);
+    const isBetween = option === 'Between';
+    const today = new Date();
+    const sixYearsAgo = new Date();
+    sixYearsAgo.setFullYear(today.getFullYear() - 6);
+    const disableInput = option === 'Is Empty';
+    // option === 'Is Not Empty' ||
+    // option === 'This Month' ||
+    // option === 'This Week' ||
+    // option === 'This Quarter' ||
+    // option === 'Last 7 Days' ||
+    // option === 'Last 30 Days';
+    return (
       <Box sx={{ p: 1, mt: 1, borderBottom: '1px solid #CBD6E2' }}>
         <FormControl
           fullWidth
@@ -567,9 +345,12 @@ export const EnumFilterControl: React.FC<{
           }}
         >
           <Select
-            value={state?.enum?.option?.toLowerCase() ?? 'equals'}
-            onChange={handleOptionChange}  // Updated to use our custom handler
-            sx={{ height: '30px', minHeight: 20 }}
+            value={state.date?.option || 'equals'}
+            onChange={(e) => onOptionChange(fieldName, e)}
+            sx={{
+              height: '30px',
+              minHeight: 20,
+            }}
             MenuProps={{
               sx: {
                 '& .MuiMenuItem-root': {
@@ -578,18 +359,315 @@ export const EnumFilterControl: React.FC<{
                 },
               },
             }}
-            name='option'
           >
-            {menuOption.map((menu) => (
-              <MenuItem key={menu.option} value={menu.value}>
-                {menu.option}
-              </MenuItem>
-            ))}
+            {menuOption &&
+              menuOption.map((menu) => (
+                <MenuItem key={menu.option} value={menu.value}>
+                  {menu.option}
+                </MenuItem>
+              ))}
           </Select>
         </FormControl>
+        <Box
+          sx={{
+            borderBottom: '1px solid #CBD6E2',
+            '.MuiFormControl-root': {
+              marginTop: '8px',
+            },
+          }}
+        >
+          {!disableInput && (
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                name='from'
+                maxDate={dayjs(today)}
+                minDate={dayjs(sixYearsAgo)}
+                value={dayjs(state.date?.value.from, 'MM/DD/YYYY')}
+                disabled={disableInput}
+                format='MM/DD/YYYY'
+                onChange={(newValue) => {
+                  onValueChange(
+                    'from',
+                    fieldName,
+                    dayjs(newValue).format('MM/DD/YYYY')
+                  );
+                }}
+                shouldDisableDate={(date) => dayjs(date).isAfter(dayjs(), 'day')}
+                slots={{
+                  openPickerIcon: () => (
+                    <img src={calendarIcon} alt='calendar' className='w-6 h-5' />
+                  ),
+                }}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    size: 'small',
+                    InputProps: {
+                      disabled: true,
+                      onPaste: (e: React.ClipboardEvent<HTMLInputElement>) => {
+                        e.preventDefault();
+                        return false;
+                      },
+                    },
+                    sx: {
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 0,
+                        fontSize: '12px',
+                        fontWeight: 300,
+                        '&.Mui-disabled': {
+                          '& input': {
+                            color: 'black',
+                            WebkitTextFillColor: 'black',
+                          },
+                        },
+                      },
+                    },
+                    placeholder: 'MM/DD/YYYY',
+                  },
+                }}
+              />
+            </LocalizationProvider>
+          )}
+          {isBetween && (
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                name='to'
+                maxDate={dayjs(today)}
+                minDate={dayjs(sixYearsAgo)}
+                sx={{ mt: 1 }}
+                value={dayjs(state.date?.value.to, 'MM/DD/YYYY')}
+                disabled={disableInput}
+                format='MM/DD/YYYY'
+                onChange={(newValue) => {
+                  onValueChange(
+                    'to',
+                    fieldName,
+                    dayjs(newValue).format('MM/DD/YYYY')
+                  );
+                }}
+                shouldDisableDate={(date) => dayjs(date).isAfter(dayjs(), 'day')}
+                slots={{
+                  openPickerIcon: () => (
+                    <img src={calendarIcon} alt='calendar' className='w-6 h-5' />
+                  ),
+                }}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    size: 'small',
+                    InputProps: {
+                      disabled: true,
+                      onPaste: (e: React.ClipboardEvent<HTMLInputElement>) => {
+                        e.preventDefault();
+                        return false;
+                      },
+                    },
+                    sx: {
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 0,
+                        fontSize: '12px',
+                        fontWeight: 300,
+
+                        '&.Mui-disabled': {
+                          '& input': {
+                            color: 'black',
+                            WebkitTextFillColor: 'black',
+                          },
+                        },
+                      },
+                    },
+                    placeholder: 'MM/DD/YYYY',
+                  },
+                }}
+              />
+            </LocalizationProvider>
+          )}
+        </Box>
       </Box>
-      {!hideInput && (
-        <Box sx={{ p: 1, mt: 1 }}>
+    );
+  };
+
+// export const EnumFilterControl: React.FC<{
+//   filterStates: Record<string, FilterState>;
+//   menuOption: { option: string; value: string }[];
+//   valueOptions: { option: string; value: string }[];
+//   fieldName: string;
+//   state: FilterState;
+//   onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
+//   onChange: (fieldName: string, isMultiple: boolean, svalues: string | string[]) => void;
+// }> = ({
+//   filterStates,
+//   menuOption,
+//   valueOptions,
+//   fieldName,
+//   state,
+//   onOptionChange,
+//   onChange,
+// }) => {
+//     const option = formatString(filterStates?.[fieldName]?.enum?.option);
+//     const isMultiple = option === 'In';
+//     const hideInput = option === 'Is Empty';
+
+//     const handleOptionChange = (e: SelectChangeEvent<any>) => {
+//       const newOption = e.target.value;
+//       const newOptionFormatted = formatString(newOption);
+//       const willBeMultiple = newOptionFormatted === 'In';
+//       const willHideInput = newOptionFormatted === 'Is Empty';
+
+//       // Reset values based on the new option type
+//       if (willHideInput) {
+//         onChange(fieldName, false, newOptionFormatted.toLowerCase());
+//       } else if (willBeMultiple) {
+//         onChange(fieldName, true, []);
+//       } else {
+//         onChange(fieldName, false, '');
+//       }
+
+//       // Then update the option
+//       onOptionChange(fieldName, e);
+//     };
+
+//     // Handle value normalization based on selection mode
+//     const currentValue = state.enum?.value as string | string[];
+//     let normalizedValue: string | string[];
+
+//     if (isMultiple) {
+//       normalizedValue = Array.isArray(currentValue)
+//         ? currentValue
+//         : currentValue !== undefined && currentValue !== null
+//           ? [currentValue]
+//           : [];
+//     } else {
+//       normalizedValue = Array.isArray(currentValue)
+//         ? currentValue[0] || ''
+//         : currentValue || '';
+//     }
+
+//     const handleValueChange = (newValue: any) => {
+//       if (isMultiple) {
+//         const values = typeof newValue === 'string' ? newValue.split(',') : newValue;
+//         onChange(fieldName, true, values);
+//       } else if (hideInput) {
+//         onChange(fieldName, false, option.toLowerCase());
+//       } else {
+//         onChange(fieldName, false, newValue);
+//       }
+//     };
+
+//     return (
+//       <Fragment>
+//         <Box sx={{ p: 1, mt: 1, borderBottom: '1px solid #CBD6E2' }}>
+//           <FormControl
+//             fullWidth
+//             size='small'
+//             sx={{
+//               '.MuiInputBase-root': {
+//                 fontSize: '12px',
+//                 fontWeight: 300,
+//               },
+//             }}
+//           >
+//             <Select
+//               value={state?.enum?.option?.toLowerCase() ?? 'equals'}
+//               onChange={handleOptionChange}  // Updated to use our custom handler
+//               sx={{ height: '30px', minHeight: 20 }}
+//               MenuProps={{
+//                 sx: {
+//                   '& .MuiMenuItem-root': {
+//                     fontSize: '12px',
+//                     fontWeight: 300,
+//                   },
+//                 },
+//               }}
+//               name='option'
+//             >
+//               {menuOption.map((menu) => (
+//                 <MenuItem key={menu.option} value={menu.value}>
+//                   {menu.option}
+//                 </MenuItem>
+//               ))}
+//             </Select>
+//           </FormControl>
+//         </Box>
+//         {!hideInput && (
+//           <Box sx={{ p: 1, mt: 1 }}>
+//             <FormControl
+//               fullWidth
+//               size='small'
+//               sx={{
+//                 '.MuiInputBase-root': {
+//                   fontSize: '12px',
+//                   fontWeight: 300,
+//                 },
+//               }}
+//             >
+//               <Select
+//                 multiple={isMultiple}
+//                 value={normalizedValue}
+//                 MenuProps={{
+//                   sx: {
+//                     '& .MuiMenuItem-root': {
+//                       fontSize: '12px',
+//                       fontWeight: 300,
+//                     },
+//                   },
+//                 }}
+//                 name='value'
+//                 onChange={(e) => handleValueChange(e.target.value)}
+//                 sx={{ height: '30px', minHeight: 20 }}
+//                 renderValue={(selected) => {
+//                   if (isMultiple) {
+//                     const selectedArray = selected as string[];
+//                     return selectedArray.length > 0
+//                       ? selectedArray
+//                         .map(val => valueOptions.find(m => m.value === val)?.option || val)
+//                         .join(', ')
+//                       : 'Select';
+//                   } else {
+//                     const selectedValue = selected as string;
+//                     return valueOptions.find(m => m.value === selectedValue)?.option || 'Select';
+//                   }
+//                 }}
+//                 displayEmpty
+//               >
+//                 {valueOptions.map((item) => (
+//                   <MenuItem key={item.option} value={item.value}>
+//                     {item.option}
+//                   </MenuItem>
+//                 ))}
+//               </Select>
+//             </FormControl>
+//           </Box>
+//         )}
+//       </Fragment>
+//     );
+//   };
+
+export const CurrencySelectFilterControl: React.FC<{
+  filterStates: Record<string, FilterState>;
+  menuOption: { option: string; value: string }[];
+  valueOptions: { option: string; value: string }[];
+  fieldName: string;
+  state: FilterState;
+  onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
+  onChange: (fieldName: string, values: string[]) => void;
+}> = ({
+  filterStates,
+  menuOption,
+  valueOptions,
+  fieldName,
+  state,
+  onOptionChange,
+  onChange,
+}) => {
+    const option = formatString(filterStates?.[fieldName]?.currencySelect?.option);
+    const isMultiple = option === 'In';
+    const hideInput = option === 'Is Empty';
+    const selectedValues: string[] = state?.currencySelect?.value || [];
+
+    return (
+      <Fragment>
+        <Box sx={{ p: 1, mt: 1, borderBottom: '1px solid #CBD6E2' }}>
           <FormControl
             fullWidth
             size='small'
@@ -601,8 +679,9 @@ export const EnumFilterControl: React.FC<{
             }}
           >
             <Select
-              multiple={isMultiple}
-              value={normalizedValue}
+              value={state?.currencySelect?.option?.toLowerCase() ?? 'equals'}
+              onChange={(e) => onOptionChange(fieldName, e)}
+              sx={{ height: '30px', minHeight: 20 }}
               MenuProps={{
                 sx: {
                   '& .MuiMenuItem-root': {
@@ -611,36 +690,202 @@ export const EnumFilterControl: React.FC<{
                   },
                 },
               }}
-              name='value'
-              onChange={(e) => handleValueChange(e.target.value)}
-              sx={{ height: '30px', minHeight: 20 }}
-              renderValue={(selected) => {
-                if (isMultiple) {
-                  const selectedArray = selected as string[];
-                  return selectedArray.length > 0
-                    ? selectedArray
-                        .map(val => valueOptions.find(m => m.value === val)?.option || val)
-                        .join(', ')
-                    : 'Select';
-                } else {
-                  const selectedValue = selected as string;
-                  return valueOptions.find(m => m.value === selectedValue)?.option || 'Select';
-                }
-              }}
-              displayEmpty
+              name='option'
             >
-              {valueOptions.map((item) => (
-                <MenuItem key={item.option} value={item.value}>
-                  {item.option}
+              {menuOption.map((menu) => (
+                <MenuItem key={menu.option} value={menu.value}>
+                  {menu.option}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
         </Box>
-      )}
-    </Fragment>
-  );
-};
+        {!hideInput && (
+          <Box sx={{ p: 1, mt: 1 }}>
+            <FormControl
+              fullWidth
+              size='small'
+              sx={{
+                '.MuiInputBase-root': {
+                  fontSize: '12px',
+                  fontWeight: 300,
+                },
+              }}
+            >
+              <Select
+                multiple={isMultiple}
+                value={state.currencySelect?.value || []}
+                MenuProps={{
+                  sx: {
+                    '& .MuiMenuItem-root': {
+                      fontSize: '12px',
+                      fontWeight: 300,
+                    },
+                  },
+                }}
+                name='value'
+                onChange={(e) =>
+                  onChange(fieldName, e.target.value as string[])
+                }
+                sx={{ height: '30px', minHeight: 20 }}
+                renderValue={(selected) => {
+                  if (isMultiple) {
+                    if (!Array.isArray(selected)) return '';
+                    return selected
+                      .map((val) => valueOptions.find((opt) => opt.value === val)?.option || val)
+                      .join(', ');
+                  } else {
+                    const selectedValue = selected as unknown as string;
+                    const selectedOption = valueOptions.find((opt) => opt.value === selectedValue);
+                    return selectedOption ? selectedOption.option : '';
+                  }
+                }}
+              >
+                {valueOptions.map((item) => (
+                  <MenuItem key={item.option} value={item.value}>
+                    {isMultiple && <Checkbox
+                      disableRipple
+                      checked={selectedValues.includes(item.value)}
+                      size="small"
+                      sx={{
+                        color: '#CBD6E2',
+                        '&.Mui-checked': {
+                          color: '#1755E7',
+                        },
+                      }}
+                    />}
+                    {item.option}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+        )}
+      </Fragment>
+    );
+  };
+
+export const EnumFilterControl: React.FC<{
+  filterStates: Record<string, FilterState>;
+  menuOption: { option: string; value: string }[];
+  valueOptions: { option: string; value: string }[];
+  fieldName: string;
+  state: FilterState;
+  onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
+  onChange: (fieldName: string, svalues: string[]) => void;
+}> = ({
+  filterStates,
+  menuOption,
+  valueOptions,
+  fieldName,
+  state,
+  onOptionChange,
+  onChange,
+}) => {
+    const option = formatString(filterStates?.[fieldName]?.enum?.option);
+    const isMultiple = option === 'In';
+    const hideInput = option === 'Is Empty';
+    const selectedValues: string[] = state?.enum?.value || [];
+    return (
+      <Fragment>
+        <Box sx={{ p: 1, mt: 1, borderBottom: '1px solid #CBD6E2' }}>
+          <FormControl
+            fullWidth
+            size='small'
+            sx={{
+              '.MuiInputBase-root': {
+                fontSize: '12px',
+                fontWeight: 300,
+              },
+            }}
+          >
+            <Select
+              value={state?.enum?.option ?? 'equals'}
+              onChange={(e) => onOptionChange(fieldName, e)}
+              sx={{ height: '30px', minHeight: 20 }}
+              MenuProps={{
+                sx: {
+                  '& .MuiMenuItem-root': {
+                    fontSize: '12px',
+                    fontWeight: 300,
+                  },
+                },
+              }}
+              name='option'
+            >
+              {menuOption.map((menu) => (
+                <MenuItem key={menu.option} value={menu.value}>
+                  {menu.option}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+        {!hideInput && (
+          <Box sx={{ p: 1, mt: 1 }}>
+            <FormControl
+              fullWidth
+              size='small'
+              sx={{
+                '.MuiInputBase-root': {
+                  fontSize: '12px',
+                  fontWeight: 300,
+                },
+              }}
+            >
+              <Select
+                multiple={isMultiple}
+                value={state.enum?.value || []}
+                MenuProps={{
+                  sx: {
+                    '& .MuiMenuItem-root': {
+                      fontSize: '12px',
+                      fontWeight: 300,
+                    },
+                  },
+                }}
+                name='value'
+                onChange={(e) =>
+                  onChange(fieldName, e.target.value as string[])
+                }
+                sx={{ height: '30px', minHeight: 20 }}
+                renderValue={(selected) => {
+                  if (isMultiple) {
+                    if (!Array.isArray(selected)) return '';
+                    return selected
+                      .map((val) => valueOptions.find((opt) => opt.value === val)?.option || val)
+                      .join(', ');
+                  } else {
+                    const selectedValue = selected as unknown as string;
+                    const selectedOption = valueOptions.find((opt) => opt.value === selectedValue);
+                    return selectedOption ? selectedOption.option : '';
+                  }
+                }}
+              >
+                {valueOptions.map((item) => (
+                  <MenuItem key={item.option} value={item.value}>
+                    {isMultiple && <Checkbox
+                      disableRipple
+                      checked={selectedValues.includes(item.value)}
+                      size="small"
+                      sx={{
+                        color: '#CBD6E2',
+                        '&.Mui-checked': {
+                          color: '#1755E7',
+                        },
+                      }}
+                    />}
+                    {item.option}
+
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+        )}
+      </Fragment>
+    );
+  };
 
 export const formatFilterForApi = (
   filterStates: Record<string, FilterState>
@@ -654,7 +899,7 @@ export const formatFilterForApi = (
       const choosenOption = state.text.option;
       const value =
         formatString(choosenOption) === 'Is Empty' ||
-        formatString(choosenOption) === 'Is Not Empty'
+          formatString(choosenOption) === 'Is Not Empty'
           ? true
           : state.text.value?.toString().trim();
       if (value) {
@@ -665,8 +910,8 @@ export const formatFilterForApi = (
       const value =
         formatString(choosenOption) === 'Is Empty'
           ? // ||
-            //   formatString(choosenOption) === 'Is Not Empty'
-            true
+          //   formatString(choosenOption) === 'Is Not Empty'
+          true
           : state.textCostAndSkill.value?.toString().trim();
       if (value) {
         formattedFilters[fieldKey] = { [choosenOption]: value };
@@ -691,8 +936,20 @@ export const formatFilterForApi = (
       const value =
         formatString(choosenOption) === 'Is Empty'
           ? // ||formatString(choosenOption) === 'Is Not Empty'
-            true
+          true
           : state.enum.value;
+      if (value && (Array.isArray(value) ? value.length > 0 : true)) {
+        formattedFilters[fieldKey] = {
+          [choosenOption]: value,
+        };
+      }
+    } else if (state.currencySelect && state.currencySelect.option) {
+      const choosenOption = state.currencySelect.option;
+      const value =
+        formatString(choosenOption) === 'Is Empty'
+          ? // ||formatString(choosenOption) === 'Is Not Empty'
+          true
+          : state.currencySelect.value;
       if (value && (Array.isArray(value) ? value.length > 0 : true)) {
         formattedFilters[fieldKey] = {
           [choosenOption]: value,

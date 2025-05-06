@@ -42,7 +42,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
   const navigate = useNavigate();
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
- 
+
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
   const [accounts, setAccounts] = useState<ConvertedAccount[]>();
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
@@ -225,66 +225,66 @@ const AccountTable: React.FC<Record<string, any>> = ({
 
   const getSortIcon =
     (orderBy: string, columnKey: keyof AccountList, order: 'asc' | 'desc') =>
-    () => {
-      if (orderBy !== columnKey) {
-        return (
+      () => {
+        if (orderBy !== columnKey) {
+          return (
+            <div
+              className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
+              onClick={createSortHandler(columnKey)}
+            >
+              <img
+                src={arrowUpIcon}
+                alt='sort-up'
+                className='w-4 h-4 filter grayscale brightness-0 opacity-50'
+              />
+              <img
+                src={arrowDownIcon}
+                alt='sort-down'
+                className='w-4 h-4 filter grayscale brightness-0 opacity-50 mt-[-9px]'
+              />
+            </div>
+          );
+        }
+        return order === 'asc' ? (
           <div
             className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
             onClick={createSortHandler(columnKey)}
           >
             <img
               src={arrowUpIcon}
-              alt='sort-up'
+              alt='sort-up-active'
+              className='w-4 h-4'
+              style={{
+                filter: 'brightness(0) saturate(100%)',
+              }}
+            />
+            <img
+              src={arrowDownIcon}
+              alt='sort-down-inactive'
+              className='w-4 h-4 filter grayscale brightness-0 opacity-50 mt-[-9px]'
+            />
+          </div>
+        ) : (
+          <div
+            className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
+            onClick={createSortHandler(columnKey)}
+          >
+            <img
+              src={arrowUpIcon}
+              alt='sort-up-inactive'
               className='w-4 h-4 filter grayscale brightness-0 opacity-50'
             />
             <img
               src={arrowDownIcon}
-              alt='sort-down'
-              className='w-4 h-4 filter grayscale brightness-0 opacity-50 mt-[-9px]'
+              alt='sort-down-active'
+              className='w-4 h-4 mt-[-9px]'
+              style={{
+                filter: 'brightness(0) saturate(100%)',
+              }}
             />
           </div>
         );
-      }
-      return order === 'asc' ? (
-        <div
-          className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
-          onClick={createSortHandler(columnKey)}
-        >
-          <img
-            src={arrowUpIcon}
-            alt='sort-up-active'
-            className='w-4 h-4'
-            style={{
-              filter: 'brightness(0) saturate(100%)',
-            }}
-          />
-          <img
-            src={arrowDownIcon}
-            alt='sort-down-inactive'
-            className='w-4 h-4 filter grayscale brightness-0 opacity-50 mt-[-9px]'
-          />
-        </div>
-      ) : (
-        <div
-          className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
-          onClick={createSortHandler(columnKey)}
-        >
-          <img
-            src={arrowUpIcon}
-            alt='sort-up-inactive'
-            className='w-4 h-4 filter grayscale brightness-0 opacity-50'
-          />
-          <img
-            src={arrowDownIcon}
-            alt='sort-down-active'
-            className='w-4 h-4 mt-[-9px]'
-            style={{
-              filter: 'brightness(0) saturate(100%)',
-            }}
-          />
-        </div>
-      );
-    };
+      };
 
   return (
     <div className='border border-[#CBD6E2] h-auto'>
@@ -349,12 +349,12 @@ const AccountTable: React.FC<Record<string, any>> = ({
                       disableRipple
                       checked={Boolean(
                         accounts?.length &&
-                          selectedRows.size === accounts.length
+                        selectedRows.size === accounts.length
                       )}
                       indeterminate={Boolean(
                         accounts?.length &&
-                          selectedRows.size > 0 &&
-                          selectedRows.size < accounts.length
+                        selectedRows.size > 0 &&
+                        selectedRows.size < accounts.length
                       )}
                       onChange={(e) => handleSelectAllRows(e.target.checked)}
                       disabled={!accounts?.length}
@@ -404,7 +404,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     direction={orderBy === 'r_number' ? order : 'asc'}
                     IconComponent={getSortIcon(orderBy, 'r_number', order)}
                   >
-                    Account Number
+                    Account ID
                   </TableSortLabel>
                 </TableCell>
                 <TableCell sx={{ minWidth: '200px' }}>
