@@ -43,11 +43,11 @@ export const exportData = async (
       break;
     case 'cost':
       url = ExportResourceCostUrl(params);
-      filename = 'resourceCost_records.xlsx';
+      filename = 'resource_cost_records.xlsx';
       break;
     case 'skill':
       url = ExportResourceSkillUrl(params);
-      filename = 'resourceSkill_records.xlsx';
+      filename = 'resource_skill_records.xlsx';
       break;
     default:
       console.error('Invalid export type');

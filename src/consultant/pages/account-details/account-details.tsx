@@ -23,6 +23,10 @@ import { AccountInfo } from './account-info';
 import Sidebar from './sidebar';
 import { transformAccountData } from './utils';
 import { CircularProgress } from '@mui/material';
+import { ExportModule } from '../../types/resource-skill';
+import { exportData } from '../../services/resource-details/resource-details-service';
+import { RootState } from '../../../store/store';
+import { useSelector } from 'react-redux';
 
 export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
@@ -31,9 +35,50 @@ export const AccountDetails = () => {
   const [accountDetails, setAccountDetails] = useState<any>(null);
   const [accountDetailsForEdit, setAccountDetailsForEdit] = useState<any>(null);
   const { accountid } = useParams();
+    const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
+      (state: RootState) => state.account
+    );
+
+    const convertedFiscalYear =
+      fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const defaultTab = searchParams.get('list') || 'financial';
   const [activeKey, setActiveKey] = useState(defaultTab);
+
+  const [tableParams, setTableParams] = useState<ExportModule>({
+    sortBy: 'created_datetime',
+    sortOrder: 'DESC',
+    fiscalYear: String(convertedFiscalYear),
+    rNumber: accountDetailsForEdit?.account_by_id?.r_number || '',
+    resourceRid: '',
+  });
+const [exportType, setExportType] = useState<'resource' | 'cost' | 'skill'>(
+  'resource'
+);
+ const handleExport = (exportType: 'resource' | 'cost' | 'skill') => {
+ if (searchParams.get('list') !== 'resources') {
+   return;
+ }
+
+   //"resource" | "cost" | "skill"
+   const { fiscalYear, rNumber, resourceRid, sortBy, sortOrder } = tableParams;
+
+   const commonPayload = {
+     fiscalYear,
+     rNumber,
+     sortBy,
+     sortOrder,
+   };
+
+   const exportPayload =
+     exportType === 'resource'
+       ? commonPayload
+       : { ...commonPayload, resourceRid };
+
+   exportData(exportType, exportPayload);
+ };
+
+
 
   useEffect(() => {
     const list = searchParams.get('list');
@@ -64,7 +109,7 @@ export const AccountDetails = () => {
     },
     {
       label: 'Export',
-      onClick: () => console.log('Export clicked'),
+      onClick: () => handleExport(exportType),
     },
   ];
 
@@ -73,7 +118,7 @@ export const AccountDetails = () => {
       state: { accountDetailsForEdit },
     });
   };
-
+   console.log(searchParams.get('list'));
   const handleActionsClick = () => {
     console.log('Actions clicked');
     // Add actions logic here
@@ -98,7 +143,11 @@ export const AccountDetails = () => {
         return <Details />;
       case 'resources':
         return (
-          <Resources accountDetails={{ ...data, activeKey: 'resources' }} />
+          <Resources
+            accountDetails={{ ...data, activeKey: 'resources' }}
+            setTableParams={setTableParams}
+            setExportType={setExportType}
+          />
         );
       case 'attachments':
         return <Attachments />;

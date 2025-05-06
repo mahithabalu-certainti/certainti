@@ -12,9 +12,9 @@ import ListTable from '../../components/table';
 import { getResourceColumns } from './columns';
 import ResourceSubComponents from './resource-sub-components';
 import ResourceTableHeader from './resource-table-header';
-// import { exportData} from '../../../../services/resource-details/resource-details-service';
 import { ResourceCostList } from '../../../../types/resource-cost';
-import { ResourceSkillList } from '../../../../types/resource-skill';
+import { ExportModule, ResourceSkillList } from '../../../../types/resource-skill';
+
 
 const BUTTON_STYLES = {
   height: '26px !important',
@@ -28,9 +28,15 @@ const BUTTON_STYLES = {
 interface ResourceProps {
   accountDetails?: Record<string, any>;
   activeKey?: string;
+  setTableParams: React.Dispatch<React.SetStateAction<ExportModule>>;
+  setExportType: (type: 'resource' | 'cost' | 'skill') => void;
 }
 
-const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
+const Resource: React.FC<ResourceProps> = ({
+  accountDetails,
+  setTableParams,
+  setExportType,
+}) => {
   const [viewResourceList, setViewResourceList] = useState<boolean>(true);
   const [columns, setColumns] = useState<any>([]);
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -43,9 +49,11 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
   const [sortField, setSortField] = useState<string>('created_datetime');
   const [costOrder, setCostOrder] = useState<'asc' | 'desc'>('desc');
-  const [costorderBy, setCostOrderBy] = useState<keyof ResourceCostList>('created_datetime');
-    const [skillOrder, setSkillOrder] = useState<'asc' | 'desc'>('desc');
-  const [SkillOrderBy, setSkillOrderBy] = useState<keyof ResourceSkillList>('created_datetime');
+  const [costorderBy, setCostOrderBy] =
+    useState<keyof ResourceCostList>('created_datetime');
+  const [skillOrder, setSkillOrder] = useState<'asc' | 'desc'>('desc');
+  const [SkillOrderBy, setSkillOrderBy] =
+    useState<keyof ResourceSkillList>('created_datetime');
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
@@ -61,7 +69,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     isLoading,
     error,
   } = useResourceList({
-    page: currentPage+1, // API expects 1-based index
+    page: currentPage + 1, // API expects 1-based index
     limit: rowsPerPage,
     accountNumber: accountDetails?.data?.accountById.r_number,
     sortBy: sortField,
@@ -81,7 +89,7 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     // update the URL with the tab value
     searchParams.set('tab', newValue);
     navigate({ search: searchParams.toString() });
-    setCurrentPage(0)
+    setCurrentPage(0);
   };
 
   const handleResourceClick = (row: any) => {
@@ -175,13 +183,16 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
     // clear query params
     searchParams.delete('res_id');
     searchParams.delete('tab');
-    navigate({
-      pathname: location.pathname,
-      search: searchParams.toString(),
-    }, {
-      state: { ...location.state, activeKey: 'resources' },
-      replace: true,
-    });
+    navigate(
+      {
+        pathname: location.pathname,
+        search: searchParams.toString(),
+      },
+      {
+        state: { ...location.state, activeKey: 'resources' },
+        replace: true,
+      }
+    );
     setFilterVisibility(true);
   };
 
@@ -206,41 +217,53 @@ const Resource: React.FC<ResourceProps> = ({ accountDetails }) => {
         },
       });
     } else {
-      navigate(`${RESOURCE_CREATE}${resId ? `?res_id=${resId}` : ''}`, { 
-        state: accountDetails 
+      navigate(`${RESOURCE_CREATE}${resId ? `?res_id=${resId}` : ''}`, {
+        state: accountDetails,
       });
     }
   };
 
-  // export function need handle in download btn export droopdown in parent 
+  // export function need handle in download btn export droopdown in parent
 
-  // const handleExport = () => {
-  //   const commonParams = {
-  //     fiscalYear: String(convertedFiscalYear),
-  //     rNumber: accountDetails?.data?.accountById.r_number,
-  //     resourceRid: searchParams.get('res_id') as string,
-  //   };
+useEffect(() => {
+  const updatedParams: Partial<ExportModule> = {
+    sortBy: '',
+    sortOrder: 'DESC',
+    resourceRid: searchParams.get('res_id') || '',
+    rNumber: accountDetails?.data?.accountById?.r_number,
+  };
 
-  //   if (value === 'cost') {
-  //     exportData('cost', {
-  //       ...commonParams,
-  //       sortBy: costorderBy,
-  //       sortOrder: costOrder.toUpperCase() as 'ASC' | 'DESC',
-  //     });
-  //   } else if (value === 'skill') {
-  //     exportData('skill', {
-  //       ...commonParams,
-  //       sortBy: SkillOrderBy,
-  //       sortOrder: skillOrder.toUpperCase() as 'ASC' | 'DESC',
-  //     });
-  //   } else {
-  //     exportData('resource', {
-  //       ...commonParams,
-  //       sortBy: sortField,
-  //       sortOrder: sortOrder,
-  //     });
-  //   }
-  // };
+  if (value === 'cost') {
+    updatedParams.sortBy = costorderBy;
+    updatedParams.sortOrder = costOrder.toUpperCase() as 'ASC' | 'DESC';
+    setExportType('cost');
+  } else if (value === 'skill') {
+    updatedParams.sortBy = SkillOrderBy;
+    updatedParams.sortOrder = skillOrder.toUpperCase() as 'ASC' | 'DESC';
+    setExportType('skill');
+  } else {
+    updatedParams.sortBy = sortField;
+    updatedParams.sortOrder = sortOrder;
+    setExportType('resource');
+  }
+
+  setTableParams((prev) => ({
+    ...prev,
+    ...updatedParams,
+  }));
+}, [
+  value,
+  costOrder,
+  costorderBy,
+  skillOrder,
+  SkillOrderBy,
+  sortField,
+  sortOrder,
+  searchParams,
+  setTableParams,
+  setExportType,
+]);
+
 
   return (
     <div className='w-full'>

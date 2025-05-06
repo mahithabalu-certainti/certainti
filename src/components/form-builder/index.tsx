@@ -313,22 +313,24 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       case 'date': {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const startDateValue: string | undefined | any =
-          constructFormData['financial_start_date'];
+          constructFormData['financial_start_date'] ||
+          constructFormData['resource_startdate'];
         const today: Dayjs = dayjs();
-
+ const isEndDateField =
+   field.name === 'financial_end_date' || field.name === 'resource_enddate';
         const parsedStartDate = startDateValue
           ? dayjs(startDateValue, 'MM/DD/YYYY')
           : undefined;
 
         const customMinDate: Dayjs | undefined =
-          field.name === 'financial_end_date' && parsedStartDate
+          isEndDateField && parsedStartDate
             ? parsedStartDate.add(1, 'day')
             : field?.minDate
               ? dayjs(field.minDate)
               : undefined;
 
         const customMaxDate: Dayjs | undefined =
-          field.name === 'financial_end_date' && startDateValue
+          isEndDateField && startDateValue
             ? today
             : field?.maxDate
               ? dayjs(field.maxDate)
