@@ -1,5 +1,5 @@
 import {
-  Button,
+  Box,
   Checkbox,
   CircularProgress,
   Dialog,
@@ -23,6 +23,7 @@ import {
   setFilters,
 } from '../../store/slices/account-slice';
 import { useToast } from '../../hooks';
+import TextButton from '../button/text-button';
 
 export const GlobalModal = ({
   isGlobalModalOpen,
@@ -114,47 +115,58 @@ export const GlobalModal = ({
       onClose={handleCloseModal}
       aria-labelledby='alert-dialog-title'
       aria-describedby='alert-dialog-description'
-      maxWidth='lg'
+      maxWidth='md'
       fullWidth
     >
-      <DialogTitle className='flex justify-between items-center border-b border-gray-300'>
-        Filters
+      <DialogTitle className='flex justify-between items-center border-b border-[#CBD6E2]'>
+        <span className='text-[#2D3E4F] text-[20px] font-medium leading-[20px]'>Filters</span>
         <img
           src={closeCircleIcon}
           alt='close'
-          className='cursor-pointer'
+          className='cursor-pointer h-[24px] w-[24px]'
           onClick={handleCloseModal}
         />
       </DialogTitle>
       <DialogContent sx={{ padding: 0, display: 'flex' }}>
         {loading ? (
-          <div className='w-full flex justify-center items-center min-h-[200px]'>
+          <div className='w-full flex justify-center items-center min-h-[380px]'>
             <CircularProgress />
           </div>
         ) : (
-          <>
-            <div className='flex-1 border-r border-gray-200 px-6 py-4'>
-              <p className='text-gray-400'>Filter Types</p>
-              <h3 className='font-medium flex items-center gap-2'>
-                <img src={allAccountIcon} alt='all account' /> All Accounts
-              </h3>
+          <div className='flex w-full h-[380px] max-h-[380px] min-h-[380px]'>
+            <div className='flex-1 border-r border-[#CBD6E2] pl-9 py-4'>
+              <p className='text-[#7D98B6] text-[13px] font-normal leading-6'>Filter Types</p>
+              <div className='flex items-center gap-3 h-[28px]'>
+              <img src={allAccountIcon} alt='all account' className='w-5 h-5' />
+                <span className='text-[#425A76] text-[13px] font-normal'>All Accounts</span>
+              </div>
             </div>
-            <div className='flex-1 border-r border-gray-200 overflow-y-auto'>
-              <p className='text-gray-400 mb-1 px-4 pt-4'>Account</p>
-              <div className='flex flex-col space-y-1 p-4'>
+            <div className='flex-2 flex flex-col border-r border-[#CBD6E2]'>
+              <p className='text-[#7D98B6] text-[13px] font-normal leading-6 px-8 pt-4'>Account</p>
+              <div className='flex-1 flex flex-col space-y-1 p-6 overflow-y-auto'>
                 {accounts?.map((account: AccountFilter) => (
                   <div key={account.rid}>
                     <label className='m-0'>
                       <Checkbox
+                        disableRipple
                         checked={selectedFilters.some(
                           (f) => f.account === account.rid
                         )}
                         onChange={() =>
                           handleFilterToggle(account.rid, 'account')
                         }
-                        sx={{ p: 0.75 }}
+                        sx={{
+                          p: 0.75,
+                          color: '#CBD6E2',
+                          '&.Mui-checked': {
+                            color: '#1755E7',
+                          },
+                          '&.MuiCheckbox-indeterminate': {
+                            color: '#1755E7',
+                          },
+                        }}
                       />
-                      <span>{account.account_name}</span>
+                      <span className='text-[13px] font-normal text-[#2D3E4F] cursor-pointer'>{account.account_name}</span>
                     </label>
                     {selectedFilters.some((f) => f.account === account.rid) &&
                       account.child_accounts &&
@@ -163,6 +175,7 @@ export const GlobalModal = ({
                           {account.child_accounts.map((child) => (
                             <label key={child.rid} className='m-0 ml-6 block'>
                               <Checkbox
+                                disableRipple
                                 checked={
                                   selectedFilters
                                     .find((f) => f.account === account.rid)
@@ -171,9 +184,18 @@ export const GlobalModal = ({
                                 onChange={() =>
                                   handleFilterToggle(child.rid, 'child')
                                 }
-                                sx={{ p: 0.75 }}
+                                sx={{
+                                  p: 0.75,
+                                  color: '#CBD6E2',
+                                  '&.Mui-checked': {
+                                    color: '#1755E7',
+                                  },
+                                  '&.MuiCheckbox-indeterminate': {
+                                    color: '#1755E7',
+                                  },
+                                }}
                               />
-                              <span>{child.account_name}</span>
+                              <span className='text-[13px] font-normal text-[#2D3E4F] cursor-pointer'>{child.account_name}</span>
                             </label>
                           ))}
                         </div>
@@ -182,10 +204,10 @@ export const GlobalModal = ({
                 ))}
               </div>
             </div>
-            <div className='flex-1 p-4 overflow-y-auto'>
+            <div className='flex-1 flex flex-col px-8 py-4 bg-[#F6F6F7]'>
               <div className='flex justify-between items-center mb-4'>
-                <h4 className='text-gray-400'>
-                  <span className='bg-gray-200 px-1 py-1 rounded text-xs min-w-[26px] text-center inline-block font-medium'>
+                <h4 className='text-[#7D98B6] text-[13px] font-normal leading-6'>
+                  <span className='bg-[#CBD6E2] w-[20px] h-[20px] inline-flex items-center justify-center rounded text-center font-medium'>
                     {selectedFilters.length +
                       selectedFilters.reduce(
                         (acc, curr) => acc + curr.child.length,
@@ -195,18 +217,18 @@ export const GlobalModal = ({
                   Filters Selected
                 </h4>
                 <span
-                  className='text-gray-400 underline cursor-pointer'
+                  className='text-[#425A76] text-[13px] font-light underline cursor-pointer'
                   onClick={handleResetFilters}
                 >
                   Clear
                 </span>
               </div>
-              <div className='overflow-y-auto'>
-                <p className='mt-3 text-gray-400'>Account</p>
+              <div className='flex-1 overflow-y-auto'>
+                <p className='mt-3 text-[#807F94] text-[13px] font-normal'>Account</p>
                 {selectedFilters.map(({ account: id }) => {
                   const account = accounts?.find((it) => it.rid === id);
                   return account ? (
-                    <p className='flex justify-between items-center' key={id}>
+                    <p className='flex justify-between items-center mt-1 text-[13px] text-[#000000] font-normal' key={id}>
                       {account.account_name}{' '}
                       <img
                         src={closeIcon}
@@ -218,7 +240,7 @@ export const GlobalModal = ({
                   ) : null;
                 })}
 
-                <p className='mt-3 text-gray-400'>Child Account</p>
+                <p className='mt-3 text-[#807F94] text-[13px] font-normal'>Child Account</p>
                 {selectedFilters.flatMap(({ account }, i) =>
                   (
                     accounts?.find((a) => a.rid === account)?.child_accounts ||
@@ -229,7 +251,7 @@ export const GlobalModal = ({
                     )
                     .map((child) => (
                       <p
-                        className='flex justify-between items-center'
+                        className='flex justify-between items-center text-[13px] text-[#000000] font-normal'
                         key={child.rid}
                       >
                         {child.account_name}{' '}
@@ -244,20 +266,38 @@ export const GlobalModal = ({
                 )}
               </div>
             </div>
-          </>
+          </div>
         )}
       </DialogContent>
-      <DialogActions className='border-t border-gray-300'>
-        <Button onClick={handleCloseModal} variant='outlined'>
-          Cancel
-        </Button>
-        <Button
-          variant='contained'
-          color='secondary'
-          onClick={handleSaveFilters}
-        >
-          Save
-        </Button>
+      <DialogActions className='border-t border-[#CBD6E2]'>
+        <Box className='flex items-center justify-end gap-3 pr-6 w-full h-[48px]'>
+          <TextButton
+            label="Cancel"
+            color='inherit'
+            onClick={handleCloseModal}
+            variant='outlined'
+            sx={{
+              width: '55px',
+              minWidth: '55px',
+              borderRadius: '2px',
+              fontSize: '13px',
+              fontWeight: 400,
+            }}
+          />
+          <TextButton
+            label='Save'
+            variant='filled'
+            onClick={handleSaveFilters}
+            sx={{
+              width: '64px',
+              minWidth: '64px',
+              backgroundColor: '#F16137',
+              borderRadius: '2px',
+              fontSize: '13px',
+              fontWeight: 400,
+            }}
+          />
+        </Box>
       </DialogActions>
     </Dialog>
   );

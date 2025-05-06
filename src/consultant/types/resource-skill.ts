@@ -8,7 +8,8 @@ export interface ResourceSkillListParams {
   filters?: object;
   accountNumber?: string;
   fiscalYear?: string | number;
-  rid?:string,
+  rid?: string;
+  resourceRid?: string;
 }
 
 enum skillLevel {
@@ -67,14 +68,13 @@ export type ResourceSkillFormData = {
   skill_name: string;
   technical_weightage?: string;
   accountNumber?: string;
-}
-
-
+};
 
 export type ResourceSkillPayload = {
   rid?: string;
   eid?: string;
   account_rid?: string;
+  resource_number: string;
   resource_type?: string;
   resource_rid?: string;
   resource_ref_id?: string;
@@ -89,3 +89,13 @@ export type ResourceSkillPayload = {
   technical_weightage?: string;
   accountNumber?: string;
 };
+
+export type ExportModule = {
+  sortBy?: string;
+  sortOrder?: string;
+  fiscalYear?: string  ;
+  rNumber?: string;
+  resourceRid?:string;
+};
+
+

@@ -1,17 +1,17 @@
 // import { ResourceCostList } from '../../../types/resourceCost';
 
-import { ResourceCostList } from "../../../../../types/resource-cost";
+import { ResourceCostList } from '../../../../../types/resource-cost';
 
 export interface RenderCostRowProps {
   resourceCost: ResourceCostType[];
 }
 
 export interface ResourceCostType {
-  accountRid?:string,
-  costRid?:string,
-  resourceRID?:string,
-  resourceType?:string,
-  resourceFullName?:string,
+  accountRid?: string;
+  costRid?: string;
+  resourceRID?: string;
+  resourceType?: string;
+  resourceFullName?: string;
   resourceCostNumber?: string;
   resourceRefId?: string;
   currency?: string;
@@ -29,15 +29,14 @@ export interface ResourceCostType {
 export function convertResourceCost(
   resourceCost: ResourceCostList[]
 ): ResourceCostType[] {
-  const resourceCostList: ResourceCostType[] = []; 
+  const resourceCostList: ResourceCostType[] = [];
 
   function processResourceCost(cost: ResourceCostList): void {
-
     const convertedCost: ResourceCostType = {
-      accountRid:cost.account_rid,
-      resourceType:cost.resource_type,
+      accountRid: cost.account_rid,
+      resourceType: cost.resource_type,
       resourceFullName: cost.resource_fullname,
-      resourceCostNumber:cost.r_number,
+      resourceCostNumber: cost.r_number,
       resourceRID: cost.resource_rid,
       resourceRefId: cost.resource_ref_id,
       currency: cost.currency_code,
@@ -50,7 +49,7 @@ export function convertResourceCost(
       biWeeklyCost: cost.bi_weekly_cost?.toString() ?? '',
       dailyCost: cost.daily_cost?.toString() ?? '',
       hourlyCost: cost.hourly_cost?.toString() ?? '',
-      costRid:cost.rid,
+      costRid: cost.rid,
     };
     resourceCostList.push(convertedCost);
   }

@@ -36,6 +36,8 @@ export const AccountListURL = ({
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };
 
+export const GlobalAccountUrl = '/api/accounts/list/global';
+
 export const AccountDetailUrl = (accountId: string) =>
   `/api/accounts/list/${accountId}`;
 
@@ -43,6 +45,8 @@ export const StateUrl = (countryId: string) =>
   `/api/accounts/states/${countryId}`;
 
 export const CityUrl = (stateId: string) => `/api/accounts/cities/${stateId}`;
+
+export const uploadUrl = () => `/importService/api/upload-csv`;
 
 export const getAccountExportUrl = ({
   sortBy,

@@ -12,7 +12,7 @@ export const userColumns: ManageUserColumn<ManageUser>[] = [
     sort: 'status',
     width: '120px',
     render: (row: ManageUser) => (
-      <span style={{ color: row.status === 'Active' ? '#4CAF50' : '#F44336' }}>
+      <span>
         {row.status}
       </span>
     ),

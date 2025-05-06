@@ -29,11 +29,11 @@ export const ManageUserDetails: React.FC = () => {
   const navigate = useNavigate();
   const userDetail = userDetails.data?.data?.users;
 
-  const userActionButtons: string[] = [
-    'Suspend User',
-    'Reactive User',
-    'Reset Password',
-    'Delete',
+  const userActionButtons: { label: string; width: string }[] = [
+    { label: 'Suspend User', width: '119px' },
+    { label: 'Reinstate User', width: '120px' },
+    { label: 'Reset Password', width: '132px' },
+    { label: 'Delete', width: '73px' },
   ];
 
   const handleAction = (action: string) => {
@@ -65,10 +65,10 @@ export const ManageUserDetails: React.FC = () => {
 
   return (
     <div className='flex flex-col h-[calc(100vh-64px)] w-full overflow-y-auto p-4 gap-3'>
-      <div className='flex h-[12%] w-full p-4 items-center justify-between border border-gray-300 rounded'>
+      <div className='w-full min-h-[75px] h-[75px] px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
         <div className='flex items-center gap-2'>
-          <img src={ManageUserIcon} alt='manage user' />
-          <div className='flex flex-col'>
+          <img src={ManageUserIcon} alt='manage user' className='w-8 h-8 rounded' />
+          <div className='flex flex-col mb-1'>
             <div className={HEADER_STYLES.adminPermission}>
               Admin Permission
             </div>
@@ -81,8 +81,11 @@ export const ManageUserDetails: React.FC = () => {
             label='Create User'
             sx={{
               ...BUTTON_STYLES,
-              backgroundColor: 'secondary.main',
+              backgroundColor: '#F16137',
               color: '#fff',
+              borderRadius: '2px',
+              fontSize: '13px',
+              fontWeight: 400,
             }}
             onClick={() => navigate(ADMIN_CREATE_USER)}
           />
@@ -92,15 +95,16 @@ export const ManageUserDetails: React.FC = () => {
             variant='outlined'
             color='inherit'
             onClick={goBack}
+            sx={{ width: '45px',minWidth:'45px', fontWeight:400,fontSize: '12px' }}
           />
         </div>
       </div>
       {/* User Details section  */}
-      <div className='flex flex-col border border-gray-300'>
-        <div className='flex justify-between items-center border-b border-gray-300 p-2'>
+      <div className='flex flex-col border border-[#CBD6E2] rounded-[4px]'>
+        <div className='flex justify-between items-center border-b border-[#CBD6E2] p-2'>
           <div>
-            <div className='text-small text-[#7D98B6]'>User</div>
-            <div className='font-semibold text-xl'>
+          <div className='text-[11px] text-[#7D98B6]'>User</div>
+          <div className='font-semibold text-[16px] text-[#2D3E4F] leading-5 tracking-normal'>
               {userDetails.isLoading ? (
                 <Skeleton variant='rounded' width={200} />
               ) : (
@@ -109,13 +113,20 @@ export const ManageUserDetails: React.FC = () => {
             </div>
           </div>
           <div className='flex gap-2 m-2'>
-            {userActionButtons.map((label) => (
+          {userActionButtons.map((button) => (
               <TextButton
-                key={label}
-                label={label}
-                sx={BUTTON_STYLES}
+              key={button.label}
+              label={button.label}              
                 variant='outlined'
-                onClick={() => handleAction(label)}
+                onClick={() => handleAction(button.label)}
+                sx={{
+                  ...BUTTON_STYLES,
+                  borderRadius: '2px',
+                  fontSize: '13px',
+                  fontWeight: 400,
+                  padding: '4px',
+                  width: button.width,
+                }}
               />
             ))}
           </div>

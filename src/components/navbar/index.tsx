@@ -31,6 +31,7 @@ import { setFiscalYear } from '../../store/slices/account-slice';
 import { fiscalYears } from '../../common-utils';
 import { useNavigate } from 'react-router-dom';
 import { PROFILE } from '../../routes';
+import { FiscalYearDropdown } from '../fiscal-dropdown';
 
 export const Navbar: React.FC = () => {
   const msalSigninInstance = new PublicClientApplication(msalConfig);
@@ -105,10 +106,11 @@ export const Navbar: React.FC = () => {
   };
 
   const changePassword = async () => {
+    handleMenuClose();
     try {
       await msalResetInstance.initialize();
       await msalResetInstance.loginPopup();
-      successToast('Password changed successfully');
+      successToast('Your password has been updated successfully');
 
       await msalSigninInstance.initialize();
       await msalSigninInstance.logoutPopup();
@@ -127,10 +129,10 @@ export const Navbar: React.FC = () => {
         errorToast(err.errorMessage);
       }
     }
-    handleMenuClose();
   };
 
   const handleLogout = async () => {
+    handleMenuClose();
     try {
       await msalSigninInstance.initialize();
       await msalSigninInstance.logoutPopup();
@@ -299,7 +301,7 @@ export const Navbar: React.FC = () => {
               type='text'
               placeholder='Search'
               aria-label='search'
-              className='bg-[#495E74] text-white text-[13px] font-[300] rounded px-4 h-8 pl-9 focus:outline-none min-w-[320px] placeholder:text-white'
+              className='bg-[#495E74] text-white text-[13px] font-[300] rounded px-4 h-8 pl-9 focus:outline-none lg:w-[320px] placeholder:text-white'
             />
             <img
               src={plusIcon}
@@ -324,23 +326,12 @@ export const Navbar: React.FC = () => {
                   <span className='text-[13px] font-normal px-2'>Global</span>
                 </IconButton>
                 <div className='border-l border-[#FFFFFF4D] h-6 mx-1' />
-                <select
-                  value={fiscalYear}
+                <FiscalYearDropdown
+                  fiscalYear={fiscalYear}
+                  fiscalYearsDropDown={fiscalYearsDropDown}
                   onChange={(e) => dispatch(setFiscalYear(e.target.value))}
-                  className='mx-2 px-1 py-2 focus:outline-none cursor-pointer text-[13px] font-medium'
-                  aria-label='Fiscal Year Selector'
-                >
-                  {fiscalYearsDropDown.map((fy) => (
-                    <option
-                      key={fy.value}
-                      value={fy.value}
-                      className='text-black'
-                    >
-                      {fy.label}
-                    </option>
-                  ))}
-                </select>
-                <div className='border-l border-[#FFFFFF4D] mx-2 h-6' />
+                />
+                <div className='border-l border-[#FFFFFF4D] ml-1 mr-2 h-6' />
               </>
             )}
             <IconButton size='large' color='inherit'>

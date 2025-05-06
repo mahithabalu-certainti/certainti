@@ -37,6 +37,7 @@ export interface UserListParams {
   sortOrder?: SortOrder;
   filters?: Filters;
   searchTerm?: string;
+  exportKey?: string;
 }
 
 // User Profile Type

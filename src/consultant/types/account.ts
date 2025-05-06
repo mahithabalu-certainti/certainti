@@ -159,6 +159,16 @@ export type AccountListResponse = {
   };
 };
 
+export type GlobalAccountListResponse = {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: {
+    gloablAcconunt: AccountList[];
+    count: number;
+  };
+};
+
 export interface AccountListURLParams {
   page?: number;
   limit?: number;

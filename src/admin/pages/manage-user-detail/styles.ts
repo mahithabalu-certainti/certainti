@@ -4,6 +4,6 @@ export const BUTTON_STYLES = {
 };
 
 export const HEADER_STYLES = {
-  adminPermission: 'font-semibold text-[#7D98B6] text-xs',
-  manageUser: 'font-semibold text-2xl',
+  adminPermission: 'font-medium text-[#7D98B6] text-[11px] leading-5 tracking-normal',
+  manageUser: 'font-semibold text-[20px] text-[#2D3E4F] leading-5 tracking-normal',
 };

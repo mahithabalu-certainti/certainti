@@ -60,8 +60,34 @@ export const renderRows = ({
 
     return (
       <React.Fragment key={account.accountName}>
-        <TableRow>
-          <TableCell sx={{ maxWidth: '50px' }}>
+        <TableRow
+          hover
+          selected={selectedRows.has(globalIndex as number)}
+          sx={{
+            '&:hover td': {
+              backgroundColor: '#f5f7fa',
+            },
+            '&.Mui-selected td': {
+              backgroundColor: '#f5f7fa',
+            },
+            '&.Mui-selected:hover td': {
+              backgroundColor: '#f5f7fa',
+            },
+          }}
+        >
+          <TableCell 
+          sx={{
+            position: 'sticky',
+            left: 0,
+            background: '#fff',
+            zIndex: 7,
+            maxWidth: '50px',
+            minWidth: '50px',
+            padding: '0 !important',
+            borderBottom: '1px solid #CBD6E2 !important',
+          }}
+          className={`${openRows.has(account.accountName) ? 'no-border' : '' }`}
+          >
             <Box className='flex items-center justify-center'>
               <Checkbox
                 disableRipple
@@ -80,8 +106,15 @@ export const renderRows = ({
           </TableCell>
           <TableCell
             sx={{
+              position: 'sticky',
+              left: '50px',
+              background: '#fff',
+              zIndex: 6,
               fontWeight: '400 !important',
               color: '#2D3E4F !important',
+              borderRight: '1px solid #CBD6E2',
+              borderBottom: '1px solid #CBD6E2 !important',
+              minWidth: '300px',
             }}
           >
             {hasChildren ? ( // Only show the icon if there are children
@@ -89,6 +122,7 @@ export const renderRows = ({
                 aria-label='expand row'
                 size='small'
                 disableRipple
+                className='!p-0 !pr-1'
                 onClick={() => handleRowClick(account.accountName)}
               >
                 {openRows.has(account.accountName) ? (
@@ -132,7 +166,6 @@ export const renderRows = ({
               </span>
             </Box>
           </TableCell>
-          <TableCell sx={{ minWidth: '350px' }}>{account.accountId}</TableCell>
           <TableCell sx={{ minWidth: '200px' }}>
             {account.parentAccount || '-'}
           </TableCell>
@@ -144,10 +177,19 @@ export const renderRows = ({
           <TableCell sx={{ minWidth: '100px' }}>{account.currency}</TableCell>
           <TableCell sx={{ minWidth: '160px' }}>{account.annualRevenue}</TableCell>
           <TableCell sx={{color: account.status === 'Active' ? '#199806 !important' : '#f44336 !important'}}>{account.status}</TableCell>
-          <TableCell sx={{ minWidth: '180px' }}>
+          <TableCell
+            title={account.primaryContact}
+            sx={{
+              minWidth: '180px',
+              maxWidth: '180px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {account.primaryContact}
           </TableCell>
-          <TableCell>
+          <TableCell sx={{ padding: '0px !important' }}>
             <ActionButton
               onEdit={() => handleEdit(account)}
               onDelete={() => handleDelete(account)}
@@ -178,15 +220,48 @@ export const renderChildRows = ({
         (acc) => acc.accountName === account.accountName
       );
       return (
-        <TableRow key={account.accountName}>
-          <TableCell className='no-border' />
+        <TableRow
+          key={account.accountName}
+          hover
+          selected={selectedRows.has(globalIndex)}
+          sx={{
+            '&:hover td': {
+              backgroundColor: '#f5f7fa',
+            },
+            '&.Mui-selected td': {
+              backgroundColor: '#f5f7fa',
+            },
+            '&.Mui-selected:hover td': {
+              backgroundColor: '#f5f7fa',
+            },
+          }}
+        >
           <TableCell
             sx={{
-              fontWeight: '400 !important',
-              color: '#2D3E4F !important',
-            }}
+            position: 'sticky',
+            left: 0,
+            background: '#fff',
+            zIndex: 7,
+            maxWidth: '50px',
+            minWidth: '50px',
+            padding: '0 !important',
+            borderBottom: '1px solid #CBD6E2 !important',
+          }}
+           className='no-border' />
+          <TableCell
+           sx={{
+            position: 'sticky',
+            left: '50px',
+            background: '#fff',
+            zIndex: 6,
+            fontWeight: '400 !important',
+            color: '#2D3E4F !important',
+            borderRight: '1px solid #CBD6E2',
+            minWidth: '300px',
+            borderBottom: '1px solid #CBD6E2 !important',
+          }}
           >
-          <Box className='inline-flex items-center -ml-1.5'>
+          <Box className='inline-flex items-center -ml-2.5'>
             <Checkbox
               disableRipple
               checked={selectedRows.has(globalIndex)}
@@ -215,7 +290,6 @@ export const renderChildRows = ({
             </span>
             </Box>
           </TableCell>
-          <TableCell sx={{ minWidth: '350px' }}>{account.accountId}</TableCell>
           <TableCell sx={{ minWidth: '200px' }}>
             {account.parentAccount || '-'}
           </TableCell>
@@ -233,8 +307,17 @@ export const renderChildRows = ({
             {account.currency}
           </TableCell>
           <TableCell sx={{ minWidth: '160px' }}>{account.annualRevenue}</TableCell>
-          <TableCell sx={{ minWidth: '100px' }}>{account.status}</TableCell>
-          <TableCell sx={{ minWidth: '180px' }}>
+          <TableCell sx={{color: account.status === 'Active' ? '#199806 !important' : '#f44336 !important', minWidth: '100px' }}>{account.status}</TableCell>
+          <TableCell
+            title={account.primaryContact}
+            sx={{
+              minWidth: '180px',
+              maxWidth: '180px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {account.primaryContact}
           </TableCell>
           <TableCell sx={{ minWidth: '80px' }}>

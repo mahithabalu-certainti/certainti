@@ -66,3 +66,14 @@ export interface UserDetail {
   data?: User;
   loading: boolean;
 }
+
+export interface UploadImportPayload {
+  entity_type: string;
+  file: File;
+  fiscal_year: string;
+  account_rid: string;
+  related_to: string;
+  related_to_rid: string;
+  uploaded_by_user_rid: string;
+  account_r_number: string;
+}

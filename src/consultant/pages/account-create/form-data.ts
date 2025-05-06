@@ -51,6 +51,17 @@ export const FormData = (
             options: STATUS_OPTIONS,
             placeholder: 'Choose Status',
           }),
+          createRadioField('is_parent', 'Is Parent Account', {
+            radioOptions: YES_NO_OPTIONS,
+            disabled: disableFields,
+            required: true,
+          }),
+          createTextField('website', 'Website', {
+            required: false,
+            regex: REGEX_PATTERNS.WEBSITE,
+            regexErrorMessage: 'Enter a valid website URL',
+            placeholder: 'Enter Website',
+          }),
           createSelectField('parent_account_rid', 'Parent Account', {
             options: parentAccount,
             placeholder: 'Choose Parent Account',
@@ -63,17 +74,11 @@ export const FormData = (
               disableDependsField: YesNo.Yes,
             },
           }),
-          createTextField('website', 'Website', {
-            required: false,
-            regex: REGEX_PATTERNS.WEBSITE,
-            regexErrorMessage: 'Enter a valid website URL',
-            placeholder: 'Enter Website',
-          }),
           createTextField('industry', 'Industry', {
             required: true,
-            regex: REGEX_PATTERNS.LETTERS_5_TO_25,
+            regex: REGEX_PATTERNS.INDUSTRY,
             regexErrorMessage:
-              'Industry should contain only letters and between 5 to 25 characters',
+              'Industry should be 5-25 characters and contain only letters, spaces, or ampersand (&)',
             placeholder: 'Enter Industry',
           }),
           createTextField('project_manager', 'Delivery Manager', {
@@ -88,11 +93,6 @@ export const FormData = (
               maxMatchedValue: REGEX_PATTERNS.MAX_NAME_REGEX,
               maxErrorMessage: 'Max length exceeded',
             },
-          }),
-          createRadioField('is_parent', 'Is Parent Account', {
-            radioOptions: YES_NO_OPTIONS,
-            disabled: disableFields,
-            required: true,
           }),
         ],
       },
@@ -130,7 +130,7 @@ export const FormData = (
             regexErrorMessage: 'Letters Only and between 3 to 25 characters',
             placeholder: 'Enter Primary Contact Name',
           }),
-          createTextField('finance_poc_name', 'Finance point of contact', {
+          createTextField('finance_poc_name', 'Finance Contact Name', {
             required: true,
             regex: REGEX_PATTERNS.LETTERS_3_TO_25,
             regexErrorMessage: 'Letters Only and between 3 to 25 characters',
@@ -179,15 +179,15 @@ export const FormData = (
           createFiscalDateField('fiscal_end_date', 'Fiscal End Date', {
             disabled: disableFields,
             required: true,
-            greaterThan: {
+            differentThan: {
               key: 'fiscal_start_date',
-              errorMessage: 'Date must be greater than Fiscal Start Date',
+              errorMessage: 'Fiscal End Date cannot be the same as the Fiscal Start Date',
             },
           }),
           createTextField('blended_rate_fte', 'Blended Rate - FTE', {
             required: false,
-            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
-            regexErrorMessage: 'Numbers only maximum 10 digits',
+            regex: REGEX_PATTERNS.BLENDED_NUMBER,
+            regexErrorMessage: 'Numbers only allowed, up to 10 digits',
             placeholder: 'Enter Blended Rate - FTE',
           }),
           createTextField('annual_revenue', 'Annual Revenue', {
@@ -198,9 +198,8 @@ export const FormData = (
           }),
           createTextField('blended_rate_subcon', 'Blended Rate - SubCon', {
             required: false,
-            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
-            regexErrorMessage:
-              'Enter a valid annual revenue using numbers and commas only',
+            regex: REGEX_PATTERNS.BLENDED_NUMBER,
+            regexErrorMessage: 'Numbers only allowed, up to 10 digits',
             placeholder: 'Enter Blended Rate - SubCon',
           }),
           createRadioField('auto_access_rd', 'Auto assess RD', {
@@ -225,7 +224,7 @@ export const FormData = (
           createTextAreaField('account_description', 'Description', {
             required: false,
             regex: REGEX_PATTERNS.ACCOUNT_DESCRIPTION,
-            regexErrorMessage: 'Description must be with in 500 characters',
+            regexErrorMessage: 'Description must be within 500 characters',
             placeholder: 'Enter Description',
           }),
         ],

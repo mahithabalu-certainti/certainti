@@ -20,8 +20,10 @@ export interface FormTypeFields {
   regexErrorMessage?: string;
   disabled?: boolean;
   greaterThan?: Record<string, string>;
+  differentThan?: Record<string, string>;
   dependsRequired?: Record<string, string>;
   resetDependsFields?: string[];
+  disableFutureDates?: boolean;
   lengthRequired?: {
     key: string;
     minMatchedValue: RegExp;
@@ -31,7 +33,15 @@ export interface FormTypeFields {
   };
   onChange?: boolean;
   anyOneRequired?: boolean;
+  hide?: boolean;
   isLoading?: boolean;
+  dateRangeError?: boolean;
+  startValue?: boolean;
+  endDateValue?: boolean;
+  errorMessage?: string;
+  startDateLabel?: string;
+  endDateLabel?: string;
+  errorHandling?: ErrorHandling[];
 }
 
 // export interface SelectOptions {
@@ -55,6 +65,11 @@ export interface SelectOption {
   value: string;
 }
 
+export interface ErrorHandling {
+  regex: RegExp;
+  errorMessage: string;
+}
+
 export interface FieldType {
   type: InputType;
   name: string;
@@ -66,12 +81,20 @@ export interface FieldType {
   regex?: RegExp;
   regexErrorMessage?: string;
   placeholder?: string;
-
+  disableFutureDates?: boolean;
   disabled?: boolean;
   defaultValue?: string;
   greaterThan?: Record<string, string>;
+  differentThan?: Record<string, string>;
   dependsRequired?: Record<string, string>;
   resetDependsFields?: string[];
+  dateRangeError?: boolean;
+  startValue?: boolean;
+  endDateValue?: boolean;
+  errorMessage?: string;
+  startDateLabel?: string;
+  endDateLabel?: string;
+  hide?: boolean;
   lengthRequired?: {
     key: string;
     minMatchedValue: RegExp;
@@ -82,6 +105,7 @@ export interface FieldType {
   onChange?: boolean;
   anyOneRequired?: boolean; // financial information error handling
   isLoading?: boolean;
+  errorHandling?: ErrorHandling[];
 }
 
 export type AllowedCountry =

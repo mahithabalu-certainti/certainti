@@ -1,5 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { ResourceDetailsTypes, SelectOption } from '../../types';
+import {
+  ResourceDetailsForPayload,
+  ResourceDetailsTypes,
+  SelectOption,
+} from '../../types';
 import {
   ResourceCostPayload,
   ResourceCostSkillFormData,
@@ -7,18 +10,16 @@ import {
 import { ResourceSkillPayload } from '../../types/resource-skill';
 import { skillLevel } from '../account-details-sidebar/sidebar-pages/resources/resource-skill/resource-skill-type';
 
-const userDetails = JSON.parse(localStorage.getItem('auth') as any);
-
 // Constants for dropdown options
 export const RESOURCE_STATUS_OPTIONS: SelectOption[] = [
   { label: 'Active', value: 'Active' },
-  { label: 'Inactive', value: 'Inactive' },
+  { label: 'In-Active', value: 'Inactive' },
 ];
 
 export const RESOURCE_TYPE_OPTIONS: SelectOption[] = [
-  { label: 'Full Time', value: 'FullTime' },
-  { label: 'Contract', value: 'Contract' },
-  { label: 'Non Labour', value: 'NonLabour' },
+  { label: 'Full-Time', value: 'Full-Time' },
+  { label: 'Sub Con', value: 'Sub Con' },
+  { label: 'Non-Labor', value: 'Non-Labor' },
 ];
 
 export const FREQUENCY_OPTIONS: SelectOption[] = [
@@ -37,6 +38,7 @@ interface RawResourceData {
   resource_fullname?: string;
   resource_type?: string;
   resource_orgname?: string;
+  resource_role?: string;
   resource_lastname?: string;
   country?: string;
   state?: string;
@@ -46,28 +48,10 @@ interface RawResourceData {
   resource_startdate?: string;
   resource_enddate?: string;
   designation?: string;
-  total_years_oexperience?: string;
+  total_years_experience?: string;
   total_years_in_org?: string;
-}
-
-interface TransformedResourceData {
-  resource_id: string;
-  account_number: string;
-  resource_ref_id: string;
-  resource_type: string;
-  full_name: string;
-  org_name: string;
-  role: string;
-  fiscal_year: number;
-  country: string;
-  state: string;
-  city: string;
-  effective_from_date: string;
-  effective_end_date: string;
-  designation: string;
-  total_years_experience: number;
-  total_years_in_org: number;
-  modified_by: string;
+  resource_status?: string;
+  comments?: string;
 }
 
 interface ResourceTransformationOptions {
@@ -77,7 +61,7 @@ interface ResourceTransformationOptions {
 }
 
 // Helper functions
-const formatDateToDDMMYYYY = (dateString?: string | null): string => {
+const formatDateToMMDDYYYY = (dateString?: string | null): string => {
   if (!dateString) return '';
 
   const date = new Date(dateString);
@@ -87,19 +71,7 @@ const formatDateToDDMMYYYY = (dateString?: string | null): string => {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = date.getFullYear();
 
-  return `${day}/${month}/${year}`;
-};
-const formatDateToYYYYMMDD = (dateString?: string | null): string => {
-  if (!dateString) return '';
-
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return '';
-
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-
-  return `${year}/${month}/${day}`;
+  return `${month}/${day}/${year}`;
 };
 
 // const capitalizeFirstLetter = (str?: string): string => {
@@ -116,7 +88,7 @@ export function transformPayloadforUpdateResource(
   rawData: RawResourceData,
   existingResource?: ResourceDetailsTypes,
   options: ResourceTransformationOptions = {}
-): TransformedResourceData {
+) {
   return {
     resource_id: options.resource_id || '',
     account_number: options.account_number || '',
@@ -129,35 +101,36 @@ export function transformPayloadforUpdateResource(
       rawData.resource_fullname || existingResource?.resource_fullname || '',
     org_name:
       rawData.resource_orgname || existingResource?.resource_orgname || '',
-    role: existingResource?.resource_role || '',
+    role: rawData.resource_role || existingResource?.resource_role,
+    resource_status:
+      rawData.resource_status || existingResource?.resource_status,
     fiscal_year: rawData.fiscal_year || existingResource?.fiscal_year || 0,
-    country: rawData.country || existingResource?.country || '',
-    state: rawData.state || existingResource?.state || '',
-    city: rawData.city || existingResource?.city || '',
+    country: rawData.country || existingResource?.country_name || '',
+    state: rawData.state || existingResource?.state_name || '',
+    city: rawData.city || existingResource?.city_name || '',
+    comments: rawData.comments || existingResource?.comments || '',
     effective_from_date:
-      formatDateToDDMMYYYY(rawData.resource_startdate) ||
-      formatDateToDDMMYYYY(existingResource?.resource_startdate) ||
+      formatDateToMMDDYYYY(rawData.resource_startdate) ||
+      formatDateToMMDDYYYY(existingResource?.resource_startdate) ||
       '',
     effective_end_date:
-      formatDateToDDMMYYYY(rawData.resource_enddate) ||
-      formatDateToDDMMYYYY(existingResource?.resource_enddate) ||
+      formatDateToMMDDYYYY(rawData.resource_enddate) ||
+      formatDateToMMDDYYYY(existingResource?.resource_enddate) ||
       '',
     designation: rawData.designation || existingResource?.designation || '',
     total_years_experience: safeParseNumber(
-      rawData.total_years_oexperience,
+      rawData.total_years_experience,
       existingResource?.total_years_experience || 0
     ),
     total_years_in_org: safeParseNumber(
       rawData.total_years_in_org,
       existingResource?.total_years_in_org || 0
     ),
-
-    modified_by: userDetails?.userId,
   };
 }
 
 export const transformPayloadforCreateResource = (
-  formData: ResourceDetailsTypes
+  formData: ResourceDetailsForPayload
 ) => {
   return {
     account_id: formData.account_id,
@@ -171,12 +144,13 @@ export const transformPayloadforCreateResource = (
     country: formData.country,
     state: formData.state,
     city: formData.city,
-    effective_from_date: formatDateToDDMMYYYY(formData.resource_startdate),
-    effective_end_date: formatDateToDDMMYYYY(formData.resource_enddate),
+    effective_from_date: formatDateToMMDDYYYY(formData.resource_startdate),
+    effective_end_date: formatDateToMMDDYYYY(formData.resource_enddate),
     designation: formData.designation,
     total_years_experience: formData.total_years_experience,
     total_years_in_org: formData.total_years_in_org,
     resource_status: formData.resource_status,
+    comments: formData.comments,
     created_by: formData.created_by,
   };
 };
@@ -188,15 +162,18 @@ export const transformCostData = (
   const data: Partial<ResourceCostPayload> = {
     eid: '',
     account_rid: formData.account_rid,
-    effective_date: formatDateToYYYYMMDD(formData.financial_start_date),
-    end_date: formatDateToYYYYMMDD(formData.financial_end_date),
+    effective_date: formData.financial_start_date
+      ? formData.financial_start_date
+      : '',
+    end_date: formData.financial_end_date ? formData.financial_end_date : '',
     cost_frequency: formData.cost_frequency,
-    cost: formData.cost ? Number(formData.cost) : null,
+    cost: formData.cost ? Number(formData.cost.replace(',', '')) : null,
     resource_type: formData.resource_type,
     resource_ref_id: formData.resource_ref_id,
     currency_rid: formData.currency ? formData.currency : null,
     resource_rid: formData.resource_rid,
     accountNumber: formData.accountNumber,
+    resource_number: formData?.resource_number,
   };
 
   if (isEdit) {
@@ -206,6 +183,7 @@ export const transformCostData = (
     delete data.resource_rid;
     delete data.resource_type;
     delete data.resource_ref_id;
+    delete data.resource_number;
   }
 
   return data;
@@ -221,7 +199,7 @@ export const transformSkillData = (
     resource_type: formData.resource_type,
     resource_rid: formData.resource_rid,
     resource_ref_id: formData.resource_ref_id,
-    start_date: formatDateToYYYYMMDD(formData.skill_start_date),
+    start_date: formData.skill_start_date ? formData.skill_start_date : '',
     skill_level: formData.skill_level as skillLevel,
     years_of_experience: formData.years_of_experience
       ? Number(formData.years_of_experience)
@@ -229,6 +207,7 @@ export const transformSkillData = (
     skill_name: formData.skill_name,
     accountNumber: formData.accountNumber,
     resource_desc: formData.resource_desc,
+    resource_number: formData?.resource_number,
   };
 
   if (isEdit) {
@@ -237,6 +216,7 @@ export const transformSkillData = (
     delete data.resource_type;
     delete data.resource_ref_id;
     delete data.resource_desc;
+    delete data.resource_number;
 
     data.rid = formData.skill_rid;
   }

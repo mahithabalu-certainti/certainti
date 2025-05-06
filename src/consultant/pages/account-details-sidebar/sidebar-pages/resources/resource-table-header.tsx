@@ -1,23 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Box } from '@mui/material';
+import { SxProps } from '@mui/material';
 import React from 'react';
-import { leftArrowIcon, resourceFilterIcon } from '../../../../../assets';
-import { Image } from '../../../../../components';
+import { leftArrowIcon } from '../../../../../assets';
 import TextButton from '../../../../../components/button/text-button';
-import Filter from '../../components/filter/filter';
-import {
-  costFilterFields,
-  resourceFilterFields,
-  skillFilterFields,
-} from './utils';
-
+import { Theme } from '@emotion/react';
 interface ResourceTableHeaderProps {
+  filterVisibility: boolean;
   title: string;
   titleIcon: React.ReactNode;
   headerButtons: {
     label: string;
     variant: 'text' | 'outlined' | 'contained';
     onClick: () => void;
+    sx?: SxProps<Theme>;
   }[];
   toggleViewMode?: () => void;
   showBackArrow?: boolean;
@@ -26,6 +21,7 @@ interface ResourceTableHeaderProps {
   value: string;
   showFilter: boolean;
   setAppliedFilters: (filters: Record<string, any>) => void;
+  resourceNumber?: string;
 }
 
 const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
@@ -35,22 +31,17 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
   toggleViewMode,
   showBackArrow = false,
   onBackClick,
-  handleFilter,
-  setAppliedFilters,
   value,
-  showFilter,
+  resourceNumber,
 }) => {
-  const getFilterFields = () => {
-    if (!value) return resourceFilterFields;
-    return value === 'cost' ? costFilterFields : skillFilterFields;
-  };
+
   return (
-    <div className='border-x border-t border-gray-300 mr-2'>
-      <div className='flex items-center justify-between p-4'>
-        <div className='flex gap-2 items-center'>
+    <div className='border-t border-[1px] border-b-0 border-[#CBD6E2] rounded-tl-[2px] h-[50px] rounded-tr-[2px]'>
+      <div className='flex items-center justify-between h-full px-4'>
+        <div className='flex items-center gap-2'>
           {showBackArrow && (
-            <div className='cursor-pointer' onClick={onBackClick}>
-              <img src={leftArrowIcon} alt='leftArrowIcon' />
+            <div className='cursor-pointer w-[24px] h-[24px] flex justify-center items-center -ml-2' onClick={onBackClick}>
+              <img src={leftArrowIcon} className='h-[14px]' alt='leftArrowIcon' />
             </div>
             //   <button
             //     onClick={onBackClick}
@@ -61,32 +52,18 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
             //   </button>
           )}
           {titleIcon && (
-            <div
-              className='bg-pink-100 p-2 rounded-lg mr-2'
-              role='img'
-              aria-hidden='true'
-            >
+            < div className='w-[24px] h-[24px] flex items-center justify-center'>
               {titleIcon}
             </div>
           )}
-          <h1 className='text-xl font-medium'>{title}</h1>
+          <h1 className='text-[14px] font-medium text-[#2D3E4F]'>{title}</h1>
+          <div className='text-[14px] font-medium text-[#2D3E4F]'>
+            {value === 'details' && resourceNumber}
+          </div>
         </div>
 
-        <div className='flex gap-2'>
-          <Box
-            onClick={handleFilter}
-            className='h-[35px] w-[38px] flex items-center justify-center border border-[#CBD6E2] cursor-pointer'
-          >
-            <Image src={resourceFilterIcon} />
-          </Box>
+        <div className='flex items-center gap-2'>
           <div className='flex gap-2'>
-            {showFilter && (
-              <Filter
-                filterMenu={getFilterFields()}
-                setAppliedFilters={setAppliedFilters}
-                handleFilter={handleFilter}
-              />
-            )}
             {headerButtons?.map((button, index) => (
               <TextButton
                 key={`header-button-${index}`}
@@ -98,6 +75,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
                     : button.onClick
                 }
                 aria-label={button.label}
+                sx={button.sx}
               />
             ))}
           </div>

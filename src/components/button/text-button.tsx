@@ -20,7 +20,7 @@ const StyledButton = styled(Button)<{
   const colorInherit = color === 'inherit';
   return {
     backgroundColor: isFilled ? secondaryColor : 'transparent',
-    height: '32px',
+    height: '32px !important',
     color: colorInherit
       ? theme.palette.grey[600]
       : isFilled
@@ -34,11 +34,11 @@ const StyledButton = styled(Button)<{
     fontSize: '14px',
     fontWeight: '500',
     padding: '8px 16px',
-    borderRadius: '0px',
+    borderRadius: '2px',
     '&:hover': {
-      backgroundColor: colorInherit ? theme.palette.grey[700] : secondaryColor,
-      color: whiteColor,
-    },
+      backgroundColor: `${colorInherit ? theme.palette.grey[700] : secondaryColor} !important`,
+      color: `${whiteColor} !important`,
+    }
   };
 });
 

@@ -41,6 +41,7 @@ interface HeaderProps {
     button?: React.CSSProperties;
     header?: React.CSSProperties;
   };
+  iconClasses?: string;
   onFilterClick?: () => void;
   onRefreshClick?: () => void;
   onDownloadClick?: () => void;
@@ -55,7 +56,8 @@ export const PageHeader: React.FC<HeaderProps> = ({
   placeholder,
   totalRecords,
   icon = accountHomeIcon,
-  iconBackgroundColor = '#d16dd3',
+  iconClasses = 'h-[32px] w-[32px]  p-2.5 rounded',
+  iconBackgroundColor,
   actionItems = [],
   primaryButton,
   showFilter = false,
@@ -73,7 +75,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
 }) => {
   return (
     <div
-      className='flex w-full border-b-1 border-gray-300 p-4'
+      className='flex w-full border-b-2 border-[#CBD6E2] p-4'
       style={customStyles.header}
     >
       <div className='flex justify-between w-full'>
@@ -82,18 +84,18 @@ export const PageHeader: React.FC<HeaderProps> = ({
             <img
               src={icon}
               alt='menu-icon'
-              className='h-10 w-10 p-2.5 rounded'
+              className={iconClasses}
               style={{ backgroundColor: iconBackgroundColor }}
             />
             <div className='flex flex-col'>
               {variant === 'sub' && placeholder ? (
-                <div className='font-medium text-[#7D98B6] text-[11px]'>
+                <div className='font-semibold text-[#7D98B6] text-[11px]'>
                   {placeholder}
                 </div>
               ) : (
                 <>
                   {subtitle && (
-                    <div className='font-medium text-[#7D98B6] text-[11px]'>
+                    <div className='font-medium text-[#7D98B6] bg-amber-400 text-[11px]'>
                       {subtitle}
                     </div>
                   )}
@@ -104,7 +106,9 @@ export const PageHeader: React.FC<HeaderProps> = ({
                   )}
                 </>
               )}
-              <div className='font-semibold text-[20px]'>{title}</div>
+              <div className='font-semibold text-[20px] text-[#2D3E4F]'>
+                {title}
+              </div>
             </div>
             {showFilter && (
               <button
@@ -123,11 +127,11 @@ export const PageHeader: React.FC<HeaderProps> = ({
             <TextButton
               label={primaryButton.label}
               onClick={primaryButton.onClick}
+              variant='outlined'
               sx={{
                 ...DEFAULT_BUTTON_STYLES,
-                backgroundColor: 'secondary.main',
-                color: '#fff',
                 ...customStyles.button,
+                width: '57px', minWidth: '57px', fontSize:'13px', fontWeight: 400,
               }}
             />
           )}

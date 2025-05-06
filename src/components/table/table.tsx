@@ -1,20 +1,23 @@
 import {
+  Box,
   Button,
   Checkbox,
   CircularProgress,
+  IconButton,
   Table as MuiTable,
   Paper,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
-  TablePagination,
   TableRow,
   Tooltip,
   Typography,
 } from '@mui/material';
 import React, { useState } from 'react';
 import { RowData, SortDirection, TableProps } from './types';
+import TablePagination from './pagination';
+import { arrowDownIcon, arrowUpIcon, editIcon, eyeIcon } from '../../assets';
 
 const Table = <T extends RowData>({
   data = [],
@@ -89,9 +92,10 @@ const Table = <T extends RowData>({
     : data.slice(currentPage * rowsPerPage, (currentPage + 1) * rowsPerPage);
 
   return (
-    <Paper sx={{ overflowX: 'auto', width: '100%' }}>
-      <TableContainer>
-        <MuiTable>
+    <>
+    <Paper sx={{ boxShadow: 'none', borderBottom: '1px solid #CBD6E2',borderRadius: '0px' }}>
+      <TableContainer sx={{ maxHeight: 'calc(85vh - 200px)', overflow:'auto', position:'relative' }}>
+        <MuiTable stickyHeader>
           <TableHead
             sx={{
               '& .MuiTableCell-root': {
@@ -99,14 +103,31 @@ const Table = <T extends RowData>({
                 fontSize: '14px',
                 lineHeight: '21px',
                 color: '#2A2A2A',
-                padding: '8px',
+                padding: '0px',
+                pl: 1,
+                minHeight: '42px',
+                borderBottom: '1px solid #CBD6E2 !important',
               },
             }}
           >
             <TableRow>
               {/* Select all checkbox */}
               {selectable && (
-                <TableCell padding='checkbox'>
+                <TableCell 
+                padding='checkbox' 
+                sx={{
+                  position: 'sticky',
+                  left: 0,
+                  background: '#fff',
+                  zIndex: 11,
+                  maxWidth: '40px',
+                  minWidth: '40px',
+                  padding: '0px !important',
+                  borderRight: '1px solid #CBD6E2',
+                  borderBottom: '1px solid #CBD6E2 !important',
+                }}
+                >
+                  <Box className='flex items-center justify-center'>
                   <Checkbox
                     indeterminate={
                       selectedRows.size > 0 && selectedRows.size < data.length
@@ -128,11 +149,12 @@ const Table = <T extends RowData>({
                       },
                     }}
                   />
+                  </Box>
                 </TableCell>
               )}
 
               {/* Column headers */}
-              {columns.map((column) => (
+              {columns.map((column, index) => (
                 // <TableCell
                 //   key={column.id}
                 //   onClick={() => column.sortable && handleSort(column.id)}
@@ -160,6 +182,12 @@ const Table = <T extends RowData>({
                     width: column.width || 120,
                     minWidth: column.width || 120,
                     maxWidth: column.width || 'auto', 
+                    position: index === 0 ? 'sticky' : 'auto',
+                    left: index === 0 ? '40px' : '0px',
+                    background: index === 0 ? '#fff' : 'auto',
+                    zIndex: index === 0 ? 10 : 'auto',
+                    borderRight: '1px solid #CBD6E2 !important',
+                    borderBottom: '1px solid #CBD6E2 !important',
                   }}
                 >
                   <div className='flex items-center'>
@@ -169,7 +197,7 @@ const Table = <T extends RowData>({
                       <>
                         {sortBy === column.sort && (
                           <span
-                            className='ml-1 cursor-pointer'
+                            className='cursor-pointer'
                             onClick={(e) => {
                               e.stopPropagation();
                               if (column.sort) {
@@ -179,22 +207,63 @@ const Table = <T extends RowData>({
                               }
                             }}
                           >
-                            {sortOrder === 'ASC' ? '↑' : '↓'}
+                            {sortOrder === 'ASC' ? (
+                                <div className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'>
+                                  <img
+                                    src={arrowUpIcon}
+                                    alt='sort-up-active'
+                                    className='w-4 h-4'
+                                    style={{
+                                      filter: 'brightness(0) saturate(100%)',
+                                    }}
+                                  />
+                                  <img
+                                    src={arrowDownIcon}
+                                    alt='sort-down-inactive'
+                                    className='w-4 h-4 filter grayscale brightness-0 opacity-50 mt-[-9px]'
+                                  />
+                                </div>
+                              ) : (
+                                <div className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'>
+                                  <img
+                                    src={arrowUpIcon}
+                                    alt='sort-up-inactive'
+                                    className='w-4 h-4 filter grayscale brightness-0 opacity-50'
+                                  />
+                                  <img
+                                    src={arrowDownIcon}
+                                    alt='sort-down-active'
+                                    className='w-4 h-4 mt-[-9px]'
+                                    style={{
+                                      filter: 'brightness(0) saturate(100%)',
+                                    }}
+                                  />
+                                </div>
+                              )}
                           </span>
                         )}
                         {sortBy !== column.sort && (
-                          <span
-                            className='ml-1 cursor-pointer text-gray-400'
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (column.sort) {
-                                handleSort(column.sort);
-                              }
-                            }}
-                          >
-                            ↕
-                          </span>
-                        )}
+                            <div
+                              className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (column.sort) {
+                                  handleSort(column.sort);
+                                }
+                              }}
+                            >
+                              <img
+                                src={arrowUpIcon}
+                                alt='sort-up'
+                                className='w-4 h-4 filter grayscale brightness-0 opacity-50'
+                              />
+                              <img
+                                src={arrowDownIcon}
+                                alt='sort-down'
+                                className='w-4 h-4 filter grayscale brightness-0 opacity-50 mt-[-9px]'
+                              />
+                            </div>
+                          )}
                       </>
                     )}
                   </div>
@@ -202,7 +271,7 @@ const Table = <T extends RowData>({
               ))}
 
               {/* Action column */}
-              {(onEdit || onDelete || onView) && <TableCell>Actions</TableCell>}
+              {(onEdit || onDelete || onView) && <TableCell sx={{ minWidth: '100px', textAlign: 'center', pl: '0px !important' }}>Action</TableCell>}
             </TableRow>
           </TableHead>
 
@@ -213,13 +282,16 @@ const Table = <T extends RowData>({
                 fontSize: '14px',
                 lineHeight: '21px',
                 color: '#425A76',
-                padding: '6px',
+                padding: '0px',
+                pl: 1,
+                minHeight: '36px',
+                borderBottom: '1px solid #CBD6E2 !important',
               },
             }}
           >
             {/* Loading state */}
             {loading && (
-              <TableRow>
+              <TableRow sx={{ height: 'calc(85vh - 200px)' }}>
                 <TableCell
                   colSpan={
                     columns.length +
@@ -235,7 +307,7 @@ const Table = <T extends RowData>({
 
             {/* Error state */}
             {error && !loading && (
-              <TableRow>
+              <TableRow sx={{ height: '40px' }}>
                 <TableCell
                   colSpan={
                     columns.length +
@@ -250,8 +322,8 @@ const Table = <T extends RowData>({
             )}
 
             {/* Empty state */}
-            {!loading && !error && data.length === 0 && (
-              <TableRow>
+            {!loading && !error && data.length == 0 && (
+              <TableRow sx={{ height: '40px' }}>
                 <TableCell
                   colSpan={
                     columns.length +
@@ -275,10 +347,36 @@ const Table = <T extends RowData>({
                     key={rowId}
                     hover
                     selected={selectedRows.has(rowId)}
+                    className='group'
+                    sx={{
+                      '&:hover td': {
+                        backgroundColor: '#f5f7fa',
+                      },
+                      '&.Mui-selected td': {
+                        backgroundColor: '#f5f7fa',
+                      },
+                      '&.Mui-selected:hover td': {
+                        backgroundColor: '#f5f7fa',
+                      },
+                    }}
                   >
                     {/* Row checkbox */}
                     {selectable && (
-                      <TableCell padding='checkbox'>
+                      <TableCell
+                       padding='checkbox' 
+                       sx={{
+                        position: 'sticky',
+                        left: 0,
+                        background: '#fff',
+                        zIndex: 7,
+                        maxWidth: '40px',
+                        minWidth: '40px',
+                        padding: '0 !important',
+                        borderRight: '1px solid #CBD6E2',
+                        borderBottom: '1px solid #CBD6E2 !important',
+                      }}
+                       >
+                        <Box className='flex items-center justify-center'>
                         <Checkbox
                           checked={selectedRows.has(rowId)}
                           onChange={() => handleRowSelect(rowId)}
@@ -291,28 +389,45 @@ const Table = <T extends RowData>({
                             },
                           }}
                         />
+                        </Box>
                       </TableCell>
                     )}
 
                     {/* Data cells */}
-                    {columns.map((column) => (
+                    {columns.map((column, index) => {
+                      const isStatus = column.id === 'status';
+                      const statusValue = row[column.id];
+                                  
+                     return (
                       <TableCell key={`${rowId}-${column.id}`}
                         sx={{
                           width: column.width || 120,
                           minWidth: column.width || 120,
                           maxWidth: column.width || 'auto',
-                          wordWrap: 'break-word'
+                          wordWrap: 'break-word',
+                          position: index === 0 ? 'sticky' : 'static',
+                          left: index === 0 ? '40px' : '0px',
+                          background: index === 0 ? '#fff' : 'inherit',
+                          zIndex: index === 0 ? 6 : 'auto',
+                          borderRight: '1px solid #CBD6E2 !important',
+                          borderBottom: '1px solid #CBD6E2 !important',
                         }}
+                        className={`${
+                          isStatus
+                            ? `${statusValue === 'Active' ? 'group-hover:!text-[#199806]' : 'group-hover:!text-[#f44336]'} group-hover:underline`
+                            : 'group-hover:!text-blue-600 group-hover:underline'
+                        } cursor-context-menu`}
                       >
                         {column.render
                           ? column.render(row)
                           : (row[column.id] as React.ReactNode)}
                       </TableCell>
-                    ))}
+                    )})}
 
                     {/* Action buttons */}
                     {(onEdit || onDelete || onView) && (
-                      <TableCell sx={{ whiteSpace: 'nowrap', width:'150px', minWidth: '150px', maxWidth: '150px' }}>
+                      <TableCell sx={{ padding: '0px !important', whiteSpace: 'nowrap', width:'100px', minWidth: '100px', maxWidth: '100px' }}>
+                        <Box className='w-full inline-flex items-center justify-center'>
                         {onView && (
                           <Tooltip
                             arrow
@@ -328,15 +443,13 @@ const Table = <T extends RowData>({
                               },
                             }}
                           >
-                            <Button
-                              variant='outlined'
+                            <IconButton
                               size='small'
-                              color='primary'
-                              sx={{ mr: 1, textTransform: 'capitalize' }}
+                              sx={{ mr: 1.5 }}
                               onClick={() => onView(row)}
                             >
-                              View
-                            </Button>
+                              <img src={eyeIcon} alt='viewIcon' className='w-5 h-5' />
+                            </IconButton>
                           </Tooltip>
                         )}
                         {onEdit && (
@@ -354,15 +467,21 @@ const Table = <T extends RowData>({
                               },
                             }}
                           >
-                            <Button
-                              variant='outlined'
+                            <IconButton
                               size='small'
-                              color='secondary'
-                              sx={{ mr: 1, textTransform: 'capitalize' }}
                               onClick={() => onEdit(row)}
                             >
-                              Edit
-                            </Button>
+                              <img 
+                              src={editIcon} 
+                              alt='editIcon'
+                              style={{
+                                filter:
+                                  'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
+                              }}
+ 
+                              className='w-4 h-4'
+                              />
+                            </IconButton>
                           </Tooltip>
                         )}
                         {onDelete && (
@@ -391,6 +510,7 @@ const Table = <T extends RowData>({
                             </Button>
                           </Tooltip>
                         )}
+                        </Box>
                       </TableCell>
                     )}
                   </TableRow>
@@ -399,22 +519,19 @@ const Table = <T extends RowData>({
           </TableBody>
         </MuiTable>
       </TableContainer>
-
+    </Paper>
       {/* Pagination */}
       {(onPageChange || onRowsPerPageChange) && (
         <TablePagination
           rowsPerPageOptions={[5, 10, 25, 50]}
-          component='div'
           count={totalItems}
           rowsPerPage={rowsPerPage}
           page={currentPage}
-          onPageChange={(_, newPage) => onPageChange?.(newPage)}
-          onRowsPerPageChange={(e) =>
-            onRowsPerPageChange?.(parseInt(e.target.value, 10))
-          }
+          onPageChange={(newPage) => onPageChange?.(newPage)}
+          onRowsPerPageChange={(newPageSize) => onRowsPerPageChange?.(newPageSize)}
         />
       )}
-    </Paper>
+  </>
   );
 };
 

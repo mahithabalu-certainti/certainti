@@ -1,9 +1,13 @@
+import { TruncateWithTooltip } from '../../../../../components';
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 interface ColumnDefinition {
   id: string;
+  sortId?: string;
   label: string;
   sortable: boolean;
-  render?: (value: any, row?: any) => React.ReactNode;
+  width?: string;
+  render: (value: any, row?: any) => JSX.Element;
 }
 
 interface ResourceColumnsProps {
@@ -19,74 +23,163 @@ const displayValue = (value: any) => {
 
 const BASE_COLUMNS: ColumnDefinition[] = [
   {
-    id: 'rid',
-    label: 'Resource Id',
+    id: 'r_number',
+    sortId: 'r_number',
+    label: 'Resource ID',
     sortable: true,
+    width: '130px',
     render: (value: string, row: any) => (
       <span
-        className='text-blue-600 hover:text-blue-800 hover:underline cursor-pointer'
+        className='text-[#425A76] font-normal text-sm hover:underline cursor-pointer'
         onClick={(e) => {
           e.stopPropagation();
           (row.onResourceIdClick || (() => {}))(row);
         }}
       >
-        {displayValue(value)}
+        <TruncateWithTooltip
+          text={String(value)}
+          // className='font-medium text-[18px] text-[#2D3E4F] '
+        >
+          {displayValue(value)}
+        </TruncateWithTooltip>
+        {/* {displayValue(value)} */}
       </span>
     ),
   },
   {
     id: 'resource_ref_id',
-    label: 'Resource Ref Id',
+    sortId: 'resource_ref_id',
+    label: 'Resource Ref ID',
     sortable: true,
-    render: (value: string) => displayValue(value),
+    width: '150px',
+    render: (value: string) => (
+      <TruncateWithTooltip
+        text={String(value)}
+        // className='font-medium text-[18px] text-[#2D3E4F] '
+      >
+        <span className='font-light text-sm text-[#425A76]'>
+          {displayValue(value)}
+        </span>
+      </TruncateWithTooltip>
+    ),
   },
   {
     id: 'resource_fullname',
+    sortId: 'resource_fullname',
     label: 'Resource Full Name',
     sortable: true,
-    render: (value: string) => displayValue(value),
+    width: '200px',
+    render: (value: string) => (
+      <TruncateWithTooltip
+        text={String(value)}
+        // className='font-medium text-[18px] text-[#2D3E4F] '
+      >
+        <span className='font-light text-sm text-[#425A76]'>
+          {displayValue(value)}
+        </span>
+      </TruncateWithTooltip>
+    ),
   },
   {
     id: 'resource_type',
+    sortId: 'resource_type',
     label: 'Resource Type',
     sortable: true,
-    render: (value: string) => displayValue(value),
+    width: '140px',
+    render: (value: string) => (
+      <TruncateWithTooltip
+        text={String(value)}
+        // className='font-medium text-[18px] text-[#2D3E4F] '
+      >
+        <span className='font-light text-sm text-[#425A76]'>
+          {displayValue(value)}
+        </span>
+      </TruncateWithTooltip>
+    ),
+  },
+  {
+    id: 'designation',
+    sortId: 'designation',
+    label: 'Resource Designation',
+    sortable: true,
+    width: '200px',
+    render: (value: string) => (
+      <TruncateWithTooltip
+        text={String(value)}
+        // className='font-medium text-[18px] text-[#2D3E4F] '
+      >
+        <span className='font-light text-sm text-[#425A76]'>
+          {displayValue(value)}
+        </span>
+      </TruncateWithTooltip>
+    ),
+  },
+  {
+    id: 'country_name',
+    sortId: 'country',
+    label: 'Resource Country',
+    sortable: true,
+    width: '160px',
+    render: (value: string) => (
+      <TruncateWithTooltip
+        text={String(value)}
+        // className='font-medium text-[18px] text-[#2D3E4F] '
+      >
+        <span className='font-light text-sm text-[#425A76]'>
+          {displayValue(value)}
+        </span>
+      </TruncateWithTooltip>
+    ),
+  },
+  {
+    id: 'state_name',
+    sortId: 'state',
+    label: 'Resource Region',
+    sortable: true,
+    width: '150px',
+    render: (value: string) => (
+      <TruncateWithTooltip
+        text={String(value)}
+        // className='font-medium text-[18px] text-[#2D3E4F] '
+      >
+        <span className='font-light text-sm text-[#425A76]'>
+          {displayValue(value)}
+        </span>
+      </TruncateWithTooltip>
+    ),
   },
 ];
 
-const createStatusColumn = (activeOnly: boolean = false): ColumnDefinition => ({
+const createStatusColumn = (): ColumnDefinition => ({
   id: 'resource_status',
-  label: 'Status',
+  sortId: 'resource_status',
+  label: 'Resource Status',
   sortable: true,
+  width: '150px',
   render: (value: string) => (
     <span
-      className={`font-medium ${
-        activeOnly
-          ? 'text-green-600'
-          : value === 'Active'
-            ? 'text-green-600'
-            : 'text-red-600'
+      className={`font-normal text-[14px] ${
+        value === 'Active' ? 'text-[#199806]' : 'text-[#f44336]'
       }`}
     >
-      {displayValue(value)}
+      {value === 'Active' ? 'Active' : 'In-Active'}
     </span>
   ),
 });
 
 export const getResourceColumns = ({
   onResourceIdClick,
-  view = false,
   onClickId,
 }: ResourceColumnsProps): ColumnDefinition[] => {
   // Apply click handler to the specified ID column
   const applyClickHandler = (columns: ColumnDefinition[]) => {
     return columns.map((column) =>
-      column.id === (onClickId || 'rid')
+      column.id === (onClickId || 'r_number')
         ? {
             ...column,
             render: (value: string, row: any) => (
               <span
-                className='text-blue-600 hover:text-blue-800 hover:underline cursor-pointer'
+                className='text-[#425A76] text-[14px] font-normal cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
                 onClick={(e) => {
                   e.stopPropagation();
                   onResourceIdClick(row);
@@ -101,7 +194,7 @@ export const getResourceColumns = ({
   };
 
   const columns = applyClickHandler([...BASE_COLUMNS]);
-  columns.push(createStatusColumn(!view));
+  columns.push(createStatusColumn());
 
   return columns;
 };

@@ -2,21 +2,24 @@ import { Autocomplete, Checkbox, Skeleton, TextField } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import dayjs from 'dayjs';
+// import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
+
 import { CountryCode, parsePhoneNumberFromString } from 'libphonenumber-js';
 import React, { useEffect } from 'react';
 import PhoneInput, { CountryData } from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
-import { calendarIcon, closeIcon, searchBlackIcon } from '../../assets';
+import {
+  arrowDownIcon,
+  calendarIcon,
+  closeIcon,
+  searchBlackIcon,
+} from '../../assets';
 
+import { useLocation } from 'react-router-dom';
 import { FieldTypes, OnChange } from '../../common-service';
 import { ALLOWED_COUNTRIES } from '../../common-utils';
-import {
-  FormType,
-  FormTypeFields,
-  SelectOption,
-} from '../../consultant/types';
-import { useLocation } from 'react-router-dom';
+import { FormType, FormTypeFields, SelectOption } from '../../consultant/types';
 
 interface FormBuilderProps {
   data: FormType[];
@@ -31,9 +34,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   data,
   formRef,
   values,
-  loading,
+  loading = false,
   onChange,
-  outData
+  outData,
 }) => {
   const location = useLocation();
   const { state } = location;
@@ -43,10 +46,33 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   >({});
 
   const CommonSkeleton = (
-    <Skeleton variant='rounded' width='100%' height={36} />
+    <Skeleton variant='rounded' width='100%' height={32} />
   );
   useEffect(() => {
-    setFormData(data);
+    setFormData((prevFormData = []) => {
+      return data.map((newSection) => {
+        const oldSection = prevFormData.find(
+          (s) => s.sectionName === newSection.sectionName
+        );
+    
+        return {
+          ...newSection,
+          fields: newSection.fields.map((newField) => {
+            const oldField = oldSection?.fields.find(
+              (f) => f.name === newField.name
+            );
+    
+            return {
+              ...newField,
+              error: oldField?.error ?? newField.error,
+              disabled: oldField?.disabled?? newField.disabled,
+              value: oldField?.value ?? newField.value,
+            };
+          }),
+        };
+      });
+    });
+      
     // Only set initial form data if constructFormData is empty
     if (Object.values(constructFormData).every((value) => !value)) {
       let constructFormData = {};
@@ -59,8 +85,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         });
       });
 
-
-
       setConstructFormData(constructFormData);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,7 +94,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     const isError = field.error ? 'border-red-500' : 'border-gray-300';
     const fontSize = '0.875rem';
     const fieldValue = (constructFormData[field.name] as string) || '';
-    const fieldDisabled = (field.disabled) ? ' bg-gray-100' : '';
+    const fieldDisabled = field.disabled ? ' bg-gray-100' : '';
 
     const handleChange = (value: FieldTypes, countryCode?: FieldTypes) => {
       const newData = {
@@ -83,9 +107,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
       if (field.resetDependsFields?.length) {
         field.resetDependsFields.forEach((fieldEntry) => {
-          fieldEntry.split(',').map(f => f.trim()).forEach((f) => {
-            newData[f] = '';
-          });
+          fieldEntry
+            .split(',')
+            .map((f) => f.trim())
+            .forEach((f) => {
+              newData[f] = '';
+            });
         });
       }
 
@@ -104,7 +131,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
 
             if (f.dependsRequired?.key === field.name) {
-              const shouldDisable = value === f.dependsRequired.disableDependsField;
+              const shouldDisable =
+                value === f.dependsRequired.disableDependsField;
 
               updatedField.disabled = shouldDisable;
 
@@ -134,7 +162,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             placeholder={field.placeholder}
             autoComplete='off'
             className={
-              'w-full sm:text-sm p-2 border-1 ' + isError + fieldDisabled
+              'placeholder-custom-color w-full sm:text-sm px-2 h-[32px] border border-[#CBD6E2] rounded-xs' +
+              isError +
+              fieldDisabled
             }
             disabled={field.disabled}
             onChange={(e) => handleChange(e.target.value)}
@@ -143,33 +173,44 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         );
       case 'select':
         return (
-          <select
-            name={field.name}
-            className={
-              'w-full sm:text-sm p-2 border-1 ' +
-              (fieldValue === '' ? 'text-gray-500 ' : '') +
-              isError +
-              fieldDisabled
-            }
-            onChange={(e) => handleChange(e.target.value)}
-            value={fieldValue}
-            disabled={field.disabled}
-          >
-            <option value='' className='text-gray-500'>
-              {field.placeholder}
-            </option>
-            {field?.options?.map((option, i) => (
-              <option key={i} value={option.value}>
-                {option.label}
+          <div className='relative w-full'>
+            <select
+              name={field.name}
+              className={
+                'custom-select-no-arrow w-full sm:text-sm px-1.5 py-[6px] border-1 ' +
+                (fieldValue === '' ? 'text-[#7D98B6] ' : '') +
+                isError +
+                fieldDisabled
+              }
+              onChange={(e) => handleChange(e.target.value)}
+              value={fieldValue}
+              disabled={field.disabled}
+            >
+              <option value='' className='text-gray-500'>
+                {field.placeholder}
               </option>
-            ))}
-          </select>
+              {field?.options?.map((option, i) => (
+                <option key={i} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <img
+              src={arrowDownIcon}
+              alt='dropdown arrow'
+              className='absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none'
+              style={{
+                width: 15,
+                height: 15,
+              }}
+            />
+          </div>
         );
       case 'textarea':
         return (
           <textarea
             className={
-              'w-full sm:text-sm p-2 border-1 resize-none ' +
+              'placeholder-custom-color w-full sm:text-sm p-2 border border-[#CBD6E2] rounded-xs h-[95px] resize-none ' +
               isError +
               fieldDisabled
             }
@@ -240,14 +281,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     handleChange(newValues);
                   }}
                 />
-                <span className='text-sm text-gray-400'>{option.label}</span>
+                <span className='text-[13px] text-[#7D98B6]'>
+                  {option.label}
+                </span>
               </label>
             ))}
           </div>
         );
       case 'radio':
         return (
-          <div className='flex gap-4 mt-1'>
+          <div className='flex gap-4 mt-1.5'>
             {field?.options?.map((option, i) => (
               <label key={i} className='flex gap-2 cursor-pointer'>
                 <input
@@ -260,27 +303,61 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     handleChange(e.target.value);
                   }}
                 />
-                <span className='text-sm text-gray-400'>{option.label}</span>
+                <span className='text-[13px] text-[#7D98B6]'>
+                  {option.label}
+                </span>
               </label>
             ))}
           </div>
         );
-      case 'date':
+      case 'date': {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const startDateValue: string | undefined | any =
+          constructFormData['financial_start_date'] ||
+          constructFormData['resource_startdate'];
+        const today: Dayjs = dayjs();
+        const isEndDateField =
+          field.name === 'financial_end_date' || field.name === 'resource_enddate';
+        const parsedStartDate = startDateValue
+          ? dayjs(startDateValue, 'MM/DD/YYYY')
+          : undefined;
+
+        const customMinDate: Dayjs | undefined =
+          isEndDateField && parsedStartDate
+            ? parsedStartDate.add(1, 'day')
+            : field?.minDate
+              ? dayjs(field.minDate)
+              : undefined;
+
+        const customMaxDate: Dayjs | undefined =
+          isEndDateField && startDateValue
+            ? today
+            : field?.maxDate
+              ? dayjs(field.maxDate)
+              : undefined;
+
         return (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
               className={fieldDisabled}
-              maxDate={field?.maxDate ? dayjs(field?.maxDate) : undefined}
-              minDate={field?.minDate ? dayjs(field?.minDate) : undefined}
-              value={dayjs(fieldValue)}
+              minDate={customMinDate}
+              maxDate={customMaxDate}
+              value={dayjs(fieldValue, 'MM/DD/YYYY')}
               disabled={field.disabled}
+              format='MM/DD/YYYY'
               onChange={(newValue) => {
-                handleChange(dayjs(newValue).format('MM/DD/YYYY'));
+                handleChange(
+                  newValue ? dayjs(newValue).format('MM/DD/YYYY') : null
+                );
               }}
-              // shouldDisableDate={(date) => dayjs(date).isBefore(dayjs(), 'day')}
+              shouldDisableDate={
+                field.disableFutureDates
+                  ? (date) => dayjs(date).isAfter(today, 'day')
+                  : undefined
+              }
               slots={{
                 openPickerIcon: () => (
-                  <img src={calendarIcon} alt='calendar' className='w-6 h-5' />
+                  <img src={calendarIcon} alt='calendar' className='w-4 h-4' />
                 ),
                 clearIcon: () => (
                   <img src={closeIcon} alt='calendar' className='w-2.5 h-2.5' />
@@ -288,13 +365,37 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               }}
               slotProps={{
                 field: { clearable: !field.disabled },
+                day: {
+                  sx: {
+                    '&.MuiPickersDay-today': {
+                      border: 'none',
+                      backgroundColor: 'inherit',
+                    },
+                  },
+                },
                 textField: {
                   fullWidth: true,
                   size: 'small',
-                  disabled: false,
+                  disabled: field.disabled,
                   sx: {
                     '& .MuiOutlinedInput-root': {
-                      borderRadius: 0,
+                      height: '32px',
+                      borderRadius: '2px',
+                      '& input': {
+                        fontWeight: 400,
+                        fontSize: '13px',
+                        lineHeight: '21px',
+                        '& ::placeholder': {
+                          color: '#7D98B6 !important',
+                        },
+                        color: 'black !important',
+                        WebkitTextFillColor: 'black !important',
+
+                        '&[value="MM/DD/YYYY"]': {
+                          color: '#7D98B6 !important',
+                          WebkitTextFillColor: '#7D98B6 !important',
+                        },
+                      },
                       '&.Mui-disabled': {
                         '& input': {
                           color: 'black',
@@ -305,28 +406,37 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   },
                   placeholder: field.placeholder,
                   error: !!field.error,
+                  // onBlur: (event) => {
+                  //   //For cache typed data
+                  //   const value = event.target.value;
+                  //   if (value !== 'MM/DD/YYYY') {
+                  //     //For Avoid default data
+                  //     handleChange(value);
+                  //   }
+                  // },
                 },
               }}
             />
           </LocalizationProvider>
         );
+      }
+
       case 'fiscalDate':
         return (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
+              className={fieldDisabled}
               value={dayjs(fieldValue, 'DD/MM/YYYY')}
               disabled={field.disabled}
               format='MM/DD'
               views={['month', 'day']}
               minDate={dayjs().startOf('year')}
-              maxDate={dayjs().endOf('year')}
               onChange={(newValue) => {
                 handleChange(dayjs(newValue).format('DD/MM/YYYY'));
               }}
-              shouldDisableDate={(date) => dayjs(date).isBefore(dayjs(), 'day')}
               slots={{
                 openPickerIcon: () => (
-                  <img src={calendarIcon} alt='calendar' className='w-6 h-5' />
+                  <img src={calendarIcon} alt='calendar' className='w-4 h-4' />
                 ),
                 clearIcon: () => (
                   <img src={closeIcon} alt='calendar' className='w-2.5 h-2.5' />
@@ -337,10 +447,26 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 textField: {
                   fullWidth: true,
                   size: 'small',
-                  disabled: false,
+                  disabled: field.disabled,
                   sx: {
                     '& .MuiOutlinedInput-root': {
-                      borderRadius: 0,
+                      height: '32px',
+                      borderRadius: '2px',
+                      '& input': {
+                        fontWeight: 400,
+                        fontSize: '13px',
+                        lineHeight: '21px',
+                        '& ::placeholder': {
+                          color: '#7D98B6 !important',
+                        },
+                        color: 'black !important',
+                        WebkitTextFillColor: 'black !important',
+
+                        '&[value="MM/DD"]': {
+                          color: '#7D98B6 !important',
+                          WebkitTextFillColor: '#7D98B6 !important',
+                        },
+                      },
                       '&.Mui-disabled': {
                         '& input': {
                           color: 'black',
@@ -365,9 +491,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             onChange={(phone, country: CountryData) =>
               handleChange(phone, country.countryCode)
             }
-            inputClass={`!w-full !text-sm !p-2 !pl-12 !border !h-[38px] !rounded-[0px] ${field.error ? '!border-red-500' : '!border-gray-300'
-              }${field.disabled ? ' !bg-gray-100' : ''}`}
-            buttonClass={`!bg-transparent !border-r ${field.error ? '!border-red-500' : '!border-gray-300'} !rounded-[0px] !hover:bg-transparent !shadow-none !px-0 !m-0`}
+            inputClass={`placeholder-custom-color !w-full !text-[13px] !p-2 !pl-12 !border !h-[32px] !rounded-xs ${
+              field.error ? '!border-red-500' : '!border-gray-300'
+            }${field.disabled ? ' !bg-gray-100' : ''}`}
+            buttonClass={`!bg-transparent !border-r ${field.error ? '!border-red-500' : '!border-gray-300'} !rounded-tl-xs !rounded-bl-xs !hover:bg-transparent !shadow-none !px-0 !m-0`}
             containerClass='!w-full'
             inputProps={{
               name: field.name,
@@ -413,154 +540,342 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     return dayjs(dateString, format, true).isValid();
   };
 
+  const validateRegex = (regex: RegExp | string, value: string) => {
+    const pattern = regex instanceof RegExp ? regex : new RegExp(regex || '');
+    return !pattern.test(value);
+  };
+
   const submitData = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     let hasError = false;
 
     const dataValidation = formData?.map((section) => {
       if (section.hide) return section;
-      return (
-        {
-          ...section,
-          fields: section.fields.map((field) => {
-            // Check if field has a value based on its type
-            let hasValue: boolean = Boolean(
-              constructFormData[field.name]?.toString().trim()
-            );
-            if (field.type === 'checkbox') {
-              hasValue = (constructFormData[field.name] as string[])?.length > 0;
-            }
-            if (field.type === 'date' || field.type === 'fiscalDate') {
-              hasValue = Boolean(constructFormData[field.name]);
-            }
-            // Validate required fields
-            if (field.required && !hasValue) {
+      return {
+        ...section,
+        fields: section.fields.map((field) => {
+          if (field.hide) return field;
+          // Check if field has a value based on its type
+          let hasValue: boolean = Boolean(
+            constructFormData[field.name]?.toString().trim()
+          );
+          if (field.type === 'checkbox') {
+            hasValue = (constructFormData[field.name] as string[])?.length > 0;
+          }
+          if (field.type === 'date' || field.type === 'fiscalDate') {
+            hasValue = Boolean(constructFormData[field.name]);
+          }
+          // Validate required fields
+          if (field.required && !hasValue) {
+            hasError = true;
+            return { ...field, error: 'Field is required' };
+          }
+
+          if (field.type === 'phone') {
+            const value = constructFormData[field.name] as string;
+            const countryCode = constructFormData[
+              `${field.name}_countryCode`
+            ] as string;
+
+            if (field.required && !value) {
               hasError = true;
-              return { ...field, error: 'Field is required' };
+              return { ...field, error: 'Phone number is required' };
             }
 
-            if (field.type === 'phone') {
-              const value = constructFormData[field.name] as string;
-              const countryCode = constructFormData[
-                `${field.name}_countryCode`
-              ] as string;
-
-              if (field.required && !value) {
+            if (value) {
+              const validation = validatePhoneNumber(value, countryCode);
+              if (!validation.isValid) {
                 hasError = true;
-                return { ...field, error: 'Phone number is required' };
-              }
-
-              if (value) {
-                const validation = validatePhoneNumber(value, countryCode);
-                if (!validation.isValid) {
-                  hasError = true;
-                  return { ...field, error: validation.error };
-                }
+                return { ...field, error: validation.error };
               }
             }
+          }
 
-            // Date validation
-            if (
-              field.type === 'fiscalDate' &&
-              constructFormData[field.name]
-            ) {
+          // Date validation
+          if (field.type === 'fiscalDate' && constructFormData[field.name]) {
+            const dateValue = constructFormData[field.name] as string;
+
+            if (!isValidDate(dateValue)) {
+              hasError = true;
+              return {
+                ...field,
+                error: 'Invalid date',
+              };
+            }
+          }
+
+          if (field.type === 'date') {
+            // cost date validation
+            const dateValue = constructFormData[field.name] as string;
+            if (field?.startValue && constructFormData[field.name]) {
               const dateValue = constructFormData[field.name] as string;
-
-              if (!isValidDate(dateValue)) {
+              if (
+                dayjs(dateValue).isBefore(dayjs(field?.minDate)) ||
+                dayjs(dateValue).isAfter(dayjs(field?.maxDate))
+              ) {
                 hasError = true;
                 return {
                   ...field,
-                  error: 'Invalid date',
+                  error: `${field.name === 'skill_start_date' ? 'Start date' : 'Effective date'} must be within the last 7 years from today`,
                 };
               }
             }
+            // Check if this date must be after another (start date vs end date)
+            if (field.endDateValue && constructFormData[field.name]) {
+              const endDateRaw = constructFormData[field.name] as string;
+              const startDateRaw = field.startDateLabel
+                ? (constructFormData[field.startDateLabel] as string)
+                : '';
 
-            // Depends Required Validation
-            if (
-              field.dependsRequired?.key &&
-              constructFormData[field.dependsRequired.key] ===
-              field.dependsRequired?.matchedValue &&
-              !hasValue
-            ) {
-              hasError = true;
-              return { ...field, error: field.dependsRequired.errorMessage };
+              const endDate = dayjs(endDateRaw?.trim());
+              const startDate = dayjs(startDateRaw?.trim());
+              if (
+                endDate.isValid() &&
+                (dayjs(endDate).isBefore(dayjs(field?.minDate)) ||
+                  dayjs(endDate).isAfter(dayjs(field?.maxDate)))
+              ) {
+                hasError = true;
+                return {
+                  ...field,
+                  error: 'End date must be within the last 7 years from today',
+                };
+              }
+              if (
+                endDate.isValid() &&
+                !endDate.isSame(startDate) &&
+                !endDate.isAfter(startDate)
+              ) {
+                hasError = true;
+                return { ...field, error: 'End date must be after effective date'};
+              }
             }
 
-            // if (field.anyOneRequired) {
-            //   if (!isAnyFieldFilled) {
-            //     hasError = true;
-            //     return { ...field, error: "Any one cost information is required" }
-            //   } else {
-            //     return { ...field, error: "" }; // Clear error if any field is filled
-            //   }
-            // }
+            if (dateValue) {
+              if (
+                field.disableFutureDates &&
+                dayjs(dateValue).isAfter(dayjs(), 'day')
+              ) {
+                hasError = true;
+                return {
+                  ...field,
+                  error: `${field.name === 'resource_startdate' ? 'Resource effective from' : 'This date'} cannot be in the future`,
+                };
+              }
+              if (dateValue && !isValidDate(dateValue, 'MM/DD/YYYY')) {
+                hasError = true;
+                return {
+                  ...field,
+                  error: 'Please enter a valid date.',
+                };
+              }
+            }
+          }
 
-            // Date custom Validation
+          // Depends Required Validation
+          if (
+            field.dependsRequired?.key &&
+            constructFormData[field.dependsRequired.key] ===
+              field.dependsRequired?.matchedValue &&
+            !hasValue
+          ) {
+            hasError = true;
+            return { ...field, error: field.dependsRequired.errorMessage };
+          }
+
+          if (field.type === 'date' && constructFormData[field.name]) {
+            const dateValue = constructFormData[field.name] as string;
+
+            // Check if future dates are disabled
             if (
-              field.greaterThan &&
-              (constructFormData[field.name] || '') <=
-              (constructFormData[field.greaterThan.key] || '')
+              field.disableFutureDates &&
+              dayjs(dateValue).isAfter(dayjs(), 'day')
             ) {
               hasError = true;
               return {
                 ...field,
-                error: field.greaterThan.errorMessage,
+                error: `${field.name === 'resource_startdate' ? 'Resource effective from' : 'This date'} cannot be in the future`,
+              };
+            }
+            const currentDate = dayjs();
+
+            if (field.name === 'resource_enddate' && dayjs(dateValue).isAfter(currentDate, 'day')) {
+              hasError = true;
+              return {
+                ...field,
+                error: 'Resource end date cannot be in the future',
               };
             }
 
-            // Validate regex if present and field has value
-            const value = constructFormData[field.name] as string;
-            if (field.regex && value) {
-              const pattern =
-                field.regex instanceof RegExp
-                  ? field.regex
-                  : new RegExp(field.regex);
-              if (!pattern.test(value)) {
+            // Check if date is before the minimum allowed date (1-1-1950)
+            const minAllowedDate = dayjs('1-1-1950', 'D-M-YYYY');
+            if (dayjs(dateValue).isBefore(minAllowedDate, 'day')) {
+              hasError = true;
+              return {
+                ...field,
+                error:
+                  field.name === 'resource_startdate'
+                      ? 'Resource effective from cannot be before 01-01-1950'
+                      : 'Date cannot be before 01-01-1950',
+              };
+            }
+
+            // Check if both start and end dates are either provided or not provided
+            if (
+              field.name === 'resource_startdate' ||
+              field.name === 'resource_enddate'
+            ) {
+              const startDate = constructFormData[
+                'resource_startdate'
+              ] as string;
+              const endDate = constructFormData['resource_enddate'] as string;
+
+              // Check if one is provided without the other
+              if ((startDate && !endDate) || (!startDate && endDate)) {
                 hasError = true;
                 return {
                   ...field,
-                  error: field.regexErrorMessage || 'Invalid format',
+                  error: 'Both resource effective from and resource end dates must be provided',
                 };
+              }
+
+              // If both are provided, validate the relationship
+              if (startDate && endDate) {
+                const start = dayjs(startDate);
+                const end = dayjs(endDate);
+
+                // Check if dates are the same
+                if (start.isSame(end, 'day')) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error:
+                    field.name === 'resource_startdate'
+                      ? 'Resource effective from cannot be the same as resource end date'
+                      : 'Resource end date cannot be the same as resource effective from',
+                  };
+                }
+
+                // Check if start date is after end date
+                if (start.isAfter(end, 'day')) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error:
+                      field.name === 'resource_startdate'
+                        ? 'Resource effective from cannot be after resource end date'
+                        : 'Resource end date cannot be before resource effective from',
+                  };
+                }
               }
             }
 
-            if (field.type === 'text' && value) {
-              const emojiRegex = /[\p{Emoji_Presentation}\uFE0F]/gu;
-              if (emojiRegex.test(value)) {
+            // Check if end date is after start date (strictly greater)
+            if (
+              field.greaterThan &&
+              constructFormData[field.greaterThan.field] &&
+              !dayjs(dateValue).isAfter(
+                dayjs(constructFormData[field.greaterThan.field] as string)
+              )
+            ) {
+              hasError = true;
+              return {
+                ...field,
+                error:
+                  field.greaterThan.message ||
+                  'Date must be strictly after the reference field',
+              };
+            }
+          }
+
+          // Fiscal Date custom Validation
+          if (field.differentThan) {
+            const currentFieldDate = dayjs(
+              constructFormData[field.name]?.toString() || '',
+              'MM/DD'
+            );
+            const differentThanFieldDate = dayjs(
+              constructFormData[field.differentThan.key]?.toString() || '',
+              'MM/DD'
+            );
+
+            if (
+              currentFieldDate.isValid() &&
+              differentThanFieldDate.isValid()
+            ) {
+              if (
+                currentFieldDate.date() === differentThanFieldDate.date() &&
+                currentFieldDate.month() === differentThanFieldDate.month()
+              ) {
                 hasError = true;
                 return {
                   ...field,
-                  error: 'Emojis are not accepted',
+                  error: field.differentThan.errorMessage,
                 };
               }
             }
+          }
 
-            if (field.lengthRequired?.key && value) {
-              const minPattern = field.lengthRequired.minMatchedValue;
-              const maxPattern = field.lengthRequired.maxMatchedValue;
+          // Validate regex if present and field has value
+          const value = constructFormData[field.name] as string;
+          if (field.regex && value) {
+            if (validateRegex(field.regex, value)) {
+              hasError = true;
+              return {
+                ...field,
+                error: field.regexErrorMessage || 'Invalid format',
+              };
+            }
+          }
+          // Validate Dynamic Error Handling
+          if (field.errorHandling && value) {
+            const errorHandler = field.errorHandling.find((handler) => {
+              return validateRegex(handler.regex, value);
+            });
+            if (errorHandler) {
+              hasError = true;
+              return {
+                ...field,
+                error: errorHandler.errorMessage,
+              };
+            }
+          }
 
-              if (!minPattern.test(value)) {
-                hasError = true;
-                return {
-                  ...field,
-                  error: field.lengthRequired.minErrorMessage,
-                };
-              }
+          if (field.type === 'text' && value) {
+            const emojiRegex = /[\p{Emoji_Presentation}\uFE0F]/gu;
+            if (emojiRegex.test(value)) {
+              hasError = true;
+              return {
+                ...field,
+                error: 'Emojis are not accepted',
+              };
+            }
+          }
 
-              if (!maxPattern.test(value)) {
-                hasError = true;
-                return {
-                  ...field,
-                  error: field.lengthRequired.maxErrorMessage,
-                };
-              }
+          if (field.lengthRequired?.key && value) {
+            const minPattern = field.lengthRequired.minMatchedValue;
+            const maxPattern = field.lengthRequired.maxMatchedValue;
+
+            if (!minPattern.test(value)) {
+              hasError = true;
+              return {
+                ...field,
+                error: field.lengthRequired.minErrorMessage,
+              };
             }
 
-            return { ...field, error: '' };
-          }),
-        })
+            if (!maxPattern.test(value)) {
+              hasError = true;
+              return {
+                ...field,
+                error: field.lengthRequired.maxErrorMessage,
+              };
+            }
+          }
+
+          return { ...field, error: '' };
+        }),
+      };
     });
-
     setFormData(dataValidation);
 
     if (!hasError) {
@@ -591,32 +906,39 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         const isHalf = section.fillType === 'half';
         if (section.hide) return null;
         return (
-          (<div key={i}>
-            <h4 className={`font-medium mb-4 ${i !== 0 ? 'mt-10' : ''}`}>
+          <div key={i} className='pb-3'>
+            <h4
+              className={`font-semibold text-base text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle mb-6 ml-3 ${i !== 0 ? 'mt-10' : ''}`}
+            >
               {section.sectionName}
             </h4>
             <div className={`grid md:grid-cols-${isHalf ? '2' : '1'} gap-4`}>
-              {section.fields.map((field, j) => (
-                <div key={j} className='grid md:grid-cols-12 gap-4'>
-                  <label
-                    className={`text-sm text-gray-500 md:text-right mt-1 ${isHalf ? 'col-span-4' : 'col-span-2'}`}
-                    htmlFor={field.name}
-                  >
-                    {field.label}
-                    {field.required && <span className='text-red-500'> *</span>}
-                  </label>
-                  <div className={isHalf ? 'col-span-8' : 'col-span-10'}>
-                    {getFields(field)}
-                    {field.error && (
-                      <span className='text-red-500 text-sm col-span-full'>
-                        {field.error}
-                      </span>
-                    )}
+              {section.fields.map((field, j) => {
+                if (field.hide) return null;
+                return (
+                  <div key={j} className='grid md:grid-cols-12 gap-4'>
+                    <label
+                      className={`text-sm text-[#65686F] font-normal leading-[21px] tracking-[0] md:text-right mt-1.5 ${isHalf ? 'col-span-4' : 'col-span-2'}`}
+                      htmlFor={field.name}
+                    >
+                      {field.label}
+                      {field.required && (
+                        <span className='text-red-500'> *</span>
+                      )}
+                    </label>
+                    <div className={isHalf ? 'col-span-8' : 'col-span-10'}>
+                      {getFields(field)}
+                      {field.error && (
+                        <span className='text-red-500 text-sm col-span-full'>
+                          {field.error}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
-          </div>)
+          </div>
         );
       })}
     </form>

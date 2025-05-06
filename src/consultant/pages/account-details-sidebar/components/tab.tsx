@@ -1,14 +1,45 @@
 import { Box, Menu, MenuItem, Tab, Tabs } from '@mui/material';
-import React, { useState } from 'react';
-
-const TabPanel = () => {
+import React, { useMemo, useState } from 'react';
+import { resourceFilterIcon } from '../../../../assets';
+import { Image } from '../../../../components';
+import ActionImportDropdown from '../sidebar-pages/imports/importdropdown';
+import {
+  getCostFilterFields,
+  resourceFilterFields,
+  skillFilterFields,
+} from '../sidebar-pages/resources/utils';
+import Filter from './filter/filter';
+import { FilterState } from './filter/filterType';
+import { useFetchCurrency } from '../../../services/account';
+interface TabProps {
+  filterVisibility: boolean;
+  handleFilter: () => void;
+  value: string;
+  showFilter: boolean;
+  setCurrentPage: (page: number) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  setAppliedFilters: (filters: Record<string, any>) => void;
+}
+const TabPanel: React.FC<TabProps> = ({
+  handleFilter,
+  setAppliedFilters,
+  value,
+  showFilter,
+  filterVisibility,
+  setCurrentPage
+}) => {
   const [tabValue, setTabValue] = useState(0);
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
   const [, setSelectedSort] = useState('Accounts');
-
+  const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
+    {}
+  );
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
+    setCurrentPage(0)
   };
+  const currency = useFetchCurrency();
 
   const handleSortClose = () => {
     setSortAnchorEl(null);
@@ -29,6 +60,38 @@ const TabPanel = () => {
   //     onClick: () => console.log('View Permissions clicked'),
   //   },
   // ];
+  const menuActivity = [
+    {
+      label: 'Create Task',
+      onClick: () => console.log('manage user clicked'),
+    },
+    {
+      label: 'Draft Email',
+      onClick: () => console.log('Export clicked'),
+    },
+    {
+      label: 'Schedule Meeting',
+      onClick: () => console.log('Export clicked'),
+    },
+    {
+      label: 'Log a call',
+      onClick: () => console.log('Export clicked'),
+    },
+  ];
+
+  const memoizedCurrency: { option: string; value: string }[] = useMemo(
+    () =>
+      currency.data?.data.currency.map((account: { currency_code: string; rid: string }) => ({
+        option: account.currency_code,
+        value: account.rid,
+      })) || [],
+    [currency.data?.data.currency]
+  );
+
+  const getFilterFields = () => {
+    if (!value) return resourceFilterFields;
+    return value === 'cost' ? getCostFilterFields(memoizedCurrency) : skillFilterFields;
+  };
 
   return (
     <Box className=' rounded-lg'>
@@ -36,8 +99,8 @@ const TabPanel = () => {
         <Tabs
           value={tabValue}
           onChange={handleTabChange}
-          className='border-1 border-gray-300'
           sx={{
+            border: '1px solid #CBD6E27D',
             padding: '3px',
             minHeight: '36px',
             '& .MuiTabs-indicator': {
@@ -53,15 +116,19 @@ const TabPanel = () => {
             sx={{
               textTransform: 'none',
               fontSize: '14px',
-              fontWeight: 600,
-              color: tabValue === 0 ? '#0BBFB726' : '',
-              backgroundColor: tabValue === 0 ? '#0BBFB726' : '',
+              fontWeight: 500,
+              color: '#2D3E4F',
+              backgroundColor: tabValue === 0 ? '#0BBFB70D' : '',
               margin: '0',
-              border: tabValue === 0 ? '2px solid #0BBFB7' : '',
-              minHeight: '36px',
+              border:
+                tabValue === 0 ? '1px solid #0BBFB7' : '1px solid transparent',
+              width: '120px',
+              height: '28px',
+              borderRadius: '4px',
+              minHeight: '28px',
               padding: '8px 16px',
-              '&.Mui-selected': {
-                color: '#1A3D6F',
+              '&:hover': {
+                color: tabValue !== 0 ? '#0BBFB7' : undefined,
               },
             }}
           />
@@ -70,15 +137,19 @@ const TabPanel = () => {
             sx={{
               textTransform: 'none',
               fontSize: '14px',
-              fontWeight: 600,
-              color: tabValue === 1 ? '#0BBFB726' : '',
-              backgroundColor: tabValue === 1 ? '#0BBFB726' : '',
+              fontWeight: 500,
+              color: '#2D3E4F',
+              backgroundColor: tabValue === 1 ? '#0BBFB70D' : '',
               margin: '0',
-              border: tabValue === 1 ? '2px solid #0BBFB7' : '',
-              minHeight: '36px',
+              border:
+                tabValue === 1 ? '1px solid #0BBFB7' : '1px solid transparent',
+              width: '120px',
+              height: '28px',
+              borderRadius: '4px',
+              minHeight: '28px',
               padding: '8px 16px',
-              '&.Mui-selected': {
-                color: '#1A3D6F',
+              '&:hover': {
+                color: tabValue !== 1 ? '#0BBFB7' : undefined,
               },
             }}
           />
@@ -86,6 +157,41 @@ const TabPanel = () => {
 
         <Box className='flex items-center space-x-2'>
           {/* <ActionsDropdown actions={MENU_ITEMS} /> */}
+          <Box className='relative'>
+            {filterVisibility && (
+              <Box
+                onClick={handleFilter}
+                className='h-[32px] w-[32px] flex items-center justify-center border border-[#CBD6E2] rounded-[2px] cursor-pointer'
+              >
+                <Image src={resourceFilterIcon} />
+              </Box>
+            )}
+            {showFilter && value !== 'details' && (
+              <Box className='absolute right-0 z-50'>
+                <Filter
+                  filterMenu={getFilterFields()}
+                  setAppliedFilters={setAppliedFilters}
+                  handleFilter={handleFilter}
+                  savedFilterStates={filterStates}
+                  onFilterStatesChange={setFilterStates}
+                  savedSelectedFilters={selectedFilters}
+                  onSelectedFiltersChange={setSelectedFilters}
+                  setCurrentPage={setCurrentPage}
+                />
+              </Box>
+            )}
+          </Box>
+          <ActionImportDropdown
+            variant={'filled'}
+            actions={menuActivity}
+            label='Add Activity'
+          />
+
+          {/* <ActionImportDropdown
+            actions={menuAccounts}
+            label='Sort By: Accounts'
+            split='true'
+          /> */}
         </Box>
       </Box>
 

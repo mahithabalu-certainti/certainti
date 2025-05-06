@@ -10,10 +10,30 @@ export type TextFilterOption =
 
 export const textOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
-  { option: 'Not Equals', value: 'notEqual' },
+  { option: 'Not Equals', value: 'not_equals' },
   { option: 'Contains', value: 'contains' },
-  { option: 'Does Not Contain', value: 'notContains' },
-  { option: 'Is Empty', value: 'isEmpty' },
+  { option: 'Is Empty', value: 'is_empty' },
+];
+
+export type TextFilterOptionForCostAndSkill =
+  | 'Equals'
+  | 'Not Equals'
+  | 'Contains'
+  | 'Is Empty';
+// | 'Does Not Contain'
+// | 'Starts With'
+// | 'Ends With'
+// | 'Is Not Empty';
+
+export const textOptionForCostAndSkill: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not Equals', value: 'not_equals' },
+  { option: 'Contains', value: 'contains' },
+  { option: 'Is Empty', value: 'is_empty' },
+  // { option: 'Does Not Contain', value: 'does_not_contain' },
+  // { option: 'Starts With', value: 'starts_with' },
+  // { option: 'Ends With', value: 'ends_with' },
+  // { option: 'Is Not Empty', value: 'is_not_empty' },
 ];
 export type NumberFilterOption =
   | 'Equals'
@@ -21,8 +41,8 @@ export type NumberFilterOption =
   | 'Less Than'
   | 'Greater Than'
   | 'Between'
-  | 'Is Empty'
-  | 'Is Not Empty';
+  | 'Is Empty';
+// | 'Is Not Empty';
 
 export const numberOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
@@ -31,29 +51,25 @@ export const numberOptions: { option: string; value: string }[] = [
   { option: 'Greater Than', value: 'greater_than' },
   { option: 'Between', value: 'between' },
   { option: 'Is Empty', value: 'is_empty' },
-  { option: 'Is Not Empty', value: 'is_not_empty' },
+  // { option: 'Is Not Empty', value: 'is_not_empty' },
 ];
-export type EnumFilterOption =
-  | 'Equals'
-  | 'Not Equals'
-  | 'In'
-  | 'Not In'
-  | 'Is Empty'
-  | 'Is Not Empty';
+export type EnumFilterOption = 'Equals' | 'Not Equals' | 'In' | 'Is Empty';
+// | 'Not In'
+// | 'Is Not Empty';
 
 export const enumOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Not Equals', value: 'not_equals' },
   { option: 'In', value: 'in' },
-  { option: 'Not In', value: 'not_in' },
   { option: 'Is Empty', value: 'is_empty' },
-  { option: 'Is Not Empty', value: 'is_not_empty' },
+  // { option: 'Not In', value: 'not_in' },
+  // { option: 'Is Not Empty', value: 'is_not_empty' },
 ];
 
 export const enumValueOptions: { option: string; value: string }[] = [
-  { option: 'Beginner', value: 'beginner' },
-  { option: 'Intermediate', value: 'intermediate' },
-  { option: 'Advanced', value: 'advanced' },
+  { option: 'Beginner', value: 'Beginner' },
+  { option: 'Intermediate', value: 'Intermediate' },
+  { option: 'Advanced', value: 'Advanced' },
 ];
 
 export type DateFilterOption =
@@ -61,31 +77,48 @@ export type DateFilterOption =
   | 'Before'
   | 'After'
   | 'Between'
-  | 'This week'
-  | 'This month'
-  | 'This Quarter'
-  | 'Last 7 days'
-  | 'Last 30 days'
-  | 'Is Empty'
-  | 'Is Not Empty';
+  | 'Is Empty';
+// | 'This week'
+// | 'This month'
+// | 'This Quarter'
+// | 'Last 7 days'
+// | 'Last 30 days'
+// | 'Is Not Empty';
 
 export const dateOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Before', value: 'before' },
   { option: 'After', value: 'after' },
   { option: 'Between', value: 'between' },
-  { option: 'This Week', value: 'this_week' },
-  { option: 'This Month', value: 'this_month' },
-  { option: 'This Quarter', value: 'this_quarter' },
-  { option: 'Last 7 Days', value: 'last_7_days' },
-  { option: 'Last 30 Days', value: 'last_30_days' },
   { option: 'Is Empty', value: 'is_empty' },
-  { option: 'Is Not Empty', value: 'is_not_empty' },
+  // { option: 'This Week', value: 'this_week' },
+  // { option: 'This Month', value: 'this_month' },
+  // { option: 'This Quarter', value: 'this_quarter' },
+  // { option: 'Last 7 Days', value: 'last_7_days' },
+  // { option: 'Last 30 Days', value: 'last_30_days' },
+  // { option: 'Is Not Empty', value: 'is_not_empty' },
+];
+
+export type StatusFilterOption = 'equals';
+
+export const statusOptions: { option: string; value: string }[] = [
+  { option: 'Active', value: 'active' },
+  { option: 'In-Active', value: 'inactive' },
+];
+
+export const resourceTypeOptions: { option: string; value: string }[] = [
+  { option: 'Full-Time', value: 'Full-Time' },
+  { option: 'Sub Con', value: 'Sub Con' },
+  { option: 'Non-Labor', value: 'Non-Labor' },
 ];
 
 // Define filter state types for each field type
 export interface TextFilterState {
   option: TextFilterOption;
+  value: string;
+}
+export interface TextFilterStateForCostAndSkill {
+  option: TextFilterOptionForCostAndSkill;
   value: string;
 }
 
@@ -100,6 +133,10 @@ export interface EnumFilterState {
   option?: EnumFilterOption;
   value?: [];
 }
+export interface CurrencySelectFilterState {
+  option?: EnumFilterOption;
+  value?: [];
+}
 export interface DateFilterState {
   option: DateFilterOption;
   value: {
@@ -108,24 +145,44 @@ export interface DateFilterState {
   };
 }
 
+interface StatusFilterState {
+  option: StatusFilterOption;
+  value: string;
+}
+
 // Union type for all possible filter states
 export type FilterState = {
   text?: TextFilterState;
   number?: NumberFilterState;
   date?: DateFilterState;
   enum?: EnumFilterState;
+  textCostAndSkill?: TextFilterStateForCostAndSkill;
+  select?: StatusFilterState;
+  currencySelect?: CurrencySelectFilterState;
 };
 
 // Define field configuration
 export type FieldConfig = {
   name: string;
   value: string;
-  type: 'text' | 'number' | 'date' | 'enum';
-  options?: string[];
+  type:
+    | 'text'
+    | 'number'
+    | 'date'
+    | 'enum'
+    | 'textCostAndSkill'
+    | 'select'
+    | 'currencySelect';
+  options?: { option: string; value: string }[];
 };
 
 export interface FilterComponentProps {
   filterMenu: FieldConfig[];
   setAppliedFilters: (filters: Record<string, any>) => void;
   handleFilter: () => void;
+  savedFilterStates?: Record<string, FilterState>;
+  onFilterStatesChange?: (filterStates: Record<string, FilterState>) => void;
+  savedSelectedFilters?: string[];
+  onSelectedFiltersChange?: (selectedFilters: string[]) => void;
+  setCurrentPage: (page: number) => void;
 }

@@ -12,15 +12,17 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TablePagination,
   TableRow,
   TableSortLabel,
   Typography,
 } from '@mui/material';
 import React, { useState } from 'react';
+import { actionIcon, arrowDownIcon, arrowUpIcon } from '../../../../assets';
+import { TablePagination } from '../../../../components/table';
 
 interface TableColumn {
   id: string;
+  sortId: string;
   label: string;
   sortable?: boolean;
   align?: 'left' | 'center' | 'right' | 'justify' | 'inherit';
@@ -91,7 +93,7 @@ const DataTable: React.FC<DataTableProps> = ({
   const [selectedRowData, setSelectedRowData] = useState<any | null>(null);
   // const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
 
-  const handlePageChange = (_event: unknown, newPage: number) => {
+  const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };
 
@@ -114,12 +116,9 @@ const DataTable: React.FC<DataTableProps> = ({
     setSortField(property);
   };
 
-  const handleRowsPerPageChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const newRowsPerPage = parseInt(event.target.value, 10);
-    setRowsPerPage(newRowsPerPage);
-    setCurrentPage(0); // Reset to first page when rows per page changes
+  const handleRowsPerPageChange = (newPageSize: number) => {
+    setRowsPerPage(newPageSize);
+    setCurrentPage(1); // Reset to first page when rows per page changes
   };
 
   // const stableSort = (array: any[], comparator: (a: any, b: any) => number) => {
@@ -169,18 +168,66 @@ const DataTable: React.FC<DataTableProps> = ({
   //   }
   // };
 
-  const isMenuOpen = Boolean(menuAnchor);
+  const getSortIcon = (
+    activeField: string,
+    columnKey: string,
+    sortOrder: 'asc' | 'desc',
+    handleClick: () => void
+  ) => {
+    const isActive = activeField === columnKey;
 
-  if (isLoading) {
     return (
-      <div className='flex justify-center border border-gray-300 items-center h-64'>
-        <CircularProgress />
-        <Typography variant='body1' className='ml-4'>
-          Loading data...
-        </Typography>
+      <div
+        className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
+        onClick={handleClick}
+      >
+        <img
+          src={arrowUpIcon}
+          alt={
+            isActive && sortOrder === 'asc'
+              ? 'sort-up-active'
+              : 'sort-up-inactive'
+          }
+          className='w-4 h-4'
+          style={{
+            filter:
+              isActive && sortOrder === 'asc'
+                ? 'brightness(0) saturate(100%)'
+                : 'grayscale(100%) brightness(0) opacity(50%)',
+          }}
+        />
+        <img
+          src={arrowDownIcon}
+          alt={
+            isActive && sortOrder === 'desc'
+              ? 'sort-down-active'
+              : 'sort-down-inactive'
+          }
+          className='w-4 h-4 mt-[-9px]'
+          style={{
+            filter:
+              isActive && sortOrder === 'desc'
+                ? 'brightness(0) saturate(100%)'
+                : 'grayscale(100%) brightness(0) opacity(50%)',
+          }}
+        />
       </div>
     );
-  }
+  };
+
+  const isMenuOpen = Boolean(menuAnchor);
+
+  // if (isLoading) {
+  //   return (
+  //     <div className='flex justify-center border border-gray-300 items-center h-64'>
+  //       <CircularProgress />
+  //       <Typography variant='body1' className='ml-4'>
+  //         Loading data...
+  //       </Typography>
+  //     </div>
+  //   );
+  // }
+  
 
   if (error) {
     return (
@@ -207,40 +254,101 @@ const DataTable: React.FC<DataTableProps> = ({
     );
   }
 
-  if (data.length === 0 && !isLoading) {
-    return (
-      <div className='flex flex-col justify-center items-center border border-gray-300 h-64 p-4'>
-        <Typography variant='h6' color='textSecondary'>
-          {emptyStateMessage}
-        </Typography>
-      </div>
-    );
-  }
+  // if (data.length === 0 && !isLoading) {
+  //   return (
+  //     <div className='flex flex-col justify-center items-center border border-gray-300 h-64 p-4'>
+  //       <Typography variant='h6' color='textSecondary'>
+  //         {emptyStateMessage}
+  //       </Typography>
+  //     </div>
+  //   );
+  // }
 
   return (
-    <div className='border border-gray-300 mr-2'>
-      <TableContainer component={Paper}>
+    <Paper
+      sx={{
+        boxShadow: 'none',
+        border: '1px solid #CBD6E2',
+        borderRadius: '0px',
+      }}
+    >
+      <TableContainer
+        sx={{ overflowX: 'auto', borderBottom: '1px solid #CBD6E2' }}
+      >
         <Table>
-          <TableHead className='bg-gray-50'>
+          <TableHead
+            sx={{
+              '& .MuiTableCell-root': {
+                fontWeight: 500,
+                fontSize: '14px',
+                lineHeight: '21px',
+                color: '#2A2A2A',
+                padding: '0px',
+                pl: 1,
+                minHeight: '50px',
+                maxHeight: '50px',
+                height: '50px',
+              },
+              '& .MuiTableCell-root:last-child': {
+                borderRight: 'none',
+              },
+              '& .MuiTableSortLabel-root': {
+                '&:hover': {
+                  color: 'inherit',
+                  cursor: 'auto',
+                },
+              },
+            }}
+          >
             <TableRow>
-              {columns.map((column) => (
+              {columns.map((column, index) => (
                 <TableCell
                   key={column.id}
                   className='font-bold'
                   align={column.align}
-                  style={{ width: column.width }}
+                  sx={{
+                    width: column.width ?? 120,
+                    maxWidth: column.width ?? 120,
+                    minWidth: column.width ?? 120,
+                    position: index === 0 ? 'sticky' : undefined,
+                    background: index === 0 ? '#fff' : '#fff',
+                    zIndex: index === 0 ? 10 : undefined,
+                    left: index === 0 ? 0 : undefined,
+                    borderRight:
+                      index === 0 ? 'none !important' : '1px solid #CBD6E2',
+                    '&::after':
+                      index === 0
+                        ? {
+                            content: '""',
+                            position: 'absolute',
+                            top: 0,
+                            right: 0,
+                            width: '1px',
+                            height: '100%',
+                            backgroundColor: '#CBD6E2',
+                            zIndex: 20,
+                          }
+                        : undefined,
+                  }}
                 >
                   {sortable && column.sortable !== false ? (
                     <TableSortLabel
-                      active={sortField === column.id}
+                      active={sortField === column.sortId}
                       direction={
-                        sortField === column.id
+                        sortField === column.sortId
                           ? sortOrder === 'ASC'
                             ? 'asc'
                             : 'desc'
                           : 'desc'
                       }
-                      onClick={() => handleSortRequest(column.id)}
+                      IconComponent={() =>
+                        getSortIcon(
+                          sortField!,
+                          column.sortId!,
+                          sortOrder.toLowerCase() as 'asc' | 'desc',
+                          () => handleSortRequest(column.sortId!)
+                        )
+                      }
                     >
                       {column.label}
                     </TableSortLabel>
@@ -250,48 +358,145 @@ const DataTable: React.FC<DataTableProps> = ({
                 </TableCell>
               ))}
               {actionMenuItems.length > 0 && (
-                <TableCell className='font-bold'>Actions</TableCell>
+                <TableCell sx={{ textAlign: 'center', pl: '0 !important' }}>
+                  Action
+                </TableCell>
               )}
             </TableRow>
           </TableHead>
-          <TableBody>
-            {data.map((row) => (
-              <TableRow key={row[rowIdentifier]} className='hover:bg-gray-50'>
-                {columns.map((column) => (
-                  <TableCell
-                    key={`${row[rowIdentifier]}-${column.id}`}
-                    align={column.align}
-                  >
-                    {column.render
-                      ? column.render(row[column.id], row)
-                      : row[column.id]}
-                  </TableCell>
-                ))}
-                {actionMenuItems.length > 0 && (
-                  <TableCell>
-                    <IconButton
-                      size='small'
-                      onClick={(e) => handleActionMenuOpen(e, row)}
-                      aria-controls={isMenuOpen ? 'action-menu' : undefined}
-                      aria-haspopup='true'
-                      aria-expanded={isMenuOpen ? 'true' : undefined}
+          <TableBody
+            sx={{
+              '& .MuiTableCell-root': {
+                fontWeight: 300,
+                fontSize: '14px',
+                lineHeight: '21px',
+                color: '#425A76',
+                padding: '0px',
+                pl: 1,
+                minHeight: '42px',
+                maxHeight: '42px',
+                height: '42px',
+                borderBottom: '1px solid #CBD6E2 !important',
+              },
+              '& .MuiTableCell-root:last-child': {
+                borderRight: 'none',
+              },
+            }}
+          >
+            {data.length > 0 ? (
+              data.map((row) => (
+                <TableRow
+                  key={row[rowIdentifier]}
+                  sx={{
+                    '&:hover td': {
+                      backgroundColor: '#f5f7fa',
+                    },
+                  }}
+                >
+                  {columns.map((column, index) => (
+                    <TableCell
+                      key={`${row[rowIdentifier]}-${column.id}`}
+                      align={column.align}
+                      sx={{
+                        width: column.width ?? 120,
+                        maxWidth: column.width ?? 120,
+                        minWidth: column.width ?? 120,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        position: index === 0 ? 'sticky' : undefined,
+                        background: index === 0 ? '#fff' : undefined,
+                        zIndex: index === 0 ? 10 : undefined,
+                        left: index === 0 ? 0 : undefined,
+                        borderRight:
+                          index === 0 ? 'none !important' : '1px solid #CBD6E2',
+                        '&::after':
+                          index === 0
+                            ? {
+                                content: '""',
+                                position: 'absolute',
+                                top: 0,
+                                right: 0,
+                                width: '1px',
+                                height: '100%',
+                                backgroundColor: '#CBD6E2',
+                                zIndex: 20,
+                              }
+                            : undefined,
+                      }}
                     >
-                      <span role='img' aria-label='more'>
-                        ⋮
-                      </span>
-                    </IconButton>
-                  </TableCell>
-                )}
+                      {column.render
+                        ? column.render(row[column.id], row)
+                        : row[column.id]}
+                    </TableCell>
+                  ))}
+                  {actionMenuItems.length > 0 && (
+                    <TableCell
+                      sx={{
+                        whiteSpace: 'nowrap',
+                        // width: '100px',
+                        // minWidth: '100px',
+                        // maxWidth: '100px',
+                        position: 'relative',
+                        textAlign: 'center',
+                        pl: '0 !important',
+                      }}
+                    >
+                      <div
+                        className='inline-flex justify-center items-center w-[140px]'
+                        style={{ position: 'relative' }}
+                      >
+                        <IconButton
+                          size='small'
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setMenuAnchor(e.currentTarget);
+                            handleActionMenuOpen(e, row);
+                          }}
+                          aria-controls={isMenuOpen ? 'action-menu' : undefined}
+                          disableRipple
+                          aria-haspopup='true'
+                          aria-expanded={isMenuOpen ? 'true' : undefined}
+                        >
+                          <div
+                            className={`${isMenuOpen && selectedRowData === row ? 'bg-[#EAF0F5]' : ''} border border-[#CBD6E2] rounded-[3px] w-5 h-5 flex items-center justify-center`}
+                          >
+                            <img
+                              src={actionIcon}
+                              alt='menu-icon'
+                              className='h-[13px]'
+                            />
+                          </div>
+                        </IconButton>
+                      </div>
+                    </TableCell>
+                  )}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow style={{ height: isLoading ? '300px' : "auto" }}>
+                <TableCell
+                  colSpan={columns.length}
+                  align='center'
+                  className='text-center py-8'
+                >
+                  {isLoading ? (
+                    <CircularProgress />
+                  ) : (
+                    <Typography variant='h6' color='textSecondary'>
+                      {emptyStateMessage}
+                    </Typography>
+                  )}
+                </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </TableContainer>
 
-      {pagination && data.length > 0 && (
+      {pagination && (
         <TablePagination
           rowsPerPageOptions={rowsPerPageOptions}
-          component='div'
           count={totalCount}
           rowsPerPage={rowsPerPage}
           page={currentPage}
@@ -318,11 +523,20 @@ const DataTable: React.FC<DataTableProps> = ({
           }}
           anchorOrigin={{
             vertical: 'bottom',
-            horizontal: 'right',
+            horizontal: 'center',
           }}
           transformOrigin={{
             vertical: 'top',
-            horizontal: 'right',
+            horizontal: 'center',
+          }}
+          PaperProps={{
+            elevation: 0,
+            sx: {
+              boxShadow: 'none',
+              border: '1px solid #CBD6E2',
+              borderRadius: '6px',
+              position: 'absolute',
+            },
           }}
         >
           {actionMenuItems.map((item) => (
@@ -330,8 +544,11 @@ const DataTable: React.FC<DataTableProps> = ({
               sx={{
                 display: 'flex',
                 borderBottom: '1px solid',
-                borderColor: 'grey.300',
-                backgroundColor: 'grey.100',
+                borderColor: '#CBD6E2',
+                backgroundColor: '#fff',
+                '&:last-child': {
+                  borderBottom: 'none',
+                },
               }}
               key={item.label}
               onClick={() => {
@@ -340,12 +557,22 @@ const DataTable: React.FC<DataTableProps> = ({
               }}
             >
               {item.icon && <div className='mr-2'>{item.icon}</div>}
-              <ListItemText>{item.label}</ListItemText>
+              <ListItemText
+                sx={{
+                  span: {
+                    fontSize: '14px',
+                    fontWeight: 400,
+                    color: '#2D3E4F',
+                  },
+                }}
+              >
+                {item.label}
+              </ListItemText>
             </MenuItem>
           ))}
         </Menu>
       )}
-    </div>
+    </Paper>
   );
 };
 

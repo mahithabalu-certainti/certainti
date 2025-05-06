@@ -2,12 +2,11 @@
 import { CircularProgress, Typography } from '@mui/material';
 import React from 'react';
 import { useResourceDetail } from '../../../../../services/resource-details';
-import { ResourceDetailsTypes } from '../../../../../types';
+import { CreateSectionData } from '../../../../../types';
+import { formatDateToMMDDYYYY } from '../utils';
 
 interface ResourceDetailsProps {
-  resourceDetails: {
-    rid: string;
-  };
+  resourceId: string;
   accountId: string;
 }
 
@@ -15,16 +14,6 @@ interface DetailItem {
   label: string;
   value: React.ReactNode;
 }
-
-const formatDate = (dateString?: string): string => {
-  if (!dateString) return '-';
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleDateString();
-  } catch {
-    return '-';
-  }
-};
 
 const formatKey = (key: string): string => {
   return key
@@ -50,26 +39,34 @@ const DetailsSection: React.FC<{
   });
 
   const renderValue = (value: React.ReactNode) => {
-    if (typeof value === 'string' && value.toLowerCase() === 'active') {
-      return <span className='text-green-600'>Active</span>;
+    if (typeof value === 'string') {
+      const status = value.toLowerCase();
+      if (status === 'active') {
+        return <span className='text-[#199806]'>Active</span>;
+      }
+      if (status === 'inactive') {
+        return <span className='text-[#f44336]'>In-Active</span>;
+      }
     }
-    return value || '-';
+    return (
+      <span className='font-light text-[14px] text-[#2D3E4F]'>{value || 'NA'}</span>
+    );
   };
 
   return (
-    <div className='mb-8'>
-      <Typography variant='h6' className='mb-4 pb-2 border-b border-gray-200'>
-        {title}
-      </Typography>
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-x-6'>
+    <div className={title === 'Basic Information' ? 'mt-0' : 'mt-6'}>
+      <div className=' text-[16px] text-[#2D3E4F] font-semibold'>{title}</div>
+      <div className='grid grid-cols-1 text-sm md:grid-cols-2 my-1.5 gap-x-6'>
         {/* Left column */}
         <div>
           {leftColumn.map((item, index) => (
-            <div key={`left-${index}`} className='grid grid-cols-2 py-2'>
-              <div className='text-right pr-4 text-gray-600 font-medium'>
+            <div key={`left-${index}`} className='grid grid-cols-2 py-2 gap-11'>
+              <div className='text-right  font-normal text-[14px]  text-[#65686F]'>
                 {item.label}
               </div>
-              <div>{renderValue(item.value)}</div>
+              <div className=' font-light text-[14px]'>
+                {renderValue(item.value)}
+              </div>
             </div>
           ))}
         </div>
@@ -77,11 +74,16 @@ const DetailsSection: React.FC<{
         {/* Right column */}
         <div>
           {rightColumn.map((item, index) => (
-            <div key={`right-${index}`} className='grid grid-cols-2 py-2'>
-              <div className='text-right pr-4 text-gray-600 font-medium'>
+            <div
+              key={`right-${index}`}
+              className='grid grid-cols-2 py-2 gap-11'
+            >
+              <div className='text-right  font-normal text-[14px]  text-[#65686F]'>
                 {item.label}
               </div>
-              <div>{renderValue(item.value)}</div>
+              <div className=' font-light text-[14px]'>
+                {renderValue(item.value)}
+              </div>
             </div>
           ))}
         </div>
@@ -91,32 +93,90 @@ const DetailsSection: React.FC<{
 };
 
 const ResourceDetails: React.FC<ResourceDetailsProps> = ({
-  resourceDetails,
+  resourceId,
   accountId,
 }) => {
+
   const {
     data: resource,
     isLoading,
     error,
-  } = useResourceDetail(resourceDetails.rid, accountId);
+  } = useResourceDetail(resourceId, accountId);
 
   const resourceData = resource?.data?.resourceDetails;
 
-  const createSectionData = (
-    dataObj: Partial<ResourceDetailsTypes>,
+  const CreateSectionData = (
+    dataObj: Partial<CreateSectionData>,
     customMappings?: Record<string, (val: any) => React.ReactNode>
-  ): DetailItem[] => {
-    return Object.entries(dataObj)
-      .filter(([, value]) => value !== undefined)
-      .map(([key, value]) => ({
+  ) => {
+    return Object.entries(dataObj).map(([key, value]) => {
+      // Handle nested objects
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        return {
+          label: formatKey(key),
+          value: Object.values(value).join(', ') || 'NA', // or handle nested objects differently
+        };
+      }
+
+      if (key === 'resource_startdate' && !Array.isArray(value)) {
+        return {
+          label: 'Resource Effective From',
+          value: formatDateToMMDDYYYY(value as string) || 'NA', // or handle nested objects differently
+        };
+      }
+
+      if (key === 'resource_enddate' && !Array.isArray(value)) {
+        return {
+          label: 'Resource End Date',
+          value: formatDateToMMDDYYYY(value as string) || 'NA', // or handle nested objects differently
+        };
+      }
+
+      if (key === 'total_years_in_org' && !Array.isArray(value)) {
+        return {
+          label: 'Total Years in Organization',
+          value: value || 'NA', // or handle nested objects differently
+        };
+      }
+
+      if (key === 'total_years_experience' && !Array.isArray(value)) {
+        return {
+          label: 'Total Years of Experience',
+          value: value || 'NA', // or handle nested objects differently
+        };
+      }
+
+      if (key === 'resource_fullname' && !Array.isArray(value)) {
+        return {
+          label: 'Resource Full Name',
+          value: value ?? 'NA', // or handle nested objects differently
+        };
+      }
+
+      if (key === 'resource_orgname' && !Array.isArray(value)) {
+        return {
+          label: 'Resource Org Name',
+          value: value ?? 'NA', // or handle nested objects differently
+        };
+      }
+
+      const displayValue =
+        value === null || value === '' || value === undefined
+          ? 'NA'
+          : customMappings?.[key]
+            ? customMappings[key](value)
+            : value;
+
+      return {
         label: formatKey(key),
-        value: customMappings?.[key] ? customMappings[key](value) : value,
-      }));
+        value: displayValue,
+      };
+    });
   };
 
   if (isLoading) {
     return (
-      <div className='flex justify-center items-center h-64'>
+      <div className='flex items-center justify-center h-64'>
         <CircularProgress />
         <Typography variant='body1' className='ml-4'>
           Loading resource details...
@@ -127,7 +187,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   if (error) {
     return (
-      <div className='flex flex-col justify-center items-center h-64 p-4'>
+      <div className='flex flex-col items-center justify-center h-64 p-4'>
         <Typography variant='h6' color='error' className='mb-2'>
           Error loading resource details
         </Typography>
@@ -145,7 +205,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   if (!resourceData) {
     return (
-      <div className='flex flex-col justify-center items-center h-64 p-4'>
+      <div className='flex flex-col items-center justify-center h-64 p-4'>
         <Typography variant='h6' color='textSecondary'>
           No resource details available
         </Typography>
@@ -154,58 +214,48 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   }
 
   // Section data with custom formatting where needed
-  const basicInfo = createSectionData({
-    resource_ref_id: resourceData.resource_ref_id,
+  const basicInfo = CreateSectionData({
+    resource_ref_ID: resourceData.resource_ref_id,
+    resource_number: resourceData.r_number,
     resource_fullname: resourceData.resource_fullname,
     resource_type: resourceData.resource_type,
     resource_orgname: resourceData.resource_orgname,
     resource_status: resourceData.resource_status,
-    fiscal_year: resourceData.fiscal_year,
   });
 
-  const locationInfo = createSectionData({
-    country: resourceData.country,
-    state: resourceData.state,
-    city: resourceData.city,
+  const locationInfo = CreateSectionData({
+    country: resourceData?.country_name,
+    region: resourceData.state_name,
+    city: resourceData.city_name,
   });
 
-  const employmentDetails = createSectionData(
+  const employmentDetails = CreateSectionData(
     {
       resource_startdate: resourceData.resource_startdate,
       resource_enddate: resourceData.resource_enddate,
       total_years_experience: resourceData.total_years_experience,
       designation: resourceData.designation,
       total_years_in_org: resourceData.total_years_in_org,
-      resource_role: resourceData.resource_role,
     },
     {
-      resource_effective_from: formatDate,
-      resource_end_date: formatDate,
+      resource_effective_from: formatDateToMMDDYYYY,
+      resource_end_date: formatDateToMMDDYYYY,
     }
   );
 
-  const systemInfo = createSectionData(
-    {
-      created_datetime: resourceData.created_datetime,
-      created_by: resourceData.created_by,
-      modified_datetime: resourceData.modified_datetime,
-      modified_by: resourceData.modified_by,
-    },
-    {
-      created_datetime: formatDate,
-      modified_datetime: formatDate,
-    }
-  );
+  const description = CreateSectionData({
+    comments: resourceData.comments,
+  });
 
   return (
-    <div className='mx-auto p-6 max-w-6xl'>
+    <div className='max-w-6xl p-6 pl-10 mx-auto'>
       <DetailsSection title='Basic Information' data={basicInfo} />
       <DetailsSection
         title='Location and Currency Information'
         data={locationInfo}
       />
       <DetailsSection title='Employment Details' data={employmentDetails} />
-      <DetailsSection title='System Information' data={systemInfo} />
+      <DetailsSection title='Description' data={description} />
     </div>
   );
 };

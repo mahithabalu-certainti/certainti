@@ -5,6 +5,7 @@ import {
   createTextAreaField,
   createTextField,
   REGEX_PATTERNS,
+  RESOURCE_REGEX,
 } from '../../../common-utils';
 import { mockSkillLevelOptions } from '../../mockdata/resource-form';
 import { FormType, SelectOption } from '../../types';
@@ -34,11 +35,13 @@ const getDateConstraints = (yearsBack: number) => {
   const currentDate = new Date();
   const minDate = new Date();
   minDate.setFullYear(currentDate.getFullYear() - yearsBack);
-  return { currentDate, minDate };
+  const previousDate = new Date(currentDate);
+  previousDate.setDate(currentDate.getDate() - 1);
+  return { currentDate, minDate, previousDate };
 };
 
 export const fiscalYears = getFiscalYears(DATE_CONFIG.FISCAL_YEARS_RANGE);
-const { currentDate, minDate } = getDateConstraints(DATE_CONFIG.MIN_YEARS_BACK);
+const { currentDate, minDate, previousDate } = getDateConstraints(DATE_CONFIG.MIN_YEARS_BACK);
 
 export const ResourceFormData = (
   country: SelectOption[],
@@ -58,17 +61,19 @@ export const ResourceFormData = (
         sectionName: 'Basic Information',
         fillType: 'half',
         fields: [
-          createTextField('resource_ref_id', 'Resource Ref Id', {
+          createTextField('resource_ref_id', 'Resource Ref ID', {
             required: true,
-            regex: REGEX_PATTERNS.ALPHANUMERIC_SPEC_5_TO_50,
-            regexErrorMessage: '5-50 letters only',
-            placeholder: 'Enter Resource Ref Id',
+            regex: RESOURCE_REGEX.RESOURCE_REF_ID,
+            regexErrorMessage:
+              'Please enter 1-50 characters, Special characters and spaces alone are not allowed.',
+            placeholder: 'Enter Resource Ref ID',
             disabled: disableFields || disableCostAndSkill,
           }),
           createTextField('resource_fullname', 'Resource Full Name', {
             required: false,
-            regex: REGEX_PATTERNS.LETTERS_3_TO_25,
-            regexErrorMessage: '3-25 letters only',
+            regex: RESOURCE_REGEX.FULL_NAME,
+            regexErrorMessage:
+              'Please enter 3-200 characters, including at least one letter. Special characters and numbers alone are not allowed.',
             placeholder: 'Enter Full Name',
             disabled: disableCostAndSkill,
           }),
@@ -80,13 +85,14 @@ export const ResourceFormData = (
           }),
           createTextField('resource_orgname', 'Resource Org Name', {
             required: false,
-            regex: REGEX_PATTERNS.LETTERS_3_TO_100,
-            regexErrorMessage: '3-25 letters only',
+            regex: RESOURCE_REGEX.ORG_NAME,
+            regexErrorMessage:
+              'Please enter 3-100 characters, including at least one letter. Special characters and numbers alone are not allowed.',
             placeholder: 'Enter Organization Name',
             disabled: disableCostAndSkill,
           }),
 
-          createSelectField('resource_status', 'Status', {
+          createSelectField('resource_status', 'Resource Status', {
             options: RESOURCE_STATUS_OPTIONS,
             placeholder: '-Select-',
             required: true,
@@ -102,11 +108,18 @@ export const ResourceFormData = (
           }),
           createTextField('resource_role', 'Resource Role', {
             required: false,
-            regex: REGEX_PATTERNS.LETTERS_3_TO_25,
-            regexErrorMessage: '3-25 letters only',
+            regex: RESOURCE_REGEX.ROLE,
+            regexErrorMessage:
+              'Please enter 4-100 characters, including at least one letter. Special characters and numbers alone are not allowed.',
             placeholder: 'Enter Resource Role',
             disabled: disableCostAndSkill,
           }),
+          // createTextField('r_number', 'Resource ID', {
+          //   required: false,
+          //   placeholder: 'Enter Resource ID',
+          //   disabled: disableCostAndSkill,
+          //   hide: !disableCostAndSkill,
+          // }),
         ],
       },
       {
@@ -121,7 +134,7 @@ export const ResourceFormData = (
             resetDependsFields: ['state, city'],
             disabled: disableCostAndSkill,
           }),
-          createSelectField('state', 'State/Province', {
+          createSelectField('state', 'Region', {
             options: states,
             placeholder: 'Select State',
             required: false,
@@ -147,11 +160,14 @@ export const ResourceFormData = (
             required: false,
             minDate: new Date(minDate.getTime()),
             maxDate: currentDate,
+            startValue: true,
           }),
           createDateField('financial_end_date', 'End Date', {
             required: false,
             minDate: new Date(minDate.getTime()),
             maxDate: currentDate,
+            endDateValue: true,
+            startDateLabel: 'financial_start_date',
           }),
           createSelectField('cost_frequency', 'Cost Frequency', {
             options: FREQUENCY_OPTIONS,
@@ -160,8 +176,9 @@ export const ResourceFormData = (
           }),
           createTextField('cost', 'Cost', {
             required: true,
-            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
-            regexErrorMessage: 'Numbers only',
+            regex: REGEX_PATTERNS.COST_REGEX,
+            regexErrorMessage:
+              'Cost must be a 10-digit number with up to 2 decimals',
             placeholder: 'Enter Cost',
           }),
           createSelectField('currency', 'Currency', {
@@ -181,12 +198,22 @@ export const ResourceFormData = (
             required: false,
             minDate: new Date(minDate.getTime()),
             maxDate: currentDate,
+            startValue: true,
           }),
           createTextField('skill_name', 'Skill Name', {
             required: true,
-            regex: REGEX_PATTERNS.LETTERS_3_TO_100,
-            regexErrorMessage: '4-25 letters only',
             placeholder: 'Enter Skill Name',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.NOT_ALLOW_ONLY_SYMBOLS,
+                errorMessage: 'Only Symbols are not allowed',
+              },
+              {
+                regex: REGEX_PATTERNS.LETTERS_3_TO_100,
+                errorMessage:
+                  'Please enter a valid Skill Name 3 to 100 characters.',
+              },
+            ],
           }),
           createSelectField('skill_level', 'Skill Level', {
             options: mockSkillLevelOptions,
@@ -195,8 +222,8 @@ export const ResourceFormData = (
           }),
           createTextField('years_of_experience', 'Years of Experience', {
             required: false,
-            regex: REGEX_PATTERNS.NUMBERS_GREATER_THAN_ZERO,
-            regexErrorMessage: 'Numbers only',
+            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
+            regexErrorMessage: 'Please enter a valid number between 0 and 99',
             placeholder: 'Enter years of experience',
           }),
         ],
@@ -208,17 +235,25 @@ export const ResourceFormData = (
           createDateField('resource_startdate', 'Resource Effective From', {
             required: false,
             disabled: disableCostAndSkill,
-            maxDate: currentDate,
+            minDate: new Date('1950-01-01'),
+            maxDate: previousDate,
+            disableFutureDates: true,
           }),
           createDateField('resource_enddate', 'Resource End Date', {
             required: false,
             disabled: disableCostAndSkill,
-            minDate: new Date(currentDate.getTime()),
+            maxDate: currentDate,
+            greaterThan: {
+              field: 'resource_startdate',
+              message:
+                'Resource End Date must be after Resource Effective From',
+            },
           }),
           createTextField('designation', 'Designation', {
             required: false,
-            regex: REGEX_PATTERNS.CITY_REGEX,
-            regexErrorMessage: 'should have 4-100 letters',
+            regex: RESOURCE_REGEX.DESIGNATION,
+            regexErrorMessage:
+              'Please enter 4-100 characters, including at least one letter. Special characters and numbers alone are not allowed.',
             placeholder: 'Enter Designation',
             disabled: disableCostAndSkill,
           }),
@@ -227,10 +262,9 @@ export const ResourceFormData = (
             'Total Years of Experience',
             {
               required: false,
-              regex: REGEX_PATTERNS.NUMBERS_GREATER_THAN_ZERO,
-              regexErrorMessage:
-                'Please enter a valid two-digit number greater than zero.',
-              placeholder: 'Enter Years',
+              regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
+              regexErrorMessage: 'Please enter a valid number between 0 and 99',
+              placeholder: 'Enter Total Years Of Experience',
               disabled: disableCostAndSkill,
             }
           ),
@@ -239,10 +273,9 @@ export const ResourceFormData = (
             'Total Years in the Organisation',
             {
               required: false,
-              regex: REGEX_PATTERNS.NUMBERS_GREATER_THAN_ZERO,
-              regexErrorMessage:
-                'Please enter a valid two-digit number greater than zero.',
-              placeholder: 'Enter Years',
+              regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
+              regexErrorMessage: 'Please enter a valid number between 0 and 99',
+              placeholder: 'Enter Total Years In The Organisation',
               disabled: disableCostAndSkill,
             }
           ),
@@ -254,9 +287,10 @@ export const ResourceFormData = (
         fields: [
           createTextAreaField('comments', 'Comments', {
             required: false,
-            placeholder: 'Enter any additional information...',
-            regexErrorMessage: '1-1000 letters only',
-            regex: REGEX_PATTERNS.RESOURCE_DESCRIPTION,
+            placeholder: 'Enter Any Additional Information',
+            regexErrorMessage: 'Maximum 1000 characters allowed',
+            regex: RESOURCE_REGEX.DESCRIPTION,
+            disabled: disableCostAndSkill,
           }),
         ],
       },

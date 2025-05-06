@@ -33,7 +33,8 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
   searchTerm,
   setSearchTerm,
   filterFields,
-  filterLable,
+  filterLabel,
+  setPage
 }) => {
   const location = useLocation();
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
@@ -65,7 +66,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
       setAppliedFilters({});
     };
 
-    let currentPathname = location.pathname;
+    const currentPathname = location.pathname;
 
     const unlisten = () => {
       if (window.location.pathname !== currentPathname) {
@@ -112,6 +113,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
     fieldName: string,
     event: SelectChangeEvent<any>
   ) => {
+    setPage(1);
     const fieldConfig = filterFields.find((f) => f.name === fieldName);
     if (!fieldConfig) return;
 
@@ -162,6 +164,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     index?: number
   ) => {
+    setPage(1);
     const fieldConfig = filterFields.find((f) => f.name === fieldName);
     if (!fieldConfig) return;
 
@@ -231,6 +234,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
   };
 
   const handleApplyFilters = () => {
+    setPage(1);
     const updatedStates = { ...filterStates };
     let hasInvalid = false;
   
@@ -355,7 +359,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
           mb: 1,
         }}
       >
-        {filterLable}
+        {filterLabel || 'Filter by'}
       </Typography>
       <TextField
         placeholder='Search'
@@ -365,9 +369,10 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         sx={{
-          mb: 2,
+          mb: 1,
           '& .MuiOutlinedInput-root': {
             maxWidth: '220px',
+            height: '36px',
             borderRadius: '26px',
             color: '#2D3E4F',
             fontSize: '12px',
@@ -433,7 +438,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
       </Typography>
 
       {showFilters && (
-        <>
+        <div className={`${filterLabel === 'Filter User by' ? 'max-h-[calc(85vh-280px)]' : 'max-h-[calc(85vh-200px)]'} overflow-y-auto`}>
           {filterApplied && (
             <Box className='flex items-center gap-2 w-full'>
               <Button
@@ -503,7 +508,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
               {renderFilterControls(field)}
             </Box>
           ))}
-        </>
+        </div>
       )}
     </Box>
   );

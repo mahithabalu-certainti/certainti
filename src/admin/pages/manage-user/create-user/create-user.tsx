@@ -24,6 +24,11 @@ import {
 import { UserDetail, UserRole } from '../../../types/manage-user';
 import { FormData } from './form-data';
 
+const HEADER_STYLES = {
+  adminPermission: 'font-medium text-[#7D98B6] text-[11px] leading-5 tracking-normal',
+  manageUser: 'font-semibold text-[20px] text-[#2D3E4F] leading-5 tracking-normal',
+};
+
 export const CreateUser: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [currentCountry, setCurrentCountry] = useState({
@@ -52,7 +57,7 @@ export const CreateUser: React.FC = () => {
   useEffect(() => {
     if (commonSuccess) {
       successToast(
-        isEditView ? 'User update successfully' : 'User created successfully'
+        isEditView ? 'User updated successfully' : 'User created successfully'
       );
       navigate(ADMIN_MANAGE_USER);
     }
@@ -185,15 +190,15 @@ export const CreateUser: React.FC = () => {
     <>
       <div className='flex flex-col p-4 gap-3'>
         {/* Header Section */}
-        <div className='flex h-[12%] w-full p-4 items-center justify-between border border-gray-300 rounded'>
+        <div className='w-full min-h-[75px] h-[75px] px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
           <div className='flex items-center gap-2'>
-            <img src={ManageUserIcon} alt='manage user' />
-            <div className='flex flex-col'>
-              <div className='font-semibold text-[#7D98B6] text-xs'>
-                Admin Permission
-              </div>
-              <div className='font-semibold text-2xl'>Manage User</div>
+            <img src={ManageUserIcon} alt='manage user' className='h-8 w-8 rounded'/>
+            <div className='flex flex-col mb-1'>
+            <div className={HEADER_STYLES.adminPermission}>
+              Admin Permission
             </div>
+            <div className={HEADER_STYLES.manageUser}>Manage User</div>
+          </div>
           </div>
           <div className='flex gap-2 items-center'>
             <TextButton
@@ -201,14 +206,14 @@ export const CreateUser: React.FC = () => {
               variant='outlined'
               color='inherit'
               onClick={goBack}
-              sx={{ width: '45px', fontWeight:400,fontSize: '12px' }}
+              sx={{ width: '45px', minWidth: '45px', fontWeight:400,fontSize: '12px' , height: '32px'}}
             />
           </div>
         </div>
 
-        <div className='border border-gray-300 rounded'>
-          <div className='flex justify-between items-center border-b border-gray-300 p-4'>
-            <div className='font-semibold text-xl'>
+        <div className='border border-[#CBD6E2] rounded-[4px]'>
+          <div className='flex justify-between items-center border-b border-[#CBD6E2] h-[50px] px-4'>
+            <div className='font-semibold text-base leading-[32px] tracking-[0%] align-middle text-[#2D3E4F]'>
               {isEditView ? 'Edit User' : 'Create User'}
             </div>
             <div className='flex gap-2 m-2'>
@@ -217,16 +222,16 @@ export const CreateUser: React.FC = () => {
                 variant='outlined'
                 color='inherit'
                 onClick={goBack}
-                sx={{ width: '56px', fontWeight:400,fontSize: '12px' }}
+                sx={{ width: '56px', minWidth: '56px', fontWeight:400, fontSize: '12px' }}
               />
               <TextButton
                 label='Save'
                 variant='filled'
                 loading={updateUser.isPending || createUser.isPending}
                 onClick={handleExternalSubmit}
-                sx={{ width: '64px', fontWeight:400,fontSize: '13px' }}
+                sx={{ width: '64px', minWidth: '64px', fontWeight:400, fontSize: '13px' }}
               />
-              {isEditView && <TextButton label='Delete' variant='outlined' sx={{ width: '73px', fontWeight:400,fontSize: '13px' }}/>}
+              {isEditView && <TextButton label='Delete' variant='outlined' sx={{ width: '73px',minWidth: '73px', fontWeight:400, fontSize: '13px' }}/>}
             </div>
           </div>
           <div className='p-5'>

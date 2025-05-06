@@ -27,8 +27,9 @@ const UserList: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(true);
+  const [page, setPage] = useState<number>(1);
   const [tableParams, setTableParams] = useState<UserListParams>({
-    page: 1,
+    page: page,
     limit: 10,
     sortBy: 'createdAt',
     sortOrder: 'DESC',
@@ -84,9 +85,9 @@ const UserList: React.FC = () => {
   };
 
   return (
-    <div className='flex flex-col h-[calc(100vh-64px)] overflow-y-auto w-full p-4 gap-3'>
+    <div className='flex flex-col h-full w-full p-4 gap-3'>
       {/* Header Section */}
-      <div className='flex h-[12%] w-full p-4 items-center justify-between border border-[#EAF0F5] rounded'>
+      <div className='w-full min-h-[75px] h-[75px] px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
         <div className='flex items-center gap-2'>
           <img
             src={ManageUserIcon}
@@ -125,9 +126,9 @@ const UserList: React.FC = () => {
       </div>
 
       {/* User Table Section */}
-      <div className='border border-[#EAF0F5] rounded'>
-        <div className='flex justify-between items-center border-b border-[#EAF0F5] p-4'>
-          <div className='font-semibold text-[20px] leading-5 text-[#2D3E4F]'>
+      <div className='flex flex-col flex-1 border border-[#CBD6E2] rounded-[4px]'>
+        <div className='flex justify-between items-center border-b border-[#CBD6E2] h-[50px] px-4'>
+          <div className='font-semibold text-base leading-[32px] tracking-[0%] align-middle text-[#2D3E4F]'>
             All Users
           </div>
           <div className='flex gap-3'>
@@ -151,11 +152,11 @@ const UserList: React.FC = () => {
         </div>
         <div className='flex flex-1 transition-all duration-300 ease-in-out'>
           <div
-            className={`transition-all duration-300 ease-in-out overflow-hidden h-full min-h-[calc(100vh-144px)] ${isFilterOpen ? 'w-[20%] opacity-100' : 'w-0 opacity-0'
+            className={`flex flex-1 transition-all duration-300 ease-in-out overflow-hidden ${isFilterOpen ? 'w-[20%] opacity-100' : 'w-0 opacity-0'
               }`}
           >
             {profileList.isLoading ?
-              <div className='w-full min-h-[calc(100vh-144px)] flex justify-center items-center'>
+              <div className='w-full flex flex-1 justify-center items-center'>
                 <CircularProgress />
               </div>
               :
@@ -164,12 +165,13 @@ const UserList: React.FC = () => {
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
                 filterFields={userFilterfields}
-                filterLable="Filter User by"
+                filterLabel="Filter User by"
+                setPage={setPage}
               />
             }
           </div>
 
-          <div className={`transition-all duration-300 ease-in-out ${isFilterOpen ? 'w-[80%]' : 'w-full'}`}>
+          <div className={`transition-all duration-300 ease-in-out border-l border-[#CBD6E2] ${isFilterOpen ? 'w-[80%]' : 'w-full border-none'}`}>
             <UserTable
               appliedFilters={appliedFilters}
               tableParams={tableParams}

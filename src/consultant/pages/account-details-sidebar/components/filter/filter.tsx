@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Box, SelectChangeEvent } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { filterArrowRightIcon } from '../../../../../assets';
 import { Button } from '../../../../../components/button';
 import { getInitialStateForField } from '../../sidebar-pages/resources/utils';
@@ -9,37 +9,60 @@ import {
   dateOptions,
   EnumFilterOption,
   enumOptions,
-  enumValueOptions,
   FieldConfig,
   FilterComponentProps,
   FilterState,
   NumberFilterOption,
   numberOptions,
   TextFilterOption,
+  TextFilterOptionForCostAndSkill,
+  textOptionForCostAndSkill,
   textOptions,
 } from './filterType';
 import {
+  CurrencySelectFilterControl,
   DateFilterControl,
   EnumFilterControl,
   formatFilterForApi,
   NumberFilterControl,
+  StatusFilterControl,
   TextFilterControl,
+  TextFilterControlForCostAndSKill,
 } from './helper';
 
 // filter to use in resource, cost and skill list pages
-
 const Filter: React.FC<FilterComponentProps> = ({
   filterMenu,
   setAppliedFilters,
   handleFilter,
+  savedFilterStates = {},
+  onFilterStatesChange,
+  savedSelectedFilters = [],
+  onSelectedFiltersChange,
+  setCurrentPage
 }) => {
-  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
-  const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
-    {}
-  );
+  const [selectedFilters, setSelectedFilters] =
+    useState<string[]>(savedSelectedFilters);
+  const [filterStates, setFilterStates] =
+    useState<Record<string, FilterState>>(savedFilterStates);
+
+  // Update parent component when local states change
+  useEffect(() => {
+    if (onFilterStatesChange) {
+      onFilterStatesChange(filterStates);
+    }
+  }, [filterStates, onFilterStatesChange]);
+
+  useEffect(() => {
+    if (onSelectedFiltersChange) {
+      onSelectedFiltersChange(selectedFilters);
+    }
+  }, [selectedFilters, onSelectedFiltersChange]);
 
   const handleApplyFilters = () => {
-    setAppliedFilters(formatFilterForApi(filterStates));
+    const formattedFilters = formatFilterForApi(filterStates);
+    setAppliedFilters(formattedFilters);
+    setCurrentPage(0)
     // handleFilter();
   };
 
@@ -47,6 +70,13 @@ const Filter: React.FC<FilterComponentProps> = ({
     setAppliedFilters({});
     setFilterStates({});
     setSelectedFilters([]);
+    if (onFilterStatesChange) {
+      onFilterStatesChange({});
+    }
+
+    if (onSelectedFiltersChange) {
+      onSelectedFiltersChange([]);
+    }
   };
 
   const handleClickFilterMenu = (fieldName: string) => {
@@ -88,6 +118,17 @@ const Filter: React.FC<FilterComponentProps> = ({
               },
             },
           };
+        case 'textCostAndSkill':
+          return {
+            ...prev,
+            [fieldName]: {
+              ...currentState,
+              textCostAndSkill: {
+                ...currentState.textCostAndSkill!,
+                option: event.target.value as TextFilterOptionForCostAndSkill,
+              },
+            },
+          };
         case 'number':
           return {
             ...prev,
@@ -107,6 +148,19 @@ const Filter: React.FC<FilterComponentProps> = ({
               enum: {
                 ...currentState.enum!,
                 option: event.target.value as EnumFilterOption,
+                value: []
+              },
+            },
+          };
+        case 'currencySelect':
+          return {
+            ...prev,
+            [fieldName]: {
+              ...currentState,
+              currencySelect: {
+                ...currentState.currencySelect!,
+                option: event.target.value as EnumFilterOption,
+                value: []
               },
             },
           };
@@ -119,6 +173,17 @@ const Filter: React.FC<FilterComponentProps> = ({
               date: {
                 ...currentState.date!,
                 option: event.target.value as DateFilterOption,
+              },
+            },
+          };
+        case 'select':
+          return {
+            ...prev,
+            [fieldName]: {
+              ...currentState,
+              select: {
+                ...currentState.select!,
+                value: event.target.value,
               },
             },
           };
@@ -150,6 +215,17 @@ const Filter: React.FC<FilterComponentProps> = ({
               },
             },
           };
+        case 'textCostAndSkill':
+          return {
+            ...prev,
+            [fieldName]: {
+              ...currentState,
+              textCostAndSkill: {
+                ...currentState.textCostAndSkill!,
+                value: event.target.value,
+              },
+            },
+          };
         case 'number':
           return {
             ...prev,
@@ -172,8 +248,8 @@ const Filter: React.FC<FilterComponentProps> = ({
 
   const handleEnumSelectChange = (
     fieldName: string,
-    isMultiple: boolean,
-    value: string[]
+    // isMultiple: boolean,
+    value: string[] | string
   ) => {
     setFilterStates((prev: any) => {
       return {
@@ -182,7 +258,25 @@ const Filter: React.FC<FilterComponentProps> = ({
           ...prev[fieldName],
           enum: {
             ...prev[fieldName].enum,
-            value: isMultiple ? value : [value],
+            // value: isMultiple ? value : [value]
+            value: value,
+          },
+        },
+      };
+    });
+  };
+  const handleCurrencySelectChange = (
+    fieldName: string,
+    value: string[]
+  ) => {
+    setFilterStates((prev: any) => {
+      return {
+        ...prev,
+        [fieldName]: {
+          ...prev[fieldName],
+          currencySelect: {
+            ...prev[fieldName].currencySelect,
+            value: value,
           },
         },
       };
@@ -224,6 +318,17 @@ const Filter: React.FC<FilterComponentProps> = ({
             onValueChange={handleFilterValueChange}
           />
         );
+      case 'textCostAndSkill':
+        return (
+          <TextFilterControlForCostAndSKill
+            filterStates={filterStates}
+            menuOption={textOptionForCostAndSkill}
+            fieldName={field.value}
+            state={fieldState}
+            onOptionChange={handleFilterOptionChange}
+            onValueChange={handleFilterValueChange}
+          />
+        );
       case 'number':
         return (
           <NumberFilterControl
@@ -240,11 +345,23 @@ const Filter: React.FC<FilterComponentProps> = ({
           <EnumFilterControl
             filterStates={filterStates}
             menuOption={enumOptions}
-            valueOptions={enumValueOptions}
+            valueOptions={field.options as { option: string; value: string }[]}
             fieldName={field.value}
             state={fieldState}
             onOptionChange={handleFilterOptionChange}
             onChange={handleEnumSelectChange}
+          />
+        );
+      case 'currencySelect':
+        return (
+          <CurrencySelectFilterControl
+            filterStates={filterStates}
+            menuOption={enumOptions}
+            valueOptions={field.options || []}
+            fieldName={field.value}
+            state={fieldState}
+            onOptionChange={handleFilterOptionChange}
+            onChange={handleCurrencySelectChange}
           />
         );
       case 'date':
@@ -256,7 +373,16 @@ const Filter: React.FC<FilterComponentProps> = ({
             state={fieldState}
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleDateChange}
-            // onChange={handleBooleanChange}
+          // onChange={handleBooleanChange}
+          />
+        );
+      case 'select':
+        return (
+          <StatusFilterControl
+            menuOption={field.options as { option: string; value: string }[]}
+            fieldName={field.value}
+            state={fieldState}
+            onOptionChange={handleFilterOptionChange}
           />
         );
       default:
@@ -265,7 +391,7 @@ const Filter: React.FC<FilterComponentProps> = ({
   };
 
   return (
-    <Box className='absolute top-117 right-60 z-50 w-[248px] max-h-[568px] bg-white shadow-lg border border-[#CBD6E2] rounded'>
+    <Box className='w-[248px] max-h-[450px] bg-white shadow-lg border border-[#CBD6E2] rounded flex flex-col'>
       <Box className='flex justify-between items-center p-2 border-b border-[#CBD6E2]'>
         <Box>Filters</Box>
         <Button
@@ -282,54 +408,51 @@ const Filter: React.FC<FilterComponentProps> = ({
           }}
         />
       </Box>
-      {filterMenu &&
-        filterMenu.map((item, index) => (
-          <>
-            <Box
-              key={index}
-              className='flex gap-2 justify-between items-center p-2 border-b border-[#CBD6E2]'
-              onClick={() => handleClickFilterMenu(item.value as string)}
-            >
-              <Box className='text-[#2D3E4F] font-light text-sm'>
-                {item.name}
+      <Box className='flex-1 overflow-y-auto'>
+        {filterMenu &&
+          filterMenu.map((item, index) => (
+            <React.Fragment key={index}>
+              <Box
+                key={index}
+                className='flex gap-2 justify-between items-center p-2 border-b border-[#CBD6E2] cursor-pointer'
+                onClick={() => handleClickFilterMenu(item.value as string)}
+              >
+                <Box className='text-[#2D3E4F] font-light text-sm'>
+                  {item.name}
+                </Box>
+                <Box className='text-[#2D3E4F] '>
+                  <img
+                    src={filterArrowRightIcon}
+                    alt='icon'
+                    className='w-[16px] h-[16px]'
+                  />
+                </Box>
               </Box>
-              <Box className='text-[#2D3E4F] '>
-                <img
-                  src={filterArrowRightIcon}
-                  alt='icon'
-                  className='w-[16px] h-[16px]'
-                />
-              </Box>
-            </Box>
-            {renderFilterControls(item)}
-          </>
-        ))}
-      <Box className='flex  justify-end items-center gap-2 p-2'>
+              {renderFilterControls(item)}
+            </React.Fragment>
+          ))}
+      </Box>
+      <Box className='flex justify-end items-center gap-2 p-2 border-t border-[#CBD6E2]'>
         <Button
           onClick={handleFilter}
           label='Cancel'
+          variant='outlined'
+          color='inherit'
           sx={{
-            height: '32px',
-            border: '1px solid #CBD6E2',
-            color: '#7D98B6',
-            borderRadius: '2px',
-            '&:hover': {
-              background: 'none',
-              color: '#7D98B6',
-            },
+            width: '55px',
+            minWidth: '55px',
+            fontSize: '12px',
+            fontWeight: 400,
           }}
         />
         <Button
           label='Find'
+          variant='filled'
           sx={{
-            height: '32px',
-            background: '#F16137',
-            color: '#FFFFFF',
-            borderRadius: '2px',
-            '&:hover': {
-              background: '#F16137',
-              color: '#FFFFFF',
-            },
+            width: '60px',
+            minWidth: '60px',
+            fontSize: '13px',
+            fontWeight: 400,
           }}
           onClick={handleApplyFilters}
         />
