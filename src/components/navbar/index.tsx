@@ -106,6 +106,7 @@ export const Navbar: React.FC = () => {
   };
 
   const changePassword = async () => {
+    handleMenuClose();
     try {
       await msalResetInstance.initialize();
       await msalResetInstance.loginPopup();
@@ -128,10 +129,10 @@ export const Navbar: React.FC = () => {
         errorToast(err.errorMessage);
       }
     }
-    handleMenuClose();
   };
 
   const handleLogout = async () => {
+    handleMenuClose();
     try {
       await msalSigninInstance.initialize();
       await msalSigninInstance.logoutPopup();

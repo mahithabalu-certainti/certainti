@@ -1,7 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useState } from 'react';
-import { useLocation, useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  useLocation,
+  useParams,
+  useNavigate,
+  useSearchParams,
+} from 'react-router-dom';
 import { accountDetailsIcon } from '../../../assets';
 import { PageHeader } from '../../../components';
 import { ACCOUNT } from '../../../routes';
@@ -23,6 +28,9 @@ import { AccountInfo } from './account-info';
 import Sidebar from './sidebar';
 import { transformAccountData } from './utils';
 import { CircularProgress } from '@mui/material';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../store/store';
+import { AccountState } from '../../../store/slices/account-slice';
 
 export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
@@ -31,9 +39,27 @@ export const AccountDetails = () => {
   const [accountDetails, setAccountDetails] = useState<any>(null);
   const [accountDetailsForEdit, setAccountDetailsForEdit] = useState<any>(null);
   const { accountid } = useParams();
+  const { filters } = useSelector<RootState, AccountState>(
+    (state: RootState) => state.account
+  );
 
   const defaultTab = searchParams.get('list') || 'financial';
   const [activeKey, setActiveKey] = useState(defaultTab);
+
+  useEffect(() => {
+    // Check Global filters and redirect if account is not in the list
+    if (filters?.length > 0 && accountid) {
+      const hasMatchingAccount = filters.some(
+        (filter) =>
+          filter.account === accountid ||
+          (filter.child && filter.child.includes(accountid))
+      );
+      if (!hasMatchingAccount) {
+        navigate(ACCOUNT);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, accountid]);
 
   useEffect(() => {
     const list = searchParams.get('list');
@@ -151,13 +177,13 @@ export const AccountDetails = () => {
           <Sidebar activeKey={activeKey} onSelect={setActiveKey} />
         </div>
         <div className='flex-1 p-4 overflow-hidden'>
-          {isLoading ?
+          {isLoading ? (
             <div className='flex items-center justify-center w-full h-full'>
               <CircularProgress />
             </div>
-            :
+          ) : (
             <>{renderContent()}</>
-          }
+          )}
         </div>
       </div>
     </div>
