@@ -147,10 +147,21 @@ class SchemaService {
       const isResourceTypeSort = order?.length && order[0][0] === 'resource_type';
       
       if (isResourceTypeSort) {
-        // Remove resource_type from order to handle manually
-        queryOrder = [];
+        const direction = order[0][1]?.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+        queryOrder = [[
+          Sequelize.literal(`
+            CASE resource_type
+              WHEN 'Full-Time' THEN 1
+              WHEN 'Non-Labor' THEN 2 
+              WHEN 'Sub Con' THEN 3
+              ELSE 4
+            END
+          `),
+          direction
+        ]];
       }
 
+      // First get all resources without pagination
       const resources = await Resource.findAll({
         where: {
           ...whereClause,
@@ -158,14 +169,12 @@ class SchemaService {
             ? { fiscal_year: fiscalYear }
             : {}),
         },
-        limit,
-        offset,
-        order: queryOrder, 
+        order: queryOrder,
         subQuery: false,
         attributes: [
           "rid",
           "r_number",
-          "resource_ref_id",
+          "resource_ref_id", 
           "resource_fullname",
           "resource_type",
           "resource_status",
@@ -173,76 +182,33 @@ class SchemaService {
           "designation",
           "total_years_experience",
           "country",
-          "state",
+          "state", 
           "city",
         ],
       });
 
-      let totalCount = await Resource.count({
-        where: {
-          ...whereClause,
-          ...(fiscalYear && fiscalYear !== 0
-            ? { fiscal_year: fiscalYear }
-            : {}),
-        },
-      });
-
       if (resources) {
+        // Process geo data for all records
         finalResources = await this.insertGeoData(resources, mainDdSequilze);
-        
-        // Handle resource_type sorting if needed
-        if (isResourceTypeSort) {
-          // Sort all resources first before applying pagination
-          const allResources = await Resource.findAll({
-            where: {
-              ...whereClause,
-              ...(fiscalYear && fiscalYear !== 0 ? { fiscal_year: fiscalYear } : {})
-            },
-            attributes: [
-              "rid",
-              "r_number", 
-              "resource_ref_id",
-              "resource_fullname",
-              "resource_type",
-              "resource_status",
-              "resource_role",
-              "designation", 
-              "total_years_experience",
-              "country",
-              "state",
-              "city"
-            ]
-          });
-
-          const final = await this.insertGeoData(allResources, mainDdSequilze);
-
-          const direction = order[0][1]?.toUpperCase() === 'DESC' ? -1 : 1;
-          
-          // Sort all resources
-          const sortedResources = final.sort((a: any, b: any) => {
-            const aType = (a.resource_type || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-            const bType = (b.resource_type || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-            return aType.localeCompare(bType) * direction;
-          });
-
-          // Update total count to reflect sorted results
-          totalCount = sortedResources.length;
-
-          // Apply pagination after sorting
-          finalResources = sortedResources.slice(offset, offset + limit);
-        }
         finalResources = await this.sortAndFilteGeoData(
           finalResources,
           goeDataFilters,
           geoDataSort
         );
+
+        // Apply pagination after geo processing
+        const totalCount = finalResources.length;
+        finalResources = finalResources.slice(offset, offset + limit);
+
+        return { resources: finalResources, totalCount };
       }
       
-      return { resources: finalResources, totalCount };
+      return { resources: [], totalCount: 0 };
     } catch (err) {
       throw new Error("Error fetching resources: " + (err as Error).message);
     }
   }
+  
   /**
    * Fetches a single resource by ID.
    * @param accountNumber - Account number (schema).
@@ -1055,7 +1021,7 @@ class SchemaService {
 
         return 0;
       });
-
+      
     return updatedResources;
   }
 
