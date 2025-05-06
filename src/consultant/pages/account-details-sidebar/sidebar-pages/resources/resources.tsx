@@ -52,7 +52,7 @@ const Resource: React.FC<ResourceProps> = ({
   const [costorderBy, setCostOrderBy] =
     useState<keyof ResourceCostList>('created_datetime');
   const [skillOrder, setSkillOrder] = useState<'asc' | 'desc'>('desc');
-  const [SkillOrderBy, setSkillOrderBy] =
+  const [skillOrderBy, setSkillOrderBy] =
     useState<keyof ResourceSkillList>('created_datetime');
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
@@ -238,7 +238,7 @@ useEffect(() => {
     updatedParams.sortOrder = costOrder.toUpperCase() as 'ASC' | 'DESC';
     setExportType?.('cost');
   } else if (value === 'skill') {
-    updatedParams.sortBy = SkillOrderBy;
+    updatedParams.sortBy = skillOrderBy;
     updatedParams.sortOrder = skillOrder.toUpperCase() as 'ASC' | 'DESC';
     setExportType?.('skill');
   } else {
@@ -256,7 +256,7 @@ useEffect(() => {
   costOrder,
   costorderBy,
   skillOrder,
-  SkillOrderBy,
+  skillOrderBy,
   sortField,
   sortOrder,
   searchParams,
@@ -313,7 +313,7 @@ useEffect(() => {
           setCostorderBy={setCostOrderBy}
           skillOrder={skillOrder}
           setSkillOrder={setSkillOrder}
-          SkillOrderBy={SkillOrderBy}
+          skillOrderBy={skillOrderBy}
           setSkillOrderBy={setSkillOrderBy}
         />
       ) : (
