@@ -551,6 +551,16 @@ export class ResourceService {
     if (fieldFilter.is_empty === true) {
       return { [Op.or]: [null, ""] };
     }
+    if (fieldFilter.is_not_empty === true) {
+      return { [Op.and]: [{ [Op.not]: null }, { [Op.ne]: "" }] };
+    }
+
+    if (fieldFilter.in && Array.isArray(fieldFilter.in)) {
+      return { [Op.in]: fieldFilter.in };
+    }
+    if (fieldFilter.not_in && Array.isArray(fieldFilter.not_in)) {
+      return { [Op.notIn]: fieldFilter.not_in };
+    }
 
     if (fieldFilter.value) {
       return fieldFilter.value;

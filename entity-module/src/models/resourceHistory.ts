@@ -52,11 +52,11 @@ export class ResourcesHistory
           allowNull: false,
         },
         old_value: {
-          type: DataTypes.STRING(100),
+          type: DataTypes.STRING(1000),
           allowNull: true,
         },
         new_value: {
-          type: DataTypes.STRING(100),
+          type: DataTypes.STRING(1000),
           allowNull: false,
         },
         modified_datetime: {
