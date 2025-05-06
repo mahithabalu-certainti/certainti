@@ -279,7 +279,7 @@ export const RESOURCE_REGEX = {
   DESIGNATION: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{4,100}$/,
 
   // Years Experience: Non-negative integers
-  YEARS_EXPERIENCE: /^[0-9]{1,2}$/,
+  YEARS_EXPERIENCE: /^(?:0|[1-9]\d?)(?:\.\d+)?$/,
 
   // Description: Multiline text, 0-1000 chars
   DESCRIPTION: /^[\s\S]{0,1000}$/,

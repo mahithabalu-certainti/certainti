@@ -45,8 +45,8 @@ export const resourceFilterFields: FieldConfig[] = [
     options: resourceTypeOptions,
   },
   { name: 'Resource Designation', value: 'designation', type: 'text' },
-  { name: 'Resource Country', value: 'country_name', type: 'text' },
-  { name: 'Resource Region', value: 'state_name', type: 'text' },
+  { name: 'Resource Country', value: 'country', type: 'text' },
+  { name: 'Resource Region', value: 'state', type: 'text' },
   {
     name: 'Resource Status',
     value: 'resource_status',

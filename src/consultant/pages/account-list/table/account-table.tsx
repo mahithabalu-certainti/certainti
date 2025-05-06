@@ -36,11 +36,13 @@ const AccountTable: React.FC<Record<string, any>> = ({
   setOrder,
   orderBy,
   setOrderBy,
+  page,
+  setPage
 }) => {
   const navigate = useNavigate();
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
-  const [page, setPage] = useState<number>(1);
+ 
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
   const [accounts, setAccounts] = useState<ConvertedAccount[]>();
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
@@ -296,7 +298,6 @@ const AccountTable: React.FC<Record<string, any>> = ({
         <TableContainer
           sx={{
             maxHeight: 'calc(85vh - 200px)',
-            minHeight: accounts?.length === 0 ? 'auto' : 'calc(85vh - 200px)',
             overflow: 'auto',
           }}
         >
@@ -412,7 +413,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     direction={orderBy === 'industry' ? order : 'asc'}
                     IconComponent={getSortIcon(orderBy, 'industry', order)}
                   >
-                    Industries
+                    Industry
                   </TableSortLabel>
                 </TableCell>
                 <TableCell sx={{ minWidth: '150px' }}>
@@ -496,7 +497,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                   </TableCell>
                 </TableRow>
               ) : accounts?.length === 0 ? (
-                <TableRow>
+                <TableRow sx={{ height: '42px' }}>
                   <TableCell colSpan={11} align='center'>
                     <Typography variant='body1'>No data available</Typography>
                   </TableCell>
