@@ -21,6 +21,7 @@ import {
   textOptions,
 } from './filterType';
 import {
+  CurrencySelectFilterControl,
   DateFilterControl,
   EnumFilterControl,
   formatFilterForApi,
@@ -146,6 +147,19 @@ const Filter: React.FC<FilterComponentProps> = ({
               enum: {
                 ...currentState.enum!,
                 option: event.target.value as EnumFilterOption,
+                value: []
+              },
+            },
+          };
+        case 'currencySelect':
+          return {
+            ...prev,
+            [fieldName]: {
+              ...currentState,
+              currencySelect: {
+                ...currentState.currencySelect!,
+                option: event.target.value as EnumFilterOption,
+                value: []
               },
             },
           };
@@ -233,7 +247,6 @@ const Filter: React.FC<FilterComponentProps> = ({
 
   const handleEnumSelectChange = (
     fieldName: string,
-    isMultiple: boolean,
     value: string[]
   ) => {
     setFilterStates((prev: any) => {
@@ -243,7 +256,24 @@ const Filter: React.FC<FilterComponentProps> = ({
           ...prev[fieldName],
           enum: {
             ...prev[fieldName].enum,
-            value: isMultiple ? value : [value],
+            value: value,
+          },
+        },
+      };
+    });
+  };
+  const handleCurrencySelectChange = (
+    fieldName: string,
+    value: string[]
+  ) => {
+    setFilterStates((prev: any) => {
+      return {
+        ...prev,
+        [fieldName]: {
+          ...prev[fieldName],
+          currencySelect: {
+            ...prev[fieldName].currencySelect,
+            value: value,
           },
         },
       };
@@ -319,6 +349,18 @@ const Filter: React.FC<FilterComponentProps> = ({
             onChange={handleEnumSelectChange}
           />
         );
+      case 'currencySelect':
+        return (
+          <CurrencySelectFilterControl
+            filterStates={filterStates}
+            menuOption={enumOptions}
+            valueOptions={field.options || []}
+            fieldName={field.value}
+            state={fieldState}
+            onOptionChange={handleFilterOptionChange}
+            onChange={handleCurrencySelectChange}
+          />
+        );
       case 'date':
         return (
           <DateFilterControl
@@ -328,7 +370,7 @@ const Filter: React.FC<FilterComponentProps> = ({
             state={fieldState}
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleDateChange}
-            // onChange={handleBooleanChange}
+          // onChange={handleBooleanChange}
           />
         );
       case 'select':

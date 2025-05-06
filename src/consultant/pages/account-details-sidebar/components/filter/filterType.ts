@@ -134,6 +134,10 @@ export interface EnumFilterState {
   option?: EnumFilterOption;
   value?: [];
 }
+export interface CurrencySelectFilterState {
+  option?: EnumFilterOption;
+  value?: [];
+}
 export interface DateFilterState {
   option: DateFilterOption;
   value: {
@@ -155,13 +159,21 @@ export type FilterState = {
   enum?: EnumFilterState;
   textCostAndSkill?: TextFilterStateForCostAndSkill;
   select?: StatusFilterState;
+  currencySelect?: CurrencySelectFilterState;
 };
 
 // Define field configuration
 export type FieldConfig = {
   name: string;
   value: string;
-  type: 'text' | 'number' | 'date' | 'enum' | 'textCostAndSkill' | 'select';
+  type:
+    | 'text'
+    | 'number'
+    | 'date'
+    | 'enum'
+    | 'textCostAndSkill'
+    | 'select'
+    | 'currencySelect';
   options?: { option: string; value: string }[];
 };
 

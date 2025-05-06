@@ -1,15 +1,16 @@
 import { Box, Menu, MenuItem, Tab, Tabs } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { resourceFilterIcon } from '../../../../assets';
 import { Image } from '../../../../components';
 import ActionImportDropdown from '../sidebar-pages/imports/importdropdown';
 import {
-  costFilterFields,
+  getCostFilterFields,
   resourceFilterFields,
   skillFilterFields,
 } from '../sidebar-pages/resources/utils';
 import Filter from './filter/filter';
 import { FilterState } from './filter/filterType';
+import { useFetchCurrency } from '../../../services/account';
 interface TabProps {
   filterVisibility: boolean;
   handleFilter: () => void;
@@ -35,6 +36,7 @@ const TabPanel: React.FC<TabProps> = ({
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
+  const currency = useFetchCurrency();
 
   const handleSortClose = () => {
     setSortAnchorEl(null);
@@ -74,9 +76,18 @@ const TabPanel: React.FC<TabProps> = ({
     },
   ];
 
+  const memoizedCurrency: { option: string; value: string }[] = useMemo(
+    () =>
+      currency.data?.data.currency.map((account: { currency_code: string; rid: string }) => ({
+        option: account.currency_code,
+        value: account.rid,
+      })) || [],
+    [currency.data?.data.currency]
+  );
+
   const getFilterFields = () => {
     if (!value) return resourceFilterFields;
-    return value === 'cost' ? costFilterFields : skillFilterFields;
+    return value === 'cost' ? getCostFilterFields(memoizedCurrency) : skillFilterFields;
   };
 
   return (
