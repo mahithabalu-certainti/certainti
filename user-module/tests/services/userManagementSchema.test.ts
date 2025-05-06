@@ -11,7 +11,6 @@ process.env.MAINDB_ENDPOINT = "localhost";
 
 import UserService from "../../src/services/userService";
 import { User } from "../../src/models/userModel";
-import { BusinessTeams } from "../../src/models/businessTeamModel";
 import { PermissionField } from "../../src/models/permissionFieldModel";
 import { ProfileFieldsAccess } from "../../src/models/profileFieldsAccessModel";
 import { UserFieldsAccess } from "../../src/models/userFieldsAccessModel";
@@ -21,12 +20,6 @@ jest.mock("../../src/models/userModel", () => ({
   User: {
     findOne: jest.fn(),
     findAll: jest.fn(),
-  },
-}));
-
-jest.mock("../../src/models/businessTeamModel", () => ({
-  BusinessTeams: {
-    findOne: jest.fn(),
   },
 }));
 
