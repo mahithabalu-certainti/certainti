@@ -298,7 +298,6 @@ const AccountTable: React.FC<Record<string, any>> = ({
         <TableContainer
           sx={{
             maxHeight: 'calc(85vh - 200px)',
-            minHeight: accounts?.length === 0 ? 'auto' : 'calc(85vh - 200px)',
             overflow: 'auto',
           }}
         >
@@ -498,7 +497,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                   </TableCell>
                 </TableRow>
               ) : accounts?.length === 0 ? (
-                <TableRow>
+                <TableRow sx={{ height: '42px' }}>
                   <TableCell colSpan={11} align='center'>
                     <Typography variant='body1'>No data available</Typography>
                   </TableCell>

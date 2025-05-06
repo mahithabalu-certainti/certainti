@@ -94,7 +94,7 @@ const Table = <T extends RowData>({
   return (
     <>
     <Paper sx={{ boxShadow: 'none', borderBottom: '1px solid #CBD6E2',borderRadius: '0px' }}>
-      <TableContainer sx={{ maxHeight: 'calc(85vh - 200px)', minHeight: 'calc(85vh - 200px)', overflow:'auto', position:'relative' }}>
+      <TableContainer sx={{ maxHeight: 'calc(85vh - 200px)', overflow:'auto', position:'relative' }}>
         <MuiTable stickyHeader>
           <TableHead
             sx={{
@@ -307,7 +307,7 @@ const Table = <T extends RowData>({
 
             {/* Error state */}
             {error && !loading && (
-              <TableRow sx={{ height: 'calc(85vh - 200px)' }}>
+              <TableRow sx={{ height: '40px' }}>
                 <TableCell
                   colSpan={
                     columns.length +
@@ -323,7 +323,7 @@ const Table = <T extends RowData>({
 
             {/* Empty state */}
             {!loading && !error && data.length == 0 && (
-              <TableRow sx={{ height: 'calc(85vh - 200px)' }}>
+              <TableRow sx={{ height: '40px' }}>
                 <TableCell
                   colSpan={
                     columns.length +

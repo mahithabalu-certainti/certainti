@@ -28,8 +28,8 @@ const BUTTON_STYLES = {
 interface ResourceProps {
   accountDetails?: Record<string, any>;
   activeKey?: string;
-  setTableParams: React.Dispatch<React.SetStateAction<ExportModule>>;
-  setExportType: (type: 'resource' | 'cost' | 'skill') => void;
+  setTableParams?: React.Dispatch<React.SetStateAction<ExportModule>>;
+  setExportType?: (type: 'resource' | 'cost' | 'skill') => void;
 }
 
 const Resource: React.FC<ResourceProps> = ({
@@ -236,18 +236,18 @@ useEffect(() => {
   if (value === 'cost') {
     updatedParams.sortBy = costorderBy;
     updatedParams.sortOrder = costOrder.toUpperCase() as 'ASC' | 'DESC';
-    setExportType('cost');
+    setExportType?.('cost');
   } else if (value === 'skill') {
     updatedParams.sortBy = SkillOrderBy;
     updatedParams.sortOrder = skillOrder.toUpperCase() as 'ASC' | 'DESC';
-    setExportType('skill');
+    setExportType?.('skill');
   } else {
     updatedParams.sortBy = sortField;
     updatedParams.sortOrder = sortOrder;
-    setExportType('resource');
+    setExportType?.('resource');
   }
 
-  setTableParams((prev) => ({
+  setTableParams?.((prev) => ({
     ...prev,
     ...updatedParams,
   }));
