@@ -26,7 +26,7 @@ interface SubcomponentProps {
   setCostorderBy: (field: keyof ResourceCostList) => void;
   skillOrder: 'asc' | 'desc';
   setSkillOrder: (order: 'asc' | 'desc') => void;
-  SkillOrderBy: string;
+  skillOrderBy: string;
   setSkillOrderBy: (field: keyof ResourceSkillList) => void;
 }
 
@@ -48,7 +48,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   setCostorderBy,
   skillOrder,
   setSkillOrder,
-  SkillOrderBy,
+  skillOrderBy,
   setSkillOrderBy,
 }) => {
   return (
@@ -141,7 +141,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               currentPage={currentPage}
               skillOrder={skillOrder}
               setSkillOrder={setSkillOrder}
-              SkillOrderBy={SkillOrderBy}
+              skillOrderBy={skillOrderBy}
               setSkillOrderBy={setSkillOrderBy}
             />
           </Box>

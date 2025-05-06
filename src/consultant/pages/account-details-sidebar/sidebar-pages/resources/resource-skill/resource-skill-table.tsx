@@ -32,7 +32,7 @@ interface ResourceSkillTableProps {
   resourceRid: string;
   skillOrder: 'asc' | 'desc';
   setSkillOrder: (skillOrder: 'asc' | 'desc') => void;
-  SkillOrderBy: string;
+  skillOrderBy: string;
   setSkillOrderBy: (field: keyof ResourceSkillList) => void;
   currentPage: number;
   setCurrentPage: (page: number) => void;
@@ -44,7 +44,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   resourceRid, currentPage, setCurrentPage,
   skillOrder,
   setSkillOrder,
-  SkillOrderBy,
+  skillOrderBy,
   setSkillOrderBy,
 }) => {
   const navigate = useNavigate();
@@ -57,7 +57,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   const { data: skillList, isLoading: loading } = useResourceSkill({
     page: currentPage+1,
     limit: rowsPerPage,
-    sortBy: SkillOrderBy,
+    sortBy: skillOrderBy,
     sortOrder: apiOrder,
     filters: appliedFilters,
     accountNumber: accountDetails?.data?.accountById?.r_number,
@@ -89,7 +89,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     _event: React.MouseEvent<unknown>,
     property: keyof ResourceSkillList
   ) => {
-    const isAsc = SkillOrderBy === property && skillOrder === 'asc';
+    const isAsc = skillOrderBy === property && skillOrder === 'asc';
     setSkillOrder(isAsc ? 'desc' : 'asc');
     setSkillOrderBy(property);
   };
@@ -142,12 +142,12 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
 
   const getSortIcon =
     (
-      SkillOrderBy: string,
+      skillOrderBy: string,
       columnKey: keyof ResourceSkillList,
       skillOrder: 'asc' | 'desc'
     ) =>
     () => {
-      if (SkillOrderBy !== columnKey) {
+      if (skillOrderBy !== columnKey) {
         return (
           <div
             className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
@@ -243,19 +243,19 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
             <TableRow>
               {/* <TableCell sx={{ minWidth: '200px' }}>
                 <TableSortLabel
-                  active={SkillOrderBy === 'resource_role'}
-                  direction={SkillOrderBy === 'resource_role' ? skillOrder : 'asc'}
-                  IconComponent={getSortIcon(SkillOrderBy, 'resource_role', skillOrder)}
+                  active={skillOrderBy === 'resource_role'}
+                  direction={skillOrderBy === 'resource_role' ? skillOrder : 'asc'}
+                  IconComponent={getSortIcon(skillOrderBy, 'resource_role', skillOrder)}
                 >
                   Resource Role
                 </TableSortLabel>
               </TableCell> */}
               <TableCell sx={{ minWidth: '120px' }}>
                 <TableSortLabel
-                  active={SkillOrderBy === 'start_date'}
-                  direction={SkillOrderBy === 'start_date' ? skillOrder : 'asc'}
+                  active={skillOrderBy === 'start_date'}
+                  direction={skillOrderBy === 'start_date' ? skillOrder : 'asc'}
                   IconComponent={getSortIcon(
-                    SkillOrderBy,
+                    skillOrderBy,
                     'start_date',
                     skillOrder
                   )}
@@ -265,10 +265,10 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
               </TableCell>
               <TableCell sx={{ minWidth: '140px' }}>
                 <TableSortLabel
-                  active={SkillOrderBy === 'skill_name'}
-                  direction={SkillOrderBy === 'skill_name' ? skillOrder : 'asc'}
+                  active={skillOrderBy === 'skill_name'}
+                  direction={skillOrderBy === 'skill_name' ? skillOrder : 'asc'}
                   IconComponent={getSortIcon(
-                    SkillOrderBy,
+                    skillOrderBy,
                     'skill_name',
                     skillOrder
                   )}
@@ -278,12 +278,12 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
               </TableCell>
               <TableCell sx={{ minWidth: '120px' }}>
                 <TableSortLabel
-                  active={SkillOrderBy === 'skill_level'}
+                  active={skillOrderBy === 'skill_level'}
                   direction={
-                    SkillOrderBy === 'skill_level' ? skillOrder : 'asc'
+                    skillOrderBy === 'skill_level' ? skillOrder : 'asc'
                   }
                   IconComponent={getSortIcon(
-                    SkillOrderBy,
+                    skillOrderBy,
                     'skill_level',
                     skillOrder
                   )}
@@ -293,12 +293,12 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
               </TableCell>
               <TableCell sx={{ minWidth: '160px' }}>
                 <TableSortLabel
-                  active={SkillOrderBy === 'years_of_experience'}
+                  active={skillOrderBy === 'years_of_experience'}
                   direction={
-                    SkillOrderBy === 'years_of_experience' ? skillOrder : 'asc'
+                    skillOrderBy === 'years_of_experience' ? skillOrder : 'asc'
                   }
                   IconComponent={getSortIcon(
-                    SkillOrderBy,
+                    skillOrderBy,
                     'years_of_experience',
                     skillOrder
                   )}
