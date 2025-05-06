@@ -118,7 +118,7 @@ const [exportType, setExportType] = useState<'resource' | 'cost' | 'skill'>(
       state: { accountDetailsForEdit },
     });
   };
-   console.log(searchParams.get('list'));
+  
   const handleActionsClick = () => {
     console.log('Actions clicked');
     // Add actions logic here
