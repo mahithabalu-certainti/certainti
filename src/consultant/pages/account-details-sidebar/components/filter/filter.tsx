@@ -29,6 +29,7 @@ import {
   TextFilterControl,
   TextFilterControlForCostAndSKill,
 } from './helper';
+import { resetFilter } from './utils';
 
 // filter to use in resource, cost and skill list pages
 const Filter: React.FC<FilterComponentProps> = ({
@@ -42,9 +43,9 @@ const Filter: React.FC<FilterComponentProps> = ({
   setCurrentPage
 }) => {
   const [selectedFilters, setSelectedFilters] =
-    useState<string[]>(savedSelectedFilters);
+  useState<string[]>(savedSelectedFilters);
   const [filterStates, setFilterStates] =
-    useState<Record<string, FilterState>>(savedFilterStates);
+  useState<Record<string, FilterState>>(savedFilterStates);
 
   // Update parent component when local states change
   useEffect(() => {
@@ -66,18 +67,16 @@ const Filter: React.FC<FilterComponentProps> = ({
     // handleFilter();
   };
 
-  const resetFilter = () => {
-    setAppliedFilters({});
-    setFilterStates({});
-    setSelectedFilters([]);
-    if (onFilterStatesChange) {
-      onFilterStatesChange({});
-    }
+  const handleResetFilter = () => {
+    resetFilter({
+      setAppliedFilters,
+      setFilterStates,
+      setSelectedFilters,
+      onFilterStatesChange,
+      onSelectedFiltersChange,
+    });
+  }
 
-    if (onSelectedFiltersChange) {
-      onSelectedFiltersChange([]);
-    }
-  };
 
   const handleClickFilterMenu = (fieldName: string) => {
     setSelectedFilters((prev) =>
@@ -85,11 +84,11 @@ const Filter: React.FC<FilterComponentProps> = ({
         ? prev.filter((item) => item !== fieldName)
         : [...prev, fieldName]
     );
-
+  
     if (!filterStates[fieldName]) {
       const fieldConfig = filterMenu.find((f) => f.value === fieldName);
       if (!fieldConfig) return;
-
+  
       setFilterStates((prev) => ({
         ...prev,
         [fieldName]: getInitialStateForField(fieldConfig),
@@ -395,7 +394,7 @@ const Filter: React.FC<FilterComponentProps> = ({
       <Box className='flex justify-between items-center p-2 border-b border-[#CBD6E2]'>
         <Box>Filters</Box>
         <Button
-          onClick={resetFilter}
+          onClick={handleResetFilter}
           label='Reset'
           variant='text'
           sx={{

@@ -14,6 +14,8 @@ import ResourceSubComponents from './resource-sub-components';
 import ResourceTableHeader from './resource-table-header';
 import { ResourceCostList } from '../../../../types/resource-cost';
 import { ExportModule, ResourceSkillList } from '../../../../types/resource-skill';
+import { FilterState } from '../../components/filter/filterType';
+import { resetFilter } from '../../components/filter/utils';
 
 
 const BUTTON_STYLES = {
@@ -58,6 +60,10 @@ const Resource: React.FC<ResourceProps> = ({
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
   );
+ const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
+    {}
+  );
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
 
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
@@ -86,6 +92,12 @@ const Resource: React.FC<ResourceProps> = ({
     setValue(newValue);
     setShowFilter(false);
     setAppliedFilters({});
+    resetFilter({
+          setAppliedFilters,
+          setFilterStates,
+          setSelectedFilters,
+         
+        });
     // update the URL with the tab value
     searchParams.set('tab', newValue);
     navigate({ search: searchParams.toString() });
@@ -99,6 +111,12 @@ const Resource: React.FC<ResourceProps> = ({
     setValue('details');
     setShowFilter(false);
     setFilterVisibility(false);
+    resetFilter({
+          setAppliedFilters,
+          setFilterStates,
+          setSelectedFilters,
+         
+        });
   };
 
   useEffect(() => {
@@ -194,6 +212,11 @@ const Resource: React.FC<ResourceProps> = ({
       }
     );
     setFilterVisibility(true);
+     resetFilter({
+              setAppliedFilters,
+              setFilterStates,
+              setSelectedFilters,
+            });
   };
 
   const handleCreateResource = () => {
@@ -277,6 +300,10 @@ useEffect(() => {
         filterVisibility={filterVisibility}
         handleFilter={handleFilter}
         setCurrentPage={setCurrentPage}
+        filterStates={filterStates}
+        selectedFilters={selectedFilters}
+        setFilterStates={setFilterStates}
+        setSelectedFilters={setSelectedFilters}
       />
       <ResourceTableHeader
         handleFilter={handleFilter}
