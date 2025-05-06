@@ -3,6 +3,7 @@ import { models } from "../models/index";
 import { constants } from "../utils/constant";
 import { IUpdateUserData, IUserData } from "../utils/types";
 import { Op, Sequelize } from "sequelize";
+import configurations from "../config/config";
 
   const { 
     User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams,
@@ -218,10 +219,11 @@ class UserService {
 // ... existing code ...
 async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
   try {
-  console.log(`[getPermissionFieldsByIds] DB operation started at: ${new Date(Date.now()).toISOString()}`);
-  // 1. Get profile id for user
+  const logger = configurations.getInstance().getLogger();
+  logger.info(`[getPermissionFieldsByIds] DB operation started at: ${new Date(Date.now()).toISOString()}`);
+    // 1. Get profile id for user
   const user = await User.findOne({ where: { rid: userId }, attributes: ["profile_rid"] });
-  console.log(`After Profile retrieve: ${new Date(Date.now()).toISOString()}`);
+  logger.info(`After Profile retrieve: ${new Date(Date.now()).toISOString()}`);
   const profileId = user?.profile_rid;
   if (!profileId) {
     return {
@@ -237,8 +239,7 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
     where: { module_permission_id: permissionIds },
     raw: true,
   });
-  console.log(`After Permission fields retrieve: ${new Date(Date.now()).toISOString()}`);
-
+  logger.info(`After Permission fields retrieve: ${new Date(Date.now()).toISOString()}`);
   // Collect all field IDs
   const fieldIds = fields.map(f => f.rid);
 
@@ -247,15 +248,14 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
     where: { profile_id: profileId, permission_field_id: fieldIds },
     raw: true,
   });
-  console.log(`After profileFieldAccess retrieve: ${new Date(Date.now()).toISOString()}`);
-
+  logger.info(`After profileFieldAccess retrieve: ${new Date(Date.now()).toISOString()}`);
 
   // 4. Get user field access for these fields
   const userFieldAccess = await UserFieldsAccess.findAll({
     where: { user_id: userId, permission_field_id: fieldIds },
     raw: true,
   });
-  console.log(`After userFieldAccess retrieve: ${new Date(Date.now()).toISOString()}`);
+  logger.info(`After userFieldAccess retrieve: ${new Date(Date.now()).toISOString()}`);
 
 
   // 5. Build access maps for quick lookup (by field_id)
@@ -267,8 +267,7 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
   userFieldAccess.forEach(acc => {
     userAccessMap[acc.permission_field_id] = { read: acc.read, edit: acc.edit };
   });
-  console.log(`After profileFieldAccess userFieldAccess map: ${new Date(Date.now()).toISOString()}`);
-
+  logger.info(`After profileFieldAccess userFieldAccess map: ${new Date(Date.now()).toISOString()}`);
 
   // 6. Build the response
   const result: { [key: string]: any[] } = {};
@@ -286,11 +285,10 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
       };
     });
   });
-  console.log(`After build response: ${new Date(Date.now()).toISOString()}`);
+  logger.info(`After build response: ${new Date(Date.now()).toISOString()}`);
 
   return result;
 } catch (err) {
-  console.log(err);
   return this.throwServiceError(err as Error);
 }
 }
@@ -413,14 +411,14 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
     data?: { users: any; count: number };
   }> {
     try {
+      const logger = configurations.getInstance().getLogger();
       let users = null;
       let count: number = 0;
       const offset = (page - 1) * limit;
 
       const whereClause = this.buildWhereClause(filters, search);
 
-      console.log("whereClause : ",JSON.stringify(whereClause));
-
+      logger.info("whereClause : " + JSON.stringify(whereClause));
       const [finalSortBy, finalSortOrder] = this.getSortParameters(
         sortBy,
         sortOrder
@@ -604,6 +602,7 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
     data?: { rid: string; user_role: string; user_id: string; permissions: any[] } | null;
   }> {
     try {
+      const logger = configurations.getInstance().getLogger();
       const roles = await User.findOne({
         attributes: ["role_rid", "rid", "profile_rid"],
         where: { azure_id: azureId },
@@ -616,8 +615,7 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
           },
         ],
       });
-      console.log(`After Profile retrieve: ${new Date(Date.now()).toISOString()}`);
-
+      logger.info(`After Profile retrieve: ${new Date(Date.now()).toISOString()}`);
 
       if (!roles || !roles.business_teams) {
         return {
@@ -641,7 +639,6 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
         },
       };
     } catch (err) {
-      console.log(err);
       return this.throwServiceError(err as Error);
     }
   }
@@ -649,8 +646,9 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
   // Consolidate all permissions for a user
 // ... existing code ...
 async getAllUserPermission(userId: string, profileId: string) {
-  console.log("userId : ",userId);
-  console.log("profileId : ",profileId);
+  const logger = configurations.getInstance().getLogger();
+  logger.info("userId : " + userId);
+  logger.info("profileId : " + profileId);
   const [profilePermissions, userPermissions] = await Promise.all([
     this.getProfilePermission(profileId),
     this.getUserPermission(userId)
@@ -668,7 +666,7 @@ async getAllUserPermission(userId: string, profileId: string) {
     } else if (item.is_enabled && !existingItem.is_enabled) {
       uniqueByNameType[key] = item;
     } else {
-      console.log(`[getAllUserPermission] Duplicate found for key: ${key}`);
+      logger.info(`[getAllUserPermission] Duplicate found for key: ${key}`);
     }
   });
   return Object.values(uniqueByNameType);
@@ -676,6 +674,7 @@ async getAllUserPermission(userId: string, profileId: string) {
 
   // Get all profile-based permissions
   async getProfilePermission(profileId: string) {
+    const logger = configurations.getInstance().getLogger();
     const permissions: any[] = [];
 
     // Menus
@@ -683,8 +682,7 @@ async getAllUserPermission(userId: string, profileId: string) {
       where: { profile_id: profileId},
       include: [{ model: Menu, as: "menu" }]
     });
-    console.log(`After menuAccess retrieve: ${new Date(Date.now()).toISOString()}`);
-
+    logger.info(`After menuAccess retrieve: ${new Date(Date.now()).toISOString()}`);
     menuAccess.forEach(ma => {
       const maWithMenu = ma as any;
       if (maWithMenu.menu) {
@@ -696,16 +694,14 @@ async getAllUserPermission(userId: string, profileId: string) {
         });
       }
     });
-    console.log(`After menuAccess response map: ${new Date(Date.now()).toISOString()}`);
-
+    logger.info(`After menuAccess response map: ${new Date(Date.now()).toISOString()}`);
 
     // Modules
     const moduleAccess = await ProfileModuleAccess.findAll({
       where: { profile_id: profileId},
       include: [{ model: MenuModule, as: "menu_module" }]
     });
-    console.log(`After module access retrieve: ${new Date(Date.now()).toISOString()}`);
-
+    logger.info(`After module access retrieve: ${new Date(Date.now()).toISOString()}`);
     moduleAccess.forEach(mo => {
       const moWithModule = mo as any;
       if (moWithModule.menu_module) {
@@ -717,15 +713,13 @@ async getAllUserPermission(userId: string, profileId: string) {
         });
       }
     });
-    console.log(`After module access map: ${new Date(Date.now()).toISOString()}`);
-
+    logger.info(`After module access map: ${new Date(Date.now()).toISOString()}`);
     // Permissions
     const permissionAccess = await ProfilePermissionAccess.findAll({
       where: { profile_id: profileId},
       include: [{ model: ModulePermission, as: "module_permission" }]
     });
-    console.log(`After permission access retrieve: ${new Date(Date.now()).toISOString()}`);
-
+    logger.info(`After permission access retrieve: ${new Date(Date.now()).toISOString()}`);
     permissionAccess.forEach(pa => {
       const paWithPerm = pa as any;
       if (paWithPerm.module_permission) {
@@ -738,8 +732,7 @@ async getAllUserPermission(userId: string, profileId: string) {
         });
       }
     });
-    console.log(`After permission access response map: ${new Date(Date.now()).toISOString()}`);
-
+    logger.info(`After permission access response map: ${new Date(Date.now()).toISOString()}`);
     return permissions;
   }
 
@@ -1164,13 +1157,13 @@ async getAllUserPermission(userId: string, profileId: string) {
     data?: { users: any; count: number };
   }> {
     try {
+      const logger = configurations.getInstance().getLogger();
       let users = null;
       let count: number = 0;
 
       const whereClause = this.buildWhereClause(filters, search);
 
-      console.log("whereClause : ",JSON.stringify(whereClause));
-
+      logger.info("whereClause : " + JSON.stringify(whereClause));
       const [finalSortBy, finalSortOrder] = this.getSortParameters(
         sortBy,
         sortOrder
@@ -1351,8 +1344,7 @@ const rawResult = users || [];
         }
       }
     } catch (error) {
-      console.error('Error fetching user names:', error);
-      // Return empty strings if there's an error
+      console.error('Error fetching user names:', error);      // Return empty strings if there's an error
     }
     
     return result;
