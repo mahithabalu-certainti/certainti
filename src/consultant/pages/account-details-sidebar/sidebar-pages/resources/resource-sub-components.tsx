@@ -5,6 +5,8 @@ import { AccountData } from '../../../account-details/utils';
 import ResourceCostTable from './resource-cost/resource-cost-table';
 import ResourceDetails from './resource-details/resource-details';
 import ResourceSkillTable from './resource-skill/resource-skill-table';
+import { ResourceCostList } from '../../../../types/resource-cost';
+import { ResourceSkillList } from '../../../../types/resource-skill';
 
 interface SubcomponentProps {
   handleTabChange: (event: React.SyntheticEvent, newValue: string) => void;
@@ -16,6 +18,16 @@ interface SubcomponentProps {
   accountDetails: AccountData;
   setFilterVisibility: (value: boolean) => void;
   setShowFilter: (value: boolean) => void;
+  currentPage: number;
+  setCurrentPage: (page: number) => void;
+  costOrder: 'asc' | 'desc';
+  setCostOrder: (order: 'asc' | 'desc') => void;
+  costorderBy: string;
+  setCostorderBy: (field: keyof ResourceCostList) => void;
+  skillOrder: 'asc' | 'desc';
+  setSkillOrder: (order: 'asc' | 'desc') => void;
+  SkillOrderBy: string;
+  setSkillOrderBy: (field: keyof ResourceSkillList) => void;
 }
 
 const ResourceSubComponents: React.FC<SubcomponentProps> = ({
@@ -28,6 +40,16 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   accountDetails,
   setFilterVisibility,
   setShowFilter,
+  currentPage,
+  setCurrentPage,
+  costOrder,
+  setCostOrder,
+  costorderBy,
+  setCostorderBy,
+  skillOrder,
+  setSkillOrder,
+  SkillOrderBy,
+  setSkillOrderBy,
 }) => {
   return (
     <Fragment>
@@ -87,10 +109,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
         {/* You can add the content for each tab below */}
         {value === 'details' && (
           <Box>
-            <ResourceDetails
-              resourceId={resourceId}
-              accountId={accountId}
-            />
+            <ResourceDetails resourceId={resourceId} accountId={accountId} />
           </Box>
         )}
 
@@ -101,6 +120,12 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               appliedFilters={appliedFilters}
               accountDetails={accountDetails}
               resourceRid={resourceId}
+              setCurrentPage={setCurrentPage}
+              currentPage={currentPage}
+              costOrder={costOrder}
+              setCostOrder={setCostOrder}
+              costorderBy={costorderBy}
+              setCostorderBy={setCostorderBy}
             />
           </Box>
         )}
@@ -112,6 +137,12 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               appliedFilters={appliedFilters}
               accountDetails={accountDetails}
               resourceRid={resourceId}
+              setCurrentPage={setCurrentPage}
+              currentPage={currentPage}
+              skillOrder={skillOrder}
+              setSkillOrder={setSkillOrder}
+              SkillOrderBy={SkillOrderBy}
+              setSkillOrderBy={setSkillOrderBy}
             />
           </Box>
         )}

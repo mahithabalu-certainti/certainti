@@ -9,7 +9,6 @@ import {
   dateOptions,
   EnumFilterOption,
   enumOptions,
-  enumValueOptions,
   FieldConfig,
   FilterComponentProps,
   FilterState,
@@ -40,6 +39,7 @@ const Filter: React.FC<FilterComponentProps> = ({
   onFilterStatesChange,
   savedSelectedFilters = [],
   onSelectedFiltersChange,
+  setCurrentPage
 }) => {
   const [selectedFilters, setSelectedFilters] =
     useState<string[]>(savedSelectedFilters);
@@ -62,6 +62,7 @@ const Filter: React.FC<FilterComponentProps> = ({
   const handleApplyFilters = () => {
     const formattedFilters = formatFilterForApi(filterStates);
     setAppliedFilters(formattedFilters);
+    setCurrentPage(0)
     // handleFilter();
   };
 
@@ -247,7 +248,7 @@ const Filter: React.FC<FilterComponentProps> = ({
 
   const handleEnumSelectChange = (
     fieldName: string,
-    value: string[]
+    value: string[] | string
   ) => {
     setFilterStates((prev: any) => {
       return {
@@ -342,7 +343,7 @@ const Filter: React.FC<FilterComponentProps> = ({
           <EnumFilterControl
             filterStates={filterStates}
             menuOption={enumOptions}
-            valueOptions={enumValueOptions}
+            valueOptions={field.options as { option: string; value: string }[]}
             fieldName={field.value}
             state={fieldState}
             onOptionChange={handleFilterOptionChange}

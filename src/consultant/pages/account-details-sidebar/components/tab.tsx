@@ -16,6 +16,7 @@ interface TabProps {
   handleFilter: () => void;
   value: string;
   showFilter: boolean;
+  setCurrentPage: (page: number) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setAppliedFilters: (filters: Record<string, any>) => void;
 }
@@ -25,6 +26,7 @@ const TabPanel: React.FC<TabProps> = ({
   value,
   showFilter,
   filterVisibility,
+  setCurrentPage
 }) => {
   const [tabValue, setTabValue] = useState(0);
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
@@ -35,6 +37,7 @@ const TabPanel: React.FC<TabProps> = ({
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
+    setCurrentPage(0)
   };
   const currency = useFetchCurrency();
 
@@ -173,6 +176,7 @@ const TabPanel: React.FC<TabProps> = ({
                   onFilterStatesChange={setFilterStates}
                   savedSelectedFilters={selectedFilters}
                   onSelectedFiltersChange={setSelectedFilters}
+                  setCurrentPage={setCurrentPage}
                 />
               </Box>
             )}

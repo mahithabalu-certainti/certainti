@@ -27,8 +27,9 @@ const UserList: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(true);
+  const [page, setPage] = useState<number>(1);
   const [tableParams, setTableParams] = useState<UserListParams>({
-    page: 1,
+    page: page,
     limit: 10,
     sortBy: 'createdAt',
     sortOrder: 'DESC',
@@ -165,6 +166,7 @@ const UserList: React.FC = () => {
                 setSearchTerm={setSearchTerm}
                 filterFields={userFilterfields}
                 filterLabel="Filter User by"
+                setPage={setPage}
               />
             }
           </div>

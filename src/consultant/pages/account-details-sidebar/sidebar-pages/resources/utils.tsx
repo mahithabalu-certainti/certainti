@@ -2,6 +2,7 @@
 // import { FieldConfig, FilterState } from "../../../components/filter/filterType";
 
 import {
+  enumValueOptions,
   FieldConfig,
   FilterState,
   resourceTypeOptions,
@@ -25,27 +26,31 @@ export const skillFilterFields: FieldConfig[] = [
   // { name: 'Resource Type', value: 'resource_type', type: 'textCostAndSkill' },
   { name: 'Start Date', value: 'start_date', type: 'date' },
   { name: 'Skill Name', value: 'skill_name', type: 'textCostAndSkill' },
-  { name: 'Skill Level', value: 'skill_level', type: 'enum' },
+  {
+    name: 'Skill Level',
+    value: 'skill_level',
+    type: 'enum',
+    options: enumValueOptions,
+  },
   { name: 'Years of Experience', value: 'years_of_experience', type: 'number' },
 ];
 export const resourceFilterFields: FieldConfig[] = [
   { name: 'Resource ID', value: 'r_number', type: 'text' },
   { name: 'Resource Ref ID', value: 'resource_ref_id', type: 'text' },
   { name: 'Resource Full Name', value: 'resource_fullname', type: 'text' },
-  // { name: 'Resource Name', value: 'resource_fullname', type: 'text' },
   {
     name: 'Resource Type',
     value: 'resource_type',
-    type: 'select',
+    type: 'enum',
     options: resourceTypeOptions,
   },
   { name: 'Resource Designation', value: 'designation', type: 'text' },
-  { name: 'Resource Country', value: 'country_name', type: 'text' },
-  { name: 'Resource Region', value: 'state_name', type: 'text' },
+  { name: 'Resource Country', value: 'country', type: 'text' },
+  { name: 'Resource Region', value: 'state', type: 'text' },
   {
     name: 'Resource Status',
     value: 'resource_status',
-    type: 'select',
+    type: 'enum',
     options: statusOptions,
   },
 ];

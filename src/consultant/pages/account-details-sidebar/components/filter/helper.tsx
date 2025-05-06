@@ -494,7 +494,7 @@ export const EnumFilterControl: React.FC<{
   fieldName: string;
   state: FilterState;
   onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
-  onChange: (fieldName: string, svalues: string[]) => void;
+  onChange: (fieldName: string, svalues: string | string[]) => void;
 }> = ({
   filterStates,
   menuOption,
@@ -507,17 +507,52 @@ export const EnumFilterControl: React.FC<{
     const option = formatString(filterStates?.[fieldName]?.enum?.option);
     const isMultiple = option === 'In';
     const hideInput = option === 'Is Empty';
-    const selectedValues: string[] = state?.enum?.value || [];
 
-    // const capitalizeFirstLetter = (str?: string) => {
-    //   if (str) {
-    //     return str.charAt(0).toUpperCase() + str.slice(1);
-    //   }
-    //   return 'N/A';
-    // };
+    const handleOptionChange = (e: SelectChangeEvent<any>) => {
+      const newOption = e.target.value;
+      const newOptionFormatted = formatString(newOption);
+      const willBeMultiple = newOptionFormatted === 'In';
+      const willHideInput = newOptionFormatted === 'Is Empty';
 
-    console.log("selectedValues", selectedValues, valueOptions);
-    console.log("selectedValues", filterStates, fieldName);
+      // Reset values based on the new option type
+      if (willHideInput) {
+        onChange(fieldName, false, newOptionFormatted.toLowerCase());
+      } else if (willBeMultiple) {
+        onChange(fieldName, true, []);
+      } else {
+        onChange(fieldName, false, '');
+      }
+
+      // Then update the option
+      onOptionChange(fieldName, e);
+    };
+
+    // Handle value normalization based on selection mode
+    const currentValue = state.enum?.value as string | string[];
+    let normalizedValue: string | string[];
+
+    if (isMultiple) {
+      normalizedValue = Array.isArray(currentValue)
+        ? currentValue
+        : currentValue !== undefined && currentValue !== null
+          ? [currentValue]
+          : [];
+    } else {
+      normalizedValue = Array.isArray(currentValue)
+        ? currentValue[0] || ''
+        : currentValue || '';
+    }
+
+    const handleValueChange = (newValue: any) => {
+      if (isMultiple) {
+        const values = typeof newValue === 'string' ? newValue.split(',') : newValue;
+        onChange(fieldName, true, values);
+      } else if (hideInput) {
+        onChange(fieldName, false, option.toLowerCase());
+      } else {
+        onChange(fieldName, false, newValue);
+      }
+    };
 
     return (
       <Fragment>
@@ -533,8 +568,8 @@ export const EnumFilterControl: React.FC<{
             }}
           >
             <Select
-              value={state?.enum?.option ?? 'equals'}
-              onChange={(e) => onOptionChange(fieldName, e)}
+              value={state?.enum?.option?.toLowerCase() ?? 'equals'}
+              onChange={handleOptionChange}  // Updated to use our custom handler
               sx={{ height: '30px', minHeight: 20 }}
               MenuProps={{
                 sx: {
@@ -568,7 +603,7 @@ export const EnumFilterControl: React.FC<{
             >
               <Select
                 multiple={isMultiple}
-                value={state.enum?.value || []}
+                value={normalizedValue}
                 MenuProps={{
                   sx: {
                     '& .MuiMenuItem-root': {
@@ -578,162 +613,25 @@ export const EnumFilterControl: React.FC<{
                   },
                 }}
                 name='value'
-                onChange={(e) =>
-                  onChange(fieldName, e.target.value as string[])
-                }
+                onChange={(e) => handleValueChange(e.target.value)}
                 sx={{ height: '30px', minHeight: 20 }}
                 renderValue={(selected) => {
                   if (isMultiple) {
-                    if (!Array.isArray(selected)) return '';
-                    return selected
-                      .map((val) => valueOptions.find((opt) => opt.value === val)?.option || val)
-                      .join(', ');
+                    const selectedArray = selected as string[];
+                    return selectedArray.length > 0
+                      ? selectedArray
+                        .map(val => valueOptions.find(m => m.value === val)?.option || val)
+                        .join(', ')
+                      : 'Select';
                   } else {
-                    const selectedValue = selected as unknown as string;
-                    const selectedOption = valueOptions.find((opt) => opt.value === selectedValue);
-                    return selectedOption ? selectedOption.option : '';
+                    const selectedValue = selected as string;
+                    return valueOptions.find(m => m.value === selectedValue)?.option || 'Select';
                   }
                 }}
+                displayEmpty
               >
                 {valueOptions.map((item) => (
                   <MenuItem key={item.option} value={item.value}>
-                    {isMultiple && <Checkbox
-                      disableRipple
-                      checked={selectedValues.includes(item.value)}
-                      size="small"
-                      sx={{
-                        color: '#CBD6E2',
-                        '&.Mui-checked': {
-                          color: '#1755E7',
-                        },
-                      }}
-                    />}
-                    {item.option}
-
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
-        )}
-      </Fragment>
-    );
-  };
-
-export const CurrencySelectFilterControl: React.FC<{
-  filterStates: Record<string, FilterState>;
-  menuOption: { option: string; value: string }[];
-  valueOptions: { option: string; value: string }[];
-  fieldName: string;
-  state: FilterState;
-  onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
-  onChange: (fieldName: string, values: string[]) => void;
-}> = ({
-  filterStates,
-  menuOption,
-  valueOptions,
-  fieldName,
-  state,
-  onOptionChange,
-  onChange,
-}) => {
-    const option = formatString(filterStates?.[fieldName]?.currencySelect?.option);
-    const isMultiple = option === 'In';
-    const hideInput = option === 'Is Empty';
-    const selectedValues: string[] = state?.currencySelect?.value || [];
-
-    console.log("selectedValues", selectedValues);
-
-
-    return (
-      <Fragment>
-        <Box sx={{ p: 1, mt: 1, borderBottom: '1px solid #CBD6E2' }}>
-          <FormControl
-            fullWidth
-            size='small'
-            sx={{
-              '.MuiInputBase-root': {
-                fontSize: '12px',
-                fontWeight: 300,
-              },
-            }}
-          >
-            <Select
-              value={state?.currencySelect?.option?.toLowerCase() ?? 'equals'}
-              onChange={(e) => onOptionChange(fieldName, e)}
-              sx={{ height: '30px', minHeight: 20 }}
-              MenuProps={{
-                sx: {
-                  '& .MuiMenuItem-root': {
-                    fontSize: '12px',
-                    fontWeight: 300,
-                  },
-                },
-              }}
-              name='option'
-            >
-              {menuOption.map((menu) => (
-                <MenuItem key={menu.option} value={menu.value}>
-                  {menu.option}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Box>
-        {!hideInput && (
-          <Box sx={{ p: 1, mt: 1 }}>
-            <FormControl
-              fullWidth
-              size='small'
-              sx={{
-                '.MuiInputBase-root': {
-                  fontSize: '12px',
-                  fontWeight: 300,
-                },
-              }}
-            >
-              <Select
-                multiple={isMultiple}
-                value={state.currencySelect?.value || []}
-                MenuProps={{
-                  sx: {
-                    '& .MuiMenuItem-root': {
-                      fontSize: '12px',
-                      fontWeight: 300,
-                    },
-                  },
-                }}
-                name='value'
-                onChange={(e) =>
-                  onChange(fieldName, e.target.value as string[])
-                }
-                sx={{ height: '30px', minHeight: 20 }}
-                renderValue={(selected) => {
-                  if (isMultiple) {
-                    if (!Array.isArray(selected)) return '';
-                    return selected
-                      .map((val) => valueOptions.find((opt) => opt.value === val)?.option || val)
-                      .join(', ');
-                  } else {
-                    const selectedValue = selected as unknown as string;
-                    const selectedOption = valueOptions.find((opt) => opt.value === selectedValue);
-                    return selectedOption ? selectedOption.option : '';
-                  }
-                }}
-              >
-                {valueOptions.map((item) => (
-                  <MenuItem key={item.option} value={item.value}>
-                    {isMultiple && <Checkbox
-                      disableRipple
-                      checked={selectedValues.includes(item.value)}
-                      size="small"
-                      sx={{
-                        color: '#CBD6E2',
-                        '&.Mui-checked': {
-                          color: '#1755E7',
-                        },
-                      }}
-                    />}
                     {item.option}
                   </MenuItem>
                 ))}
@@ -759,7 +657,7 @@ export const formatFilterForApi = (
         formatString(choosenOption) === 'Is Empty' ||
           formatString(choosenOption) === 'Is Not Empty'
           ? true
-          : state.text.value?.toString().trim().toLowerCase();
+          : state.text.value?.toString().trim();
       if (value) {
         formattedFilters[fieldKey] = { [choosenOption]: value };
       }
@@ -770,7 +668,7 @@ export const formatFilterForApi = (
           ? // ||
           //   formatString(choosenOption) === 'Is Not Empty'
           true
-          : state.textCostAndSkill.value?.toString().trim().toLowerCase();
+          : state.textCostAndSkill.value?.toString().trim();
       if (value) {
         formattedFilters[fieldKey] = { [choosenOption]: value };
       }
@@ -830,11 +728,11 @@ export const formatFilterForApi = (
               ? [value.from?.toString(), value.to?.toString()]
               : boolOptions
                 ? true
-                : value.from?.toString().toLowerCase(),
+                : value.from?.toString(),
         };
       }
     } else if (state.select) {
-      formattedFilters[fieldKey] = state.select.value.toLowerCase();
+      formattedFilters[fieldKey] = state.select.value;
     }
   });
 

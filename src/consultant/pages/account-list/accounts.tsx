@@ -32,6 +32,7 @@ export const Accounts: React.FC = () => {
   const [order, setOrder] = useState<'asc' | 'desc'>('desc');
   const [orderBy, setOrderBy] = useState<keyof AccountList>('createdAt');
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
+ const [page, setPage] = useState<number>(1);
 
   const menuItems = [
     {
@@ -153,6 +154,7 @@ export const Accounts: React.FC = () => {
               setSearchTerm={setSearchTerm}
               filterFields={accountFilterfields}
               filterLabel='Filter Accounts by'
+              setPage={setPage}
             />}
         </div>
 
@@ -173,6 +175,8 @@ export const Accounts: React.FC = () => {
             setOrder={setOrder}
             orderBy={orderBy}
             setOrderBy={setOrderBy}
+            setPage={setPage}
+            page={page}
           />
         </div>
       </div>

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ResourceCostListParams } from '../../types/resource-cost';
-import { ResourceSkillListParams } from '../../types/resource-skill';
+import { ExportModule, ResourceSkillListParams } from '../../types/resource-skill';
 
 export const baseUrl = import.meta.env.VITE_RESOURCE_URL;
 export const resourceCostUrl = 'api/resource_cost/list';
@@ -119,4 +119,40 @@ export const skillListURL = ({
     fiscalYear,
     resourceRid,
   });
+};
+export const ExportResourceCostUrl = ({
+  sortBy,
+  sortOrder,
+  fiscalYear,
+  rNumber,
+  resourceRid,
+}: ExportModule): string => {
+  const baseUrl = '/entityService/api/resource_cost/export';
+  const searchParams = new URLSearchParams();
+
+  if (sortBy !== undefined) searchParams.set('sortBy', sortBy);
+  if (sortOrder !== undefined) searchParams.set('sortOrder', sortOrder);
+  if (rNumber !== undefined) searchParams.set('accountNumber', rNumber);
+  if (fiscalYear !== undefined) searchParams.set('fiscalYear', fiscalYear);
+  if (resourceRid !== undefined) searchParams.set('resourceRid', resourceRid);
+  const queryString = searchParams.toString();
+  return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+};
+export const ExportResourceSkillUrl = ({
+  sortBy,
+  sortOrder,
+  fiscalYear,
+  rNumber,
+  resourceRid,
+}: ExportModule): string => {
+  const baseUrl = '/entityService/api/resource_skill/export';
+  const searchParams = new URLSearchParams();
+
+  if (sortBy !== undefined) searchParams.set('sortBy', sortBy);
+  if (sortOrder !== undefined) searchParams.set('sortOrder', sortOrder);
+  if (rNumber !== undefined) searchParams.set('accountNumber', rNumber);
+  if (fiscalYear !== undefined) searchParams.set('fiscalYear', fiscalYear);
+  if (resourceRid !== undefined) searchParams.set('resourceRid', resourceRid);
+  const queryString = searchParams.toString();
+  return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };

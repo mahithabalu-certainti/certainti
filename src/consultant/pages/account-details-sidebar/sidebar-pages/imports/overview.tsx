@@ -18,13 +18,12 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId }) => {
     type: 'error' | 'success';
     text: string;
   } | null>(null);
-    const auth = localStorage.getItem('auth');
-    const {  userId } = auth ? JSON.parse(auth) : {};
+  const auth = localStorage.getItem('auth');
+  const { userId } = auth ? JSON.parse(auth) : {};
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [entityType, setEntityType] = useState<string>('Select Type');
-  const [fiscalYear, setFiscalYear] = useState<string>('Select Year');
+  const [fiscalYear, setFiscalYear] = useState<string>('Year');
   const [loading, setLoading] = useState<boolean>(false);
-
   useEffect(() => {
     if (
       message?.type === 'error' &&
@@ -36,7 +35,7 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId }) => {
     }
   }, [entityType, fiscalYear, selectedFiles]);
 
-  const { successToast ,errorToast} = useToast();
+  const { successToast, errorToast } = useToast();
   const menuItems = [
     { label: 'Resource', onClick: () => setEntityType('Resource') },
     { label: 'Resource Cost', onClick: () => setEntityType('Resource Cost') },
@@ -96,34 +95,35 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId }) => {
     return validFiles;
   };
 
- 
   const handleSubmit = async () => {
-    const file = selectedFiles[0];
-    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-      showError(`"${file.name}" exceeds the 50MB limit. Please upload a smaller file.`);
-      return;
-    }
-
     if (entityType === 'Select Type') {
       showError('Please select an Entity Type.');
       return;
     }
- 
-    if (fiscalYear === 'Select Year') {
+
+    if (fiscalYear === 'Year') {
       showError('Please select a Fiscal Year.');
       return;
     }
- 
+
     if (selectedFiles.length === 0) {
       showError('Please select a file before submitting.');
       return;
     }
- 
+
     if (!accountId || !accountNo) {
       showError('Missing account information.');
       return;
     }
- 
+
+    const file = selectedFiles[0];
+    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      showError(
+        `"${file.name}" exceeds the 50MB limit. Please upload a smaller file.`
+      );
+      return;
+    }
+
     try {
       const payload: UploadImportPayload = {
         entity_type: entityType,
@@ -135,7 +135,7 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId }) => {
         uploaded_by_user_rid: userId,
         account_r_number: accountNo,
       };
-      setLoading(true)
+      setLoading(true);
       const response = await uploadImportFile(payload);
       if (
         response?.data.statusCode === 201 ||
@@ -143,39 +143,40 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId }) => {
       ) {
         successToast(response.data.message);
         fileInputRef.current!.value = '';
-        setSelectedFiles([])
-        setEntityType('Select Type')
-        setFiscalYear('Select Year')
-        setLoading(false)
+        setSelectedFiles([]);
+        setEntityType('Select Type');
+        setFiscalYear('Year');
+        setLoading(false);
         setMessage(null);
       } else if (response?.data.statusCode === 400) {
         errorToast(response.data.message);
-         setLoading(false);
+        setLoading(false);
       }
     } catch (error) {
       console.error('Upload failed:', error);
       showError('Failed to upload the file.');
-       setLoading(false);
+      setLoading(false);
     }
   };
-
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const validFiles = validateFiles(e.target.files);
     if (validFiles.length > 0) {
       setSelectedFiles(validFiles);
-      showSuccess(`File "${validFiles[0].name}" uploaded successfully.`);
+      showSuccess(`File "${validFiles[0].name}" added successfully.`);
     }
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const validFiles = validateFiles(e.dataTransfer.files);
-    if (validFiles.length > 0) {
-      setSelectedFiles(validFiles);
-      showSuccess(`File "${validFiles[0].name}" uploaded successfully.`);
-    }
-  };
+ const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+   e.preventDefault();
+   const validFiles = validateFiles(e.dataTransfer.files);
+
+   if (validFiles.length > 0) {
+     setSelectedFiles((prevFiles) => [...prevFiles, ...validFiles]);
+      showSuccess(`File "${validFiles[0].name}" added successfully.`);
+   }
+ };
+
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -227,19 +228,23 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId }) => {
           />
         </div>
       </div>
-
-      <div className='h-[50px] px-4  border-b border-[#CBD6E2] flex items-center gap-6'>
+      <div className='h-[50px] px-4 border-b border-[#CBD6E2] flex items-center gap-6'>
         <div className='flex items-center gap-2'>
-          <label className='font-normal text-[14px] text-[#2D3E4F] '>
+          <label className='font-normal text-[14px] text-[#2D3E4F]'>
             Entity Type
+            <span className='text-red-500 ml-1'>*</span>
           </label>
           <ActionImportDropdown actions={menuItems} label={entityType} />
         </div>
         <div className='flex items-center gap-2'>
-          <label className='font-normal text-[14px] text-[#2D3E4F] '>
+          <label className='font-normal text-[14px] text-[#2D3E4F]'>
             Fiscal Year
+            <span className='text-red-500 ml-1'>*</span>
           </label>
-          <ActionImportDropdown actions={fiscalYears} label={fiscalYear} />
+          <ActionImportDropdown
+            actions={fiscalYears}
+            label={`FY -${fiscalYear}`}
+          />
         </div>
       </div>
 
@@ -286,16 +291,12 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId }) => {
           </div>
         )}
 
-        {selectedFiles.length > 0 && (
-          <div className='w-[502px] mt-4 border-t border-gray-300 pt-2'>
-            <div className='text-sm font-semibold mb-2'>Selected File:</div>
-            <ul className='text-sm list-disc pl-5'>
-              {selectedFiles.map((file, index) => (
-                <li key={index}>{file.name}</li>
-              ))}
-            </ul>
+        {/* {selectedFiles.length > 0 && (
+          <div className='flex items-center justify-center font-[14px]  text-[#2D3E4F]'>
+            <div className='pr-2'>Selected File:- </div>
+            <div>{selectedFiles[0].name}</div>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

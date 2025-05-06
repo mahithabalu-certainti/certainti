@@ -2,7 +2,9 @@ import { Autocomplete, Checkbox, Skeleton, TextField } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import dayjs from 'dayjs';
+// import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
+
 import { CountryCode, parsePhoneNumberFromString } from 'libphonenumber-js';
 import React, { useEffect } from 'react';
 import PhoneInput, { CountryData } from 'react-phone-input-2';
@@ -47,7 +49,30 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     <Skeleton variant='rounded' width='100%' height={32} />
   );
   useEffect(() => {
-    setFormData(data);
+    setFormData((prevFormData = []) => {
+      return data.map((newSection) => {
+        const oldSection = prevFormData.find(
+          (s) => s.sectionName === newSection.sectionName
+        );
+    
+        return {
+          ...newSection,
+          fields: newSection.fields.map((newField) => {
+            const oldField = oldSection?.fields.find(
+              (f) => f.name === newField.name
+            );
+    
+            return {
+              ...newField,
+              error: oldField?.error ?? newField.error,
+              disabled: oldField?.disabled?? newField.disabled,
+              value: oldField?.value ?? newField.value,
+            };
+          }),
+        };
+      });
+    });
+      
     // Only set initial form data if constructFormData is empty
     if (Object.values(constructFormData).every((value) => !value)) {
       let constructFormData = {};
@@ -285,13 +310,36 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             ))}
           </div>
         );
-      case 'date':
+      case 'date': {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const startDateValue: string | undefined | any =
+          constructFormData['financial_start_date'];
+        const today: Dayjs = dayjs();
+
+        const parsedStartDate = startDateValue
+          ? dayjs(startDateValue, 'MM/DD/YYYY')
+          : undefined;
+
+        const customMinDate: Dayjs | undefined =
+          field.name === 'financial_end_date' && parsedStartDate
+            ? parsedStartDate.add(1, 'day')
+            : field?.minDate
+              ? dayjs(field.minDate)
+              : undefined;
+
+        const customMaxDate: Dayjs | undefined =
+          field.name === 'financial_end_date' && startDateValue
+            ? today
+            : field?.maxDate
+              ? dayjs(field.maxDate)
+              : undefined;
+
         return (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
               className={fieldDisabled}
-              maxDate={field?.maxDate ? dayjs(field?.maxDate) : undefined}
-              minDate={field?.minDate ? dayjs(field?.minDate) : undefined}
+              minDate={customMinDate}
+              maxDate={customMaxDate}
               value={dayjs(fieldValue, 'MM/DD/YYYY')}
               disabled={field.disabled}
               format='MM/DD/YYYY'
@@ -302,7 +350,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               }}
               shouldDisableDate={
                 field.disableFutureDates
-                  ? (date) => dayjs(date).isAfter(dayjs(), 'day')
+                  ? (date) => dayjs(date).isAfter(today, 'day')
                   : undefined
               }
               slots={{
@@ -348,19 +396,21 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   },
                   placeholder: field.placeholder,
                   error: !!field.error,
-                  onBlur: (event) => {
-                    //For cache typed data
-                    const value = event.target.value;
-                    if (value !== 'MM/DD/YYYY') {
-                      //For Avoid default data
-                      handleChange(value);
-                    }
-                  },
+                  // onBlur: (event) => {
+                  //   //For cache typed data
+                  //   const value = event.target.value;
+                  //   if (value !== 'MM/DD/YYYY') {
+                  //     //For Avoid default data
+                  //     handleChange(value);
+                  //   }
+                  // },
                 },
               }}
             />
           </LocalizationProvider>
         );
+      }
+
       case 'fiscalDate':
         return (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -546,6 +596,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
           if (field.type === 'date') {
             // cost date validation
+            const dateValue = constructFormData[field.name] as string;
             if (field?.startValue && constructFormData[field.name]) {
               const dateValue = constructFormData[field.name] as string;
               if (
@@ -589,7 +640,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               }
             }
 
-            const dateValue = constructFormData[field.name] as string;
             if (dateValue) {
               if (
                 field.disableFutureDates &&
@@ -634,6 +684,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               return {
                 ...field,
                 error: 'Future dates are not allowed',
+              };
+            }
+            const currentDate = dayjs();
+
+            if (field.name === 'resource_enddate' && !dayjs(dateValue).isBefore(currentDate, 'day')) {
+              hasError = true;
+              return {
+                ...field,
+                error: 'Date Cannot be in the Future',
               };
             }
 

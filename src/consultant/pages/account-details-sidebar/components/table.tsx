@@ -22,6 +22,7 @@ import { TablePagination } from '../../../../components/table';
 
 interface TableColumn {
   id: string;
+  sortId: string;
   label: string;
   sortable?: boolean;
   align?: 'left' | 'center' | 'right' | 'justify' | 'inherit';
@@ -117,7 +118,7 @@ const DataTable: React.FC<DataTableProps> = ({
 
   const handleRowsPerPageChange = (newPageSize: number) => {
     setRowsPerPage(newPageSize);
-    setCurrentPage(0); // Reset to first page when rows per page changes
+    setCurrentPage(1); // Reset to first page when rows per page changes
   };
 
   // const stableSort = (array: any[], comparator: (a: any, b: any) => number) => {
@@ -332,9 +333,9 @@ const DataTable: React.FC<DataTableProps> = ({
                 >
                   {sortable && column.sortable !== false ? (
                     <TableSortLabel
-                      active={sortField === column.id}
+                      active={sortField === column.sortId}
                       direction={
-                        sortField === column.id
+                        sortField === column.sortId
                           ? sortOrder === 'ASC'
                             ? 'asc'
                             : 'desc'
@@ -343,9 +344,9 @@ const DataTable: React.FC<DataTableProps> = ({
                       IconComponent={() =>
                         getSortIcon(
                           sortField!,
-                          column.id!,
+                          column.sortId!,
                           sortOrder.toLowerCase() as 'asc' | 'desc',
-                          () => handleSortRequest(column.id!)
+                          () => handleSortRequest(column.sortId!)
                         )
                       }
                     >
@@ -473,7 +474,7 @@ const DataTable: React.FC<DataTableProps> = ({
                 </TableRow>
               ))
             ) : (
-              <TableRow style={{ height: '300px' }}>
+              <TableRow style={{ height: isLoading ? '300px' : "auto" }}>
                 <TableCell
                   colSpan={columns.length}
                   align='center'

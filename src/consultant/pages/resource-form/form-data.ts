@@ -35,11 +35,13 @@ const getDateConstraints = (yearsBack: number) => {
   const currentDate = new Date();
   const minDate = new Date();
   minDate.setFullYear(currentDate.getFullYear() - yearsBack);
-  return { currentDate, minDate };
+  const previousDate = new Date(currentDate);
+  previousDate.setDate(currentDate.getDate() - 1);
+  return { currentDate, minDate, previousDate };
 };
 
 export const fiscalYears = getFiscalYears(DATE_CONFIG.FISCAL_YEARS_RANGE);
-const { currentDate, minDate } = getDateConstraints(DATE_CONFIG.MIN_YEARS_BACK);
+const { currentDate, minDate, previousDate } = getDateConstraints(DATE_CONFIG.MIN_YEARS_BACK);
 
 export const ResourceFormData = (
   country: SelectOption[],
@@ -234,12 +236,13 @@ export const ResourceFormData = (
             required: false,
             disabled: disableCostAndSkill,
             minDate: new Date('1950-01-01'),
-            maxDate: currentDate,
+            maxDate: previousDate,
             disableFutureDates: true,
           }),
           createDateField('resource_enddate', 'Resource End Date', {
             required: false,
             disabled: disableCostAndSkill,
+            maxDate: currentDate,
             greaterThan: {
               field: 'resource_startdate',
               message:

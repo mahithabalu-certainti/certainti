@@ -11,7 +11,7 @@ export const fields: FieldConfig[] = [
   { label: 'Account Number', name: 'account_number', type: 'number' },
   { label: 'Account Name', name: 'account_name', type: 'text' },
   { label: 'Record ID', name: 'account_id', type: 'text' },
-  { label: 'Industries', name: 'industry', type: 'text' },
+  { label: 'Industry', name: 'industry', type: 'text' },
   {
     label: 'Country',
     name: 'country',
