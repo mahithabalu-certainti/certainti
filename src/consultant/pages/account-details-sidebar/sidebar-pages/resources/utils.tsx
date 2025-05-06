@@ -9,9 +9,9 @@ import {
   statusOptions,
 } from '../../components/filter/filterType';
 
-export const costFilterFields: FieldConfig[] = [
+export const getCostFilterFields = (currencyOptions: { option: string; value: string }[]): FieldConfig[] => [
   // { name: 'Resource Cost Number', value: 'resource_cost_number', type: 'textCostAndSkill' },
-  { name: 'Currency', value: 'currency', type: 'textCostAndSkill' },
+  { name: 'Currency', value: 'currency', type: 'currencySelect', options: currencyOptions },
   { name: 'Start Date', value: 'effective_date', type: 'date' },
   { name: 'End Date', value: 'end_date', type: 'date' },
   { name: 'Hourly', value: 'hourly', type: 'number' },
@@ -68,6 +68,8 @@ export const getInitialStateForField = (
       return { date: { option: 'equals', value: { from: '', to: '' } } };
     case 'enum':
       return { enum: { option: 'equals', value: [] } };
+    case 'currencySelect':
+      return { currencySelect: { option: 'equals', value: [] } };
     case 'select':
       return { status: { option: 'equals', value: 'active' } };
     default:
