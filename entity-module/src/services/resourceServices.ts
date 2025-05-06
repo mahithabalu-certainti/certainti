@@ -556,10 +556,14 @@ export class ResourceService {
     }
 
     if (fieldFilter.in && Array.isArray(fieldFilter.in)) {
-      return { [Op.in]: fieldFilter.in };
+      return {
+        [Op.iLike]: {[Op.any]: fieldFilter.in.map((value: string) => value)}
+      };
     }
     if (fieldFilter.not_in && Array.isArray(fieldFilter.not_in)) {
-      return { [Op.notIn]: fieldFilter.not_in };
+      return {
+        [Op.notILike]: {[Op.any]: fieldFilter.not_in.map((value: string) => value)}
+      };
     }
 
     if (fieldFilter.value) {
