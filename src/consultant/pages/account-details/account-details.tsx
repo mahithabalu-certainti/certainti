@@ -1,7 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useState } from 'react';
-import { useLocation, useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  useLocation,
+  useParams,
+  useNavigate,
+  useSearchParams,
+} from 'react-router-dom';
 import { accountDetailsIcon } from '../../../assets';
 import { PageHeader } from '../../../components';
 import { ACCOUNT } from '../../../routes';
@@ -23,10 +28,11 @@ import { AccountInfo } from './account-info';
 import Sidebar from './sidebar';
 import { transformAccountData } from './utils';
 import { CircularProgress } from '@mui/material';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../store/store';
+import { AccountState } from '../../../store/slices/account-slice';
 import { ExportModule } from '../../types/resource-skill';
 import { exportData } from '../../services/resource-details/resource-details-service';
-import { RootState } from '../../../store/store';
-import { useSelector } from 'react-redux';
 
 export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
@@ -35,12 +41,10 @@ export const AccountDetails = () => {
   const [accountDetails, setAccountDetails] = useState<any>(null);
   const [accountDetailsForEdit, setAccountDetailsForEdit] = useState<any>(null);
   const { accountid } = useParams();
-    const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
-      (state: RootState) => state.account
-    );
-
-    const convertedFiscalYear =
-      fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
+  const { filters, fiscalYear } = useSelector<RootState, AccountState>(
+    (state: RootState) => state.account
+  );
+  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const defaultTab = searchParams.get('list') || 'financial';
   const [activeKey, setActiveKey] = useState(defaultTab);
@@ -52,33 +56,46 @@ export const AccountDetails = () => {
     rNumber: accountDetailsForEdit?.account_by_id?.r_number || '',
     resourceRid: '',
   });
-const [exportType, setExportType] = useState<'resource' | 'cost' | 'skill'>(
-  'resource'
-);
- const handleExport = (exportType: 'resource' | 'cost' | 'skill') => {
- if (searchParams.get('list') !== 'resources') {
-   return;
- }
+  const [exportType, setExportType] = useState<'resource' | 'cost' | 'skill'>(
+    'resource'
+  );
+  const handleExport = (exportType: 'resource' | 'cost' | 'skill') => {
+    if (searchParams.get('list') !== 'resources') {
+      return;
+    }
 
-   //"resource" | "cost" | "skill"
-   const { fiscalYear, rNumber, resourceRid, sortBy, sortOrder } = tableParams;
+    //"resource" | "cost" | "skill"
+    const { fiscalYear, rNumber, resourceRid, sortBy, sortOrder } = tableParams;
 
-   const commonPayload = {
-     fiscalYear,
-     rNumber,
-     sortBy,
-     sortOrder,
-   };
+    const commonPayload = {
+      fiscalYear,
+      rNumber,
+      sortBy,
+      sortOrder,
+    };
 
-   const exportPayload =
-     exportType === 'resource'
-       ? commonPayload
-       : { ...commonPayload, resourceRid };
+    const exportPayload =
+      exportType === 'resource'
+        ? commonPayload
+        : { ...commonPayload, resourceRid };
 
-   exportData(exportType, exportPayload);
- };
+    exportData(exportType, exportPayload);
+  };
 
-
+  useEffect(() => {
+    // Check Global filters and redirect if account is not in the list
+    if (filters?.length > 0 && accountid) {
+      const hasMatchingAccount = filters.some(
+        (filter) =>
+          filter.account === accountid ||
+          (filter.child && filter.child.includes(accountid))
+      );
+      if (!hasMatchingAccount) {
+        navigate(ACCOUNT);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, accountid]);
 
   useEffect(() => {
     const list = searchParams.get('list');
@@ -118,7 +135,7 @@ const [exportType, setExportType] = useState<'resource' | 'cost' | 'skill'>(
       state: { accountDetailsForEdit },
     });
   };
-  
+
   const handleActionsClick = () => {
     console.log('Actions clicked');
     // Add actions logic here
@@ -200,13 +217,13 @@ const [exportType, setExportType] = useState<'resource' | 'cost' | 'skill'>(
           <Sidebar activeKey={activeKey} onSelect={setActiveKey} />
         </div>
         <div className='flex-1 p-4 overflow-hidden'>
-          {isLoading ?
+          {isLoading ? (
             <div className='flex items-center justify-center w-full h-full'>
               <CircularProgress />
             </div>
-            :
+          ) : (
             <>{renderContent()}</>
-          }
+          )}
         </div>
       </div>
     </div>
