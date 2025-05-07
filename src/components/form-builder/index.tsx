@@ -430,7 +430,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               disabled={field.disabled}
               format='MM/DD'
               views={['month', 'day']}
-              minDate={dayjs().startOf('year')}
+              open={false}
               onChange={(newValue) => {
                 handleChange(dayjs(newValue).format('DD/MM/YYYY'));
               }}
@@ -461,7 +461,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                         },
                         color: 'black !important',
                         WebkitTextFillColor: 'black !important',
-
                         '&[value="MM/DD"]': {
                           color: '#7D98B6 !important',
                           WebkitTextFillColor: '#7D98B6 !important',
@@ -471,6 +470,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                         '& input': {
                           color: 'black',
                           WebkitTextFillColor: 'black',
+                        },
+                      },
+                      '& .MuiIconButton-edgeEnd': {
+                        pointerEvents: 'none',
+                        '&:hover': {
+                          backgroundColor: 'transparent',
                         },
                       },
                     },
@@ -787,33 +792,33 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
           }
 
-          // Fiscal Date custom Validation
-          if (field.differentThan) {
-            const currentFieldDate = dayjs(
-              constructFormData[field.name]?.toString() || '',
-              'MM/DD'
-            );
-            const differentThanFieldDate = dayjs(
-              constructFormData[field.differentThan.key]?.toString() || '',
-              'MM/DD'
-            );
+         // Start & end not be same Validation
+         if (field.toBeNotSame) {
+          const currentFieldDate = dayjs(
+            constructFormData[field.name]?.toString() || '',
+            'MM/DD'
+          );
+          const differentThanFieldDate = dayjs(
+            constructFormData[field.toBeNotSame.key]?.toString() || '',
+            'MM/DD'
+          );
 
+          if (
+            currentFieldDate.isValid() &&
+            differentThanFieldDate.isValid()
+          ) {
             if (
-              currentFieldDate.isValid() &&
-              differentThanFieldDate.isValid()
+              currentFieldDate.date() === differentThanFieldDate.date() &&
+              currentFieldDate.month() === differentThanFieldDate.month()
             ) {
-              if (
-                currentFieldDate.date() === differentThanFieldDate.date() &&
-                currentFieldDate.month() === differentThanFieldDate.month()
-              ) {
-                hasError = true;
-                return {
-                  ...field,
-                  error: field.differentThan.errorMessage,
-                };
-              }
+              hasError = true;
+              return {
+                ...field,
+                error: field.toBeNotSame.errorMessage,
+              };
             }
           }
+        }
 
           // Validate regex if present and field has value
           const value = constructFormData[field.name] as string;
