@@ -107,13 +107,10 @@ const accountSchema = Joi.object({
     .max(50)
     .allow(null)
     .optional()
-    .pattern(
-      new RegExp(`^https:\\/\\/[a-zA-Z0-9.-]+\\.(${allowedTLDs.join("|")})$`)
-    )
+    .pattern(/^(https:\/\/|www\.)[^\s/$.?#].[^\s]*$/)
     .messages({
-      "string.pattern.base": `The website must be a valid HTTPS URL with a domain ending in one of the following: ${allowedTLDs.join(
-        ", "
-      )}.`,
+      "string.pattern.base": `Website URL must begin with 'www.' or 'https://'`,
+      "string.max": "The website must not exceed 50 characters."
     }),
   project_manager: Joi.string().max(50).required(),
   created_datetime: Joi.date().iso().allow(null),
@@ -206,13 +203,10 @@ const updateAccountSchema = Joi.object({
     .max(50)
     .allow(null)
     .optional()
-    .pattern(
-      new RegExp(`^https:\\/\\/[a-zA-Z0-9.-]+\\.(${allowedTLDs.join("|")})$`)
-    )
+    .pattern(/^(https:\/\/|www\.)[^\s/$.?#].[^\s]*$/)
     .messages({
-      "string.pattern.base": `The website must be a valid HTTPS URL with a domain ending in one of the following: ${allowedTLDs.join(
-        ", "
-      )}.`,
+      "string.pattern.base": `Website URL must begin with 'www.' or 'https://'`,
+      "string.max": "The website must not exceed 50 characters."
     }),
   project_manager: Joi.string().max(50).required(),
   annual_revenue: Joi.number().required(),
