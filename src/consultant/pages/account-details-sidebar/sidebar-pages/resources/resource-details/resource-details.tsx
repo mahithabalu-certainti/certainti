@@ -118,16 +118,23 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
         };
       }
 
+      if (key === 'resource_ref_id' && !Array.isArray(value)) {
+        return {
+          label: 'Resource Code',
+          value: value ?? 'NA', // or handle nested objects differently
+        };
+      }
+
       if (key === 'resource_startdate' && !Array.isArray(value)) {
         return {
-          label: 'Resource Effective From',
+          label: 'Effective Date',
           value: formatDateToMMDDYYYY(value as string) || 'NA', // or handle nested objects differently
         };
       }
 
       if (key === 'resource_enddate' && !Array.isArray(value)) {
         return {
-          label: 'Resource End Date',
+          label: 'End Date',
           value: formatDateToMMDDYYYY(value as string) || 'NA', // or handle nested objects differently
         };
       }
@@ -148,7 +155,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
       if (key === 'resource_fullname' && !Array.isArray(value)) {
         return {
-          label: 'Resource Full Name',
+          label: 'Name',
           value: value ?? 'NA', // or handle nested objects differently
         };
       }
@@ -158,6 +165,8 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
           label: 'Resource Org Name',
           value: value ?? 'NA', // or handle nested objects differently
         };
+
+        
       }
 
       const displayValue =
@@ -215,12 +224,11 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   // Section data with custom formatting where needed
   const basicInfo = CreateSectionData({
-    resource_ref_ID: resourceData.resource_ref_id,
-    resource_number: resourceData.r_number,
+    resource_code: resourceData.resource_ref_id,
     resource_fullname: resourceData.resource_fullname,
     resource_type: resourceData.resource_type,
     resource_orgname: resourceData.resource_orgname,
-    resource_status: resourceData.resource_status,
+    status: resourceData.resource_status,
   });
 
   const locationInfo = CreateSectionData({
@@ -246,6 +254,10 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   const description = CreateSectionData({
     comments: resourceData.comments,
   });
+  const auditLogSection = CreateSectionData({
+    record_id: resourceData.rid,
+    resource_id: resourceData.r_number,
+  });
 
   return (
     <div className='max-w-6xl p-6 pl-10 mx-auto'>
@@ -256,6 +268,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
       />
       <DetailsSection title='Employment Details' data={employmentDetails} />
       <DetailsSection title='Description' data={description} />
+      <DetailsSection title='Audit Log' data={auditLogSection} />
     </div>
   );
 };

@@ -216,6 +216,7 @@ export const REGEX_PATTERNS = {
   LETTERS_5_TO_25: /^[A-Za-z\s]{5,25}$/,
   LETTERS_3_TO_25: /^(?!.*\s{2,-'})[A-Za-z\s]{3,25}$/,
   LETTERS_3_TO_100: /^[\s\S]{3,100}$/,
+  LETTERS_2_TO_64: /^[\s\S]{3,100}$/,
   NOT_ALLOW_ONLY_SYMBOLS: /^(?![\W_]+$).+$/,
   ALPHANUMERIC_SPEC_5_TO_50: /^[\s\S]{5,50}$/,
   EMAIL:
@@ -234,7 +235,7 @@ export const REGEX_PATTERNS = {
   NUMBERS: /^[0-9]{1,20}$/,
   NUMBERS_50: /^[0-9]{5,50}$/,
   ANNUAL_REVENUE: /^(\d{1,3}(,\d{3})+|\d{1,2}(,\d{2}){1,2},\d{3}|\d+)(\.\d+)?$/,
-  COST_REGEX: /^\d{1,3}(?:,\d{2,3})*(\.\d{1,2})?$|^\d{1,10}(\.\d{1,2})?$/,
+  COST_REGEX: /^\d{1,3}(?:,\d{2,3})*(\.\d{1,2})?$|^\d{1,16}(\.\d{1,2})?$/,
   NAME_REGEX: /^[A-Za-z\s'-]+$/,
   STREET_REGEX: /^(?![\W_]+$)(?!\s*$)[\w\W]{3,200}$/,
   CITY_REGEX: /^[A-Za-z\s]{3,100}$/,
@@ -261,6 +262,7 @@ export const RESOURCE_REGEX = {
   FULL_NAME:
     /^(?=[\s\S]{3,200}$)(?=.*[a-zA-Z])(?!^\d+$)(?!^[^\w\s]+$)(?!^\s+$)[\w\s\-,.!?@#$%^&*()+=;:'"/\\<>{}[\]|~`]+$/,
   RESOURCE_REF_ID: /^(?=.*[a-zA-Z0-9])[\w\W]{1,50}$/,
+  RESOURCE_FIRST_LAST_NAME: /^(?=[A-Za-z])[A-Za-z](?:[A-Za-z]|[- '](?=[A-Za-z])){1,62}[A-Za-z]$/,
   // Organization Name: Extended chars for org names, 4-100 chars
   ORG_NAME: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{3,100}$/,
 

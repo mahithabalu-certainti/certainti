@@ -36,8 +36,8 @@ export const skillFilterFields: FieldConfig[] = [
 ];
 export const resourceFilterFields: FieldConfig[] = [
   { name: 'Resource ID', value: 'r_number', type: 'text' },
-  { name: 'Resource Ref ID', value: 'resource_ref_id', type: 'text' },
-  { name: 'Resource Full Name', value: 'resource_fullname', type: 'text' },
+  { name: 'Resource Code', value: 'resource_ref_id', type: 'text' },
+  { name: 'Name', value: 'resource_fullname', type: 'text' },
   {
     name: 'Resource Type',
     value: 'resource_type',
@@ -48,7 +48,7 @@ export const resourceFilterFields: FieldConfig[] = [
   { name: 'Resource Country', value: 'country', type: 'text' },
   { name: 'Resource Region', value: 'state', type: 'text' },
   {
-    name: 'Resource Status',
+    name: 'Status',
     value: 'resource_status',
     type: 'enum',
     options: statusOptions,

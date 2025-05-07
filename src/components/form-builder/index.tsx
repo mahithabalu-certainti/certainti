@@ -54,25 +54,25 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         const oldSection = prevFormData.find(
           (s) => s.sectionName === newSection.sectionName
         );
-    
+
         return {
           ...newSection,
           fields: newSection.fields.map((newField) => {
             const oldField = oldSection?.fields.find(
               (f) => f.name === newField.name
             );
-    
+
             return {
               ...newField,
               error: oldField?.error ?? newField.error,
-              disabled: oldField?.disabled?? newField.disabled,
+              disabled: oldField?.disabled ?? newField.disabled,
               value: oldField?.value ?? newField.value,
             };
           }),
         };
       });
     });
-      
+
     // Only set initial form data if constructFormData is empty
     if (Object.values(constructFormData).every((value) => !value)) {
       let constructFormData = {};
@@ -97,6 +97,21 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     const fieldDisabled = field.disabled ? ' bg-gray-100' : '';
 
     const handleChange = (value: FieldTypes, countryCode?: FieldTypes) => {
+      if (field.name === 'resource_type') {
+        const resourceOrgNameField = formData?.[0].fields.find(
+          (f) => f.name === 'resource_orgname'
+        );
+
+        if (resourceOrgNameField) {
+
+          if (fieldValue !== value) {
+            resourceOrgNameField.error = '';
+          }
+
+          resourceOrgNameField.required =
+            value === 'Sub Con' || value === 'Non-Labor';
+        }
+      }
       const newData = {
         ...constructFormData,
         [field.name]: value,
@@ -317,7 +332,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           constructFormData['resource_startdate'];
         const today: Dayjs = dayjs();
         const isEndDateField =
-          field.name === 'financial_end_date' || field.name === 'resource_enddate';
+          field.name === 'financial_end_date' ||
+          field.name === 'resource_enddate';
         const parsedStartDate = startDateValue
           ? dayjs(startDateValue, 'MM/DD/YYYY')
           : undefined;
@@ -651,7 +667,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 !endDate.isAfter(startDate)
               ) {
                 hasError = true;
-                return { ...field, error: 'End date must be after effective date'};
+                return {
+                  ...field,
+                  error: 'End date must be after effective date',
+                };
               }
             }
 
@@ -663,7 +682,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 hasError = true;
                 return {
                   ...field,
-                  error: `${field.name === 'resource_startdate' ? 'Resource effective from' : 'This date'} cannot be in the future`,
+                  error: `${field.name === 'resource_startdate' ? 'Effective Date' : 'This date'} cannot be in the future`,
                 };
               }
               if (dateValue && !isValidDate(dateValue, 'MM/DD/YYYY')) {
@@ -698,16 +717,19 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               hasError = true;
               return {
                 ...field,
-                error: `${field.name === 'resource_startdate' ? 'Resource effective from' : 'This date'} cannot be in the future`,
+                error: `${field.name === 'resource_startdate' ? 'Effective Date' : 'This date'} cannot be in the future`,
               };
             }
             const currentDate = dayjs();
 
-            if (field.name === 'resource_enddate' && dayjs(dateValue).isAfter(currentDate, 'day')) {
+            if (
+              field.name === 'resource_enddate' &&
+              dayjs(dateValue).isAfter(currentDate, 'day')
+            ) {
               hasError = true;
               return {
                 ...field,
-                error: 'Resource end date cannot be in the future',
+                error: 'End Date cannot be in the future',
               };
             }
 
@@ -719,8 +741,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 ...field,
                 error:
                   field.name === 'resource_startdate'
-                      ? 'Resource effective from cannot be before 01-01-1950'
-                      : 'Date cannot be before 01-01-1950',
+                    ? 'Effective Date cannot be before 01-01-1950'
+                    : 'Date cannot be before 01-01-1950',
               };
             }
 
@@ -739,7 +761,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 hasError = true;
                 return {
                   ...field,
-                  error: 'Both resource effective from and resource end dates must be provided',
+                  error:
+                    'Both Effective Date and End Dates must be provided',
                 };
               }
 
@@ -754,9 +777,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   return {
                     ...field,
                     error:
-                    field.name === 'resource_startdate'
-                      ? 'Resource effective from cannot be the same as resource end date'
-                      : 'Resource end date cannot be the same as resource effective from',
+                      field.name === 'resource_startdate'
+                        ? 'Effective Date cannot be the same as End Date'
+                        : 'End Date cannot be the same as Effective Date',
                   };
                 }
 
@@ -767,8 +790,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     ...field,
                     error:
                       field.name === 'resource_startdate'
-                        ? 'Resource effective from cannot be after resource end date'
-                        : 'Resource end date cannot be before resource effective from',
+                        ? 'Effective Date cannot be after End Date'
+                        : 'End Date cannot be before Effective Date',
                   };
                 }
               }
@@ -792,33 +815,33 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
           }
 
-         // Start & end not be same Validation
-         if (field.toBeNotSame) {
-          const currentFieldDate = dayjs(
-            constructFormData[field.name]?.toString() || '',
-            'MM/DD'
-          );
-          const differentThanFieldDate = dayjs(
-            constructFormData[field.toBeNotSame.key]?.toString() || '',
-            'MM/DD'
-          );
+          // Start & end not be same Validation
+          if (field.toBeNotSame) {
+            const currentFieldDate = dayjs(
+              constructFormData[field.name]?.toString() || '',
+              'MM/DD'
+            );
+            const differentThanFieldDate = dayjs(
+              constructFormData[field.toBeNotSame.key]?.toString() || '',
+              'MM/DD'
+            );
 
-          if (
-            currentFieldDate.isValid() &&
-            differentThanFieldDate.isValid()
-          ) {
             if (
-              currentFieldDate.date() === differentThanFieldDate.date() &&
-              currentFieldDate.month() === differentThanFieldDate.month()
+              currentFieldDate.isValid() &&
+              differentThanFieldDate.isValid()
             ) {
-              hasError = true;
-              return {
-                ...field,
-                error: field.toBeNotSame.errorMessage,
-              };
+              if (
+                currentFieldDate.date() === differentThanFieldDate.date() &&
+                currentFieldDate.month() === differentThanFieldDate.month()
+              ) {
+                hasError = true;
+                return {
+                  ...field,
+                  error: field.toBeNotSame.errorMessage,
+                };
+              }
             }
           }
-        }
 
           // Validate regex if present and field has value
           const value = constructFormData[field.name] as string;

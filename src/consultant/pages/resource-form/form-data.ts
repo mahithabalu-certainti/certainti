@@ -61,20 +61,36 @@ export const ResourceFormData = (
         sectionName: 'Basic Information',
         fillType: 'half',
         fields: [
-          createTextField('resource_ref_id', 'Resource Ref ID', {
+          createTextField('resource_ref_id', 'Resource Code', {
             required: true,
             regex: RESOURCE_REGEX.RESOURCE_REF_ID,
             regexErrorMessage:
               'Please enter 1-50 characters, Special characters and spaces alone are not allowed.',
-            placeholder: 'Enter Resource Ref ID',
+            placeholder: 'Enter Resource Code',
             disabled: disableFields || disableCostAndSkill,
           }),
-          createTextField('resource_fullname', 'Resource Full Name', {
+          createTextField('resource_fullname', 'Name', {
             required: false,
             regex: RESOURCE_REGEX.FULL_NAME,
             regexErrorMessage:
               'Please enter 3-200 characters, including at least one letter. Special characters and numbers alone are not allowed.',
             placeholder: 'Enter Full Name',
+            disabled: disableCostAndSkill,
+          }),
+          createTextField('resource_firstname', 'First Name', {
+            required: false,
+            regex: RESOURCE_REGEX.RESOURCE_FIRST_LAST_NAME,
+            regexErrorMessage:
+             `Please enter 2-64 characters, at least one letter. Spaces, hyphens (-) and apostrophes (') are allowed, cannot be at the start/end or consecutive`,
+            placeholder: 'Enter First Name',
+            disabled: disableCostAndSkill,
+          }),
+          createTextField('resource_lastname', 'Last Name', {
+            required: false,
+            regex: RESOURCE_REGEX.RESOURCE_FIRST_LAST_NAME,
+            regexErrorMessage:
+              `Please enter 2-64 characters, at least one letter. Spaces, hyphens (-) and apostrophes (') are allowed, cannot be at the start/end or consecutive`,
+            placeholder: 'Enter Last Name',
             disabled: disableCostAndSkill,
           }),
           createSelectField('resource_type', 'Resource Type', {
@@ -92,26 +108,20 @@ export const ResourceFormData = (
             disabled: disableCostAndSkill,
           }),
 
-          createSelectField('resource_status', 'Resource Status', {
+          createSelectField('resource_status', 'Status', {
             options: RESOURCE_STATUS_OPTIONS,
             placeholder: '-Select-',
             required: true,
             disabled: disableCostAndSkill,
           }),
 
-          createSelectField('fiscal_year', 'Fiscal Year', {
-            options: fiscalYears,
-            placeholder: '-Select-',
-            required: true,
-            onChange: true,
-            disabled: disableCostAndSkill,
-          }),
-          createTextField('resource_role', 'Resource Role', {
+      
+          createTextField('resource_role', 'Role', {
             required: false,
             regex: RESOURCE_REGEX.ROLE,
             regexErrorMessage:
               'Please enter 4-100 characters, including at least one letter. Special characters and numbers alone are not allowed.',
-            placeholder: 'Enter Resource Role',
+            placeholder: 'Enter Role',
             disabled: disableCostAndSkill,
           }),
           // createTextField('r_number', 'Resource ID', {
@@ -178,7 +188,7 @@ export const ResourceFormData = (
             required: true,
             regex: REGEX_PATTERNS.COST_REGEX,
             regexErrorMessage:
-              'Cost must be a 10-digit number with up to 2 decimals',
+              'Cost must be a 16-digit number with up to 2 decimals',
             placeholder: 'Enter Cost',
           }),
           createSelectField('currency', 'Currency', {
@@ -200,7 +210,7 @@ export const ResourceFormData = (
             maxDate: currentDate,
             startValue: true,
           }),
-          createTextField('skill_name', 'Skill Name', {
+          createTextField('skill_name', 'Skill Details', {
             required: true,
             placeholder: 'Enter Skill Name',
             errorHandling: [
@@ -211,7 +221,7 @@ export const ResourceFormData = (
               {
                 regex: REGEX_PATTERNS.LETTERS_3_TO_100,
                 errorMessage:
-                  'Please enter a valid Skill Name 3 to 100 characters.',
+                  'Please enter a valid Skill Details 3 to 100 characters.',
               },
             ],
           }),
@@ -220,33 +230,27 @@ export const ResourceFormData = (
             placeholder: '-Select-',
             required: false,
           }),
-          createTextField('years_of_experience', 'Years of Experience', {
-            required: false,
-            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
-            regexErrorMessage: 'Please enter a valid number between 0 and 99',
-            placeholder: 'Enter years of experience',
-          }),
         ],
       },
       {
         sectionName: 'Employment Details',
         fillType: 'half',
         fields: [
-          createDateField('resource_startdate', 'Resource Effective From', {
+          createDateField('resource_startdate', 'Effective Date', {
             required: false,
             disabled: disableCostAndSkill,
             minDate: new Date('1950-01-01'),
             maxDate: previousDate,
             disableFutureDates: true,
           }),
-          createDateField('resource_enddate', 'Resource End Date', {
+          createDateField('resource_enddate', 'End Date', {
             required: false,
             disabled: disableCostAndSkill,
             maxDate: currentDate,
             greaterThan: {
               field: 'resource_startdate',
               message:
-                'Resource End Date must be after Resource Effective From',
+                'End Date must be after Effective Date',
             },
           }),
           createTextField('designation', 'Designation', {
@@ -263,7 +267,7 @@ export const ResourceFormData = (
             {
               required: false,
               regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
-              regexErrorMessage: 'Please enter a valid number between 0 and 99',
+              regexErrorMessage: 'Please enter a valid number between 0 and 99 with up to 2 decimals',
               placeholder: 'Enter Total Years Of Experience',
               disabled: disableCostAndSkill,
             }
@@ -274,7 +278,7 @@ export const ResourceFormData = (
             {
               required: false,
               regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
-              regexErrorMessage: 'Please enter a valid number between 0 and 99',
+              regexErrorMessage: 'Please enter a valid number between 0 and 99 with up to 2 decimals',
               placeholder: 'Enter Total Years In The Organisation',
               disabled: disableCostAndSkill,
             }

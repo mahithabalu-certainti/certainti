@@ -69,6 +69,7 @@ export interface CreateSectionData {
   r_number: string;
   eid: string | null;
   resource_ref_ID: string;
+  resource_code: string;
   resource_type: string;
   resource_fullname: string;
   resource_orgname: string;
@@ -84,13 +85,15 @@ export interface CreateSectionData {
   designation: string;
   total_years_experience: number;
   total_years_in_org: number;
-  resource_status: string;
+  status: string;
   created_datetime: string; // ISO date string
   modified_datetime: string; // ISO date string
   created_by: string; // UUID format
   modified_by: string | null;
   comments: string;
   resource_number?: string;
+  record_id?: string;
+  resource_id?: string;
 }
 interface ResourceData {
   resourceDetails: ResourceDetailsTypes;
