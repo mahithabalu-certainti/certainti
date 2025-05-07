@@ -179,7 +179,7 @@ export const FormData = (
           createFiscalDateField('fiscal_end_date', 'Fiscal End Date', {
             disabled: disableFields,
             required: true,
-            differentThan: {
+            toBeNotSame: {
               key: 'fiscal_start_date',
               errorMessage: 'Fiscal End Date cannot be the same as the Fiscal Start Date',
             },

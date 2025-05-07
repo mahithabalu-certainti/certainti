@@ -20,7 +20,7 @@ export interface FormTypeFields {
   regexErrorMessage?: string;
   disabled?: boolean;
   greaterThan?: Record<string, string>;
-  differentThan?: Record<string, string>;
+  toBeNotSame?: Record<string, string>;
   dependsRequired?: Record<string, string>;
   resetDependsFields?: string[];
   disableFutureDates?: boolean;
@@ -85,7 +85,7 @@ export interface FieldType {
   disabled?: boolean;
   defaultValue?: string;
   greaterThan?: Record<string, string>;
-  differentThan?: Record<string, string>;
+  toBeNotSame?: Record<string, string>;
   dependsRequired?: Record<string, string>;
   resetDependsFields?: string[];
   dateRangeError?: boolean;
