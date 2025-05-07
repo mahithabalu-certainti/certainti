@@ -16,8 +16,8 @@ const BUTTON_STYLES = {
 };
 
 const HEADER_STYLES = {
-  adminPermission: 'font-medium text-[#7D98B6] text-[11px]',
-  manageUser: 'font-semibold text-[20px] text-[#2D3E4F]',
+  adminPermission: 'font-medium text-[#7D98B6] text-[11px] leading-5 tracking-normal',
+  manageUser: 'font-semibold text-[20px] text-[#2D3E4F] leading-5 tracking-normal',
 };
 
 export const ProfileList: React.FC = () => {
@@ -26,8 +26,9 @@ export const ProfileList: React.FC = () => {
     Record<string, FilterType>
   >({});
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [page, setPage] = useState<number>(1);
   const [tableParams, setTableParams] = useState<UserListParams>({
-    page: 1,
+    page: page,
     limit: 10,
     sortBy: 'createdAt',
     sortOrder: 'DESC',
@@ -47,26 +48,26 @@ export const ProfileList: React.FC = () => {
   };
 
   return (
-    <div className='flex flex-col h-[calc(100vh-64px)] overflow-y-auto w-full p-4 gap-3'>
+    <div className='flex flex-col h-full w-full p-4 gap-3'>
       {/* Header Section */}
-      <div className='flex h-[12%] w-full p-4 items-center justify-between border border-[#EAF0F5] rounded'>
+      <div className='w-full min-h-[75px] h-[75px] px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
         <div className='flex items-center gap-2'>
           <img
             src={userIcon}
             alt='menu-icon'
-            className='h-10 w-10 bg-[#BE3EB5] p-2.5 rounded'
+            className='h-8 w-8 bg-[#BE3EB5] p-2.5 rounded'
           />
-          <div className='flex flex-col'>
+          <div className='flex flex-col mb-1'>
             <div className={HEADER_STYLES.adminPermission}>
               Admin Permission
             </div>
             <div className={HEADER_STYLES.manageUser}>Manage Profile</div>
           </div>
           <div
-            className={`flex items-center justify-center border mt-0.5 ml-2 rounded-xs w-9 h-9 cursor-pointer transition-colors duration-300 ${isFilterOpen ? 'bg-[#EAF0F6] border-[#CBD6E2]' : 'border-[#EAF0F5]'}`}
+            className={`flex items-center justify-center border mt-0.5 ml-2 rounded-xs w-8 h-8 cursor-pointer transition-colors duration-300 ${isFilterOpen ? 'bg-[#EAF0F6] border-[#CBD6E2]' : 'border-[#EAF0F5]'}`}
             onClick={() => setIsFilterOpen((prev) => !prev)}
           >
-            <img src={filterIcon} alt='menu-icon' className='h-[13px]' />
+            <img src={filterIcon} alt='menu-icon' className='h-[12px]' />
           </div>
         </div>
         <div className='flex gap-2 items-center'>
@@ -87,9 +88,9 @@ export const ProfileList: React.FC = () => {
       </div>
 
       {/* User Table Section */}
-      <div className='border border-[#EAF0F5] rounded'>
-        <div className='flex justify-between items-center border-b border-[#EAF0F5] p-4'>
-          <div className='font-semibold text-[20px] leading-5 text-[#2D3E4F]'>
+      <div className='flex flex-col flex-1 border border-[#CBD6E2] rounded-[4px]'>
+        <div className='flex justify-between items-center border-b border-[#CBD6E2] h-[50px] px-4'>
+          <div className='font-semibold text-base leading-[32px] tracking-[0%] align-middle text-[#2D3E4F]'>
             All Profiles
           </div>
           <div className='flex gap-3'>
@@ -109,8 +110,7 @@ export const ProfileList: React.FC = () => {
         </div>
         <div className='flex flex-1 transition-all duration-300 ease-in-out'>
           <div
-            className={`transition-all duration-300 ease-in-out overflow-hidden h-full min-h-[calc(100vh-144px)] ${
-              isFilterOpen ? 'w-[20%] opacity-100' : 'w-0 opacity-0'
+            className={`flex flex-1 transition-all duration-300 ease-in-out overflow-hidden ${isFilterOpen ? 'w-[20%] opacity-100' : 'w-0 opacity-0'
             }`}
           >
             <Filter
@@ -118,12 +118,12 @@ export const ProfileList: React.FC = () => {
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
               filterFields={getManageProfileFilterfields()}
+              filterLabel="Filter User by"
+              setPage={setPage}
             />
           </div>
 
-          <div
-            className={`transition-all duration-300 ease-in-out ${isFilterOpen ? 'w-[80%]' : 'w-full'}`}
-          >
+          <div className={`transition-all duration-300 ease-in-out border-l border-[#CBD6E2] ${isFilterOpen ? 'w-[80%]' : 'w-full border-none'}`}>
             <ProfileTable
               appliedFilters={appliedFilters}
               tableParams={tableParams}
