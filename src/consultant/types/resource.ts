@@ -1,3 +1,4 @@
+import { FilterState } from '../pages/account-details-sidebar/components/filter/filterType';
 import { Status, YesNo } from './account';
 
 export interface ResourceListURLParams {
@@ -61,4 +62,12 @@ export interface NewResourceData extends ResourceFieldsTypes, ResourceById {
 
 export interface ResourceFormData extends Omit<NewResourceData, 'status'> {
   status: YesNo;
+}
+
+export interface ResetFilter {
+  setAppliedFilters: (filters: Record<string, string>) => void;
+  setFilterStates: (filterStates: Record<string, FilterState>) => void;
+  setSelectedFilters: (selectedFilters: string[]) => void;
+  onFilterStatesChange?: (filterStates: Record<string, FilterState>) => void;
+  onSelectedFiltersChange?: (selectedFilters: string[]) => void;
 }

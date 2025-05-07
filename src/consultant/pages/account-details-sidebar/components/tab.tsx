@@ -11,6 +11,7 @@ import {
 import Filter from './filter/filter';
 import { FilterState } from './filter/filterType';
 import { useFetchCurrency } from '../../../services/account';
+import { resetFilter } from './filter/utils';
 interface TabProps {
   filterVisibility: boolean;
   handleFilter: () => void;
@@ -19,6 +20,10 @@ interface TabProps {
   setCurrentPage: (page: number) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setAppliedFilters: (filters: Record<string, any>) => void;
+  filterStates?: Record<string, FilterState>;
+  selectedFilters?: string[];
+  setFilterStates: (filterStates: Record<string, FilterState>) => void;  
+  setSelectedFilters: (selectedFilters: string[]) => void;
 }
 const TabPanel: React.FC<TabProps> = ({
   handleFilter,
@@ -26,18 +31,25 @@ const TabPanel: React.FC<TabProps> = ({
   value,
   showFilter,
   filterVisibility,
-  setCurrentPage
+  setCurrentPage,
+  filterStates,
+  selectedFilters,
+  setFilterStates,
+  setSelectedFilters
 }) => {
   const [tabValue, setTabValue] = useState(0);
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
   const [, setSelectedSort] = useState('Accounts');
-  const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
-    {}
-  );
-  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+ 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
     setCurrentPage(0)
+    resetFilter({
+      setAppliedFilters,
+      setFilterStates,
+      setSelectedFilters,
+     
+    });
   };
   const currency = useFetchCurrency();
 
