@@ -75,23 +75,23 @@ const checkUserStatusMiddleware = (permissionName?: string) => {
             return;
           }
         }
-        const accountrid = req.headers['x-account-id'] as string;
-        if (!accountrid) {
-          res.status(HttpStatus.BAD_REQUEST).json({
-            error: HttpStatus.BAD_REQUEST_MESSAGE,
-            message: "Account ID is required in headers"
-          });
-          return;
-        }
-        const isActiveAccount = await checkAccountStatus(accountrid, sequelize);
+        // const accountrid = req.headers['x-account-id'] as string;
+        // if (!accountrid) {
+        //   res.status(HttpStatus.BAD_REQUEST).json({
+        //     error: HttpStatus.BAD_REQUEST_MESSAGE,
+        //     message: "Account ID is required in headers"
+        //   });
+        //   return;
+        // }
+        // const isActiveAccount = await checkAccountStatus(accountrid, sequelize);
 
-        if (!isActiveAccount) {
-          res.status(HttpStatus.FORBIDDEN).json({
-            error: HttpStatus.FORBIDDEN_MESSAGE,
-            message: "Account is inactive. Please contact administrator."
-          });
-          return;
-        }
+        // if (!isActiveAccount) {
+        //   res.status(HttpStatus.FORBIDDEN).json({
+        //     error: HttpStatus.FORBIDDEN_MESSAGE,
+        //     message: "Account is inactive. Please contact administrator."
+        //   });
+        //   return;
+        // }
         next();
     } catch (error) {
         console.error('Error checking user status:', error);
