@@ -116,6 +116,8 @@ const createResourcesSchema = Joi.object({
     'any.required': 'Resource type is required'
   }),
   full_name: Joi.string().min(3).max(200).optional().allow("").allow(null),
+  first_name: Joi.string().min(3).max(64).optional().allow("").allow(null),
+  last_name: Joi.string().min(3).max(64).optional().allow("").allow(null),
   org_name: Joi.string()
     .min(3)
     .max(100)
@@ -131,17 +133,11 @@ const createResourcesSchema = Joi.object({
       "any.allowOnly": '"organization name" cannot be null or empty',
     }),
   role: Joi.string().min(4).max(100).optional().allow("").allow(null),
-  fiscal_year: Joi.number().integer().min(1000).max(9999).required().messages({
-    "number.base": "Fiscal year must be a number",
-    "number.min": "Fiscal year must be a 4-digit number",
-    "number.max": "Fiscal year must be a 4-digit number",
-    "any.required": "Fiscal year is required",
-  }),
   country: Joi.string()
     .guid({ version: ["uuidv4"] })
     .optional()
     .allow("", null),
-  state: Joi.string()
+  region: Joi.string()
     .guid({ version: ["uuidv4"] })
     .optional()
     .allow("", null),
@@ -179,21 +175,35 @@ const createResourcesSchema = Joi.object({
     }),
   designation: Joi.string().min(4).max(100).optional().allow("").allow(null),
   total_years_experience: Joi.number()
+    .precision(2)
     .min(0)
-    .max(99)
+    .max(99.99)
     .optional()
     .allow("")
-    .allow(null),
+    .allow(null)
+    .messages({
+      "number.base": "Total years experience must be a number",
+      "number.min": "Total years experience cannot be negative",
+      "number.max": "Total years experience cannot exceed 99.99",
+      "number.precision": "Total years experience can only have up to 2 decimal places"
+    }),
   total_years_in_org: Joi.number()
-    .optional()
+    .precision(2)
     .min(0)
-    .max(99)
+    .max(99.99)
+    .optional()
     .allow("")
-    .allow(null),
+    .allow(null)
+    .messages({
+      "number.base": "Total years in organization must be a number",
+      "number.min": "Total years in organization cannot be negative",
+      "number.max": "Total years in organization cannot exceed 99.99",
+      "number.precision": "Total years in organization can only have up to 2 decimal places"
+    }),
   resource_status: Joi.string().valid("Active", "Inactive").optional(),
   created_by: Joi.string()
     .guid({ version: ["uuidv4"] })
-    .required(),
+    .optional(),
   comments: Joi.string().max(1000).optional().allow("").allow(null),
 });
 
@@ -208,6 +218,8 @@ const updateResourceSchema = Joi.object({
     'any.required': 'Resource type is required'
   }),
   full_name: Joi.string().min(3).max(200).optional().allow("").allow(null),
+  first_name: Joi.string().min(3).max(64).optional().allow("").allow(null),
+  last_name: Joi.string().min(3).max(64).optional().allow("").allow(null),
   org_name: Joi.string()
     .min(3)
     .max(100)
@@ -223,17 +235,11 @@ const updateResourceSchema = Joi.object({
       "any.allowOnly": '"organization name" cannot be null or empty',
     }),
   role: Joi.string().min(4).max(100).optional().allow("").allow(null),
-  fiscal_year: Joi.number().integer().min(1000).max(9999).required().messages({
-    "number.base": "Fiscal year must be a number",
-    "number.min": "Fiscal year must be a 4-digit number",
-    "number.max": "Fiscal year must be a 4-digit number",
-    "any.required": "Fiscal year is required",
-  }),
   country: Joi.string()
     .guid({ version: ["uuidv4"] })
     .optional()
     .allow("", null),
-  state: Joi.string()
+  region: Joi.string()
     .guid({ version: ["uuidv4"] })
     .optional()
     .allow("", null),
@@ -489,16 +495,14 @@ const updateResourceCostSchema = Joi.object({
       "hourly"
     )
     .required(),
-  cost: Joi.number()
-    .precision(2)
-    .min(0)
-    .max(9999999999.99)
+    cost: Joi.string()
+    .pattern(/^\d+(\.\d{0,2})?$/)
     .required()
     .messages({
-      "number.base": "Cost must be a valid number",
-      "number.min": "Cost cannot be negative",
-      "number.max": "Cost cannot exceed 9,999,999,999.99",
-      "number.precision": "Cost can only have up to 2 decimal places",
+      "string.base": "Cost must be a valid string number maximum up to (9999999999999999.99)",
+      "string.pattern.base": "Cost must be a valid number with up to 2 decimal places",
+      "string.empty": "Cost is required",
+      "any.required": "Cost is required"
     }),
   status: Joi.string().max(255).default("active").optional(),
   modified_datetime: Joi.date()
@@ -605,16 +609,14 @@ const resourceCostSchema = Joi.object({
       "hourly"
     )
     .required(),
-  cost: Joi.number()
-    .precision(2)
-    .min(0)
-    .max(9999999999.99)
+  cost: Joi.string()
+    .pattern(/^\d+(\.\d{0,2})?$/)
     .required()
     .messages({
-      "number.base": "Cost must be a valid number",
-      "number.min": "Cost cannot be negative",
-      "number.max": "Cost cannot exceed 9,999,999,999.99",
-      "number.precision": "Cost can only have up to 2 decimal places",
+      "string.base": "Cost must be a valid string number maximum up to (9999999999999999.99)",
+      "string.pattern.base": "Cost must be a valid number with up to 2 decimal places",
+      "string.empty": "Cost is required",
+      "any.required": "Cost is required"
     }),
   fiscalYear: Joi.number().optional(),
   currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),

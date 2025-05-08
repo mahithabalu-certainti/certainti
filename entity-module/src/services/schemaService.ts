@@ -179,11 +179,11 @@ class SchemaService {
           "resource_type",
           "resource_status",
           "resource_role",
-          "designation",
-          "total_years_experience",
-          "country",
-          "state", 
-          "city",
+          "resource_designation",
+          "resource_total_experience",
+          "resource_country",
+          "resource_region", 
+          "resource_city",
         ],
       });
 
@@ -270,8 +270,9 @@ class SchemaService {
       const resourceObject = {
         resource_ref_id: resourceData.resource_ref_id,
         resource_type: resourceData.resource_type,
-        fiscal_year: resourceData.fiscal_year,
         resource_fullname: resourceData.full_name || null,
+        resource_firstname: resourceData.first_name || null,
+        resource_lastname: resourceData.last_name || null,
         resource_status: resourceData.resource_status,
         resource_orgname: resourceData.org_name || null,
         resource_startdate: moment(startDate).isValid()
@@ -281,12 +282,12 @@ class SchemaService {
           ? moment(endDate).toDate()
           : null,
         resource_role: resourceData.role || null,
-        state: resourceData.state || null,
-        country: resourceData.country || null,
-        city: resourceData.city || null,
-        designation: resourceData.designation || null,
-        total_years_experience: resourceData.total_years_experience || 0,
-        total_years_in_org: resourceData.total_years_in_org || 0,
+        resource_region: resourceData.region || null,
+        resource_country: resourceData.country || null,
+        resource_city: resourceData.city || null,
+        resource_designation: resourceData.designation || null,
+        resource_total_experience: resourceData.total_years_experience || 0,
+        resource_total_experience_organization: resourceData.total_years_in_org || 0,
         created_by: resourceData.created_by,
         modified_by: resourceData.modified_by,
         account_rid: resourceData.account_id,
@@ -355,14 +356,16 @@ class SchemaService {
           "r_number",
           "resource_ref_id",
           "resource_fullname",
+          "resource_firstname",
+          "resource_lastname",
           "resource_type",
           "resource_status",
           "resource_role",
-          "designation",
-          "total_years_experience",
-          "country",
-          "state",
-          "city",
+          "resource_designation",
+          "resource_total_experience",
+          "resource_country",
+          "resource_region",
+          "resource_city",
         ],
       });
 
@@ -419,14 +422,13 @@ class SchemaService {
         account_rid: resourceData.account_id,
         resource_type: resourceData.resource_type,
         resource_rid: resourceId,
-        fiscal_year: resourceData.fiscal_year,
         country_rid: resourceData.country || null,
-        country_region_rid: resourceData.state || null,
+        country_region_rid: resourceData.region || null,
         effective_date: moment(startDate).isValid()
           ? moment(startDate).toDate()
           : null,
         end_date: moment(endDate).isValid() ? moment(startDate).toDate() : null,
-        created_by: resourceData.created_by,
+        created_by: resourceData.created_by || '',
       });
     } catch (err) {
       throw new Error(
@@ -521,23 +523,24 @@ class SchemaService {
 
       const updateResourceObject: any = {
         resource_fullname: resourceData.full_name || null,
+        resource_firstname: resourceData.first_name || null,
+        resource_lastname: resourceData.last_name || null,
         resource_orgname: resourceData.org_name || null,
         resource_role: resourceData.role || null,
         resource_type: resourceData.resource_type || "",
         resource_status: resourceData.resource_status,
-        country: resourceData.country || null,
-        state: resourceData.state || null,
-        city: resourceData.city || null,
+        resource_country: resourceData.country || null,
+        resource_region: resourceData.state || null,
+        resource_city: resourceData.city || null,
         resource_startdate: moment(startDate).isValid()
           ? moment(startDate).toDate()
           : null,
         resource_enddate: moment(endDate).isValid()
           ? moment(endDate).toDate()
           : null,
-        designation: resourceData.designation || null,
-        total_years_experience: resourceData.total_years_experience || null,
-        total_years_in_org: resourceData.total_years_in_org || null,
-        fiscal_year: resourceData.fiscal_year,
+        resource_designation: resourceData.designation || null,
+        resource_total_experience: resourceData.total_years_experience || null,
+        resource_total_experience_organization: resourceData.total_years_in_org || null,
         modified_by: resourceData.modified_by,
         comments: resourceData.comments || "",
       };
@@ -605,7 +608,6 @@ class SchemaService {
       await ResourceFiscalModel.update(
         {
           resource_type: resourceData.resource_type || "",
-          fiscal_year: resourceData.fiscal_year,
           country_rid: resourceData.country || null,
           country_region_rid: resourceData.state || null,
           effective_date: moment(startDate).isValid()
@@ -789,21 +791,21 @@ class SchemaService {
         const [country]: any[] = await mainDbSequelize.query(
           `SELECT country_code,country_name FROM country WHERE rid = :rid`,
           {
-            replacements: { rid: resource.country },
+            replacements: { rid: resource.resource_country },
             type: "SELECT",
           }
         );
         const [state]: any[] = await mainDbSequelize.query(
           `SELECT state_name FROM state WHERE rid = :rid`,
           {
-            replacements: { rid: resource.state },
+            replacements: { rid: resource.resource_region },
             type: "SELECT",
           }
         );
         const [city]: any[] = await mainDbSequelize.query(
           `SELECT city_name FROM city WHERE rid = :rid`,
           {
-            replacements: { rid: resource.city },
+            replacements: { rid: resource.resource_city },
             type: "SELECT",
           }
         );
@@ -874,12 +876,12 @@ class SchemaService {
   async insertGeoData(resources: any, mainDdSequilze: Sequelize) {
     try {
       const countryIds = [
-        ...new Set(resources.map((r: any) => r.country)),
+        ...new Set(resources.map((r: any) => r.resource_country)),
       ].filter(Boolean);
-      const stateIds = [...new Set(resources.map((r: any) => r.state))].filter(
+      const regionIds = [...new Set(resources.map((r: any) => r.resource_region))].filter(
         Boolean
       );
-      const cityIds = [...new Set(resources.map((r: any) => r.city))].filter(
+      const cityIds = [...new Set(resources.map((r: any) => r.resource_city))].filter(
         Boolean
       );
 
@@ -897,11 +899,11 @@ class SchemaService {
         );
       }
 
-      if (stateIds.length > 0) {
+      if (regionIds.length > 0) {
         states = await mainDdSequilze.query(
           `SELECT rid, state_name FROM state WHERE rid IN (:ids)`,
           {
-            replacements: { ids: stateIds },
+            replacements: { ids: regionIds },
             type: "SELECT",
           }
         );
@@ -924,7 +926,7 @@ class SchemaService {
         ])
       );
 
-      const statesMap = Object.fromEntries(
+      const regionMap = Object.fromEntries(
         (Array.isArray(states) ? states : []).map((s: any) => [s.rid, s])
       );
 
@@ -935,7 +937,7 @@ class SchemaService {
       const updatedResources = resources.map((res: any) => ({
         ...res.toJSON(),
         country_name: countryMap[res.country]?.country_name || null,
-        state_name: statesMap[res.state]?.state_name || null,
+        region_name: regionMap[res.state]?.state_name || null,
         city_name: cityMap[res.city]?.city_name || null,
       }));
 
@@ -967,8 +969,8 @@ class SchemaService {
         }
 
         if (
-          whereClause.state &&
-          !this.applyTextFilter(res.state_name, whereClause.state)
+          whereClause.region &&
+          !this.applyTextFilter(res.region_name, whereClause.region)
         ) {
           return false;
         }
@@ -1006,16 +1008,16 @@ class SchemaService {
         const [field, direction] = order[0] || [];
         const dir = direction === "ASC" ? 1 : -1;
 
-        if (field === "country") {
+        if (field === "resource_country") {
           return (
             (a.country_name || "").localeCompare(b.country_name || "") * dir
           );
         }
-        if (field === "state") {
-          return (a.state_name || "").localeCompare(b.state_name || "") * dir;
+        if (field === "resource_region") {
+          return (a.region_name || "").localeCompare(b.region_name || "") * dir;
         }
 
-        if (field === "city") {
+        if (field === "resource_city") {
           return (a.city_name || "").localeCompare(b.city_name || "") * dir;
         }
 
