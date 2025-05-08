@@ -96,13 +96,14 @@ const accountSchema = Joi.object({
     .allow(""),
   created_by: Joi.string().max(255).optional(),
   modified_by: Joi.string().max(255).optional(),
-  primary_contact_name: Joi.string().min(3).max(25).required(),
-  primary_contact_email: Joi.string().email().max(50).required(),
+  primary_contact_name: Joi.string().min(2).max(128).required(),
+  primary_contact_email: Joi.string().email().min(3).max(125).required(),
   primary_contact_number: Joi.string().pattern(/^[1-9]\d{9,14}$/).required(),
   finance_poc_name: Joi.string().min(3).max(25).required(),
   finance_poc_email: Joi.string().email().max(50).required(),
   finance_poc_number: Joi.string().pattern(/^[1-9]\d{9,14}$/).required(),
-  industry: Joi.string().min(5).max(25).required(),
+  industry_rid: Joi.string().required(),
+  industry_name: Joi.string().min(5).optional(),
   website: Joi.string()
     .max(50)
     .allow(null)
@@ -112,7 +113,7 @@ const accountSchema = Joi.object({
       "string.pattern.base": `Website URL must begin with 'www.' or 'https://'`,
       "string.max": "The website must not exceed 50 characters."
     }),
-  project_manager: Joi.string().max(50).required(),
+  project_manager: Joi.string().min(2).max(128).required(),
   created_datetime: Joi.date().iso().allow(null),
   modified_datetime: Joi.date().iso().allow(null),
   annual_revenue: Joi.number().required(),
@@ -125,7 +126,7 @@ const accountSchema = Joi.object({
 const updateAccountSchema = Joi.object({
   account_rid: Joi.string().max(255).required(),
   account_id: Joi.string().max(255).required(),
-  account_name: Joi.string().min(7).max(25).required(),
+  account_name: Joi.string().min(7).max(125).required(),
   r_number: Joi.string().required(),
   account_description: Joi.string().max(500).optional().allow("").allow(null),
   status: Joi.string().valid("active", "inactive").required(),
@@ -192,15 +193,17 @@ const updateAccountSchema = Joi.object({
     .allow(null)
     .allow(""),
   modified_by: Joi.string().max(255).optional(),
-  primary_contact_name: Joi.string().min(3).max(25).required(),
-  primary_contact_email: Joi.string().email().max(50).required(),
+  primary_contact_name: Joi.string().min(2).max(128).required(),
+  primary_contact_email: Joi.string().email().min(3).max(125).required(),
   primary_contact_number: Joi.string().pattern(/^[1-9]\d{9,14}$/).required(),
   finance_poc_name: Joi.string().min(3).max(25).required(),
   finance_poc_email: Joi.string().email().max(50).required(),
   finance_poc_number: Joi.string().pattern(/^[1-9]\d{9,14}$/).required(),
-  industry: Joi.string().min(5).max(25).required(),
+  industry_rid: Joi.string().min(5).required(),
+  industry_name: Joi.string().min(5).max(100).optional(),
   website: Joi.string()
-    .max(50)
+    .min(10)
+    .max(255)
     .allow(null)
     .optional()
     .pattern(/^(https:\/\/|www\.)[^\s/$.?#].[^\s]*$/)
@@ -208,7 +211,7 @@ const updateAccountSchema = Joi.object({
       "string.pattern.base": `Website URL must begin with 'www.' or 'https://'`,
       "string.max": "The website must not exceed 50 characters."
     }),
-  project_manager: Joi.string().max(50).required(),
+  project_manager: Joi.string().min(2).max(128).required(),
   annual_revenue: Joi.number().required(),
   data_storage: Joi.string()
     .valid("separate_db", "store_in_parent")

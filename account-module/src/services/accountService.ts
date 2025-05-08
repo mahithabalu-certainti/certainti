@@ -359,7 +359,7 @@ class AccountService {
             "RecordId": account?.rid || "",
             "Parent Account": account?.parent_account?.account_name || "",
             "Account Number": account?.r_number || "",
-            "Indutries": account?.industry || "",
+            "Indutry Name": account?.industry_name || "",
             "Country": account?.country?.country_name || "",
             "Currency": account?.currency?.currency_code || "",
             "Annual Revenue": account?.annual_revenue || "",
@@ -374,7 +374,7 @@ class AccountService {
                 "RecordId": child?.rid || "",
                 "Parent Account": account?.account_name || "", // parent is current account
                 "Account Number": child?.r_number || "",
-                "Indutries": child?.industry || "",
+                "Indutry Name": child?.industry_name || "",
                 "Country": child?.country?.country_name || "",
                 "Currency": child?.currency?.currency_code || "",
                 "Annual Revenue": child?.annual_revenue || "",
@@ -411,7 +411,8 @@ class AccountService {
         parent_account_rid,
         account_country_rid,
         account_currency_rid,
-        industry,
+        industry_rid,
+        industry_name,
         primary_contact_name,
         account_country_region_rid,
         data_storage,
@@ -475,7 +476,8 @@ class AccountService {
         currency_rid: parent_account
           ? parent_account.currency_rid
           : account_currency_rid,
-        industry,
+        industry_rid: industry_rid,
+        industry_name: industry_name,
         primary_contact_name,
         status,
         annual_revenue,
@@ -533,7 +535,8 @@ class AccountService {
         data_storage,
         account_country_rid,
         account_currency_rid,
-        industry,
+        industry_rid,
+        industry_name,
         primary_contact_name
       } = accountData;
 
@@ -545,7 +548,8 @@ class AccountService {
           region: account_country_region_rid,
           country_rid: account_country_rid,
           currency_rid: account_currency_rid,
-          industry,
+          industry_rid: industry_rid,
+          industry_name: industry_name,
           primary_contact_name,
           annual_revenue,
         },
