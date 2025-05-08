@@ -495,16 +495,14 @@ const updateResourceCostSchema = Joi.object({
       "hourly"
     )
     .required(),
-    cost: Joi.number()
-    .precision(2)
-    .min(0)
-    .max(9007199254740991) // Maximum value for decimal(18,2)
+    cost: Joi.string()
+    .pattern(/^\d+(\.\d{0,2})?$/)
     .required()
     .messages({
-      "number.base": "Cost must be a valid number",
-      "number.min": "Cost cannot be negative", 
-      "number.max": "Cost cannot exceed 9,007,199,254,740,991",
-      "number.precision": "Cost can only have up to 2 decimal places",
+      "string.base": "Cost must be a valid string number maximum up to (9999999999999999.99)",
+      "string.pattern.base": "Cost must be a valid number with up to 2 decimal places",
+      "string.empty": "Cost is required",
+      "any.required": "Cost is required"
     }),
   status: Joi.string().max(255).default("active").optional(),
   modified_datetime: Joi.date()
@@ -611,16 +609,14 @@ const resourceCostSchema = Joi.object({
       "hourly"
     )
     .required(),
-  cost: Joi.number()
-    .precision(2)
-    .min(0)
-    .max(9007199254740991) // Maximum value for decimal(18,2)
+  cost: Joi.string()
+    .pattern(/^\d+(\.\d{0,2})?$/)
     .required()
     .messages({
-      "number.base": "Cost must be a valid number",
-      "number.min": "Cost cannot be negative", 
-      "number.max": "Cost cannot exceed 9,007,199,254,740,991",
-      "number.precision": "Cost can only have up to 2 decimal places",
+      "string.base": "Cost must be a valid string number maximum up to (9999999999999999.99)",
+      "string.pattern.base": "Cost must be a valid number with up to 2 decimal places",
+      "string.empty": "Cost is required",
+      "any.required": "Cost is required"
     }),
   fiscalYear: Joi.number().optional(),
   currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
