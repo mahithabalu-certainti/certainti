@@ -936,11 +936,11 @@ class SchemaService {
 
       const updatedResources = resources.map((res: any) => ({
         ...res.toJSON(),
-        country_name: countryMap[res.country]?.country_name || null,
-        region_name: regionMap[res.state]?.state_name || null,
-        city_name: cityMap[res.city]?.city_name || null,
+        country_name: countryMap[res.resource_country]?.country_name || null,
+        region_name: regionMap[res.resource_region]?.state_name || null,
+        city_name: cityMap[res.resource_city]?.city_name || null,
       }));
-
+      
       return updatedResources;
     } catch (err) {
       throw new Error("Error fetching geo data: " + (err as Error).message);
