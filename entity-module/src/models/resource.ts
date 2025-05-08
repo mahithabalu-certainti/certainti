@@ -8,9 +8,10 @@ export interface ResourcesAttributes {
   resource_type: "Full-Time" | "Sub Con" | "Non-Labor";
   account_rid: string;
   resource_fullname?: string | null;
+  resource_firstname?: string | null;
+  resource_lastname?: string | null;
   resource_orgname?: string | null;
   resource_role?: string | null;
-  fiscal_year?: number;
   resource_country?: string | null;
   resource_region?: string | null;
   resource_city?: string | null;
@@ -22,7 +23,7 @@ export interface ResourcesAttributes {
   resource_status?: "Active" | "Inactive";
   created_datetime?: Date;
   modified_datetime?: Date;
-  created_by: string;
+  created_by?: string | null;
   modified_by?: string | null;
   comments?: string;
 }
@@ -39,8 +40,9 @@ export class Resources
   public r_number?: string;
   public resource_ref_id!: string;
   public resource_type!: "Full-Time" | "Sub Con" | "Non-Labor";
-  public fiscal_year!: number;
   public resource_fullname?: string | null;
+  public resource_firstname?: string | null;
+  public resource_lastname?: string | null;
   public resource_orgname?: string;
   public resource_role?: string | null;
   public resource_country?: string | null;
@@ -54,7 +56,7 @@ export class Resources
   public resource_status?: "Active" | "Inactive";
   public created_datetime?: Date;
   public modified_datetime?: Date;
-  public created_by!: string;
+  public created_by?: string;
   public modified_by?: string;
   public account_rid!: string;
   public comments?: string;
@@ -97,6 +99,20 @@ export class Resources
           },
           allowNull: true,
         },
+        resource_firstname: {
+          type: DataTypes.STRING(64),
+          validate: {
+            len: [3, 64],
+          },
+          allowNull: true,
+        },
+        resource_lastname: {
+          type: DataTypes.STRING(64),
+          validate: {
+            len: [3, 64],
+          },
+          allowNull: true,
+        },
         resource_orgname: {
           type: DataTypes.STRING(100),
           validate: {
@@ -110,10 +126,6 @@ export class Resources
             len: [4, 100],
           },
           allowNull: true,
-        },
-        fiscal_year: {
-          type: DataTypes.INTEGER,
-          allowNull: false,
         },
         resource_country: {
           type: DataTypes.UUID,
@@ -143,14 +155,14 @@ export class Resources
           allowNull: true,
         },
         resource_total_experience: {
-          type: DataTypes.INTEGER,
+          type: DataTypes.DECIMAL(4,2),
           allowNull: true,
           validate: {
             min: 0,
           },
         },
         resource_total_experience_organization: {
-          type: DataTypes.INTEGER,
+          type: DataTypes.DECIMAL(4,2),
           allowNull: true,
           validate: {
             min: 0,
@@ -172,7 +184,7 @@ export class Resources
         },
         created_by: {
           type: DataTypes.UUID,
-          allowNull: false,
+          allowNull: true,
         },
         modified_by: {
           type: DataTypes.UUID,

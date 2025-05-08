@@ -270,8 +270,9 @@ class SchemaService {
       const resourceObject = {
         resource_ref_id: resourceData.resource_ref_id,
         resource_type: resourceData.resource_type,
-        fiscal_year: resourceData.fiscal_year,
         resource_fullname: resourceData.full_name || null,
+        resource_firstname: resourceData.first_name || null,
+        resource_lastname: resourceData.last_name || null,
         resource_status: resourceData.resource_status,
         resource_orgname: resourceData.org_name || null,
         resource_startdate: moment(startDate).isValid()
@@ -355,14 +356,16 @@ class SchemaService {
           "r_number",
           "resource_ref_id",
           "resource_fullname",
+          "resource_firstname",
+          "resource_lastname",
           "resource_type",
           "resource_status",
           "resource_role",
-          "designation",
-          "total_years_experience",
-          "country",
-          "state",
-          "city",
+          "resource_designation",
+          "resource_total_experience",
+          "resource_country",
+          "resource_region",
+          "resource_city",
         ],
       });
 
@@ -419,14 +422,13 @@ class SchemaService {
         account_rid: resourceData.account_id,
         resource_type: resourceData.resource_type,
         resource_rid: resourceId,
-        fiscal_year: resourceData.fiscal_year,
         country_rid: resourceData.country || null,
         country_region_rid: resourceData.region || null,
         effective_date: moment(startDate).isValid()
           ? moment(startDate).toDate()
           : null,
         end_date: moment(endDate).isValid() ? moment(startDate).toDate() : null,
-        created_by: resourceData.created_by,
+        created_by: resourceData.created_by || '',
       });
     } catch (err) {
       throw new Error(
@@ -521,6 +523,8 @@ class SchemaService {
 
       const updateResourceObject: any = {
         resource_fullname: resourceData.full_name || null,
+        resource_firstname: resourceData.first_name || null,
+        resource_lastname: resourceData.last_name || null,
         resource_orgname: resourceData.org_name || null,
         resource_role: resourceData.role || null,
         resource_type: resourceData.resource_type || "",
@@ -537,7 +541,6 @@ class SchemaService {
         resource_designation: resourceData.designation || null,
         resource_total_experience: resourceData.total_years_experience || null,
         resource_total_experience_organization: resourceData.total_years_in_org || null,
-        fiscal_year: resourceData.fiscal_year,
         modified_by: resourceData.modified_by,
         comments: resourceData.comments || "",
       };
@@ -605,7 +608,6 @@ class SchemaService {
       await ResourceFiscalModel.update(
         {
           resource_type: resourceData.resource_type || "",
-          fiscal_year: resourceData.fiscal_year,
           country_rid: resourceData.country || null,
           country_region_rid: resourceData.state || null,
           effective_date: moment(startDate).isValid()
@@ -967,8 +969,8 @@ class SchemaService {
         }
 
         if (
-          whereClause.state &&
-          !this.applyTextFilter(res.state_name, whereClause.state)
+          whereClause.region &&
+          !this.applyTextFilter(res.region_name, whereClause.region)
         ) {
           return false;
         }
@@ -1006,16 +1008,16 @@ class SchemaService {
         const [field, direction] = order[0] || [];
         const dir = direction === "ASC" ? 1 : -1;
 
-        if (field === "country") {
+        if (field === "resource_country") {
           return (
             (a.country_name || "").localeCompare(b.country_name || "") * dir
           );
         }
-        if (field === "state") {
-          return (a.state_name || "").localeCompare(b.state_name || "") * dir;
+        if (field === "resource_region") {
+          return (a.region_name || "").localeCompare(b.region_name || "") * dir;
         }
 
-        if (field === "city") {
+        if (field === "resource_city") {
           return (a.city_name || "").localeCompare(b.city_name || "") * dir;
         }
 
