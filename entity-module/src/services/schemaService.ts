@@ -282,10 +282,10 @@ class SchemaService {
           ? moment(endDate).toDate()
           : null,
         resource_role: resourceData.role || null,
-        resource_region: resourceData.region || null,
-        resource_country: resourceData.country || null,
-        resource_city: resourceData.city || null,
-        resource_designation: resourceData.designation || null,
+        resource_region: resourceData.resource_region || null,
+        resource_country: resourceData.resource_country || null,
+        resource_city: resourceData.resource_city || null,
+        resource_designation: resourceData.resource_designation || null,
         resource_total_experience: resourceData.total_years_experience || 0,
         resource_total_experience_organization: resourceData.total_years_in_org || 0,
         created_by: resourceData.created_by,
@@ -422,8 +422,8 @@ class SchemaService {
         account_rid: resourceData.account_id,
         resource_type: resourceData.resource_type,
         resource_rid: resourceId,
-        country_rid: resourceData.country || null,
-        country_region_rid: resourceData.region || null,
+        country_rid: resourceData.resource_country || null,
+        country_region_rid: resourceData.resource_region || null,
         effective_date: moment(startDate).isValid()
           ? moment(startDate).toDate()
           : null,
@@ -529,16 +529,16 @@ class SchemaService {
         resource_role: resourceData.role || null,
         resource_type: resourceData.resource_type || "",
         resource_status: resourceData.resource_status,
-        resource_country: resourceData.country || null,
-        resource_region: resourceData.state || null,
-        resource_city: resourceData.city || null,
+        resource_country: resourceData.resource_country || null,
+        resource_region: resourceData.resource_region || null,
+        resource_city: resourceData.resource_city || null,
         resource_startdate: moment(startDate).isValid()
           ? moment(startDate).toDate()
           : null,
         resource_enddate: moment(endDate).isValid()
           ? moment(endDate).toDate()
           : null,
-        resource_designation: resourceData.designation || null,
+        resource_designation: resourceData.resource_designation || null,
         resource_total_experience: resourceData.total_years_experience || null,
         resource_total_experience_organization: resourceData.total_years_in_org || null,
         modified_by: resourceData.modified_by,
@@ -608,8 +608,8 @@ class SchemaService {
       await ResourceFiscalModel.update(
         {
           resource_type: resourceData.resource_type || "",
-          country_rid: resourceData.country || null,
-          country_region_rid: resourceData.state || null,
+          country_rid: resourceData.resource_country || null,
+          country_region_rid: resourceData.resource_region || null,
           effective_date: moment(startDate).isValid()
             ? moment(startDate).toDate()
             : null,
@@ -812,7 +812,7 @@ class SchemaService {
 
         (resource as any).dataValues.country_code = country?.country_code || null;
         (resource as any).dataValues.country_name = country?.country_name || null;
-        (resource as any).dataValues.state_name = state?.state_name || null;
+        (resource as any).dataValues.region_name = state?.state_name || null;
         (resource as any).dataValues.city_name = city?.city_name || null;
         //Added to format date as MM/DD/YYYY
         resource = {
@@ -951,7 +951,7 @@ class SchemaService {
     resources: any[],
     whereClause: Record<string, any> = {},
     order: string[][] = []
-  ): Promise<any[]> {
+): Promise<any[]> {
     const updatedResources = resources
       .filter((res) => {
         if (
@@ -1023,9 +1023,9 @@ class SchemaService {
 
         return 0;
       });
-      
+
     return updatedResources;
-  }
+}
 
   applyTextFilter(value: string | null | undefined, filter: any): boolean {
     const val = (value || "").toLowerCase();
