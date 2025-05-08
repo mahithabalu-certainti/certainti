@@ -16,5 +16,5 @@ routes.get('/cities/:stateId', checkUserStatusMiddleware("NA"), controller.geoDa
 routes.get('/list/:id', checkUserStatusMiddleware("account_details_view"), controller.accountController.accountById);
 routes.post('/new', checkUserStatusMiddleware("accounts_create"), controller.accountController.createAccount);
 routes.put('/update', checkUserStatusMiddleware("accounts_edit_update"), controller.accountController.updateAccount);
-
+routes.get("/industry", checkUserStatusMiddleware("NA"), controller.geoDataController.industries);
 export default routes;

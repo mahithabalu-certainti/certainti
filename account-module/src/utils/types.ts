@@ -31,7 +31,8 @@ export interface IAccount {
   finance_poc_name: string;
   finance_poc_email: string;
   finance_poc_number: string;
-  industry: string;
+  industry_rid: string;
+  industry_name:string;
   website?: string | null;
   project_manager: string;
   database_level: boolean;
@@ -77,7 +78,8 @@ export interface IUpdateAccount {
   finance_poc_name: string;
   finance_poc_email: string;
   finance_poc_number: string;
-  industry: string;
+  industry_rid: string;
+  industry_name:string;
   website?: string | null;
   project_manager: string;
   database_level: boolean;

@@ -6,7 +6,7 @@ import { DatabaseConnection } from "./dbConnectionModel";
 import { Region } from "./regionModel";
 import { States } from "./stateModel";
 import { City } from "./cityModel";
-
+import { Industry } from "./industryModel";
 export const models: {
   Account: typeof Account;
   Currency: typeof Currency;
@@ -15,6 +15,7 @@ export const models: {
   Region: typeof Region;
   States: typeof States;
   City: typeof City;
+  Industry: typeof Industry;
 } = {
   Account: Account,
   Currency: Currency,
@@ -23,6 +24,7 @@ export const models: {
   Region: Region,
   States: States,
   City: City,
+  Industry: Industry,
 };
 
 export async function initModels() {
@@ -33,6 +35,7 @@ export async function initModels() {
     Region.initialize(sequelize);
     States.initialize(sequelize);
     City.initialize(sequelize);
+    Industry.initialize(sequelize);
     DatabaseConnection.initialize(sequelize);
     Account.initialize(sequelize);
     await sequelize.sync({ force: false });
@@ -49,4 +52,5 @@ export const modelExports = {
   Region,
   States,
   City,
+  Industry,
 };

@@ -75,7 +75,23 @@ const checkUserStatusMiddleware = (permissionName?: string) => {
             return;
           }
         }
-        
+        const accountrid = req.headers['x-account-id'] as string;
+        if (!accountrid) {
+          res.status(HttpStatus.BAD_REQUEST).json({
+            error: HttpStatus.BAD_REQUEST_MESSAGE,
+            message: "Account ID is required in headers"
+          });
+          return;
+        }
+        const isActiveAccount = await checkAccountStatus(accountrid, sequelize);
+
+        if (!isActiveAccount) {
+          res.status(HttpStatus.FORBIDDEN).json({
+            error: HttpStatus.FORBIDDEN_MESSAGE,
+            message: "Account is inactive. Please contact administrator."
+          });
+          return;
+        }
         next();
     } catch (error) {
         console.error('Error checking user status:', error);
@@ -141,5 +157,19 @@ const checkUserStatusMiddleware = (permissionName?: string) => {
     }
     return !!isEnabled;
   };
+
+  // Function to Check Account Status
+async function checkAccountStatus(rid: string, sequelize: any): Promise<boolean> {
+  const accountRecords = await sequelize.query(
+    constants.SQL_GET_ACCOUNT,
+    {
+      replacements: { rid },
+      type: constants.SELECT
+    }
+  ) as Array<{ rid: string, status: string }>;
+
+  const account = accountRecords[0];
+  return account ? account.status === 'active' : false;
+}
 
 export { authMiddleware, checkUserStatusMiddleware};
