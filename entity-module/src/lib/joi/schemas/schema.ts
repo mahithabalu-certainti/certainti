@@ -133,15 +133,15 @@ const createResourcesSchema = Joi.object({
       "any.allowOnly": '"organization name" cannot be null or empty',
     }),
   role: Joi.string().min(4).max(100).optional().allow("").allow(null),
-  country: Joi.string()
+  resource_country: Joi.string()
     .guid({ version: ["uuidv4"] })
     .optional()
     .allow("", null),
-  region: Joi.string()
+  resource_region: Joi.string()
     .guid({ version: ["uuidv4"] })
     .optional()
     .allow("", null),
-  city: Joi.string()
+  resource_city: Joi.string()
     .guid({ version: ["uuidv4"] })
     .optional()
     .allow("", null),
@@ -173,7 +173,7 @@ const createResourcesSchema = Joi.object({
       "date.invalidFormat":
         "Invalid effective end date. Please use the format MM/DD/YYYY",
     }),
-  designation: Joi.string().min(4).max(100).optional().allow("").allow(null),
+  resource_designation: Joi.string().min(4).max(100).optional().allow("").allow(null),
   total_years_experience: Joi.number()
     .precision(2)
     .min(0)
@@ -235,15 +235,15 @@ const updateResourceSchema = Joi.object({
       "any.allowOnly": '"organization name" cannot be null or empty',
     }),
   role: Joi.string().min(4).max(100).optional().allow("").allow(null),
-  country: Joi.string()
+  resource_country: Joi.string()
     .guid({ version: ["uuidv4"] })
     .optional()
     .allow("", null),
-  region: Joi.string()
+  resource_region: Joi.string()
     .guid({ version: ["uuidv4"] })
     .optional()
     .allow("", null),
-  city: Joi.string()
+  resource_city: Joi.string()
     .guid({ version: ["uuidv4"] })
     .optional()
     .allow("", null),
@@ -273,7 +273,7 @@ const updateResourceSchema = Joi.object({
       "any.invalid": "Effective end date must be after the start date.",
       "date.invalidFormat": "Invalid effective end date.",
     }),
-  designation: Joi.string().min(4).max(100).optional().allow("").allow(null),
+  resource_designation: Joi.string().min(4).max(100).optional().allow("").allow(null),
   total_years_experience: Joi.number()
     .optional()
     .min(0)
