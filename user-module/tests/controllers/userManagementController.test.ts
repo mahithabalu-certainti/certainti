@@ -3,6 +3,8 @@ import * as helpers from "../../src/utils/helpers";
 import { constants } from "../../src/utils/constant";
 import configurations from "../../src/config/config";
 import {
+  userProfiles,
+  userRoles,
   userPermissionById,
   userPermissionFields,
 } from "../../src/controllers/userManagementController";
@@ -12,6 +14,8 @@ jest.mock("../../src/config/config", () => {
   const userServicesMock = {
     permissionById: jest.fn(),
     getPermissionFieldsByIds: jest.fn(),
+    roles: jest.fn(), 
+    profiles: jest.fn(),
   };
 
   return {
@@ -191,6 +195,106 @@ describe("userManagementController", () => {
         constants.BAD_REQUEST,
         constants.BAD_REQUEST_MESSAGE,
         "userId and permission ids are required"
+      );
+    });
+  });
+  describe("userRoles", () => {
+    it("should return user roles successfully", async () => {
+      userServicesMock.roles.mockResolvedValue({
+        statusCode: constants.SUCCESS,
+        data: [{ id: "admin", name: "Administrator" }],
+      });
+
+      const req = createMockRequest();
+      await userRoles(req, mockResponse);
+
+      expect(userServicesMock.roles).toHaveBeenCalled();
+      expect(helpers.handleSuccessResponse).toHaveBeenCalledWith(
+        mockResponse,
+        [{ id: "admin", name: "Administrator" }]
+      );
+      expect(helpers.successLog).toHaveBeenCalledWith("User roles");
+    });
+
+    it("should handle service error for roles", async () => {
+      userServicesMock.roles.mockResolvedValue({
+        statusCode: constants.BAD_REQUEST,
+        errorMessage: "Invalid request",
+      });
+
+      const req = createMockRequest();
+      await userRoles(req, mockResponse);
+
+      expect(helpers.handleErrorResponse).toHaveBeenCalledWith(
+        mockResponse,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        "Invalid request"
+      );
+    });
+
+    it("should handle unexpected errors in roles", async () => {
+      userServicesMock.roles.mockRejectedValue(new Error("DB connection failed"));
+
+      const req = createMockRequest();
+      await userRoles(req, mockResponse);
+
+      expect(helpers.handleErrorResponse).toHaveBeenCalledWith(
+        mockResponse,
+        constants.FAILED,
+        constants.FAILED_MESSAGE,
+        "DB connection failed"
+      );
+    });
+  });
+
+  // New tests for userProfiles
+  describe("userProfiles", () => {
+    it("should return user profiles successfully", async () => {
+      userServicesMock.profiles.mockResolvedValue({
+        statusCode: constants.SUCCESS,
+        data: [{ id: "profile1", name: "Basic User" }],
+      });
+
+      const req = createMockRequest();
+      await userProfiles(req, mockResponse);
+
+      expect(userServicesMock.profiles).toHaveBeenCalled();
+      expect(helpers.handleSuccessResponse).toHaveBeenCalledWith(
+        mockResponse,
+        [{ id: "profile1", name: "Basic User" }]
+      );
+      expect(helpers.successLog).toHaveBeenCalledWith("User profiles");
+    });
+
+    it("should handle service error for profiles", async () => {
+      userServicesMock.profiles.mockResolvedValue({
+        statusCode: constants.BAD_REQUEST,
+        errorMessage: "Invalid parameter",
+      });
+
+      const req = createMockRequest();
+      await userProfiles(req, mockResponse);
+
+      expect(helpers.handleErrorResponse).toHaveBeenCalledWith(
+        mockResponse,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        "Invalid parameter"
+      );
+    });
+
+    it("should handle unexpected errors in profiles", async () => {
+      userServicesMock.profiles.mockRejectedValue(new Error("Timeout error"));
+
+      const req = createMockRequest();
+      await userProfiles(req, mockResponse);
+
+      expect(helpers.handleErrorResponse).toHaveBeenCalledWith(
+        mockResponse,
+        constants.FAILED,
+        constants.FAILED_MESSAGE,
+        "Timeout error"
       );
     });
   });
