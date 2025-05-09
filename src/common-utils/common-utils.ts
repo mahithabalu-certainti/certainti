@@ -216,7 +216,6 @@ export const REGEX_PATTERNS = {
   LETTERS_5_TO_25: /^[A-Za-z\s]{5,25}$/,
   LETTERS_3_TO_25: /^(?!.*\s{2,-'})[A-Za-z\s]{3,25}$/,
   LETTERS_3_TO_100: /^[\s\S]{3,100}$/,
-  LETTERS_2_TO_64: /^[\s\S]{3,100}$/,
   NOT_ALLOW_ONLY_SYMBOLS: /^(?![\W_]+$).+$/,
   ALPHANUMERIC_SPEC_5_TO_50: /^[\s\S]{5,50}$/,
   EMAIL:
@@ -246,6 +245,16 @@ export const REGEX_PATTERNS = {
   MIN_ACCOUNT_NAME_REGEX: /^.{7,}$/,
   MAX_ACCOUNT_NAME_REGEX: /^.{0,25}$/,
   MAX_EMAIL_REGEX: /^.{0,254}$/,
+
+  NAME_LENGTH_2_TO_64_REGEX: /^.{2,64}$/,
+  NO_LEADING_OR_TRAILING_SPECIAL_REGEX: /^(?!^[-' ]|.*[-' ]$)/,
+  ALLOWED_CHARS_NAME_REGEX: /^[A-Za-z-' ]+$/,
+  NO_CONSECUTIVE_SPECIALS_REGEX: /^(?!.*[-' ]{2})/,
+
+  NAME_LENGTH_3_TO_100_REGEX: /^.{3,100}$/,
+  ALLOWED_CHARS_EXTENDED_NAME_REGEX: /^[A-Za-z0-9 &'.,-]+$/,
+  NO_CONSECUTIVE_SPECIALS_EXTENDED_REGEX: /^(?!.*[ &'.,-]{2})/,
+  NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX: /^(?!^[ &'.,-])(?!(.*[ &'.,-]$))/,
 };
 
 /**
@@ -258,42 +267,18 @@ export const REGEX_PATTERNS = {
  */
 
 export const RESOURCE_REGEX = {
-  // Full Name: Alphanumeric with hyphen/apostrophe, 3-100 chars
-  FULL_NAME:
-    /^(?=[\s\S]{3,200}$)(?=.*[a-zA-Z])(?!^\d+$)(?!^[^\w\s]+$)(?!^\s+$)[\w\s\-,.!?@#$%^&*()+=;:'"/\\<>{}[\]|~`]+$/,
   RESOURCE_REF_ID: /^(?=.*[a-zA-Z0-9])[\w\W]{1,50}$/,
-  RESOURCE_FIRST_LAST_NAME: /^(?=[A-Za-z])[A-Za-z](?:[A-Za-z]|[- '](?=[A-Za-z])){1,62}[A-Za-z]$/,
-  // Organization Name: Extended chars for org names, 4-100 chars
-  ORG_NAME: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{3,100}$/,
-
-  // Email: Standard format with length limit
+  RESOURCE_NAME: /^(?!.*[-' ]{2})[A-Za-z](?:[A-Za-z]|[-' ](?=[A-Za-z])){0,62}[A-Za-z]$/,
+  ORG_NAME: /^(?!.*[&\-.'", ]{2})[A-Za-z0-9](?:[A-Za-z0-9]|[&\-.'", ](?=[A-Za-z0-9])){1,98}[A-Za-z0-9]$/,
   EMAIL: /^[a-zA-Z0-9._%+-]{1,64}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-
-  // Mobile: International phone format, 5-15 digits
   MOBILE: /^\+?[0-9][0-9\- ]{3,14}[0-9]$/,
-
-  // Manager Name: Alphanumeric with titles, 3-100 chars
   MANAGER_NAME: /^(?=(.*[a-zA-Z0-9]){3})[a-zA-Z0-9][a-zA-Z0-9 .'-]{1,99}$/,
-
-  // Designation: Job titles with special chars, 4-100 chars
   ROLE: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{4,100}$/,
-
   DESIGNATION: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{4,100}$/,
-
-  // Years Experience: Non-negative integers
   YEARS_EXPERIENCE: /^(?:0|[1-9]\d?)(?:\.\d{1,2})?$/,
-
-  // Description: Multiline text, 0-1000 chars
   DESCRIPTION: /^[\s\S]{0,1000}$/,
-
-  // Status/Type: For enum validation
   ENUM_VALIDATION: /^(Active|Inactive|Full-time|Contract|Mandatory)$/,
-
-  // Country: Standard name validation
-  COUNTRY:
-    /^(?![\s-])(?!.*[\s-]{2})[A-Za-zÀ-ÖØ-öø-ÿ\s-]{2,49}[A-Za-zÀ-ÖØ-öø-ÿ]$/,
-
-  // Date Validation (format only)
+  COUNTRY: /^(?![\s-])(?!.*[\s-]{2})[A-Za-zÀ-ÖØ-öø-ÿ\s-]{2,49}[A-Za-zÀ-ÖØ-öø-ÿ]$/,
   DATE_FORMAT: /^\d{4}-\d{2}-\d{2}$/,
 };
 

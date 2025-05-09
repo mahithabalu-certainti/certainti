@@ -72,25 +72,70 @@ export const ResourceFormData = (
           }),
           createTextField('resource_fullname', 'Name', {
             required: false,
-            regex: RESOURCE_REGEX.FULL_NAME,
-            regexErrorMessage:
-              'Please enter 3-200 characters, including at least one letter. Special characters and numbers alone are not allowed.',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.NAME_LENGTH_2_TO_64_REGEX,
+                errorMessage: 'Please enter 2–64 characters.',
+              },
+              {
+                regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_REGEX,
+                errorMessage: 'Name cannot start or end with a space, apostrophe, or hyphen.',
+              },
+              {
+                regex: REGEX_PATTERNS.ALLOWED_CHARS_NAME_REGEX,
+                errorMessage: 'Only letters, spaces, apostrophes, and hyphens are allowed.',
+              },
+              {
+                regex: REGEX_PATTERNS.NO_CONSECUTIVE_SPECIALS_REGEX,
+                errorMessage: 'Consecutive spaces, apostrophes, or hyphens are not allowed.',
+              },
+            ],
             placeholder: 'Enter Full Name',
             disabled: disableCostAndSkill,
           }),
           createTextField('resource_firstname', 'First Name', {
             required: false,
-            regex: RESOURCE_REGEX.RESOURCE_FIRST_LAST_NAME,
-            regexErrorMessage:
-             `Please enter 2-64 characters, at least one letter. Spaces, hyphens (-) and apostrophes (') are allowed, cannot be at the start/end or consecutive`,
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.NAME_LENGTH_2_TO_64_REGEX,
+                errorMessage: 'Please enter 2–64 characters.',
+              },
+              {
+                regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_REGEX,
+                errorMessage: 'Name cannot start or end with a space, apostrophe, or hyphen.',
+              },
+              {
+                regex: REGEX_PATTERNS.ALLOWED_CHARS_NAME_REGEX,
+                errorMessage: 'Only letters, spaces, apostrophes, and hyphens are allowed.',
+              },
+              {
+                regex: REGEX_PATTERNS.NO_CONSECUTIVE_SPECIALS_REGEX,
+                errorMessage: 'Consecutive spaces, apostrophes, or hyphens are not allowed.',
+              },
+            ],
             placeholder: 'Enter First Name',
             disabled: disableCostAndSkill,
           }),
           createTextField('resource_lastname', 'Last Name', {
             required: false,
-            regex: RESOURCE_REGEX.RESOURCE_FIRST_LAST_NAME,
-            regexErrorMessage:
-              `Please enter 2-64 characters, at least one letter. Spaces, hyphens (-) and apostrophes (') are allowed, cannot be at the start/end or consecutive`,
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.NAME_LENGTH_2_TO_64_REGEX,
+                errorMessage: 'Please enter 2–64 characters.',
+              },
+              {
+                regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_REGEX,
+                errorMessage: 'Name cannot start or end with a space, apostrophe, or hyphen.',
+              },
+              {
+                regex: REGEX_PATTERNS.ALLOWED_CHARS_NAME_REGEX,
+                errorMessage: 'Only letters, spaces, apostrophes, and hyphens are allowed.',
+              },
+              {
+                regex: REGEX_PATTERNS.NO_CONSECUTIVE_SPECIALS_REGEX,
+                errorMessage: 'Consecutive spaces, apostrophes, or hyphens are not allowed.',
+              },
+            ],
             placeholder: 'Enter Last Name',
             disabled: disableCostAndSkill,
           }),
@@ -102,9 +147,24 @@ export const ResourceFormData = (
           }),
           createTextField('resource_orgname', 'Resource Org Name', {
             required: false,
-            regex: RESOURCE_REGEX.ORG_NAME,
-            regexErrorMessage:
-              'Please enter 3-100 characters, including at least one letter. Special characters and numbers alone are not allowed.',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.NAME_LENGTH_3_TO_100_REGEX,
+                errorMessage: 'Please enter between 3 to 100 characters.',
+              },
+              {
+                regex: REGEX_PATTERNS.ALLOWED_CHARS_EXTENDED_NAME_REGEX,
+                errorMessage: 'Only letters, numbers, spaces, ampersands (&), hyphens (-), periods (.), apostrophes (\') and commas (,) are allowed.',
+              },
+              {
+                regex: REGEX_PATTERNS.NO_CONSECUTIVE_SPECIALS_EXTENDED_REGEX,
+                errorMessage: 'Consecutive special characters are not allowed.',
+              },
+              {
+                regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX,
+                errorMessage: 'Cannot start or end with a space or special character',
+              },
+            ],
             placeholder: 'Enter Organization Name',
             disabled: disableCostAndSkill,
           }),

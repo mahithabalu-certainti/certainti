@@ -859,15 +859,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
           // Validate regex if present and field has value
           const value = constructFormData[field.name] as string;
-          if (field.regex && value) {
-            if (validateRegex(field.regex, value)) {
-              hasError = true;
-              return {
-                ...field,
-                error: field.regexErrorMessage || 'Invalid format',
-              };
-            }
-          }
+          // if (field.regex && value) {
+          //   if (validateRegex(field.regex, value)) {
+          //     hasError = true;
+          //     return {
+          //       ...field,
+          //       error: field.regexErrorMessage || 'Invalid format',
+          //     };
+          //   }
+          // }
           // Validate Dynamic Error Handling
           if (field.errorHandling && value) {
             const errorHandler = field.errorHandling.find((handler) => {
