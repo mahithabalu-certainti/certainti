@@ -1076,13 +1076,13 @@ export class ProjectService {
   }
   
   /**
-   * Fetches a list of industries from the database.
+   * Fetches a list of project classification from the database.
    *
    * @returns {Promise<{ statusCode: number, message: string, errorMessage?: string, data?: { country: any } }>} The response object containing status code, message, and a list of countries.
    * - statusCode: HTTP status code indicating the result of the request.
    * - message: A success or error message based on the outcome of the request.
    * - errorMessage (optional): The error message in case of a failure.
-   * - data (optional): An object containing the list of countries if the request is successful.
+   * - data (optional): An object containing the list of project classification if the request is successful.
    */
   async getProjectClassification(): Promise<{
     statusCode: number;
