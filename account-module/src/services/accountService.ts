@@ -156,7 +156,7 @@ class AccountService {
         const sequelize = await initOrgSequelize();
         let keyContacts: any[] = [];
         const allAccountIds = [...new Set([
-          parentAccounts.map((account: any) => `'${account.rid}'`),  // This line should be modified to work with an array if accountIds is already an array.
+          parentAccounts.map((account: any) => `'${account.rid}'`),
           ...childAccounts.map((child: any) => `'${child.rid}'`)
         ])].join(", ");
        
