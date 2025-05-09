@@ -340,7 +340,6 @@ const createResourceSkillSchema = Joi.object({
   resource_rid: Joi.string().max(255).optional().allow(null).allow(""),
   resource_number: Joi.string().max(255).required(),
   resource_ref_id: Joi.string().max(255).required(),
-  resource_desc: Joi.string().max(100).optional().allow(null).allow(""),
   start_date: Joi.string()
     .max(10)
     .custom(isNotFutureDate, "Start date validation")
@@ -359,12 +358,11 @@ const createResourceSkillSchema = Joi.object({
     .optional()
     .allow("")
     .allow(null),
-  years_of_experience: Joi.number().min(0).max(99).optional().allow(null),
+  skill_type_rid: Joi.string().max(255).required(),
+  skill_subtype_rid: Joi.string().max(255).required(),
+  skill_details: Joi.string().max(2000).optional().allow(null).allow(""),  
   created_by: Joi.string().max(255).optional().allow(null).allow(""),
   modified_by: Joi.string().max(255).optional().allow(null).allow(""),
-  technical_weightage: Joi.number().min(0).optional().allow(null),
-  skill_name: Joi.string().max(255).required().trim(),
-  skill_type: Joi.string().max(255).optional().allow(null).allow(""),
   accountNumber: Joi.string().max(255).required(),
 });
 
@@ -388,12 +386,11 @@ const updateResourceSkillSchema = Joi.object({
     .optional()
     .allow("")
     .allow(null),
-  skill_name: Joi.string().max(255).required().trim(),
-  years_of_experience: Joi.number().min(0).max(99).optional().allow(null),
   modified_by: Joi.string().max(255).optional(),
-  technical_weightage: Joi.number().min(0).optional().allow(null),
-  skill_type: Joi.string().max(255).optional().allow(null).allow(""),
-  status: Joi.string().max(255).default("active").optional(),
+  skill_type_rid: Joi.string().max(255).required(),
+  skill_subtype_rid: Joi.string().max(255).required(),
+  skill_details: Joi.string().max(2000).optional().allow(null).allow(""),
+  status: Joi.string().max(255).optional(),
   modified_datetime: Joi.date()
     .iso()
     .default(() => new Date()),

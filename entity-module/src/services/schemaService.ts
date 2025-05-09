@@ -104,7 +104,7 @@ class SchemaService {
       await ResourcesHistoryModel.sync({ force: false });
       await ResourcesTimelineModel.sync({ force: false });
       await ResourceCostModel.sync({ force: false });
-      await SkillModel.sync({ force: false });
+      // await SkillModel.sync({ force: false });
       await ResourceSkillModel.sync({ force: false });
     } catch (err) {
       throw new Error(

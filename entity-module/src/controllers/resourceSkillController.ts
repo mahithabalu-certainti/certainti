@@ -339,11 +339,75 @@ async function resourceSkillById(req: Request, res: Response): Promise<void> {
   }
 }
 
+ async function getSkillTypes (req: Request, res: Response): Promise<void> {
+  const methodName = "getSkillTypes";
+  try {
+    const result = await resourceSkillService.getSkillTypes();
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, result.data?.skillTypes);
+    }
+    else {
+      errorLog(methodName, result.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+    }
+  }
+  catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+  async function getSkillSubTypes (req: Request, res: Response): Promise<void> {
+    const methodName = "getSkillSubTypes";
+    try {
+       const result = await resourceSkillService.getSkillSubTypes(req.query.skillTypeRid as string);
+
+       if (result.statusCode === HttpStatus.SUCCESS) {
+         successLog(methodName);
+         handleSuccessResponse(res, result.data?.skillSubTypes);
+       }
+       else {
+         errorLog(methodName, result.errorMessage);
+         handleErrorResponse(
+           res,
+           HttpStatus.BAD_REQUEST,
+           HttpStatus.BAD_REQUEST_MESSAGE,
+           result.errorMessage
+         );
+       }
+    }
+    catch (err) {
+       const error = err as Error;
+       errorLog(methodName, error.message);
+       handleErrorResponse(
+         res,
+         HttpStatus.FAILED,
+         HttpStatus.FAILED_MESSAGE,
+         error.message
+       );
+    }
+  }
+
 
   export default {
     createResourceSkill,
     updateResourceSkill,
     resourceSkill,
     exportResourceSkill,
-    resourceSkillById
+    resourceSkillById,
+    getSkillTypes,
+    getSkillSubTypes
   }
