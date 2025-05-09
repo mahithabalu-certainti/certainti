@@ -146,7 +146,7 @@ export class ProjectService {
         project_startdate: startDate?.toDate() || null,
         project_enddate: endDate?.toDate() || null,
         project_type: projectData.project_type,
-        project_classification: projectData.project_classification || null,
+        project_classification_rid: projectData.project_classification_rid || null,
         project_client_group: projectData.project_client_group || null,
         project_group: projectData.project_group || null,
         project_summary: projectData.project_summary || null,
@@ -305,7 +305,7 @@ export class ProjectService {
         project_tpc_email: projectData.project_tpc_email || null,
         project_tpc_mobile: projectData.project_tpc_mobile || null,
         project_cc_list: projectData.project_cc_list || null,
-        project_classification: projectData.project_classification || null,
+        project_classification_rid: projectData.project_classification_rid || null,
         project_client_group: projectData.project_client_group || null,
         project_group: projectData.project_group || null,
         project_summary: projectData.project_summary || null,
@@ -532,12 +532,12 @@ export class ProjectService {
           "project_startdate",
           "project_enddate",
           "project_type",
-          "project_classification",
+          "project_classification_rid",
           "project_client_group",
           "project_group",
           "project_status",
           "account_rid",
-        ],
+        ]
       });
 
       if (projectData) {
@@ -1073,6 +1073,47 @@ export class ProjectService {
     ];
 
     return isAllProject ? allProjectFields : projectFilterFields;
+  }
+  
+  /**
+   * Fetches a list of industries from the database.
+   *
+   * @returns {Promise<{ statusCode: number, message: string, errorMessage?: string, data?: { country: any } }>} The response object containing status code, message, and a list of countries.
+   * - statusCode: HTTP status code indicating the result of the request.
+   * - message: A success or error message based on the outcome of the request.
+   * - errorMessage (optional): The error message in case of a failure.
+   * - data (optional): An object containing the list of countries if the request is successful.
+   */
+  async getProjectClassification(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectClassifications: any; count: number };
+  }> {
+    try {
+      const mainDbSequlize = await initMainDbSequelize();
+      const projectClassifications = await mainDbSequlize.query(
+        `SELECT rid, classification_name, classification_description, classification_status
+         FROM project_classification
+         WHERE classification_status = 'Active'
+         ORDER BY classification_name ASC`,
+        {
+          type: "SELECT"
+        }
+      );
+      
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          projectClassifications,
+          count: projectClassifications.length,
+        },
+      };
+    } catch (err) {
+      console.log(err)
+      return this.throwServiceError(err as Error);
+    }
   }
 
   /**
