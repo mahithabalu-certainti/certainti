@@ -104,6 +104,7 @@ const accountSchema = Joi.object({
   finance_poc_number: Joi.string().pattern(/^[1-9]\d{9,14}$/).required(),
   industry_rid: Joi.string().required(),
   industry_name: Joi.string().min(5).optional(),
+  business_details: Joi.string().min(1).max(2000).required(),
   website: Joi.string()
     .max(50)
     .allow(null)
@@ -121,6 +122,19 @@ const accountSchema = Joi.object({
     .valid("separate_db", "store_in_parent")
     .max(255)
     .required(),
+    key_contacts: Joi.array()
+    .items(
+      Joi.object({
+        key_contact_name: Joi.string().required(),
+        key_contact_email: Joi.string().email().required(),
+        key_contact_role: Joi.string().required(),
+        is_primary_contact: Joi.boolean().required(),
+        include_in_communication: Joi.boolean().required(),
+        status: Joi.string().valid('Active', 'Inactive').required()
+      })
+    )
+    .min(1)
+    .required()
 });
 
 const updateAccountSchema = Joi.object({
@@ -201,6 +215,7 @@ const updateAccountSchema = Joi.object({
   finance_poc_number: Joi.string().pattern(/^[1-9]\d{9,14}$/).required(),
   industry_rid: Joi.string().min(5).required(),
   industry_name: Joi.string().min(5).max(100).optional(),
+  business_details: Joi.string().min(1).max(2000).required(),
   website: Joi.string()
     .min(10)
     .max(255)
@@ -217,6 +232,19 @@ const updateAccountSchema = Joi.object({
     .valid("separate_db", "store_in_parent")
     .max(255)
     .required(),
+    key_contacts: Joi.array()
+    .items(
+      Joi.object({
+        key_contact_name: Joi.string().required(),
+        key_contact_email: Joi.string().email().required(),
+        key_contact_role: Joi.string().required(),
+        is_primary_contact: Joi.boolean().required(),
+        include_in_communication: Joi.boolean().required(),
+        status: Joi.string().valid('Active', 'Inactive').required()
+      })
+    )
+    .min(1)
+    .required()
 });
 
 const listAccountSchema = Joi.object({
