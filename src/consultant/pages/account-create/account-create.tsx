@@ -20,10 +20,13 @@ import { AccountFormData, SelectOption, YesNo } from '../../types';
 import { FormData } from './form-data';
 import { DATA_STORAGE_OPTIONS, transformFormData } from './utils';
 import { ACCOUNT } from '../../../routes';
+import { useManageUserRole } from '../../../admin/service';
 
 export const AccountForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [currentCountry, setCurrentCountry] = useState('');
+  const [isPrimaryContactRequired, setIsPrimaryContactRequired] =
+    useState(false);
   const [dataResidency, setDataResidency] = useState(DATA_STORAGE_OPTIONS);
   const { successToast } = useToast();
   const location = useLocation();
@@ -31,6 +34,7 @@ export const AccountForm: React.FC = () => {
 
   const getAccount = useFetchAccountFields(accountid as string);
   const account = getAccount.data?.data;
+  // Remaping all fields to match with form controls
   const accountData = useMemo(
     () => ({
       ...account?.accountDetails,
@@ -42,6 +46,21 @@ export const AccountForm: React.FC = () => {
             ? 'yes'
             : 'no',
           auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
+          key_contact_name:
+            account?.accountById.key_contacts[0]?.key_contact_name,
+          key_contact_role:
+            account?.accountById.key_contacts[0]?.key_contact_role,
+          key_contact_email:
+            account?.accountById.key_contacts[0]?.key_contact_email,
+          key_contacts_status: account?.accountById.key_contacts[0]?.status,
+          is_primary_contact: account?.accountById.key_contacts[0]
+            ?.is_primary_contact
+            ? 'yes'
+            : 'no',
+          include_in_communication: account?.accountById.key_contacts[0]
+            ?.include_in_communication
+            ? 'yes'
+            : 'no',
         }),
     }),
     [account]
@@ -49,6 +68,7 @@ export const AccountForm: React.FC = () => {
 
   const allCountries = useGetAllCountries();
   const industry = useFetchIndustrys();
+  const userRoles = useManageUserRole();
   const parentAccount = useFetchParentAccounts();
   const currency = useFetchCurrency();
   const states = useFetchState(currentCountry);
@@ -122,6 +142,15 @@ export const AccountForm: React.FC = () => {
     [industry.data?.data.industries]
   );
 
+  const memoizeRole: SelectOption[] = useMemo(
+    () =>
+      userRoles.data?.data.roles.map((role) => ({
+        label: role.business_teams,
+        value: role.rid,
+      })) || [],
+    [userRoles.data?.data.roles]
+  );
+
   const submitData = (formValues: Partial<AccountFormData>) => {
     const industry_name =
       formValues.industry_rid &&
@@ -158,6 +187,9 @@ export const AccountForm: React.FC = () => {
       } else {
         setDataResidency(DATA_STORAGE_OPTIONS);
       }
+    }
+    if (data.fieldName === 'key_contact_role') {
+      setIsPrimaryContactRequired(!!data.fieldValue);
     }
   };
 
@@ -210,13 +242,17 @@ export const AccountForm: React.FC = () => {
           memoizedState,
           dataResidency,
           memoizedIndustry,
+          memoizeRole,
+          isPrimaryContactRequired,
           isEditView,
           states.isLoading
         )}
         loading={
           allCountries.isLoading ||
           parentAccount.isLoading ||
-          currency.isLoading
+          currency.isLoading ||
+          industry.isLoading ||
+          userRoles.isLoading
         }
         values={isEditView && accountData ? { ...accountData } : undefined}
         outData={submitData}

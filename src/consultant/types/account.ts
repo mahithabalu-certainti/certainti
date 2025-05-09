@@ -101,6 +101,8 @@ export interface AccountById {
   r_number: string;
   account_name: string;
   industry: string;
+  industry_rid: string;
+  business_details: string;
   country_rid: string;
   currency_rid: string;
   status: Status;
@@ -110,6 +112,18 @@ export interface AccountById {
   annual_revenue: number;
   region: string;
   rid: string;
+  key_contacts: KeyContacts[];
+}
+
+export interface KeyContacts {
+  key_contact_id?: string;
+  account_rid?: string;
+  key_contact_name: string;
+  key_contact_email: string;
+  key_contact_role: string;
+  is_primary_contact: boolean;
+  include_in_communication: boolean;
+  status: Status;
 }
 
 export interface AccountFieldsTypes {
@@ -142,6 +156,12 @@ export interface NewAccountData extends AccountFieldsTypes, AccountById {
   account_rid: string;
   industry_rid: string;
   industry_name: string;
+  key_contact_name: string;
+  key_contact_email: string;
+  key_contact_role: string;
+  is_primary_contact: string;
+  include_in_communication: string;
+  key_contacts_status: Status;
 }
 
 export interface AccountFormData

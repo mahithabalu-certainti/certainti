@@ -1,4 +1,4 @@
-import { AccountFormData, NewAccountData, SelectOption } from '../../types';
+import { AccountFormData, NewAccountData, SelectOption, Status } from '../../types';
 
 export const DATA_STORAGE_OPTIONS: SelectOption[] = [
   { label: 'Separate DB', value: 'separate_db' },
@@ -40,6 +40,17 @@ export const transformFormData = (
     project_manager: formData.project_manager,
     annual_revenue: Number((formData.annual_revenue ?? '').toString().replace(/[^\d.]/g, '')),
     data_storage: formData.data_storage,
+    business_details: formData.business_details,
+    key_contacts: [
+      {
+        key_contact_name: formData.key_contact_name as string,
+        key_contact_email: formData.key_contact_email as string,
+        key_contact_role: formData.key_contact_role as string,
+        is_primary_contact: formData?.is_primary_contact === 'yes',
+        include_in_communication: formData?.include_in_communication === 'yes',
+        status: formData?.key_contacts_status as Status,
+      },
+    ],
   };
   if (isEdit) {
     data.account_rid = account_rid;

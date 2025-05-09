@@ -3,7 +3,6 @@ import { FormType, SelectOption, YesNo } from '../../types';
 import { DATA_STORAGE_OPTIONS } from './utils';
 import {
   createFiscalDateField,
-  createPhoneInputField,
   createRadioField,
   createSelectField,
   createTextAreaField,
@@ -20,6 +19,8 @@ export const FormData = (
   state: SelectOption[],
   dataResidency: SelectOption[],
   industrys: SelectOption[],
+  roles: SelectOption[],
+  isPrimaryContactRequired: boolean,
   disableFields?: boolean,
   stateLoading?: boolean
 ): FormType[] => {
@@ -129,6 +130,19 @@ export const FormData = (
         ],
       },
       {
+        sectionName: '',
+        fillType: 'full',
+        fields: [
+          createTextAreaField('business_details', 'Business Details', {
+            required: true,
+            regex: REGEX_PATTERNS.ACCOUNT_DESCRIPTION,
+            regexErrorMessage:
+              'Business Details must be within 2000 characters',
+            placeholder: 'Enter Business Details',
+          }),
+        ],
+      },
+      {
         sectionName: 'Location and Currency Information',
         fillType: 'half',
         fields: [
@@ -156,42 +170,90 @@ export const FormData = (
         sectionName: 'Key Contacts List',
         fillType: 'half',
         fields: [
-          createTextField('primary_contact_name', 'Primary Contact Name', {
-            required: true,
-            regex: REGEX_PATTERNS.LETTERS_3_TO_25,
-            regexErrorMessage: 'Letters Only and between 3 to 25 characters',
-            placeholder: 'Enter Primary Contact Name',
+          createTextField('key_contact_name', 'Key Contact Name', {
+            required: false,
+            regex: REGEX_PATTERNS.ACCOUNT_NAME,
+            regexErrorMessage: 'Invalid Name',
+            placeholder: 'Enter Key Contact Name',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_NAME_REGEX,
+                errorMessage:
+                  'Key Contact Name must be more than 1 characters long',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_NAME_REGEX,
+                errorMessage: 'Max length exceeded',
+              },
+              {
+                regex: REGEX_PATTERNS.NOT_ALLOW_SPACE_SYMBOLS_AT_START_END,
+                errorMessage:
+                  'Cannot begin or end with a space or special character',
+              },
+            ],
           }),
-          createTextField('finance_poc_name', 'Finance Contact Name', {
-            required: true,
-            regex: REGEX_PATTERNS.LETTERS_3_TO_25,
-            regexErrorMessage: 'Letters Only and between 3 to 25 characters',
-            placeholder: 'Enter Finance point of contact',
+          createSelectField('key_contact_role', 'Key Contact Role', {
+            options: roles,
+            required: false,
+            placeholder: 'Choose Contact Role',
+            onChange: true,
           }),
-          createTextField('primary_contact_email', 'Primary Contact Email', {
-            required: true,
-            regex: REGEX_PATTERNS.EMAIL,
-            regexErrorMessage: 'Enter a valid email address',
-            placeholder: 'Enter Primary Contact Email',
+          createTextField('key_contact_email', 'Key Contact Email', {
+            required: false,
+            placeholder: 'Enter Key Contact Email',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_EMAIL_REGEX,
+                errorMessage: 'Max length exceeded',
+              },
+              {
+                regex: REGEX_PATTERNS.EMAIL,
+                errorMessage: 'Invalid email address',
+              },
+            ],
           }),
-          createTextField('finance_poc_email', 'Finance POC Email', {
-            required: true,
-            regex: REGEX_PATTERNS.EMAIL,
-            regexErrorMessage: 'Enter a valid email address',
-            placeholder: 'Enter Finance POC Email',
+          createRadioField('is_primary_contact', 'Is Primary Contact?', {
+            radioOptions: YES_NO_OPTIONS,
+            required: isPrimaryContactRequired,
+            onChange: true,
           }),
-          createPhoneInputField(
-            'primary_contact_number',
-            'Primary Contact Phone',
+          createRadioField(
+            'include_in_communication',
+            'Include in Communications?',
             {
-              required: true,
-              placeholder: 'Enter Primary Contact Phone',
+              radioOptions: YES_NO_OPTIONS,
+              required: false,
             }
           ),
-          createPhoneInputField('finanace_poc_number', 'Finance POC Phone', {
-            required: true,
-            placeholder: 'Enter Finance POC Phone',
+          createSelectField('key_contacts_status', 'Key Contact Status', {
+            required: false,
+            options: STATUS_OPTIONS,
+            placeholder: 'Choose Contact Status',
           }),
+          // createTextField('finance_poc_name', 'Finance Contact Name', {
+          //   required: true,
+          //   regex: REGEX_PATTERNS.LETTERS_3_TO_25,
+          //   regexErrorMessage: 'Letters Only and between 3 to 25 characters',
+          //   placeholder: 'Enter Finance point of contact',
+          // }),
+          // createTextField('finance_poc_email', 'Finance POC Email', {
+          //   required: true,
+          //   regex: REGEX_PATTERNS.EMAIL,
+          //   regexErrorMessage: 'Enter a valid email address',
+          //   placeholder: 'Enter Finance POC Email',
+          // }),
+          // createPhoneInputField(
+          //   'primary_contact_number',
+          //   'Primary Contact Phone',
+          //   {
+          //     required: true,
+          //     placeholder: 'Enter Primary Contact Phone',
+          //   }
+          // ),
+          // createPhoneInputField('finanace_poc_number', 'Finance POC Phone', {
+          //   required: true,
+          //   placeholder: 'Enter Finance POC Phone',
+          // }),
         ],
       },
       {
@@ -215,12 +277,19 @@ export const FormData = (
             radioOptions: YES_NO_OPTIONS,
             required: true,
           }),
-          createTextField('max_ai_interactions', 'Max interaction Follow up', {
-            required: true,
-            regex: REGEX_PATTERNS.MAX_AI_INTRACTION,
-            regexErrorMessage: 'Enter a number between 3 and 5',
-            placeholder: 'Enter Max AI Intractions',
-          }),
+          createSelectField(
+            'max_ai_interactions',
+            'Max interaction Follow up',
+            {
+              required: true,
+              options: [
+                { label: '3', value: '3' },
+                { label: '4', value: '4' },
+                { label: '5', value: '5' },
+              ],
+              placeholder: 'Choose Max AI Intractions',
+            }
+          ),
           createRadioField('auto_access_rd', 'Auto Assessment', {
             radioOptions: YES_NO_OPTIONS,
             required: true,
@@ -266,6 +335,8 @@ export const FormData = (
       stateLoading,
       currency,
       dataResidency,
+      isPrimaryContactRequired,
+      roles,
     ]
   );
 };

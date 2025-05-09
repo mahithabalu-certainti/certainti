@@ -916,11 +916,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         if (section.hide) return null;
         return (
           <div key={i}>
-            <h4
-              className={`font-semibold text-base text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle mb-6 py-2 bg-[#DCE8FF] text-[14px] ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'}`}
-            >
-              {section.sectionName}
-            </h4>
+            {section.sectionName && (
+              <h4
+                className={`font-semibold text-base text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle mb-6 py-2 bg-[#DCE8FF] text-[14px] ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'}`}
+              >
+                {section.sectionName}
+              </h4>
+            )}
             <div
               className={`grid md:grid-cols-${isHalf ? '2' : '1'} gap-4 ${layout === Layout.TYPE_1 ? 'px-10' : 'px-6'} mb-6`}
             >

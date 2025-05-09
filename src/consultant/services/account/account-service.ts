@@ -27,6 +27,7 @@ import {
   ParentAccountUrl,
   StateUrl,
 } from '../urls/account-url';
+// import { mockAccountDetails } from '../../mockdata';
 
 export const fetchAccountFields = async (
   acctounId: string
@@ -34,6 +35,8 @@ export const fetchAccountFields = async (
   const { data } = await accountServiceApi.get<AccountFieldsApiResponse>(
     AccountDetailUrl(acctounId)
   );
+  // await new Promise((resolve) => setTimeout(resolve, 2000));  
+  // return mockAccountDetails;
   return data;
 };
 
