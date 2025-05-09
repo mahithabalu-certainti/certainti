@@ -25,6 +25,7 @@ import {
   EnumFilterControl,
   formatFilterForApi,
   NumberFilterControl,
+  SkillSubTypeFilterControl,
   StatusFilterControl,
   TextFilterControl,
   TextFilterControlForCostAndSKill,
@@ -305,6 +306,23 @@ const Filter: React.FC<FilterComponentProps> = ({
 
     const fieldState = filterStates[field.value] || {};
 
+    if (field.type === 'skillSubTypeFilter') {
+      const dependsOnField = field.dependsOn;
+      const isSkillTypeSelected = dependsOnField 
+        ? !!filterStates[dependsOnField]?.select?.value
+        : false;
+  
+      return (
+        <SkillSubTypeFilterControl
+          menuOption={field.options || []}
+          fieldName={field.value}
+          state={fieldState}
+          onOptionChange={handleFilterOptionChange}
+          skillTypeSelected={isSkillTypeSelected}
+        />
+      );
+    }
+
     switch (field.type) {
       case 'text':
         return (
@@ -384,6 +402,16 @@ const Filter: React.FC<FilterComponentProps> = ({
             onOptionChange={handleFilterOptionChange}
           />
         );
+      // case 'skillTypeFilter':
+      //   return (
+      //     <SkillTypeFilterControl
+      //       menuOption={field.options as { option: string; value: string }[]}
+      //       fieldName={field.value}
+      //       state={fieldState}
+      //       onOptionChange={handleFilterOptionChange}
+      //       setFilterStates={setFilterStates}
+      //     />
+      //   );
       default:
         return null;
     }

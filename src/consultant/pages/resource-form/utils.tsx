@@ -207,12 +207,10 @@ export const transformSkillData = (
     resource_ref_id: formData.resource_ref_id,
     start_date: formData.skill_start_date ? formData.skill_start_date : '',
     skill_level: formData.skill_level as skillLevel,
-    years_of_experience: formData.years_of_experience
-      ? Number(formData.years_of_experience)
-      : null,
-    skill_name: formData.skill_name,
+    skill_type_rid: formData.skill_type,
+    skill_subtype_rid: formData.skill_sub_type,
+    skill_details: formData.skill_details,
     accountNumber: formData.accountNumber,
-    resource_desc: formData.resource_desc,
     resource_number: formData?.resource_number,
   };
 

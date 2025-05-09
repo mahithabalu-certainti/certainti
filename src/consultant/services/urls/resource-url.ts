@@ -46,3 +46,6 @@ export const ExportResourcelUrl = ({
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };
+
+export const SKILLTYPEURL = `${baseUrl}/api/resource_skill/skilltypes`;
+export const SkillSubTypeUrl = (skillType : string) => `${baseUrl}/api/resource_skill/skillsubtypes?skillTypeRid=${skillType}`;

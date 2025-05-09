@@ -41,16 +41,21 @@ const getDateConstraints = (yearsBack: number) => {
 };
 
 export const fiscalYears = getFiscalYears(DATE_CONFIG.FISCAL_YEARS_RANGE);
-const { currentDate, minDate, previousDate } = getDateConstraints(DATE_CONFIG.MIN_YEARS_BACK);
+const { currentDate, minDate, previousDate } = getDateConstraints(
+  DATE_CONFIG.MIN_YEARS_BACK
+);
 
 export const ResourceFormData = (
   country: SelectOption[],
   states: SelectOption[],
   city: SelectOption[],
   currency: SelectOption[],
+  skillTypeOptions: SelectOption[],
+  skillSubTypeOptions: SelectOption[],
   stateLoading?: boolean,
   cityLoading?: boolean,
   currencyLoading?: boolean,
+  skillSubTypeLoading?: boolean,
   disableFields?: boolean,
   hideSkill?: string,
   disableCostAndSkill?: boolean,
@@ -70,6 +75,12 @@ export const ResourceFormData = (
             placeholder: 'Enter Resource Code',
             disabled: disableFields || disableCostAndSkill,
           }),
+          createSelectField('resource_type', 'Resource Type', {
+            options: RESOURCE_TYPE_OPTIONS,
+            placeholder: '-Select-',
+            required: true,
+            disabled: disableCostAndSkill || disableOrgname,
+          }),
           createTextField('resource_fullname', 'Name', {
             required: false,
             errorHandling: [
@@ -79,15 +90,18 @@ export const ResourceFormData = (
               },
               {
                 regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_REGEX,
-                errorMessage: 'Name cannot start or end with a space, apostrophe, or hyphen.',
+                errorMessage:
+                  'Name cannot start or end with a space, apostrophe, or hyphen.',
               },
               {
                 regex: REGEX_PATTERNS.ALLOWED_CHARS_NAME_REGEX,
-                errorMessage: 'Only letters, spaces, apostrophes, and hyphens are allowed.',
+                errorMessage:
+                  'Only letters, spaces, apostrophes, and hyphens are allowed.',
               },
               {
                 regex: REGEX_PATTERNS.NO_CONSECUTIVE_SPECIALS_REGEX,
-                errorMessage: 'Consecutive spaces, apostrophes, or hyphens are not allowed.',
+                errorMessage:
+                  'Consecutive spaces, apostrophes, or hyphens are not allowed.',
               },
             ],
             placeholder: 'Enter Full Name',
@@ -102,15 +116,18 @@ export const ResourceFormData = (
               },
               {
                 regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_REGEX,
-                errorMessage: 'Name cannot start or end with a space, apostrophe, or hyphen.',
+                errorMessage:
+                  'Name cannot start or end with a space, apostrophe, or hyphen.',
               },
               {
                 regex: REGEX_PATTERNS.ALLOWED_CHARS_NAME_REGEX,
-                errorMessage: 'Only letters, spaces, apostrophes, and hyphens are allowed.',
+                errorMessage:
+                  'Only letters, spaces, apostrophes, and hyphens are allowed.',
               },
               {
                 regex: REGEX_PATTERNS.NO_CONSECUTIVE_SPECIALS_REGEX,
-                errorMessage: 'Consecutive spaces, apostrophes, or hyphens are not allowed.',
+                errorMessage:
+                  'Consecutive spaces, apostrophes, or hyphens are not allowed.',
               },
             ],
             placeholder: 'Enter First Name',
@@ -125,26 +142,24 @@ export const ResourceFormData = (
               },
               {
                 regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_REGEX,
-                errorMessage: 'Name cannot start or end with a space, apostrophe, or hyphen.',
+                errorMessage:
+                  'Name cannot start or end with a space, apostrophe, or hyphen.',
               },
               {
                 regex: REGEX_PATTERNS.ALLOWED_CHARS_NAME_REGEX,
-                errorMessage: 'Only letters, spaces, apostrophes, and hyphens are allowed.',
+                errorMessage:
+                  'Only letters, spaces, apostrophes, and hyphens are allowed.',
               },
               {
                 regex: REGEX_PATTERNS.NO_CONSECUTIVE_SPECIALS_REGEX,
-                errorMessage: 'Consecutive spaces, apostrophes, or hyphens are not allowed.',
+                errorMessage:
+                  'Consecutive spaces, apostrophes, or hyphens are not allowed.',
               },
             ],
             placeholder: 'Enter Last Name',
             disabled: disableCostAndSkill,
           }),
-          createSelectField('resource_type', 'Resource Type', {
-            options: RESOURCE_TYPE_OPTIONS,
-            placeholder: '-Select-',
-            required: true,
-            disabled: disableCostAndSkill || disableOrgname,
-          }),
+
           createTextField('resource_orgname', 'Resource Org Name', {
             required: false,
             errorHandling: [
@@ -154,29 +169,23 @@ export const ResourceFormData = (
               },
               {
                 regex: REGEX_PATTERNS.ALLOWED_CHARS_EXTENDED_NAME_REGEX,
-                errorMessage: 'Only letters, numbers, spaces, ampersands (&), hyphens (-), periods (.), apostrophes (\') and commas (,) are allowed.',
+                errorMessage:
+                  "Only letters, numbers, spaces, ampersands (&), hyphens (-), periods (.), apostrophes (') and commas (,) are allowed.",
               },
               {
                 regex: REGEX_PATTERNS.NO_CONSECUTIVE_SPECIALS_EXTENDED_REGEX,
                 errorMessage: 'Consecutive special characters are not allowed.',
               },
               {
-                regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX,
-                errorMessage: 'Cannot start or end with a space or special character',
+                regex:
+                  REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX,
+                errorMessage:
+                  'Cannot start or end with a space or special character',
               },
             ],
             placeholder: 'Enter Organization Name',
             disabled: disableCostAndSkill,
           }),
-
-          createSelectField('resource_status', 'Status', {
-            options: RESOURCE_STATUS_OPTIONS,
-            placeholder: '-Select-',
-            required: true,
-            disabled: disableCostAndSkill,
-          }),
-
-      
           createTextField('resource_role', 'Role', {
             required: false,
             regex: RESOURCE_REGEX.ROLE,
@@ -185,12 +194,12 @@ export const ResourceFormData = (
             placeholder: 'Enter Role',
             disabled: disableCostAndSkill,
           }),
-          // createTextField('r_number', 'Resource ID', {
-          //   required: false,
-          //   placeholder: 'Enter Resource ID',
-          //   disabled: disableCostAndSkill,
-          //   hide: !disableCostAndSkill,
-          // }),
+          createSelectField('resource_status', 'Status', {
+            options: RESOURCE_STATUS_OPTIONS,
+            placeholder: '-Select-',
+            required: true,
+            disabled: disableCostAndSkill,
+          }),
         ],
       },
       {
@@ -271,7 +280,21 @@ export const ResourceFormData = (
             maxDate: currentDate,
             startValue: true,
           }),
-          createTextField('skill_name', 'Skill Details', {
+          createSelectField('skill_type', 'Skill Type', {
+            options: skillTypeOptions,
+            placeholder: '-Select-',
+            required: true,
+            onChange: true,
+            resetDependsFields: ['skill_sub_type'],
+          }),
+          createSelectField('skill_sub_type', 'Skill SubType', {
+            options: skillSubTypeOptions,
+            placeholder: '-Select-',
+            required: true,
+            isLoading: skillSubTypeLoading,
+            onChange: true,
+          }),
+          createTextField('skill_details', 'Skill Details', {
             required: true,
             placeholder: 'Enter Skill Details',
             errorHandling: [
@@ -310,8 +333,7 @@ export const ResourceFormData = (
             maxDate: currentDate,
             greaterThan: {
               field: 'resource_startdate',
-              message:
-                'End Date must be after Effective Date',
+              message: 'End Date must be after Effective Date',
             },
           }),
           createTextField('designation', 'Designation', {
@@ -328,7 +350,8 @@ export const ResourceFormData = (
             {
               required: false,
               regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
-              regexErrorMessage: 'Please enter a valid number between 0 and 99 with up to 2 decimals',
+              regexErrorMessage:
+                'Please enter a valid number between 0 and 99 with up to 2 decimals',
               placeholder: 'Enter Total Years Of Experience',
               disabled: disableCostAndSkill,
             }
@@ -339,7 +362,8 @@ export const ResourceFormData = (
             {
               required: false,
               regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
-              regexErrorMessage: 'Please enter a valid number between 0 and 99 with up to 2 decimals',
+              regexErrorMessage:
+                'Please enter a valid number between 0 and 99 with up to 2 decimals',
               placeholder: 'Enter Total Years In The Organisation',
               disabled: disableCostAndSkill,
             }
@@ -363,14 +387,18 @@ export const ResourceFormData = (
     [
       disableFields,
       disableCostAndSkill,
+      disableOrgname,
       country,
       states,
       stateLoading,
       city,
       cityLoading,
+      hideSkill,
       currency,
       currencyLoading,
-      hideSkill,
+      skillTypeOptions,
+      skillSubTypeOptions,
+      skillSubTypeLoading,
     ]
   );
 };

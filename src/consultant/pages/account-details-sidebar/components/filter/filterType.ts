@@ -172,8 +172,11 @@ export type FieldConfig = {
     | 'enum'
     | 'textCostAndSkill'
     | 'select'
-    | 'currencySelect';
+    | 'currencySelect'
+    | 'skillTypeFilter'
+    | 'skillSubTypeFilter';
   options?: { option: string; value: string }[];
+  dependsOn?: string;
 };
 
 export interface FilterComponentProps {

@@ -33,6 +33,8 @@ export const skillFilterFields: FieldConfig[] = [
     options: enumValueOptions,
   },
   { name: 'Years of Experience', value: 'years_of_experience', type: 'number' },
+  { name: 'skill Type', value: 'skill_type_rid', type: 'number' },
+  { name: 'skill Sub Type', value: 'skill_subtype_rid', type: 'number', dependsOn: 'skill_type_rid' },
 ];
 export const resourceFilterFields: FieldConfig[] = [
   { name: 'Resource Code', value: 'resource_ref_id', type: 'text' },
