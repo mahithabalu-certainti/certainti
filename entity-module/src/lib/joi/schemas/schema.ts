@@ -305,6 +305,7 @@ const listResourceSchema = Joi.object({
   }),
   search: Joi.string().max(255).optional(),
   filters: Joi.string().default("{}"),
+  globalFilters: Joi.string().default("{}"),
   sortBy: Joi.string().default("created_datetime").optional().allow(""),
   sortOrder: Joi.string()
     .valid("ASC", "DESC")
@@ -632,7 +633,6 @@ const resourceCostSchema = Joi.object({
 });
 
 const createProjectSchema = Joi.object({
-  account_number: Joi.string().max(50).required(),
   account_id: Joi.string()
     .guid({ version: ["uuidv4"] })
     .required(),
@@ -806,7 +806,6 @@ const createProjectSchema = Joi.object({
 
 const updateProjectSchema = Joi.object({
   project_id: Joi.string().guid({ version: ["uuidv4"] }).required(),
-  account_number: Joi.string().max(50).required(),
   account_id: Joi.string().guid({ version: ["uuidv4"] }).required(),
   project_ref_id: Joi.string().min(5).max(50).required(),
   industry: Joi.string().min(4).max(100).required(),
