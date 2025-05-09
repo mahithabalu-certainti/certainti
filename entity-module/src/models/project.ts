@@ -8,16 +8,16 @@ export interface ProjectAttributes {
   industry: string;
   account_rid: string;
   account_fiscal_rid: string | null;
-  program_name?: string | null;
+  project_name?: string | null;
   client_organization: string;
-  project_start_date?: Date | null;
-  project_end_date?: Date | null;
+  project_startdate?: Date | null;
+  project_enddate?: Date | null;
   project_type: "Fixed" | "Time & Material" | null;
   project_classification?: string | null;
   project_client_group?: string | null;
   project_group?: string | null;
   project_summary?: string | null;
-  status?: "Active" | "Inactive";
+  project_status?: "Active" | "Inactive";
   fiscal_year: number;
   country?: string | null;
   region?: string | null;
@@ -34,7 +34,7 @@ export interface ProjectAttributes {
   total_effort?: number;
   total_cost?: number;
   total_fte?: number;
-  total_subcon?: number;
+  total_sub_con?: number;
   total_non_labor_cost?: number;
   total_fte_effort?: number;
   total_sub_con_effort?: number;
@@ -52,6 +52,7 @@ export interface ProjectAttributes {
   modified_datetime?: Date;
   created_by: string;
   modified_by?: string | null;
+  blended_rate?: number | null;
 }
 
 interface ProjectCreationAttributes
@@ -66,16 +67,16 @@ export class Project
   public account_fiscal_rid!: string;
   public account_rid!: string;
   public industry!: string;
-  public program_name?: string | null;
+  public project_name?: string | null;
   public client_organization!: string;
-  public project_start_date?: Date | null;
-  public project_end_date?: Date | null;
+  public project_startdate?: Date | null;
+  public project_enddate?: Date | null;
   public project_type!: "Fixed" | "Time & Material";
   public project_classification?: string | null;
   public project_client_group?: string | null;
   public project_group?: string | null;
   public project_summary?: string | null;
-  public status?: "Active" | "Inactive";
+  public project_status?: "Active" | "Inactive";
   public fiscal_year!: number;
   public country?: string | null;
   public region?: string | null;
@@ -92,7 +93,7 @@ export class Project
   public total_effort?: number;
   public total_cost?: number;
   public total_fte?: number;
-  public total_subcon?: number;
+  public total_sub_con?: number;
   public total_non_labor_cost?: number;
   public total_fte_effort?: number;
   public total_sub_con_effort?: number;
@@ -110,6 +111,7 @@ export class Project
   public modified_datetime?: Date;
   public created_by!: string;
   public modified_by?: string | null;
+  public blended_rate?: number | null;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
     return Project.init(
@@ -145,13 +147,13 @@ export class Project
           type: DataTypes.STRING(100),
           allowNull: false,
         },
-        program_name: DataTypes.STRING(100),
+        project_name: DataTypes.STRING(100),
         client_organization: {
           type: DataTypes.STRING(100),
           allowNull: false,
         },
-        project_start_date: DataTypes.DATE,
-        project_end_date: DataTypes.DATE,
+        project_startdate: DataTypes.DATE,
+        project_enddate: DataTypes.DATE,
         project_type: {
           type: DataTypes.ENUM("Fixed", "Time & Material"),
           allowNull: false,
@@ -160,7 +162,7 @@ export class Project
         project_client_group: DataTypes.STRING(200),
         project_group: DataTypes.STRING(150),
         project_summary: DataTypes.STRING(1000),
-        status: {
+        project_status: {
           type: DataTypes.ENUM("Active", "Inactive"),
           allowNull: true,
         },
@@ -207,7 +209,7 @@ export class Project
         total_effort: DataTypes.DOUBLE,
         total_cost: DataTypes.DECIMAL(13, 2),
         total_fte: DataTypes.DOUBLE,
-        total_subcon: DataTypes.DOUBLE,
+        total_sub_con: DataTypes.DOUBLE,
         total_non_labor_cost: DataTypes.DECIMAL(13, 2),
         total_fte_effort: DataTypes.DOUBLE,
         total_sub_con_effort: DataTypes.DOUBLE,
@@ -224,6 +226,10 @@ export class Project
           defaultValue: false,
         },
         max_ai_interaction: DataTypes.INTEGER,
+        blended_rate: {
+          type: DataTypes.INTEGER,
+          allowNull: true,
+        },
         blended_rate_fte: DataTypes.STRING,
         blended_rate_sub_con: DataTypes.STRING,
         project_description: DataTypes.STRING(2000),

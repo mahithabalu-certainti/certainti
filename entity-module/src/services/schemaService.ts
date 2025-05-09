@@ -2,7 +2,7 @@ import moment, { Moment } from "moment";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Resources } from "../models/resource";
 import { ICreateResource, IUpdateResource } from "../utils/types";
-import { Op, Sequelize } from "sequelize";
+import { DataTypes, Op, Sequelize } from "sequelize";
 import { ResourceFiscal } from "../models/resourceFiscal";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { ResourcesHistory } from "../models/resourceHistory";
@@ -144,12 +144,15 @@ class SchemaService {
 
       // Handle special case for resource_type sorting
       let queryOrder = order;
-      const isResourceTypeSort = order?.length && order[0][0] === 'resource_type';
-      
+      const isResourceTypeSort =
+        order?.length && order[0][0] === "resource_type";
+
       if (isResourceTypeSort) {
-        const direction = order[0][1]?.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
-        queryOrder = [[
-          Sequelize.literal(`
+        const direction =
+          order[0][1]?.toUpperCase() === "DESC" ? "DESC" : "ASC";
+        queryOrder = [
+          [
+            Sequelize.literal(`
             CASE resource_type
               WHEN 'Full-Time' THEN 1
               WHEN 'Non-Labor' THEN 2 
@@ -157,8 +160,9 @@ class SchemaService {
               ELSE 4
             END
           `),
-          direction
-        ]];
+            direction,
+          ],
+        ];
       }
 
       // First get all resources without pagination
@@ -174,7 +178,7 @@ class SchemaService {
         attributes: [
           "rid",
           "r_number",
-          "resource_ref_id", 
+          "resource_ref_id",
           "resource_fullname",
           "resource_type",
           "resource_status",
@@ -182,7 +186,7 @@ class SchemaService {
           "designation",
           "total_years_experience",
           "country",
-          "state", 
+          "state",
           "city",
         ],
       });
@@ -202,13 +206,13 @@ class SchemaService {
 
         return { resources: finalResources, totalCount };
       }
-      
+
       return { resources: [], totalCount: 0 };
     } catch (err) {
       throw new Error("Error fetching resources: " + (err as Error).message);
     }
   }
-  
+
   /**
    * Fetches a single resource by ID.
    * @param accountNumber - Account number (schema).
@@ -346,7 +350,9 @@ class SchemaService {
       const resources = await Resource.findAll({
         where: {
           ...whereClause,
-          ...(fiscalYear && fiscalYear !== 0 ? { fiscal_year: fiscalYear } : {})
+          ...(fiscalYear && fiscalYear !== 0
+            ? { fiscal_year: fiscalYear }
+            : {}),
         },
         order,
         subQuery: false,
@@ -369,7 +375,9 @@ class SchemaService {
       const totalCount = await Resource.count({
         where: {
           ...whereClause,
-          ...(fiscalYear && fiscalYear !== 0 ? { fiscal_year: fiscalYear } : {})
+          ...(fiscalYear && fiscalYear !== 0
+            ? { fiscal_year: fiscalYear }
+            : {}),
         },
       });
 
@@ -384,13 +392,9 @@ class SchemaService {
 
       return { resources: finalResources, totalCount };
     } catch (err) {
-      throw new Error(
-        "Error fetching resources: " + (err as Error).message
-      );
+      throw new Error("Error fetching resources: " + (err as Error).message);
     }
   }
-
-
 
   /**
    * Inserts a record into the resource fiscal table.
@@ -449,7 +453,7 @@ class SchemaService {
     try {
       // Validate inputs
       if (!resourceId || !accountNumber) {
-        throw new Error('Resource ID and account number are required');
+        throw new Error("Resource ID and account number are required");
       }
 
       const schemaName = `platform_v2_${accountNumber}`;
@@ -460,7 +464,7 @@ class SchemaService {
         `SELECT schema_name FROM information_schema.schemata WHERE schema_name = :schemaName`,
         {
           replacements: { schemaName },
-          type: "SELECT"
+          type: "SELECT",
         }
       );
 
@@ -473,18 +477,18 @@ class SchemaService {
       // Add transaction to ensure data consistency
       const resource = await sequelize.transaction(async (t) => {
         return await Resource.findOne({
-        where: {
-          rid: resourceId,
-        },
+          where: {
+            rid: resourceId,
+          },
           transaction: t,
-          lock: true
+          lock: true,
         });
       });
 
       return resource !== null;
     } catch (err) {
       // Log error for debugging
-      console.error('Resource existence check failed:', err);
+      console.error("Resource existence check failed:", err);
       throw new Error(
         "Error checking if resource exists: " + (err as Error).message
       );
@@ -510,8 +514,12 @@ class SchemaService {
       const Resource = Resources.initialize(sequelize, schemaName);
 
       // Parse dates and set to UTC midnight to avoid timezone issues
-      const startDate = moment.utc(resourceData.effective_from_date, "MM/DD/YYYY").startOf('day');
-      const endDate = moment.utc(resourceData.effective_end_date, "MM/DD/YYYY").startOf('day');
+      const startDate = moment
+        .utc(resourceData.effective_from_date, "MM/DD/YYYY")
+        .startOf("day");
+      const endDate = moment
+        .utc(resourceData.effective_end_date, "MM/DD/YYYY")
+        .startOf("day");
 
       const existingResourceData = await Resource.findOne({
         where: {
@@ -685,7 +693,7 @@ class SchemaService {
       return {
         accountNumber: accountRnumber,
         accountId: account?.rid,
-        accountName: account.account_name
+        accountName: account.account_name,
       };
     } catch (err) {
       throw new Error("Error fetching account : " + (err as Error).message);
@@ -808,8 +816,10 @@ class SchemaService {
           }
         );
 
-        (resource as any).dataValues.country_code = country?.country_code || null;
-        (resource as any).dataValues.country_name = country?.country_name || null;
+        (resource as any).dataValues.country_code =
+          country?.country_code || null;
+        (resource as any).dataValues.country_name =
+          country?.country_name || null;
         (resource as any).dataValues.state_name = state?.state_name || null;
         (resource as any).dataValues.city_name = city?.city_name || null;
         //Added to format date as MM/DD/YYYY
@@ -1021,7 +1031,7 @@ class SchemaService {
 
         return 0;
       });
-      
+
     return updatedResources;
   }
 
@@ -1032,7 +1042,10 @@ class SchemaService {
       return false;
     }
 
-    if (filter?.not_contains && val.includes(filter.not_contains.toLowerCase())) {
+    if (
+      filter?.not_contains &&
+      val.includes(filter.not_contains.toLowerCase())
+    ) {
       return false;
     }
 
@@ -1044,7 +1057,11 @@ class SchemaService {
       return false;
     }
 
-    if (filter?.is_empty === true && val.trim() !== "" && !val.trim() !== null) {
+    if (
+      filter?.is_empty === true &&
+      val.trim() !== "" &&
+      !val.trim() !== null
+    ) {
       return false;
     }
 
@@ -1097,7 +1114,6 @@ class SchemaService {
           Array.isArray(result) && result.length > 0 ? result[0] : null;
       }
 
-
       project.dataValues = {
         ...project.dataValues,
         country_name: countryRow?.country_name || null,
@@ -1111,8 +1127,8 @@ class SchemaService {
     }
   }
 
-  async fetchAccountById(accountId: string){
-    try{
+  async fetchAccountById(accountId: string) {
+    try {
       const mainDbSequelize = await initMainDbSequelize();
       const [accountData]: any[] = await mainDbSequelize.query(
         `SELECT * FROM account WHERE rid = :rid`,
@@ -1122,8 +1138,277 @@ class SchemaService {
         }
       );
       return accountData;
-    }catch(err){
+    } catch (err) {
       throw new Error("Error fetching Accounts: " + (err as Error).message);
+    }
+  }
+
+  async fetchAllProjects(
+    offset: number,
+    limit: number,
+    sort: {
+      sortCol: string;
+      sortOrder: string;
+    },
+    whereClause: Record<string, any>,
+    fiscalYear: number,
+    accountMeta: Array<{
+      rid: string;
+      r_number: string;
+      storage_type: string;
+      parent_account_rid: string | null;
+    }>
+  ) {
+    try {
+      const orgDbSequelize = await initOrgSequelize();
+      const TempTableModel = await this.createTempProjectTable(orgDbSequelize);
+      await TempTableModel.sync({ force: true });
+
+      if (accountMeta.length > 0) {
+        for (const acc of accountMeta) {
+          const schema = `platform_v2_${acc.r_number}`;
+          await this.insertIntoTempFromSchema(
+            orgDbSequelize,
+            TempTableModel,
+            schema,
+            fiscalYear,
+            acc.rid,
+            [],
+          );
+        }
+      } else {
+        const schemas: any = await orgDbSequelize.query(
+          `
+          SELECT DISTINCT table_schema
+          FROM information_schema.tables
+          WHERE table_name = 'project'
+            AND table_type = 'BASE TABLE'
+            AND table_schema LIKE 'platform_v2_%'
+          `,
+          { type: "SELECT" }
+        );
+
+        for (const { table_schema } of schemas) {
+          await this.insertIntoTempFromSchema(
+            orgDbSequelize,
+            TempTableModel,
+            table_schema,
+            fiscalYear
+          );
+        }
+      }
+
+      const { rows: finalResult, count } = await TempTableModel.findAndCountAll(
+        {
+          where: {
+            ...whereClause,
+            ...(fiscalYear && fiscalYear !== 0
+              ? { fiscal_year: fiscalYear }
+              : {}),
+          },
+          order: [[sort.sortCol, sort.sortOrder.toUpperCase()]],
+          offset,
+          limit,
+        }
+      );
+
+      return {
+        finalResult,
+        totalCount: count,
+      };
+    } catch (err) {
+      throw new Error("Error fetching Accounts: " + (err as Error).message);
+    }
+  }
+
+  async createTempProjectTable(dbInstance: Sequelize) {
+    try {
+      const TempProject = dbInstance.define(
+        "temp_project_data",
+        {
+          rid: DataTypes.UUID,
+          r_number: DataTypes.TEXT,
+          project_ref_id: DataTypes.TEXT,
+          industry: DataTypes.TEXT,
+          project_name: DataTypes.TEXT,
+          project_description: DataTypes.TEXT,
+          project_manager: DataTypes.TEXT,
+          project_lead: DataTypes.TEXT,
+          total_effort: DataTypes.DOUBLE,
+          total_cost: DataTypes.DECIMAL(13, 2),
+          spoc_name: DataTypes.TEXT,
+          spoc_email: DataTypes.TEXT,
+          project_status: DataTypes.TEXT,
+          project_startdate: DataTypes.DATEONLY,
+          project_enddate: DataTypes.DATEONLY,
+          created_datetime: DataTypes.DATEONLY,
+          created_by: DataTypes.UUID,
+          fiscal_year: DataTypes.INTEGER,
+          account_rid: DataTypes.UUID,
+          source_schema: DataTypes.TEXT,
+        },
+        {
+          tableName: "temp_project_data",
+          timestamps: false,
+        }
+      );
+      return TempProject;
+    } catch (err) {
+      throw new Error("Error creating temp project table");
+    }
+  }
+
+  async computeGlobalAccountFilter(globalFilters: Record<string, string[]>) {
+    try {
+      const mainDbSequelize = await initMainDbSequelize();
+      const accountIds = new Set<string>();
+
+      for (const value of Object.values(globalFilters)) {
+        value.forEach((id) => accountIds.add(id));
+      }
+
+      const accountIdArray = Array.from(accountIds);
+
+      if (accountIdArray.length === 0) {
+        return [];
+      }
+
+      const placeholders = accountIdArray.map((_, i) => `:id${i}`).join(", ");
+      const replacements = Object.fromEntries(
+        accountIdArray.map((id, i) => [`id${i}`, id])
+      );
+
+      const accounts = await mainDbSequelize.query(
+        `
+        SELECT rid, r_number, storage_type, parent_account_rid
+        FROM account
+        WHERE rid IN (${placeholders})
+        `,
+        {
+          replacements,
+          type: "SELECT",
+        }
+      );
+
+      if (accounts && accounts.length > 0) {
+        for (const val of accounts as any[]) {
+          if (val.storage_type === "store_in_parent") {
+            const accountById = await this.fetchAccountById(
+              val.parent_account_rid
+            );
+            if (accountById) {
+              val.r_number = accountById.r_number;
+            }
+          }
+        }
+      }
+
+      return accounts as {
+        rid: string;
+        r_number: string;
+        storage_type: string;
+        parent_account_rid: string | null;
+      }[];
+    } catch (err) {
+      throw new Error("Error computing global account filter");
+    }
+  }
+
+  private async insertIntoTempFromSchema(
+    sequelizeInstance: any,
+    TempTableModel: any,
+    schema: string,
+    fiscalYear: number,
+    accountId?: string,
+    filterAccountRids?: string[]
+  ) {
+    const [{ exists }] = await sequelizeInstance.query(
+      `
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.tables 
+        WHERE table_schema = :schema 
+        AND table_name = 'project'
+      ) as exists
+      `,
+      {
+        replacements: { schema },
+        type: "SELECT",
+      }
+    );
+
+    if (!exists) {
+      return;
+    }
+
+    let baseQuery = `
+      INSERT INTO temp_project_data (
+        rid, r_number, project_ref_id, industry, project_name, project_description,
+        project_manager, project_lead, total_effort, total_cost, spoc_name,
+        spoc_email, project_status, project_startdate, project_enddate, created_datetime,
+        created_by, fiscal_year, account_rid, source_schema
+      )
+      SELECT 
+        rid, r_number, project_ref_id, industry, project_name, project_description,
+        project_manager, project_lead, total_effort, total_cost, spoc_name,
+        spoc_email, project_status, project_startdate, project_enddate, created_datetime,
+        created_by, fiscal_year, account_rid, :schemaName
+      FROM "${schema}"."project"
+    `;
+
+    const conditions: string[] = [];
+    const replacements: Record<string, any> = { schemaName: schema };
+
+    if (fiscalYear !== 0) {
+      conditions.push(`fiscal_year = :fiscalYear`);
+      replacements.fiscalYear = fiscalYear;
+    }
+
+    if(accountId){
+      conditions.push(`account_rid = :fiscalYear`);
+      replacements.fiscalYear = accountId;
+    }
+
+    if (filterAccountRids && filterAccountRids.length > 0) {
+      const placeholders = filterAccountRids.map((_, i) => `:acc${i}`);
+      conditions.push(`account_rid IN (${placeholders.join(", ")})`);
+      filterAccountRids.forEach((id, i) => {
+        replacements[`acc${i}`] = id;
+      });
+    }
+
+    if (conditions.length > 0) {
+      baseQuery += ` WHERE ${conditions.join(" AND ")}`;
+    }
+
+    await sequelizeInstance.query(baseQuery, {
+      replacements,
+    });
+  }
+
+  async checkIfSchemaAndTableExists(accountNumber: string) {
+    try {
+      const schemaName = `platform_v2_${accountNumber}`;
+      const sequelize = await initOrgSequelize();
+
+      const result = await sequelize.query(
+        `
+        SELECT EXISTS (
+          SELECT 1
+          FROM information_schema.tables
+          WHERE table_schema = :schemaName
+            AND table_name = 'project'
+        ) AS "exists"
+        `,
+        {
+          replacements: { schemaName },
+          type: "SELECT",
+        }
+      );
+
+      return (result[0] as any).exists === true;
+    } catch (err) {
+      throw new Error("Error checking schema :" + (err as Error).message);
     }
   }
 }

@@ -4,6 +4,8 @@ import * as helpers from "../../src/utils/helpers";
 import { HttpStatus } from "../../src/utils/constants";
 import projectController from "../../src/controllers/projectController";
 
+const X_USER_ID = "40a92c48-8538-411c-9312-4f8296951ead";
+
 jest.mock("../../src/config/config", () => ({
   getInstance: jest.fn().mockReturnValue({
     getServices: jest.fn().mockReturnValue({
@@ -37,7 +39,9 @@ const createMockRequest = (): Request => {
     body: {},
     params: {},
     query: {},
-    headers: {},
+    headers: {
+      "x-user-id": X_USER_ID,
+    },
     get: jest.fn().mockImplementation((name: string) => {
       return undefined;
     }),
@@ -85,7 +89,7 @@ describe("Project Controller", () => {
       );
       expect(services.projectServices.createProject).toHaveBeenCalledWith({
         name: "Test Project",
-      });
+      }, X_USER_ID);
       expect(helpers.handleSuccessResponse).toHaveBeenCalledWith(mockResponse, {
         id: "proj-id",
         name: "Test Project",
@@ -175,7 +179,7 @@ describe("Project Controller", () => {
       ).toHaveBeenCalledWith({
         id: "proj-id",
         name: "Updated Project",
-      });
+      }, X_USER_ID);
       expect(helpers.handleSuccessResponse).toHaveBeenCalledWith(mockResponse, {
         id: "proj-id",
         name: "Updated Project",
@@ -307,7 +311,7 @@ describe("Project Controller", () => {
 
   describe("project list", () => {
     const mockReq = {
-      params: { accountNumber: "ACC0001" },
+      params: { accountId: "ACC0001" },
       query: {},
     } as unknown as Request;
 

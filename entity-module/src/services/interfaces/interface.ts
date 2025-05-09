@@ -211,7 +211,7 @@ export interface IProjectService {
     accountNumber: string
   ): Promise<Project>;
   projectById(
-    accountNumber: string,
+    accountId: string,
     projectId: string
   ): Promise<{
     statusCode: number;
@@ -220,7 +220,7 @@ export interface IProjectService {
     data?: { project: any };
   }>;
   projectList(
-    accountNumber: string,
+    accountId: string,
     fiscal_year: number,
     page: number,
     limit: number,
@@ -233,5 +233,20 @@ export interface IProjectService {
     message: string;
     errorMessage?: string;
     data?: { projects: any };
+  }>;
+  allProjectList(
+    fiscal_year: number,
+    page: number,
+    limit: number,
+    search: string,
+    filters: Record<string, string>,
+    sortBy: string,
+    sortOrder: string,
+    globalFilters: Record<string, string[]>,
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projects: any, count: number };
   }>;
 }

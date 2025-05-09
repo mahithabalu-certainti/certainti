@@ -120,9 +120,9 @@ async function updateProject(req: Request, res: Response): Promise<void> {
 async function projectById(req: Request, res: Response): Promise<void> {
   const methodName = "Project Details";
   try {
-    const { accountNumber, projectId } = req.params;
+    const { accountId, projectId } = req.params;
 
-    const project = await projectService.projectById(accountNumber, projectId);
+    const project = await projectService.projectById(accountId, projectId);
 
     if (project.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -154,7 +154,7 @@ async function projectById(req: Request, res: Response): Promise<void> {
 async function projectList(req: Request, res: Response): Promise<void> {
   const methodName = "Project List";
   try {
-    const { accountNumber } = req.params;
+    const { accountId } = req.params;
 
     const value = await validateRequest(req, listResourceSchema, res, "GET");
 
@@ -179,7 +179,7 @@ async function projectList(req: Request, res: Response): Promise<void> {
     const limitNum: number = parseInt(value.limit, 10) || 25;
 
     const project = await projectService.projectList(
-      accountNumber,
+      accountId,
       value.fiscalYear !== "" && value.fiscalYear !== null
         ? value.fiscalYear
         : 0,
@@ -218,9 +218,79 @@ async function projectList(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function allProjectList(req: Request, res: Response): Promise<void> {
+  const methodName = "All Project List";
+  try {
+    const value = await validateRequest(req, listResourceSchema, res, "GET");
+
+    let parsedFilters: Record<string, any> = {};
+    let parsedGlobalFilters: Record<string, string[]> = {}
+
+    if (!value) {
+      return;
+    }
+
+    try {
+      if (value.filters) {
+        parsedFilters = JSON.parse(value.filters);
+      }
+      if (value.globalFilters) {
+        parsedGlobalFilters = JSON.parse(value.globalFilters);
+      }
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    const pageNum: number = parseInt(value.page, 10) || 1;
+    const limitNum: number = parseInt(value.limit, 10) || 25;
+
+    const project = await projectService.allProjectList(
+      value.fiscalYear !== "" && value.fiscalYear !== null
+        ? value.fiscalYear
+        : 0,
+      pageNum,
+      limitNum,
+      value.search,
+      parsedFilters,
+      value.sortBy,
+      value.sortOrder,
+      parsedGlobalFilters
+    );
+
+    if (project.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, project.data);
+      return;
+    } else {
+      errorLog(methodName, project.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        project.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 export default {
   createProject,
   updateProject,
   projectById,
   projectList,
+  allProjectList,
 };

@@ -6,8 +6,9 @@ const routes: Router = Router();
 
 routes.use(checkUserStatusMiddleware("NA"));
 
-routes.get("/list/:accountNumber", controller.projectController.projectList);
-routes.get("/list/:accountNumber/:projectId", controller.projectController.projectById);
+routes.get("/list", controller.projectController.allProjectList);
+routes.get("/list/:accountId", controller.projectController.projectList);
+routes.get("/list/:accountId/:projectId", controller.projectController.projectById);
 routes.post("/new", controller.projectController.createProject);
 routes.put("/update", controller.projectController.updateProject);
 

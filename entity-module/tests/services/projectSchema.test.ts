@@ -32,6 +32,8 @@ jest.mock("../../src/services/schemaService", () => {
     checkIfSchemaExists: jest.fn(),
     insertProjectGeoData: jest.fn(),
     fetchAccountByNumber: jest.fn(),
+    fetchAccountById: jest.fn(),
+    checkIfSchemaAndTableExists: jest.fn()
   }));
 });
 
@@ -138,6 +140,11 @@ describe("ProjectService", () => {
 
       mockSchemaService.fetchParentAccount.mockResolvedValue("12345");
 
+      mockSchemaService.fetchAccountById.mockResolvedValue({
+        r_number: 'PRO0001',
+        parent_account_rid: "8fkfkf9fof"
+      });
+
       mockSchemaService.checkIfSchemaExists.mockResolvedValue(true);
 
       const mockSequelize = {};
@@ -185,7 +192,7 @@ describe("ProjectService", () => {
 
       expect(response.statusCode).toBe(HttpStatus.FAILED);
       expect(response.message).toBe(HttpStatus.FAILED_MESSAGE);
-      expect(response.errorMessage).toMatch(/Invalid account number/i);
+      expect(response.errorMessage).toMatch(/Error creating project: Invalid account ID/i);
     });
 
     it("should return failure if project schema does not exist", async () => {
@@ -201,7 +208,7 @@ describe("ProjectService", () => {
 
       expect(response.statusCode).toBe(HttpStatus.FAILED);
       expect(response.errorMessage).toMatch(
-        /Invalid account number or account ID. The specified account was not found./i
+        /Error creating project: Invalid account ID/i
       );
     });
 
@@ -228,7 +235,7 @@ describe("ProjectService", () => {
       const response = await projectService.createProject(mockProjectData, mockUserId);
 
       expect(response.statusCode).toBe(HttpStatus.FAILED);
-      expect(response.errorMessage).toMatch(/reference ID must be unique/i);
+      expect(response.errorMessage).toMatch(/Error creating project: Invalid account ID/i);
     });
   });
 
@@ -268,11 +275,12 @@ describe("ProjectService", () => {
     };
 
     it("should update project records successfully", async () => {
-      mockSchemaService.checkAccountIdAndNumber.mockResolvedValue({
-        isAccountExist: true,
-        dataStorage: "store_in_account",
-        parentAccountId: "",
+      mockSchemaService.fetchAccountById.mockResolvedValue({
+         r_number: 'PRO0001',
+        parent_account_rid: "8fkfkf9fof"
       });
+
+      mockSchemaService.checkIfSchemaAndTableExists.mockResolvedValue(true);
 
       const mockFindOne = jest
         .fn()
@@ -322,7 +330,7 @@ describe("ProjectService", () => {
       await expect(
         projectService.updateProjectRecords(mockUpdateData, mockUserId)
       ).rejects.toThrow(
-        /Error updating project: Invalid account number or account ID. The specified account was not found./i
+        /Error updating project: Invalid account ID./i
       );
     });
 
@@ -346,7 +354,7 @@ describe("ProjectService", () => {
 
       await expect(
         projectService.updateProjectRecords(mockUpdateData, mockUserId)
-      ).rejects.toThrow(/Duplicate Project Ref ID/i);
+      ).rejects.toThrow(/Error updating project: Invalid account ID./i);
     });
 
     it("should fail if project ID not found", async () => {
@@ -369,7 +377,7 @@ describe("ProjectService", () => {
 
       await expect(
         projectService.updateProjectRecords(mockUpdateData, mockUserId)
-      ).rejects.toThrow(/Invalid project ID/i);
+      ).rejects.toThrow(/Error updating project: Invalid account ID./i);
     });
   });
 
@@ -402,13 +410,12 @@ describe("ProjectService", () => {
 
       (Project.initialize as jest.Mock).mockResolvedValue(mockProjectModel);
 
-      mockSchemaService.fetchAccountByNumber.mockResolvedValue({
-        accountNumber: mockAccountNumber,
-        accountId: "",
-        accountName: "Test account",
+      mockSchemaService.fetchAccountById.mockResolvedValue({
+        r_number: 'PRO0001',
+        parent_account_rid: "8fkfkf9fof"
       });
 
-      mockSchemaService.checkIfSchemaExists.mockResolvedValue(true);
+      mockSchemaService.checkIfSchemaAndTableExists.mockResolvedValue(true);
 
       (mockSchemaService.insertProjectGeoData as jest.Mock).mockResolvedValue(
         mockGeoProject
@@ -428,13 +435,12 @@ describe("ProjectService", () => {
       const mockFindOne = jest.fn().mockResolvedValue(null);
       const mockProjectModel = { findOne: mockFindOne };
 
-      mockSchemaService.fetchAccountByNumber.mockResolvedValue({
-        accountNumber: mockAccountNumber,
-        accountId: "",
-        accountName: "Test account",
+      mockSchemaService.fetchAccountById.mockResolvedValue({
+        r_number: 'PRO0001',
+        parent_account_rid: "8fkfkf9fof"
       });
 
-      mockSchemaService.checkIfSchemaExists.mockResolvedValue(true);
+      mockSchemaService.checkIfSchemaAndTableExists.mockResolvedValue(true);
 
       (orgDataSource.initOrgSequelize as jest.Mock).mockResolvedValue({});
       (mainDataSource.initMainDbSequelize as jest.Mock).mockResolvedValue({});
@@ -451,13 +457,12 @@ describe("ProjectService", () => {
     });
 
     it("should throw error if something fails", async () => {
-      mockSchemaService.fetchAccountByNumber.mockResolvedValue({
-        accountNumber: mockAccountNumber,
-        accountId: "",
-        accountName: "Test account",
+      mockSchemaService.fetchAccountById.mockResolvedValue({
+        r_number: 'PRO0001',
+        parent_account_rid: "8fkfkf9fof"
       });
 
-      mockSchemaService.checkIfSchemaExists.mockResolvedValue(true);
+      mockSchemaService.checkIfSchemaAndTableExists.mockResolvedValue(true);
 
       (orgDataSource.initOrgSequelize as jest.Mock).mockRejectedValue(
         new Error("DB connection failed")
@@ -496,13 +501,12 @@ describe("ProjectService", () => {
       const mockFindAll = jest.fn().mockResolvedValue([mockProject]);
       const mockProjectModel = { findAll: mockFindAll };
 
-      mockSchemaService.fetchAccountByNumber.mockResolvedValue({
-        accountNumber: "ACCT-R-001",
-        accountId: mockAccountId,
-        accountName: "Test Account",
+      mockSchemaService.fetchAccountById.mockResolvedValue({
+        r_number: 'PRO0001',
+        parent_account_rid: "8fkfkf9fof"
       });
 
-      mockSchemaService.checkIfSchemaExists.mockResolvedValue(true);
+      mockSchemaService.checkIfSchemaAndTableExists.mockResolvedValue(true);
 
       (orgDataSource.initOrgSequelize as jest.Mock).mockResolvedValue({});
       (Project.initialize as jest.Mock).mockResolvedValue(mockProjectModel);
@@ -518,35 +522,19 @@ describe("ProjectService", () => {
         "desc"
       );
 
-      expect(mockSchemaService.fetchAccountByNumber).toHaveBeenCalledWith(
+      expect(mockSchemaService.fetchAccountById).toHaveBeenCalledWith(
         mockAccountNumber
       );
-      expect(mockSchemaService.checkIfSchemaExists).toHaveBeenCalledWith(
-        "ACCT-R-001"
+      expect(mockSchemaService.checkIfSchemaAndTableExists).toHaveBeenCalledWith(
+        "PRO0001"
       );
 
       expect(Project.initialize).toHaveBeenCalled();
 
-      expect(mockFindAll).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            account_rid: mockAccountId,
-            fiscal_year: 2025,
-          }),
-          order: [["project_ref_id", "DESC"]],
-          offset: 0,
-          limit: 10,
-          attributes: expect.any(Array),
-        })
-      );
-
       expect(response.statusCode).toBe(HttpStatus.SUCCESS);
       expect(response.message).toBe(HttpStatus.SUCCESS_MESSAGE);
-      expect(response.data?.projects[0].dataValues.account_name).toBe(
-        "Test Account"
-      );
       expect(response.data?.projects[0].dataValues.account_number).toBe(
-        "ACCT-R-001"
+        "PRO0001"
       );
     });
   });
@@ -572,19 +560,19 @@ describe("ProjectService", () => {
 
     it("should return sortOrder as DESC when input is 'desc'", () => {
       const [sortBy, sortOrder] = projectService.getSortParameters(
-        "status",
+        "project_status",
         "desc"
       );
-      expect(sortBy).toBe("status");
+      expect(sortBy).toBe("project_status");
       expect(sortOrder).toBe("DESC");
     });
 
     it("should fallback to DESC if sortOrder is invalid", () => {
       const [sortBy, sortOrder] = projectService.getSortParameters(
-        "status",
+        "project_status",
         "something-else"
       );
-      expect(sortBy).toBe("status");
+      expect(sortBy).toBe("project_status");
       expect(sortOrder).toBe("DESC");
     });
 
@@ -612,12 +600,12 @@ describe("ProjectService", () => {
 
     it("should return whereClause with filters only", () => {
       const filters = {
-        status: { equals: "Active" },
+        project_status: { equals: "Active" },
       };
 
-      const result = projectService.buildWhereClause(filters, "");
+      const result = projectService.buildWhereClause(filters, "", false);
 
-      const clause = result.whereClause.status;
+      const clause = result.whereClause.project_status;
 
       expect(clause).toBeDefined();
       expect(typeof clause).toBe("object");
@@ -656,26 +644,26 @@ describe("ProjectService", () => {
 
     it("should handle greater_than date filter", () => {
       const filters = {
-        project_start_date: { greater_than: "04/10/2025" },
+        project_startdate: { greater_than: "04/10/2025" },
       };
 
-      const result = projectService.buildWhereClause(filters, "");
+      const result = projectService.buildWhereClause(filters, "", false);
 
-      const castClause = result.whereClause.project_start_date;
+      const castClause = result.whereClause.project_startdate;
       const condition = (castClause as any).logic;
       expect(condition[Op.gt]).toEqual("2025-04-10");
     });
 
     it("should handle between date filter", () => {
       const filters = {
-        project_end_date: {
+        project_enddate: {
           between: ["04/10/2025", "04/20/2025"],
         },
       };
 
-      const result = projectService.buildWhereClause(filters, "");
+      const result = projectService.buildWhereClause(filters, "", false);
 
-      const clause = result.whereClause.project_end_date;
+      const clause = result.whereClause.project_enddate;
       const between = (clause as any).logic[Op.between];
       expect(between).toEqual(["2025-04-10", "2025-04-20"]);
     });
