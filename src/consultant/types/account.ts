@@ -6,6 +6,12 @@ export interface ParentAccountApiResponse extends CommonApiResponse {
   };
 }
 
+export interface IndustrysApiResponse extends CommonApiResponse {
+  data: {
+    industries: Industries[];
+  };
+}
+
 export interface CurrencyApiResponse extends CommonApiResponse {
   data: {
     currency: Currencys[];
@@ -50,6 +56,11 @@ export interface Currencys {
 export interface GloablAcconunts {
   rid: string;
   account_name: string;
+}
+
+export interface Industries {
+  rid: string;
+  industry_name: string;
 }
 
 export interface Account {
@@ -129,6 +140,8 @@ export interface NewAccountData extends AccountFieldsTypes, AccountById {
   modified_by: string;
   finance_poc_number: string;
   account_rid: string;
+  industry_rid: string;
+  industry_name: string;
 }
 
 export interface AccountFormData

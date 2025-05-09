@@ -2,10 +2,10 @@ import { useMemo } from 'react';
 import { FormType, SelectOption } from '../../../../consultant/types';
 import {
   createPhoneInputField,
-  createRadioField,
   createSelectField,
   createTextField,
   REGEX_PATTERNS,
+  STATUS_OPTIONS,
 } from '../../../../common-utils';
 
 export const FormData = (
@@ -54,17 +54,18 @@ export const FormData = (
           }),
           createTextField('email', 'Email Address', {
             required: true,
-            regex: REGEX_PATTERNS.EMAIL,
             placeholder: 'Enter Email Address',
-            regexErrorMessage: 'Invalid email address',
             disabled: disableFields,
-            lengthRequired: {
-              key: 'email_length',
-              minMatchedValue: REGEX_PATTERNS.EMAIL,
-              minErrorMessage: 'Invalid email address',
-              maxMatchedValue: REGEX_PATTERNS.MAX_EMAIL_REGEX,
-              maxErrorMessage: 'Max length exceeded',
-            },
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_EMAIL_REGEX,
+                errorMessage: 'Max length exceeded',
+              },
+              {
+                regex: REGEX_PATTERNS.EMAIL,
+                errorMessage: 'Invalid email address',
+              },
+            ],
           }),
           createPhoneInputField('phone', 'Phone Number', {
             required: false,
@@ -86,12 +87,10 @@ export const FormData = (
             placeholder: 'Select Role',
             required: true,
           }),
-          createRadioField('status', 'Status', {
+          createSelectField('status', 'Status', {
             required: true,
-            radioOptions: [
-              { label: 'Active', value: 'active' },
-              { label: 'In-active', value: 'inactive' },
-            ],
+            options: STATUS_OPTIONS,
+            placeholder: 'Choose Status',
           }),
         ],
       },
@@ -113,9 +112,9 @@ export const FormData = (
             onChange: true,
             resetDependsFields: ['state, city'],
           }),
-          createSelectField('state', 'State/Province', {
+          createSelectField('state', 'Region', {
             options: states,
-            placeholder: 'Select State',
+            placeholder: 'Select Region',
             required: false,
             onChange: true,
             isLoading: stateLoading,
@@ -126,11 +125,19 @@ export const FormData = (
             required: false,
             isLoading: stateLoading || cityLoading,
           }),
-          createTextField('zip_code', 'Zip/Postal code', {
+          createTextField('zip_code', 'Zip Code / Area Code', {
             required: false,
-            regex: REGEX_PATTERNS.POSTAL_CODE,
-            regexErrorMessage: 'Invalid postal code / zip code',
-            placeholder: 'Enter Zip/Postal code',
+            placeholder: 'Enter Zip Code / Area Code',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_POSTAL_REGEX,
+                errorMessage: 'Max length exceeded',
+              },
+              {
+                regex: REGEX_PATTERNS.POSTAL_CODE,
+                errorMessage: 'Invalid postal code / zip code',
+              },
+            ],
           }),
         ],
       },

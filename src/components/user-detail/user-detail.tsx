@@ -45,7 +45,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
 
   const mappedUserDetails: Detail[] = [
     { label: 'Identity', value: '', full: true },
-    { label: 'Record ID', value: getValueOrDefault(data?.rid) },
+    { label: 'User Record ID', value: getValueOrDefault(data?.rid) },
     {
       label: 'User ID',
       value: getValueOrDefault(data?.r_number),
@@ -87,18 +87,18 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     },
     { label: 'Audit Info', value: '', full: true },
     {
-      label: 'Created on',
+      label: 'Created On',
       value: getDateTimeFormat(data?.created_datetime) || 'N/A',
     },
     {
-      label: 'Created by',
+      label: 'Created By',
       value: capitalizeFirstLetter(data?.created_by),
     },
     {
-      label: 'Last Updated on',
+      label: 'Updated On',
       value: getDateTimeFormat(data?.modified_datetime) || 'N/A',
     },
-    { label: 'Last Updated by', value: getValueOrDefault(data?.modified_by) },
+    { label: 'Updated By', value: getValueOrDefault(data?.modified_by) },
   ];
   return (
     <div className='grid grid-cols-2 divide-y'>

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { FormType, SelectOption, YesNo } from '../../types';
-import { DATA_STORAGE_OPTIONS, STATUS_OPTIONS } from './utils';
+import { DATA_STORAGE_OPTIONS } from './utils';
 import {
   createFiscalDateField,
   createPhoneInputField,
@@ -9,6 +9,7 @@ import {
   createTextAreaField,
   createTextField,
   REGEX_PATTERNS,
+  STATUS_OPTIONS,
   YES_NO_OPTIONS,
 } from '../../../common-utils';
 
@@ -18,8 +19,9 @@ export const FormData = (
   currency: SelectOption[],
   state: SelectOption[],
   dataResidency: SelectOption[],
+  industrys: SelectOption[],
   disableFields?: boolean,
-  stateLoading?: boolean,
+  stateLoading?: boolean
 ): FormType[] => {
   return useMemo(
     () => [
@@ -39,20 +41,22 @@ export const FormData = (
             regex: REGEX_PATTERNS.ACCOUNT_NAME,
             regexErrorMessage: 'Invalid Account Name',
             placeholder: 'Enter Account Name',
-            lengthRequired: {
-              key: 'name_length',
-              minMatchedValue: REGEX_PATTERNS.MIN_ACCOUNT_NAME_REGEX,
-              minErrorMessage: 'Account name must be more than 6 characters long',
-              maxMatchedValue: REGEX_PATTERNS.MAX_ACCOUNT_NAME_REGEX,
-              maxErrorMessage: 'Max length exceeded',
-            },
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_ACCOUNT_NAME_REGEX,
+                errorMessage:
+                  'Account Name must be more than 6 characters long',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_ACCOUNT_NAME_REGEX,
+                errorMessage: 'Max length exceeded',
+              },
+            ],
           }),
-          createTextField('industry', 'Industry', {
+          createSelectField('industry_rid', 'Industry', {
+            options: industrys,
+            placeholder: 'Choose Industry',
             required: true,
-            regex: REGEX_PATTERNS.INDUSTRY,
-            regexErrorMessage:
-              'Industry should be 5-25 characters and contain only letters, spaces, or ampersand (&)',
-            placeholder: 'Enter Industry',
           }),
           createRadioField('is_parent', 'Is Parent Account', {
             radioOptions: YES_NO_OPTIONS,
@@ -64,7 +68,7 @@ export const FormData = (
               key: 'data_storage',
               ifMatchValue: DATA_STORAGE_OPTIONS[0].value,
               ifNotMatchValue: DATA_STORAGE_OPTIONS[1].value,
-            }
+            },
           }),
           createSelectField('parent_account_rid', 'Parent Account', {
             options: parentAccount,
@@ -88,22 +92,36 @@ export const FormData = (
             regex: REGEX_PATTERNS.WEBSITE,
             regexErrorMessage: 'Enter a valid website URL',
             placeholder: 'Enter Website',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_WEBSITE,
+                errorMessage: 'Max length exceeded',
+              },
+            ],
           }),
           createTextField('project_manager', 'Delivery Manager', {
-            required: true,
+            required: false,
             regex: REGEX_PATTERNS.MANAGER_REGEX,
             regexErrorMessage: 'Enter a valid name',
             placeholder: 'Enter Delivery Manager Name',
-            lengthRequired: {
-              key: 'name_length',
-              minMatchedValue: REGEX_PATTERNS.MIN_NAME_REGEX,
-              minErrorMessage: 'Name must be more than 2 characters long',
-              maxMatchedValue: REGEX_PATTERNS.MAX_NAME_REGEX,
-              maxErrorMessage: 'Max length exceeded',
-            },
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_NAME_REGEX,
+                errorMessage: 'Name must be more than 1 characters long',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_NAME_REGEX,
+                errorMessage: 'Max length exceeded',
+              },
+              {
+                regex: REGEX_PATTERNS.NOT_ALLOW_SPACE_SYMBOLS_AT_START_END,
+                errorMessage:
+                  'Cannot begin or end with a space or special character',
+              },
+            ],
           }),
           createTextField('annual_revenue', 'Annual Revenue', {
-            required: true,
+            required: false,
             regex: REGEX_PATTERNS.ANNUAL_REVENUE,
             regexErrorMessage: 'Enter a valid annual revenue',
             placeholder: 'Enter Annual Revenue',
@@ -117,19 +135,19 @@ export const FormData = (
           createSelectField('country_rid', 'Country', {
             options: country,
             placeholder: 'Choose Country',
-            required: true,
+            required: false,
             onChange: true,
             resetDependsFields: ['region'],
           }),
           createSelectField('region', 'Region', {
             options: state,
             placeholder: 'Choose Region',
-            required: true,
+            required: false,
             isLoading: stateLoading,
           }),
           createSelectField('currency_rid', 'Currency', {
             options: currency,
-            required: true,
+            required: false,
             placeholder: 'Choose Currency',
           }),
         ],
@@ -180,16 +198,17 @@ export const FormData = (
         sectionName: 'Account Settings',
         fillType: 'half',
         fields: [
-          createFiscalDateField('fiscal_start_date', 'Fiscal Start Date', {
+          createFiscalDateField('fiscal_start_date', 'Fiscal start', {
             required: true,
             disabled: disableFields,
           }),
-          createFiscalDateField('fiscal_end_date', 'Fiscal End Date', {
+          createFiscalDateField('fiscal_end_date', 'Fiscal End', {
             disabled: disableFields,
             required: true,
             toBeNotSame: {
               key: 'fiscal_start_date',
-              errorMessage: 'Fiscal End Date cannot be the same as the Fiscal Start Date',
+              errorMessage:
+                'Fiscal End Date cannot be the same as the Fiscal Start Date',
             },
           }),
           createRadioField('autosend_interaction', 'Auto Send Interaction', {
@@ -232,12 +251,21 @@ export const FormData = (
           createTextAreaField('account_description', 'Comments', {
             required: false,
             regex: REGEX_PATTERNS.ACCOUNT_DESCRIPTION,
-            regexErrorMessage: 'Comments must be within 500 characters',
+            regexErrorMessage: 'Comments must be within 2000 characters',
             placeholder: 'Enter Comments',
           }),
         ],
       },
     ],
-    [country, parentAccount, state, disableFields, currency, stateLoading, dataResidency]
+    [
+      industrys,
+      disableFields,
+      parentAccount,
+      country,
+      state,
+      stateLoading,
+      currency,
+      dataResidency,
+    ]
   );
 };

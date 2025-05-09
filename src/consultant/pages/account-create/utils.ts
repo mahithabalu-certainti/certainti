@@ -1,10 +1,5 @@
 import { AccountFormData, NewAccountData, SelectOption } from '../../types';
 
-export const STATUS_OPTIONS: SelectOption[] = [
-  { label: 'Active', value: 'active' },
-  { label: 'In-Active', value: 'inactive' },
-];
-
 export const DATA_STORAGE_OPTIONS: SelectOption[] = [
   { label: 'Separate DB', value: 'separate_db' },
   { label: 'Store in Parent', value: 'store_in_parent' },
@@ -13,6 +8,7 @@ export const DATA_STORAGE_OPTIONS: SelectOption[] = [
 export const transformFormData = (
   formData: Partial<AccountFormData>,
   isEdit: boolean,
+  industry_name?: string,
   account_rid?: string
 ): Partial<NewAccountData> => {
   const data: Partial<NewAccountData> = {
@@ -38,7 +34,8 @@ export const transformFormData = (
     finance_poc_name: formData.finance_poc_name,
     finance_poc_email: formData.finance_poc_email,
     finance_poc_number: formData.finanace_poc_number,
-    industry: formData.industry,
+    industry_rid: formData.industry_rid,
+    industry_name,
     website: formData.website || null,
     project_manager: formData.project_manager,
     annual_revenue: Number((formData.annual_revenue ?? '').toString().replace(/[^\d.]/g, '')),

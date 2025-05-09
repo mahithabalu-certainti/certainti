@@ -12,6 +12,7 @@ import {
   CitysApiResponse,
   CurrencyApiResponse,
   GlobalAccountListResponse,
+  IndustrysApiResponse,
   ParentAccountApiResponse,
   StatesApiResponse,
 } from '../../types';
@@ -22,6 +23,7 @@ import {
   CurrencyUrl,
   getAccountExportUrl,
   GlobalAccountUrl,
+  IndustryUrl,
   ParentAccountUrl,
   StateUrl,
 } from '../urls/account-url';
@@ -75,6 +77,13 @@ export const fetchParentAccounts =
   async (): Promise<ParentAccountApiResponse> => {
     const { data } =
       await accountServiceApi.get<ParentAccountApiResponse>(ParentAccountUrl);
+    return data;
+  };
+
+  export const fetchIndustrys =
+  async (): Promise<IndustrysApiResponse> => {
+    const { data } =
+      await accountServiceApi.get<IndustrysApiResponse>(IndustryUrl);
     return data;
   };
 

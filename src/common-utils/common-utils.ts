@@ -228,18 +228,18 @@ export const REGEX_PATTERNS = {
   LETTERS_3_TO_100: /^[\s\S]{3,100}$/,
   NOT_ALLOW_ONLY_SYMBOLS: /^(?![\W_]+$).+$/,
   ALPHANUMERIC_SPEC_5_TO_50: /^[\s\S]{5,50}$/,
-  EMAIL:
-    /^(?!.*[._%+]{2})[a-zA-Z0-9](?:[a-zA-Z0-9._-]{0,62}[a-zA-Z0-9])?@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+  EMAIL: /^(?=.{6,254}$)[a-zA-Z0-9._+-]+@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63}$/,
   PHONE: /^([0-9]{10})$/,
   WEBSITE:
-    /^(https?:\/\/)?(www\.)?[a-zA-Z0-9-]{1,50}(\.[a-zA-Z]{2,})+(\/[^\s]*)?$/i,
+    /^https?:\/\/(?!.*\.\.)(?!.*\/\/)(?:[a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]{2,}(?::[0-9]+)?(?:\/[a-zA-Z0-9-.:/]*)*$/,
+  MAX_WEBSITE: /^.{0,255}$/,
   DATA_RESIDENCY: /^[A-Za-z0-9\s-]+$/,
   NUMBER_OPTIONAL_DECIMAL: /^([0-9]{1,10}(\.[0-9]{1,2})?)?$/,
   BLENDED_NUMBER: /^[0-9]{1,10}$/,
   DESCRIPTION: /^.{0,500}$/,
   RESOURCE_DESCRIPTION: /^.{0,1000}$/,
-  ACCOUNT_DESCRIPTION: /^[\s\S]{0,500}$/,
-  POSTAL_CODE: /^[A-Za-z0-9\s-]{3,9}$/,
+  ACCOUNT_DESCRIPTION: /^[\s\S]{0,2000}$/,
+  POSTAL_CODE: /^[a-zA-Z0-9-]{1,20}$/,
   MAX_AI_INTRACTION: /^[3-5]$/,
   NUMBERS: /^[0-9]{1,20}$/,
   NUMBERS_50: /^[0-9]{5,50}$/,
@@ -250,11 +250,14 @@ export const REGEX_PATTERNS = {
   CITY_REGEX: /^[A-Za-z\s]{3,100}$/,
   NUMBERS_GREATER_THAN_ZERO: /^[1-9]\d*$/,
   MANAGER_REGEX: /^[A-Za-z0-9\s.'-]*$/,
-  MIN_NAME_REGEX: /^.{3,}$/,
-  MAX_NAME_REGEX: /^.{0,50}$/,
+  MIN_NAME_REGEX: /^.{2,}$/,
+  MAX_NAME_REGEX: /^.{0,128}$/,
   MIN_ACCOUNT_NAME_REGEX: /^.{7,}$/,
-  MAX_ACCOUNT_NAME_REGEX: /^.{0,25}$/,
+  MAX_ACCOUNT_NAME_REGEX: /^.{0,125}$/,
   MAX_EMAIL_REGEX: /^.{0,254}$/,
+  MAX_POSTAL_REGEX: /^.{1,20}$/,
+  NOT_ALLOW_SPACE_SYMBOLS_AT_START_END:
+    /^[a-zA-Z0-9][a-zA-Z0-9 !@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]*[a-zA-Z0-9]$/,
 };
 
 /**
@@ -351,3 +354,8 @@ export const getDateTimeFormat = (date?: string) => {
   if (!date) return '';
   return dayjs(date).format('MM-DD-YYYY HH:mm:ss');
 };
+
+export const STATUS_OPTIONS: SelectOption[] = [
+  { label: 'Active', value: 'active' },
+  { label: 'In-Active', value: 'inactive' },
+];

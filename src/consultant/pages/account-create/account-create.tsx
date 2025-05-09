@@ -8,6 +8,7 @@ import { useToast } from '../../../hooks';
 import {
   useFetchAccountFields,
   useFetchCurrency,
+  useFetchIndustrys,
   useFetchParentAccounts,
   useFetchState,
 } from '../../services/account';
@@ -47,6 +48,7 @@ export const AccountForm: React.FC = () => {
   );
 
   const allCountries = useGetAllCountries();
+  const industry = useFetchIndustrys();
   const parentAccount = useFetchParentAccounts();
   const currency = useFetchCurrency();
   const states = useFetchState(currentCountry);
@@ -111,10 +113,24 @@ export const AccountForm: React.FC = () => {
     [states.data?.data.states]
   );
 
+  const memoizedIndustry: SelectOption[] = useMemo(
+    () =>
+      industry.data?.data.industries.map((industry) => ({
+        label: industry.industry_name,
+        value: industry.rid,
+      })) || [],
+    [industry.data?.data.industries]
+  );
+
   const submitData = (formValues: Partial<AccountFormData>) => {
+    const industry_name =
+      formValues.industry_rid &&
+      memoizedIndustry.find((item) => item.value === formValues.industry_rid)
+        ?.label;
     const transformData = transformFormData(
       formValues,
       isEditView,
+      industry_name,
       accountData?.rid
     );
     if (isEditView) {
@@ -193,8 +209,9 @@ export const AccountForm: React.FC = () => {
           memoizedCurrency,
           memoizedState,
           dataResidency,
+          memoizedIndustry,
           isEditView,
-          states.isLoading,
+          states.isLoading
         )}
         loading={
           allCountries.isLoading ||
