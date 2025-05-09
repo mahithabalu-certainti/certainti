@@ -50,7 +50,6 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
       label: 'User ID',
       value: getValueOrDefault(data?.r_number),
     },
-    { label: 'Full name', value: getValueOrDefault(data?.full_name) },
     {
       label: 'First name',
       value: getValueOrDefault(data?.first_name),
@@ -89,7 +88,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     { label: 'Audit Info', value: '', full: true },
     {
       label: 'Created on',
-      value: getDateTimeFormat(data?.created_datetime),
+      value: getDateTimeFormat(data?.created_datetime) || 'N/A',
     },
     {
       label: 'Created by',
@@ -97,7 +96,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     },
     {
       label: 'Last Updated on',
-      value: getDateTimeFormat(data?.modified_datetime),
+      value: getDateTimeFormat(data?.modified_datetime) || 'N/A',
     },
     { label: 'Last Updated by', value: getValueOrDefault(data?.modified_by) },
   ];

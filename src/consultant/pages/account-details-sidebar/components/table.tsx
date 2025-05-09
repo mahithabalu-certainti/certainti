@@ -32,6 +32,7 @@ interface TableColumn {
 
 interface TableActionMenuItem {
   label: string;
+  disabled?: boolean;
   onClick: (row: any) => void;
   icon?: React.ReactNode;
 }
@@ -552,9 +553,12 @@ const DataTable: React.FC<DataTableProps> = ({
               }}
               key={item.label}
               onClick={() => {
-                item.onClick(selectedRowData);
-                handleActionMenuClose();
+                if (!item.disabled) {
+                  item.onClick(selectedRowData);
+                  handleActionMenuClose();
+                }
               }}
+              disabled={item.disabled}
             >
               {item.icon && <div className='mr-2'>{item.icon}</div>}
               <ListItemText

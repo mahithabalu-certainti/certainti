@@ -56,6 +56,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   const [resourceCostList, setResourceCostList] = useState<ResourceCostType[]>(
     []
   );
+  const accountInActive = accountDetails?.data?.accountById?.status === "inactive";
   const apiOrder = costOrder.toUpperCase() as 'ASC' | 'DESC';
   const { data: costList, isLoading: loading } = useResourceCost({
     page: currentPage+1,
@@ -182,6 +183,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
               <ActionButton
                 onEdit={() => handleEdit(cost)}
                 onDelete={() => {}}
+                isDisabled={accountInActive}
                 // onView={() => { }}
               />
             </TableCell>

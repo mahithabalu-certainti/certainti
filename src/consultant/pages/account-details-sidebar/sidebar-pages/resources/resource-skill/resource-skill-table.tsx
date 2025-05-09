@@ -53,6 +53,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   const [resourceSkillList, setResourceSkillList] = useState<
     ResourceSkillType[]
   >([]);
+  const accountInActive = accountDetails?.data?.accountById?.status === "inactive";
   const apiOrder = skillOrder.toUpperCase() as 'ASC' | 'DESC';
   const { data: skillList, isLoading: loading } = useResourceSkill({
     page: currentPage+1,
@@ -131,6 +132,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
               <ActionButton
                 onEdit={() => handleEdit(skill)}
                 onDelete={() => {}}
+                isDisabled={accountInActive}
                 // onView={() => { }}
               />
             </TableCell>

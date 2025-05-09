@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { createresourceIcon, editIcon } from '../../../assets';
-import { OnChange, useGetAllCountries } from '../../../common-service';
+import { Layout, OnChange, useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
@@ -58,6 +58,8 @@ const ResourceForm: React.FC = () => {
   const [searchParams] = useSearchParams();
   const resourceId = searchParams.get('res_id');
   const [resourceDetails, setResourceDetails] = useState<any>(null);
+  const accountId = searchParams.get('account_id');
+
   // Derived values
   const isEditView = location.pathname.includes('/edit');
   const accountData = isEditView
@@ -162,8 +164,8 @@ const ResourceForm: React.FC = () => {
   const city = useFetchCity(currentCountry.state);
   const currency = useFetchCurrency();
   // Mutations
-  const createResource = useCreateResource();
-  const updateResource = useUpdateResource();
+  const createResource = useCreateResource(accountId as string);
+  const updateResource = useUpdateResource(accountId as string);
   const createResourceCost = useCreateResourceCost();
   const updateResourceCost = useUpdateResourceCost();
   const createResourceSkill = useCreateResourceSkill();
@@ -280,7 +282,6 @@ const ResourceForm: React.FC = () => {
         createResourceSkill.mutate(skillData);
       }
     }
-
     if (!state?.skill && !state?.cost) {
       if (isEditView) {
         const updatedData = transformPayloadforUpdateResource(
@@ -352,7 +353,7 @@ const ResourceForm: React.FC = () => {
 
   return (
     <div className='resource-form-container'>
-      <div className='flex justify-between items-center border-b-2 h-[108px] border-gray-200 px-4 py-6'>
+      <div className='flex justify-between items-center border-b-2 border-gray-200 px-10 py-6'>
         <div className='flex items-center'>
           <img
             src={isEditView ? editIcon : createresourceIcon}
@@ -422,40 +423,39 @@ const ResourceForm: React.FC = () => {
           />
         </div>
       </div>
-      <div className='p-8'>
-        <FormBuilder
-          data={formConfig}
-          loading={allCountries.isLoading}
-          values={
-            isEditView &&
-            !state?.cost &&
-            !state?.skill &&
-            (resourceDetails as unknown as Record<
-              string,
-              string | number | boolean | string[] | null
-            >)
-              ? (resourceDetails as unknown as Record<
+      <FormBuilder
+        data={formConfig}
+        loading={allCountries.isLoading}
+        values={
+          isEditView &&
+          !state?.cost &&
+          !state?.skill &&
+          (resource?.data?.resourceDetails as unknown as Record<
+            string,
+            string | number | boolean | string[] | null
+          >)
+            ? (resource?.data?.resourceDetails as unknown as Record<
+                string,
+                string | number | boolean | string[] | null
+              >)
+            : state?.cost || state?.skill
+              ? (formValues as unknown as Record<
                   string,
                   string | number | boolean | string[] | null
                 >)
-              : state?.cost || state?.skill
-                ? (formValues as unknown as Record<
-                    string,
-                    string | number | boolean | string[] | null
-                  >)
-                : undefined
-          }
-          // values={
-          //   resource.data?.data?.resource as unknown as Record<
-          //     string,
-          //     string | number | boolean | string[] | null
-          //   >
-          // }
-          outData={handleSubmit}
-          formRef={formRef}
-          onChange={onChangeField}
-        />
-      </div>
+              : undefined
+        }
+        // values={
+        //   resource.data?.data?.resource as unknown as Record<
+        //     string,
+        //     string | number | boolean | string[] | null
+        //   >
+        // }
+        outData={handleSubmit}
+        formRef={formRef}
+        onChange={onChangeField}
+        layout={Layout.TYPE_1}
+      />
     </div>
   );
 };

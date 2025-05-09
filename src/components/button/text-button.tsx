@@ -8,6 +8,7 @@ interface TextButtonProps {
   variant?: 'contained' | 'text' | 'outlined' | 'filled';
   color?: ButtonOwnProps['color'];
   loading?: boolean;
+  disabled?: boolean;
   onClick?: () => void;
 }
 
@@ -38,6 +39,10 @@ const StyledButton = styled(Button)<{
     '&:hover': {
       backgroundColor: `${colorInherit ? theme.palette.grey[700] : secondaryColor} !important`,
       color: `${whiteColor} !important`,
+    },
+    '&:disabled': {
+      backgroundColor: `${colorInherit ? theme.palette.grey[700] : theme.palette.secondary.light}`,
+      color: theme.palette.grey[100],
     }
   };
 });

@@ -6,6 +6,7 @@ import {
   ErrorHandling,
   FieldType,
   SelectOption,
+  YesNo,
 } from '../consultant/types';
 
 export const createTextField = (
@@ -110,6 +111,13 @@ export const createRadioField = (
     radioOptions: SelectOption[];
     defaultValue?: string;
     disabled?: boolean;
+    onChange?: boolean;
+    defaultSelect?: {
+      key: string;
+      matchedValue: YesNo.Yes;
+      ifMatchValue: string;
+      ifNotMatchValue: string;
+    };
   }
 ): FieldType => ({
   type: 'radio',
@@ -118,6 +126,8 @@ export const createRadioField = (
   required: options.required ?? false,
   options: options.radioOptions,
   disabled: options.disabled,
+  onChange: options.onChange,
+  defaultSelect: options.defaultSelect,
 });
 
 export const createSelectField = (
@@ -203,8 +213,8 @@ export const createFiscalDateField = (
 });
 
 export const YES_NO_OPTIONS: SelectOption[] = [
-  { label: 'Yes', value: 'yes' },
-  { label: 'No', value: 'no' },
+  { label: 'Yes', value: YesNo.Yes },
+  { label: 'No', value: YesNo.No },
 ];
 
 // Regex patterns
@@ -293,7 +303,7 @@ export const ALLOWED_COUNTRIES: AllowedCountry[] = [
   'fr',
 ];
 
-export const fiscalYears = Array.from({ length: 6 }, (_, i) => {
+export const fiscalYears = Array.from({ length: 100 }, (_, i) => {
   const year = new Date().getFullYear() - i;
   return { value: year.toString(), label: `FY-${year}` };
 });

@@ -18,8 +18,8 @@ import {
   menuIcon,
   notificationIcon,
   phoneIcon,
-  plusIcon,
-  searchIcon,
+  // plusIcon,
+  // searchIcon,
   settingsIcon,
 } from '../../assets';
 import { UserRoles } from '../../common-service';
@@ -97,9 +97,9 @@ export const Navbar: React.FC = () => {
     setNotificationAnchor(event.currentTarget);
   };
 
-  const handleSearchMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setSearchAnchor(event.currentTarget);
-  };
+  // const handleSearchMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+  //   setSearchAnchor(event.currentTarget);
+  // };
 
   const handleCloseGlobalModal = () => {
     setIsGlobalModalOpen(false);
@@ -290,7 +290,7 @@ export const Navbar: React.FC = () => {
       <AppBar position='sticky'>
         <Toolbar className='justify-between !min-h-[55px]'>
           <div className='relative rounded-md mr-2 flex gap-2'>
-            <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
+            {/* <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
               <img
                 src={searchIcon}
                 alt='search'
@@ -310,7 +310,7 @@ export const Navbar: React.FC = () => {
               aria-controls={notificationId}
               alt='plus'
               className='cursor-pointer h-8 w-7'
-            />
+            /> */}
           </div>
           <Box
             sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}

@@ -1,11 +1,31 @@
-import { useApiMutation } from '../../../api/mutation';
+import { Resource } from 'i18next';
 import { ResourceUpdateResponse } from '../../types/resource-edit';
+import { useMutation } from '@tanstack/react-query';
+import { resourceServiceApi } from '../../../api/api';
 
-export const useUpdateResource = () => {
-  return useApiMutation<unknown, Partial<ResourceUpdateResponse>>(
-    'https://dev-platform20-api-management.azure-api.net/entityService/api/resources/update',
-    'put'
-  );
+export const useUpdateResource = (accountId: string) => {
+  return useMutation<ResourceUpdateResponse, Error, Partial<Resource>>({
+    mutationFn: (body) => updateResource(body, accountId),
+  });
+};
+
+export const updateResource = async (
+  body: Partial<Resource>,
+  accountId: string
+): Promise<ResourceUpdateResponse> => {
+  try {
+    const { data } = await resourceServiceApi.put<ResourceUpdateResponse>(
+      '/api/resources/update',
+      body,
+      {
+        headers: { 'x-account-id': accountId },
+      }
+    );
+    return data;
+  } catch (error) {
+    console.error('Error fetching user details:', error);
+    throw error;
+  }
 };
 
 // export const useUpdateResource = (
