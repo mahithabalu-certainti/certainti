@@ -132,6 +132,20 @@ export interface IResourceCostService {
 }
 
 export interface IResourceSkillService {
+  getSkillSubTypes(skillTypeRid: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { skillSubTypes: any[] };
+  }>;
+
+  getSkillTypes(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string; 
+    data?: { skillTypes: any[] };
+  }>;
+  
   createResourceSkill(
     resourceSkillData: IResourceSkill,
     userId: string

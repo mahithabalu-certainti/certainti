@@ -10,19 +10,20 @@ interface ResourceSkillAttributes  {
  resource_type: string,
  resource_rid: string,
  resource_number: string,
- resource_ref_id: string, 
- resource_desc: string,
- skill_rid: string,
+ resource_ref_id: string,
+ status?: string, 
+ skill_type_rid: string,
+ skill_subtype_rid: string,
+ skill_type_name?: string,
+ skill_subtype_name?: string,
+ skill_details?: string,             
  start_date?: Date | null,
- skill_description?: string,
- skill_level: string,
- status?: string,
- years_of_experience: number,
+ skill_description?: string,     
+ skill_level: string,         
  created_datetime?: Date,
  modified_datetime?: Date,
  created_by?: string,
  modified_by?: string,
- technical_weightage: number
 }
 
 interface ResourceSkillCreationAttributes
@@ -38,18 +39,17 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
   resource_rid!: string;
   resource_number!: string;
   resource_ref_id!: string;
-  resource_desc!: string;
-  status?: string; 
-  skill_rid!: string;
+  status?: string;
+  skill_type_rid!: string;
+  skill_subtype_rid!: string;
+  skill_details?: string;
   start_date?: Date;
   skill_description?: string;
   skill_level!: string;
-  years_of_experience!: number;
   created_datetime?: Date;
   modified_datetime?: Date;
   created_by?: string;
   modified_by?: string;
-  technical_weightage!: number;
 
   static initialize(sequelize: Sequelize,schemaName: string) {
     ResourceSkill.init(
@@ -83,14 +83,6 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
         type: DataTypes.STRING(255),
         allowNull: false,
        },
-       resource_desc : {
-         type: DataTypes.STRING(255),
-         allowNull: true,
-       },
-       skill_rid: {
-        type: DataTypes.UUID,
-        allowNull: false,
-       },
        start_date: {
         type: DataTypes.DATE,
         allowNull: true,
@@ -104,21 +96,26 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
        allowNull: true,
        defaultValue: "Beginner", 
        },
-       years_of_experience: {
-         type: DataTypes.DECIMAL(10, 1),
-         allowNull: true,
-       },
        resource_ref_id: {
         type: DataTypes.STRING(255),
         allowNull: false,
        },
-       technical_weightage: {
-         type: DataTypes.DECIMAL(10, 2),
-         allowNull: true,
-       },
        status: {
         type: DataTypes.STRING(255),
+        allowNull: true,
         defaultValue: "active",
+       },
+       skill_type_rid: {
+        type: DataTypes.UUID,
+        allowNull: false,
+       },
+       skill_subtype_rid: {
+        type: DataTypes.UUID,
+        allowNull: false,
+       },
+       skill_details: {
+        type: DataTypes.STRING(2000),
+        allowNull: true,
        },
        created_datetime: {
         type: DataTypes.DATE,
@@ -184,15 +181,15 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
     });
 
     // Skill model
-    ResourceSkill.belongsTo(Skill,{
-      foreignKey: "skill_rid",
-      targetKey: "rid",
-    });
+    // ResourceSkill.belongsTo(Skill,{
+    //   foreignKey: "skill_rid",
+    //   targetKey: "rid",
+    // });
 
-    Skill.hasMany(ResourceSkill, {
-      foreignKey: "skill_rid",
-      sourceKey: "rid",
-    });
+    // Skill.hasMany(ResourceSkill, {
+    //   foreignKey: "skill_rid",
+    //   sourceKey: "rid",
+    // });
 
     return ResourceSkill;
   }

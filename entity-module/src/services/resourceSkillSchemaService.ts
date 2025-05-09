@@ -7,6 +7,7 @@ import { ResourceSkill } from "../models/resourceSkill";
 import { ResourceSkillTimeline } from "../models/resourceSkillTimeline";
 import { ResourceSkillHistory } from "../models/resourceSkillHistory";
 import { ResourceFiscal } from "../models/resourceFiscal";
+import { initMainDbSequelize } from "../config/mainDataSource";
 
 class ResourceSkillSchemaService {
   private sequelizeInstance: Sequelize | null = null;
@@ -26,7 +27,7 @@ class ResourceSkillSchemaService {
         // Initialize models with the sequelize instance
         Resources.initialize(sequelize, schemaName);
         ResourceFiscal.initialize(sequelize,schemaName);
-        Skill.initialize(sequelize,schemaName);
+        // Skill.initialize(sequelize,schemaName);
         ResourceSkill.initialize(sequelize,schemaName);
         ResourceSkillTimeline.initialize(sequelize,schemaName);
         ResourceSkillHistory.initialize(sequelize,schemaName);
@@ -269,58 +270,92 @@ class ResourceSkillSchemaService {
    * @param search - Search term
    * @returns Promise with query results
    */
-  async exportResoucreSkill(
-    schemaName: string,
-    filterConditions: string,
-    searchCondition: string,
-    finalSortBy: string,
-    finalSortOrder: string,
-    resource_rid: string,
-    search: string
-  ) {
-    const sequelize = await this.getDbConnection(schemaName);
+async exportResoucreSkill(
+  schemaName: string,
+  filterConditions: string,
+  searchCondition: string,
+  finalSortBy: string,
+  finalSortOrder: string,
+  resource_rid: string,
+  search: string
+) {
+  const sequelize = await this.getDbConnection(schemaName);
+  const mainDbSequelize = await initMainDbSequelize();
 
-    // Build the query to get data from the account-specific schema
-    const query = `
-      SELECT rs.*,
-      TO_CHAR(rs.start_date, 'MM/DD/YYYY') as start_date,
-       r.resource_fullname, s.skill_name, r.resource_role, r.resource_type, r.resource_status, r.fiscal_year
-      FROM "${schemaName}"."resource_skill" rs
-      INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
-      INNER JOIN "${schemaName}"."skill" s ON rs.skill_rid = s.rid
-      WHERE 1=1 AND rs.resource_rid = :resource_rid
-      ${filterConditions}
-      ${searchCondition}
-      ORDER BY ${finalSortBy === 'skill_name' ? 's' : 'rs'}."${finalSortBy}" ${finalSortOrder}
-    `;
+  // Build the query to get data from the account-specific schema
+  const query = `
+    SELECT rs.*,
+    TO_CHAR(rs.start_date, 'MM/DD/YYYY') as start_date,
+    r.resource_fullname
+    FROM "${schemaName}"."resource_skill" rs
+    INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
+    WHERE 1=1 AND rs.resource_rid = :resource_rid
+    ${filterConditions}
+    ${searchCondition}
+    ${finalSortBy === 'skill_type_name' || finalSortBy === 'skill_subtype_name' ? '' : `ORDER BY rs."${finalSortBy}" ${finalSortOrder}`}
+  `;
 
-    const replacements = {
-      searchTerm: search ? `%${search}%` : null,
-      resource_rid,
-    };
+  const replacements = {
+    searchTerm: search ? `%${search}%` : null,
+    resource_rid,
+  };
 
-    // Execute the queries
-    const results = await sequelize.query(query, {
-      replacements,
-      type: "SELECT",
+  // Execute the query
+  let resourceSkill = await sequelize.query(query, {
+    replacements,
+    type: "SELECT",
+  }) as any[];
+
+  if (resourceSkill.length > 0) {
+    const skillTypeRids = [...new Set(resourceSkill.map(r => r.skill_type_rid))];
+    const skillSubtypeRids = [...new Set(resourceSkill.map(r => r.skill_subtype_rid))];
+
+    // Fetch skill type names
+    const skillTypeQuery = `SELECT rid, skill_type_name FROM "public"."skill_type" WHERE rid IN (:skillTypeRids)`;
+    const skillTypes = await mainDbSequelize.query(skillTypeQuery, {
+      replacements: { skillTypeRids },
+      type: "SELECT"
     });
-  
-    const resourceSkill = results.map((resource: any) => {
-      return {
-        "Start Date":resource.start_date,
-        "Skill Name":resource.skill_name,
-        "Skill Level":resource.skill_level,
-        "Years of Experience":resource.years_of_experience
-      };
+
+    // Fetch skill subtype names
+    const skillSubtypeQuery = `SELECT rid, skill_subtype_name FROM "public"."skill_subtype" WHERE rid IN (:skillSubtypeRids)`;
+    const skillSubtypes = await mainDbSequelize.query(skillSubtypeQuery, {
+      replacements: { skillSubtypeRids },
+      type: "SELECT"
     });
-    return {
-      statusCode: HttpStatus.SUCCESS,
-      message: HttpStatus.SUCCESS_MESSAGE,
-      data: {
-        resourceSkill: resourceSkill
-      },
-    };
+
+    // Create lookup maps
+    const skillTypeMap = new Map(skillTypes.map((st: any) => [st.rid, st.skill_type_name]));
+    const skillSubtypeMap = new Map(skillSubtypes.map((sst: any) => [sst.rid, sst.skill_subtype_name]));
+
+    // Add names to resource skills and format for export
+    resourceSkill = resourceSkill.map((rs: any) => ({
+      "Start Date": rs.start_date,
+      "Skill Type Name": skillTypeMap.get(rs.skill_type_rid) || '',
+      "Skill Subtype Name": skillSubtypeMap.get(rs.skill_subtype_rid) || '',
+      "Skill Level": rs.skill_level,
+    }));
+
+    // Apply sorting if needed
+    if (finalSortBy === 'skill_type_name' || finalSortBy === 'skill_subtype_name') {
+      resourceSkill.sort((a: any, b: any) => {
+        const aValue = a[finalSortBy].toLowerCase();
+        const bValue = b[finalSortBy].toLowerCase();
+        return finalSortOrder === 'ASC' 
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      });
+    }
   }
+
+  return {
+    statusCode: HttpStatus.SUCCESS,
+    message: HttpStatus.SUCCESS_MESSAGE,
+    data: {
+      resourceSkill
+    },
+  };
+}
 
 /**
    * Executes the main and count queries and formats the response
@@ -353,14 +388,13 @@ async executeQueries(
   const query = `
     SELECT rs.*,
     TO_CHAR(rs.start_date, 'MM/DD/YYYY') as start_date,
-     r.resource_fullname, s.skill_name, r.resource_role, r.resource_type, r.resource_status, r.fiscal_year
+    r.resource_fullname, r.resource_role, r.resource_type, r.resource_status
     FROM "${schemaName}"."resource_skill" rs
     INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
-    INNER JOIN "${schemaName}"."skill" s ON rs.skill_rid = s.rid
     WHERE 1=1 AND rs.resource_rid = :resource_rid
     ${filterConditions}
     ${searchCondition}
-    ORDER BY ${finalSortBy === 'skill_name' ? 's' : 'rs'}."${finalSortBy}" ${finalSortOrder}
+    ${finalSortBy === 'skill_type_name' || finalSortBy === 'skill_subtype_name' ? '' : `ORDER BY rs."${finalSortBy}" ${finalSortOrder}`}
     LIMIT :limit OFFSET :offset
   `;
 
@@ -369,7 +403,6 @@ async executeQueries(
     SELECT COUNT(*) as total
     FROM "${schemaName}"."resource_skill" rs
     INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
-    INNER JOIN "${schemaName}"."skill" s ON rs.skill_rid = s.rid
     WHERE 1=1 AND rs.resource_rid = :resource_rid
     ${filterConditions}
     ${searchCondition}
@@ -395,7 +428,51 @@ async executeQueries(
     }),
   ]);
 
-  const resourceSkill = results;
+  let resourceSkill = results as any[];
+  const mainDbSequelize = await initMainDbSequelize();
+
+  // Fetch skill type and subtype names from separate databases if needed
+  if (resourceSkill.length > 0) {
+    const skillTypeRids = [...new Set(resourceSkill.map((r: any) => r.skill_type_rid))];
+    const skillSubtypeRids = [...new Set(resourceSkill.map((r: any) => r.skill_subtype_rid))];
+
+    // Fetch skill type names
+    const skillTypeQuery = `SELECT rid, skill_type_name FROM "public"."skill_type" WHERE rid IN (:skillTypeRids)`;
+    const skillTypes = await mainDbSequelize.query(skillTypeQuery, {
+      replacements: { skillTypeRids },
+      type: "SELECT"
+    });
+
+    // Fetch skill subtype names
+    const skillSubtypeQuery = `SELECT rid, skill_subtype_name FROM "public"."skill_subtype" WHERE rid IN (:skillSubtypeRids)`;
+    const skillSubtypes = await mainDbSequelize.query(skillSubtypeQuery, {
+      replacements: { skillSubtypeRids },
+      type: "SELECT"
+    });
+
+    // Create lookup maps
+    const skillTypeMap = new Map(skillTypes.map((st: any) => [st.rid, st.skill_type_name]));
+    const skillSubtypeMap = new Map(skillSubtypes.map((sst: any) => [sst.rid, sst.skill_subtype_name]));
+
+    // Add names to resource skills
+    resourceSkill = resourceSkill.map((rs: any) => ({
+      ...rs,
+      skill_type_name: skillTypeMap.get(rs.skill_type_rid) || '',
+      skill_subtype_name: skillSubtypeMap.get(rs.skill_subtype_rid) || ''
+    }));
+
+    // Apply sorting if needed
+    if (finalSortBy === 'skill_type_name' || finalSortBy === 'skill_subtype_name') {
+      resourceSkill.sort((a: any, b: any) => {
+        const aValue = a[finalSortBy].toLowerCase();
+        const bValue = b[finalSortBy].toLowerCase();
+        return finalSortOrder === 'ASC' 
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      });
+    }
+  }
+
   const totalCount = countResult ? (countResult as any).total : 0;
 
   return {
@@ -419,9 +496,9 @@ async executeQueries(
    */
   getSortParameters(sortBy: string, sortOrder: string): [string, string] {
     const validSortColumns = [
-      "skill_name",
+      "skill_type_name",
+      "skill_subtype_name",
       "skill_level",
-      "years_of_experience",
       "start_date",
     ];
     if (!validSortColumns.includes(sortBy)) {
@@ -443,8 +520,8 @@ async executeQueries(
 
     return `
       AND (
-        s.skill_name ILIKE :searchTerm 
-        OR r.resource_full_name ILIKE :searchTerm
+        s.skill_type_name ILIKE :searchTerm 
+        OR r.resource_fullname ILIKE :searchTerm
       )
     `;
   }
@@ -490,20 +567,22 @@ async executeQueries(
     let filterConditions = "";
 
     // Define field types for proper filter handling
-    const alphanumericFields = ["skill_name"];
-    const numericFields = ["years_of_experience"];
+    // const alphanumericFields = ["skill_type_name"];
+    // const numericFields = ["years_of_experience"];
     const dateFields = ["start_date"];
-    const enumFields = ["skill_level","status"];
+    const enumFields = ["skill_level","status","skill_type_rid","skill_subtype_rid"];
 
     // Process each filter
     Object.entries(filters).forEach(([key, value]) => {
       // Handle different filter types based on field type
       if (typeof value === "object") {
-        if (alphanumericFields.includes(key)) {
-          filterConditions += this.processAlphanumericFilter(key, value);
-        } else if (numericFields.includes(key)) {
-          filterConditions += this.processNumericFilter(key, value);
-        } else if (dateFields.includes(key)) {
+        // if (alphanumericFields.includes(key)) {
+        //   filterConditions += this.processAlphanumericFilter(key, value);
+        // } 
+        // else if (numericFields.includes(key)) {
+        //   filterConditions += this.processNumericFilter(key, value);
+        // } 
+        if (dateFields.includes(key)) {
           filterConditions += this.processDateFilter(key, value);
         } else if (enumFields.includes(key)) {
           filterConditions += this.processEnumFilter(key, value);
@@ -673,20 +752,43 @@ processEnumFilter(key: string, value: any) {
   let condition = "";
   let tableAlias = "rs"; // Default to rs since we're only handling skill_level
 
+  // Check if the field is a UUID type
+  const isUuidField = key.toLowerCase().includes('rid');
   if (value.equals !== undefined) {
-    condition += ` AND LOWER(${tableAlias}."${key}") = LOWER('${value.equals}')`;
+    if (isUuidField) {
+      condition += ` AND ${tableAlias}."${key}" = '${value.equals}'`;
+    } else {
+      condition += ` AND LOWER(${tableAlias}."${key}") = LOWER('${value.equals}')`;
+    }
   } else if (value.not_equals !== undefined) {
-    condition += ` AND LOWER(${tableAlias}."${key}") != LOWER('${value.not_equals}')`;
+    if (isUuidField) {
+      condition += ` AND ${tableAlias}."${key}" != '${value.not_equals}'`;
+    } else {
+      condition += ` AND LOWER(${tableAlias}."${key}") != LOWER('${value.not_equals}')`;
+    }
   } else if (value.in && Array.isArray(value.in) && value.in.length > 0) {
-    const values = value.in.map((item: string) => `'${item.toLowerCase()}'`).join(",");
-    condition += ` AND LOWER(${tableAlias}."${key}") IN (${values})`;
+    if (isUuidField) {
+      const values = value.in.map((item: string) => `'${item}'`).join(",");
+      condition += ` AND ${tableAlias}."${key}" IN (${values})`;
+    } else {
+      const values = value.in.map((item: string) => `'${item.toLowerCase()}'`).join(",");
+      condition += ` AND LOWER(${tableAlias}."${key}") IN (${values})`;
+    }
   } else if (value.is_empty !== undefined) {
     if (value.is_empty) {
-      condition += ` AND (${tableAlias}."${key}" IS NULL OR ${tableAlias}."${key}" = '')`;
+      if(isUuidField) {
+        condition += ` AND ${tableAlias}."${key}" IS NULL`;
+      } else {
+        condition += ` AND (${tableAlias}."${key}" IS NULL OR ${tableAlias}."${key}" = '')`;
+      }
     } else {
-      condition += ` AND ${tableAlias}."${key}" IS NOT NULL AND ${tableAlias}."${key}" != ''`;
+      if(isUuidField) {
+        condition += ` AND ${tableAlias}."${key}" IS NOT NULL`;
+      } else {
+        condition += ` AND ${tableAlias}."${key}" IS NOT NULL AND ${tableAlias}."${key}"!= ''`;
+      }}
     }
-  }
+    
   return condition;
 }
 

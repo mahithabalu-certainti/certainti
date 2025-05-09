@@ -85,18 +85,15 @@ export interface IResourceSkill {
    resource_type: string;
    resource_rid: string;
    resource_ref_id: string,
-   resource_desc?: string;
-   skill_rid: string;
    start_date?: string | null;
    skill_description?: string;
    skill_level?: string;
+   skill_type_rid: string;
+   skill_subtype_rid: string;
+   skill_details?: string;
    status?: string;
-   years_of_experience?: number,
    created_by?: string | null;
    modified_by?: string | null;
-   skill_type?: string;
-   skill_name: string;
-   technical_weightage?: number;
    accountNumber: string;
    resource_number: string;
 }
@@ -108,12 +105,10 @@ export interface IUpdateResourceSkill {
   skill_description?: string;
   skill_level?: string;
   status?: string;
-  years_of_experience?: number,
   modified_by?: string | null;
-  skill_rid: string;
-  skill_name: string;
-  skill_type?: string;
-  technical_weightage?: number;
+  skill_type_rid: string;
+  skill_subtype_rid: string;
+  skill_details?: string;
   accountNumber: string;
 }
 
