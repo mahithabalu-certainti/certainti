@@ -108,10 +108,10 @@ const accountSchema = Joi.object({
     .max(50)
     .allow(null)
     .optional()
-    .pattern(/^(https:\/\/|www\.)[^\s/$.?#].[^\s]*$/)
+    .pattern(/^(https?:\/\/)[a-zA-Z0-9.-]+(:[0-9]+)?(\/[a-zA-Z0-9.-]*)*\/?$/)
     .messages({
-      "string.pattern.base": `Website URL must begin with 'www.' or 'https://'`,
-      "string.max": "The website must not exceed 50 characters."
+      "string.pattern.base": `Website URL must begin with 'http' or 'https://'`,
+      "string.max": "The website must not exceed 255 characters."
     }),
   project_manager: Joi.string().min(2).max(128).required(),
   created_datetime: Joi.date().iso().allow(null),
@@ -206,10 +206,10 @@ const updateAccountSchema = Joi.object({
     .max(255)
     .allow(null)
     .optional()
-    .pattern(/^(https:\/\/|www\.)[^\s/$.?#].[^\s]*$/)
+    .pattern(/^(https?:\/\/)[a-zA-Z0-9.-]+(:[0-9]+)?(\/[a-zA-Z0-9.-]*)*\/?$/)
     .messages({
-      "string.pattern.base": `Website URL must begin with 'www.' or 'https://'`,
-      "string.max": "The website must not exceed 50 characters."
+      "string.pattern.base": `Website URL must begin with 'http' or 'https://'`,
+      "string.max": "The website must not exceed 255 characters."
     }),
   project_manager: Joi.string().min(2).max(128).required(),
   annual_revenue: Joi.number().required(),

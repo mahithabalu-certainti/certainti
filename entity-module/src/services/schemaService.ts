@@ -1182,7 +1182,8 @@ class SchemaService {
           rid: DataTypes.UUID,
           r_number: DataTypes.TEXT,
           project_ref_id: DataTypes.TEXT,
-          industry: DataTypes.TEXT,
+          industry_rid: DataTypes.UUID,
+          industry_name: DataTypes.TEXT,
           project_name: DataTypes.TEXT,
           project_description: DataTypes.TEXT,
           project_manager: DataTypes.TEXT,
@@ -1296,13 +1297,13 @@ class SchemaService {
 
     let baseQuery = `
       INSERT INTO temp_project_data (
-        rid, r_number, project_ref_id, industry, project_name, project_description,
+        rid, r_number, project_ref_id, industry_rid,industry_name, project_name, project_description,
         project_manager, project_lead, total_effort, total_cost, spoc_name,
         spoc_email, project_status, project_startdate, project_enddate, created_datetime,
         created_by, fiscal_year, account_rid, source_schema
       )
       SELECT 
-        rid, r_number, project_ref_id, industry, project_name, project_description,
+        rid, r_number, project_ref_id, industry_rid,industry_name project_name, project_description,
         project_manager, project_lead, total_effort, total_cost, spoc_name,
         spoc_email, project_status, project_startdate, project_enddate, created_datetime,
         created_by, fiscal_year, account_rid, :schemaName

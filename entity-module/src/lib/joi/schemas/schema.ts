@@ -634,7 +634,8 @@ const createProjectSchema = Joi.object({
     .guid({ version: ["uuidv4"] })
     .required(),
   project_ref_id: Joi.string().min(5).max(50).required(),
-  industry: Joi.string().min(4).max(100).required(),
+  industry_rid: Joi.string().min(4).max(100).required(),
+  industry_name: Joi.string().min(4).max(100).required(),
   program_name: Joi.string().min(4).max(100).optional().allow("").allow(null),
   client_organization: Joi.string().min(4).max(100).required(),
   project_start_date: Joi.string()
@@ -805,7 +806,8 @@ const updateProjectSchema = Joi.object({
   project_id: Joi.string().guid({ version: ["uuidv4"] }).required(),
   account_id: Joi.string().guid({ version: ["uuidv4"] }).required(),
   project_ref_id: Joi.string().min(5).max(50).required(),
-  industry: Joi.string().min(4).max(100).required(),
+  industry_rid: Joi.string().min(4).max(100).required(),
+  industry_name: Joi.string().min(4).max(100).required(),
   program_name: Joi.string().min(4).max(100).optional().allow("").allow(null),
   client_organization: Joi.string().min(4).max(100).required(),
 

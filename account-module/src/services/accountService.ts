@@ -3,6 +3,7 @@ import { HttpStatus } from "../utils/constant";
 import { IAccount, IUpdateAccount } from "../utils/types";
 import SchemaService from "./schemaService";
 import { models } from "../models";
+import { initOrgSequelize } from "../config/orgdbDataSource";
 
 const { Account, Country, Currency } = models;
 
@@ -152,18 +153,35 @@ class AccountService {
             },
           ]
         });
-
+        const sequelize = await initOrgSequelize();
+        let keyContacts: any[] = [];
+        const allAccountIds = [...new Set([
+          parentAccounts.map((account: any) => `'${account.rid}'`),  // This line should be modified to work with an array if accountIds is already an array.
+          ...childAccounts.map((child: any) => `'${child.rid}'`)
+        ])].join(", ");
+       
+        if (allAccountIds.length > 0) {
+          const [results] = await sequelize.query(
+            `SELECT key_contact_id, account_rid, key_contact_name, key_contact_email,key_contact_role,is_primary_contact,include_in_communication, status 
+             FROM key_contact_details 
+             WHERE account_rid IN (${allAccountIds})`
+          );
+          keyContacts = results;
+        }
         // Group child accounts by parent_account_rid
         const childAccountsByParent = childAccounts.reduce((acc: any, child: any) => {
           if (!acc[child.parent_account_rid]) {
             acc[child.parent_account_rid] = [];
           }
+          const childKeyContacts = keyContacts.filter((contact: any) => contact.account_rid === child.rid);
+          child.setDataValue('key_contacts', childKeyContacts);
           acc[child.parent_account_rid].push(child);
           return acc;
         }, {});
 
         // Attach child accounts to their respective parent accounts
         parentAccounts.forEach((account: any) => {
+          account.setDataValue("key_contacts", keyContacts.filter((contact: any) => contact.account_rid === account.rid));
           account.setDataValue('child_accounts', childAccountsByParent[account.rid] || []);
         });
       } else {
