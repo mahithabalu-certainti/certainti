@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { resourceProfileIcon } from '../../../../../assets';
 import { RESOURCE, RESOURCE_CREATE } from '../../../../../routes';
 import { RootState } from '../../../../../store/store';
@@ -64,12 +64,13 @@ const Resource: React.FC<ResourceProps> = ({
     {}
   );
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
-
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
+  const accountInActive = accountDetails?.data?.accountById?.status === "inactive";
 
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const { accountid } = useParams();
   const {
     data: ResourceList,
     isLoading,
@@ -150,7 +151,7 @@ const Resource: React.FC<ResourceProps> = ({
 
   const handleEdit = (resource: any) => {
     setFilterVisibility(false);
-    navigate(RESOURCE + '/edit/' + resource.rid, {
+    navigate(RESOURCE + '/edit/' + resource.rid+`?account_id=${accountid}`, {
       state: { resource, accountDetails },
     });
   };
@@ -159,10 +160,12 @@ const Resource: React.FC<ResourceProps> = ({
     {
       label: 'Edit',
       onClick: handleEdit,
+      disabled: accountInActive
     },
     {
       label: 'Delete',
       onClick: (row: any) => console.log('Delete', row),
+      disabled: accountInActive
     },
     {
       label: 'View Summary',
@@ -188,6 +191,7 @@ const Resource: React.FC<ResourceProps> = ({
     {
       label: 'New',
       variant: 'outlined' as const,
+      disabled: accountInActive,
       onClick: () => handleCreateResource(),
       sx: { ...BUTTON_STYLES, width: '61px', minWidth: '61px' },
     },
@@ -240,7 +244,7 @@ const Resource: React.FC<ResourceProps> = ({
         },
       });
     } else {
-      navigate(`${RESOURCE_CREATE}${resId ? `?res_id=${resId}` : ''}`, {
+      navigate(`${RESOURCE_CREATE}?account_id=${accountid}${resId ? `&res_id=${resId}` : ''}`, {
         state: accountDetails,
       });
     }

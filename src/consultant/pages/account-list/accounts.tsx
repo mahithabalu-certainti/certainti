@@ -28,7 +28,7 @@ const BUTTON_STYLES = {
 export const Accounts: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [isFilterOpen, setIsFilterOpen] = useState<boolean>(true);
+  const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
   const [order, setOrder] = useState<'asc' | 'desc'>('desc');
   const [orderBy, setOrderBy] = useState<keyof AccountList>('createdAt');
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
@@ -84,7 +84,7 @@ export const Accounts: React.FC = () => {
                 All Accounts
               </div>
               <div className='font-medium text-[#7D98B6] text-[11px] -mt-1'>
-                Total Records found -{' '}
+                Total Accounts -{' '}
                 <span className='font-semibold text-[#2D3E4F]'>
                   {totalCount}
                 </span>

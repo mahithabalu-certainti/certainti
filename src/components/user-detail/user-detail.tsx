@@ -50,7 +50,6 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
       label: 'User ID',
       value: getValueOrDefault(data?.r_number),
     },
-    { label: 'Full name', value: getValueOrDefault(data?.full_name) },
     {
       label: 'First name',
       value: getValueOrDefault(data?.first_name),

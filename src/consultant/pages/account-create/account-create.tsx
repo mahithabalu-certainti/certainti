@@ -1,10 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { accountHomeIcon, editIcon } from '../../../assets';
-import {
-  OnChange,
-  useGetAllCountries,
-} from '../../../common-service';
+import { Layout, OnChange, useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
@@ -18,14 +15,15 @@ import {
   useCreateAccount,
   useUpdateAccount,
 } from '../../services/account-create';
-import { AccountFormData, SelectOption } from '../../types';
+import { AccountFormData, SelectOption, YesNo } from '../../types';
 import { FormData } from './form-data';
-import { transformFormData } from './utils';
+import { DATA_STORAGE_OPTIONS, transformFormData } from './utils';
 import { ACCOUNT } from '../../../routes';
 
 export const AccountForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [currentCountry, setCurrentCountry] = useState('');
+  const [dataResidency, setDataResidency] = useState(DATA_STORAGE_OPTIONS);
   const { successToast } = useToast();
   const location = useLocation();
   const { accountid } = useParams();
@@ -134,6 +132,17 @@ export const AccountForm: React.FC = () => {
     if (data.fieldName === 'country_rid') {
       setCurrentCountry(data.fieldValue as string);
     }
+    if (data.fieldName === 'is_parent') {
+      if (data.fieldValue === YesNo.Yes) {
+        setDataResidency(
+          DATA_STORAGE_OPTIONS.filter(
+            (item) => item.value !== 'store_in_parent'
+          )
+        );
+      } else {
+        setDataResidency(DATA_STORAGE_OPTIONS);
+      }
+    }
   };
 
   const goBack = () => {
@@ -151,7 +160,9 @@ export const AccountForm: React.FC = () => {
           />
           <div>
             {isEditView && (
-              <h5 className='text-[20px] font-semibold ml-2 text-[#2D3E4F] mb-1'>Edit Account</h5>
+              <h5 className='text-[20px] font-semibold ml-2 text-[#2D3E4F] mb-1'>
+                Edit Account
+              </h5>
             )}
             <h4 className='text-[20px] font-semibold text-[#2D3E4F]  ml-2 leading-4'>
               {isEditView ? accountData.account_name : 'Create Account'}
@@ -175,27 +186,27 @@ export const AccountForm: React.FC = () => {
           />
         </div>
       </div>
-      <div className='p-10'>
-        <FormBuilder
-          data={FormData(
-            memoizedContry,
-            memoizedParentAccounts,
-            memoizedCurrency,
-            memoizedState,
-            isEditView,
-            states.isLoading
-          )}
-          loading={
-            allCountries.isLoading ||
-            parentAccount.isLoading ||
-            currency.isLoading
-          }
-          values={isEditView && accountData ? { ...accountData } : undefined}
-          outData={submitData}
-          formRef={formRef}
-          onChange={onChangeField}
-        />
-      </div>
+      <FormBuilder
+        data={FormData(
+          memoizedContry,
+          memoizedParentAccounts,
+          memoizedCurrency,
+          memoizedState,
+          dataResidency,
+          isEditView,
+          states.isLoading
+        )}
+        loading={
+          allCountries.isLoading ||
+          parentAccount.isLoading ||
+          currency.isLoading
+        }
+        values={isEditView && accountData ? { ...accountData } : undefined}
+        outData={submitData}
+        formRef={formRef}
+        onChange={onChangeField}
+        layout={Layout.TYPE_1}
+      />
     </>
   );
 };

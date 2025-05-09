@@ -9,10 +9,12 @@ import { useToast } from '../../../../../hooks';
 interface OverviewProps {
   accountNo?: string | undefined;
   accountId?: string | undefined;
+  accountInActive?: boolean;
 }
 
 const MAX_FILE_SIZE_MB = 50;
-const Overview: React.FC<OverviewProps> = ({ accountNo, accountId }) => {
+
+const Overview: React.FC<OverviewProps> = ({ accountNo, accountId, accountInActive }) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [message, setMessage] = useState<{
     type: 'error' | 'success';
@@ -24,6 +26,8 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId }) => {
   const [entityType, setEntityType] = useState<string>('Select Type');
   const [fiscalYear, setFiscalYear] = useState<string>('Year');
   const [loading, setLoading] = useState<boolean>(false);
+
+
   useEffect(() => {
     if (
       message?.type === 'error' &&
@@ -219,6 +223,7 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId }) => {
             loading={loading}
             variant='filled'
             onClick={handleSubmit}
+            disabled={accountInActive}
             sx={{
               width: '64px',
               minWidth: '64px',
@@ -253,7 +258,11 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId }) => {
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onClick={openFileDialog}
-          className='h-[116px] w-[502px] border-[2px] border-dashed border-[#0176D3] rounded-[8px] flex flex-col items-center justify-center gap-2 cursor-pointer bg-[#F4F6F9]'
+          className={`h-[116px] w-[502px] border-[2px] border-dashed rounded-[8px] flex flex-col items-center justify-center gap-2 bg-[#F4F6F9] ${
+            accountInActive
+              ? 'border-gray-300 cursor-not-allowed opacity-50'
+              : 'border-[#0176D3] cursor-pointer'
+          }`}
         >
           <img
             src={uploadIcon}
@@ -263,7 +272,7 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId }) => {
           <div className='text-[14px] text-[#0B0B0B]'>
             Drag your file(s) or{' '}
             <span
-              className='text-[#0176D3] underline cursor-pointer'
+              className='text-[#0176D3] underline'
               onClick={(e) => {
                 e.stopPropagation();
                 openFileDialog();
@@ -278,6 +287,7 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId }) => {
             className='hidden'
             ref={fileInputRef}
             onChange={handleFileSelect}
+            disabled={accountInActive}
           />
         </div>
 

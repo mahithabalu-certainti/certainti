@@ -71,7 +71,7 @@ const FiscalYearDropdown = ({
 
       {open && (
         <div
-          className="absolute w-full bg-white border-b border-l border-r rounded-b-xs shadow-lg"
+          className="absolute w-full bg-white border-b border-l border-r rounded-b-xs shadow-lg max-h-[50vh] overflow-y-auto"
           style={{ borderColor: '#CBD6E2' }}
         >
           {fiscalYearsDropDown.map((fy) => (
