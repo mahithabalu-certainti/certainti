@@ -2,7 +2,6 @@ import { Autocomplete, Checkbox, Skeleton, TextField } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-// import dayjs from 'dayjs';
 import dayjs, { Dayjs } from 'dayjs';
 
 import { CountryCode, parsePhoneNumberFromString } from 'libphonenumber-js';
@@ -17,7 +16,7 @@ import {
 } from '../../assets';
 
 import { useLocation } from 'react-router-dom';
-import { FieldTypes, OnChange } from '../../common-service';
+import { FieldTypes, Layout, OnChange } from '../../common-service';
 import { ALLOWED_COUNTRIES } from '../../common-utils';
 import { FormType, FormTypeFields, SelectOption } from '../../consultant/types';
 
@@ -26,6 +25,7 @@ interface FormBuilderProps {
   formRef: React.RefObject<HTMLFormElement>;
   loading?: boolean;
   values?: Record<string, string | string[] | boolean | number | null | object>;
+  layout?: Layout;
   outData: (e: object) => void;
   onChange?: (params: OnChange) => void;
 }
@@ -35,6 +35,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   formRef,
   values,
   loading = false,
+  layout,
   onChange,
   outData,
 }) => {
@@ -54,25 +55,25 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         const oldSection = prevFormData.find(
           (s) => s.sectionName === newSection.sectionName
         );
-    
+
         return {
           ...newSection,
           fields: newSection.fields.map((newField) => {
             const oldField = oldSection?.fields.find(
               (f) => f.name === newField.name
             );
-    
+
             return {
               ...newField,
               error: oldField?.error ?? newField.error,
-              disabled: oldField?.disabled?? newField.disabled,
+              disabled: oldField?.disabled ?? newField.disabled,
               value: oldField?.value ?? newField.value,
             };
           }),
         };
       });
     });
-      
+
     // Only set initial form data if constructFormData is empty
     if (Object.values(constructFormData).every((value) => !value)) {
       let constructFormData = {};
@@ -114,6 +115,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               newData[f] = '';
             });
         });
+      }
+
+      // update value when change depends fields
+      if (field.defaultSelect) {
+        if (field.defaultSelect.matchedValue === value) {
+          newData[field.defaultSelect.key] = field.defaultSelect.ifMatchValue;
+        } else {
+          newData[field.defaultSelect.key] =
+            field.defaultSelect.ifNotMatchValue;
+        }
       }
 
       if (field.onChange && onChange) {
@@ -420,7 +431,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           </LocalizationProvider>
         );
       }
-
       case 'fiscalDate':
         return (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -435,9 +445,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 handleChange(dayjs(newValue).format('DD/MM/YYYY'));
               }}
               slots={{
-                openPickerIcon: () => (
-                  <img src={calendarIcon} alt='calendar' className='w-4 h-4' />
-                ),
                 clearIcon: () => (
                   <img src={closeIcon} alt='calendar' className='w-2.5 h-2.5' />
                 ),
@@ -473,10 +480,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                         },
                       },
                       '& .MuiIconButton-edgeEnd': {
-                        pointerEvents: 'none',
-                        '&:hover': {
-                          backgroundColor: 'transparent',
-                        },
+                        display: 'none',
                       },
                     },
                   },
@@ -911,13 +915,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         const isHalf = section.fillType === 'half';
         if (section.hide) return null;
         return (
-          <div key={i} className='pb-3'>
+          <div key={i}>
             <h4
-              className={`font-semibold text-base text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle mb-6 ml-3 ${i !== 0 ? 'mt-10' : ''}`}
+              className={`font-semibold text-base text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle mb-6 py-2 bg-[#DCE8FF] text-[14px] ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'}`}
             >
               {section.sectionName}
             </h4>
-            <div className={`grid md:grid-cols-${isHalf ? '2' : '1'} gap-4`}>
+            <div
+              className={`grid md:grid-cols-${isHalf ? '2' : '1'} gap-4 ${layout === Layout.TYPE_1 ? 'px-10' : 'px-6'} mb-6`}
+            >
               {section.fields.map((field, j) => {
                 if (field.hide) return null;
                 return (

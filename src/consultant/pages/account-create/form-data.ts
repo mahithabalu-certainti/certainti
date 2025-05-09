@@ -17,8 +17,9 @@ export const FormData = (
   parentAccount: SelectOption[],
   currency: SelectOption[],
   state: SelectOption[],
+  dataResidency: SelectOption[],
   disableFields?: boolean,
-  stateLoading?: boolean
+  stateLoading?: boolean,
 ): FormType[] => {
   return useMemo(
     () => [
@@ -46,21 +47,24 @@ export const FormData = (
               maxErrorMessage: 'Max length exceeded',
             },
           }),
-          createSelectField('status', 'Status', {
+          createTextField('industry', 'Industry', {
             required: true,
-            options: STATUS_OPTIONS,
-            placeholder: 'Choose Status',
+            regex: REGEX_PATTERNS.INDUSTRY,
+            regexErrorMessage:
+              'Industry should be 5-25 characters and contain only letters, spaces, or ampersand (&)',
+            placeholder: 'Enter Industry',
           }),
           createRadioField('is_parent', 'Is Parent Account', {
             radioOptions: YES_NO_OPTIONS,
             disabled: disableFields,
             required: true,
-          }),
-          createTextField('website', 'Website', {
-            required: false,
-            regex: REGEX_PATTERNS.WEBSITE,
-            regexErrorMessage: 'Enter a valid website URL',
-            placeholder: 'Enter Website',
+            onChange: true,
+            defaultSelect: {
+              matchedValue: YesNo.Yes,
+              key: 'data_storage',
+              ifMatchValue: DATA_STORAGE_OPTIONS[0].value,
+              ifNotMatchValue: DATA_STORAGE_OPTIONS[1].value,
+            }
           }),
           createSelectField('parent_account_rid', 'Parent Account', {
             options: parentAccount,
@@ -74,12 +78,16 @@ export const FormData = (
               disableDependsField: YesNo.Yes,
             },
           }),
-          createTextField('industry', 'Industry', {
+          createSelectField('status', 'Status', {
             required: true,
-            regex: REGEX_PATTERNS.INDUSTRY,
-            regexErrorMessage:
-              'Industry should be 5-25 characters and contain only letters, spaces, or ampersand (&)',
-            placeholder: 'Enter Industry',
+            options: STATUS_OPTIONS,
+            placeholder: 'Choose Status',
+          }),
+          createTextField('website', 'Website', {
+            required: false,
+            regex: REGEX_PATTERNS.WEBSITE,
+            regexErrorMessage: 'Enter a valid website URL',
+            placeholder: 'Enter Website',
           }),
           createTextField('project_manager', 'Delivery Manager', {
             required: true,
@@ -93,6 +101,12 @@ export const FormData = (
               maxMatchedValue: REGEX_PATTERNS.MAX_NAME_REGEX,
               maxErrorMessage: 'Max length exceeded',
             },
+          }),
+          createTextField('annual_revenue', 'Annual Revenue', {
+            required: true,
+            regex: REGEX_PATTERNS.ANNUAL_REVENUE,
+            regexErrorMessage: 'Enter a valid annual revenue',
+            placeholder: 'Enter Annual Revenue',
           }),
         ],
       },
@@ -121,7 +135,7 @@ export const FormData = (
         ],
       },
       {
-        sectionName: 'Contact Information',
+        sectionName: 'Key Contacts List',
         fillType: 'half',
         fields: [
           createTextField('primary_contact_name', 'Primary Contact Name', {
@@ -163,18 +177,12 @@ export const FormData = (
         ],
       },
       {
-        sectionName: 'Settings Information',
+        sectionName: 'Account Settings',
         fillType: 'half',
         fields: [
           createFiscalDateField('fiscal_start_date', 'Fiscal Start Date', {
             required: true,
             disabled: disableFields,
-          }),
-          createTextField('max_ai_interactions', 'Max AI Intractions', {
-            required: true,
-            regex: REGEX_PATTERNS.MAX_AI_INTRACTION,
-            regexErrorMessage: 'Enter a number between 3 and 5',
-            placeholder: 'Enter Max AI Intractions',
           }),
           createFiscalDateField('fiscal_end_date', 'Fiscal End Date', {
             disabled: disableFields,
@@ -184,17 +192,25 @@ export const FormData = (
               errorMessage: 'Fiscal End Date cannot be the same as the Fiscal Start Date',
             },
           }),
+          createRadioField('autosend_interaction', 'Auto Send Interaction', {
+            radioOptions: YES_NO_OPTIONS,
+            required: true,
+          }),
+          createTextField('max_ai_interactions', 'Max interaction Follow up', {
+            required: true,
+            regex: REGEX_PATTERNS.MAX_AI_INTRACTION,
+            regexErrorMessage: 'Enter a number between 3 and 5',
+            placeholder: 'Enter Max AI Intractions',
+          }),
+          createRadioField('auto_access_rd', 'Auto Assessment', {
+            radioOptions: YES_NO_OPTIONS,
+            required: true,
+          }),
           createTextField('blended_rate_fte', 'Blended Rate - FTE', {
             required: false,
             regex: REGEX_PATTERNS.BLENDED_NUMBER,
             regexErrorMessage: 'Numbers only allowed, up to 10 digits',
             placeholder: 'Enter Blended Rate - FTE',
-          }),
-          createTextField('annual_revenue', 'Annual Revenue', {
-            required: true,
-            regex: REGEX_PATTERNS.ANNUAL_REVENUE,
-            regexErrorMessage: 'Enter a valid annual revenue',
-            placeholder: 'Enter Annual Revenue',
           }),
           createTextField('blended_rate_subcon', 'Blended Rate - SubCon', {
             required: false,
@@ -202,34 +218,26 @@ export const FormData = (
             regexErrorMessage: 'Numbers only allowed, up to 10 digits',
             placeholder: 'Enter Blended Rate - SubCon',
           }),
-          createRadioField('auto_access_rd', 'Auto assess RD', {
-            radioOptions: YES_NO_OPTIONS,
+          createRadioField('data_storage', 'Data Residency', {
             required: true,
-          }),
-          createRadioField('data_storage', 'Data Storage', {
-            required: true,
-            radioOptions: DATA_STORAGE_OPTIONS,
+            radioOptions: dataResidency,
             disabled: disableFields,
-          }),
-          createRadioField('autosend_interaction', 'Auto Send AI Interaction', {
-            radioOptions: YES_NO_OPTIONS,
-            required: true,
           }),
         ],
       },
       {
-        sectionName: 'Description Information',
+        sectionName: 'Comments',
         fillType: 'full',
         fields: [
-          createTextAreaField('account_description', 'Description', {
+          createTextAreaField('account_description', 'Comments', {
             required: false,
             regex: REGEX_PATTERNS.ACCOUNT_DESCRIPTION,
-            regexErrorMessage: 'Description must be within 500 characters',
-            placeholder: 'Enter Description',
+            regexErrorMessage: 'Comments must be within 500 characters',
+            placeholder: 'Enter Comments',
           }),
         ],
       },
     ],
-    [country, parentAccount, state, disableFields, currency, stateLoading]
+    [country, parentAccount, state, disableFields, currency, stateLoading, dataResidency]
   );
 };
