@@ -75,7 +75,7 @@ export const ResourceFormData = (
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.NAME_LENGTH_2_TO_64_REGEX,
-                errorMessage: 'Please enter 2–64 characters.',
+                errorMessage: 'Please enter 2-64 characters.',
               },
               {
                 regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_REGEX,
@@ -98,7 +98,7 @@ export const ResourceFormData = (
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.NAME_LENGTH_2_TO_64_REGEX,
-                errorMessage: 'Please enter 2–64 characters.',
+                errorMessage: 'Please enter 2-64 characters.',
               },
               {
                 regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_REGEX,
@@ -121,7 +121,7 @@ export const ResourceFormData = (
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.NAME_LENGTH_2_TO_64_REGEX,
-                errorMessage: 'Please enter 2–64 characters.',
+                errorMessage: 'Please enter 2-64 characters.',
               },
               {
                 regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_REGEX,
