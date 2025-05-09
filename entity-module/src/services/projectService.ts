@@ -407,9 +407,13 @@ export class ProjectService {
       );
 
       if (!isExists) {
-        throw new Error(
-          "Invalid account ID"
-        );
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.SUCCESS_MESSAGE,
+          data: {
+            project: [],
+          },
+        };
       }
 
       const orgDbSequlize = await initOrgSequelize();
@@ -485,9 +489,13 @@ export class ProjectService {
       );
 
       if (!isExists) {
-        throw new Error(
-          "Invalid account ID: project does not exist."
-        );
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.SUCCESS_MESSAGE,
+          data: {
+            projects: [],
+          },
+        };
       }
 
       const orgDbSequlize = await initOrgSequelize();
