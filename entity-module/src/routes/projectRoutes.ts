@@ -11,5 +11,5 @@ routes.get("/list/:accountId", controller.projectController.projectList);
 routes.get("/list/:accountId/:projectId", controller.projectController.projectById);
 routes.post("/new", controller.projectController.createProject);
 routes.put("/update", controller.projectController.updateProject);
-
+routes.get("/projectclassification", controller.projectController.projectClassification);
 export default routes;

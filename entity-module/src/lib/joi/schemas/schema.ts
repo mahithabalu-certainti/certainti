@@ -665,7 +665,7 @@ const createProjectSchema = Joi.object({
       "date.invalidFormat": "Invalid Project end date.",
     }),
   project_type: Joi.string().valid("Fixed", "Time & Material").required(),
-  project_classification: Joi.string()
+  project_classification_rid: Joi.string()
     .max(100)
     .optional()
     .allow("")
@@ -836,7 +836,7 @@ const updateProjectSchema = Joi.object({
     }),
 
   project_type: Joi.string().valid("Fixed", "Time & Material").required(),
-  project_classification: Joi.string().max(100).optional().allow("").allow(null),
+  project_classification_rid: Joi.string().max(100).optional().allow("").allow(null),
   project_client_group: Joi.string().max(200).optional().allow("").allow(null),
   project_group: Joi.string().max(150).optional().allow("").allow(null),
   project_summary: Joi.string().max(1000).optional().allow("").allow(null),

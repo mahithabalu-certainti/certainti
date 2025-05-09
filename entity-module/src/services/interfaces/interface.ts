@@ -263,4 +263,11 @@ export interface IProjectService {
     errorMessage?: string;
     data?: { projects: any, count: number };
   }>;
+  getProjectClassification(
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectClassifications: any, count: number };
+  }>;
 }

@@ -123,7 +123,7 @@ export interface ICreateProject {
   project_start_date?: Date | null;
   project_end_date?: Date | null;
   project_type: "Fixed" | "Time & Material";
-  project_classification?: string | null;
+  project_classification_rid?: string | null;
   project_client_group?: string | null;
   project_group?: string | null;
   project_summary?: string | null;
@@ -174,7 +174,7 @@ export interface IUpdateProject {
   project_start_date?: Date | null;
   project_end_date?: Date | null;
   project_type: "Fixed" | "Time & Material";
-  project_classification?: string | null;
+  project_classification_rid?: string | null;
   project_client_group?: string | null;
   project_group?: string | null;
   project_summary?: string | null;
