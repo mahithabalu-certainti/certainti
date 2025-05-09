@@ -71,7 +71,7 @@ export const Accounts: React.FC = () => {
   const [totalCount, setTotalCount] = useState<number>(0);
   return (
     <div className='flex flex-col w-full h-full'>
-      <div className='flex justify-between w-full h-[110px] border-b-2 border-[#CBD6E2] px-4'>
+      <div className='flex justify-between w-full border-b-2 border-[#CBD6E2] p-6'>
         <div className='flex'>
           <div className='flex items-center justify-center'>
             <img

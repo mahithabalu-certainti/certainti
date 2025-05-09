@@ -194,7 +194,7 @@ export const AccountForm: React.FC = () => {
           memoizedState,
           dataResidency,
           isEditView,
-          states.isLoading
+          states.isLoading,
         )}
         loading={
           allCountries.isLoading ||
