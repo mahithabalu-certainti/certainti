@@ -42,7 +42,8 @@ const typeDefs = gql`
     finance_poc_name: String!
     finance_poc_email: String!
     finance_poc_number: String!
-    industry: String
+    industry_rid: String
+    industry_name: String
     website: String
     project_manager: String!
     database_level: Boolean!

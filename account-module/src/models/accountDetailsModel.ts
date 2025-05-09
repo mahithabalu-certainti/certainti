@@ -53,7 +53,8 @@ class AccountDetails
   public finance_poc_name!: string;
   public finance_poc_email!: string;
   public finanace_poc_number!: string;
-  public industry!: string;
+  public industry_rid!: string;
+  public industry_name!: string;
   public website?: string;
   public project_manager!: string;
   public database_level!: boolean;

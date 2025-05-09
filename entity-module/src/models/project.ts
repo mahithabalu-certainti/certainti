@@ -5,7 +5,8 @@ export interface ProjectAttributes {
   r_number?: string;
   eid?: string;
   project_ref_id: string;
-  industry: string;
+  industry_rid: string;
+  industry_name?: string;
   account_rid: string;
   account_fiscal_rid: string | null;
   project_name?: string | null;
@@ -66,7 +67,8 @@ export class Project
   public project_ref_id!: string;
   public account_fiscal_rid!: string;
   public account_rid!: string;
-  public industry!: string;
+  public industry_rid!: string;
+  public industry_name?: string;
   public project_name?: string | null;
   public client_organization!: string;
   public project_startdate?: Date | null;
@@ -143,9 +145,13 @@ export class Project
           allowNull: false,
           unique: true
         },
-        industry: {
+        industry_rid: {
           type: DataTypes.STRING(100),
           allowNull: false,
+        },
+        industry_name: {
+          type: DataTypes.STRING(100),
+          allowNull: true,
         },
         project_name: DataTypes.STRING(100),
         client_organization: {

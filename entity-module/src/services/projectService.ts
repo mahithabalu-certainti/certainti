@@ -137,7 +137,8 @@ export class ProjectService {
 
       const projectCreationData = {
         project_ref_id: projectData.project_ref_id,
-        industry: projectData.industry,
+        industry_rid: projectData.industry_rid,
+        industry_name: projectData.industry_name,
         account_rid: projectData.account_id,
         account_fiscal_rid: null,
         project_name: projectData.program_name || null,
@@ -308,7 +309,8 @@ export class ProjectService {
         project_client_group: projectData.project_client_group || null,
         project_group: projectData.project_group || null,
         project_summary: projectData.project_summary || null,
-        industry: projectData.industry,
+        industry_rid: projectData.industry_rid,
+        industry_name: projectData.industry_name,
         fiscal_year: projectData.fiscal_year,
         total_effort: projectData.total_effort || 0,
         total_cost: projectData.total_cost || 0,
@@ -525,7 +527,8 @@ export class ProjectService {
         attributes: [
           "r_number",
           "project_ref_id",
-          "industry",
+          "industry_rid",
+          "industry_name",
           "project_startdate",
           "project_enddate",
           "project_type",

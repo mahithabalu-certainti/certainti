@@ -116,7 +116,8 @@ export interface ICreateProject {
   account_number: string;
   account_id: string;
   project_ref_id: string;
-  industry: string;
+  industry_rid: string;
+  industry_name?: string;
   program_name?: string | null;
   client_organization: string;
   project_start_date?: Date | null;
@@ -166,7 +167,8 @@ export interface IUpdateProject {
   account_number: string;
   account_id: string;
   project_ref_id: string;
-  industry: string;
+  industry_rid: string;
+  industry_name: string;
   program_name?: string | null;
   client_organization: string;
   project_start_date?: Date | null;

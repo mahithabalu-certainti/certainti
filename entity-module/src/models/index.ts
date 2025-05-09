@@ -7,7 +7,7 @@ import { ResourceSkill } from "./resourceSkill";
 import { ResourceSkillHistory } from "./resourceSkillHistory";
 import { ResourceSkillTimeline } from "./resourceSkillTimeline";
 import { Skill } from "./skill";
-
+import {KeyContact}  from "./keyContactDetails"
 export const models: {
   Resources: typeof Resources;
   ResourceCost: typeof ResourceCost;
@@ -17,6 +17,7 @@ export const models: {
   ResourceSkill: typeof ResourceSkill;
   ResourceSkillTimeline: typeof ResourceSkillTimeline;
   ResourceSkillHistory: typeof ResourceSkillHistory;
+  KeyContact:typeof KeyContact
 } = {
   Resources: Resources,
   ResourceCost: ResourceCost,
@@ -25,5 +26,6 @@ export const models: {
   Skill: Skill,
   ResourceSkill: ResourceSkill,
   ResourceSkillTimeline: ResourceSkillTimeline,
-  ResourceSkillHistory: ResourceSkillHistory
+  ResourceSkillHistory: ResourceSkillHistory,
+  KeyContact:KeyContact
 };
