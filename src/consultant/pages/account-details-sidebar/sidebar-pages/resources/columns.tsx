@@ -74,9 +74,9 @@ const BASE_COLUMNS: ColumnDefinition[] = [
     ),
   },
   {
-    id: 'designation',
-    sortId: 'designation',
-    label: 'Resource Designation',
+    id: 'resource_designation',
+    sortId: 'resource_designation',
+    label: 'Designation',
     sortable: true,
     width: '200px',
     render: (value: string) => (
@@ -92,8 +92,8 @@ const BASE_COLUMNS: ColumnDefinition[] = [
   },
   {
     id: 'country_name',
-    sortId: 'country',
-    label: 'Resource Country',
+    sortId: 'resource_country',
+    label: 'Country',
     sortable: true,
     width: '160px',
     render: (value: string) => (
@@ -108,9 +108,9 @@ const BASE_COLUMNS: ColumnDefinition[] = [
     ),
   },
   {
-    id: 'state_name',
-    sortId: 'state',
-    label: 'Resource Region',
+    id: 'region_name',
+    sortId: 'resource_region',
+    label: 'Region',
     sortable: true,
     width: '150px',
     render: (value: string) => (

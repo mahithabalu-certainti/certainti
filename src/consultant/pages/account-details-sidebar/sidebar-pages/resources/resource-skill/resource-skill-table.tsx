@@ -273,7 +273,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
                     skillOrder
                   )}
                 >
-                  Skill Name
+                  Skill Details
                 </TableSortLabel>
               </TableCell>
               <TableCell sx={{ minWidth: '120px' }}>

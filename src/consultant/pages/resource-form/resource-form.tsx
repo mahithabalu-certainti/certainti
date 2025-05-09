@@ -57,7 +57,7 @@ const ResourceForm: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const resourceId = searchParams.get('res_id');
-
+  const [resourceDetails, setResourceDetails] = useState<any>(null);
   // Derived values
   const isEditView = location.pathname.includes('/edit');
   const accountData = isEditView
@@ -104,6 +104,20 @@ const ResourceForm: React.FC = () => {
   );
 
   useEffect(() => {
+    const resourceDetailsData = resource?.data?.resourceDetails
+      const finalResourceDetails = {
+        ...resourceDetailsData,
+        country:resourceDetailsData?.resource_country,
+        state:resourceDetailsData?.resource_region,
+        city:resourceDetailsData?.resource_city,
+        designation:resourceDetailsData?.resource_designation,
+        total_years_experience: resourceDetailsData?.resource_total_experience,
+        total_years_in_org: resourceDetailsData?.resource_total_experience_organization,
+    }
+      setResourceDetails(finalResourceDetails || null);
+  }, [resource]);
+
+  useEffect(() => {
     const formValues = resource?.data?.resourceDetails;
     if (state?.cost && isSuccess && costSuccess && isEditView) {
       const costValues = {
@@ -130,8 +144,8 @@ const ResourceForm: React.FC = () => {
     }
   }, [state, costDetails, resource]);
 
-  const countryId = resource?.data?.resourceDetails.country;
-  const stateId = resource?.data?.resourceDetails.state;
+  const countryId = resource?.data?.resourceDetails.resource_country;
+  const stateId = resource?.data?.resourceDetails.resource_region;
   useEffect(() => {
     if (countryId) {
       setCurrentCountry((prev) => ({ ...prev, country: countryId }));
@@ -311,6 +325,11 @@ const ResourceForm: React.FC = () => {
       }));
     }
   };
+
+  //disable orgname in the formdata if the user select resource type as full-time
+  const disableOrgname = resourceDetails?.resource_type === 'full-time';
+  
+  
   const activeFormSection = state?.cost
     ? FormSection.COST
     : state?.skill
@@ -327,7 +346,8 @@ const ResourceForm: React.FC = () => {
     currency.isLoading,
     isEditView,
     activeFormSection,
-    state?.cost || state?.skill
+    state?.cost || state?.skill,
+    disableOrgname,
   );
 
   return (
@@ -410,11 +430,11 @@ const ResourceForm: React.FC = () => {
             isEditView &&
             !state?.cost &&
             !state?.skill &&
-            (resource?.data?.resourceDetails as unknown as Record<
+            (resourceDetails as unknown as Record<
               string,
               string | number | boolean | string[] | null
             >)
-              ? (resource?.data?.resourceDetails as unknown as Record<
+              ? (resourceDetails as unknown as Record<
                   string,
                   string | number | boolean | string[] | null
                 >)

@@ -112,7 +112,7 @@ export type ResourceCostPayload = {
   resource_ref_id: string;
   effective_date?: string;
   end_date?: string;
-  cost?: number | null;
+  cost?: string;
   cost_frequency?: string;
   fiscal_year?: string;
   currency_rid?: string | null;

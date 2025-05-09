@@ -53,7 +53,8 @@ export const ResourceFormData = (
   currencyLoading?: boolean,
   disableFields?: boolean,
   hideSkill?: string,
-  disableCostAndSkill?: boolean
+  disableCostAndSkill?: boolean,
+  disableOrgname?: boolean
 ): FormType[] => {
   return useMemo(
     () => [
@@ -97,7 +98,7 @@ export const ResourceFormData = (
             options: RESOURCE_TYPE_OPTIONS,
             placeholder: '-Select-',
             required: true,
-            disabled: disableCostAndSkill,
+            disabled: disableCostAndSkill || disableOrgname,
           }),
           createTextField('resource_orgname', 'Resource Org Name', {
             required: false,
@@ -212,7 +213,7 @@ export const ResourceFormData = (
           }),
           createTextField('skill_name', 'Skill Details', {
             required: true,
-            placeholder: 'Enter Skill Name',
+            placeholder: 'Enter Skill Details',
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.NOT_ALLOW_ONLY_SYMBOLS,

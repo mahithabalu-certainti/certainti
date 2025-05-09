@@ -105,7 +105,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   const resourceData = resource?.data?.resourceDetails;
 
-  const CreateSectionData = (
+  const   CreateSectionData = (
     dataObj: Partial<CreateSectionData>,
     customMappings?: Record<string, (val: any) => React.ReactNode>
   ) => {
@@ -233,7 +233,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   const locationInfo = CreateSectionData({
     country: resourceData?.country_name,
-    region: resourceData.state_name,
+    region: resourceData.region_name,
     city: resourceData.city_name,
   });
 
@@ -241,9 +241,9 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
     {
       resource_startdate: resourceData.resource_startdate,
       resource_enddate: resourceData.resource_enddate,
-      total_years_experience: resourceData.total_years_experience,
-      designation: resourceData.designation,
-      total_years_in_org: resourceData.total_years_in_org,
+      total_years_experience: resourceData.resource_total_experience,
+      designation: resourceData.resource_designation,
+      total_years_in_org: resourceData.resource_total_experience_organization,
     },
     {
       resource_effective_from: formatDateToMMDDYYYY,

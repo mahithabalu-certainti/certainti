@@ -110,6 +110,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
           resourceOrgNameField.required =
             value === 'Sub Con' || value === 'Non-Labor';
+          resourceOrgNameField.disabled = value === 'Full-Time';
         }
       }
       const newData = {
