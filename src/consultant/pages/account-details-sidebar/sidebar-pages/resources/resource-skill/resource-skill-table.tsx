@@ -293,21 +293,6 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
                   Skill Level
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ minWidth: '160px' }}>
-                <TableSortLabel
-                  active={skillOrderBy === 'years_of_experience'}
-                  direction={
-                    skillOrderBy === 'years_of_experience' ? skillOrder : 'asc'
-                  }
-                  IconComponent={getSortIcon(
-                    skillOrderBy,
-                    'years_of_experience',
-                    skillOrder
-                  )}
-                >
-                  Years of Experience
-                </TableSortLabel>
-              </TableCell>
               <TableCell
                 sx={{
                   minWidth: '80px',
