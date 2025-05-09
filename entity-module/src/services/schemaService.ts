@@ -130,7 +130,6 @@ class SchemaService {
     order: any[],
     whereClause: Record<string, string> = {},
     fiscalYear: number,
-    goeDataFilters: Record<string, any> = {},
     geoDataSort: string[][]
   ) {
     try {
@@ -194,9 +193,8 @@ class SchemaService {
       if (resources) {
         // Process geo data for all records
         finalResources = await this.insertGeoData(resources, mainDdSequilze);
-        finalResources = await this.sortAndFilteGeoData(
+        finalResources = await this.sortGeoData(
           finalResources,
-          goeDataFilters,
           geoDataSort
         );
 
@@ -337,7 +335,6 @@ class SchemaService {
     order: any[],
     whereClause: Record<string, string> = {},
     fiscalYear: number,
-    goeDataFilters: Record<string, any> = {},
     geoDataSort: string[][]
   ) {
     try {
@@ -386,9 +383,8 @@ class SchemaService {
 
       if (resources) {
         finalResources = await this.insertGeoData(resources, mainDdSequilze);
-        finalResources = await this.sortAndFilteGeoData(
+        finalResources = await this.sortGeoData(
           finalResources,
-          goeDataFilters,
           geoDataSort
         );
       }
@@ -955,84 +951,41 @@ class SchemaService {
     }
   }
 
-  async sortAndFilteGeoData(
+  async sortGeoData(
     resources: any[],
-    whereClause: Record<string, any> = {},
     order: string[][] = []
 ): Promise<any[]> {
-    const updatedResources = resources
-      .filter((res) => {
-        if (
-          whereClause.city &&
-          !this.applyTextFilter(res.city_name, whereClause.city)
-        ) {
-          return false;
+
+    // Apply sorting if specified
+    if (order && order.length > 0) {
+      const [sortField, sortDirection] = order[0];
+      const isAsc = sortDirection.toUpperCase() === 'ASC';
+
+      resources = resources.sort((a, b) => {
+        let compareValueA, compareValueB;
+
+        switch (sortField) {
+          case 'resource_country':
+            compareValueA = a.country_name || '';
+            compareValueB = b.country_name || '';
+            break;
+          case 'resource_region':
+            compareValueA = a.region_name || '';
+            compareValueB = b.region_name || '';
+            break;
+          default:
+            return 0;
         }
 
-        if (
-          whereClause.country &&
-          !this.applyTextFilter(res.country_name, whereClause.country)
-        ) {
-          return false;
+        if (isAsc) {
+          return compareValueA.localeCompare(compareValueB);
+        } else {
+          return compareValueB.localeCompare(compareValueA);
         }
-
-        if (
-          whereClause.region &&
-          !this.applyTextFilter(res.region_name, whereClause.region)
-        ) {
-          return false;
-        }
-
-        return true;
-        // if (
-        //   whereClause.city?.length &&
-        //   !whereClause.city.some((c: any) =>
-        //     res.city_name?.toLowerCase().includes(c.toLowerCase())
-        //   )
-        // ) {
-        //   return false;
-        // }
-
-        // if (
-        //   whereClause.country?.length &&
-        //   !whereClause.country.some((c: any) =>
-        //     res.country_name?.toLowerCase().includes(c.toLowerCase())
-        //   )
-        // ) {
-        //   return false;
-        // }
-
-        // if (
-        //   whereClause.state?.length &&
-        //   !whereClause.state.some((r: any) =>
-        //     res.state_name?.toLowerCase().includes(r.toLowerCase())
-        //   )
-        // ) {
-        //   return false;
-        // }
-        // return true;
-      })
-      .sort((a, b) => {
-        const [field, direction] = order[0] || [];
-        const dir = direction === "ASC" ? 1 : -1;
-
-        if (field === "resource_country") {
-          return (
-            (a.country_name || "").localeCompare(b.country_name || "") * dir
-          );
-        }
-        if (field === "resource_region") {
-          return (a.region_name || "").localeCompare(b.region_name || "") * dir;
-        }
-
-        if (field === "resource_city") {
-          return (a.city_name || "").localeCompare(b.city_name || "") * dir;
-        }
-
-        return 0;
       });
+    }
 
-    return updatedResources;
+    return resources;
 }
 
   applyTextFilter(value: string | null | undefined, filter: any): boolean {

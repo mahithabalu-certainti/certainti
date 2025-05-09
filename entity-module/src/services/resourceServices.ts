@@ -139,8 +139,7 @@ export class ResourceService {
       );
 
       const { whereClause } = this.buildWhereClause(filters, search);
-      const { goeDataFilters, geoDataSort } = this.processGeoDataFilterAndSort(
-        filters,
+      const { geoDataSort } = this.processGeoDataSort(
         sortBy,
         sortOrder
       );
@@ -152,7 +151,6 @@ export class ResourceService {
         [[finalSortBy, finalSortOrder]],
         whereClause,
         fiscalYear,
-        goeDataFilters,
         geoDataSort
       );
 
@@ -214,8 +212,7 @@ export class ResourceService {
       );
 
       const { whereClause } = this.buildWhereClause(filters, search);
-      const { goeDataFilters, geoDataSort } = this.processGeoDataFilterAndSort(
-        filters,
+      const { geoDataSort } = this.processGeoDataSort(
         sortBy,
         sortOrder
       );
@@ -225,7 +222,6 @@ export class ResourceService {
         [[finalSortBy, finalSortOrder]],
         whereClause,
         fiscalYear,
-        goeDataFilters,
         geoDataSort
       );
       const rawResult = resources.resources || [];
@@ -497,6 +493,7 @@ export class ResourceService {
     whereClause: Record<string, any>
   ): Record<string, any> {
     const castToTextFields = ["resource_type", "resource_fullname", "resource_designation", "r_number", "resource_ref_id","resource_status"];
+    const uuidFields = ["resource_country","resource_region"];
 
     const filterFields = [
       { clientField: "resource_ref_id", dbField: "resource_ref_id" },
@@ -505,13 +502,18 @@ export class ResourceService {
       { clientField: "resource_type", dbField: "resource_type" },
       { clientField: "resource_status", dbField: "resource_status" },
       { clientField: "resource_designation", dbField: "resource_designation" },
+      { clientField: "resource_country", dbField: "resource_country" },
+      { clientField: "resource_region", dbField: "resource_region" },
     ];
 
     filterFields.forEach(({ clientField, dbField }) => {
       if (filters[clientField]) {
         const fieldFilter = filters[clientField];
 
-        if (castToTextFields.includes(dbField)) {
+        if (uuidFields.includes(dbField)) {
+          whereClause[dbField] = this.getUuidFieldFilter(fieldFilter, dbField);
+        }
+        else if (castToTextFields.includes(dbField)) {
           whereClause[dbField] = Sequelize.where(
             Sequelize.cast(Sequelize.col(dbField), "TEXT"),
             this.getFieldFilter(fieldFilter, dbField)
@@ -524,6 +526,28 @@ export class ResourceService {
     });
 
     return whereClause;
+  }
+
+  private getUuidFieldFilter(fieldFilter: any, dbField: string): any {
+    if (fieldFilter.equals) {
+      return fieldFilter.equals;
+    }
+    if (fieldFilter.not_equals) {
+      return { [Op.ne]: fieldFilter.not_equals };
+    }
+    if (fieldFilter.is_empty === true) {
+      return { [Op.is]: null };
+    }
+    if (fieldFilter.is_not_empty === true) {
+      return { [Op.not]: null };
+    }
+    if (fieldFilter.in && Array.isArray(fieldFilter.in)) {
+      return { [Op.in]: fieldFilter.in };
+    }
+    if (fieldFilter.not_in && Array.isArray(fieldFilter.not_in)) {
+      return { [Op.notIn]: fieldFilter.not_in };
+    }
+    return fieldFilter.value || fieldFilter;
   }
 
   /**
@@ -585,50 +609,24 @@ export class ResourceService {
     }
   }
 
-  processGeoDataFilterAndSort(
-    filters: Record<string, any>,
-    sortBy: string,
+processGeoDataSort(
+    sortBy: string, 
     sortOrder: string
-  ) {
-    let goeDataFilters: Record<string, any> = {};
+) {
     const geoDataSort: string[][] = [];
+    const geoFields = ["resource_country", "resource_region", "resource_city"];
 
-    if (filters.region) {
-      goeDataFilters["region"] = filters.region;
-    }
-
-    if (filters.country) {
-      goeDataFilters["country"] = filters.country;
-    }
-
-    if (filters.city) {
-      goeDataFilters["city"] = filters.city;
-    }
-
-    if (sortBy === "resource_country") {
-      geoDataSort.push([
-        sortBy,
-        sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC",
-      ]);
-    }
-    if (sortBy === "resource_region") {
-      geoDataSort.push([
-        sortBy,
-        sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC",
-      ]);
-    }
-    if (sortBy === "resource_city") {
-      geoDataSort.push([
-        sortBy,
-        sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC",
-      ]);
+    if (geoFields.includes(sortBy)) {
+        geoDataSort.push([
+            sortBy,
+            sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC"
+        ]);
     }
 
     return {
-      goeDataFilters,
-      geoDataSort,
+        geoDataSort,
     };
-  }
+}
 
   /**
    * Formats an error response to be returned from service methods.
