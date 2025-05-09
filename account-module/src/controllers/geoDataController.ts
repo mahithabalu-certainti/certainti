@@ -227,11 +227,54 @@ async function cities(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * Handles the request to fetch a list of industries from the geoDataService.
+ *
+ * @param {Request} req The request object containing details of the HTTP request.
+ * @param {Response} res The response object to send the HTTP response.
+ * @returns {Promise<void>} A promise that resolves when the request is processed.
+ *
+ * This method calls the `industries` service, checks the status, and sends an appropriate response:
+ * - If successful, it sends a success response with the list of industries.
+ * - If failed, it logs the error and sends an error response.
+ */
+async function industries(req: Request, res: Response): Promise<void> {
+  const methodName = "industry";
+  try {
+    const industries = await services.geoDataServices.industries();
+    if (industries.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, industries.data);
+      return;
+    } else {
+      errorLog(methodName, industries.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        industries.message
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 // Update the export to include the cities function
 export default {
   country,
   currency,
   regions,
   states,
-  cities
+  cities,
+  industries
 };

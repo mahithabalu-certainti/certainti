@@ -105,4 +105,10 @@ export interface IGeoDataService {
       count: number;
     }>
   >;
+  industries(): Promise<
+  GeoDataResponse<{
+    industries: any;
+    count: number;
+  }>
+  >
 }

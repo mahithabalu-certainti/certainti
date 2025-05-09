@@ -4,7 +4,7 @@ import { Region } from "../models/regionModel";
 import { States } from "../models/stateModel";
 import { HttpStatus } from "../utils/constant";
 import { models } from "../models";
-
+import { Industry } from "../models/industryModel";
 class GeoDataService {
   /**
    * Fetches a list of countries from the database.
@@ -221,6 +221,42 @@ class GeoDataService {
       return this.throwServiceError(err as Error);
     }
   }
+  /**
+   * Fetches a list of industries from the database.
+   *
+   * @returns {Promise<{ statusCode: number, message: string, errorMessage?: string, data?: { country: any } }>} The response object containing status code, message, and a list of countries.
+   * - statusCode: HTTP status code indicating the result of the request.
+   * - message: A success or error message based on the outcome of the request.
+   * - errorMessage (optional): The error message in case of a failure.
+   * - data (optional): An object containing the list of countries if the request is successful.
+   */
+  async industries(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { industries: any; count: number };
+  }> {
+    try {
+      const industries = await Industry.findAll({
+        attributes: ["rid", "industry_name", "industry_description","industry_status"],
+        where: {
+          industry_status: "active"
+        },
+        order: [["industry_name", "ASC"]] 
+      });
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          industries,
+          count: industries.length,
+        },
+      };
+    } catch (err) {
+      return this.throwServiceError(err as Error);
+    }
+  }
+
 
   /**
    * Handles the error thrown during service execution and returns a standardized error response.

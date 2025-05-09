@@ -140,7 +140,7 @@ export class ResourceFiscal
           allowNull: true,
         },
         annual_cost: {
-          type: DataTypes.DECIMAL(12, 2),
+          type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
           validate: {
             isPositive(value: number) {
@@ -151,7 +151,7 @@ export class ResourceFiscal
           },
         },
         semiannual_cost: {
-          type: DataTypes.DECIMAL(12, 2),
+          type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
           validate: {
             isPositive(value: number) {
@@ -162,7 +162,7 @@ export class ResourceFiscal
           },
         },
         monthly_cost: {
-          type: DataTypes.DECIMAL(12, 2),
+          type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
           validate: {
             isPositive(value: number) {
@@ -173,7 +173,7 @@ export class ResourceFiscal
           },
         },
         weekly_cost: {
-          type: DataTypes.DECIMAL(12, 2),
+          type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
           validate: {
             isPositive(value: number) {
@@ -184,7 +184,7 @@ export class ResourceFiscal
           },
         },
         bi_weekly_cost: {
-          type: DataTypes.DECIMAL(12, 2),
+          type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
           validate: {
             isPositive(value: number) {
@@ -195,7 +195,7 @@ export class ResourceFiscal
           },
         },
         daily_cost: {
-          type: DataTypes.DECIMAL(12, 2),
+          type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
           validate: {
             isPositive(value: number) {
@@ -206,7 +206,7 @@ export class ResourceFiscal
           },
         },
         hourly_cost: {
-          type: DataTypes.DECIMAL(12, 2),
+          type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
           validate: {
             isPositive(value: number) {

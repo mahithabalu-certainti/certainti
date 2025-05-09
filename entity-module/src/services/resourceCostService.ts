@@ -11,6 +11,7 @@ import { ResourceFiscal } from "../models/resourceFiscal";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { Op, Sequelize } from "sequelize";
 import moment from "moment";
+import Decimal from "decimal.js";
 
 class ResourceCostService {
   private schemaService: SchemaService;
@@ -230,7 +231,7 @@ class ResourceCostService {
    * @param resourceCost - Object containing resource cost details including costs, dates, and identifiers
    * @returns Promise resolving to status object with created resource cost data or error message
    */
-  async createResourceCost(
+async createResourceCost(
     resourceCost: IResourceCost,
     userId: string
   ): Promise<{
@@ -254,11 +255,10 @@ class ResourceCostService {
         accountNumber,
         resource_number,
       } = resourceCost;
-
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
       const schemaName = `platform_v2_${accountNumberFetched}`;
-      // Create both tables in parallel for better performance
+      
       const [resourceCostTableCreated, timelineTableCreated] =
         await Promise.all([
           resourceCostSchemaService.validateSchema(schemaName, "resource_cost"),
@@ -267,7 +267,6 @@ class ResourceCostService {
             "resource_cost_timeline"
           ),
         ]);
-
       if (!resourceCostTableCreated) {
         return {
           statusCode: HttpStatus.FAILED,
@@ -283,68 +282,65 @@ class ResourceCostService {
             "Account schema or resource_cost_timeline table could not be created",
         };
       }
-
       let createdResourceCost;
       let eventStatus = "Success";
       let errorMessage = "";
-      let frequency = {};
-
+      let frequency: Record<string, string | null> = {
+        annual_cost: null,
+        semi_annual_cost: null,
+        monthly_cost: null,
+        weekly_cost: null,
+        bi_weekly_cost: null,
+        daily_cost: null,
+        hourly_cost: null
+      };
       try {
-        let costField;
+        const decimalCost = new Decimal(cost);
+        const costValue = decimalCost.toString();
+        
+        // Set only the relevant frequency cost field
         switch (cost_frequency) {
           case "annual":
-            frequency = { annual_cost: cost };
-            costField = "annual_cost";
+            frequency.annual_cost = costValue;
             break;
           case "semi_annual":
-            frequency = { semi_annual_cost: cost };
-            costField = "semi_annual_cost";
+            frequency.semi_annual_cost = costValue;
             break;
           case "monthly":
-            frequency = { monthly_cost: cost };
-            costField = "monthly_cost";
+            frequency.monthly_cost = costValue;
             break;
           case "weekly":
-            frequency = { weekly_cost: cost };
-            costField = "weekly_cost";
+            frequency.weekly_cost = costValue;
             break;
           case "bi_weekly":
-            frequency = { bi_weekly_cost: cost };
-            costField = "bi_weekly_cost";
+            frequency.bi_weekly_cost = costValue;
             break;
           case "daily":
-            frequency = { daily_cost: cost };
-            costField = "daily_cost";
+            frequency.daily_cost = costValue;
             break;
           case "hourly":
-            frequency = { hourly_cost: cost };
-            costField = "hourly_cost";
+            frequency.hourly_cost = costValue;
             break;
           default:
             throw new Error(`Invalid cost frequency: ${cost_frequency}`);
         }
-
         const sequelize = await this.getOrgSequelize();
         ResourceCost.initialize(sequelize, schemaName);
         const effectiveDate = this.formatDateForDb(effective_date as string);
         const endDate = this.formatDateForDb(end_date as string);
-
         if (effectiveDate && endDate) {
           const existingCost = await ResourceCost.findOne({
             where: {
               resource_rid,
               effective_date: effectiveDate,
               end_date: endDate,
-              [costField]: { [Op.ne]: null },
+              [`${cost_frequency}_cost`]: { [Op.ne]: null },
             },
           });
-
           if (existingCost) {
             throw new Error("Compensation already exists for this duration.");
           }
         }
-
-        // Use the model's create method to leverage default values
         createdResourceCost = await ResourceCost.create({
           eid,
           account_rid,
@@ -354,23 +350,22 @@ class ResourceCostService {
           resource_ref_id,
           effective_date: effectiveDate || null,
           end_date: endDate || null,
+          cost_type: cost_frequency,
+          cost: cost,
           ...frequency,
           currency_rid: currency_rid || undefined,
           created_datetime: new Date(),
           created_by: userId,
           modified_by: userId,
         });
-
         if (resource_rid) {
           try {
             ResourceFiscal.initialize(sequelize, schemaName);
-            // Check if a record already exists for this resource and fiscal year
             const existingFiscal = await ResourceFiscal.findOne({
               where: {
                 resource_rid: resource_rid,
               },
             });
-
             if (existingFiscal) {
               await existingFiscal.update({
                 ...frequency,
@@ -380,15 +375,12 @@ class ResourceCostService {
             }
           } catch (fiscalError) {
             console.error("Error updating resource fiscal:", fiscalError);
-            // Continue with the process even if fiscal update fails
           }
         }
       } catch (error) {
         eventStatus = "Failure";
         errorMessage = (error as Error).message;
       }
-
-      //Try to log the event in the timeline table
       try {
         await this.createResourceCostTimeline(
           createdResourceCost ? createdResourceCost : {},
@@ -400,9 +392,7 @@ class ResourceCostService {
         );
       } catch (timelineError) {
         console.error("Failed to create timeline entry:", timelineError);
-        // Continue execution even if timeline creation fails
       }
-
       if (eventStatus === "Failure") {
         return {
           statusCode: HttpStatus.FAILED,
@@ -410,7 +400,6 @@ class ResourceCostService {
           errorMessage: errorMessage,
         };
       }
-
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -422,7 +411,6 @@ class ResourceCostService {
       return this.throwServiceError(err as Error);
     }
   }
-
   /**
    * Creates a record in the ResourceCostTimeline table using Sequelize ORM
    * @param resourceCost - The created resource cost object
@@ -523,47 +511,41 @@ class ResourceCostService {
         };
       }
 
-      let frequency = {};
+      let frequency: Record<string, string | null> = {
+        annual_cost: null,
+        semi_annual_cost: null,
+        monthly_cost: null,
+        weekly_cost: null,
+        bi_weekly_cost: null,
+        daily_cost: null,
+        hourly_cost: null
+      };
       try {
-        // First, create an object with all cost frequency fields set to null
-        const clearFrequencies = {
-          annual_cost: null as null | number,
-          semi_annual_cost: null as null | number,
-          monthly_cost: null as null | number,
-          weekly_cost: null as null | number,
-          bi_weekly_cost: null as null | number,
-          daily_cost: null as null | number,
-          hourly_cost: null as null | number,
-        };
-
-        frequency = {
-          ...clearFrequencies,
-        };
-
+        const decimalCost = new Decimal(cost);
+        const costValue = decimalCost.toString();
+        
+        // Set only the relevant frequency cost field
         switch (cost_frequency) {
           case "annual":
-            (frequency as { annual_cost: number | null }).annual_cost = cost;
+            frequency.annual_cost = costValue;
             break;
           case "semi_annual":
-            (
-              frequency as { semi_annual_cost: number | null }
-            ).semi_annual_cost = cost;
+            frequency.semi_annual_cost = costValue;
             break;
           case "monthly":
-            (frequency as { monthly_cost: number | null }).monthly_cost = cost;
+            frequency.monthly_cost = costValue;
             break;
           case "weekly":
-            (frequency as { weekly_cost: number | null }).weekly_cost = cost;
+            frequency.weekly_cost = costValue;
             break;
           case "bi_weekly":
-            (frequency as { bi_weekly_cost: number | null }).bi_weekly_cost =
-              cost;
+            frequency.bi_weekly_cost = costValue;
             break;
           case "daily":
-            (frequency as { daily_cost: number | null }).daily_cost = cost;
+            frequency.daily_cost = costValue;
             break;
           case "hourly":
-            (frequency as { hourly_cost: number | null }).hourly_cost = cost;
+            frequency.hourly_cost = costValue;
             break;
           default:
             throw new Error(`Invalid cost frequency: ${cost_frequency}`);
@@ -602,6 +584,8 @@ class ResourceCostService {
             eid,
             effective_date: effectiveDate || null,
             end_date: endDate || null,
+            cost_type: cost_frequency,
+            cost: cost,
             ...frequency,
             currency_rid,
             rid,

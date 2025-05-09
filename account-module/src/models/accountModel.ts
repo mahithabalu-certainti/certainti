@@ -2,7 +2,7 @@ import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { DatabaseConnection } from "./dbConnectionModel";
 import { Country } from "./countryModel";
 import { Currency } from "./currencyModel";
-
+import { Industry } from "./industryModel";
 interface AccountAttributes {
   rid: string;
   eid?: string;
@@ -16,7 +16,8 @@ interface AccountAttributes {
   database_connection_rid?: string;
   country_rid: string;
   currency_rid: string;
-  industry: string;
+  industry_rid: string;
+  industry_name?: string;
   primary_contact_name: string;
   status: string;
   annual_revenue: number;
@@ -43,7 +44,8 @@ export class Account
   public database_connection_rid?: string;
   public country_rid!: string;
   public currency_rid!: string;
-  public industry!: string;
+  public industry_rid!: string;
+  public industry_name?: string;
   public primary_contact_name!: string;
   public status!: string;
   public annual_revenue!: number;
@@ -114,9 +116,13 @@ export class Account
           type: DataTypes.UUID,
           allowNull: false,
         },
-        industry: {
+        industry_rid: {
           type: DataTypes.STRING(25),
           allowNull: false,
+        },
+        industry_name: {
+          type: DataTypes.STRING(255),
+          allowNull: true
         },
         primary_contact_name: {
           type: DataTypes.STRING(50),
@@ -174,6 +180,11 @@ export class Account
     Account.belongsTo(Country, {
       foreignKey: "country_rid",
       as: "country",
+    });
+
+    Account.belongsTo(Industry, {
+      foreignKey: "industry_rid",
+      as: "industry",
     });
 
     Account.belongsTo(Currency, {

@@ -3,19 +3,20 @@ export interface ICreateResource {
   resource_ref_id: string;
   resource_type: "Full-Time" | "Sub Con"| "Non-Labor";
   full_name?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
   org_name?: string | null;
   role?: string | null;
-  fiscal_year: number;
-  country?: string | null;
-  state?: string | null;
-  city?: string | null;
+  resource_country?: string | null;
+  resource_region?: string | null;
+  resource_city?: string | null;
   effective_from_date?: Date | null;
   effective_end_date?: Date | null;
-  designation?: string | null;
+  resource_designation?: string | null;
   total_years_experience?: number | null;
   total_years_in_org?: number | null;
   resource_status?: "Active" | "Inactive";
-  created_by: string;
+  created_by?: string | null;
   modified_by?: string | null;
   account_id: string;
   comments?: string;
@@ -27,19 +28,20 @@ export interface IUpdateResource {
   resource_ref_id: string;
   resource_type: "Full-Time" | "Sub Con" | "Non-Labor";
   full_name?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
   org_name?: string | null;
   role?: string | null;
-  fiscal_year: number;
-  country?: string | null;
-  state?: string | null;
-  city?: string | null;
+  resource_country?: string | null;
+  resource_region?: string | null;
+  resource_city?: string | null;
   effective_from_date?: string | null;
   effective_end_date?: string | null;
-  designation?: string | null;
+  resource_designation?: string | null;
   total_years_experience?: number | null;
   total_years_in_org?: number | null;
   resource_status?: "Active" | "Inactive";
-  modified_by: string;
+  modified_by ?: string | null;
   comments?: string;
 }
 export interface IResourceCost {
@@ -90,7 +92,6 @@ export interface IResourceSkill {
    skill_level?: string;
    status?: string;
    years_of_experience?: number,
-   fiscal_year?: number,
    created_by?: string | null;
    modified_by?: string | null;
    skill_type?: string;

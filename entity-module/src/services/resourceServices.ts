@@ -234,10 +234,12 @@ export class ResourceService {
           "Resource ID":resource.r_number,
           "Resource Ref ID":resource.resource_ref_id,
           "Resource Full Name":resource.resource_fullname,
+          "Resource First Name": resource.resource_firstname,
+          "Resource Last Name": resource.resource_lastname,
           "Resource Type": resource?.resource_type,
           "Resource Designation": resource.designation,
           "Resource Country": resource.country_name,
-          "Resource Region": resource.region,
+          "Resource Region": resource.resource_region,
           "Status": resource.resource_status,
           
 
@@ -417,14 +419,13 @@ export class ResourceService {
       "resource_fullname",
       "resource_type",
       "resource_status",
-      "total_years_experience",
       "resource_role",
       "resource_mobile",
       "resource_email",
-      "designation",
-      "total_years_experience",
-      "country",
-      "state",
+      "resource_designation",
+      "resource_total_experience",
+      "resource_country",
+      "resource_region",
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -495,7 +496,7 @@ export class ResourceService {
     filters: Record<string, any>,
     whereClause: Record<string, any>
   ): Record<string, any> {
-    const castToTextFields = ["resource_type", "resource_fullname", "designation", "r_number", "resource_ref_id","resource_status"];
+    const castToTextFields = ["resource_type", "resource_fullname", "resource_designation", "r_number", "resource_ref_id","resource_status"];
 
     const filterFields = [
       { clientField: "resource_ref_id", dbField: "resource_ref_id" },
@@ -503,7 +504,7 @@ export class ResourceService {
       { clientField: "resource_fullname", dbField: "resource_fullname" },
       { clientField: "resource_type", dbField: "resource_type" },
       { clientField: "resource_status", dbField: "resource_status" },
-      { clientField: "designation", dbField: "designation" },
+      { clientField: "resource_designation", dbField: "resource_designation" },
     ];
 
     filterFields.forEach(({ clientField, dbField }) => {
@@ -592,8 +593,8 @@ export class ResourceService {
     let goeDataFilters: Record<string, any> = {};
     const geoDataSort: string[][] = [];
 
-    if (filters.state) {
-      goeDataFilters["state"] = filters.state;
+    if (filters.region) {
+      goeDataFilters["region"] = filters.region;
     }
 
     if (filters.country) {
@@ -604,19 +605,19 @@ export class ResourceService {
       goeDataFilters["city"] = filters.city;
     }
 
-    if (sortBy === "country") {
+    if (sortBy === "resource_country") {
       geoDataSort.push([
         sortBy,
         sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC",
       ]);
     }
-    if (sortBy === "state") {
+    if (sortBy === "resource_region") {
       geoDataSort.push([
         sortBy,
         sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC",
       ]);
     }
-    if (sortBy === "city") {
+    if (sortBy === "resource_city") {
       geoDataSort.push([
         sortBy,
         sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC",

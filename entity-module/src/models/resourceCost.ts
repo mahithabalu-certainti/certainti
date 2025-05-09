@@ -12,6 +12,8 @@ interface ResourceCostAttributes {
   resource_ref_id: string;
   effective_date?: Date | null;
   end_date?: Date | null;
+  cost?: number;
+  cost_type?: string;
   annual_cost?: number;
   semi_annual_cost?: number;
   monthly_cost?: number;
@@ -44,6 +46,8 @@ export class ResourceCost
   resource_ref_id!: string;
   effective_date?: Date;
   end_date?: Date;
+  cost?: number;
+  cost_type?: string;
   annual_cost?: number;
   semi_annual_cost?: number;
   monthly_cost?: number;
@@ -132,32 +136,40 @@ export class ResourceCost
             },
           },
         },
+        cost: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+        },
+        cost_type: {
+          type: DataTypes.STRING(255),
+          allowNull: true,
+        },
         annual_cost: {
-          type: DataTypes.DECIMAL(12, 2),
+          type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },
         semi_annual_cost: {
-          type: DataTypes.DECIMAL(12, 2),
+          type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },
         monthly_cost: {
-          type: DataTypes.DECIMAL(12, 2),
+          type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },
         weekly_cost: {
-          type: DataTypes.DECIMAL(12, 2),
+          type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },
         bi_weekly_cost: {
-          type: DataTypes.DECIMAL(12, 2),
+          type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },
         daily_cost: {
-          type: DataTypes.DECIMAL(12, 2),
+          type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },
         hourly_cost: {
-          type: DataTypes.DECIMAL(12, 2),
+          type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },
         currency_rid: {

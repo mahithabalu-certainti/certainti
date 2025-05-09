@@ -8,21 +8,22 @@ export interface ResourcesAttributes {
   resource_type: "Full-Time" | "Sub Con" | "Non-Labor";
   account_rid: string;
   resource_fullname?: string | null;
+  resource_firstname?: string | null;
+  resource_lastname?: string | null;
   resource_orgname?: string | null;
   resource_role?: string | null;
-  fiscal_year?: number;
-  country?: string | null;
-  state?: string | null;
-  city?: string | null;
+  resource_country?: string | null;
+  resource_region?: string | null;
+  resource_city?: string | null;
   resource_startdate?: Date | null;
   resource_enddate?: Date | null;
-  designation?: string | null;
-  total_years_experience?: number | null;
-  total_years_in_org?: number | null;
+  resource_designation?: string | null;
+  resource_total_experience?: number | null;
+  resource_total_experience_organization?: number | null;
   resource_status?: "Active" | "Inactive";
   created_datetime?: Date;
   modified_datetime?: Date;
-  created_by: string;
+  created_by?: string | null;
   modified_by?: string | null;
   comments?: string;
 }
@@ -39,22 +40,23 @@ export class Resources
   public r_number?: string;
   public resource_ref_id!: string;
   public resource_type!: "Full-Time" | "Sub Con" | "Non-Labor";
-  public fiscal_year!: number;
   public resource_fullname?: string | null;
+  public resource_firstname?: string | null;
+  public resource_lastname?: string | null;
   public resource_orgname?: string;
   public resource_role?: string | null;
-  public country?: string | null;
-  public state?: string | null;
+  public resource_country?: string | null;
+  public resource_region?: string | null;
   public city?: string | null;
   public resource_startdate?: Date;
   public resource_enddate?: Date;
-  public designation?: string | null;
-  public total_years_experience?: number;
-  public total_years_in_org?: number;
+  public resource_designation?: string | null;
+  public resource_total_experience?: number;
+  public resource_total_experience_organization?: number;
   public resource_status?: "Active" | "Inactive";
   public created_datetime?: Date;
   public modified_datetime?: Date;
-  public created_by!: string;
+  public created_by?: string;
   public modified_by?: string;
   public account_rid!: string;
   public comments?: string;
@@ -97,6 +99,20 @@ export class Resources
           },
           allowNull: true,
         },
+        resource_firstname: {
+          type: DataTypes.STRING(64),
+          validate: {
+            len: [3, 64],
+          },
+          allowNull: true,
+        },
+        resource_lastname: {
+          type: DataTypes.STRING(64),
+          validate: {
+            len: [3, 64],
+          },
+          allowNull: true,
+        },
         resource_orgname: {
           type: DataTypes.STRING(100),
           validate: {
@@ -111,19 +127,15 @@ export class Resources
           },
           allowNull: true,
         },
-        fiscal_year: {
-          type: DataTypes.INTEGER,
-          allowNull: false,
-        },
-        country: {
+        resource_country: {
           type: DataTypes.UUID,
           allowNull: true,
         },
-        state: {
+        resource_region: {
           type: DataTypes.UUID,
           allowNull: true,
         },
-        city: {
+        resource_city: {
           type: DataTypes.UUID,
           allowNull: true,
         },
@@ -135,22 +147,22 @@ export class Resources
           type: DataTypes.DATE,
           allowNull: true,
         },
-        designation: {
+        resource_designation: {
           type: DataTypes.STRING(100),
           validate: {
             len: [4, 100],
           },
           allowNull: true,
         },
-        total_years_experience: {
-          type: DataTypes.INTEGER,
+        resource_total_experience: {
+          type: DataTypes.DECIMAL(4,2),
           allowNull: true,
           validate: {
             min: 0,
           },
         },
-        total_years_in_org: {
-          type: DataTypes.INTEGER,
+        resource_total_experience_organization: {
+          type: DataTypes.DECIMAL(4,2),
           allowNull: true,
           validate: {
             min: 0,
@@ -172,7 +184,7 @@ export class Resources
         },
         created_by: {
           type: DataTypes.UUID,
-          allowNull: false,
+          allowNull: true,
         },
         modified_by: {
           type: DataTypes.UUID,
