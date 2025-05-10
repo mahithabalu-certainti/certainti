@@ -92,5 +92,16 @@ export interface IUpdateAccount {
   data_residency?: string | null;
   data_storage: "separate_db" | "store_in_parent";
   r_number: string;
-  business_details:string
+  business_details:string;
+  key_contacts:any;
+}
+
+export interface IKeyContactDetail {
+  key_contact_id: string;
+  key_contact_name: string;
+  key_contact_email: string;
+  key_contact_role_rid: string;
+  is_primary_contact: boolean;
+  include_in_communication: boolean;
+  status: "active" | "inactive";
 }

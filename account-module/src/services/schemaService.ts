@@ -1,5 +1,5 @@
 import { initOrgSequelize } from "../config/orgdbDataSource";
-import { IAccount, IUpdateAccount } from "../utils/types";
+import { IAccount, IUpdateAccount, IKeyContactDetail } from "../utils/types";
 
 class SchemaService {
   async createNewSchema(account_number: string) {
@@ -305,7 +305,51 @@ class SchemaService {
       }
     );
   }
+  
+  async manageKeyContacts(
+    key_contacts: IKeyContactDetail,
+    account_rid: string,
+    userId: string
+  ) {
+    
+  try {
+    for (const contact of Object.values(key_contacts)) {
+      console.log("action",contact.action_type)
+      if(contact.action_type === 'edit')
+      {
+        {
+          this.updateKeyContactDetails(
+            contact,
+            account_rid,
+            userId
+          )
+        }
+      }
+      else if(contact.action_type === 'delete')
+      {
+        {
+          this.deleteKeyContactDetails(
+            account_rid,
+            contact.key_contact_id
+          )
+        }
+      }
+      else if(contact.action_type === 'add')
+      {
+        this.insertKeyContactDetails(
+          contact,
+          account_rid,
+          userId
+        )
+      }
+    }
+  }
+    catch(Error)
+    {
+      console.log(Error)
+    }
 
+  }
   async updateAccountDetails(
     account_rid: string,
     accountData: IUpdateAccount,
@@ -390,62 +434,117 @@ class SchemaService {
       }
     );
   }
-  async inserKeyContactDetails(
-    accountData: IAccount,
+
+  async deleteKeyContactDetails(account_rid: string,key_contact_id: string){
+    const sequelize = await initOrgSequelize();
+    await sequelize.query(
+      `DELETE FROM "public"."key_contact_details" 
+       WHERE key_contact_id = :key_contact_id AND account_rid = :account_rid`,
+      {
+        replacements: {
+          key_contact_id,
+          account_rid,
+        }
+      }
+    );
+  }
+  async updateKeyContactDetails(
+    key_contact: IKeyContactDetail,
     account_rid: string,
     userId: string,
 ) {
-  const keyContactDetails = accountData.key_contacts;
+  const keyContactDetails = key_contact;
       const sequelize = await initOrgSequelize();
       try {
-        const result = await sequelize.query(
-          `SELECT key_contact_id FROM "public"."key_contact_details" 
-           ORDER BY key_contact_id DESC LIMIT 1;`,
+
+        await sequelize.query(
+          `
+            UPDATE "public"."key_contact_details"
+            SET 
+              key_contact_name = :key_contact_name,
+              key_contact_email = :key_contact_email,
+              key_contact_role_rid = :key_contact_role_rid,
+              status = :status,
+              is_primary_contact = :is_primary_contact,
+              include_in_communication = :include_in_communication,
+              modified_by = :modified_by
+            WHERE account_rid = :account_rid
+            AND key_contact_id = :key_contact_id;
+          `,
           {
-            type: "SELECT",
-            plain: true,
+            replacements: {
+              key_contact_id: keyContactDetails.key_contact_id,
+              account_rid: account_rid,
+              key_contact_name: keyContactDetails.key_contact_name,
+              key_contact_email: keyContactDetails.key_contact_email,
+              key_contact_role_rid: keyContactDetails.key_contact_role_rid,
+              status: keyContactDetails.status,
+              is_primary_contact: keyContactDetails.is_primary_contact,
+              include_in_communication: keyContactDetails.include_in_communication,
+              modified_by: userId
+            },
           }
-        ) as { key_contact_id: string };
-        
-        const keyContactId = result?.key_contact_id ?? '';
-        let lastKeyId = keyContactId.startsWith('KEY') ? parseInt(keyContactId.replace("KEY", "")) : 0; // Direct check for 'KEY'  
-        const insertQueries = keyContactDetails.map((contact:any) => {
-          lastKeyId++;
-          const key_contact_id = `KEY${String(lastKeyId).padStart(3, '0')}`;
-            return sequelize.query(
-            `INSERT INTO "public"."key_contact_details" (
-              key_contact_id,account_rid, key_contact_name, 
-              key_contact_email, key_contact_role, status, 
-              is_primary_contact, include_in_communication, 
-              created_by, modified_by
-            ) VALUES (
-              :key_contact_id,:account_rid, :key_contact_name, 
-              :key_contact_email, :key_contact_role, :key_contact_status, 
-              :is_primary_contact, :include_in_communication, 
-              :created_by, :modified_by
-            );`,
-            {
-              replacements: {
-                key_contact_id: key_contact_id,
-                account_rid: account_rid,
-                key_contact_name: contact.key_contact_name,
-                key_contact_email: contact.key_contact_email,
-                key_contact_role: contact.key_contact_role,
-                key_contact_status: contact.status,
-                is_primary_contact: contact.is_primary_contact,
-                include_in_communication: contact.include_in_communication,
-                created_by: userId,
-                modified_by: userId,
-              },
-            }
-          );
-        });
-    
-        await Promise.all(insertQueries);
+        );
       } catch (error) {
-        console.error("Error inserting key contact details:", error);
+        console.error("Error updating key contact details:", error);
         throw error;
       }
+  }
+  async insertKeyContactDetails(
+    keyContacts: IKeyContactDetail,
+    account_rid: string,
+    userId: string,
+  ) {
+    const keyContactDetails = keyContacts;
+    const sequelize = await initOrgSequelize();
+    try {
+      const result = await sequelize.query(
+        `SELECT key_contact_id FROM "public"."key_contact_details" 
+         ORDER BY key_contact_id DESC LIMIT 1;`,
+        {
+          type: "SELECT",
+          plain: true,
+        }
+      ) as { key_contact_id: string };
+  
+      const keyContactId = result?.key_contact_id ?? '';
+      let lastKeyId = keyContactId.startsWith('KEY') ? parseInt(keyContactId.replace("KEY", "")) : 0;
+      
+      // Since keyContactDetails is a single object, not an array
+      lastKeyId++;
+      const key_contact_id = `KEY${String(lastKeyId).padStart(3, '0')}`;
+      
+      await sequelize.query(
+        `INSERT INTO "public"."key_contact_details" (
+          key_contact_id, account_rid, key_contact_name, 
+          key_contact_email, key_contact_role_rid, status, 
+          is_primary_contact, include_in_communication, 
+          created_by, modified_by
+        ) VALUES (
+          :key_contact_id, :account_rid, :key_contact_name, 
+          :key_contact_email, :key_contact_role_rid, :status, 
+          :is_primary_contact, :include_in_communication, 
+          :created_by, :modified_by
+        );`,
+        {
+          replacements: {
+            key_contact_id,
+            account_rid,
+            key_contact_name: keyContactDetails.key_contact_name,
+            key_contact_email: keyContactDetails.key_contact_email,
+            key_contact_role_rid: keyContactDetails.key_contact_role_rid,
+            status: keyContactDetails.status,
+            is_primary_contact: keyContactDetails.is_primary_contact,
+            include_in_communication: keyContactDetails.include_in_communication,
+            created_by: userId,
+            modified_by: userId
+          }
+        }
+      );
+    } catch (error) {
+      console.error("Error inserting key contact details:", error);
+      throw error;
+    }
   }
 
 }
