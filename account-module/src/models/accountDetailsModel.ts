@@ -24,6 +24,7 @@ interface AccountDetailsAttributes {
   database_level: boolean;
   data_residency?: string;
   data_storage?: string;
+  business_details: string;
 }
 
 interface AccountDetailsCreationAttributes
@@ -60,6 +61,7 @@ class AccountDetails
   public database_level!: boolean;
   public data_residency?: string;
   public data_storage?: string;
+  public business_details!: string;
   public created_datetime?: Date;
   public modified_datetime?: Date;
 
@@ -173,6 +175,10 @@ AccountDetails.init(
     data_residency: {
       type: DataTypes.STRING(255),
       allowNull: true,
+    },
+    business_details: {
+      type: DataTypes.STRING(2000),
+      allowNull: false,
     },
     data_storage: {
       type: DataTypes.STRING(255),

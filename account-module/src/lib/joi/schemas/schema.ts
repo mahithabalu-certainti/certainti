@@ -127,14 +127,14 @@ const accountSchema = Joi.object({
       Joi.object({
         key_contact_name: Joi.string().required(),
         key_contact_email: Joi.string().email().required(),
-        key_contact_role: Joi.string().required(),
+        key_contact_role_rid: Joi.string().required(),
         is_primary_contact: Joi.boolean().required(),
         include_in_communication: Joi.boolean().required(),
-        status: Joi.string().valid('Active', 'Inactive').required()
+        status: Joi.string().valid('Active', 'Inactive').required(),
+        action_type: Joi.string().valid('add').required()
       })
     )
-    .min(1)
-    .required()
+    .optional()
 });
 
 const updateAccountSchema = Joi.object({
@@ -235,16 +235,17 @@ const updateAccountSchema = Joi.object({
     key_contacts: Joi.array()
     .items(
       Joi.object({
+        key_contact_id: Joi.string().required(),
         key_contact_name: Joi.string().required(),
         key_contact_email: Joi.string().email().required(),
-        key_contact_role: Joi.string().required(),
+        key_contact_role_rid: Joi.string().required(),
         is_primary_contact: Joi.boolean().required(),
         include_in_communication: Joi.boolean().required(),
-        status: Joi.string().valid('Active', 'Inactive').required()
+        status: Joi.string().valid('Active', 'Inactive').required(),
+        action_type: Joi.string().valid('add', 'edit','delete').required()
       })
     )
-    .min(1)
-    .required()
+    .optional()
 });
 
 const listAccountSchema = Joi.object({
