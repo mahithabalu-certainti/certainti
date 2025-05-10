@@ -59,18 +59,18 @@ const accountSchema = Joi.object({
   autosend_interaction: Joi.boolean().required(),
   auto_access_rd: Joi.boolean().required(),
   fiscal_start_date: Joi.string()
-    .pattern(/^\d{2}\/\d{2}\/\d{4}$/)
+    .pattern(/^\d{2}\/\d{2}$/)
     .required()
     .messages({
       "string.pattern.base":
-        "fiscal_start_date must be in the format DD/MM/YYYY",
+        "fiscal_start_date must be in the format DD/MM",
     }),
 
   fiscal_end_date: Joi.string()
-    .pattern(/^\d{2}\/\d{2}\/\d{4}$/)
+    .pattern(/^\d{2}\/\d{2}$/)
     .required()
     .messages({
-      "string.pattern.base": "fiscal_end_date must be in the format DD/MM/YYYY",
+      "string.pattern.base": "fiscal_end_date must be in the format DD/MM",
     }),
   interaction_cc_list: Joi.string().allow(null),
   blended_rate_fte: Joi.string()
@@ -105,6 +105,7 @@ const accountSchema = Joi.object({
   industry_rid: Joi.string().required(),
   industry_name: Joi.string().min(5).optional(),
   business_details: Joi.string().min(1).max(2000).required(),
+  comments: Joi.string().min(1).max(2000).optional(),
   website: Joi.string()
     .max(50)
     .allow(null)
@@ -125,12 +126,12 @@ const accountSchema = Joi.object({
     key_contacts: Joi.array()
     .items(
       Joi.object({
-        key_contact_name: Joi.string().required(),
-        key_contact_email: Joi.string().email().required(),
+        key_contact_name: Joi.string().min(2).max(128).required(),
+        key_contact_email: Joi.string().email().min(3).max(125).required(),
         key_contact_role_rid: Joi.string().required(),
         is_primary_contact: Joi.boolean().required(),
         include_in_communication: Joi.boolean().required(),
-        status: Joi.string().valid('Active', 'Inactive').required(),
+        status: Joi.string().valid('active', 'inactive').required(),
         action_type: Joi.string().valid('add').required()
       })
     )
@@ -171,18 +172,18 @@ const updateAccountSchema = Joi.object({
   autosend_interaction: Joi.boolean().required(),
   auto_access_rd: Joi.boolean().required(),
   fiscal_start_date: Joi.string()
-    .pattern(/^\d{2}\/\d{2}\/\d{4}$/)
+    .pattern(/^\d{2}\/\d{2}$/)
     .required()
     .messages({
       "string.pattern.base":
-        "fiscal_start_date must be in the format DD/MM/YYYY",
+        "fiscal_start_date must be in the format DD/MM",
     }),
 
   fiscal_end_date: Joi.string()
-    .pattern(/^\d{2}\/\d{2}\/\d{4}$/)
+    .pattern(/^\d{2}\/\d{2}$/)
     .required()
     .messages({
-      "string.pattern.base": "fiscal_end_date must be in the format DD/MM/YYYY",
+      "string.pattern.base": "fiscal_end_date must be in the format DD/MM",
     }),
   interaction_cc_list: Joi.string().allow(null),
   blended_rate_fte: Joi.string()
@@ -216,6 +217,7 @@ const updateAccountSchema = Joi.object({
   industry_rid: Joi.string().min(5).required(),
   industry_name: Joi.string().min(5).max(100).optional(),
   business_details: Joi.string().min(1).max(2000).required(),
+  comments: Joi.string().min(1).max(2000).optional(),
   website: Joi.string()
     .min(10)
     .max(255)
@@ -235,13 +237,17 @@ const updateAccountSchema = Joi.object({
     key_contacts: Joi.array()
     .items(
       Joi.object({
-        key_contact_id: Joi.string().required(),
-        key_contact_name: Joi.string().required(),
-        key_contact_email: Joi.string().email().required(),
+        key_contact_id: Joi.string().when("action_type", {
+          is: Joi.string().valid("edit", "delete"),
+          then: Joi.required(),
+          otherwise: Joi.forbidden(), // Optional: Prevents key_contact_id in 'add' action
+        }),
+        key_contact_name: Joi.string().min(2).max(128).required(),
+        key_contact_email: Joi.string().email().min(3).max(125).required(),
         key_contact_role_rid: Joi.string().required(),
         is_primary_contact: Joi.boolean().required(),
         include_in_communication: Joi.boolean().required(),
-        status: Joi.string().valid('Active', 'Inactive').required(),
+        status: Joi.string().valid('active', 'inactive').required(),
         action_type: Joi.string().valid('add', 'edit','delete').required()
       })
     )

@@ -50,6 +50,7 @@ class SchemaService {
         data_storage VARCHAR(255) CHECK (data_storage IN ('separate_db', 'store_in_parent')),
         auto_access_rd BOOLEAN NOT NULL,
         business_details VARCHAR(2000) NOT NULL,
+        comments VARCHAR(2000),
         created_datetime DATE DEFAULT CURRENT_TIMESTAMP NULL,
         modified_datetime DATE DEFAULT CURRENT_TIMESTAMP NULL
       );
@@ -266,7 +267,7 @@ class SchemaService {
           created_by, modified_by, primary_contact_email, primary_contact_number, 
           finance_poc_name, finance_poc_email, finanace_poc_number, website, 
           project_manager, 
-          data_residency, data_storage, auto_access_rd,business_details
+          data_residency, data_storage, auto_access_rd,business_details,comments
         ) 
         VALUES (
           :account_rid, :max_ai_interactions, 
@@ -275,7 +276,7 @@ class SchemaService {
           :created_by, :modified_by, :primary_contact_email, :primary_contact_number, 
           :finance_poc_name, :finance_poc_email, :finanace_poc_number, :website, 
           :project_manager, 
-          :data_residency, :data_storage, :auto_access_rd,:business_details
+          :data_residency, :data_storage, :auto_access_rd,:business_details,:comments
         );
       `,
       {
@@ -300,7 +301,8 @@ class SchemaService {
           data_residency: accountData.data_residency ?? null,
           data_storage: accountData.data_storage ?? null,
           auto_access_rd: accountData.auto_access_rd,
-          business_details:accountData.business_details
+          business_details:accountData.business_details,
+          comments:accountData.comments?? null
         },
       }
     );
@@ -379,7 +381,8 @@ class SchemaService {
           project_manager = :project_manager,
           auto_access_rd = :auto_access_rd,
           modified_datetime = :modified_datetime,
-          business_details = :business_details
+          business_details = :business_details,
+          comments = :comments
         WHERE account_rid = :account_rid;
       `,
       {
@@ -400,6 +403,7 @@ class SchemaService {
           project_manager: accountData.project_manager,
           auto_access_rd: accountData.auto_access_rd,
           business_details:accountData.business_details,
+          comments: accountData.comments?? null,
           modified_datetime: new Date(),
         },
       }
