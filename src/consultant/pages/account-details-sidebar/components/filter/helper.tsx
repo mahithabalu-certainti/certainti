@@ -773,6 +773,7 @@ export const EnumFilterControl: React.FC<{
   state: FilterState;
   onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
   onChange: (fieldName: string, svalues: string[]) => void;
+  disabled?: boolean;
 }> = ({
   filterStates,
   menuOption,
@@ -781,6 +782,7 @@ export const EnumFilterControl: React.FC<{
   state,
   onOptionChange,
   onChange,
+  disabled = false,
 }) => {
     const option = formatString(filterStates?.[fieldName]?.enum?.option);
     const isMultiple = option === 'In';
@@ -798,6 +800,7 @@ export const EnumFilterControl: React.FC<{
                 fontWeight: 300,
               },
             }}
+            disabled={disabled} 
           >
             <Select
               value={state?.enum?.option ?? 'equals'}
@@ -832,6 +835,7 @@ export const EnumFilterControl: React.FC<{
                   fontWeight: 300,
                 },
               }}
+              disabled={disabled}
             >
               <Select
                 multiple={isMultiple}
@@ -1121,65 +1125,3 @@ export const SkillTypeFilterControl: React.FC<SkillTypeFilterControlProps> = ({
     </Box>
   );
 };
-
-interface SkillSubTypeFilterControlProps {
-  fieldName: string;
-  state: FilterState;
-  menuOption: { option: string; value: string }[];
-  onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
-  skillTypeSelected: boolean;
-}
-
-export const SkillSubTypeFilterControl: React.FC<SkillSubTypeFilterControlProps> = ({ 
-  fieldName, 
-  state, 
-  menuOption, 
-  onOptionChange,
-  skillTypeSelected
-}) => (
-  <Box sx={{ p: 1, mt: 1, borderBottom: '1px solid #CBD6E2' }}>
-    <FormControl fullWidth size='small'>
-      <Select
-        value={state.select?.value || ''}
-        displayEmpty
-        disabled={!skillTypeSelected}
-        renderValue={(selected) => {
-          if (!selected) {
-            return <span style={{ color: '#aaa' }}>
-              {skillTypeSelected ? 'Select sub type' : 'Select skill type first'}
-            </span>;
-          }
-          const selectedOption = menuOption.find(opt => opt.value === selected)?.option;
-          return selectedOption || selected;
-        }}
-        onChange={(e) => onOptionChange(fieldName, e)}
-        sx={{ 
-          height: '30px', 
-          minHeight: 20,
-          '&.Mui-disabled': {
-            backgroundColor: '#f5f5f5'
-          }
-        }}
-        MenuProps={{
-          PaperProps: {
-            sx: {
-              '& .MuiMenuItem-root': {
-                fontSize: '12px',
-                fontWeight: 300,
-              },
-            },
-          },
-        }}
-      >
-        <MenuItem value='' disabled>
-          Select
-        </MenuItem>
-        {menuOption.map((menu) => (
-          <MenuItem key={menu.value} value={menu.value}>
-            {menu.option}
-          </MenuItem>   
-        ))}
-      </Select>
-    </FormControl>
-  </Box>
-);

@@ -131,7 +131,7 @@ export interface NumberFilterState {
 }
 export interface EnumFilterState {
   option?: EnumFilterOption;
-  value?: [];
+  value?: string[];
 }
 export interface CurrencySelectFilterState {
   option?: EnumFilterOption;

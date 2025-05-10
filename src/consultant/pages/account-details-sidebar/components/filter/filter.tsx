@@ -25,7 +25,6 @@ import {
   EnumFilterControl,
   formatFilterForApi,
   NumberFilterControl,
-  SkillSubTypeFilterControl,
   StatusFilterControl,
   TextFilterControl,
   TextFilterControlForCostAndSKill,
@@ -306,19 +305,21 @@ const Filter: React.FC<FilterComponentProps> = ({
 
     const fieldState = filterStates[field.value] || {};
 
-    if (field.type === 'skillSubTypeFilter') {
-      const dependsOnField = field.dependsOn;
-      const isSkillTypeSelected = dependsOnField 
-        ? !!filterStates[dependsOnField]?.select?.value
-        : false;
-  
+    console.log('field', field)
+    if (field.value === 'skill_sub_type') {
+      const skillTypeValue = filterStates['skill_type']?.enum?.value;
+      const enabled = !!skillTypeValue && !!skillTypeValue[0]; // Only enable if skill type is selected
+   
       return (
-        <SkillSubTypeFilterControl
-          menuOption={field.options || []}
+        <EnumFilterControl
+          filterStates={filterStates}
+          menuOption={enumOptions}
+          valueOptions={field.options as { option: string; value: string }[]}
           fieldName={field.value}
           state={fieldState}
           onOptionChange={handleFilterOptionChange}
-          skillTypeSelected={isSkillTypeSelected}
+          onChange={handleEnumSelectChange}
+          disabled={!enabled}
         />
       );
     }
@@ -402,16 +403,6 @@ const Filter: React.FC<FilterComponentProps> = ({
             onOptionChange={handleFilterOptionChange}
           />
         );
-      // case 'skillTypeFilter':
-      //   return (
-      //     <SkillTypeFilterControl
-      //       menuOption={field.options as { option: string; value: string }[]}
-      //       fieldName={field.value}
-      //       state={fieldState}
-      //       onOptionChange={handleFilterOptionChange}
-      //       setFilterStates={setFilterStates}
-      //     />
-      //   );
       default:
         return null;
     }

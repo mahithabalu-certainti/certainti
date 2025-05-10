@@ -48,4 +48,4 @@ export const ExportResourcelUrl = ({
 };
 
 export const SKILLTYPEURL = `${baseUrl}/api/resource_skill/skilltypes`;
-export const SkillSubTypeUrl = (skillType : string) => `${baseUrl}/api/resource_skill/skillsubtypes?skillTypeRid=${skillType}`;
+export const SkillSubTypeUrl = (skillType : string | null) => `${baseUrl}/api/resource_skill/skillsubtypes?skillTypeRid=${skillType}`;

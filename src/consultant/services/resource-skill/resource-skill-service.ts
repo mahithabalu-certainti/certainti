@@ -146,19 +146,19 @@ export const useFetchResourceSkillType = (): UseQueryResult => {
 );
 };
 
-export const fetchSkillSubType = async (skillType : string): Promise<SKillSubTypeApiResponse> => {
+export const fetchSkillSubType = async (skillType : string | null): Promise<SKillSubTypeApiResponse> => {
   const { data } = await api.get<SKillSubTypeApiResponse>(SkillSubTypeUrl(skillType));
   return data;
 };
 
-export const useFetchResourceSkillSubType = (params : string): UseQueryResult => {
+export const useFetchResourceSkillSubType = (params : string | null): UseQueryResult => {
   return useQuery({
     queryKey: ['resource-skill-Type', params],
     queryFn: async () => {
       const res = await fetchSkillSubType(params);
       return res.data;
     },
-    enabled:!!params,
+    enabled: Boolean(params) && (typeof params === 'string' && params.trim() !== ''),
     retry: 0,
   },
 );
