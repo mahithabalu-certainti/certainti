@@ -480,7 +480,7 @@ class AccountService {
           : account_currency_rid,
         industry_rid: industry_rid,
         industry_name: industry_name,
-        primary_contact_name,
+        primary_contact_name:'John Doe',
         status,
         annual_revenue,
       });
