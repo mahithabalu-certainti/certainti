@@ -42,6 +42,8 @@ export interface IAccount {
   annual_revenue: number;
   data_residency?: string | null;
   data_storage: "separate_db" | "store_in_parent";
+  key_contacts:any;
+  business_details:string
 }
 
 export interface IUpdateAccount {
@@ -90,4 +92,5 @@ export interface IUpdateAccount {
   data_residency?: string | null;
   data_storage: "separate_db" | "store_in_parent";
   r_number: string;
+  business_details:string
 }

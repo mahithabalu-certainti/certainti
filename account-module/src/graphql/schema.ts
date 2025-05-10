@@ -49,6 +49,7 @@ const typeDefs = gql`
     database_level: Boolean!
     annual_revenue: String
     data_storage: String!
+    business_details: String!
     created_datetime: Date
     modified_datetime: Date
     country: Country

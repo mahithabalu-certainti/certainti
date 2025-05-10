@@ -436,6 +436,7 @@ class AccountService {
         data_storage,
         status,
         annual_revenue,
+        key_contacts,
       } = accountData;
 
       if (data_storage === "store_in_parent" && !parent_account_rid) {
@@ -517,6 +518,11 @@ class AccountService {
           userId
         );
       }
+      await this.schemaService.inserKeyContactDetails(
+        accountData,
+        account.rid,
+        userId
+      );
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -712,13 +718,22 @@ class AccountService {
         acconuntNumber,
         accountById?.rid || "",
       );
+      // Fetch key contacts for the account
+      const keyContacts = await this.schemaService.fetchKeyContacts(
+        accountById?.rid || ""
+      );
 
+      // Add key contacts to account details
+      const accountData = {
+        ...accountDetails.length > 0 ? accountDetails[0] : {},
+        keyContacts: keyContacts.length > 0 ? keyContacts : [],
+      };
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
           accountById,
-          accountDetails: accountDetails.length > 0 ? accountDetails[0] : {},
+          accountDetails: accountData,
         },
       };
     } catch (err) {

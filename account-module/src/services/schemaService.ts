@@ -49,6 +49,7 @@ class SchemaService {
         data_residency VARCHAR(255),
         data_storage VARCHAR(255) CHECK (data_storage IN ('separate_db', 'store_in_parent')),
         auto_access_rd BOOLEAN NOT NULL,
+        business_details VARCHAR(2000) NOT NULL,
         created_datetime DATE DEFAULT CURRENT_TIMESTAMP NULL,
         modified_datetime DATE DEFAULT CURRENT_TIMESTAMP NULL
       );
@@ -265,7 +266,7 @@ class SchemaService {
           created_by, modified_by, primary_contact_email, primary_contact_number, 
           finance_poc_name, finance_poc_email, finanace_poc_number, website, 
           project_manager, 
-          data_residency, data_storage, auto_access_rd
+          data_residency, data_storage, auto_access_rd,business_details
         ) 
         VALUES (
           :account_rid, :max_ai_interactions, 
@@ -274,7 +275,7 @@ class SchemaService {
           :created_by, :modified_by, :primary_contact_email, :primary_contact_number, 
           :finance_poc_name, :finance_poc_email, :finanace_poc_number, :website, 
           :project_manager, 
-          :data_residency, :data_storage, :auto_access_rd
+          :data_residency, :data_storage, :auto_access_rd,:business_details
         );
       `,
       {
@@ -299,6 +300,7 @@ class SchemaService {
           data_residency: accountData.data_residency ?? null,
           data_storage: accountData.data_storage ?? null,
           auto_access_rd: accountData.auto_access_rd,
+          business_details:accountData.business_details
         },
       }
     );
@@ -332,7 +334,8 @@ class SchemaService {
           website = :website,
           project_manager = :project_manager,
           auto_access_rd = :auto_access_rd,
-          modified_datetime = :modified_datetime
+          modified_datetime = :modified_datetime,
+          business_details = :business_details
         WHERE account_rid = :account_rid;
       `,
       {
@@ -352,6 +355,7 @@ class SchemaService {
           website: accountData.website ?? null,
           project_manager: accountData.project_manager,
           auto_access_rd: accountData.auto_access_rd,
+          business_details:accountData.business_details,
           modified_datetime: new Date(),
         },
       }
@@ -375,6 +379,75 @@ class SchemaService {
       throw new Error("Error retrieving account details");
     }
   }
+
+  async fetchKeyContacts(account_rid: string) {
+    const sequelize = await initOrgSequelize();
+    return await sequelize.query(
+      `SELECT * FROM "public"."key_contact_details" WHERE account_rid = :account_rid`,
+      {
+        type: "SELECT",
+        replacements: { account_rid },
+      }
+    );
+  }
+  async inserKeyContactDetails(
+    accountData: IAccount,
+    account_rid: string,
+    userId: string,
+) {
+  const keyContactDetails = accountData.key_contacts;
+      const sequelize = await initOrgSequelize();
+      try {
+        const result = await sequelize.query(
+          `SELECT key_contact_id FROM "public"."key_contact_details" 
+           ORDER BY key_contact_id DESC LIMIT 1;`,
+          {
+            type: "SELECT",
+            plain: true,
+          }
+        ) as { key_contact_id: string };
+        
+        const keyContactId = result?.key_contact_id ?? '';
+        let lastKeyId = keyContactId.startsWith('KEY') ? parseInt(keyContactId.replace("KEY", "")) : 0; // Direct check for 'KEY'  
+        const insertQueries = keyContactDetails.map((contact:any) => {
+          lastKeyId++;
+          const key_contact_id = `KEY${String(lastKeyId).padStart(3, '0')}`;
+            return sequelize.query(
+            `INSERT INTO "public"."key_contact_details" (
+              key_contact_id,account_rid, key_contact_name, 
+              key_contact_email, key_contact_role, status, 
+              is_primary_contact, include_in_communication, 
+              created_by, modified_by
+            ) VALUES (
+              :key_contact_id,:account_rid, :key_contact_name, 
+              :key_contact_email, :key_contact_role, :key_contact_status, 
+              :is_primary_contact, :include_in_communication, 
+              :created_by, :modified_by
+            );`,
+            {
+              replacements: {
+                key_contact_id: key_contact_id,
+                account_rid: account_rid,
+                key_contact_name: contact.key_contact_name,
+                key_contact_email: contact.key_contact_email,
+                key_contact_role: contact.key_contact_role,
+                key_contact_status: contact.status,
+                is_primary_contact: contact.is_primary_contact,
+                include_in_communication: contact.include_in_communication,
+                created_by: userId,
+                modified_by: userId,
+              },
+            }
+          );
+        });
+    
+        await Promise.all(insertQueries);
+      } catch (error) {
+        console.error("Error inserting key contact details:", error);
+        throw error;
+      }
+  }
+
 }
 
 export default SchemaService;
