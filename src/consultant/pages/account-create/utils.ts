@@ -1,4 +1,5 @@
 import { AccountFormData, NewAccountData, SelectOption, Status } from '../../types';
+import dayjs from 'dayjs';
 
 export const DATA_STORAGE_OPTIONS: SelectOption[] = [
   { label: 'Separate DB', value: 'separate_db' },
@@ -24,8 +25,8 @@ export const transformFormData = (
     max_ai_interactions: Number(formData.max_ai_interactions),
     autosend_interaction: formData.autosend_interaction === 'yes',
     auto_access_rd: formData.auto_access_rd === 'yes',
-    fiscal_start_date: formData.fiscal_start_date,
-    fiscal_end_date: formData.fiscal_end_date,
+    fiscal_start_date: formData.fiscal_start_date ? dayjs(formData.fiscal_start_date, 'DD/MM/YYYY').format('DD/MM') : undefined,
+    fiscal_end_date: formData.fiscal_end_date ? dayjs(formData.fiscal_end_date, 'DD/MM/YYYY').format('DD/MM') : undefined,
     blended_rate_fte: formData.blended_rate_fte || null,
     blended_rate_subcon: formData.blended_rate_subcon || null,
     primary_contact_name: formData.primary_contact_name,
@@ -45,10 +46,11 @@ export const transformFormData = (
       {
         key_contact_name: formData.key_contact_name as string,
         key_contact_email: formData.key_contact_email as string,
-        key_contact_role: formData.key_contact_role as string,
+        key_contact_role_rid: formData.key_contact_role as string,
         is_primary_contact: formData?.is_primary_contact === 'yes',
         include_in_communication: formData?.include_in_communication === 'yes',
         status: formData?.key_contacts_status as Status,
+        action_type:'add',
       },
     ],
   };

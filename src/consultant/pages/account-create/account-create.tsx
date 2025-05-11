@@ -48,8 +48,8 @@ export const AccountForm: React.FC = () => {
           auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
           key_contact_name:
             account?.accountById.key_contacts[0]?.key_contact_name,
-          key_contact_role:
-            account?.accountById.key_contacts[0]?.key_contact_role,
+            key_contact_role:
+            account?.accountById.key_contacts[0]?.key_contact_role_rid,
           key_contact_email:
             account?.accountById.key_contacts[0]?.key_contact_email,
           key_contacts_status: account?.accountById.key_contacts[0]?.status,
@@ -199,7 +199,7 @@ export const AccountForm: React.FC = () => {
 
   return (
     <>
-      <div className='flex justify-between items-center border-b-2 border-gray-200 px-10 py-6'>
+      <div className='flex items-center justify-between px-10 py-6 border-b-2 border-gray-200'>
         <div className='flex items-center'>
           <img
             src={isEditView ? editIcon : accountHomeIcon}

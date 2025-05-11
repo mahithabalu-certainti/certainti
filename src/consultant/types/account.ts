@@ -120,10 +120,11 @@ export interface KeyContacts {
   account_rid?: string;
   key_contact_name: string;
   key_contact_email: string;
-  key_contact_role: string;
+  key_contact_role_rid: string;
   is_primary_contact: boolean;
   include_in_communication: boolean;
   status: Status;
+  action_type?: string;
 }
 
 export interface AccountFieldsTypes {

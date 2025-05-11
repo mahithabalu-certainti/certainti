@@ -34,7 +34,7 @@ export interface OnChange {
 }
 
 export enum UserRoles {
-  Admin = 'Admin',
+  Admin = 'Super Admin',
   AccountAdministration = 'Account Administration',
   ProjectAdministration = 'Project Administration',
   CaseAdministration = 'Case Administration',
