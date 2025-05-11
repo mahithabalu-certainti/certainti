@@ -686,13 +686,13 @@ class AccountService {
             model: Country,
             as: "country",
             attributes: ["country_name"],
-            required: true,
+            required: false,
           },
           {
             model: Currency,
             as: "currency",
             attributes: ["currency_code"],
-            required: true,
+            required: false,
           },
           {
             model: Account,
