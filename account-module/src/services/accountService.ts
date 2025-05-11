@@ -841,7 +841,7 @@ class AccountService {
     }
 
     if (filters.industry) {
-      whereClause.industry = this.getFieldFilter(filters.industry, "industry");
+      whereClause.industry = this.getFieldFilter(filters.industry, "industry_name");
     }
 
     if (filters.status) {
