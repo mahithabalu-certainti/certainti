@@ -165,22 +165,22 @@ export class ProjectService {
         project_tpc_email: projectData.project_tpc_email || null,
         project_tpc_mobile: projectData.project_tpc_mobile || null,
         project_cc_list: projectData.project_cc_list || null,
-        total_effort: projectData.total_effort ? new Decimal(projectData.total_effort).toNumber().toString() : null,
-        total_cost: projectData.total_cost ? new Decimal(projectData.total_cost).toNumber().toString() : null,
+        total_effort: projectData.total_effort ? this.getNumericRate(projectData.total_effort) : null,
+        total_cost: projectData.total_cost ? this.getNumericRate(projectData.total_cost) : null,
         total_fte: projectData.total_fte || 0,
         total_sub_con: projectData.total_sub_con || 0,
-        total_non_labor_cost: projectData.total_non_labor_cost ? new Decimal(projectData.total_non_labor_cost).toNumber().toString() : null,
-        total_fte_effort: projectData.total_fte_effort ? new Decimal(projectData.total_fte_effort).toNumber().toString() : null,
-        total_sub_con_effort: projectData.total_sub_con_effort ? new Decimal(projectData.total_sub_con_effort).toNumber().toString() : null,
-        total_fte_cost: projectData.total_fte_cost ? new Decimal(projectData.total_fte_cost).toNumber().toString() : null,
-        total_sub_con_cost: projectData.total_sub_con_cost ? new Decimal(projectData.total_sub_con_cost).toNumber().toString() : null,
+        total_non_labor_cost: projectData.total_non_labor_cost ? this.getNumericRate(projectData.total_non_labor_cost) : null,
+        total_fte_effort: projectData.total_fte_effort ? this.getNumericRate(projectData.total_fte_effort) : null,
+        total_sub_con_effort: projectData.total_sub_con_effort ? this.getNumericRate(projectData.total_sub_con_effort) : null,
+        total_fte_cost: projectData.total_fte_cost ? this.getNumericRate(projectData.total_fte_cost) : null,
+        total_sub_con_cost: projectData.total_sub_con_cost ? this.getNumericRate(projectData.total_sub_con_cost) : null,
         last_rd_ai_assess_on: projectData.last_rd_ai_assess_on || null,
         last_rd_ai_assess_by: projectData.last_rd_ai_assess_by || null,
         auto_send_ai_interaction: projectData.auto_send_ai_interaction ?? false,
         auto_access_rd: projectData.auto_access_rd ?? false,
         max_ai_interaction: projectData.max_ai_interaction || 0,
-        blended_rate_fte: projectData.blended_rate_fte ? new Decimal(projectData.blended_rate_fte).toNumber().toString() : null,
-        blended_rate_sub_con: projectData.blended_rate_sub_con ? new Decimal(projectData.blended_rate_sub_con).toNumber().toString() : null,
+        blended_rate_fte: projectData.blended_rate_fte ? this.getNumericForBlendedRate(projectData.blended_rate_fte) : null,
+        blended_rate_sub_con: projectData.blended_rate_sub_con ? this.getNumericForBlendedRate(projectData.blended_rate_sub_con)  : null,
         project_description: projectData.project_description || null,
         created_datetime: new Date(),
         modified_datetime: new Date(),
@@ -319,21 +319,21 @@ export class ProjectService {
         industry_rid: projectData.industry_rid,
         industry_name: projectData.industry_name,
         fiscal_year: projectData.fiscal_year,
-        total_effort: projectData.total_effort ? new Decimal(projectData.total_effort).toNumber().toString() : null,
-        total_cost: projectData.total_cost ? new Decimal(projectData.total_cost).toNumber().toString() : null,
+        total_effort: projectData.total_effort ? this.getNumericRate(projectData.total_effort): null,
+        total_cost: projectData.total_cost ? this.getNumericRate(projectData.total_cost) : null,
         total_fte: projectData.total_fte || 0,
         total_sub_con: projectData.total_sub_con || 0,
 
-        total_non_labor_cost: projectData.total_non_labor_cost ? new Decimal(projectData.total_non_labor_cost).toNumber().toString() : null,
-        total_fte_effort: projectData.total_fte_effort ? new Decimal(projectData.total_fte_effort).toNumber().toString() : null,
-        total_sub_con_effort: projectData.total_sub_con_effort ? new Decimal(projectData.total_sub_con_effort).toNumber().toString() : null,
-        total_fte_cost: projectData.total_fte_cost ? new Decimal(projectData.total_fte_cost).toNumber().toString() : null,
-        total_sub_con_cost: projectData.total_sub_con_cost ? new Decimal(projectData.total_sub_con_cost).toNumber().toString() : null,
+        total_non_labor_cost: projectData.total_non_labor_cost ? this.getNumericRate(projectData.total_non_labor_cost)  : null,
+        total_fte_effort: projectData.total_fte_effort ? this.getNumericRate(projectData.total_fte_effort)  : null,
+        total_sub_con_effort: projectData.total_sub_con_effort ? this.getNumericRate(projectData.total_sub_con_effort)  : null,
+        total_fte_cost: projectData.total_fte_cost ? this.getNumericRate(projectData.total_fte_cost)  : null,
+        total_sub_con_cost: projectData.total_sub_con_cost ? this.getNumericRate(projectData.total_sub_con_cost)  : null,
         auto_send_ai_interaction: projectData.auto_send_ai_interaction ?? false,
         auto_access_rd: projectData.auto_access_rd ?? false,
         max_ai_interaction: projectData.max_ai_interaction || 0,
-        blended_rate_fte: projectData.blended_rate_fte ? new Decimal(projectData.blended_rate_fte).toNumber().toString() : null,
-        blended_rate_sub_con: projectData.blended_rate_sub_con ? new Decimal(projectData.blended_rate_sub_con).toNumber().toString() : null,
+        blended_rate_fte: projectData.blended_rate_fte ? this.getNumericForBlendedRate(projectData.blended_rate_fte) : null,
+        blended_rate_sub_con: projectData.blended_rate_sub_con ? this.getNumericForBlendedRate(projectData.blended_rate_sub_con)  : null,
         modified_by: userId,
         modified_datetime: new Date(),
       };
@@ -1094,7 +1094,39 @@ export class ProjectService {
 
     return isAllProject ? allProjectFields : projectFilterFields;
   }
+  private getNumericForBlendedRate(rateString: string): string | null {
+    if (rateString) {
+      // Extract numeric value only (including decimals)
+      const numericValue = rateString.match(/[\d.]+/);
+      if (numericValue) {
+        // Convert to Decimal for precision
+        const decimalValue = new Decimal(numericValue[0]);
+        const formattedValue = decimalValue.isInteger() 
+          ? `${decimalValue.toFixed(0)} $/Hour` 
+          : `${decimalValue.toFixed(2)} $/Hour`;
   
+        return formattedValue;
+      }
+    }
+    return null;
+  }
+  
+  private getNumericRate(rateString: string): string | null {
+    if (rateString) {
+      // Extract numeric value only (including decimals)
+      const numericValue = rateString.match(/[\d.]+/);
+      if (numericValue) {
+        // Convert to Decimal for precision
+        const decimalValue = new Decimal(numericValue[0]);
+  
+        // Format based on whole number or decimal
+        return decimalValue.isInteger() 
+          ? decimalValue.toFixed(0) 
+          : decimalValue.toString();
+      }
+    }
+    return null;
+  }
   /**
    * Fetches a list of project classification from the database.
    *

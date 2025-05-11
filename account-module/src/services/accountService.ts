@@ -113,13 +113,13 @@ class AccountService {
             model: Country,
             as: "country",
             attributes: ["rid", "country_name"],
-            required: true,
+            required: false,
           },
           {
             model: Currency,
             as: "currency",
             attributes: ["rid", "currency_code"],
-            required: true,
+            required: false,
           }
         ],
       });
@@ -285,13 +285,13 @@ class AccountService {
               model: Country,
               as: "country",
               attributes: ["rid", "country_name"],
-              required: true,
+              required: false,
             },
             {
               model: Currency,
               as: "currency",
               attributes: ["rid", "currency_code"],
-              required: true,
+              required: false,
             }
           ],
         });
