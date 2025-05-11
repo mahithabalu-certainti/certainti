@@ -141,15 +141,15 @@ export interface ICreateProject {
   project_tpc_email?: string | null;
   project_tpc_mobile?: string | null;
   project_cc_list?: string | null;
-  total_effort?: number;
-  total_cost?: number;
+  total_effort?: string | null;
+  total_cost?: string | null;
   total_fte?: number;
   total_sub_con?: number;
-  total_non_labor_cost?: number;
-  total_fte_effort?: number;
-  total_sub_con_effort?: number;
-  total_fte_cost?: number;
-  total_sub_con_cost?: number;
+  total_non_labor_cost?: string | null;
+  total_fte_effort?: string | null;
+  total_sub_con_effort?: string | null;
+  total_fte_cost?: string | null;
+  total_sub_con_cost?: string | null;
   last_rd_ai_assess_on?: Date | null;
   last_rd_ai_assess_by?: string | null;
   auto_send_ai_interaction?: boolean;
@@ -160,6 +160,7 @@ export interface ICreateProject {
   project_description?: string | null;
   modified_by?: string;
   created_by: string;
+  key_contacts:any
 }
 
 export interface IUpdateProject {
@@ -192,15 +193,15 @@ export interface IUpdateProject {
   project_tpc_email?: string | null;
   project_tpc_mobile?: string | null;
   project_cc_list?: string | null;
-  total_effort?: number;
-  total_cost?: number;
+  total_effort?: string | null;
+  total_cost?: string | null;
   total_fte?: number;
   total_sub_con?: number;
-  total_non_labor_cost?: number;
-  total_fte_effort?: number;
-  total_sub_con_effort?: number;
-  total_fte_cost?: number;
-  total_sub_con_cost?: number;
+  total_non_labor_cost?: string | null;
+  total_fte_effort?: string | null;
+  total_sub_con_effort?: string | null;
+  total_fte_cost?: string | null;
+  total_sub_con_cost?: string | null;
   last_rd_ai_assess_on?: Date | null;
   last_rd_ai_assess_by?: string | null;
   auto_send_ai_interaction?: boolean;
@@ -211,4 +212,15 @@ export interface IUpdateProject {
   project_description?: string | null;
   modified_by?: string;
   created_by: string;
+  key_contacts:any;
+}
+
+export interface IKeyContactDetail {
+  key_contact_id: string;
+  key_contact_name: string;
+  key_contact_email: string;
+  key_contact_role_rid: string;
+  is_primary_contact: boolean;
+  include_in_communication: boolean;
+  status: "active" | "inactive";
 }

@@ -1,6 +1,6 @@
 import { initOrgSequelize } from "../config/orgdbDataSource";
 import { IAccount, IUpdateAccount, IKeyContactDetail } from "../utils/types";
-
+import Decimal from "decimal.js";
 class SchemaService {
   async createNewSchema(account_number: string) {
     try {
@@ -35,8 +35,8 @@ class SchemaService {
         fiscal_start_date VARCHAR(10) NOT NULL,
         fiscal_end_date VARCHAR(10) NOT NULL,
         interaction_cc_list VARCHAR,
-        blended_rate_fte VARCHAR(10),
-        blended_rate_subcon VARCHAR(10),
+        blended_rate_fte VARCHAR(20),
+        blended_rate_subcon VARCHAR(20),
         created_by VARCHAR(255),
         modified_by VARCHAR(255),
         primary_contact_email VARCHAR(50) NOT NULL,
@@ -67,8 +67,8 @@ class SchemaService {
         account_rid UUID NOT NULL REFERENCES "${schemaName}"."account_details"(account_rid),
         parent_account_rid UUID,
         tax_claim_level VARCHAR(50),
-        blended_rate_fte VARCHAR(10),
-        blended_rate_subcon VARCHAR(10),
+        blended_rate_fte VARCHAR(20),
+        blended_rate_subcon VARCHAR(20),
         total_projects INT,
         total_fte INT,
         total_subcon INT,
@@ -287,8 +287,8 @@ class SchemaService {
           fiscal_start_date: accountData.fiscal_start_date,
           fiscal_end_date: accountData.fiscal_end_date,
           interaction_cc_list: accountData.interaction_cc_list ?? null,
-          blended_rate_fte: accountData.blended_rate_fte ?? null,
-          blended_rate_subcon: accountData.blended_rate_subcon ?? null,
+          blended_rate_fte: accountData.blended_rate_fte ? new Decimal(accountData.blended_rate_fte).toNumber().toString() : null,
+          blended_rate_subcon: accountData.blended_rate_subcon? new Decimal(accountData.blended_rate_subcon).toNumber().toString() : null,
           created_by: userId,
           modified_by: userId,
           primary_contact_email: 'test@gmail.com',
@@ -387,8 +387,8 @@ class SchemaService {
           max_ai_interactions: accountData.max_ai_interactions,
           autosend_interaction: accountData.autosend_interaction,
           interaction_cc_list: accountData.interaction_cc_list ?? null,
-          blended_rate_fte: accountData.blended_rate_fte ?? null,
-          blended_rate_subcon: accountData.blended_rate_subcon ?? null,
+          blended_rate_fte: accountData.blended_rate_fte ? new Decimal(accountData.blended_rate_fte).toNumber().toString() : null,
+          blended_rate_subcon: accountData.blended_rate_subcon? new Decimal(accountData.blended_rate_subcon).toNumber().toString() : null,
           modified_by: userId,
           primary_contact_email: accountData.primary_contact_email,
           primary_contact_number: accountData.primary_contact_number,
@@ -439,11 +439,11 @@ class SchemaService {
     const sequelize = await initOrgSequelize();
     await sequelize.query(
       `DELETE FROM "public"."key_contact_details" 
-       WHERE key_contact_id = :key_contact_id AND account_rid = :account_rid`,
+       WHERE key_contact_id = :key_contact_id AND account_rid = :account_rid and project_rid = :project_rid and contact_type = 'Account'`,
       {
         replacements: {
           key_contact_id,
-          account_rid,
+          account_rid
         }
       }
     );
@@ -469,7 +469,8 @@ class SchemaService {
               include_in_communication = :include_in_communication,
               modified_by = :modified_by
             WHERE account_rid = :account_rid
-            AND key_contact_id = :key_contact_id;
+            AND key_contact_id = :key_contact_id
+            AND contact_type = 'Account'
           `,
           {
             replacements: {
@@ -519,12 +520,12 @@ class SchemaService {
           key_contact_id, account_rid, key_contact_name, 
           key_contact_email, key_contact_role_rid, status, 
           is_primary_contact, include_in_communication, 
-          created_by, modified_by
+          created_by, modified_by,contact_type
         ) VALUES (
           :key_contact_id, :account_rid, :key_contact_name, 
           :key_contact_email, :key_contact_role_rid, :status, 
           :is_primary_contact, :include_in_communication, 
-          :created_by, :modified_by
+          :created_by, :modified_by,'Account'
         );`,
         {
           replacements: {

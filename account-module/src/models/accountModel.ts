@@ -14,8 +14,8 @@ interface AccountAttributes {
   parent_account_rid?: string | null;
   storage_type: string;
   database_connection_rid?: string;
-  country_rid: string;
-  currency_rid: string;
+  country_rid?: string;
+  currency_rid?: string;
   industry_rid: string;
   industry_name?: string;
   primary_contact_name: string;
@@ -42,8 +42,8 @@ export class Account
   public storage_type!: string;
   public parent_account_rid?: string | null;
   public database_connection_rid?: string;
-  public country_rid!: string;
-  public currency_rid!: string;
+  public country_rid?: string;
+  public currency_rid?: string;
   public industry_rid!: string;
   public industry_name?: string;
   public primary_contact_name!: string;
@@ -110,11 +110,11 @@ export class Account
         },
         country_rid: {
           type: DataTypes.UUID,
-          allowNull: false,
+          allowNull: true,
         },
         currency_rid: {
           type: DataTypes.UUID,
-          allowNull: false,
+          allowNull: true,
         },
         industry_rid: {
           type: DataTypes.STRING(25),

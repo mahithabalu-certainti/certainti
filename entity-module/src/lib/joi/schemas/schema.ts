@@ -732,33 +732,27 @@ const createProjectSchema = Joi.object({
 
       return value;
     }, "Comma-separated email validator"),
-  total_effort: Joi.number().greater(0).optional().allow(null),
-  total_cost: Joi.number()
-    .precision(2)
-    .positive()
-    .max(9999999999.99)
+  total_effort: Joi.string()
+  .pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
+  total_cost: Joi.string()
+  .pattern(/^\d+(\.\d{0,2})?$/)
     .allow(null)
     .optional(),
   total_fte: Joi.number().greater(0).optional().allow(null),
   total_sub_con: Joi.number().greater(0).optional().allow(null),
-  total_non_labor_cost: Joi.number()
-    .precision(2)
-    .positive()
-    .max(9999999999.99)
+  total_non_labor_cost: Joi.string()
+  .pattern(/^\d+(\.\d{0,2})?$/)
     .optional()
     .allow(null),
-  total_fte_effort: Joi.number().greater(0).optional().allow(null),
-  total_sub_con_effort: Joi.number().greater(0).optional().allow(null),
-  total_fte_cost: Joi.number()
-    .precision(2)
-    .positive()
-    .max(9999999999.99)
-    .optional()
+  total_fte_effort: Joi.string()
+  .pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
+  total_sub_con_effort: Joi.string()
+  .pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
+  total_fte_cost: Joi.string()
+  .pattern(/^\d+(\.\d{0,2})?$/)
     .allow(null),
-  total_sub_con_cost: Joi.number()
-    .precision(2)
-    .positive()
-    .max(9999999999.99)
+  total_sub_con_cost: Joi.string()
+  .pattern(/^\d+(\.\d{0,2})?$/)
     .optional()
     .allow(null),
   last_rd_ai_assess_on: Joi.string()
@@ -800,6 +794,19 @@ const createProjectSchema = Joi.object({
   created_by: Joi.string()
   .guid({ version: ["uuidv4"] })
   .required(),
+  key_contacts: Joi.array()
+  .items(
+    Joi.object({
+      key_contact_name: Joi.string().min(2).max(128).optional(),
+      key_contact_email: Joi.string().email().min(3).max(125).optional(),
+      key_contact_role_rid: Joi.string().optional(),
+      is_primary_contact: Joi.boolean().optional(),
+      include_in_communication: Joi.boolean().required(),
+      status: Joi.string().valid('active', 'inactive').required(),
+      action_type: Joi.string().valid('add').required()
+    })
+  )
+  .optional()
 });
 
 const updateProjectSchema = Joi.object({
@@ -875,15 +882,15 @@ const updateProjectSchema = Joi.object({
       return value;
     }),
 
-  total_effort: Joi.number().greater(0).optional().allow(null),
-  total_cost: Joi.number().precision(2).positive().max(9999999999.99).optional().allow(null),
+  total_effort: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
+  total_cost: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
   total_fte: Joi.number().greater(0).optional().allow(null),
   total_sub_con: Joi.number().greater(0).optional().allow(null),
-  total_non_labor_cost: Joi.number().precision(2).positive().max(9999999999.99).optional().allow(null),
-  total_fte_effort: Joi.number().greater(0).optional().allow(null),
-  total_sub_con_effort: Joi.number().greater(0).optional().allow(null),
-  total_fte_cost: Joi.number().precision(2).positive().max(9999999999.99).optional().allow(null),
-  total_sub_con_cost: Joi.number().precision(2).positive().max(9999999999.99).optional().allow(null),
+  total_non_labor_cost: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
+  total_fte_effort: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
+  total_sub_con_effort: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
+  total_fte_cost: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
+  total_sub_con_cost: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
 
   last_rd_ai_assess_on: Joi.string()
   .max(10)
@@ -921,6 +928,23 @@ const updateProjectSchema = Joi.object({
     .allow(null),
 
   project_description: Joi.string().max(2000).allow(null).allow(""),
+  key_contacts: Joi.array()
+  .items(
+    Joi.object({
+      key_contact_id: Joi.string().when("action_type", {
+        is: Joi.string().valid("edit", "delete"),
+        then: Joi.required(),
+        otherwise: Joi.forbidden(), // Optional: Prevents key_contact_id in 'add' action
+      }),
+      key_contact_name: Joi.string().min(2).max(128).optional(),
+      key_contact_email: Joi.string().email().min(3).max(125).optional(),
+      key_contact_role_rid: Joi.string().optional(),
+      is_primary_contact: Joi.boolean().optional(),
+      include_in_communication: Joi.boolean().optional(),
+      status: Joi.string().valid('active', 'inactive').required(),
+      action_type: Joi.string().valid('add', 'edit','delete').required()
+    })
+  )
 });
 
 export {

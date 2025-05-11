@@ -32,15 +32,15 @@ export interface ProjectAttributes {
   project_tpc_email?: string | null;
   project_tpc_mobile?: string | null;
   project_cc_list?: string | null;
-  total_effort?: number;
-  total_cost?: number;
+  total_effort?: string | null;
+  total_cost?: string | null;
   total_fte?: number;
   total_sub_con?: number;
-  total_non_labor_cost?: number;
-  total_fte_effort?: number;
-  total_sub_con_effort?: number;
-  total_fte_cost?: number;
-  total_sub_con_cost?: number;
+  total_non_labor_cost?: string | null;
+  total_fte_effort?: string | null;
+  total_sub_con_effort?: string | null;
+  total_fte_cost?: string | null;
+  total_sub_con_cost?: string | null;
   last_rd_ai_assess_on?: Date | null;
   last_rd_ai_assess_by?: string | null;
   auto_send_ai_interaction?: boolean;
@@ -92,15 +92,15 @@ export class Project
   public project_tpc_email?: string | null;
   public project_tpc_mobile?: string | null;
   public project_cc_list?: string | null;
-  public total_effort?: number;
-  public total_cost?: number;
+  public total_effort?:  string | null;;
+  public total_cost?:  string | null;;
   public total_fte?: number;
-  public total_sub_con?: number;
-  public total_non_labor_cost?: number;
-  public total_fte_effort?: number;
-  public total_sub_con_effort?: number;
-  public total_fte_cost?: number;
-  public total_sub_con_cost?: number;
+  public total_sub_con?:  number;
+  public total_non_labor_cost?:  string | null;
+  public total_fte_effort?:  string | null;
+  public total_sub_con_effort?:  string | null;
+  public total_fte_cost?:  string | null;
+  public total_sub_con_cost?:  string | null;
   public last_rd_ai_assess_on?: Date | null;
   public last_rd_ai_assess_by?: string | null;
   public auto_send_ai_interaction?: boolean;
@@ -212,15 +212,15 @@ export class Project
         project_tpc_email: DataTypes.STRING(255),
         project_tpc_mobile: DataTypes.STRING(15),
         project_cc_list: DataTypes.TEXT,
-        total_effort: DataTypes.DOUBLE,
-        total_cost: DataTypes.DECIMAL(13, 2),
+        total_effort: DataTypes.STRING,
+        total_cost: DataTypes.STRING,
         total_fte: DataTypes.DOUBLE,
         total_sub_con: DataTypes.DOUBLE,
-        total_non_labor_cost: DataTypes.DECIMAL(13, 2),
-        total_fte_effort: DataTypes.DOUBLE,
-        total_sub_con_effort: DataTypes.DOUBLE,
-        total_fte_cost: DataTypes.DECIMAL(13, 2),
-        total_sub_con_cost: DataTypes.DECIMAL(13, 2),
+        total_non_labor_cost: DataTypes.STRING,
+        total_fte_effort: DataTypes.STRING,
+        total_sub_con_effort: DataTypes.STRING,
+        total_fte_cost: DataTypes.STRING,
+        total_sub_con_cost: DataTypes.STRING,
         last_rd_ai_assess_on: DataTypes.DATE,
         last_rd_ai_assess_by: DataTypes.UUID,
         auto_send_ai_interaction: {

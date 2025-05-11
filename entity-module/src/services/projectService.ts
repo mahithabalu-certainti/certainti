@@ -9,6 +9,7 @@ import { ProjectFiscal } from "../models/projectFiscal";
 import { Op, Sequelize } from "sequelize";
 import { ProjectHistory } from "../models/projectHistory";
 import { initMainDbSequelize } from "../config/mainDataSource";
+import Decimal from "decimal.js";
 
 export class ProjectService {
   private schemaService: SchemaService;
@@ -164,22 +165,22 @@ export class ProjectService {
         project_tpc_email: projectData.project_tpc_email || null,
         project_tpc_mobile: projectData.project_tpc_mobile || null,
         project_cc_list: projectData.project_cc_list || null,
-        total_effort: projectData.total_effort || 0,
-        total_cost: projectData.total_cost || 0.0,
+        total_effort: projectData.total_effort ? new Decimal(projectData.total_effort).toNumber().toString() : null,
+        total_cost: projectData.total_cost ? new Decimal(projectData.total_cost).toNumber().toString() : null,
         total_fte: projectData.total_fte || 0,
         total_sub_con: projectData.total_sub_con || 0,
-        total_non_labor_cost: projectData.total_non_labor_cost || 0.0,
-        total_fte_effort: projectData.total_fte_effort || 0,
-        total_sub_con_effort: projectData.total_sub_con_effort || 0,
-        total_fte_cost: projectData.total_fte_cost || 0.0,
-        total_sub_con_cost: projectData.total_sub_con_cost || 0.0,
+        total_non_labor_cost: projectData.total_non_labor_cost ? new Decimal(projectData.total_non_labor_cost).toNumber().toString() : null,
+        total_fte_effort: projectData.total_fte_effort ? new Decimal(projectData.total_fte_effort).toNumber().toString() : null,
+        total_sub_con_effort: projectData.total_sub_con_effort ? new Decimal(projectData.total_sub_con_effort).toNumber().toString() : null,
+        total_fte_cost: projectData.total_fte_cost ? new Decimal(projectData.total_fte_cost).toNumber().toString() : null,
+        total_sub_con_cost: projectData.total_sub_con_cost ? new Decimal(projectData.total_sub_con_cost).toNumber().toString() : null,
         last_rd_ai_assess_on: projectData.last_rd_ai_assess_on || null,
         last_rd_ai_assess_by: projectData.last_rd_ai_assess_by || null,
         auto_send_ai_interaction: projectData.auto_send_ai_interaction ?? false,
         auto_access_rd: projectData.auto_access_rd ?? false,
         max_ai_interaction: projectData.max_ai_interaction || 0,
-        blended_rate_fte: projectData.blended_rate_fte || null,
-        blended_rate_sub_con: projectData.blended_rate_sub_con || null,
+        blended_rate_fte: projectData.blended_rate_fte ? new Decimal(projectData.blended_rate_fte).toNumber().toString() : null,
+        blended_rate_sub_con: projectData.blended_rate_sub_con ? new Decimal(projectData.blended_rate_sub_con).toNumber().toString() : null,
         project_description: projectData.project_description || null,
         created_datetime: new Date(),
         modified_datetime: new Date(),
@@ -192,6 +193,12 @@ export class ProjectService {
       });
 
       if (project && project.rid) {
+        await this.schemaService.manageKeyContacts(
+          projectData.key_contacts,
+          projectData.account_id,
+          project.rid,
+          projectCreationData.created_by
+        );
         this.addProjectFiscalRecords(
           projectCreationData,
           orgDbSequlize,
@@ -312,20 +319,21 @@ export class ProjectService {
         industry_rid: projectData.industry_rid,
         industry_name: projectData.industry_name,
         fiscal_year: projectData.fiscal_year,
-        total_effort: projectData.total_effort || 0,
-        total_cost: projectData.total_cost || 0,
+        total_effort: projectData.total_effort ? new Decimal(projectData.total_effort).toNumber().toString() : null,
+        total_cost: projectData.total_cost ? new Decimal(projectData.total_cost).toNumber().toString() : null,
         total_fte: projectData.total_fte || 0,
         total_sub_con: projectData.total_sub_con || 0,
-        total_non_labor_cost: projectData.total_non_labor_cost || 0,
-        total_fte_effort: projectData.total_fte_effort || 0,
-        total_sub_con_effort: projectData.total_sub_con_effort || 0,
-        total_fte_cost: projectData.total_fte_cost || 0,
-        total_sub_con_cost: projectData.total_sub_con_cost || 0,
+
+        total_non_labor_cost: projectData.total_non_labor_cost ? new Decimal(projectData.total_non_labor_cost).toNumber().toString() : null,
+        total_fte_effort: projectData.total_fte_effort ? new Decimal(projectData.total_fte_effort).toNumber().toString() : null,
+        total_sub_con_effort: projectData.total_sub_con_effort ? new Decimal(projectData.total_sub_con_effort).toNumber().toString() : null,
+        total_fte_cost: projectData.total_fte_cost ? new Decimal(projectData.total_fte_cost).toNumber().toString() : null,
+        total_sub_con_cost: projectData.total_sub_con_cost ? new Decimal(projectData.total_sub_con_cost).toNumber().toString() : null,
         auto_send_ai_interaction: projectData.auto_send_ai_interaction ?? false,
         auto_access_rd: projectData.auto_access_rd ?? false,
         max_ai_interaction: projectData.max_ai_interaction || 0,
-        blended_rate_fte: projectData.blended_rate_fte || null,
-        blended_rate_sub_con: projectData.blended_rate_sub_con || null,
+        blended_rate_fte: projectData.blended_rate_fte ? new Decimal(projectData.blended_rate_fte).toNumber().toString() : null,
+        blended_rate_sub_con: projectData.blended_rate_sub_con ? new Decimal(projectData.blended_rate_sub_con).toNumber().toString() : null,
         modified_by: userId,
         modified_datetime: new Date(),
       };
@@ -342,6 +350,12 @@ export class ProjectService {
       );
 
       if (updateProject) {
+        await this.schemaService.manageKeyContacts(
+          projectData.key_contacts,
+          projectData.account_id,
+          projectData.project_id,
+          userId
+        );
         await this.updateProjectFiscal(
           updateProject,
           orgDbSequlize,
@@ -428,11 +442,17 @@ export class ProjectService {
           rid: projectId,
         },
       });
+      
 
       if (projectData) {
+        const keyContacts = await this.schemaService.fetchKeyContacts(
+          projectData.account_rid,
+          projectId
+        );
         projectData = await this.schemaService.insertProjectGeoData(
           projectData,
-          mainDbSequlize
+          mainDbSequlize,
+          keyContacts
         );
       }
 
