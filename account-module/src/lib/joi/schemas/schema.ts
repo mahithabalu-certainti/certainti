@@ -34,23 +34,23 @@ const accountSchema = Joi.object({
   status: Joi.string().valid("active", "inactive").required(),
   is_parent: Joi.boolean().required(),
   parent_account_rid: Joi.string().allow(null).optional(),
-  account_currency_rid: Joi.string()
+  account_currency_rid: Joi.string().allow("").allow(null)
     .pattern(uuidRegex, "valid UUID")
-    .required()
+    .optional()
     .messages({
       "string.pattern.base": "Invalid UUID format for currency RID",
       "any.required": "Account currency RID is required",
     }),
   account_country_rid: Joi.string()
-    .pattern(uuidRegex, "valid UUID")
-    .required()
+    .pattern(uuidRegex, "valid UUID").allow("").allow(null)
+    .optional()
     .messages({
       "string.pattern.base": "Invalid UUID format for country RID",
       "any.required": "Account country RID is required",
     }),
   account_country_region_rid: Joi.string()
-    .pattern(uuidRegex, "valid UUID")
-    .required()
+    .pattern(uuidRegex, "valid UUID").allow("").allow(null)
+    .optional()
     .messages({
       "string.pattern.base": "Invalid UUID format for region RID",
       "any.required": "Account country region RID is required",
@@ -74,22 +74,19 @@ const accountSchema = Joi.object({
     }),
   interaction_cc_list: Joi.string().allow(null),
   blended_rate_fte: Joi.string()
-    .pattern(/^\d{1,10}$/)
-    .max(10)
+    .pattern(/^\d+(\.\d{0,2})?$/)
     .optional()
     .messages({
-      "string.pattern.base":"Blended Rate - FTE must be a whole number with up to 10 digits",
-      "string.max": "Blended Rate - FTE must not exceed 10 digits"
+      "string.pattern.base":"Blended Rate - FTE  must be a valid  number maximum up to (9999999999999999.99)",
     })
     .allow(null)
     .allow(""),
 
   blended_rate_subcon: Joi.string()
-    .pattern(/^\d{1,10}$/)
-    .max(10)
+    .pattern(/^\d+(\.\d{0,2})?$/)
     .optional()
     .messages({
-      "string.pattern.base":"Blended Rate - SubCon must be a whole number with up to 10 digits",
+      "string.pattern.base":"Blended Rate - SubCon must be a valid  number maximum up to (9999999999999999.99)",
       "string.max": "Blended Rate - SubCon must not exceed 10 digits",
     })
     .allow(null)
@@ -109,7 +106,7 @@ const accountSchema = Joi.object({
       "string.pattern.base": `Website URL must begin with 'http' or 'https://'`,
       "string.max": "The website must not exceed 255 characters."
     }),
-  project_manager: Joi.string().min(2).max(128).required(),
+  project_manager: Joi.string().min(2).max(128).optional().allow("").allow(null),
   created_datetime: Joi.date().iso().allow(null),
   modified_datetime: Joi.date().iso().allow(null),
   annual_revenue: Joi.number().required(),
@@ -120,10 +117,10 @@ const accountSchema = Joi.object({
     key_contacts: Joi.array()
     .items(
       Joi.object({
-        key_contact_name: Joi.string().min(2).max(128).required(),
-        key_contact_email: Joi.string().email().min(3).max(125).required(),
-        key_contact_role_rid: Joi.string().required(),
-        is_primary_contact: Joi.boolean().required(),
+        key_contact_name: Joi.string().min(2).max(128).optional(),
+        key_contact_email: Joi.string().email().min(3).max(125).optional(),
+        key_contact_role_rid: Joi.string().optional(),
+        is_primary_contact: Joi.boolean().optional(),
         include_in_communication: Joi.boolean().required(),
         status: Joi.string().valid('active', 'inactive').required(),
         action_type: Joi.string().valid('add').required()
@@ -141,23 +138,23 @@ const updateAccountSchema = Joi.object({
   status: Joi.string().valid("active", "inactive").required(),
   is_parent: Joi.boolean().required(),
   parent_account_rid: Joi.string().allow(null).optional(),
-  account_currency_rid: Joi.string()
+  account_currency_rid: Joi.string().allow("").allow(null)
     .pattern(uuidRegex, "valid UUID")
-    .required()
+    .optional()
     .messages({
       "string.pattern.base": "Invalid UUID format for currency RID",
       "any.required": "Account currency RID is required",
     }),
   account_country_rid: Joi.string()
-    .pattern(uuidRegex, "valid UUID")
-    .required()
+    .pattern(uuidRegex, "valid UUID").allow("").allow(null)
+    .optional()
     .messages({
       "string.pattern.base": "Invalid UUID format for country RID",
       "any.required": "Account country RID is required",
     }),
-  account_country_region_rid: Joi.string()
+  account_country_region_rid: Joi.string().allow("").allow(null)
     .pattern(uuidRegex, "valid UUID")
-    .required()
+    .optional()
     .messages({
       "string.pattern.base": "Invalid UUID format for region RID",
       "any.required": "Account country region RID is required",
@@ -181,22 +178,19 @@ const updateAccountSchema = Joi.object({
     }),
   interaction_cc_list: Joi.string().allow(null),
   blended_rate_fte: Joi.string()
-    .pattern(/^\d{1,10}$/)
-    .max(10)
+    .pattern(/^\d+(\.\d{0,2})?$/)
     .optional()
     .messages({
-      "string.pattern.base":"Blended Rate - FTE must be a whole number with up to 10 digits",
-      "string.max": "Blended Rate - FTE must not exceed 10 digits",
+      "string.pattern.base":"Blended Rate - FTE  must be a valid  number maximum up to (9999999999999999.99)",
     })
     .allow(null)
     .allow(""),
 
   blended_rate_subcon: Joi.string()
-    .pattern(/^\d{1,10}$/)
-    .max(10)
+    .pattern(/^\d+(\.\d{0,2})?$/)
     .optional()
     .messages({
-      "string.pattern.base":"Blended Rate - SubCon must be a whole number with up to 10 digits",
+      "string.pattern.base":"Blended Rate - SubCon must be a valid  number maximum up to (9999999999999999.99)",
       "string.max": "Blended Rate - SubCon must not exceed 10 digits",
     })
     .allow(null)
@@ -216,7 +210,7 @@ const updateAccountSchema = Joi.object({
       "string.pattern.base": `Website URL must begin with 'http' or 'https://'`,
       "string.max": "The website must not exceed 255 characters."
     }),
-  project_manager: Joi.string().min(2).max(128).required(),
+  project_manager: Joi.string().min(2).max(128).optional().allow("").allow(null),
   annual_revenue: Joi.number().required(),
   data_storage: Joi.string()
     .valid("separate_db", "store_in_parent")
@@ -230,11 +224,11 @@ const updateAccountSchema = Joi.object({
           then: Joi.required(),
           otherwise: Joi.forbidden(), // Optional: Prevents key_contact_id in 'add' action
         }),
-        key_contact_name: Joi.string().min(2).max(128).required(),
-        key_contact_email: Joi.string().email().min(3).max(125).required(),
-        key_contact_role_rid: Joi.string().required(),
-        is_primary_contact: Joi.boolean().required(),
-        include_in_communication: Joi.boolean().required(),
+        key_contact_name: Joi.string().min(2).max(128).optional(),
+        key_contact_email: Joi.string().email().min(3).max(125).optional(),
+        key_contact_role_rid: Joi.string().optional(),
+        is_primary_contact: Joi.boolean().optional(),
+        include_in_communication: Joi.boolean().optional(),
         status: Joi.string().valid('active', 'inactive').required(),
         action_type: Joi.string().valid('add', 'edit','delete').required()
       })
