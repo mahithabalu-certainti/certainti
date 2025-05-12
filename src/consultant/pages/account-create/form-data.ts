@@ -172,7 +172,7 @@ export const FormData = (
         fields: [
           createTextField('key_contact_name', 'Key Contact Name', {
             required: false,
-            regex: REGEX_PATTERNS.ACCOUNT_NAME,
+            regex: REGEX_PATTERNS.CONTACT_NAME,
             regexErrorMessage: 'Invalid Name',
             placeholder: 'Enter Key Contact Name',
             errorHandling: [
@@ -225,7 +225,7 @@ export const FormData = (
               required: false,
             }
           ),
-          createSelectField('key_contacts_status', 'Key Contact Status', {
+          createSelectField('key_contact_status', 'Key Contact Status', {
             required: false,
             options: STATUS_OPTIONS,
             placeholder: 'Choose Contact Status',

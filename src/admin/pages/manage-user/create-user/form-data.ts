@@ -30,13 +30,16 @@ export const FormData = (
             regexErrorMessage:
               "First name must contain only letters, spaces, apostrophes (') or hyphens (-).",
             placeholder: 'Enter First name',
-            lengthRequired: {
-              key: 'name_length',
-              minMatchedValue: REGEX_PATTERNS.MIN_NAME_REGEX,
-              minErrorMessage: 'Name must be more than 2 characters long',
-              maxMatchedValue: REGEX_PATTERNS.MAX_NAME_REGEX,
-              maxErrorMessage: 'Max length exceeded',
-            },
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_3,
+                errorMessage: 'Name must be more than 2 characters long',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_64,
+                errorMessage: 'Max length exceeded',
+              },
+            ],
           }),
           createTextField('last_name', 'Last name', {
             required: true,
@@ -44,13 +47,16 @@ export const FormData = (
             placeholder: 'Enter Last name',
             regexErrorMessage:
               "Last name must contain only letters, spaces, apostrophes (') or hyphens (-).",
-            lengthRequired: {
-              key: 'name_length',
-              minMatchedValue: REGEX_PATTERNS.MIN_NAME_REGEX,
-              minErrorMessage: 'Name must be more than 2 characters long',
-              maxMatchedValue: REGEX_PATTERNS.MAX_NAME_REGEX,
-              maxErrorMessage: 'Max length exceeded',
-            },
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_3,
+                errorMessage: 'Name must be more than 2 characters long',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_64,
+                errorMessage: 'Max length exceeded',
+              },
+            ],
           }),
           createTextField('email', 'Email Address', {
             required: true,
@@ -102,8 +108,14 @@ export const FormData = (
             required: false,
             regex: REGEX_PATTERNS.STREET_REGEX,
             regexErrorMessage:
-              'Street must contain only letters and spaces, and be 3 to 200 characters long.',
+              'Street must contain only alphanumeric characters,letters, spaces, commas, periods, hyphens, and hash.',
             placeholder: 'Enter Street',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_255,
+                errorMessage: 'Max length exceeded',
+              },
+            ],
           }),
           createSelectField('country', 'Country', {
             options: country,

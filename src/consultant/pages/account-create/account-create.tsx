@@ -21,6 +21,7 @@ import { FormData } from './form-data';
 import { DATA_STORAGE_OPTIONS, transformFormData } from './utils';
 import { ACCOUNT } from '../../../routes';
 import { useManageUserRole } from '../../../admin/service';
+import { STATUS_OPTIONS } from '../../../common-utils';
 
 export const AccountForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -47,17 +48,17 @@ export const AccountForm: React.FC = () => {
             : 'no',
           auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
           key_contact_name:
-            account?.accountById.key_contacts[0]?.key_contact_name,
-            key_contact_role:
-            account?.accountById.key_contacts[0]?.key_contact_role_rid,
+            account?.accountById?.key_contacts?.[0]?.key_contact_name,
+          key_contact_role:
+            account?.accountById?.key_contacts?.[0]?.key_contact_role_rid,
           key_contact_email:
-            account?.accountById.key_contacts[0]?.key_contact_email,
-          key_contacts_status: account?.accountById.key_contacts[0]?.status,
-          is_primary_contact: account?.accountById.key_contacts[0]
+            account?.accountById?.key_contacts?.[0]?.key_contact_email,
+          key_contact_status: account?.accountById?.key_contacts?.[0]?.status,
+          is_primary_contact: account?.accountById?.key_contacts?.[0]
             ?.is_primary_contact
             ? 'yes'
             : 'no',
-          include_in_communication: account?.accountById.key_contacts[0]
+          include_in_communication: account?.accountById?.key_contacts?.[0]
             ?.include_in_communication
             ? 'yes'
             : 'no',
@@ -65,6 +66,7 @@ export const AccountForm: React.FC = () => {
     }),
     [account]
   );
+  const defaultAciveValue = STATUS_OPTIONS[0].value;
 
   const allCountries = useGetAllCountries();
   const industry = useFetchIndustrys();
@@ -142,7 +144,7 @@ export const AccountForm: React.FC = () => {
     [industry.data?.data.industries]
   );
 
-  const memoizeRole: SelectOption[] = useMemo(
+  const memoizedRole: SelectOption[] = useMemo(
     () =>
       userRoles.data?.data.roles.map((role) => ({
         label: role.business_teams,
@@ -242,7 +244,7 @@ export const AccountForm: React.FC = () => {
           memoizedState,
           dataResidency,
           memoizedIndustry,
-          memoizeRole,
+          memoizedRole,
           isPrimaryContactRequired,
           isEditView,
           states.isLoading
@@ -254,7 +256,16 @@ export const AccountForm: React.FC = () => {
           industry.isLoading ||
           userRoles.isLoading
         }
-        values={isEditView && accountData ? { ...accountData } : undefined}
+        values={
+          isEditView && accountData
+            ? { ...accountData }
+            : {
+                status: defaultAciveValue,
+                key_contact_status: defaultAciveValue,
+                autosend_interaction: YesNo.Yes,
+                auto_access_rd: YesNo.Yes,
+              } // Set default values in Create Account
+        }
         outData={submitData}
         formRef={formRef}
         onChange={onChangeField}
