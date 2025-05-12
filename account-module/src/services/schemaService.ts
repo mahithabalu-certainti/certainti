@@ -319,7 +319,7 @@ class SchemaService {
       console.log("action",contact.action_type)
       if(contact.action_type === 'edit')
       {
-        {
+        if (contact.key_contact_name || contact.key_contact_email || contact.key_contact_role_rid) { 
           this.updateKeyContactDetails(
             contact,
             account_rid,
@@ -338,11 +338,15 @@ class SchemaService {
       }
       else if(contact.action_type === 'add')
       {
-        this.insertKeyContactDetails(
-          contact,
-          account_rid,
-          userId
-        )
+        if (contact.key_contact_name || contact.key_contact_email || contact.key_contact_role_rid) {
+          this.insertKeyContactDetails(
+            contact,
+            account_rid,
+            userId
+          )
+        }
+
+       
       }
     }
   }

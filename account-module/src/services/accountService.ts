@@ -4,6 +4,7 @@ import { IAccount, IUpdateAccount,IKeyContactDetail } from "../utils/types";
 import SchemaService from "./schemaService";
 import { models } from "../models";
 import { initOrgSequelize } from "../config/orgdbDataSource";
+import Decimal from "decimal.js";
 
 const { Account, Country, Currency } = models;
 
@@ -482,7 +483,7 @@ class AccountService {
         industry_name: industry_name,
         primary_contact_name:'John Doe',
         status,
-        annual_revenue,
+        annual_revenue: annual_revenue ? new Decimal(annual_revenue).toNumber().toString() : ""
       });
 
       if (parent_account && data_storage === "store_in_parent") {
@@ -558,7 +559,7 @@ class AccountService {
           industry_rid: industry_rid,
           industry_name: industry_name,
           primary_contact_name,
-          annual_revenue,
+          annual_revenue: annual_revenue ? new Decimal(annual_revenue).toNumber().toString() : ""
         },
         {
           where: {
