@@ -254,6 +254,12 @@ export const ResourceFormData = (
             placeholder: '-Select-',
             required: true,
           }),
+          createSelectField('fiscal_year', 'Fiscal Year', {
+            options: fiscalYears,
+            placeholder: '-Select-',
+            required: true,
+            onChange: true,
+          }),
           createTextField('cost', 'Cost', {
             required: true,
             regex: REGEX_PATTERNS.COST_REGEX,

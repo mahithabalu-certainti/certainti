@@ -158,7 +158,7 @@ const Resource: React.FC<ResourceProps> = ({
   const handleEdit = (resource: any) => {
     setFilterVisibility(false);
     navigate(RESOURCE + '/edit/' + resource.rid + `?account_id=${accountid}`, {
-      state: { resource, accountDetails },
+      state: { resource, accountDetails, resources: true },
     });
   };
 

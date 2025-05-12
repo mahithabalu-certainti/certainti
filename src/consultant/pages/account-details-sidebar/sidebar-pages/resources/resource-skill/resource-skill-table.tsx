@@ -71,7 +71,6 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   }, [skillList]);
 
   const handleEdit = (skill: ResourceSkillType) => {
-    console.log('skill-handleEdit', skill)
     navigate(RESOURCESKILL + '/edit/' + skill.resourceRID, {
       state: { ...accountDetails, skillInfo: skill, skill: true },
     });
