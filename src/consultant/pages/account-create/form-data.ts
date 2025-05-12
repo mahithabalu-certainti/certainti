@@ -77,12 +77,12 @@ export const FormData = (
             placeholder: 'Choose Parent Account',
             required: isParentAccountRequired,
             disabled: !isParentAccountRequired || disableFields,
-            // dependsRequired: {
-            //   key: 'is_parent',
-            //   matchedValue: YesNo.No,
-            //   errorMessage: 'Field is required',
-            //   disableDependsField: YesNo.Yes,
-            // },
+            dependsRequired: {
+              key: 'is_parent',
+              matchedValue: YesNo.No,
+              errorMessage: 'Field is required',
+              disableDependsField: YesNo.Yes,
+            },
           }),
           createSelectField('status', 'Status', {
             required: true,

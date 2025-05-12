@@ -328,7 +328,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           constructFormData['resource_startdate'];
         const today: Dayjs = dayjs();
         const isEndDateField =
-          field.name === 'financial_end_date' || field.name === 'resource_enddate';
+          field.name === 'financial_end_date' ||
+          field.name === 'resource_enddate';
         const parsedStartDate = startDateValue
           ? dayjs(startDateValue, 'MM/DD/YYYY')
           : undefined;
@@ -436,13 +437,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
               className={fieldDisabled}
-              value={dayjs(fieldValue, 'DD/MM/YYYY')}
+              value={dayjs(fieldValue, 'DD/MM')}
               disabled={field.disabled}
               format='MM/DD'
               views={['month', 'day']}
               open={false}
               onChange={(newValue) => {
-                handleChange(dayjs(newValue).format('DD/MM/YYYY'));
+                handleChange(dayjs(newValue).format('DD/MM'));
               }}
               slots={{
                 clearIcon: () => (
@@ -603,8 +604,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           // Date validation
           if (field.type === 'fiscalDate' && constructFormData[field.name]) {
             const dateValue = constructFormData[field.name] as string;
-
-            if (!isValidDate(dateValue)) {
+            if (!isValidDate(dateValue, 'DD/MM')) {
               hasError = true;
               return {
                 ...field,
@@ -655,7 +655,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 !endDate.isAfter(startDate)
               ) {
                 hasError = true;
-                return { ...field, error: 'End date must be after effective date'};
+                return {
+                  ...field,
+                  error: 'End date must be after effective date',
+                };
               }
             }
 
@@ -707,7 +710,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
             const currentDate = dayjs();
 
-            if (field.name === 'resource_enddate' && dayjs(dateValue).isAfter(currentDate, 'day')) {
+            if (
+              field.name === 'resource_enddate' &&
+              dayjs(dateValue).isAfter(currentDate, 'day')
+            ) {
               hasError = true;
               return {
                 ...field,
@@ -723,8 +729,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 ...field,
                 error:
                   field.name === 'resource_startdate'
-                      ? 'Resource effective from cannot be before 01-01-1950'
-                      : 'Date cannot be before 01-01-1950',
+                    ? 'Resource effective from cannot be before 01-01-1950'
+                    : 'Date cannot be before 01-01-1950',
               };
             }
 
@@ -743,7 +749,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 hasError = true;
                 return {
                   ...field,
-                  error: 'Both resource effective from and resource end dates must be provided',
+                  error:
+                    'Both resource effective from and resource end dates must be provided',
                 };
               }
 
@@ -758,9 +765,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   return {
                     ...field,
                     error:
-                    field.name === 'resource_startdate'
-                      ? 'Resource effective from cannot be the same as resource end date'
-                      : 'Resource end date cannot be the same as resource effective from',
+                      field.name === 'resource_startdate'
+                        ? 'Resource effective from cannot be the same as resource end date'
+                        : 'Resource end date cannot be the same as resource effective from',
                   };
                 }
 
@@ -796,33 +803,33 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
           }
 
-         // Start & end not be same Validation
-         if (field.toBeNotSame) {
-          const currentFieldDate = dayjs(
-            constructFormData[field.name]?.toString() || '',
-            'MM/DD'
-          );
-          const differentThanFieldDate = dayjs(
-            constructFormData[field.toBeNotSame.key]?.toString() || '',
-            'MM/DD'
-          );
+          // Start & end not be same Validation
+          if (field.toBeNotSame) {
+            const currentFieldDate = dayjs(
+              constructFormData[field.name]?.toString() || '',
+              'MM/DD'
+            );
+            const differentThanFieldDate = dayjs(
+              constructFormData[field.toBeNotSame.key]?.toString() || '',
+              'MM/DD'
+            );
 
-          if (
-            currentFieldDate.isValid() &&
-            differentThanFieldDate.isValid()
-          ) {
             if (
-              currentFieldDate.date() === differentThanFieldDate.date() &&
-              currentFieldDate.month() === differentThanFieldDate.month()
+              currentFieldDate.isValid() &&
+              differentThanFieldDate.isValid()
             ) {
-              hasError = true;
-              return {
-                ...field,
-                error: field.toBeNotSame.errorMessage,
-              };
+              if (
+                currentFieldDate.date() === differentThanFieldDate.date() &&
+                currentFieldDate.month() === differentThanFieldDate.month()
+              ) {
+                hasError = true;
+                return {
+                  ...field,
+                  error: field.toBeNotSame.errorMessage,
+                };
+              }
             }
           }
-        }
 
           // Validate regex if present and field has value
           const value = constructFormData[field.name] as string;

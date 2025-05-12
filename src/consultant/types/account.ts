@@ -96,6 +96,12 @@ export enum YesNo {
   No = 'no',
 }
 
+export enum KeyContactsUpdate {
+  Edit = 'edit',
+  Delete = 'delete',
+  Add = 'add'
+}
+
 export interface AccountById {
   parent_account_rid: string | null;
   r_number: string;
@@ -112,7 +118,6 @@ export interface AccountById {
   annual_revenue: number;
   region: string;
   rid: string;
-  key_contacts: KeyContacts[];
 }
 
 export interface KeyContacts {
@@ -143,26 +148,28 @@ export interface AccountFieldsTypes {
   blended_rate_fte: string | null;
   blended_rate_subcon: string | null;
   data_storage: Storagetype;
+  keyContacts: KeyContacts[];
 }
 
 export interface NewAccountData extends AccountFieldsTypes, AccountById {
   account_id: string;
-  account_currency_rid: string;
-  account_country_rid: string;
-  account_country_region_rid: string;
+  account_currency_rid: string | null;
+  account_country_rid: string | null;
+  account_country_region_rid: string | null;
   account_city_rid: string;
   created_by: string;
   modified_by: string;
   finance_poc_number: string;
   account_rid: string;
   industry_rid: string;
-  industry_name: string;
+  industry_name_other: string;
   key_contact_name: string;
   key_contact_email: string;
   key_contact_role: string;
   is_primary_contact: string;
   include_in_communication: string;
-  key_contacts_status: Status;
+  key_contact_status: Status;
+  key_contacts: KeyContacts[];
 }
 
 export interface AccountFormData

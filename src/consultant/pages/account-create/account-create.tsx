@@ -31,8 +31,7 @@ export const AccountForm: React.FC = () => {
     key_contact_role: '',
     key_contact_email: '',
   });
-  const [isParentAccountRequired, setIsParentAccountRequired] =
-  useState(false);
+  const [isParentAccountRequired, setIsParentAccountRequired] = useState(false);
   const [dataResidency, setDataResidency] = useState(DATA_STORAGE_OPTIONS);
   const { successToast } = useToast();
   const location = useLocation();
@@ -58,17 +57,17 @@ export const AccountForm: React.FC = () => {
             : 'no',
           auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
           key_contact_name:
-            account?.accountById?.key_contacts?.[0]?.key_contact_name,
+            account?.accountDetails?.keyContacts?.[0]?.key_contact_name,
           key_contact_role:
-            account?.accountById?.key_contacts?.[0]?.key_contact_role_rid,
+            account?.accountDetails?.keyContacts?.[0]?.key_contact_role_rid,
           key_contact_email:
-            account?.accountById?.key_contacts?.[0]?.key_contact_email,
-          key_contact_status: account?.accountById?.key_contacts?.[0]?.status,
-          is_primary_contact: account?.accountById?.key_contacts?.[0]
+            account?.accountDetails?.keyContacts?.[0]?.key_contact_email,
+          key_contact_status: account?.accountDetails?.keyContacts?.[0]?.status,
+          is_primary_contact: account?.accountDetails?.keyContacts?.[0]
             ?.is_primary_contact
             ? 'yes'
             : 'no',
-          include_in_communication: account?.accountById?.key_contacts?.[0]
+          include_in_communication: account?.accountDetails?.keyContacts?.[0]
             ?.include_in_communication
             ? 'yes'
             : 'no',
@@ -77,7 +76,9 @@ export const AccountForm: React.FC = () => {
     [account]
   );
   const defaultAciveValue = STATUS_OPTIONS[0].value;
-  const isValueUpdateInKeyContact = Object.values(primaryKeyContactInfo).some(val => val.trim() !== '')
+  const isValueUpdateInKeyContact = Object.values(primaryKeyContactInfo).some(
+    (val) => val.trim() !== ''
+  );
 
   const allCountries = useGetAllCountries();
   const industry = useFetchIndustrys();
@@ -109,6 +110,14 @@ export const AccountForm: React.FC = () => {
       setCurrentCountry(accountData.country_rid);
     }
   }, [accountData.country_rid]);
+
+  useEffect(() => {
+    setPrimaryKeyContactInfo({
+      key_contact_email: accountData.key_contact_email || '',
+      key_contact_name: accountData.key_contact_name || '',
+      key_contact_role: accountData.key_contact_role || '',
+    });
+  }, [accountData.key_contact_email, accountData.key_contact_name, accountData.key_contact_role]);
 
   const memoizedContry: SelectOption[] = useMemo(
     () =>
@@ -163,17 +172,13 @@ export const AccountForm: React.FC = () => {
       })) || [],
     [userRoles.data?.data.roles]
   );
-
   const submitData = (formValues: Partial<AccountFormData>) => {
-    const industry_name =
-      formValues.industry_rid &&
-      memoizedIndustry.find((item) => item.value === formValues.industry_rid)
-        ?.label;
     const transformData = transformFormData(
       formValues,
       isEditView,
-      industry_name,
-      accountData?.rid
+      accountData?.rid,
+      isValueUpdateInKeyContact,
+      account?.accountDetails.keyContacts[0].key_contact_id
     );
     if (isEditView) {
       updateAccount.mutate(transformData);
@@ -241,14 +246,24 @@ export const AccountForm: React.FC = () => {
             variant='outlined'
             color='inherit'
             onClick={goBack}
-            sx={{ height: '32px', width: '56px', fontSize:'12px', fontWeight: 400 }}
+            sx={{
+              height: '32px',
+              width: '56px',
+              fontSize: '12px',
+              fontWeight: 400,
+            }}
           />
           <TextButton
             label='Save'
             variant='filled'
             loading={createAccount.isPending || updateAccount.isPending}
             onClick={handleExternalSubmit}
-            sx={{ height: '32px', width: '64px', fontSize:'13px', fontWeight: 400 }}
+            sx={{
+              height: '32px',
+              width: '64px',
+              fontSize: '13px',
+              fontWeight: 400,
+            }}
           />
         </div>
       </div>
