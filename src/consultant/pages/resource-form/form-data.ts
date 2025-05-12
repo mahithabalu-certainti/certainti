@@ -68,7 +68,9 @@ export const ResourceFormData = (
   disableFields?: boolean,
   hideSkill?: string,
   disableCostAndSkill?: boolean,
-  disableOrgname?: boolean
+  disableOrgname?: boolean,
+  currentSkillType?: string,
+  currentskillSubType?: string,
 ): FormType[] => {
   return useMemo(
     () => [
@@ -245,6 +247,18 @@ export const ResourceFormData = (
         fillType: 'half',
         hide: hideSkill === 'cost' ? false : true,
         fields: [
+          createSelectField('fiscal_year', 'Fiscal Year', {
+            options: fiscalYears,
+            placeholder: '-Select-',
+            required: true,
+            onChange: true,
+          }),
+          createSelectField('currency', 'Currency', {
+            options: currency,
+            placeholder: '-Select-',
+            required: false,
+            isLoading: currencyLoading,
+          }),
           createDateField('financial_start_date', 'Effective Date', {
             required: false,
             minDate: new Date(minDate.getTime()),
@@ -263,12 +277,6 @@ export const ResourceFormData = (
             placeholder: '-Select-',
             required: true,
           }),
-          createSelectField('fiscal_year', 'Fiscal Year', {
-            options: fiscalYears,
-            placeholder: '-Select-',
-            required: true,
-            onChange: true,
-          }),
           createTextField('cost', 'Cost', {
             required: true,
             regex: REGEX_PATTERNS.COST_REGEX,
@@ -276,12 +284,7 @@ export const ResourceFormData = (
               'Cost must be a 16-digit number with up to 2 decimals',
             placeholder: 'Enter Cost',
           }),
-          createSelectField('currency', 'Currency', {
-            options: currency,
-            placeholder: '-Select-',
-            required: false,
-            isLoading: currencyLoading,
-          }),
+          
         ],
       },
       {
@@ -328,6 +331,16 @@ export const ResourceFormData = (
             options: mockSkillLevelOptions,
             placeholder: '-Select-',
             required: false,
+          }),
+          createTextField('skill_type_other', 'Skill Type(Other)', {
+            required: true,
+            placeholder: 'Enter Skill Type',
+            hide: currentSkillType === 'f6044ae9-7b65-4cfc-8ad3-c18a8f7ee30a' ? false : true,
+          }),
+          createTextField('skill_sub_type_other', 'Skill Sub Type(Other)', {
+            required: true,
+            placeholder: 'Enter Skill Sub Type',
+            hide: currentskillSubType === 'b8894099-0385-4681-8237-21f89b0d1883' ? false : true,
           }),
         ],
       },
@@ -394,7 +407,6 @@ export const ResourceFormData = (
             placeholder: 'Enter Any Additional Information',
             regexErrorMessage: 'Maximum 1000 characters allowed',
             regex: RESOURCE_REGEX.DESCRIPTION,
-            disabled: disableCostAndSkill,
           }),
         ],
       },
@@ -414,6 +426,8 @@ export const ResourceFormData = (
       skillTypeOptions,
       skillSubTypeOptions,
       skillSubTypeLoading,
+      currentSkillType,
+      currentskillSubType,
     ]
   );
 };

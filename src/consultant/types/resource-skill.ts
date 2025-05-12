@@ -95,6 +95,9 @@ export type ResourceSkillPayload = {
   skill_type_rid?: string;
   skill_subtype_rid?: string;
   skill_details?: string;
+  comments?: string;
+  skill_type_others?: string;
+  skill_subtype_others?: string;
 };
 
 export type ExportModule = {

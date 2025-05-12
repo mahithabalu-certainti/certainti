@@ -21,7 +21,6 @@ import { RESOURCESKILL } from "../../../../../../routes";
 import ActionButton from '../../../../account-list/table/action-button';
 import { TablePagination } from '../../../../../../components/table';
 import { arrowDownIcon, arrowUpIcon } from '../../../../../../assets';
-import { formatDateToMMDDYYYY } from '../utils';
 
 interface ResourceSkillTableProps {
   fiscalYear?: number;
@@ -103,7 +102,6 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
 
   const renderRows = ({ resourceSkill }: RenderSkillRowProps) => {
     return resourceSkill?.map((skill, i) => {
-      const startDate = formatDateToMMDDYYYY(skill.startDate as string);
       return (
         <React.Fragment key={i}>
           <TableRow
@@ -122,7 +120,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
             }}
           >
             {/* <TableCell sx={{ minWidth: '200px' }}>{skill.resourceRole}</TableCell> */}
-            <TableCell sx={{ minWidth: '120px' }}>{startDate}</TableCell>
+            <TableCell sx={{ minWidth: '120px' }}>{skill.startDate}</TableCell>
             <TableCell sx={{ minWidth: '120px' }}>{skill.skillType}</TableCell>
             <TableCell sx={{ minWidth: '120px' }}>{skill.skillSubType}</TableCell>
             <TableCell sx={{ minWidth: '140px' }}>{skill.skillDetails}</TableCell>

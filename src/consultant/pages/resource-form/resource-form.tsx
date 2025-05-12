@@ -52,8 +52,9 @@ const ResourceForm: React.FC = () => {
     state: '',
   });
   const [currentSkillType, setCurrentSkillType] = useState({
+    skillSubType:'',
     skill_type: '',
-    skillSubType: '',
+    skill_sub_type: '',
   });
   const [formValues, setFormValues] = useState<Record<string, any>>({});
 
@@ -143,6 +144,8 @@ const ResourceForm: React.FC = () => {
         skill_type: skillInfo?.skillTypeId || '',
         skill_sub_type: skillInfo?.skillSubTypeId || '',
         skill_start_date: skillInfo?.startDate || '',
+        skill_type_other: skillInfo?.skillType || '', 
+        skill_sub_type_other: skillInfo?.skillSubType || '',
         years_of_experience: skillInfo?.yearsOfExperience || '',
       };
       setFormValues(skillValues);
@@ -244,8 +247,7 @@ const ResourceForm: React.FC = () => {
       label: skill.skill_type_name,
       value: skill.rid,
     })) || []
-    const finaldata = [...convertData,{label: "Other", value: "Other"}]
-    return finaldata
+    return convertData
   }, [skillType]);
 
   useEffect(()=>{
@@ -254,7 +256,7 @@ const ResourceForm: React.FC = () => {
         label: skill.skill_subtype_name,
         value: skill.rid,
       })) || []
-      setSkillSubTypeData([...finalData,{label: "Other", value: "Other"}])
+      setSkillSubTypeData(finalData)
   },[skillSubType])
   
 
@@ -371,6 +373,12 @@ const ResourceForm: React.FC = () => {
         [fieldName]: fieldValue as string,
       }));
     }
+    if(fieldName === 'skill_sub_type') {
+      setCurrentSkillType((prev) => ({
+       ...prev,
+        [fieldName]: fieldValue as string,
+      }));
+    }
   };
 
   //disable orgname in the formdata if the user select resource type as full-time
@@ -397,6 +405,8 @@ const ResourceForm: React.FC = () => {
     activeFormSection,
     state?.cost || state?.skill,
     disableOrgname,
+    currentSkillType.skill_type,
+    currentSkillType.skill_sub_type || currentSkillType.skillSubType,
   );
 
   return (

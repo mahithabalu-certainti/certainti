@@ -181,6 +181,7 @@ export const transformCostData = (
     resource_rid: formData.resource_rid,
     accountNumber: formData.accountNumber,
     resource_number: formData?.resource_number,
+    comments: formData.comments,
   };
 
   if (isEdit) {
@@ -210,9 +211,12 @@ export const transformSkillData = (
     skill_level: formData.skill_level as skillLevel,
     skill_type_rid: formData.skill_type,
     skill_subtype_rid: formData.skill_sub_type,
+    skill_type_others: formData.skill_type_other || "",
+    skill_subtype_others: formData.skill_sub_type_other || "",
     skill_details: formData.skill_details,
     accountNumber: formData.accountNumber,
     resource_number: formData?.resource_number,
+    comments: formData.comments,
   };
 
   if (isEdit) {
