@@ -31,10 +31,10 @@ export function convertAccounts(
       parentAccount: parentAccountName,
       accountNumber: account.r_number,
       industry: account.industry,
-      country: account.country?.country_name || 'Unknown',
-      currency: account.currency?.currency_code || 'Unknown',
+      country: account.country?.country_name || 'N/A',
+      currency: account.currency?.currency_code || 'N/A',
       status: account.status === 'active' ? 'Active' : 'In Active',
-      primaryContact: account.primary_contact_name || 'Unknown',
+      primaryContact: account.primary_contact_name || 'N/A',
       parentAccountID: account.parent_account_rid,
       annualRevenue: account.annual_revenue,
     };

@@ -3,6 +3,7 @@ import {
   AccountFieldsApiResponse,
   CitysApiResponse,
   CurrencyApiResponse,
+  IndustrysApiResponse,
   ParentAccountApiResponse,
   StatesApiResponse,
 } from '../../types';
@@ -10,6 +11,7 @@ import {
   fetchAccountFields,
   fetchCity,
   fetchCurrency,
+  fetchIndustrys,
   fetchParentAccounts,
   fetchState,
 } from './account-service';
@@ -30,6 +32,14 @@ export const useFetchParentAccounts = () => {
   return useQuery<ParentAccountApiResponse, Error>({
     queryKey: ['parentAccount'],
     queryFn: fetchParentAccounts,
+    retry: 0,
+  });
+};
+
+export const useFetchIndustrys = () => {
+  return useQuery<IndustrysApiResponse, Error>({
+    queryKey: ['industrys'],
+    queryFn: fetchIndustrys,
     retry: 0,
   });
 };

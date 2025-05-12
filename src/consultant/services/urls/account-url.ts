@@ -6,6 +6,7 @@ export const AccountEditUrl = '/accounts/:id/edit';
 export const AccountDeleteUrl = '/accounts/:id/delete';
 export const AccountUpdateUrl = '/api/accounts/update';
 export const ParentAccountUrl = '/api/accounts/global';
+export const IndustryUrl = '/api/accounts/industry';
 export const CurrencyUrl = '/api/accounts/currency';
 
 export const AccountListURL = ({

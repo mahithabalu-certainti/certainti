@@ -2,10 +2,10 @@ import { useMemo } from 'react';
 import { FormType, SelectOption } from '../../../../consultant/types';
 import {
   createPhoneInputField,
-  createRadioField,
   createSelectField,
   createTextField,
   REGEX_PATTERNS,
+  STATUS_OPTIONS,
 } from '../../../../common-utils';
 
 export const FormData = (
@@ -30,13 +30,16 @@ export const FormData = (
             regexErrorMessage:
               "First name must contain only letters, spaces, apostrophes (') or hyphens (-).",
             placeholder: 'Enter First name',
-            lengthRequired: {
-              key: 'name_length',
-              minMatchedValue: REGEX_PATTERNS.MIN_NAME_REGEX,
-              minErrorMessage: 'Name must be more than 2 characters long',
-              maxMatchedValue: REGEX_PATTERNS.MAX_NAME_REGEX,
-              maxErrorMessage: 'Max length exceeded',
-            },
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_3,
+                errorMessage: 'Name must be more than 2 characters long',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_64,
+                errorMessage: 'Max length exceeded',
+              },
+            ],
           }),
           createTextField('last_name', 'Last name', {
             required: true,
@@ -44,27 +47,31 @@ export const FormData = (
             placeholder: 'Enter Last name',
             regexErrorMessage:
               "Last name must contain only letters, spaces, apostrophes (') or hyphens (-).",
-            lengthRequired: {
-              key: 'name_length',
-              minMatchedValue: REGEX_PATTERNS.MIN_NAME_REGEX,
-              minErrorMessage: 'Name must be more than 2 characters long',
-              maxMatchedValue: REGEX_PATTERNS.MAX_NAME_REGEX,
-              maxErrorMessage: 'Max length exceeded',
-            },
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_3,
+                errorMessage: 'Name must be more than 2 characters long',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_64,
+                errorMessage: 'Max length exceeded',
+              },
+            ],
           }),
           createTextField('email', 'Email Address', {
             required: true,
-            regex: REGEX_PATTERNS.EMAIL,
             placeholder: 'Enter Email Address',
-            regexErrorMessage: 'Invalid email address',
             disabled: disableFields,
-            lengthRequired: {
-              key: 'email_length',
-              minMatchedValue: REGEX_PATTERNS.EMAIL,
-              minErrorMessage: 'Invalid email address',
-              maxMatchedValue: REGEX_PATTERNS.MAX_EMAIL_REGEX,
-              maxErrorMessage: 'Max length exceeded',
-            },
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_EMAIL_REGEX,
+                errorMessage: 'Max length exceeded',
+              },
+              {
+                regex: REGEX_PATTERNS.EMAIL,
+                errorMessage: 'Invalid email address',
+              },
+            ],
           }),
           createPhoneInputField('phone', 'Phone Number', {
             required: false,
@@ -86,12 +93,10 @@ export const FormData = (
             placeholder: 'Select Role',
             required: true,
           }),
-          createRadioField('status', 'Status', {
+          createSelectField('status', 'Status', {
             required: true,
-            radioOptions: [
-              { label: 'Active', value: 'active' },
-              { label: 'In-active', value: 'inactive' },
-            ],
+            options: STATUS_OPTIONS,
+            placeholder: 'Choose Status',
           }),
         ],
       },
@@ -103,8 +108,14 @@ export const FormData = (
             required: false,
             regex: REGEX_PATTERNS.STREET_REGEX,
             regexErrorMessage:
-              'Street must contain only letters and spaces, and be 3 to 200 characters long.',
+              'Street must contain only alphanumeric characters,letters, spaces, commas, periods, hyphens, and hash.',
             placeholder: 'Enter Street',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_255,
+                errorMessage: 'Max length exceeded',
+              },
+            ],
           }),
           createSelectField('country', 'Country', {
             options: country,
@@ -113,9 +124,9 @@ export const FormData = (
             onChange: true,
             resetDependsFields: ['state, city'],
           }),
-          createSelectField('state', 'State/Province', {
+          createSelectField('state', 'Region', {
             options: states,
-            placeholder: 'Select State',
+            placeholder: 'Select Region',
             required: false,
             onChange: true,
             isLoading: stateLoading,
@@ -126,11 +137,19 @@ export const FormData = (
             required: false,
             isLoading: stateLoading || cityLoading,
           }),
-          createTextField('zip_code', 'Zip/Postal code', {
+          createTextField('zip_code', 'Zip Code / Area Code', {
             required: false,
-            regex: REGEX_PATTERNS.POSTAL_CODE,
-            regexErrorMessage: 'Invalid postal code / zip code',
-            placeholder: 'Enter Zip/Postal code',
+            placeholder: 'Enter Zip Code / Area Code',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_POSTAL_REGEX,
+                errorMessage: 'Max length exceeded',
+              },
+              {
+                regex: REGEX_PATTERNS.POSTAL_CODE,
+                errorMessage: 'Invalid postal code / zip code',
+              },
+            ],
           }),
         ],
       },

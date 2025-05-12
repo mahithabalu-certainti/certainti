@@ -73,6 +73,13 @@ interface OutputData {
   annualRevenue: string;
 }
 
+const getValueOrDefault = (
+  value?: string | number | null,
+  defaultValue = 'N/A'
+): string => {
+  return value?.toString() || defaultValue;
+};
+
 export const transformAccountData = (data: AccountData): DisplayColumn[] => {
   const account = data?.accountById;
 
@@ -80,16 +87,16 @@ export const transformAccountData = (data: AccountData): DisplayColumn[] => {
     {
       items: [
         { label: 'Account ID', value: account?.r_number },
-        { label: 'Country', value: account?.country?.country_name },
+        { label: 'Country', value: getValueOrDefault(account?.country?.country_name) },
       ],
     },
     {
       items: [
         {
           label: 'Parent Name',
-          value: account?.parent_account?.account_name || '-',
+          value: getValueOrDefault(account?.parent_account?.account_name),
         },
-        { label: 'Currency', value: account?.currency?.currency_code },
+        { label: 'Currency', value: getValueOrDefault(account?.currency?.currency_code) },
       ],
     },
     {
@@ -98,13 +105,13 @@ export const transformAccountData = (data: AccountData): DisplayColumn[] => {
           label: 'Is Parent Account',
           value: account?.is_parent ? 'Yes' : 'No',
         },
-        { label: 'Account Name', value: account?.account_name },
+        { label: 'Account Name', value: getValueOrDefault(account?.account_name) },
       ],
     },
     {
       items: [
-        { label: 'Primary Contact', value: account?.primary_contact_name },
-        { label: 'Industry', value: account?.industry },
+        { label: 'Primary Contact', value: getValueOrDefault(account?.primary_contact_name) },
+        { label: 'Industry', value: getValueOrDefault(account?.industry) },
       ],
     },
     {
