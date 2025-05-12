@@ -796,14 +796,30 @@ const createProjectSchema = Joi.object({
   .required(),
   key_contacts: Joi.array()
   .items(
-    Joi.object({
-      key_contact_name: Joi.string().min(2).max(128).optional(),
-      key_contact_email: Joi.string().email().min(3).max(125).optional(),
-      key_contact_role_rid: Joi.string().optional(),
-      is_primary_contact: Joi.boolean().optional(),
-      include_in_communication: Joi.boolean().required(),
+  Joi.object({
+      key_contact_name: Joi.string().pattern(/^(?!.*(['-])\1)[A-Za-z][A-Za-z' -]{0,126}[A-Za-z]$/).min(2).max(128).optional().allow("").allow(null)
+      .messages({
+        "string.base": "Key Contact Name must be a text value.",
+        "string.min": "Key Contact Name must be at least 2 characters long.",
+        "string.max": "Key Contact Name cannot exceed 128 characters.",
+        "string.pattern.base":
+          " Key Contact Name is not valid",
+      }),
+      key_contact_email: Joi.string()
+      .trim()
+      .regex(/^[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]*[a-zA-Z0-9])?@[a-zA-Z0-9-]+\.[a-zA-Z]{2,63}$/) 
+      .min(3).max(125).optional().allow("").allow(null).messages({
+        "string.base": "Key Contact Email must be a text value.",
+        "string.empty": "Key Contact Email cannot be empty.",
+        "string.min": "Key Contact Email must be at least 6 characters long.",
+        "string.max": "Key Contact Email cannot exceed 254 characters.",
+        "string.pattern.base": "Key Contact Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
+      }),
+      key_contact_role_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
+      is_primary_contact: Joi.boolean().valid(true, false).optional(),
+      include_in_communication: Joi.boolean().valid(true, false).optional(),
       status: Joi.string().valid('active', 'inactive').required(),
-      action_type: Joi.string().valid('add').required()
+      action_type: Joi.string().valid('add', 'edit','delete').required()
     })
   )
   .optional()
@@ -929,22 +945,39 @@ const updateProjectSchema = Joi.object({
 
   project_description: Joi.string().max(2000).allow(null).allow(""),
   key_contacts: Joi.array()
-  .items(
-    Joi.object({
-      key_contact_id: Joi.string().when("action_type", {
-        is: Joi.string().valid("edit", "delete"),
-        then: Joi.required(),
-        otherwise: Joi.forbidden(), // Optional: Prevents key_contact_id in 'add' action
-      }),
-      key_contact_name: Joi.string().min(2).max(128).optional(),
-      key_contact_email: Joi.string().email().min(3).max(125).optional(),
-      key_contact_role_rid: Joi.string().optional(),
-      is_primary_contact: Joi.boolean().optional(),
-      include_in_communication: Joi.boolean().optional(),
-      status: Joi.string().valid('active', 'inactive').required(),
-      action_type: Joi.string().valid('add', 'edit','delete').required()
-    })
-  )
+    .items(
+      Joi.object({
+        key_contact_id: Joi.string().when("action_type", {
+          is: Joi.string().valid("edit", "delete"),
+          then: Joi.required(),
+          otherwise: Joi.forbidden(),
+        }),
+        key_contact_name: Joi.string().pattern(/^(?!.*(['-])\1)[A-Za-z][A-Za-z' -]{0,126}[A-Za-z]$/).min(2).max(128).optional().allow("").allow(null)
+        .messages({
+          "string.base": "Key Contact Name must be a text value.",
+          "string.min": "Key Contact Name must be at least 2 characters long.",
+          "string.max": "Key Contact Name cannot exceed 128 characters.",
+          "string.pattern.base":
+            " Key Contact Name is not valid",
+        }),
+        key_contact_email: Joi.string()
+        .trim()
+        .regex(/^[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]*[a-zA-Z0-9])?@[a-zA-Z0-9-]+\.[a-zA-Z]{2,63}$/) 
+        .min(3).max(125).optional().allow("").allow(null).messages({
+          "string.base": "Key Contact Email must be a text value.",
+          "string.empty": "Key Contact Email cannot be empty.",
+          "string.min": "Key Contact Email must be at least 6 characters long.",
+          "string.max": "Key Contact Email cannot exceed 254 characters.",
+          "string.pattern.base": "Key Contact Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
+        }),
+        key_contact_role_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
+        is_primary_contact: Joi.boolean().valid(true, false).optional(),
+        include_in_communication: Joi.boolean().valid(true, false).optional(),
+        status: Joi.string().valid('active', 'inactive').required(),
+        action_type: Joi.string().valid('add', 'edit','delete').required()
+      })
+    )
+    .optional()
 });
 
 export {

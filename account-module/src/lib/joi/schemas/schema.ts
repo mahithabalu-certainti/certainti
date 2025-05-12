@@ -106,24 +106,43 @@ const accountSchema = Joi.object({
       "string.pattern.base": `Website URL must begin with 'http' or 'https://'`,
       "string.max": "The website must not exceed 255 characters."
     }),
-  project_manager: Joi.string().min(2).max(128).optional().allow("").allow(null),
+  project_manager: Joi.string().pattern(/^(?!.*(['-])\1)[A-Za-z][A-Za-z' -]{0,126}[A-Za-z]$/).min(2).max(128).optional().allow("").allow(null),
   created_datetime: Joi.date().iso().allow(null),
   modified_datetime: Joi.date().iso().allow(null),
-  annual_revenue: Joi.number().required(),
+  annual_revenue: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional()
+    .messages({
+      "string.pattern.base":"Annual Revenue must be a valid  number maximum up to (9999999999999999.99)",
+    }).allow("").allow(null),
   data_storage: Joi.string()
     .valid("separate_db", "store_in_parent")
     .max(255)
     .required(),
-    key_contacts: Joi.array()
+  key_contacts: Joi.array()
     .items(
-      Joi.object({
-        key_contact_name: Joi.string().min(2).max(128).optional(),
-        key_contact_email: Joi.string().email().min(3).max(125).optional(),
-        key_contact_role_rid: Joi.string().optional(),
-        is_primary_contact: Joi.boolean().optional(),
-        include_in_communication: Joi.boolean().required(),
+    Joi.object({
+        key_contact_name: Joi.string().pattern(/^(?!.*(['-])\1)[A-Za-z][A-Za-z' -]{0,126}[A-Za-z]$/).min(2).max(128).optional().allow("").allow(null)
+        .messages({
+          "string.base": "Key Contact Name must be a text value.",
+          "string.min": "Key Contact Name must be at least 2 characters long.",
+          "string.max": "Key Contact Name cannot exceed 128 characters.",
+          "string.pattern.base":
+            " Key Contact Name is not valid",
+        }),
+        key_contact_email: Joi.string()
+        .trim()
+        .regex(/^[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]*[a-zA-Z0-9])?@[a-zA-Z0-9-]+\.[a-zA-Z]{2,63}$/) 
+        .min(3).max(125).optional().allow("").allow(null).messages({
+          "string.base": "Key Contact Email must be a text value.",
+          "string.empty": "Key Contact Email cannot be empty.",
+          "string.min": "Key Contact Email must be at least 6 characters long.",
+          "string.max": "Key Contact Email cannot exceed 254 characters.",
+          "string.pattern.base": "Key Contact Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
+        }),
+        key_contact_role_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
+        is_primary_contact: Joi.boolean().valid(true, false).optional(),
+        include_in_communication: Joi.boolean().valid(true, false).optional(),
         status: Joi.string().valid('active', 'inactive').required(),
-        action_type: Joi.string().valid('add').required()
+        action_type: Joi.string().valid('add', 'edit','delete').required()
       })
     )
     .optional()
@@ -210,25 +229,51 @@ const updateAccountSchema = Joi.object({
       "string.pattern.base": `Website URL must begin with 'http' or 'https://'`,
       "string.max": "The website must not exceed 255 characters."
     }),
-  project_manager: Joi.string().min(2).max(128).optional().allow("").allow(null),
-  annual_revenue: Joi.number().required(),
+  project_manager: Joi.string().pattern(/^(?!.*(['-])\1)[A-Za-z][A-Za-z' -]{0,126}[A-Za-z]$/).min(2).max(128).optional().allow("").allow(null)
+  .messages({
+    "string.base": "Delivary Manager must be a text value.",
+    "string.min": "Delivary Manager must be at least 2 characters long.",
+    "string.max": "Delivary Manager cannot exceed 128 characters.",
+    "string.pattern.base":
+      " Delivary Manager is not valid",
+  }),
+  annual_revenue: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional()
+    .messages({
+      "string.pattern.base":"Annual Revenue must be a valid  number maximum up to (9999999999999999.99)",
+    }).allow("").allow(null),
   data_storage: Joi.string()
     .valid("separate_db", "store_in_parent")
     .max(255)
     .required(),
-    key_contacts: Joi.array()
+  key_contacts: Joi.array()
     .items(
       Joi.object({
         key_contact_id: Joi.string().when("action_type", {
           is: Joi.string().valid("edit", "delete"),
           then: Joi.required(),
-          otherwise: Joi.forbidden(), // Optional: Prevents key_contact_id in 'add' action
+          otherwise: Joi.forbidden(),
         }),
-        key_contact_name: Joi.string().min(2).max(128).optional(),
-        key_contact_email: Joi.string().email().min(3).max(125).optional(),
-        key_contact_role_rid: Joi.string().optional(),
-        is_primary_contact: Joi.boolean().optional(),
-        include_in_communication: Joi.boolean().optional(),
+        key_contact_name: Joi.string().pattern(/^(?!.*(['-])\1)[A-Za-z][A-Za-z' -]{0,126}[A-Za-z]$/).min(2).max(128).optional().allow("").allow(null)
+        .messages({
+          "string.base": "Key Contact Name must be a text value.",
+          "string.min": "Key Contact Name must be at least 2 characters long.",
+          "string.max": "Key Contact Name cannot exceed 128 characters.",
+          "string.pattern.base":
+            " Key Contact Name is not valid",
+        }),
+        key_contact_email: Joi.string()
+        .trim()
+        .regex(/^[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]*[a-zA-Z0-9])?@[a-zA-Z0-9-]+\.[a-zA-Z]{2,63}$/) 
+        .min(3).max(125).optional().allow("").allow(null).messages({
+          "string.base": "Key Contact Email must be a text value.",
+          "string.empty": "Key Contact Email cannot be empty.",
+          "string.min": "Key Contact Email must be at least 6 characters long.",
+          "string.max": "Key Contact Email cannot exceed 254 characters.",
+          "string.pattern.base": "Key Contact Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
+        }),
+        key_contact_role_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
+        is_primary_contact: Joi.boolean().valid(true, false).optional(),
+        include_in_communication: Joi.boolean().valid(true, false).optional(),
         status: Joi.string().valid('active', 'inactive').required(),
         action_type: Joi.string().valid('add', 'edit','delete').required()
       })
