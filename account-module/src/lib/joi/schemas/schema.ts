@@ -94,7 +94,7 @@ const accountSchema = Joi.object({
   created_by: Joi.string().max(255).optional(),
   modified_by: Joi.string().max(255).optional(),
   industry_rid: Joi.string().required(),
-  industry_name: Joi.string().min(5).optional(),
+  industry_name_other: Joi.string().min(5).optional().allow("").allow(null),
   business_details: Joi.string().min(1).max(2000).required(),
   comments: Joi.string().min(1).max(2000).optional(),
   website: Joi.string()
@@ -216,7 +216,7 @@ const updateAccountSchema = Joi.object({
     .allow(""),
   modified_by: Joi.string().max(255).optional(),
   industry_rid: Joi.string().min(5).required(),
-  industry_name: Joi.string().min(5).max(100).optional(),
+  industry_name_other: Joi.string().min(5).optional().allow("").allow(null),
   business_details: Joi.string().min(1).max(2000).required(),
   comments: Joi.string().min(1).max(2000).optional(),
   website: Joi.string()
