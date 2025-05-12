@@ -708,7 +708,7 @@ class ResourceCostSchemaService {
     }
 
     const fiscalYearCondition = `
-      AND r.fiscal_year = ${fiscalYear}`;
+      AND rc.fiscal_year = ${fiscalYear}`;
 
     // Add fiscal year condition to filter conditions
     filterConditions += fiscalYearCondition;

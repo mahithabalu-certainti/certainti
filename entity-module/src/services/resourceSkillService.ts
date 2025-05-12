@@ -90,6 +90,7 @@ class ResourceSkillService {
 
         try {
 
+            if(!skill_type_others){
             // Then check if this skill type rid exists for the resource
             const existingResourceSkill = await ResourceModel.findOne({
               where: {
@@ -106,12 +107,15 @@ class ResourceSkillService {
                 errorMessage: `Skill already exists for this resource`,
               };
             }
+          }
           
         } catch (error) {
           console.error("Error checking for duplicate skill:", error);
           // Continue with creation if check fails
         }
+      
       }
+    
 
       // Create tables in parallel for better performance
       const [
@@ -830,11 +834,6 @@ class ResourceSkillService {
       if (resourceSkillById) {
         resourceSkillById.created_by = userNames.created_by_name;
         resourceSkillById.modified_by = userNames.modified_by_name;
-      }
-
-      // Format dates to MM/DD/YYYY with proper parsing
-      if (resourceSkillById?.start_date) {
-        resourceSkillById.dataValues.start_date = moment(resourceSkillById.start_date, "YYYY-MM-DD").format("MM/DD/YYYY") as any;
       }
 
       const resourceInfo = (resourceSkillById as any).Resource;
