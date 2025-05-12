@@ -9,12 +9,15 @@ import { ProjectFiscal } from "../models/projectFiscal";
 import { Op, Sequelize } from "sequelize";
 import { ProjectHistory } from "../models/projectHistory";
 import { initMainDbSequelize } from "../config/mainDataSource";
+import { RedisService } from "./redisService";
 
 export class ProjectService {
   private schemaService: SchemaService;
+  private redisService: RedisService;
 
-  constructor() {
+  constructor(redisService: RedisService) {
     this.schemaService = new SchemaService();
+    this.redisService = redisService;
   }
 
   async createProject(
@@ -71,6 +74,8 @@ export class ProjectService {
         projectData,
         accountNumber
       );
+
+      await this.redisService.deleteUserProjectCache(userId);
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -132,15 +137,15 @@ export class ProjectService {
         throw new Error("Project reference ID must be unique.");
       }
 
-      const startDate = moment(projectData.project_start_date, "MM/DD/YYYY");
-      const endDate = moment(projectData.project_end_date, "MM/DD/YYYY");
+      const startDate = moment(projectData.project_startdate, "MM/DD/YYYY");
+      const endDate = moment(projectData.project_enddate, "MM/DD/YYYY");
 
       const projectCreationData = {
         project_ref_id: projectData.project_ref_id,
         industry: projectData.industry,
         account_rid: projectData.account_id,
         account_fiscal_rid: null,
-        project_name: projectData.program_name || null,
+        project_name: projectData.project_name || null,
         client_organization: projectData.client_organization,
         project_startdate: startDate?.toDate() || null,
         project_enddate: endDate?.toDate() || null,
@@ -149,7 +154,7 @@ export class ProjectService {
         project_client_group: projectData.project_client_group || null,
         project_group: projectData.project_group || null,
         project_summary: projectData.project_summary || null,
-        project_status: projectData.status,
+        project_status: projectData.project_status,
         fiscal_year: projectData.fiscal_year,
         country: projectData.country || null,
         region: projectData.region || null,
@@ -258,8 +263,8 @@ export class ProjectService {
       const schemaName = `platform_v2_${accountNumber}`;
       const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
 
-      const startDate = moment(projectData.project_start_date, "MM/DD/YYYY");
-      const endDate = moment(projectData.project_end_date, "MM/DD/YYYY");
+      const startDate = moment(projectData.project_startdate, "MM/DD/YYYY");
+      const endDate = moment(projectData.project_enddate, "MM/DD/YYYY");
 
       const existingData = await ProjectModel.findOne({
         where: {
@@ -288,9 +293,9 @@ export class ProjectService {
       projectData.modified_by = userId;
 
       const updateProjectData = {
-        project_name: projectData.program_name || null,
+        project_name: projectData.project_name || null,
         project_description: projectData.project_description || null,
-        project_status: (projectData.status as "Active" | "Inactive") || "Active",
+        project_status: (projectData.project_status as "Active" | "Inactive") || "Active",
         project_startdate: startDate?.toDate() || null,
         project_enddate: endDate?.toDate() || null,
         project_ref_id: projectData.project_ref_id,
@@ -360,6 +365,9 @@ export class ProjectService {
           existingData
         );
       }
+
+      await this.redisService.deleteUserProjectCache(userId)
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -534,6 +542,7 @@ export class ProjectService {
           "project_group",
           "project_status",
           "account_rid",
+          "rid"
         ],
       });
 
@@ -564,7 +573,8 @@ export class ProjectService {
     filters: Record<string, any> = {},
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
-    globalFilters: Record<string, string[]> = {} 
+    globalFilters: Record<string, string[]> = {},
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -574,6 +584,33 @@ export class ProjectService {
     try {
       const offset = (page - 1) * limit;
 
+      const keyParams = {
+        fiscalYear,
+        page,
+        limit,
+        search,
+        filters,
+        sortBy,
+        sortOrder,
+        globalFilters,
+        userId,
+      };
+
+      const cacheKey = this.redisService.generateCacheKey(`project_${userId}`, keyParams);
+
+      const cachedData = await this.redisService.get(cacheKey);
+      if(cachedData){
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.SUCCESS_MESSAGE,
+          data: {
+            ...cachedData
+          },
+        };
+      }
+
+      await this.redisService.deleteUserProjectCache(userId);
+
       const [finalSortBy, finalSortOrder] =
         this.getSortParametersForAllProjects(sortBy, sortOrder);
 
@@ -582,19 +619,25 @@ export class ProjectService {
         sortOrder: finalSortOrder,
       };
 
-      const { whereClause } = this.buildWhereClause(filters, search, true);
-
-      const appliedAccountNumber = await this.schemaService.computeGlobalAccountFilter(globalFilters);
+      const appliedAccountNumber = await this.schemaService.computeGlobalAccountFilter(globalFilters, userId);
 
       const { finalResult: allProjectList, totalCount } =
         await this.schemaService.fetchAllProjects(
           offset,
           limit,
           sort,
-          whereClause,
+          filters,
           fiscalYear,
-          appliedAccountNumber
+          appliedAccountNumber,
+          userId,
+          search
         );
+
+      await this.redisService.set(cacheKey, {
+        projects: allProjectList,
+        count: totalCount,
+      }, 420);
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,

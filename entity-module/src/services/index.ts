@@ -5,6 +5,7 @@ import {
   IResourceSkillService,
 } from "./interfaces/interface";
 import { ProjectService } from "./projectService";
+import { RedisService } from "./redisService";
 import ResourceCostService from "./resourceCostService";
 import { ResourceService } from "./resourceServices";
 import ResourceSkillService from "./resourceSkillService";
@@ -23,14 +24,14 @@ class Services implements IServiceContainer {
     resourceService: IResourceService = new ResourceService(),
     resourceCostServices: IResourceCostService = new ResourceCostService(),
     resourceSkillServices: IResourceSkillService = new ResourceSkillService(),
-    projectService: IProjectService = new ProjectService()
+    redisService: RedisService = new RedisService()
   ) {
     try {
       this.resourceCostServices = resourceCostServices;
       this.resourceService = resourceService;
       this.resourceCostServices = resourceCostServices;
       this.resourceSkillServices = resourceSkillServices;
-      this.projectServices = projectService;
+      this.projectServices = new ProjectService(redisService);
     } catch (error) {
       console.log("Error initializing service : ", error);
       throw new Error("Service Initialization failed!");

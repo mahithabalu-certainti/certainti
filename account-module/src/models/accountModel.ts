@@ -23,6 +23,8 @@ interface AccountAttributes {
   annual_revenue: number;
   created_datetime?: Date;
   modified_datetime?: Date;
+  created_by?: string;
+  modified_by?: string;
 }
 
 interface AccountCreationAttributes
@@ -51,6 +53,8 @@ export class Account
   public annual_revenue!: number;
   public created_datetime?: Date;
   public modified_datetime?: Date;
+  public created_by?: string;
+  public modified_by?: string;
 
   static initialize(sequelize: Sequelize) {
     Account.init(
@@ -138,6 +142,14 @@ export class Account
           allowNull: true,
           defaultValue: DataTypes.NOW,
         },
+        created_by: {
+          type: DataTypes.UUID,
+          allowNull: true,
+        },
+        modified_by: {
+          type: DataTypes.UUID,
+          allowNull: true,
+        }
       },
       {
         sequelize,

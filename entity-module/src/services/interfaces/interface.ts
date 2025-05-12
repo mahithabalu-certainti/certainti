@@ -243,6 +243,7 @@ export interface IProjectService {
     sortBy: string,
     sortOrder: string,
     globalFilters: Record<string, string[]>,
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;

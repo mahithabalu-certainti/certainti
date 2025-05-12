@@ -10,8 +10,9 @@ import { ResourcesTimeline } from "../models/resourceTimeline";
 import { ResourceCost } from "../models/resourceCost";
 import { ResourceSkill } from "../models/resourceSkill";
 import { Skill } from "../models/skill";
-
 class SchemaService {
+  constructor() {}
+
   /**
    * Checks if the schema for a given account number exists.
    * @param accountNumber - The account number to check.
@@ -186,7 +187,7 @@ class SchemaService {
           "resource_designation",
           "resource_total_experience",
           "resource_country",
-          "resource_region", 
+          "resource_region",
           "resource_city",
         ],
       });
@@ -291,7 +292,8 @@ class SchemaService {
         resource_city: resourceData.resource_city || null,
         resource_designation: resourceData.resource_designation || null,
         resource_total_experience: resourceData.total_years_experience || 0,
-        resource_total_experience_organization: resourceData.total_years_in_org || 0,
+        resource_total_experience_organization:
+          resourceData.total_years_in_org || 0,
         created_by: resourceData.created_by,
         modified_by: resourceData.modified_by,
         account_rid: resourceData.account_id,
@@ -432,7 +434,7 @@ class SchemaService {
           ? moment(startDate).toDate()
           : null,
         end_date: moment(endDate).isValid() ? moment(startDate).toDate() : null,
-        created_by: resourceData.created_by || '',
+        created_by: resourceData.created_by || "",
       });
     } catch (err) {
       throw new Error(
@@ -548,7 +550,8 @@ class SchemaService {
           : null,
         resource_designation: resourceData.resource_designation || null,
         resource_total_experience: resourceData.total_years_experience || null,
-        resource_total_experience_organization: resourceData.total_years_in_org || null,
+        resource_total_experience_organization:
+          resourceData.total_years_in_org || null,
         modified_by: resourceData.modified_by,
         comments: resourceData.comments || "",
       };
@@ -818,8 +821,10 @@ class SchemaService {
           }
         );
 
-        (resource as any).dataValues.country_code = country?.country_code || null;
-        (resource as any).dataValues.country_name = country?.country_name || null;
+        (resource as any).dataValues.country_code =
+          country?.country_code || null;
+        (resource as any).dataValues.country_name =
+          country?.country_name || null;
         (resource as any).dataValues.region_name = state?.state_name || null;
         (resource as any).dataValues.city_name = city?.city_name || null;
         //Added to format date as MM/DD/YYYY
@@ -886,12 +891,12 @@ class SchemaService {
       const countryIds = [
         ...new Set(resources.map((r: any) => r.resource_country)),
       ].filter(Boolean);
-      const regionIds = [...new Set(resources.map((r: any) => r.resource_region))].filter(
-        Boolean
-      );
-      const cityIds = [...new Set(resources.map((r: any) => r.resource_city))].filter(
-        Boolean
-      );
+      const regionIds = [
+        ...new Set(resources.map((r: any) => r.resource_region)),
+      ].filter(Boolean);
+      const cityIds = [
+        ...new Set(resources.map((r: any) => r.resource_city)),
+      ].filter(Boolean);
 
       let countryRows: any[] = [];
       let states: any[] = [];
@@ -948,7 +953,7 @@ class SchemaService {
         region_name: regionMap[res.resource_region]?.state_name || null,
         city_name: cityMap[res.resource_city]?.city_name || null,
       }));
-      
+
       return updatedResources;
     } catch (err) {
       throw new Error("Error fetching geo data: " + (err as Error).message);
@@ -959,7 +964,7 @@ class SchemaService {
     resources: any[],
     whereClause: Record<string, any> = {},
     order: string[][] = []
-): Promise<any[]> {
+  ): Promise<any[]> {
     const updatedResources = resources
       .filter((res) => {
         if (
@@ -1033,7 +1038,7 @@ class SchemaService {
       });
 
     return updatedResources;
-}
+  }
 
   applyTextFilter(value: string | null | undefined, filter: any): boolean {
     const val = (value || "").toLowerCase();
@@ -1157,64 +1162,207 @@ class SchemaService {
       r_number: string;
       storage_type: string;
       parent_account_rid: string | null;
-    }>
+    }>,
+    userId: string,
+    search: string
   ) {
     try {
       const orgDbSequelize = await initOrgSequelize();
-      const TempTableModel = await this.createTempProjectTable(orgDbSequelize);
-      await TempTableModel.sync({ force: true });
+
+      let schemas: any[] = [];
+      let results: any[] = [];
+      const replacements: any[] = [];
 
       if (accountMeta.length > 0) {
-        for (const acc of accountMeta) {
-          const schema = `platform_v2_${acc.r_number}`;
-          await this.insertIntoTempFromSchema(
-            orgDbSequelize,
-            TempTableModel,
-            schema,
-            fiscalYear,
-            acc.rid,
-            [],
-          );
-        }
-      } else {
-        const schemas: any = await orgDbSequelize.query(
+        schemas = accountMeta.map((acc) => ({
+          table_schema: `platform_v2_${acc.r_number}`,
+          account_rid: acc.rid,
+        }));
+
+        const validSchemasRaw: any[] = await orgDbSequelize.query(
           `
           SELECT DISTINCT table_schema
           FROM information_schema.tables
           WHERE table_name = 'project'
             AND table_type = 'BASE TABLE'
-            AND table_schema LIKE 'platform_v2_%'
+            AND table_schema IN (${schemas
+              .map((_, i) => `:schema${i}`)
+              .join(", ")})
           `,
-          { type: "SELECT" }
+          {
+            replacements: Object.fromEntries(
+              schemas.map((s, i) => [`schema${i}`, s.table_schema])
+            ),
+            type: "SELECT",
+          }
         );
 
-        for (const { table_schema } of schemas) {
-          await this.insertIntoTempFromSchema(
-            orgDbSequelize,
-            TempTableModel,
+        const validSchemas = schemas.map(({ table_schema, account_rid }) => {
+          const match = validSchemasRaw.find((s) => s.table_schema === table_schema);
+          return {
             table_schema,
-            fiscalYear
-          );
+            account_rid: match ? account_rid : "",
+          };
+        });
+
+        if (validSchemas.length === 0) {
+          return {
+            finalResult: [],
+            totalCount: 0,
+          };
         }
+
+        const unionQueries = validSchemas
+          .map(({ table_schema, account_rid }) => {
+            let schemaConditions = [`account_rid = '${account_rid}'`];
+
+            if (fiscalYear && fiscalYear !== 0) {
+              schemaConditions.push(`fiscal_year = ${fiscalYear}`);
+            }
+
+            return `
+              SELECT * FROM "${table_schema}".project
+              ${schemaConditions.length ? `WHERE ${schemaConditions.join(" AND ")}` : ""}
+            `;
+          })
+          .join("\nUNION ALL\n");
+          
+        const { whereSQL: filterWhereSQL, replacements: whereReplacements } =
+        this.buildRawWhereClause(whereClause, search);
+
+        const whereConditions: string[] = [];
+        replacements.push(...whereReplacements);
+
+        if (fiscalYear && fiscalYear !== 0) {
+          whereConditions.push(`fiscal_year = ?`);
+          replacements.push(fiscalYear);
+        }
+
+        let fullWhereClause = filterWhereSQL;
+        if (whereConditions.length > 0) {
+          fullWhereClause += fullWhereClause
+            ? ` AND ${whereConditions.join(" AND ")}`
+            : `WHERE ${whereConditions.join(" AND ")}`;
+        }
+
+        const fullQuery = `
+        WITH all_projects AS (
+          ${unionQueries}
+        )
+        SELECT rid, r_number, project_ref_id, industry, project_name, project_description,
+               project_manager, project_lead, total_effort, total_cost, spoc_name,
+               spoc_email, project_status, project_startdate, project_enddate, created_datetime,
+               created_by, fiscal_year, account_rid
+        FROM all_projects
+        ${fullWhereClause}
+        ORDER BY ${sort.sortCol} ${sort.sortOrder}
+        LIMIT ? OFFSET ?;
+      `;
+
+        replacements.push(limit, offset);
+
+        results = await orgDbSequelize.query(fullQuery, {
+          replacements,
+          type: "SELECT",
+        });
+      } else {
+        const accountByUserId = await this.fetchSchemaByUserId(userId);
+
+        if (accountByUserId && accountByUserId.length === 0) {
+          return {
+            finalResult: [],
+            totalCount: 0,
+          };
+        }
+
+        schemas = accountByUserId.map((acc) => ({
+          table_schema: `platform_v2_${acc.r_number}`,
+        }));
+
+        if (schemas.length === 0) {
+          return {
+            finalResult: [],
+            totalCount: 0,
+          };
+        }
+
+        const validSchemas: any[] = await orgDbSequelize.query(
+          `
+          SELECT DISTINCT table_schema
+          FROM information_schema.tables
+          WHERE table_name = 'project'
+            AND table_type = 'BASE TABLE'
+            AND table_schema IN (${schemas
+              .map((_, i) => `:schema${i}`)
+              .join(", ")})
+          `,
+          {
+            replacements: Object.fromEntries(
+              schemas.map((s, i) => [`schema${i}`, s.table_schema])
+            ),
+            type: "SELECT",
+          }
+        );
+
+        const { whereSQL: filterWhereSQL, replacements: whereReplacements } =
+          this.buildRawWhereClause(whereClause, search);
+
+        const unionQueries = validSchemas
+          .map(({ table_schema }) => {
+            let schemaConditions = [];
+
+            if (fiscalYear && fiscalYear !== 0) {
+              schemaConditions.push(`fiscal_year = ${fiscalYear}`);
+            }
+
+            return `
+              SELECT * FROM "${table_schema}".project
+              ${schemaConditions.length ? `WHERE ${schemaConditions.join(" AND ")}` : ""}
+            `
+          })
+          .join("\nUNION ALL\n");
+
+
+        const whereConditions = [];
+        const replacements = [...whereReplacements];
+
+        if (fiscalYear && fiscalYear !== 0) {
+          whereConditions.push(`fiscal_year = ?`);
+          replacements.push(fiscalYear);
+        }
+
+        let fullWhereClause = filterWhereSQL;
+        if (whereConditions.length > 0) {
+          fullWhereClause += fullWhereClause
+            ? ` AND ${whereConditions.join(" AND ")}`
+            : `WHERE ${whereConditions.join(" AND ")}`;
+        }
+
+        const fullQuery = `
+            WITH all_projects AS (
+              ${unionQueries}
+            )
+            SELECT rid, r_number, project_ref_id, industry, project_name, project_description,
+            project_manager, project_lead, total_effort, total_cost, spoc_name,
+            spoc_email, project_status, project_startdate, project_enddate, created_datetime,
+            created_by, fiscal_year, account_rid
+            FROM all_projects
+            ${fullWhereClause}
+            ORDER BY ${sort.sortCol} ${sort.sortOrder}
+            LIMIT ? OFFSET ?;
+          `;
+
+        replacements.push(limit, offset);
+
+        results = await orgDbSequelize.query(fullQuery, {
+          replacements,
+          type: "SELECT",
+        });
       }
 
-      const { rows: finalResult, count } = await TempTableModel.findAndCountAll(
-        {
-          where: {
-            ...whereClause,
-            ...(fiscalYear && fiscalYear !== 0
-              ? { fiscal_year: fiscalYear }
-              : {}),
-          },
-          order: [[sort.sortCol, sort.sortOrder.toUpperCase()]],
-          offset,
-          limit,
-        }
-      );
-
       return {
-        finalResult,
-        totalCount: count,
+        finalResult: results,
+        totalCount: results.length,
       };
     } catch (err) {
       throw new Error("Error fetching Accounts: " + (err as Error).message);
@@ -1258,7 +1406,10 @@ class SchemaService {
     }
   }
 
-  async computeGlobalAccountFilter(globalFilters: Record<string, string[]>) {
+  async computeGlobalAccountFilter(
+    globalFilters: Record<string, string[]>,
+    userId: string
+  ) {
     try {
       const mainDbSequelize = await initMainDbSequelize();
       const accountIds = new Set<string>();
@@ -1278,11 +1429,13 @@ class SchemaService {
         accountIdArray.map((id, i) => [`id${i}`, id])
       );
 
+      replacements["userId"] = userId;
+
       const accounts = await mainDbSequelize.query(
         `
         SELECT rid, r_number, storage_type, parent_account_rid
         FROM account
-        WHERE rid IN (${placeholders})
+        WHERE rid IN (${placeholders}) AND created_by = :userId
         `,
         {
           replacements,
@@ -1364,7 +1517,7 @@ class SchemaService {
       replacements.fiscalYear = fiscalYear;
     }
 
-    if(accountId){
+    if (accountId) {
       conditions.push(`account_rid = :fiscalYear`);
       replacements.fiscalYear = accountId;
     }
@@ -1410,6 +1563,108 @@ class SchemaService {
     } catch (err) {
       throw new Error("Error checking schema :" + (err as Error).message);
     }
+  }
+
+  async fetchSchemaByUserId(userId: string) {
+    try {
+      const mainDbInstance = await initMainDbSequelize();
+
+      let account: any[] = await mainDbInstance.query(
+        `SELECT rid, r_number, storage_type, parent_account_rid FROM account WHERE created_by = :created_by`,
+        {
+          replacements: { created_by: userId },
+          type: "SELECT",
+        }
+      );
+
+      if (account && account.length > 0) {
+        account.forEach((acc) => {
+          if (acc.storage_type === "store_in_parent") {
+            const findParentAccId = account.filter(
+              (val) => val.rid === acc.parent_account_rid
+            );
+            if (findParentAccId && findParentAccId.length > 0) {
+              acc.r_number = findParentAccId[0].r_number;
+            }
+          }
+        });
+      }
+
+      return account;
+    } catch (err) {
+      throw new Error("Error fecthing schema" + (err as Error).message);
+    }
+  }
+
+  buildRawWhereClause(where: Record<string, any>, search: string) {
+    const conditions: string[] = [];
+    const replacements: any[] = [];
+
+    for (const [field, condition] of Object.entries(where)) {
+      if (typeof condition === "object" && condition !== null) {
+        if ("equals" in condition) {
+          conditions.push(`${field} = ?`);
+          replacements.push(condition.equals);
+        } else if ("contains" in condition) {
+          conditions.push(`${field} ILIKE ?`);
+          replacements.push(`%${condition.contains}%`);
+        } else if ("not_contains" in condition) {
+          conditions.push(`${field} NOT ILIKE ?`);
+          replacements.push(`%${condition.not_contains}%`);
+        } else if ("greater_than" in condition) {
+          conditions.push(`${field} > ?`);
+          replacements.push(condition.greater_than);
+        } else if ("lesser_than" in condition) {
+          conditions.push(`${field} < ?`);
+          replacements.push(condition.lesser_than);
+        } else if (
+          "between" in condition &&
+          Array.isArray(condition.between) &&
+          condition.between.length === 2
+        ) {
+          conditions.push(`${field} BETWEEN ? AND ?`);
+          replacements.push(condition.between[0], condition.between[1]);
+        } else {
+          console.warn(`Unsupported filter on field "${field}"`);
+        }
+      } else {
+        conditions.push(`${field} = ?`);
+        replacements.push(condition);
+      }
+    }
+
+    if (search) {
+      const numericSearch = !isNaN(parseInt(search));
+      const baseSearchFields = ["industry", "r_number"];
+      const allProjectFields = [
+        "project_ref_id",
+        "project_name",
+        "project_description",
+        "project_manager",
+        "project_lead",
+        "spoc_name",
+        "spoc_email",
+        // "project_status",
+      ];
+
+      const searchFields = [...baseSearchFields, ...allProjectFields];
+
+      const searchConditions: string[] = searchFields.map(
+        (field) => `${field} ILIKE ?`
+      );
+      replacements.push(...searchFields.map(() => `%${search}%`));
+
+      if (numericSearch) {
+        searchConditions.push("total_cost = ?", "total_effort = ?");
+        replacements.push(parseInt(search), parseInt(search));
+      }
+
+      conditions.push(`(${searchConditions.join(" OR ")})`);
+    }
+
+    const whereSQL =
+      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    return { whereSQL, replacements };
   }
 }
 

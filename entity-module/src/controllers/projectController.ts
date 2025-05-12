@@ -223,6 +223,18 @@ async function allProjectList(req: Request, res: Response): Promise<void> {
   try {
     const value = await validateRequest(req, listResourceSchema, res, "GET");
 
+    const userId = req.headers["x-user-id"] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
     let parsedFilters: Record<string, any> = {};
     let parsedGlobalFilters: Record<string, string[]> = {}
 
@@ -257,7 +269,8 @@ async function allProjectList(req: Request, res: Response): Promise<void> {
       parsedFilters,
       value.sortBy,
       value.sortOrder,
-      parsedGlobalFilters
+      parsedGlobalFilters,
+      userId
     );
 
     if (project.statusCode === HttpStatus.SUCCESS) {

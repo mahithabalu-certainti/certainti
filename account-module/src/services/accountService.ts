@@ -481,6 +481,8 @@ class AccountService {
         primary_contact_name,
         status,
         annual_revenue,
+        created_by: userId,
+        modified_by: userId
       });
 
       if (parent_account && data_storage === "store_in_parent") {
@@ -552,6 +554,7 @@ class AccountService {
           industry_name: industry_name,
           primary_contact_name,
           annual_revenue,
+          modified_by: userId
         },
         {
           where: {
