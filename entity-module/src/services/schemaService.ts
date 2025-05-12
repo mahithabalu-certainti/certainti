@@ -1,7 +1,11 @@
 import moment, { Moment } from "moment";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Resources } from "../models/resource";
-import { ICreateResource, IKeyContactDetail, IUpdateResource } from "../utils/types";
+import {
+  ICreateResource,
+  IKeyContactDetail,
+  IUpdateResource,
+} from "../utils/types";
 import { DataTypes, Op, Sequelize } from "sequelize";
 import { ResourceFiscal } from "../models/resourceFiscal";
 import { initMainDbSequelize } from "../config/mainDataSource";
@@ -194,10 +198,7 @@ class SchemaService {
       if (resources) {
         // Process geo data for all records
         finalResources = await this.insertGeoData(resources, mainDdSequilze);
-        finalResources = await this.sortGeoData(
-          finalResources,
-          geoDataSort
-        );
+        finalResources = await this.sortGeoData(finalResources, geoDataSort);
 
         // Apply pagination after geo processing
         const totalCount = finalResources.length;
@@ -385,10 +386,7 @@ class SchemaService {
 
       if (resources) {
         finalResources = await this.insertGeoData(resources, mainDdSequilze);
-        finalResources = await this.sortGeoData(
-          finalResources,
-          geoDataSort
-        );
+        finalResources = await this.sortGeoData(finalResources, geoDataSort);
       }
 
       return { resources: finalResources, totalCount };
@@ -887,12 +885,12 @@ class SchemaService {
       const countryIds = [
         ...new Set(resources.map((r: any) => r.resource_country)),
       ].filter(Boolean);
-      const regionIds = [...new Set(resources.map((r: any) => r.resource_region))].filter(
-        Boolean
-      );
-      const cityIds = [...new Set(resources.map((r: any) => r.resource_city))].filter(
-        Boolean
-      );
+      const regionIds = [
+        ...new Set(resources.map((r: any) => r.resource_region)),
+      ].filter(Boolean);
+      const cityIds = [
+        ...new Set(resources.map((r: any) => r.resource_city)),
+      ].filter(Boolean);
 
       let countryRows: any[] = [];
       let states: any[] = [];
@@ -949,34 +947,30 @@ class SchemaService {
         region_name: regionMap[res.resource_region]?.state_name || null,
         city_name: cityMap[res.resource_city]?.city_name || null,
       }));
-      
+
       return updatedResources;
     } catch (err) {
       throw new Error("Error fetching geo data: " + (err as Error).message);
     }
   }
 
-  async sortGeoData(
-    resources: any[],
-    order: string[][] = []
-): Promise<any[]> {
-
+  async sortGeoData(resources: any[], order: string[][] = []): Promise<any[]> {
     // Apply sorting if specified
     if (order && order.length > 0) {
       const [sortField, sortDirection] = order[0];
-      const isAsc = sortDirection.toUpperCase() === 'ASC';
+      const isAsc = sortDirection.toUpperCase() === "ASC";
 
       resources = resources.sort((a, b) => {
         let compareValueA, compareValueB;
 
         switch (sortField) {
-          case 'resource_country':
-            compareValueA = a.country_name || '';
-            compareValueB = b.country_name || '';
+          case "resource_country":
+            compareValueA = a.country_name || "";
+            compareValueB = b.country_name || "";
             break;
-          case 'resource_region':
-            compareValueA = a.region_name || '';
-            compareValueB = b.region_name || '';
+          case "resource_region":
+            compareValueA = a.region_name || "";
+            compareValueB = b.region_name || "";
             break;
           default:
             return 0;
@@ -991,7 +985,7 @@ class SchemaService {
     }
 
     return resources;
-}
+  }
 
   applyTextFilter(value: string | null | undefined, filter: any): boolean {
     const val = (value || "").toLowerCase();
@@ -1026,7 +1020,11 @@ class SchemaService {
     return true;
   }
 
-  async insertProjectGeoData(project: any, mainDdSequilze: Sequelize,keyContacts:any) {
+  async insertProjectGeoData(
+    project: any,
+    mainDdSequilze: Sequelize,
+    keyContacts: any
+  ) {
     try {
       const countryId = project.country;
       const regionId = project.region;
@@ -1074,7 +1072,7 @@ class SchemaService {
 
       project.dataValues = {
         ...project.dataValues,
-        key_contacts:keyContacts,
+        key_contacts: keyContacts,
         country_name: countryRow?.country_name || null,
         state_name: regionRow?.region_name || null,
         city_name: currencyRow?.currency_name || null,
@@ -1118,10 +1116,12 @@ class SchemaService {
       parent_account_rid: string | null;
     }>,
     userId: string,
-    search: string
+    search: string,
+    accountDataSort: string[][]
   ) {
     try {
       const orgDbSequelize = await initOrgSequelize();
+      const mainDbSequelize = await initMainDbSequelize();
 
       let schemas: any[] = [];
       let results: any[] = [];
@@ -1152,7 +1152,9 @@ class SchemaService {
         );
 
         const validSchemas = schemas.map(({ table_schema, account_rid }) => {
-          const match = validSchemasRaw.find((s) => s.table_schema === table_schema);
+          const match = validSchemasRaw.find(
+            (s) => s.table_schema === table_schema
+          );
           return {
             table_schema,
             account_rid: match ? account_rid : "",
@@ -1176,13 +1178,17 @@ class SchemaService {
 
             return `
               SELECT * FROM "${table_schema}".project
-              ${schemaConditions.length ? `WHERE ${schemaConditions.join(" AND ")}` : ""}
+              ${
+                schemaConditions.length
+                  ? `WHERE ${schemaConditions.join(" AND ")}`
+                  : ""
+              }
             `;
           })
           .join("\nUNION ALL\n");
-          
+
         const { whereSQL: filterWhereSQL, replacements: whereReplacements } =
-        this.buildRawWhereClause(whereClause, search);
+          this.buildRawWhereClause(whereClause, search);
 
         const whereConditions: string[] = [];
         replacements.push(...whereReplacements);
@@ -1203,7 +1209,7 @@ class SchemaService {
         WITH all_projects AS (
           ${unionQueries}
         )
-        SELECT rid, r_number, project_ref_id, industry, project_name, project_description,
+        SELECT rid, r_number, project_ref_id, industry_rid, project_name, project_description,
                project_manager, project_lead, total_effort, total_cost, spoc_name,
                spoc_email, project_status, project_startdate, project_enddate, created_datetime,
                created_by, fiscal_year, account_rid
@@ -1271,11 +1277,14 @@ class SchemaService {
 
             return `
               SELECT * FROM "${table_schema}".project
-              ${schemaConditions.length ? `WHERE ${schemaConditions.join(" AND ")}` : ""}
-            `
+              ${
+                schemaConditions.length
+                  ? `WHERE ${schemaConditions.join(" AND ")}`
+                  : ""
+              }
+            `;
           })
           .join("\nUNION ALL\n");
-
 
         const whereConditions = [];
         const replacements = [...whereReplacements];
@@ -1296,7 +1305,7 @@ class SchemaService {
             WITH all_projects AS (
               ${unionQueries}
             )
-            SELECT rid, r_number, project_ref_id, industry, project_name, project_description,
+            SELECT rid, r_number, project_ref_id, industry_rid, project_name, project_description,
             project_manager, project_lead, total_effort, total_cost, spoc_name,
             spoc_email, project_status, project_startdate, project_enddate, created_datetime,
             created_by, fiscal_year, account_rid
@@ -1312,6 +1321,42 @@ class SchemaService {
           replacements,
           type: "SELECT",
         });
+      }
+
+      if (results.length > 0) {
+        const accountIds = results.map((val) => val.account_rid);
+        const placeholders = accountIds.map(() => "?").join(", ");
+
+        const accounts = await mainDbSequelize.query(
+          `SELECT rid, r_number, account_name FROM account WHERE rid IN (${placeholders})`,
+          {
+            replacements: accountIds,
+            type: "SELECT",
+          }
+        );
+
+        const accountMap = new Map(
+          accounts.map((acc: any) => [
+            acc.rid,
+            { r_number: acc.r_number, account_name: acc.account_name },
+          ])
+        );
+
+        results = results.map((res: any) => {
+          const accountInfo = accountMap.get(res.account_rid);
+          return {
+            ...res,
+            account_number: accountInfo?.r_number || null,
+            account_name: accountInfo?.account_name || null,
+          };
+        });
+
+        if(accountDataSort.length > 0){
+          results = this.sortProjectByAccount(results, whereClause, {
+            sortCol: accountDataSort[0][0] || "",
+            sortOrder: accountDataSort[0][1] || "",
+          });
+        }
       }
 
       return {
@@ -1422,128 +1467,59 @@ class SchemaService {
     }
   }
 
-  private async insertIntoTempFromSchema(
-    sequelizeInstance: any,
-    TempTableModel: any,
-    schema: string,
-    fiscalYear: number,
-    accountId?: string,
-    filterAccountRids?: string[]
-  ) {
-    const [{ exists }] = await sequelizeInstance.query(
-      `
-      SELECT EXISTS (
-        SELECT 1
-        FROM information_schema.tables 
-        WHERE table_schema = :schema 
-        AND table_name = 'project'
-      ) as exists
-      `,
-      {
-        replacements: { schema },
-        type: "SELECT",
-      }
-    );
-
-    if (!exists) {
-      return;
-    }
-
-    let baseQuery = `
-      INSERT INTO temp_project_data (
-        rid, r_number, project_ref_id, industry_rid,industry_name, project_name, project_description,
-        project_manager, project_lead, total_effort, total_cost, spoc_name,
-        spoc_email, project_status, project_startdate, project_enddate, created_datetime,
-        created_by, fiscal_year, account_rid, source_schema
-      )
-      SELECT 
-        rid, r_number, project_ref_id, industry_rid,industry_name project_name, project_description,
-        project_manager, project_lead, total_effort, total_cost, spoc_name,
-        spoc_email, project_status, project_startdate, project_enddate, created_datetime,
-        created_by, fiscal_year, account_rid, :schemaName
-      FROM "${schema}"."project"
-    `;
-
-    const conditions: string[] = [];
-    const replacements: Record<string, any> = { schemaName: schema };
-
-    if (fiscalYear !== 0) {
-      conditions.push(`fiscal_year = :fiscalYear`);
-      replacements.fiscalYear = fiscalYear;
-    }
-
-    if (accountId) {
-      conditions.push(`account_rid = :fiscalYear`);
-      replacements.fiscalYear = accountId;
-    }
-
-    if (filterAccountRids && filterAccountRids.length > 0) {
-      const placeholders = filterAccountRids.map((_, i) => `:acc${i}`);
-      conditions.push(`account_rid IN (${placeholders.join(", ")})`);
-      filterAccountRids.forEach((id, i) => {
-        replacements[`acc${i}`] = id;
-      });
-    }
-
-    if (conditions.length > 0) {
-      baseQuery += ` WHERE ${conditions.join(" AND ")}`;
-    }
-
-    await sequelizeInstance.query(baseQuery, {
-      replacements,
-    });
-  }
-
   async manageKeyContacts(
     key_contacts: IKeyContactDetail,
     account_rid: string,
     projectId: string,
     userId: string
   ) {
-    
-  try {
-    for (const contact of Object.values(key_contacts)) {
-      console.log("action",contact.action_type)
-      if(contact.action_type === 'edit')
-      {
-        if (contact.key_contact_name || contact.key_contact_email || contact.key_contact_role_rid) {
-          this.updateKeyContactDetails(
-            contact,
-            account_rid,
-            projectId,
-            userId
-          )
+    try {
+      for (const contact of Object.values(key_contacts)) {
+        if (contact.action_type === "edit") {
+          if (
+            contact.key_contact_name ||
+            contact.key_contact_email ||
+            contact.key_contact_role_rid
+          ) {
+            this.updateKeyContactDetails(
+              contact,
+              account_rid,
+              projectId,
+              userId
+            );
+          }
+        } else if (contact.action_type === "delete") {
+          {
+            this.deleteKeyContactDetails(
+              account_rid,
+              projectId,
+              contact.key_contact_id
+            );
+          }
+        } else if (contact.action_type === "add") {
+          if (
+            contact.key_contact_name ||
+            contact.key_contact_email ||
+            contact.key_contact_role_rid
+          ) {
+            this.insertKeyContactDetails(
+              contact,
+              account_rid,
+              projectId,
+              userId
+            );
+          }
         }
       }
-      else if(contact.action_type === 'delete')
-      {
-        {
-          this.deleteKeyContactDetails(
-            account_rid,
-            projectId,
-            contact.key_contact_id
-          )
-        }
-      }
-      else if(contact.action_type === 'add')
-      {
-        if (contact.key_contact_name || contact.key_contact_email || contact.key_contact_role_rid) {
-        this.insertKeyContactDetails(
-          contact,
-          account_rid,
-          projectId,
-          userId
-        )
-      }
-      }
+    } catch (Error) {
+      console.log(Error);
     }
   }
-    catch(Error)
-    {
-      console.log(Error)
-    }
-  }
-  async deleteKeyContactDetails(account_rid: string,key_contact_id: string,project_rid:string){
+  async deleteKeyContactDetails(
+    account_rid: string,
+    key_contact_id: string,
+    project_rid: string
+  ) {
     const sequelize = await initOrgSequelize();
     await sequelize.query(
       `DELETE FROM "public"."key_contact_details" 
@@ -1552,23 +1528,22 @@ class SchemaService {
         replacements: {
           key_contact_id,
           account_rid,
-          project_rid
-        }
+          project_rid,
+        },
       }
     );
   }
   async updateKeyContactDetails(
     key_contact: IKeyContactDetail,
     account_rid: string,
-    project_rid:string,
-    userId: string,
-) {
-  const keyContactDetails = key_contact;
-      const sequelize = await initOrgSequelize();
-      try {
-
-        await sequelize.query(
-          `
+    project_rid: string,
+    userId: string
+  ) {
+    const keyContactDetails = key_contact;
+    const sequelize = await initOrgSequelize();
+    try {
+      await sequelize.query(
+        `
             UPDATE "public"."key_contact_details"
             SET 
               key_contact_name = :key_contact_name,
@@ -1583,52 +1558,55 @@ class SchemaService {
             AND project_rid = :project_rid
             AND contact_type = 'Project'
           `,
-          {
-            replacements: {
-              key_contact_id: keyContactDetails.key_contact_id,
-              account_rid: account_rid,
-              project_rid:project_rid,
-              key_contact_name: keyContactDetails.key_contact_name,
-              key_contact_email: keyContactDetails.key_contact_email,
-              key_contact_role_rid: keyContactDetails.key_contact_role_rid,
-              status: keyContactDetails.status,
-              is_primary_contact: keyContactDetails.is_primary_contact,
-              include_in_communication: keyContactDetails.include_in_communication,
-              modified_by: userId
-            },
-          }
-        );
-      } catch (error) {
-        console.error("Error updating key contact details:", error);
-        throw error;
-      }
+        {
+          replacements: {
+            key_contact_id: keyContactDetails.key_contact_id,
+            account_rid: account_rid,
+            project_rid: project_rid,
+            key_contact_name: keyContactDetails.key_contact_name,
+            key_contact_email: keyContactDetails.key_contact_email,
+            key_contact_role_rid: keyContactDetails.key_contact_role_rid,
+            status: keyContactDetails.status,
+            is_primary_contact: keyContactDetails.is_primary_contact,
+            include_in_communication:
+              keyContactDetails.include_in_communication,
+            modified_by: userId,
+          },
+        }
+      );
+    } catch (error) {
+      console.error("Error updating key contact details:", error);
+      throw error;
+    }
   }
-  
+
   async insertKeyContactDetails(
     keyContacts: IKeyContactDetail,
     account_rid: string,
     project_rid: string,
-    userId: string,
+    userId: string
   ) {
     const keyContactDetails = keyContacts;
     const sequelize = await initOrgSequelize();
     try {
-      const result = await sequelize.query(
+      const result = (await sequelize.query(
         `SELECT key_contact_id FROM "public"."key_contact_details" 
          ORDER BY key_contact_id DESC LIMIT 1;`,
         {
           type: "SELECT",
           plain: true,
         }
-      ) as { key_contact_id: string };
-  
-      const keyContactId = result?.key_contact_id ?? '';
-      let lastKeyId = keyContactId.startsWith('KEY') ? parseInt(keyContactId.replace("KEY", "")) : 0;
-      
+      )) as { key_contact_id: string };
+
+      const keyContactId = result?.key_contact_id ?? "";
+      let lastKeyId = keyContactId.startsWith("KEY")
+        ? parseInt(keyContactId.replace("KEY", ""))
+        : 0;
+
       // Since keyContactDetails is a single object, not an array
       lastKeyId++;
-      const key_contact_id = `KEY${String(lastKeyId).padStart(3, '0')}`;
-      
+      const key_contact_id = `KEY${String(lastKeyId).padStart(3, "0")}`;
+
       await sequelize.query(
         `INSERT INTO "public"."key_contact_details" (
           key_contact_id, account_rid, key_contact_name, project_rid,
@@ -1651,10 +1629,11 @@ class SchemaService {
             key_contact_role_rid: keyContactDetails.key_contact_role_rid,
             status: keyContactDetails.status,
             is_primary_contact: keyContactDetails.is_primary_contact,
-            include_in_communication: keyContactDetails.include_in_communication,
+            include_in_communication:
+              keyContactDetails.include_in_communication,
             created_by: userId,
-            modified_by: userId
-          }
+            modified_by: userId,
+          },
         }
       );
     } catch (error) {
@@ -1663,14 +1642,14 @@ class SchemaService {
     }
   }
 
-  async fetchKeyContacts(account_rid: string,project_rid:string) {
+  async fetchKeyContacts(account_rid: string, project_rid: string) {
     const sequelize = await initOrgSequelize();
     return await sequelize.query(
       `SELECT * FROM "public"."key_contact_details" WHERE account_rid = :account_rid
       and project_rid = :project_rid and contact_type = 'Project'`,
       {
         type: "SELECT",
-        replacements: { account_rid,project_rid },
+        replacements: { account_rid, project_rid },
       }
     );
   }
@@ -1770,7 +1749,7 @@ class SchemaService {
 
     if (search) {
       const numericSearch = !isNaN(parseInt(search));
-      const baseSearchFields = ["industry", "r_number"];
+      const baseSearchFields = ["industry_rid", "r_number"];
       const allProjectFields = [
         "project_ref_id",
         "project_name",
@@ -1802,6 +1781,48 @@ class SchemaService {
     return { whereSQL, replacements };
   }
 
+  private sortProjectByAccount(
+    results: any[],
+    whereClause: Record<string, any>,
+    sort: { sortCol: string; sortOrder: string }
+  ): any[] {
+    const updatedResources = results
+      .filter((res) => {
+        if (
+          whereClause.account_name &&
+          !this.applyTextFilter(res.account_name, whereClause.account_name)
+        ) {
+          return false;
+        }
+
+        if (
+          whereClause.account_number &&
+          !this.applyTextFilter(res.account_number, whereClause.account_number)
+        ) {
+          return false;
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        const field = sort.sortCol;
+        const direction = sort.sortOrder;
+        const dir = direction === "ASC" ? 1 : -1;
+
+        if (field === "account_name") {
+          return (
+            (a.account_name || "").localeCompare(b.account_name || "") * dir
+          );
+        }
+        if (field === "account_number") {
+          return (a.account_number || "").localeCompare(b.account_number || "") * dir;
+        }
+
+        return 0;
+      });
+
+    return updatedResources;
+  }
 }
 
 export default SchemaService;

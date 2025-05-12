@@ -362,7 +362,7 @@ export class ProjectService {
           userId
         );
         await this.updateProjectFiscal(
-          updateProject,
+          updateProjectData,
           orgDbSequlize,
           schemaName,
           projectData.project_id
@@ -637,6 +637,11 @@ export class ProjectService {
       const [finalSortBy, finalSortOrder] =
         this.getSortParametersForAllProjects(sortBy, sortOrder);
 
+      const { accountDataSort } = this.processAccountDataSort(
+        sortBy,
+        sortOrder
+      );
+
       const sort = {
         sortCol: finalSortBy,
         sortOrder: finalSortOrder,
@@ -653,7 +658,8 @@ export class ProjectService {
           fiscalYear,
           appliedAccountNumber,
           userId,
-          search
+          search,
+          accountDataSort
         );
 
       await this.redisService.set(cacheKey, {
@@ -720,7 +726,7 @@ export class ProjectService {
 
       const projectFiscalData = {
         project_rid: projectRid,
-        project_name: projectData.program_name || "",
+        project_name: projectData.project_name || "",
         eid: projectData.eid || null,
         fiscal_year: projectData.fiscal_year,
         account_rid: projectData.account_rid,
@@ -729,9 +735,9 @@ export class ProjectService {
         expiry_duration: null,
 
         autosend_interaction: projectData.auto_send_ai_interaction ?? false,
-        project_status: projectData.status as "Active" | "Inactive",
-        project_startdate: projectData.project_start_date || null,
-        project_enddate: projectData.project_end_date || null,
+        project_status: projectData.project_status as "Active" | "Inactive",
+        project_startdate: projectData.project_startdate || null,
+        project_enddate: projectData.project_enddate || null,
 
         total_fte_prj: projectData.total_fte || 0,
         total_subcon_prj: projectData.total_sub_con || 0,
@@ -781,8 +787,8 @@ export class ProjectService {
         fiscal_year: projectData.fiscal_year,
         max_ai_interaction: projectData.max_ai_interaction || 0,
         auto_send_ai_interaction: projectData.auto_send_ai_interaction ?? false,
-        project_startdate: projectData.project_start_date || null,
-        project_enddate: projectData.project_end_date || null,
+        project_startdate: projectData.project_startdate || null,
+        project_enddate: projectData.project_enddate || null,
 
         total_fte: projectData.total_fte || 0,
         total_sub_con: projectData.total_sub_con || 0,
@@ -793,7 +799,7 @@ export class ProjectService {
         interaction_cc_list: projectData.project_cc_list || null,
         modified_by: projectData.modified_by,
         modified_datetime: new Date(),
-        project_status: projectData.status as "Active" | "Inactive",
+        project_status: projectData.project_status as "Active" | "Inactive",
 
         total_fte_prj: projectData.total_fte || 0,
         total_subcon_prj: projectData.total_sub_con || 0,
@@ -810,7 +816,7 @@ export class ProjectService {
 
       await ProjectFiscalModel.update(updateData, {
         where: {
-          rid: projectRid,
+          project_rid: projectRid,
         },
       });
     } catch (err) {
@@ -1062,7 +1068,7 @@ export class ProjectService {
     const validSortColumns = [
       "r_number",
       "project_ref_id",
-      "industry",
+      "industry_rid",
       "project_startdate",
       "project_enddate",
       "project_name",
@@ -1083,6 +1089,25 @@ export class ProjectService {
 
     sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
     return [sortBy, sortOrder];
+  }
+
+  processAccountDataSort(
+    sortBy: string, 
+    sortOrder: string
+  ) {
+      const accountDataSort: string[][] = [];
+      const accountFields = ["account_number", "account_name"];
+
+      if (accountFields.includes(sortBy)) {
+        accountDataSort.push([
+              sortBy,
+              sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC"
+          ]);
+      }
+
+      return {
+        accountDataSort,
+      };
   }
 
   private normalizeDate(input: string): string | null {
