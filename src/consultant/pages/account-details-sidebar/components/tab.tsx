@@ -1,17 +1,19 @@
 import { Box, Menu, MenuItem, Tab, Tabs } from '@mui/material';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { resourceFilterIcon } from '../../../../assets';
 import { Image } from '../../../../components';
 import ActionImportDropdown from '../sidebar-pages/imports/importdropdown';
 import {
   getCostFilterFields,
+  getSkillFilterFields,
   resourceFilterFields,
-  skillFilterFields,
 } from '../sidebar-pages/resources/utils';
 import Filter from './filter/filter';
 import { FilterState } from './filter/filterType';
 import { useFetchCurrency } from '../../../services/account';
 import { resetFilter } from './filter/utils';
+import { useFetchResourceSkillSubType, useFetchResourceSkillType } from '../../../services/resource-skill/resource-skill-service';
+import { SkillSubtype, SkillType } from '../../../types/resource';
 interface TabProps {
   filterVisibility: boolean;
   handleFilter: () => void;
@@ -39,6 +41,12 @@ const TabPanel: React.FC<TabProps> = ({
 }) => {
   const [tabValue, setTabValue] = useState(0);
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
+  const [currentSkillType, setCurrentSkillType] = useState({
+    skill_type_rid: '',
+    skill_subtype_rid: '',
+  });
+
+  const [skillSubTypeData, setSkillSubTypeData] = useState<{ option: string; value: string }[]>([]);
   const [, setSelectedSort] = useState('Accounts');
  
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
@@ -48,11 +56,39 @@ const TabPanel: React.FC<TabProps> = ({
       setAppliedFilters,
       setFilterStates,
       setSelectedFilters,
-     
     });
   };
   const currency = useFetchCurrency();
+  const { data: skillType } = useFetchResourceSkillType();
+  const { data: skillSubType } = useFetchResourceSkillSubType(currentSkillType.skill_type_rid || null as string | null);
 
+  const memoizedSkillType: { option: string; value: string }[] = useMemo(() => {
+    const data = skillType as SkillType[];
+    return (
+      data?.map((skill: SkillType) => ({
+        option: skill.skill_type_name,
+        value: skill.rid,
+      })) || []
+    );
+  }, [skillType]);
+
+  useEffect(()=>{
+      const data = skillSubType as SkillSubtype[];
+      const finalData = data?.map((skill: SkillSubtype) => ({
+        option: skill.skill_subtype_name,
+        value: skill.rid,
+      })) || []
+      setSkillSubTypeData(finalData)
+  },[skillSubType])
+
+  useEffect(()=>{
+    if(filterStates?.skill_type_rid?.enum?.value){
+      setCurrentSkillType({
+        skill_type_rid: filterStates?.skill_type_rid?.enum?.value as unknown as string,
+        skill_subtype_rid: filterStates?.skill_sub_type?.enum?.value as unknown as string
+      })
+    }
+  },[filterStates])
   const handleSortClose = () => {
     setSortAnchorEl(null);
   };
@@ -102,7 +138,7 @@ const TabPanel: React.FC<TabProps> = ({
 
   const getFilterFields = () => {
     if (!value) return resourceFilterFields;
-    return value === 'cost' ? getCostFilterFields(memoizedCurrency) : skillFilterFields;
+    return value === 'cost' ? getCostFilterFields(memoizedCurrency) : getSkillFilterFields(memoizedSkillType, skillSubTypeData);
   };
 
   return (

@@ -18,6 +18,8 @@ import {
   fetchResourceSkillByIdUrl,
   skillListURL,
 } from '../urls/resource-cost-skill-urls';
+import { SkillSubTypeUrl, SKILLTYPEURL } from '../urls';
+import { SKillSubTypeApiResponse, SkillTypeApiResponse } from '../../types/resource';
 
 export const useResourceSkill = (
   params: ResourceSkillListParams,
@@ -125,4 +127,39 @@ export const useUpdateResourceSkill = (
     },
     ...options,
   });
+};
+
+export const fetchSkillType = async (): Promise<SkillTypeApiResponse> => {
+  const { data } = await api.get<SkillTypeApiResponse>(SKILLTYPEURL);
+  return data;
+};
+
+export const useFetchResourceSkillType = (): UseQueryResult => {
+  return useQuery({
+    queryKey: ['resource-skill-Type'],
+    queryFn: async () => {
+      const res = await fetchSkillType();
+      return res.data;
+    },
+    retry: 0,
+  },
+);
+};
+
+export const fetchSkillSubType = async (skillType : string | null): Promise<SKillSubTypeApiResponse> => {
+  const { data } = await api.get<SKillSubTypeApiResponse>(SkillSubTypeUrl(skillType));
+  return data;
+};
+
+export const useFetchResourceSkillSubType = (params : string | null): UseQueryResult => {
+  return useQuery({
+    queryKey: ['resource-skill-Type', params],
+    queryFn: async () => {
+      const res = await fetchSkillSubType(params);
+      return res.data;
+    },
+    enabled: Boolean(params) && (typeof params === 'string' && params.trim() !== ''),
+    retry: 0,
+  },
+);
 };
