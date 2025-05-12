@@ -45,7 +45,6 @@ const TabPanel: React.FC<TabProps> = ({
     skill_type_rid: '',
     skill_subtype_rid: '',
   });
-  console.log('currentSkillType', currentSkillType)
 
   const [skillSubTypeData, setSkillSubTypeData] = useState<{ option: string; value: string }[]>([]);
   const [, setSelectedSort] = useState('Accounts');
@@ -83,7 +82,6 @@ const TabPanel: React.FC<TabProps> = ({
   },[skillSubType])
 
   useEffect(()=>{
-    console.log('filterStates', filterStates)
     if(filterStates?.skill_type_rid?.enum?.value){
       setCurrentSkillType({
         skill_type_rid: filterStates?.skill_type_rid?.enum?.value as unknown as string,

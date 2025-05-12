@@ -304,11 +304,10 @@ const Filter: React.FC<FilterComponentProps> = ({
     if (!selectedFilters.includes(field.value)) return null;
 
     const fieldState = filterStates[field.value] || {};
-
-    console.log('field', field)
-    if (field.value === 'skill_sub_type') {
-      const skillTypeValue = filterStates['skill_type']?.enum?.value;
-      const enabled = !!skillTypeValue && !!skillTypeValue[0]; // Only enable if skill type is selected
+    let enabled = false;
+    if (field.value === 'skill_subtype_rid') {
+      const skillTypeValue = filterStates['skill_type_rid']?.enum?.value;
+      enabled = !!skillTypeValue && !!skillTypeValue[0]; // Only enable if skill type is selected
    
       return (
         <EnumFilterControl
