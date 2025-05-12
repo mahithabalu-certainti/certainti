@@ -1,4 +1,5 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
+import { R_NUMBER_PREFIX } from "../utils/constants";
 
 interface ResourceCostTimelineAttributes  {
  rid: string,
@@ -86,23 +87,8 @@ export class ResourceCostTimeline extends Model<ResourceCostTimelineAttributes, 
         hooks: {
           beforeCreate: async (resourceCostTimeline: ResourceCostTimeline) => {
             // Generate r_number if not provided
-            if (!resourceCostTimeline.r_number) {
-              // Get the latest resource cost timeline to determine the next number
-              const latestResourceCostTimeline = await ResourceCostTimeline.findOne({
-                order: [['event_datetime', 'DESC']],
-              });
-              
-              // Extract the numeric part if a previous record exists, or start with 1
-              let nextNumber = 1;
-              if (latestResourceCostTimeline && latestResourceCostTimeline.r_number) {
-                const match = latestResourceCostTimeline.r_number.match(/RCT(\d+)/);
-                if (match && match[1]) {
-                  nextNumber = parseInt(match[1], 10) + 1;
-                }
-              }
-              
-              // Format the r_number with leading zeros (e.g., RCT00001)
-              resourceCostTimeline.r_number = `RCT${nextNumber.toString().padStart(5, '0')}`;
+            if (!resourceCostTimeline.r_number) {              
+              resourceCostTimeline.r_number = `${R_NUMBER_PREFIX.RESOURCE_COST_TIMELINE} ${Math.floor(Math.random() * 10000000000).toString().padStart(10, '0')}`;
             }
           }
         }

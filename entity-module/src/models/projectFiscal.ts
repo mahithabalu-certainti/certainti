@@ -1,4 +1,5 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
+import { R_NUMBER_PREFIX } from "../utils/constants";
 
 export interface ProjectFiscalAttributes {
   rid?: string;
@@ -302,13 +303,8 @@ export class ProjectFiscal
         timestamps: false,
         underscored: true,
         hooks: {
-          beforeValidate: async (projectFiscal) => {
-            const latestAccount = await ProjectFiscal.findAll();
-            const serialNumber = latestAccount ? latestAccount.length + 1 : 1;
-
-            const accountCode = `PROFS${serialNumber
-              .toString()
-              .padStart(4, "0")}`;
+          beforeValidate: async (projectFiscal) => {            
+            const accountCode = `${R_NUMBER_PREFIX.PROJECT_FISCAL} ${Math.floor(Math.random() * 10000000000).toString().padStart(10, '0')}`;
             projectFiscal.setDataValue("r_number", accountCode);
           },
         },

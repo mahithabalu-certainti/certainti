@@ -3,6 +3,7 @@ import { DatabaseConnection } from "./dbConnectionModel";
 import { Country } from "./countryModel";
 import { Currency } from "./currencyModel";
 import { Industry } from "./industryModel";
+import { R_NUMBER_PREFIX } from "../utils/constant";
 interface AccountAttributes {
   rid: string;
   eid?: string;
@@ -149,12 +150,7 @@ export class Account
             user.setDataValue("modified_datetime", new Date());
           },
           beforeValidate: async (account) => {
-            const latestAccount = await Account.findAll();
-            const serialNumber = latestAccount ? latestAccount.length + 1 : 1;
-
-            const accountCode = `ACC${serialNumber
-              .toString()
-              .padStart(4, "0")}`;
+            const accountCode = `${R_NUMBER_PREFIX.ACCOUNT} ${Math.floor(Math.random() * 10000000000).toString().padStart(10, '0')}`;
             account.setDataValue("r_number", accountCode);
           },
         },

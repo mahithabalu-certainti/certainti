@@ -1,4 +1,5 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
+import { R_NUMBER_PREFIX } from "../utils/constants";
 
 interface ResourceSkillHistoryAttributes  {
  rid: string,
@@ -74,22 +75,7 @@ export class ResourceSkillHistory extends Model<ResourceSkillHistoryAttributes, 
             console.log("line 80 : ");
             // Generate r_number if not provided
             if (!resourceSkillHistory.r_number) {
-              // Get the latest resource skill history to determine the next number
-              const latestResourceSkillHistory = await ResourceSkillHistory.findOne({
-                order: [['modified_datetime', 'DESC']],
-              });
-              
-              // Extract the numeric part if a previous record exists, or start with 1
-              let nextNumber = 1;
-              if (latestResourceSkillHistory && latestResourceSkillHistory.r_number) {
-                const match = latestResourceSkillHistory.r_number.match(/RSH(\d+)/);
-                if (match && match[1]) {
-                  nextNumber = parseInt(match[1], 10) + 1;
-                }
-              }
-              
-              // Format the r_number with leading zeros (e.g., RCH00001)
-              resourceSkillHistory.r_number = `RSH${nextNumber.toString().padStart(5, '0')}`;
+              resourceSkillHistory.r_number = `${R_NUMBER_PREFIX.RESOURCE_SKILL_HISTORY} ${Math.floor(Math.random() * 10000000000).toString().padStart(10, '0')}`;
             }
           }
         }

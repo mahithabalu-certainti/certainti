@@ -1,4 +1,5 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
+import { R_NUMBER_PREFIX } from "../utils/constants";
 
 export interface ResourcesAttributes {
   rid?: string;
@@ -216,13 +217,8 @@ export class Resources
             resources.setDataValue("created_datetime", new Date());
             resources.setDataValue("modified_datetime", new Date());
           },
-          beforeValidate: async (account) => {
-            const latestAccount = await Resources.findAll();
-            const serialNumber = latestAccount ? latestAccount.length + 1 : 1;
-
-            const accountCode = `RES${serialNumber
-              .toString()
-              .padStart(4, "0")}`;
+          beforeValidate: async (account) => {            
+            const accountCode = `${R_NUMBER_PREFIX.RESOURCE} ${Math.floor(Math.random() * 10000000000).toString().padStart(10, '0')}`;
             account.setDataValue("r_number", accountCode);
           },
         },

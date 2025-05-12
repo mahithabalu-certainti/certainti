@@ -1,5 +1,6 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { Resources } from "./resource";
+import { R_NUMBER_PREFIX } from "../utils/constants";
 
 interface ResourceCostAttributes {
   rid: string;
@@ -219,24 +220,7 @@ export class ResourceCost
           beforeCreate: async (resourceCost: ResourceCost) => {
             // Generate r_number if not provided
             if (!resourceCost.r_number) {
-              // Get the latest resource cost to determine the next number
-              const latestResourceCost = await ResourceCost.findOne({
-                order: [["created_datetime", "DESC"]],
-              });
-
-              // Extract the numeric part if a previous record exists, or start with 1
-              let nextNumber = 1;
-              if (latestResourceCost && latestResourceCost.r_number) {
-                const match = latestResourceCost.r_number.match(/RC(\d+)/);
-                if (match && match[1]) {
-                  nextNumber = parseInt(match[1], 10) + 1;
-                }
-              }
-
-              // Format the r_number with leading zeros (e.g., RC00001)
-              resourceCost.r_number = `RC${nextNumber
-                .toString()
-                .padStart(5, "0")}`;
+              resourceCost.r_number = `${R_NUMBER_PREFIX.RESOURCE_COST} ${Math.floor(Math.random() * 10000000000).toString().padStart(10, '0')}`;
             }
           },
         },
