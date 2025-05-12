@@ -20,19 +20,7 @@ export const mockAccountDetails: AccountFieldsApiResponse = {
       primary_contact_name: 'John Doe',
       rid: '2d991b85-e388-40a8-944e-81ddf8d9cc41',
       industry_rid: 'a966bb8b-6b8f-4869-a3e0-843ec888e8aa',
-      business_details: "something about the account",
-      key_contacts: [
-        {
-          key_contact_id: 'KEY002',
-          account_rid: '9dcfda7e-32a7-490a-aa18-e6e6f84fbce9',
-          key_contact_name: 'Test User 2',
-          key_contact_email: 'test@gmail.com',
-          key_contact_role: 'Technical Consultant',
-          is_primary_contact: false,
-          include_in_communication: true,
-          status: Status.Active,
-        },
-      ],
+      business_details: 'something about the account',
     },
     accountDetails: {
       max_ai_interactions: 3,
@@ -50,6 +38,18 @@ export const mockAccountDetails: AccountFieldsApiResponse = {
       project_manager: 'Karthick',
       auto_access_rd: false,
       data_storage: Storagetype.SeperateDB,
+      keyContacts: [
+        {
+          key_contact_id: 'KEY002',
+          account_rid: '9dcfda7e-32a7-490a-aa18-e6e6f84fbce9',
+          key_contact_name: 'Test User 2',
+          key_contact_email: 'test@gmail.com',
+          key_contact_role_rid: '9dcfda7e-32a7-490a-aa18-e6e6f84fbce9',
+          is_primary_contact: false,
+          include_in_communication: true,
+          status: Status.Active,
+        },
+      ],
     },
   },
 };
