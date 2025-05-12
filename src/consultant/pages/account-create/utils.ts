@@ -58,7 +58,7 @@ export const transformFormData = (
             include_in_communication:
               formData?.include_in_communication === 'yes',
             status: formData?.key_contact_status as Status,
-            key_contact_id,
+            ...(key_contact_id && { key_contact_id }),
             action_type: isEdit
               ? KeyContactsUpdate.Edit
               : KeyContactsUpdate.Add,
