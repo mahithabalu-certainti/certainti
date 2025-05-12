@@ -10,6 +10,7 @@ import { Op, Sequelize } from "sequelize";
 import { ProjectHistory } from "../models/projectHistory";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { RedisService } from "./redisService";
+import Decimal from "decimal.js";
 
 export class ProjectService {
   private schemaService: SchemaService;
@@ -142,7 +143,8 @@ export class ProjectService {
 
       const projectCreationData = {
         project_ref_id: projectData.project_ref_id,
-        industry: projectData.industry,
+        industry_rid: projectData.industry_rid,
+        industry_name: projectData.industry_name,
         account_rid: projectData.account_id,
         account_fiscal_rid: null,
         project_name: projectData.project_name || null,
@@ -150,7 +152,7 @@ export class ProjectService {
         project_startdate: startDate?.toDate() || null,
         project_enddate: endDate?.toDate() || null,
         project_type: projectData.project_type,
-        project_classification: projectData.project_classification || null,
+        project_classification_rid: projectData.project_classification_rid || null,
         project_client_group: projectData.project_client_group || null,
         project_group: projectData.project_group || null,
         project_summary: projectData.project_summary || null,
@@ -168,22 +170,22 @@ export class ProjectService {
         project_tpc_email: projectData.project_tpc_email || null,
         project_tpc_mobile: projectData.project_tpc_mobile || null,
         project_cc_list: projectData.project_cc_list || null,
-        total_effort: projectData.total_effort || 0,
-        total_cost: projectData.total_cost || 0.0,
+        total_effort: projectData.total_effort ? this.getNumericRate(projectData.total_effort) : null,
+        total_cost: projectData.total_cost ? this.getNumericRate(projectData.total_cost) : null,
         total_fte: projectData.total_fte || 0,
         total_sub_con: projectData.total_sub_con || 0,
-        total_non_labor_cost: projectData.total_non_labor_cost || 0.0,
-        total_fte_effort: projectData.total_fte_effort || 0,
-        total_sub_con_effort: projectData.total_sub_con_effort || 0,
-        total_fte_cost: projectData.total_fte_cost || 0.0,
-        total_sub_con_cost: projectData.total_sub_con_cost || 0.0,
+        total_non_labor_cost: projectData.total_non_labor_cost ? this.getNumericRate(projectData.total_non_labor_cost) : null,
+        total_fte_effort: projectData.total_fte_effort ? this.getNumericRate(projectData.total_fte_effort) : null,
+        total_sub_con_effort: projectData.total_sub_con_effort ? this.getNumericRate(projectData.total_sub_con_effort) : null,
+        total_fte_cost: projectData.total_fte_cost ? this.getNumericRate(projectData.total_fte_cost) : null,
+        total_sub_con_cost: projectData.total_sub_con_cost ? this.getNumericRate(projectData.total_sub_con_cost) : null,
         last_rd_ai_assess_on: projectData.last_rd_ai_assess_on || null,
         last_rd_ai_assess_by: projectData.last_rd_ai_assess_by || null,
         auto_send_ai_interaction: projectData.auto_send_ai_interaction ?? false,
         auto_access_rd: projectData.auto_access_rd ?? false,
         max_ai_interaction: projectData.max_ai_interaction || 0,
-        blended_rate_fte: projectData.blended_rate_fte || null,
-        blended_rate_sub_con: projectData.blended_rate_sub_con || null,
+        blended_rate_fte: projectData.blended_rate_fte ? this.getNumericForBlendedRate(projectData.blended_rate_fte) : null,
+        blended_rate_sub_con: projectData.blended_rate_sub_con ? this.getNumericForBlendedRate(projectData.blended_rate_sub_con)  : null,
         project_description: projectData.project_description || null,
         created_datetime: new Date(),
         modified_datetime: new Date(),
@@ -196,6 +198,12 @@ export class ProjectService {
       });
 
       if (project && project.rid) {
+        await this.schemaService.manageKeyContacts(
+          projectData.key_contacts,
+          projectData.account_id,
+          project.rid,
+          projectCreationData.created_by
+        );
         this.addProjectFiscalRecords(
           projectCreationData,
           orgDbSequlize,
@@ -309,26 +317,28 @@ export class ProjectService {
         project_tpc_email: projectData.project_tpc_email || null,
         project_tpc_mobile: projectData.project_tpc_mobile || null,
         project_cc_list: projectData.project_cc_list || null,
-        project_classification: projectData.project_classification || null,
+        project_classification_rid: projectData.project_classification_rid || null,
         project_client_group: projectData.project_client_group || null,
         project_group: projectData.project_group || null,
         project_summary: projectData.project_summary || null,
-        industry: projectData.industry,
+        industry_rid: projectData.industry_rid,
+        industry_name: projectData.industry_name,
         fiscal_year: projectData.fiscal_year,
-        total_effort: projectData.total_effort || 0,
-        total_cost: projectData.total_cost || 0,
+        total_effort: projectData.total_effort ? this.getNumericRate(projectData.total_effort): null,
+        total_cost: projectData.total_cost ? this.getNumericRate(projectData.total_cost) : null,
         total_fte: projectData.total_fte || 0,
         total_sub_con: projectData.total_sub_con || 0,
-        total_non_labor_cost: projectData.total_non_labor_cost || 0,
-        total_fte_effort: projectData.total_fte_effort || 0,
-        total_sub_con_effort: projectData.total_sub_con_effort || 0,
-        total_fte_cost: projectData.total_fte_cost || 0,
-        total_sub_con_cost: projectData.total_sub_con_cost || 0,
+
+        total_non_labor_cost: projectData.total_non_labor_cost ? this.getNumericRate(projectData.total_non_labor_cost)  : null,
+        total_fte_effort: projectData.total_fte_effort ? this.getNumericRate(projectData.total_fte_effort)  : null,
+        total_sub_con_effort: projectData.total_sub_con_effort ? this.getNumericRate(projectData.total_sub_con_effort)  : null,
+        total_fte_cost: projectData.total_fte_cost ? this.getNumericRate(projectData.total_fte_cost)  : null,
+        total_sub_con_cost: projectData.total_sub_con_cost ? this.getNumericRate(projectData.total_sub_con_cost)  : null,
         auto_send_ai_interaction: projectData.auto_send_ai_interaction ?? false,
         auto_access_rd: projectData.auto_access_rd ?? false,
         max_ai_interaction: projectData.max_ai_interaction || 0,
-        blended_rate_fte: projectData.blended_rate_fte || null,
-        blended_rate_sub_con: projectData.blended_rate_sub_con || null,
+        blended_rate_fte: projectData.blended_rate_fte ? this.getNumericForBlendedRate(projectData.blended_rate_fte) : null,
+        blended_rate_sub_con: projectData.blended_rate_sub_con ? this.getNumericForBlendedRate(projectData.blended_rate_sub_con)  : null,
         modified_by: userId,
         modified_datetime: new Date(),
       };
@@ -345,6 +355,12 @@ export class ProjectService {
       );
 
       if (updateProject) {
+        await this.schemaService.manageKeyContacts(
+          projectData.key_contacts,
+          projectData.account_id,
+          projectData.project_id,
+          userId
+        );
         await this.updateProjectFiscal(
           updateProject,
           orgDbSequlize,
@@ -434,11 +450,17 @@ export class ProjectService {
           rid: projectId,
         },
       });
+      
 
       if (projectData) {
+        const keyContacts = await this.schemaService.fetchKeyContacts(
+          projectData.account_rid,
+          projectId
+        );
         projectData = await this.schemaService.insertProjectGeoData(
           projectData,
-          mainDbSequlize
+          mainDbSequlize,
+          keyContacts
         );
       }
 
@@ -533,11 +555,12 @@ export class ProjectService {
         attributes: [
           "r_number",
           "project_ref_id",
-          "industry",
+          "industry_rid",
+          "industry_name",
           "project_startdate",
           "project_enddate",
           "project_type",
-          "project_classification",
+          "project_classification_rid",
           "project_client_group",
           "project_group",
           "project_status",
@@ -1077,13 +1100,13 @@ export class ProjectService {
     const projectFilterFields = [
       { clientField: "applyFilters", dbField: "applyFilters" },
       { clientField: "project_ref_id", dbField: "project_ref_id" },
-      { clientField: "industry", dbField: "industry" },
+      { clientField: "industry", dbField: "industry_name" },
       { clientField: "project_startdate", dbField: "project_startdate" },
       { clientField: "project_enddate", dbField: "project_enddate" },
       { clientField: "project_type", dbField: "project_type" },
       {
         clientField: "project_classification",
-        dbField: "project_classification",
+        dbField: "project_classification_rid",
       },
       { clientField: "project_client_group", dbField: "project_client_group" },
       { clientField: "project_group", dbField: "project_group" },
@@ -1113,6 +1136,79 @@ export class ProjectService {
     ];
 
     return isAllProject ? allProjectFields : projectFilterFields;
+  }
+  private getNumericForBlendedRate(rateString: string): string | null {
+    if (rateString) {
+      // Extract numeric value only (including decimals)
+      const numericValue = rateString.match(/[\d.]+/);
+      if (numericValue) {
+        // Convert to Decimal for precision
+        const decimalValue = new Decimal(numericValue[0]);
+        const formattedValue = decimalValue.isInteger() 
+          ? `${decimalValue.toFixed(0)} $/Hour` 
+          : `${decimalValue.toFixed(2)} $/Hour`;
+  
+        return formattedValue;
+      }
+    }
+    return null;
+  }
+  
+  private getNumericRate(rateString: string): string | null {
+    if (rateString) {
+      // Extract numeric value only (including decimals)
+      const numericValue = rateString.match(/[\d.]+/);
+      if (numericValue) {
+        // Convert to Decimal for precision
+        const decimalValue = new Decimal(numericValue[0]);
+  
+        // Format based on whole number or decimal
+        return decimalValue.isInteger() 
+          ? decimalValue.toFixed(0) 
+          : decimalValue.toString();
+      }
+    }
+    return null;
+  }
+  /**
+   * Fetches a list of project classification from the database.
+   *
+   * @returns {Promise<{ statusCode: number, message: string, errorMessage?: string, data?: { country: any } }>} The response object containing status code, message, and a list of countries.
+   * - statusCode: HTTP status code indicating the result of the request.
+   * - message: A success or error message based on the outcome of the request.
+   * - errorMessage (optional): The error message in case of a failure.
+   * - data (optional): An object containing the list of project classification if the request is successful.
+   */
+  async getProjectClassification(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectClassifications: any; count: number };
+  }> {
+    try {
+      const mainDbSequlize = await initMainDbSequelize();
+      const projectClassifications = await mainDbSequlize.query(
+        `SELECT rid, classification_name, classification_description, classification_status
+         FROM project_classification
+         WHERE classification_status = 'Active'
+         ORDER BY classification_name ASC`,
+        {
+          type: "SELECT"
+        }
+      );
+      
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          projectClassifications,
+          count: projectClassifications.length,
+        },
+      };
+    } catch (err) {
+      console.log(err)
+      return this.throwServiceError(err as Error);
+    }
   }
 
   /**

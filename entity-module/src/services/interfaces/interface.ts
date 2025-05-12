@@ -132,6 +132,20 @@ export interface IResourceCostService {
 }
 
 export interface IResourceSkillService {
+  getSkillSubTypes(skillTypeRid: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { skillSubTypes: any[] };
+  }>;
+
+  getSkillTypes(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string; 
+    data?: { skillTypes: any[] };
+  }>;
+  
   createResourceSkill(
     resourceSkillData: IResourceSkill,
     userId: string
@@ -249,5 +263,12 @@ export interface IProjectService {
     message: string;
     errorMessage?: string;
     data?: { projects: any, count: number };
+  }>;
+  getProjectClassification(
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projectClassifications: any, count: number };
   }>;
 }

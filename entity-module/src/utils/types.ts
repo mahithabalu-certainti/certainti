@@ -55,13 +55,14 @@ export interface IResourceCost {
   currency_rid?: string;
   cost_frequency: string;
   cost: number;
+  fiscal_year: number;
   created_datetime?: string | null;
   modified_datetime?: string | null;
+  comments?: string;
   created_by?: string | null;
   modified_by?: string | null;
   status?: "active" | "inactive";
   accountNumber: string;
-  fiscal_year?: string;
   resource_number: string;
 }
 
@@ -71,8 +72,10 @@ export interface IUpdateResourceCost {
   effective_date?: string | null;
   end_date?: string | null;
   currency_rid?: string;
+  fiscal_year: number;
   cost_frequency: string;
   cost: number;
+  comments?: string;
   modified_datetime?: string | null;
   modified_by?: string | null;
   status?: "active" | "inactive";
@@ -85,18 +88,18 @@ export interface IResourceSkill {
    resource_type: string;
    resource_rid: string;
    resource_ref_id: string,
-   resource_desc?: string;
-   skill_rid: string;
-   start_date?: string | null;
+   start_date?: number;
    skill_description?: string;
    skill_level?: string;
+   skill_type_rid: string;
+   skill_subtype_rid: string;
+   skill_type_others: string;
+   skill_subtype_others: string;
+   skill_details?: string;
+   comments?: string;
    status?: string;
-   years_of_experience?: number,
    created_by?: string | null;
    modified_by?: string | null;
-   skill_type?: string;
-   skill_name: string;
-   technical_weightage?: number;
    accountNumber: string;
    resource_number: string;
 }
@@ -104,16 +107,17 @@ export interface IResourceSkill {
 export interface IUpdateResourceSkill {
   rid: string;
   eid?: string;
-  start_date?: string | null;
+  start_date?: number;
   skill_description?: string;
   skill_level?: string;
   status?: string;
-  years_of_experience?: number,
   modified_by?: string | null;
-  skill_rid: string;
-  skill_name: string;
-  skill_type?: string;
-  technical_weightage?: number;
+  skill_type_rid: string;
+  skill_subtype_rid: string;
+  skill_type_others: string;
+  skill_subtype_others: string;
+  comments?: string;
+  skill_details?: string;
   accountNumber: string;
 }
 
@@ -121,13 +125,14 @@ export interface ICreateProject {
   account_number: string;
   account_id: string;
   project_ref_id: string;
-  industry: string;
   project_name?: string | null;
+  industry_rid: string;
+  industry_name?: string;
   client_organization: string;
   project_startdate?: Date | null;
   project_enddate?: Date | null;
   project_type: "Fixed" | "Time & Material";
-  project_classification?: string | null;
+  project_classification_rid?: string | null;
   project_client_group?: string | null;
   project_group?: string | null;
   project_summary?: string | null;
@@ -145,15 +150,15 @@ export interface ICreateProject {
   project_tpc_email?: string | null;
   project_tpc_mobile?: string | null;
   project_cc_list?: string | null;
-  total_effort?: number;
-  total_cost?: number;
+  total_effort?: string | null;
+  total_cost?: string | null;
   total_fte?: number;
   total_sub_con?: number;
-  total_non_labor_cost?: number;
-  total_fte_effort?: number;
-  total_sub_con_effort?: number;
-  total_fte_cost?: number;
-  total_sub_con_cost?: number;
+  total_non_labor_cost?: string | null;
+  total_fte_effort?: string | null;
+  total_sub_con_effort?: string | null;
+  total_fte_cost?: string | null;
+  total_sub_con_cost?: string | null;
   last_rd_ai_assess_on?: Date | null;
   last_rd_ai_assess_by?: string | null;
   auto_send_ai_interaction?: boolean;
@@ -164,6 +169,7 @@ export interface ICreateProject {
   project_description?: string | null;
   modified_by?: string;
   created_by: string;
+  key_contacts:any
 }
 
 export interface IUpdateProject {
@@ -171,13 +177,14 @@ export interface IUpdateProject {
   account_number: string;
   account_id: string;
   project_ref_id: string;
-  industry: string;
   project_name?: string | null;
+  industry_rid: string;
+  industry_name: string;
   client_organization: string;
   project_startdate?: Date | null;
   project_enddate?: Date | null;
   project_type: "Fixed" | "Time & Material";
-  project_classification?: string | null;
+  project_classification_rid?: string | null;
   project_client_group?: string | null;
   project_group?: string | null;
   project_summary?: string | null;
@@ -195,15 +202,15 @@ export interface IUpdateProject {
   project_tpc_email?: string | null;
   project_tpc_mobile?: string | null;
   project_cc_list?: string | null;
-  total_effort?: number;
-  total_cost?: number;
+  total_effort?: string | null;
+  total_cost?: string | null;
   total_fte?: number;
   total_sub_con?: number;
-  total_non_labor_cost?: number;
-  total_fte_effort?: number;
-  total_sub_con_effort?: number;
-  total_fte_cost?: number;
-  total_sub_con_cost?: number;
+  total_non_labor_cost?: string | null;
+  total_fte_effort?: string | null;
+  total_sub_con_effort?: string | null;
+  total_fte_cost?: string | null;
+  total_sub_con_cost?: string | null;
   last_rd_ai_assess_on?: Date | null;
   last_rd_ai_assess_by?: string | null;
   auto_send_ai_interaction?: boolean;
@@ -214,4 +221,15 @@ export interface IUpdateProject {
   project_description?: string | null;
   modified_by?: string;
   created_by: string;
+  key_contacts:any;
+}
+
+export interface IKeyContactDetail {
+  key_contact_id: string;
+  key_contact_name: string;
+  key_contact_email: string;
+  key_contact_role_rid: string;
+  is_primary_contact: boolean;
+  include_in_communication: boolean;
+  status: "active" | "inactive";
 }

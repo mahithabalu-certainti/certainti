@@ -1,4 +1,5 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
+import { R_NUMBER_PREFIX } from "../utils/constants";
 
 interface ProjectTimelineAttributes {
   rid?: string;
@@ -84,12 +85,17 @@ export class ProjectTimeline
             resources.setDataValue("event_datetime", new Date());
           },
           beforeValidate: async (account) => {
-            const latestAccount = await ProjectTimeline.findAll();
-            const serialNumber = latestAccount ? latestAccount.length + 1 : 1;
-
-            const accountCode = `PROT${serialNumber
-              .toString()
-              .padStart(4, "0")}`;
+            // Get the latest project timeline number and increment it
+            const latestAccount = await ProjectTimeline.findOne({
+              order: [['r_number', 'DESC']],
+            });
+            
+            let nextNumber = '0000000001';
+            if (latestAccount) {
+              const currentNumber = parseInt(latestAccount.r_number?.split(' ')[1] || '0');
+              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
+            }            
+            const accountCode = `${R_NUMBER_PREFIX.PROJECT_TIMELINE} ${nextNumber}`;
             account.setDataValue("r_number", accountCode);
           },
         },

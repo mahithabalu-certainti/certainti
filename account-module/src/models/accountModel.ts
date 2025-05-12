@@ -3,6 +3,7 @@ import { DatabaseConnection } from "./dbConnectionModel";
 import { Country } from "./countryModel";
 import { Currency } from "./currencyModel";
 import { Industry } from "./industryModel";
+import { R_NUMBER_PREFIX } from "../utils/constant";
 interface AccountAttributes {
   rid: string;
   eid?: string;
@@ -14,13 +15,12 @@ interface AccountAttributes {
   parent_account_rid?: string | null;
   storage_type: string;
   database_connection_rid?: string;
-  country_rid: string;
-  currency_rid: string;
+  country_rid?: string;
+  currency_rid?: string;
   industry_rid: string;
-  industry_name?: string;
-  primary_contact_name: string;
+  industry_name_other?: string;
   status: string;
-  annual_revenue: number;
+  annual_revenue: string;
   created_datetime?: Date;
   modified_datetime?: Date;
   created_by?: string;
@@ -44,13 +44,12 @@ export class Account
   public storage_type!: string;
   public parent_account_rid?: string | null;
   public database_connection_rid?: string;
-  public country_rid!: string;
-  public currency_rid!: string;
+  public country_rid?: string;
+  public currency_rid?: string;
   public industry_rid!: string;
-  public industry_name?: string;
-  public primary_contact_name!: string;
+  public industry_name_other?: string;
   public status!: string;
-  public annual_revenue!: number;
+  public annual_revenue!: string;
   public created_datetime?: Date;
   public modified_datetime?: Date;
   public created_by?: string;
@@ -93,7 +92,7 @@ export class Account
           allowNull: false,
         },
         annual_revenue: {
-          type: DataTypes.DECIMAL(),
+          type: DataTypes.STRING(20),
           allowNull: false,
         },
         region: {
@@ -114,23 +113,19 @@ export class Account
         },
         country_rid: {
           type: DataTypes.UUID,
-          allowNull: false,
+          allowNull: true,
         },
         currency_rid: {
           type: DataTypes.UUID,
-          allowNull: false,
+          allowNull: true,
         },
         industry_rid: {
           type: DataTypes.STRING(25),
           allowNull: false,
         },
-        industry_name: {
+        industry_name_other: {
           type: DataTypes.STRING(255),
           allowNull: true
-        },
-        primary_contact_name: {
-          type: DataTypes.STRING(50),
-          allowNull: false,
         },
         created_datetime: {
           type: DataTypes.DATE,
@@ -161,12 +156,18 @@ export class Account
             user.setDataValue("modified_datetime", new Date());
           },
           beforeValidate: async (account) => {
-            const latestAccount = await Account.findAll();
-            const serialNumber = latestAccount ? latestAccount.length + 1 : 1;
-
-            const accountCode = `ACC${serialNumber
-              .toString()
-              .padStart(4, "0")}`;
+            // Get the latest account number and increment it
+            const latestAccount = await Account.findOne({
+              order: [['r_number', 'DESC']],
+            });
+            
+            let nextNumber = '0000000001';
+            if (latestAccount) {
+              const currentNumber = parseInt(latestAccount.r_number?.split(' ')[1] || '0');
+              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
+            }
+            
+            const accountCode = `${R_NUMBER_PREFIX.ACCOUNT} ${nextNumber}`;
             account.setDataValue("r_number", accountCode);
           },
         },

@@ -25,23 +25,20 @@ export interface IAccount {
   blended_rate_subcon?: string | null;
   created_by?: string | null;
   modified_by?: string | null;
-  primary_contact_name: string;
-  primary_contact_email: string;
-  primary_contact_number: string;
-  finance_poc_name: string;
-  finance_poc_email: string;
-  finance_poc_number: string;
   industry_rid: string;
-  industry_name:string;
+  industry_name_other?:string;
   website?: string | null;
   project_manager: string;
   database_level: boolean;
   database_connection_rid?: number | null;
   created_datetime?: string | null;
   modified_datetime?: string | null;
-  annual_revenue: number;
+  annual_revenue?: string | null;
   data_residency?: string | null;
   data_storage: "separate_db" | "store_in_parent";
+  key_contacts:any;
+  business_details:string
+  comments?:string;
 }
 
 export interface IUpdateAccount {
@@ -72,22 +69,29 @@ export interface IUpdateAccount {
   blended_rate_subcon?: string | null;
   created_by?: string | null;
   modified_by?: string | null;
-  primary_contact_name: string;
-  primary_contact_email: string;
-  primary_contact_number: string;
-  finance_poc_name: string;
-  finance_poc_email: string;
-  finance_poc_number: string;
   industry_rid: string;
-  industry_name:string;
+  industry_name_other?:string;
   website?: string | null;
   project_manager: string;
   database_level: boolean;
   database_connection_rid?: number | null;
   created_datetime?: string | null;
   modified_datetime?: string | null;
-  annual_revenue: number;
+  annual_revenue?: string | null;
   data_residency?: string | null;
   data_storage: "separate_db" | "store_in_parent";
   r_number: string;
+  business_details:string;
+  comments?:string;
+  key_contacts:any;
+}
+
+export interface IKeyContactDetail {
+  key_contact_id: string;
+  key_contact_name: string;
+  key_contact_email: string;
+  key_contact_role_rid: string;
+  is_primary_contact: boolean;
+  include_in_communication: boolean;
+  status: "active" | "inactive";
 }

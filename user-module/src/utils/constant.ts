@@ -28,3 +28,7 @@ export const NODE_ENV = {
   DEV: "DEV",
   PROD: "PRODUCTION"
 }
+
+export const R_NUMBER_PREFIX = {
+  USER: 'UID',
+}

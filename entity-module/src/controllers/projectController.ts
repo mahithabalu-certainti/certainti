@@ -299,6 +299,47 @@ async function allProjectList(req: Request, res: Response): Promise<void> {
     return;
   }
 }
+/**
+ * Handles the request to fetch a list of Project Classification from the geoDataService.
+ *
+ * @param {Request} req The request object containing details of the HTTP request.
+ * @param {Response} res The response object to send the HTTP response.
+ * @returns {Promise<void>} A promise that resolves when the request is processed.
+ *
+ * This method calls the `Project Classification` service, checks the status, and sends an appropriate response:
+ * - If successful, it sends a success response with the list of Project Classification.
+ * - If failed, it logs the error and sends an error response.
+ */
+async function projectClassification(req: Request, res: Response): Promise<void> {
+  const methodName = "Project Classification";
+  try {
+    const projectClassifications = await services.projectServices.getProjectClassification();
+    if (projectClassifications.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, projectClassifications.data);
+      return;
+    } else {
+      errorLog(methodName, projectClassifications.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        projectClassifications.message
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
 
 export default {
   createProject,
@@ -306,4 +347,5 @@ export default {
   projectById,
   projectList,
   allProjectList,
+  projectClassification
 };

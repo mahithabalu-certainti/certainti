@@ -1,8 +1,11 @@
 import { Op, Sequelize,UniqueConstraintError  } from "sequelize";
 import { HttpStatus } from "../utils/constant";
-import { IAccount, IUpdateAccount } from "../utils/types";
+import { IAccount, IUpdateAccount,IKeyContactDetail } from "../utils/types";
 import SchemaService from "./schemaService";
 import { models } from "../models";
+import { initOrgSequelize } from "../config/orgdbDataSource";
+import Decimal from "decimal.js";
+import { Industry } from "../models/industryModel";
 
 const { Account, Country, Currency } = models;
 
@@ -112,13 +115,13 @@ class AccountService {
             model: Country,
             as: "country",
             attributes: ["rid", "country_name"],
-            required: true,
+            required: false,
           },
           {
             model: Currency,
             as: "currency",
             attributes: ["rid", "currency_code"],
-            required: true,
+            required: false,
           }
         ],
       });
@@ -152,7 +155,7 @@ class AccountService {
             },
           ]
         });
-
+    
         // Group child accounts by parent_account_rid
         const childAccountsByParent = childAccounts.reduce((acc: any, child: any) => {
           if (!acc[child.parent_account_rid]) {
@@ -284,14 +287,20 @@ class AccountService {
               model: Country,
               as: "country",
               attributes: ["rid", "country_name"],
-              required: true,
+              required: false,
             },
             {
               model: Currency,
               as: "currency",
               attributes: ["rid", "currency_code"],
-              required: true,
-            }
+              required: false,
+            },
+            {
+              model: Industry,
+              as: "industry",
+              attributes: ["rid", "industry_name"],
+              required: false,
+            },
           ],
         });
   
@@ -316,6 +325,11 @@ class AccountService {
                 model: Currency,
                 as: "currency",
                 attributes: ["rid", "currency_code"]
+              },
+              {
+                model: Industry,
+                as: "currency",
+                attributes: ["rid", "industry_name"],
               },
               {
                 model: Account,
@@ -364,7 +378,6 @@ class AccountService {
             "Currency": account?.currency?.currency_code || "",
             "Annual Revenue": account?.annual_revenue || "",
             "Status": account?.status || "",
-            "Primary Contact": account?.primary_contact_name || ""
           };
           exportDetails.push(baseRow);
           if (Array.isArray(account.child_accounts) && account.child_accounts.length > 0) {
@@ -378,8 +391,7 @@ class AccountService {
                 "Country": child?.country?.country_name || "",
                 "Currency": child?.currency?.currency_code || "",
                 "Annual Revenue": child?.annual_revenue || "",
-                "Status": child?.status || "",
-                "Primary Contact": child?.primary_contact_name || ""
+                "Status": child?.status || ""
               });
             });
           }
@@ -412,12 +424,12 @@ class AccountService {
         account_country_rid,
         account_currency_rid,
         industry_rid,
-        industry_name,
-        primary_contact_name,
+        industry_name_other,
         account_country_region_rid,
         data_storage,
         status,
         annual_revenue,
+        key_contacts,
       } = accountData;
 
       if (data_storage === "store_in_parent" && !parent_account_rid) {
@@ -477,12 +489,11 @@ class AccountService {
           ? parent_account.currency_rid
           : account_currency_rid,
         industry_rid: industry_rid,
-        industry_name: industry_name,
-        primary_contact_name,
+        industry_name_other: industry_name_other,
         status,
-        annual_revenue,
         created_by: userId,
         modified_by: userId
+        annual_revenue: annual_revenue ? new Decimal(annual_revenue).toNumber().toString() : ""
       });
 
       if (parent_account && data_storage === "store_in_parent") {
@@ -501,6 +512,11 @@ class AccountService {
           userId
         );
       }
+      await this.schemaService.manageKeyContacts(
+        key_contacts,
+        account.rid,
+        userId
+      );
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -538,8 +554,9 @@ class AccountService {
         account_country_rid,
         account_currency_rid,
         industry_rid,
-        industry_name,
-        primary_contact_name
+        industry_name_other,
+
+        key_contacts,
       } = accountData;
 
       const [affectedCounts, affectedRows] = await repository.update(
@@ -553,8 +570,9 @@ class AccountService {
           industry_rid: industry_rid,
           industry_name: industry_name,
           primary_contact_name,
-          annual_revenue,
-          modified_by: userId
+          modified_by: userId,
+          industry_name_other: industry_name_other,
+          annual_revenue: annual_revenue ? new Decimal(annual_revenue).toNumber().toString() : ""
         },
         {
           where: {
@@ -574,6 +592,11 @@ class AccountService {
           default_r_number,
           userId
         );
+        this.schemaService.manageKeyContacts(
+          key_contacts,
+          account_rid,
+          userId
+        );
       }
 
       if (default_parent_id === "store_in_parent") {
@@ -583,6 +606,11 @@ class AccountService {
           default_r_number,
           userId
         );
+        this.schemaService.manageKeyContacts(
+          key_contacts,
+          default_parent_id,
+          userId
+        );
       }
 
       if (default_parent_id === null) {
@@ -590,6 +618,11 @@ class AccountService {
           account_rid,
           accountData,
           default_r_number,
+          userId
+        );
+        this.schemaService.manageKeyContacts(
+          key_contacts,
+          account_rid,
           userId
         );
       }
@@ -667,13 +700,13 @@ class AccountService {
             model: Country,
             as: "country",
             attributes: ["country_name"],
-            required: true,
+            required: false,
           },
           {
             model: Currency,
             as: "currency",
             attributes: ["currency_code"],
-            required: true,
+            required: false,
           },
           {
             model: Account,
@@ -697,13 +730,22 @@ class AccountService {
         acconuntNumber,
         accountById?.rid || "",
       );
+      // Fetch key contacts for the account
+      const keyContacts = await this.schemaService.fetchKeyContacts(
+        accountById?.rid || ""
+      );
 
+      // Add key contacts to account details
+      const accountData = {
+        ...accountDetails.length > 0 ? accountDetails[0] : {},
+        keyContacts: keyContacts.length > 0 ? keyContacts : [],
+      };
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
           accountById,
-          accountDetails: accountDetails.length > 0 ? accountDetails[0] : {},
+          accountDetails: accountData,
         },
       };
     } catch (err) {
@@ -775,7 +817,6 @@ class AccountService {
         { r_number: { [Op.iLike]: `%${search}%` } },
         { industry: { [Op.iLike]: `%${search}%` } },
         { status: { [Op.iLike]: `%${search}%` } },
-        { primary_contact_name: { [Op.iLike]: `%${search}%` } },
         { eid: { [Op.iLike]: `%${search}%` } }, // Added Account ID search
         { "$country.country_name$": { [Op.iLike]: `%${search}%` } },
         { "$currency.currency_code$": { [Op.iLike]: `%${search}%` } },
@@ -813,15 +854,11 @@ class AccountService {
     }
 
     if (filters.industry) {
-      whereClause.industry = this.getFieldFilter(filters.industry, "industry");
+      whereClause.industry_rid = this.getFieldFilter(filters.industry, "industry_rid");
     }
 
     if (filters.status) {
       whereClause.status = this.getFieldFilter(filters.status, "status");
-    }
-
-    if (filters.primary_contact) {
-      whereClause.primary_contact_name = this.getFieldFilter(filters.primary_contact, "primary_contact_name");
     }
 
     if (filters.is_parent_account) {
@@ -975,7 +1012,6 @@ class AccountService {
       "status",
       "r_number",
       "industry",
-      "primary_contact_name",
       "is_parent",
       "country",
       "currency",

@@ -8,7 +8,7 @@ import resourceSkillSchemaService from "./resourceSkillSchemaService";
 import SchemaService from "./schemaService";
 import { ResourceFiscal } from "../models/resourceFiscal";
 import { initOrgSequelize } from "../config/orgDataSource";
-import { Sequelize, Op } from "sequelize";
+import { Sequelize, Op, QueryTypes } from "sequelize";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import moment from "moment";
 import { Resources } from "../models/resource";
@@ -58,18 +58,18 @@ class ResourceSkillService {
         resource_type,
         resource_rid,
         resource_ref_id,
-        resource_desc,
-        skill_rid,
         start_date,
         skill_description,
         skill_level,
-        years_of_experience,
         created_by,
         modified_by,
-        skill_type,
-        skill_name,
-        technical_weightage,
+        skill_type_rid,
+        skill_subtype_rid,
+        skill_type_others,
+        skill_subtype_others,
+        skill_details,
         accountNumber,
+        comments,
         resource_number,
       } = resourceSkill;
 
@@ -77,12 +77,11 @@ class ResourceSkillService {
         await this.schemaService.fetchAccountByNumber(accountNumber);
       const schemaName = `platform_v2_${accountNumberFetched}`;
 
-      // First check if skill with same name already exists for this resource
-      if (skill_name && resource_rid) {
+      
+      if (skill_type_rid && resource_rid) {
         const sequelizeInstance = await this.getOrgSequelize();
         console.log("Before Initialize");
         Resources.initialize(sequelizeInstance, schemaName);
-        const SkillModel = Skill.initialize(sequelizeInstance, schemaName);
         const ResourceModel = ResourceSkill.initialize(
           sequelizeInstance,
           schemaName
@@ -90,21 +89,12 @@ class ResourceSkillService {
         console.log("After Initialize");
 
         try {
-          // First get the skill rid from skill table
-          const skill = await SkillModel.findOne({
-            where: {
-              skill_name: {
-                [Op.iLike]: skill_name, // Case insensitive comparison
-              },
-            },
-            attributes: ["rid"], // Only fetch the rid
-          });
 
-          if (skill?.rid) {
-            // Then check if this skill rid exists for the resource
+            if(!skill_type_others){
+            // Then check if this skill type rid exists for the resource
             const existingResourceSkill = await ResourceModel.findOne({
               where: {
-                skill_rid: skill.rid,
+                skill_type_rid: skill_type_rid,
                 resource_rid,
               },
               attributes: ["rid"], // Only fetch the rid
@@ -114,15 +104,18 @@ class ResourceSkillService {
               return {
                 statusCode: HttpStatus.FAILED,
                 message: HttpStatus.FAILED_MESSAGE,
-                errorMessage: `Skill '${skill_name}' already exists for this resource`,
+                errorMessage: `Skill already exists for this resource`,
               };
             }
           }
+          
         } catch (error) {
           console.error("Error checking for duplicate skill:", error);
           // Continue with creation if check fails
         }
+      
       }
+    
 
       // Create tables in parallel for better performance
       const [
@@ -162,41 +155,42 @@ class ResourceSkillService {
           errorMessage: "Account schema or skill table could not be created",
         };
       }
+
       // Check if skill exists or create a new one
-      let skillRidToUse = skill_rid;
+      // let skillRidToUse = skill_rid;
 
-      if (skill_name) {
-        try {
-          const sequelizeInstance = await this.getOrgSequelize();
-          Skill.initialize(sequelizeInstance, schemaName);
-          // Find existing skill by name
-          const existingSkill = await Skill.findOne({
-            where: {
-              skill_name: skill_name,
-            },
-          });
+      // if (skill_name) {
+      //   try {
+      //     const sequelizeInstance = await this.getOrgSequelize();
+      //     Skill.initialize(sequelizeInstance, schemaName);
+      //     // Find existing skill by name
+      //     const existingSkill = await Skill.findOne({
+      //       where: {
+      //         skill_name: skill_name,
+      //       },
+      //     });
 
-          if (existingSkill) {
-            // Use existing skill's RID
-            skillRidToUse = existingSkill.rid;
-          } else {
-            // Create new skill if it doesn't exist
-            const newSkill = await Skill.create({
-              eid,
-              skill_type,
-              skill_name,
-              skill_description,
-              created_by: userId,
-              modified_by: userId,
-            });
+      //     if (existingSkill) {
+      //       // Use existing skill's RID
+      //       skillRidToUse = existingSkill.rid;
+      //     } else {
+      //       // Create new skill if it doesn't exist
+      //       const newSkill = await Skill.create({
+      //         eid,
+      //         skill_type,
+      //         skill_name,
+      //         skill_description,
+      //         created_by: userId,
+      //         modified_by: userId,
+      //       });
 
-            skillRidToUse = newSkill.rid;
-          }
-        } catch (skillError) {
-          console.error("Error handling skill:", skillError);
-          // Continue with the process even if skill handling fails
-        }
-      }
+      //       skillRidToUse = newSkill.rid;
+      //     }
+      //   } catch (skillError) {
+      //     console.error("Error handling skill:", skillError);
+      //     // Continue with the process even if skill handling fails
+      //   }
+      // }
 
       let createdResourceSkill;
       let eventStatus = "Success";
@@ -205,7 +199,6 @@ class ResourceSkillService {
         const sequelizeInstance = await this.getOrgSequelize();
         ResourceSkill.initialize(sequelizeInstance, schemaName);
 
-        const startDate = this.formatDateForDb(start_date as string);
 
         // Use the model's create method to leverage default values
         createdResourceSkill = await ResourceSkill.create({
@@ -215,13 +208,15 @@ class ResourceSkillService {
           resource_rid,
           resource_number,
           resource_ref_id,
-          resource_desc: resource_desc || "",
-          skill_rid: skillRidToUse, // Use the determined skill RID
-          start_date: startDate || null,
+          start_date,
           skill_description,
           skill_level: skill_level || "",
-          years_of_experience: years_of_experience || 0,
-          technical_weightage: technical_weightage || 0,
+          skill_type_rid,
+          skill_subtype_rid,
+          skill_type_others,
+          skill_subtype_others,
+          comments,
+          skill_details: skill_details || undefined,
           created_by: userId,
           modified_by: userId,
         });
@@ -344,11 +339,14 @@ class ResourceSkillService {
         start_date,
         skill_description,
         skill_level,
-        skill_name,
-        years_of_experience,
+        skill_type_rid,
+        skill_subtype_rid,
+        skill_type_others,
+        skill_subtype_others,
+        skill_details,
+        comments,
         modified_by,
         status,
-        technical_weightage,
         accountNumber,
       } = resourceSkillData;
 
@@ -393,61 +391,63 @@ class ResourceSkillService {
       }
 
       // Handle skill_name update if provided
-      let skillRidToUse = originalResourceSkill.skill_rid;
+      // let skillRidToUse = originalResourceSkill.skill_rid;
 
-      if (skill_name) {
-        try {
-          Skill.initialize(sequelizeInstance, schemaName);
+      // if (skill_name) {
+      //   try {
+      //     Skill.initialize(sequelizeInstance, schemaName);
 
-          // Find existing skill by name
-          const existingSkill = await Skill.findOne({
-            where: {
-              skill_name: skill_name,
-            },
-          });
+      //     // Find existing skill by name
+      //     const existingSkill = await Skill.findOne({
+      //       where: {
+      //         skill_name: skill_name,
+      //       },
+      //     });
 
-          if (existingSkill) {
-            // Use existing skill's RID
-            skillRidToUse = existingSkill.rid;
-          } else {
-            // Create new skill if it doesn't exist
-            const newSkill = await Skill.create({
-              eid,
-              skill_type: resourceSkillData.skill_type || "",
-              skill_name,
-              skill_description,
-              created_by: userId,
-              modified_by: userId,
-            });
+      //     if (existingSkill) {
+      //       // Use existing skill's RID
+      //       skillRidToUse = existingSkill.rid;
+      //     } else {
+      //       // Create new skill if it doesn't exist
+      //       const newSkill = await Skill.create({
+      //         eid,
+      //         skill_type: resourceSkillData.skill_type || "",
+      //         skill_name,
+      //         skill_description,
+      //         created_by: userId,
+      //         modified_by: userId,
+      //       });
 
-            skillRidToUse = newSkill.rid;
-          }
-        } catch (skillError) {
-          console.error("Error handling skill:", skillError);
-          return {
-            statusCode: HttpStatus.FAILED,
-            message: HttpStatus.FAILED_MESSAGE,
-            errorMessage:
-              "Failed to process skill information: " +
-              (skillError as Error).message,
-          };
-        }
-      }
+      //       skillRidToUse = newSkill.rid;
+      //     }
+      //   } catch (skillError) {
+      //     console.error("Error handling skill:", skillError);
+      //     return {
+      //       statusCode: HttpStatus.FAILED,
+      //       message: HttpStatus.FAILED_MESSAGE,
+      //       errorMessage:
+      //         "Failed to process skill information: " +
+      //         (skillError as Error).message,
+      //     };
+      //   }
+      // }
 
       try {
-        const startDate = this.formatDateForDb(start_date as string);
 
         const [affectedCounts, affectedRows] = await ResourceSkill.update(
           {
             rid,
             eid,
-            start_date: startDate || null,
+            start_date,
             skill_description,
             skill_level,
-            skill_rid: skillRidToUse,
+            skill_type_rid,
+            skill_subtype_rid,
+            skill_type_others,
+            skill_subtype_others,
+            comments,
+            skill_details: skill_details || undefined,
             status,
-            years_of_experience,
-            technical_weightage,
             modified_by: userId,
             modified_datetime: new Date(),
           },
@@ -544,6 +544,12 @@ class ResourceSkillService {
         "start_date",
         "skill_description",
         "skill_level",
+        "skill_type_rid",
+        "skill_subtype_rid",
+        "skill_type_others",
+        "skill_subtype_others",
+        "comments",
+        "skill_details",
         "years_of_experience",
         "fiscal_year",
         "modified_by",
@@ -830,11 +836,6 @@ class ResourceSkillService {
         resourceSkillById.modified_by = userNames.modified_by_name;
       }
 
-      // Format dates to MM/DD/YYYY with proper parsing
-      if (resourceSkillById?.start_date) {
-        resourceSkillById.dataValues.start_date = moment(resourceSkillById.start_date, "YYYY-MM-DD").format("MM/DD/YYYY") as any;
-      }
-
       const resourceInfo = (resourceSkillById as any).Resource;
 
       if (resourceInfo) {
@@ -853,6 +854,33 @@ class ResourceSkillService {
           }
         }
       }
+
+      // Get the main database connection
+    const mainDbSequelize = await this.getMainDbSequelize();
+
+    // Fetch skill type name
+    const skillTypeQuery = `SELECT skill_type_name FROM "public"."skill_type" WHERE rid = :skillTypeRid`;
+    const skillType = await mainDbSequelize.query(skillTypeQuery, {
+      replacements: { skillTypeRid: resourceSkillById?.skill_type_rid },
+      type: "SELECT",
+      plain: true
+    });
+
+    // Fetch skill subtype name
+    const skillSubtypeQuery = `SELECT skill_subtype_name FROM "public"."skill_subtype" WHERE rid = :skillSubtypeRid`;
+    const skillSubtype = await mainDbSequelize.query(skillSubtypeQuery, {
+      replacements: { skillSubtypeRid: resourceSkillById?.skill_subtype_rid },
+      type: "SELECT",
+      plain: true
+    });
+
+    if (resourceSkillById && resourceSkillById.dataValues) {
+      resourceSkillById.dataValues = {
+        ...resourceSkillById.dataValues,
+        skill_type_name: skillType?.skill_type_name?.toString() || '',
+        skill_subtype_name: skillSubtype?.skill_subtype_name?.toString() || ''
+      };
+    }
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -940,6 +968,87 @@ class ResourceSkillService {
     date.hour(12).minute(0).second(0).millisecond(0);
 
     return date.toDate();
+  }
+
+  async getSkillTypes(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { skillTypes: any[]};
+  }> {
+    try {
+      const mainDbSequelize = await this.getMainDbSequelize();
+      
+      const skillTypes = await mainDbSequelize.query(
+        `SELECT 
+          rid,
+          skill_type_name,
+          skill_type_description,
+          status,
+          created_by,
+          modified_by,
+          created_datetime,
+          modified_datetime
+        FROM skill_type 
+        WHERE status = 'active'
+        ORDER BY skill_type_name ASC`,
+        {
+          type: QueryTypes.SELECT
+        }
+      );
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          skillTypes
+        }
+      };
+
+    } catch (err) {
+      return this.throwServiceError(err as Error);
+    }
+  }
+
+  async getSkillSubTypes(skillTypeRid: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { skillSubTypes: any[]};
+  }> {
+    try {
+      const mainDbSequelize = await this.getMainDbSequelize();
+
+      const skillSubTypes = await mainDbSequelize.query(
+        `SELECT
+          rid,
+          skill_subtype_name,
+          skill_subtype_description,
+          status,
+          created_by,
+          modified_by,
+          created_datetime,
+          modified_datetime
+        FROM skill_subtype
+        WHERE skill_type_rid = :skillTypeRid AND status = 'active'
+        ORDER BY skill_subtype_name ASC`,
+        {
+          replacements: { skillTypeRid },
+          type: QueryTypes.SELECT
+        }
+      )
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          skillSubTypes
+        }
+      };
+
+    }
+    catch (err) {
+      return this.throwServiceError(err as Error);
+    }
   }
 }
 

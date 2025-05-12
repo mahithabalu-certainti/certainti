@@ -1,5 +1,6 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { Resources } from "./resource";
+import { R_NUMBER_PREFIX } from "../utils/constants";
 
 interface ResourceCostAttributes {
   rid: string;
@@ -22,7 +23,9 @@ interface ResourceCostAttributes {
   daily_cost?: number;
   hourly_cost?: number;
   currency_rid?: string;
+  fiscal_year: number;
   status?: string;
+  comments?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
   created_by?: string;
@@ -48,6 +51,7 @@ export class ResourceCost
   end_date?: Date;
   cost?: number;
   cost_type?: string;
+  fiscal_year!: number;
   annual_cost?: number;
   semi_annual_cost?: number;
   monthly_cost?: number;
@@ -57,6 +61,7 @@ export class ResourceCost
   hourly_cost?: number;
   currency_rid?: string;
   status?: string;
+  comments?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
   created_by?: string;
@@ -96,6 +101,10 @@ export class ResourceCost
         },
         resource_number: {
           type: DataTypes.STRING(255),
+          allowNull: false,
+        },
+        fiscal_year: {
+          type: DataTypes.INTEGER,
           allowNull: false,
         },
         effective_date: {
@@ -180,6 +189,10 @@ export class ResourceCost
           type: DataTypes.STRING(255),
           defaultValue: "active",
         },
+        comments: {
+          type: DataTypes.STRING(2000),
+          allowNull: true,
+        },
         created_datetime: {
           type: DataTypes.DATE,
           allowNull: true,
@@ -219,24 +232,17 @@ export class ResourceCost
           beforeCreate: async (resourceCost: ResourceCost) => {
             // Generate r_number if not provided
             if (!resourceCost.r_number) {
-              // Get the latest resource cost to determine the next number
-              const latestResourceCost = await ResourceCost.findOne({
-                order: [["created_datetime", "DESC"]],
-              });
-
-              // Extract the numeric part if a previous record exists, or start with 1
-              let nextNumber = 1;
-              if (latestResourceCost && latestResourceCost.r_number) {
-                const match = latestResourceCost.r_number.match(/RC(\d+)/);
-                if (match && match[1]) {
-                  nextNumber = parseInt(match[1], 10) + 1;
-                }
-              }
-
-              // Format the r_number with leading zeros (e.g., RC00001)
-              resourceCost.r_number = `RC${nextNumber
-                .toString()
-                .padStart(5, "0")}`;
+              // Get the latest cost number and increment it
+            const latestAccount = await ResourceCost.findOne({
+              order: [['r_number', 'DESC']],
+            });
+            
+            let nextNumber = '0000000001';
+            if (latestAccount) {
+              const currentNumber = parseInt(latestAccount.r_number?.split(' ')[1] || '0');
+              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
+            }
+              resourceCost.r_number = `${R_NUMBER_PREFIX.RESOURCE_COST} ${nextNumber}`;
             }
           },
         },

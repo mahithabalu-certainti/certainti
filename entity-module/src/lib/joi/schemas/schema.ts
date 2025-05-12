@@ -341,18 +341,18 @@ const createResourceSkillSchema = Joi.object({
   resource_rid: Joi.string().max(255).optional().allow(null).allow(""),
   resource_number: Joi.string().max(255).required(),
   resource_ref_id: Joi.string().max(255).required(),
-  resource_desc: Joi.string().max(100).optional().allow(null).allow(""),
-  start_date: Joi.string()
-    .max(10)
-    .custom(isNotFutureDate, "Start date validation")
+  start_date: Joi.number()
+    .integer()
+    .min(1900)
+    .max(9999)
     .optional()
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "start_date must be in the format MM/DD/YYYY",
-      "any.invalid": "Date cannot be in the future.",
-      "date.invalidFormat":
-        "Invalid start date. Please use the format MM/DD/YYYY",
+      "number.base": "Start date must be a valid year",
+      "number.min": "Start date must be a 4-digit year",
+      "number.max": "Start date must be a 4-digit year",
+      "any.invalid": "Year cannot be in the future"
     }),
   skill_description: Joi.string().max(255).optional().allow(null).allow(""),
   skill_level: Joi.string()
@@ -360,28 +360,32 @@ const createResourceSkillSchema = Joi.object({
     .optional()
     .allow("")
     .allow(null),
-  years_of_experience: Joi.number().min(0).max(99).optional().allow(null),
+  skill_type_rid: Joi.string().max(255).required(),
+  skill_subtype_rid: Joi.string().max(255).required(),
+  skill_type_others: Joi.string().max(255).optional().allow(null).allow(""),
+  skill_subtype_others: Joi.string().max(255).optional().allow(null).allow(""),
+  skill_details: Joi.string().max(2000).optional().allow(null).allow(""),
+  comments: Joi.string().max(2000).optional().allow(null).allow(""),  
   created_by: Joi.string().max(255).optional().allow(null).allow(""),
   modified_by: Joi.string().max(255).optional().allow(null).allow(""),
-  technical_weightage: Joi.number().min(0).optional().allow(null),
-  skill_name: Joi.string().max(255).required().trim(),
-  skill_type: Joi.string().max(255).optional().allow(null).allow(""),
   accountNumber: Joi.string().max(255).required(),
 });
 
 const updateResourceSkillSchema = Joi.object({
   rid: Joi.string().max(255).required(),
   eid: Joi.string().max(255).optional().allow(null).allow(""),
-  start_date: Joi.string()
-    .max(10)
-    .custom(isNotFutureDate, "start date validation")
+  start_date: Joi.number()
+    .integer()
+    .min(1900)
+    .max(9999)
     .optional()
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "start_date must be in the format MM/DD/YYYY",
-      "any.invalid": "Date cannot be in the future.",
-      "date.invalidFormat": "start date. Please use the format MM/DD/YYYY",
+      "number.base": "Start date must be a valid year",
+      "number.min": "Start date must be a 4-digit year",
+      "number.max": "Start date must be a 4-digit year",
+      "any.invalid": "Year cannot be in the future"
     }),
   skill_description: Joi.string().max(255).optional().allow(null).allow(""),
   skill_level: Joi.string()
@@ -389,12 +393,14 @@ const updateResourceSkillSchema = Joi.object({
     .optional()
     .allow("")
     .allow(null),
-  skill_name: Joi.string().max(255).required().trim(),
-  years_of_experience: Joi.number().min(0).max(99).optional().allow(null),
   modified_by: Joi.string().max(255).optional(),
-  technical_weightage: Joi.number().min(0).optional().allow(null),
-  skill_type: Joi.string().max(255).optional().allow(null).allow(""),
-  status: Joi.string().max(255).default("active").optional(),
+  skill_type_rid: Joi.string().max(255).required(),
+  skill_subtype_rid: Joi.string().max(255).required(),
+  skill_type_others: Joi.string().max(255).optional().allow(null).allow(""),
+  skill_subtype_others: Joi.string().max(255).optional().allow(null).allow(""),
+  skill_details: Joi.string().max(2000).optional().allow(null).allow(""),
+  comments: Joi.string().max(2000).optional().allow(null).allow(""),
+  status: Joi.string().max(255).optional(),
   modified_datetime: Joi.date()
     .iso()
     .default(() => new Date()),
@@ -506,6 +512,19 @@ const updateResourceCostSchema = Joi.object({
       "any.required": "Cost is required"
     }),
   status: Joi.string().max(255).default("active").optional(),
+  fiscal_year: Joi.number()
+   .integer()
+   .min(1000)
+   .max(9999)
+   .allow(0)
+   .optional()
+   .messages({
+      "number.base": "Fiscal year must be a number",
+      "number.min": "Fiscal year must be a 4-digit number",
+      "number.max": "Fiscal year must be a 4-digit number",
+      "any.required": "Fiscal year is required",
+   }),
+  comments: Joi.string().max(2000).optional().allow("").allow(null), 
   modified_datetime: Joi.date()
     .iso()
     .default(() => new Date()),
@@ -619,9 +638,21 @@ const resourceCostSchema = Joi.object({
       "string.empty": "Cost is required",
       "any.required": "Cost is required"
     }),
-  fiscalYear: Joi.number().optional(),
+    fiscal_year: Joi.number()
+    .integer()
+    .min(1000)
+    .max(9999)
+    .allow(0)
+    .optional()
+    .messages({
+       "number.base": "Fiscal year must be a number",
+       "number.min": "Fiscal year must be a 4-digit number",
+       "number.max": "Fiscal year must be a 4-digit number",
+       "any.required": "Fiscal year is required",
+    }),
   currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
   status: Joi.string().max(255).default("active"),
+  comments: Joi.string().max(2000).optional().allow(null).allow(""),
   created_datetime: Joi.date()
     .iso()
     .default(() => new Date()),
@@ -637,8 +668,9 @@ const createProjectSchema = Joi.object({
     .guid({ version: ["uuidv4"] })
     .required(),
   project_ref_id: Joi.string().min(5).max(50).required(),
-  industry: Joi.string().min(4).max(100).required(),
   project_name: Joi.string().min(4).max(100).optional().allow("").allow(null),
+  industry_rid: Joi.string().min(4).max(100).required(),
+  industry_name: Joi.string().min(4).max(100).required(),
   client_organization: Joi.string().min(4).max(100).required(),
   project_startdate: Joi.string()
     .max(10)
@@ -667,7 +699,7 @@ const createProjectSchema = Joi.object({
       "date.invalidFormat": "Invalid Project end date.",
     }),
   project_type: Joi.string().valid("Fixed", "Time & Material").required(),
-  project_classification: Joi.string()
+  project_classification_rid: Joi.string()
     .max(100)
     .optional()
     .allow("")
@@ -734,33 +766,27 @@ const createProjectSchema = Joi.object({
 
       return value;
     }, "Comma-separated email validator"),
-  total_effort: Joi.number().greater(0).optional().allow(null),
-  total_cost: Joi.number()
-    .precision(2)
-    .positive()
-    .max(9999999999.99)
+  total_effort: Joi.string()
+  .pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
+  total_cost: Joi.string()
+  .pattern(/^\d+(\.\d{0,2})?$/)
     .allow(null)
     .optional(),
   total_fte: Joi.number().greater(0).optional().allow(null),
   total_sub_con: Joi.number().greater(0).optional().allow(null),
-  total_non_labor_cost: Joi.number()
-    .precision(2)
-    .positive()
-    .max(9999999999.99)
+  total_non_labor_cost: Joi.string()
+  .pattern(/^\d+(\.\d{0,2})?$/)
     .optional()
     .allow(null),
-  total_fte_effort: Joi.number().greater(0).optional().allow(null),
-  total_sub_con_effort: Joi.number().greater(0).optional().allow(null),
-  total_fte_cost: Joi.number()
-    .precision(2)
-    .positive()
-    .max(9999999999.99)
-    .optional()
+  total_fte_effort: Joi.string()
+  .pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
+  total_sub_con_effort: Joi.string()
+  .pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
+  total_fte_cost: Joi.string()
+  .pattern(/^\d+(\.\d{0,2})?$/)
     .allow(null),
-  total_sub_con_cost: Joi.number()
-    .precision(2)
-    .positive()
-    .max(9999999999.99)
+  total_sub_con_cost: Joi.string()
+  .pattern(/^\d+(\.\d{0,2})?$/)
     .optional()
     .allow(null),
   last_rd_ai_assess_on: Joi.string()
@@ -799,14 +825,44 @@ const createProjectSchema = Joi.object({
     .allow(null)
     .allow(""),
   project_description: Joi.string().max(2000).allow(null).allow(""),
+  key_contacts: Joi.array()
+  .items(
+  Joi.object({
+      key_contact_name: Joi.string().pattern(/^(?!.*(['-])\1)[A-Za-z][A-Za-z' -]{0,126}[A-Za-z]$/).min(2).max(128).optional().allow("").allow(null)
+      .messages({
+        "string.base": "Key Contact Name must be a text value.",
+        "string.min": "Key Contact Name must be at least 2 characters long.",
+        "string.max": "Key Contact Name cannot exceed 128 characters.",
+        "string.pattern.base":
+          " Key Contact Name is not valid",
+      }),
+      key_contact_email: Joi.string()
+      .trim()
+      .regex(/^[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]*[a-zA-Z0-9])?@[a-zA-Z0-9-]+\.[a-zA-Z]{2,63}$/) 
+      .min(3).max(125).optional().allow("").allow(null).messages({
+        "string.base": "Key Contact Email must be a text value.",
+        "string.empty": "Key Contact Email cannot be empty.",
+        "string.min": "Key Contact Email must be at least 6 characters long.",
+        "string.max": "Key Contact Email cannot exceed 254 characters.",
+        "string.pattern.base": "Key Contact Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
+      }),
+      key_contact_role_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
+      is_primary_contact: Joi.boolean().valid(true, false).optional(),
+      include_in_communication: Joi.boolean().valid(true, false).optional(),
+      status: Joi.string().valid('active', 'inactive').required(),
+      action_type: Joi.string().valid('add', 'edit','delete').required()
+    })
+  )
+  .optional()
 });
 
 const updateProjectSchema = Joi.object({
   project_id: Joi.string().guid({ version: ["uuidv4"] }).required(),
   account_id: Joi.string().guid({ version: ["uuidv4"] }).required(),
   project_ref_id: Joi.string().min(5).max(50).required(),
-  industry: Joi.string().min(4).max(100).required(),
   project_name: Joi.string().min(4).max(100).optional().allow("").allow(null),
+  industry_rid: Joi.string().min(4).max(100).required(),
+  industry_name: Joi.string().min(4).max(100).required(),
   client_organization: Joi.string().min(4).max(100).required(),
 
   project_startdate: Joi.string()
@@ -834,7 +890,7 @@ const updateProjectSchema = Joi.object({
     }),
 
   project_type: Joi.string().valid("Fixed", "Time & Material").required(),
-  project_classification: Joi.string().max(100).optional().allow("").allow(null),
+  project_classification_rid: Joi.string().max(100).optional().allow("").allow(null),
   project_client_group: Joi.string().max(200).optional().allow("").allow(null),
   project_group: Joi.string().max(150).optional().allow("").allow(null),
   project_summary: Joi.string().max(1000).optional().allow("").allow(null),
@@ -873,15 +929,15 @@ const updateProjectSchema = Joi.object({
       return value;
     }),
 
-  total_effort: Joi.number().greater(0).optional().allow(null),
-  total_cost: Joi.number().precision(2).positive().max(9999999999.99).optional().allow(null),
+  total_effort: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
+  total_cost: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
   total_fte: Joi.number().greater(0).optional().allow(null),
   total_sub_con: Joi.number().greater(0).optional().allow(null),
-  total_non_labor_cost: Joi.number().precision(2).positive().max(9999999999.99).optional().allow(null),
-  total_fte_effort: Joi.number().greater(0).optional().allow(null),
-  total_sub_con_effort: Joi.number().greater(0).optional().allow(null),
-  total_fte_cost: Joi.number().precision(2).positive().max(9999999999.99).optional().allow(null),
-  total_sub_con_cost: Joi.number().precision(2).positive().max(9999999999.99).optional().allow(null),
+  total_non_labor_cost: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
+  total_fte_effort: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
+  total_sub_con_effort: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
+  total_fte_cost: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
+  total_sub_con_cost: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
 
   last_rd_ai_assess_on: Joi.string()
   .max(10)
@@ -919,6 +975,40 @@ const updateProjectSchema = Joi.object({
     .allow(null),
 
   project_description: Joi.string().max(2000).allow(null).allow(""),
+  key_contacts: Joi.array()
+    .items(
+      Joi.object({
+        key_contact_id: Joi.string().when("action_type", {
+          is: Joi.string().valid("edit", "delete"),
+          then: Joi.required(),
+          otherwise: Joi.forbidden(),
+        }),
+        key_contact_name: Joi.string().pattern(/^(?!.*(['-])\1)[A-Za-z][A-Za-z' -]{0,126}[A-Za-z]$/).min(2).max(128).optional().allow("").allow(null)
+        .messages({
+          "string.base": "Key Contact Name must be a text value.",
+          "string.min": "Key Contact Name must be at least 2 characters long.",
+          "string.max": "Key Contact Name cannot exceed 128 characters.",
+          "string.pattern.base":
+            " Key Contact Name is not valid",
+        }),
+        key_contact_email: Joi.string()
+        .trim()
+        .regex(/^[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]*[a-zA-Z0-9])?@[a-zA-Z0-9-]+\.[a-zA-Z]{2,63}$/) 
+        .min(3).max(125).optional().allow("").allow(null).messages({
+          "string.base": "Key Contact Email must be a text value.",
+          "string.empty": "Key Contact Email cannot be empty.",
+          "string.min": "Key Contact Email must be at least 6 characters long.",
+          "string.max": "Key Contact Email cannot exceed 254 characters.",
+          "string.pattern.base": "Key Contact Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
+        }),
+        key_contact_role_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
+        is_primary_contact: Joi.boolean().valid(true, false).optional(),
+        include_in_communication: Joi.boolean().valid(true, false).optional(),
+        status: Joi.string().valid('active', 'inactive').required(),
+        action_type: Joi.string().valid('add', 'edit','delete').required()
+      })
+    )
+    .optional()
 });
 
 export {

@@ -1,6 +1,7 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { Resources } from "./resource";
 import { Skill } from "./skill";
+import { R_NUMBER_PREFIX } from "../utils/constants";
 
 interface ResourceSkillAttributes  {
  rid: string,
@@ -10,19 +11,23 @@ interface ResourceSkillAttributes  {
  resource_type: string,
  resource_rid: string,
  resource_number: string,
- resource_ref_id: string, 
- resource_desc: string,
- skill_rid: string,
- start_date?: Date | null,
- skill_description?: string,
- skill_level: string,
- status?: string,
- years_of_experience: number,
+ resource_ref_id: string,
+ status?: string, 
+ skill_type_rid: string,
+ skill_subtype_rid: string,
+ skill_type_name?: string,
+ skill_subtype_name?: string,
+ skill_details?: string,             
+ start_date?: number | null,
+ skill_description?: string,     
+ skill_level: string,  
+ skill_type_others?: string,
+ skill_subtype_others?: string,
+ comments?: string,       
  created_datetime?: Date,
  modified_datetime?: Date,
  created_by?: string,
  modified_by?: string,
- technical_weightage: number
 }
 
 interface ResourceSkillCreationAttributes
@@ -38,18 +43,20 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
   resource_rid!: string;
   resource_number!: string;
   resource_ref_id!: string;
-  resource_desc!: string;
-  status?: string; 
-  skill_rid!: string;
-  start_date?: Date;
+  status?: string;
+  skill_type_rid!: string;
+  skill_subtype_rid!: string;
+  skill_details?: string;
+  start_date?: number;
   skill_description?: string;
   skill_level!: string;
-  years_of_experience!: number;
+  skill_type_others?: string;
+  skill_subtype_others?: string;
+  comments?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
   created_by?: string;
   modified_by?: string;
-  technical_weightage!: number;
 
   static initialize(sequelize: Sequelize,schemaName: string) {
     ResourceSkill.init(
@@ -83,17 +90,16 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
         type: DataTypes.STRING(255),
         allowNull: false,
        },
-       resource_desc : {
-         type: DataTypes.STRING(255),
-         allowNull: true,
-       },
-       skill_rid: {
-        type: DataTypes.UUID,
-        allowNull: false,
-       },
        start_date: {
-        type: DataTypes.DATE,
+        type: DataTypes.INTEGER,
         allowNull: true,
+        validate: {
+          isYear(value: number) {
+            if (value && (value < 1900 || value > 9999)) {
+              throw new Error('Start date must be a valid year between 1900 and 9999');
+            }
+          }
+        }
        },
        skill_description: {
         type: DataTypes.STRING(255),
@@ -104,21 +110,38 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
        allowNull: true,
        defaultValue: "Beginner", 
        },
-       years_of_experience: {
-         type: DataTypes.DECIMAL(10, 1),
-         allowNull: true,
+       skill_type_others: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+       },
+       skill_subtype_others: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
        },
        resource_ref_id: {
         type: DataTypes.STRING(255),
         allowNull: false,
        },
-       technical_weightage: {
-         type: DataTypes.DECIMAL(10, 2),
-         allowNull: true,
-       },
        status: {
         type: DataTypes.STRING(255),
+        allowNull: true,
         defaultValue: "active",
+       },
+       skill_type_rid: {
+        type: DataTypes.STRING(255),
+        allowNull: false,
+       },
+       skill_subtype_rid: {
+        type: DataTypes.STRING(255),
+        allowNull: false,
+       },
+       skill_details: {
+        type: DataTypes.STRING(2000),
+        allowNull: true,
+       },
+       comments: {
+        type: DataTypes.STRING(2000),
+        allowNull: true,
        },
        created_datetime: {
         type: DataTypes.DATE,
@@ -148,23 +171,18 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
         hooks: {
           beforeCreate: async (resourceSkill: ResourceSkill) => {
             // Generate r_number if not provided
-            if (!resourceSkill.r_number) {
-              // Get the latest resource skill to determine the next number
-              const latestResourceSkill = await ResourceSkill.findOne({
-                order: [['created_datetime', 'DESC']],
-              });
-              
-              // Extract the numeric part if a previous record exists, or start with 1
-              let nextNumber = 1;
-              if (latestResourceSkill && latestResourceSkill.r_number) {
-                const match = latestResourceSkill.r_number.match(/RSK(\d+)/);
-                if (match && match[1]) {
-                  nextNumber = parseInt(match[1], 10) + 1;
-                }
-              }
-              
-              // Format the r_number with leading zeros (e.g., RSK00001)
-              resourceSkill.r_number = `RSK${nextNumber.toString().padStart(5, '0')}`;
+            if (!resourceSkill.r_number) { 
+              // Get the latest resource skill number and increment it
+            const latestAccount = await ResourceSkill.findOne({
+              order: [['r_number', 'DESC']],
+            });
+            
+            let nextNumber = '0000000001';
+            if (latestAccount) {
+              const currentNumber = parseInt(latestAccount.r_number?.split(' ')[1] || '0');
+              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
+            }             
+              resourceSkill.r_number = `${R_NUMBER_PREFIX.RESOURCE_SKILL} ${nextNumber}`;
             }
           }
         }
@@ -184,15 +202,15 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
     });
 
     // Skill model
-    ResourceSkill.belongsTo(Skill,{
-      foreignKey: "skill_rid",
-      targetKey: "rid",
-    });
+    // ResourceSkill.belongsTo(Skill,{
+    //   foreignKey: "skill_rid",
+    //   targetKey: "rid",
+    // });
 
-    Skill.hasMany(ResourceSkill, {
-      foreignKey: "skill_rid",
-      sourceKey: "rid",
-    });
+    // Skill.hasMany(ResourceSkill, {
+    //   foreignKey: "skill_rid",
+    //   sourceKey: "rid",
+    // });
 
     return ResourceSkill;
   }

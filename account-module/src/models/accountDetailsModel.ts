@@ -14,16 +14,13 @@ interface AccountDetailsAttributes {
   blended_rate_subcon?: string;
   created_by?: string;
   modified_by?: string;
-  primary_contact_email: string;
-  primary_contact_number: string;
-  finance_poc_name: string;
-  finance_poc_email: string;
-  finanace_poc_number: string;
   website?: string;
   project_manager: string;
   database_level: boolean;
   data_residency?: string;
   data_storage?: string;
+  business_details: string;
+  comments?: string;
 }
 
 interface AccountDetailsCreationAttributes
@@ -48,17 +45,15 @@ class AccountDetails
   public blended_rate_subcon?: string;
   public created_by?: string;
   public modified_by?: string;
-  public primary_contact_email!: string;
-  public primary_contact_number!: string;
-  public finance_poc_name!: string;
-  public finance_poc_email!: string;
-  public finanace_poc_number!: string;
-  public industry!: string;
+  public industry_rid!: string;
+  public industry_name_other?: string;
   public website?: string;
   public project_manager!: string;
   public database_level!: boolean;
   public data_residency?: string;
   public data_storage?: string;
+  public business_details!: string;
+  public comments?: string;
   public created_datetime?: Date;
   public modified_datetime?: Date;
 
@@ -128,32 +123,7 @@ AccountDetails.init(
       type: DataTypes.STRING(255),
       allowNull: true,
     },
-    primary_contact_email: {
-      type: DataTypes.STRING(50),
-      allowNull: false,
-      validate: {
-        isEmail: true,
-      },
-    },
-    primary_contact_number: {
-      type: DataTypes.STRING(50),
-      allowNull: false,
-    },
-    finance_poc_name: {
-      type: DataTypes.STRING(25),
-      allowNull: false,
-    },
-    finance_poc_email: {
-      type: DataTypes.STRING(50),
-      allowNull: false,
-      validate: {
-        isEmail: true,
-      },
-    },
-    finanace_poc_number: {
-      type: DataTypes.STRING(50),
-      allowNull: false,
-    },
+  
     website: {
       type: DataTypes.STRING(50),
       allowNull: true,
@@ -171,6 +141,14 @@ AccountDetails.init(
     },
     data_residency: {
       type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    business_details: {
+      type: DataTypes.STRING(2000),
+      allowNull: false,
+    },
+    comments: {
+      type: DataTypes.STRING(2000),
       allowNull: true,
     },
     data_storage: {

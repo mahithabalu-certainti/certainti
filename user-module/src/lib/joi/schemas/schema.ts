@@ -10,7 +10,16 @@ const createUserSchema = Joi.object({
   first_name: Joi.string().min(3).max(64).required(),
   last_name: Joi.string().min(3).max(64).required(),
   middle_name: Joi.string().min(3).max(64).optional(),
-  email: Joi.string().email().min(10).max(255).required(),
+  email: Joi.string()
+  .trim()
+  .regex(/^[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]*[a-zA-Z0-9])?@[a-zA-Z0-9-]+\.[a-zA-Z]{2,63}$/) 
+  .min(10).max(255).required().allow("").allow(null).messages({
+    "string.base": "Email must be a text value.",
+    "string.empty": "Email cannot be empty.",
+    "string.min": "Email must be at least 6 characters long.",
+    "string.max": "Email cannot exceed 254 characters.",
+    "string.pattern.base": "Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
+  }),
   profile_id: Joi.string().max(255).required(),
   role: Joi.string().max(255).required(),
   status: Joi.string().valid("active", "inactive").required(),
@@ -29,7 +38,16 @@ const enterpriseUserSchema = Joi.object({
   last_name: Joi.string().min(3).max(64).required(),
   middle_name: Joi.string().max(255).optional(),
   status: Joi.string().valid("active", "inactive").required(),
-  email: Joi.string().email().max(255).required(),
+  email: Joi.string()
+  .trim()
+  .regex(/^[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]*[a-zA-Z0-9])?@[a-zA-Z0-9-]+\.[a-zA-Z]{2,63}$/) 
+  .min(10).max(255).required().allow("").allow(null).messages({
+    "string.base": "Email must be a text value.",
+    "string.empty": "Email cannot be empty.",
+    "string.min": "Email must be at least 6 characters long.",
+    "string.max": "Email cannot exceed 254 characters.",
+    "string.pattern.base": "Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
+  }),
   mobile: Joi.string().max(10).required(),
   profile_id: Joi.string().max(255).required(),
   designation: Joi.string().max(255).required(),

@@ -1,7 +1,7 @@
 import moment, { Moment } from "moment";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Resources } from "../models/resource";
-import { ICreateResource, IUpdateResource } from "../utils/types";
+import { ICreateResource, IKeyContactDetail, IUpdateResource } from "../utils/types";
 import { DataTypes, Op, Sequelize } from "sequelize";
 import { ResourceFiscal } from "../models/resourceFiscal";
 import { initMainDbSequelize } from "../config/mainDataSource";
@@ -105,7 +105,7 @@ class SchemaService {
       await ResourcesHistoryModel.sync({ force: false });
       await ResourcesTimelineModel.sync({ force: false });
       await ResourceCostModel.sync({ force: false });
-      await SkillModel.sync({ force: false });
+      // await SkillModel.sync({ force: false });
       await ResourceSkillModel.sync({ force: false });
     } catch (err) {
       throw new Error(
@@ -131,7 +131,6 @@ class SchemaService {
     order: any[],
     whereClause: Record<string, string> = {},
     fiscalYear: number,
-    goeDataFilters: Record<string, any> = {},
     geoDataSort: string[][]
   ) {
     try {
@@ -195,9 +194,8 @@ class SchemaService {
       if (resources) {
         // Process geo data for all records
         finalResources = await this.insertGeoData(resources, mainDdSequilze);
-        finalResources = await this.sortAndFilteGeoData(
+        finalResources = await this.sortGeoData(
           finalResources,
-          goeDataFilters,
           geoDataSort
         );
 
@@ -339,7 +337,6 @@ class SchemaService {
     order: any[],
     whereClause: Record<string, string> = {},
     fiscalYear: number,
-    goeDataFilters: Record<string, any> = {},
     geoDataSort: string[][]
   ) {
     try {
@@ -388,9 +385,8 @@ class SchemaService {
 
       if (resources) {
         finalResources = await this.insertGeoData(resources, mainDdSequilze);
-        finalResources = await this.sortAndFilteGeoData(
+        finalResources = await this.sortGeoData(
           finalResources,
-          goeDataFilters,
           geoDataSort
         );
       }
@@ -886,159 +882,42 @@ class SchemaService {
     }
   }
 
-  async insertGeoData(resources: any, mainDdSequilze: Sequelize) {
-    try {
-      const countryIds = [
-        ...new Set(resources.map((r: any) => r.resource_country)),
-      ].filter(Boolean);
-      const regionIds = [
-        ...new Set(resources.map((r: any) => r.resource_region)),
-      ].filter(Boolean);
-      const cityIds = [
-        ...new Set(resources.map((r: any) => r.resource_city)),
-      ].filter(Boolean);
-
-      let countryRows: any[] = [];
-      let states: any[] = [];
-      let cities: any[] = [];
-
-      if (countryIds.length > 0) {
-        countryRows = await mainDdSequilze.query(
-          `SELECT rid, country_name FROM country WHERE rid IN (:ids)`,
-          {
-            replacements: { ids: countryIds },
-            type: "SELECT",
-          }
-        );
-      }
-
-      if (regionIds.length > 0) {
-        states = await mainDdSequilze.query(
-          `SELECT rid, state_name FROM state WHERE rid IN (:ids)`,
-          {
-            replacements: { ids: regionIds },
-            type: "SELECT",
-          }
-        );
-      }
-
-      if (cityIds.length > 0) {
-        cities = await mainDdSequilze.query(
-          `SELECT rid, city_name FROM city WHERE rid IN (:ids)`,
-          {
-            replacements: { ids: cityIds },
-            type: "SELECT",
-          }
-        );
-      }
-
-      const countryMap = Object.fromEntries(
-        (Array.isArray(countryRows) ? countryRows : []).map((c: any) => [
-          c.rid,
-          c,
-        ])
-      );
-
-      const regionMap = Object.fromEntries(
-        (Array.isArray(states) ? states : []).map((s: any) => [s.rid, s])
-      );
-
-      const cityMap = Object.fromEntries(
-        (Array.isArray(cities) ? cities : []).map((s: any) => [s.rid, s])
-      );
-
-      const updatedResources = resources.map((res: any) => ({
-        ...res.toJSON(),
-        country_name: countryMap[res.resource_country]?.country_name || null,
-        region_name: regionMap[res.resource_region]?.state_name || null,
-        city_name: cityMap[res.resource_city]?.city_name || null,
-      }));
-
-      return updatedResources;
-    } catch (err) {
-      throw new Error("Error fetching geo data: " + (err as Error).message);
-    }
-  }
-
-  async sortAndFilteGeoData(
+  async sortGeoData(
     resources: any[],
-    whereClause: Record<string, any> = {},
     order: string[][] = []
-  ): Promise<any[]> {
-    const updatedResources = resources
-      .filter((res) => {
-        if (
-          whereClause.city &&
-          !this.applyTextFilter(res.city_name, whereClause.city)
-        ) {
-          return false;
+): Promise<any[]> {
+
+    // Apply sorting if specified
+    if (order && order.length > 0) {
+      const [sortField, sortDirection] = order[0];
+      const isAsc = sortDirection.toUpperCase() === 'ASC';
+
+      resources = resources.sort((a, b) => {
+        let compareValueA, compareValueB;
+
+        switch (sortField) {
+          case 'resource_country':
+            compareValueA = a.country_name || '';
+            compareValueB = b.country_name || '';
+            break;
+          case 'resource_region':
+            compareValueA = a.region_name || '';
+            compareValueB = b.region_name || '';
+            break;
+          default:
+            return 0;
         }
 
-        if (
-          whereClause.country &&
-          !this.applyTextFilter(res.country_name, whereClause.country)
-        ) {
-          return false;
+        if (isAsc) {
+          return compareValueA.localeCompare(compareValueB);
+        } else {
+          return compareValueB.localeCompare(compareValueA);
         }
-
-        if (
-          whereClause.region &&
-          !this.applyTextFilter(res.region_name, whereClause.region)
-        ) {
-          return false;
-        }
-
-        return true;
-        // if (
-        //   whereClause.city?.length &&
-        //   !whereClause.city.some((c: any) =>
-        //     res.city_name?.toLowerCase().includes(c.toLowerCase())
-        //   )
-        // ) {
-        //   return false;
-        // }
-
-        // if (
-        //   whereClause.country?.length &&
-        //   !whereClause.country.some((c: any) =>
-        //     res.country_name?.toLowerCase().includes(c.toLowerCase())
-        //   )
-        // ) {
-        //   return false;
-        // }
-
-        // if (
-        //   whereClause.state?.length &&
-        //   !whereClause.state.some((r: any) =>
-        //     res.state_name?.toLowerCase().includes(r.toLowerCase())
-        //   )
-        // ) {
-        //   return false;
-        // }
-        // return true;
-      })
-      .sort((a, b) => {
-        const [field, direction] = order[0] || [];
-        const dir = direction === "ASC" ? 1 : -1;
-
-        if (field === "resource_country") {
-          return (
-            (a.country_name || "").localeCompare(b.country_name || "") * dir
-          );
-        }
-        if (field === "resource_region") {
-          return (a.region_name || "").localeCompare(b.region_name || "") * dir;
-        }
-
-        if (field === "resource_city") {
-          return (a.city_name || "").localeCompare(b.city_name || "") * dir;
-        }
-
-        return 0;
       });
+    }
 
-    return updatedResources;
-  }
+    return resources;
+}
 
   applyTextFilter(value: string | null | undefined, filter: any): boolean {
     const val = (value || "").toLowerCase();
@@ -1073,7 +952,7 @@ class SchemaService {
     return true;
   }
 
-  async insertProjectGeoData(project: any, mainDdSequilze: Sequelize) {
+  async insertProjectGeoData(project: any, mainDdSequilze: Sequelize,keyContacts:any) {
     try {
       const countryId = project.country;
       const regionId = project.region;
@@ -1121,6 +1000,7 @@ class SchemaService {
 
       project.dataValues = {
         ...project.dataValues,
+        key_contacts:keyContacts,
         country_name: countryRow?.country_name || null,
         state_name: regionRow?.region_name || null,
         city_name: currencyRow?.currency_name || null,
@@ -1377,7 +1257,8 @@ class SchemaService {
           rid: DataTypes.UUID,
           r_number: DataTypes.TEXT,
           project_ref_id: DataTypes.TEXT,
-          industry: DataTypes.TEXT,
+          industry_rid: DataTypes.UUID,
+          industry_name: DataTypes.TEXT,
           project_name: DataTypes.TEXT,
           project_description: DataTypes.TEXT,
           project_manager: DataTypes.TEXT,
@@ -1496,13 +1377,13 @@ class SchemaService {
 
     let baseQuery = `
       INSERT INTO temp_project_data (
-        rid, r_number, project_ref_id, industry, project_name, project_description,
+        rid, r_number, project_ref_id, industry_rid,industry_name, project_name, project_description,
         project_manager, project_lead, total_effort, total_cost, spoc_name,
         spoc_email, project_status, project_startdate, project_enddate, created_datetime,
         created_by, fiscal_year, account_rid, source_schema
       )
       SELECT 
-        rid, r_number, project_ref_id, industry, project_name, project_description,
+        rid, r_number, project_ref_id, industry_rid,industry_name project_name, project_description,
         project_manager, project_lead, total_effort, total_cost, spoc_name,
         spoc_email, project_status, project_startdate, project_enddate, created_datetime,
         created_by, fiscal_year, account_rid, :schemaName
@@ -1539,6 +1420,187 @@ class SchemaService {
     });
   }
 
+  async manageKeyContacts(
+    key_contacts: IKeyContactDetail,
+    account_rid: string,
+    projectId: string,
+    userId: string
+  ) {
+    
+  try {
+    for (const contact of Object.values(key_contacts)) {
+      console.log("action",contact.action_type)
+      if(contact.action_type === 'edit')
+      {
+        if (contact.key_contact_name || contact.key_contact_email || contact.key_contact_role_rid) {
+          this.updateKeyContactDetails(
+            contact,
+            account_rid,
+            projectId,
+            userId
+          )
+        }
+      }
+      else if(contact.action_type === 'delete')
+      {
+        {
+          this.deleteKeyContactDetails(
+            account_rid,
+            projectId,
+            contact.key_contact_id
+          )
+        }
+      }
+      else if(contact.action_type === 'add')
+      {
+        if (contact.key_contact_name || contact.key_contact_email || contact.key_contact_role_rid) {
+        this.insertKeyContactDetails(
+          contact,
+          account_rid,
+          projectId,
+          userId
+        )
+      }
+      }
+    }
+  }
+    catch(Error)
+    {
+      console.log(Error)
+    }
+  }
+  async deleteKeyContactDetails(account_rid: string,key_contact_id: string,project_rid:string){
+    const sequelize = await initOrgSequelize();
+    await sequelize.query(
+      `DELETE FROM "public"."key_contact_details" 
+       WHERE key_contact_id = :key_contact_id AND account_rid = :account_rid and project_rid = :project_rid and contact_type = 'Project'`,
+      {
+        replacements: {
+          key_contact_id,
+          account_rid,
+          project_rid
+        }
+      }
+    );
+  }
+  async updateKeyContactDetails(
+    key_contact: IKeyContactDetail,
+    account_rid: string,
+    project_rid:string,
+    userId: string,
+) {
+  const keyContactDetails = key_contact;
+      const sequelize = await initOrgSequelize();
+      try {
+
+        await sequelize.query(
+          `
+            UPDATE "public"."key_contact_details"
+            SET 
+              key_contact_name = :key_contact_name,
+              key_contact_email = :key_contact_email,
+              key_contact_role_rid = :key_contact_role_rid,
+              status = :status,
+              is_primary_contact = :is_primary_contact,
+              include_in_communication = :include_in_communication,
+              modified_by = :modified_by
+            WHERE account_rid = :account_rid
+            AND key_contact_id = :key_contact_id
+            AND project_rid = :project_rid
+            AND contact_type = 'Project'
+          `,
+          {
+            replacements: {
+              key_contact_id: keyContactDetails.key_contact_id,
+              account_rid: account_rid,
+              project_rid:project_rid,
+              key_contact_name: keyContactDetails.key_contact_name,
+              key_contact_email: keyContactDetails.key_contact_email,
+              key_contact_role_rid: keyContactDetails.key_contact_role_rid,
+              status: keyContactDetails.status,
+              is_primary_contact: keyContactDetails.is_primary_contact,
+              include_in_communication: keyContactDetails.include_in_communication,
+              modified_by: userId
+            },
+          }
+        );
+      } catch (error) {
+        console.error("Error updating key contact details:", error);
+        throw error;
+      }
+  }
+  
+  async insertKeyContactDetails(
+    keyContacts: IKeyContactDetail,
+    account_rid: string,
+    project_rid: string,
+    userId: string,
+  ) {
+    const keyContactDetails = keyContacts;
+    const sequelize = await initOrgSequelize();
+    try {
+      const result = await sequelize.query(
+        `SELECT key_contact_id FROM "public"."key_contact_details" 
+         ORDER BY key_contact_id DESC LIMIT 1;`,
+        {
+          type: "SELECT",
+          plain: true,
+        }
+      ) as { key_contact_id: string };
+  
+      const keyContactId = result?.key_contact_id ?? '';
+      let lastKeyId = keyContactId.startsWith('KEY') ? parseInt(keyContactId.replace("KEY", "")) : 0;
+      
+      // Since keyContactDetails is a single object, not an array
+      lastKeyId++;
+      const key_contact_id = `KEY${String(lastKeyId).padStart(3, '0')}`;
+      
+      await sequelize.query(
+        `INSERT INTO "public"."key_contact_details" (
+          key_contact_id, account_rid, key_contact_name, project_rid,
+          key_contact_email, key_contact_role_rid, status, 
+          is_primary_contact, include_in_communication, 
+          created_by, modified_by, contact_type
+        ) VALUES (
+          :key_contact_id, :account_rid, :key_contact_name, :project_rid,
+          :key_contact_email, :key_contact_role_rid, :status, 
+          :is_primary_contact, :include_in_communication, 
+          :created_by, :modified_by, 'Project'
+        )`,
+        {
+          replacements: {
+            key_contact_id,
+            account_rid,
+            project_rid,
+            key_contact_name: keyContactDetails.key_contact_name,
+            key_contact_email: keyContactDetails.key_contact_email,
+            key_contact_role_rid: keyContactDetails.key_contact_role_rid,
+            status: keyContactDetails.status,
+            is_primary_contact: keyContactDetails.is_primary_contact,
+            include_in_communication: keyContactDetails.include_in_communication,
+            created_by: userId,
+            modified_by: userId
+          }
+        }
+      );
+    } catch (error) {
+      console.error("Error inserting key contact details:", error);
+      throw error;
+    }
+  }
+
+  async fetchKeyContacts(account_rid: string,project_rid:string) {
+    const sequelize = await initOrgSequelize();
+    return await sequelize.query(
+      `SELECT * FROM "public"."key_contact_details" WHERE account_rid = :account_rid
+      and project_rid = :project_rid and contact_type = 'Project'`,
+      {
+        type: "SELECT",
+        replacements: { account_rid,project_rid },
+      }
+    );
+  }
+
   async checkIfSchemaAndTableExists(accountNumber: string) {
     try {
       const schemaName = `platform_v2_${accountNumber}`;
@@ -1564,7 +1626,6 @@ class SchemaService {
       throw new Error("Error checking schema :" + (err as Error).message);
     }
   }
-
   async fetchSchemaByUserId(userId: string) {
     try {
       const mainDbInstance = await initMainDbSequelize();
@@ -1666,6 +1727,7 @@ class SchemaService {
       conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
     return { whereSQL, replacements };
   }
+
 }
 
 export default SchemaService;
