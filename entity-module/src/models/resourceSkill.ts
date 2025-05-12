@@ -18,9 +18,12 @@ interface ResourceSkillAttributes  {
  skill_type_name?: string,
  skill_subtype_name?: string,
  skill_details?: string,             
- start_date?: Date | null,
+ start_date?: number | null,
  skill_description?: string,     
- skill_level: string,         
+ skill_level: string,  
+ skill_type_others?: string,
+ skill_subtype_others?: string,
+ comments?: string,       
  created_datetime?: Date,
  modified_datetime?: Date,
  created_by?: string,
@@ -44,9 +47,12 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
   skill_type_rid!: string;
   skill_subtype_rid!: string;
   skill_details?: string;
-  start_date?: Date;
+  start_date?: number;
   skill_description?: string;
   skill_level!: string;
+  skill_type_others?: string;
+  skill_subtype_others?: string;
+  comments?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
   created_by?: string;
@@ -85,8 +91,15 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
         allowNull: false,
        },
        start_date: {
-        type: DataTypes.DATE,
+        type: DataTypes.INTEGER,
         allowNull: true,
+        validate: {
+          isYear(value: number) {
+            if (value && (value < 1900 || value > 9999)) {
+              throw new Error('Start date must be a valid year between 1900 and 9999');
+            }
+          }
+        }
        },
        skill_description: {
         type: DataTypes.STRING(255),
@@ -96,6 +109,14 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
        type: DataTypes.STRING(255),
        allowNull: true,
        defaultValue: "Beginner", 
+       },
+       skill_type_others: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+       },
+       skill_subtype_others: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
        },
        resource_ref_id: {
         type: DataTypes.STRING(255),
@@ -107,14 +128,18 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
         defaultValue: "active",
        },
        skill_type_rid: {
-        type: DataTypes.UUID,
+        type: DataTypes.STRING(255),
         allowNull: false,
        },
        skill_subtype_rid: {
-        type: DataTypes.UUID,
+        type: DataTypes.STRING(255),
         allowNull: false,
        },
        skill_details: {
+        type: DataTypes.STRING(2000),
+        allowNull: true,
+       },
+       comments: {
         type: DataTypes.STRING(2000),
         allowNull: true,
        },

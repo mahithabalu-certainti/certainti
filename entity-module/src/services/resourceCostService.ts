@@ -254,6 +254,8 @@ async createResourceCost(
         currency_rid,
         accountNumber,
         resource_number,
+        comments,
+        fiscal_year,
       } = resourceCost;
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
@@ -354,6 +356,8 @@ async createResourceCost(
           cost: cost,
           ...frequency,
           currency_rid: currency_rid || undefined,
+          fiscal_year,
+          comments,
           created_datetime: new Date(),
           created_by: userId,
           modified_by: userId,
@@ -471,6 +475,8 @@ async createResourceCost(
         currency_rid,
         accountNumber,
         rid,
+        fiscal_year,
+        comments,
         status,
       } = resourceCostData;
 
@@ -588,6 +594,8 @@ async createResourceCost(
             cost: cost,
             ...frequency,
             currency_rid,
+            fiscal_year,
+            comments,
             rid,
             status,
             modified_datetime: new Date(),
@@ -727,6 +735,7 @@ async createResourceCost(
         "hourly_cost",
         "currency_rid",
         "fiscal_year",
+        "comments",
         "status",
       ];
 
