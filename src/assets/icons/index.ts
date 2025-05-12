@@ -52,6 +52,7 @@ import phoneIcon from './phone.svg';
 import plusIcon from './plus.svg';
 import projectHeaderIcon from './projects-header.svg';
 import projectsIcon from './projects.svg';
+import projectCreateIcon from './new-project.svg';
 import refreshIcon from './refresh.svg';
 import resourceHeaderIcon from './resource-header.svg';
 import resourceFilterIcon from './resourceFilterIcon.svg';
@@ -67,6 +68,7 @@ import uploadIcon from './Vector.svg';
 import addIcon from './addicon.svg';
 import eyeIcon from './eye-icon.svg';
 import backIcon from './chevron-double-left.svg';
+import projectDetailsIcon from './project-details.svg';
 
 export {
   accountDetailsIcon,
@@ -126,6 +128,8 @@ export {
   plusIcon,
   projectHeaderIcon,
   projectsIcon,
+  projectDetailsIcon,
+  projectCreateIcon,
   refreshIcon,
   resourceFilterIcon,
   resourceHeaderIcon,

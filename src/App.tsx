@@ -12,7 +12,9 @@ import {
   Login,
   NotFound,
   Profile,
+  ProjectDetails,
   ProjectForm,
+  Projects,
   ResourceForm,
 } from './consultant/pages';
 import Resource from './consultant/pages/account-details-sidebar/sidebar-pages/resources/resources';
@@ -32,7 +34,10 @@ import {
   MAIN_ROUTE,
   NOT_MATCH,
   PROFILE,
+  PROJECT,
   PROJECT_CREATE,
+  PROJECT_DETAILS,
+  PROJECT_EDIT,
   ProtectedRoute,
   RESOURCE,
   RESOURCE_CREATE,
@@ -73,7 +78,10 @@ export const App: React.FC<IApp> = ({ instance }) => {
             <Route path={ACCOUNT_CREATE} element={<AccountForm />} />
             <Route path={ACCOUNT_EDIT} element={<AccountForm />} />
             <Route path={ACCOUNT_DETAILS} element={<AccountDetails />} />
+            <Route path={PROJECT} element={<Projects />} />
+            <Route path={PROJECT_DETAILS} element={<ProjectDetails />} />
             <Route path={PROJECT_CREATE} element={<ProjectForm />} />
+            <Route path={ PROJECT_EDIT} element={<ProjectForm />} />
             <Route path={RESOURCE_CREATE} element={<ResourceForm />} />
             <Route path={RESOURCE_EDIT} element={<ResourceForm />} />
             <Route path={RESOURCECOST_CREATE} element={<ResourceForm />} />
