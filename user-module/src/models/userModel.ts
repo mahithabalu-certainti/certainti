@@ -191,7 +191,7 @@ export class User
             user.setDataValue("modified_datetime", new Date());
           },
           beforeValidate: async (account) => {            
-            const accountCode = `${R_NUMBER_PREFIX.USER}${Math.floor(Math.random() * 10000000000).toString().padStart(10, '0')}`;
+            const accountCode = `${R_NUMBER_PREFIX.USER} ${Math.floor(Math.random() * 10000000000).toString().padStart(10, '0')}`;
             account.setDataValue("r_number", accountCode);
           },
         },
