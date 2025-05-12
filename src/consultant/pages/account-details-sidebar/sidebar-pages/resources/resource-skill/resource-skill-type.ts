@@ -24,6 +24,8 @@ export interface ResourceSkillType {
   yearsOfExperience?: string;
   skillTypeId?: string;
   skillSubTypeId?: string;
+  skillTypeOthers?: string;
+  skillSubTypeOthers?: string;
 }
 
 export function convertResourceSkill(
@@ -42,7 +44,9 @@ export function convertResourceSkill(
       skillSubType: skill.skill_subtype_name,
       skillLevel: skill.skill_level,
       skillTypeId: skill.skill_type_rid,
-      skillSubTypeId: skill.skill_subtype_rid
+      skillSubTypeId: skill.skill_subtype_rid,
+      skillTypeOthers: skill.skill_type_others,
+      skillSubTypeOthers: skill.skill_subtype_others,
     };
     resourceSkillList.push(convertedSkill);
   }

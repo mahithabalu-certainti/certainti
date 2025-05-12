@@ -332,12 +332,12 @@ export const ResourceFormData = (
             placeholder: '-Select-',
             required: false,
           }),
-          createTextField('skill_type_other', 'Skill Type(Other)', {
+          createTextField('skill_type_others', 'Skill Type(Other)', {
             required: true,
             placeholder: 'Enter Skill Type',
             hide: currentSkillType === 'f6044ae9-7b65-4cfc-8ad3-c18a8f7ee30a' ? false : true,
           }),
-          createTextField('skill_sub_type_other', 'Skill Sub Type(Other)', {
+          createTextField('skill_subtype_others', 'Skill Sub Type(Other)', {
             required: true,
             placeholder: 'Enter Skill Sub Type',
             hide: currentskillSubType === 'b8894099-0385-4681-8237-21f89b0d1883' ? false : true,

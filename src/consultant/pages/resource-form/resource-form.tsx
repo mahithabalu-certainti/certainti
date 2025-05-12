@@ -136,7 +136,6 @@ const ResourceForm: React.FC = () => {
       };
       setFormValues(costValues);
     } else if (state?.skill && isSuccess && skillInfo && isEditView) {
-      console.log('skillInfo', skillInfo)
       const skillValues = {
         ...formValues,
         skill_level: skillInfo?.skillLevel || '',
@@ -144,8 +143,8 @@ const ResourceForm: React.FC = () => {
         skill_type: skillInfo?.skillTypeId || '',
         skill_sub_type: skillInfo?.skillSubTypeId || '',
         skill_start_date: skillInfo?.startDate || '',
-        skill_type_other: skillInfo?.skillType || '', 
-        skill_sub_type_other: skillInfo?.skillSubType || '',
+        skill_type_others: skillInfo?.skillTypeOthers || '', 
+        skill_subtype_others: skillInfo?.skillSubTypeOthers || '',
         years_of_experience: skillInfo?.yearsOfExperience || '',
       };
       setFormValues(skillValues);
@@ -154,6 +153,7 @@ const ResourceForm: React.FC = () => {
       setFormValues(formValues);
     }
   }, [state, costDetails, resource]);
+
 
   const countryId = resource?.data?.resourceDetails.resource_country;
   const stateId = resource?.data?.resourceDetails.resource_region;
