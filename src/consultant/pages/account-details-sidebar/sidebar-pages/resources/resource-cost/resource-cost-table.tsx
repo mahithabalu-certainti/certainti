@@ -322,7 +322,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
                   },
                 }}
               >
-                Resource Full Name
+                Name
                 {/* <TableSortLabel
                   active={costorderBy === 'resource_fullname'}
                   direction={costorderBy === 'resource_fullname' ? costOrder : 'asc'}

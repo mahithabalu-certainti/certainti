@@ -71,3 +71,39 @@ export interface ResetFilter {
   onFilterStatesChange?: (filterStates: Record<string, FilterState>) => void;
   onSelectedFiltersChange?: (selectedFilters: string[]) => void;
 }
+
+export interface SkillType {
+  rid: string;
+  skill_type_name: string;
+  skill_type_description: string;
+  status: "active" | "inactive" | string; // Add other possible statuses if needed
+  created_by: string;
+  modified_by: string;
+  created_datetime: string; // or Date if you parse it
+  modified_datetime: string; // or Date if you parse it
+}
+
+export interface SkillTypeApiResponse {
+  statusCode: number;
+  statusCodeValue: "Success" | string; // Add other possible values if needed
+  statusMessage: string;
+  data: SkillType[];
+}
+
+export interface SkillSubtype {
+  rid: string;
+  skill_subtype_name: string;
+  skill_subtype_description: string;
+  status: "active" | "inactive" | string; // Add other possible statuses if needed
+  created_by: string;
+  modified_by: string;
+  created_datetime: string; // or `Date` if parsed
+  modified_datetime: string; // or `Date` if parsed
+}
+
+export interface SKillSubTypeApiResponse {
+  statusCode: number;
+  statusCodeValue: "Success" | string; // Add other possible values (e.g., "Error")
+  statusMessage: string;
+  data: SkillSubtype[];
+}

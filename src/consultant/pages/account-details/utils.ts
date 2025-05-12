@@ -78,24 +78,21 @@ export const transformAccountData = (data: AccountData): DisplayColumn[] => {
 
   return [
     {
-      // Column 1 (15%)
       items: [
         { label: 'Account ID', value: account?.r_number },
         { label: 'Country', value: account?.country?.country_name },
       ],
     },
     {
-      // Column 2 (25%)
       items: [
         {
           label: 'Parent Name',
           value: account?.parent_account?.account_name || '-',
         },
-        { label: 'Currency', value: account?.currency.currency_code },
+        { label: 'Currency', value: account?.currency?.currency_code },
       ],
     },
     {
-      // Column 3 (15%)
       items: [
         {
           label: 'Is Parent Account',
@@ -105,14 +102,12 @@ export const transformAccountData = (data: AccountData): DisplayColumn[] => {
       ],
     },
     {
-      // Column 4 (20%)
       items: [
         { label: 'Primary Contact', value: account?.primary_contact_name },
         { label: 'Industry', value: account?.industry },
       ],
     },
     {
-      // Column 5 (25%)
       items: [
         {
           label: 'Status',

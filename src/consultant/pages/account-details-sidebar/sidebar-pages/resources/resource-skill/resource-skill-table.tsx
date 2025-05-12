@@ -21,7 +21,6 @@ import { RESOURCESKILL } from "../../../../../../routes";
 import ActionButton from '../../../../account-list/table/action-button';
 import { TablePagination } from '../../../../../../components/table';
 import { arrowDownIcon, arrowUpIcon } from '../../../../../../assets';
-import { formatDateToMMDDYYYY } from '../utils';
 
 interface ResourceSkillTableProps {
   fiscalYear?: number;
@@ -51,7 +50,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   // const location = useLocation();
   const [rowsPerPage, setRowsPerPage] = useState<number>(25);
   const [resourceSkillList, setResourceSkillList] = useState<
-    ResourceSkillType[]
+  ResourceSkillType[]
   >([]);
   const accountInActive = accountDetails?.data?.accountById?.status === "inactive";
   const apiOrder = skillOrder.toUpperCase() as 'ASC' | 'DESC';
@@ -103,7 +102,6 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
 
   const renderRows = ({ resourceSkill }: RenderSkillRowProps) => {
     return resourceSkill?.map((skill, i) => {
-      const startDate = formatDateToMMDDYYYY(skill.startDate as string);
       return (
         <React.Fragment key={i}>
           <TableRow
@@ -122,12 +120,11 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
             }}
           >
             {/* <TableCell sx={{ minWidth: '200px' }}>{skill.resourceRole}</TableCell> */}
-            <TableCell sx={{ minWidth: '120px' }}>{startDate}</TableCell>
-            <TableCell sx={{ minWidth: '140px' }}>{skill.skillName}</TableCell>
+            <TableCell sx={{ minWidth: '120px' }}>{skill.startDate}</TableCell>
+            <TableCell sx={{ minWidth: '120px' }}>{skill.skillType}</TableCell>
+            <TableCell sx={{ minWidth: '120px' }}>{skill.skillSubType}</TableCell>
+            <TableCell sx={{ minWidth: '140px' }}>{skill.skillDetails}</TableCell>
             <TableCell sx={{ minWidth: '120px' }}>{skill.skillLevel}</TableCell>
-            <TableCell sx={{ minWidth: '160px' }}>
-              {skill.yearsOfExperience}
-            </TableCell>
             <TableCell sx={{ padding: '0px !important' }}>
               <ActionButton
                 onEdit={() => handleEdit(skill)}
@@ -265,17 +262,43 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
                   Start Date
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ minWidth: '140px' }}>
+              <TableCell sx={{ minWidth: '120px' }}>
                 <TableSortLabel
-                  active={skillOrderBy === 'skill_name'}
-                  direction={skillOrderBy === 'skill_name' ? skillOrder : 'asc'}
+                  active={skillOrderBy === 'skill_type'}
+                  direction={skillOrderBy === 'skill_type' ? skillOrder : 'asc'}
                   IconComponent={getSortIcon(
                     skillOrderBy,
-                    'skill_name',
+                    'skill_type_name',
                     skillOrder
                   )}
                 >
-                  Skill Name
+                  Skill Type
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ minWidth: '120px' }}>
+                <TableSortLabel
+                  active={skillOrderBy === 'skill_sub_type'}
+                  direction={skillOrderBy === 'skill_sub_type' ? skillOrder : 'asc'}
+                  IconComponent={getSortIcon(
+                    skillOrderBy,
+                    'skill_subtype_name',
+                    skillOrder
+                  )}
+                >
+                  Skill Sub Type
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ minWidth: '140px' }}>
+                <TableSortLabel
+                  active={skillOrderBy === 'skill_details'}
+                  direction={skillOrderBy === 'skill_details' ? skillOrder : 'asc'}
+                  IconComponent={getSortIcon(
+                    skillOrderBy,
+                    'skill_details',
+                    skillOrder
+                  )}
+                >
+                  Skill Details
                 </TableSortLabel>
               </TableCell>
               <TableCell sx={{ minWidth: '120px' }}>
@@ -291,21 +314,6 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
                   )}
                 >
                   Skill Level
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ minWidth: '160px' }}>
-                <TableSortLabel
-                  active={skillOrderBy === 'years_of_experience'}
-                  direction={
-                    skillOrderBy === 'years_of_experience' ? skillOrder : 'asc'
-                  }
-                  IconComponent={getSortIcon(
-                    skillOrderBy,
-                    'years_of_experience',
-                    skillOrder
-                  )}
-                >
-                  Years of Experience
                 </TableSortLabel>
               </TableCell>
               <TableCell

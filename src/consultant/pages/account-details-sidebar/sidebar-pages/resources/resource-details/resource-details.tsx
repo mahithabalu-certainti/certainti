@@ -105,7 +105,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   const resourceData = resource?.data?.resourceDetails;
 
-  const CreateSectionData = (
+  const   CreateSectionData = (
     dataObj: Partial<CreateSectionData>,
     customMappings?: Record<string, (val: any) => React.ReactNode>
   ) => {
@@ -118,16 +118,23 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
         };
       }
 
+      if (key === 'resource_ref_id' && !Array.isArray(value)) {
+        return {
+          label: 'Resource Code',
+          value: value ?? 'NA', // or handle nested objects differently
+        };
+      }
+
       if (key === 'resource_startdate' && !Array.isArray(value)) {
         return {
-          label: 'Resource Effective From',
+          label: 'Effective Date',
           value: formatDateToMMDDYYYY(value as string) || 'NA', // or handle nested objects differently
         };
       }
 
       if (key === 'resource_enddate' && !Array.isArray(value)) {
         return {
-          label: 'Resource End Date',
+          label: 'End Date',
           value: formatDateToMMDDYYYY(value as string) || 'NA', // or handle nested objects differently
         };
       }
@@ -148,7 +155,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
       if (key === 'resource_fullname' && !Array.isArray(value)) {
         return {
-          label: 'Resource Full Name',
+          label: 'Name',
           value: value ?? 'NA', // or handle nested objects differently
         };
       }
@@ -158,6 +165,8 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
           label: 'Resource Org Name',
           value: value ?? 'NA', // or handle nested objects differently
         };
+
+        
       }
 
       const displayValue =
@@ -215,17 +224,16 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   // Section data with custom formatting where needed
   const basicInfo = CreateSectionData({
-    resource_ref_ID: resourceData.resource_ref_id,
-    resource_number: resourceData.r_number,
+    resource_code: resourceData.resource_ref_id,
     resource_fullname: resourceData.resource_fullname,
     resource_type: resourceData.resource_type,
     resource_orgname: resourceData.resource_orgname,
-    resource_status: resourceData.resource_status,
+    status: resourceData.resource_status,
   });
 
   const locationInfo = CreateSectionData({
     country: resourceData?.country_name,
-    region: resourceData.state_name,
+    region: resourceData.region_name,
     city: resourceData.city_name,
   });
 
@@ -233,9 +241,9 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
     {
       resource_startdate: resourceData.resource_startdate,
       resource_enddate: resourceData.resource_enddate,
-      total_years_experience: resourceData.total_years_experience,
-      designation: resourceData.designation,
-      total_years_in_org: resourceData.total_years_in_org,
+      total_years_experience: resourceData.resource_total_experience,
+      designation: resourceData.resource_designation,
+      total_years_in_org: resourceData.resource_total_experience_organization,
     },
     {
       resource_effective_from: formatDateToMMDDYYYY,
@@ -245,6 +253,14 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   const description = CreateSectionData({
     comments: resourceData.comments,
+  });
+  const auditLogSection = CreateSectionData({
+    record_id: resourceData.rid,
+    resource_id: resourceData.r_number,
+    Created_On: formatDateToMMDDYYYY(resourceData.created_datetime),
+    Created_By: resourceData.created_by,
+    Updated_On: formatDateToMMDDYYYY(resourceData.modified_datetime),
+    Updated_By: resourceData.modified_by,
   });
 
   return (
@@ -256,6 +272,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
       />
       <DetailsSection title='Employment Details' data={employmentDetails} />
       <DetailsSection title='Description' data={description} />
+      <DetailsSection title='Audit Log' data={auditLogSection} />
     </div>
   );
 };

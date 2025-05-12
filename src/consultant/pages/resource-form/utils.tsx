@@ -36,10 +36,11 @@ export const FREQUENCY_OPTIONS: SelectOption[] = [
 interface RawResourceData {
   resource_ref_id?: string;
   resource_fullname?: string;
+  resource_firstname?: string;
+  resource_lastname?: string;
   resource_type?: string;
   resource_orgname?: string;
   resource_role?: string;
-  resource_lastname?: string;
   country?: string;
   state?: string;
   city?: string;
@@ -52,6 +53,7 @@ interface RawResourceData {
   total_years_in_org?: string;
   resource_status?: string;
   comments?: string;
+  resource_country?: string;
 }
 
 interface ResourceTransformationOptions {
@@ -99,15 +101,18 @@ export function transformPayloadforUpdateResource(
 
     full_name:
       rawData.resource_fullname || existingResource?.resource_fullname || '',
+      first_name:
+      rawData.resource_firstname || existingResource?.resource_fullname || '',
+      last_name:
+      rawData.resource_fullname || existingResource?.resource_fullname || '',
     org_name:
       rawData.resource_orgname || existingResource?.resource_orgname || '',
     role: rawData.resource_role || existingResource?.resource_role,
     resource_status:
       rawData.resource_status || existingResource?.resource_status,
-    fiscal_year: rawData.fiscal_year || existingResource?.fiscal_year || 0,
-    country: rawData.country || existingResource?.country_name || '',
-    state: rawData.state || existingResource?.state_name || '',
-    city: rawData.city || existingResource?.city_name || '',
+    resource_country: rawData.country || existingResource?.country || '',
+    resource_region: rawData.state || existingResource?.state || '',
+    resource_city: rawData.city || existingResource?.city || '',
     comments: rawData.comments || existingResource?.comments || '',
     effective_from_date:
       formatDateToMMDDYYYY(rawData.resource_startdate) ||
@@ -117,14 +122,14 @@ export function transformPayloadforUpdateResource(
       formatDateToMMDDYYYY(rawData.resource_enddate) ||
       formatDateToMMDDYYYY(existingResource?.resource_enddate) ||
       '',
-    designation: rawData.designation || existingResource?.designation || '',
+    resource_designation: rawData.designation || existingResource?.designation || '',
     total_years_experience: safeParseNumber(
       rawData.total_years_experience,
-      existingResource?.total_years_experience || 0
+      existingResource?.resource_total_experience || 0
     ),
     total_years_in_org: safeParseNumber(
       rawData.total_years_in_org,
-      existingResource?.total_years_in_org || 0
+      existingResource?.resource_total_experience_organization || 0
     ),
   };
 }
@@ -137,16 +142,17 @@ export const transformPayloadforCreateResource = (
     account_number: formData.account_number,
     resource_ref_id: formData.resource_ref_id,
     resource_type: formData.resource_type,
+    first_name: formData.resource_firstname,
+    last_name: formData.resource_lastname,
     full_name: formData.resource_fullname,
     org_name: formData.resource_orgname,
     role: formData.resource_role,
-    fiscal_year: formData.fiscal_year,
-    country: formData.country,
-    state: formData.state,
-    city: formData.city,
+    resource_country: formData.country,
+    resource_region: formData.state,
+    resource_city: formData.city,
     effective_from_date: formatDateToMMDDYYYY(formData.resource_startdate),
     effective_end_date: formatDateToMMDDYYYY(formData.resource_enddate),
-    designation: formData.designation,
+    resource_designation: formData.designation,
     total_years_experience: formData.total_years_experience,
     total_years_in_org: formData.total_years_in_org,
     resource_status: formData.resource_status,
@@ -167,13 +173,15 @@ export const transformCostData = (
       : '',
     end_date: formData.financial_end_date ? formData.financial_end_date : '',
     cost_frequency: formData.cost_frequency,
-    cost: formData.cost ? Number(formData.cost.replace(',', '')) : null,
+    cost: formData.cost?.toString(),
+    fiscal_year: formData.fiscal_year,
     resource_type: formData.resource_type,
     resource_ref_id: formData.resource_ref_id,
     currency_rid: formData.currency ? formData.currency : null,
     resource_rid: formData.resource_rid,
     accountNumber: formData.accountNumber,
     resource_number: formData?.resource_number,
+    comments: formData.comments,
   };
 
   if (isEdit) {
@@ -201,13 +209,14 @@ export const transformSkillData = (
     resource_ref_id: formData.resource_ref_id,
     start_date: formData.skill_start_date ? formData.skill_start_date : '',
     skill_level: formData.skill_level as skillLevel,
-    years_of_experience: formData.years_of_experience
-      ? Number(formData.years_of_experience)
-      : null,
-    skill_name: formData.skill_name,
+    skill_type_rid: formData.skill_type,
+    skill_subtype_rid: formData.skill_sub_type,
+    skill_type_others: formData.skill_type_others || "",
+    skill_subtype_others: formData.skill_subtype_others || "",
+    skill_details: formData.skill_details,
     accountNumber: formData.accountNumber,
-    resource_desc: formData.resource_desc,
     resource_number: formData?.resource_number,
+    comments: formData.comments,
   };
 
   if (isEdit) {
