@@ -601,7 +601,7 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { rid: string; user_role: string; user_id: string; permissions: any[] } | null;
+    data?: { rid: string; user_role: string; user_id: string; profile_id: string; permissions: any[] } | null;
   }> {
     try {
       const roles = await User.findOne({
@@ -637,6 +637,7 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
           rid: roles.role_rid || "",
           user_role: roles.business_teams?.business_teams,
           user_id: roles.rid,
+          profile_id: roles.profile_rid || "",
           permissions
         },
       };
@@ -689,11 +690,12 @@ async getAllUserPermission(userId: string, profileId: string) {
       const maWithMenu = ma as any;
       if (maWithMenu.menu) {
         permissions.push({
+          rid: maWithMenu.rid,
           type: "menu",
-          menuId: maWithMenu.menu.rid,
+          menu_id: maWithMenu.menu.rid,
           name: maWithMenu.menu.menu_name,
           desc: maWithMenu.menu.menu_desc,
-          isEnabled: maWithMenu.is_enabled
+          is_enabled: maWithMenu.is_enabled
         });
       }
     });
@@ -711,12 +713,13 @@ async getAllUserPermission(userId: string, profileId: string) {
       const moWithModule = mo as any;
       if (moWithModule.menu_module) {
         permissions.push({
+          rid: moWithModule.rid,
           type: "module",
-          moduleId: moWithModule.menu_module.rid,
+          module_id: moWithModule.menu_module.rid,
           menuId: moWithModule.menu_module.menu_id,
           name: moWithModule.menu_module.module_name,
           desc: moWithModule.menu_module.module_desc,
-          isEnabled: moWithModule.is_enabled
+          is_enabled: moWithModule.is_enabled
         });
       }
     });
@@ -735,13 +738,14 @@ async getAllUserPermission(userId: string, profileId: string) {
       const paWithPerm = pa as any;
       if (paWithPerm.module_permission) {
         permissions.push({
+          rid: paWithPerm.rid,
           type: "permission",
-          permissionId: paWithPerm.module_permission_id,
-          moduleId: paWithPerm.module_permission.menu_module_id,
+          permission_id: paWithPerm.module_permission_id,
+          module_id: paWithPerm.module_permission.menu_module_id,
           name: paWithPerm.module_permission.permission_name,
           desc: paWithPerm.module_permission.permission_desc,
-          isFieldAvailable: paWithPerm.module_permission.is_field_available,
-          isEnabled: paWithPerm.is_enabled
+          is_field_available: paWithPerm.module_permission.is_field_available,
+          is_enabled: paWithPerm.is_enabled
         });
       }
     });
@@ -757,9 +761,10 @@ async getAllUserPermission(userId: string, profileId: string) {
       const faWithField = fa as any;
       if (faWithField.permission_field) {
         permissions.push({
+          rid: faWithField.rid,
           type: "field",
-          fieldId: faWithField.permission_field.rid,
-          permissionId: faWithField.permission_field.module_permission_id,
+          field_id: faWithField.permission_field.rid,
+          permission_id: faWithField.permission_field.module_permission_id,
           name: faWithField.permission_field.field_name,
           desc: faWithField.permission_field.field_desc,
           read: faWithField.read,
@@ -785,11 +790,12 @@ async getAllUserPermission(userId: string, profileId: string) {
       const maWithMenu = ma as any;
       if (maWithMenu.menu) {
         permissions.push({
+          rid: maWithMenu.rid,
           type: "menu",
-          menuId: maWithMenu.menu.rid,
+          menu_id: maWithMenu.menu.rid,
           name: maWithMenu.menu.menu_name,
           desc: maWithMenu.menu.menu_desc,
-          isEnabled: maWithMenu.is_enabled
+          is_enabled: maWithMenu.is_enabled
         });
       }
     });
@@ -803,12 +809,13 @@ async getAllUserPermission(userId: string, profileId: string) {
       const moWithModule = mo as any;
       if (moWithModule.menu_module) {
         permissions.push({
+          rid: moWithModule.rid,
           type: "module",
-          moduleId: moWithModule.menu_module.rid,
-          menuId: moWithModule.menu_module.menu_id,
+          module_id: moWithModule.menu_module.rid,
+          menu_id: moWithModule.menu_module.menu_id,
           name: moWithModule.menu_module.module_name,
           desc: moWithModule.menu_module.module_desc,
-          isEnabled: moWithModule.is_enabled
+          is_enabled: moWithModule.is_enabled
         });
       }
     });
@@ -823,12 +830,13 @@ async getAllUserPermission(userId: string, profileId: string) {
       const paWithPerm = pa as any;
       if (paWithPerm.module_permission) {
         permissions.push({
+          rid: paWithPerm.rid,
           type: "permission",
-          permissionId: paWithPerm.module_permission_id,
-          moduleId: paWithPerm.module_permission.menu_module_id,
+          permission_id: paWithPerm.module_permission_id,
+          module_id: paWithPerm.module_permission.menu_module_id,
           name: paWithPerm.module_permission.permission_name,
           desc: paWithPerm.module_permission.permission_desc,
-          isEnabled: paWithPerm.is_enabled
+          is_enabled: paWithPerm.is_enabled
         });
       }
     });
@@ -844,9 +852,10 @@ async getAllUserPermission(userId: string, profileId: string) {
       const faWithField = fa as any;
       if (faWithField.permission_field) {
         permissions.push({
+          rid: faWithField.rid,
           type: "field",
-          fieldId: faWithField.permission_field.rid,
-          permissionId: faWithField.permission_field.module_permission_id,
+          field_id: faWithField.permission_field.rid,
+          permission_id: faWithField.permission_field.module_permission_id,
           name: faWithField.permission_field.field_name,
           read: faWithField.read,
           edit: faWithField.edit

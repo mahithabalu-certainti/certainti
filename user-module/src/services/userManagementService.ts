@@ -50,8 +50,8 @@ class UserManagementService {
     errorMessage?: string;
     data?: {
       profile?: any;
-      profileId?: string;
-      profileNumber?: string;
+      profile_id?: string;
+      profile_number?: string;
       permissions?: any[];
     };
   }> {
@@ -96,8 +96,8 @@ class UserManagementService {
           message: "Profile created but cloning failed",
           errorMessage: `Profile ${profile.rid} was created but cloning from ${sourceProfileId} failed`,
           data: {
-            profileId: profile.rid,
-            profileNumber: profile.r_number
+            profile_id: profile.rid,
+            profile_number: profile.r_number
           }
         };
       } else {
@@ -106,8 +106,8 @@ class UserManagementService {
           statusCode: constants.SUCCESS,
           message: constants.SUCCESS_MESSAGE,
           data: {
-            profileId: profile.rid,
-            profileNumber: profile.r_number,
+            profile_id: profile.rid,
+            profile_number: profile.r_number,
             permissions
           }
         };
@@ -297,8 +297,8 @@ async getProfilePermissions(
   message: string;
   errorMessage?: string;
   data?: {
-    profileId: string;
-    profileNumber?: string;
+    profile_id: string;
+    profile_number?: string;
     permissions?: any[];
   };
 }> {
@@ -340,7 +340,7 @@ async getProfilePermissions(
       statusCode: constants.SUCCESS,
       message: constants.SUCCESS_MESSAGE,
       data: {
-        profileId: profile.rid,
+        profile_id: profile.rid,
         permissions
       }
     };
@@ -369,9 +369,10 @@ private async getFieldsForPermission(profileId: string, permissionId: string): P
   return fieldAccess.map(fa => {
     const faWithField = fa as any;
     return {
+      rid: faWithField.rid,
       type: "field",
-      fieldId: faWithField.permission_field.rid,
-      permissionId: faWithField.permission_field.module_permission_id,
+      field_id: faWithField.permission_field.rid,
+      permission_id: faWithField.permission_field.module_permission_id,
       name: faWithField.permission_field.field_name,
       desc: faWithField.permission_field.field_desc,
       read: faWithField.read,
@@ -404,13 +405,14 @@ private async getPermissionsForModule(profileId: string, moduleId: string): Prom
   for (const pa of permissionAccess) {
     const paWithPermission = pa as any;
     permissions.push({
+      rid: paWithPermission.rid,
       type: "permission",
-      permissionId: paWithPermission.module_permission.rid,
-      moduleId: paWithPermission.module_permission.menu_module_id,
+      permission_id: paWithPermission.module_permission.rid,
+      module_id: paWithPermission.module_permission.menu_module_id,
       name: paWithPermission.module_permission.permission_name,
       desc: paWithPermission.module_permission.permission_desc,
-      isFieldAvailable: paWithPermission.module_permission.is_field_available,
-      isEnabled: paWithPermission.is_enabled
+      is_field_available: paWithPermission.module_permission.is_field_available,
+      is_enabled: paWithPermission.is_enabled
     });
   }
   
@@ -440,12 +442,13 @@ private async getModulesForMenu(profileId: string, menuId: string): Promise<any[
   for (const ma of moduleAccess) {
     const maWithModule = ma as any;
     permissions.push({
+      rid: maWithModule.rid,
       type: "module",
-      moduleId: maWithModule.menu_module.rid,
-      menuId: maWithModule.menu_module.menu_id,
+      module_id: maWithModule.menu_module.rid,
+      menu_id: maWithModule.menu_module.menu_id,
       name: maWithModule.menu_module.module_name,
       desc: maWithModule.menu_module.module_desc,
-      isEnabled: maWithModule.is_enabled
+      is_enabled: maWithModule.is_enabled
     });
   }
   
