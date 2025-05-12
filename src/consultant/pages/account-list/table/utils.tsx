@@ -296,18 +296,6 @@ export const renderChildRows = ({
           </TableCell>
           <TableCell sx={{ minWidth: '160px' }}>{account.annualRevenue}</TableCell>
           <TableCell sx={{color: account.status === 'Active' ? '#199806 !important' : '#f44336 !important', minWidth: '100px' }}>{account.status}</TableCell>
-          <TableCell
-            title={account.primaryContact}
-            sx={{
-              minWidth: '180px',
-              maxWidth: '180px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {account.primaryContact}
-          </TableCell>
           <TableCell sx={{ minWidth: '80px' }}>
             <ActionButton
               onEdit={() => handleEdit(account)}
