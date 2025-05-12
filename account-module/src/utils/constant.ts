@@ -27,3 +27,7 @@ export const constants = {
   SELECT: 'SELECT',
   INSERT: 'INSERT'
 }
+
+export const R_NUMBER_PREFIX = {
+  ACCOUNT: 'ACC',
+}

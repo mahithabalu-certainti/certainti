@@ -1,4 +1,5 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
+import { R_NUMBER_PREFIX } from "../utils/constants";
 
 interface ProjectHistoryAttributes {
   rid?: string;
@@ -85,15 +86,18 @@ export class ProjectHistory
             project.setDataValue("modified_datetime", new Date());
             project.setDataValue("created_datetime", new Date());
           },
-          beforeValidate: async (project) => {
-            console.log("Inside vefor valodaye", project);
-            const latestAccount = await ProjectHistory.findAll();
-            const serialNumber = latestAccount ? latestAccount.length + 1 : 1;
-
-            const accountCode = `PROH${serialNumber
-              .toString()
-              .padStart(4, "0")}`;
-
+          beforeValidate: async (project) => { 
+            // Get the latest project history number and increment it
+            const latestAccount = await ProjectHistory.findOne({
+              order: [['r_number', 'DESC']],
+            });
+            
+            let nextNumber = '0000000001';
+            if (latestAccount) {
+              const currentNumber = parseInt(latestAccount.r_number?.split(' ')[1] || '0');
+              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
+            }           
+            const accountCode = `${R_NUMBER_PREFIX.PROJECT_HISTORY} ${nextNumber}`;
             project.setDataValue("r_number", accountCode);
           },
         },

@@ -1,6 +1,7 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { Profile } from "./profileModel";
 import { BusinessTeams } from "./businessTeamModel";
+import { R_NUMBER_PREFIX } from "../utils/constant";
 interface UserAttributes {
   rid: string;
   r_number?: string;
@@ -189,13 +190,18 @@ export class User
           beforeUpdate: (user) => {
             user.setDataValue("modified_datetime", new Date());
           },
-          beforeValidate: async (account) => {
-            const latestAccount = await User.findAll();
-            const serialNumber = latestAccount ? latestAccount.length + 1 : 1;
-
-            const accountCode = `USR${serialNumber
-              .toString()
-              .padStart(4, "0")}`;
+          beforeValidate: async (account) => {  
+            // Get the latest user number and increment it
+            const latestUser = await User.findOne({
+              order: [['r_number', 'DESC']],
+            });
+            
+            let nextNumber = '0000000001';
+            if (latestUser) {
+              const currentNumber = parseInt(latestUser.r_number?.split(' ')[1] || '0');
+              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
+            }          
+            const accountCode = `${R_NUMBER_PREFIX.USER} ${nextNumber}`;
             account.setDataValue("r_number", accountCode);
           },
         },

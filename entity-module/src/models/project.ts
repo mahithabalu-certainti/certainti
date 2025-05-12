@@ -1,4 +1,5 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
+import { R_NUMBER_PREFIX } from "../utils/constants";
 
 export interface ProjectAttributes {
   rid?: string;
@@ -64,6 +65,7 @@ export class Project
   implements ProjectAttributes
 {
   public rid?: string;
+  public r_number?: string;
   public project_ref_id!: string;
   public account_fiscal_rid!: string;
   public account_rid!: string;
@@ -265,12 +267,17 @@ export class Project
         underscored: true,
         hooks: {
           beforeValidate: async (account) => {
-            const latestAccount = await Project.findAll();
-            const serialNumber = latestAccount ? latestAccount.length + 1 : 1;
-
-            const accountCode = `PRO${serialNumber
-              .toString()
-              .padStart(4, "0")}`;
+            // Get the latest account number and increment it
+            const latestAccount = await Project.findOne({
+              order: [['r_number', 'DESC']],
+            });
+            
+            let nextNumber = '0000000001';
+            if (latestAccount) {
+              const currentNumber = parseInt(latestAccount.r_number?.split(' ')[1] || '0');
+              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
+            }            
+            const accountCode = `${R_NUMBER_PREFIX.PROJECT} ${nextNumber}`;
             account.setDataValue("r_number", accountCode);
           },
         },
