@@ -18,8 +18,7 @@ interface AccountAttributes {
   country_rid?: string;
   currency_rid?: string;
   industry_rid: string;
-  industry_name?: string;
-  primary_contact_name: string;
+  industry_name_other?: string;
   status: string;
   annual_revenue: string;
   created_datetime?: Date;
@@ -46,8 +45,7 @@ export class Account
   public country_rid?: string;
   public currency_rid?: string;
   public industry_rid!: string;
-  public industry_name?: string;
-  public primary_contact_name!: string;
+  public industry_name_other?: string;
   public status!: string;
   public annual_revenue!: string;
   public created_datetime?: Date;
@@ -121,13 +119,9 @@ export class Account
           type: DataTypes.STRING(25),
           allowNull: false,
         },
-        industry_name: {
+        industry_name_other: {
           type: DataTypes.STRING(255),
           allowNull: true
-        },
-        primary_contact_name: {
-          type: DataTypes.STRING(50),
-          allowNull: false,
         },
         created_datetime: {
           type: DataTypes.DATE,

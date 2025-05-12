@@ -341,17 +341,18 @@ const createResourceSkillSchema = Joi.object({
   resource_rid: Joi.string().max(255).optional().allow(null).allow(""),
   resource_number: Joi.string().max(255).required(),
   resource_ref_id: Joi.string().max(255).required(),
-  start_date: Joi.string()
-    .max(10)
-    .custom(isNotFutureDate, "Start date validation")
+  start_date: Joi.number()
+    .integer()
+    .min(1900)
+    .max(9999)
     .optional()
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "start_date must be in the format MM/DD/YYYY",
-      "any.invalid": "Date cannot be in the future.",
-      "date.invalidFormat":
-        "Invalid start date. Please use the format MM/DD/YYYY",
+      "number.base": "Start date must be a valid year",
+      "number.min": "Start date must be a 4-digit year",
+      "number.max": "Start date must be a 4-digit year",
+      "any.invalid": "Year cannot be in the future"
     }),
   skill_description: Joi.string().max(255).optional().allow(null).allow(""),
   skill_level: Joi.string()
@@ -361,7 +362,10 @@ const createResourceSkillSchema = Joi.object({
     .allow(null),
   skill_type_rid: Joi.string().max(255).required(),
   skill_subtype_rid: Joi.string().max(255).required(),
-  skill_details: Joi.string().max(2000).optional().allow(null).allow(""),  
+  skill_type_others: Joi.string().max(255).optional().allow(null).allow(""),
+  skill_subtype_others: Joi.string().max(255).optional().allow(null).allow(""),
+  skill_details: Joi.string().max(2000).optional().allow(null).allow(""),
+  comments: Joi.string().max(2000).optional().allow(null).allow(""),  
   created_by: Joi.string().max(255).optional().allow(null).allow(""),
   modified_by: Joi.string().max(255).optional().allow(null).allow(""),
   accountNumber: Joi.string().max(255).required(),
@@ -370,16 +374,18 @@ const createResourceSkillSchema = Joi.object({
 const updateResourceSkillSchema = Joi.object({
   rid: Joi.string().max(255).required(),
   eid: Joi.string().max(255).optional().allow(null).allow(""),
-  start_date: Joi.string()
-    .max(10)
-    .custom(isNotFutureDate, "start date validation")
+  start_date: Joi.number()
+    .integer()
+    .min(1900)
+    .max(9999)
     .optional()
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "start_date must be in the format MM/DD/YYYY",
-      "any.invalid": "Date cannot be in the future.",
-      "date.invalidFormat": "start date. Please use the format MM/DD/YYYY",
+      "number.base": "Start date must be a valid year",
+      "number.min": "Start date must be a 4-digit year",
+      "number.max": "Start date must be a 4-digit year",
+      "any.invalid": "Year cannot be in the future"
     }),
   skill_description: Joi.string().max(255).optional().allow(null).allow(""),
   skill_level: Joi.string()
@@ -390,7 +396,10 @@ const updateResourceSkillSchema = Joi.object({
   modified_by: Joi.string().max(255).optional(),
   skill_type_rid: Joi.string().max(255).required(),
   skill_subtype_rid: Joi.string().max(255).required(),
+  skill_type_others: Joi.string().max(255).optional().allow(null).allow(""),
+  skill_subtype_others: Joi.string().max(255).optional().allow(null).allow(""),
   skill_details: Joi.string().max(2000).optional().allow(null).allow(""),
+  comments: Joi.string().max(2000).optional().allow(null).allow(""),
   status: Joi.string().max(255).optional(),
   modified_datetime: Joi.date()
     .iso()
@@ -503,6 +512,19 @@ const updateResourceCostSchema = Joi.object({
       "any.required": "Cost is required"
     }),
   status: Joi.string().max(255).default("active").optional(),
+  fiscal_year: Joi.number()
+   .integer()
+   .min(1000)
+   .max(9999)
+   .allow(0)
+   .optional()
+   .messages({
+      "number.base": "Fiscal year must be a number",
+      "number.min": "Fiscal year must be a 4-digit number",
+      "number.max": "Fiscal year must be a 4-digit number",
+      "any.required": "Fiscal year is required",
+   }),
+  comments: Joi.string().max(2000).optional().allow("").allow(null), 
   modified_datetime: Joi.date()
     .iso()
     .default(() => new Date()),
@@ -616,9 +638,21 @@ const resourceCostSchema = Joi.object({
       "string.empty": "Cost is required",
       "any.required": "Cost is required"
     }),
-  fiscalYear: Joi.number().optional(),
+    fiscal_year: Joi.number()
+    .integer()
+    .min(1000)
+    .max(9999)
+    .allow(0)
+    .optional()
+    .messages({
+       "number.base": "Fiscal year must be a number",
+       "number.min": "Fiscal year must be a 4-digit number",
+       "number.max": "Fiscal year must be a 4-digit number",
+       "any.required": "Fiscal year is required",
+    }),
   currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
   status: Joi.string().max(255).default("active"),
+  comments: Joi.string().max(2000).optional().allow(null).allow(""),
   created_datetime: Joi.date()
     .iso()
     .default(() => new Date()),

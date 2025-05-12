@@ -787,7 +787,7 @@ processEnumFilter(key: string, value: any) {
       } else {
         condition += ` AND ${tableAlias}."${key}" IS NOT NULL AND ${tableAlias}."${key}"!= ''`;
       }}
-    }
+  }
     
   return condition;
 }

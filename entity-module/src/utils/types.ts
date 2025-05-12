@@ -55,13 +55,14 @@ export interface IResourceCost {
   currency_rid?: string;
   cost_frequency: string;
   cost: number;
+  fiscal_year: number;
   created_datetime?: string | null;
   modified_datetime?: string | null;
+  comments?: string;
   created_by?: string | null;
   modified_by?: string | null;
   status?: "active" | "inactive";
   accountNumber: string;
-  fiscal_year?: string;
   resource_number: string;
 }
 
@@ -71,8 +72,10 @@ export interface IUpdateResourceCost {
   effective_date?: string | null;
   end_date?: string | null;
   currency_rid?: string;
+  fiscal_year: number;
   cost_frequency: string;
   cost: number;
+  comments?: string;
   modified_datetime?: string | null;
   modified_by?: string | null;
   status?: "active" | "inactive";
@@ -85,12 +88,15 @@ export interface IResourceSkill {
    resource_type: string;
    resource_rid: string;
    resource_ref_id: string,
-   start_date?: string | null;
+   start_date?: number;
    skill_description?: string;
    skill_level?: string;
    skill_type_rid: string;
    skill_subtype_rid: string;
+   skill_type_others: string;
+   skill_subtype_others: string;
    skill_details?: string;
+   comments?: string;
    status?: string;
    created_by?: string | null;
    modified_by?: string | null;
@@ -101,13 +107,16 @@ export interface IResourceSkill {
 export interface IUpdateResourceSkill {
   rid: string;
   eid?: string;
-  start_date?: string | null;
+  start_date?: number;
   skill_description?: string;
   skill_level?: string;
   status?: string;
   modified_by?: string | null;
   skill_type_rid: string;
   skill_subtype_rid: string;
+  skill_type_others: string;
+  skill_subtype_others: string;
+  comments?: string;
   skill_details?: string;
   accountNumber: string;
 }

@@ -36,14 +36,8 @@ const typeDefs = gql`
     blended_rate_subcon: String
     created_by: String
     modified_by: String
-    primary_contact_name: String!
-    primary_contact_email: String!
-    primary_contact_number: String!
-    finance_poc_name: String!
-    finance_poc_email: String!
-    finance_poc_number: String!
-    industry_rid: String
-    industry_name: String
+    industry_rid: String!
+    industry_name_other: String
     website: String
     project_manager: String!
     database_level: Boolean!
