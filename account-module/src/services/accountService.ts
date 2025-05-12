@@ -166,6 +166,12 @@ class AccountService {
               as: "parent_account",
               attributes: ["rid", "account_name"],
             },
+            {
+              model: Industry,
+              as: "industry",
+              attributes: ["rid", "industry_name"],
+              required: false,
+            }
           ]
         });
     
@@ -262,7 +268,7 @@ class AccountService {
   
         const order: any[] = [];
   
-        if (finalSortBy !== "country" && finalSortBy !== "currency") {
+        if (finalSortBy !== "country" && finalSortBy !== "currency" && finalSortBy !== "industry") {
           order.push([finalSortBy, finalSortOrder]);
         }
   
@@ -281,7 +287,14 @@ class AccountService {
             finalSortOrder,
           ]);
         }
-  
+        
+        if (finalSortBy === "industry") {
+          order.push([
+            { model: Industry, as: "industry" },
+            "industry_name",
+            finalSortOrder,
+          ]);
+        }
         // Determine if we should include the parent_account_rid filter
         // Only apply this filter if is_parent_account is not set to "NO"
         const baseWhereClause = { ...allWhereClause };
