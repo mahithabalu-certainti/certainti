@@ -220,7 +220,17 @@ export class ResourceCost
           beforeCreate: async (resourceCost: ResourceCost) => {
             // Generate r_number if not provided
             if (!resourceCost.r_number) {
-              resourceCost.r_number = `${R_NUMBER_PREFIX.RESOURCE_COST} ${Math.floor(Math.random() * 10000000000).toString().padStart(10, '0')}`;
+              // Get the latest cost number and increment it
+            const latestAccount = await ResourceCost.findOne({
+              order: [['r_number', 'DESC']],
+            });
+            
+            let nextNumber = '0000000001';
+            if (latestAccount) {
+              const currentNumber = parseInt(latestAccount.r_number?.split(' ')[1] || '0');
+              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
+            }
+              resourceCost.r_number = `${R_NUMBER_PREFIX.RESOURCE_COST} ${nextNumber}`;
             }
           },
         },

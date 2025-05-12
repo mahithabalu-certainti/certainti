@@ -87,8 +87,18 @@ export class ResourceCostTimeline extends Model<ResourceCostTimelineAttributes, 
         hooks: {
           beforeCreate: async (resourceCostTimeline: ResourceCostTimeline) => {
             // Generate r_number if not provided
-            if (!resourceCostTimeline.r_number) {              
-              resourceCostTimeline.r_number = `${R_NUMBER_PREFIX.RESOURCE_COST_TIMELINE} ${Math.floor(Math.random() * 10000000000).toString().padStart(10, '0')}`;
+            if (!resourceCostTimeline.r_number) {
+              // Get the latest cost timeline number and increment it
+            const latestAccount = await ResourceCostTimeline.findOne({
+              order: [['r_number', 'DESC']],
+            });
+            
+            let nextNumber = '0000000001';
+            if (latestAccount) {
+              const currentNumber = parseInt(latestAccount.r_number?.split(' ')[1] || '0');
+              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
+            }              
+              resourceCostTimeline.r_number = `${R_NUMBER_PREFIX.RESOURCE_COST_TIMELINE} ${nextNumber}`;
             }
           }
         }

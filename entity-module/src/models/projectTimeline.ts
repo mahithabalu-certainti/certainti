@@ -84,8 +84,18 @@ export class ProjectTimeline
           beforeUpdate: (resources) => {
             resources.setDataValue("event_datetime", new Date());
           },
-          beforeValidate: async (account) => {            
-            const accountCode = `${R_NUMBER_PREFIX.PROJECT_TIMELINE} ${Math.floor(Math.random() * 10000000000).toString().padStart(10, '0')}`;
+          beforeValidate: async (account) => {
+            // Get the latest project timeline number and increment it
+            const latestAccount = await ProjectTimeline.findOne({
+              order: [['r_number', 'DESC']],
+            });
+            
+            let nextNumber = '0000000001';
+            if (latestAccount) {
+              const currentNumber = parseInt(latestAccount.r_number?.split(' ')[1] || '0');
+              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
+            }            
+            const accountCode = `${R_NUMBER_PREFIX.PROJECT_TIMELINE} ${nextNumber}`;
             account.setDataValue("r_number", accountCode);
           },
         },

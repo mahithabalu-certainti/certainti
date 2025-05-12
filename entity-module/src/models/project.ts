@@ -65,6 +65,7 @@ export class Project
   implements ProjectAttributes
 {
   public rid?: string;
+  public r_number?: string;
   public project_ref_id!: string;
   public account_fiscal_rid!: string;
   public account_rid!: string;
@@ -265,8 +266,18 @@ export class Project
         timestamps: false,
         underscored: true,
         hooks: {
-          beforeValidate: async (account) => {            
-            const accountCode = `${R_NUMBER_PREFIX.PROJECT} ${Math.floor(Math.random() * 10000000000).toString().padStart(10, '0')}`;
+          beforeValidate: async (account) => {
+            // Get the latest account number and increment it
+            const latestAccount = await Project.findOne({
+              order: [['r_number', 'DESC']],
+            });
+            
+            let nextNumber = '0000000001';
+            if (latestAccount) {
+              const currentNumber = parseInt(latestAccount.r_number?.split(' ')[1] || '0');
+              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
+            }            
+            const accountCode = `${R_NUMBER_PREFIX.PROJECT} ${nextNumber}`;
             account.setDataValue("r_number", accountCode);
           },
         },

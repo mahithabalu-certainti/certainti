@@ -88,7 +88,17 @@ export class ResourcesTimeline
             resources.setDataValue("event_datetime", new Date());
           },
           beforeValidate: async (account) => {
-            const accountCode = `${R_NUMBER_PREFIX.RESOURCE_TIMELINE} ${Math.floor(Math.random() * 10000000000).toString().padStart(10, '0')}`;
+            // Get the latest resource timeline number and increment it
+            const latestAccount = await ResourcesTimeline.findOne({
+              order: [['r_number', 'DESC']],
+            });
+            
+            let nextNumber = '0000000001';
+            if (latestAccount) {
+              const currentNumber = parseInt(latestAccount.r_number?.split(' ')[1] || '0');
+              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
+            }
+            const accountCode = `${R_NUMBER_PREFIX.RESOURCE_TIMELINE} ${nextNumber}`;
             account.setDataValue("r_number", accountCode);
           },
         },

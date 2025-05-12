@@ -303,8 +303,18 @@ export class ProjectFiscal
         timestamps: false,
         underscored: true,
         hooks: {
-          beforeValidate: async (projectFiscal) => {            
-            const accountCode = `${R_NUMBER_PREFIX.PROJECT_FISCAL} ${Math.floor(Math.random() * 10000000000).toString().padStart(10, '0')}`;
+          beforeValidate: async (projectFiscal) => {
+            // Get the latest project fiscal number and increment it
+            const latestAccount = await ProjectFiscal.findOne({
+              order: [['r_number', 'DESC']],
+            });
+            
+            let nextNumber = '0000000001';
+            if (latestAccount) {
+              const currentNumber = parseInt(latestAccount.r_number?.split(' ')[1] || '0');
+              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
+            }            
+            const accountCode = `${R_NUMBER_PREFIX.PROJECT_FISCAL} ${nextNumber}`;
             projectFiscal.setDataValue("r_number", accountCode);
           },
         },

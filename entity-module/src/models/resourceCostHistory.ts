@@ -73,8 +73,18 @@ export class ResourceCostHistory extends Model<ResourceCostHistoryAttributes, Re
         hooks: {
           beforeCreate: async (resourceCostHistory: ResourceCostHistory) => {
             // Generate r_number if not provided
-            if (!resourceCostHistory.r_number) {              
-              resourceCostHistory.r_number = `${R_NUMBER_PREFIX.RESOURCE_COST_HISTORY} ${Math.floor(Math.random() * 10000000000).toString().padStart(10, '0')}`;
+            if (!resourceCostHistory.r_number) {
+              // Get the latest cost history number and increment it
+            const latestAccount = await ResourceCostHistory.findOne({
+              order: [['r_number', 'DESC']],
+            });
+            
+            let nextNumber = '0000000001';
+            if (latestAccount) {
+              const currentNumber = parseInt(latestAccount.r_number?.split(' ')[1] || '0');
+              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
+            }              
+              resourceCostHistory.r_number = `${R_NUMBER_PREFIX.RESOURCE_COST_HISTORY} ${nextNumber}`;
             }
           }
         }

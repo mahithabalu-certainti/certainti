@@ -75,7 +75,17 @@ export class ResourceSkillHistory extends Model<ResourceSkillHistoryAttributes, 
             console.log("line 80 : ");
             // Generate r_number if not provided
             if (!resourceSkillHistory.r_number) {
-              resourceSkillHistory.r_number = `${R_NUMBER_PREFIX.RESOURCE_SKILL_HISTORY} ${Math.floor(Math.random() * 10000000000).toString().padStart(10, '0')}`;
+              // Get the latest skill history number and increment it
+            const latestAccount = await ResourceSkillHistory.findOne({
+              order: [['r_number', 'DESC']],
+            });
+            
+            let nextNumber = '0000000001';
+            if (latestAccount) {
+              const currentNumber = parseInt(latestAccount.r_number?.split(' ')[1] || '0');
+              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
+            }
+              resourceSkillHistory.r_number = `${R_NUMBER_PREFIX.RESOURCE_SKILL_HISTORY} ${nextNumber}`;
             }
           }
         }
