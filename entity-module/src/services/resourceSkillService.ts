@@ -832,11 +832,6 @@ class ResourceSkillService {
         resourceSkillById.modified_by = userNames.modified_by_name;
       }
 
-      // Format dates to MM/DD/YYYY with proper parsing
-      if (resourceSkillById?.start_date) {
-        resourceSkillById.dataValues.start_date = moment(resourceSkillById.start_date, "YYYY-MM-DD").format("MM/DD/YYYY") as any;
-      }
-
       const resourceInfo = (resourceSkillById as any).Resource;
 
       if (resourceInfo) {
