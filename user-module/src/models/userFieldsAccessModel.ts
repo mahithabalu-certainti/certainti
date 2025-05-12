@@ -72,6 +72,12 @@ export class UserFieldsAccess
             record.setDataValue("modified_datetime", new Date());
           },
         },
+        indexes: [
+          {
+            name: 'idx_user_fields_access_user_id',
+            fields: ['user_id']
+          }
+        ]
       }
     );
 

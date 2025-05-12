@@ -1,9 +1,10 @@
-import { DataTypes, Model, Optional, Sequelize } from "sequelize";
+import { DataTypes, Model, Optional, Sequelize, Op } from "sequelize";
 interface ProfileAttributes {
   rid: string; // UUID
   r_number?: string;
   eid?: number;
   profile_name: string;
+  profile_type: string;
   profile_description?: string;
   profile_status?: string;
   created_by?: string;
@@ -25,6 +26,7 @@ export class Profile
   public r_number?: string;
   public eid?: number;
   public profile_name!: string;
+  public profile_type!: string;
   public profile_description?: string;
   public profile_status?: string;
   public created_by?: string;
@@ -53,6 +55,10 @@ export class Profile
           allowNull: true,
         },
         profile_name: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        profile_type: {
           type: DataTypes.STRING,
           allowNull: false,
         },
@@ -88,6 +94,38 @@ export class Profile
         modelName: "Profile",
         tableName: "profile",
         timestamps: false,
+        hooks: {
+          beforeUpdate: (record) => {
+            record.setDataValue("modified_datetime", new Date());
+          },
+          beforeCreate: async (profile: Profile) => {
+            // Find all profiles with valid r_numbers
+            const profiles = await Profile.findAll({
+              where: {
+                r_number: {
+                  [Op.like]: 'PRF%'
+                }
+              },
+              attributes: ['r_number']
+            });
+            
+            // Extract and find the highest number
+            let maxNumber = 0;
+            profiles.forEach(p => {
+              if (p.r_number) {
+                const numPart = parseInt(p.r_number.replace('PRF', ''), 10);
+                if (!isNaN(numPart) && numPart > maxNumber) {
+                  maxNumber = numPart;
+                }
+              }
+            });
+            
+            // Increment and format
+            const nextNumber = maxNumber + 1;
+            const formattedNumber = `PRF${nextNumber.toString().padStart(5, '0')}`;
+            profile.r_number = formattedNumber;
+          }
+        }
       }
     );
   }

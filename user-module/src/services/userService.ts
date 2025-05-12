@@ -2,7 +2,7 @@ import { initSequelize } from "../config/dataSource";
 import { models } from "../models/index";
 import { constants } from "../utils/constant";
 import { IUpdateUserData, IUserData } from "../utils/types";
-import { Op, Sequelize } from "sequelize";
+import { Op, Sequelize, IndexHints } from "sequelize";
 
   const { 
     User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams,
@@ -690,9 +690,10 @@ async getAllUserPermission(userId: string, profileId: string) {
       if (maWithMenu.menu) {
         permissions.push({
           type: "menu",
+          menuId: maWithMenu.menu.rid,
           name: maWithMenu.menu.menu_name,
           desc: maWithMenu.menu.menu_desc,
-          is_enabled: maWithMenu.is_enabled
+          isEnabled: maWithMenu.is_enabled
         });
       }
     });
@@ -711,9 +712,11 @@ async getAllUserPermission(userId: string, profileId: string) {
       if (moWithModule.menu_module) {
         permissions.push({
           type: "module",
+          moduleId: moWithModule.menu_module.rid,
+          menuId: moWithModule.menu_module.menu_id,
           name: moWithModule.menu_module.module_name,
           desc: moWithModule.menu_module.module_desc,
-          is_enabled: moWithModule.is_enabled
+          isEnabled: moWithModule.is_enabled
         });
       }
     });
@@ -722,19 +725,45 @@ async getAllUserPermission(userId: string, profileId: string) {
     // Permissions
     const permissionAccess = await ProfilePermissionAccess.findAll({
       where: { profile_id: profileId},
-      include: [{ model: ModulePermission, as: "module_permission" }]
+      include: [{ model: ModulePermission, as: "module_permission" }],
+      indexHints: [{ type: IndexHints.USE, values: ['idx_profile_permission_access_profile_id'] }]
     });
     console.log(`After permission access retrieve: ${new Date(Date.now()).toISOString()}`);
+
 
     permissionAccess.forEach(pa => {
       const paWithPerm = pa as any;
       if (paWithPerm.module_permission) {
         permissions.push({
           type: "permission",
-          permission_id: paWithPerm.module_permission_id,
+          permissionId: paWithPerm.module_permission_id,
+          moduleId: paWithPerm.module_permission.menu_module_id,
           name: paWithPerm.module_permission.permission_name,
           desc: paWithPerm.module_permission.permission_desc,
-          is_enabled: paWithPerm.is_enabled
+          isFieldAvailable: paWithPerm.module_permission.is_field_available,
+          isEnabled: paWithPerm.is_enabled
+        });
+      }
+    });
+
+    const fieldAccess = await ProfileFieldsAccess.findAll({
+      where: { profile_id: profileId },
+      include: [{ model: PermissionField, as: "permission_field" }],
+      indexHints: [{ type: IndexHints.USE, values: ['idx_profile_fields_access_profile_id'] }]
+    });
+    console.log(`After fieldAccess retrieve: ${new Date(Date.now()).toISOString()}`);
+
+    fieldAccess.forEach(fa => {
+      const faWithField = fa as any;
+      if (faWithField.permission_field) {
+        permissions.push({
+          type: "field",
+          fieldId: faWithField.permission_field.rid,
+          permissionId: faWithField.permission_field.module_permission_id,
+          name: faWithField.permission_field.field_name,
+          desc: faWithField.permission_field.field_desc,
+          read: faWithField.read,
+          edit: faWithField.edit
         });
       }
     });
@@ -757,9 +786,10 @@ async getAllUserPermission(userId: string, profileId: string) {
       if (maWithMenu.menu) {
         permissions.push({
           type: "menu",
+          menuId: maWithMenu.menu.rid,
           name: maWithMenu.menu.menu_name,
           desc: maWithMenu.menu.menu_desc,
-          is_enabled: maWithMenu.is_enabled
+          isEnabled: maWithMenu.is_enabled
         });
       }
     });
@@ -774,9 +804,11 @@ async getAllUserPermission(userId: string, profileId: string) {
       if (moWithModule.menu_module) {
         permissions.push({
           type: "module",
+          moduleId: moWithModule.menu_module.rid,
+          menuId: moWithModule.menu_module.menu_id,
           name: moWithModule.menu_module.module_name,
           desc: moWithModule.menu_module.module_desc,
-          is_enabled: moWithModule.is_enabled
+          isEnabled: moWithModule.is_enabled
         });
       }
     });
@@ -784,20 +816,44 @@ async getAllUserPermission(userId: string, profileId: string) {
     // Permissions
     const permissionAccess = await UserPermissionAccess.findAll({
       where: { user_id: userId},
-      include: [{ model: ModulePermission, as: "module_permission" }]
+      include: [{ model: ModulePermission, as: "module_permission" }],
+      indexHints: [{ type: IndexHints.USE, values: ['idx_user_permission_access_user_id'] }]
     });
     permissionAccess.forEach(pa => {
       const paWithPerm = pa as any;
       if (paWithPerm.module_permission) {
         permissions.push({
           type: "permission",
-          permission_id: paWithPerm.module_permission_id,
+          permissionId: paWithPerm.module_permission_id,
+          moduleId: paWithPerm.module_permission.menu_module_id,
           name: paWithPerm.module_permission.permission_name,
           desc: paWithPerm.module_permission.permission_desc,
-          is_enabled: paWithPerm.is_enabled
+          isEnabled: paWithPerm.is_enabled
         });
       }
     });
+
+    const fieldAccess = await UserFieldsAccess.findAll({
+      where: { user_id: userId },
+      include: [{ model: PermissionField, as: "permission_field" }],
+      indexHints: [{ type: IndexHints.USE, values: ['idx_user_fields_access_user_id'] }]
+    });
+    console.log(`After user fieldAccess retrieve: ${new Date(Date.now()).toISOString()}`);
+
+    fieldAccess.forEach(fa => {
+      const faWithField = fa as any;
+      if (faWithField.permission_field) {
+        permissions.push({
+          type: "field",
+          fieldId: faWithField.permission_field.rid,
+          permissionId: faWithField.permission_field.module_permission_id,
+          name: faWithField.permission_field.field_name,
+          read: faWithField.read,
+          edit: faWithField.edit
+        });
+      }
+    });
+
 
     return permissions;
   }

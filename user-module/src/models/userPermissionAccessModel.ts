@@ -66,6 +66,12 @@ export class UserPermissionAccess
             record.setDataValue("modified_datetime", new Date());
           },
         },
+        indexes: [
+          {
+            name: 'idx_user_permission_access_user_id',
+            fields: ['user_id']
+          }
+        ]
       }
     );
 
