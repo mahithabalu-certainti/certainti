@@ -1057,13 +1057,13 @@ export class ProjectService {
     const projectFilterFields = [
       { clientField: "applyFilters", dbField: "applyFilters" },
       { clientField: "project_ref_id", dbField: "project_ref_id" },
-      { clientField: "industry", dbField: "industry" },
+      { clientField: "industry", dbField: "industry_name" },
       { clientField: "project_startdate", dbField: "project_startdate" },
       { clientField: "project_enddate", dbField: "project_enddate" },
       { clientField: "project_type", dbField: "project_type" },
       {
         clientField: "project_classification",
-        dbField: "project_classification",
+        dbField: "project_classification_rid",
       },
       { clientField: "project_client_group", dbField: "project_client_group" },
       { clientField: "project_group", dbField: "project_group" },
