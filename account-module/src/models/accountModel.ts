@@ -20,7 +20,7 @@ interface AccountAttributes {
   industry_name?: string;
   primary_contact_name: string;
   status: string;
-  annual_revenue: number;
+  annual_revenue: string;
   created_datetime?: Date;
   modified_datetime?: Date;
 }
@@ -48,7 +48,7 @@ export class Account
   public industry_name?: string;
   public primary_contact_name!: string;
   public status!: string;
-  public annual_revenue!: number;
+  public annual_revenue!: string;
   public created_datetime?: Date;
   public modified_datetime?: Date;
 
@@ -89,7 +89,7 @@ export class Account
           allowNull: false,
         },
         annual_revenue: {
-          type: DataTypes.DECIMAL(),
+          type: DataTypes.STRING(20),
           allowNull: false,
         },
         region: {

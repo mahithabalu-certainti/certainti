@@ -1353,7 +1353,7 @@ class SchemaService {
       console.log("action",contact.action_type)
       if(contact.action_type === 'edit')
       {
-        {
+        if (contact.key_contact_name || contact.key_contact_email || contact.key_contact_role_rid) {
           this.updateKeyContactDetails(
             contact,
             account_rid,
@@ -1374,12 +1374,14 @@ class SchemaService {
       }
       else if(contact.action_type === 'add')
       {
+        if (contact.key_contact_name || contact.key_contact_email || contact.key_contact_role_rid) {
         this.insertKeyContactDetails(
           contact,
           account_rid,
           projectId,
           userId
         )
+      }
       }
     }
   }
@@ -1388,8 +1390,7 @@ class SchemaService {
       console.log(Error)
     }
   }
-  async deleteKeyContactDetails(account_rid: string,project_rid:string,key_contact_id: string,){
-
+  async deleteKeyContactDetails(account_rid: string,key_contact_id: string,project_rid:string){
     const sequelize = await initOrgSequelize();
     await sequelize.query(
       `DELETE FROM "public"."key_contact_details" 
@@ -1471,6 +1472,7 @@ class SchemaService {
       const keyContactId = result?.key_contact_id ?? '';
       let lastKeyId = keyContactId.startsWith('KEY') ? parseInt(keyContactId.replace("KEY", "")) : 0;
       
+      // Since keyContactDetails is a single object, not an array
       lastKeyId++;
       const key_contact_id = `KEY${String(lastKeyId).padStart(3, '0')}`;
       
