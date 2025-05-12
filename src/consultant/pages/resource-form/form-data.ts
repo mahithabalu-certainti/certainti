@@ -263,7 +263,7 @@ export const ResourceFormData = (
             required: false,
             minDate: new Date(minDate.getTime()),
             maxDate: currentDate,
-            startValue: true,
+            startValue: false,
           }),
           createDateField('financial_end_date', 'End Date', {
             required: false,
@@ -278,7 +278,7 @@ export const ResourceFormData = (
             required: true,
           }),
           createTextField('cost', 'Cost', {
-            required: true,
+            required: false,
             regex: REGEX_PATTERNS.COST_REGEX,
             regexErrorMessage:
               'Cost must be a 16-digit number with up to 2 decimals',
