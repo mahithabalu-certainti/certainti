@@ -43,12 +43,25 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   const { state } = location;
   const [formData, setFormData] = React.useState<FormType[]>();
   const [constructFormData, setConstructFormData] = React.useState<
-    Record<string, FieldTypes>
+  Record<string, FieldTypes>
   >({});
 
   const CommonSkeleton = (
     <Skeleton variant='rounded' width='100%' height={32} />
   );
+
+  useEffect(() => {
+    //if field.name === 'resource_type' then disable resource_orgname
+    if (constructFormData["resource_type"] === "Full-Time") {
+      const resourceOrgNameField = formData?.[0].fields.find(
+        (f) => f.name ==='resource_orgname'
+      );
+      if (resourceOrgNameField) {
+        resourceOrgNameField.disabled = true;
+      }
+    }
+  },[constructFormData, formData])
+
   useEffect(() => {
     setFormData((prevFormData = []) => {
       return data.map((newSection) => {
@@ -111,6 +124,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
           resourceOrgNameField.required =
             value === 'Sub Con' || value === 'Non-Labor';
+          resourceOrgNameField.disabled = value === 'Full-Time';
         }
       }
       const newData = {

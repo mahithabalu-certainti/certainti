@@ -22,20 +22,37 @@ export const getCostFilterFields = (currencyOptions: { option: string; value: st
   { name: 'Semi-Annual', value: 'semi_annual', type: 'number' },
   { name: 'Annual', value: 'annual', type: 'number' },
 ];
-export const skillFilterFields: FieldConfig[] = [
-  // { name: 'Resource Type', value: 'resource_type', type: 'textCostAndSkill' },
-  { name: 'Start Date', value: 'start_date', type: 'date' },
-  { name: 'Skill Name', value: 'skill_name', type: 'textCostAndSkill' },
-  {
-    name: 'Skill Level',
-    value: 'skill_level',
-    type: 'enum',
-    options: enumValueOptions,
-  },
-  { name: 'Years of Experience', value: 'years_of_experience', type: 'number' },
-];
+export const getSkillFilterFields = (
+  skillTypeOptions: any[],
+  skillSubTypeOptions: any[]
+): FieldConfig[] => {
+  return [
+    // { name: 'Resource Type', value: 'resource_type', type: 'textCostAndSkill' },
+    { name: 'Start Date', value: 'start_date', type: 'date' },
+    { name: 'Skill Details', value: 'skill_name', type: 'textCostAndSkill' },
+    {
+      name: 'Skill Level',
+      value: 'skill_level',
+      type: 'enum',
+      options: enumValueOptions,
+    },
+    { name: 'Years of Experience', value: 'years_of_experience', type: 'number' },
+    {
+      name: 'Skill Type',
+      value: 'skill_type_rid',
+      type: 'enum',
+      options: skillTypeOptions
+    },
+    {
+      name: 'Skill Sub-Type',
+      value: 'skill_subtype_rid',
+      type: 'enum',
+      options: skillSubTypeOptions,
+      dependsOn: 'skill_type_rid'  // This indicates it depends on skill_type
+    },
+  ];
+};
 export const resourceFilterFields: FieldConfig[] = [
-  { name: 'Resource ID', value: 'r_number', type: 'text' },
   { name: 'Resource Code', value: 'resource_ref_id', type: 'text' },
   { name: 'Name', value: 'resource_fullname', type: 'text' },
   {
@@ -44,9 +61,9 @@ export const resourceFilterFields: FieldConfig[] = [
     type: 'enum',
     options: resourceTypeOptions,
   },
-  { name: 'Resource Designation', value: 'designation', type: 'text' },
-  { name: 'Resource Country', value: 'country', type: 'text' },
-  { name: 'Resource Region', value: 'state', type: 'text' },
+  { name: 'Designation', value: 'designation', type: 'text' },
+  { name: 'Country', value: 'country', type: 'text' },
+  { name: 'Region', value: 'region', type: 'text' },
   {
     name: 'Status',
     value: 'resource_status',

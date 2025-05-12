@@ -41,7 +41,11 @@ export type ResourceSkillList = {
   modified_by: null;
   resource_number: string;
   resource_full_name: string;
-  skill_name: string;
+  skill_details: string;
+  skill_type_name: string;
+  skill_subtype_name: string;
+  skill_type_rid: string;
+  skill_subtype_rid: string;
 };
 
 export interface ResourceSkillApiResponse extends CommonApiResponse {
@@ -88,6 +92,9 @@ export type ResourceSkillPayload = {
   skill_name: string;
   technical_weightage?: string;
   accountNumber?: string;
+  skill_type_rid?: string;
+  skill_subtype_rid?: string;
+  skill_details?: string;
 };
 
 export type ExportModule = {
