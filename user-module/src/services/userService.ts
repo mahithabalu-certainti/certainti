@@ -716,7 +716,7 @@ async getAllUserPermission(userId: string, profileId: string) {
           rid: moWithModule.rid,
           type: "module",
           module_id: moWithModule.menu_module.rid,
-          menuId: moWithModule.menu_module.menu_id,
+          menu_id: moWithModule.menu_module.menu_id,
           name: moWithModule.menu_module.module_name,
           desc: moWithModule.menu_module.module_desc,
           is_enabled: moWithModule.is_enabled
