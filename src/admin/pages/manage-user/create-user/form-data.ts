@@ -21,7 +21,7 @@ export const FormData = (
   return useMemo(
     () => [
       {
-        sectionName: 'Basic Information',
+        sectionName: 'Identity',
         fillType: 'half',
         fields: [
           createTextField('first_name', 'First name', {
@@ -38,22 +38,13 @@ export const FormData = (
               maxErrorMessage: 'Max length exceeded',
             },
           }),
-          createTextField('street', 'Street', {
-            required: false,
-            regex: REGEX_PATTERNS.STREET_REGEX,
-            regexErrorMessage:
-              'Street must contain only letters and spaces, and be 3 to 200 characters long.',
-            placeholder: 'Enter Street',
-          }),
           createTextField('last_name', 'Last name', {
             required: true,
             regex: REGEX_PATTERNS.NAME_REGEX,
-
             placeholder: 'Enter Last name',
-
             regexErrorMessage:
               "Last name must contain only letters, spaces, apostrophes (') or hyphens (-).",
-           lengthRequired: {
+            lengthRequired: {
               key: 'name_length',
               minMatchedValue: REGEX_PATTERNS.MIN_NAME_REGEX,
               minErrorMessage: 'Name must be more than 2 characters long',
@@ -75,30 +66,50 @@ export const FormData = (
               maxErrorMessage: 'Max length exceeded',
             },
           }),
+          createPhoneInputField('phone', 'Phone Number', {
+            required: false,
+            placeholder: 'Enter Phone Number',
+          }),
+        ],
+      },
+      {
+        sectionName: 'Access & Role',
+        fillType: 'half',
+        fields: [
           createSelectField('profile_rid', 'Profile', {
             options: profile,
             required: true,
             placeholder: 'Select Profile',
-          }),
-          createTextField('zip_code', 'Zip/Postal code', {
-            required: false,
-            regex: REGEX_PATTERNS.POSTAL_CODE,
-            regexErrorMessage: 'Invalid postal code / zip code',
-            placeholder: 'Enter Zip/Postal code',
-          }),
-          createPhoneInputField('phone', 'Phone Number', {
-            required: false,
-            placeholder: 'Enter Phone Number',
           }),
           createSelectField('role_rid', 'Role', {
             options: role,
             placeholder: 'Select Role',
             required: true,
           }),
+          createRadioField('status', 'Status', {
+            required: true,
+            radioOptions: [
+              { label: 'Active', value: 'active' },
+              { label: 'In-active', value: 'inactive' },
+            ],
+          }),
+        ],
+      },
+      {
+        sectionName: 'Address',
+        fillType: 'half',
+        fields: [
+          createTextField('street', 'Street', {
+            required: false,
+            regex: REGEX_PATTERNS.STREET_REGEX,
+            regexErrorMessage:
+              'Street must contain only letters and spaces, and be 3 to 200 characters long.',
+            placeholder: 'Enter Street',
+          }),
           createSelectField('country', 'Country', {
             options: country,
             placeholder: 'Select Country',
-            required: true,
+            required: false,
             onChange: true,
             resetDependsFields: ['state, city'],
           }),
@@ -115,12 +126,11 @@ export const FormData = (
             required: false,
             isLoading: stateLoading || cityLoading,
           }),
-          createRadioField('status', 'Status', {
-            required: true,
-            radioOptions: [
-              { label: 'Active', value: 'active' },
-              { label: 'In-active', value: 'inactive' },
-            ],
+          createTextField('zip_code', 'Zip/Postal code', {
+            required: false,
+            regex: REGEX_PATTERNS.POSTAL_CODE,
+            regexErrorMessage: 'Invalid postal code / zip code',
+            placeholder: 'Enter Zip/Postal code',
           }),
         ],
       },

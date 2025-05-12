@@ -25,9 +25,7 @@ export const Profile: React.FC = () => {
             className='h-10 w-10 bg-[#7D98B6] p-2.5 rounded'
           />
           <div>
-            <h4 className='font-bold text-lg ml-2 leading-4'>
-              View Profile Details
-            </h4>
+            <h4 className='font-bold text-lg ml-2 leading-4'>My Information</h4>
           </div>
         </div>
         <div className='flex gap-3'>

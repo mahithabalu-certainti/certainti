@@ -22,6 +22,7 @@ export interface FormTypeFields {
   greaterThan?: Record<string, string>;
   toBeNotSame?: Record<string, string>;
   dependsRequired?: Record<string, string>;
+  defaultSelect?: Record<string, string>;
   resetDependsFields?: string[];
   disableFutureDates?: boolean;
   lengthRequired?: {
@@ -87,6 +88,7 @@ export interface FieldType {
   greaterThan?: Record<string, string>;
   toBeNotSame?: Record<string, string>;
   dependsRequired?: Record<string, string>;
+  defaultSelect?: Record<string, string>;
   resetDependsFields?: string[];
   dateRangeError?: boolean;
   startValue?: boolean;

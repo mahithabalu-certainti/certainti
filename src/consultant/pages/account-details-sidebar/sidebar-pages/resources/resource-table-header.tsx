@@ -13,6 +13,7 @@ interface ResourceTableHeaderProps {
     variant: 'text' | 'outlined' | 'contained';
     onClick: () => void;
     sx?: SxProps<Theme>;
+    disabled?: boolean;
   }[];
   toggleViewMode?: () => void;
   showBackArrow?: boolean;
@@ -76,6 +77,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
                 }
                 aria-label={button.label}
                 sx={button.sx}
+                disabled={button.disabled}
               />
             ))}
           </div>

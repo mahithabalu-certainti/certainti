@@ -8,9 +8,10 @@ import { ListItemText } from '@mui/material';
 interface ActionButtonProps {
   onEdit: () => void;
   onDelete: () => void;
+  isDisabled?: boolean;
 }
 
-export default function ActionButton({ onEdit, onDelete }: ActionButtonProps) {
+export default function ActionButton({  onEdit, onDelete, isDisabled }: ActionButtonProps) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -24,10 +25,12 @@ export default function ActionButton({ onEdit, onDelete }: ActionButtonProps) {
     {
       label: 'Edit',
       onClick: () => onEdit(),
+      disabled: isDisabled
     },
     {
       label: 'Delete',
       onClick: () =>  onDelete(),
+      disabled: isDisabled
     },
   ]
 
@@ -102,6 +105,7 @@ export default function ActionButton({ onEdit, onDelete }: ActionButtonProps) {
                 item.onClick();
                 handleClose();
               }}
+              disabled={item.disabled}
             >
               <ListItemText
                 sx={{

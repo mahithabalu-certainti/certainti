@@ -30,6 +30,12 @@ const accountServiceApi = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// Create Resource Service Axios instance
+const resourceServiceApi = axios.create({
+  baseURL: import.meta.env.VITE_BASE_URL + import.meta.env.VITE_RESOURCE_URL,
+  headers: { 'Content-Type': 'application/json' },
+});
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL,
   headers: {
@@ -38,7 +44,7 @@ const api = axios.create({
 });
 
 // Apply interceptors to both services
-[accountServiceApi, userServiceApi, api].forEach((api) => {
+[accountServiceApi, userServiceApi, resourceServiceApi, api].forEach((api) => {
   api.interceptors.request.use(
     (config) => {
       const auth = localStorage.getItem('auth');
@@ -73,7 +79,7 @@ const processQueue = (error: unknown, token: string | null = null) => {
 };
 
 // Modify the response interceptor
-[accountServiceApi, userServiceApi, api].forEach((api) => {
+[accountServiceApi, userServiceApi, resourceServiceApi, api].forEach((api) => {
   api.interceptors.response.use(
     (response: AxiosResponse) => {
       return response;
@@ -159,4 +165,4 @@ const processQueue = (error: unknown, token: string | null = null) => {
   );
 });
 
-export { accountServiceApi, userServiceApi, api };
+export { accountServiceApi, userServiceApi, resourceServiceApi, api };
