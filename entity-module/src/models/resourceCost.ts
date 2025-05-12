@@ -23,7 +23,9 @@ interface ResourceCostAttributes {
   daily_cost?: number;
   hourly_cost?: number;
   currency_rid?: string;
+  fiscal_year: number;
   status?: string;
+  comments?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
   created_by?: string;
@@ -49,6 +51,7 @@ export class ResourceCost
   end_date?: Date;
   cost?: number;
   cost_type?: string;
+  fiscal_year!: number;
   annual_cost?: number;
   semi_annual_cost?: number;
   monthly_cost?: number;
@@ -58,6 +61,7 @@ export class ResourceCost
   hourly_cost?: number;
   currency_rid?: string;
   status?: string;
+  comments?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
   created_by?: string;
@@ -97,6 +101,10 @@ export class ResourceCost
         },
         resource_number: {
           type: DataTypes.STRING(255),
+          allowNull: false,
+        },
+        fiscal_year: {
+          type: DataTypes.INTEGER,
           allowNull: false,
         },
         effective_date: {
@@ -180,6 +188,10 @@ export class ResourceCost
         status: {
           type: DataTypes.STRING(255),
           defaultValue: "active",
+        },
+        comments: {
+          type: DataTypes.STRING(2000),
+          allowNull: true,
         },
         created_datetime: {
           type: DataTypes.DATE,

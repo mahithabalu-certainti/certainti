@@ -65,8 +65,11 @@ class ResourceSkillService {
         modified_by,
         skill_type_rid,
         skill_subtype_rid,
+        skill_type_others,
+        skill_subtype_others,
         skill_details,
         accountNumber,
+        comments,
         resource_number,
       } = resourceSkill;
 
@@ -192,7 +195,6 @@ class ResourceSkillService {
         const sequelizeInstance = await this.getOrgSequelize();
         ResourceSkill.initialize(sequelizeInstance, schemaName);
 
-        const startDate = this.formatDateForDb(start_date as string);
 
         // Use the model's create method to leverage default values
         createdResourceSkill = await ResourceSkill.create({
@@ -202,11 +204,14 @@ class ResourceSkillService {
           resource_rid,
           resource_number,
           resource_ref_id,
-          start_date: startDate || null,
+          start_date,
           skill_description,
           skill_level: skill_level || "",
           skill_type_rid,
           skill_subtype_rid,
+          skill_type_others,
+          skill_subtype_others,
+          comments,
           skill_details: skill_details || undefined,
           created_by: userId,
           modified_by: userId,
@@ -332,7 +337,10 @@ class ResourceSkillService {
         skill_level,
         skill_type_rid,
         skill_subtype_rid,
+        skill_type_others,
+        skill_subtype_others,
         skill_details,
+        comments,
         modified_by,
         status,
         accountNumber,
@@ -421,17 +429,19 @@ class ResourceSkillService {
       // }
 
       try {
-        const startDate = this.formatDateForDb(start_date as string);
 
         const [affectedCounts, affectedRows] = await ResourceSkill.update(
           {
             rid,
             eid,
-            start_date: startDate || null,
+            start_date,
             skill_description,
             skill_level,
             skill_type_rid,
             skill_subtype_rid,
+            skill_type_others,
+            skill_subtype_others,
+            comments,
             skill_details: skill_details || undefined,
             status,
             modified_by: userId,
@@ -532,6 +542,9 @@ class ResourceSkillService {
         "skill_level",
         "skill_type_rid",
         "skill_subtype_rid",
+        "skill_type_others",
+        "skill_subtype_others",
+        "comments",
         "skill_details",
         "years_of_experience",
         "fiscal_year",
