@@ -39,7 +39,7 @@ export const transformFormData = (
     industry_name,
     website: formData.website || null,
     project_manager: formData.project_manager,
-    annual_revenue: Number((formData.annual_revenue ?? '').toString().replace(/[^\d.]/g, '')),
+    annual_revenue: formData.annual_revenue,
     data_storage: formData.data_storage,
     business_details: formData.business_details,
     key_contacts: [

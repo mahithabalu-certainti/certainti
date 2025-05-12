@@ -26,12 +26,22 @@ import { STATUS_OPTIONS } from '../../../common-utils';
 export const AccountForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [currentCountry, setCurrentCountry] = useState('');
-  const [isPrimaryContactRequired, setIsPrimaryContactRequired] =
-    useState(false);
+  const [primaryKeyContactInfo, setPrimaryKeyContactInfo] = useState({
+    key_contact_name: '',
+    key_contact_role: '',
+    key_contact_email: '',
+  });
+  const [isParentAccountRequired, setIsParentAccountRequired] =
+  useState(false);
   const [dataResidency, setDataResidency] = useState(DATA_STORAGE_OPTIONS);
   const { successToast } = useToast();
   const location = useLocation();
   const { accountid } = useParams();
+  const keyContactInfo = [
+    'key_contact_name',
+    'key_contact_role',
+    'key_contact_email',
+  ];
 
   const getAccount = useFetchAccountFields(accountid as string);
   const account = getAccount.data?.data;
@@ -67,6 +77,7 @@ export const AccountForm: React.FC = () => {
     [account]
   );
   const defaultAciveValue = STATUS_OPTIONS[0].value;
+  const isValueUpdateInKeyContact = Object.values(primaryKeyContactInfo).some(val => val.trim() !== '')
 
   const allCountries = useGetAllCountries();
   const industry = useFetchIndustrys();
@@ -186,12 +197,17 @@ export const AccountForm: React.FC = () => {
             (item) => item.value !== 'store_in_parent'
           )
         );
+        setIsParentAccountRequired(false);
       } else {
+        setIsParentAccountRequired(true);
         setDataResidency(DATA_STORAGE_OPTIONS);
       }
     }
-    if (data.fieldName === 'key_contact_role') {
-      setIsPrimaryContactRequired(!!data.fieldValue);
+    if (keyContactInfo.includes(data.fieldName)) {
+      setPrimaryKeyContactInfo((prev) => ({
+        ...prev,
+        [data.fieldName]: data.fieldValue,
+      }));
     }
   };
 
@@ -245,7 +261,8 @@ export const AccountForm: React.FC = () => {
           dataResidency,
           memoizedIndustry,
           memoizedRole,
-          isPrimaryContactRequired,
+          isValueUpdateInKeyContact,
+          isParentAccountRequired,
           isEditView,
           states.isLoading
         )}

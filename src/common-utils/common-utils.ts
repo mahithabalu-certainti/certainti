@@ -236,7 +236,7 @@ export const REGEX_PATTERNS = {
   MAX_WEBSITE: /^.{0,255}$/,
   DATA_RESIDENCY: /^[A-Za-z0-9\s-]+$/,
   NUMBER_OPTIONAL_DECIMAL: /^([0-9]{1,10}(\.[0-9]{1,2})?)?$/,
-  BLENDED_NUMBER: /^[0-9]{1,10}$/,
+  BLENDED_NUMBER: /^(?!0\d)\d{1,18}(\.\d{1,2})?$/,
   DESCRIPTION: /^.{0,500}$/,
   RESOURCE_DESCRIPTION: /^.{0,1000}$/,
   ACCOUNT_DESCRIPTION: /^[\s\S]{0,2000}$/,

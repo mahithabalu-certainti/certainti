@@ -21,6 +21,7 @@ export const FormData = (
   industrys: SelectOption[],
   roles: SelectOption[],
   isPrimaryContactRequired: boolean,
+  isParentAccountRequired: boolean,
   disableFields?: boolean,
   stateLoading?: boolean
 ): FormType[] => {
@@ -74,14 +75,14 @@ export const FormData = (
           createSelectField('parent_account_rid', 'Parent Account', {
             options: parentAccount,
             placeholder: 'Choose Parent Account',
-            required: false,
-            disabled: disableFields,
-            dependsRequired: {
-              key: 'is_parent',
-              matchedValue: YesNo.No,
-              errorMessage: 'Field is required',
-              disableDependsField: YesNo.Yes,
-            },
+            required: isParentAccountRequired,
+            disabled: !isParentAccountRequired || disableFields,
+            // dependsRequired: {
+            //   key: 'is_parent',
+            //   matchedValue: YesNo.No,
+            //   errorMessage: 'Field is required',
+            //   disableDependsField: YesNo.Yes,
+            // },
           }),
           createSelectField('status', 'Status', {
             required: true,
@@ -175,6 +176,7 @@ export const FormData = (
             regex: REGEX_PATTERNS.CONTACT_NAME,
             regexErrorMessage: 'Invalid Name',
             placeholder: 'Enter Key Contact Name',
+            onChange: true,
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_NAME_REGEX,
@@ -201,6 +203,7 @@ export const FormData = (
           createTextField('key_contact_email', 'Key Contact Email', {
             required: false,
             placeholder: 'Enter Key Contact Email',
+            onChange: true,
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MAX_EMAIL_REGEX,
@@ -297,7 +300,8 @@ export const FormData = (
           createTextField('blended_rate_fte', 'Blended Rate - FTE', {
             required: false,
             regex: REGEX_PATTERNS.BLENDED_NUMBER,
-            regexErrorMessage: 'Numbers only allowed, up to 10 digits',
+            regexErrorMessage:
+              'Only allowed positive numbers , up to 18 digits & 2 decimal places',
             placeholder: 'Enter Blended Rate - FTE',
           }),
           createTextField('blended_rate_subcon', 'Blended Rate - SubCon', {
