@@ -882,6 +882,80 @@ class SchemaService {
     }
   }
 
+  async insertGeoData(resources: any, mainDdSequilze: Sequelize) {
+    try {
+      const countryIds = [
+        ...new Set(resources.map((r: any) => r.resource_country)),
+      ].filter(Boolean);
+      const regionIds = [...new Set(resources.map((r: any) => r.resource_region))].filter(
+        Boolean
+      );
+      const cityIds = [...new Set(resources.map((r: any) => r.resource_city))].filter(
+        Boolean
+      );
+
+      let countryRows: any[] = [];
+      let states: any[] = [];
+      let cities: any[] = [];
+
+      if (countryIds.length > 0) {
+        countryRows = await mainDdSequilze.query(
+          `SELECT rid, country_name FROM country WHERE rid IN (:ids)`,
+          {
+            replacements: { ids: countryIds },
+            type: "SELECT",
+          }
+        );
+      }
+
+      if (regionIds.length > 0) {
+        states = await mainDdSequilze.query(
+          `SELECT rid, state_name FROM state WHERE rid IN (:ids)`,
+          {
+            replacements: { ids: regionIds },
+            type: "SELECT",
+          }
+        );
+      }
+
+      if (cityIds.length > 0) {
+        cities = await mainDdSequilze.query(
+          `SELECT rid, city_name FROM city WHERE rid IN (:ids)`,
+          {
+            replacements: { ids: cityIds },
+            type: "SELECT",
+          }
+        );
+      }
+
+      const countryMap = Object.fromEntries(
+        (Array.isArray(countryRows) ? countryRows : []).map((c: any) => [
+          c.rid,
+          c,
+        ])
+      );
+
+      const regionMap = Object.fromEntries(
+        (Array.isArray(states) ? states : []).map((s: any) => [s.rid, s])
+      );
+
+      const cityMap = Object.fromEntries(
+        (Array.isArray(cities) ? cities : []).map((s: any) => [s.rid, s])
+      );
+
+      const updatedResources = resources.map((res: any) => ({
+        ...res.toJSON(),
+        country_name: countryMap[res.resource_country]?.country_name || null,
+        region_name: regionMap[res.resource_region]?.state_name || null,
+        city_name: cityMap[res.resource_city]?.city_name || null,
+      }));
+      
+      return updatedResources;
+    } catch (err) {
+      throw new Error("Error fetching geo data: " + (err as Error).message);
+    }
+  }
+
   async sortGeoData(
     resources: any[],
     order: string[][] = []
