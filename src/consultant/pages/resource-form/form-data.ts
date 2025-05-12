@@ -30,6 +30,14 @@ const getFiscalYears = (range: number) => {
   });
 };
 
+const getSkillStartDateOptions = (range: number) => {
+  const currentYear = new Date().getFullYear();
+  return Array.from({ length: range }, (_, i) => {
+    const year = currentYear - i;
+    return { label: `${year}`, value: String(year) };
+  });
+};
+
 // 3. Extract date calculations
 const getDateConstraints = (yearsBack: number) => {
   const currentDate = new Date();
@@ -41,6 +49,7 @@ const getDateConstraints = (yearsBack: number) => {
 };
 
 export const fiscalYears = getFiscalYears(DATE_CONFIG.FISCAL_YEARS_RANGE);
+export const skillStartDateYears = getSkillStartDateOptions(DATE_CONFIG.FISCAL_YEARS_RANGE);
 const { currentDate, minDate, previousDate } = getDateConstraints(
   DATE_CONFIG.MIN_YEARS_BACK
 );
@@ -280,11 +289,11 @@ export const ResourceFormData = (
         fillType: 'half',
         hide: hideSkill === 'skill' ? false : true,
         fields: [
-          createDateField('skill_start_date', 'Start Date', {
+          createSelectField('skill_start_date', 'Start Date', {
+            options:skillStartDateYears,
             required: false,
-            minDate: new Date(minDate.getTime()),
-            maxDate: currentDate,
-            startValue: true,
+            placeholder: '-Select-',
+            onChange: true,
           }),
           createSelectField('skill_type', 'Skill Type', {
             options: skillTypeOptions,

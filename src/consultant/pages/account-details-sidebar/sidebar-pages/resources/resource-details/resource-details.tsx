@@ -257,6 +257,10 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   const auditLogSection = CreateSectionData({
     record_id: resourceData.rid,
     resource_id: resourceData.r_number,
+    Created_On: formatDateToMMDDYYYY(resourceData.created_datetime),
+    Created_By: resourceData.created_by,
+    Updated_On: formatDateToMMDDYYYY(resourceData.modified_datetime),
+    Updated_By: resourceData.modified_by,
   });
 
   return (

@@ -102,6 +102,7 @@ export type ResourceCostSkillFormData = {
   resource_desc?: string;
   skill_type?: string;
   skill_sub_type?: string;
+  fiscal_year?: string;
 };
 
 export type ResourceCostPayload = {

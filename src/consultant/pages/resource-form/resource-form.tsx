@@ -240,12 +240,12 @@ const ResourceForm: React.FC = () => {
 
   const memoizedSkillType: SelectOption[] = useMemo(() => {
     const data = skillType as SkillType[];
-    return (
-      data?.map((skill: SkillType) => ({
-        label: skill.skill_type_name,
-        value: skill.rid,
-      })) || []
-    );
+    const convertData = data?.map((skill: SkillType) => ({
+      label: skill.skill_type_name,
+      value: skill.rid,
+    })) || []
+    const finaldata = [...convertData,{label: "Other", value: "Other"}]
+    return finaldata
   }, [skillType]);
 
   useEffect(()=>{
@@ -254,7 +254,7 @@ const ResourceForm: React.FC = () => {
         label: skill.skill_subtype_name,
         value: skill.rid,
       })) || []
-      setSkillSubTypeData(finalData)
+      setSkillSubTypeData([...finalData,{label: "Other", value: "Other"}])
   },[skillSubType])
   
 

@@ -98,11 +98,15 @@ export interface CreateSectionData {
   created_datetime: string; // ISO date string
   modified_datetime: string; // ISO date string
   created_by: string; // UUID format
-  modified_by: string | null;
+  modified_by?: string;
   comments: string;
   resource_number?: string;
   record_id?: string;
   resource_id?: string;
+  Created_On?: string;
+  Created_By?: string;
+  Updated_On?: string;
+  Updated_By?: string | null;
 }
 interface ResourceData {
   resourceDetails: ResourceDetailsTypes;
