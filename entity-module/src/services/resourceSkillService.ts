@@ -90,6 +90,7 @@ class ResourceSkillService {
 
         try {
 
+            if(!skill_type_others){
             // Then check if this skill type rid exists for the resource
             const existingResourceSkill = await ResourceModel.findOne({
               where: {
@@ -106,12 +107,15 @@ class ResourceSkillService {
                 errorMessage: `Skill already exists for this resource`,
               };
             }
+          }
           
         } catch (error) {
           console.error("Error checking for duplicate skill:", error);
           // Continue with creation if check fails
         }
+      
       }
+    
 
       // Create tables in parallel for better performance
       const [
