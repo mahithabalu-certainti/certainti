@@ -238,7 +238,7 @@ export const FormData = (
           createSelectField('key_contact_status', 'Key Contact Status', {
             required: false,
             options: STATUS_OPTIONS,
-            placeholder: 'Choose Contact Status',
+            placeholder: 'Choose Key Contact Status',
           }),
           // createTextField('finance_poc_name', 'Finance Contact Name', {
           //   required: true,
@@ -297,7 +297,7 @@ export const FormData = (
                 { label: '4', value: '4' },
                 { label: '5', value: '5' },
               ],
-              placeholder: 'Choose Max AI Intractions',
+              placeholder: 'Choose Max interaction Follow up',
             }
           ),
           createRadioField('auto_access_rd', 'Auto Assessment', {
