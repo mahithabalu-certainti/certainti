@@ -90,7 +90,6 @@ const Resource: React.FC<ResourceProps> = ({
     sortBy: sortField,
     sortOrder: sortOrder,
     filters: appliedFilters,
-    fiscalYear: convertedFiscalYear,
   });
 
   const handleFilter = () => {
@@ -253,7 +252,7 @@ const Resource: React.FC<ResourceProps> = ({
       navigate(
         `${RESOURCE_CREATE}?account_id=${accountid}${resId ? `&res_id=${resId}` : ''}`,
         {
-          state: accountDetails,
+          state: {accountDetails, resourceCreate: true},
         }
       );
     }
