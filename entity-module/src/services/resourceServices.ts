@@ -223,16 +223,13 @@ export class ResourceService {
       const rawResult = resources.resources || [];
       let exportData = rawResult.map((resource: any) => {
         return {
-          "Resource ID":resource.r_number,
           "Resource Code":resource.resource_ref_id,
           "Name":resource.resource_fullname,
           "Resource Type": resource?.resource_type,
           "Designation": resource.designation,
           "Country": resource.country_name,
-          "Region": resource.resource_region,
+          "Region": resource.region_name,
           "Status": resource.resource_status,
-          
-
         };
       });
       return {
