@@ -38,11 +38,7 @@ import {
 import { SkillSubtype, SkillType } from '../../types/resource.ts';
 import { formatDateToMMDDYYYYWithTime } from '../account-details-sidebar/sidebar-pages/resources/utils.tsx';
 
-enum FormSection {
-  COST = 'cost',
-  SKILL = 'skill',
-  NONE = '',
-}
+
 
 const ResourceForm: React.FC = () => {
   // Refs
@@ -159,7 +155,6 @@ const ResourceForm: React.FC = () => {
       setFormValues(skillValues);
     }
     else if (formValues && !isEditView) {
-      console.log('formValues', formValues)
       // Set form values with resource details when creataing cost and skill
       setFormValues(formValues);
     }
@@ -396,11 +391,7 @@ const ResourceForm: React.FC = () => {
   //disable orgname in the formdata if the user select resource type as full-time
   const disableOrgname = resourceDetails?.resource_type === 'full-time';
 
-  const activeFormSection = state?.cost
-    ? FormSection.COST
-    : state?.skill
-      ? FormSection.SKILL
-      : FormSection.NONE;
+
   // Form configuration
   const formConfig = ResourceFormData(
     memoizedCountry,
@@ -414,7 +405,6 @@ const ResourceForm: React.FC = () => {
     currency.isLoading,
     skillSubTypeLoading,
     isEditView,
-    activeFormSection,
     state?.cost || state?.skill,
     disableOrgname,
     currentSkillType.skill_type,

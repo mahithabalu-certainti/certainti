@@ -68,7 +68,6 @@ export const ResourceFormData = (
   currencyLoading?: boolean,
   skillSubTypeLoading?: boolean,
   disableFields?: boolean,
-  hideSkill?: string,
   disableCostAndSkill?: boolean,
   disableOrgname?: boolean,
   currentSkillType?: string,

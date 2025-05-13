@@ -106,7 +106,6 @@ export const skillListURL = ({
   sortOrder,
   filters,
   accountNumber,
-  fiscalYear,
   resourceRid,
 }: ResourceSkillListParams): string => {
   return returnURL(resourceSkillUrl, {
@@ -116,7 +115,6 @@ export const skillListURL = ({
     sortOrder,
     filters,
     accountNumber,
-    fiscalYear,
     resourceRid,
   });
 };
