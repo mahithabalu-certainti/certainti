@@ -129,7 +129,6 @@ class SchemaService {
     limit: number,
     order: any[],
     whereClause: Record<string, string> = {},
-    fiscalYear: number,
     geoDataSort: string[][]
   ) {
     try {
@@ -168,9 +167,6 @@ class SchemaService {
       const resources = await Resource.findAll({
         where: {
           ...whereClause,
-          ...(fiscalYear && fiscalYear !== 0
-            ? { fiscal_year: fiscalYear }
-            : {}),
         },
         order: queryOrder,
         subQuery: false,
@@ -334,7 +330,6 @@ class SchemaService {
     accountNumber: string,
     order: any[],
     whereClause: Record<string, string> = {},
-    fiscalYear: number,
     geoDataSort: string[][]
   ) {
     try {
@@ -348,9 +343,6 @@ class SchemaService {
       const resources = await Resource.findAll({
         where: {
           ...whereClause,
-          ...(fiscalYear && fiscalYear !== 0
-            ? { fiscal_year: fiscalYear }
-            : {}),
         },
         order,
         subQuery: false,
@@ -375,9 +367,6 @@ class SchemaService {
       const totalCount = await Resource.count({
         where: {
           ...whereClause,
-          ...(fiscalYear && fiscalYear !== 0
-            ? { fiscal_year: fiscalYear }
-            : {}),
         },
       });
 

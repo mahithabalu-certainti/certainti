@@ -1,3 +1,4 @@
+import { initSequelize } from "../config/maindbDataSource";
 import { initOrgSequelize } from "../config/orgdbDataSource";
 import { IAccount, IUpdateAccount, IKeyContactDetail } from "../utils/types";
 import Decimal from "decimal.js";
@@ -50,6 +51,16 @@ class SchemaService {
         modified_datetime DATE DEFAULT CURRENT_TIMESTAMP NULL
       );
     `);
+  }
+
+  async fetchKeyContactRoles(): Promise<any[]> {
+    const sequelize = await initSequelize();
+    const result = await sequelize.query(`
+      SELECT *
+      FROM "public".key_contact_role
+      ORDER BY role_name ASC;
+    `);
+    return result[0];
   }
 
   private async createAccountFiscalTable(schemaName: string, sequelize: any) {

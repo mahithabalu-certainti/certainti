@@ -17,4 +17,5 @@ routes.get('/list/:id', checkUserStatusMiddleware("account_details_view"), contr
 routes.post('/new', checkUserStatusMiddleware("accounts_create"), controller.accountController.createAccount);
 routes.put('/update', checkUserStatusMiddleware("accounts_edit_update"), controller.accountController.updateAccount);
 routes.get("/industry", checkUserStatusMiddleware("NA"), controller.geoDataController.industries);
+routes.get("/keycontactroles", checkUserStatusMiddleware("NA"), controller.accountController.getKeyContactRoles);
 export default routes;

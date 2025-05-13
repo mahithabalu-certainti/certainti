@@ -65,6 +65,13 @@ export interface IAccountService {
     errorMessage?: string;
     data?: { gloablAcconunt: any; count: number };
   }>;
+
+  getKeyContactRoles(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { keyContactRoles: any };
+  }>;
 }
 
 export interface GeoDataResponse<T> {

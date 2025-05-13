@@ -98,7 +98,6 @@ async function resourcesList(req: Request, res: Response): Promise<void> {
 
     const resourcesList = await resourceService.resourcesList(
       accountNumber,
-      value.fiscalYear !== "" && value.fiscalYear !== null ? value.fiscalYear : 0,
       pageNum,
       limitNum,
       value.search,
@@ -160,7 +159,6 @@ async function exportResourcesList(req: Request, res: Response): Promise<void> {
 
     const resourcesList = await resourceService.exportResourcesList(
       accountNumber,
-      value.fiscalYear !== "" && value.fiscalYear !== null ? value.fiscalYear : 0,
       value.search,
       parsedFilters,
       value.sortBy,
