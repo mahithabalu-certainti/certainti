@@ -16,4 +16,6 @@ routes.put("/update", checkUserStatusMiddleware("user_edit_update"), controller.
 routes.get("/:userId/permission/fields", checkUserStatusMiddleware("NA"), controller.userManagementController.userPermissionFields);
 routes.post("/profile/clone",checkUserStatusMiddleware("profile_create"), controller.userManagementController.createProfile);
 routes.get("/profile/:profileId/permissions",checkUserStatusMiddleware("profile_view"), controller.userManagementController.getProfilePermissions);
+routes.put("/profile/permissions", checkUserStatusMiddleware("profile_create"), controller.userManagementController.updateProfilePermissions);
+routes.put("/profile/permissions/edit", checkUserStatusMiddleware("profile_edit_update"), controller.userManagementController.editProfilePermissions);
 export default routes;

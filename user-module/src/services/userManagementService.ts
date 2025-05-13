@@ -3,11 +3,12 @@ import { models } from "../models/index";
 const UserService = require('../services/userService').default;
 const userService = new UserService();
 import { ProfileTimeline } from "../models/profileTimelineModel";
-import { IndexHints } from "sequelize";
+import { Op, IndexHints } from "sequelize";
+import { initSequelize } from "../config/dataSource";
 
 const {
   Profile, ProfileMenuAccess, Menu, ProfileModuleAccess, MenuModule, ProfilePermissionAccess, ModulePermission,
-  UserMenuAccess, UserModuleAccess, UserPermissionAccess, PermissionField, ProfileFieldsAccess, UserFieldsAccess
+  UserMenuAccess, UserModuleAccess, UserPermissionAccess, PermissionField, ProfileFieldsAccess, UserFieldsAccess,   ProfileMenuAccessHistory, ProfileModuleAccessHistory, ProfilePermissionAccessHistory, ProfileFieldsAccessHistory, ProfileHistory
 } = models;
 
 class UserManagementService {
@@ -81,13 +82,13 @@ class UserManagementService {
         sourceProfileId
       }, userId);
 
-           // Record the profile creation event with appropriate status
-           await this.recordProfileEvent(
-            profile.rid,
-            "create",
-            cloneSuccess ? "success" : "failure",
-            userId
-          );
+      // Record the profile creation event with appropriate status
+      await this.recordProfileEvent(
+        profile.rid,
+        "create",
+        cloneSuccess ? "success" : "failure",
+        userId
+      );
 
       if (!cloneSuccess) {
         // If cloning failed but profile was created
@@ -286,174 +287,174 @@ class UserManagementService {
  * @param {string} [params.id] - Optional ID corresponding to the filter type
  * @returns {Promise<Object>} - Response object with permissions data
  */
-async getProfilePermissions(
-  params: {
-    profileId: string;
-    type?: string;
-    id?: string;
-  }
-): Promise<{
-  statusCode: number;
-  message: string;
-  errorMessage?: string;
-  data?: {
-    profile_id: string;
-    profile_number?: string;
-    permissions?: any[];
-  };
-}> {
-  try {
-    const { profileId, type, id } = params;
-    
-    // Verify profile exists
-    const profile = await Profile.findByPk(profileId);
-    if (!profile) {
-      return {
-        statusCode: constants.NOT_FOUND,
-        message: constants.NOT_FOUND_MESSAGE,
-        errorMessage: `Profile with ID ${profileId} not found`
-      };
+  async getProfilePermissions(
+    params: {
+      profileId: string;
+      type?: string;
+      id?: string;
     }
-    
-    // Import UserService to get profile permissions
-    const UserService = require('../services/userService').default;
-    const userService = new UserService();
-    
-    // Get filtered permissions based on provided parameters
-    let permissions = [];
-    
-    if (type === 'permission' && id) {
-      // Case 7: If permission type is provided, get only fields for that permission
-      permissions = await this.getFieldsForPermission(profileId, id);
-    } else if (type === 'module' && id) {
-      // Case 6: If module type is provided, get permissions and fields for that module
-      permissions = await this.getPermissionsForModule(profileId, id);
-    } else if (type === 'menu' && id) {
-      // Case 5: If menu type is provided, get modules, permissions, and fields for that menu
-      permissions = await this.getModulesForMenu(profileId, id);
-    } else {
-      // Case 4: If no filters, get all permissions for the profile
-      permissions = await userService.getProfilePermission(profileId);
-    }
-    
-    return {
-      statusCode: constants.SUCCESS,
-      message: constants.SUCCESS_MESSAGE,
-      data: {
-        profile_id: profile.rid,
-        permissions
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: {
+      profile_id: string;
+      profile_number?: string;
+      permissions?: any[];
+    };
+  }> {
+    try {
+      const { profileId, type, id } = params;
+
+      // Verify profile exists
+      const profile = await Profile.findByPk(profileId);
+      if (!profile) {
+        return {
+          statusCode: constants.NOT_FOUND,
+          message: constants.NOT_FOUND_MESSAGE,
+          errorMessage: `Profile with ID ${profileId} not found`
+        };
       }
-    };
-  } catch (err: any) {
-    return this.throwServiceError(err as Error);
+
+      // Import UserService to get profile permissions
+      const UserService = require('../services/userService').default;
+      const userService = new UserService();
+
+      // Get filtered permissions based on provided parameters
+      let permissions = [];
+
+      if (type === 'permission' && id) {
+        // Case 7: If permission type is provided, get only fields for that permission
+        permissions = await this.getFieldsForPermission(profileId, id);
+      } else if (type === 'module' && id) {
+        // Case 6: If module type is provided, get permissions and fields for that module
+        permissions = await this.getPermissionsForModule(profileId, id);
+      } else if (type === 'menu' && id) {
+        // Case 5: If menu type is provided, get modules, permissions, and fields for that menu
+        permissions = await this.getModulesForMenu(profileId, id);
+      } else {
+        // Case 4: If no filters, get all permissions for the profile
+        permissions = await userService.getProfilePermission(profileId);
+      }
+
+      return {
+        statusCode: constants.SUCCESS,
+        message: constants.SUCCESS_MESSAGE,
+        data: {
+          profile_id: profile.rid,
+          permissions
+        }
+      };
+    } catch (err: any) {
+      return this.throwServiceError(err as Error);
+    }
   }
-}
 
-/**
- * Gets fields for a specific permission
- */
-private async getFieldsForPermission(profileId: string, permissionId: string): Promise<any[]> {
-  const fieldAccess = await ProfileFieldsAccess.findAll({
-    where: { 
-      profile_id: profileId,
-      '$permission_field.module_permission_id$': permissionId
-    },
-    include: [{ 
-      model: PermissionField, 
-      as: "permission_field",
-      required: true
-    }],
-    indexHints: [{ type: IndexHints.USE, values: ['idx_profile_fields_access_profile_id'] }]
-  });
-  
-  return fieldAccess.map(fa => {
-    const faWithField = fa as any;
-    return {
-      rid: faWithField.rid,
-      type: "field",
-      field_id: faWithField.permission_field.rid,
-      permission_id: faWithField.permission_field.module_permission_id,
-      name: faWithField.permission_field.field_name,
-      desc: faWithField.permission_field.field_desc,
-      read: faWithField.read,
-      edit: faWithField.edit
-    };
-  });
-}
+  /**
+   * Gets fields for a specific permission
+   */
+  private async getFieldsForPermission(profileId: string, permissionId: string): Promise<any[]> {
+    const fieldAccess = await ProfileFieldsAccess.findAll({
+      where: {
+        profile_id: profileId,
+        '$permission_field.module_permission_id$': permissionId
+      },
+      include: [{
+        model: PermissionField,
+        as: "permission_field",
+        required: true
+      }],
+      indexHints: [{ type: IndexHints.USE, values: ['idx_profile_fields_access_profile_id'] }]
+    });
 
-/**
- * Gets permissions and fields for a specific module
- */
-private async getPermissionsForModule(profileId: string, moduleId: string): Promise<any[]> {
-  const permissions = [];
-  
-  // Get permission access
-  const permissionAccess = await ProfilePermissionAccess.findAll({
-    where: { 
-      profile_id: profileId,
-      '$module_permission.menu_module_id$': moduleId
-    },
-    include: [{ 
-      model: ModulePermission, 
-      as: "module_permission",
-      required: true
-    }],
-    indexHints: [{ type: IndexHints.USE, values: ['idx_profile_permission_access_profile_id'] }]
-  });
-  
-  // Add permissions to result
-  for (const pa of permissionAccess) {
-    const paWithPermission = pa as any;
-    permissions.push({
-      rid: paWithPermission.rid,
-      type: "permission",
-      permission_id: paWithPermission.module_permission.rid,
-      module_id: paWithPermission.module_permission.menu_module_id,
-      name: paWithPermission.module_permission.permission_name,
-      desc: paWithPermission.module_permission.permission_desc,
-      is_field_available: paWithPermission.module_permission.is_field_available,
-      is_enabled: paWithPermission.is_enabled
+    return fieldAccess.map(fa => {
+      const faWithField = fa as any;
+      return {
+        rid: faWithField.rid,
+        type: "field",
+        field_id: faWithField.permission_field.rid,
+        permission_id: faWithField.permission_field.module_permission_id,
+        name: faWithField.permission_field.field_name,
+        desc: faWithField.permission_field.field_desc,
+        read: faWithField.read,
+        edit: faWithField.edit
+      };
     });
   }
-  
-  return permissions;
-}
 
-/**
- * Gets modules, permissions, and fields for a specific menu
- */
-private async getModulesForMenu(profileId: string, menuId: string): Promise<any[]> {
-  const permissions = [];
-  
-  // Get module access
-  const moduleAccess = await ProfileModuleAccess.findAll({
-    where: { 
-      profile_id: profileId,
-      '$menu_module.menu_id$': menuId
-    },
-    include: [{ 
-      model: MenuModule, 
-      as: "menu_module",
-      required: true
-    }]
-  });
-  
-  // Add modules to result
-  for (const ma of moduleAccess) {
-    const maWithModule = ma as any;
-    permissions.push({
-      rid: maWithModule.rid,
-      type: "module",
-      module_id: maWithModule.menu_module.rid,
-      menu_id: maWithModule.menu_module.menu_id,
-      name: maWithModule.menu_module.module_name,
-      desc: maWithModule.menu_module.module_desc,
-      is_enabled: maWithModule.is_enabled
+  /**
+   * Gets permissions and fields for a specific module
+   */
+  private async getPermissionsForModule(profileId: string, moduleId: string): Promise<any[]> {
+    const permissions = [];
+
+    // Get permission access
+    const permissionAccess = await ProfilePermissionAccess.findAll({
+      where: {
+        profile_id: profileId,
+        '$module_permission.menu_module_id$': moduleId
+      },
+      include: [{
+        model: ModulePermission,
+        as: "module_permission",
+        required: true
+      }],
+      indexHints: [{ type: IndexHints.USE, values: ['idx_profile_permission_access_profile_id'] }]
     });
+
+    // Add permissions to result
+    for (const pa of permissionAccess) {
+      const paWithPermission = pa as any;
+      permissions.push({
+        rid: paWithPermission.rid,
+        type: "permission",
+        permission_id: paWithPermission.module_permission.rid,
+        module_id: paWithPermission.module_permission.menu_module_id,
+        name: paWithPermission.module_permission.permission_name,
+        desc: paWithPermission.module_permission.permission_desc,
+        is_field_available: paWithPermission.module_permission.is_field_available,
+        is_enabled: paWithPermission.is_enabled
+      });
+    }
+
+    return permissions;
   }
-  
-  return permissions;
-}
+
+  /**
+   * Gets modules, permissions, and fields for a specific menu
+   */
+  private async getModulesForMenu(profileId: string, menuId: string): Promise<any[]> {
+    const permissions = [];
+
+    // Get module access
+    const moduleAccess = await ProfileModuleAccess.findAll({
+      where: {
+        profile_id: profileId,
+        '$menu_module.menu_id$': menuId
+      },
+      include: [{
+        model: MenuModule,
+        as: "menu_module",
+        required: true
+      }]
+    });
+
+    // Add modules to result
+    for (const ma of moduleAccess) {
+      const maWithModule = ma as any;
+      permissions.push({
+        rid: maWithModule.rid,
+        type: "module",
+        module_id: maWithModule.menu_module.rid,
+        menu_id: maWithModule.menu_module.menu_id,
+        name: maWithModule.menu_module.module_name,
+        desc: maWithModule.menu_module.module_desc,
+        is_enabled: maWithModule.is_enabled
+      });
+    }
+
+    return permissions;
+  }
 
   /**
    * Gets all profiles
@@ -478,6 +479,418 @@ private async getModulesForMenu(profileId: string, menuId: string): Promise<any[
       };
     } catch (err: any) {
       return this.throwServiceError(err as Error);
+    }
+  }
+  /**
+   * Updates profile permissions based on modified items
+   * 
+   * @param {string} profileId - The profile ID to update permissions for
+   * @param {Array} permissions - Array of permission objects with modification flags
+   * @param {string} userId - The ID of the user making the update
+ * @param {string} eventName - The name of the event (create or edit)
+ * @returns {Promise<Object>} - Response object with update status
+ */
+  async updateProfilePermissions(
+    profileId: string,
+    profileName: string,
+    permissions: Array<{
+      rid: string;
+      type: string;
+      is_modified: boolean;
+      is_enabled?: boolean;
+      read?: boolean;
+      edit?: boolean;
+    }>,
+    userId: string,
+    eventName: string = "create" // Default to "create" for backward compatibility
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: {
+      profileId: string;
+      updatedPermissionCount: number;
+    };
+  }> {
+    try {
+      // Verify profile exists
+      const profile = await Profile.findByPk(profileId);
+      if (!profile) {
+        return {
+          statusCode: constants.NOT_FOUND,
+          message: constants.NOT_FOUND_MESSAGE,
+          errorMessage: `Profile with ID ${profileId} not found`
+        };
+      }
+
+      if (eventName === 'edit' && profileName) {
+        // Check if name has changed
+        if (profile.profile_name !== profileName) {
+          const isUniqueAndUpdated = await this.checkProfileNameUniqueAndUpdate(
+            profileId,
+            profileName,
+            profile.profile_name,
+            userId
+          );
+          
+          if (!isUniqueAndUpdated) {
+            return {
+              statusCode: constants.BAD_REQUEST,
+              message: constants.BAD_REQUEST_MESSAGE,
+              errorMessage: `Profile name '${profileName}' is already in use`,
+              data: {
+                profileId,
+                updatedPermissionCount: 0
+              }
+            };
+          }
+        }
+      }
+
+      // Filter only modified permissions
+      const modifiedPermissions = permissions.filter(p => p.is_modified === true);
+
+      if (modifiedPermissions.length === 0) {
+        return {
+          statusCode: constants.SUCCESS,
+          message: constants.SUCCESS_MESSAGE,
+          data: {
+            profileId,
+            updatedPermissionCount: 0
+          }
+        };
+      }
+
+      // Process updates by type
+      const updatePromises = modifiedPermissions.map(async (permission) => {
+        switch (permission.type) {
+          case 'menu':
+            return this.updateMenuAccessIfChanged(permission.rid, permission.is_enabled || false, userId, eventName);
+          case 'module':
+            return this.updateModuleAccessIfChanged(permission.rid, permission.is_enabled || false, userId, eventName);
+          case 'permission':
+            return this.updatePermissionAccessIfChanged(permission.rid, permission.is_enabled || false, userId, eventName);
+          case 'field':
+            return this.updateFieldAccessIfChanged(
+              permission.rid,
+              permission.read || false,
+              permission.edit || false,
+              userId,
+              eventName
+            );
+
+          default:
+            console.warn(`Unknown permission type: ${permission.type}`);
+            return false;
+        }
+      });
+
+      // Wait for all updates to complete
+      const updateResults = await Promise.all(updatePromises);
+      const updatedPermissionCount = updateResults.filter(result => result === true).length;
+
+      // Record the update event in profile timeline only if changes were made
+      if (updatedPermissionCount > 0 && eventName === "edit") {
+        await this.recordProfileEvent(
+          profileId,
+          "update",
+          "success",
+          userId
+        );
+      }
+
+      return {
+        statusCode: constants.SUCCESS,
+        message: constants.SUCCESS_MESSAGE,
+        data: {
+          profileId,
+          updatedPermissionCount
+        }
+      };
+    } catch (err: any) {
+      return this.throwServiceError(err as Error);
+    }
+  }
+
+/**
+ * Checks if a profile name is unique and updates the profile if it is
+ * 
+ * @param {string} profileId - The ID of the profile to update
+ * @param {string} profileName - The new profile name to check
+ * @param {string} currentProfileName - The current profile name
+ * @param {string} userId - The ID of the user making the update
+ * @returns {Promise<boolean>} - Returns true if name is unique and update successful, false otherwise
+ */
+async checkProfileNameUniqueAndUpdate(
+  profileId: string,
+  profileName: string,
+  currentProfileName: string,
+  userId: string
+): Promise<boolean> {
+  try {
+    // Check if the new name is unique
+    const existingProfile = await Profile.findOne({
+      where: {
+        profile_name: profileName,
+      }
+    });    
+    // If profile with same name exists, return false
+    if (existingProfile) {
+      return false;
+    }
+    
+    // Create history record for name change
+    await ProfileHistory.create({
+      profile_rid: profileId,
+      attribute_name: 'name',
+      old_value: currentProfileName,
+      new_value: profileName,
+      modified_by: userId
+    });
+    
+    // Update the profile name
+    await Profile.update(
+      { 
+        profile_name: profileName,
+        modified_by: userId,
+        modified_datetime: new Date(),
+      },
+      { 
+        where: { rid: profileId }
+      }
+    );
+    
+    return true;
+  } catch (error) {
+    console.error('Error checking profile name uniqueness and updating:', error);
+    return false;
+  }
+}
+
+  /**
+   * Updates menu access for a profile if the value has changed
+   */
+  private async updateMenuAccessIfChanged(
+    accessId: string,
+    isEnabled: boolean,
+    userId: string,
+    eventName: string = "create"
+  ): Promise<boolean> {
+    try {
+      // First fetch the current value
+      const currentAccess = await ProfileMenuAccess.findByPk(accessId);
+      if (!currentAccess) {
+        console.error(`Menu access with ID ${accessId} not found`);
+        return false;
+      }
+  
+      // Check if the value has actually changed
+      if (currentAccess.is_enabled === isEnabled) {
+        console.log(`Menu access ${accessId} value unchanged, skipping update`);
+        return false;
+      }
+  
+      // Store history if this is an edit operation
+      if (eventName === 'edit') {
+        await ProfileMenuAccessHistory.create({
+          profile_menu_access_rid: accessId,
+          attribute_name: 'is_enabled',
+          old_value: currentAccess.is_enabled.toString(),
+          new_value: isEnabled.toString(),
+          modified_by: userId
+        });
+      }
+  
+      // Update only if the value has changed
+      const [updated] = await ProfileMenuAccess.update(
+        {
+          is_enabled: isEnabled,
+          modified_by: userId
+        },
+        {
+          where: { rid: accessId }
+        }
+      );
+  
+      return updated > 0;
+    } catch (error) {
+      console.error('Error updating menu access:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Updates module access for a profile if the value has changed
+   */
+  private async updateModuleAccessIfChanged(
+    accessId: string,
+    isEnabled: boolean,
+    userId: string,
+    eventName: string = "create"
+  ): Promise<boolean> {
+    try {
+      // First fetch the current value
+      const currentAccess = await ProfileModuleAccess.findByPk(accessId);
+      if (!currentAccess) {
+        console.error(`Module access with ID ${accessId} not found`);
+        return false;
+      }
+  
+      // Check if the value has actually changed
+      if (currentAccess.is_enabled === isEnabled) {
+        console.log(`Module access ${accessId} value unchanged, skipping update`);
+        return false;
+      }
+  
+      // Store history if this is an edit operation
+      if (eventName === 'edit') {
+        await ProfileModuleAccessHistory.create({
+          profile_module_access_rid: accessId,
+          attribute_name: 'is_enabled',
+          old_value: currentAccess.is_enabled.toString(),
+          new_value: isEnabled.toString(),
+          modified_by: userId
+        });
+      }
+  
+      // Update only if the value has changed
+      const [updated] = await ProfileModuleAccess.update(
+        {
+          is_enabled: isEnabled,
+          modified_by: userId
+        },
+        {
+          where: { rid: accessId }
+        }
+      );
+  
+      return updated > 0;
+    } catch (error) {
+      console.error('Error updating module access:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Updates permission access for a profile if the value has changed
+   */
+  private async updatePermissionAccessIfChanged(
+    accessId: string,
+    isEnabled: boolean,
+    userId: string,
+    eventName: string = "create"
+  ): Promise<boolean> {
+    try {
+      // First fetch the current value
+      const currentAccess = await ProfilePermissionAccess.findByPk(accessId);
+      if (!currentAccess) {
+        console.error(`Permission access with ID ${accessId} not found`);
+        return false;
+      }
+  
+      // Check if the value has actually changed
+      if (currentAccess.is_enabled === isEnabled) {
+        console.log(`Permission access ${accessId} value unchanged, skipping update`);
+        return false;
+      }
+  
+      // Store history if this is an edit operation
+      if (eventName === 'edit') {
+        await ProfilePermissionAccessHistory.create({
+          profile_permission_access_rid: accessId,
+          attribute_name: 'is_enabled',
+          old_value: currentAccess.is_enabled.toString(),
+          new_value: isEnabled.toString(),
+          modified_by: userId
+        });
+      }
+  
+      // Update only if the value has changed
+      const [updated] = await ProfilePermissionAccess.update(
+        {
+          is_enabled: isEnabled,
+          modified_by: userId
+        },
+        {
+          where: { rid: accessId }
+        }
+      );
+  
+      return updated > 0;
+    } catch (error) {
+      console.error('Error updating permission access:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Updates field access for a profile if the values have changed
+   */
+  private async updateFieldAccessIfChanged(
+    accessId: string,
+    read: boolean,
+    edit: boolean,
+    userId: string,
+    eventName: string = "create"
+  ): Promise<boolean> {
+    try {
+      // First fetch the current values
+      const currentAccess = await ProfileFieldsAccess.findByPk(accessId);
+      if (!currentAccess) {
+        console.error(`Field access with ID ${accessId} not found`);
+        return false;
+      }
+  
+      // Check if any values have actually changed
+      const readChanged = currentAccess.read !== read;
+      const editChanged = currentAccess.edit !== edit;
+  
+      if (!readChanged && !editChanged) {
+        console.log(`Field access ${accessId} values unchanged, skipping update`);
+        return false;
+      }
+  
+      // Store history if this is an edit operation
+      if (eventName === 'edit') {
+        // Create history entry for read permission if changed
+        if (readChanged) {
+          await ProfileFieldsAccessHistory.create({
+            profile_fields_access_rid: accessId,
+            attribute_name: 'read',
+            old_value: currentAccess.read.toString(),
+            new_value: read.toString(),
+            modified_by: userId
+          });
+        }
+  
+        // Create history entry for edit permission if changed
+        if (editChanged) {
+          await ProfileFieldsAccessHistory.create({
+            profile_fields_access_rid: accessId,
+            attribute_name: 'edit',
+            old_value: currentAccess.edit.toString(),
+            new_value: edit.toString(),
+            modified_by: userId
+          });
+        }
+      }
+  
+      // Update only if values have changed
+      const [updated] = await ProfileFieldsAccess.update(
+        {
+          read,
+          edit,
+          modified_by: userId
+        },
+        {
+          where: { rid: accessId }
+        }
+      );
+  
+      return updated > 0;
+    } catch (error) {
+      console.error('Error updating field access:', error);
+      return false;
     }
   }
 }

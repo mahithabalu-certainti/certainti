@@ -296,4 +296,124 @@ async function getProfilePermissions(req: Request, res: Response): Promise<void>
   }
 }
 
-export { userProfiles, userRoles, userPermissionById, userPermissionFields, createProfile, getProfilePermissions };
+/**
+ * Updates profile permissions based on the provided data
+ * 
+ * @param {Request} req - Express request object containing profile ID and permissions to update
+ * @param {Response} res - Express response object
+ * @returns {Promise<void>} - Returns updated profile data
+ */
+async function updateProfilePermissions(req: Request, res: Response): Promise<void> {
+  const methodName = "Update profile permissions";
+  try {
+    const { profile_id, profile_name, permissions } = req.body;
+    
+    // Validate required fields
+    if (!profile_id || !profile_name || !permissions || !Array.isArray(permissions)) {
+      errorLog(methodName, "Profile ID, Profile Name and permissions array are required");
+      handleErrorResponse(
+        res,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        "Profile ID, Profile Name and permissions array are required"
+      );
+      return;
+    }
+    
+    // Get user ID from request (assuming it's set by auth middleware)
+    const userId = req.headers["x-user-id"] as string || "";
+    
+    // Call service method to update permissions
+    const result = await services.userManagementServices.updateProfilePermissions(
+      profile_id,
+      profile_name,
+      permissions,
+      userId,
+      "create" // Pass "create" as the event name
+    );
+    
+    if (result.statusCode === constants.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, result.data);
+    } else {
+      errorLog(methodName, result.errorMessage);
+      handleErrorResponse(
+        res,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+    }
+  } catch (error) {
+    const err = error as Error;
+    errorLog(methodName, err.message);
+    handleErrorResponse(
+      res,
+      constants.FAILED,
+      constants.FAILED_MESSAGE,
+      err.message
+    );
+  }
+}
+
+/**
+ * Edits profile permissions based on the provided data
+ * 
+ * @param {Request} req - Express request object containing profile ID and permissions to update
+ * @param {Response} res - Express response object
+ * @returns {Promise<void>} - Returns updated profile data
+ */
+async function editProfilePermissions(req: Request, res: Response): Promise<void> {
+  const methodName = "Edit profile permissions";
+  try {
+    const { profile_id, profile_name, permissions } = req.body;
+    
+    // Validate required fields
+    if (!profile_id || !profile_name || !permissions || !Array.isArray(permissions)) {
+      errorLog(methodName, "Profile ID, Profile Name and permissions array are required");
+      handleErrorResponse(
+        res,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        "Profile ID, Profile Name and permissions array are required"
+      );
+      return;
+    }
+    
+    // Get user ID from request (assuming it's set by auth middleware)
+    const userId = req.headers["x-user-id"] as string || "";
+    
+    // Call service method to update permissions
+    const result = await services.userManagementServices.updateProfilePermissions(
+      profile_id,
+      profile_name,
+      permissions,
+      userId,
+      "edit" // Pass "edit" as the event name
+    );
+    
+    if (result.statusCode === constants.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, result.data);
+    } else {
+      errorLog(methodName, result.errorMessage);
+      handleErrorResponse(
+        res,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+    }
+  } catch (error) {
+    const err = error as Error;
+    errorLog(methodName, err.message);
+    handleErrorResponse(
+      res,
+      constants.FAILED,
+      constants.FAILED_MESSAGE,
+      err.message
+    );
+  }
+}
+
+export { userProfiles, userRoles, userPermissionById, userPermissionFields, createProfile, getProfilePermissions, updateProfilePermissions, editProfilePermissions};
