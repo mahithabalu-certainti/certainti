@@ -36,6 +36,7 @@ import {
   transformSkillData,
 } from './utils.tsx';
 import { SkillSubtype, SkillType } from '../../types/resource.ts';
+import { formatDateToMMDDYYYYWithTime } from '../account-details-sidebar/sidebar-pages/resources/utils.tsx';
 
 enum FormSection {
   COST = 'cost',
@@ -119,6 +120,12 @@ const ResourceForm: React.FC = () => {
       total_years_experience: resourceDetailsData?.resource_total_experience,
       total_years_in_org:
         resourceDetailsData?.resource_total_experience_organization,
+        Record_id : resourceDetailsData?.rid,
+        Resource_id : resourceDetailsData?.r_number,
+        Created_On : formatDateToMMDDYYYYWithTime(resourceDetailsData?.created_datetime),
+        Created_By : resourceDetailsData?.created_by,
+        Updated_On : formatDateToMMDDYYYYWithTime(resourceDetailsData?.modified_datetime),
+        Updated_By : resourceDetailsData?.modified_by,
     };
     setResourceDetails(finalResourceDetails || null);
   }, [resource]);
@@ -133,6 +140,8 @@ const ResourceForm: React.FC = () => {
         cost: costInfo?.cost || '',
         currency: costInfo?.currency_rid || null,
         cost_frequency: costInfo?.cost_frequency || '',
+        fiscal_year: costInfo?.fiscal_year || '',
+        comments: costInfo?.comments || '',
       };
       setFormValues(costValues);
     } else if (state?.skill && isSuccess && skillInfo && isEditView) {
@@ -148,7 +157,9 @@ const ResourceForm: React.FC = () => {
         years_of_experience: skillInfo?.yearsOfExperience || '',
       };
       setFormValues(skillValues);
-    } else if (formValues && !isEditView) {
+    }
+    else if (formValues && !isEditView) {
+      console.log('formValues', formValues)
       // Set form values with resource details when creataing cost and skill
       setFormValues(formValues);
     }
@@ -332,6 +343,7 @@ const ResourceForm: React.FC = () => {
           {
             resource_id: location?.state?.resource?.rid,
             account_number: accountData?.r_number,
+            text:"sample"
           }
         );
         updateResource.mutate(updatedData as any);
@@ -407,6 +419,8 @@ const ResourceForm: React.FC = () => {
     disableOrgname,
     currentSkillType.skill_type,
     currentSkillType.skill_sub_type || currentSkillType.skillSubType,
+    state?.skill,
+    state?.cost
   );
 
   return (

@@ -3,7 +3,7 @@ import { CircularProgress, Typography } from '@mui/material';
 import React from 'react';
 import { useResourceDetail } from '../../../../../services/resource-details';
 import { CreateSectionData } from '../../../../../types';
-import { formatDateToMMDDYYYY } from '../utils';
+import { formatDateToMMDDYYYY, formatDateToMMDDYYYYWithTime } from '../utils';
 
 interface ResourceDetailsProps {
   resourceId: string;
@@ -257,9 +257,9 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   const auditLogSection = CreateSectionData({
     record_id: resourceData.rid,
     resource_id: resourceData.r_number,
-    Created_On: formatDateToMMDDYYYY(resourceData.created_datetime),
+    Created_On: formatDateToMMDDYYYYWithTime(resourceData.created_datetime),
     Created_By: resourceData.created_by,
-    Updated_On: formatDateToMMDDYYYY(resourceData.modified_datetime),
+    Updated_On: formatDateToMMDDYYYYWithTime(resourceData.modified_datetime),
     Updated_By: resourceData.modified_by,
   });
 
@@ -271,8 +271,8 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
         data={locationInfo}
       />
       <DetailsSection title='Employment Details' data={employmentDetails} />
-      <DetailsSection title='Description' data={description} />
-      <DetailsSection title='Audit Log' data={auditLogSection} />
+      <DetailsSection title='Comments' data={description} />
+      <DetailsSection title='Audit Information' data={auditLogSection} />
     </div>
   );
 };

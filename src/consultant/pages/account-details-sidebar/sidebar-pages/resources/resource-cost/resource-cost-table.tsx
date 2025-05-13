@@ -74,6 +74,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   }, [costList]);
 
   const handleEdit = (cost: ResourceCostType) => {
+    console.log('cost', cost)
     navigate(RESOURCECOST + '/edit/' + cost.resourceCostNumber, {
       state: { ...accountDetails, costInfo: cost, cost: true },
     });
