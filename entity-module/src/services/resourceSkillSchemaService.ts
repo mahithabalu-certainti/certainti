@@ -285,7 +285,7 @@ async exportResoucreSkill(
   // Build the query to get data from the account-specific schema
   const query = `
     SELECT rs.*,
-    TO_CHAR(rs.start_date, 'MM/DD/YYYY') as start_date,
+    rs.start_date,
     r.resource_fullname
     FROM "${schemaName}"."resource_skill" rs
     INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
