@@ -30,7 +30,7 @@ export function convertAccounts(
       accountId: account.rid,
       parentAccount: parentAccountName,
       accountNumber: account.r_number,
-      industry: account.industry,
+      industry: account?.industry?.industry_name || account?.industry_name_other || 'N/A',
       country: account.country?.country_name || 'N/A',
       currency: account.currency?.currency_code || 'N/A',
       status: account.status === 'active' ? 'Active' : 'In Active',

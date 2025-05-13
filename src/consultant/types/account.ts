@@ -223,7 +223,10 @@ export interface AccountListURLParams {
 export interface globalFilters {
   [key: string]: string[];
 }
-
+type Industry = {
+  rid: string;
+  industry_name: string;
+};
 export type AccountList = {
   rid: string;
   r_number: string;
@@ -240,7 +243,8 @@ export type AccountList = {
   database_connection_rid: string | null;
   country_rid: string;
   currency_rid: string;
-  industry: string;
+  industry: Industry;
+  industry_name_other: string;
   primary_contact_name: string;
   createdAt: string;
   updatedAt: string;

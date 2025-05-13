@@ -317,8 +317,6 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
               <TableCell
                 sx={{
                   minWidth: '80px',
-                  textAlign: 'center',
-                  pl: '0 !important',
                 }}
               >
                 Action

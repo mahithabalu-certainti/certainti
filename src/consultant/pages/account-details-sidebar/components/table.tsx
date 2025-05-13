@@ -359,7 +359,7 @@ const DataTable: React.FC<DataTableProps> = ({
                 </TableCell>
               ))}
               {actionMenuItems.length > 0 && (
-                <TableCell sx={{ textAlign: 'center', pl: '0 !important' }}>
+                <TableCell>
                   Action
                 </TableCell>
               )}
