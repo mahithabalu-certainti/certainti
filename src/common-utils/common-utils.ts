@@ -138,7 +138,7 @@ export const createSelectField = (
     required: boolean;
     placeholder?: string;
     disabled?: boolean;
-    dependsRequired?: Record<string, string>;
+    clearValue?: Record<string, string>;
     onChange?: boolean;
     isLoading?: boolean;
     resetDependsFields?: string[];
@@ -151,7 +151,7 @@ export const createSelectField = (
   options: others.options,
   disabled: others.disabled,
   placeholder: others.placeholder,
-  dependsRequired: others.dependsRequired,
+  clearValue: others.clearValue,
   onChange: others.onChange,
   isLoading: others.isLoading,
   resetDependsFields: others.resetDependsFields,
@@ -274,7 +274,9 @@ export const REGEX_PATTERNS = {
   NO_LEADING_SPECIAL_REGEX: /^[a-zA-Z]/,
   ALLOWED_CHARS_REGEX: /^[a-zA-Z0-9_-]+$/,
   NO_CONSECUTIVE_SPECIALS_REGEX_FOR_ORG_NAME: /^(?!.*[-_]{2}).+$/,
-  NO_TRAILING_SPECIAL_REGEX: /[^-_]$/
+  NO_TRAILING_SPECIAL_REGEX: /[^-_]$/,
+  NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX:
+    /^(?!^[ &'.,-])(?!(.*[ &'.,-]$))/,
 };
 
 /**
@@ -298,7 +300,8 @@ export const RESOURCE_REGEX = {
   YEARS_EXPERIENCE: /^(?:0|[1-9]\d?)(?:\.\d{1,2})?$/,
   DESCRIPTION: /^[\s\S]{0,2000}$/,
   ENUM_VALIDATION: /^(Active|Inactive|Full-time|Contract|Mandatory)$/,
-  COUNTRY: /^(?![\s-])(?!.*[\s-]{2})[A-Za-zÀ-ÖØ-öø-ÿ\s-]{2,49}[A-Za-zÀ-ÖØ-öø-ÿ]$/,
+  COUNTRY:
+    /^(?![\s-])(?!.*[\s-]{2})[A-Za-zÀ-ÖØ-öø-ÿ\s-]{2,49}[A-Za-zÀ-ÖØ-öø-ÿ]$/,
   DATE_FORMAT: /^\d{4}-\d{2}-\d{2}$/,
 };
 
