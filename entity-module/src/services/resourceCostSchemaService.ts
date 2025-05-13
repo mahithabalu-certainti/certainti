@@ -642,17 +642,17 @@ class ResourceCostSchemaService {
       const rawResult = resourceCost || [];
       let exportData = rawResult.map((resource: any) => {
         return {
-          "Resource Full Name": resource.resource_fullname,
-          Currency: resource.currency_code,
+          "Name": resource.resource_fullname,
+          "Currency": resource.currency_code,
           "Start Date": resource.effective_date,
           "End Date": resource.end_date,
-          Hourly: resource.hourly_cost,
-          Daily: resource.daily_cost,
+          "Hourly": resource.hourly_cost,
+          "Daily": resource.daily_cost,
           "Bi-Weekly": resource.bi_weekly_cost,
-          Weekly: resource.weekly_cost,
-          Monthly: resource.monthly_cost,
+          "Weekly": resource.weekly_cost,
+          "Monthly": resource.monthly_cost,
           "Semi Annual": resource.semi_annual_cost,
-          Annual: resource.annual_cost,
+          "Annual": resource.annual_cost,
         };
       });
 

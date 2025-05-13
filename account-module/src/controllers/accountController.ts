@@ -410,6 +410,38 @@ async function ListGlobalAccounts(req: Request, res: Response): Promise<void> {
   }
 }
 
+  async function getKeyContactRoles(req: Request, res: Response): Promise<void> {
+    const methodName = "get key contact roles";
+    try {
+      const account = await accountServices.getKeyContactRoles();
+
+      if (account.statusCode === HttpStatus.SUCCESS) {
+        successLog(methodName);
+        handleSuccessResponse(res, account.data);
+      }
+      else{
+        errorLog(methodName, account.errorMessage);
+        handleErrorResponse(
+          res,
+          HttpStatus.BAD_REQUEST,
+          HttpStatus.BAD_REQUEST_MESSAGE,
+          account.errorMessage
+        );
+      }
+    }
+    catch (err) {
+      const error = err as Error;
+      errorLog(methodName, error.message);
+      handleErrorResponse(
+        res,
+        HttpStatus.FAILED,
+        HttpStatus.FAILED_MESSAGE,
+        error.message
+      );
+    }
+  }
+
+
 
 export default {
   accounts,
@@ -418,5 +450,6 @@ export default {
   updateAccount,
   globalAccounts,
   accountById,
-  ListGlobalAccounts
+  ListGlobalAccounts,
+  getKeyContactRoles,
 };
