@@ -42,7 +42,7 @@ export const FormData = (
           createTextField('account_name', 'Account Name', {
             required: true,
             regex: REGEX_PATTERNS.ACCOUNT_NAME,
-            regexErrorMessage: 'Invalid Account Name',
+            regexErrorMessage: "only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), and commas (,)",
             placeholder: 'Enter Account Name',
             errorHandling: [
               {
