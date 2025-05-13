@@ -1,64 +1,61 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
-import { accountHomeIcon, editIcon } from '../../../assets';
+import { useLocation } from 'react-router-dom';
+import { editIcon, projectCreateIcon } from '../../../assets';
 import { OnChange, useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
 import {
-  useFetchAccountFields,
+  useFetchClassification,
   useFetchCurrency,
+  useFetchIndustrys,
   useFetchState,
 } from '../../services/account';
-import {
-  useCreateAccount,
-  useUpdateAccount,
-} from '../../services/account-create';
-import { AccountFormData, SelectOption } from '../../types';
+import {SelectOption } from '../../types';
 import { FormData } from './form-data';
 import { transformFormData } from './utils';
+import { NewProjectData } from '../../types/project';
+import { useCreateProject, useUpdateProject } from '../../services/project/project-create-service';
+import { useProjectDetail } from '../../services/project';
 
 const ProjectForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [currentCountry, setCurrentCountry] = useState('');
   const { successToast } = useToast();
   const location = useLocation();
-  const { accountid } = useParams();
+  // const { accountID, projectID } = location.state;
 
-  const getAccount = useFetchAccountFields(accountid as string);
-  const account = getAccount.data?.data;
-  const accountData = useMemo(
+  
+  const getProjectData = useProjectDetail("bf4da492-2f71-42f7-8859-ae70a4047a56","PRJ-12317");
+  const account = getProjectData.data?.data?.project;
+  console.log(account);
+  // need to change this
+  const projectData = useMemo(
     () => ({
-      ...account?.accountDetails,
-      ...account?.accountById,
-      ...(account?.accountById &&
-        account?.accountDetails && {
-          is_parent: account?.accountById.is_parent ? 'yes' : 'no',
-          autosend_interaction: account?.accountDetails.autosend_interaction
-            ? 'yes'
-            : 'no',
-          auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
-        }),
+      ...account
     }),
     [account]
   );
 
   const allCountries = useGetAllCountries();
   const currency = useFetchCurrency();
-  const state = useFetchState(currentCountry);
-  const createAccount = useCreateAccount();
-  const updateAccount = useUpdateAccount();
+  const industry = useFetchIndustrys();
+  const Classification = useFetchClassification();
+  const states = useFetchState(currentCountry);
+  const createProject = useCreateProject();
+  const updateProject = useUpdateProject();
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
-
-  const commonSuccess = createAccount.isSuccess || updateAccount.isSuccess;
+console.log(isEditView);
+  const commonSuccess = createProject.isSuccess || updateProject.isSuccess;
   useEffect(() => {
     if (commonSuccess) {
       successToast(
         isEditView
-          ? 'Account update successfully'
-          : 'Account created successfully'
+          ? 'Project update successfully'
+          : 'Project created successfully'
       );
+      goBack()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
@@ -71,6 +68,14 @@ const ProjectForm: React.FC = () => {
       })) || [],
     [allCountries.data?.data.country]
   );
+  const memoizedClassification: SelectOption[] = useMemo(
+    () =>
+      Classification.data?.data.projectClassifications.map((data) => ({
+        label: data.classification_name,
+        value: data.rid,
+      })) || [],
+    [Classification.data?.data.projectClassifications]
+  );
 
   const memoizedCurrency: SelectOption[] = useMemo(
     () =>
@@ -80,22 +85,38 @@ const ProjectForm: React.FC = () => {
       })) || [],
     [currency.data?.data.currency]
   );
-
-  const memoizedRegions: SelectOption[] = useMemo(
+  const memoizedIndustry: SelectOption[] = useMemo(
     () =>
-      state.data?.data.states.map((state) => ({
+      industry.data?.data.industries.map((industries) => ({
+        label: industries.industry_name,
+        value: industries.rid,
+      })) || [],
+    [industry.data?.data.industries]
+  );
+
+  const memoizedState: SelectOption[] = useMemo(
+    () =>
+      states.data?.data.states.map((state) => ({
         label: state.state_name,
         value: state.rid,
       })) || [],
-    [state.data?.data.states]
+    [states.data?.data.states]
   );
-
-  const submitData = (formValues: Partial<AccountFormData>) => {
-    const accountData = transformFormData(formValues, isEditView);
+ 
+  const submitData = (formValues: Partial<NewProjectData>) => {
+    console.log(account?.rid);
+    const projectData = transformFormData(
+      {
+        ...formValues,
+        account_id:"bf4da492-2f71-42f7-8859-ae70a4047a56",
+        client_organization: "TechCorp Inc.",// need to remove
+      },
+      isEditView
+    );
     if (isEditView) {
-      updateAccount.mutate(accountData);
+      updateProject.mutate(projectData);
     } else {
-      createAccount.mutate(accountData);
+      createProject.mutate(projectData);
     }
   };
 
@@ -108,27 +129,35 @@ const ProjectForm: React.FC = () => {
   };
 
   const onChangeField = (data: OnChange) => {
-    if (data.fieldName === 'country_rid') {
+    if (data.fieldName === 'country') {
       setCurrentCountry(data.fieldValue as string);
     }
   };
+  useEffect(() => {
+    if (projectData.country_rid) {
+      setCurrentCountry(projectData.country_rid);
+    }
+  }, [projectData.country_rid]);
+
+ 
 
   return (
     <>
       <div className='flex justify-between items-center border-b-2 border-gray-200 px-10 py-6'>
         <div className='flex items-center'>
           <img
-            src={isEditView ? editIcon : accountHomeIcon}
-            alt='menu-icon'
-            className='h-10 w-10 bg-[#7D98B6] p-2.5 rounded'
+            src={isEditView ? editIcon : projectCreateIcon}
+            alt='projrct-icon'
+            className='h-[32px] w-[32px]  rounded'
           />
           <div>
-            {isEditView && (
-              <h5 className='text-xs ml-2 text-gray-500 mb-1'>Edit Project</h5>
+          {isEditView && (
+              <h5 className='font-semibold text-[11px] leading-[20px] ml-2 text-[#7D98B6]'>{projectData.project_name}</h5>
             )}
-            <h4 className='font-bold text-lg ml-2 leading-4'>
-              {isEditView ? accountData.account_name : 'Create Project'}
-            </h4>
+            <div className='font-semibold text-[20px] ml-2 text-[#2D3E4F] leading-[20px]'>
+              {isEditView ? "Edit Project": 'New Project'}
+            </div>
+           
           </div>
         </div>
         <div className='flex gap-3'>
@@ -137,12 +166,14 @@ const ProjectForm: React.FC = () => {
             variant='outlined'
             color='inherit'
             onClick={goBack}
+            sx={{ height: '32px', width: '56px', fontSize:'12px', fontWeight: 400 }}
           />
           <TextButton
             label='Save'
             variant='filled'
-            loading={createAccount.isPending || updateAccount.isPending}
+            loading={createProject.isPending || updateProject.isPending}
             onClick={handleExternalSubmit}
+            sx={{ height: '32px', width: '64px', fontSize:'13px', fontWeight: 400 }}
           />
         </div>
       </div>
@@ -151,14 +182,17 @@ const ProjectForm: React.FC = () => {
           data={FormData(
             memoizedContry,
             memoizedCurrency,
-            memoizedRegions,
+            memoizedState,
+            memoizedIndustry,
+            memoizedClassification,
             isEditView,
-            state.isLoading
+            states.isLoading
           )}
-          loading={
-            allCountries.isLoading || currency.isLoading || state.isLoading
-          }
-          values={isEditView && accountData ? { ...accountData } : undefined}
+          // loading={
+          //   allCountries.isLoading || currency.isLoading || state.isLoading
+          // }
+          loading={false}
+          values={isEditView && projectData ? { ...projectData } : undefined}
           outData={submitData}
           formRef={formRef}
           onChange={onChangeField}

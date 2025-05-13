@@ -48,7 +48,11 @@ export const Projects: React.FC = () => {
   const navigate = useNavigate();
 
   const handleCreateProject = () => {
-    navigate(PROJECT_CREATE);
+    navigate(PROJECT_CREATE,{
+      state: {
+        accountID: "bf4da492-2f71-42f7-8859-ae70a4047a56",
+      },
+    });
   };
 
   const projectFilterFields = getProjectFilterFields();

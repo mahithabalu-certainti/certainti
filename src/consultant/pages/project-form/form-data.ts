@@ -1,71 +1,186 @@
 import { useMemo } from 'react';
 import {
   createDateField,
+  createPhoneInputField,
+  createRadioField,
   createSelectField,
   createTextAreaField,
   createTextField,
   REGEX_PATTERNS,
 } from '../../../common-utils';
 import { FormType, SelectOption } from '../../types';
+import { fiscalYears } from '../resource-form/form-data';
+const DATE_CONFIG = {
+  FISCAL_YEARS_RANGE: 6,
+  MIN_YEARS_BACK: 6,
+} as const;
+
+const getDateConstraints = (yearsBack: number) => {
+  const currentDate = new Date();
+  const minDate = new Date();
+  minDate.setFullYear(currentDate.getFullYear() - yearsBack);
+  const previousDate = new Date(currentDate);
+  previousDate.setDate(currentDate.getDate() - 1);
+  return { currentDate, minDate, previousDate };
+};
+
+const { currentDate, minDate,  } = getDateConstraints(DATE_CONFIG.MIN_YEARS_BACK);
 
 export const FormData = (
   country: SelectOption[],
   currency: SelectOption[],
   state: SelectOption[],
+  industry: SelectOption[],
+  classification: SelectOption[],
   disableFields?: boolean,
   stateLoading?: boolean
 ): FormType[] => {
+
+
   return useMemo(
     () => [
       {
         sectionName: 'Basic Information',
         fillType: 'half',
         fields: [
-          createTextField('rid', 'Project Number', {
+          createTextField('rid', 'Record ID', {
             required: true,
-            regex: REGEX_PATTERNS.ALPHANUMERIC,
-            regexErrorMessage: 'Please Enter valid Project Number',
             placeholder: 'Enter Project Number',
             disabled: disableFields,
+            hide:!disableFields
           }),
-          createDateField('project_start_date', 'Project Start Date', {
+          createTextField('r_number', 'Project ID', {
             required: true,
+            placeholder: 'Enter Project Number',
             disabled: disableFields,
+            hide:!disableFields
           }),
-          createTextField('project_ref_id', 'Project Ref Id', {
+          createTextField('project_ref_id', 'Project Code', {
             required: true,
-            regex: REGEX_PATTERNS.ALPHANUMERIC,
-            regexErrorMessage: 'Please Enter valid Project Ref Id',
-            placeholder: 'Enter Project Ref Id',
-            disabled: disableFields,
+            placeholder: 'Enter project code',
+            lengthRequired: {
+                  key: 'name_length',
+                  minMatchedValue: REGEX_PATTERNS.MIN_5,
+                  minErrorMessage: 'Ref ID must be more than 4 characters long',
+                  maxMatchedValue: REGEX_PATTERNS.MAX_50,
+                  maxErrorMessage: 'Max length exceeded',
+                },
           }),
-          createDateField('project_end_date', 'Project End Date', {
-            required: true,
-            disabled: disableFields,
+          createTextField('name', 'Name', {
+            // required: true,
+            placeholder: 'Enter name',
+            lengthRequired: {
+                  key: 'name_length',
+                  minMatchedValue: REGEX_PATTERNS.MIN_4,
+                  minErrorMessage: 'Ref ID must be more than 4 characters long',
+                  maxMatchedValue: REGEX_PATTERNS.MAX_255,
+                  maxErrorMessage: 'Max length exceeded',
+                },
           }),
-          createSelectField('region', 'Region', {
-            options: state,
-            placeholder: 'Choose Region',
-            required: true,
-            isLoading: stateLoading,
+          createSelectField('industry', 'Industry', {
+            options: industry,
+            placeholder: 'Choose Industry',
+            required: false,
           }),
-          createTextField('industry', 'Industry', {
-            required: true,
-            regex: REGEX_PATTERNS.LETTERS_5_TO_25,
-            regexErrorMessage:
-              'Industry should contain only letters and between 5 to 25 characters',
-            placeholder: 'Enter Industry',
+          createTextField('program_name', 'Program Name', {
+            placeholder: 'Enter a Program Name',
+            lengthRequired: {
+              key: 'name_length',
+              minMatchedValue: REGEX_PATTERNS.MIN_4,
+              minErrorMessage: 'Name must be more than 3 characters long',
+              maxMatchedValue: REGEX_PATTERNS.MAX_100,
+              maxErrorMessage: 'Max length exceeded',
+            },
           }),
-          createTextField('project_manager', 'Project Manager', {
-            required: true,
-            regex: REGEX_PATTERNS.EMAIL,
-            regexErrorMessage: 'Enter a valid email address',
-            placeholder: 'Enter Project Manager',
+          createDateField('project_start_date', 'Start Date', {
+            required: false,
+            minDate: new Date(minDate.getTime()),
+            maxDate: currentDate,
+            startValue: true,
           }),
-          createSelectField('region', 'Region', {
-            options: state,
-            placeholder: 'Choose Region',
+          createDateField('project_end_date', 'End Date', {
+            required: false,
+            minDate: new Date(minDate.getTime()),
+            // maxDate: currentDate,
+            // endDateValue: false,
+            startDateLabel: 'project_start_date',
+          }),
+          createRadioField('project_type', 'Project Type', {
             required: true,
+            radioOptions: [
+              { label: 'Fixed', value: 'Fixed' },
+              { label: 'Time & Material', value: 'Time & Material' },
+            ],
+          }),
+          createSelectField('project_classification', 'Classification', {
+            options: classification,
+            placeholder: 'Choose Industry',
+            required: false,
+          }), 
+          // createTextField('client_organization', 'Client Organization', {
+          //   required:true,
+          //   placeholder: 'Enter a Client Organization',
+          //   lengthRequired: {
+          //     key: 'name_length',
+          //     minMatchedValue: REGEX_PATTERNS.MIN_4,
+          //     minErrorMessage: 'Name must be more than 3 characters long',
+          //     maxMatchedValue: REGEX_PATTERNS.MAX_HUNDERED_REGEX,
+          //     maxErrorMessage: 'Max length exceeded',
+          //   },
+          // }),
+          // createTextField('project_classification', 'Classification', {
+          //   placeholder: 'Enter a Project Classification',
+          //   lengthRequired: {
+          //     key: 'name_length',
+          //     minMatchedValue: REGEX_PATTERNS.MIN_4,
+          //     minErrorMessage: 'Name must be more than 3 characters long',
+          //     maxMatchedValue: REGEX_PATTERNS.MAX_HUNDERED_REGEX,
+          //     maxErrorMessage: 'Max length exceeded',
+          //   },
+          // }),
+          createTextField('project_client_group', 'Client Group', {
+            placeholder: 'Enter a Project Client Group',
+            lengthRequired: {
+              key: 'name_length',
+              minMatchedValue: REGEX_PATTERNS.MIN_4,
+              minErrorMessage: 'Name must be more than 3 characters long',
+              maxMatchedValue: REGEX_PATTERNS.MAX_200,
+              maxErrorMessage: 'Max length exceeded',
+            },
+          }),
+          createTextField('project_group', 'Project Group', {
+            placeholder: 'Enter a Project  Group',
+            lengthRequired: {
+              key: 'name_length',
+              minMatchedValue: REGEX_PATTERNS.MIN_4,
+              minErrorMessage: 'Name must be more than 3 characters long',
+              maxMatchedValue: REGEX_PATTERNS.MAX_150,
+              maxErrorMessage: 'Max length exceeded',
+            },
+          }),
+          createTextField('project_summary', 'Description', {
+            required: false,
+            placeholder: 'Enter Project Summary',
+             lengthRequired: {
+              key: 'name_length',
+              minMatchedValue: REGEX_PATTERNS.MIN_4,
+              minErrorMessage: 'Summary must be more than 3 characters long',
+              maxMatchedValue: REGEX_PATTERNS.MAX_1000,
+              maxErrorMessage: 'Max length exceeded',
+            },
+          }),
+          createRadioField('status', 'Status', {
+            required: true,
+            radioOptions: [
+              { label: 'Active', value: 'Active' },
+              { label: 'In-active', value: 'Inactive' },
+            ],
+          }),
+          createSelectField('fiscal_year', 'Fiscal Year', {
+            options: fiscalYears,
+            placeholder: '-Select-',
+            required: true,
+            onChange: true,
           }),
         ],
       },
@@ -73,21 +188,27 @@ export const FormData = (
         sectionName: 'Location and Currency Information',
         fillType: 'half',
         fields: [
-          createSelectField('country_rid', 'Country', {
+          createSelectField('country', 'Country', {
             options: country,
             placeholder: 'Choose Country',
-            required: true,
-          }),
-          createSelectField('currency_rid', 'Currency', {
-            options: currency,
-            required: true,
-            placeholder: 'Choose Currency',
+            required: false,
+            onChange: true,
+            disabled: disableFields,
           }),
           createSelectField('region', 'Region', {
             options: state,
             placeholder: 'Choose Region',
-            required: true,
+            required: false,
+            isLoading: stateLoading,
+            disabled: disableFields,
           }),
+          createSelectField('currency', 'Currency', {
+            options: currency,
+            required: false,
+            placeholder: 'Choose Currency',
+            disabled: disableFields,
+          }),
+         
         ],
       },
       {
@@ -96,66 +217,101 @@ export const FormData = (
         fields: [
           createTextField('project_manager', 'Project Manager', {
             required: true,
-            regex: REGEX_PATTERNS.LETTERS_3_TO_25,
-            regexErrorMessage: 'Letters Only and between 3 to 25 characters',
             placeholder: 'Enter Project Manager',
+            lengthRequired: {
+              key: 'name_length',
+              minMatchedValue: REGEX_PATTERNS.MIN_3,
+              minErrorMessage: 'Name must be more than 2 characters long',
+              maxMatchedValue: REGEX_PATTERNS.MAX_100,
+              maxErrorMessage: 'Max length exceeded',
+            },
           }),
           createTextField(
-            'project_Technical_point_of_contact_name',
-            'Project Technical Point of Contact Name',
+            'project_tpc_name',
+            'Project Technical POC Name',
             {
-              required: true,
-              regex: REGEX_PATTERNS.LETTERS_3_TO_25,
-              regexErrorMessage: 'Letters Only and between 3 to 25 characters',
               placeholder: 'Project Technical Point of Contact Name',
+              lengthRequired: {
+                key: 'name_length',
+                minMatchedValue: REGEX_PATTERNS.MIN_NAME_REGEX,
+                minErrorMessage: 'Name must be more than 2 characters long',
+                maxMatchedValue: REGEX_PATTERNS.MAX_100,
+                maxErrorMessage: 'Max length exceeded',
+              },
             }
           ),
           createTextField('project_lead', 'Project Lead', {
             required: true,
-            regex: REGEX_PATTERNS.EMAIL,
-            regexErrorMessage: 'Enter a valid email address',
             placeholder: 'Enter Project Lead',
+            lengthRequired: {
+              key: 'name_length',
+              minMatchedValue: REGEX_PATTERNS.MIN_3,
+              minErrorMessage: 'Name must be more than 2 characters long',
+              maxMatchedValue: REGEX_PATTERNS.MAX_100,
+              maxErrorMessage: 'Max length exceeded',
+            },
           }),
           createTextField(
-            'project_Technical_point_of_contact_email',
-            'Project Technical Point of Contact Name Email',
+            'project_tpc_email',
+            'Project Technical POC Email',
             {
-              required: true,
               regex: REGEX_PATTERNS.EMAIL,
-              regexErrorMessage: 'Enter a valid email address',
               placeholder:
-                'Enter Project Technical Point of Contact Name Email',
-            }
+                'Enter Project Technical Point of Contact Email',
+            regexErrorMessage: 'Invalid email address',
+            lengthRequired: {
+              key: 'email_length',
+              minMatchedValue: REGEX_PATTERNS.EMAIL,
+              minErrorMessage: 'Invalid email address',
+              maxMatchedValue: REGEX_PATTERNS.MAX_EMAIL_REGEX,
+              maxErrorMessage: 'Max length exceeded',
+            },
+            }  
           ),
           createTextField('spoc_name', 'SPOC Name', {
             required: true,
-            regex: REGEX_PATTERNS.PHONE,
-            regexErrorMessage: 'Enter a valid number (e.g 9876543210)',
             placeholder: 'Enter SPOC Name',
+            lengthRequired: {
+              key: 'name_length',
+              minMatchedValue: REGEX_PATTERNS.MIN_3,
+              minErrorMessage: 'Name must be more than 2 characters long',
+              maxMatchedValue: REGEX_PATTERNS.MAX_100,
+              maxErrorMessage: 'Max length exceeded',
+            },
           }),
-          createTextField(
-            'project_Technical_point_of_contact_mobile',
-            'Project Technical Point of Contact Mobile',
+          createPhoneInputField(
+            'project_tpc_mobile',
+            'Project Technical POC Mobile',
             {
-              required: true,
-              regex: REGEX_PATTERNS.PHONE,
-              regexErrorMessage: 'Enter a valid number (e.g 9876543210)',
+              required: false,
               placeholder: 'Enter Finance POC Phone',
             }
           ),
           createTextField('spoc_email', 'SPOC Email', {
-            required: true,
+            required: false,
             regex: REGEX_PATTERNS.EMAIL,
-            regexErrorMessage: 'Enter a valid email address',
+            regexErrorMessage: 'Invalid email address',
             placeholder: 'Enter SPOC Email',
+            lengthRequired: {
+              key: 'email_length',
+              minMatchedValue: REGEX_PATTERNS.EMAIL,
+              minErrorMessage: 'Invalid email address',
+              maxMatchedValue: REGEX_PATTERNS.MAX_EMAIL_REGEX,
+              maxErrorMessage: 'Max length exceeded',
+            },
           }),
           createTextField('project_cc_list', 'Project CC List', {
-            required: true,
+            placeholder: 'Enter Project CC List',
+            lengthRequired: {
+              key: 'email_length',
+              minMatchedValue: REGEX_PATTERNS.EMAIL,
+              minErrorMessage: 'Invalid email address',
+              maxMatchedValue: REGEX_PATTERNS.MAX_EMAIL_REGEX,
+              maxErrorMessage: 'Max length exceeded',
+            },
           }),
-          createTextField('spoc_mobile', 'SPOC Mobile', {
-            required: true,
-            regex: REGEX_PATTERNS.PHONE,
-            regexErrorMessage: 'Enter a valid number (e.g 9876543210)',
+          createPhoneInputField('spoc_mobile', 'SPOC Mobile', {
+            required: false,
             placeholder: 'Enter SPOC Mobile',
           }),
         ],
@@ -164,94 +320,135 @@ export const FormData = (
         sectionName: 'Financial Information',
         fillType: 'half',
         fields: [
-          createSelectField('account_billing_type', 'Account Billing Type', {
-            options: state,
-            placeholder: 'Choose bill type',
-            required: true,
-          }),
-          createTextField('total_non_labour_cost', 'Total Non Labour Cost', {
-            required: true,
-            regex: REGEX_PATTERNS.MAX_AI_INTRACTION,
-            regexErrorMessage: 'Enter a number between 3 and 5',
-            placeholder: 'Enter Total Non Labour Cost',
-          }),
-          createTextField('total-effort', 'Total Effort', {
-            required: true,
-            regex: REGEX_PATTERNS.MAX_AI_INTRACTION,
-            regexErrorMessage: 'Enter a number between 3 and 5',
+        
+          createTextField('total_effort', 'Effort in Hrs', {
+            regex: REGEX_PATTERNS.BLENDED_NUMBER,
+            regexErrorMessage: 'Enter a Positive Integer or Decimal number ',
             placeholder: 'Enter Total Effort',
           }),
-          createTextField('total_fte_effort', 'Total FTE Effort', {
-            required: false,
-            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
-            regexErrorMessage: 'Numbers only maximum 10 digits',
-            placeholder: 'Enter Total FTE Effort',
-          }),
           createTextField('total_cost', 'Total Cost', {
-            required: true,
-            regex: REGEX_PATTERNS.NUMBERS,
-            regexErrorMessage: 'Enter a valid annual revenue',
+            regex: REGEX_PATTERNS.BLENDED_NUMBER,
+            regexErrorMessage: 'Enter a only Positve Interger or Decimal number',
             placeholder: 'Enter Total Cost',
           }),
-          createTextField('total_sub_con_effort', 'Total Sub Con Effort', {
-            required: false,
-            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
-            regexErrorMessage: 'Numbers only maximum 10 digits',
-            placeholder: 'Enter Total Sub Con Effort',
-          }),
-          createTextField('total_fte', 'Total FTE', {
-            required: true,
-            regex: REGEX_PATTERNS.MAX_AI_INTRACTION,
-            regexErrorMessage: 'Enter a number between 3 and 5',
+          createTextField('total_fte', 'Total FTE Count', {
+            regex: REGEX_PATTERNS.POSITIVE_INTEGER_REGEX,
+            regexErrorMessage: 'Enter a Positive Integer or Decimal number ',
             placeholder: 'Enter Total FTE',
           }),
-          createTextField('total_fte_cost', 'Total FTE Cost', {
-            required: true,
-            regex: REGEX_PATTERNS.MAX_AI_INTRACTION,
-            regexErrorMessage: 'Enter a number between 3 and 5',
-            placeholder: 'Enter Total FTE Cost',
-          }),
-          createTextField('total_sub_con', 'Total Sub Con', {
-            required: true,
-            regex: REGEX_PATTERNS.MAX_AI_INTRACTION,
-            regexErrorMessage: 'Enter a number between 3 and 5',
+          createTextField('total_sub_con', 'Total Sub Con Count', {
+
+            regex: REGEX_PATTERNS.POSITIVE_INTEGER_REGEX,
+            regexErrorMessage: 'Enter a Positive Integer or Decimal number',
             placeholder: 'Enter Total Sub Con',
           }),
+       
+          createTextField('total_fte_effort', 'Total FTE Effort', {
+            regex: REGEX_PATTERNS.BLENDED_NUMBER,
+            regexErrorMessage: 'Enter a Positive Integer number ',
+            placeholder: 'Enter Total FTE Effort',
+          }),
+          createTextField('total_sub_con_effort', 'Total Sub Con Effort', {
+            regex: REGEX_PATTERNS.BLENDED_NUMBER,
+            regexErrorMessage: 'Enter a Positive Integer number ',
+            placeholder: 'Enter Total Sub Con Effort',
+          }),
+         
+          createTextField('total_fte_cost', 'Total FTE Cost', {
+            regex: REGEX_PATTERNS.BLENDED_NUMBER,
+            regexErrorMessage: 'Enter a only Positve Interger or Decimal number',
+            placeholder: 'Enter Total FTE Cost',
+          }), 
           createTextField('total_sub_con_cost', 'Total Sub Con Cost', {
-            required: true,
-            regex: REGEX_PATTERNS.MAX_AI_INTRACTION,
-            regexErrorMessage: 'Enter a number between 3 and 5',
+            regex: REGEX_PATTERNS.BLENDED_NUMBER,
+            regexErrorMessage: 'Enter a only Positve Interger or Decimal number',
             placeholder: 'Enter Total Sub Con Cost',
+          }),  
+          createTextField('total_non_labor_cost', 'Total Non Labour Cost', {
+            regex: REGEX_PATTERNS.BLENDED_NUMBER,
+            regexErrorMessage: 'Enter a only Positve Interger or Decimal number',
+            placeholder: 'Enter Total Non Labour Cost',
+          }),
+        ],
+      },
+      {
+        sectionName: 'Project Settings',
+        fillType: 'half',
+        fields: [
+          createRadioField('auto_send_ai_interaction', 'Auto Send Interaction', {
+            required: true,
+            radioOptions: [
+              { label: 'Yes', value: "Yes" },
+              { label: 'N0', value: "No" },
+            ],
+          }),
+          createRadioField('auto_access_rd', 'Auto Assessment', {
+            required: true,
+            radioOptions: [
+              { label: 'Yes', value: "Yes" },
+              { label: 'N0', value: "No" },
+            ],
+          }),
+          createTextField('max_ai_interaction', 'Max Interaction follow up', {
+            required: false,
+            placeholder: 'Enter  Max AI Interactions',
+            regex: REGEX_PATTERNS.POSITIVE_INTEGER_REGEX,
+            regexErrorMessage: 'Enter a only Positve Interger number',
+          }),
+         
+          createTextField('blended_rate_fte', 'Blended Rate FTE', {
+            required: false,
+            placeholder: 'Enter Blended Rate FTE',
+            regex: REGEX_PATTERNS.BLENDED_NUMBER,
+            regexErrorMessage: 'Enter a Positive Integer or Decimal number ',
+          }),
+          createTextField('blended_rate_sub_con', 'Blended Rate Sub Con', {
+            required: false,
+            placeholder: 'Enter Blended Rate Sub Con',
+            regex: REGEX_PATTERNS.BLENDED_NUMBER,
+            regexErrorMessage: 'Enter a Positive Integer or Decimal number ',
           }),
         ],
       },
       {
         sectionName: 'Audit Information',
         fillType: 'half',
+        hide:!disableFields,
         fields: [
-          createTextField('last_rd_ai_assessed_on', 'Total Effort', {
-            required: true,
-            regex: REGEX_PATTERNS.MAX_AI_INTRACTION,
-            regexErrorMessage: 'Enter a number between 3 and 5',
-            placeholder: 'Enter Total Effort',
-          }),
-          createTextField('last_rd_ai_assessed_by', 'Total FTE Effort', {
+          createDateField('last_rd_ai_assess_on', 'Created On', {
             required: false,
-            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
-            regexErrorMessage: 'Numbers only maximum 10 digits',
-            placeholder: 'Enter Total FTE Effort',
+            disabled: disableFields,
+            // hide:!disableFields,
+          }),
+          createTextField('llast_rd_ai_assess_by', 'Created By', {
+            required: false,
+            placeholder: 'Enter Last Rd AI Assessed By',
+            disabled: disableFields,
+            // hide:!disableFields,
+          }),
+          createDateField('last_rd_ai_assess_on', 'Updated On', {
+            required: false,
+            disabled: disableFields,
+            // hide:!disableFields,
+          }),
+          createTextField('llast_rd_ai_assess_by', 'Updated By', {
+            required: false,
+            placeholder: 'Enter Last Rd AI Assessed By',
+            disabled: disableFields,
+            // hide:!disableFields,
           }),
         ],
       },
       {
-        sectionName: 'Description Information',
+        sectionName: 'Comments',
         fillType: 'full',
         fields: [
-          createTextAreaField('account_description', 'Description', {
+          createTextAreaField('project_description', 'Comments', {
             required: false,
-            regex: REGEX_PATTERNS.DESCRIPTION,
-            regexErrorMessage: 'Maximum 500 characters allowed',
-            placeholder: 'Enter Description',
+            regex: REGEX_PATTERNS.MAX_2000,
+            regexErrorMessage: 'Maximum 2000 characters allowed',
+            placeholder: 'Enter a comments',
+            
           }),
         ],
       },
