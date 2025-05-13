@@ -138,7 +138,7 @@ export const createSelectField = (
     required: boolean;
     placeholder?: string;
     disabled?: boolean;
-    dependsRequired?: Record<string, string>;
+    clearValue?: Record<string, string>;
     onChange?: boolean;
     isLoading?: boolean;
     resetDependsFields?: string[];
@@ -151,7 +151,7 @@ export const createSelectField = (
   options: others.options,
   disabled: others.disabled,
   placeholder: others.placeholder,
-  dependsRequired: others.dependsRequired,
+  clearValue: others.clearValue,
   onChange: others.onChange,
   isLoading: others.isLoading,
   resetDependsFields: others.resetDependsFields,
@@ -269,7 +269,8 @@ export const REGEX_PATTERNS = {
   NAME_LENGTH_3_TO_100_REGEX: /^.{3,100}$/,
   ALLOWED_CHARS_EXTENDED_NAME_REGEX: /^[A-Za-z0-9 &'.,-]+$/,
   NO_CONSECUTIVE_SPECIALS_EXTENDED_REGEX: /^(?!.*[ &'.,-]{2})/,
-  NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX: /^(?!^[ &'.,-])(?!(.*[ &'.,-]$))/,
+  NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX:
+    /^(?!^[ &'.,-])(?!(.*[ &'.,-]$))/,
 };
 
 /**
@@ -283,8 +284,10 @@ export const REGEX_PATTERNS = {
 
 export const RESOURCE_REGEX = {
   RESOURCE_REF_ID: /^(?=.*[a-zA-Z0-9])[\w\W]{1,50}$/,
-  RESOURCE_NAME: /^(?!.*[-' ]{2})[A-Za-z](?:[A-Za-z]|[-' ](?=[A-Za-z])){0,62}[A-Za-z]$/,
-  ORG_NAME: /^(?!.*[&\-.'", ]{2})[A-Za-z0-9](?:[A-Za-z0-9]|[&\-.'", ](?=[A-Za-z0-9])){1,98}[A-Za-z0-9]$/,
+  RESOURCE_NAME:
+    /^(?!.*[-' ]{2})[A-Za-z](?:[A-Za-z]|[-' ](?=[A-Za-z])){0,62}[A-Za-z]$/,
+  ORG_NAME:
+    /^(?!.*[&\-.'", ]{2})[A-Za-z0-9](?:[A-Za-z0-9]|[&\-.'", ](?=[A-Za-z0-9])){1,98}[A-Za-z0-9]$/,
   EMAIL: /^[a-zA-Z0-9._%+-]{1,64}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
   MOBILE: /^\+?[0-9][0-9\- ]{3,14}[0-9]$/,
   MANAGER_NAME: /^(?=(.*[a-zA-Z0-9]){3})[a-zA-Z0-9][a-zA-Z0-9 .'-]{1,99}$/,
@@ -293,7 +296,8 @@ export const RESOURCE_REGEX = {
   YEARS_EXPERIENCE: /^(?:0|[1-9]\d?)(?:\.\d{1,2})?$/,
   DESCRIPTION: /^[\s\S]{0,1000}$/,
   ENUM_VALIDATION: /^(Active|Inactive|Full-time|Contract|Mandatory)$/,
-  COUNTRY: /^(?![\s-])(?!.*[\s-]{2})[A-Za-zÀ-ÖØ-öø-ÿ\s-]{2,49}[A-Za-zÀ-ÖØ-öø-ÿ]$/,
+  COUNTRY:
+    /^(?![\s-])(?!.*[\s-]{2})[A-Za-zÀ-ÖØ-öø-ÿ\s-]{2,49}[A-Za-zÀ-ÖØ-öø-ÿ]$/,
   DATE_FORMAT: /^\d{4}-\d{2}-\d{2}$/,
 };
 
