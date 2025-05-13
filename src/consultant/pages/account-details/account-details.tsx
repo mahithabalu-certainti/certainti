@@ -68,16 +68,16 @@ export const AccountDetails = () => {
     const { fiscalYear, rNumber, resourceRid, sortBy, sortOrder } = tableParams;
 
     const commonPayload = {
-      fiscalYear,
       rNumber,
       sortBy,
       sortOrder,
     };
 
-    const exportPayload =
-      exportType === 'resource'
-        ? commonPayload
-        : { ...commonPayload, resourceRid };
+    const exportPayload = {
+      ...commonPayload,
+      ...(exportType !== 'resource' && { resourceRid }),
+      ...(exportType === 'cost' && { fiscalYear })
+    };
 
     exportData(exportType, exportPayload);
   };

@@ -270,3 +270,14 @@ export interface ConvertedAccount {
   parentAccountID: string | null;
   annualRevenue: string;
 }
+
+export interface keyContactRoles {
+  rid: string;
+  role_name: string;
+}
+
+export interface keyContactRolesApiResponse extends CommonApiResponse {
+  data: {
+    keyContactRoles: keyContactRoles[];
+  };
+}

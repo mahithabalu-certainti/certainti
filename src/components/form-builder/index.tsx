@@ -415,6 +415,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   fullWidth: true,
                   size: 'small',
                   disabled: field.disabled,
+                  onKeyDown: (e) => {
+                    if (e.key.length === 1 && /[a-zA-Z]/.test(e.key)) {
+                      e.preventDefault();
+                    }
+                  },
                   sx: {
                     '& .MuiOutlinedInput-root': {
                       height: '32px',
