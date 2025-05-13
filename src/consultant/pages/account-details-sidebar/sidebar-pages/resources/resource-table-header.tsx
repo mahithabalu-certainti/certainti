@@ -35,7 +35,6 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
   value,
   resourceNumber,
 }) => {
-  console.log('value', value)
 
   return (
     <div className='border-t border-[1px] border-b-0 border-[#CBD6E2] rounded-tl-[2px] h-[50px] rounded-tr-[2px]'>
