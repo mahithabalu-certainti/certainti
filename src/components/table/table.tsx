@@ -271,7 +271,7 @@ const Table = <T extends RowData>({
               ))}
 
               {/* Action column */}
-              {(onEdit || onDelete || onView) && <TableCell sx={{ minWidth: '100px', textAlign: 'center', pl: '0px !important' }}>Action</TableCell>}
+              {(onEdit || onDelete || onView) && <TableCell sx={{ minWidth: '100px', }}>Action</TableCell>}
             </TableRow>
           </TableHead>
 

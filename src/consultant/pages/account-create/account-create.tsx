@@ -11,6 +11,7 @@ import {
   useFetchIndustrys,
   useFetchParentAccounts,
   useFetchState,
+  useKeyContactRoles,
 } from '../../services/account';
 import {
   useCreateAccount,
@@ -18,9 +19,8 @@ import {
 } from '../../services/account-create';
 import { AccountFormData, SelectOption, YesNo } from '../../types';
 import { FormData } from './form-data';
-import { DATA_STORAGE_OPTIONS, transformFormData } from './utils';
+import { DATA_STORAGE_OPTIONS, othersIndustryId, transformFormData } from './utils';
 import { ACCOUNT } from '../../../routes';
-import { useManageUserRole } from '../../../admin/service';
 import { STATUS_OPTIONS } from '../../../common-utils';
 
 export const AccountForm: React.FC = () => {
@@ -32,6 +32,7 @@ export const AccountForm: React.FC = () => {
     key_contact_email: '',
   });
   const [isParentAccountRequired, setIsParentAccountRequired] = useState(false);
+  const [showOthersField, setShowOthersField] = useState(false);
   const [dataResidency, setDataResidency] = useState(DATA_STORAGE_OPTIONS);
   const { successToast } = useToast();
   const location = useLocation();
@@ -82,7 +83,7 @@ export const AccountForm: React.FC = () => {
 
   const allCountries = useGetAllCountries();
   const industry = useFetchIndustrys();
-  const userRoles = useManageUserRole();
+  const keyContactRoles = useKeyContactRoles();
   const parentAccount = useFetchParentAccounts();
   const currency = useFetchCurrency();
   const states = useFetchState(currentCountry);
@@ -93,6 +94,7 @@ export const AccountForm: React.FC = () => {
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
 
   const commonSuccess = createAccount.isSuccess || updateAccount.isSuccess;
+
   useEffect(() => {
     if (commonSuccess) {
       successToast(
@@ -117,7 +119,17 @@ export const AccountForm: React.FC = () => {
       key_contact_name: accountData.key_contact_name || '',
       key_contact_role: accountData.key_contact_role || '',
     });
-  }, [accountData.key_contact_email, accountData.key_contact_name, accountData.key_contact_role]);
+  }, [
+    accountData.key_contact_email,
+    accountData.key_contact_name,
+    accountData.key_contact_role,
+  ]);
+
+  useEffect(() => {
+    if (accountData.industry_rid === othersIndustryId) {
+      setShowOthersField(true);
+    }
+  }, [accountData.industry_rid]);
 
   const memoizedContry: SelectOption[] = useMemo(
     () =>
@@ -166,12 +178,13 @@ export const AccountForm: React.FC = () => {
 
   const memoizedRole: SelectOption[] = useMemo(
     () =>
-      userRoles.data?.data.roles.map((role) => ({
-        label: role.business_teams,
+      keyContactRoles.data?.data.keyContactRoles.map((role) => ({
+        label: role.role_name,
         value: role.rid,
       })) || [],
-    [userRoles.data?.data.roles]
+    [keyContactRoles.data?.data.keyContactRoles]
   );
+
   const submitData = (formValues: Partial<AccountFormData>) => {
     const transformData = transformFormData(
       formValues,
@@ -213,6 +226,13 @@ export const AccountForm: React.FC = () => {
         ...prev,
         [data.fieldName]: data.fieldValue,
       }));
+    }
+    // show others field if industry is selected as Others
+    if (data.fieldName === 'industry_rid') {
+      // others id
+      setShowOthersField(
+        data.fieldValue === othersIndustryId // others id
+      );
     }
   };
 
@@ -280,14 +300,15 @@ export const AccountForm: React.FC = () => {
           isValueUpdateInKeyContact,
           isParentAccountRequired,
           isEditView,
-          states.isLoading
+          states.isLoading,
+          showOthersField
         )}
         loading={
           allCountries.isLoading ||
           parentAccount.isLoading ||
           currency.isLoading ||
           industry.isLoading ||
-          userRoles.isLoading
+          keyContactRoles.isLoading
         }
         values={
           isEditView && accountData

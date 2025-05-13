@@ -21,7 +21,7 @@ export interface FormTypeFields {
   disabled?: boolean;
   greaterThan?: Record<string, string>;
   toBeNotSame?: Record<string, string>;
-  dependsRequired?: Record<string, string>;
+  clearValue?: Record<string, string>;
   defaultSelect?: Record<string, string>;
   resetDependsFields?: string[];
   disableFutureDates?: boolean;
@@ -87,7 +87,7 @@ export interface FieldType {
   defaultValue?: string;
   greaterThan?: Record<string, string>;
   toBeNotSame?: Record<string, string>;
-  dependsRequired?: Record<string, string>;
+  clearValue?: Record<string, string>;
   defaultSelect?: Record<string, string>;
   resetDependsFields?: string[];
   dateRangeError?: boolean;

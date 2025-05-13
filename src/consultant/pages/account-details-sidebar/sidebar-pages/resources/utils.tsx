@@ -29,14 +29,6 @@ export const getSkillFilterFields = (
   return [
     // { name: 'Resource Type', value: 'resource_type', type: 'textCostAndSkill' },
     { name: 'Start Date', value: 'start_date', type: 'date' },
-    { name: 'Skill Details', value: 'skill_name', type: 'textCostAndSkill' },
-    {
-      name: 'Skill Level',
-      value: 'skill_level',
-      type: 'enum',
-      options: enumValueOptions,
-    },
-    { name: 'Years of Experience', value: 'years_of_experience', type: 'number' },
     {
       name: 'Skill Type',
       value: 'skill_type_rid',
@@ -49,6 +41,12 @@ export const getSkillFilterFields = (
       type: 'enum',
       options: skillSubTypeOptions,
       dependsOn: 'skill_type_rid'  // This indicates it depends on skill_type
+    },
+    {
+      name: 'Skill Level',
+      value: 'skill_level',
+      type: 'enum',
+      options: enumValueOptions,
     },
   ];
 };
@@ -105,4 +103,29 @@ export const formatDateToMMDDYYYY = (dateString?: string | null): string => {
   const year = date.getFullYear();
 
   return `${month}/${day}/${year}`;
+};
+
+export const formatDateToMMDDYYYYWithTime = (dateString?: string | null): string => {
+  if (!dateString) return '';
+
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+
+  // Date parts
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+
+  // Time parts (12-hour format with AM/PM)
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  
+  hours = hours % 12;
+  hours = hours || 12; // Convert "0" hours to "12"
+
+  const formattedTime = `${String(hours).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
+
+  return `${month}/${day}/${year}, ${formattedTime}`;
 };

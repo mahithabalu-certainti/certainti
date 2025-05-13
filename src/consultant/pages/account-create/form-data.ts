@@ -23,7 +23,8 @@ export const FormData = (
   isPrimaryContactRequired: boolean,
   isParentAccountRequired: boolean,
   disableFields?: boolean,
-  stateLoading?: boolean
+  stateLoading?: boolean,
+  showOthersField?: boolean
 ): FormType[] => {
   return useMemo(
     () => [
@@ -41,7 +42,7 @@ export const FormData = (
           createTextField('account_name', 'Account Name', {
             required: true,
             regex: REGEX_PATTERNS.ACCOUNT_NAME,
-            regexErrorMessage: 'Invalid Account Name',
+            regexErrorMessage: "only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), and commas (,)",
             placeholder: 'Enter Account Name',
             errorHandling: [
               {
@@ -59,6 +60,7 @@ export const FormData = (
             options: industrys,
             placeholder: 'Choose Industry',
             required: true,
+            onChange: true,
           }),
           createRadioField('is_parent', 'Is Parent Account', {
             radioOptions: YES_NO_OPTIONS,
@@ -72,16 +74,21 @@ export const FormData = (
               ifNotMatchValue: DATA_STORAGE_OPTIONS[1].value,
             },
           }),
+          createTextField('industry_name_other', 'Industry - Others', {
+            required: true,
+            regex: REGEX_PATTERNS.MAX_255,
+            regexErrorMessage: 'Max length exceeded',
+            placeholder: 'Enter Industry - Others',
+            hide: !showOthersField,
+          }),
           createSelectField('parent_account_rid', 'Parent Account', {
             options: parentAccount,
             placeholder: 'Choose Parent Account',
             required: isParentAccountRequired,
             disabled: !isParentAccountRequired || disableFields,
-            dependsRequired: {
+            clearValue: {
               key: 'is_parent',
-              matchedValue: YesNo.No,
-              errorMessage: 'Field is required',
-              disableDependsField: YesNo.Yes,
+              matchedValue: YesNo.Yes,
             },
           }),
           createSelectField('status', 'Status', {
@@ -197,7 +204,7 @@ export const FormData = (
           createSelectField('key_contact_role', 'Key Contact Role', {
             options: roles,
             required: false,
-            placeholder: 'Choose Contact Role',
+            placeholder: 'Choose Key Contact Role',
             onChange: true,
           }),
           createTextField('key_contact_email', 'Key Contact Email', {
@@ -231,7 +238,7 @@ export const FormData = (
           createSelectField('key_contact_status', 'Key Contact Status', {
             required: false,
             options: STATUS_OPTIONS,
-            placeholder: 'Choose Contact Status',
+            placeholder: 'Choose Key Contact Status',
           }),
           // createTextField('finance_poc_name', 'Finance Contact Name', {
           //   required: true,
@@ -290,7 +297,7 @@ export const FormData = (
                 { label: '4', value: '4' },
                 { label: '5', value: '5' },
               ],
-              placeholder: 'Choose Max AI Intractions',
+              placeholder: 'Choose Max interaction Follow up',
             }
           ),
           createRadioField('auto_access_rd', 'Auto Assessment', {
@@ -334,13 +341,15 @@ export const FormData = (
       industrys,
       disableFields,
       parentAccount,
+      isParentAccountRequired,
       country,
       state,
       stateLoading,
       currency,
-      dataResidency,
-      isPrimaryContactRequired,
       roles,
+      isPrimaryContactRequired,
+      dataResidency,
+      showOthersField,
     ]
   );
 };
