@@ -1204,7 +1204,6 @@ const rawResult = users || [];
         const { profile, business_teams, ...basicUserInfo } = user;
         return {
           "Username":basicUserInfo.first_name,
-          "Full name":basicUserInfo.full_name,
           "Email":basicUserInfo.email,
           "Profile": profile?.profile_name,
           "Status": basicUserInfo.status

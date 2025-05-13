@@ -75,7 +75,7 @@ class AccountService {
 
       const order: any[] = [];
 
-      if (finalSortBy !== "country" && finalSortBy !== "currency") {  //&& finalSortBy !== "industry"
+      if (finalSortBy !== "country" && finalSortBy !== "currency" && finalSortBy !== "industry") {
         order.push([finalSortBy, finalSortOrder]);
       }
 
@@ -94,13 +94,13 @@ class AccountService {
           finalSortOrder,
         ]);
       }
-      // if (finalSortBy === "industry") {
-      //   order.push([
-      //     { model: Industry, as: "industry" },
-      //     "industry_name",
-      //     finalSortOrder,
-      //   ]);
-      // }
+      if (finalSortBy === "industry") {
+        order.push([
+          { model: Industry, as: "industry" },
+          "industry_name",
+          finalSortOrder,
+        ]);
+      }
 
       // Determine if we should include the parent_account_rid filter
       // Only apply this filter if is_parent_account is not set to "NO"
@@ -130,12 +130,12 @@ class AccountService {
             attributes: ["rid", "currency_code"],
             required: false,
           },
-          // {
-          //   model: Industry,
-          //   as: "industry",
-          //   attributes: ["rid", "industry_name"],
-          //   required: false,
-          // }
+          {
+            model: Industry,
+            as: "industry",
+            attributes: ["rid", "industry_name"],
+            required: false,
+          }
         ],
       });
 
@@ -166,12 +166,12 @@ class AccountService {
               as: "parent_account",
               attributes: ["rid", "account_name"],
             },
-            // {
-            //   model: Industry,
-            //   as: "industry",
-            //   attributes: ["rid", "industry_name"],
-            //   required: false,
-            // }
+            {
+              model: Industry,
+              as: "industry",
+              attributes: ["rid", "industry_name"],
+              required: false,
+            }
           ]
         });
     
@@ -210,11 +210,11 @@ class AccountService {
             as: "currency",
             attributes: []
           },
-          // {
-          //   model: Industry,
-          //   as: "industry",
-          //   attributes: []
-          // }
+          {
+            model: Industry,
+            as: "industry",
+            attributes: []
+          }
         ]
       });
 
@@ -273,7 +273,7 @@ class AccountService {
   
         const order: any[] = [];
   
-        if (finalSortBy !== "country" && finalSortBy !== "currency") { //&& finalSortBy !== "industry"
+        if (finalSortBy !== "country" && finalSortBy !== "currency" && finalSortBy !== "industry") {
           order.push([finalSortBy, finalSortOrder]);
         }
   
@@ -293,13 +293,13 @@ class AccountService {
           ]);
         }
         
-        // if (finalSortBy === "industry") {
-        //   order.push([
-        //     { model: Industry, as: "industry" },
-        //     "industry_name",
-        //     finalSortOrder,
-        //   ]);
-        // }
+        if (finalSortBy === "industry") {
+          order.push([
+            { model: Industry, as: "industry" },
+            "industry_name",
+            finalSortOrder,
+          ]);
+        }
         // Determine if we should include the parent_account_rid filter
         // Only apply this filter if is_parent_account is not set to "NO"
         const baseWhereClause = { ...allWhereClause };
@@ -326,12 +326,12 @@ class AccountService {
               attributes: ["rid", "currency_code"],
               required: false,
             },
-            // {
-            //   model: Industry,
-            //   as: "industry",
-            //   attributes: ["rid", "industry_name"],
-            //   required: false,
-            // },
+            {
+              model: Industry,
+              as: "industry",
+              attributes: ["rid", "industry_name"],
+              required: false,
+            },
           ],
         });
   
@@ -357,11 +357,11 @@ class AccountService {
                 as: "currency",
                 attributes: ["rid", "currency_code"]
               },
-              // {
-              //   model: Industry,
-              //   as: "currency",
-              //   attributes: ["rid", "industry_name"],
-              // },
+              {
+                model: Industry,
+                as: "industry",
+                attributes: ["rid", "industry_name"],
+              },
               {
                 model: Account,
                 as: "parent_account",
@@ -591,7 +591,7 @@ class AccountService {
       // Check if account name already exists before update
       const existingAccount = await repository.findOne({
         where: {
-          account_name: account_name,
+          account_name: { [Op.iLike]: account_name }, // Case insensitive comparison
           rid: { [Op.ne]: account_rid } // Exclude current account
         }
       });
