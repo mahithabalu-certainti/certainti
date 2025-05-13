@@ -90,7 +90,6 @@ const Resource: React.FC<ResourceProps> = ({
     sortBy: sortField,
     sortOrder: sortOrder,
     filters: appliedFilters,
-    fiscalYear: convertedFiscalYear,
   });
 
   const handleFilter = () => {

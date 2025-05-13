@@ -37,7 +37,6 @@ interface ResourceSkillTableProps {
   setCurrentPage: (page: number) => void;
 }
 const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
-  fiscalYear,
   appliedFilters,
   accountDetails,
   resourceRid, currentPage, setCurrentPage,
@@ -61,7 +60,6 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     sortOrder: apiOrder,
     filters: appliedFilters,
     accountNumber: accountDetails?.data?.accountById?.r_number,
-    fiscalYear,
     resourceRid,
   });
 

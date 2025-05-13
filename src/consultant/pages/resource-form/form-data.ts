@@ -218,8 +218,12 @@ export const ResourceFormData = (
                   'Cannot start or end with a space or special character',
               },
             ],
-            placeholder: 'Enter Org Name',
+            placeholder: 'Enter Resource Org Name',
             disabled: disableCostAndSkill,
+            clearValue: {
+              key: 'resource_type',
+              matchedValue: RESOURCE_TYPE_OPTIONS[0].value || RESOURCE_TYPE_OPTIONS[1].value || RESOURCE_TYPE_OPTIONS[2].value ,
+            },
           }),
           createTextField('resource_role', 'Role', {
             required: false,

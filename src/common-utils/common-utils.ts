@@ -22,6 +22,7 @@ export const createTextField = (
     anyOneRequired?: boolean;
     hide?: boolean;
     errorHandling?: ErrorHandling[];
+    clearValue?: Record<string, string>;
     lengthRequired?: {
       key: string;
       minMatchedValue: RegExp;
@@ -44,6 +45,7 @@ export const createTextField = (
   hide: options.hide,
   lengthRequired: options.lengthRequired,
   errorHandling: options.errorHandling,
+  clearValue: options.clearValue
 });
 
 export const createPhoneInputField = (
