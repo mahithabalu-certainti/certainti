@@ -487,7 +487,7 @@ class UserManagementService {
    * @param {string} profileId - The profile ID to update permissions for
    * @param {Array} permissions - Array of permission objects with modification flags
    * @param {string} userId - The ID of the user making the update
- * @param {string} eventName - The name of the event (create or edit)
+ * @param {string} originalUrl - OriginalUrl of the request
  * @returns {Promise<Object>} - Response object with update status
  */
   async updateProfilePermissions(
@@ -502,7 +502,7 @@ class UserManagementService {
       edit?: boolean;
     }>,
     userId: string,
-    eventName: string = "create" // Default to "create" for backward compatibility
+    originalUrl: string = "" 
   ): Promise<{
     statusCode: number;
     message: string;
@@ -523,7 +523,7 @@ class UserManagementService {
         };
       }
 
-      if (eventName === 'edit' && profileName) {
+      if (originalUrl.includes('edit') && profileName) {
         // Check if name has changed
         if (profile.profile_name !== profileName) {
           const isUniqueAndUpdated = await this.checkProfileNameUniqueAndUpdate(
@@ -565,18 +565,18 @@ class UserManagementService {
       const updatePromises = modifiedPermissions.map(async (permission) => {
         switch (permission.type) {
           case 'menu':
-            return this.updateMenuAccessIfChanged(permission.rid, permission.is_enabled || false, userId, eventName);
+            return this.updateMenuAccessIfChanged(permission.rid, permission.is_enabled || false, userId, originalUrl);
           case 'module':
-            return this.updateModuleAccessIfChanged(permission.rid, permission.is_enabled || false, userId, eventName);
+            return this.updateModuleAccessIfChanged(permission.rid, permission.is_enabled || false, userId, originalUrl);
           case 'permission':
-            return this.updatePermissionAccessIfChanged(permission.rid, permission.is_enabled || false, userId, eventName);
+            return this.updatePermissionAccessIfChanged(permission.rid, permission.is_enabled || false, userId, originalUrl);
           case 'field':
             return this.updateFieldAccessIfChanged(
               permission.rid,
               permission.read || false,
               permission.edit || false,
               userId,
-              eventName
+              originalUrl
             );
 
           default:
@@ -590,7 +590,7 @@ class UserManagementService {
       const updatedPermissionCount = updateResults.filter(result => result === true).length;
 
       // Record the update event in profile timeline only if changes were made
-      if (updatedPermissionCount > 0 && eventName === "edit") {
+      if (updatedPermissionCount > 0 && originalUrl.includes('edit')) {
         await this.recordProfileEvent(
           profileId,
           "update",
@@ -674,7 +674,7 @@ async checkProfileNameUniqueAndUpdate(
     accessId: string,
     isEnabled: boolean,
     userId: string,
-    eventName: string = "create"
+    originalUrl: string = "create"
   ): Promise<boolean> {
     try {
       // First fetch the current value
@@ -691,7 +691,7 @@ async checkProfileNameUniqueAndUpdate(
       }
   
       // Store history if this is an edit operation
-      if (eventName === 'edit') {
+      if (originalUrl.includes('edit')) {
         await ProfileMenuAccessHistory.create({
           profile_menu_access_rid: accessId,
           attribute_name: 'is_enabled',
@@ -726,7 +726,7 @@ async checkProfileNameUniqueAndUpdate(
     accessId: string,
     isEnabled: boolean,
     userId: string,
-    eventName: string = "create"
+    originalUrl: string = "create"
   ): Promise<boolean> {
     try {
       // First fetch the current value
@@ -743,7 +743,7 @@ async checkProfileNameUniqueAndUpdate(
       }
   
       // Store history if this is an edit operation
-      if (eventName === 'edit') {
+      if (originalUrl.includes('edit')) {
         await ProfileModuleAccessHistory.create({
           profile_module_access_rid: accessId,
           attribute_name: 'is_enabled',
@@ -778,7 +778,7 @@ async checkProfileNameUniqueAndUpdate(
     accessId: string,
     isEnabled: boolean,
     userId: string,
-    eventName: string = "create"
+    originalUrl: string = "create"
   ): Promise<boolean> {
     try {
       // First fetch the current value
@@ -795,7 +795,7 @@ async checkProfileNameUniqueAndUpdate(
       }
   
       // Store history if this is an edit operation
-      if (eventName === 'edit') {
+      if (originalUrl.includes('edit')) {
         await ProfilePermissionAccessHistory.create({
           profile_permission_access_rid: accessId,
           attribute_name: 'is_enabled',
@@ -831,7 +831,7 @@ async checkProfileNameUniqueAndUpdate(
     read: boolean,
     edit: boolean,
     userId: string,
-    eventName: string = "create"
+    originalUrl: string = "create"
   ): Promise<boolean> {
     try {
       // First fetch the current values
@@ -851,7 +851,7 @@ async checkProfileNameUniqueAndUpdate(
       }
   
       // Store history if this is an edit operation
-      if (eventName === 'edit') {
+      if (originalUrl.includes('edit')) {
         // Create history entry for read permission if changed
         if (readChanged) {
           await ProfileFieldsAccessHistory.create({

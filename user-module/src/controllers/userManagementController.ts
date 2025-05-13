@@ -329,7 +329,7 @@ async function updateProfilePermissions(req: Request, res: Response): Promise<vo
       profile_name,
       permissions,
       userId,
-      "create" // Pass "create" as the event name
+      req.originalUrl // Pass "create" as the event name
     );
     
     if (result.statusCode === constants.SUCCESS) {
@@ -366,9 +366,7 @@ async function updateProfilePermissions(req: Request, res: Response): Promise<vo
 async function editProfilePermissions(req: Request, res: Response): Promise<void> {
   const methodName = "Edit profile permissions";
   try {
-    const { profile_id, profile_name, permissions } = req.body;
-    
-    // Validate required fields
+    const { profile_id, profile_name, permissions } = req.body;    // Validate required fields
     if (!profile_id || !profile_name || !permissions || !Array.isArray(permissions)) {
       errorLog(methodName, "Profile ID, Profile Name and permissions array are required");
       handleErrorResponse(
@@ -389,7 +387,7 @@ async function editProfilePermissions(req: Request, res: Response): Promise<void
       profile_name,
       permissions,
       userId,
-      "edit" // Pass "edit" as the event name
+      req.originalUrl // Pass "edit" as the event name
     );
     
     if (result.statusCode === constants.SUCCESS) {
