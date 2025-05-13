@@ -22,7 +22,6 @@ export interface IResourceService {
   }>;
   resourcesList(
     accountNumber: string,
-    fiscal_year: number,
     page: number,
     limit: number,
     search: string,
@@ -38,7 +37,6 @@ export interface IResourceService {
 
   exportResourcesList(
     accountNumber: string,
-    fiscal_year: number,
     search: string,
     filters: Record<string, string>,
     sortBy: string,

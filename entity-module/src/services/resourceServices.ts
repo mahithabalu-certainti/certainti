@@ -104,7 +104,6 @@ export class ResourceService {
    */
   async resourcesList(
     accountNumber: string,
-    fiscalYear: number = 0,
     page: number = 1,
     limit: number = 10,
     search: string,
@@ -150,7 +149,6 @@ export class ResourceService {
         limit,
         [[finalSortBy, finalSortOrder]],
         whereClause,
-        fiscalYear,
         geoDataSort
       );
 
@@ -181,7 +179,6 @@ export class ResourceService {
    */
   async exportResourcesList(
     accountNumber: string,
-    fiscalYear: number = 0,
     search: string,
     filters: Record<string, string> = {},
     sortBy: string = "created_datetime",
@@ -221,24 +218,18 @@ export class ResourceService {
         accountRNumber,
         [[finalSortBy, finalSortOrder]],
         whereClause,
-        fiscalYear,
         geoDataSort
       );
       const rawResult = resources.resources || [];
       let exportData = rawResult.map((resource: any) => {
         return {
-          "Resource ID":resource.r_number,
-          "Resource Ref ID":resource.resource_ref_id,
-          "Resource Full Name":resource.resource_fullname,
-          "Resource First Name": resource.resource_firstname,
-          "Resource Last Name": resource.resource_lastname,
+          "Resource Code":resource.resource_ref_id,
+          "Name":resource.resource_fullname,
           "Resource Type": resource?.resource_type,
-          "Resource Designation": resource.designation,
-          "Resource Country": resource.country_name,
-          "Resource Region": resource.resource_region,
+          "Designation": resource.designation,
+          "Country": resource.country_name,
+          "Region": resource.region_name,
           "Status": resource.resource_status,
-          
-
         };
       });
       return {

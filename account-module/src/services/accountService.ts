@@ -75,7 +75,7 @@ class AccountService {
 
       const order: any[] = [];
 
-      if (finalSortBy !== "country" && finalSortBy !== "currency"  && finalSortBy !== "industry") {
+      if (finalSortBy !== "country" && finalSortBy !== "currency" && finalSortBy !== "industry") {
         order.push([finalSortBy, finalSortOrder]);
       }
 
@@ -208,6 +208,11 @@ class AccountService {
           {
             model: Currency,
             as: "currency",
+            attributes: []
+          },
+          {
+            model: Industry,
+            as: "industry",
             attributes: []
           }
         ]
@@ -354,7 +359,7 @@ class AccountService {
               },
               {
                 model: Industry,
-                as: "currency",
+                as: "industry",
                 attributes: ["rid", "industry_name"],
               },
               {
@@ -583,6 +588,22 @@ class AccountService {
         key_contacts,
       } = accountData;
 
+      // Check if account name already exists before update
+      const existingAccount = await repository.findOne({
+        where: {
+          account_name: { [Op.iLike]: account_name }, // Case insensitive comparison
+          rid: { [Op.ne]: account_rid } // Exclude current account
+        }
+      });
+
+      if (existingAccount) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: `An account with the name "${account_name}" already exists. Please choose a different name.`
+        };
+      }
+
       const [affectedCounts, affectedRows] = await repository.update(
         {
           account_name,
@@ -767,6 +788,26 @@ class AccountService {
         data: {
           accountById,
           accountDetails: accountData,
+        },
+      };
+    } catch (err) {
+      return this.throwServiceError(err as Error);
+    }
+  }
+
+  async getKeyContactRoles(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { keyContactRoles: any };
+  }> {
+    try {
+      const keyContactRoles = await this.schemaService.fetchKeyContactRoles();
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          keyContactRoles,
         },
       };
     } catch (err) {
