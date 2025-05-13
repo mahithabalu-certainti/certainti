@@ -11,6 +11,7 @@ import {
   useFetchIndustrys,
   useFetchParentAccounts,
   useFetchState,
+  useKeyContactRoles,
 } from '../../services/account';
 import {
   useCreateAccount,
@@ -20,7 +21,6 @@ import { AccountFormData, SelectOption, YesNo } from '../../types';
 import { FormData } from './form-data';
 import { DATA_STORAGE_OPTIONS, othersIndustryId, transformFormData } from './utils';
 import { ACCOUNT } from '../../../routes';
-import { useManageUserRole } from '../../../admin/service';
 import { STATUS_OPTIONS } from '../../../common-utils';
 
 export const AccountForm: React.FC = () => {
@@ -83,7 +83,7 @@ export const AccountForm: React.FC = () => {
 
   const allCountries = useGetAllCountries();
   const industry = useFetchIndustrys();
-  const userRoles = useManageUserRole();
+  const keyContactRoles = useKeyContactRoles();
   const parentAccount = useFetchParentAccounts();
   const currency = useFetchCurrency();
   const states = useFetchState(currentCountry);
@@ -178,11 +178,11 @@ export const AccountForm: React.FC = () => {
 
   const memoizedRole: SelectOption[] = useMemo(
     () =>
-      userRoles.data?.data.roles.map((role) => ({
-        label: role.business_teams,
+      keyContactRoles.data?.data.keyContactRoles.map((role) => ({
+        label: role.role_name,
         value: role.rid,
       })) || [],
-    [userRoles.data?.data.roles]
+    [keyContactRoles.data?.data.keyContactRoles]
   );
 
   const submitData = (formValues: Partial<AccountFormData>) => {
@@ -307,7 +307,7 @@ export const AccountForm: React.FC = () => {
           parentAccount.isLoading ||
           currency.isLoading ||
           industry.isLoading ||
-          userRoles.isLoading
+          keyContactRoles.isLoading
         }
         values={
           isEditView && accountData
