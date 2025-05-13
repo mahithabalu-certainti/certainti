@@ -115,7 +115,7 @@ export const ResourceFormData = (
           }),
           createSelectField('resource_type', 'Resource Type', {
             options: RESOURCE_TYPE_OPTIONS,
-            placeholder: '-Select-',
+            placeholder: 'Select Resource Type',
             required: true,
             disabled: disableCostAndSkill || disableOrgname,
           }),
@@ -234,7 +234,7 @@ export const ResourceFormData = (
           }),
           createSelectField('resource_status', 'Status', {
             options: RESOURCE_STATUS_OPTIONS,
-            placeholder: '-Select-',
+            placeholder: 'Select Resource Status',
             required: true,
             disabled: disableCostAndSkill,
           }),
@@ -277,13 +277,13 @@ export const ResourceFormData = (
         fields: [
           createSelectField('fiscal_year', 'Fiscal Year', {
             options: fiscalYears,
-            placeholder: '-Select-',
+            placeholder: 'Select Fiscal Year',
             required: true,
             onChange: true,
           }),
           createSelectField('currency', 'Currency', {
             options: currency,
-            placeholder: '-Select-',
+            placeholder: 'Select Currency',
             required: false,
             isLoading: currencyLoading,
           }),
@@ -302,7 +302,7 @@ export const ResourceFormData = (
           }),
           createSelectField('cost_frequency', 'Cost Frequency', {
             options: FREQUENCY_OPTIONS,
-            placeholder: '-Select-',
+            placeholder: 'Select Cost Frequency',
             required: true,
           }),
           createTextField('cost', 'Cost', {
@@ -322,19 +322,19 @@ export const ResourceFormData = (
           createSelectField('skill_start_date', 'Start Date', {
             options: skillStartDateYears,
             required: false,
-            placeholder: '-Select-',
+            placeholder: 'Select Start Date',
             onChange: true,
           }),
           createSelectField('skill_type', 'Skill Type', {
             options: skillTypeOptions,
-            placeholder: '-Select-',
+            placeholder: 'Select Skill Type',
             required: true,
             onChange: true,
             resetDependsFields: ['skill_sub_type'],
           }),
           createSelectField('skill_sub_type', 'Skill SubType', {
             options: skillSubTypeOptions,
-            placeholder: '-Select-',
+            placeholder: 'Select Skill SubType',
             required: true,
             isLoading: skillSubTypeLoading,
             onChange: true,
@@ -356,7 +356,7 @@ export const ResourceFormData = (
           }),
           createSelectField('skill_level', 'Skill Level', {
             options: mockSkillLevelOptions,
-            placeholder: '-Select-',
+            placeholder: 'Select Skill Level',
             required: false,
           }),
           createTextField('skill_type_others', 'Skill Type(Other)', {

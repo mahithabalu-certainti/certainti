@@ -36,7 +36,7 @@ export const getSkillFilterFields = (
       options: skillTypeOptions
     },
     {
-      name: 'Skill Sub-Type',
+      name: 'Skill SubType',
       value: 'skill_subtype_rid',
       type: 'enum',
       options: skillSubTypeOptions,
