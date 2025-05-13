@@ -5,9 +5,9 @@ import SchemaService from "./schemaService";
 import { models } from "../models";
 import { initOrgSequelize } from "../config/orgdbDataSource";
 import Decimal from "decimal.js";
-import { Industry } from "../models/industryModel";
 
-const { Account, Country, Currency } = models;
+
+const { Account, Country, Currency,Industry } = models;
 
 class AccountService {
   private accountRepository: typeof Account | null;
@@ -75,7 +75,7 @@ class AccountService {
 
       const order: any[] = [];
 
-      if (finalSortBy !== "country" && finalSortBy !== "currency") {
+      if (finalSortBy !== "country" && finalSortBy !== "currency"  && finalSortBy !== "industry") {
         order.push([finalSortBy, finalSortOrder]);
       }
 
@@ -91,6 +91,13 @@ class AccountService {
         order.push([
           { model: Currency, as: "currency" },
           "currency_code",
+          finalSortOrder,
+        ]);
+      }
+      if (finalSortBy === "industry") {
+        order.push([
+          { model: Industry, as: "industry" },
+          "industry_name",
           finalSortOrder,
         ]);
       }
@@ -121,6 +128,12 @@ class AccountService {
             model: Currency,
             as: "currency",
             attributes: ["rid", "currency_code"],
+            required: false,
+          },
+          {
+            model: Industry,
+            as: "industry",
+            attributes: ["rid", "industry_name"],
             required: false,
           }
         ],
@@ -153,6 +166,12 @@ class AccountService {
               as: "parent_account",
               attributes: ["rid", "account_name"],
             },
+            {
+              model: Industry,
+              as: "industry",
+              attributes: ["rid", "industry_name"],
+              required: false,
+            }
           ]
         });
     
@@ -249,7 +268,7 @@ class AccountService {
   
         const order: any[] = [];
   
-        if (finalSortBy !== "country" && finalSortBy !== "currency") {
+        if (finalSortBy !== "country" && finalSortBy !== "currency" && finalSortBy !== "industry") {
           order.push([finalSortBy, finalSortOrder]);
         }
   
@@ -268,7 +287,14 @@ class AccountService {
             finalSortOrder,
           ]);
         }
-  
+        
+        if (finalSortBy === "industry") {
+          order.push([
+            { model: Industry, as: "industry" },
+            "industry_name",
+            finalSortOrder,
+          ]);
+        }
         // Determine if we should include the parent_account_rid filter
         // Only apply this filter if is_parent_account is not set to "NO"
         const baseWhereClause = { ...allWhereClause };

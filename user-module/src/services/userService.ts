@@ -574,7 +574,7 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
     data?: { roles: any };
   }> {
     try {
-      const roles = await BusinessTeams.findAll();
+      const roles = await BusinessTeams.findAll({order: [["business_teams", "ASC"]]});
       return {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
@@ -819,7 +819,7 @@ async getAllUserPermission(userId: string, profileId: string) {
     data?: { profiles: any };
   }> {
     try {
-      const profiles = await Profile.findAll();
+      const profiles = await Profile.findAll( {order: [["profile_name", "ASC"]]} );
       return {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
