@@ -51,27 +51,27 @@ export const AccountForm: React.FC = () => {
       ...account?.accountById,
       ...(account?.accountById &&
         account?.accountDetails && {
-          is_parent: account?.accountById.is_parent ? 'yes' : 'no',
-          autosend_interaction: account?.accountDetails.autosend_interaction
-            ? 'yes'
-            : 'no',
-          auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
-          key_contact_name:
-            account?.accountDetails?.keyContacts?.[0]?.key_contact_name,
-          key_contact_role:
-            account?.accountDetails?.keyContacts?.[0]?.key_contact_role_rid,
-          key_contact_email:
-            account?.accountDetails?.keyContacts?.[0]?.key_contact_email,
-          key_contact_status: account?.accountDetails?.keyContacts?.[0]?.status,
-          is_primary_contact: account?.accountDetails?.keyContacts?.[0]
-            ?.is_primary_contact
-            ? 'yes'
-            : 'no',
-          include_in_communication: account?.accountDetails?.keyContacts?.[0]
-            ?.include_in_communication
-            ? 'yes'
-            : 'no',
-        }),
+        is_parent: account?.accountById.is_parent ? 'yes' : 'no',
+        autosend_interaction: account?.accountDetails.autosend_interaction
+          ? 'yes'
+          : 'no',
+        auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
+        key_contact_name:
+          account?.accountDetails?.keyContacts?.[0]?.key_contact_name,
+        key_contact_role:
+          account?.accountDetails?.keyContacts?.[0]?.key_contact_role_rid,
+        key_contact_email:
+          account?.accountDetails?.keyContacts?.[0]?.key_contact_email,
+        key_contact_status: account?.accountDetails?.keyContacts?.[0]?.status,
+        is_primary_contact: account?.accountDetails?.keyContacts?.[0]
+          ?.is_primary_contact
+          ? 'yes'
+          : 'no',
+        include_in_communication: account?.accountDetails?.keyContacts?.[0]
+          ?.include_in_communication
+          ? 'yes'
+          : 'no',
+      }),
     }),
     [account]
   );
@@ -231,28 +231,16 @@ export const AccountForm: React.FC = () => {
           />
           <div>
             {isEditView && (
-              <h5 className='text-[20px] font-semibold ml-2 text-[#2D3E4F] mb-1'>
+              <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F] mb-1'>
                 Edit Account
               </h5>
             )}
-            <h4 className='text-[20px] font-semibold text-[#2D3E4F]  ml-2 leading-4'>
+            <h4 className='text-[16px] font-bold text-[#2D3E4F]  ml-2 leading-4'>
               {isEditView ? accountData.account_name : 'Create Account'}
             </h4>
           </div>
         </div>
         <div className='flex gap-3'>
-          <TextButton
-            label='Cancel'
-            variant='outlined'
-            color='inherit'
-            onClick={goBack}
-            sx={{
-              height: '32px',
-              width: '56px',
-              fontSize: '12px',
-              fontWeight: 400,
-            }}
-          />
           <TextButton
             label='Save'
             variant='filled'
@@ -265,6 +253,19 @@ export const AccountForm: React.FC = () => {
               fontWeight: 400,
             }}
           />
+          <TextButton
+            label='Cancel'
+            variant='outlined'
+            color='inherit'
+            onClick={goBack}
+            sx={{
+              height: '32px',
+              width: '56px',
+              fontSize: '12px',
+              fontWeight: 400,
+            }}
+          />
+
         </div>
       </div>
       <FormBuilder
@@ -292,11 +293,11 @@ export const AccountForm: React.FC = () => {
           isEditView && accountData
             ? { ...accountData }
             : {
-                status: defaultAciveValue,
-                key_contact_status: defaultAciveValue,
-                autosend_interaction: YesNo.Yes,
-                auto_access_rd: YesNo.Yes,
-              } // Set default values in Create Account
+              status: defaultAciveValue,
+              key_contact_status: defaultAciveValue,
+              autosend_interaction: YesNo.Yes,
+              auto_access_rd: YesNo.Yes,
+            } // Set default values in Create Account
         }
         outData={submitData}
         formRef={formRef}

@@ -43,7 +43,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   const { state } = location;
   const [formData, setFormData] = React.useState<FormType[]>();
   const [constructFormData, setConstructFormData] = React.useState<
-  Record<string, FieldTypes>
+    Record<string, FieldTypes>
   >({});
 
   const CommonSkeleton = (
@@ -54,13 +54,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     //if field.name === 'resource_type' then disable resource_orgname
     if (constructFormData["resource_type"] === "Full-Time") {
       const resourceOrgNameField = formData?.[0].fields.find(
-        (f) => f.name ==='resource_orgname'
+        (f) => f.name === 'resource_orgname'
       );
       if (resourceOrgNameField) {
         resourceOrgNameField.disabled = true;
       }
     }
-  },[constructFormData, formData])
+  }, [constructFormData, formData])
 
   useEffect(() => {
     setFormData((prevFormData = []) => {
@@ -105,7 +105,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   }, [data, values, state]);
 
   const getFields = (field: FormTypeFields) => {
-    const isError = field.error ? 'border-red-500' : 'border-gray-300';
+    const isError = field.error ? 'border-red-500 bg-[#FEF2F2]' : 'bg-[#FFFFFF] border-gray-300';
     const fontSize = '0.875rem';
     const fieldValue = (constructFormData[field.name] as string) || '';
     const fieldDisabled = field.disabled ? ' bg-gray-100' : '';
@@ -380,7 +380,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
-              className={fieldDisabled}
+              className={isError + fieldDisabled}
               minDate={customMinDate}
               maxDate={customMaxDate}
               value={dayjs(fieldValue, 'MM/DD/YYYY')}
@@ -465,7 +465,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
-              className={fieldDisabled}
+              className={isError + fieldDisabled}
               value={dayjs(fieldValue, 'DD/MM')}
               disabled={field.disabled}
               format='MM/DD'
@@ -530,9 +530,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             onChange={(phone, country: CountryData) =>
               handleChange(phone, country.countryCode)
             }
-            inputClass={`placeholder-custom-color !w-full !text-[13px] !p-2 !pl-12 !border !h-[32px] !rounded-xs ${
-              field.error ? '!border-red-500' : '!border-gray-300'
-            }${field.disabled ? ' !bg-gray-100' : ''}`}
+            inputClass={`placeholder-custom-color !w-full !text-[13px] !p-2 !pl-12 !border !h-[32px] !rounded-xs ${field.error ? '!border-red-500' : '!border-gray-300'
+              }${field.disabled ? ' !bg-gray-100' : ''}`}
             buttonClass={`!bg-transparent !border-r ${field.error ? '!border-red-500' : '!border-gray-300'} !rounded-tl-xs !rounded-bl-xs !hover:bg-transparent !shadow-none !px-0 !m-0`}
             containerClass='!w-full'
             inputProps={{
@@ -716,7 +715,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           if (
             field.dependsRequired?.key &&
             constructFormData[field.dependsRequired.key] ===
-              field.dependsRequired?.matchedValue &&
+            field.dependsRequired?.matchedValue &&
             !hasValue
           ) {
             hasError = true;
@@ -954,20 +953,20 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           <div key={i}>
             {section.sectionName && (
               <h4
-                className={`font-semibold text-base text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle mb-6 py-2 bg-[#DCE8FF] text-[14px] ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'}`}
+                className={`${i === 0 ? 'border-b' : 'border'} border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle mb-1 py-2 bg-[#F5F9FF] ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'}`}
               >
                 {section.sectionName}
               </h4>
             )}
             <div
-              className={`grid md:grid-cols-${isHalf ? '2' : '1'} gap-4 ${layout === Layout.TYPE_1 ? 'px-10' : 'px-6'} mb-6`}
+              className={`grid md:grid-cols-3 gap-4 ${layout === Layout.TYPE_1 ? 'px-10' : 'px-6'} mb-6`}
             >
               {section.fields.map((field, j) => {
                 if (field.hide) return null;
                 return (
-                  <div key={j} className='grid md:grid-cols-12 gap-4'>
+                  <div key={j} className={`col-span-1 ${!isHalf ? 'md:col-span-3' : ''} flex flex-col`}>
                     <label
-                      className={`text-sm text-[#65686F] font-normal leading-[21px] tracking-[0] md:text-right mt-1.5 ${isHalf ? 'col-span-4' : 'col-span-2'}`}
+                      className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1.5`}
                       htmlFor={field.name}
                     >
                       {field.label}
@@ -975,10 +974,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                         <span className='text-red-500'> *</span>
                       )}
                     </label>
-                    <div className={isHalf ? 'col-span-8' : 'col-span-10'}>
+                    <div>
                       {getFields(field)}
                       {field.error && (
-                        <span className='text-red-500 text-sm col-span-full'>
+                        <span className='text-[12px] text-red-400 col-span-full'>
                           {field.error}
                         </span>
                       )}
