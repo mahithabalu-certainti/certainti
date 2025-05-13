@@ -67,3 +67,7 @@ export const getAccountExportUrl = ({
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };
+
+export const getKeyContactRolesUrl = (): string => {
+  return `/api/accounts/keycontactroles`;
+};

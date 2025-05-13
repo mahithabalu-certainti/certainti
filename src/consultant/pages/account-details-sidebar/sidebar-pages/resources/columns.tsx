@@ -154,6 +154,9 @@ export const getResourceColumns = ({
         ? {
             ...column,
             render: (value: string, row: any) => (
+              <TruncateWithTooltip
+                text={String(value)}
+              >
               <span
                 className='text-[#425A76] text-[14px] font-normal cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
                 onClick={(e) => {
@@ -163,6 +166,7 @@ export const getResourceColumns = ({
               >
                 {displayValue(value)}
               </span>
+              </TruncateWithTooltip>
             ),
           }
         : column

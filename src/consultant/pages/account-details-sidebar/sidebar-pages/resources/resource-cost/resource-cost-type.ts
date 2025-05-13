@@ -24,6 +24,7 @@ export interface ResourceCostType {
   weeklyCost?: number | string;
   dailyCost?: number | string;
   hourlyCost?: number | string;
+  fiscal_year?: string;
 }
 
 export function convertResourceCost(
@@ -50,6 +51,7 @@ export function convertResourceCost(
       dailyCost: cost.daily_cost?.toString() ?? '',
       hourlyCost: cost.hourly_cost?.toString() ?? '',
       costRid: cost.rid,
+      fiscal_year: cost.fiscal_year,
     };
     resourceCostList.push(convertedCost);
   }

@@ -59,7 +59,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
           )}
           <h1 className='text-[14px] font-medium text-[#2D3E4F]'>{title}</h1>
           <div className='text-[14px] font-medium text-[#2D3E4F]'>
-            {value === 'details' && resourceNumber}
+          {(value === 'details' || value === 'cost' || value === 'skill') && resourceNumber}
           </div>
         </div>
 

@@ -43,7 +43,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   const { state } = location;
   const [formData, setFormData] = React.useState<FormType[]>();
   const [constructFormData, setConstructFormData] = React.useState<
-  Record<string, FieldTypes>
+    Record<string, FieldTypes>
   >({});
 
   const CommonSkeleton = (
@@ -52,15 +52,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
   useEffect(() => {
     //if field.name === 'resource_type' then disable resource_orgname
-    if (constructFormData["resource_type"] === "Full-Time") {
+    if (constructFormData['resource_type'] === 'Full-Time') {
       const resourceOrgNameField = formData?.[0].fields.find(
-        (f) => f.name ==='resource_orgname'
+        (f) => f.name === 'resource_orgname'
       );
       if (resourceOrgNameField) {
         resourceOrgNameField.disabled = true;
       }
     }
-  },[constructFormData, formData])
+  }, [constructFormData, formData]);
 
   useEffect(() => {
     setFormData((prevFormData = []) => {
@@ -79,7 +79,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             return {
               ...newField,
               error: oldField?.error ?? newField.error,
-              disabled: oldField?.disabled ?? newField.disabled,
               value: oldField?.value ?? newField.value,
             };
           }),
@@ -117,7 +116,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         );
 
         if (resourceOrgNameField) {
-
           if (fieldValue !== value) {
             resourceOrgNameField.error = '';
           }
@@ -166,19 +164,18 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           fields: section.fields.map((f) => {
             const updatedField = { ...f };
 
+            // clear error message when change field
             if (f.name === field.name) {
               updatedField.error = '';
             }
 
-            if (f.dependsRequired?.key === field.name) {
-              const shouldDisable =
-                value === f.dependsRequired.disableDependsField;
-
-              updatedField.disabled = shouldDisable;
-
-              if (shouldDisable) {
-                newData[f.name] = '';
-              }
+            // clear selected value when other field change
+            if (
+              f.clearValue?.key === field.name &&
+              value === f.clearValue.matchedValue
+            ) {
+              newData[f.name] = '';
+              updatedField.error = '';
             }
 
             return updatedField;
@@ -418,6 +415,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   fullWidth: true,
                   size: 'small',
                   disabled: field.disabled,
+                  onKeyDown: (e) => {
+                    if (e.key.length === 1 && /[a-zA-Z]/.test(e.key)) {
+                      e.preventDefault();
+                    }
+                  },
                   sx: {
                     '& .MuiOutlinedInput-root': {
                       height: '32px',
@@ -712,17 +714,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
           }
 
-          // Depends Required Validation
-          if (
-            field.dependsRequired?.key &&
-            constructFormData[field.dependsRequired.key] ===
-              field.dependsRequired?.matchedValue &&
-            !hasValue
-          ) {
-            hasError = true;
-            return { ...field, error: field.dependsRequired.errorMessage };
-          }
-
           if (field.type === 'date' && constructFormData[field.name]) {
             const dateValue = constructFormData[field.name] as string;
 
@@ -778,8 +769,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 hasError = true;
                 return {
                   ...field,
-                  error:
-                    'Both Effective Date and End Dates must be provided',
+                  error: 'Both Effective Date and End Dates must be provided',
                 };
               }
 

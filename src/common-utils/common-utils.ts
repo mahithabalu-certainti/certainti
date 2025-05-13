@@ -22,6 +22,7 @@ export const createTextField = (
     anyOneRequired?: boolean;
     hide?: boolean;
     errorHandling?: ErrorHandling[];
+    clearValue?: Record<string, string>;
     lengthRequired?: {
       key: string;
       minMatchedValue: RegExp;
@@ -44,6 +45,7 @@ export const createTextField = (
   hide: options.hide,
   lengthRequired: options.lengthRequired,
   errorHandling: options.errorHandling,
+  clearValue: options.clearValue
 });
 
 export const createPhoneInputField = (
@@ -138,7 +140,7 @@ export const createSelectField = (
     required: boolean;
     placeholder?: string;
     disabled?: boolean;
-    dependsRequired?: Record<string, string>;
+    clearValue?: Record<string, string>;
     onChange?: boolean;
     isLoading?: boolean;
     resetDependsFields?: string[];
@@ -151,7 +153,7 @@ export const createSelectField = (
   options: others.options,
   disabled: others.disabled,
   placeholder: others.placeholder,
-  dependsRequired: others.dependsRequired,
+  clearValue: others.clearValue,
   onChange: others.onChange,
   isLoading: others.isLoading,
   resetDependsFields: others.resetDependsFields,
@@ -227,6 +229,7 @@ export const REGEX_PATTERNS = {
   LETTERS_5_TO_25: /^[A-Za-z\s]{5,25}$/,
   LETTERS_3_TO_25: /^(?!.*\s{2,-'})[A-Za-z\s]{3,25}$/,
   LETTERS_3_TO_100: /^[\s\S]{3,100}$/,
+  LENGTH_3_TO_50_REGEX: /^.{3,50}$/,
   NOT_ALLOW_ONLY_SYMBOLS: /^(?![\W_]+$).+$/,
   ALPHANUMERIC_SPEC_5_TO_50: /^[\s\S]{5,50}$/,
   EMAIL: /^(?=.{6,254}$)[a-zA-Z0-9._+-]+@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63}$/,
@@ -279,6 +282,12 @@ export const REGEX_PATTERNS = {
   ALLOWED_CHARS_EXTENDED_NAME_REGEX: /^[A-Za-z0-9 &'.,-]+$/,
   NO_CONSECUTIVE_SPECIALS_EXTENDED_REGEX: /^(?!.*[ &'.,-]{2})/,
   NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX: /^(?!^[ &'.,-])(?!(.*[ &'.,-]$))/,
+  NO_LEADING_SPECIAL_REGEX: /^[a-zA-Z]/,
+  ALLOWED_CHARS_REGEX: /^[a-zA-Z0-9_-]+$/,
+  NO_CONSECUTIVE_SPECIALS_REGEX_FOR_ORG_NAME: /^(?!.*[-_]{2}).+$/,
+  NO_TRAILING_SPECIAL_REGEX: /[^-_]$/,
+  // NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX:
+  //   /^(?!^[ &'.,-])(?!(.*[ &'.,-]$))/,
 };
 
 /**
@@ -291,7 +300,7 @@ export const REGEX_PATTERNS = {
  */
 
 export const RESOURCE_REGEX = {
-  RESOURCE_REF_ID: /^(?=.*[a-zA-Z0-9])[\w\W]{1,50}$/,
+  RESOURCE_CODE: /^(?![0-9_-])[a-zA-Z][a-zA-Z0-9_-]{2,49}$/,
   RESOURCE_NAME: /^(?!.*[-' ]{2})[A-Za-z](?:[A-Za-z]|[-' ](?=[A-Za-z])){0,62}[A-Za-z]$/,
   ORG_NAME: /^(?!.*[&\-.'", ]{2})[A-Za-z0-9](?:[A-Za-z0-9]|[&\-.'", ](?=[A-Za-z0-9])){1,98}[A-Za-z0-9]$/,
   EMAIL: /^[a-zA-Z0-9._%+-]{1,64}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
@@ -300,9 +309,10 @@ export const RESOURCE_REGEX = {
   ROLE: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{4,100}$/,
   DESIGNATION: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{4,100}$/,
   YEARS_EXPERIENCE: /^(?:0|[1-9]\d?)(?:\.\d{1,2})?$/,
-  DESCRIPTION: /^[\s\S]{0,1000}$/,
+  DESCRIPTION: /^[\s\S]{0,2000}$/,
   ENUM_VALIDATION: /^(Active|Inactive|Full-time|Contract|Mandatory)$/,
-  COUNTRY: /^(?![\s-])(?!.*[\s-]{2})[A-Za-zÀ-ÖØ-öø-ÿ\s-]{2,49}[A-Za-zÀ-ÖØ-öø-ÿ]$/,
+  COUNTRY:
+    /^(?![\s-])(?!.*[\s-]{2})[A-Za-zÀ-ÖØ-öø-ÿ\s-]{2,49}[A-Za-zÀ-ÖØ-öø-ÿ]$/,
   DATE_FORMAT: /^\d{4}-\d{2}-\d{2}$/,
 };
 

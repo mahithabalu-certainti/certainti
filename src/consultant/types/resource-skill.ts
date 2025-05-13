@@ -7,7 +7,6 @@ export interface ResourceSkillListParams {
   sortOrder?: 'ASC' | 'DESC';
   filters?: object;
   accountNumber?: string;
-  fiscalYear?: string | number;
   rid?: string;
   resourceRid?: string;
 }

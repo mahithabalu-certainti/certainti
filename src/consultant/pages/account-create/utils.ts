@@ -11,6 +11,8 @@ export const DATA_STORAGE_OPTIONS: SelectOption[] = [
   { label: 'Store in Parent', value: 'store_in_parent' },
 ];
 
+export const othersIndustryId = '107e689d-35d8-49e5-a444-08db0c59167b';
+
 export const transformFormData = (
   formData: Partial<AccountFormData>,
   isEdit: boolean,
@@ -42,7 +44,10 @@ export const transformFormData = (
     finance_poc_email: formData.finance_poc_email,
     finance_poc_number: formData.finanace_poc_number,
     industry_rid: formData.industry_rid,
-    industry_name_other: '',
+    industry_name_other:
+      othersIndustryId === formData.industry_rid
+        ? formData.industry_name_other
+        : '', //clear others industry name if industry is not others
     website: formData.website || null,
     project_manager: formData.project_manager,
     annual_revenue: formData.annual_revenue,
@@ -59,9 +64,10 @@ export const transformFormData = (
               formData?.include_in_communication === 'yes',
             status: formData?.key_contact_status as Status,
             ...(key_contact_id && { key_contact_id }),
-            action_type: isEdit
-              ? KeyContactsUpdate.Edit
-              : KeyContactsUpdate.Add,
+            action_type:
+              isEdit && key_contact_id
+                ? KeyContactsUpdate.Edit
+                : KeyContactsUpdate.Add,
           },
         ]
       : [],

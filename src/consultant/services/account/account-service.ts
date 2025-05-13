@@ -14,6 +14,7 @@ import {
   CurrencyApiResponse,
   GlobalAccountListResponse,
   IndustrysApiResponse,
+  keyContactRolesApiResponse,
   ParentAccountApiResponse,
   StatesApiResponse,
 } from '../../types';
@@ -24,6 +25,7 @@ import {
   ClassificationUrl,
   CurrencyUrl,
   getAccountExportUrl,
+  getKeyContactRolesUrl,
   GlobalAccountUrl,
   IndustryUrl,
   ParentAccountUrl,
@@ -147,4 +149,23 @@ export const exportAccountList = async (params: AccountListURLParams = {}) => {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+};
+
+export const fetchKeyContactRoles = async (): Promise<keyContactRolesApiResponse> => {
+  try {
+    const { data } =
+      await accountServiceApi.get<keyContactRolesApiResponse>(getKeyContactRolesUrl());
+    return data;
+  } catch (error) {
+    console.error('Error fetching key contact roles:', error);
+    throw error;
+  }
+};
+
+export const useKeyContactRoles = () => {
+  return useQuery<keyContactRolesApiResponse, Error>({
+    queryKey: ['keyContactRoles'], // Unique query key
+    queryFn: () => fetchKeyContactRoles(),
+    retry: 0,
+  });
 };
