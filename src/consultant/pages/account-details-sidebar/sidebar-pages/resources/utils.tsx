@@ -30,13 +30,6 @@ export const getSkillFilterFields = (
     // { name: 'Resource Type', value: 'resource_type', type: 'textCostAndSkill' },
     { name: 'Start Date', value: 'start_date', type: 'date' },
     {
-      name: 'Skill Level',
-      value: 'skill_level',
-      type: 'enum',
-      options: enumValueOptions,
-    },
-    { name: 'Years of Experience', value: 'years_of_experience', type: 'number' },
-    {
       name: 'Skill Type',
       value: 'skill_type_rid',
       type: 'enum',
@@ -48,6 +41,12 @@ export const getSkillFilterFields = (
       type: 'enum',
       options: skillSubTypeOptions,
       dependsOn: 'skill_type_rid'  // This indicates it depends on skill_type
+    },
+    {
+      name: 'Skill Level',
+      value: 'skill_level',
+      type: 'enum',
+      options: enumValueOptions,
     },
   ];
 };
