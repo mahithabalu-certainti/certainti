@@ -66,8 +66,8 @@ const ResourceForm: React.FC = () => {
   // Derived values
   const isEditView = location.pathname.includes('/edit');
   const accountData = isEditView
-    ? location?.state?.accountDetails?.data?.accountById
-    : location?.state?.data?.accountById;
+  ? location?.state?.accountDetails?.data?.accountById
+  : location?.state?.accountDetails?.data?.accountById;
   const resourceName = isEditView
     ? location?.state?.resource?.resource_fullname
     : 'New Resource';
