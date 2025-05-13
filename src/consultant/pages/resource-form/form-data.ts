@@ -439,7 +439,7 @@ export const ResourceFormData = (
         fields: [
           createTextAreaField('comments', 'Comments', {
             required: false,
-            placeholder: 'Enter Any Additional Information',
+            placeholder: 'Enter Comments',
             regexErrorMessage: 'Maximum 2000 characters allowed',
             regex: RESOURCE_REGEX.DESCRIPTION,
           }),
