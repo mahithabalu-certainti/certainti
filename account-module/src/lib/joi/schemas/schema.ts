@@ -29,7 +29,7 @@ const allowedTLDs = [
 
 const accountSchema = Joi.object({
   account_id: Joi.string().max(255).allow(null).optional(),
-  account_name: Joi.string().min(7).max(25).required(),
+  account_name: Joi.string().min(7).max(125).required(),
   account_description: Joi.string().max(500).optional().allow("").allow(null),
   status: Joi.string().valid("active", "inactive").required(),
   is_parent: Joi.boolean().required(),
@@ -94,7 +94,7 @@ const accountSchema = Joi.object({
   created_by: Joi.string().max(255).optional(),
   modified_by: Joi.string().max(255).optional(),
   industry_rid: Joi.string().required(),
-  industry_name_other: Joi.string().min(5).optional().allow("").allow(null),
+  industry_name_other: Joi.string().optional().allow("").allow(null),
   business_details: Joi.string().min(1).max(2000).required(),
   comments: Joi.string().min(1).max(2000).optional(),
   website: Joi.string()
@@ -216,7 +216,7 @@ const updateAccountSchema = Joi.object({
     .allow(""),
   modified_by: Joi.string().max(255).optional(),
   industry_rid: Joi.string().min(5).required(),
-  industry_name_other: Joi.string().min(5).optional().allow("").allow(null),
+  industry_name_other: Joi.string().optional().allow("").allow(null),
   business_details: Joi.string().min(1).max(2000).required(),
   comments: Joi.string().min(1).max(2000).optional(),
   website: Joi.string()

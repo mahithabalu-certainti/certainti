@@ -359,7 +359,7 @@ class AccountService {
               },
               {
                 model: Industry,
-                as: "currency",
+                as: "industry",
                 attributes: ["rid", "industry_name"],
               },
               {
