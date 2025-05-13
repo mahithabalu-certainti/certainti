@@ -85,7 +85,6 @@ export const ResourceFormData = (
         fields: [
           createTextField('resource_ref_id', 'Resource Code', {
             required: true,
-            regex: RESOURCE_REGEX.RESOURCE_CODE,
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.LENGTH_3_TO_50_REGEX,
@@ -450,12 +449,12 @@ export const ResourceFormData = (
         fillType: 'half',
         hide: disableCostAndSkill || createResource,
         fields: [
-          createTextField('Record_id', 'Record Id', {
+          createTextField('Record_id', 'Record ID', {
             required: false,
             disabled: true,
             hide: disableCostAndSkill,
           }),
-          createTextField('Resource_id', 'Resource Id', {
+          createTextField('Resource_id', 'Resource ID', {
             required: false,
             disabled: true,
             hide: disableCostAndSkill,
