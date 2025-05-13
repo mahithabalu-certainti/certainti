@@ -38,8 +38,6 @@ import {
 import { SkillSubtype, SkillType } from '../../types/resource.ts';
 import { formatDateToMMDDYYYYWithTime } from '../account-details-sidebar/sidebar-pages/resources/utils.tsx';
 
-
-
 const ResourceForm: React.FC = () => {
   // Refs
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -410,7 +408,8 @@ const ResourceForm: React.FC = () => {
     currentSkillType.skill_type,
     currentSkillType.skill_sub_type || currentSkillType.skillSubType,
     state?.skill,
-    state?.cost
+    state?.cost,
+    state?.resourceCreate
   );
 
   return (

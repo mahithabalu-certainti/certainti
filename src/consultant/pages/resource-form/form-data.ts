@@ -73,7 +73,8 @@ export const ResourceFormData = (
   currentSkillType?: string,
   currentskillSubType?: string,
   disableSkill?: boolean,
-  disableCost?: boolean
+  disableCost?: boolean,
+  createResource?: boolean,
 ): FormType[] => {
   return useMemo(
     () => [
@@ -447,7 +448,7 @@ export const ResourceFormData = (
       {
         sectionName: 'Audit Information',
         fillType: 'half',
-        hide: disableCostAndSkill,
+        hide: disableCostAndSkill || createResource,
         fields: [
           createTextField('Record_id', 'Record Id', {
             required: false,
