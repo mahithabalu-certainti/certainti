@@ -266,6 +266,7 @@ export const REGEX_PATTERNS = {
   NOT_ALLOW_SPACE_SYMBOLS_AT_START_END:
     /^[a-zA-Z0-9][a-zA-Z0-9 !@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]*[a-zA-Z0-9]$/,
   NAME_LENGTH_2_TO_64_REGEX: /^.{2,64}$/,
+  NAME_LENGTH_3_TO_64_REGEX: /^.{3,64}$/,
   NO_LEADING_OR_TRAILING_SPECIAL_REGEX: /^(?!^[-' ]|.*[-' ]$)/,
   ALLOWED_CHARS_NAME_REGEX: /^[A-Za-z-' ]+$/,
   NO_CONSECUTIVE_SPECIALS_REGEX: /^(?!.*[-' ]{2})/,

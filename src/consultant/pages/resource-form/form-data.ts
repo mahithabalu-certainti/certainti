@@ -351,6 +351,12 @@ export const ResourceFormData = (
           createTextField('skill_type_others', 'Skill Type(Other)', {
             required: true,
             placeholder: 'Enter Skill Type',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.NAME_LENGTH_3_TO_64_REGEX,
+                errorMessage: 'Please enter 3-64 characters.',
+              },
+            ],
             hide:
               currentSkillType === 'f6044ae9-7b65-4cfc-8ad3-c18a8f7ee30a'
                 ? false
@@ -359,6 +365,12 @@ export const ResourceFormData = (
           createTextField('skill_subtype_others', 'Skill SubType(Other)', {
             required: true,
             placeholder: 'Enter Skill SubType',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.NAME_LENGTH_3_TO_64_REGEX,
+                errorMessage: 'Please enter 3-64 characters.',
+              },
+            ],
             hide:
               currentskillSubType === 'b8894099-0385-4681-8237-21f89b0d1883'
                 ? false
