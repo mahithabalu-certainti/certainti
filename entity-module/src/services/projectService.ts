@@ -14,11 +14,11 @@ import Decimal from "decimal.js";
 
 export class ProjectService {
   private schemaService: SchemaService;
-  private redisService: RedisService;
+  // private redisService: RedisService;
 
   constructor(redisService: RedisService) {
     this.schemaService = new SchemaService();
-    this.redisService = redisService;
+    // this.redisService = redisService;
   }
 
   async createProject(
@@ -76,7 +76,7 @@ export class ProjectService {
         accountNumber
       );
 
-      await this.redisService.deleteUserProjectCache(userId);
+      // await this.redisService.deleteUserProjectCache(userId);
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -382,7 +382,7 @@ export class ProjectService {
         );
       }
 
-      await this.redisService.deleteUserProjectCache(userId)
+      // await this.redisService.deleteUserProjectCache(userId)
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -619,20 +619,20 @@ export class ProjectService {
         userId,
       };
 
-      const cacheKey = this.redisService.generateCacheKey(`project_${userId}`, keyParams);
+      // const cacheKey = this.redisService.generateCacheKey(`project_${userId}`, keyParams);
 
-      const cachedData = await this.redisService.get(cacheKey);
-      if(cachedData){
-        return {
-          statusCode: HttpStatus.SUCCESS,
-          message: HttpStatus.SUCCESS_MESSAGE,
-          data: {
-            ...cachedData
-          },
-        };
-      }
+      // const cachedData = await this.redisService.get(cacheKey);
+      // if(cachedData){
+      //   return {
+      //     statusCode: HttpStatus.SUCCESS,
+      //     message: HttpStatus.SUCCESS_MESSAGE,
+      //     data: {
+      //       ...cachedData
+      //     },
+      //   };
+      // }
 
-      await this.redisService.deleteUserProjectCache(userId);
+      // await this.redisService.deleteUserProjectCache(userId);
 
       const [finalSortBy, finalSortOrder] =
         this.getSortParametersForAllProjects(sortBy, sortOrder);
@@ -662,10 +662,10 @@ export class ProjectService {
           accountDataSort
         );
 
-      await this.redisService.set(cacheKey, {
-        projects: allProjectList,
-        count: totalCount,
-      }, 420);
+      // await this.redisService.set(cacheKey, {
+      //   projects: allProjectList,
+      //   count: totalCount,
+      // }, 420);
 
       return {
         statusCode: HttpStatus.SUCCESS,
