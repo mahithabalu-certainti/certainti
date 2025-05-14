@@ -1271,7 +1271,7 @@ const rawResult = users || [];
           "Username":basicUserInfo.first_name,
           "Email":basicUserInfo.email,
           "Profile": profile?.profile_name,
-          "Status": basicUserInfo.status
+          "Status": basicUserInfo.status === 'active' ? "Active" : "In Active",
         };
       });
 
