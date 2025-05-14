@@ -8,15 +8,15 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     return data.map((detail, index) => (
       <div
         key={index}
-        className={`${detail.full ? 'col-span-2 border-t -mt-[1px] bg-[#DCE8FF]' : ''} grid ${detail.full ? 'grid-cols-1' : 'grid-cols-[1fr_2fr]'} gap-1 items-center justify-center border-gray-200 p-2`}
+        className={`${detail.full ? 'col-span-2 border-t -mt-[1px] bg-[#DCE8FF]' : ''} grid ${detail.full ? 'grid-cols-1' : 'grid-cols-[150px_auto]'} gap-1 items-center border-gray-200 p-2`}
       >
         <div
-          className={`text-[14px] text-left ${detail.full ? 'font-semibold text-[#2D3E4F] ' : 'font-medium text-[#425A76] '}`}
+          className={`text-[14px] text-left ${detail.full ? 'font-semibold text-[#2D3E4F] ' : 'font-medium text-[#425A76]'}`}
         >
           {detail.label ?? ''}
         </div>
         {!detail.full && (
-          <div className='break-words whitespace-normal font-light text-[#425A76] text-[14px] max-w-full'>
+          <div className='break-all whitespace-normal font-light text-[#425A76] text-[14px] max-w-full'>
             {loading ? (
               <Skeleton variant='rounded' width='100%' />
             ) : (
@@ -28,7 +28,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     ));
   };
 
-  const capitalizeFirstLetter = (str?: string) => {
+  const capitalizeFirstLetter = (str?: string | null) => {
     if (str) {
       return str.charAt(0).toUpperCase() + str.slice(1);
     }
@@ -45,16 +45,15 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
 
   const mappedUserDetails: Detail[] = [
     { label: 'Identity', value: '', full: true },
-    { label: 'User Record ID', value: getValueOrDefault(data?.rid) },
     {
       label: 'User ID',
       value: getValueOrDefault(data?.r_number),
     },
     {
-      label: 'First name',
+      label: 'First Name',
       value: getValueOrDefault(data?.first_name),
     },
-    { label: 'Last name', value: getValueOrDefault(data?.last_name) },
+    { label: 'Last Name', value: getValueOrDefault(data?.last_name) },
     { label: 'Email address', value: getValueOrDefault(data?.email) },
     {
       label: 'Phone Number',
@@ -86,6 +85,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
       value: getValueOrDefault(data?.country_name),
     },
     { label: 'Audit Info', value: '', full: true },
+    { label: 'User Record ID', value: getValueOrDefault(data?.rid) },
     {
       label: 'Created On',
       value: getDateTimeFormat(data?.created_datetime) || 'N/A',
@@ -98,7 +98,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
       label: 'Updated On',
       value: getDateTimeFormat(data?.modified_datetime) || 'N/A',
     },
-    { label: 'Updated By', value: getValueOrDefault(data?.modified_by) },
+    { label: 'Updated By', value: capitalizeFirstLetter(data?.modified_by) },
   ];
   return (
     <div className='grid grid-cols-2 divide-y'>

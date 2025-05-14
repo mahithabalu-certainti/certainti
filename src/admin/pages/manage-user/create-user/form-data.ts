@@ -28,7 +28,7 @@ export const FormData = (
             required: true,
             regex: REGEX_PATTERNS.NAME_REGEX,
             regexErrorMessage:
-              "First name must contain only letters, spaces, apostrophes (') or hyphens (-).",
+              "First name must contain only letters, apostrophes (') or hyphens (-).",
             placeholder: 'Enter First name',
             errorHandling: [
               {
@@ -46,7 +46,7 @@ export const FormData = (
             regex: REGEX_PATTERNS.NAME_REGEX,
             placeholder: 'Enter Last name',
             regexErrorMessage:
-              "Last name must contain only letters, spaces, apostrophes (') or hyphens (-).",
+              "Last name must contain only letters, apostrophes (') or hyphens (-).",
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_3,
@@ -148,6 +148,18 @@ export const FormData = (
               {
                 regex: REGEX_PATTERNS.POSTAL_CODE,
                 errorMessage: 'Invalid postal code / zip code',
+              },
+              {
+                regex: REGEX_PATTERNS.POSTAL_NO_CONSECUTIVE_HYPHENS,
+                errorMessage: 'Zip code cannot contain consecutive hyphens',
+              },
+              {
+                regex: REGEX_PATTERNS.POSTAL_NO_LEADING_OR_TRAILING,
+                errorMessage: 'Zip code cannot start or end with a hyphen and can contain at most one hyphen',
+              },
+              {
+                regex: REGEX_PATTERNS.POSTAL_ALLOWED_CHARS,
+                errorMessage: 'Zip code must be alphanumeric and contain at least one number',
               },
             ],
           }),

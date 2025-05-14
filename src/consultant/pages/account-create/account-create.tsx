@@ -19,7 +19,7 @@ import {
 } from '../../services/account-create';
 import { AccountFormData, SelectOption, YesNo } from '../../types';
 import { FormData } from './form-data';
-import { DATA_STORAGE_OPTIONS, othersIndustryId, transformFormData } from './utils';
+import { DATA_STORAGE_OPTIONS, formatDateValue, othersIndustryId, transformFormData } from './utils';
 import { ACCOUNT } from '../../../routes';
 import { STATUS_OPTIONS } from '../../../common-utils';
 
@@ -72,6 +72,12 @@ export const AccountForm: React.FC = () => {
             ?.include_in_communication
             ? 'yes'
             : 'no',
+          record_id: account?.accountDetails?.rid,
+          account_id: account?.accountById?.r_number,
+          created_on: formatDateValue(account?.accountDetails?.created_datetime),
+          updated_on: formatDateValue(account?.accountDetails?.modified_datetime),
+          created_by: account?.accountDetails?.created_by,
+          updated_by: account?.accountDetails?.modified_by,
         }),
     }),
     [account]
