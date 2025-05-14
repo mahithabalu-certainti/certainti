@@ -11,23 +11,22 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TableSortLabel,
   Typography,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { generatePath, useNavigate } from 'react-router-dom';
-import { arrowDownIcon, arrowUpIcon } from '../../../../assets';
 import { reshapeGlobalFilter } from '../../../../common-utils';
-import { TablePagination } from '../../../../components/table';
+import { TablePagination, TableSortHeader } from '../../../../components/table';
 import { ACCOUNT, ACCOUNT_DETAILS } from '../../../../routes';
 import { RootState } from '../../../../store/store';
 import { useAccounts } from '../../../services/account';
 import { FilterState } from '../../../types';
-import { Account, AccountList, ConvertedAccount } from '../../../types/account';
+import { Account, ConvertedAccount } from '../../../types/account';
 import { convertAccounts } from '../helpers';
 import './styles.css';
 import { renderChildRows, renderRows } from './utils';
+import { accountColumns } from './columns';
 
 const AccountTable: React.FC<Record<string, any>> = ({
   appliedFilters,
@@ -43,7 +42,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
 
-  const [rowsPerPage, setRowsPerPage] = useState<number>(10);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(100);
   const [accounts, setAccounts] = useState<ConvertedAccount[]>();
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
   const { filters, fiscalYear } = useSelector<
@@ -197,19 +196,10 @@ const AccountTable: React.FC<Record<string, any>> = ({
   };
 
   // Handle sorting
-  const handleRequestSort = (
-    _event: React.MouseEvent<unknown>,
-    property: keyof AccountList
-  ) => {
-    const isAsc = orderBy === property && order === 'asc';
-    setOrder(isAsc ? 'desc' : 'asc');
+  const handleSortChange = (property: string, direction: 'asc' | 'desc') => {
     setOrderBy(property);
+    setOrder(direction);
   };
-
-  const createSortHandler =
-    (property: keyof AccountList) => (event: React.MouseEvent<unknown>) => {
-      handleRequestSort(event, property);
-    };
 
   const childRowsRenderer = (parentAccount: string | null) =>
     renderChildRows({
@@ -223,110 +213,33 @@ const AccountTable: React.FC<Record<string, any>> = ({
       handleAccountNameClick,
     });
 
-  const getSortIcon =
-    (orderBy: string, columnKey: keyof AccountList, order: 'asc' | 'desc') =>
-      () => {
-        if (orderBy !== columnKey) {
-          return (
-            <div
-              className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
-              onClick={createSortHandler(columnKey)}
-            >
-              <img
-                src={arrowUpIcon}
-                alt='sort-up'
-                className='w-4 h-4 filter grayscale brightness-0 opacity-50'
-              />
-              <img
-                src={arrowDownIcon}
-                alt='sort-down'
-                className='w-4 h-4 filter grayscale brightness-0 opacity-50 mt-[-9px]'
-              />
-            </div>
-          );
-        }
-        return order === 'asc' ? (
-          <div
-            className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
-            onClick={createSortHandler(columnKey)}
-          >
-            <img
-              src={arrowUpIcon}
-              alt='sort-up-active'
-              className='w-4 h-4'
-              style={{
-                filter: 'brightness(0) saturate(100%)',
-              }}
-            />
-            <img
-              src={arrowDownIcon}
-              alt='sort-down-inactive'
-              className='w-4 h-4 filter grayscale brightness-0 opacity-50 mt-[-9px]'
-            />
-          </div>
-        ) : (
-          <div
-            className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
-            onClick={createSortHandler(columnKey)}
-          >
-            <img
-              src={arrowUpIcon}
-              alt='sort-up-inactive'
-              className='w-4 h-4 filter grayscale brightness-0 opacity-50'
-            />
-            <img
-              src={arrowDownIcon}
-              alt='sort-down-active'
-              className='w-4 h-4 mt-[-9px]'
-              style={{
-                filter: 'brightness(0) saturate(100%)',
-              }}
-            />
-          </div>
-        );
-      };
-
   return (
-    <div className='border border-[#CBD6E2] h-auto'>
+    <div className='border-t border-[#CBD6E2] h-auto'>
       <Paper
         sx={{
           boxShadow: 'none',
-          borderBottom: '1px solid #CBD6E2',
           borderRadius: '0px',
         }}
       >
         <TableContainer
           sx={{
-            maxHeight: 'calc(85vh - 200px)',
-            overflow: 'auto',
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
+            '&::-webkit-scrollbar': {
+              display: 'none',
+            },
           }}
         >
-          <Table
-            stickyHeader
-            sx={{
-              borderCollapse: 'separate !important',
-              borderSpacing: 0,
-              '& .MuiTableCell-root': {
-                borderBottom: '1px solid #CBD6E2',
-              },
-            }}
-          >
+          <Table stickyHeader>
             <TableHead
-              sx={{
-                '& .MuiTableCell-root': {
-                  fontWeight: 500,
-                  fontSize: '14px',
-                  lineHeight: '21px',
-                  color: '#2A2A2A',
-                  padding: '0px',
-                  pl: 1,
-                  height: '50px',
-                },
-                '& .MuiTableSortLabel-root': {
-                  '&:hover': {
-                    color: 'inherit',
-                    cursor: 'auto',
-                  },
+               sx={{
+                "& .MuiTableCell-root": {
+                  fontWeight: 700,
+                  fontSize: "13px",
+                  color: "#2A2A2A",
+                  padding: "0px",
+                  px: "8px",
+                  height: "28px",
                 },
               }}
             >
@@ -337,15 +250,16 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     left: 0,
                     background: '#fff',
                     zIndex: 11,
-                    maxWidth: '50px',
-                    minWidth: '50px',
+                    maxWidth: '32px',
+                    minWidth: '32px',
                     padding: '0px !important',
-                    borderRight: '1px solid #CBD6E2',
+                    borderRight: 'none',
                     borderBottom: '1px solid #CBD6E2 !important',
                   }}
                 >
-                  <Box className='flex items-center justify-center'>
+                  {/* <Box className='flex items-center justify-center !h-[28px] !w-[32px]'>
                     <Checkbox
+                      size="small"
                       disableRipple
                       checked={Boolean(
                         accounts?.length &&
@@ -368,122 +282,72 @@ const AccountTable: React.FC<Record<string, any>> = ({
                         },
                       }}
                     />
-                  </Box>
+                  </Box> */}
                 </TableCell>
-                <TableCell
-                  sx={{
-                    position: 'sticky',
-                    left: '50px',
-                    background: '#fff',
-                    zIndex: 10,
-                    minWidth: '300px',
-                    borderRight: '1px solid #CBD6E2',
-                    borderBottom: '1px solid #CBD6E2 !important',
-                  }}
-                >
-                  <TableSortLabel
-                    active={orderBy === 'account_name'}
-                    direction={orderBy === 'account_name' ? order : 'asc'}
-                    IconComponent={getSortIcon(orderBy, 'account_name', order)}
-                  >
-                    Account Name
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sx={{ minWidth: '200px' }}>
-                  <TableSortLabel
-                    active={orderBy === 'is_parent'}
-                    direction={orderBy === 'is_parent' ? order : 'asc'}
-                    IconComponent={getSortIcon(orderBy, 'is_parent', order)}
-                  >
-                    Parent Account
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sx={{ minWidth: '180px' }}>
-                  <TableSortLabel
-                    active={orderBy === 'r_number'}
-                    direction={orderBy === 'r_number' ? order : 'asc'}
-                    IconComponent={getSortIcon(orderBy, 'r_number', order)}
-                  >
-                    Account ID
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sx={{ minWidth: '200px' }}>
-                  <TableSortLabel
-                    active={orderBy === 'industry'}
-                    direction={orderBy === 'industry' ? order : 'asc'}
-                    IconComponent={getSortIcon(orderBy, 'industry', order)}
-                  >
-                    Industry
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sx={{ minWidth: '150px' }}>
-                  <TableSortLabel
-                    active={orderBy === 'country'}
-                    direction={orderBy === 'country' ? order : 'asc'}
-                    IconComponent={getSortIcon(orderBy, 'country', order)}
-                  >
-                    Country
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sx={{ minWidth: '100px' }}>
-                  <TableSortLabel
-                    active={orderBy === 'currency'}
-                    direction={orderBy === 'currency' ? order : 'asc'}
-                    IconComponent={getSortIcon(orderBy, 'currency', order)}
-                  >
-                    Currency
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sx={{ minWidth: '160px' }}>
-                  <TableSortLabel
-                    active={orderBy === 'annual_revenue'}
-                    direction={orderBy === 'annual_revenue' ? order : 'asc'}
-                    IconComponent={getSortIcon(
-                      orderBy,
-                      'annual_revenue',
-                      order
-                    )}
-                  >
-                    Annual Revenue
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sx={{ minWidth: '100px' }}>
-                  <TableSortLabel
-                    active={orderBy === 'status'}
-                    direction={orderBy === 'status' ? order : 'asc'}
-                    IconComponent={getSortIcon(orderBy, 'status', order)}
-                  >
-                    Status
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sx={{ minWidth: '100px', }}>Action</TableCell>
+                {accountColumns.map((column) => (
+                  column.sortable ? (
+                    <TableSortHeader
+                      key={column.id}
+                      columnId={column.sortId}
+                      label={column.label}
+                      orderBy={orderBy}
+                      order={order}
+                      onSortChange={handleSortChange}
+                      sx={{
+                        minWidth: column.width || 160,
+                        ...(column.sx || {})
+                      }}
+                    />
+                  ) : (
+                    <TableCell
+                      key={column.id}
+                      sx={{
+                        minWidth: column.width || 160,
+                        ...(column.sx || {})
+                      }}
+                    >
+                      {column.label}
+                    </TableCell>
+                  )
+                ))}
+                <TableCell sx={{ minWidth: '100px', textAlign: 'center', pl: '0px !important' }}>Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody
               sx={{
-                '& .MuiTableCell-root': {
-                  fontWeight: 300,
-                  fontSize: '14px',
-                  lineHeight: '21px',
-                  color: '#425A76',
-                  padding: '0px',
-                  pl: 1,
-                  minHeight: '42px',
-                  maxHeight: '42px',
-                  height: '42px',
-                  borderBottom: '1px solid #CBD6E2 !important',
+                "& .MuiTableCell-root": {
+                  fontWeight: 500,
+                  fontSize: "13px",
+                  color: "#425A76",
+                  padding: "0px",
+                  paddingLeft: "8px",
+                  height: "32px",
                 },
               }}
             >
               {loading ? (
-                <TableRow sx={{ height: 'calc(85vh - 200px)' }}>
-                  <TableCell colSpan={11} align='center'>
+                <TableRow
+                  sx={{
+                    height: 'calc(85vh - 200px)',
+                    '& .MuiTableCell-root': {
+                      border: 'none',
+                    },
+                  }}
+                >
+                  <TableCell colSpan={10} align='center'>
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
               ) : accounts?.length === 0 ? (
-                <TableRow sx={{ height: '42px' }}>
-                  <TableCell colSpan={11} align='center'>
+                <TableRow
+                  sx={{
+                    height: '32px',
+                    '& .MuiTableCell-root': {
+                      border: 'none',
+                    },
+                  }}
+                >
+                  <TableCell colSpan={10} align='center'>
                     <Typography variant='body1'>No data available</Typography>
                   </TableCell>
                 </TableRow>
@@ -504,14 +368,14 @@ const AccountTable: React.FC<Record<string, any>> = ({
           </Table>
         </TableContainer>
       </Paper>
-      <TablePagination
+      {/* <TablePagination
         rowsPerPageOptions={[5, 10, 25, 50]}
         count={accountList?.count ?? 0}
         rowsPerPage={rowsPerPage}
         page={(page ?? 1) - 1}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
-      />
+      /> */}
     </div>
   );
 };

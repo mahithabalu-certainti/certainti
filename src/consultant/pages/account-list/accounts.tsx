@@ -7,9 +7,10 @@ import {
   actionIcon,
   downloadIcon,
   filterIcon,
+  newFilterIcon,
   refreshIcon,
 } from '../../../assets';
-import { Filter } from '../../../components';
+import { Filter, FilterModal } from '../../../components';
 import ActionsDropdown from '../../../components/actions-dropdown/actions-dropdown';
 import TextButton from '../../../components/button/text-button';
 import { ACCOUNT_CREATE } from '../../../routes';
@@ -51,7 +52,7 @@ export const Accounts: React.FC = () => {
 
   const navigate = useNavigate();
 
-  const handleCreateAcount = () => {
+  const handleCreateAccount = () => {
     navigate(ACCOUNT_CREATE);
   };
 
@@ -71,114 +72,111 @@ export const Accounts: React.FC = () => {
   const [totalCount, setTotalCount] = useState<number>(0);
   return (
     <div className='flex flex-col w-full h-full'>
-      <div className='flex justify-between w-full border-b-2 border-[#CBD6E2] p-6'>
-        <div className='flex'>
-          <div className='flex items-center justify-center'>
+      <div className="flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4">
+        <div className="flex h-[33px]">
+          <div className="flex items-center justify-center">
             <img
               src={accountHomeIcon}
-              alt='menu-icon'
-              className='h-8 w-8 bg-[#d16dd3] p-[9px] rounded'
+              alt="menu-icon"
+              className="h-7 w-7 bg-[#d16dd3] p-[7px] rounded"
             />
-            <div className='flex flex-col mx-2.5 pb-1'>
-              <div className='font-semibold text-[20px] text-[#2D3E4F]'>
+            <div className="flex flex-col mx-2.5 pb-1">
+              <div className="font-bold text-[16px] text-[#2D3E4F]">
                 All Accounts
               </div>
-              <div className='font-medium text-[#7D98B6] text-[11px] -mt-1'>
-                Total Accounts -{' '}
-                <span className='font-semibold text-[#2D3E4F]'>
-                  {totalCount}
-                </span>
+              <div className="font-semibold text-[#7D98B6] text-[12px] -mt-1">
+                {`All Accounts • ${totalCount} items`}
               </div>
-            </div>
-            <div
-              className={`flex items-center justify-center border mt-0.5 ml-2 rounded-xs w-8 h-8 cursor-pointer transition-colors duration-300 ${isFilterOpen ? 'bg-[#EAF0F6] border-[#CBD6E2]' : 'border-[#EAF0F5]'}`}
-              onClick={() => setIsFilterOpen((prev) => !prev)}
-            >
-              <img src={filterIcon} alt='menu-icon' className='h-[12px]' />
             </div>
           </div>
         </div>
-        <div className='flex gap-3 justify-center items-center'>
-          <ActionsDropdown actions={menuItems} />
-          <TextButton
-            label='Create Account'
-            onClick={handleCreateAcount}
+        <div className="flex gap-3 justify-center items-center">
+          <ActionsDropdown
+            actions={menuItems}
             sx={{
-              ...BUTTON_STYLES,
-              backgroundColor: '#F16137',
-              color: '#fff',
-              borderRadius: '2px',
-              fontSize: '13px',
-              fontWeight: 400,
+              height: "32px",
+              background: "linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)",
+              border: '1px solid #CBD6E2',
+              color: "#425A76",
+              borderRadius: "2px",
+              fontSize: "13px",
+              fontWeight: 700,
+              '&:hover': {
+                color: "#425A76 !important",
+              },
             }}
           />
-          <div className='flex items-center justify-center border border-[#EAF0F5] w-16 h-8'>
-            <div className='flex items-center justify-center w-1/2'>
-              <img src={refreshIcon} alt='refresh-icon' className='h-4' />
+          <TextButton
+            label="Create Account"
+            onClick={handleCreateAccount}
+            sx={{
+              height: "32px",
+              background: "linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)",
+              border: '1px solid #CBD6E2',
+              color: "#425A76",
+              borderRadius: "2px",
+              fontSize: "13px",
+              fontWeight: 700,
+              '&:hover': {
+                color: "#425A76 !important",
+              },
+            }}
+          />
+          <div className="flex items-center justify-center border border-[#EAF0F5] w-16 h-8">
+            <div className="flex items-center justify-center w-1/2">
+              <img src={refreshIcon} alt="refresh-icon" className="h-4" />
             </div>
-            <div className='border-l border-[#EAF0F5] h-full'></div>
-            <div className='flex items-center justify-center w-1/2'>
-              <img
-                src={downloadIcon}
-                alt='download-icon'
-                className='h-4'
-              />
+            <div className="border-l border-[#EAF0F5] h-full"></div>
+            <div className="flex items-center justify-center w-1/2">
+              <img src={downloadIcon} alt="download-icon" className="h-4" />
             </div>
           </div>
-          <div className='flex border border-[#EAF0F5] w-8 h-8 justify-center items-center bg-[#EAF0F6]'>
-            <img src={actionIcon} alt='menu-icon' className='h-4' />
+          <div
+            className="flex border border-[#CBD6E2] w-8 h-8 rounded-[2px] justify-center items-center"
+            style={{
+              background: "linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)",
+            }}
+          >
+            <img src={actionIcon} alt="menu-icon" className="h-4" />
           </div>
-          <div className='flex border border-[#EAF0F5] w-8 h-8 justify-center items-center bg-[#EAF0F6]'>
-            <img
-              src={accountSettingsIcon}
-              alt='menu-icon'
-              className='h-4'
-            />
+          <div
+            className="flex border border-[#CBD6E2] w-8 h-8 rounded-[2px] justify-center items-center"
+            style={{
+              background: "linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)",
+            }}
+          >
+            <img src={accountSettingsIcon} alt="menu-icon" className="h-4" />
           </div>
         </div>
       </div>
-      <div className='flex flex-1 transition-all duration-300 ease-in-out'>
-        <div
-          className={`flex flex-1 transition-all duration-300 ease-in-out overflow-hidden ${
-            isFilterOpen ? 'w-[260px] opacity-100' : 'w-0 opacity-0'
-            }`}
-        >
-          {countriesList.isLoading || currencyList.isLoading ?
-            <div className='w-full flex flex-1 justify-center items-center'>
-              <CircularProgress />
+      <div className='flex items-center justify-end h-[45px] min-h-[45px] px-4'>
+        <div className='relative'>
+          <button
+            className='w-[64px] h-[26px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] border border-[#CBD6E2]'
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+          >
+            <img src={newFilterIcon} alt="filter-icon" />
+            Filter
+          </button>
+          {isFilterOpen &&
+            <div className='absolute mt-1 right-0 z-50'>
+              <FilterModal />
             </div>
-            :
-            <Filter
-              setAppliedFilters={setAppliedFilters}
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              filterFields={accountFilterfields}
-              filterLabel='Filter Accounts by'
-              setPage={setPage}
-            />}
+          }
         </div>
-
-        <div
-          className={`transition-all duration-300 ease-in-out flex flex-1 flex-col border-l-2 border-[#CBD6E2] bg-[#FCFCFC] ${
-            isFilterOpen ? 'w-[calc(100%-260px)]' : 'w-full'
-          } p-5 -ml-[2px]`}
-        >
-          <div className='font-semibold text-[16px] leading-5 text-[#2D3E4F] mb-3.5'>
-            All Accounts
-            <span className='font-normal'> • {totalCount} items</span>
-          </div>
-          <AccountTable
-            appliedFilters={appliedFilters}
-            searchTerm={searchTerm}
-            setTotalCount={setTotalCount}
-            order={order} 
-            setOrder={setOrder}
-            orderBy={orderBy}
-            setOrderBy={setOrderBy}
-            setPage={setPage}
-            page={page}
-          />
-        </div>
+      </div>
+      <div>
+        <AccountTable
+          appliedFilters={appliedFilters}
+          searchTerm={searchTerm}
+          setTotalCount={setTotalCount}
+          order={order}
+          setOrder={setOrder}
+          orderBy={orderBy}
+          setOrderBy={setOrderBy}
+          setPage={setPage}
+          page={page}
+        />
       </div>
     </div>
   );

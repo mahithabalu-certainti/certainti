@@ -67,6 +67,11 @@ import uploadIcon from './Vector.svg';
 import addIcon from './addicon.svg';
 import eyeIcon from './eye-icon.svg';
 import backIcon from './chevron-double-left.svg';
+import childAccountIcon from './child-account.svg';
+import arrowIcon from './arrow-icon.svg';
+import sortIcon from './sort-icon.svg';
+import newFilterIcon from './filter-icon.svg';
+import checkedIcon from './checked-icon.svg';
 
 export {
   accountDetailsIcon,
@@ -85,11 +90,14 @@ export {
   arrowBackIcon,
   arrowDownIcon,
   arrowUpIcon,
+  arrowIcon,
   attachmentIcon,
   backIcon,
   calendarIcon,
   caseIcon,
+  checkedIcon,
   checklistTemplateIcon,
+  childAccountIcon,
   chevronDownIcon,
   chevronLeftIcon,
   closeCircleIcon,
@@ -120,6 +128,7 @@ export {
   manageUserAccessIcon,
   ManageUserIcon,
   menuIcon,
+  newFilterIcon,
   notesIcon,
   notificationIcon,
   phoneIcon,
@@ -133,6 +142,7 @@ export {
   searchBlackIcon,
   searchIcon,
   settingsIcon,
+  sortIcon,
   surveyIcon,
   surveyTemplateIcon,
   taskTemplateIcon,
