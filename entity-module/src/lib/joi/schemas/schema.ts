@@ -104,20 +104,20 @@ const createResourcesSchema = Joi.object({
   account_id: Joi.string()
     .guid({ version: ["uuidv4"] })
     .required(),
-  resource_ref_id: Joi.string().min(5).max(50).required().messages({
-    'string.base': 'Resource Ref ID must be a string.',
-    'string.empty': 'Resource Ref ID is required.',
-    'string.min': 'Resource Ref ID must be at least 5 characters long.',
-    'string.max': 'Resource Ref ID must not exceed 50 characters.',
-    'any.required': 'Resource Ref ID is a required field.'
+  resource_ref_id: Joi.string().min(3).max(50).required().messages({
+    'string.base': 'Resource Code must be a string.',
+    'string.empty': 'Resource Code is required.',
+    'string.min': 'Resource Code must be at least 5 characters long.',
+    'string.max': 'Resource Code must not exceed 50 characters.',
+    'any.required': 'Resource Code is a required field.'
   }),
   resource_type: Joi.string().valid("Full-Time", "Sub Con", "Non-Labor").required().messages({
     'any.only': 'Resource type must be one of: Full-Time, Sub Con, or Non-Labor',
     'any.required': 'Resource type is required'
   }),
-  full_name: Joi.string().min(3).max(200).optional().allow("").allow(null),
-  first_name: Joi.string().min(3).max(64).optional().allow("").allow(null),
-  last_name: Joi.string().min(3).max(64).optional().allow("").allow(null),
+  full_name: Joi.string().min(2).max(64).optional().allow("").allow(null),
+  first_name: Joi.string().min(2).max(64).optional().allow("").allow(null),
+  last_name: Joi.string().min(2).max(64).optional().allow("").allow(null),
   org_name: Joi.string()
     .min(3)
     .max(100)
@@ -212,14 +212,20 @@ const updateResourceSchema = Joi.object({
     .guid({ version: ["uuidv4"] })
     .required(),
   account_number: Joi.string().max(50).required(),
-  resource_ref_id: Joi.string().max(50).required(),
+  resource_ref_id: Joi.string().min(3).max(50).required().messages({
+    'string.base': 'Resource Code must be a string.',
+    'string.empty': 'Resource Code is required.',
+    'string.min': 'Resource Code must be at least 5 characters long.',
+    'string.max': 'Resource Code must not exceed 50 characters.',
+    'any.required': 'Resource Code is a required field.'
+  }),
   resource_type: Joi.string().valid("Full-Time", "Sub Con", "Non-Labor").required().messages({
     'any.only': 'Resource type must be one of: Full-Time, Sub Con, or Non-Labor',
     'any.required': 'Resource type is required'
   }),
-  full_name: Joi.string().min(3).max(200).optional().allow("").allow(null),
-  first_name: Joi.string().min(3).max(64).optional().allow("").allow(null),
-  last_name: Joi.string().min(3).max(64).optional().allow("").allow(null),
+  full_name: Joi.string().min(2).max(64).optional().allow("").allow(null),
+  first_name: Joi.string().min(2).max(64).optional().allow("").allow(null),
+  last_name: Joi.string().min(2).max(64).optional().allow("").allow(null),
   org_name: Joi.string()
     .min(3)
     .max(100)

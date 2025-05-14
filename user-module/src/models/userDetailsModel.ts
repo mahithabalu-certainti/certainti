@@ -110,7 +110,7 @@ export class UserDetails
         modified_datetime: {
           type: DataTypes.DATE,
           allowNull: true,
-          defaultValue: null,
+          defaultValue: DataTypes.NOW,
         },
       },
       {

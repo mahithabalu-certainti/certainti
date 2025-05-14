@@ -96,21 +96,21 @@ export class Resources
         resource_fullname: {
           type: DataTypes.STRING(200),
           validate: {
-            len: [3, 200],
+            len: [2, 64],
           },
           allowNull: true,
         },
         resource_firstname: {
-          type: DataTypes.STRING(64),
+          type: DataTypes.STRING(100),
           validate: {
-            len: [3, 64],
+            len: [2, 64],
           },
           allowNull: true,
         },
         resource_lastname: {
-          type: DataTypes.STRING(64),
+          type: DataTypes.STRING(100),
           validate: {
-            len: [3, 64],
+            len: [2, 64],
           },
           allowNull: true,
         },
@@ -230,9 +230,9 @@ export class Resources
             }            
             const accountCode = `${R_NUMBER_PREFIX.RESOURCE} ${nextNumber}`;
             account.setDataValue("r_number", accountCode);
-          },
-        },
-      }
+          },           
+        },        
+      }      
     );
   }
 }
