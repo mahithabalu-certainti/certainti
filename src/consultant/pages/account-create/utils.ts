@@ -78,3 +78,28 @@ export const transformFormData = (
   }
   return data;
 };
+
+export const formatDateValue = (dateString?: string | null): string => {
+  if (!dateString) return '';
+
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+
+  // Date parts
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+
+  // Time parts (12-hour format with AM/PM)
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  
+  hours = hours % 12;
+  hours = hours || 12; // Convert "0" hours to "12"
+
+  const formattedTime = `${String(hours).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
+
+  return `${month}/${day}/${year}, ${formattedTime}`;
+};

@@ -148,7 +148,7 @@ export const NumberFilterControl: React.FC<{
 export const StatusFilterControl: React.FC<{
   fieldName: string;
   state: FilterState;
-  options: string[];
+  options: { value: string; label: string; }[];
   onOptionChange: (fieldName: string, event: SelectChangeEvent<string>) => void;
 }> = ({ fieldName, state, options, onOptionChange }) => (
   <Box sx={{ pl: 3, mt: 1 }}>
@@ -159,8 +159,8 @@ export const StatusFilterControl: React.FC<{
         sx={{ height: '30px', minHeight: 20, fontSize: '14px' }}
       >
         {options.map((option) => (
-          <MenuItem key={option} value={option} sx={{ fontSize: '14px' }}>
-            {option}
+          <MenuItem key={option.label} value={option.value} sx={{ fontSize: '14px' }}>
+            {option.label}
           </MenuItem>
         ))}
       </Select>

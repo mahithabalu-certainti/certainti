@@ -339,6 +339,37 @@ export const FormData = (
           }),
         ],
       },
+      {
+        sectionName: 'Audit Information',
+        fillType: 'half',
+        hide: !disableFields,
+        fields: [
+          createTextField('record_id', 'Record ID', {
+            required: false,
+            disabled: true,
+          }),
+          createTextField('account_id', 'Account ID', {
+            required: false,
+            disabled: true,
+          }),
+          createTextField('created_on', 'Created On', {
+            required: false,
+            disabled: true,
+          }),
+          createTextField('created_by', 'Created By', {
+            required: false,
+            disabled: true,
+          }),
+          createTextField('updated_on', 'Updated On', {
+            required: false,
+            disabled: true,
+          }),
+          createTextField('updated_by', 'Updated By', {
+            required: false,
+            disabled: true,
+          }),
+        ],
+      },
     ],
     [
       industrys,

@@ -8,15 +8,15 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     return data.map((detail, index) => (
       <div
         key={index}
-        className={`${detail.full ? 'col-span-2 border-t -mt-[1px] bg-[#DCE8FF]' : ''} grid ${detail.full ? 'grid-cols-1' : 'grid-cols-[1fr_2fr]'} gap-1 items-center justify-center border-gray-200 p-2`}
+        className={`${detail.full ? 'col-span-2 border-t -mt-[1px] bg-[#DCE8FF]' : ''} grid ${detail.full ? 'grid-cols-1' : 'grid-cols-[150px_auto]'} gap-1 items-center border-gray-200 p-2`}
       >
         <div
-          className={`text-[14px] text-left ${detail.full ? 'font-semibold text-[#2D3E4F] ' : 'font-medium text-[#425A76] '}`}
+          className={`text-[14px] text-left ${detail.full ? 'font-semibold text-[#2D3E4F] ' : 'font-medium text-[#425A76]'}`}
         >
           {detail.label ?? ''}
         </div>
         {!detail.full && (
-          <div className='break-words whitespace-normal font-light text-[#425A76] text-[14px] max-w-full'>
+          <div className='break-all whitespace-normal font-light text-[#425A76] text-[14px] max-w-full'>
             {loading ? (
               <Skeleton variant='rounded' width='100%' />
             ) : (
@@ -50,10 +50,10 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
       value: getValueOrDefault(data?.r_number),
     },
     {
-      label: 'First name',
+      label: 'First Name',
       value: getValueOrDefault(data?.first_name),
     },
-    { label: 'Last name', value: getValueOrDefault(data?.last_name) },
+    { label: 'Last Name', value: getValueOrDefault(data?.last_name) },
     { label: 'Email address', value: getValueOrDefault(data?.email) },
     {
       label: 'Phone Number',

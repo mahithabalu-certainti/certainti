@@ -149,6 +149,18 @@ export const FormData = (
                 regex: REGEX_PATTERNS.POSTAL_CODE,
                 errorMessage: 'Invalid postal code / zip code',
               },
+              {
+                regex: REGEX_PATTERNS.POSTAL_NO_CONSECUTIVE_HYPHENS,
+                errorMessage: 'Zip code cannot contain consecutive hyphens',
+              },
+              {
+                regex: REGEX_PATTERNS.POSTAL_NO_LEADING_OR_TRAILING,
+                errorMessage: 'Zip code cannot start or end with a hyphen and can contain at most one hyphen',
+              },
+              {
+                regex: REGEX_PATTERNS.POSTAL_ALLOWED_CHARS,
+                errorMessage: 'Zip code must be alphanumeric and contain at least one number',
+              },
             ],
           }),
         ],
