@@ -142,6 +142,7 @@ export interface KeyContacts {
 }
 
 export interface AccountFieldsTypes {
+  rid: string;
   primary_contact_email: string;
   primary_contact_number: string;
   finance_poc_name: string;
@@ -158,6 +159,10 @@ export interface AccountFieldsTypes {
   blended_rate_subcon: string | null;
   data_storage: Storagetype;
   keyContacts: KeyContacts[];
+  modified_by: string;
+  created_by: string;
+  modified_datetime: string;
+  created_datetime: string;
 }
 
 export interface NewAccountData extends AccountFieldsTypes, AccountById {

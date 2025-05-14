@@ -321,7 +321,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
           <StatusFilterControl
             fieldName={field.name}
             state={fieldState}
-            options={field.options || []}
+            options={field.options as { value: string; label: string; }[]}
             onOptionChange={handleFilterOptionChange}
           />
         );
@@ -338,7 +338,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
           <MultiSelectFilterControl
             fieldName={field.name}
             state={fieldState}
-            options={field.options || []}
+            options={field.options as string[]}
             onChange={handleMultiSelectChange}
           />
         );

@@ -45,7 +45,7 @@ export type FieldConfig = {
   name: string;
   label: string;
   type: 'text' | 'number' | 'status' | 'boolean' | 'multi-select';
-  options?: string[];
+  options?: string[] | { value: string; label: string; }[];
 };
 
 export interface FilterComponentProps {
@@ -56,3 +56,8 @@ export interface FilterComponentProps {
   filterLabel?: string;
   setPage: (page: number) => void;
 }
+
+export const StatusOptions = [
+  { value: 'Active', label: 'Active' },
+  { value: 'Inactive', label: 'In-Active' },
+]
