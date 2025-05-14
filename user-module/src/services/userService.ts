@@ -331,7 +331,7 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
       manager_name,
       employee_id,
       function_group_id,
-      mobile,
+      mobile,      
     });
   }
 
@@ -1206,7 +1206,7 @@ const rawResult = users || [];
           "Username":basicUserInfo.first_name,
           "Email":basicUserInfo.email,
           "Profile": profile?.profile_name,
-          "Status": basicUserInfo.status === 'active' ? "Active" : "In Active",
+          "Status": basicUserInfo.status === 'active' ? "Active" : "In-Active",
         };
       });
 
