@@ -68,6 +68,7 @@ export class User
   public readonly modified_datetime!: Date;
 
   static initialize(sequelize: Sequelize) {
+    sequelize.query(`CREATE SEQUENCE IF NOT EXISTS usr_r_number_seq START 1;`);
     User.init(
       {
         rid: {
@@ -96,7 +97,7 @@ export class User
         },
         first_name: {
           type: DataTypes.STRING,
-        },
+          },
         middle_name: {
           type: DataTypes.STRING,
           allowNull: true,
@@ -104,10 +105,10 @@ export class User
         phone: {
           type: DataTypes.STRING,
           allowNull: true,
-        },       
+        },
         last_name: {
           type: DataTypes.STRING,
-        },
+          },
         full_name: {
           type: DataTypes.STRING,
           allowNull: true,
@@ -178,7 +179,7 @@ export class User
         modified_datetime: {
           type: DataTypes.DATE,
           allowNull: true,
-          defaultValue: null,
+          defaultValue: DataTypes.NOW,
         },
       },
       {
@@ -190,19 +191,12 @@ export class User
           beforeUpdate: (user) => {
             user.setDataValue("modified_datetime", new Date());
           },
-          beforeValidate: async (account) => {  
-            // Get the latest user number and increment it
-            const latestUser = await User.findOne({
-              order: [['r_number', 'DESC']],
-            });
-            
-            let nextNumber = '0000000001';
-            if (latestUser) {
-              const currentNumber = parseInt(latestUser.r_number?.split(' ')[1] || '0');
-              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
-            }          
-            const accountCode = `${R_NUMBER_PREFIX.USER} ${nextNumber}`;
-            account.setDataValue("r_number", accountCode);
+          beforeValidate: async (user: User) => {
+            if (!user.r_number) {
+              const [result] = await sequelize.query("SELECT nextval('usr_r_number_seq')");
+              const nextNum = (result[0] as { nextval: number }).nextval;
+              user.r_number = `${R_NUMBER_PREFIX.USER} ${String(nextNum).padStart(10, '0')}`;
+            }
           },
         },
       }
