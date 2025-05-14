@@ -61,7 +61,7 @@ export const FormData = (
             lengthRequired: {
                   key: 'name_length',
                   minMatchedValue: REGEX_PATTERNS.MIN_5,
-                  minErrorMessage: 'Ref ID must be more than 4 characters long',
+                  minErrorMessage: 'Porject code must be more than 4 characters long',
                   maxMatchedValue: REGEX_PATTERNS.MAX_50,
                   maxErrorMessage: 'Max length exceeded',
                 },
@@ -72,7 +72,7 @@ export const FormData = (
             lengthRequired: {
                   key: 'name_length',
                   minMatchedValue: REGEX_PATTERNS.MIN_4,
-                  minErrorMessage: 'Ref ID must be more than 4 characters long',
+                  minErrorMessage: 'Name must be more than 4 characters long',
                   maxMatchedValue: REGEX_PATTERNS.MAX_255,
                   maxErrorMessage: 'Max length exceeded',
                 },
@@ -87,7 +87,7 @@ export const FormData = (
             lengthRequired: {
               key: 'name_length',
               minMatchedValue: REGEX_PATTERNS.MIN_4,
-              minErrorMessage: 'Name must be more than 3 characters long',
+              minErrorMessage: 'Program name must be more than 3 characters long',
               maxMatchedValue: REGEX_PATTERNS.MAX_100,
               maxErrorMessage: 'Max length exceeded',
             },
@@ -221,7 +221,7 @@ export const FormData = (
             lengthRequired: {
               key: 'name_length',
               minMatchedValue: REGEX_PATTERNS.MIN_3,
-              minErrorMessage: 'Name must be more than 2 characters long',
+              minErrorMessage: 'Project Manager must be more than 2 characters long',
               maxMatchedValue: REGEX_PATTERNS.MAX_100,
               maxErrorMessage: 'Max length exceeded',
             },
@@ -246,7 +246,7 @@ export const FormData = (
             lengthRequired: {
               key: 'name_length',
               minMatchedValue: REGEX_PATTERNS.MIN_3,
-              minErrorMessage: 'Name must be more than 2 characters long',
+              minErrorMessage: 'Project Lead must be more than 2 characters long',
               maxMatchedValue: REGEX_PATTERNS.MAX_100,
               maxErrorMessage: 'Max length exceeded',
             },
@@ -274,7 +274,7 @@ export const FormData = (
             lengthRequired: {
               key: 'name_length',
               minMatchedValue: REGEX_PATTERNS.MIN_3,
-              minErrorMessage: 'Name must be more than 2 characters long',
+              minErrorMessage: 'SPOC name must be more than 2 characters long',
               maxMatchedValue: REGEX_PATTERNS.MAX_100,
               maxErrorMessage: 'Max length exceeded',
             },

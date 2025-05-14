@@ -23,10 +23,10 @@ const ProjectForm: React.FC = () => {
   const [currentCountry, setCurrentCountry] = useState('');
   const { successToast } = useToast();
   const location = useLocation();
-  // const { accountID, projectID } = location.state;
+  const { accountID, projectID } = location.state;
 
   
-  const getProjectData = useProjectDetail("bf4da492-2f71-42f7-8859-ae70a4047a56","PRJ-12317");
+  const getProjectData = useProjectDetail(accountID,projectID);
   const account = getProjectData.data?.data?.project;
   console.log(account);
   // need to change this
@@ -108,7 +108,7 @@ console.log(isEditView);
     const projectData = transformFormData(
       {
         ...formValues,
-        account_id:"bf4da492-2f71-42f7-8859-ae70a4047a56",
+        account_id:accountID,
         client_organization: "TechCorp Inc.",// need to remove
       },
       isEditView
@@ -196,6 +196,8 @@ console.log(isEditView);
           outData={submitData}
           formRef={formRef}
           onChange={onChangeField}
+          keyStart='project_start_date'
+          keyEnd='project_end_date'
         />
       </div>
     </>

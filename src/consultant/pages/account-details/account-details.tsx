@@ -169,7 +169,7 @@ export const AccountDetails = () => {
       case 'attachments':
         return <Attachments />;
       case 'projects':
-        return <Projects />;
+        return <Projects  accountDetails={{ ...data, activeKey: 'Projects' }} />;
       case 'cases':
         return <Cases />;
       case 'activities':

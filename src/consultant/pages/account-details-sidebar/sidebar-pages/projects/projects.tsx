@@ -21,12 +21,12 @@ const BUTTON_STYLES = {
   borderRadius: '2px',
 };
 
-interface IProjectsProps {
+interface ProjectsProps {
   accountDetails?: Record<string, any>;
   activeKey?: string;
 }
 
-const Projects: React.FC<IProjectsProps> = ({ accountDetails }) => {
+const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
   const navigate = useNavigate();
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
@@ -101,7 +101,7 @@ const Projects: React.FC<IProjectsProps> = ({ accountDetails }) => {
 
   const handleCreateProject = () => {
     navigate(`${PROJECT_CREATE}`, {
-      state: accountDetails,
+      state: { accountId: accountDetails?.data?.accountById?.r_number },
     });
   };
 

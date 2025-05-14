@@ -28,6 +28,8 @@ interface FormBuilderProps {
   layout?: Layout;
   outData: (e: object) => void;
   onChange?: (params: OnChange) => void;
+  keyStart?: string;
+  keyEnd?: string;
 }
 
 export const FormBuilder: React.FC<FormBuilderProps> = ({
@@ -38,6 +40,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   layout,
   onChange,
   outData,
+  keyStart,
+  keyEnd,
 }) => {
   const location = useLocation();
   const { state } = location;
@@ -349,13 +353,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         );
       case 'date': {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const startDateValue: string | undefined | any =
-          constructFormData['financial_start_date'] ||
-          constructFormData['resource_startdate'];
+        const startDateValue: string | undefined | any = 
+          constructFormData[keyStart];
         const today: Dayjs = dayjs();
         const isEndDateField =
-          field.name === 'financial_end_date' ||
-          field.name === 'resource_enddate';
+          field.name === keyEnd;
         const parsedStartDate = startDateValue
           ? dayjs(startDateValue, 'MM/DD/YYYY')
           : undefined;
