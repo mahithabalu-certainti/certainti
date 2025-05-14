@@ -161,35 +161,42 @@ const DetailsSection: React.FC<{
 
   return (
     <div className={title === 'Basic Information' ? 'mt-0' : 'mt-6'}>
-      <div className=' text-[16px] text-[#2D3E4F] font-semibold'>{title}</div>
-      <div className='grid grid-cols-1 text-sm md:grid-cols-2 my-1.5 gap-x-6'>
-        {/* Left column */}
-        <div>
-          {leftColumn.map((item, index) => (
-            <div key={`left-${index}`} className='grid grid-cols-2 py-2'>
-              <div className='text-right  font-normal text-[14px]  text-[#65686F] w-[85%]'>
-                {item.label}
-              </div>
-              <div className=' font-light text-[14px]'>
-                {renderValue(item.value)}
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className='text-[16px] text-[#2D3E4F] font-semibold'>{title}</div>
+      <div className='text-sm my-1.5 grid gap-y-2'>
+        {leftColumn.map((leftItem, index) => {
+          const rightItem = rightColumn[index];
 
-        {/* Right column */}
-        <div>
-          {rightColumn.map((item, index) => (
-            <div key={`right-${index}`} className='grid grid-cols-2 py-2'>
-              <div className='text-right  font-normal text-[14px]  text-[#65686F] w-[85%]'>
-                {item.label}
+          return (
+            <div
+              key={`row-${index}`}
+              className='grid grid-cols-1 md:grid-cols-2 gap-6'
+            >
+              {/* Left column */}
+              <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-4 py-2'>
+                <div className='text-right font-normal text-[14px] text-[#65686F] pr-2'>
+                  {leftItem.label}
+                </div>
+                <div className='font-light text-[14px] break-all overflow-hidden'>
+                  {renderValue(leftItem.value)}
+                </div>
               </div>
-              <div className=' font-light text-[14px]'>
-                {renderValue(item.value)}
-              </div>
+
+              {/* Right column */}
+              {rightItem ? (
+                <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-4 py-2'>
+                  <div className='text-right font-normal text-[14px] text-[#65686F] pr-2'>
+                    {rightItem.label}
+                  </div>
+                  <div className='font-light text-[14px] break-all overflow-hidden'>
+                    {renderValue(rightItem.value)}
+                  </div>
+                </div>
+              ) : (
+                <div />
+              )}
             </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
     </div>
   );
