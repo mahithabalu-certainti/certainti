@@ -277,6 +277,9 @@ export const REGEX_PATTERNS = {
   ALLOWED_CHARS_REGEX: /^[a-zA-Z0-9_-]+$/,
   NO_CONSECUTIVE_SPECIALS_REGEX_FOR_ORG_NAME: /^(?!.*[-_]{2}).+$/,
   NO_TRAILING_SPECIAL_REGEX: /[^-_]$/,
+  POSTAL_NO_CONSECUTIVE_HYPHENS: /^(?!-)(?!.*--)[a-zA-Z0-9-]{1,20}(?<!-)$/,
+  POSTAL_NO_LEADING_OR_TRAILING: /^(?!-)(?!.*--)(?!.*-.*-)[a-zA-Z0-9]{1,19}(-[a-zA-Z0-9]{1,19})?$/,
+  POSTAL_ALLOWED_CHARS: /^(?!^[a-zA-Z-]+$).*$/,
   // NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX:
   //   /^(?!^[ &'.,-])(?!(.*[ &'.,-]$))/,
 };
