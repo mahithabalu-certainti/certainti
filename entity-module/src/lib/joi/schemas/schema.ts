@@ -668,11 +668,11 @@ const createProjectSchema = Joi.object({
     .guid({ version: ["uuidv4"] })
     .required(),
   project_ref_id: Joi.string().min(5).max(50).required(),
+  project_name: Joi.string().min(4).max(100).optional().allow("").allow(null),
   industry_rid: Joi.string().min(4).max(100).required(),
   industry_name: Joi.string().min(4).max(100).required(),
-  program_name: Joi.string().min(4).max(100).optional().allow("").allow(null),
   client_organization: Joi.string().min(4).max(100).required(),
-  project_start_date: Joi.string()
+  project_startdate: Joi.string()
     .max(10)
     .optional()
     .allow("")
@@ -685,7 +685,7 @@ const createProjectSchema = Joi.object({
       "any.invalid": "Date cannot be in the future.",
       "date.invalidFormat": "Invalid project start date.",
     }),
-  project_end_date: Joi.string()
+  project_enddate: Joi.string()
     .max(10)
     .optional()
     .allow("")
@@ -707,7 +707,7 @@ const createProjectSchema = Joi.object({
   project_client_group: Joi.string().max(200).optional().allow("").allow(null),
   project_group: Joi.string().max(150).optional().allow("").allow(null),
   project_summary: Joi.string().max(1000).optional().allow("").allow(null),
-  status: Joi.string().valid("Active", "Inactive").optional(),
+  project_status: Joi.string().valid("Active", "Inactive").optional(),
   fiscal_year: Joi.number().integer().min(1000).max(9999).required().messages({
     "number.base": "Fiscal year must be a number",
     "number.min": "Fiscal year must be a 4-digit number",
@@ -825,9 +825,6 @@ const createProjectSchema = Joi.object({
     .allow(null)
     .allow(""),
   project_description: Joi.string().max(2000).allow(null).allow(""),
-  created_by: Joi.string()
-  .guid({ version: ["uuidv4"] })
-  .required(),
   key_contacts: Joi.array()
   .items(
   Joi.object({
@@ -863,12 +860,12 @@ const updateProjectSchema = Joi.object({
   project_id: Joi.string().guid({ version: ["uuidv4"] }).required(),
   account_id: Joi.string().guid({ version: ["uuidv4"] }).required(),
   project_ref_id: Joi.string().min(5).max(50).required(),
+  project_name: Joi.string().min(4).max(100).optional().allow("").allow(null),
   industry_rid: Joi.string().min(4).max(100).required(),
   industry_name: Joi.string().min(4).max(100).required(),
-  program_name: Joi.string().min(4).max(100).optional().allow("").allow(null),
   client_organization: Joi.string().min(4).max(100).required(),
 
-  project_start_date: Joi.string()
+  project_startdate: Joi.string()
     .max(10)
     .optional()
     .allow("")
@@ -880,7 +877,7 @@ const updateProjectSchema = Joi.object({
       "date.invalidFormat": "Invalid project start date.",
     }),
 
-  project_end_date: Joi.string()
+  project_enddate: Joi.string()
     .max(10)
     .optional()
     .allow("")
@@ -897,7 +894,7 @@ const updateProjectSchema = Joi.object({
   project_client_group: Joi.string().max(200).optional().allow("").allow(null),
   project_group: Joi.string().max(150).optional().allow("").allow(null),
   project_summary: Joi.string().max(1000).optional().allow("").allow(null),
-  status: Joi.string().valid("Active", "Inactive").optional(),
+  project_status: Joi.string().valid("Active", "Inactive").optional(),
   fiscal_year: Joi.number().integer().min(1000).max(9999).required().messages({
     "number.base": "Fiscal year must be a number",
     "number.min": "Fiscal year must be a 4-digit number",

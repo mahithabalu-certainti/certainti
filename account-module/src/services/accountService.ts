@@ -522,6 +522,8 @@ class AccountService {
         industry_rid: industry_rid,
         industry_name_other: industry_name_other,
         status,
+        created_by: userId,
+        modified_by: userId,
         annual_revenue: annual_revenue ? new Decimal(annual_revenue).toNumber().toString() : ""
       });
 
@@ -584,7 +586,6 @@ class AccountService {
         account_currency_rid,
         industry_rid,
         industry_name_other,
-
         key_contacts,
       } = accountData;
 
@@ -613,6 +614,7 @@ class AccountService {
           country_rid: account_country_rid,
           currency_rid: account_currency_rid,
           industry_rid: industry_rid,
+          modified_by: userId,
           industry_name_other: industry_name_other,
           annual_revenue: annual_revenue ? new Decimal(annual_revenue).toNumber().toString() : ""
         },

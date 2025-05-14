@@ -9,13 +9,16 @@ import { ProjectFiscal } from "../models/projectFiscal";
 import { Op, Sequelize } from "sequelize";
 import { ProjectHistory } from "../models/projectHistory";
 import { initMainDbSequelize } from "../config/mainDataSource";
+import { RedisService } from "./redisService";
 import Decimal from "decimal.js";
 
 export class ProjectService {
   private schemaService: SchemaService;
+  // private redisService: RedisService;
 
-  constructor() {
+  constructor(redisService: RedisService) {
     this.schemaService = new SchemaService();
+    // this.redisService = redisService;
   }
 
   async createProject(
@@ -72,6 +75,8 @@ export class ProjectService {
         projectData,
         accountNumber
       );
+
+      // await this.redisService.deleteUserProjectCache(userId);
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -133,8 +138,8 @@ export class ProjectService {
         throw new Error("Project reference ID must be unique.");
       }
 
-      const startDate = moment(projectData.project_start_date, "MM/DD/YYYY");
-      const endDate = moment(projectData.project_end_date, "MM/DD/YYYY");
+      const startDate = moment(projectData.project_startdate, "MM/DD/YYYY");
+      const endDate = moment(projectData.project_enddate, "MM/DD/YYYY");
 
       const projectCreationData = {
         project_ref_id: projectData.project_ref_id,
@@ -142,7 +147,7 @@ export class ProjectService {
         industry_name: projectData.industry_name,
         account_rid: projectData.account_id,
         account_fiscal_rid: null,
-        project_name: projectData.program_name || null,
+        project_name: projectData.project_name || null,
         client_organization: projectData.client_organization,
         project_startdate: startDate?.toDate() || null,
         project_enddate: endDate?.toDate() || null,
@@ -151,7 +156,7 @@ export class ProjectService {
         project_client_group: projectData.project_client_group || null,
         project_group: projectData.project_group || null,
         project_summary: projectData.project_summary || null,
-        project_status: projectData.status,
+        project_status: projectData.project_status,
         fiscal_year: projectData.fiscal_year,
         country: projectData.country || null,
         region: projectData.region || null,
@@ -266,8 +271,8 @@ export class ProjectService {
       const schemaName = `platform_v2_${accountNumber}`;
       const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
 
-      const startDate = moment(projectData.project_start_date, "MM/DD/YYYY");
-      const endDate = moment(projectData.project_end_date, "MM/DD/YYYY");
+      const startDate = moment(projectData.project_startdate, "MM/DD/YYYY");
+      const endDate = moment(projectData.project_enddate, "MM/DD/YYYY");
 
       const existingData = await ProjectModel.findOne({
         where: {
@@ -296,9 +301,9 @@ export class ProjectService {
       projectData.modified_by = userId;
 
       const updateProjectData = {
-        project_name: projectData.program_name || null,
+        project_name: projectData.project_name || null,
         project_description: projectData.project_description || null,
-        project_status: (projectData.status as "Active" | "Inactive") || "Active",
+        project_status: (projectData.project_status as "Active" | "Inactive") || "Active",
         project_startdate: startDate?.toDate() || null,
         project_enddate: endDate?.toDate() || null,
         project_ref_id: projectData.project_ref_id,
@@ -357,7 +362,7 @@ export class ProjectService {
           userId
         );
         await this.updateProjectFiscal(
-          updateProject,
+          updateProjectData,
           orgDbSequlize,
           schemaName,
           projectData.project_id
@@ -376,6 +381,9 @@ export class ProjectService {
           existingData
         );
       }
+
+      // await this.redisService.deleteUserProjectCache(userId)
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -557,7 +565,8 @@ export class ProjectService {
           "project_group",
           "project_status",
           "account_rid",
-        ]
+          "rid"
+        ],
       });
 
       if (projectData) {
@@ -587,7 +596,8 @@ export class ProjectService {
     filters: Record<string, any> = {},
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
-    globalFilters: Record<string, string[]> = {} 
+    globalFilters: Record<string, string[]> = {},
+    userId: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -597,27 +607,66 @@ export class ProjectService {
     try {
       const offset = (page - 1) * limit;
 
+      const keyParams = {
+        fiscalYear,
+        page,
+        limit,
+        search,
+        filters,
+        sortBy,
+        sortOrder,
+        globalFilters,
+        userId,
+      };
+
+      // const cacheKey = this.redisService.generateCacheKey(`project_${userId}`, keyParams);
+
+      // const cachedData = await this.redisService.get(cacheKey);
+      // if(cachedData){
+      //   return {
+      //     statusCode: HttpStatus.SUCCESS,
+      //     message: HttpStatus.SUCCESS_MESSAGE,
+      //     data: {
+      //       ...cachedData
+      //     },
+      //   };
+      // }
+
+      // await this.redisService.deleteUserProjectCache(userId);
+
       const [finalSortBy, finalSortOrder] =
         this.getSortParametersForAllProjects(sortBy, sortOrder);
+
+      const { accountDataSort } = this.processAccountDataSort(
+        sortBy,
+        sortOrder
+      );
 
       const sort = {
         sortCol: finalSortBy,
         sortOrder: finalSortOrder,
       };
 
-      const { whereClause } = this.buildWhereClause(filters, search, true);
-
-      const appliedAccountNumber = await this.schemaService.computeGlobalAccountFilter(globalFilters);
+      const appliedAccountNumber = await this.schemaService.computeGlobalAccountFilter(globalFilters, userId);
 
       const { finalResult: allProjectList, totalCount } =
         await this.schemaService.fetchAllProjects(
           offset,
           limit,
           sort,
-          whereClause,
+          filters,
           fiscalYear,
-          appliedAccountNumber
+          appliedAccountNumber,
+          userId,
+          search,
+          accountDataSort
         );
+
+      // await this.redisService.set(cacheKey, {
+      //   projects: allProjectList,
+      //   count: totalCount,
+      // }, 420);
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -677,7 +726,7 @@ export class ProjectService {
 
       const projectFiscalData = {
         project_rid: projectRid,
-        project_name: projectData.program_name || "",
+        project_name: projectData.project_name || "",
         eid: projectData.eid || null,
         fiscal_year: projectData.fiscal_year,
         account_rid: projectData.account_rid,
@@ -686,9 +735,9 @@ export class ProjectService {
         expiry_duration: null,
 
         autosend_interaction: projectData.auto_send_ai_interaction ?? false,
-        project_status: projectData.status as "Active" | "Inactive",
-        project_startdate: projectData.project_start_date || null,
-        project_enddate: projectData.project_end_date || null,
+        project_status: projectData.project_status as "Active" | "Inactive",
+        project_startdate: projectData.project_startdate || null,
+        project_enddate: projectData.project_enddate || null,
 
         total_fte_prj: projectData.total_fte || 0,
         total_subcon_prj: projectData.total_sub_con || 0,
@@ -738,8 +787,8 @@ export class ProjectService {
         fiscal_year: projectData.fiscal_year,
         max_ai_interaction: projectData.max_ai_interaction || 0,
         auto_send_ai_interaction: projectData.auto_send_ai_interaction ?? false,
-        project_startdate: projectData.project_start_date || null,
-        project_enddate: projectData.project_end_date || null,
+        project_startdate: projectData.project_startdate || null,
+        project_enddate: projectData.project_enddate || null,
 
         total_fte: projectData.total_fte || 0,
         total_sub_con: projectData.total_sub_con || 0,
@@ -750,7 +799,7 @@ export class ProjectService {
         interaction_cc_list: projectData.project_cc_list || null,
         modified_by: projectData.modified_by,
         modified_datetime: new Date(),
-        project_status: projectData.status as "Active" | "Inactive",
+        project_status: projectData.project_status as "Active" | "Inactive",
 
         total_fte_prj: projectData.total_fte || 0,
         total_subcon_prj: projectData.total_sub_con || 0,
@@ -767,7 +816,7 @@ export class ProjectService {
 
       await ProjectFiscalModel.update(updateData, {
         where: {
-          rid: projectRid,
+          project_rid: projectRid,
         },
       });
     } catch (err) {
@@ -1019,7 +1068,7 @@ export class ProjectService {
     const validSortColumns = [
       "r_number",
       "project_ref_id",
-      "industry",
+      "industry_rid",
       "project_startdate",
       "project_enddate",
       "project_name",
@@ -1040,6 +1089,25 @@ export class ProjectService {
 
     sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
     return [sortBy, sortOrder];
+  }
+
+  processAccountDataSort(
+    sortBy: string, 
+    sortOrder: string
+  ) {
+      const accountDataSort: string[][] = [];
+      const accountFields = ["account_number", "account_name"];
+
+      if (accountFields.includes(sortBy)) {
+        accountDataSort.push([
+              sortBy,
+              sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC"
+          ]);
+      }
+
+      return {
+        accountDataSort,
+      };
   }
 
   private normalizeDate(input: string): string | null {
