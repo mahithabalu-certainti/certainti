@@ -23,6 +23,11 @@ export const mockAccountDetails: AccountFieldsApiResponse = {
       business_details: 'something about the account',
     },
     accountDetails: {
+      rid: '9dcfda7e-32a7-490a-aa18-e6e6f84fbce9',
+      modified_by: 'user123',
+      created_by: 'admin456',
+      modified_datetime: '2024-03-19T10:30:00Z',
+      created_datetime: '2024-03-18T15:45:00Z',
       max_ai_interactions: 3,
       autosend_interaction: true,
       fiscal_start_date: '01/01/2023',
