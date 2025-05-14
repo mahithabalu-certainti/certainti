@@ -28,7 +28,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     ));
   };
 
-  const capitalizeFirstLetter = (str?: string) => {
+  const capitalizeFirstLetter = (str?: string | null) => {
     if (str) {
       return str.charAt(0).toUpperCase() + str.slice(1);
     }
@@ -45,7 +45,6 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
 
   const mappedUserDetails: Detail[] = [
     { label: 'Identity', value: '', full: true },
-    { label: 'User Record ID', value: getValueOrDefault(data?.rid) },
     {
       label: 'User ID',
       value: getValueOrDefault(data?.r_number),
@@ -86,6 +85,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
       value: getValueOrDefault(data?.country_name),
     },
     { label: 'Audit Info', value: '', full: true },
+    { label: 'User Record ID', value: getValueOrDefault(data?.rid) },
     {
       label: 'Created On',
       value: getDateTimeFormat(data?.created_datetime) || 'N/A',
@@ -98,7 +98,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
       label: 'Updated On',
       value: getDateTimeFormat(data?.modified_datetime) || 'N/A',
     },
-    { label: 'Updated By', value: getValueOrDefault(data?.modified_by) },
+    { label: 'Updated By', value: capitalizeFirstLetter(data?.modified_by) },
   ];
   return (
     <div className='grid grid-cols-2 divide-y'>

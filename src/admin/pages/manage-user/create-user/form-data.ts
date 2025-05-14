@@ -28,7 +28,7 @@ export const FormData = (
             required: true,
             regex: REGEX_PATTERNS.NAME_REGEX,
             regexErrorMessage:
-              "First name must contain only letters, spaces, apostrophes (') or hyphens (-).",
+              "First name must contain only letters, apostrophes (') or hyphens (-).",
             placeholder: 'Enter First name',
             errorHandling: [
               {
@@ -46,7 +46,7 @@ export const FormData = (
             regex: REGEX_PATTERNS.NAME_REGEX,
             placeholder: 'Enter Last name',
             regexErrorMessage:
-              "Last name must contain only letters, spaces, apostrophes (') or hyphens (-).",
+              "Last name must contain only letters, apostrophes (') or hyphens (-).",
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_3,

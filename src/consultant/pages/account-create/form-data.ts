@@ -42,7 +42,8 @@ export const FormData = (
           createTextField('account_name', 'Account Name', {
             required: true,
             regex: REGEX_PATTERNS.ACCOUNT_NAME,
-            regexErrorMessage: "only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), and commas (,)",
+            regexErrorMessage:
+              "only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), and commas (,)",
             placeholder: 'Enter Account Name',
             errorHandling: [
               {
@@ -131,8 +132,9 @@ export const FormData = (
           }),
           createTextField('annual_revenue', 'Annual Revenue', {
             required: false,
-            regex: REGEX_PATTERNS.ANNUAL_REVENUE,
-            regexErrorMessage: 'Enter a valid annual revenue',
+            regex: REGEX_PATTERNS.BLENDED_NUMBER,
+            regexErrorMessage:
+              'Only allowed positive numbers, up to 16 digits & 2 decimal places',
             placeholder: 'Enter Annual Revenue',
           }),
         ],
@@ -308,13 +310,14 @@ export const FormData = (
             required: false,
             regex: REGEX_PATTERNS.BLENDED_NUMBER,
             regexErrorMessage:
-              'Only allowed positive numbers , up to 18 digits & 2 decimal places',
+              'Only allowed positive numbers, up to 16 digits & 2 decimal places',
             placeholder: 'Enter Blended Rate - FTE',
           }),
           createTextField('blended_rate_subcon', 'Blended Rate - SubCon', {
             required: false,
             regex: REGEX_PATTERNS.BLENDED_NUMBER,
-            regexErrorMessage: 'Numbers only allowed, up to 10 digits',
+            regexErrorMessage:
+              'Only allowed positive numbers, up to 16 digits & 2 decimal places',
             placeholder: 'Enter Blended Rate - SubCon',
           }),
           createRadioField('data_storage', 'Data Residency', {
