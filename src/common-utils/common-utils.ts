@@ -232,7 +232,8 @@ export const REGEX_PATTERNS = {
   LENGTH_3_TO_50_REGEX: /^.{3,50}$/,
   NOT_ALLOW_ONLY_SYMBOLS: /^(?![\W_]+$).+$/,
   ALPHANUMERIC_SPEC_5_TO_50: /^[\s\S]{5,50}$/,
-  EMAIL: /^(?=.{6,254}$)[a-zA-Z0-9._+-]+@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63}$/,
+  EMAIL: /^(?!.*[._%+]{2})(?!.*\.@)[a-zA-Z0-9](?:[a-zA-Z0-9._-]{0,62}[a-zA-Z0-9])?@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+,
   PHONE: /^([0-9]{10})$/,
   WEBSITE:
     /^https?:\/\/(?!.*\.\.)(?!.*\/\/)(?:[a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]{2,}(?::[0-9]+)?(?:\/[a-zA-Z0-9-.:/]*)*$/,

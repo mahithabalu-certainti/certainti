@@ -225,6 +225,7 @@ const TabPanel: React.FC<TabProps> = ({
                   savedSelectedFilters={selectedFilters}
                   onSelectedFiltersChange={setSelectedFilters}
                   setCurrentPage={setCurrentPage}
+                  mode={value === 'skill' ? 'year':'date'}
                 />
               </Box>
             )}

@@ -327,7 +327,10 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
     resource_code: resourceData.resource_ref_id,
     resource_fullname: resourceData.resource_fullname,
     resource_type: resourceData.resource_type,
+    frist_name: resourceData.resource_firstname,
+    last_name: resourceData.resource_lastname,
     resource_orgname: resourceData.resource_orgname,
+    role: resourceData.resource_role,
     status: resourceData.resource_status,
   });
 

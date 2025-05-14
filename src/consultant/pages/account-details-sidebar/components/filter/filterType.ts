@@ -188,4 +188,5 @@ export interface FilterComponentProps {
   savedSelectedFilters?: string[];
   onSelectedFiltersChange?: (selectedFilters: string[]) => void;
   setCurrentPage: (page: number) => void;
+  mode?: string;
 }

@@ -95,6 +95,9 @@ export interface CreateSectionData {
   total_years_experience: number;
   total_years_in_org: number;
   status: string;
+  frist_name?: string;
+  last_name?: string;
+  role: string;
   created_datetime: string; // ISO date string
   modified_datetime: string; // ISO date string
   created_by: string; // UUID format
