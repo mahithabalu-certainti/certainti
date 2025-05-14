@@ -111,6 +111,22 @@ const listUserSchema = Joi.object({
   organization: Joi.string().required().valid(constants.PLATFORM_TWO, constants.PLATFORM_ONE),
 });
 
+const listProfileSchema = Joi.object({
+  page: Joi.string()
+    .pattern(/^[0-9]+$/)
+    .default("1"),
+  limit: Joi.string()
+    .pattern(/^[0-9]+$/)
+    .default("10"),
+  filters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("created_datetime").optional().allow(""),
+  sortOrder: Joi.string()
+    .valid("ASC", "DESC")
+    .default("DESC")
+    .optional()
+    .allow(""),
+});
+
 const exportUserSchema = Joi.object({
   search: Joi.string().max(255).optional().allow(""),
   filters: Joi.string().default("{}"),
@@ -123,4 +139,124 @@ const listUserByIdSchema = Joi.object({
   organization: Joi.string().required().valid(constants.PLATFORM_TWO, constants.PLATFORM_ONE),
 });
 
-export { createUserSchema, updateUserSchema, enterpriseUserSchema, userDetailsUpdateSchema, userReqSchema, listUserSchema, listUserByIdSchema, exportUserSchema };
+/**
+ * Schema for validating user permission by ID requests
+ */
+const userPermissionByIdSchema = Joi.object({
+  params: Joi.object({
+    id: Joi.string().required().messages({
+      "string.empty": "User Azure ID is required",
+      "any.required": "User Azure ID is required"
+    })
+  })
+});
+
+/**
+ * Schema for validating create profile requests
+ */
+const createProfileSchema = Joi.object({
+  source_profileId: Joi.string().required().messages({
+    "string.empty": "Source Profile ID is required",
+    "any.required": "Source Profile ID is required"
+  }),
+  profile_name: Joi.string().min(3).max(255).required().messages({
+    "string.empty": "Profile name is required",
+    "string.min": "Profile name must be at least 3 characters long",
+    "string.max": "Profile name cannot exceed 255 characters",
+    "any.required": "Profile name is required"
+  }),
+  profile_description: Joi.string().max(500).allow('', null).optional(),
+  profile_type: Joi.string().required().messages({
+    "string.empty": "Profile type is required",
+    "any.required": "Profile type is required"
+  })
+});
+
+/**
+ * Schema for validating get profile permissions requests
+ */
+/**
+ * Schema for validating get profile permissions requests
+ */
+const getProfilePermissionsSchema = Joi.object({
+  type: Joi.string().valid('menu', 'module', 'permission').optional(),
+  id: Joi.string().when('type', {
+    is: Joi.exist(),
+    then: Joi.required().messages({
+      "string.empty": "ID is required when type is specified",
+      "any.required": "ID is required when type is specified"
+    }),
+    otherwise: Joi.optional()
+  })
+});
+
+/**
+ * Schema for validating update/edit profile permissions requests
+ */
+const updateProfilePermissionsSchema = Joi.object({
+  profile_id: Joi.string().required().messages({
+    "string.empty": "Profile ID is required",
+    "any.required": "Profile ID is required"
+  }),
+  profile_name: Joi.string().min(3).max(255).required().messages({
+    "string.empty": "Profile name is required",
+    "string.min": "Profile name must be at least 3 characters long",
+    "string.max": "Profile name cannot exceed 255 characters",
+    "any.required": "Profile name is required"
+  }),
+  permissions: Joi.array().items(
+    Joi.object({
+      rid: Joi.string().required(),
+      type: Joi.string().valid('menu', 'module', 'permission', 'field').required(),
+      menu_id: Joi.string().optional(),
+      module_id: Joi.string().optional(),
+      permission_id: Joi.string().optional(),
+      field_id: Joi.string().optional(),
+      name: Joi.string().optional(),
+      desc: Joi.string().optional(),
+      is_modified: Joi.boolean().required(),
+      is_enabled: Joi.boolean().optional(),
+      is_field_available: Joi.boolean().optional(),
+      read: Joi.boolean().optional(),
+      edit: Joi.boolean().optional()
+    })
+  ).required().messages({
+    "array.base": "Permissions must be an array",
+    "any.required": "Permissions array is required"
+  })
+});
+
+const editProfilePermissionsSchema = Joi.object({
+  profile_id: Joi.string().required().messages({
+    "string.empty": "Profile ID is required",
+    "any.required": "Profile ID is required"
+  }),
+  profile_name: Joi.string().min(3).max(255).required().messages({
+    "string.empty": "Profile name is required",
+    "string.min": "Profile name must be at least 3 characters long",
+    "string.max": "Profile name cannot exceed 255 characters",
+    "any.required": "Profile name is required"
+  }),
+  permissions: Joi.array().items(
+    Joi.object({
+      rid: Joi.string().required(),
+      type: Joi.string().valid('menu', 'module', 'permission', 'field').required(),
+      menu_id: Joi.string().optional(),
+      module_id: Joi.string().optional(),
+      permission_id: Joi.string().optional(),
+      field_id: Joi.string().optional(),
+      name: Joi.string().optional(),
+      desc: Joi.string().optional(),
+      is_modified: Joi.boolean().required(),
+      is_enabled: Joi.boolean().optional(),
+      is_field_available: Joi.boolean().optional(),
+      read: Joi.boolean().optional(),
+      edit: Joi.boolean().optional()
+    })
+  ).required().messages({
+    "array.base": "Permissions must be an array",
+    "any.required": "Permissions array is required"
+  })
+});
+
+export { createUserSchema, updateUserSchema, enterpriseUserSchema, userDetailsUpdateSchema, userReqSchema, listUserSchema, listUserByIdSchema, exportUserSchema, userPermissionByIdSchema, createProfileSchema, getProfilePermissionsSchema, updateProfilePermissionsSchema, editProfilePermissionsSchema, listProfileSchema };

@@ -8,7 +8,17 @@ import {
   handleErrorResponse,
   handleSuccessResponse,
   successLog,
+  validateRequest,
 } from "../utils/helpers";
+
+import {
+  userPermissionByIdSchema,
+  createProfileSchema,
+  getProfilePermissionsSchema,
+  updateProfilePermissionsSchema,
+  editProfilePermissionsSchema,
+  listProfileSchema
+} from "../lib/joi/schemas/schema";
 
 const logger = configurations.getInstance().getLogger();
 const services = configurations.getInstance().getServices();
@@ -48,39 +58,72 @@ async function userRoles(req: Request, res: Response): Promise<void> {
 }
 
 /**
- * Fetches the user profiles from the service and returns them in the response.
+ * Fetches the user profiles from the service with pagination, filtering, and sorting options.
  * Logs success or failure depending on the outcome.
  *
- * @param {Request} req - The Express request object containing any necessary request data.
+ * @param {Request} req - The Express request object containing query parameters for filtering and pagination.
  * @param {Response} res - The Express response object used to send the response back to the client.
  * @returns {Promise<void>} - A promise that resolves when the user profiles are fetched and the response is sent.
  *
  * @throws {Error} - Throws an error if the request to fetch profiles fails at any step.
  */
 async function userProfiles(req: Request, res: Response): Promise<void> {
-  const methodName = "User profiles"
+  const methodName = "User profiles";
   try {
-    const profiles = await services.userServices.profiles();
+    const value = await validateRequest(req, listProfileSchema,"PLATFORM_TWO", res, "GET");
 
-    if (profiles.statusCode === constants.SUCCESS) {
-      successLog(methodName)
-      handleSuccessResponse(
-        res,
-        profiles.data
+    let parsedFilters: Record<string, any> = {};
+
+    if (!value) {
+      return;
+    }
+
+    try {
+      if (value.filters) {
+        parsedFilters = JSON.parse(value.filters);
+      }
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
       );
+    }
+
+    const pageNum: number = parseInt(value.page, 10) || 1;
+    const limitNum: number = parseInt(value.limit, 10) || 10;
+
+    const profilesList = await services.userManagementServices.profilesList(
+      pageNum,
+      limitNum,
+      parsedFilters,
+      value.sortBy,
+      value.sortOrder
+    );
+
+    if (profilesList.statusCode === constants.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, profilesList.data);
+      return;
     } else {
-      errorLog(methodName, profiles.errorMessage);
+      errorLog(methodName, profilesList.errorMessage);
       handleErrorResponse(
         res,
         constants.BAD_REQUEST,
         constants.BAD_REQUEST_MESSAGE,
-        profiles.errorMessage
+        profilesList.errorMessage
       );
+      return;
     }
   } catch (error) {
     const err = error as Error;
     errorLog(methodName, err.message);
-    handleErrorResponse(res, constants.FAILED, constants.FAILED_MESSAGE, err.message);
+    handleErrorResponse(
+      res,
+      constants.FAILED,
+      constants.FAILED_MESSAGE,
+      err.message
+    );
+    return;
   }
 }
 
@@ -130,6 +173,16 @@ async function userPermissionFields(req: Request, res: Response): Promise<void> 
 async function userPermissionById(req: Request, res: Response): Promise<void> {
   const methodName = "User permission by ID";
   try {
+    const validatedData = await validateRequest(
+      req,
+      userPermissionByIdSchema,
+      "PLATFORM_TWO", // Or appropriate organization value
+      res,
+      "GET"
+    );
+    // If validation fails, validateRequest will handle the response
+    if (!validatedData) return;
+    
     const userAzureId = req.params.id;
     const userRole = await services.userServices.permissionById(userAzureId);
     if (userRole.statusCode === constants.SUCCESS) {
@@ -167,10 +220,22 @@ async function userPermissionById(req: Request, res: Response): Promise<void> {
 async function createProfile(req: Request, res: Response): Promise<void> {
   const methodName = "Create profile";
   try {
-    const { sourceProfileId, profileName, profileDescription, profileType } = req.body;
+    const validatedData = await validateRequest(
+      req,
+      createProfileSchema,
+      "PLATFORM_TWO",
+      res,
+      "POST"
+    );
+    
+    // If validation fails, validateRequest will handle the response
+    if (!validatedData) return;
+    
+    // Use the validated data instead of req.body
+    const { source_profileId, profile_name, profile_description, profile_type } = validatedData;
     
     // Validate required fields
-    if (!sourceProfileId || !profileName || !profileType) {
+    if (!source_profileId || !profile_name || !profile_type) {
       errorLog(methodName, "Source Profile Id, Profile name and type are required");
       handleErrorResponse(
         res,
@@ -186,10 +251,10 @@ async function createProfile(req: Request, res: Response): Promise<void> {
 
     
     const result = await services.userManagementServices.createProfile({
-      sourceProfileId,
-      profileName,
-      profileDescription,
-      profileType
+      source_profileId,
+      profile_name,
+      profile_description,
+      profile_type
     }, userId);
     
     if (result.statusCode === constants.SUCCESS) {
@@ -226,8 +291,21 @@ async function createProfile(req: Request, res: Response): Promise<void> {
 async function getProfilePermissions(req: Request, res: Response): Promise<void> {
   const methodName = "Get profile permissions";
   try {
+    const validatedData = await validateRequest(
+      req,
+      getProfilePermissionsSchema,
+      "PLATFORM_TWO", // Or appropriate organization value
+      res,
+      "GET"
+    );
+    console.log("Validated Data:", validatedData);
+    
+    // If validation fails, validateRequest will handle the response
+    if (!validatedData) return;
+    
     const profileId = req.params.profileId;
-    const { type, id } = req.query;
+    // Get type and id from validated data
+    const { type, id } = validatedData;
     
     // Validate profile ID
     if (!profileId) {
@@ -306,19 +384,19 @@ async function getProfilePermissions(req: Request, res: Response): Promise<void>
 async function updateProfilePermissions(req: Request, res: Response): Promise<void> {
   const methodName = "Update profile permissions";
   try {
-    const { profile_id, profile_name, permissions } = req.body;
+    // Validate request data
+    const validatedData = await validateRequest(
+      req,
+      updateProfilePermissionsSchema,
+      "PLATFORM_TWO", // Or appropriate organization value
+      res,
+      "POST"
+    );
+    // If validation fails, validateRequest will handle the response
+    if (!validatedData) return;
     
-    // Validate required fields
-    if (!profile_id || !profile_name || !permissions || !Array.isArray(permissions)) {
-      errorLog(methodName, "Profile ID, Profile Name and permissions array are required");
-      handleErrorResponse(
-        res,
-        constants.BAD_REQUEST,
-        constants.BAD_REQUEST_MESSAGE,
-        "Profile ID, Profile Name and permissions array are required"
-      );
-      return;
-    }
+    // Use the validated data instead of req.body
+    const { profile_id, profile_name, permissions } = validatedData;
     
     // Get user ID from request (assuming it's set by auth middleware)
     const userId = req.headers["x-user-id"] as string || "";
@@ -366,17 +444,20 @@ async function updateProfilePermissions(req: Request, res: Response): Promise<vo
 async function editProfilePermissions(req: Request, res: Response): Promise<void> {
   const methodName = "Edit profile permissions";
   try {
-    const { profile_id, profile_name, permissions } = req.body;    // Validate required fields
-    if (!profile_id || !profile_name || !permissions || !Array.isArray(permissions)) {
-      errorLog(methodName, "Profile ID, Profile Name and permissions array are required");
-      handleErrorResponse(
-        res,
-        constants.BAD_REQUEST,
-        constants.BAD_REQUEST_MESSAGE,
-        "Profile ID, Profile Name and permissions array are required"
-      );
-      return;
-    }
+  // Validate request data
+  const validatedData = await validateRequest(
+    req,
+    editProfilePermissionsSchema,
+    "PLATFORM_TWO", // Or appropriate organization value
+    res,
+    "PUT"
+  );
+  
+  // If validation fails, validateRequest will handle the response
+  if (!validatedData) return;
+  
+  // Use the validated data instead of req.body
+  const { profile_id, profile_name, permissions } = validatedData;
     
     // Get user ID from request (assuming it's set by auth middleware)
     const userId = req.headers["x-user-id"] as string || "";

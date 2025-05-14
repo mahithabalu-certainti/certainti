@@ -7,8 +7,8 @@ import { Op, IndexHints } from "sequelize";
 import { initSequelize } from "../config/dataSource";
 
 const {
-  Profile, ProfileMenuAccess, Menu, ProfileModuleAccess, MenuModule, ProfilePermissionAccess, ModulePermission,
-  UserMenuAccess, UserModuleAccess, UserPermissionAccess, PermissionField, ProfileFieldsAccess, UserFieldsAccess,   ProfileMenuAccessHistory, ProfileModuleAccessHistory, ProfilePermissionAccessHistory, ProfileFieldsAccessHistory, ProfileHistory
+  Profile, ProfileMenuAccess, Menu, ProfileModuleAccess, MenuModule, ProfilePermissionAccess, ModulePermission, User,
+  UserMenuAccess, UserModuleAccess, UserPermissionAccess, PermissionField, ProfileFieldsAccess, UserFieldsAccess, ProfileMenuAccessHistory, ProfileModuleAccessHistory, ProfilePermissionAccessHistory, ProfileFieldsAccessHistory, ProfileHistory
 } = models;
 
 class UserManagementService {
@@ -39,10 +39,10 @@ class UserManagementService {
    */
   async createProfile(
     profileData: {
-      sourceProfileId: string;
-      profileName: string;
-      profileDescription?: string;
-      profileType: string;
+      source_profileId: string;
+      profile_name: string;
+      profile_description?: string;
+      profile_type: string;
     },
     userId: string
   ): Promise<{
@@ -57,10 +57,10 @@ class UserManagementService {
     };
   }> {
     try {
-      const { sourceProfileId, profileName, profileDescription, profileType } = profileData;
+      const { source_profileId, profile_name, profile_description, profile_type } = profileData;
 
       // Validate required fields
-      if (!sourceProfileId || !profileName || !profileType) {
+      if (!source_profileId || !profile_name || !profile_type) {
         return {
           statusCode: constants.BAD_REQUEST,
           message: constants.BAD_REQUEST_MESSAGE,
@@ -68,18 +68,33 @@ class UserManagementService {
         };
       }
 
+      // Check if profile name already exists
+      const existingProfile = await Profile.findOne({
+        where: {
+          profile_name: profile_name
+        }
+      });
+
+      if (existingProfile) {
+        return {
+          statusCode: constants.BAD_REQUEST,
+          message: constants.BAD_REQUEST_MESSAGE,
+          errorMessage: `Profile name '${profile_name}' already exists`
+        };
+      }
+
       // Create the profile
       const profile = await Profile.create({
-        profile_name: profileName,
-        profile_description: profileDescription || "",
-        profile_type: profileType,
+        profile_name: profile_name,
+        profile_description: profile_description || "",
+        profile_type: profile_type,
         profile_status: "active",
         created_by: userId,
         modified_by: userId
       });
       const cloneSuccess = await this.profileClone({
         profileId: profile.rid,
-        sourceProfileId
+        source_profileId
       }, userId);
 
       // Record the profile creation event with appropriate status
@@ -95,7 +110,7 @@ class UserManagementService {
         return {
           statusCode: constants.FAILED,
           message: "Profile created but cloning failed",
-          errorMessage: `Profile ${profile.rid} was created but cloning from ${sourceProfileId} failed`,
+          errorMessage: `Profile ${profile.rid} was created but cloning from ${source_profileId} failed`,
           data: {
             profile_id: profile.rid,
             profile_number: profile.r_number
@@ -161,37 +176,37 @@ class UserManagementService {
   private async profileClone(
     profileData: {
       profileId: string;
-      sourceProfileId?: string;
+      source_profileId?: string;
     },
     userId: string
   ): Promise<boolean> {
     try {
-      const { profileId, sourceProfileId } = profileData;
+      const { profileId, source_profileId } = profileData;
 
       // Use Promise.all to run these queries in parallel for better performance
       const [menuAccess, moduleAccess, permissionAccess, fieldAccess] = await Promise.all([
         // Get menu access records
         ProfileMenuAccess.findAll({
-          where: { profile_id: sourceProfileId },
+          where: { profile_id: source_profileId },
           raw: true
         }),
 
         // Get module access records
         ProfileModuleAccess.findAll({
-          where: { profile_id: sourceProfileId },
+          where: { profile_id: source_profileId },
           raw: true
         }),
 
         // Get permission access records
         ProfilePermissionAccess.findAll({
-          where: { profile_id: sourceProfileId },
+          where: { profile_id: source_profileId },
           raw: true,
           indexHints: [{ type: IndexHints.USE, values: ['idx_profile_permission_access_profile_id'] }]
         }),
 
         // Get field access records - using index for better performance
         ProfileFieldsAccess.findAll({
-          where: { profile_id: sourceProfileId },
+          where: { profile_id: source_profileId },
           raw: true,
           indexHints: [{ type: IndexHints.USE, values: ['idx_profile_fields_access_profile_id'] }]
 
@@ -456,6 +471,302 @@ class UserManagementService {
     return permissions;
   }
 
+  // ... existing code ...
+
+  /**
+   * Retrieves a paginated, filtered, and sorted list of user profiles
+   * 
+   * @param {number} page - The page number for pagination
+   * @param {number} limit - The number of items per page
+   * @param {Record<string, any>} filters - Optional filters to apply
+   * @param {string} sortBy - Optional field to sort by
+   * @param {string} sortOrder - Optional sort direction ('asc' or 'desc')
+   * @returns {Promise<ApiResponse>} - Response with paginated profiles data
+   */
+  async profilesList(
+    page: number = 1,
+    limit: number = 10,
+    filters: Record<string, any> = {},
+    sortBy: string = "created_datetime",
+    sortOrder: string = "ASC"
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: {
+      profiles: any[];
+      count: number;
+    };
+  }> {
+    try {
+      // Calculate pagination offset
+      const offset = (page - 1) * limit;
+
+      // Get validated sort parameters
+      const [finalSortBy, finalSortOrder] = this.getSortParameters(sortBy, sortOrder);
+
+      // Build where clause for filtering
+      const { whereClause, includeClause } = this.buildWhereClause(filters);
+
+      // Get total count for pagination
+      const totalCount = await Profile.count({
+        where: whereClause,
+        include: includeClause,
+        distinct: true  // Add this line to handle LEFT JOINs correctly
+      });
+
+      // Prepare order array based on sort field
+      let orderArray;
+      if (finalSortBy === 'created_by') {
+        orderArray = [
+          [{ model: User, as: 'creator' }, 'first_name', finalSortOrder]
+        ] as any; // Type assertion to avoid TypeScript errors
+      } else {
+        orderArray = [[finalSortBy, finalSortOrder]];
+      }
+      // Get profiles with pagination, filtering and sorting
+      const profiles = await Profile.findAll({
+        where: whereClause,
+        order: orderArray,
+        limit,
+        offset,
+        attributes: [
+          'rid',
+          'r_number',
+          'profile_name',
+          'profile_description',
+          'profile_type',
+          'profile_status',
+          'created_datetime',
+          'modified_datetime',
+          'created_by',
+          'modified_by'
+        ],
+        include: [
+          {
+            model: User,
+            as: 'creator',
+            attributes: ['first_name'],
+            required: includeClause.find(clause => clause.as === 'creator')?.required ?? false
+          },
+          {
+            model: User,
+            as: 'modifier',
+            attributes: ['first_name'],
+            required: false
+          }
+        ]
+      });
+
+      // Transform the results to replace user IDs with usernames
+      const transformedProfiles = profiles.map(profile => {
+        const plainProfile = profile.get({ plain: true });
+
+        // Only use creator.first_name if it exists and doesn't conflict with filters
+        const createdByName = plainProfile.creator ? plainProfile.creator.first_name : null;
+        const modifiedByName = plainProfile.modifier ? plainProfile.modifier.first_name : null;
+
+        return {
+          ...plainProfile,
+          created_by: createdByName,
+          modified_by: modifiedByName,
+          creator: undefined,  // Remove the nested creator object
+          modifier: undefined  // Remove the nested modifier object
+        };
+      });
+
+      return {
+        statusCode: constants.SUCCESS,
+        message: constants.SUCCESS_MESSAGE,
+        data: {
+          profiles: transformedProfiles,
+          count: totalCount
+        }
+      };
+    } catch (error) {
+      return this.throwServiceError(error as Error);
+    }
+  }
+
+  /**
+   * Validates and normalizes sort parameters
+   * 
+   * @param {string} sortBy - Field to sort by
+   * @param {string} sortOrder - Sort order (ASC or DESC)
+   * @returns {[string, string]} - Tuple of validated sort parameters
+   */
+  private getSortParameters(sortBy: string, sortOrder: string): [string, string] {
+    const validSortColumns = [
+      "profile_name",
+      "created_datetime",
+      "created_by",
+    ];
+
+    if (!validSortColumns.includes(sortBy)) {
+      sortBy = "created_datetime";
+    }
+
+    sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
+    return [sortBy, sortOrder];
+  }
+
+  /**
+  * Builds a where clause for filtering
+  * 
+  * @param {Record<string, any>} filters - Filter object mapping fields to values
+  * @returns {object} - Object containing the where clause and include clause
+  */
+  private buildWhereClause(filters: Record<string, any>): {
+    whereClause: Record<string, any>;
+    includeClause: Array<any>;
+  } {
+    let whereClause: Record<string, any> = {};
+    let includeClause: Array<any> = [];
+  
+    if (filters) {
+      const filterProcessors: Record<string, Function> = {
+        'profile_name': (value: any) => this.processTextFilter('profile_name', value, whereClause),
+        'created_datetime': (value: any) => this.processDateFilter('created_datetime', value, whereClause),
+        'created_by': (value: any) => this.processRelationFilter('created_by', value, whereClause, includeClause)
+      };
+  
+      Object.keys(filters).forEach(key => {
+        const value = filters[key];
+        if (value === undefined || value === null) return;
+        if (filterProcessors[key]) {
+          filterProcessors[key](value);
+        } else if (value !== '') {
+          whereClause[key] = value;
+        }
+      });
+    }
+    return { whereClause, includeClause };
+  }
+
+  /**
+   * Process text field filter with various operators
+   * 
+   * @param {string} field - Field name
+   * @param {any} value - Filter value
+   * @param {Record<string, any>} whereClause - Where clause to modify
+   */
+  private processTextFilter(field: string, value: any, whereClause: Record<string, any>): void {
+    if (typeof value === 'string') {
+      // Simple string value - treat as equals
+      whereClause[field] = value;
+    } else if (typeof value === 'object') {
+      if (value.equals !== undefined) {
+        whereClause[field] = value.equals;
+      } else if (value.not_equals !== undefined) {
+        whereClause[field] = { [Op.ne]: value.not_equals };
+      } else if (value.contains !== undefined) {
+        whereClause[field] = { [Op.iLike]: `%${value.contains}%` };
+      } else if (value.isEmpty !== undefined) {
+        if (value.isEmpty) {
+          whereClause[field] = { [Op.or]: [null, ''] };
+        } else {
+          whereClause[field] = { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] };
+        }
+      }
+    }
+  }
+
+  /**
+   * Process date field filter with various operators
+   * 
+   * @param {string} field - Field name
+   * @param {any} value - Filter value
+   * @param {Record<string, any>} whereClause - Where clause to modify
+   */
+  private processDateFilter(field: string, value: any, whereClause: Record<string, any>): void {
+    if (typeof value === 'string') {
+      // Simple string date - treat as equals (on date)
+      const date = new Date(value);
+      const nextDay = new Date(date);
+      nextDay.setDate(nextDay.getDate() + 1);
+
+      whereClause[field] = {
+        [Op.gte]: date,
+        [Op.lt]: nextDay
+      };
+    } else if (typeof value === 'object') {
+      if (value.equals !== undefined) {
+        const date = new Date(value.equals);
+        const nextDay = new Date(date);
+        nextDay.setDate(nextDay.getDate() + 1);
+
+        whereClause[field] = {
+          [Op.gte]: date,
+          [Op.lt]: nextDay
+        };
+      } else if (value.before !== undefined) {
+        whereClause[field] = { [Op.lt]: new Date(value.before) };
+      } else if (value.after !== undefined) {
+        whereClause[field] = { [Op.gt]: new Date(value.after) };
+      } else if (value.between !== undefined && value.between.from !== undefined && value.between.to !== undefined) {
+        const fromDate = new Date(value.between.from);
+        const toDate = new Date(value.between.to);
+        // Add one day to include the end date fully
+        toDate.setHours(23, 59, 59, 999);
+
+        whereClause[field] = {
+          [Op.gte]: fromDate,
+          [Op.lte]: toDate
+        };
+      } else if (value.isEmpty !== undefined) {
+        if (value.isEmpty) {
+          whereClause[field] = null;
+        } else {
+          whereClause[field] = { [Op.ne]: null };
+        }
+      }
+    }
+  }
+
+  private processRelationFilter(
+    field: string,
+    value: any,
+    whereClause: Record<string, any>,
+    includeClause: Array<any>
+  ): void {
+    const relationConfig: Record<string, { model: any; as: string; attribute: string }> = {
+      'created_by': { model: User, as: 'creator', attribute: 'first_name' }
+    };
+  
+    const config = relationConfig[field];
+    if (!config) return;
+  
+    // Ensure the User model is included as a LEFT JOIN
+    const existingInclude = includeClause.find(inc => inc.as === config.as);
+    if (!existingInclude) {
+      includeClause.push({
+        model: config.model,
+        as: config.as,
+        attributes: [], // No need to select attributes
+        required: false // LEFT JOIN
+      });
+    }
+  
+    // Reference the nested field (e.g., $creator.first_name$)
+    const nestedField = `$${config.as}.${config.attribute}$`;
+  
+    if (typeof value === 'object') {
+      if (value.equals !== undefined) {
+        // Case-insensitive match
+        whereClause[nestedField] = { [Op.iLike]: value.equals };
+      } else if (value.not_equals !== undefined) {
+        whereClause[nestedField] = {
+          [Op.or]: [
+            { [Op.notILike]: value.not_equals }, // Case-insensitive not equal
+            { [Op.is]: null } // Include profiles without a creator
+          ]
+        };
+      } else if (value.contains !== undefined) {
+        whereClause[nestedField] = { [Op.iLike]: `%${value.contains}%` };
+      }
+    }
+  }
+
   /**
    * Gets all profiles
    * 
@@ -502,7 +813,7 @@ class UserManagementService {
       edit?: boolean;
     }>,
     userId: string,
-    originalUrl: string = "" 
+    originalUrl: string = ""
   ): Promise<{
     statusCode: number;
     message: string;
@@ -532,7 +843,7 @@ class UserManagementService {
             profile.profile_name,
             userId
           );
-          
+
           if (!isUniqueAndUpdated) {
             return {
               statusCode: constants.BAD_REQUEST,
@@ -612,60 +923,60 @@ class UserManagementService {
     }
   }
 
-/**
- * Checks if a profile name is unique and updates the profile if it is
- * 
- * @param {string} profileId - The ID of the profile to update
- * @param {string} profileName - The new profile name to check
- * @param {string} currentProfileName - The current profile name
- * @param {string} userId - The ID of the user making the update
- * @returns {Promise<boolean>} - Returns true if name is unique and update successful, false otherwise
- */
-async checkProfileNameUniqueAndUpdate(
-  profileId: string,
-  profileName: string,
-  currentProfileName: string,
-  userId: string
-): Promise<boolean> {
-  try {
-    // Check if the new name is unique
-    const existingProfile = await Profile.findOne({
-      where: {
-        profile_name: profileName,
+  /**
+   * Checks if a profile name is unique and updates the profile if it is
+   * 
+   * @param {string} profileId - The ID of the profile to update
+   * @param {string} profileName - The new profile name to check
+   * @param {string} currentProfileName - The current profile name
+   * @param {string} userId - The ID of the user making the update
+   * @returns {Promise<boolean>} - Returns true if name is unique and update successful, false otherwise
+   */
+  async checkProfileNameUniqueAndUpdate(
+    profileId: string,
+    profileName: string,
+    currentProfileName: string,
+    userId: string
+  ): Promise<boolean> {
+    try {
+      // Check if the new name is unique
+      const existingProfile = await Profile.findOne({
+        where: {
+          profile_name: profileName,
+        }
+      });
+      // If profile with same name exists, return false
+      if (existingProfile) {
+        return false;
       }
-    });    
-    // If profile with same name exists, return false
-    if (existingProfile) {
+
+      // Create history record for name change
+      await ProfileHistory.create({
+        profile_rid: profileId,
+        attribute_name: 'name',
+        old_value: currentProfileName,
+        new_value: profileName,
+        modified_by: userId
+      });
+
+      // Update the profile name
+      await Profile.update(
+        {
+          profile_name: profileName,
+          modified_by: userId,
+          modified_datetime: new Date(),
+        },
+        {
+          where: { rid: profileId }
+        }
+      );
+
+      return true;
+    } catch (error) {
+      console.error('Error checking profile name uniqueness and updating:', error);
       return false;
     }
-    
-    // Create history record for name change
-    await ProfileHistory.create({
-      profile_rid: profileId,
-      attribute_name: 'name',
-      old_value: currentProfileName,
-      new_value: profileName,
-      modified_by: userId
-    });
-    
-    // Update the profile name
-    await Profile.update(
-      { 
-        profile_name: profileName,
-        modified_by: userId,
-        modified_datetime: new Date(),
-      },
-      { 
-        where: { rid: profileId }
-      }
-    );
-    
-    return true;
-  } catch (error) {
-    console.error('Error checking profile name uniqueness and updating:', error);
-    return false;
   }
-}
 
   /**
    * Updates menu access for a profile if the value has changed
@@ -683,13 +994,13 @@ async checkProfileNameUniqueAndUpdate(
         console.error(`Menu access with ID ${accessId} not found`);
         return false;
       }
-  
+
       // Check if the value has actually changed
       if (currentAccess.is_enabled === isEnabled) {
         console.log(`Menu access ${accessId} value unchanged, skipping update`);
         return false;
       }
-  
+
       // Store history if this is an edit operation
       if (originalUrl.includes('edit')) {
         await ProfileMenuAccessHistory.create({
@@ -700,7 +1011,7 @@ async checkProfileNameUniqueAndUpdate(
           modified_by: userId
         });
       }
-  
+
       // Update only if the value has changed
       const [updated] = await ProfileMenuAccess.update(
         {
@@ -711,7 +1022,7 @@ async checkProfileNameUniqueAndUpdate(
           where: { rid: accessId }
         }
       );
-  
+
       return updated > 0;
     } catch (error) {
       console.error('Error updating menu access:', error);
@@ -735,13 +1046,13 @@ async checkProfileNameUniqueAndUpdate(
         console.error(`Module access with ID ${accessId} not found`);
         return false;
       }
-  
+
       // Check if the value has actually changed
       if (currentAccess.is_enabled === isEnabled) {
         console.log(`Module access ${accessId} value unchanged, skipping update`);
         return false;
       }
-  
+
       // Store history if this is an edit operation
       if (originalUrl.includes('edit')) {
         await ProfileModuleAccessHistory.create({
@@ -752,7 +1063,7 @@ async checkProfileNameUniqueAndUpdate(
           modified_by: userId
         });
       }
-  
+
       // Update only if the value has changed
       const [updated] = await ProfileModuleAccess.update(
         {
@@ -763,7 +1074,7 @@ async checkProfileNameUniqueAndUpdate(
           where: { rid: accessId }
         }
       );
-  
+
       return updated > 0;
     } catch (error) {
       console.error('Error updating module access:', error);
@@ -787,13 +1098,13 @@ async checkProfileNameUniqueAndUpdate(
         console.error(`Permission access with ID ${accessId} not found`);
         return false;
       }
-  
+
       // Check if the value has actually changed
       if (currentAccess.is_enabled === isEnabled) {
         console.log(`Permission access ${accessId} value unchanged, skipping update`);
         return false;
       }
-  
+
       // Store history if this is an edit operation
       if (originalUrl.includes('edit')) {
         await ProfilePermissionAccessHistory.create({
@@ -804,7 +1115,7 @@ async checkProfileNameUniqueAndUpdate(
           modified_by: userId
         });
       }
-  
+
       // Update only if the value has changed
       const [updated] = await ProfilePermissionAccess.update(
         {
@@ -815,7 +1126,7 @@ async checkProfileNameUniqueAndUpdate(
           where: { rid: accessId }
         }
       );
-  
+
       return updated > 0;
     } catch (error) {
       console.error('Error updating permission access:', error);
@@ -840,16 +1151,16 @@ async checkProfileNameUniqueAndUpdate(
         console.error(`Field access with ID ${accessId} not found`);
         return false;
       }
-  
+
       // Check if any values have actually changed
       const readChanged = currentAccess.read !== read;
       const editChanged = currentAccess.edit !== edit;
-  
+
       if (!readChanged && !editChanged) {
         console.log(`Field access ${accessId} values unchanged, skipping update`);
         return false;
       }
-  
+
       // Store history if this is an edit operation
       if (originalUrl.includes('edit')) {
         // Create history entry for read permission if changed
@@ -862,7 +1173,7 @@ async checkProfileNameUniqueAndUpdate(
             modified_by: userId
           });
         }
-  
+
         // Create history entry for edit permission if changed
         if (editChanged) {
           await ProfileFieldsAccessHistory.create({
@@ -874,7 +1185,7 @@ async checkProfileNameUniqueAndUpdate(
           });
         }
       }
-  
+
       // Update only if values have changed
       const [updated] = await ProfileFieldsAccess.update(
         {
@@ -886,7 +1197,7 @@ async checkProfileNameUniqueAndUpdate(
           where: { rid: accessId }
         }
       );
-  
+
       return updated > 0;
     } catch (error) {
       console.error('Error updating field access:', error);

@@ -1,4 +1,8 @@
 import { DataTypes, Model, Optional, Sequelize, Op } from "sequelize";
+
+// Import User model
+// import { User } from "./userModel";
+
 interface ProfileAttributes {
   rid: string; // UUID
   r_number?: string;
@@ -11,6 +15,8 @@ interface ProfileAttributes {
   modified_by?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
+  creator?: any;  // Association property for User who created the profile
+  modifier?: any; // Association property for User who modified the profile
 }
 
 // Define the interface for the creation attributes (optional fields like created_datetime, modified_datetime)
@@ -36,6 +42,10 @@ export class Profile
   public readonly created_datetime!: Date;
   public readonly modified_datetime!: Date;
 
+  // Add associations
+  public readonly creator?: any;
+  public readonly modifier?: any;
+
   static initialize(sequelize: Sequelize) {
     // Initialize the model
     Profile.init(
@@ -60,7 +70,7 @@ export class Profile
         },
         profile_type: {
           type: DataTypes.STRING,
-          allowNull: false,
+          allowNull: true,
         },
         profile_description: {
           type: DataTypes.STRING,
@@ -71,12 +81,20 @@ export class Profile
           allowNull: true,
         },
         created_by: {
-          type: DataTypes.STRING,
+          type: DataTypes.UUID,
           allowNull: true,
+          references: {
+            model: 'user',
+            key: 'rid'
+          }
         },
         modified_by: {
-          type: DataTypes.STRING,
+          type: DataTypes.UUID,
           allowNull: true,
+          references: {
+            model: 'user',
+            key: 'rid'
+          }
         },
         created_datetime: {
           type: DataTypes.DATE,
@@ -128,5 +146,17 @@ export class Profile
         }
       }
     );
+  }
+  static associate(models: any) {
+    // Set up associations after all models are initialized
+    Profile.belongsTo(models.User, {
+      foreignKey: 'created_by',
+      as: 'creator'
+    });
+    
+    Profile.belongsTo(models.User, {
+      foreignKey: 'modified_by',
+      as: 'modifier'
+    });
   }
 }

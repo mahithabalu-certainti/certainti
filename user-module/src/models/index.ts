@@ -127,6 +127,11 @@ export async function initModels() {
     UserPermissionAccessHistory.initialize(sequelize);
     UserFieldsAccessHistory.initialize(sequelize);
     ProfileHistory.initialize(sequelize);
+    Object.values(models).forEach((model: any) => { 
+      if (model.associate) { 
+        model.associate(models); 
+      } 
+    });
     await sequelize.sync({ force: false });
   } catch (err) {
     console.log("Errr loading models", err);
