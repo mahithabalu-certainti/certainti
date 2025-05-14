@@ -319,7 +319,7 @@ export const ALLOWED_COUNTRIES: AllowedCountry[] = [
   'fr',
 ];
 
-export const fiscalYears = Array.from({ length: 100 }, (_, i) => {
+export const fiscalYears = Array.from({ length: 26 }, (_, i) => {
   const year = new Date().getFullYear() - i;
   return { value: year.toString(), label: `FY-${year}` };
 });
