@@ -20,8 +20,8 @@ const initExpressServer = async (): Promise<Server> => {
     })
    );
 
-   const redis = new RedisService();
-   await redis.connect();
+//    const redis = new RedisService();
+//    await redis.connect();
 
    app.use(requestLogger);
    app.use('/api', routes);
