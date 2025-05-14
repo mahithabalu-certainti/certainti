@@ -80,12 +80,12 @@ export const Accounts: React.FC = () => {
               className='h-8 w-8 bg-[#d16dd3] p-[9px] rounded'
             />
             <div className='flex flex-col mx-2.5 pb-1'>
-              <div className='font-semibold text-[20px] text-[#2D3E4F]'>
+              <div className='font-bold text-[16px] text-[#2D3E4F]'>
                 All Accounts
               </div>
-              <div className='font-medium text-[#7D98B6] text-[11px] -mt-1'>
+              <div className='font-semibold text-[#7D98B6] text-[12px] -mt-1'>
                 Total Accounts -{' '}
-                <span className='font-semibold text-[#2D3E4F]'>
+                <span className='font-semibold text-[#7D98B6]'>
                   {totalCount}
                 </span>
               </div>
@@ -99,7 +99,7 @@ export const Accounts: React.FC = () => {
           </div>
         </div>
         <div className='flex gap-3 justify-center items-center'>
-          <ActionsDropdown actions={menuItems} />
+          <ActionsDropdown actions={menuItems} sx={{ fontWeight: 700 }} />
           <TextButton
             label='Create Account'
             onClick={handleCreateAcount}

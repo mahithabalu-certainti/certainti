@@ -5,7 +5,7 @@ import React from 'react';
 interface TextButtonProps {
   label: string;
   sx?: SxProps<Theme>;
-  variant?: 'contained' | 'text' | 'outlined' | 'filled';
+  // variant?: 'contained' | 'text' | 'outlined' | 'filled';
   color?: ButtonOwnProps['color'];
   loading?: boolean;
   disabled?: boolean;
@@ -63,12 +63,11 @@ const StyledButton = styled(Button)(() => {
 });
 
 const TextButton: React.FC<TextButtonProps> = ({
-  variant = 'contained',
   label,
   ...rest
 }) => {
   return (
-    <StyledButton variantType={variant} {...rest}>
+    <StyledButton {...rest}>
       {label}
     </StyledButton>
   );

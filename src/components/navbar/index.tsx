@@ -13,6 +13,7 @@ import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   accountsIcon,
+  burgerMenuIcon,
   chevronDownIcon,
   globeIcon,
   menuIcon,
@@ -33,7 +34,11 @@ import { useNavigate } from 'react-router-dom';
 import { PROFILE } from '../../routes';
 import { FiscalYearDropdown } from '../fiscal-dropdown';
 
-export const Navbar: React.FC = () => {
+interface NavbarProps {
+  handleSidebarToggle: () => void;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle }) => {
   const msalSigninInstance = new PublicClientApplication(msalConfig);
   const msalResetInstance = new PublicClientApplication(
     msalResetPasswordConfig
@@ -165,9 +170,9 @@ export const Navbar: React.FC = () => {
       open={isMenuOpen}
       onClose={handleMenuClose}
     >
-      <MenuItem sx={{ fontSize:'14px' }} onClick={goToProfile}>Profile</MenuItem>
-      <MenuItem sx={{ fontSize:'14px' }} onClick={changePassword}>Change Password</MenuItem>
-      <MenuItem sx={{ fontSize:'14px' }} onClick={handleLogout}>Logout</MenuItem>
+      <MenuItem sx={{ fontSize: '14px' }} onClick={goToProfile}>Profile</MenuItem>
+      <MenuItem sx={{ fontSize: '14px' }} onClick={changePassword}>Change Password</MenuItem>
+      <MenuItem sx={{ fontSize: '14px' }} onClick={handleLogout}>Logout</MenuItem>
     </Menu>
   );
 
@@ -288,8 +293,11 @@ export const Navbar: React.FC = () => {
   return (
     <>
       <AppBar position='sticky'>
-        <Toolbar className='justify-between !min-h-[55px]'>
+        <Toolbar className='justify-between !min-h-[55px] !pl-0'>
           <div className='relative rounded-md mr-2 flex gap-2'>
+            <button className='cursor-pointer' type='button' onClick={handleSidebarToggle}>
+              <img src={burgerMenuIcon} alt='menu' className='h-[40px] w-[40px]' />
+            </button>
             {/* <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
               <img
                 src={searchIcon}

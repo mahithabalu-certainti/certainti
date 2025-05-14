@@ -14,6 +14,7 @@ import arrowDownIcon from './arrow-down.svg';
 import arrowUpIcon from './arrow-up.svg';
 import arrowBackIcon from './arrowBackIcon.svg';
 import attachmentIcon from './attachment.svg';
+import burgerMenuIcon from './burgerMenuIcon.svg';
 import calendarIcon from './calendar.svg';
 import caseIcon from './case.svg';
 import checklistTemplateIcon from './checklist-template.svg';
@@ -87,6 +88,7 @@ export {
   arrowUpIcon,
   attachmentIcon,
   backIcon,
+  burgerMenuIcon,
   calendarIcon,
   caseIcon,
   checklistTemplateIcon,

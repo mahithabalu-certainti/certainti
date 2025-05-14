@@ -1,4 +1,4 @@
-import { Autocomplete, Checkbox, Skeleton, TextField } from '@mui/material';
+import { Autocomplete, Checkbox, colors, Skeleton, TextField } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -199,7 +199,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             placeholder={field.placeholder}
             autoComplete='off'
             className={
-              'placeholder-custom-color w-full sm:text-sm px-2 h-[32px] border border-[#CBD6E2] rounded-xs' +
+              'placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium w-full sm:text-sm px-2 h-[32px] border border-[#CBD6E2] rounded-xs' +
               isError +
               fieldDisabled
             }
@@ -223,11 +223,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               value={fieldValue}
               disabled={field.disabled}
             >
-              <option value='' className='text-gray-500'>
+              <option value='' className='text-[13px] text-[#425A76] font-medium'>
                 {field.placeholder}
               </option>
               {field?.options?.map((option, i) => (
-                <option key={i} value={option.value}>
+                <option key={i} value={option.value} className='text-[13px] text-[#425A76] font-medium'>
                   {option.label}
                 </option>
               ))}
@@ -247,7 +247,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return (
           <textarea
             className={
-              'placeholder-custom-color w-full sm:text-sm p-2 border border-[#CBD6E2] rounded-xs h-[95px] resize-none ' +
+              'placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium w-full sm:text-sm p-2 border border-[#CBD6E2] rounded-xs h-[95px] resize-none ' +
               isError +
               fieldDisabled
             }
@@ -377,7 +377,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
-              className={isError + fieldDisabled}
+              className={'placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium' + isError + fieldDisabled}
               minDate={customMinDate}
               maxDate={customMaxDate}
               value={dayjs(fieldValue, 'MM/DD/YYYY')}
@@ -467,7 +467,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
-              className={isError + fieldDisabled}
+              className={'placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium' + isError + fieldDisabled}
               value={dayjs(fieldValue, 'DD/MM')}
               disabled={field.disabled}
               format='MM/DD'
@@ -532,7 +532,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             onChange={(phone, country: CountryData) =>
               handleChange(phone, country.countryCode)
             }
-            inputClass={`placeholder-custom-color !w-full !text-[13px] !p-2 !pl-12 !border !h-[32px] !rounded-xs ${field.error ? '!border-red-500' : '!border-gray-300'
+            inputClass={`placeholder:text-[13px] placeholder:color[#425A76] placeholder:font-medium !w-full !text-[13px] !p-2 !pl-12 !border !h-[32px] !rounded-xs ${field.error ? '!border-red-500' : '!border-gray-300'
               }${field.disabled ? ' !bg-gray-100' : ''}`}
             buttonClass={`!bg-transparent !border-r ${field.error ? '!border-red-500' : '!border-gray-300'} !rounded-tl-xs !rounded-bl-xs !hover:bg-transparent !shadow-none !px-0 !m-0`}
             containerClass='!w-full'
