@@ -190,7 +190,7 @@ export class ResourceCost
           defaultValue: "active",
         },
         comments: {
-          type: DataTypes.STRING(2000),
+          type: DataTypes.TEXT,
           allowNull: true,
         },
         created_datetime: {
