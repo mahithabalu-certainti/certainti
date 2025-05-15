@@ -39,19 +39,19 @@ export const AccountInfo: React.FC<AccountInfoProps> = ({
           </Typography>
         );
       }
-      if (lowerValue === 'yes' || lowerValue === 'no') {
-        return (
-          <Typography
-            component='span'
-            sx={{
-              color: lowerValue === 'yes' ? '#00A854' : '#F44336',
-              fontWeight: 500,
-            }}
-          >
-            {value}
-          </Typography>
-        );
-      }
+      // if (lowerValue === 'yes' || lowerValue === 'no') {
+      //   return (
+      //     <Typography
+      //       component='span'
+      //       sx={{
+      //         color: lowerValue === 'yes' ? '#00A854' : '#F44336',
+      //         fontWeight: 500,
+      //       }}
+      //     >
+      //       {value}
+      //     </Typography>
+      //   );
+      // }
     }
     return value;
   };
