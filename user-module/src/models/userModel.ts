@@ -12,7 +12,6 @@ interface UserAttributes {
   first_name: string;
   last_name: string;
   middle_name?: string;
-  full_name?: string;
   email: string;
   street?: string;
   city?: string;
@@ -29,7 +28,7 @@ interface UserAttributes {
   modified_by?: string;
   created_datetime?: Date;
   modified_datetime?: Date;
-  business_teams?: any;
+  business_teams?: string;
 }
 
 interface UserCreationAttributes extends Optional<UserAttributes, "rid"> {}
@@ -47,7 +46,6 @@ export class User
   public first_name!: string;
   public middle_name?: string;
   public last_name!: string;
-  public full_name?: string;
   public email!: string;
   public street?: string;
   public city?: string;
@@ -101,7 +99,7 @@ export class User
         middle_name: {
           type: DataTypes.STRING,
           allowNull: true,
-        },
+          },
         phone: {
           type: DataTypes.STRING,
           allowNull: true,
@@ -109,10 +107,6 @@ export class User
         last_name: {
           type: DataTypes.STRING,
           },
-        full_name: {
-          type: DataTypes.STRING,
-          allowNull: true,
-        },
         email: {
           type: DataTypes.STRING,
           allowNull: false,
