@@ -426,7 +426,7 @@ class SchemaService {
   {
      const sequelize = await initSequelize();
      return await sequelize.query(
-          `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          `SELECT first_name || ' ' || last_name AS full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: created_by },
             type: 'SELECT'
