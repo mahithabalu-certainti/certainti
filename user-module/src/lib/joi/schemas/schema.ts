@@ -18,7 +18,7 @@ const createUserSchema = Joi.object({
     "string.empty": "Email cannot be empty.",
     "string.min": "Email must be at least 6 characters long.",
     "string.max": "Email cannot exceed 254 characters.",
-    "string.pattern.base": "Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
+    "string.pattern.base": "Invalid Email Address."
   }),
   profile_id: Joi.string().max(255).required(),
   role: Joi.string().max(255).required(),
@@ -27,7 +27,7 @@ const createUserSchema = Joi.object({
   city: Joi.string().max(255).allow('', null).optional(),
   state: Joi.string().max(255).allow('', null).optional(),
   zip_code: Joi.string().max(20).allow('', null).optional(),
-  phone: Joi.string().pattern(/^[1-9]\d{9,10}$/).optional(),
+  phone: Joi.string().pattern(/^[1-9]\d{9,14}$/).optional(),
   country: Joi.string().max(255).allow('', null).optional(),
   created_by: Joi.string().max(255).required(),
 });
@@ -46,7 +46,7 @@ const enterpriseUserSchema = Joi.object({
     "string.empty": "Email cannot be empty.",
     "string.min": "Email must be at least 6 characters long.",
     "string.max": "Email cannot exceed 254 characters.",
-    "string.pattern.base": "Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
+    "string.pattern.base": "Invalid Email Address."
   }),
   mobile: Joi.string().max(10).required(),
   profile_id: Joi.string().max(255).required(),
