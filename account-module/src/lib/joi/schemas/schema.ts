@@ -136,7 +136,7 @@ const accountSchema = Joi.object({
           "string.empty": "Key Contact Email cannot be empty.",
           "string.min": "Key Contact Email must be at least 6 characters long.",
           "string.max": "Key Contact Email cannot exceed 254 characters.",
-          "string.pattern.base": "Key Contact Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
+          "string.pattern.base": "Invalid Key Contact Email Address."
         }),
         key_contact_role_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional(),
@@ -269,7 +269,7 @@ const updateAccountSchema = Joi.object({
           "string.empty": "Key Contact Email cannot be empty.",
           "string.min": "Key Contact Email must be at least 6 characters long.",
           "string.max": "Key Contact Email cannot exceed 254 characters.",
-          "string.pattern.base": "Key Contact Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
+          "string.pattern.base": "Invalid Key Contact Email Address"
         }),
         key_contact_role_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional(),
