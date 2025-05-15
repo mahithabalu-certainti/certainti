@@ -513,12 +513,8 @@ class AccountService {
         is_parent: parent_account_rid ? false : true,
         parent_account_rid: parent_account_rid || null,
         storage_type: data_storage,
-        country_rid: parent_account
-          ? parent_account.country_rid
-          : account_country_rid,
-        currency_rid: parent_account
-          ? parent_account.currency_rid
-          : account_currency_rid,
+        country_rid:account_country_rid,
+        currency_rid:account_currency_rid,
         industry_rid: industry_rid,
         industry_name_other: industry_name_other,
         status,
