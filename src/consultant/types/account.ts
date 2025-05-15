@@ -118,6 +118,8 @@ export interface AccountById {
   annual_revenue: number;
   region: string;
   rid: string;
+  created_datetime: string;
+  modified_datetime: string;
 }
 
 export interface KeyContacts {
@@ -152,8 +154,6 @@ export interface AccountFieldsTypes {
   keyContacts: KeyContacts[];
   modified_by: string;
   created_by: string;
-  modified_datetime: string;
-  created_datetime: string;
 }
 
 export interface NewAccountData extends AccountFieldsTypes, AccountById {
