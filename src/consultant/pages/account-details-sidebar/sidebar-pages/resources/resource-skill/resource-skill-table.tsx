@@ -222,9 +222,11 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       <Paper sx={{ overflowX: 'auto', boxShadow: 'none', borderRadius: '0px' }}>
         <Table
           sx={{
-            borderCollapse: 'collapse',
+            borderCollapse: 'separate !important',
+            borderSpacing: 0,
             '& .MuiTableCell-root': {
               borderBottom: '1px solid #CBD6E2',
+              borderRight: '1px solid #CBD6E2',
             },
           }}
         >

@@ -260,6 +260,7 @@ export const REGEX_PATTERNS = {
   STREET_REGEX: /^(?![\W_]+$)(?!\s*$)[a-zA-Z0-9\s,.\-#]+$/,
   MAX_255: /^.{0,255}$/,
   MAX_64: /^.{0,64}$/,
+  MAX_2000: /^[\s\S]{0,2000}$/,
   MIN_3: /^.{3,}$/,
   CITY_REGEX: /^[A-Za-z\s]{3,100}$/,
   NUMBERS_GREATER_THAN_ZERO: /^[1-9]\d*$/,
@@ -290,6 +291,7 @@ export const REGEX_PATTERNS = {
   POSTAL_ALLOWED_CHARS: /^(?!^[a-zA-Z-]+$).*$/,
   // NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX:
   //   /^(?!^[ &'.,-])(?!(.*[ &'.,-]$))/,
+  SKILL_OTHERS_ALLOWED_CHARS_REGEX: /^[A-Za-z\-'._\s]+$/,
 };
 
 /**

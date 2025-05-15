@@ -141,17 +141,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
                 left: 0,
                 background: '#fff',
                 zIndex: 10,
-                borderRight: 'none !important',
-                '&::after': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  width: '1px',
-                  height: '100%',
-                  backgroundColor: '#CBD6E2',
-                  zIndex: 20,
-                },
+                borderRight: '1px solid #CBD6E2 !important',
               }}
             >
              <TruncateWithTooltip text={String(cost.resourceFullName)}>
@@ -289,7 +279,8 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       >
         <Table
           sx={{
-            borderCollapse: 'collapse',
+            borderCollapse: 'separate !important',
+            borderSpacing: 0,
             '& .MuiTableCell-root': {
               borderBottom: '1px solid #CBD6E2',
               borderRight: '1px solid #CBD6E2',
@@ -326,17 +317,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
                   left: 0,
                   background: '#fff',
                   zIndex: 8,
-                  borderRight: 'none !important',
-                  '&::after': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    right: 0,
-                    width: '1px',
-                    height: '100%',
-                    backgroundColor: '#CBD6E2',
-                    zIndex: 10,
-                  },
+                  borderRight: '1px solid #CBD6E2 !important',
                 }}
               >
                 Name

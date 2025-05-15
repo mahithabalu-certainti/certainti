@@ -360,19 +360,46 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           ? dayjs(startDateValue, 'MM/DD/YYYY')
           : undefined;
 
-        const customMinDate: Dayjs | undefined =
-          isEndDateField && parsedStartDate
-            ? parsedStartDate.add(1, 'day')
-            : field?.minDate
-              ? dayjs(field.minDate)
-              : undefined;
+        // Get the selected fiscal year from form data
+        const selectedFiscalYear = constructFormData['fiscal_year'];
+        const isFinancialDateField =
+          field.name === 'financial_start_date' ||
+          field.name === 'financial_end_date';
 
-        const customMaxDate: Dayjs | undefined =
-          isEndDateField && startDateValue
-            ? today
-            : field?.maxDate
-              ? dayjs(field.maxDate)
-              : undefined;
+        const customMinDate: Dayjs | undefined = (() => {
+          if (isFinancialDateField && selectedFiscalYear) {
+            const fiscalYearStart = dayjs(`01/01/${selectedFiscalYear}`, 'MM/DD/YYYY');
+
+            if (isEndDateField && parsedStartDate) {
+              return parsedStartDate.add(1, 'day').isAfter(fiscalYearStart)
+                ? parsedStartDate.add(1, 'day')
+                : fiscalYearStart;
+            }
+            return fiscalYearStart;
+          }
+          if (isEndDateField && parsedStartDate) {
+            return parsedStartDate.add(1, 'day');
+          }
+          return field?.minDate ? dayjs(field.minDate) : undefined;
+        })();
+
+        const customMaxDate: Dayjs | undefined = (() => {
+          if (isFinancialDateField && selectedFiscalYear) {
+            const fiscalYearEnd = dayjs(`12/31/${selectedFiscalYear}`, 'MM/DD/YYYY');
+            
+            if (field?.maxDate) {
+              const maxDate = dayjs(field.maxDate);
+              return fiscalYearEnd.isBefore(maxDate) ? fiscalYearEnd : maxDate;
+            }
+            return fiscalYearEnd;
+          }   
+          if (isEndDateField && startDateValue) {
+            return field?.maxDate 
+              ? (dayjs(field.maxDate).isBefore(today) ? dayjs(field.maxDate) : today)
+              : today;
+          }
+          return field?.maxDate ? dayjs(field.maxDate) : undefined;
+        })();
 
         return (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -645,8 +672,90 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           }
 
           if (field.type === 'date') {
-            // cost date validation
             const dateValue = constructFormData[field.name] as string;
+            // cost date validation
+            if (field.name === 'financial_start_date' || field.name === 'financial_end_date') {
+              const selectedFiscalYear = constructFormData['fiscal_year'] as string;
+              
+              if (selectedFiscalYear) {
+                // Fiscal year bounds
+                const fiscalYearStart = dayjs(`01/01/${selectedFiscalYear}`, 'MM/DD/YYYY');
+                const fiscalYearEnd = dayjs(`12/31/${selectedFiscalYear}`, 'MM/DD/YYYY');
+                
+                if (dateValue) {
+                  const currentDate = dayjs(dateValue, 'MM/DD/YYYY');
+                  
+                  // Check against fiscal year bounds
+                  if (currentDate.isBefore(fiscalYearStart, 'day') || 
+                      currentDate.isAfter(fiscalYearEnd, 'day')) {
+                    hasError = true;
+                    return {
+                      ...field,
+                      error: `${field.name === 'financial_start_date' ? 'Start' : 'End'} date must be within the selected fiscal year (${selectedFiscalYear})`,
+                    };
+                  }
+            
+                  // Check against minDate (if specified)
+                  if (field.minDate && currentDate.isBefore(dayjs(field.minDate), 'day')) {
+                    hasError = true;
+                    return {
+                      ...field,
+                      error: `${field.name === 'financial_start_date' ? 'Start' : 'End'} date cannot be before ${dayjs(field.minDate).format('MM/DD/YYYY')}`,
+                    };
+                  }
+            
+                  // Check against maxDate (if specified)
+                  if (field.maxDate && currentDate.isAfter(dayjs(field.maxDate), 'day')) {
+                    hasError = true;
+                    return {
+                      ...field,
+                      error: `${field.name === 'financial_start_date' ? 'Start' : 'End'} date cannot be after ${dayjs(field.maxDate).format('MM/DD/YYYY')}`,
+                    };
+                  }
+                }
+              }
+            
+              // Validate financial end date against start date
+              if (field.name === 'financial_end_date' && dateValue) {
+                const startDateValue = constructFormData['financial_start_date'] as string;
+                
+                if (startDateValue) {
+                  const startDate = dayjs(startDateValue, 'MM/DD/YYYY');
+                  const endDate = dayjs(dateValue, 'MM/DD/YYYY');
+                  
+                  if (endDate.isSame(startDate, 'day')) {
+                    hasError = true;
+                    return {
+                      ...field,
+                      error: 'End date cannot be the same as start date',
+                    };
+                  }
+                  
+                  if (endDate.isBefore(startDate, 'day')) {
+                    hasError = true;
+                    return {
+                      ...field,
+                      error: 'End date must be after start date',
+                    };
+                  }
+                }
+              }
+            
+              // Validate both financial dates are either provided or not provided
+              if (field.name === 'financial_start_date' || field.name === 'financial_end_date') {
+                const startDate = constructFormData['financial_start_date'] as string;
+                const endDate = constructFormData['financial_end_date'] as string;
+                
+                if ((startDate && !endDate) || (!startDate && endDate)) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error: 'Both start date and end date must be provided',
+                  };
+                }
+              }
+            }
+
             if (field?.startValue && constructFormData[field.name]) {
               const dateValue = constructFormData[field.name] as string;
               if (

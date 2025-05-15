@@ -19,6 +19,7 @@ import {
 const DATE_CONFIG = {
   FISCAL_YEARS_RANGE: 6,
   MIN_YEARS_BACK: 6,
+  COST_FISCAL_YEARS_RANGE: 20,
 } as const;
 
 // 2. Extract fiscal years calculation
@@ -48,7 +49,7 @@ const getDateConstraints = (yearsBack: number) => {
   return { currentDate, minDate, previousDate };
 };
 
-export const fiscalYears = getFiscalYears(DATE_CONFIG.FISCAL_YEARS_RANGE);
+export const fiscalYears = getFiscalYears(DATE_CONFIG.COST_FISCAL_YEARS_RANGE);
 export const skillStartDateYears = getSkillStartDateOptions(
   DATE_CONFIG.FISCAL_YEARS_RANGE
 );
@@ -115,7 +116,7 @@ export const ResourceFormData = (
           }),
           createSelectField('resource_type', 'Resource Type', {
             options: RESOURCE_TYPE_OPTIONS,
-            placeholder: 'Select Resource Type',
+            placeholder: 'Choose Resource Type',
             required: true,
             disabled: disableCostAndSkill || disableOrgname,
           }),
@@ -234,7 +235,7 @@ export const ResourceFormData = (
           }),
           createSelectField('resource_status', 'Status', {
             options: RESOURCE_STATUS_OPTIONS,
-            placeholder: 'Select Resource Status',
+            placeholder: 'Choose Status',
             required: true,
             disabled: disableCostAndSkill,
           }),
@@ -247,7 +248,7 @@ export const ResourceFormData = (
         fields: [
           createSelectField('country', 'Country', {
             options: country,
-            placeholder: 'Select Country',
+            placeholder: 'Choose Country',
             required: false,
             onChange: true,
             resetDependsFields: ['state, city'],
@@ -255,7 +256,7 @@ export const ResourceFormData = (
           }),
           createSelectField('state', 'Region', {
             options: states,
-            placeholder: 'Select Region',
+            placeholder: 'Choose Region',
             required: false,
             onChange: true,
             isLoading: stateLoading,
@@ -263,7 +264,7 @@ export const ResourceFormData = (
           }),
           createSelectField('city', 'City', {
             options: city,
-            placeholder: 'Select City',
+            placeholder: 'Choose City',
             required: false,
             isLoading: stateLoading || cityLoading,
             disabled: disableCostAndSkill,
@@ -277,32 +278,31 @@ export const ResourceFormData = (
         fields: [
           createSelectField('fiscal_year', 'Fiscal Year', {
             options: fiscalYears,
-            placeholder: 'Select Fiscal Year',
+            placeholder: 'Choose Fiscal Year',
             required: true,
             onChange: true,
+            resetDependsFields: ['financial_start_date, financial_end_date'],
           }),
           createSelectField('currency', 'Currency', {
             options: currency,
-            placeholder: 'Select Currency',
+            placeholder: 'Choose Currency',
             required: false,
             isLoading: currencyLoading,
           }),
           createDateField('financial_start_date', 'Start Date', {
             required: false,
             minDate: new Date(minDate.getTime()),
-            maxDate: currentDate,
-            startValue: false,
+            maxDate: previousDate,
           }),
           createDateField('financial_end_date', 'End Date', {
             required: false,
             minDate: new Date(minDate.getTime()),
             maxDate: currentDate,
-            endDateValue: true,
             startDateLabel: 'financial_start_date',
           }),
           createSelectField('cost_frequency', 'Cost Frequency', {
             options: FREQUENCY_OPTIONS,
-            placeholder: 'Select Cost Frequency',
+            placeholder: 'Choose Cost Frequency',
             required: true,
           }),
           createTextField('cost', 'Cost', {
@@ -319,22 +319,22 @@ export const ResourceFormData = (
         fillType: 'half',
         hide: !disableSkill,
         fields: [
-          createSelectField('skill_start_date', 'Start Date', {
-            options: skillStartDateYears,
+          createDateField('skill_start_date', 'Start Date', {
             required: false,
-            placeholder: 'Select Start Date',
-            onChange: true,
+            minDate: new Date(minDate.getTime()),
+            maxDate: currentDate,
+            startValue: true,
           }),
           createSelectField('skill_type', 'Skill Type', {
             options: skillTypeOptions,
-            placeholder: 'Select Skill Type',
+            placeholder: 'Choose Skill Type',
             required: true,
             onChange: true,
             resetDependsFields: ['skill_sub_type'],
           }),
           createSelectField('skill_sub_type', 'Skill SubType', {
             options: skillSubTypeOptions,
-            placeholder: 'Select Skill SubType',
+            placeholder: 'Choose Skill SubType',
             required: true,
             isLoading: skillSubTypeLoading,
             onChange: true,
@@ -342,10 +342,16 @@ export const ResourceFormData = (
           createTextField('skill_details', 'Skill Details', {
             required: true,
             placeholder: 'Enter Skill Details',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_2000,
+                errorMessage: 'Input must be between 1 and 2,000 characters.',
+              }
+          ],
           }),
           createSelectField('skill_level', 'Skill Level', {
             options: mockSkillLevelOptions,
-            placeholder: 'Select Skill Level',
+            placeholder: 'Choose Skill Level',
             required: false,
           }),
           createTextField('skill_type_others', 'Skill Type(Other)', {
@@ -355,6 +361,10 @@ export const ResourceFormData = (
               {
                 regex: REGEX_PATTERNS.NAME_LENGTH_3_TO_64_REGEX,
                 errorMessage: 'Please enter 3-64 characters.',
+              },
+              {
+                regex: REGEX_PATTERNS.SKILL_OTHERS_ALLOWED_CHARS_REGEX,
+                errorMessage: "Only letters, hyphens (-), apostrophes ('), periods (.), underscores (_), and spaces are allowed.",
               },
             ],
             hide:
@@ -369,6 +379,10 @@ export const ResourceFormData = (
               {
                 regex: REGEX_PATTERNS.NAME_LENGTH_3_TO_64_REGEX,
                 errorMessage: 'Please enter 3-64 characters.',
+              },
+              {
+                regex: REGEX_PATTERNS.SKILL_OTHERS_ALLOWED_CHARS_REGEX,
+                errorMessage: "Only letters, hyphens (-), apostrophes ('), periods (.), underscores (_), and spaces are allowed.",
               },
             ],
             hide:
