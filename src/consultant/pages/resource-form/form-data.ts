@@ -115,7 +115,7 @@ export const ResourceFormData = (
           }),
           createSelectField('resource_type', 'Resource Type', {
             options: RESOURCE_TYPE_OPTIONS,
-            placeholder: '-Select-',
+            placeholder: 'Select Resource Type',
             required: true,
             disabled: disableCostAndSkill || disableOrgname,
           }),
@@ -234,7 +234,7 @@ export const ResourceFormData = (
           }),
           createSelectField('resource_status', 'Status', {
             options: RESOURCE_STATUS_OPTIONS,
-            placeholder: '-Select-',
+            placeholder: 'Select Resource Status',
             required: true,
             disabled: disableCostAndSkill,
           }),
@@ -277,13 +277,13 @@ export const ResourceFormData = (
         fields: [
           createSelectField('fiscal_year', 'Fiscal Year', {
             options: fiscalYears,
-            placeholder: '-Select-',
+            placeholder: 'Select Fiscal Year',
             required: true,
             onChange: true,
           }),
           createSelectField('currency', 'Currency', {
             options: currency,
-            placeholder: '-Select-',
+            placeholder: 'Select Currency',
             required: false,
             isLoading: currencyLoading,
           }),
@@ -302,7 +302,7 @@ export const ResourceFormData = (
           }),
           createSelectField('cost_frequency', 'Cost Frequency', {
             options: FREQUENCY_OPTIONS,
-            placeholder: '-Select-',
+            placeholder: 'Select Cost Frequency',
             required: true,
           }),
           createTextField('cost', 'Cost', {
@@ -322,19 +322,19 @@ export const ResourceFormData = (
           createSelectField('skill_start_date', 'Start Date', {
             options: skillStartDateYears,
             required: false,
-            placeholder: '-Select-',
+            placeholder: 'Select Start Date',
             onChange: true,
           }),
           createSelectField('skill_type', 'Skill Type', {
             options: skillTypeOptions,
-            placeholder: '-Select-',
+            placeholder: 'Select Skill Type',
             required: true,
             onChange: true,
             resetDependsFields: ['skill_sub_type'],
           }),
           createSelectField('skill_sub_type', 'Skill SubType', {
             options: skillSubTypeOptions,
-            placeholder: '-Select-',
+            placeholder: 'Select Skill SubType',
             required: true,
             isLoading: skillSubTypeLoading,
             onChange: true,
@@ -342,26 +342,21 @@ export const ResourceFormData = (
           createTextField('skill_details', 'Skill Details', {
             required: true,
             placeholder: 'Enter Skill Details',
-            errorHandling: [
-              {
-                regex: REGEX_PATTERNS.NOT_ALLOW_ONLY_SYMBOLS,
-                errorMessage: 'Only Symbols are not allowed',
-              },
-              {
-                regex: REGEX_PATTERNS.LETTERS_3_TO_100,
-                errorMessage:
-                  'Please enter a valid Skill Details 3 to 100 characters.',
-              },
-            ],
           }),
           createSelectField('skill_level', 'Skill Level', {
             options: mockSkillLevelOptions,
-            placeholder: '-Select-',
+            placeholder: 'Select Skill Level',
             required: false,
           }),
           createTextField('skill_type_others', 'Skill Type(Other)', {
             required: true,
             placeholder: 'Enter Skill Type',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.NAME_LENGTH_3_TO_64_REGEX,
+                errorMessage: 'Please enter 3-64 characters.',
+              },
+            ],
             hide:
               currentSkillType === 'f6044ae9-7b65-4cfc-8ad3-c18a8f7ee30a'
                 ? false
@@ -370,6 +365,12 @@ export const ResourceFormData = (
           createTextField('skill_subtype_others', 'Skill SubType(Other)', {
             required: true,
             placeholder: 'Enter Skill SubType',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.NAME_LENGTH_3_TO_64_REGEX,
+                errorMessage: 'Please enter 3-64 characters.',
+              },
+            ],
             hide:
               currentskillSubType === 'b8894099-0385-4681-8237-21f89b0d1883'
                 ? false
