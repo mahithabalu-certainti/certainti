@@ -81,9 +81,9 @@ export const ManageUserDetails: React.FC = () => {
             label='Create User'
             sx={{
               ...BUTTON_STYLES,
-              backgroundColor: '#F16137',
-              color: '#fff',
-              borderRadius: '2px',
+              // backgroundColor: '#F16137',
+              // color: '#fff',
+              // borderRadius: '2px',
               fontSize: '13px',
               fontWeight: 400,
             }}
@@ -92,10 +92,10 @@ export const ManageUserDetails: React.FC = () => {
 
           <TextButton
             label='Back'
-            variant='outlined'
-            color='inherit'
+            // variant='outlined'
+            // color='inherit'
             onClick={goBack}
-            sx={{ width: '45px',minWidth:'45px', fontWeight:400,fontSize: '12px' }}
+            sx={{ width: '45px', minWidth: '45px', fontWeight: 400, fontSize: '12px' }}
           />
         </div>
       </div>
@@ -103,8 +103,8 @@ export const ManageUserDetails: React.FC = () => {
       <div className='flex flex-col border border-[#CBD6E2] rounded-[4px]'>
         <div className='flex justify-between items-center border-b border-[#CBD6E2] p-2'>
           <div>
-          <div className='text-[11px] text-[#7D98B6]'>User</div>
-          <div className='font-semibold text-[16px] text-[#2D3E4F] leading-5 tracking-normal'>
+            <div className='text-[11px] text-[#7D98B6]'>User</div>
+            <div className='font-semibold text-[16px] text-[#2D3E4F] leading-5 tracking-normal'>
               {userDetails.isLoading ? (
                 <Skeleton variant='rounded' width={200} />
               ) : (
@@ -113,18 +113,18 @@ export const ManageUserDetails: React.FC = () => {
             </div>
           </div>
           <div className='flex gap-2 m-2'>
-          {userActionButtons.map((button) => (
+            {userActionButtons.map((button) => (
               <TextButton
-              key={button.label}
-              label={button.label}              
-                variant='outlined'
+                key={button.label}
+                label={button.label}
+                // variant='outlined'
                 onClick={() => handleAction(button.label)}
                 sx={{
                   ...BUTTON_STYLES,
                   borderRadius: '2px',
                   fontSize: '13px',
                   fontWeight: 400,
-                  padding: '4px',
+                  // padding: '4px',
                   width: button.width,
                 }}
               />

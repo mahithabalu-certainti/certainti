@@ -111,7 +111,7 @@ const UserList: React.FC = () => {
           <ActionsDropdown actions={MENU_ITEMS} />
           <TextButton
             label='Create User'
-            variant='filled'
+            // variant='filled'
             onClick={() => navigate(ADMIN_CREATE_USER)}
             sx={{
               ...BUTTON_STYLES,
@@ -136,7 +136,7 @@ const UserList: React.FC = () => {
               <TextButton
                 key={button.label}
                 label={button.label}
-                variant='outlined'
+                // variant='outlined'
                 onClick={() => handleAction(button.label)}
                 sx={{
                   ...BUTTON_STYLES,

@@ -1,6 +1,6 @@
 export interface FormType {
   sectionName: string;
-  fillType: 'half' | 'full';
+  fillType: 'half' | 'full' | 'quarter';
   fields: FormTypeFields[];
   hide?: boolean;
 }
@@ -14,6 +14,7 @@ export interface FormTypeFields {
   minDate?: Date;
   maxDate?: Date;
   options?: SelectOption[];
+  span?: number;
   error?: string;
   placeholder?: string;
   regex?: string | RegExp;
@@ -43,6 +44,8 @@ export interface FormTypeFields {
   startDateLabel?: string;
   endDateLabel?: string;
   errorHandling?: ErrorHandling[];
+  onClick?: () => void;
+  iconUrl?: string;
 }
 
 // export interface SelectOptions {
@@ -59,7 +62,10 @@ export type InputType =
   | 'date'
   | 'radio'
   | 'phone'
-  | 'fiscalDate';
+  | 'fiscalDate'
+  | 'button'
+  | 'website'
+  | 'iconButton';
 
 export interface SelectOption {
   label: string;
@@ -78,6 +84,7 @@ export interface FieldType {
   required: boolean;
   minDate?: Date;
   maxDate?: Date;
+  iconUrl?: string;
   options?: SelectOption[];
   regex?: RegExp;
   regexErrorMessage?: string;
@@ -105,9 +112,11 @@ export interface FieldType {
     maxErrorMessage: string;
   };
   onChange?: boolean;
+  onClick?: (index?: number) => void;
   anyOneRequired?: boolean; // financial information error handling
   isLoading?: boolean;
   errorHandling?: ErrorHandling[];
+  span?: number;
 }
 
 export type AllowedCountry =

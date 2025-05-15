@@ -5,6 +5,7 @@ import {
   AllowedCountry,
   ErrorHandling,
   FieldType,
+  InputType,
   SelectOption,
   YesNo,
 } from '../consultant/types';
@@ -13,6 +14,8 @@ export const createTextField = (
   name: string,
   label: string,
   options: {
+    type?: InputType;
+    span?: number;
     required?: boolean;
     regex?: RegExp;
     regexErrorMessage?: string;
@@ -32,10 +35,11 @@ export const createTextField = (
     };
   } = {}
 ): FieldType => ({
-  type: 'text',
+  type: options.type ?? 'text',
   name,
   label,
   required: options.required ?? false,
+  span: options.span,
   regex: options.regex,
   regexErrorMessage: options.regexErrorMessage,
   placeholder: options.placeholder,
@@ -45,7 +49,7 @@ export const createTextField = (
   hide: options.hide,
   lengthRequired: options.lengthRequired,
   errorHandling: options.errorHandling,
-  clearValue: options.clearValue
+  clearValue: options.clearValue,
 });
 
 export const createPhoneInputField = (
@@ -110,6 +114,7 @@ export const createRadioField = (
   label: string,
   options: {
     required?: boolean;
+    span?: number;
     radioOptions: SelectOption[];
     defaultValue?: string;
     disabled?: boolean;
@@ -126,6 +131,7 @@ export const createRadioField = (
   name,
   label,
   required: options.required ?? false,
+  span: options.span,
   options: options.radioOptions,
   disabled: options.disabled,
   onChange: options.onChange,
@@ -138,6 +144,7 @@ export const createSelectField = (
   others: {
     options: SelectOption[];
     required: boolean;
+    span?: number;
     placeholder?: string;
     disabled?: boolean;
     clearValue?: Record<string, string>;
@@ -151,12 +158,49 @@ export const createSelectField = (
   label,
   required: others.required,
   options: others.options,
+  span: others.span,
   disabled: others.disabled,
   placeholder: others.placeholder,
   clearValue: others.clearValue,
   onChange: others.onChange,
   isLoading: others.isLoading,
   resetDependsFields: others.resetDependsFields,
+});
+
+export const createButton = (
+  name: string,
+  label: string,
+  others: {
+    iconUrl?: string;
+    onClick?: () => void;
+  }
+): FieldType => ({
+  type: 'button',
+  name: name,
+  label: label,
+  required: false,
+  iconUrl: others.iconUrl,
+  onClick: others.onClick,
+});
+
+export const createImgButton = (
+  iconUrl: string,
+  others?: {
+    span?: number;
+    onClick?: (index: number) => void;
+  }
+): FieldType => ({
+  type: 'iconButton',
+  iconUrl: iconUrl,
+  name: '',
+  label: '',
+  required: false,
+  span: others?.span,
+  onClick: (index?: number) => {
+    if (others?.onClick && index !== undefined) {
+      others.onClick(index);
+    }
+  },
 });
 
 export const createDateField = (
@@ -272,7 +316,8 @@ export const REGEX_PATTERNS = {
   NAME_LENGTH_3_TO_100_REGEX: /^.{3,100}$/,
   ALLOWED_CHARS_EXTENDED_NAME_REGEX: /^[A-Za-z0-9 &'.,-]+$/,
   NO_CONSECUTIVE_SPECIALS_EXTENDED_REGEX: /^(?!.*[ &'.,-]{2})/,
-  NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX: /^(?!^[ &'.,-])(?!(.*[ &'.,-]$))/,
+  NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX:
+    /^(?!^[ &'.,-])(?!(.*[ &'.,-]$))/,
   NO_LEADING_SPECIAL_REGEX: /^[a-zA-Z]/,
   ALLOWED_CHARS_REGEX: /^[a-zA-Z0-9_-]+$/,
   NO_CONSECUTIVE_SPECIALS_REGEX_FOR_ORG_NAME: /^(?!.*[-_]{2}).+$/,
@@ -292,8 +337,10 @@ export const REGEX_PATTERNS = {
 
 export const RESOURCE_REGEX = {
   RESOURCE_CODE: /^(?![0-9_-])[a-zA-Z][a-zA-Z0-9_-]{2,49}$/,
-  RESOURCE_NAME: /^(?!.*[-' ]{2})[A-Za-z](?:[A-Za-z]|[-' ](?=[A-Za-z])){0,62}[A-Za-z]$/,
-  ORG_NAME: /^(?!.*[&\-.'", ]{2})[A-Za-z0-9](?:[A-Za-z0-9]|[&\-.'", ](?=[A-Za-z0-9])){1,98}[A-Za-z0-9]$/,
+  RESOURCE_NAME:
+    /^(?!.*[-' ]{2})[A-Za-z](?:[A-Za-z]|[-' ](?=[A-Za-z])){0,62}[A-Za-z]$/,
+  ORG_NAME:
+    /^(?!.*[&\-.'", ]{2})[A-Za-z0-9](?:[A-Za-z0-9]|[&\-.'", ](?=[A-Za-z0-9])){1,98}[A-Za-z0-9]$/,
   EMAIL: /^[a-zA-Z0-9._%+-]{1,64}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
   MOBILE: /^\+?[0-9][0-9\- ]{3,14}[0-9]$/,
   MANAGER_NAME: /^(?=(.*[a-zA-Z0-9]){3})[a-zA-Z0-9][a-zA-Z0-9 .'-]{1,99}$/,

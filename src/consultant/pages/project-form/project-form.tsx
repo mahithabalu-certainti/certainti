@@ -33,12 +33,12 @@ const ProjectForm: React.FC = () => {
       ...account?.accountById,
       ...(account?.accountById &&
         account?.accountDetails && {
-          is_parent: account?.accountById.is_parent ? 'yes' : 'no',
-          autosend_interaction: account?.accountDetails.autosend_interaction
-            ? 'yes'
-            : 'no',
-          auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
-        }),
+        is_parent: account?.accountById.is_parent ? 'yes' : 'no',
+        autosend_interaction: account?.accountDetails.autosend_interaction
+          ? 'yes'
+          : 'no',
+        auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
+      }),
     }),
     [account]
   );
@@ -134,13 +134,13 @@ const ProjectForm: React.FC = () => {
         <div className='flex gap-3'>
           <TextButton
             label='Cancel'
-            variant='outlined'
-            color='inherit'
+            // variant='outlined'
+            // color='inherit'
             onClick={goBack}
           />
           <TextButton
             label='Save'
-            variant='filled'
+            // variant='filled'
             loading={createAccount.isPending || updateAccount.isPending}
             onClick={handleExternalSubmit}
           />

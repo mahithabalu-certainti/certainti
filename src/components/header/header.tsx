@@ -12,7 +12,7 @@ import TextButton from '../button/text-button';
 
 const DEFAULT_BUTTON_STYLES = {
   height: '35px',
-  color: 'secondary.main',
+  // color: 'secondary.main',
 };
 
 interface HeaderProps {
@@ -127,11 +127,11 @@ export const PageHeader: React.FC<HeaderProps> = ({
             <TextButton
               label={primaryButton.label}
               onClick={primaryButton.onClick}
-              variant='outlined'
+              // variant='outlined'
               sx={{
                 ...DEFAULT_BUTTON_STYLES,
                 ...customStyles.button,
-                width: '57px', minWidth: '57px', fontSize:'13px', fontWeight: 400,
+                width: '57px', minWidth: '57px', fontSize: '13px', fontWeight: 400,
               }}
             />
           )}

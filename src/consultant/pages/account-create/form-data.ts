@@ -1,8 +1,10 @@
 import { useMemo } from 'react';
-import { FormType, SelectOption, YesNo } from '../../types';
+import { FieldType, FormType, SelectOption, YesNo } from '../../types';
 import { DATA_STORAGE_OPTIONS } from './utils';
 import {
+  createButton,
   createFiscalDateField,
+  createImgButton,
   createRadioField,
   createSelectField,
   createTextAreaField,
@@ -11,6 +13,125 @@ import {
   STATUS_OPTIONS,
   YES_NO_OPTIONS,
 } from '../../../common-utils';
+import { closeIcon } from '../../../assets';
+
+export const newKeyContactFields = (
+  roles: SelectOption[],
+  isPrimaryContactRequired: boolean
+) => [
+  createTextField('key_contact_name', 'Key Contact Name', {
+    required: false,
+    span: 4,
+    regex: REGEX_PATTERNS.CONTACT_NAME,
+    regexErrorMessage: 'Invalid Name',
+    placeholder: 'Enter Key Contact Name',
+    onChange: true,
+    errorHandling: [
+      {
+        regex: REGEX_PATTERNS.MIN_NAME_REGEX,
+        errorMessage: 'Key Contact Name must be more than 1 characters long',
+      },
+      {
+        regex: REGEX_PATTERNS.MAX_NAME_REGEX,
+        errorMessage: 'Max length exceeded',
+      },
+      {
+        regex: REGEX_PATTERNS.NOT_ALLOW_SPACE_SYMBOLS_AT_START_END,
+        errorMessage: 'Cannot begin or end with a space or special character',
+      },
+    ],
+  }),
+  createSelectField('key_contact_role', 'Key Contact Role', {
+    options: roles,
+    span: 2,
+    required: false,
+    placeholder: 'Choose Key Contact Role',
+    onChange: true,
+  }),
+  createTextField('key_contact_email', 'Key Contact Email', {
+    required: false,
+    span: 2,
+    placeholder: 'Enter Key Contact Email',
+    onChange: true,
+    errorHandling: [
+      {
+        regex: REGEX_PATTERNS.MAX_EMAIL_REGEX,
+        errorMessage: 'Max length exceeded',
+      },
+      {
+        regex: REGEX_PATTERNS.EMAIL,
+        errorMessage: 'Invalid email address',
+      },
+    ],
+  }),
+  createRadioField('is_primary_contact', 'Is Primary Contact?', {
+    radioOptions: YES_NO_OPTIONS,
+    span: 2,
+    required: isPrimaryContactRequired,
+    onChange: true,
+  }),
+  createRadioField('include_in_communication', 'Include in Communications?', {
+    radioOptions: YES_NO_OPTIONS,
+    span: 2,
+    required: false,
+  }),
+  createSelectField('key_contact_status', 'Key Contact Status', {
+    required: false,
+    span: 2,
+    options: STATUS_OPTIONS,
+    placeholder: 'Choose Key Contact Status',
+  }),
+  createImgButton(closeIcon, {
+    span: 1,
+  }),
+];
+
+const createDynamicField = (
+  contacts: FieldType,
+  index: number,
+  removeKeyContact: (index: number) => void
+) => {
+  const fieldsArr = [];
+  const groupIndex = Math.floor(index / 7);
+  const { name, label, ...rest } = contacts;
+  if (contacts.type === 'text') {
+    fieldsArr.push(
+      createTextField(name + '_' + groupIndex, label, {
+        ...rest,
+      })
+    );
+  }
+  if (contacts.type === 'select') {
+    fieldsArr.push(
+      createSelectField(name + '_' + groupIndex, label, {
+        ...rest,
+        options: rest.options || [],
+      })
+    );
+  }
+  if (contacts.type === 'radio') {
+    fieldsArr.push(
+      createRadioField(name + '_' + groupIndex, label, {
+        required: rest.required,
+        span: rest.span,
+        defaultValue: rest.defaultValue,
+        disabled: rest.disabled,
+        onChange: rest.onChange,
+        radioOptions: rest.options || [],
+      })
+    );
+  }
+  if (contacts.type === 'iconButton') {
+    fieldsArr.push(
+      createImgButton('', {
+        span: rest.span,
+        onClick: () => removeKeyContact(index),
+      })
+    );
+  }
+
+  return fieldsArr;
+};
 
 export const FormData = (
   country: SelectOption[],
@@ -22,10 +143,15 @@ export const FormData = (
   roles: SelectOption[],
   isPrimaryContactRequired: boolean,
   isParentAccountRequired: boolean,
+  keyContacts: FieldType[],
+  addNewKeyContact: () => void,
+  removeKeyContact: (index: number) => void,
   disableFields?: boolean,
   stateLoading?: boolean,
   showOthersField?: boolean
 ): FormType[] => {
+  console.log('FormData', keyContacts);
+
   return useMemo(
     () => [
       {
@@ -42,7 +168,8 @@ export const FormData = (
           createTextField('account_name', 'Account Name', {
             required: true,
             regex: REGEX_PATTERNS.ACCOUNT_NAME,
-            regexErrorMessage: "only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), and commas (,)",
+            regexErrorMessage:
+              "only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), and commas (,)",
             placeholder: 'Enter Account Name',
             errorHandling: [
               {
@@ -97,6 +224,7 @@ export const FormData = (
             placeholder: 'Choose Status',
           }),
           createTextField('website', 'Website', {
+            type: 'website',
             required: false,
             regex: REGEX_PATTERNS.WEBSITE,
             regexErrorMessage: 'Enter a valid website URL',
@@ -178,68 +306,12 @@ export const FormData = (
         sectionName: 'Key Contacts List',
         fillType: 'half',
         fields: [
-          createTextField('key_contact_name', 'Key Contact Name', {
-            required: false,
-            regex: REGEX_PATTERNS.CONTACT_NAME,
-            regexErrorMessage: 'Invalid Name',
-            placeholder: 'Enter Key Contact Name',
-            onChange: true,
-            errorHandling: [
-              {
-                regex: REGEX_PATTERNS.MIN_NAME_REGEX,
-                errorMessage:
-                  'Key Contact Name must be more than 1 characters long',
-              },
-              {
-                regex: REGEX_PATTERNS.MAX_NAME_REGEX,
-                errorMessage: 'Max length exceeded',
-              },
-              {
-                regex: REGEX_PATTERNS.NOT_ALLOW_SPACE_SYMBOLS_AT_START_END,
-                errorMessage:
-                  'Cannot begin or end with a space or special character',
-              },
-            ],
-          }),
-          createSelectField('key_contact_role', 'Key Contact Role', {
-            options: roles,
-            required: false,
-            placeholder: 'Choose Key Contact Role',
-            onChange: true,
-          }),
-          createTextField('key_contact_email', 'Key Contact Email', {
-            required: false,
-            placeholder: 'Enter Key Contact Email',
-            onChange: true,
-            errorHandling: [
-              {
-                regex: REGEX_PATTERNS.MAX_EMAIL_REGEX,
-                errorMessage: 'Max length exceeded',
-              },
-              {
-                regex: REGEX_PATTERNS.EMAIL,
-                errorMessage: 'Invalid email address',
-              },
-            ],
-          }),
-          createRadioField('is_primary_contact', 'Is Primary Contact?', {
-            radioOptions: YES_NO_OPTIONS,
-            required: isPrimaryContactRequired,
-            onChange: true,
-          }),
-          createRadioField(
-            'include_in_communication',
-            'Include in Communications?',
-            {
-              radioOptions: YES_NO_OPTIONS,
-              required: false,
-            }
-          ),
-          createSelectField('key_contact_status', 'Key Contact Status', {
-            required: false,
-            options: STATUS_OPTIONS,
-            placeholder: 'Choose Key Contact Status',
-          }),
+          ...keyContacts
+            .map((contacts, index) => [
+              ...createDynamicField(contacts, index, removeKeyContact),
+            ])
+            .flat(),
+          //
           // createTextField('finance_poc_name', 'Finance Contact Name', {
           //   required: true,
           //   regex: REGEX_PATTERNS.LETTERS_3_TO_25,
@@ -264,6 +336,16 @@ export const FormData = (
           //   required: true,
           //   placeholder: 'Enter Finance POC Phone',
           // }),
+        ],
+      },
+      {
+        sectionName: '',
+        fillType: 'full',
+        fields: [
+          createButton('Add another key contact', '', {
+            iconUrl: '',
+            onClick: addNewKeyContact,
+          }),
         ],
       },
       {
@@ -350,6 +432,8 @@ export const FormData = (
       isPrimaryContactRequired,
       dataResidency,
       showOthersField,
+      keyContacts,
+      addNewKeyContact,
     ]
   );
 };

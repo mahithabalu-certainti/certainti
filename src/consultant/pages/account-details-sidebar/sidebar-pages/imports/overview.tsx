@@ -171,15 +171,15 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId, accountInActi
     }
   };
 
- const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-   e.preventDefault();
-   const validFiles = validateFiles(e.dataTransfer.files);
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const validFiles = validateFiles(e.dataTransfer.files);
 
-   if (validFiles.length > 0) {
-     setSelectedFiles((prevFiles) => [...prevFiles, ...validFiles]);
+    if (validFiles.length > 0) {
+      setSelectedFiles((prevFiles) => [...prevFiles, ...validFiles]);
       showSuccess(`File "${validFiles[0].name}" added successfully.`);
-   }
- };
+    }
+  };
 
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -208,20 +208,20 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId, accountInActi
         <div className='flex gap-2'>
           <TextButton
             label='Cancel'
-            variant='outlined'
-            color='inherit'
+            // variant='outlined'
+            // color='inherit'
             onClick={goBack}
             sx={{
               width: '56px',
               minWidth: '56px',
               fontWeight: 400,
-              fontSize: '12px',
+              fontSize: '13px',
             }}
           />
           <TextButton
             label='Save'
             loading={loading}
-            variant='filled'
+            // variant='filled'
             onClick={handleSubmit}
             disabled={accountInActive}
             sx={{
@@ -258,11 +258,10 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId, accountInActi
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onClick={openFileDialog}
-          className={`h-[116px] w-[502px] border-[2px] border-dashed rounded-[8px] flex flex-col items-center justify-center gap-2 bg-[#F4F6F9] ${
-            accountInActive
-              ? 'border-gray-300 cursor-not-allowed opacity-50'
-              : 'border-[#0176D3] cursor-pointer'
-          }`}
+          className={`h-[116px] w-[502px] border-[2px] border-dashed rounded-[8px] flex flex-col items-center justify-center gap-2 bg-[#F4F6F9] ${accountInActive
+            ? 'border-gray-300 cursor-not-allowed opacity-50'
+            : 'border-[#0176D3] cursor-pointer'
+            }`}
         >
           <img
             src={uploadIcon}
@@ -293,9 +292,8 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId, accountInActi
 
         {message && (
           <div
-            className={`w-[502px] mt-2 text-sm ${
-              message.type === 'error' ? 'text-red-600' : 'text-green-600'
-            }`}
+            className={`w-[502px] mt-2 text-sm ${message.type === 'error' ? 'text-red-600' : 'text-green-600'
+              }`}
           >
             {message.text}
           </div>

@@ -59,7 +59,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
           )}
           <h1 className='text-[14px] font-medium text-[#2D3E4F]'>{title}</h1>
           <div className='text-[14px] font-medium text-[#2D3E4F]'>
-          {(value === 'details' || value === 'cost' || value === 'skill') && resourceNumber}
+            {(value === 'details' || value === 'cost' || value === 'skill') && resourceNumber}
           </div>
         </div>
 
@@ -69,7 +69,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
               <TextButton
                 key={`header-button-${index}`}
                 label={button.label}
-                variant={button.variant}
+                // variant={button.variant}
                 onClick={
                   button.label.toLowerCase() === 'view'
                     ? toggleViewMode

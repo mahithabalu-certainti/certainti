@@ -29,7 +29,7 @@ const BUTTON_STYLES = {
   height: '26px !important',
   fontSize: '13px',
   fontWeight: 400,
-  color: '#F16137',
+  // color: '#F16137',
   bgcolor: '#FFF8F6',
   borderRadius: '2px',
 };
@@ -252,7 +252,7 @@ const Resource: React.FC<ResourceProps> = ({
       navigate(
         `${RESOURCE_CREATE}?account_id=${accountid}${resId ? `&res_id=${resId}` : ''}`,
         {
-          state: {accountDetails, resourceCreate: true},
+          state: { accountDetails, resourceCreate: true },
         }
       );
     }

@@ -22,6 +22,8 @@ import chevronDownIcon from './chevron-down.svg';
 import chevronLeftIcon from './chevron-left.svg';
 import closeCircleIcon from './close-circle.svg';
 import closeIcon from './close.svg';
+import keyContactRemoveIcon from './key-contact-remove-icon.svg';
+import keyContactAddIcon from './key-contact-add-icon.svg';
 import configureSettingIcon from './configure-setting.svg';
 import createresourceIcon from './create-resource.svg';
 import dashboardIcon from './dashboard.svg';
@@ -68,6 +70,7 @@ import uploadIcon from './Vector.svg';
 import addIcon from './addicon.svg';
 import eyeIcon from './eye-icon.svg';
 import backIcon from './chevron-double-left.svg';
+import verticalSeparatorIcon from './verticalSeparatorIcon.svg';
 
 export {
   accountDetailsIcon,
@@ -96,6 +99,8 @@ export {
   chevronLeftIcon,
   closeCircleIcon,
   closeIcon,
+  keyContactRemoveIcon,
+  keyContactAddIcon,
   configureSettingIcon,
   createresourceIcon,
   dashboardIcon,
@@ -130,6 +135,7 @@ export {
   projectsIcon,
   refreshIcon,
   resourceFilterIcon,
+  verticalSeparatorIcon,
   resourceHeaderIcon,
   resourceProfileIcon,
   searchBlackIcon,

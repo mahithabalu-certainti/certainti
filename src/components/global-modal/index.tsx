@@ -137,7 +137,7 @@ export const GlobalModal = ({
             <div className='flex-1 border-r border-[#CBD6E2] pl-9 py-4'>
               <p className='text-[#7D98B6] text-[13px] font-normal leading-6'>Filter Types</p>
               <div className='flex items-center gap-3 h-[28px]'>
-              <img src={allAccountIcon} alt='all account' className='w-5 h-5' />
+                <img src={allAccountIcon} alt='all account' className='w-5 h-5' />
                 <span className='text-[#425A76] text-[13px] font-normal'>All Accounts</span>
               </div>
             </div>
@@ -273,9 +273,9 @@ export const GlobalModal = ({
         <Box className='flex items-center justify-end gap-3 pr-6 w-full h-[48px]'>
           <TextButton
             label="Cancel"
-            color='inherit'
+            // color='inherit'
             onClick={handleCloseModal}
-            variant='outlined'
+            // variant='outlined'
             sx={{
               width: '55px',
               minWidth: '55px',
@@ -286,12 +286,12 @@ export const GlobalModal = ({
           />
           <TextButton
             label='Save'
-            variant='filled'
+            // variant='filled'
             onClick={handleSaveFilters}
             sx={{
               width: '64px',
               minWidth: '64px',
-              backgroundColor: '#F16137',
+              // backgroundColor: '#F16137',
               borderRadius: '2px',
               fontSize: '13px',
               fontWeight: 400,

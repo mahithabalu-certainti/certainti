@@ -17,8 +17,8 @@ import {
   useCreateAccount,
   useUpdateAccount,
 } from '../../services/account-create';
-import { AccountFormData, SelectOption, YesNo } from '../../types';
-import { FormData } from './form-data';
+import { AccountFormData, FieldType, SelectOption, YesNo } from '../../types';
+import { FormData, newKeyContactFields } from './form-data';
 import { DATA_STORAGE_OPTIONS, othersIndustryId, transformFormData } from './utils';
 import { ACCOUNT } from '../../../routes';
 import { STATUS_OPTIONS } from '../../../common-utils';
@@ -34,6 +34,7 @@ export const AccountForm: React.FC = () => {
   const [isParentAccountRequired, setIsParentAccountRequired] = useState(false);
   const [showOthersField, setShowOthersField] = useState(false);
   const [dataResidency, setDataResidency] = useState(DATA_STORAGE_OPTIONS);
+  const [keyContacts, setKeyContacts] = useState<FieldType[]>([]);
   const { successToast } = useToast();
   const location = useLocation();
   const { accountid } = useParams();
@@ -185,6 +186,33 @@ export const AccountForm: React.FC = () => {
     [keyContactRoles.data?.data.keyContactRoles]
   );
 
+  useEffect(() => {
+    setKeyContacts(newKeyContactFields(memoizedRole, isValueUpdateInKeyContact) as []);
+  }, [memoizedRole, isValueUpdateInKeyContact]);
+
+  const removeKeyContactInfo = (index: number) => {
+    // shallow copy keyContacts array
+    const contactsArr = [...keyContacts];
+    //Every time new contact is added it add newKeyContacts length fields
+    // and we need to remove same number of fields from the array for that 
+    // we calculated the length
+    const lengthOfKeyContacts = newKeyContactFields(memoizedRole, isValueUpdateInKeyContact).length;
+    // Finds how many contacts is added like 1, 2, 3 etc
+    const totalContactGrp = Math.floor(keyContacts.length / lengthOfKeyContacts);
+    // Finds which contact is clicked
+    const clickedGroup = totalContactGrp - 1 - (Math.floor(index / lengthOfKeyContacts));
+    // Finds the index of the first contact in the clicked contact group
+    const groupStartIndex = keyContacts.length - ((clickedGroup + 1) * lengthOfKeyContacts);
+
+    // Remove the clicked contact group from the array with the added newKeyContacts length
+    contactsArr.splice(groupStartIndex, lengthOfKeyContacts)
+    setKeyContacts(contactsArr);
+  };
+  const addKeyContactInfo = () => {
+    const newKeyData = newKeyContactFields(memoizedRole, isValueUpdateInKeyContact)
+    setKeyContacts([...keyContacts, ...newKeyData]);
+  }
+
   const submitData = (formValues: Partial<AccountFormData>) => {
     const transformData = transformFormData(
       formValues,
@@ -240,6 +268,23 @@ export const AccountForm: React.FC = () => {
     window.history.back();
   };
 
+  // console.log("formdata", FormData(
+  //   memoizedContry,
+  //   memoizedParentAccounts,
+  //   memoizedCurrency,
+  //   memoizedState,
+  //   dataResidency,
+  //   memoizedIndustry,
+  //   memoizedRole,
+  //   isValueUpdateInKeyContact,
+  //   isParentAccountRequired,
+  //   keyContacts,
+  //   addKeyContactInfo,
+  //   isEditView,
+  //   states.isLoading,
+  //   showOthersField
+  // ))
+
   return (
     <>
       <div className='flex items-center justify-between px-10 py-6 border-b-2 border-gray-200'>
@@ -263,7 +308,6 @@ export const AccountForm: React.FC = () => {
         <div className='flex gap-3'>
           <TextButton
             label='Save'
-            variant='filled'
             loading={createAccount.isPending || updateAccount.isPending}
             onClick={handleExternalSubmit}
             sx={{
@@ -275,8 +319,7 @@ export const AccountForm: React.FC = () => {
           />
           <TextButton
             label='Cancel'
-            variant='outlined'
-            color='inherit'
+            // color='inherit'
             onClick={goBack}
             sx={{
               height: '32px',
@@ -299,9 +342,13 @@ export const AccountForm: React.FC = () => {
           memoizedRole,
           isValueUpdateInKeyContact,
           isParentAccountRequired,
+          keyContacts,
+          addKeyContactInfo,
+          removeKeyContactInfo,
           isEditView,
           states.isLoading,
-          showOthersField
+          showOthersField,
+
         )}
         loading={
           allCountries.isLoading ||

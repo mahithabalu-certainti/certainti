@@ -1,4 +1,4 @@
-import { Autocomplete, Checkbox, colors, Skeleton, TextField } from '@mui/material';
+import { Autocomplete, Checkbox, Skeleton, TextField } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -12,7 +12,10 @@ import {
   arrowDownIcon,
   calendarIcon,
   closeIcon,
+  keyContactRemoveIcon,
+  keyContactAddIcon,
   searchBlackIcon,
+  verticalSeparatorIcon,
 } from '../../assets';
 
 import { useLocation } from 'react-router-dom';
@@ -104,7 +107,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   }, [data, values, state]);
 
   const getFields = (field: FormTypeFields) => {
-    const isError = field.error ? 'border-red-500 bg-[#FEF2F2]' : 'bg-[#FFFFFF] border-gray-300';
+    const isError = field.error ? 'border-red-500 bg-[#FEF2F2]' : 'bg-[#FFFFFF]';
     const fontSize = '0.875rem';
     const fieldValue = (constructFormData[field.name] as string) || '';
     const fieldDisabled = field.disabled ? ' bg-gray-100' : '';
@@ -199,7 +202,24 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             placeholder={field.placeholder}
             autoComplete='off'
             className={
-              'placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium w-full sm:text-sm px-2 h-[32px] border border-[#CBD6E2] rounded-xs' +
+              'focus:outline-none placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium w-full sm:text-sm px-2 h-[32px] border border-[#CBD6E2] rounded-xs' +
+              isError +
+              fieldDisabled
+            }
+            disabled={field.disabled}
+            onChange={(e) => handleChange(e.target.value)}
+            value={fieldValue}
+          />
+        );
+      case 'website':
+        return (
+          <input
+            type={'text'}
+            name={field.name}
+            placeholder={field.placeholder}
+            autoComplete='off'
+            className={
+              'focus:outline-none placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium w-full sm:text-sm px-2 h-[32px]' +
               isError +
               fieldDisabled
             }
@@ -214,7 +234,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             <select
               name={field.name}
               className={
-                'custom-select-no-arrow w-full sm:text-sm px-1.5 py-[6px] border-1 ' +
+                'focus:outline-none custom-select-no-arrow w-full sm:text-sm px-1.5 py-[6px] border border-[#CBD6E2] ' +
                 (fieldValue === '' ? 'text-[#7D98B6] ' : '') +
                 isError +
                 fieldDisabled
@@ -247,7 +267,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return (
           <textarea
             className={
-              'placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium w-full sm:text-sm p-2 border border-[#CBD6E2] rounded-xs h-[95px] resize-none ' +
+              'focus:outline-none placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium w-full sm:text-sm p-2 border border-[#CBD6E2] rounded-xs h-[95px] resize-none ' +
               isError +
               fieldDisabled
             }
@@ -264,7 +284,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             <img
               src={searchBlackIcon}
               alt='search'
-              className='absolute top-1/2 right-3 -translate-y-1/2 z-10'
+              className='focus:outline-none absolute top-1/2 right-3 -translate-y-1/2 z-10'
             />
             <Autocomplete
               options={field.options || []}
@@ -377,7 +397,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
-              className={'placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium' + isError + fieldDisabled}
+              className={'placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium border border-[#CBD6E2]' + isError + fieldDisabled}
               minDate={customMinDate}
               maxDate={customMaxDate}
               value={dayjs(fieldValue, 'MM/DD/YYYY')}
@@ -439,6 +459,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                           WebkitTextFillColor: '#7D98B6 !important',
                         },
                       },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        border: '1px solid #CBD6E2', // match default
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        border: '1px solid #CBD6E2',
+                      },
                       '&.Mui-disabled': {
                         '& input': {
                           color: 'black',
@@ -467,7 +493,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
-              className={'placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium' + isError + fieldDisabled}
+              className={'placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium border border-[#CBD6E2]' + isError + fieldDisabled}
               value={dayjs(fieldValue, 'DD/MM')}
               disabled={field.disabled}
               format='MM/DD'
@@ -488,6 +514,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   size: 'small',
                   disabled: field.disabled,
                   sx: {
+
                     '& .MuiOutlinedInput-root': {
                       height: '32px',
                       borderRadius: '2px',
@@ -510,6 +537,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                           color: 'black',
                           WebkitTextFillColor: 'black',
                         },
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        border: '1px solid #CBD6E2', // match default
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        border: '1px solid #CBD6E2',
                       },
                       '& .MuiIconButton-edgeEnd': {
                         display: 'none',
@@ -543,6 +576,21 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }}
           />
         );
+      case 'button':
+        return (
+          <button
+            className='flex items-center gap-1 bg-[#EAF0F5] h-[30px] rounded-[2px] color-[#2D3E4F] px-2 text-[12px] font-semibold'
+            type='button' onClick={field.onClick}>
+            <span>
+              <img src={keyContactAddIcon} />
+            </span>
+            {field.name}
+          </button>
+        )
+      case 'iconButton':
+        return (
+          <img className='cursor-pointer' src={field.iconUrl || keyContactRemoveIcon} onClick={field.onClick} />
+        )
       default:
         return null;
     }
@@ -934,6 +982,40 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     );
   }
 
+  const loadKeyContactSection = (section: FormType) => {
+    return (
+      <div
+        className={`grid md:grid-cols-15 gap-4 px-6 mb-6`}
+      >
+        {section.fields.map((field, j) => {
+          if (field.hide) return null;
+          return (
+            <div key={j} className={`col-span-${field?.span} md:col-span-${field?.span} flex flex-col`}>
+              <label
+                className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1.5`}
+                htmlFor={field.name}
+              >
+                {field.label}
+                {field.required && (
+                  <span className='text-red-500'> *</span>
+                )}
+              </label>
+              <div>
+                {getFields(field)}
+                {field.error && (
+                  <span className='text-[12px] text-red-400 col-span-full'>
+                    {field.error}
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    )
+
+  }
+
   return (
     <form onSubmit={submitData} ref={formRef}>
       {formData?.map((section, i) => {
@@ -948,34 +1030,51 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 {section.sectionName}
               </h4>
             )}
-            <div
-              className={`grid md:grid-cols-3 gap-4 ${layout === Layout.TYPE_1 ? 'px-10' : 'px-6'} mb-6`}
-            >
-              {section.fields.map((field, j) => {
-                if (field.hide) return null;
-                return (
-                  <div key={j} className={`col-span-1 ${!isHalf ? 'md:col-span-3' : ''} flex flex-col`}>
-                    <label
-                      className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1.5`}
-                      htmlFor={field.name}
-                    >
-                      {field.label}
-                      {field.required && (
-                        <span className='text-red-500'> *</span>
-                      )}
-                    </label>
-                    <div>
-                      {getFields(field)}
-                      {field.error && (
-                        <span className='text-[12px] text-red-400 col-span-full'>
-                          {field.error}
-                        </span>
-                      )}
+            <>
+              {section.sectionName === 'Key Contacts List' ? loadKeyContactSection(section) : <div
+                className={`grid md:grid-cols-3 gap-4 ${layout === Layout.TYPE_1 ? 'px-10' : 'px-6'} mb-6`}
+              >
+                {section.fields.map((field, j) => {
+                  if (field.hide) return null;
+                  return (
+
+                    <div key={j} className={`col-span-1 ${!isHalf ? 'md:col-span-3' : ''} flex flex-col`}>
+                      <label
+                        className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1.5`}
+                        htmlFor={field.name}
+                      >
+                        {field.label}
+                        {field.required && (
+                          <span className='text-red-500'> *</span>
+                        )}
+                      </label>
+                      <div>
+                        {
+                          field.type === 'website' ?
+                            <div className="border border-[#CBD6E2] rounded-[2px] overflow-hidden">
+                              <div className="h-[32px]  box-border flex items-center gap-[4px]">
+                                <span className="pl-[8px] text-[13px] text-[#425A76]">https://</span>
+                                <img src={verticalSeparatorIcon} alt-='separtor' />
+                                {getFields(field)}
+                              </div>
+                            </div>
+                            : getFields(field)
+                        }
+
+                        {field.error && (
+                          <span className='text-[12px] text-red-400 col-span-full'>
+                            {field.error}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+
+
+                  );
+                })}
+              </div>}
+            </>
+
           </div>
         );
       })}

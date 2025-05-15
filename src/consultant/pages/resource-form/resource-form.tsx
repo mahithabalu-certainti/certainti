@@ -47,7 +47,7 @@ const ResourceForm: React.FC = () => {
     state: '',
   });
   const [currentSkillType, setCurrentSkillType] = useState({
-    skillSubType:'',
+    skillSubType: '',
     skill_type: '',
     skill_sub_type: '',
   });
@@ -66,8 +66,8 @@ const ResourceForm: React.FC = () => {
   // Derived values
   const isEditView = location.pathname.includes('/edit');
   const accountData = isEditView
-  ? location?.state?.accountDetails?.data?.accountById
-  : location?.state?.accountDetails?.data?.accountById;
+    ? location?.state?.accountDetails?.data?.accountById
+    : location?.state?.accountDetails?.data?.accountById;
   const resourceName = isEditView
     ? location?.state?.resource?.resource_fullname
     : 'New Resource';
@@ -114,12 +114,12 @@ const ResourceForm: React.FC = () => {
       total_years_experience: resourceDetailsData?.resource_total_experience,
       total_years_in_org:
         resourceDetailsData?.resource_total_experience_organization,
-        Record_id : resourceDetailsData?.rid,
-        Resource_id : resourceDetailsData?.r_number,
-        Created_On : formatDateToMMDDYYYYWithTime(resourceDetailsData?.created_datetime),
-        Created_By : resourceDetailsData?.created_by,
-        Updated_On : formatDateToMMDDYYYYWithTime(resourceDetailsData?.modified_datetime),
-        Updated_By : resourceDetailsData?.modified_by,
+      Record_id: resourceDetailsData?.rid,
+      Resource_id: resourceDetailsData?.r_number,
+      Created_On: formatDateToMMDDYYYYWithTime(resourceDetailsData?.created_datetime),
+      Created_By: resourceDetailsData?.created_by,
+      Updated_On: formatDateToMMDDYYYYWithTime(resourceDetailsData?.modified_datetime),
+      Updated_By: resourceDetailsData?.modified_by,
     };
     setResourceDetails(finalResourceDetails || null);
   }, [resource]);
@@ -146,7 +146,7 @@ const ResourceForm: React.FC = () => {
         skill_type: skillInfo?.skillTypeId || '',
         skill_sub_type: skillInfo?.skillSubTypeId || '',
         skill_start_date: skillInfo?.startDate || '',
-        skill_type_others: skillInfo?.skillTypeOthers || '', 
+        skill_type_others: skillInfo?.skillTypeOthers || '',
         skill_subtype_others: skillInfo?.skillSubTypeOthers || '',
         years_of_experience: skillInfo?.yearsOfExperience || '',
       };
@@ -187,7 +187,7 @@ const ResourceForm: React.FC = () => {
   const states = useFetchState(currentCountry.country);
   const city = useFetchCity(currentCountry.state);
   const { data: skillType } = useFetchResourceSkillType();
-  const { data: skillSubType, isLoading : skillSubTypeLoading } = useFetchResourceSkillSubType(currentSkillType.skill_type);
+  const { data: skillSubType, isLoading: skillSubTypeLoading } = useFetchResourceSkillSubType(currentSkillType.skill_type);
 
   const currency = useFetchCurrency();
   // Mutations
@@ -210,7 +210,7 @@ const ResourceForm: React.FC = () => {
   const memoizedCountry: SelectOption[] = useMemo(() => {
     const countries = allCountries.data?.data.country || [];
     return countries
-      .slice() 
+      .slice()
       .sort((a, b) => a.country_name.localeCompare(b.country_name))
       .map((country) => ({
         label: country.country_name,
@@ -254,15 +254,15 @@ const ResourceForm: React.FC = () => {
     return convertData
   }, [skillType]);
 
-  useEffect(()=>{
-      const data = skillSubType as SkillSubtype[];
-      const finalData = data?.map((skill: SkillSubtype) => ({
-        label: skill.skill_subtype_name,
-        value: skill.rid,
-      })) || []
-      setSkillSubTypeData(finalData)
-  },[skillSubType])
-  
+  useEffect(() => {
+    const data = skillSubType as SkillSubtype[];
+    const finalData = data?.map((skill: SkillSubtype) => ({
+      label: skill.skill_subtype_name,
+      value: skill.rid,
+    })) || []
+    setSkillSubTypeData(finalData)
+  }, [skillSubType])
+
 
   useEffect(() => {
     if (commonSuccess) {
@@ -336,7 +336,7 @@ const ResourceForm: React.FC = () => {
           {
             resource_id: location?.state?.resource?.rid,
             account_number: accountData?.r_number,
-            text:"sample"
+            text: "sample"
           }
         );
         updateResource.mutate(updatedData as any);
@@ -372,15 +372,15 @@ const ResourceForm: React.FC = () => {
         [fieldName]: fieldValue as string,
       }));
     }
-    if(fieldName === 'skill_type') {
+    if (fieldName === 'skill_type') {
       setCurrentSkillType((prev) => ({
-       ...prev,
+        ...prev,
         [fieldName]: fieldValue as string,
       }));
     }
-    if(fieldName === 'skill_sub_type') {
+    if (fieldName === 'skill_sub_type') {
       setCurrentSkillType((prev) => ({
-       ...prev,
+        ...prev,
         [fieldName]: fieldValue as string,
       }));
     }
@@ -453,8 +453,8 @@ const ResourceForm: React.FC = () => {
         <div className='flex gap-3'>
           <TextButton
             label='Cancel'
-            variant='outlined'
-            color='inherit'
+            // variant='outlined'
+            // color='inherit'
             onClick={handleGoBack}
             sx={{
               width: '56px',
@@ -465,7 +465,7 @@ const ResourceForm: React.FC = () => {
           />
           <TextButton
             label='Save'
-            variant='filled'
+            // variant='filled'
             loading={
               createResource.isPending ||
               updateResource.isPending ||
@@ -489,21 +489,21 @@ const ResourceForm: React.FC = () => {
         loading={allCountries.isLoading}
         values={
           isEditView &&
-          !state?.cost &&
-          !state?.skill &&
-          (resourceDetails as unknown as Record<
-            string,
-            string | number | boolean | string[] | null
-          >)
+            !state?.cost &&
+            !state?.skill &&
+            (resourceDetails as unknown as Record<
+              string,
+              string | number | boolean | string[] | null
+            >)
             ? (resourceDetails as unknown as Record<
+              string,
+              string | number | boolean | string[] | null
+            >)
+            : state?.cost || state?.skill
+              ? (formValues as unknown as Record<
                 string,
                 string | number | boolean | string[] | null
               >)
-            : state?.cost || state?.skill
-              ? (formValues as unknown as Record<
-                  string,
-                  string | number | boolean | string[] | null
-                >)
               : undefined
         }
         // values={

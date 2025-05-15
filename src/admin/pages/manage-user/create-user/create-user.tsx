@@ -207,8 +207,8 @@ export const CreateUser: React.FC = () => {
           <div className='flex gap-2 items-center'>
             <TextButton
               label='Back'
-              variant='outlined'
-              color='inherit'
+              // variant='outlined'
+              // color='inherit'
               onClick={goBack}
             // sx={{ width: '45px', minWidth: '45px', fontWeight:400,fontSize: '12px' , height: '32px'}}
             />
@@ -223,19 +223,19 @@ export const CreateUser: React.FC = () => {
             <div className='flex gap-2 m-2'>
               <TextButton
                 label='Cancel'
-                variant='outlined'
-                color='inherit'
+                // variant='outlined'
+                // color='inherit'
                 onClick={goBack}
                 sx={{ width: '56px', minWidth: '56px', fontWeight: 400, fontSize: '12px' }}
               />
               <TextButton
                 label='Save'
-                variant='filled'
+                // variant='filled'
                 loading={updateUser.isPending || createUser.isPending}
                 onClick={handleExternalSubmit}
                 sx={{ width: '64px', minWidth: '64px', fontWeight: 400, fontSize: '13px' }}
               />
-              {isEditView && <TextButton label='Delete' variant='outlined' sx={{ width: '73px', minWidth: '73px', fontWeight: 400, fontSize: '13px' }} />}
+              {isEditView && <TextButton label='Delete' sx={{ width: '73px', minWidth: '73px', fontWeight: 400, fontSize: '13px' }} />}
             </div>
           </div>
           <FormBuilder
