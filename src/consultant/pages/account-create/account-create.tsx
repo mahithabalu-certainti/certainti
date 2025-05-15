@@ -79,10 +79,10 @@ export const AccountForm: React.FC = () => {
           record_id: account?.accountDetails?.rid,
           account_id: account?.accountById?.r_number,
           created_on: getDateTimeFormat(
-            account?.accountDetails?.created_datetime
+            account?.accountById?.created_datetime
           ),
           updated_on: getDateTimeFormat(
-            account?.accountDetails?.modified_datetime
+            account?.accountById?.modified_datetime
           ),
           created_by: account?.accountDetails?.created_by,
           updated_by: account?.accountDetails?.modified_by,
@@ -314,7 +314,7 @@ export const AccountForm: React.FC = () => {
           isParentAccountRequired,
           isEditView,
           states.isLoading,
-          showOthersField,
+          showOthersField
         )}
         loading={
           allCountries.isLoading ||
