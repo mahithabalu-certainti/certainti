@@ -46,10 +46,6 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
   const mappedUserDetails: Detail[] = [
     { label: 'Identity', value: '', full: true },
     {
-      label: 'User ID',
-      value: getValueOrDefault(data?.r_number),
-    },
-    {
       label: 'First Name',
       value: getValueOrDefault(data?.first_name),
     },
@@ -71,21 +67,26 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     { label: 'Status', value: capitalizeFirstLetter(data?.status) },
     { label: 'Address', value: '', full: true },
     { label: 'Street', value: getValueOrDefault(data?.street) },
-    { label: 'City', value: getValueOrDefault(data?.city_name) },
-    {
-      label: 'State/Province',
-      value: getValueOrDefault(data?.state_name),
-    },
-    {
-      label: 'Zip/Postal Code',
-      value: getValueOrDefault(data?.zip_code),
-    },
     {
       label: 'Country',
       value: getValueOrDefault(data?.country_name),
     },
-    { label: 'Audit Info', value: '', full: true },
+    {
+      label: 'Region',
+      value: getValueOrDefault(data?.state_name),
+    },
+    { label: 'City', value: getValueOrDefault(data?.city_name) },
+    {
+      label: 'Zip Code / Area Code',
+      value: getValueOrDefault(data?.zip_code),
+    },
+
+    { label: 'Audit Information', value: '', full: true },
     { label: 'User Record ID', value: getValueOrDefault(data?.rid) },
+    {
+      label: 'User ID',
+      value: getValueOrDefault(data?.r_number),
+    },
     {
       label: 'Created On',
       value: getDateTimeFormat(data?.created_datetime) || 'N/A',

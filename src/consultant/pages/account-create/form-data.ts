@@ -132,9 +132,9 @@ export const FormData = (
           }),
           createTextField('annual_revenue', 'Annual Revenue', {
             required: false,
-            regex: REGEX_PATTERNS.BLENDED_NUMBER,
+            regex: REGEX_PATTERNS.ANNUAL_REVENUE,
             regexErrorMessage:
-              'Only allowed positive numbers, up to 16 digits & 2 decimal places',
+              'Only allowed positive numbers, up to 12 digits & 2 decimal places',
             placeholder: 'Enter Annual Revenue',
           }),
         ],
