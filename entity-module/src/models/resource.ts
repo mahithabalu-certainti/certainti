@@ -5,10 +5,10 @@ export interface ResourcesAttributes {
   rid?: string;
   eid?: string;
   r_number?: string;
-  resource_ref_id: string;
+  resource_code: string;
   resource_type: "Full-Time" | "Sub Con" | "Non-Labor";
   account_rid: string;
-  resource_fullname?: string | null;
+  resource_name?: string | null;
   resource_firstname?: string | null;
   resource_lastname?: string | null;
   resource_orgname?: string | null;
@@ -39,16 +39,16 @@ export class Resources
   public rid?: string;
   public eid?: string;
   public r_number?: string;
-  public resource_ref_id!: string;
+  public resource_code!: string;
   public resource_type!: "Full-Time" | "Sub Con" | "Non-Labor";
-  public resource_fullname?: string | null;
+  public resource_name?: string | null;
   public resource_firstname?: string | null;
   public resource_lastname?: string | null;
   public resource_orgname?: string;
   public resource_role?: string | null;
   public resource_country?: string | null;
   public resource_region?: string | null;
-  public city?: string | null;
+  public resource_city?: string | null;
   public resource_startdate?: Date;
   public resource_enddate?: Date;
   public resource_designation?: string | null;
@@ -84,7 +84,7 @@ export class Resources
           type: DataTypes.UUID,
           allowNull: false,
         },
-        resource_ref_id: {
+        resource_code: {
           type: DataTypes.STRING(50),
           allowNull: false,
           unique: true,
@@ -93,7 +93,7 @@ export class Resources
           type: DataTypes.ENUM("Full-Time", "Sub Con", "Non-Labor"),
           allowNull: false,
         },
-        resource_fullname: {
+        resource_name: {
           type: DataTypes.STRING(200),
           validate: {
             len: [2, 64],
@@ -124,7 +124,7 @@ export class Resources
         resource_role: {
           type: DataTypes.STRING(100),
           validate: {
-            len: [4, 100],
+            len: [3, 100],
           },
           allowNull: true,
         },
@@ -151,7 +151,7 @@ export class Resources
         resource_designation: {
           type: DataTypes.STRING(100),
           validate: {
-            len: [4, 100],
+            len: [3, 100],
           },
           allowNull: true,
         },
@@ -192,7 +192,7 @@ export class Resources
           allowNull: true,
         },
         comments: {
-          type: DataTypes.STRING(1000),
+          type: DataTypes.TEXT,
           allowNull: true,
         },
       },

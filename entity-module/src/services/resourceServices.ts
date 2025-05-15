@@ -223,13 +223,13 @@ export class ResourceService {
       const rawResult = resources.resources || [];
       let exportData = rawResult.map((resource: any) => {
         return {
-          "Resource Code":resource.resource_ref_id,
-          "Name":resource.resource_fullname,
+          "Resource Code":resource.resource_code,
+          "Name":resource.resource_name,
           "Resource Type": resource?.resource_type,
-          "Designation": resource.designation,
+          "Designation": resource.resource_designation,
           "Country": resource.country_name,
           "Region": resource.region_name,
-          "Status": resource.resource_status,
+          "Status": resource.resource_status === "active" ? "Active" : "In-Active",
         };
       });
       return {
@@ -402,8 +402,8 @@ export class ResourceService {
     const validSortColumns = [
       "rid",
       "r_number",
-      "resource_ref_id",
-      "resource_fullname",
+      "resource_code",
+      "resource_name",
       "resource_type",
       "resource_status",
       "resource_role",
@@ -460,7 +460,7 @@ export class ResourceService {
   ): Record<string, any> {
     const searchCondition = {
       [Op.or]: [
-        { resource_fullname: { [Op.iLike]: `%${search}%` } },
+        { resource_name: { [Op.iLike]: `%${search}%` } },
         { r_number: { [Op.iLike]: `%${search}%` } },
       ],
     };
@@ -483,13 +483,13 @@ export class ResourceService {
     filters: Record<string, any>,
     whereClause: Record<string, any>
   ): Record<string, any> {
-    const castToTextFields = ["resource_type", "resource_fullname", "resource_designation", "r_number", "resource_ref_id","resource_status"];
+    const castToTextFields = ["resource_type", "resource_name", "resource_designation", "r_number", "resource_code","resource_status"];
     const uuidFields = ["resource_country","resource_region"];
 
     const filterFields = [
-      { clientField: "resource_ref_id", dbField: "resource_ref_id" },
+      { clientField: "resource_code", dbField: "resource_code" },
       { clientField: "r_number", dbField: "r_number" },
-      { clientField: "resource_fullname", dbField: "resource_fullname" },
+      { clientField: "resource_name", dbField: "resource_name" },
       { clientField: "resource_type", dbField: "resource_type" },
       { clientField: "resource_status", dbField: "resource_status" },
       { clientField: "resource_designation", dbField: "resource_designation" },
