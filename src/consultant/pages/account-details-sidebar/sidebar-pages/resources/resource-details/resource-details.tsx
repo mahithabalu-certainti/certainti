@@ -15,12 +15,116 @@ interface DetailItem {
   value: React.ReactNode;
 }
 
+interface AuditDetailsSectionProps {
+  title: string;
+  data: {
+    rid: string;
+    r_number: string;
+    created_datetime: string;
+    created_by: string;
+    modified_datetime: string;
+    modified_by: string | null;  
+  };
+}
+
 const formatKey = (key: string): string => {
   return key
     .split('_')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 };
+interface AuditDetailsSectionProps {
+  title: string;
+  data: {
+    rid: string;
+    r_number: string;
+    created_datetime: string;
+    created_by: string;
+    modified_datetime: string;
+    modified_by: string | null;
+  };
+}
+
+interface AuditItem {
+  label: string;
+  value: React.ReactNode;
+  column: 1 | 2;
+  row?: number;
+}
+
+const AuditDetailsSection: React.FC<AuditDetailsSectionProps> = ({ title, data }) => {
+  // Define audit items with their columns
+  const auditItems: AuditItem[] = [
+    { label: 'Record ID', value: data.rid, column: 1 },
+    { 
+      label: 'Created On', 
+      value: formatDateToMMDDYYYYWithTime(data.created_datetime), 
+      column: 1 
+    },
+    { 
+      label: 'Updated On', 
+      value: formatDateToMMDDYYYYWithTime(data.modified_datetime), 
+      column: 1 
+    },
+    { label: 'Resource ID', value: data.r_number, column: 2 },
+    { label: 'Created By', value: data.created_by, column: 2 },
+    { label: 'Updated By', value: data.modified_by, column: 2 },
+  ];
+
+  // Group items by column
+  const columnOneItems = auditItems.filter(item => item.column === 1);
+  const columnTwoItems = auditItems.filter(item => item.column === 2);
+  
+  return (
+    <div className="mt-6">
+      <div className="text-[16px] text-[#2D3E4F] font-semibold">
+        {title}
+      </div>
+      
+      <div className="grid grid-cols-1 text-sm md:grid-cols-2 my-1.5 gap-x-6">
+        {/* First Column */}
+        <div>
+          {columnOneItems.map((item, index) => (
+            <AuditItemRow key={`col1-${index}`} item={item} />
+          ))}
+        </div>
+        
+        {/* Second Column */}
+        <div>
+          {/* First row - Resource Id */}
+          <AuditItemRow item={columnTwoItems[0]} />
+          
+          {/* Second row - Empty space for alignment */}
+          <div>&nbsp;</div>
+          
+          {/* Remaining items */}
+          {columnTwoItems.slice(1).map((item, index) => (
+            <AuditItemRow key={`col2-${index + 1}`} item={item} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Extracted reusable row component
+const AuditItemRow: React.FC<{ item: AuditItem }> = ({ item }) => {
+  if (!item) return null;
+  
+  return (
+    <div className="grid grid-cols-2 py-2">
+      <div className="text-right font-normal text-[14px] text-[#65686F] pr-4 min-w-[120px] break-words">
+        {item.label}
+      </div>
+      <div className="font-light text-[14px] pl-2 break-words">
+        <span className="font-light text-[14px] text-[#2D3E4F]">
+          {item.value || 'NA'}
+        </span>
+      </div>
+    </div>
+  );
+};
+
 
 const DetailsSection: React.FC<{
   title: string;
@@ -49,44 +153,50 @@ const DetailsSection: React.FC<{
       }
     }
     return (
-      <span className='font-light text-[14px] text-[#2D3E4F]'>{value || 'NA'}</span>
+      <span className='font-light text-[14px] text-[#2D3E4F]'>
+        {value || 'NA'}
+      </span>
     );
   };
 
   return (
     <div className={title === 'Basic Information' ? 'mt-0' : 'mt-6'}>
-      <div className=' text-[16px] text-[#2D3E4F] font-semibold'>{title}</div>
-      <div className='grid grid-cols-1 text-sm md:grid-cols-2 my-1.5 gap-x-6'>
-        {/* Left column */}
-        <div>
-          {leftColumn.map((item, index) => (
-            <div key={`left-${index}`} className='grid grid-cols-2 py-2'>
-              <div className='text-right  font-normal text-[14px]  text-[#65686F] w-[85%]'>
-                {item.label}
-              </div>
-              <div className=' font-light text-[14px]'>
-                {renderValue(item.value)}
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className='text-[16px] text-[#2D3E4F] font-semibold'>{title}</div>
+      <div className='text-sm my-1.5 grid gap-y-2'>
+        {leftColumn.map((leftItem, index) => {
+          const rightItem = rightColumn[index];
 
-        {/* Right column */}
-        <div>
-          {rightColumn.map((item, index) => (
+          return (
             <div
-              key={`right-${index}`}
-              className='grid grid-cols-2 py-2'
+              key={`row-${index}`}
+              className='grid grid-cols-1 md:grid-cols-2 gap-6'
             >
-              <div className='text-right  font-normal text-[14px]  text-[#65686F] w-[85%]'>
-                {item.label}
+              {/* Left column */}
+              <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-4 py-2'>
+                <div className='text-right font-normal text-[14px] text-[#65686F] pr-2'>
+                  {leftItem.label}
+                </div>
+                <div className='font-light text-[14px] break-all overflow-hidden'>
+                  {renderValue(leftItem.value)}
+                </div>
               </div>
-              <div className=' font-light text-[14px]'>
-                {renderValue(item.value)}
-              </div>
+
+              {/* Right column */}
+              {rightItem ? (
+                <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-4 py-2'>
+                  <div className='text-right font-normal text-[14px] text-[#65686F] pr-2'>
+                    {rightItem.label}
+                  </div>
+                  <div className='font-light text-[14px] break-all overflow-hidden'>
+                    {renderValue(rightItem.value)}
+                  </div>
+                </div>
+              ) : (
+                <div />
+              )}
             </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -96,7 +206,6 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   resourceId,
   accountId,
 }) => {
-
   const {
     data: resource,
     isLoading,
@@ -105,7 +214,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   const resourceData = resource?.data?.resourceDetails;
 
-  const   CreateSectionData = (
+  const CreateSectionData = (
     dataObj: Partial<CreateSectionData>,
     customMappings?: Record<string, (val: any) => React.ReactNode>
   ) => {
@@ -165,8 +274,6 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
           label: 'Resource Org Name',
           value: value ?? 'NA', // or handle nested objects differently
         };
-
-        
       }
 
       const displayValue =
@@ -227,7 +334,10 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
     resource_code: resourceData.resource_ref_id,
     resource_fullname: resourceData.resource_fullname,
     resource_type: resourceData.resource_type,
+    frist_name: resourceData.resource_firstname,
+    last_name: resourceData.resource_lastname,
     resource_orgname: resourceData.resource_orgname,
+    role: resourceData.resource_role,
     status: resourceData.resource_status,
   });
 
@@ -254,14 +364,6 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   const description = CreateSectionData({
     comments: resourceData.comments,
   });
-  const auditLogSection = CreateSectionData({
-    record_id: resourceData.rid,
-    resource_id: resourceData.r_number,
-    Created_On: formatDateToMMDDYYYYWithTime(resourceData.created_datetime),
-    Created_By: resourceData.created_by,
-    Updated_On: formatDateToMMDDYYYYWithTime(resourceData.modified_datetime),
-    Updated_By: resourceData.modified_by,
-  });
 
   return (
     <div className='max-w-6xl p-6'>
@@ -272,7 +374,17 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
       />
       <DetailsSection title='Employment Details' data={employmentDetails} />
       <DetailsSection title='Comments' data={description} />
-      <DetailsSection title='Audit Information' data={auditLogSection} />
+      <AuditDetailsSection
+        title='Audit Information'
+        data={{
+          rid: resourceData.rid,
+          r_number: resourceData.r_number,
+          created_datetime: resourceData.created_datetime,
+          created_by: resourceData.created_by,
+          modified_datetime: resourceData.modified_datetime,
+          modified_by: resourceData.modified_by,
+        }}
+      />
     </div>
   );
 };

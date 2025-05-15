@@ -170,7 +170,7 @@ export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle }) => {
       open={isMenuOpen}
       onClose={handleMenuClose}
     >
-      <MenuItem sx={{ fontSize: '14px' }} onClick={goToProfile}>Profile</MenuItem>
+      <MenuItem sx={{ fontSize: '14px' }} onClick={goToProfile}>View Profile Details</MenuItem>
       <MenuItem sx={{ fontSize: '14px' }} onClick={changePassword}>Change Password</MenuItem>
       <MenuItem sx={{ fontSize: '14px' }} onClick={handleLogout}>Logout</MenuItem>
     </Menu>

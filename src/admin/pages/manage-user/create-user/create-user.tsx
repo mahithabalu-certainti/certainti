@@ -123,22 +123,22 @@ export const CreateUser: React.FC = () => {
 
   const submitData = (data: Partial<UserDetail>) => {
     if (isEditView && userDatas) {
-      const normalizeValue = (value: unknown) => {
-        return value === undefined || value === null || value === ''
-          ? ''
-          : value;
-      };
+      // const normalizeValue = (value: unknown) => {
+      //   return value === undefined || value === null || value === ''
+      //     ? ''
+      //     : value;
+      // };
 
-      const compareData = (data: Partial<UserDetail>, userDatas: UserDetail) => {
-        return Object.entries(data).some(([key, value]) => {
-          return normalizeValue(value) !== normalizeValue(userDatas[key as keyof UserDetail]);
-        });
-      };
+      // const compareData = (data: Partial<UserDetail>, userDatas: UserDetail) => {
+      //   return Object.entries(data).some(([key, value]) => {
+      //     return normalizeValue(value) !== normalizeValue(userDatas[key as keyof UserDetail]);
+      //   });
+      // };
 
-      if (!compareData(data, userDatas)) {
-        window.history.back();
-        return;
-      }
+      // if (!compareData(data, userDatas)) {
+      //   window.history.back();
+      //   return;
+      // }
 
       const constructData = {
         ...data,
@@ -178,10 +178,16 @@ export const CreateUser: React.FC = () => {
   };
 
   const onChangeField = ({ fieldName, fieldValue }: OnChange) => {
-    if (fieldName === 'country' || fieldName === 'state') {
+    if(fieldName === 'country'){
+      setCurrentCountry({
+        country: fieldValue as string,
+        state: '',
+      });
+    }
+    if (fieldName === 'state') {
       setCurrentCountry((prev) => ({
         ...prev,
-        [fieldName]: fieldValue as string,
+        state: fieldValue as string,
       }));
     }
   };

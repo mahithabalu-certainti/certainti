@@ -1,5 +1,5 @@
 import { AccountList, ConvertedAccount } from '../../types';
-import { FieldConfig } from '../../types/account-filter';
+import { FieldConfig, StatusOptions } from '../../types/account-filter';
 
 export const getAccountFilterfields = (countryOptions: string[], currencyOptions: string[]): FieldConfig[] => [
   { label: 'Parent Account', name: 'parent_account', type: 'text' },
@@ -10,7 +10,7 @@ export const getAccountFilterfields = (countryOptions: string[], currencyOptions
   { label: 'Country', name: 'country', type: 'multi-select', options: countryOptions },
   { label: 'Currency', name: 'currency', type: 'multi-select', options: currencyOptions },
   { label: 'Annual Revenue', name: 'annual_revenue', type: 'number' },
-  { label: 'Status', name: 'status', type: 'status', options: ['Active', 'Inactive'] },
+  { label: 'Status', name: 'status', type: 'status', options: StatusOptions },
   { label: 'Primary Contact', name: 'primary_contact', type: 'text' },
   { label: 'Is Parent Account', name: 'is_parent_account', type: 'boolean' },
 ];

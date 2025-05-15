@@ -95,7 +95,7 @@ const Table = <T extends RowData>({
     <>
     <Paper sx={{ boxShadow: 'none', borderBottom: '1px solid #CBD6E2',borderRadius: '0px' }}>
       <TableContainer sx={{ maxHeight: 'calc(85vh - 200px)', overflow:'auto', position:'relative' }}>
-        <MuiTable stickyHeader>
+        <MuiTable stickyHeader sx={{ tableLayout: 'fixed' }}>
           <TableHead
             sx={{
               '& .MuiTableCell-root': {

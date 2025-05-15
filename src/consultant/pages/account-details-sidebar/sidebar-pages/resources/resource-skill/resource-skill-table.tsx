@@ -21,6 +21,7 @@ import { RESOURCESKILL } from "../../../../../../routes";
 import ActionButton from '../../../../account-list/table/action-button';
 import { TablePagination } from '../../../../../../components/table';
 import { arrowDownIcon, arrowUpIcon } from '../../../../../../assets';
+import { TruncateWithTooltip } from '../../../../../../components';
 
 interface ResourceSkillTableProps {
   fiscalYear?: number;
@@ -119,9 +120,21 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
           >
             {/* <TableCell sx={{ minWidth: '200px' }}>{skill.resourceRole}</TableCell> */}
             <TableCell sx={{ minWidth: '120px' }}>{skill.startDate}</TableCell>
-            <TableCell sx={{ minWidth: '120px' }}>{skill.skillType}</TableCell>
-            <TableCell sx={{ minWidth: '120px' }}>{skill.skillSubType}</TableCell>
-            <TableCell sx={{ minWidth: '140px' }}>{skill.skillDetails}</TableCell>
+            <TableCell sx={{ minWidth: '120px' }}>
+              <TruncateWithTooltip text={String(skill.skillType)}>
+                {skill.skillType}
+              </TruncateWithTooltip>
+            </TableCell>
+            <TableCell sx={{ minWidth: '120px' }}>
+              <TruncateWithTooltip text={String(skill.skillSubType)}>
+                {skill.skillSubType}
+              </TruncateWithTooltip>
+            </TableCell>
+            <TableCell sx={{ minWidth: '140px' }}>
+              <TruncateWithTooltip text={String(skill.skillDetails)}>
+                {skill.skillDetails}
+              </TruncateWithTooltip>
+            </TableCell>
             <TableCell sx={{ minWidth: '120px' }}>{skill.skillLevel}</TableCell>
             <TableCell sx={{ padding: '0px !important' }}>
               <ActionButton

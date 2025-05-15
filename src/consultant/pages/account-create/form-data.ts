@@ -260,7 +260,8 @@ export const FormData = (
           createTextField('annual_revenue', 'Annual Revenue', {
             required: false,
             regex: REGEX_PATTERNS.ANNUAL_REVENUE,
-            regexErrorMessage: 'Enter a valid annual revenue',
+            regexErrorMessage:
+              'Only allowed positive numbers, up to 12 digits & 2 decimal places',
             placeholder: 'Enter Annual Revenue',
           }),
         ],
@@ -390,13 +391,14 @@ export const FormData = (
             required: false,
             regex: REGEX_PATTERNS.BLENDED_NUMBER,
             regexErrorMessage:
-              'Only allowed positive numbers , up to 18 digits & 2 decimal places',
+              'Only allowed positive numbers, up to 16 digits & 2 decimal places',
             placeholder: 'Enter Blended Rate - FTE',
           }),
           createTextField('blended_rate_subcon', 'Blended Rate - SubCon', {
             required: false,
             regex: REGEX_PATTERNS.BLENDED_NUMBER,
-            regexErrorMessage: 'Numbers only allowed, up to 10 digits',
+            regexErrorMessage:
+              'Only allowed positive numbers, up to 16 digits & 2 decimal places',
             placeholder: 'Enter Blended Rate - SubCon',
           }),
           createRadioField('data_storage', 'Data Residency', {
@@ -415,6 +417,37 @@ export const FormData = (
             regex: REGEX_PATTERNS.ACCOUNT_DESCRIPTION,
             regexErrorMessage: 'Comments must be within 2000 characters',
             placeholder: 'Enter Comments',
+          }),
+        ],
+      },
+      {
+        sectionName: 'Audit Information',
+        fillType: 'half',
+        hide: !disableFields,
+        fields: [
+          createTextField('record_id', 'Record ID', {
+            required: false,
+            disabled: true,
+          }),
+          createTextField('account_id', 'Account ID', {
+            required: false,
+            disabled: true,
+          }),
+          createTextField('created_on', 'Created On', {
+            required: false,
+            disabled: true,
+          }),
+          createTextField('created_by', 'Created By', {
+            required: false,
+            disabled: true,
+          }),
+          createTextField('updated_on', 'Updated On', {
+            required: false,
+            disabled: true,
+          }),
+          createTextField('updated_by', 'Updated By', {
+            required: false,
+            disabled: true,
           }),
         ],
       },

@@ -306,11 +306,13 @@ export const DateFilterControl: React.FC<{
   menuOption: { option: string; value: string }[];
   fieldName: string;
   state: FilterState;
+   mode?: 'year' | 'date';
   onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
   onValueChange: (
     type: 'from' | 'to',
     fieldName: string,
-    dateValue: string
+    dateValue: string,
+    mode?: 'year' | 'date'
   ) => void;
 }> = ({
   filterStates,
@@ -319,6 +321,7 @@ export const DateFilterControl: React.FC<{
   state,
   onOptionChange,
   onValueChange,
+  mode = 'date',
 }) => {
     const option = formatString(filterStates?.[fieldName]?.date?.option);
     const isBetween = option === 'Between';
@@ -376,7 +379,30 @@ export const DateFilterControl: React.FC<{
             },
           }}
         >
-          {!disableInput && (
+          {!disableInput && ( 
+            mode === 'year' ? (
+              <FormControl fullWidth size="small" sx={{ mt: 1 }}>
+                <Select
+                  value={state.date?.value.from || ''}
+                  onChange={(e) => onValueChange('from', fieldName, e.target.value)}
+                  displayEmpty
+                  inputProps={{ 'aria-label': 'Select Year' }}
+                  sx={{ fontSize: '12px', fontWeight: 300, height: '40px' }}
+                >
+                  <MenuItem value="" disabled>Select Year</MenuItem>
+                  {Array.from({ length: 6 }).map((_, index) => {
+                    const year = new Date().getFullYear() - index;
+                    return (
+                      <MenuItem key={year} value={year.toString()}
+                      sx={{ fontSize: '12px', fontWeight: 300,}} 
+                      >
+                        {year}
+                      </MenuItem>
+                    );
+                  })}
+                </Select>
+              </FormControl>
+            ) : (
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DatePicker
                 name='from'
@@ -426,7 +452,8 @@ export const DateFilterControl: React.FC<{
                   },
                 }}
               />
-            </LocalizationProvider>
+            </LocalizationProvider> 
+          )
           )}
           {isBetween && (
             <LocalizationProvider dateAdapter={AdapterDayjs}>
