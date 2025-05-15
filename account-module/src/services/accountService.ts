@@ -400,7 +400,7 @@ class AccountService {
         let exportDetails: any[] = [];
         cleanedUsers.forEach((account: any) => {
           const baseRow = {
-            "Account name": account?.account_name || "",
+            "Account Name": account?.account_name || "",
             "Parent Account": account?.parent_account?.account_name || "",
             // "RecordId": account?.rid || "",
             "Account Id": account?.r_number || "",
