@@ -163,7 +163,23 @@ const DetailsSection: React.FC<{
     <div className={title === 'Basic Information' ? 'mt-0' : 'mt-6'}>
       <div className='text-[16px] text-[#2D3E4F] font-semibold'>{title}</div>
       <div className='text-sm my-1.5 grid gap-y-2'>
-        {leftColumn.map((leftItem, index) => {
+      {title === 'Comments' ? (
+        // Full-width single column layout for Comments
+        data.map((item, index) => (
+          <div
+            key={`comment-row-${index}`}
+            className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-4 py-2'
+          >
+            <div className='text-right font-normal text-[14px] text-[#65686F] pr-2'>
+              {item.label}
+            </div>
+            <div className='font-light text-[14px] break-all overflow-hidden'>
+              {renderValue(item.value)}
+            </div>
+          </div>
+        ))
+      ) : (
+        leftColumn.map((leftItem, index) => {
           const rightItem = rightColumn[index];
 
           return (
@@ -196,7 +212,8 @@ const DetailsSection: React.FC<{
               )}
             </div>
           );
-        })}
+        })  
+      )}
       </div>
     </div>
   );
@@ -331,8 +348,8 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   // Section data with custom formatting where needed
   const basicInfo = CreateSectionData({
-    resource_code: resourceData.resource_ref_id,
-    resource_fullname: resourceData.resource_fullname,
+    resource_code: resourceData.resource_code,
+    resource_fullname: resourceData.resource_name,
     resource_type: resourceData.resource_type,
     frist_name: resourceData.resource_firstname,
     last_name: resourceData.resource_lastname,

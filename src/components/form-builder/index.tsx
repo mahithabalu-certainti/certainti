@@ -765,7 +765,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 hasError = true;
                 return {
                   ...field,
-                  error: `${field.name === 'skill_start_date' ? 'Start date' : 'Effective date'} must be within the last 7 years from today`,
+                  error: `Effective date must be within the last 7 years from today`,
                 };
               }
             }
@@ -810,7 +810,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 hasError = true;
                 return {
                   ...field,
-                  error: `${field.name === 'resource_startdate' ? 'Effective Date' : 'This date'} cannot be in the future`,
+                  error: `${field.name === 'resource_startdate' ? 'Effective Date' : field.name === 'skill_start_date' ? "Start Date" : 'This date'} cannot be in the future`,
                 };
               }
               if (dateValue && !isValidDate(dateValue, 'MM/DD/YYYY')) {
@@ -857,9 +857,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               return {
                 ...field,
                 error:
-                  field.name === 'resource_startdate'
-                    ? 'Effective Date cannot be before 01-01-1950'
-                    : 'Date cannot be before 01-01-1950',
+                field.name === 'resource_startdate'
+                  ? 'Effective Date cannot be before 01-01-1950'
+                  : field.name === 'skill_start_date' ? 'Start Date cannot be before 01-01-1950'
+                  : 'Date cannot be before 01-01-1950',
               };
             }
 

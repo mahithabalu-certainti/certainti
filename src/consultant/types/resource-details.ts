@@ -4,12 +4,12 @@ export interface ResourceDetailsTypes {
   rid: string;
   r_number: string;
   eid: string | null;
-  resource_ref_id: string;
+  resource_code: string;
   resource_region: string;
   resource_designation: string;
   resource_city: string;
   resource_type: string;
-  resource_fullname: string;
+  resource_name: string;
   resource_firstname: string;
   resource_lastname: string;
   resource_orgname: string;
@@ -43,9 +43,9 @@ export interface ResourceDetailsForPayload {
   rid: string;
   r_number: string;
   eid: string | null;
-  resource_ref_id: string;
+  resource_code: string;
   resource_type: string;
-  resource_fullname: string;
+  resource_name: string;
   resource_orgname: string;
   resource_role: string;
   fiscal_year: number;
