@@ -46,7 +46,7 @@ export const FormData = (
             regex: REGEX_PATTERNS.NAME_REGEX,
             placeholder: 'Enter Last Name',
             regexErrorMessage:
-              "First name must contain only letters, apostrophes (') and hyphens (-)",
+              "Last name must contain only letters, apostrophes (') and hyphens (-)",
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_3,
@@ -147,7 +147,8 @@ export const FormData = (
               },
               {
                 regex: REGEX_PATTERNS.POSTAL_CODE,
-                errorMessage: 'Zip Code / Area code must contain only alphanumeric characters and hyphens (-)',
+                errorMessage:
+                  'Zip Code / Area code must contain only alphanumeric characters and hyphens (-)',
               },
             ],
           }),
