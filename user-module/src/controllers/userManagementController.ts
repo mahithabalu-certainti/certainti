@@ -232,26 +232,14 @@ async function createProfile(req: Request, res: Response): Promise<void> {
     if (!validatedData) return;
     
     // Use the validated data instead of req.body
-    const { source_profileId, profile_name, profile_description, profile_type } = validatedData;
-    
-    // Validate required fields
-    if (!source_profileId || !profile_name || !profile_type) {
-      errorLog(methodName, "Source Profile Id, Profile name and type are required");
-      handleErrorResponse(
-        res,
-        constants.BAD_REQUEST,
-        constants.BAD_REQUEST_MESSAGE,
-        "Profile name and type are required"
-      );
-      return;
-    }
+    const { source_profile_id, profile_name, profile_description, profile_type } = validatedData;
     
     // Get user ID from request (assuming it's set by auth middleware)
     const userId = req.headers["x-user-id"] as string || "";
 
     
     const result = await services.userManagementServices.createProfile({
-      source_profileId,
+      source_profile_id,
       profile_name,
       profile_description,
       profile_type
@@ -306,43 +294,7 @@ async function getProfilePermissions(req: Request, res: Response): Promise<void>
     const profileId = req.params.profileId;
     // Get type and id from validated data
     const { type, id } = validatedData;
-    
-    // Validate profile ID
-    if (!profileId) {
-      errorLog(methodName, "Profile ID is required");
-      handleErrorResponse(
-        res,
-        constants.BAD_REQUEST,
-        constants.BAD_REQUEST_MESSAGE,
-        "Profile ID is required"
-      );
-      return;
-    }
-    
-    // Validate type if provided
-    if (type && !['menu', 'module', 'permission'].includes(type as string)) {
-      errorLog(methodName, "Type must be one of: menu, module, permission");
-      handleErrorResponse(
-        res,
-        constants.BAD_REQUEST,
-        constants.BAD_REQUEST_MESSAGE,
-        "Type must be one of: menu, module, permission"
-      );
-      return;
-    }
-    
-    // Validate that id is provided if type is provided
-    if (type && !id) {
-      errorLog(methodName, "ID must be provided when type is specified");
-      handleErrorResponse(
-        res,
-        constants.BAD_REQUEST,
-        constants.BAD_REQUEST_MESSAGE,
-        "ID must be provided when type is specified"
-      );
-      return;
-    }
-    
+
     // Call service method to get permissions
     const result = await services.userManagementServices.getProfilePermissions({
       profileId,
@@ -396,7 +348,7 @@ async function updateProfilePermissions(req: Request, res: Response): Promise<vo
     if (!validatedData) return;
     
     // Use the validated data instead of req.body
-    const { profile_id, profile_name, permissions } = validatedData;
+    const { profile_id, profile_name, privileges } = validatedData;
     
     // Get user ID from request (assuming it's set by auth middleware)
     const userId = req.headers["x-user-id"] as string || "";
@@ -405,7 +357,7 @@ async function updateProfilePermissions(req: Request, res: Response): Promise<vo
     const result = await services.userManagementServices.updateProfilePermissions(
       profile_id,
       profile_name,
-      permissions,
+      privileges,
       userId,
       req.originalUrl // Pass "create" as the event name
     );
@@ -457,7 +409,7 @@ async function editProfilePermissions(req: Request, res: Response): Promise<void
   if (!validatedData) return;
   
   // Use the validated data instead of req.body
-  const { profile_id, profile_name, permissions } = validatedData;
+  const { profile_id, profile_name, privileges } = validatedData;
     
     // Get user ID from request (assuming it's set by auth middleware)
     const userId = req.headers["x-user-id"] as string || "";
@@ -466,7 +418,7 @@ async function editProfilePermissions(req: Request, res: Response): Promise<void
     const result = await services.userManagementServices.updateProfilePermissions(
       profile_id,
       profile_name,
-      permissions,
+      privileges,
       userId,
       req.originalUrl // Pass "edit" as the event name
     );

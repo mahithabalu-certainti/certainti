@@ -104,7 +104,7 @@ export class Profile
         modified_datetime: {
           type: DataTypes.DATE,
           allowNull: true,
-          defaultValue: null,
+          defaultValue: DataTypes.NOW,
         },
       },
       {
@@ -112,40 +112,10 @@ export class Profile
         modelName: "Profile",
         tableName: "profile",
         timestamps: false,
-        hooks: {
-          beforeUpdate: (record) => {
-            record.setDataValue("modified_datetime", new Date());
-          },
-          beforeCreate: async (profile: Profile) => {
-            // Find all profiles with valid r_numbers
-            const profiles = await Profile.findAll({
-              where: {
-                r_number: {
-                  [Op.like]: 'PRF%'
-                }
-              },
-              attributes: ['r_number']
-            });
-            
-            // Extract and find the highest number
-            let maxNumber = 0;
-            profiles.forEach(p => {
-              if (p.r_number) {
-                const numPart = parseInt(p.r_number.replace('PRF', ''), 10);
-                if (!isNaN(numPart) && numPart > maxNumber) {
-                  maxNumber = numPart;
-                }
-              }
-            });
-            
-            // Increment and format
-            const nextNumber = maxNumber + 1;
-            const formattedNumber = `PRF${nextNumber.toString().padStart(5, '0')}`;
-            profile.r_number = formattedNumber;
-          }
-        }
       }
     );
+                // Set up the sequence and default value for r_number
+      setupProfileSequence(sequelize)
   }
   static associate(models: any) {
     // Set up associations after all models are initialized
@@ -158,5 +128,22 @@ export class Profile
       foreignKey: 'modified_by',
       as: 'modifier'
     });
+  }
+}
+
+async function setupProfileSequence(sequelize: Sequelize) {
+  try {
+    // Step 1: Create the sequence if it doesn't exist
+    await sequelize.query('CREATE SEQUENCE IF NOT EXISTS profile_seq START 1');
+    
+    // Step 2: Set the default value for r_number to use the sequence
+    await sequelize.query(`ALTER TABLE profile
+      ALTER COLUMN r_number SET DEFAULT 'PRF ' || LPAD(nextval('profile_seq')::text, 10, '0')`);
+    
+    console.log('Profile sequence setup complete');
+  } catch (error) {
+    console.error('Error setting up profile sequence:', error);
+    // Don't throw the error to allow the application to continue starting up
+    // The sequence setup can be handled separately if needed
   }
 }

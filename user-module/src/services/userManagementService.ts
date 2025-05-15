@@ -39,7 +39,7 @@ class UserManagementService {
    */
   async createProfile(
     profileData: {
-      source_profileId: string;
+      source_profile_id: string;
       profile_name: string;
       profile_description?: string;
       profile_type: string;
@@ -53,20 +53,11 @@ class UserManagementService {
       profile?: any;
       profile_id?: string;
       profile_number?: string;
-      permissions?: any[];
+      privileges?: any[];
     };
   }> {
     try {
-      const { source_profileId, profile_name, profile_description, profile_type } = profileData;
-
-      // Validate required fields
-      if (!source_profileId || !profile_name || !profile_type) {
-        return {
-          statusCode: constants.BAD_REQUEST,
-          message: constants.BAD_REQUEST_MESSAGE,
-          errorMessage: "Source Profile Id, Profile name and type are required"
-        };
-      }
+      const { source_profile_id, profile_name, profile_description, profile_type } = profileData;
 
       // Check if profile name already exists
       const existingProfile = await Profile.findOne({
@@ -94,7 +85,7 @@ class UserManagementService {
       });
       const cloneSuccess = await this.profileClone({
         profileId: profile.rid,
-        source_profileId
+        source_profile_id
       }, userId);
 
       // Record the profile creation event with appropriate status
@@ -110,21 +101,21 @@ class UserManagementService {
         return {
           statusCode: constants.FAILED,
           message: "Profile created but cloning failed",
-          errorMessage: `Profile ${profile.rid} was created but cloning from ${source_profileId} failed`,
+          errorMessage: `Profile ${profile.rid} was created but cloning from ${source_profile_id} failed`,
           data: {
             profile_id: profile.rid,
             profile_number: profile.r_number
           }
         };
       } else {
-        const permissions = await userService.getProfilePermission(profile.rid);
+        const privileges = await userService.getProfilePermission(profile.rid);
         return {
           statusCode: constants.SUCCESS,
           message: constants.SUCCESS_MESSAGE,
           data: {
             profile_id: profile.rid,
             profile_number: profile.r_number,
-            permissions
+            privileges
           }
         };
       }
@@ -176,37 +167,37 @@ class UserManagementService {
   private async profileClone(
     profileData: {
       profileId: string;
-      source_profileId?: string;
+      source_profile_id?: string;
     },
     userId: string
   ): Promise<boolean> {
     try {
-      const { profileId, source_profileId } = profileData;
+      const { profileId, source_profile_id } = profileData;
 
       // Use Promise.all to run these queries in parallel for better performance
       const [menuAccess, moduleAccess, permissionAccess, fieldAccess] = await Promise.all([
         // Get menu access records
         ProfileMenuAccess.findAll({
-          where: { profile_id: source_profileId },
+          where: { profile_id: source_profile_id },
           raw: true
         }),
 
         // Get module access records
         ProfileModuleAccess.findAll({
-          where: { profile_id: source_profileId },
+          where: { profile_id: source_profile_id },
           raw: true
         }),
 
         // Get permission access records
         ProfilePermissionAccess.findAll({
-          where: { profile_id: source_profileId },
+          where: { profile_id: source_profile_id },
           raw: true,
           indexHints: [{ type: IndexHints.USE, values: ['idx_profile_permission_access_profile_id'] }]
         }),
 
         // Get field access records - using index for better performance
         ProfileFieldsAccess.findAll({
-          where: { profile_id: source_profileId },
+          where: { profile_id: source_profile_id },
           raw: true,
           indexHints: [{ type: IndexHints.USE, values: ['idx_profile_fields_access_profile_id'] }]
 
@@ -315,7 +306,7 @@ class UserManagementService {
     data?: {
       profile_id: string;
       profile_number?: string;
-      permissions?: any[];
+      privileges?: any[];
     };
   }> {
     try {
@@ -330,26 +321,21 @@ class UserManagementService {
           errorMessage: `Profile with ID ${profileId} not found`
         };
       }
-
-      // Import UserService to get profile permissions
-      const UserService = require('../services/userService').default;
-      const userService = new UserService();
-
       // Get filtered permissions based on provided parameters
-      let permissions = [];
+      let privileges = [];
 
       if (type === 'permission' && id) {
         // Case 7: If permission type is provided, get only fields for that permission
-        permissions = await this.getFieldsForPermission(profileId, id);
+        privileges = await this.getFieldsForPermission(profileId, id);
       } else if (type === 'module' && id) {
         // Case 6: If module type is provided, get permissions and fields for that module
-        permissions = await this.getPermissionsForModule(profileId, id);
+        privileges = await this.getPermissionsForModule(profileId, id);
       } else if (type === 'menu' && id) {
         // Case 5: If menu type is provided, get modules, permissions, and fields for that menu
-        permissions = await this.getModulesForMenu(profileId, id);
+        privileges = await this.getModulesForMenu(profileId, id);
       } else {
         // Case 4: If no filters, get all permissions for the profile
-        permissions = await userService.getProfilePermission(profileId);
+        privileges = await userService.getProfilePermission(profileId);
       }
 
       return {
@@ -357,7 +343,7 @@ class UserManagementService {
         message: constants.SUCCESS_MESSAGE,
         data: {
           profile_id: profile.rid,
-          permissions
+          privileges
         }
       };
     } catch (err: any) {
@@ -401,7 +387,7 @@ class UserManagementService {
    * Gets permissions and fields for a specific module
    */
   private async getPermissionsForModule(profileId: string, moduleId: string): Promise<any[]> {
-    const permissions = [];
+    const privileges = [];
 
     // Get permission access
     const permissionAccess = await ProfilePermissionAccess.findAll({
@@ -420,7 +406,7 @@ class UserManagementService {
     // Add permissions to result
     for (const pa of permissionAccess) {
       const paWithPermission = pa as any;
-      permissions.push({
+      privileges.push({
         rid: paWithPermission.rid,
         type: "permission",
         permission_id: paWithPermission.module_permission.rid,
@@ -432,14 +418,14 @@ class UserManagementService {
       });
     }
 
-    return permissions;
+    return privileges;
   }
 
   /**
    * Gets modules, permissions, and fields for a specific menu
    */
   private async getModulesForMenu(profileId: string, menuId: string): Promise<any[]> {
-    const permissions = [];
+    const privileges = [];
 
     // Get module access
     const moduleAccess = await ProfileModuleAccess.findAll({
@@ -457,7 +443,7 @@ class UserManagementService {
     // Add modules to result
     for (const ma of moduleAccess) {
       const maWithModule = ma as any;
-      permissions.push({
+      privileges.push({
         rid: maWithModule.rid,
         type: "module",
         module_id: maWithModule.menu_module.rid,
@@ -468,7 +454,7 @@ class UserManagementService {
       });
     }
 
-    return permissions;
+    return privileges;
   }
 
   // ... existing code ...
@@ -805,7 +791,7 @@ class UserManagementService {
    * Updates profile permissions based on modified items
    * 
    * @param {string} profileId - The profile ID to update permissions for
-   * @param {Array} permissions - Array of permission objects with modification flags
+   * @param {Array} privileges - Array of permission objects with modification flags
    * @param {string} userId - The ID of the user making the update
  * @param {string} originalUrl - OriginalUrl of the request
  * @returns {Promise<Object>} - Response object with update status
@@ -813,7 +799,7 @@ class UserManagementService {
   async updateProfilePermissions(
     profileId: string,
     profileName: string,
-    permissions: Array<{
+    privileges: Array<{
       rid: string;
       type: string;
       is_modified: boolean;
@@ -868,7 +854,7 @@ class UserManagementService {
       }
 
       // Filter only modified permissions
-      const modifiedPermissions = permissions.filter(p => p.is_modified === true);
+      const modifiedPermissions = privileges.filter(p => p.is_modified === true);
 
       if (modifiedPermissions.length === 0) {
         return {
