@@ -763,6 +763,15 @@ class UserManagementService {
         };
       } else if (value.contains !== undefined) {
         whereClause[nestedField] = { [Op.iLike]: `%${value.contains}%` };
+      } else if (value.is_empty !== undefined) {
+        // Handle is_empty filter for relation fields
+        if (value.is_empty) {
+          // If is_empty is true, find records where the relation is null
+          whereClause[nestedField] = { [Op.is]: null };
+        } else {
+          // If is_empty is false, find records where the relation is not null
+          whereClause[nestedField] = { [Op.not]: null };
+        }
       }
     }
   }
