@@ -14,7 +14,6 @@ export interface IUserData {
   first_name: string;
   last_name: string;
   middle_name?: string;
-  full_name?: string;
   email: string;
   mobile?: string;
   user_name?: string;

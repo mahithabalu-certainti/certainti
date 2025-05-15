@@ -94,8 +94,6 @@ class UserService {
         role_rid: role,
         middle_name,
         phone,
-        full_name:
-          first_name + (middle_name ? " " + middle_name : "") + " " + last_name,
         created_by: userId,
         modified_by: userId,
       });
@@ -182,11 +180,6 @@ class UserService {
           role_rid: role,
           middle_name,
           phone,
-          full_name:
-            first_name +
-            (middle_name ? " " + middle_name : "") +
-            " " +
-            last_name,
           modified_by: loggedInUser,
           modified_datetime: new Date(),
         },
@@ -906,7 +899,7 @@ async getAllUserPermission(userId: string, profileId: string) {
 
     const { count, rows } = await User.findAndCountAll({
       where: whereClause,
-      attributes: ["rid", "email", "status", "full_name", "first_name"],
+      attributes: ["rid", "email", "status", "first_name"],
       limit,
       offset,
       order,
@@ -982,7 +975,7 @@ async getAllUserPermission(userId: string, profileId: string) {
    * Builds a `whereClause` object for filtering database queries based on provided filters and search criteria.
    *
    * This method constructs a `whereClause` object used to filter database records. It supports searching
-   * for users by fields such as `full_name`, `first_name`, `email`, and `business_teams.business_teams`,
+   * for users by fields such as  `first_name`, `email`, and `business_teams.business_teams`,
    * as well as applying additional filters for specific fields (e.g., `user_name`, `status`, etc.).
    *
    * @param {Record<string, any>} filters - The filtering conditions for specific fields (e.g., user_name, status).
@@ -999,7 +992,6 @@ async getAllUserPermission(userId: string, profileId: string) {
     if (search) {
       const searchCondition = {
         [Op.or]: [
-          { full_name: { [Op.iLike]: `%${search}%` } },
           { first_name: { [Op.iLike]: `%${search}%` } },
           { last_name: { [Op.iLike]: `%${search}%` } },
           { middle_name: { [Op.iLike]: `%${search}%` } },
@@ -1023,7 +1015,6 @@ async getAllUserPermission(userId: string, profileId: string) {
       { clientField: "first_name", dbField: "first_name" },
       { clientField: "last_name", dbField: "last_name" },
       { clientField: "middle_name", dbField: "middle_name" },
-      { clientField: "full_name", dbField: "full_name" },
       { clientField: "r_number", dbField: "r_number" },
       { clientField: "email", dbField: "email" },
       // Status is handled separately
@@ -1107,7 +1098,6 @@ async getAllUserPermission(userId: string, profileId: string) {
       "status",
       "created_datetime",
       "modified_datetime",
-      "full_name",
       "profile",
     ];
 
@@ -1279,7 +1269,7 @@ const rawResult = users || [];
 
     const { count, rows } = await User.findAndCountAll({
       where: whereClause,
-      attributes: ["rid", "email", "status", "full_name", "first_name"],
+      attributes: ["rid", "email", "status", "first_name"],
       order,
       include: [
         {
@@ -1358,7 +1348,7 @@ const rawResult = users || [];
       // Fetch created_by user name if ID exists
       if (userIds.created_by) {
         const [createdByUser] = await sequelize.query(
-          `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          `SELECT first_name || ' ' || last_name AS full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.created_by },
             type: 'SELECT'
@@ -1373,7 +1363,7 @@ const rawResult = users || [];
       // Fetch modified_by user name if ID exists
       if (userIds.modified_by) {
         const [modifiedByUser] = await sequelize.query(
-          `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          `SELECT first_name || ' ' || last_name AS full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.modified_by },
             type: 'SELECT'
