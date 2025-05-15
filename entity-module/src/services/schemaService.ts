@@ -178,8 +178,8 @@ class SchemaService {
         attributes: [
           "rid",
           "r_number",
-          "resource_ref_id",
-          "resource_fullname",
+          "resource_code",
+          "resource_name",
           "resource_type",
           "resource_status",
           "resource_role",
@@ -257,8 +257,8 @@ class SchemaService {
 
       const isRefIdExist = await Resource.findOne({
         where: {
-          resource_ref_id: {
-            [Op.iLike]: resourceData.resource_ref_id,
+          resource_code: {
+            [Op.iLike]: resourceData.resource_code,
           },
         },
       });
@@ -268,9 +268,9 @@ class SchemaService {
       }
 
       const resourceObject = {
-        resource_ref_id: resourceData.resource_ref_id,
+        resource_code: resourceData.resource_code,
         resource_type: resourceData.resource_type,
-        resource_fullname: resourceData.full_name || null,
+        resource_name: resourceData.name || null,
         resource_firstname: resourceData.first_name || null,
         resource_lastname: resourceData.last_name || null,
         resource_status: resourceData.resource_status,
@@ -352,8 +352,8 @@ class SchemaService {
         attributes: [
           "rid",
           "r_number",
-          "resource_ref_id",
-          "resource_fullname",
+          "resource_code",
+          "resource_name",
           "resource_firstname",
           "resource_lastname",
           "resource_type",
@@ -515,7 +515,7 @@ class SchemaService {
       });
 
       const updateResourceObject: any = {
-        resource_fullname: resourceData.full_name || null,
+        resource_name: resourceData.name || null,
         resource_firstname: resourceData.first_name || null,
         resource_lastname: resourceData.last_name || null,
         resource_orgname: resourceData.org_name || null,

@@ -577,6 +577,7 @@ async createResourceCost(
                 effective_date: effectiveDate,
                 end_date: endDate,
                 [`${cost_frequency}_cost`]: Number(cost),
+                rid: { [Op.ne]: rid } // Exclude the current record being updated
               },
             });
 
