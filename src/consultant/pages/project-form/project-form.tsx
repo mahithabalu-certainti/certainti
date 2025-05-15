@@ -10,6 +10,7 @@ import {
   useFetchCurrency,
   useFetchIndustrys,
   useFetchState,
+  useKeyContactRoles,
 } from '../../services/account';
 import {SelectOption } from '../../types';
 import { FormData } from './form-data';
@@ -21,9 +22,19 @@ import { useProjectDetail } from '../../services/project';
 const ProjectForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [currentCountry, setCurrentCountry] = useState('');
+  const [primaryKeyContactInfo, setPrimaryKeyContactInfo] = useState({
+    key_contact_name: '',
+    key_contact_role: '',
+    key_contact_email: '',
+  });
   const { successToast } = useToast();
   const location = useLocation();
   const { accountID, projectID } = location.state;
+  const keyContactInfo = [
+    'key_contact_name',
+    'key_contact_role',
+    'key_contact_email',
+  ];
 
   
   const getProjectData = useProjectDetail(accountID,projectID);
@@ -41,9 +52,14 @@ const ProjectForm: React.FC = () => {
   const currency = useFetchCurrency();
   const industry = useFetchIndustrys();
   const Classification = useFetchClassification();
+  const keyContactRoles = useKeyContactRoles();
   const states = useFetchState(currentCountry);
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
+
+  const isValueUpdateInKeyContact = Object.values(primaryKeyContactInfo).some(
+    (val) => val.trim() !== ''
+  );
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
 console.log(isEditView);
@@ -59,6 +75,18 @@ console.log(isEditView);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
+
+  // useEffect(() => {
+  //   setPrimaryKeyContactInfo({
+  //     key_contact_email: account.key_contact_email || '',
+  //     key_contact_name: account.key_contact_name || '',
+  //     key_contact_role: account.key_contact_role || '',
+  //   });
+  // }, [
+  //   account.key_contact_email,
+  //   account.key_contact_name,
+  //   account.key_contact_role,
+  // ]);
 
   const memoizedContry: SelectOption[] = useMemo(
     () =>
@@ -102,7 +130,14 @@ console.log(isEditView);
       })) || [],
     [states.data?.data.states]
   );
- 
+  const memoizedRole: SelectOption[] = useMemo(
+    () =>
+      keyContactRoles.data?.data.keyContactRoles.map((role) => ({
+        label: role.role_name,
+        value: role.rid,
+      })) || [],
+    [keyContactRoles.data?.data.keyContactRoles]
+  );
   const submitData = (formValues: Partial<NewProjectData>) => {
     console.log(account?.rid);
     const projectData = transformFormData(
@@ -131,6 +166,12 @@ console.log(isEditView);
   const onChangeField = (data: OnChange) => {
     if (data.fieldName === 'country') {
       setCurrentCountry(data.fieldValue as string);
+    }
+    if (keyContactInfo.includes(data.fieldName)) {
+      setPrimaryKeyContactInfo((prev) => ({
+        ...prev,
+        [data.fieldName]: data.fieldValue,
+      }));
     }
   };
   useEffect(() => {
@@ -185,6 +226,8 @@ console.log(isEditView);
             memoizedState,
             memoizedIndustry,
             memoizedClassification,
+            memoizedRole,
+            isValueUpdateInKeyContact,
             isEditView,
             states.isLoading
           )}

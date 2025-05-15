@@ -1,12 +1,13 @@
 import { useMemo } from 'react';
 import {
   createDateField,
-  createPhoneInputField,
   createRadioField,
   createSelectField,
   createTextAreaField,
   createTextField,
   REGEX_PATTERNS,
+  STATUS_OPTIONS,
+  YES_NO_OPTIONS,
 } from '../../../common-utils';
 import { FormType, SelectOption } from '../../types';
 import { fiscalYears } from '../resource-form/form-data';
@@ -32,6 +33,8 @@ export const FormData = (
   state: SelectOption[],
   industry: SelectOption[],
   classification: SelectOption[],
+  roles: SelectOption[],
+  isPrimaryContactRequired: boolean,
   disableFields?: boolean,
   stateLoading?: boolean
 ): FormType[] => {
@@ -117,27 +120,6 @@ export const FormData = (
             placeholder: 'Choose Industry',
             required: false,
           }), 
-          // createTextField('client_organization', 'Client Organization', {
-          //   required:true,
-          //   placeholder: 'Enter a Client Organization',
-          //   lengthRequired: {
-          //     key: 'name_length',
-          //     minMatchedValue: REGEX_PATTERNS.MIN_4,
-          //     minErrorMessage: 'Name must be more than 3 characters long',
-          //     maxMatchedValue: REGEX_PATTERNS.MAX_HUNDERED_REGEX,
-          //     maxErrorMessage: 'Max length exceeded',
-          //   },
-          // }),
-          // createTextField('project_classification', 'Classification', {
-          //   placeholder: 'Enter a Project Classification',
-          //   lengthRequired: {
-          //     key: 'name_length',
-          //     minMatchedValue: REGEX_PATTERNS.MIN_4,
-          //     minErrorMessage: 'Name must be more than 3 characters long',
-          //     maxMatchedValue: REGEX_PATTERNS.MAX_HUNDERED_REGEX,
-          //     maxErrorMessage: 'Max length exceeded',
-          //   },
-          // }),
           createTextField('project_client_group', 'Client Group', {
             placeholder: 'Enter a Project Client Group',
             lengthRequired: {
@@ -212,110 +194,178 @@ export const FormData = (
         ],
       },
       {
-        sectionName: 'Contact Information',
+        sectionName: 'Key Contacts List',
         fillType: 'half',
         fields: [
-          createTextField('project_manager', 'Project Manager', {
-            required: true,
-            placeholder: 'Enter Project Manager',
-            lengthRequired: {
-              key: 'name_length',
-              minMatchedValue: REGEX_PATTERNS.MIN_3,
-              minErrorMessage: 'Project Manager must be more than 2 characters long',
-              maxMatchedValue: REGEX_PATTERNS.MAX_100,
-              maxErrorMessage: 'Max length exceeded',
-            },
-          }),
-          createTextField(
-            'project_tpc_name',
-            'Project Technical POC Name',
-            {
-              placeholder: 'Project Technical Point of Contact Name',
-              lengthRequired: {
-                key: 'name_length',
-                minMatchedValue: REGEX_PATTERNS.MIN_NAME_REGEX,
-                minErrorMessage: 'Name must be more than 2 characters long',
-                maxMatchedValue: REGEX_PATTERNS.MAX_100,
-                maxErrorMessage: 'Max length exceeded',
+          createTextField('key_contact_name', 'Key Contact Name', {
+            required: false,
+            regex: REGEX_PATTERNS.CONTACT_NAME,
+            regexErrorMessage: 'Invalid Name',
+            placeholder: 'Enter Key Contact Name',
+            onChange: true,
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_NAME_REGEX,
+                errorMessage:
+                  'Key Contact Name must be more than 1 characters long',
               },
-            }
-          ),
-          createTextField('project_lead', 'Project Lead', {
-            required: true,
-            placeholder: 'Enter Project Lead',
-            lengthRequired: {
-              key: 'name_length',
-              minMatchedValue: REGEX_PATTERNS.MIN_3,
-              minErrorMessage: 'Project Lead must be more than 2 characters long',
-              maxMatchedValue: REGEX_PATTERNS.MAX_100,
-              maxErrorMessage: 'Max length exceeded',
-            },
+              {
+                regex: REGEX_PATTERNS.MAX_NAME_REGEX,
+                errorMessage: 'Max length exceeded',
+              },
+              {
+                regex: REGEX_PATTERNS.NOT_ALLOW_SPACE_SYMBOLS_AT_START_END,
+                errorMessage:
+                  'Cannot begin or end with a space or special character',
+              },
+            ],
           }),
-          createTextField(
-            'project_tpc_email',
-            'Project Technical POC Email',
-            {
-              regex: REGEX_PATTERNS.EMAIL,
-              placeholder:
-                'Enter Project Technical Point of Contact Email',
-            regexErrorMessage: 'Invalid email address',
-            lengthRequired: {
-              key: 'email_length',
-              minMatchedValue: REGEX_PATTERNS.EMAIL,
-              minErrorMessage: 'Invalid email address',
-              maxMatchedValue: REGEX_PATTERNS.MAX_EMAIL_REGEX,
-              maxErrorMessage: 'Max length exceeded',
-            },
-            }  
-          ),
-          createTextField('spoc_name', 'SPOC Name', {
-            required: true,
-            placeholder: 'Enter SPOC Name',
-            lengthRequired: {
-              key: 'name_length',
-              minMatchedValue: REGEX_PATTERNS.MIN_3,
-              minErrorMessage: 'SPOC name must be more than 2 characters long',
-              maxMatchedValue: REGEX_PATTERNS.MAX_100,
-              maxErrorMessage: 'Max length exceeded',
-            },
+          createSelectField('key_contact_role', 'Key Contact Role', {
+            options: roles,
+            required: false,
+            placeholder: 'Choose Key Contact Role',
+            onChange: true,
           }),
-          createPhoneInputField(
-            'project_tpc_mobile',
-            'Project Technical POC Mobile',
+          createTextField('key_contact_email', 'Key Contact Email', {
+            required: false,
+            placeholder: 'Enter Key Contact Email',
+            onChange: true,
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_EMAIL_REGEX,
+                errorMessage: 'Max length exceeded',
+              },
+              {
+                regex: REGEX_PATTERNS.EMAIL,
+                errorMessage: 'Invalid email address',
+              },
+            ],
+          }),
+          createRadioField('is_primary_contact', 'Is Primary Contact?', {
+            radioOptions: YES_NO_OPTIONS,
+            required: isPrimaryContactRequired,
+            onChange: true,
+          }),
+          createRadioField(
+            'include_in_communication',
+            'Include in Communications?',
             {
+              radioOptions: YES_NO_OPTIONS,
               required: false,
-              placeholder: 'Enter Finance POC Phone',
             }
           ),
-          createTextField('spoc_email', 'SPOC Email', {
+          createSelectField('key_contact_status', 'Key Contact Status', {
             required: false,
-            regex: REGEX_PATTERNS.EMAIL,
-            regexErrorMessage: 'Invalid email address',
-            placeholder: 'Enter SPOC Email',
-            lengthRequired: {
-              key: 'email_length',
-              minMatchedValue: REGEX_PATTERNS.EMAIL,
-              minErrorMessage: 'Invalid email address',
-              maxMatchedValue: REGEX_PATTERNS.MAX_EMAIL_REGEX,
-              maxErrorMessage: 'Max length exceeded',
-            },
-          }),
-          createTextField('project_cc_list', 'Project CC List', {
-            placeholder: 'Enter Project CC List',
-            lengthRequired: {
-              key: 'email_length',
-              minMatchedValue: REGEX_PATTERNS.EMAIL,
-              minErrorMessage: 'Invalid email address',
-              maxMatchedValue: REGEX_PATTERNS.MAX_EMAIL_REGEX,
-              maxErrorMessage: 'Max length exceeded',
-            },
-          }),
-          createPhoneInputField('spoc_mobile', 'SPOC Mobile', {
-            required: false,
-            placeholder: 'Enter SPOC Mobile',
+            options: STATUS_OPTIONS,
+            placeholder: 'Choose Key Contact Status',
           }),
         ],
       },
+      // {
+      //   sectionName: 'Contact Information',
+      //   fillType: 'half',
+      //   fields: [
+      //     createTextField('project_manager', 'Project Manager', {
+      //       required: true,
+      //       placeholder: 'Enter Project Manager',
+      //       lengthRequired: {
+      //         key: 'name_length',
+      //         minMatchedValue: REGEX_PATTERNS.MIN_3,
+      //         minErrorMessage: 'Project Manager must be more than 2 characters long',
+      //         maxMatchedValue: REGEX_PATTERNS.MAX_100,
+      //         maxErrorMessage: 'Max length exceeded',
+      //       },
+      //     }),
+      //     createTextField(
+      //       'project_tpc_name',
+      //       'Project Technical POC Name',
+      //       {
+      //         placeholder: 'Project Technical Point of Contact Name',
+      //         lengthRequired: {
+      //           key: 'name_length',
+      //           minMatchedValue: REGEX_PATTERNS.MIN_NAME_REGEX,
+      //           minErrorMessage: 'Name must be more than 2 characters long',
+      //           maxMatchedValue: REGEX_PATTERNS.MAX_100,
+      //           maxErrorMessage: 'Max length exceeded',
+      //         },
+      //       }
+      //     ),
+      //     createTextField('project_lead', 'Project Lead', {
+      //       required: true,
+      //       placeholder: 'Enter Project Lead',
+      //       lengthRequired: {
+      //         key: 'name_length',
+      //         minMatchedValue: REGEX_PATTERNS.MIN_3,
+      //         minErrorMessage: 'Project Lead must be more than 2 characters long',
+      //         maxMatchedValue: REGEX_PATTERNS.MAX_100,
+      //         maxErrorMessage: 'Max length exceeded',
+      //       },
+      //     }),
+      //     createTextField(
+      //       'project_tpc_email',
+      //       'Project Technical POC Email',
+      //       {
+      //         regex: REGEX_PATTERNS.EMAIL,
+      //         placeholder:
+      //           'Enter Project Technical Point of Contact Email',
+      //       regexErrorMessage: 'Invalid email address',
+      //       lengthRequired: {
+      //         key: 'email_length',
+      //         minMatchedValue: REGEX_PATTERNS.EMAIL,
+      //         minErrorMessage: 'Invalid email address',
+      //         maxMatchedValue: REGEX_PATTERNS.MAX_EMAIL_REGEX,
+      //         maxErrorMessage: 'Max length exceeded',
+      //       },
+      //       }  
+      //     ),
+      //     createTextField('spoc_name', 'SPOC Name', {
+      //       required: true,
+      //       placeholder: 'Enter SPOC Name',
+      //       lengthRequired: {
+      //         key: 'name_length',
+      //         minMatchedValue: REGEX_PATTERNS.MIN_3,
+      //         minErrorMessage: 'SPOC name must be more than 2 characters long',
+      //         maxMatchedValue: REGEX_PATTERNS.MAX_100,
+      //         maxErrorMessage: 'Max length exceeded',
+      //       },
+      //     }),
+      //     createPhoneInputField(
+      //       'project_tpc_mobile',
+      //       'Project Technical POC Mobile',
+      //       {
+      //         required: false,
+      //         placeholder: 'Enter Finance POC Phone',
+      //       }
+      //     ),
+      //     createTextField('spoc_email', 'SPOC Email', {
+      //       required: false,
+      //       regex: REGEX_PATTERNS.EMAIL,
+      //       regexErrorMessage: 'Invalid email address',
+      //       placeholder: 'Enter SPOC Email',
+      //       lengthRequired: {
+      //         key: 'email_length',
+      //         minMatchedValue: REGEX_PATTERNS.EMAIL,
+      //         minErrorMessage: 'Invalid email address',
+      //         maxMatchedValue: REGEX_PATTERNS.MAX_EMAIL_REGEX,
+      //         maxErrorMessage: 'Max length exceeded',
+      //       },
+      //     }),
+      //     createTextField('project_cc_list', 'Project CC List', {
+      //       placeholder: 'Enter Project CC List',
+      //       lengthRequired: {
+      //         key: 'email_length',
+      //         minMatchedValue: REGEX_PATTERNS.EMAIL,
+      //         minErrorMessage: 'Invalid email address',
+      //         maxMatchedValue: REGEX_PATTERNS.MAX_EMAIL_REGEX,
+      //         maxErrorMessage: 'Max length exceeded',
+      //       },
+      //     }),
+      //     createPhoneInputField('spoc_mobile', 'SPOC Mobile', {
+      //       required: false,
+      //       placeholder: 'Enter SPOC Mobile',
+      //     }),
+      //   ],
+      // },
       {
         sectionName: 'Financial Information',
         fillType: 'half',
