@@ -73,7 +73,7 @@ export class Account
           unique: true,
         },
         account_description: {
-          type: DataTypes.STRING(255),
+          type: DataTypes.STRING(2000),
           allowNull: true,
         },
         eid: {

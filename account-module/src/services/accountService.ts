@@ -616,7 +616,8 @@ class AccountService {
           industry_rid: industry_rid,
           modified_by: userId,
           industry_name_other: industry_name_other,
-          annual_revenue: annual_revenue ? new Decimal(annual_revenue).toNumber().toString() : ""
+          annual_revenue: annual_revenue ? new Decimal(annual_revenue).toNumber().toString() : "",
+          modified_datetime: new Date()
         },
         {
           where: {
