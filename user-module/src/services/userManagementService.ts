@@ -519,7 +519,7 @@ class UserManagementService {
       let orderArray;
       if (finalSortBy === 'created_by') {
         orderArray = [
-          [{ model: User, as: 'creator' }, 'first_name', finalSortOrder]
+          [{ model: User, as: 'creator' }, 'full_name', finalSortOrder]
         ] as any; // Type assertion to avoid TypeScript errors
       } else {
         orderArray = [[finalSortBy, finalSortOrder]];
@@ -546,13 +546,13 @@ class UserManagementService {
           {
             model: User,
             as: 'creator',
-            attributes: ['first_name'],
+            attributes: ['full_name'],
             required: includeClause.find(clause => clause.as === 'creator')?.required ?? false
           },
           {
             model: User,
             as: 'modifier',
-            attributes: ['first_name'],
+            attributes: ['full_name'],
             required: false
           }
         ]
@@ -562,9 +562,9 @@ class UserManagementService {
       const transformedProfiles = profiles.map(profile => {
         const plainProfile = profile.get({ plain: true });
 
-        // Only use creator.first_name if it exists and doesn't conflict with filters
-        const createdByName = plainProfile.creator ? plainProfile.creator.first_name : null;
-        const modifiedByName = plainProfile.modifier ? plainProfile.modifier.first_name : null;
+        // Only use creator.full_name if it exists and doesn't conflict with filters
+        const createdByName = plainProfile.creator ? plainProfile.creator.full_name : null;
+        const modifiedByName = plainProfile.modifier ? plainProfile.modifier.full_name : null;
 
         return {
           ...plainProfile,
@@ -661,8 +661,8 @@ class UserManagementService {
         whereClause[field] = { [Op.ne]: value.not_equals };
       } else if (value.contains !== undefined) {
         whereClause[field] = { [Op.iLike]: `%${value.contains}%` };
-      } else if (value.isEmpty !== undefined) {
-        if (value.isEmpty) {
+      } else if (value.is_empty !== undefined) {
+        if (value.is_empty) {
           whereClause[field] = { [Op.or]: [null, ''] };
         } else {
           whereClause[field] = { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] };
@@ -713,8 +713,8 @@ class UserManagementService {
           [Op.gte]: fromDate,
           [Op.lte]: toDate
         };
-      } else if (value.isEmpty !== undefined) {
-        if (value.isEmpty) {
+      } else if (value.is_empty !== undefined) {
+        if (value.is_empty) {
           whereClause[field] = null;
         } else {
           whereClause[field] = { [Op.ne]: null };
@@ -730,7 +730,7 @@ class UserManagementService {
     includeClause: Array<any>
   ): void {
     const relationConfig: Record<string, { model: any; as: string; attribute: string }> = {
-      'created_by': { model: User, as: 'creator', attribute: 'first_name' }
+      'created_by': { model: User, as: 'creator', attribute: 'full_name' }
     };
   
     const config = relationConfig[field];
@@ -747,7 +747,7 @@ class UserManagementService {
       });
     }
   
-    // Reference the nested field (e.g., $creator.first_name$)
+    // Reference the nested field (e.g., $creator.full_name$)
     const nestedField = `$${config.as}.${config.attribute}$`;
   
     if (typeof value === 'object') {

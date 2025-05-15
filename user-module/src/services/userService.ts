@@ -867,36 +867,6 @@ async getAllUserPermission(userId: string, profileId: string) {
     return permissions;
   }
 
-
-  /**
-   * Retrieves a list of all profiles from the `Profile` model.
-   *
-   * This method fetches all the available profiles from the database and returns them in the response.
-   * If the fetch is successful, it returns the profiles in the `data` field of the response.
-   *
-   * @returns {Promise<{ statusCode: string, message: string, data: { profiles: any[] } }>}
-   * A promise that resolves to an object containing the status, message, and the list of profiles.
-   */
-  async profiles(): Promise<{
-    statusCode: number;
-    message: string;
-    errorMessage?: string;
-    data?: { profiles: any };
-  }> {
-    try {
-      const profiles = await Profile.findAll( {order: [["profile_name", "ASC"]]} );
-      return {
-        statusCode: constants.SUCCESS,
-        message: constants.SUCCESS_MESSAGE,
-        data: {
-          profiles,
-        },
-      };
-    } catch (err) {
-      return this.throwServiceError(err as Error);
-    }
-  }
-
   /**
    * Fetches user details based on the provided filters, pagination, and sorting.
    *
