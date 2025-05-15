@@ -404,11 +404,11 @@ class AccountService {
             "Parent Account": account?.parent_account?.account_name || "",
             // "RecordId": account?.rid || "",
             "Account Id": account?.r_number || "",
-            "Indutry": account?.industry?.industry_name || "",
+            "Industry": account?.industry?.industry_name || "",
             "Country": account?.country?.country_name || "",
             "Currency": account?.currency?.currency_code || "",
             "Annual Revenue": account?.annual_revenue || "",
-            "Status": account?.status === 'active' ? 'Active' : 'In Active',
+            "Status": account?.status === 'active' ? 'Active' : 'In-Active',
           };
           exportDetails.push(baseRow);
           if (Array.isArray(account.child_accounts) && account.child_accounts.length > 0) {
@@ -418,11 +418,11 @@ class AccountService {
                 // "RecordId": child?.rid || "",
                 "Parent Account": account?.account_name || "", // parent is current account
                 "Account Id": child?.r_number || "",
-                "Indutry": child?.industry?.industry_name || "",
+                "Industry": child?.industry?.industry_name || "",
                 "Country": child?.country?.country_name || "",
                 "Currency": child?.currency?.currency_code || "",
                 "Annual Revenue": child?.annual_revenue || "",
-                "Status": child?.status === 'active' ? 'Active' : 'In Active',
+                "Status": child?.status === 'active' ? 'Active' : 'In-Active',
               });
             });
           }
@@ -778,11 +778,23 @@ class AccountService {
       const keyContacts = await this.schemaService.fetchKeyContacts(
         accountById?.rid || ""
       );
-
+      let userNames;
+      if(accountById)
+      {
+         userNames = await this.fetchUserNames({
+            created_by: accountById?.created_by || "",
+            modified_by: accountById?.modified_by || "",
+          });
+        (accountById as any).dataValues.created_by = userNames.created_by_name;
+        (accountById as any).dataValues.modified_by = userNames.modified_by_name;
+      }
+    
       // Add key contacts to account details
       const accountData = {
         ...accountDetails.length > 0 ? accountDetails[0] : {},
         keyContacts: keyContacts.length > 0 ? keyContacts : [],
+        created_by: accountDetails.length > 0 ? userNames?.created_by_name || "" : "",
+        modified_by: accountDetails.length > 0 ? userNames?.modified_by_name || "" : ""
       };
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -816,6 +828,43 @@ class AccountService {
       return this.throwServiceError(err as Error);
     }
   }
+  
+   /**
+   * Fetches user names for user IDs from the main database
+   * @param userIds - Object containing user IDs (created_by, modified_by)
+   * @returns Promise resolving to object with user names
+   */
+  private async fetchUserNames(userIds: { created_by?: string, modified_by?: string }): Promise<{ created_by_name: string, modified_by_name: string }> {
+    const result = {
+      created_by_name: '',
+      modified_by_name: ''
+    };
+    
+    try {
+      
+      // Fetch created_by user name if ID exists
+      if (userIds.created_by) {
+        const [createdByUser] = await this.schemaService.fetchUserNames(userIds.created_by)
+        if (createdByUser) {
+          result.created_by_name = (createdByUser as any).full_name;
+        }
+      }
+      
+      // Fetch modified_by user name if ID exists
+      if (userIds.modified_by) {
+        const [modifiedByUser] = await this.schemaService.fetchUserNames(userIds.modified_by)    
+        if (modifiedByUser) {
+          result.modified_by_name = (modifiedByUser as any).full_name;
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user names:', error);
+      // Return empty strings if there's an error
+    }
+    
+    return result;
+  }
+
   
   async listGlobalAccounts(): Promise<{
     statusCode: number;

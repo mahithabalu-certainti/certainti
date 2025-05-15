@@ -422,6 +422,17 @@ class SchemaService {
       throw new Error("Error retrieving account details");
     }
   }
+  async fetchUserNames(created_by:string)
+  {
+     const sequelize = await initSequelize();
+     return await sequelize.query(
+          `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          {
+            replacements: { userId: created_by },
+            type: 'SELECT'
+          }
+        )
+  }
 
   async fetchKeyContacts(account_rid: string) {
     const sequelize = await initOrgSequelize();

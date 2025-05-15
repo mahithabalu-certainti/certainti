@@ -30,7 +30,7 @@ const allowedTLDs = [
 const accountSchema = Joi.object({
   account_id: Joi.string().max(255).allow(null).optional(),
   account_name: Joi.string().min(7).max(125).required(),
-  account_description: Joi.string().max(500).optional().allow("").allow(null),
+  account_description: Joi.string().max(2000).optional().allow("").allow(null),
   status: Joi.string().valid("active", "inactive").required(),
   is_parent: Joi.boolean().required(),
   parent_account_rid: Joi.string().allow(null).optional(),
@@ -101,9 +101,9 @@ const accountSchema = Joi.object({
     .max(50)
     .allow(null)
     .optional()
-    .pattern(/^(https?:\/\/)[a-zA-Z0-9.-]+(:[0-9]+)?(\/[a-zA-Z0-9.-]*)*\/?$/)
+    .pattern(/^(https?:\/\/|www\.)[a-zA-Z0-9.-]+(:[0-9]+)?(\/[a-zA-Z0-9.-]*)*\/?$/)
     .messages({
-      "string.pattern.base": `Website URL must begin with 'http' or 'https://'`,
+      "string.pattern.base": `Website URL must begin with 'http' ,'www.' or 'https://'`,
       "string.max": "The website must not exceed 255 characters."
     }),
   project_manager: Joi.string().pattern(/^(?!.*(['-])\1)[A-Za-z][A-Za-z' -]{0,126}[A-Za-z]$/).min(2).max(128).optional().allow("").allow(null),
@@ -131,7 +131,7 @@ const accountSchema = Joi.object({
         key_contact_email: Joi.string()
         .trim()
         .regex(/^[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]*[a-zA-Z0-9])?@[a-zA-Z0-9-]+\.[a-zA-Z]{2,63}$/) 
-        .min(3).max(125).optional().allow("").allow(null).messages({
+        .min(3).max(254).optional().allow("").allow(null).messages({
           "string.base": "Key Contact Email must be a text value.",
           "string.empty": "Key Contact Email cannot be empty.",
           "string.min": "Key Contact Email must be at least 6 characters long.",
@@ -153,7 +153,7 @@ const updateAccountSchema = Joi.object({
   account_id: Joi.string().max(255).required(),
   account_name: Joi.string().min(7).max(125).required(),
   r_number: Joi.string().required(),
-  account_description: Joi.string().max(500).optional().allow("").allow(null),
+  account_description: Joi.string().max(2000).optional().allow("").allow(null),
   status: Joi.string().valid("active", "inactive").required(),
   is_parent: Joi.boolean().required(),
   parent_account_rid: Joi.string().allow(null).optional(),
@@ -224,9 +224,9 @@ const updateAccountSchema = Joi.object({
     .max(255)
     .allow(null)
     .optional()
-    .pattern(/^(https?:\/\/)[a-zA-Z0-9.-]+(:[0-9]+)?(\/[a-zA-Z0-9.-]*)*\/?$/)
+   .pattern(/^(https?:\/\/|www\.)[a-zA-Z0-9.-]+(:[0-9]+)?(\/[a-zA-Z0-9.-]*)*\/?$/)
     .messages({
-      "string.pattern.base": `Website URL must begin with 'http' or 'https://'`,
+      "string.pattern.base": `Website URL must begin with 'http','www.' or 'https://'`,
       "string.max": "The website must not exceed 255 characters."
     }),
   project_manager: Joi.string().pattern(/^(?!.*(['-])\1)[A-Za-z][A-Za-z' -]{0,126}[A-Za-z]$/).min(2).max(128).optional().allow("").allow(null)
@@ -264,7 +264,7 @@ const updateAccountSchema = Joi.object({
         key_contact_email: Joi.string()
         .trim()
         .regex(/^[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]*[a-zA-Z0-9])?@[a-zA-Z0-9-]+\.[a-zA-Z]{2,63}$/) 
-        .min(3).max(125).optional().allow("").allow(null).messages({
+        .min(3).max(254).optional().allow("").allow(null).messages({
           "string.base": "Key Contact Email must be a text value.",
           "string.empty": "Key Contact Email cannot be empty.",
           "string.min": "Key Contact Email must be at least 6 characters long.",

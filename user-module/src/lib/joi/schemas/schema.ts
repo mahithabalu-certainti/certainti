@@ -27,7 +27,7 @@ const createUserSchema = Joi.object({
   city: Joi.string().max(255).allow('', null).optional(),
   state: Joi.string().max(255).allow('', null).optional(),
   zip_code: Joi.string().max(20).allow('', null).optional(),
-  phone: Joi.string().pattern(/^[1-9]\d{9,10}$/).optional(),
+  phone: Joi.string().pattern(/^[1-9]\d{9,14}$/).optional(),
   country: Joi.string().max(255).allow('', null).optional(),
   created_by: Joi.string().max(255).required(),
 });
