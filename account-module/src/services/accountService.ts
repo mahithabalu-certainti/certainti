@@ -402,8 +402,7 @@ class AccountService {
           const baseRow = {
             "Account Name": account?.account_name || "",
             "Parent Account": account?.parent_account?.account_name || "",
-            // "RecordId": account?.rid || "",
-            "Account Id": account?.r_number || "",
+            "Account ID": account?.r_number || "",
             "Industry": account?.industry?.industry_name || "",
             "Country": account?.country?.country_name || "",
             "Currency": account?.currency?.currency_code || "",
@@ -414,10 +413,9 @@ class AccountService {
           if (Array.isArray(account.child_accounts) && account.child_accounts.length > 0) {
             account.child_accounts.forEach((child: any) => {
               exportDetails.push({
-                "Account name": child?.account_name || "",
-                // "RecordId": child?.rid || "",
+                "Account Name": child?.account_name || "",
                 "Parent Account": account?.account_name || "", // parent is current account
-                "Account Id": child?.r_number || "",
+                "Account ID": child?.r_number || "",
                 "Industry": child?.industry?.industry_name || "",
                 "Country": child?.country?.country_name || "",
                 "Currency": child?.currency?.currency_code || "",
