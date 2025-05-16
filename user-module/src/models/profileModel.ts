@@ -21,7 +21,7 @@ interface ProfileAttributes {
 
 // Define the interface for the creation attributes (optional fields like created_datetime, modified_datetime)
 interface ProfileCreationAttributes
-  extends Optional<ProfileAttributes, "rid"> {}
+  extends Optional<ProfileAttributes, "rid"| "r_number"> {}
 
 // Define the Profile model class extending Sequelize's Model class
 export class Profile
@@ -115,7 +115,7 @@ export class Profile
       }
     );
                 // Set up the sequence and default value for r_number
-      setupProfileSequence(sequelize)
+      // setupProfileSequence(sequelize)
   }
   static associate(models: any) {
     // Set up associations after all models are initialized
@@ -131,7 +131,7 @@ export class Profile
   }
 }
 
-async function setupProfileSequence(sequelize: Sequelize) {
+export async function setupProfileSequence(sequelize: Sequelize) {
   try {
     // Step 1: Create the sequence if it doesn't exist
     await sequelize.query('CREATE SEQUENCE IF NOT EXISTS profile_seq START 1');
