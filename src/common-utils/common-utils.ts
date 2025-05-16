@@ -1,6 +1,12 @@
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
 import { UserDetail } from '../admin/types/manage-user';
 import { AxiosErrorMsg, CheckError } from '../common-service';
+
 import {
   AllowedCountry,
   ErrorHandling,
@@ -232,7 +238,8 @@ export const REGEX_PATTERNS = {
   LENGTH_3_TO_50_REGEX: /^.{3,50}$/,
   NOT_ALLOW_ONLY_SYMBOLS: /^(?![\W_]+$).+$/,
   ALPHANUMERIC_SPEC_5_TO_50: /^[\s\S]{5,50}$/,
-  EMAIL: /^(?=.{6,254}$)[a-zA-Z0-9]+(?:[._+-][a-zA-Z0-9]+)*@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63}$/,
+  EMAIL:
+    /^(?=.{6,254}$)[a-zA-Z0-9]+(?:[._+-][a-zA-Z0-9]+)*@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63}$/,
   PHONE: /^([0-9]{10})$/,
   WEBSITE:
     /^https?:\/\/(?!.*\.\.)(?!.*\/\/)(?:[a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]{2,}(?::[0-9]+)?(?:\/[a-zA-Z0-9-.:/]*)*$/,
@@ -247,7 +254,7 @@ export const REGEX_PATTERNS = {
   MAX_AI_INTRACTION: /^[3-5]$/,
   NUMBERS: /^[0-9]{1,20}$/,
   NUMBERS_50: /^[0-9]{5,50}$/,
-  ANNUAL_REVENUE: /^(\d{1,3}(,\d{3})+|\d{1,2}(,\d{2}){1,2},\d{3}|\d+)(\.\d+)?$/,
+  ANNUAL_REVENUE: /^(?!0\d)\d{1,12}(\.\d{1,2})?$/,
   COST_REGEX: /^\d{1,3}(?:,\d{2,3})*(\.\d{1,2})?$|^\d{1,16}(\.\d{1,2})?$/,
   NAME_REGEX: /^(?!.*[ '-]{2})[A-Za-z]+(?:['-][A-Za-z]+)*$/,
   STREET_REGEX: /^(?![\W_]+$)(?!\s*$)[a-zA-Z0-9\s,.\-#]+$/,
@@ -266,6 +273,7 @@ export const REGEX_PATTERNS = {
   NOT_ALLOW_SPACE_SYMBOLS_AT_START_END:
     /^[a-zA-Z0-9][\w !@#$%^&*()_+=\-[\]{};':’"\\|,.<>\\/?\u2013\u2014]*[a-zA-Z0-9]$/,
   NAME_LENGTH_2_TO_64_REGEX: /^.{2,64}$/,
+  NAME_LENGTH_3_TO_64_REGEX: /^.{3,64}$/,
   NO_LEADING_OR_TRAILING_SPECIAL_REGEX: /^(?!^[-' ]|.*[-' ]$)/,
   ALLOWED_CHARS_NAME_REGEX: /^[A-Za-z-' ]+$/,
   NO_CONSECUTIVE_SPECIALS_REGEX: /^(?!.*[-' ]{2})/,
@@ -321,7 +329,7 @@ export const ALLOWED_COUNTRIES: AllowedCountry[] = [
   'fr',
 ];
 
-export const fiscalYears = Array.from({ length: 100 }, (_, i) => {
+export const fiscalYears = Array.from({ length: 26 }, (_, i) => {
   const year = new Date().getFullYear() - i;
   return { value: year.toString(), label: `FY-${year}` };
 });
@@ -354,7 +362,7 @@ export const formatAddress = (userDatas?: UserDetail) => {
 
 export const getDateTimeFormat = (date?: string) => {
   if (!date) return '';
-  return dayjs(date).format('MM-DD-YYYY HH:mm:ss');
+  return dayjs.utc(date).local().format('MM-DD-YYYY HH:mm:ss');
 };
 
 export const STATUS_OPTIONS: SelectOption[] = [

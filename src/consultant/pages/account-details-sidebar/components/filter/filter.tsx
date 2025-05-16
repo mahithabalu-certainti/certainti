@@ -40,7 +40,8 @@ const Filter: React.FC<FilterComponentProps> = ({
   onFilterStatesChange,
   savedSelectedFilters = [],
   onSelectedFiltersChange,
-  setCurrentPage
+  setCurrentPage,
+  mode,
 }) => {
   const [selectedFilters, setSelectedFilters] =
   useState<string[]>(savedSelectedFilters);
@@ -390,6 +391,7 @@ const Filter: React.FC<FilterComponentProps> = ({
             state={fieldState}
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleDateChange}
+            mode={mode as 'date' | 'year'}
           // onChange={handleBooleanChange}
           />
         );
@@ -406,7 +408,6 @@ const Filter: React.FC<FilterComponentProps> = ({
         return null;
     }
   };
-
   return (
     <Box className='w-[248px] max-h-[450px] bg-white shadow-lg border border-[#CBD6E2] rounded flex flex-col'>
       <Box className='flex justify-between items-center p-2 border-b border-[#CBD6E2]'>
