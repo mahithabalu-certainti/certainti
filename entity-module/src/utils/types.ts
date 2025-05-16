@@ -49,12 +49,19 @@ export interface IResourceCost {
   account_rid: string;
   resource_type: string;
   resource_rid: string;
-  resource_ref_id: string;
+  resource_code: string;
   effective_date?: string | null;
   end_date?: string | null;
   currency_rid?: string;
-  cost_frequency: string;
-  cost: number;
+  // cost_frequency: string;
+  // cost: number;
+  annual_cost?: number | "";
+  semi_annual_cost?: number | "";
+  monthly_cost?: number | "";
+  weekly_cost?: number | "";
+  bi_weekly_cost?: number | "";
+  daily_cost?: number | "";
+  hourly_cost?: number | "";
   fiscal_year: number;
   created_datetime?: string | null;
   modified_datetime?: string | null;
@@ -73,8 +80,15 @@ export interface IUpdateResourceCost {
   end_date?: string | null;
   currency_rid?: string;
   fiscal_year: number;
-  cost_frequency: string;
-  cost: number;
+  // cost_frequency: string;
+  // cost: number;
+  annual_cost?: number | "";
+  semi_annual_cost?: number | "";
+  monthly_cost?: number | "";
+  weekly_cost?: number | "";
+  bi_weekly_cost?: number | "";
+  daily_cost?: number | "";
+  hourly_cost?: number | "";
   comments?: string;
   modified_datetime?: string | null;
   modified_by?: string | null;
@@ -87,7 +101,7 @@ export interface IResourceSkill {
    account_rid: string;
    resource_type: string;
    resource_rid: string;
-   resource_ref_id: string,
+   resource_code: string,
    start_date?: Date | null;
    skill_description?: string;
    skill_level?: string;

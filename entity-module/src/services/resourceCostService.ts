@@ -246,11 +246,18 @@ async createResourceCost(
         account_rid,
         resource_type,
         resource_rid,
-        resource_ref_id,
+        resource_code,
         effective_date,
         end_date,
-        cost_frequency,
-        cost,
+        // cost_frequency,
+        // cost,
+        annual_cost,
+        semi_annual_cost,
+        monthly_cost,
+        weekly_cost,
+        bi_weekly_cost,
+        daily_cost,
+        hourly_cost,
         currency_rid,
         accountNumber,
         resource_number,
@@ -287,45 +294,68 @@ async createResourceCost(
       let createdResourceCost;
       let eventStatus = "Success";
       let errorMessage = "";
-      let frequency: Record<string, string | null> = {
-        annual_cost: null,
-        semi_annual_cost: null,
-        monthly_cost: null,
-        weekly_cost: null,
-        bi_weekly_cost: null,
-        daily_cost: null,
-        hourly_cost: null
-      };
+      // let frequency: Record<string, string | null> = {
+      //   annual_cost: null,
+      //   semi_annual_cost: null,
+      //   monthly_cost: null,
+      //   weekly_cost: null,
+      //   bi_weekly_cost: null,
+      //   daily_cost: null,
+      //   hourly_cost: null
+      // };
       try {
-        const decimalCost = new Decimal(cost);
-        const costValue = decimalCost.toString();
+        const costFields = {
+          annual_cost,
+          semi_annual_cost,
+          monthly_cost,
+          weekly_cost,
+          bi_weekly_cost,
+          daily_cost,
+          hourly_cost
+        };
+
+        const costValues = Object.entries(costFields).reduce((acc, [key, value]) => {
+          // Normalize empty string to null
+          if (value === "" || value === null || value === undefined) {
+            acc[key] = null;
+          } else {
+            try {
+              // Convert valid string/number to Decimal
+              acc[key] = new Decimal(value).toString();
+            } catch (error) {
+              throw new Error(`Invalid number format for ${key}: ${value}`);
+            }
+          }
+        
+          return acc;
+        }, {} as Record<string, string | null>);
         
         // Set only the relevant frequency cost field
-        switch (cost_frequency) {
-          case "annual":
-            frequency.annual_cost = costValue;
-            break;
-          case "semi_annual":
-            frequency.semi_annual_cost = costValue;
-            break;
-          case "monthly":
-            frequency.monthly_cost = costValue;
-            break;
-          case "weekly":
-            frequency.weekly_cost = costValue;
-            break;
-          case "bi_weekly":
-            frequency.bi_weekly_cost = costValue;
-            break;
-          case "daily":
-            frequency.daily_cost = costValue;
-            break;
-          case "hourly":
-            frequency.hourly_cost = costValue;
-            break;
-          default:
-            throw new Error(`Invalid cost frequency: ${cost_frequency}`);
-        }
+        // switch (cost_frequency) {
+        //   case "annual":
+        //     frequency.annual_cost = costValue;
+        //     break;
+        //   case "semi_annual":
+        //     frequency.semi_annual_cost = costValue;
+        //     break;
+        //   case "monthly":
+        //     frequency.monthly_cost = costValue;
+        //     break;
+        //   case "weekly":
+        //     frequency.weekly_cost = costValue;
+        //     break;
+        //   case "bi_weekly":
+        //     frequency.bi_weekly_cost = costValue;
+        //     break;
+        //   case "daily":
+        //     frequency.daily_cost = costValue;
+        //     break;
+        //   case "hourly":
+        //     frequency.hourly_cost = costValue;
+        //     break;
+        //   default:
+        //     throw new Error(`Invalid cost frequency: ${cost_frequency}`);
+        // }
         const sequelize = await this.getOrgSequelize();
         ResourceCost.initialize(sequelize, schemaName);
         const effectiveDate = this.formatDateForDb(effective_date as string);
@@ -336,7 +366,11 @@ async createResourceCost(
               resource_rid,
               effective_date: effectiveDate,
               end_date: endDate,
-              [`${cost_frequency}_cost`]: { [Op.ne]: null },
+              [Op.or]: [
+                {
+                  ...costValues,
+                }
+              ]
             },
           });
           if (existingCost) {
@@ -349,12 +383,13 @@ async createResourceCost(
           resource_type,
           resource_rid,
           resource_number,
-          resource_ref_id,
+          resource_code,
           effective_date: effectiveDate || null,
           end_date: endDate || null,
-          cost_type: cost_frequency,
-          cost: cost,
-          ...frequency,
+          // cost_type: cost_frequency,
+          // cost: cost,
+          // ...frequency,
+          ...costValues,
           currency_rid: currency_rid || undefined,
           fiscal_year,
           comments,
@@ -372,7 +407,8 @@ async createResourceCost(
             });
             if (existingFiscal) {
               await existingFiscal.update({
-                ...frequency,
+                // ...frequency,
+                ...costValues,
                 modified_datetime: new Date(),
                 modified_by: userId,
               });
@@ -470,8 +506,15 @@ async createResourceCost(
         eid,
         effective_date,
         end_date,
-        cost_frequency,
-        cost,
+        // cost_frequency,
+        // cost,
+        annual_cost,
+        semi_annual_cost,
+        monthly_cost,
+        weekly_cost,
+        bi_weekly_cost,
+        daily_cost,
+        hourly_cost,
         currency_rid,
         accountNumber,
         rid,
@@ -517,45 +560,68 @@ async createResourceCost(
         };
       }
 
-      let frequency: Record<string, string | null> = {
-        annual_cost: null,
-        semi_annual_cost: null,
-        monthly_cost: null,
-        weekly_cost: null,
-        bi_weekly_cost: null,
-        daily_cost: null,
-        hourly_cost: null
-      };
+      // let frequency: Record<string, string | null> = {
+      //   annual_cost: null,
+      //   semi_annual_cost: null,
+      //   monthly_cost: null,
+      //   weekly_cost: null,
+      //   bi_weekly_cost: null,
+      //   daily_cost: null,
+      //   hourly_cost: null
+      // };
       try {
-        const decimalCost = new Decimal(cost);
-        const costValue = decimalCost.toString();
+        const costFields = {
+          annual_cost,
+          semi_annual_cost,
+          monthly_cost,
+          weekly_cost,
+          bi_weekly_cost,
+          daily_cost,
+          hourly_cost
+        };
+
+        const costValues = Object.entries(costFields).reduce((acc, [key, value]) => {
+          // Normalize empty string to null
+          if (value === "" || value === null || value === undefined) {
+            acc[key] = null;
+          } else {
+            try {
+              // Convert valid string/number to Decimal
+              acc[key] = new Decimal(value).toString();
+            } catch (error) {
+              throw new Error(`Invalid number format for ${key}: ${value}`);
+            }
+          }
+        
+          return acc;
+        }, {} as Record<string, string | null>);
         
         // Set only the relevant frequency cost field
-        switch (cost_frequency) {
-          case "annual":
-            frequency.annual_cost = costValue;
-            break;
-          case "semi_annual":
-            frequency.semi_annual_cost = costValue;
-            break;
-          case "monthly":
-            frequency.monthly_cost = costValue;
-            break;
-          case "weekly":
-            frequency.weekly_cost = costValue;
-            break;
-          case "bi_weekly":
-            frequency.bi_weekly_cost = costValue;
-            break;
-          case "daily":
-            frequency.daily_cost = costValue;
-            break;
-          case "hourly":
-            frequency.hourly_cost = costValue;
-            break;
-          default:
-            throw new Error(`Invalid cost frequency: ${cost_frequency}`);
-        }
+        // switch (cost_frequency) {
+        //   case "annual":
+        //     frequency.annual_cost = costValue;
+        //     break;
+        //   case "semi_annual":
+        //     frequency.semi_annual_cost = costValue;
+        //     break;
+        //   case "monthly":
+        //     frequency.monthly_cost = costValue;
+        //     break;
+        //   case "weekly":
+        //     frequency.weekly_cost = costValue;
+        //     break;
+        //   case "bi_weekly":
+        //     frequency.bi_weekly_cost = costValue;
+        //     break;
+        //   case "daily":
+        //     frequency.daily_cost = costValue;
+        //     break;
+        //   case "hourly":
+        //     frequency.hourly_cost = costValue;
+        //     break;
+        //   default:
+        //     throw new Error(`Invalid cost frequency: ${cost_frequency}`);
+        // }
 
         const effectiveDate = this.formatDateForDb(effective_date as string);
         const endDate = this.formatDateForDb(end_date as string);
@@ -565,18 +631,18 @@ async createResourceCost(
               rid: rid,
             },
           });
-          if (
-            existingRow &&
-            existingRow.effective_date !== effectiveDate ||
-            existingRow?.end_date !== endDate ||
-            Number(existingRow[`${cost_frequency}_cost`]) !== Number(cost)
-          ) {
+
+          if (existingRow) {
             const existingCost = await ResourceCost.findOne({
               where: {
-                resource_rid: existingRow?.resource_rid,
+                resource_rid: existingRow.resource_rid,
                 effective_date: effectiveDate,
                 end_date: endDate,
-                [`${cost_frequency}_cost`]: Number(cost),
+                [Op.or]: [
+                  {
+                    ...costValues,
+                  }
+                ],
                 rid: { [Op.ne]: rid } // Exclude the current record being updated
               },
             });
@@ -591,9 +657,10 @@ async createResourceCost(
             eid,
             effective_date: effectiveDate || null,
             end_date: endDate || null,
-            cost_type: cost_frequency,
-            cost: cost,
-            ...frequency,
+            // cost_type: cost_frequency,
+            // cost: cost,
+            // ...frequency,
+            ...costValues,
             currency_rid,
             fiscal_year,
             comments,
@@ -622,7 +689,8 @@ async createResourceCost(
 
             if (existingFiscal) {
               await existingFiscal.update({
-                ...frequency,
+                // ...frequency,
+                ...costValues,
                 modified_datetime: new Date(),
                 modified_by: userId,
               });
@@ -1004,7 +1072,7 @@ async createResourceCost(
       // Fetch created_by user name if ID exists
       if (userIds.created_by) {
         const [createdByUser] = await sequelize.query(
-          `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          `SELECT concat(first_name, ' ', last_name) as full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.created_by },
             type: "SELECT",
@@ -1019,7 +1087,7 @@ async createResourceCost(
       // Fetch modified_by user name if ID exists
       if (userIds.modified_by) {
         const [modifiedByUser] = await sequelize.query(
-          `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          `SELECT concat(first_name, ' ', last_name) as full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.modified_by },
             type: "SELECT",

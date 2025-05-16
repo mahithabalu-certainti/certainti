@@ -57,7 +57,7 @@ class ResourceSkillService {
         account_rid,
         resource_type,
         resource_rid,
-        resource_ref_id,
+        resource_code,
         start_date,
         skill_description,
         skill_level,
@@ -208,7 +208,7 @@ class ResourceSkillService {
           resource_type,
           resource_rid,
           resource_number,
-          resource_ref_id,
+          resource_code,
           start_date: startDate || undefined,
           skill_description,
           skill_level: skill_level || "",
@@ -553,10 +553,8 @@ class ResourceSkillService {
         "skill_subtype_others",
         "comments",
         "skill_details",
-        "years_of_experience",
         "fiscal_year",
         "modified_by",
-        "technical_weightage",
         "status",
       ];
 
@@ -921,7 +919,7 @@ class ResourceSkillService {
       // Fetch created_by user name if ID exists
       if (userIds.created_by) {
         const [createdByUser] = await sequelize.query(
-          `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          `SELECT concat(first_name, ' ', last_name) as full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.created_by },
             type: "SELECT",
@@ -936,7 +934,7 @@ class ResourceSkillService {
       // Fetch modified_by user name if ID exists
       if (userIds.modified_by) {
         const [modifiedByUser] = await sequelize.query(
-          `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          `SELECT concat(first_name, ' ', last_name) as full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.modified_by },
             type: "SELECT",
