@@ -2,7 +2,7 @@ export interface IAccount {
   account_id: string;
   account_number: string;
   account_name: string;
-  account_description?: string | null;
+  comments?: string | null;
   status: "active" | "inactive";
   eid: number;
   is_parent: boolean;
@@ -45,7 +45,7 @@ export interface IUpdateAccount {
   account_id: string;
   account_number: string;
   account_name: string;
-  account_description?: string | null;
+  comments?: string | null;
   status: "active" | "inactive";
   eid: number;
   is_parent: boolean;

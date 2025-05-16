@@ -21,7 +21,7 @@ const typeDefs = gql`
     rid: ID!
     r_number: String!
     account_name: String!
-    account_description: String
+    comments: String
     status: String!
     eid: String
     parent_account_rid: Int
