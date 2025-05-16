@@ -707,7 +707,7 @@ async createResourceCost(
             originalResourceCost.toJSON(),
             affectedRows[0],
             userId,
-            accountNumber
+            accountNumberFetched,
           );
 
           // Also log to timeline

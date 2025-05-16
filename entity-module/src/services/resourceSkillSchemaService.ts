@@ -244,14 +244,14 @@ class ResourceSkillSchemaService {
       }
 
       // Then create the skill table
-      const skillTableCreated = await this.createTablesInSchema(
-        schemaName,
-        "skill"
-      );
-      if (!skillTableCreated) {
-        console.error(`Failed to create skill table in schema ${schemaName}`);
-        return false;
-      }
+      // const skillTableCreated = await this.createTablesInSchema(
+      //   schemaName,
+      //   "skill"
+      // );
+      // if (!skillTableCreated) {
+      //   console.error(`Failed to create skill table in schema ${schemaName}`);
+      //   return false;
+      // }
     }
 
     // Then create the requested table
