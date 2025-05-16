@@ -304,7 +304,11 @@ export const REGEX_PATTERNS = {
   STREET_REGEX: /^(?![\W_]+$)(?!\s*$)[a-zA-Z0-9\s,.\-#]+$/,
   MAX_255: /^.{0,255}$/,
   MAX_64: /^.{0,64}$/,
+  MAX_2000: /^[\s\S]{0,2000}$/,
+  MAX_50: /^.{0,50}$/,
+  MAX_100: /^.{0,100}$/,
   MIN_3: /^.{3,}$/,
+  MIN_2: /^.{2,}$/,
   CITY_REGEX: /^[A-Za-z\s]{3,100}$/,
   NUMBERS_GREATER_THAN_ZERO: /^[1-9]\d*$/,
   MANAGER_REGEX: /^[A-Za-z\s.'-]*$/,
@@ -336,6 +340,7 @@ export const REGEX_PATTERNS = {
   POSTAL_ALLOWED_CHARS: /^(?!^[a-zA-Z-]+$).*$/,
   // NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX:
   //   /^(?!^[ &'.,-])(?!(.*[ &'.,-]$))/,
+  SKILL_OTHERS_ALLOWED_CHARS_REGEX: /^[A-Za-z\-'._\s]+$/,
 };
 
 /**
@@ -356,7 +361,7 @@ export const RESOURCE_REGEX = {
   EMAIL: /^[a-zA-Z0-9._%+-]{1,64}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
   MOBILE: /^\+?[0-9][0-9\- ]{3,14}[0-9]$/,
   MANAGER_NAME: /^(?=(.*[a-zA-Z0-9]){3})[a-zA-Z0-9][a-zA-Z0-9 .'-]{1,99}$/,
-  ROLE: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{4,100}$/,
+  ROLE:/^(?=.*[a-zA-Z])[a-zA-Z\s\-'.]+$/,
   DESIGNATION: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{4,100}$/,
   YEARS_EXPERIENCE: /^(?:0|[1-9]\d?)(?:\.\d{1,2})?$/,
   DESCRIPTION: /^[\s\S]{0,2000}$/,
