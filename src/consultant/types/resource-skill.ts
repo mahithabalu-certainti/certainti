@@ -82,6 +82,7 @@ export type ResourceSkillPayload = {
   resource_number: string;
   resource_type?: string;
   resource_rid?: string;
+  resource_code?: string;
   resource_ref_id?: string;
   resource_desc?: string;
   start_date?: string;

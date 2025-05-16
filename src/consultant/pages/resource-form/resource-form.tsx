@@ -308,6 +308,7 @@ const ResourceForm: React.FC = () => {
         resource_rid: resourceId,
         resource_number: resource?.data.resourceDetails.r_number,
         cost_rid: state?.costInfo?.costRid,
+        resource_code: resource?.data.resourceDetails.resource_code,
       };
       const costData = transformCostData(updateFormValues, isEditView);
       if (isEditView) {
@@ -325,9 +326,10 @@ const ResourceForm: React.FC = () => {
         resource_number: resource?.data.resourceDetails.r_number,
         skill_rid: state?.skillInfo?.skillRId,
         resource_desc: resource?.data.resourceDetails.resource_role,
+        resource_code: resource?.data.resourceDetails.resource_code,
       };
       const skillData = transformSkillData(updateFormValues, isEditView);
-
+      // Update or create skill based on isEditView valu
       if (isEditView) {
         updateResourceSkill.mutate(skillData);
       } else {

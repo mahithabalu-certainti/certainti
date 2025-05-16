@@ -23,6 +23,7 @@ export const createTextField = (
     regex?: RegExp;
     regexErrorMessage?: string;
     placeholder?: string;
+    group?: string;
     disabled?: boolean;
     onChange?: boolean;
     anyOneRequired?: boolean;
@@ -46,6 +47,7 @@ export const createTextField = (
   regexErrorMessage: options.regexErrorMessage,
   placeholder: options.placeholder,
   disabled: options.disabled,
+  group: options.group,
   onChange: options.onChange,
   anyOneRequired: options.anyOneRequired,
   hide: options.hide,
@@ -250,13 +252,14 @@ export const REGEX_PATTERNS = {
   DESCRIPTION: /^.{0,500}$/,
   RESOURCE_DESCRIPTION: /^.{0,1000}$/,
   ACCOUNT_DESCRIPTION: /^[\s\S]{0,2000}$/,
-  POSTAL_CODE: /^[a-zA-Z0-9-]{1,20}$/,
+  POSTAL_CODE:/^(?!^[A-Za-z]+$)[A-Za-z0-9-]+$/,
   MAX_AI_INTRACTION: /^[3-5]$/,
   NUMBERS: /^[0-9]{1,20}$/,
   NUMBERS_50: /^[0-9]{5,50}$/,
   ANNUAL_REVENUE: /^(?!0\d)\d{1,12}(\.\d{1,2})?$/,
   COST_REGEX: /^\d{1,3}(?:,\d{2,3})*(\.\d{1,2})?$|^\d{1,16}(\.\d{1,2})?$/,
   NAME_REGEX: /^(?!.*[ '-]{2})[A-Za-z]+(?:['-][A-Za-z]+)*$/,
+  USER_NAME:/^(?!.*['-]{2})(?!.*^\s)(?!.*\s$)[A-Za-z]+(?:['-][A-Za-z]+)*$/,
   STREET_REGEX: /^(?![\W_]+$)(?!\s*$)[a-zA-Z0-9\s,.\-#]+$/,
   MAX_255: /^.{0,255}$/,
   MAX_64: /^.{0,64}$/,

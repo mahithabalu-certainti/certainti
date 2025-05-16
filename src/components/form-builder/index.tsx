@@ -18,7 +18,7 @@ import {
 import { useLocation } from 'react-router-dom';
 import { FieldTypes, Layout, OnChange } from '../../common-service';
 import { ALLOWED_COUNTRIES } from '../../common-utils';
-import { FormType, FormTypeFields, SelectOption } from '../../consultant/types';
+import { FormType, FormTypeFields, GroupFields, SelectOption } from '../../consultant/types';
 
 interface FormBuilderProps {
   data: FormType[];
@@ -617,6 +617,19 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     e.preventDefault();
     let hasError = false;
 
+        //get group fields from formData
+        const groupFields: GroupFields = new Map();
+        formData?.forEach((section) => {
+          section.fields.forEach((field) => {
+            if (field.group) {
+              if (!groupFields.has(field.group)) {
+                groupFields.set(field.group, []);
+              }
+              groupFields.get(field.group)?.push(field.name);
+            }
+          });
+        });
+
     const dataValidation = formData?.map((section) => {
       if (section.hide) return section;
       return {
@@ -1021,7 +1034,25 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         }),
       };
     });
+       //group field validation
+       groupFields.forEach((fieldNames, groupName) => {
+        const isAnyFieldFilled = fieldNames.some(
+          (fieldName) => constructFormData[fieldName]?.toString().trim()
+        );
+  
+        if (!isAnyFieldFilled) {
+          hasError = true;
+          dataValidation?.forEach((section) => {
+            section.fields.forEach((field) => {
+              if (field.group === groupName) {
+                field.error = `At least one field in the "${groupName}" group is required`;
+              }
+            });
+          });
+        }
+      });
     setFormData(dataValidation);
+
 
     if (!hasError) {
       //If there is no error then only submit the data

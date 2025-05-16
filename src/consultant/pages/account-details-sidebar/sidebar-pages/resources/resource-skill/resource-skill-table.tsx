@@ -22,6 +22,7 @@ import ActionButton from '../../../../account-list/table/action-button';
 import { TablePagination } from '../../../../../../components/table';
 import { arrowDownIcon, arrowUpIcon } from '../../../../../../assets';
 import { TruncateWithTooltip } from '../../../../../../components';
+import { formatDateToMMDDYYYY } from '../utils';
 
 interface ResourceSkillTableProps {
   fiscalYear?: number;
@@ -98,7 +99,6 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     (event: React.MouseEvent<unknown>) => {
       handleRequestSort(event, property);
     };
-
   const renderRows = ({ resourceSkill }: RenderSkillRowProps) => {
     return resourceSkill?.map((skill, i) => {
       return (
@@ -119,7 +119,9 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
             }}
           >
             {/* <TableCell sx={{ minWidth: '200px' }}>{skill.resourceRole}</TableCell> */}
-            <TableCell sx={{ minWidth: '120px' }}>{skill.startDate}</TableCell>
+            <TableCell sx={{ minWidth: '120px' }}>
+           { formatDateToMMDDYYYY(skill.startDate as string)}
+             </TableCell>
             <TableCell sx={{ minWidth: '120px' }}>
               <TruncateWithTooltip text={String(skill.skillType)}>
                 {skill.skillType}
