@@ -21,7 +21,7 @@ export const createTextField = (
   label: string,
   options: {
     type?: InputType;
-    span?: number;
+    width?: string;
     required?: boolean;
     regex?: RegExp;
     regexErrorMessage?: string;
@@ -45,7 +45,7 @@ export const createTextField = (
   name,
   label,
   required: options.required ?? false,
-  span: options.span,
+  width: options.width,
   regex: options.regex,
   regexErrorMessage: options.regexErrorMessage,
   placeholder: options.placeholder,
@@ -120,7 +120,7 @@ export const createRadioField = (
   label: string,
   options: {
     required?: boolean;
-    span?: number;
+    width?: string;
     radioOptions: SelectOption[];
     defaultValue?: string;
     disabled?: boolean;
@@ -137,7 +137,7 @@ export const createRadioField = (
   name,
   label,
   required: options.required ?? false,
-  span: options.span,
+  width: options.width,
   options: options.radioOptions,
   disabled: options.disabled,
   onChange: options.onChange,
@@ -150,7 +150,7 @@ export const createSelectField = (
   others: {
     options: SelectOption[];
     required: boolean;
-    span?: number;
+    width?: string;
     placeholder?: string;
     disabled?: boolean;
     clearValue?: Record<string, string>;
@@ -164,7 +164,7 @@ export const createSelectField = (
   label,
   required: others.required,
   options: others.options,
-  span: others.span,
+  width: others.width,
   disabled: others.disabled,
   placeholder: others.placeholder,
   clearValue: others.clearValue,
@@ -192,7 +192,7 @@ export const createButton = (
 export const createImgButton = (
   iconUrl: string,
   others?: {
-    span?: number;
+    width?: string;
     onClick?: (index: number) => void;
   }
 ): FieldType => ({
@@ -201,7 +201,7 @@ export const createImgButton = (
   name: '',
   label: '',
   required: false,
-  span: others?.span,
+  width: others?.width,
   onClick: (index?: number) => {
     if (others?.onClick && index !== undefined) {
       others.onClick(index);
@@ -331,7 +331,8 @@ export const REGEX_PATTERNS = {
   NO_CONSECUTIVE_SPECIALS_REGEX_FOR_ORG_NAME: /^(?!.*[-_]{2}).+$/,
   NO_TRAILING_SPECIAL_REGEX: /[^-_]$/,
   POSTAL_NO_CONSECUTIVE_HYPHENS: /^(?!-)(?!.*--)[a-zA-Z0-9-]{1,20}(?<!-)$/,
-  POSTAL_NO_LEADING_OR_TRAILING: /^(?!-)(?!.*--)(?!.*-.*-)[a-zA-Z0-9]{1,19}(-[a-zA-Z0-9]{1,19})?$/,
+  POSTAL_NO_LEADING_OR_TRAILING:
+    /^(?!-)(?!.*--)(?!.*-.*-)[a-zA-Z0-9]{1,19}(-[a-zA-Z0-9]{1,19})?$/,
   POSTAL_ALLOWED_CHARS: /^(?!^[a-zA-Z-]+$).*$/,
   // NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX:
   //   /^(?!^[ &'.,-])(?!(.*[ &'.,-]$))/,

@@ -115,7 +115,7 @@ const ProjectForm: React.FC = () => {
 
   return (
     <>
-      <div className='flex justify-between items-center border-b-2 border-gray-200 px-10 py-6'>
+      <div className='h-[60px] border-box flex justify-between items-center border-b-2 border-gray-200 px-10'>
         <div className='flex items-center'>
           <img
             src={isEditView ? editIcon : accountHomeIcon}
@@ -133,16 +133,16 @@ const ProjectForm: React.FC = () => {
         </div>
         <div className='flex gap-3'>
           <TextButton
-            label='Cancel'
-            // variant='outlined'
-            // color='inherit'
-            onClick={goBack}
-          />
-          <TextButton
             label='Save'
             // variant='filled'
             loading={createAccount.isPending || updateAccount.isPending}
             onClick={handleExternalSubmit}
+          />
+          <TextButton
+            label='Cancel'
+            // variant='outlined'
+            // color='inherit'
+            onClick={goBack}
           />
         </div>
       </div>

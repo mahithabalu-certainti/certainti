@@ -1,9 +1,9 @@
 @import 'tailwindcss';
 
 * {
-  font-family: 'Lexend', sans-serif;
+  font-family: 'Mulish', 'Lexend', sans-serif;
   scrollbar-width: thin;
-  scrollbar-color: #888 transparent; 
+  scrollbar-color: #888 transparent;
 }
 
 .placeholder-custom-color::placeholder {

@@ -1,4 +1,4 @@
-import { Autocomplete, Checkbox, Skeleton, TextField } from '@mui/material';
+import { Autocomplete, Checkbox, Skeleton, Table, TableBody, TableCell, TableHead, TableRow, TextField } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -31,6 +31,7 @@ interface FormBuilderProps {
   layout?: Layout;
   outData: (e: object) => void;
   onChange?: (params: OnChange) => void;
+  newContactLength?: number;
 }
 
 export const FormBuilder: React.FC<FormBuilderProps> = ({
@@ -41,6 +42,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   layout,
   onChange,
   outData,
+  newContactLength
 }) => {
   const location = useLocation();
   const { state } = location;
@@ -202,7 +204,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             placeholder={field.placeholder}
             autoComplete='off'
             className={
-              'focus:outline-none placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium w-full sm:text-sm px-2 h-[32px] border border-[#CBD6E2] rounded-xs' +
+              'focus:outline-none placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium w-full sm:text-sm px-2 h-[32px] border border-[#CBD6E2] rounded-xs ' +
               isError +
               fieldDisabled
             }
@@ -220,7 +222,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             autoComplete='off'
             className={
               'focus:outline-none placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium w-full sm:text-sm px-2 h-[32px]' +
-              isError +
+              // isError +
               fieldDisabled
             }
             disabled={field.disabled}
@@ -579,7 +581,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       case 'button':
         return (
           <button
-            className='flex items-center gap-1 bg-[#EAF0F5] h-[30px] rounded-[2px] color-[#2D3E4F] px-2 text-[12px] font-semibold'
+            className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] rounded-[2px] color-[#2D3E4F] px-2 text-[12px] font-semibold'
             type='button' onClick={field.onClick}>
             <span>
               <img src={keyContactAddIcon} />
@@ -589,7 +591,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         )
       case 'iconButton':
         return (
-          <img className='cursor-pointer' src={field.iconUrl || keyContactRemoveIcon} onClick={field.onClick} />
+          <img className='cursor-pointer' alt='remove' src={field.iconUrl || keyContactRemoveIcon} onClick={field.onClick} />
         )
       default:
         return null;
@@ -982,17 +984,108 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     );
   }
 
+  // converts Keycontact data to render in a row method array of array[7]
+  const chunkFields = (arr: FormTypeFields[], chunkSize: number = 0) => {
+    const chunks = [];
+    for (let i = 0; i < arr.length; i += chunkSize) {
+      //this will push from 0 to chunksize normally 7, its a static data we are using from formData.ts file
+      chunks.push(arr.slice(i, i + chunkSize));
+    }
+    return chunks;
+  };
+
   const loadKeyContactSection = (section: FormType) => {
+    const fieldRows = chunkFields(section.fields, newContactLength);
     return (
       <div
-        className={`grid md:grid-cols-15 gap-4 px-6 mb-6`}
+      // className='px-10'
+      >
+        <Table>
+          <TableHead sx={{
+            '& .MuiTableCell-root': {
+              fontWeight: 700,
+              fontSize: '13px',
+              color: '#2A2A2A',
+              padding: '0px 8px',
+              height: '29px',
+              boxSizing: 'border-box',
+            },
+            '& .MuiTableCell-root:first-of-type': {
+              paddingLeft: '40px',
+            }
+          }}>
+            <TableRow sx={{ height: 29 }}>
+              {section.fields.slice(0, newContactLength).map((field, j) => {
+                return (
+                  <TableCell sx={{
+                    minWidth: `${field.width}`,
+                    '&.MuiTableCell-root': {
+                      height: 29,
+                      padding: '0px 4px',
+                      lineHeight: 0,
+                    }
+                  }} key={`${field.name}_${j}`}>{field.label}</TableCell>
+                )
+              })}
+            </TableRow>
+          </TableHead>
+          <TableBody sx={{
+            '& .MuiTableCell-root': {
+              padding: '0px',
+              height: 30,
+              boxSizing: 'border-box',
+              '& input, & select': {
+                paddingLeft: '4px',
+                border: 'none',
+                outline: 'none',
+                boxShadow: 'none',
+                background: 'transparent'
+              },
+              '& radio': {
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }
+            },
+            '& .MuiTableRow-root > .MuiTableCell-root:first-of-type': {
+              paddingLeft: '40px',
+            },
+          }}>
+            {fieldRows.map((row, rowIndex) => (
+              <TableRow key={rowIndex}>
+                {row.map((field, colIndex) => (
+                  <TableCell sx={{
+                    minWidth: `${field.width}`,
+                    paddingLeft: `${field.type}` === 'iconButton' || `${field.type}` === 'radio' ? '10px !important' : 'none',
+                    verticalAlign: `${field.type}` === 'iconButton' ? 'middle !important' : 'top',
+                    '& input': {
+                      border: `${field.label}` === 'Key Contact Name' ? '1px dashed #D9D9D9 !important' : 'none'
+                    }
+                  }} key={colIndex} style={{ verticalAlign: 'top' }}>
+                    {getFields(field)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    )
+
+  }
+
+  const loadDefaultSections = (section: FormType, isHalf: boolean, index: number) => {
+    return (
+      <div
+        className={`grid md:grid-cols-3 gap-x-4 gap-y-[2px] ${layout === Layout.TYPE_1 ? 'px-10' : 'px-6'} ${!formData?.[index + 1]?.sectionName ? 'mb-1' : 'mb-4'} `}
       >
         {section.fields.map((field, j) => {
           if (field.hide) return null;
           return (
-            <div key={j} className={`col-span-${field?.span} md:col-span-${field?.span} flex flex-col`}>
+
+            <div key={j} className={`col-span-1 ${!isHalf ? 'md:col-span-3' : ''} flex flex-col`}>
               <label
-                className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1.5`}
+                className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
                 htmlFor={field.name}
               >
                 {field.label}
@@ -1001,6 +1094,53 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 )}
               </label>
               <div>
+                {
+                  field.type === 'website' ?
+                    <div className={`border border-[#CBD6E2] rounded-[2px] overflow-hidden ${field.error ? 'border-red-500 bg-[#FEF2F2]' : ''}`}>
+                      <div className="h-[32px]  box-border flex items-center gap-[4px]">
+                        <span className="pl-[8px] text-[13px] text-[#425A76]">https://</span>
+                        <img src={verticalSeparatorIcon} alt-='separtor' />
+                        {getFields(field)}
+                      </div>
+                    </div>
+                    : getFields(field)
+                }
+
+                {field.error && (
+                  <span className='text-[12px] text-red-400 col-span-full'>
+                    {field.error}
+                  </span>
+                )}
+              </div>
+            </div>
+
+
+          );
+        })}
+      </div>
+    )
+  }
+
+  const loadSectionsWithoutTitle = (section: FormType) => {
+    return (
+      <div
+        className={`grid md:grid-cols-3 gap-x-4 gap-y-[2px] ${layout === Layout.TYPE_1 ? 'px-10' : 'px-6'} mb-4`}
+      >
+        {section.fields.map((field, j) => {
+          if (field.hide) return null;
+          return (
+
+            <div key={j} className={`col-span-3 flex flex-col`}>
+              <label
+                className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left`}
+                htmlFor={field.name}
+              >
+                {field.label}
+                {field.required && (
+                  <span className='text-red-500'> *</span>
+                )}
+              </label>
+              <div className={`${!field.label ? 'mt-1.5' : ""}`}>
                 {getFields(field)}
                 {field.error && (
                   <span className='text-[12px] text-red-400 col-span-full'>
@@ -1013,7 +1153,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         })}
       </div>
     )
-
   }
 
   return (
@@ -1025,54 +1164,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           <div key={i}>
             {section.sectionName && (
               <h4
-                className={`${i === 0 ? 'border-b' : 'border'} border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle mb-1 py-2 bg-[#F5F9FF] ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'}`}
+                className={`${i === 0 ? 'border-b' : 'border'} h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#F5F9FF] ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'}`}
               >
                 {section.sectionName}
               </h4>
             )}
             <>
-              {section.sectionName === 'Key Contacts List' ? loadKeyContactSection(section) : <div
-                className={`grid md:grid-cols-3 gap-4 ${layout === Layout.TYPE_1 ? 'px-10' : 'px-6'} mb-6`}
-              >
-                {section.fields.map((field, j) => {
-                  if (field.hide) return null;
-                  return (
-
-                    <div key={j} className={`col-span-1 ${!isHalf ? 'md:col-span-3' : ''} flex flex-col`}>
-                      <label
-                        className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1.5`}
-                        htmlFor={field.name}
-                      >
-                        {field.label}
-                        {field.required && (
-                          <span className='text-red-500'> *</span>
-                        )}
-                      </label>
-                      <div>
-                        {
-                          field.type === 'website' ?
-                            <div className="border border-[#CBD6E2] rounded-[2px] overflow-hidden">
-                              <div className="h-[32px]  box-border flex items-center gap-[4px]">
-                                <span className="pl-[8px] text-[13px] text-[#425A76]">https://</span>
-                                <img src={verticalSeparatorIcon} alt-='separtor' />
-                                {getFields(field)}
-                              </div>
-                            </div>
-                            : getFields(field)
-                        }
-
-                        {field.error && (
-                          <span className='text-[12px] text-red-400 col-span-full'>
-                            {field.error}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-
-                  );
-                })}
-              </div>}
+              {!section.sectionName ? loadSectionsWithoutTitle(section) :
+                section.sectionName === 'Key Contacts List' ? loadKeyContactSection(section) :
+                  loadDefaultSections(section, isHalf, i)
+              }
             </>
 
           </div>

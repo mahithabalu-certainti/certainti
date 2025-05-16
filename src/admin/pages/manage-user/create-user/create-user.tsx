@@ -178,7 +178,7 @@ export const CreateUser: React.FC = () => {
   };
 
   const onChangeField = ({ fieldName, fieldValue }: OnChange) => {
-    if(fieldName === 'country'){
+    if (fieldName === 'country') {
       setCurrentCountry({
         country: fieldValue as string,
         state: '',
@@ -228,13 +228,6 @@ export const CreateUser: React.FC = () => {
             </div>
             <div className='flex gap-2 m-2'>
               <TextButton
-                label='Cancel'
-                // variant='outlined'
-                // color='inherit'
-                onClick={goBack}
-                sx={{ width: '56px', minWidth: '56px', fontWeight: 400, fontSize: '12px' }}
-              />
-              <TextButton
                 label='Save'
                 // variant='filled'
                 loading={updateUser.isPending || createUser.isPending}
@@ -242,6 +235,13 @@ export const CreateUser: React.FC = () => {
                 sx={{ width: '64px', minWidth: '64px', fontWeight: 400, fontSize: '13px' }}
               />
               {isEditView && <TextButton label='Delete' sx={{ width: '73px', minWidth: '73px', fontWeight: 400, fontSize: '13px' }} />}
+              <TextButton
+                label='Cancel'
+                // variant='outlined'
+                // color='inherit'
+                onClick={goBack}
+                sx={{ width: '56px', minWidth: '56px', fontWeight: 400, fontSize: '12px' }}
+              />
             </div>
           </div>
           <FormBuilder

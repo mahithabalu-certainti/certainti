@@ -14,7 +14,7 @@ export interface FormTypeFields {
   minDate?: Date;
   maxDate?: Date;
   options?: SelectOption[];
-  span?: number;
+  width?: string;
   error?: string;
   placeholder?: string;
   regex?: string | RegExp;
@@ -116,7 +116,7 @@ export interface FieldType {
   anyOneRequired?: boolean; // financial information error handling
   isLoading?: boolean;
   errorHandling?: ErrorHandling[];
-  span?: number;
+  width?: string;
 }
 
 export type AllowedCountry =

@@ -39,6 +39,7 @@ export const AccountForm: React.FC = () => {
   const [showOthersField, setShowOthersField] = useState(false);
   const [dataResidency, setDataResidency] = useState(DATA_STORAGE_OPTIONS);
   const [keyContacts, setKeyContacts] = useState<FieldType[]>([]);
+  const [newContactLength, setNewContactLength] = useState<number>(0);
   const { successToast } = useToast();
   const location = useLocation();
   const { accountid } = useParams();
@@ -201,6 +202,7 @@ export const AccountForm: React.FC = () => {
   );
 
   useEffect(() => {
+    setNewContactLength(newKeyContactFields(memoizedRole, isValueUpdateInKeyContact).length);
     setKeyContacts(newKeyContactFields(memoizedRole, isValueUpdateInKeyContact) as []);
   }, [memoizedRole, isValueUpdateInKeyContact]);
 
@@ -282,26 +284,9 @@ export const AccountForm: React.FC = () => {
     window.history.back();
   };
 
-  // console.log("formdata", FormData(
-  //   memoizedContry,
-  //   memoizedParentAccounts,
-  //   memoizedCurrency,
-  //   memoizedState,
-  //   dataResidency,
-  //   memoizedIndustry,
-  //   memoizedRole,
-  //   isValueUpdateInKeyContact,
-  //   isParentAccountRequired,
-  //   keyContacts,
-  //   addKeyContactInfo,
-  //   isEditView,
-  //   states.isLoading,
-  //   showOthersField
-  // ))
-
   return (
     <>
-      <div className='flex items-center justify-between px-10 py-6 border-b-2 border-gray-200'>
+      <div className='h-[60px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200'>
         <div className='flex items-center'>
           <img
             src={isEditView ? editIcon : accountHomeIcon}
@@ -385,6 +370,7 @@ export const AccountForm: React.FC = () => {
         formRef={formRef}
         onChange={onChangeField}
         layout={Layout.TYPE_1}
+        newContactLength={newContactLength}
       />
     </>
   );

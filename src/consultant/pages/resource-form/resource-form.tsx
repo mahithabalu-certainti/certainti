@@ -414,7 +414,7 @@ const ResourceForm: React.FC = () => {
 
   return (
     <div className='resource-form-container'>
-      <div className='flex justify-between items-center border-b-2 border-gray-200 px-10 py-6'>
+      <div className='h-[60px] border-box flex justify-between items-center border-b-2 border-gray-200 px-10'>
         <div className='flex items-center'>
           <img
             src={isEditView ? editIcon : createresourceIcon}
@@ -452,18 +452,6 @@ const ResourceForm: React.FC = () => {
         </div>
         <div className='flex gap-3'>
           <TextButton
-            label='Cancel'
-            // variant='outlined'
-            // color='inherit'
-            onClick={handleGoBack}
-            sx={{
-              width: '56px',
-              minWidth: '56px',
-              fontSize: '12px',
-              fontWeight: 400,
-            }}
-          />
-          <TextButton
             label='Save'
             // variant='filled'
             loading={
@@ -479,6 +467,18 @@ const ResourceForm: React.FC = () => {
               width: '64px',
               minWidth: '64px',
               fontSize: '13px',
+              fontWeight: 400,
+            }}
+          />
+          <TextButton
+            label='Cancel'
+            // variant='outlined'
+            // color='inherit'
+            onClick={handleGoBack}
+            sx={{
+              width: '56px',
+              minWidth: '56px',
+              fontSize: '12px',
               fontWeight: 400,
             }}
           />

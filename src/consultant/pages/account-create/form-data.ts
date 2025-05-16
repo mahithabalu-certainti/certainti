@@ -21,7 +21,7 @@ export const newKeyContactFields = (
 ) => [
   createTextField('key_contact_name', 'Key Contact Name', {
     required: false,
-    span: 4,
+    width: '190px',
     regex: REGEX_PATTERNS.CONTACT_NAME,
     regexErrorMessage: 'Invalid Name',
     placeholder: 'Enter Key Contact Name',
@@ -41,17 +41,17 @@ export const newKeyContactFields = (
       },
     ],
   }),
-  createSelectField('key_contact_role', 'Key Contact Role', {
+  createSelectField('key_contact_role', 'Role', {
     options: roles,
-    span: 2,
+    width: '140px',
     required: false,
-    placeholder: 'Choose Key Contact Role',
+    placeholder: 'Choose Role',
     onChange: true,
   }),
-  createTextField('key_contact_email', 'Key Contact Email', {
+  createTextField('key_contact_email', 'Email', {
     required: false,
-    span: 2,
-    placeholder: 'Enter Key Contact Email',
+    width: '160px',
+    placeholder: 'Enter Email',
     onChange: true,
     errorHandling: [
       {
@@ -66,23 +66,23 @@ export const newKeyContactFields = (
   }),
   createRadioField('is_primary_contact', 'Is Primary Contact?', {
     radioOptions: YES_NO_OPTIONS,
-    span: 2,
+    width: '140px',
     required: isPrimaryContactRequired,
     onChange: true,
   }),
   createRadioField('include_in_communication', 'Include in Communications?', {
     radioOptions: YES_NO_OPTIONS,
-    span: 2,
+    width: '190px',
     required: false,
   }),
-  createSelectField('key_contact_status', 'Key Contact Status', {
+  createSelectField('key_contact_status', 'Status', {
     required: false,
-    span: 2,
+    width: '140px',
     options: STATUS_OPTIONS,
-    placeholder: 'Choose Key Contact Status',
+    placeholder: 'Choose Status',
   }),
   createImgButton(closeIcon, {
-    span: 1,
+    width: '60px',
   }),
 ];
 
@@ -113,7 +113,7 @@ const createDynamicField = (
     fieldsArr.push(
       createRadioField(name + '_' + groupIndex, label, {
         required: rest.required,
-        span: rest.span,
+        width: rest.width,
         defaultValue: rest.defaultValue,
         disabled: rest.disabled,
         onChange: rest.onChange,
@@ -124,7 +124,7 @@ const createDynamicField = (
   if (contacts.type === 'iconButton') {
     fieldsArr.push(
       createImgButton('', {
-        span: rest.span,
+        width: rest.width,
         onClick: () => removeKeyContact(index),
       })
     );
@@ -150,8 +150,6 @@ export const FormData = (
   stateLoading?: boolean,
   showOthersField?: boolean
 ): FormType[] => {
-  console.log('FormData', keyContacts);
-
   return useMemo(
     () => [
       {
