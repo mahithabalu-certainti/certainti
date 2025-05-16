@@ -70,6 +70,30 @@ async function userRoles(req: Request, res: Response): Promise<void> {
 async function userProfiles(req: Request, res: Response): Promise<void> {
   const methodName = "User profiles";
   try {
+        // Check if no query parameters are provided
+        const hasNoQueryParams = !req.query.page && !req.query.limit && !req.query.filters && !req.query.sortBy && !req.query.sortOrder;
+    
+        if (hasNoQueryParams) {
+          // If no parameters provided, get all profiles
+          const allProfiles = await services.userManagementServices.getAllProfiles();
+          
+          if (allProfiles.statusCode === constants.SUCCESS) {
+            successLog(methodName);
+            handleSuccessResponse(res, allProfiles.data);
+            return;
+          } else {
+            errorLog(methodName, allProfiles.errorMessage);
+            handleErrorResponse(
+              res,
+              constants.BAD_REQUEST,
+              constants.BAD_REQUEST_MESSAGE,
+              allProfiles.errorMessage
+            );
+            return;
+          }
+        }
+        
+        // Continue with existing validation and pagination logic for when parameters are provided
     const value = await validateRequest(req, listProfileSchema,"PLATFORM_TWO", res, "GET");
 
     let parsedFilters: Record<string, any> = {};
@@ -291,13 +315,13 @@ async function getProfilePermissions(req: Request, res: Response): Promise<void>
     // If validation fails, validateRequest will handle the response
     if (!validatedData) return;
     
-    const profileId = req.params.profileId;
+    const profile_id = req.params.profileId;
     // Get type and id from validated data
     const { type, id } = validatedData;
 
     // Call service method to get permissions
     const result = await services.userManagementServices.getProfilePermissions({
-      profileId,
+      profile_id,
       type: type as string,
       id: id as string
     });

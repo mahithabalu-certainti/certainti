@@ -84,7 +84,7 @@ class UserManagementService {
         modified_by: userId
       });
       const cloneSuccess = await this.profileClone({
-        profileId: profile.rid,
+        profile_id: profile.rid,
         source_profile_id
       }, userId);
 
@@ -127,14 +127,14 @@ class UserManagementService {
   /**
  * Records a profile event in the profile_timeline table
  * 
- * @param {string} profileId - The ID of the profile
+ * @param {string} profile_id - The ID of the profile
  * @param {string} eventName - The name of the event (e.g., "create")
  * @param {string} eventStatus - The status of the event (e.g., "success" or "failure")
  * @param {string} userId - The ID of the user who performed the action
  * @returns {Promise<boolean>} - Returns true if recording was successful
  */
   private async recordProfileEvent(
-    profileId: string,
+    profile_id: string,
     eventName: string,
     eventStatus: string,
     userId: string
@@ -142,7 +142,7 @@ class UserManagementService {
     try {
       // Create timeline entry
       await ProfileTimeline.create({
-        profile_rid: profileId,
+        profile_rid: profile_id,
         event_name: eventName,
         event_status: eventStatus,
         event_datetime: new Date(),
@@ -166,13 +166,13 @@ class UserManagementService {
    */
   private async profileClone(
     profileData: {
-      profileId: string;
+      profile_id: string;
       source_profile_id?: string;
     },
     userId: string
   ): Promise<boolean> {
     try {
-      const { profileId, source_profile_id } = profileData;
+      const { profile_id, source_profile_id } = profileData;
 
       // Use Promise.all to run these queries in parallel for better performance
       const [menuAccess, moduleAccess, permissionAccess, fieldAccess] = await Promise.all([
@@ -206,7 +206,7 @@ class UserManagementService {
 
       // Prepare new records for bulk creation
       const newMenuAccess = menuAccess.map(item => ({
-        profile_id: profileId,
+        profile_id: profile_id,
         menu_id: item.menu_id,
         is_enabled: item.is_enabled,
         created_by: userId,
@@ -214,7 +214,7 @@ class UserManagementService {
       }));
 
       const newModuleAccess = moduleAccess.map(item => ({
-        profile_id: profileId,
+        profile_id: profile_id,
         menu_module_id: item.menu_module_id,
         is_enabled: item.is_enabled,
         created_by: userId,
@@ -222,7 +222,7 @@ class UserManagementService {
       }));
 
       const newPermissionAccess = permissionAccess.map(item => ({
-        profile_id: profileId,
+        profile_id: profile_id,
         module_permission_id: item.module_permission_id,
         is_enabled: item.is_enabled,
         created_by: userId,
@@ -230,7 +230,7 @@ class UserManagementService {
       }));
 
       const newFieldAccess = fieldAccess.map(item => ({
-        profile_id: profileId,
+        profile_id: profile_id,
         permission_field_id: item.permission_field_id,
         read: item.read,
         edit: item.edit,
@@ -288,14 +288,14 @@ class UserManagementService {
  * Retrieves profile permissions based on profile ID and optional type and ID filters
  * 
  * @param {Object} params - Parameters for filtering permissions
- * @param {string} params.profileId - The profile ID to retrieve permissions for
+ * @param {string} params.profile_id - The profile ID to retrieve permissions for
  * @param {string} [params.type] - Optional filter type (menu, module, permission)
  * @param {string} [params.id] - Optional ID corresponding to the filter type
  * @returns {Promise<Object>} - Response object with permissions data
  */
   async getProfilePermissions(
     params: {
-      profileId: string;
+      profile_id: string;
       type?: string;
       id?: string;
     }
@@ -310,15 +310,15 @@ class UserManagementService {
     };
   }> {
     try {
-      const { profileId, type, id } = params;
+      const { profile_id, type, id } = params;
 
       // Verify profile exists
-      const profile = await Profile.findByPk(profileId);
+      const profile = await Profile.findByPk(profile_id);
       if (!profile) {
         return {
           statusCode: constants.NOT_FOUND,
           message: constants.NOT_FOUND_MESSAGE,
-          errorMessage: `Profile with ID ${profileId} not found`
+          errorMessage: `Profile with ID ${profile_id} not found`
         };
       }
       // Get filtered permissions based on provided parameters
@@ -326,16 +326,16 @@ class UserManagementService {
 
       if (type === 'permission' && id) {
         // Case 7: If permission type is provided, get only fields for that permission
-        privileges = await this.getFieldsForPermission(profileId, id);
+        privileges = await this.getFieldsForPermission(profile_id, id);
       } else if (type === 'module' && id) {
         // Case 6: If module type is provided, get permissions and fields for that module
-        privileges = await this.getPermissionsForModule(profileId, id);
+        privileges = await this.getPermissionsForModule(profile_id, id);
       } else if (type === 'menu' && id) {
         // Case 5: If menu type is provided, get modules, permissions, and fields for that menu
-        privileges = await this.getModulesForMenu(profileId, id);
+        privileges = await this.getModulesForMenu(profile_id, id);
       } else {
         // Case 4: If no filters, get all permissions for the profile
-        privileges = await userService.getProfilePermission(profileId);
+        privileges = await userService.getProfilePermission(profile_id);
       }
 
       return {
@@ -354,10 +354,10 @@ class UserManagementService {
   /**
    * Gets fields for a specific permission
    */
-  private async getFieldsForPermission(profileId: string, permissionId: string): Promise<any[]> {
+  private async getFieldsForPermission(profile_id: string, permissionId: string): Promise<any[]> {
     const fieldAccess = await ProfileFieldsAccess.findAll({
       where: {
-        profile_id: profileId,
+        profile_id: profile_id,
         '$permission_field.module_permission_id$': permissionId
       },
       include: [{
@@ -386,13 +386,13 @@ class UserManagementService {
   /**
    * Gets permissions and fields for a specific module
    */
-  private async getPermissionsForModule(profileId: string, moduleId: string): Promise<any[]> {
+  private async getPermissionsForModule(profile_id: string, moduleId: string): Promise<any[]> {
     const privileges = [];
 
     // Get permission access
     const permissionAccess = await ProfilePermissionAccess.findAll({
       where: {
-        profile_id: profileId,
+        profile_id: profile_id,
         '$module_permission.menu_module_id$': moduleId
       },
       include: [{
@@ -424,13 +424,13 @@ class UserManagementService {
   /**
    * Gets modules, permissions, and fields for a specific menu
    */
-  private async getModulesForMenu(profileId: string, menuId: string): Promise<any[]> {
+  private async getModulesForMenu(profile_id: string, menuId: string): Promise<any[]> {
     const privileges = [];
 
     // Get module access
     const moduleAccess = await ProfileModuleAccess.findAll({
       where: {
-        profile_id: profileId,
+        profile_id: profile_id,
         '$menu_module.menu_id$': menuId
       },
       include: [{
@@ -771,7 +771,7 @@ class UserManagementService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { profiles: any[] };
+    data?: { profiles: any[]; count: number };
   }> {
     try {
       const profiles = await Profile.findAll();
@@ -780,7 +780,8 @@ class UserManagementService {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
         data: {
-          profiles
+          profiles,
+          count: profiles.length
         }
       };
     } catch (err: any) {
@@ -790,14 +791,14 @@ class UserManagementService {
   /**
    * Updates profile permissions based on modified items
    * 
-   * @param {string} profileId - The profile ID to update permissions for
+   * @param {string} profile_id - The profile ID to update permissions for
    * @param {Array} privileges - Array of permission objects with modification flags
    * @param {string} userId - The ID of the user making the update
  * @param {string} originalUrl - OriginalUrl of the request
  * @returns {Promise<Object>} - Response object with update status
  */
   async updateProfilePermissions(
-    profileId: string,
+    profile_id: string,
     profileName: string,
     privileges: Array<{
       rid: string;
@@ -814,18 +815,18 @@ class UserManagementService {
     message: string;
     errorMessage?: string;
     data?: {
-      profileId: string;
-      updatedPermissionCount: number;
+      profile_id: string;
+      updated_permission_count: number;
     };
   }> {
     try {
       // Verify profile exists
-      const profile = await Profile.findByPk(profileId);
+      const profile = await Profile.findByPk(profile_id);
       if (!profile) {
         return {
           statusCode: constants.NOT_FOUND,
           message: constants.NOT_FOUND_MESSAGE,
-          errorMessage: `Profile with ID ${profileId} not found`
+          errorMessage: `Profile with ID ${profile_id} not found`
         };
       }
 
@@ -833,7 +834,7 @@ class UserManagementService {
         // Check if name has changed
         if (profile.profile_name !== profileName) {
           const isUniqueAndUpdated = await this.checkProfileNameUniqueAndUpdate(
-            profileId,
+            profile_id,
             profileName,
             profile.profile_name,
             userId
@@ -845,8 +846,8 @@ class UserManagementService {
               message: constants.BAD_REQUEST_MESSAGE,
               errorMessage: `Profile name '${profileName}' is already in use`,
               data: {
-                profileId,
-                updatedPermissionCount: 0
+                profile_id,
+                updated_permission_count: 0
               }
             };
           }
@@ -861,8 +862,8 @@ class UserManagementService {
           statusCode: constants.SUCCESS,
           message: constants.SUCCESS_MESSAGE,
           data: {
-            profileId,
-            updatedPermissionCount: 0
+            profile_id,
+            updated_permission_count: 0
           }
         };
       }
@@ -893,12 +894,12 @@ class UserManagementService {
 
       // Wait for all updates to complete
       const updateResults = await Promise.all(updatePromises);
-      const updatedPermissionCount = updateResults.filter(result => result === true).length;
+      const updated_permission_count = updateResults.filter(result => result === true).length;
 
       // Record the update event in profile timeline only if changes were made
-      if (updatedPermissionCount > 0 && originalUrl.includes('edit')) {
+      if (updated_permission_count > 0 && originalUrl.includes('edit')) {
         await this.recordProfileEvent(
-          profileId,
+          profile_id,
           "update",
           "success",
           userId
@@ -909,8 +910,8 @@ class UserManagementService {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
         data: {
-          profileId,
-          updatedPermissionCount
+          profile_id,
+          updated_permission_count
         }
       };
     } catch (err: any) {
@@ -921,14 +922,14 @@ class UserManagementService {
   /**
    * Checks if a profile name is unique and updates the profile if it is
    * 
-   * @param {string} profileId - The ID of the profile to update
+   * @param {string} profile_id - The ID of the profile to update
    * @param {string} profileName - The new profile name to check
    * @param {string} currentProfileName - The current profile name
    * @param {string} userId - The ID of the user making the update
    * @returns {Promise<boolean>} - Returns true if name is unique and update successful, false otherwise
    */
   async checkProfileNameUniqueAndUpdate(
-    profileId: string,
+    profile_id: string,
     profileName: string,
     currentProfileName: string,
     userId: string
@@ -947,7 +948,7 @@ class UserManagementService {
 
       // Create history record for name change
       await ProfileHistory.create({
-        profile_rid: profileId,
+        profile_rid: profile_id,
         attribute_name: 'name',
         old_value: currentProfileName,
         new_value: profileName,
@@ -962,7 +963,7 @@ class UserManagementService {
           modified_datetime: new Date(),
         },
         {
-          where: { rid: profileId }
+          where: { rid: profile_id }
         }
       );
 
