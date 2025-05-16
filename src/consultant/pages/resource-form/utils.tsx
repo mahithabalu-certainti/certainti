@@ -34,8 +34,8 @@ export const FREQUENCY_OPTIONS: SelectOption[] = [
 
 // Type definitions
 interface RawResourceData {
-  resource_ref_id?: string;
-  resource_fullname?: string;
+  resource_code?: string;
+  resource_name?: string;
   resource_firstname?: string;
   resource_lastname?: string;
   resource_type?: string;
@@ -94,17 +94,17 @@ export function transformPayloadforUpdateResource(
   return {
     resource_id: options.resource_id || '',
     account_number: options.account_number || '',
-    resource_ref_id:
-      rawData.resource_ref_id || existingResource?.resource_ref_id || '',
+    resource_code:
+      rawData.resource_code || existingResource?.resource_code || '',
     resource_type:
       rawData.resource_type || existingResource?.resource_type || '',
 
-    full_name:
-      rawData.resource_fullname || existingResource?.resource_fullname || '',
+    name:
+      rawData.resource_name || existingResource?.resource_name || '',
       first_name:
-      rawData.resource_firstname || existingResource?.resource_fullname || '',
+      rawData.resource_firstname || existingResource?.resource_firstname || '',
       last_name:
-      rawData.resource_fullname || existingResource?.resource_fullname || '',
+      rawData.resource_lastname || existingResource?.resource_lastname || '',
     org_name:
       rawData.resource_orgname || existingResource?.resource_orgname || '',
     role: rawData.resource_role || existingResource?.resource_role,
@@ -140,11 +140,11 @@ export const transformPayloadforCreateResource = (
   return {
     account_id: formData.account_id,
     account_number: formData.account_number,
-    resource_ref_id: formData.resource_ref_id,
+    resource_code: formData.resource_code,
     resource_type: formData.resource_type,
     first_name: formData.resource_firstname,
     last_name: formData.resource_lastname,
-    full_name: formData.resource_fullname,
+    name: formData.resource_name,
     org_name: formData.resource_orgname,
     role: formData.resource_role,
     resource_country: formData.country,

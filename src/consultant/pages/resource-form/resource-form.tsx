@@ -63,6 +63,12 @@ const ResourceForm: React.FC = () => {
   const [resourceDetails, setResourceDetails] = useState<any>(null);
   const accountId = searchParams.get('account_id');
   const [skillSubTypeData, setSkillSubTypeData] = useState<SelectOption[]>([]);
+  const [isResourceFullNameEmpty, setIsResourceFullNameEmpty] = useState(false);
+  const [isAnyResourceNameFilled, setIsAnyResourceNameFilled] = useState(false);
+  const [currentResource, setCurrentResource] = useState({
+    resource_firstname: '',
+    resource_lastname: '',
+  });
   // Derived values
   const isEditView = location.pathname.includes('/edit');
   const accountData = isEditView
@@ -384,6 +390,24 @@ const ResourceForm: React.FC = () => {
         [fieldName]: fieldValue as string,
       }));
     }
+    
+    if (fieldName === 'resource_name') {
+      setIsResourceFullNameEmpty((fieldValue as string).trim() !== '');
+    }
+  
+    if (fieldName === 'resource_firstname' || fieldName === 'resource_lastname') {
+      setCurrentResource((prev) => ({
+        ...prev,
+        [fieldName]: fieldValue as string,
+      }));
+      const updatedValues = {
+        ...currentResource,
+        [fieldName]: fieldValue as string,
+      };
+  
+      const hasName = !!updatedValues.resource_firstname?.trim() || !!updatedValues.resource_lastname?.trim();
+      setIsAnyResourceNameFilled(hasName);
+    }
   };
 
   //disable orgname in the formdata if the user select resource type as full-time
@@ -409,7 +433,9 @@ const ResourceForm: React.FC = () => {
     currentSkillType.skill_sub_type || currentSkillType.skillSubType,
     state?.skill,
     state?.cost,
-    state?.resourceCreate
+    state?.resourceCreate,
+    isResourceFullNameEmpty,
+    isAnyResourceNameFilled
   );
 
   return (
