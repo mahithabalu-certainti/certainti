@@ -41,7 +41,6 @@ async function createResource(req: Request, res: Response): Promise<void> {
     }
 
     const resources = await resourceService.createResource(value, userId);
-
     if (resources.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, resources.data);

@@ -99,6 +99,39 @@ const isEndDateAfterStartDate = (
   return value;
 };
 
+const costFields = [
+  'annual_cost',
+  'semi_annual_cost',
+  'monthly_cost',
+  'bi_weekly_cost',
+  'weekly_cost',
+  'daily_cost',
+  'hourly_cost'
+];
+
+// Shared validation method
+const MAX_COST_VALUE = 999999999999.99;
+
+const costFieldValidator = (fieldName: string) => {
+  return Joi.string()
+    .pattern(/^\d+(\.\d{1,2})?$/)
+    .custom((value, helpers) => {
+      if (!value) return value; // skip empty string, already allowed
+
+      const numValue = parseFloat(value);
+      if (numValue > MAX_COST_VALUE) {
+        return helpers.error('number.maxCost');
+      }
+
+      return value;
+    })
+    .allow('')
+    .messages({
+      'string.pattern.base': `${fieldName.replace(/_/g, ' ')} must be a valid number with up to 2 decimal places`,
+      'number.maxCost': `${fieldName.replace(/_/g, ' ')} must be a valid string number maximum up to (${MAX_COST_VALUE})`
+    });
+};
+
 const createResourcesSchema = Joi.object({
   account_number: Joi.string().max(50).required(),
   account_id: Joi.string()
@@ -525,7 +558,7 @@ const createResourceSkillSchema = Joi.object({
   }),
   resource_rid: Joi.string().max(255).optional().allow(null).allow(""),
   resource_number: Joi.string().max(255).required(),
-  resource_ref_id: Joi.string().max(255).required(),
+  resource_code: Joi.string().max(255).required(),
   start_date: Joi.string()
     .max(10)
     .custom((value, helpers) => {
@@ -754,6 +787,7 @@ const exportResourceSkillSchema = Joi.object({
       "any.required": "Fiscal year is required",
     }),
 });
+
 const updateResourceCostSchema = Joi.object({
   rid: Joi.string().pattern(uuidRegex).required(),
   eid: Joi.string().max(255).optional().allow(null).allow(""),
@@ -782,26 +816,13 @@ const updateResourceCostSchema = Joi.object({
       "date.invalidFormat":
         "Invalid end date. Please use the format MM/DD/YYYY",
     }),
-  cost_frequency: Joi.string()
-    .valid(
-      "annual",
-      "semi_annual",
-      "monthly",
-      "bi_weekly",
-      "weekly",
-      "daily",
-      "hourly"
-    )
-    .required(),
-    cost: Joi.string()
-    .pattern(/^\d+(\.\d{0,2})?$/)
-    .required()
-    .messages({
-      "string.base": "Cost must be a valid string number maximum up to (9999999999999999.99)",
-      "string.pattern.base": "Cost must be a valid number with up to 2 decimal places",
-      "string.empty": "Cost is required",
-      "any.required": "Cost is required"
-    }),
+  annual_cost: costFieldValidator('annual_cost'),
+  semi_annual_cost: costFieldValidator('semi_annual_cost'),
+  monthly_cost: costFieldValidator('monthly_cost'),
+  bi_weekly_cost: costFieldValidator('bi_weekly_cost'),
+  weekly_cost: costFieldValidator('weekly_cost'),
+  daily_cost: costFieldValidator('daily_cost'),
+  hourly_cost: costFieldValidator('hourly_cost'),
   status: Joi.string().max(255).default("active").optional(),
   fiscal_year: Joi.number()
    .integer()
@@ -820,7 +841,23 @@ const updateResourceCostSchema = Joi.object({
     .iso()
     .default(() => new Date()),
   modified_by: Joi.string().max(255).optional(),
+}).custom((value, helpers) => {
+  const filled = costFields.filter(field => value[field] && value[field].toString().trim() !== '');
+
+  if (filled.length === 0) {
+    return helpers.error('any.atLeastOneCostRequired');
+  }
+
+  if (filled.length > 1) {
+    return helpers.error('any.onlyOneCostAllowed');
+  }
+
+  return value;
+}).messages({
+  'any.onlyOneCostAllowed': 'Only one cost field should have a value',
+  'any.atLeastOneCostRequired': 'At least one cost field is required'
 });
+
 
 const getResourceCostSchema = Joi.object({
   id: Joi.string().pattern(uuidRegex).required(),
@@ -885,7 +922,7 @@ const resourceCostSchema = Joi.object({
     'any.required': 'Resource type is required'
   }),
   resource_rid: Joi.string().pattern(uuidRegex).required(),
-  resource_ref_id: Joi.string().max(255).required(),
+  resource_code: Joi.string().max(255).required(),
   effective_date: Joi.string()
     .max(10)
     .custom(isValidDate, "Effective date validation")
@@ -909,27 +946,14 @@ const resourceCostSchema = Joi.object({
       "date.invalidFormat":
         "Invalid end date. Please use the format MM/DD/YYYY",
     }),
-  cost_frequency: Joi.string()
-    .valid(
-      "annual",
-      "semi_annual",
-      "monthly",
-      "bi_weekly",
-      "weekly",
-      "daily",
-      "hourly"
-    )
-    .required(),
-  cost: Joi.string()
-    .pattern(/^\d+(\.\d{0,2})?$/)
-    .required()
-    .messages({
-      "string.base": "Cost must be a valid string number maximum up to (9999999999999999.99)",
-      "string.pattern.base": "Cost must be a valid number with up to 2 decimal places",
-      "string.empty": "Cost is required",
-      "any.required": "Cost is required"
-    }),
-    fiscal_year: Joi.number()
+  annual_cost: costFieldValidator('annual_cost'),
+  semi_annual_cost: costFieldValidator('semi_annual_cost'),
+  monthly_cost: costFieldValidator('monthly_cost'),
+  bi_weekly_cost: costFieldValidator('bi_weekly_cost'),
+  weekly_cost: costFieldValidator('weekly_cost'),
+  daily_cost: costFieldValidator('daily_cost'),
+  hourly_cost: costFieldValidator('hourly_cost'),
+  fiscal_year: Joi.number()
     .integer()
     .min(1000)
     .max(9999)
@@ -952,6 +976,21 @@ const resourceCostSchema = Joi.object({
     .default(() => new Date()),
   created_by: Joi.string().max(255).optional(),
   modified_by: Joi.string().max(255).optional(),
+}).custom((value, helpers) => {
+  const filled = costFields.filter(field => value[field] && value[field].toString().trim() !== '');
+
+  if (filled.length === 0) {
+    return helpers.error('any.atLeastOneCostRequired');
+  }
+
+  if (filled.length > 1) {
+    return helpers.error('any.onlyOneCostAllowed');
+  }
+
+  return value;
+}).messages({
+  'any.onlyOneCostAllowed': 'Only one cost field should have a value',
+  'any.atLeastOneCostRequired': 'At least one cost field is required'
 });
 
 const createProjectSchema = Joi.object({

@@ -350,7 +350,7 @@ class ResourceCostSchemaService {
 
       //Build the base query without sorting or pagination
       let query = `
-        SELECT rc.*,rc.r_number as r_number, r.resource_fullname,
+        SELECT rc.*,rc.r_number as r_number, r.resource_name,
         TO_CHAR(rc.effective_date, 'MM/DD/YYYY') as effective_date,
         TO_CHAR(rc.end_date, 'MM/DD/YYYY') as end_date
         FROM "${schemaName}"."resource_cost" rc
@@ -527,7 +527,7 @@ class ResourceCostSchemaService {
 
       //Build the base query without sorting or pagination
       let query = `
-        SELECT rc.*,rc.r_number as r_number, r.resource_fullname,
+        SELECT rc.*,rc.r_number as r_number, r.resource_name,
         TO_CHAR(rc.effective_date, 'MM/DD/YYYY') as effective_date,
         TO_CHAR(rc.end_date, 'MM/DD/YYYY') as end_date
         FROM "${schemaName}"."resource_cost" rc
@@ -642,7 +642,7 @@ class ResourceCostSchemaService {
       const rawResult = resourceCost || [];
       let exportData = rawResult.map((resource: any) => {
         return {
-          "Name": resource.resource_fullname,
+          "Name": resource.resource_name,
           "Currency": resource.currency_code,
           "Start Date": resource.effective_date,
           "End Date": resource.end_date,
