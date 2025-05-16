@@ -236,6 +236,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                 "& .MuiTableCell-root": {
                   fontWeight: 700,
                   fontSize: "13px",
+                  lineHeight: "21px",
                   color: "#2A2A2A",
                   padding: "0px",
                   px: "8px",
@@ -316,11 +317,13 @@ const AccountTable: React.FC<Record<string, any>> = ({
             <TableBody
               sx={{
                 "& .MuiTableCell-root": {
-                  fontWeight: 500,
+                  fontWeight: 700,
                   fontSize: "13px",
-                  color: "#425A76",
+                  lineHeight: "21px",
+                  color: "#2D3E4F",
                   padding: "0px",
                   paddingLeft: "8px",
+                  paddingRight: "8px",
                   height: "32px",
                 },
               }}

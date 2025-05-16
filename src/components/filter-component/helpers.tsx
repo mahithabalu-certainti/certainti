@@ -6,12 +6,14 @@ import {
   FormControlLabel,
   FormGroup,
   MenuItem,
+  MenuProps,
   Select,
   SelectChangeEvent,
   TextField,
 } from '@mui/material';
 import { FilterState } from '../../consultant/types/account-filter';
 import { useMemo } from 'react';
+import { arrowIcon } from '../../assets';
 
 export const TextFilterControl: React.FC<{
   fieldName: string;
@@ -275,3 +277,346 @@ export const MultiSelectFilterControl: React.FC<{
     </Box>
   );
 };
+
+
+const SELECT_STYLES = {
+  fontWeight: 600,
+  fontSize: '12px',
+  lineHeight: '30px',
+  borderRadius: '2px',
+  '& .MuiSelect-select': {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    fontWeight: 600,
+    fontSize: '12px',
+    lineHeight: '30px',
+    color: '#425A76',
+    py: 0
+  },
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderColor: '#CBD6E2',
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: '#CBD6E2',
+  },
+  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    borderColor: '#CBD6E2',
+  },
+};
+
+const MENU_PROPS: Partial<MenuProps> = {
+  anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
+  transformOrigin: { vertical: 'top', horizontal: 'left' },
+  PaperProps: {
+    style: {
+      borderRadius: '0px 0px 8px 8px',
+      border: '1px solid #CBD6E2',
+      borderTop: 'none',
+      marginTop: '1px',
+      boxShadow: 'none',
+    },
+  },
+  MenuListProps: {
+    sx: {
+      paddingTop: 0,
+      paddingBottom: 0,
+    },
+  },
+};
+
+export const NewTextFilterControl: React.FC<{
+  fieldName: string;
+  state: FilterState;
+  onOptionChange: (fieldName: string, event: SelectChangeEvent<string>) => void;
+  onValueChange: (
+    fieldName: string,
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => void;
+}> = ({ fieldName, state, onOptionChange, onValueChange }) => (
+  <div className="flex gap-2 items-center">
+    <Select
+      size="small"
+      value={state.text?.option || 'contains'}
+      onChange={(e) => onOptionChange(fieldName, e)}
+      className="min-w-[65px] max-w-[65px] h-[28px]"
+      IconComponent={() => (
+        <img src={arrowIcon} alt="arrowIcon" className="pr-3" />
+      )}
+      sx={SELECT_STYLES}
+      MenuProps={MENU_PROPS}
+    >
+      <MenuItem value="equals" sx={{ fontSize: '14px', color: '#425A76', fontWeight: 600, py: '1px' }}>=</MenuItem>
+      <MenuItem value="contains" sx={{ fontSize: '14px', color: '#425A76', fontWeight: 600, py: '1px' }}>∈</MenuItem>
+      <MenuItem value="starts_with" sx={{ fontSize: '14px', color: '#425A76', fontWeight: 600, py: '1px' }}>↦</MenuItem>
+      <MenuItem value="ends_with" sx={{ fontSize: '14px', color: '#425A76', fontWeight: 600, py: '1px' }}>⇥</MenuItem>
+    </Select>
+    <TextField
+      size="small"
+      value={state.text?.value || ''}
+      onChange={(e) => onValueChange(fieldName, e)}
+      placeholder='Type here'
+      sx={{
+        '& .MuiOutlinedInput-root': {
+          borderRadius: '2px',
+          '& fieldset': {
+            borderColor: '#CBD6E2',
+          },
+          '&:hover fieldset': {
+            borderColor: '#CBD6E2',
+          },
+          '&.Mui-focused fieldset': {
+            borderColor: '#CBD6E2',
+          },
+        },
+        '& .MuiInputBase-input': {
+          fontSize: '12px',
+          color: '#425A76',
+          height: '12px',
+          width: '170px'
+        },
+      }}
+    />
+  </div>
+);
+
+export const NewMultiSelectFilterControl: React.FC<{
+  fieldName: string;
+  state: FilterState;
+  options: string[];
+  onChange: (fieldName: string, values: string[]) => void;
+}> = ({ fieldName, state, options, onChange }) => {
+  const selectedValues = state.multiSelect?.values || [];
+
+  const menuItems = useMemo(() => {
+    return options.map((option) => (
+      <MenuItem
+        key={option}
+        value={option}
+        dense
+        sx={{
+          fontSize: '12px',
+          color: '#425A76',
+          fontWeight: 600,
+          py: '1px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px'
+        }}
+      >
+        <Checkbox
+          disableRipple
+          checked={selectedValues.includes(option)}
+          size="small"
+          sx={{
+            color: '#CBD6E2',
+            '&.Mui-checked': {
+              color: '#1755E7',
+            },
+          }}
+        />
+        {option}
+      </MenuItem>
+    ));
+  }, [options, selectedValues]);
+
+  return(
+  <FormControl fullWidth>
+    <Select
+      multiple
+      size="small"
+      value={state.multiSelect?.values || []}
+      onChange={(e) => onChange(fieldName, e.target.value as string[])}
+      className="h-[28px] mr-1.5"
+      IconComponent={() => (
+        <img src={arrowIcon} alt="arrowIcon" className="pr-3" />
+      )}
+      sx={SELECT_STYLES}
+      MenuProps={MENU_PROPS}
+    >
+      {menuItems}
+    </Select>
+  </FormControl>
+)};
+
+export const NewNumberFilterControl: React.FC<{
+  fieldName: string;
+  state: FilterState;
+  onOptionChange: (fieldName: string, event: SelectChangeEvent<string>) => void;
+  onValueChange: (
+    fieldName: string,
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    index?: number
+  ) => void;
+}> = ({ fieldName, state, onOptionChange, onValueChange }) => {
+  const option = state.number?.option || 'equals';
+  const value = state.number?.value;
+  const hasError = state.number?.error ?? false;
+
+  return (
+    <div className="flex gap-2 items-center">
+      <Select
+        size="small"
+        value={option}
+        onChange={(e) => onOptionChange(fieldName, e)}
+        className="min-w-[65px] max-w-[65px] h-[28px]"
+        IconComponent={() => (
+          <img src={arrowIcon} alt="arrowIcon" className="pr-3" />
+        )}
+        sx={SELECT_STYLES}
+        MenuProps={MENU_PROPS}
+      >
+        <MenuItem value="equals" sx={{ fontSize: '12px', color: '#425A76', fontWeight: 600, py: '1px' }}>=</MenuItem>
+        <MenuItem value="greater_than" sx={{ fontSize: '12px', color: '#425A76', fontWeight: 600, py: '1px' }}>&gt;</MenuItem>
+        <MenuItem value="less_than" sx={{ fontSize: '12px', color: '#425A76', fontWeight: 600, py: '1px' }}>&lt;</MenuItem>
+        <MenuItem value="between" sx={{ fontSize: '12px', color: '#425A76', fontWeight: 600, py: '1px' }}>⟷</MenuItem>
+      </Select>
+      
+      {option === 'between' ? (
+        <div className="flex gap-2">
+          {[0, 1].map((i) => (
+            <TextField
+              key={i}
+              type="number"
+              size="small"
+              placeholder={i === 0 ? 'Min' : 'Max'}
+              value={Array.isArray(value) ? value[i] : ''}
+              onChange={(e) => onValueChange(fieldName, e, i)}
+              error={hasError && (!value || (Array.isArray(value) && value[i]?.trim() === ''))}
+              inputProps={{ min: 0 }}
+              onKeyDown={(e) => {
+                if (e.key === '-' || e.key === 'e') e.preventDefault();
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '2px',
+                  '& fieldset': {
+                    borderColor: '#CBD6E2',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#CBD6E2',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#CBD6E2',
+                  },
+                },
+                '& .MuiInputBase-input': {
+                  fontSize: '12px',
+                  color: '#425A76',
+                  height: '12px',
+                  width: '82px'
+                },
+                '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button': {
+                  '-webkit-appearance': 'none',
+                  margin: 0,
+                },
+                '& input[type=number]': {
+                  '-moz-appearance': 'textfield',
+                },
+              }}
+            />
+          ))}
+        </div>
+      ) : (
+        <TextField
+          type="number"
+          size="small"
+          value={typeof value === 'string' ? value : ''}
+          onChange={(e) => onValueChange(fieldName, e)}
+          placeholder='Enter a number'
+          error={hasError && !value}
+          inputProps={{ min: 0 }}
+          onKeyDown={(e) => {
+            if (e.key === '-' || e.key === 'e') e.preventDefault();
+          }}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '2px',
+              '& fieldset': {
+                borderColor: '#CBD6E2',
+              },
+              '&:hover fieldset': {
+                borderColor: '#CBD6E2',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: '#CBD6E2',
+              },
+            },
+            '& .MuiInputBase-input': {
+              fontSize: '12px',
+              color: '#425A76',
+              height: '12px',
+              width: '170px'
+            },
+            '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button': {
+              '-webkit-appearance': 'none',
+              margin: 0,
+            },
+            '& input[type=number]': {
+              '-moz-appearance': 'textfield',
+            },
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
+export const NewStatusFilterControl: React.FC<{
+  fieldName: string;
+  state: FilterState;
+  options: { value: string; label: string; }[];
+  onOptionChange: (fieldName: string, event: SelectChangeEvent<string>) => void;
+}> = ({ fieldName, state, options, onOptionChange }) => (
+  <FormControl fullWidth>
+    <Select
+      size="small"
+      value={state.status?.value || 'Active'}
+      onChange={(e) => onOptionChange(fieldName, e)}
+      className="mr-1.5 h-[28px]"
+      IconComponent={() => (
+        <img src={arrowIcon} alt="arrowIcon" className="pr-3" />
+      )}
+      sx={SELECT_STYLES}
+      MenuProps={MENU_PROPS}
+    >
+      {options?.map((option) => (
+        <MenuItem 
+          key={option.label} 
+          value={option.value}
+          sx={{ 
+            fontSize: '12px', 
+            color: '#425A76',
+            fontWeight: 600,
+            py: '1px',
+          }}
+        >
+          {option.label}
+        </MenuItem>
+      ))}
+    </Select>
+  </FormControl>
+);
+
+export const NewBooleanFilterControl: React.FC<{
+  fieldName: string;
+  state: FilterState;
+  onChange: (fieldName: string, value: boolean) => void;
+}> = ({ fieldName, state, onChange }) => (
+  <FormControl fullWidth>
+    <Select
+      size="small"
+      value={state.boolean?.value ? 'true' : 'false'}
+      onChange={(e) => onChange(fieldName, e.target.value === 'true')}
+      className="mr-1.5 h-[28px]"
+      IconComponent={() => (
+        <img src={arrowIcon} alt="arrowIcon" className="pr-3" />
+      )}
+      sx={SELECT_STYLES}
+      MenuProps={MENU_PROPS}
+    >
+      <MenuItem value="true" sx={{ fontSize: '12px', color: '#425A76', fontWeight: 600, py: '1px' }}>Yes</MenuItem>
+      <MenuItem value="false" sx={{ fontSize: '12px', color: '#425A76', fontWeight: 600, py: '1px' }}>No</MenuItem>
+    </Select>
+  </FormControl>
+);

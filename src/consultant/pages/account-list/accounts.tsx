@@ -6,11 +6,10 @@ import {
   accountSettingsIcon,
   actionIcon,
   downloadIcon,
-  filterIcon,
   newFilterIcon,
   refreshIcon,
 } from '../../../assets';
-import { Filter, FilterModal } from '../../../components';
+import { FilterModal } from '../../../components';
 import ActionsDropdown from '../../../components/actions-dropdown/actions-dropdown';
 import TextButton from '../../../components/button/text-button';
 import { ACCOUNT_CREATE } from '../../../routes';
@@ -18,17 +17,11 @@ import { getAccountFilterfields } from './helpers';
 import AccountTable from './table/account-table';
 import { useGetAllCountries } from '../../../common-service';
 import { exportAccountList, useFetchCurrency } from '../../services/account';
-import { CircularProgress } from '@mui/material';
 import { AccountList } from '../../types';
-
-const BUTTON_STYLES = {
-  height: '32px',
-  color: '#F15A29',
-};
 
 export const Accounts: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
-  const [searchTerm, setSearchTerm] = useState<string>('');
+  // const [searchTerm, setSearchTerm] = useState<string>('');
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
   const [order, setOrder] = useState<'asc' | 'desc'>('desc');
   const [orderBy, setOrderBy] = useState<keyof AccountList>('createdAt');
@@ -67,7 +60,7 @@ export const Accounts: React.FC = () => {
     return currencyList.data?.data.currency.map(item => item.currency_code) || [];
   }, [currencyList]);
 
-  const accountFilterfields = getAccountFilterfields(allCountries, allCurrencies);
+  const accountFilterFields = getAccountFilterfields(allCountries, allCurrencies);
 
   const [totalCount, setTotalCount] = useState<number>(0);
   return (
@@ -160,7 +153,11 @@ export const Accounts: React.FC = () => {
           </button>
           {isFilterOpen &&
             <div className='absolute mt-1 right-0 z-50'>
-              <FilterModal />
+              <FilterModal
+                filterFields={accountFilterFields}
+                setAppliedFilters={setAppliedFilters}
+                setPage={setPage}
+              />
             </div>
           }
         </div>
@@ -168,7 +165,6 @@ export const Accounts: React.FC = () => {
       <div>
         <AccountTable
           appliedFilters={appliedFilters}
-          searchTerm={searchTerm}
           setTotalCount={setTotalCount}
           order={order}
           setOrder={setOrder}
