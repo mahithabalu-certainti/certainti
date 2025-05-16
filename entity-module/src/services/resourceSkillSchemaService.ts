@@ -8,6 +8,7 @@ import { ResourceSkillTimeline } from "../models/resourceSkillTimeline";
 import { ResourceSkillHistory } from "../models/resourceSkillHistory";
 import { ResourceFiscal } from "../models/resourceFiscal";
 import { initMainDbSequelize } from "../config/mainDataSource";
+import moment from "moment";
 
 class ResourceSkillSchemaService {
   private sequelizeInstance: Sequelize | null = null;
@@ -330,7 +331,10 @@ async exportResoucreSkill(
 
     // Add names to resource skills and format for export
     resourceSkill = resourceSkill.map((rs: any) => ({
-      "Start Date": rs.start_date,
+
+      "Start Date": rs.start_date = moment(rs.start_date).format(
+        "MM/DD/YYYY"
+      ) as any,
       "Skill Type": skillTypeMap.get(rs.skill_type_rid) || '',
       "Skill Subtype": skillSubtypeMap.get(rs.skill_subtype_rid) || '',
       "Skill Details": rs.skill_details,
