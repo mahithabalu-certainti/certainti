@@ -68,6 +68,12 @@ export class ProfilePermissionAccess
             record.setDataValue("modified_datetime", new Date());
           },
         },
+        indexes: [
+          {
+            name: 'idx_profile_permission_access_profile_id',
+            fields: ['profile_id']
+          }
+        ]
       }
     );
 
