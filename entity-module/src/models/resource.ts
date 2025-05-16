@@ -180,7 +180,7 @@ export class Resources
         },
         modified_datetime: {
           type: DataTypes.DATE,
-          allowNull: true,
+          allowNull: false,
           defaultValue: DataTypes.NOW,
         },
         created_by: {

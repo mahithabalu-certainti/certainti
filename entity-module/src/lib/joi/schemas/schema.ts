@@ -492,18 +492,32 @@ const updateResourceSchema = Joi.object({
       "string.min": "Resource designation must be at least 3 characters long",
       "string.max": "Resource designation must not exceed 64 characters"
     }),
-  total_years_experience: Joi.number()
-    .optional()
+    total_years_experience: Joi.number()
+    .precision(2)
     .min(0)
-    .max(99)
+    .max(99.99)
+    .optional()
     .allow("")
-    .allow(null),
+    .allow(null)
+    .messages({
+      "number.base": "Total years experience must be a number",
+      "number.min": "Total years experience cannot be negative",
+      "number.max": "Total years experience cannot exceed 99.99",
+      "number.precision": "Total years experience can only have up to 2 decimal places"
+    }),
   total_years_in_org: Joi.number()
-    .optional()
+    .precision(2)
     .min(0)
-    .max(99)
+    .max(99.99)
+    .optional()
     .allow("")
-    .allow(null),
+    .allow(null)
+    .messages({
+      "number.base": "Total years in organization must be a number",
+      "number.min": "Total years in organization cannot be negative",
+      "number.max": "Total years in organization cannot exceed 99.99",
+      "number.precision": "Total years in organization can only have up to 2 decimal places"
+    }),
   resource_status: Joi.string().valid("Active", "Inactive").optional(),
   comments: Joi.string().optional().allow("").allow(null),
 });
