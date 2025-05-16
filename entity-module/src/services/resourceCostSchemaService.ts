@@ -7,6 +7,7 @@ import { initOrgSequelize } from "../config/orgDataSource";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { HttpStatus } from "../utils/constants";
 import { ResourceFiscal } from "../models/resourceFiscal";
+import moment from "moment";
 
 class ResourceCostSchemaService {
   private sequelizeInstance: Sequelize | null = null;
@@ -644,8 +645,12 @@ class ResourceCostSchemaService {
         return {
           "Name": resource.resource_name,
           "Currency": resource.currency_code,
-          "Start Date": resource.effective_date,
-          "End Date": resource.end_date,
+          "Start Date": resource.effective_date = moment(resource.effective_date).format(
+            "MM/DD/YYYY"
+          ) as any,
+          "End Date": resource.end_date = moment(resource.end_date).format(
+            "MM/DD/YYYY"
+          ) as any,
           "Hourly": resource.hourly_cost,
           "Daily": resource.daily_cost,
           "Bi-Weekly": resource.bi_weekly_cost,

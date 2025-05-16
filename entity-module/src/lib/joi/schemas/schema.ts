@@ -577,36 +577,33 @@ const createResourceSkillSchema = Joi.object({
     .max(10)
     .custom((value, helpers) => {
       if (!value) return value;
-
-      // Parse the date in MM/DD/YYYY format
+    
       const [month, day, year] = value.split("/").map(Number);
-      const inputDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-      const minDate = new Date('1950-01-01');
-      const currentDate = new Date();
-
-      // Check if date is valid
+      const inputDate = new Date(Date.UTC(year, month - 1, day));
+      const minDate = new Date(Date.UTC(1950, 0, 1));
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0); // Normalize to date only
+    
       if (isNaN(inputDate.getTime())) {
         return helpers.error("date.invalidFormat", {
           message: "Invalid date format. Please use MM/DD/YYYY."
         });
       }
-
-      // Check if date is before minimum date
+    
       if (inputDate < minDate) {
         return helpers.error("date.min", {
           message: "Start date cannot be before 01/01/1950"
         });
       }
-
-      // Check if date is in the future
-      if (inputDate > currentDate) {
+    
+      if (inputDate > today) {
         return helpers.error("date.max", {
           message: "Start date cannot be in the future"
         });
       }
-
+    
       return value;
-    })
+    })    
     .optional()
     .allow("")
     .allow(null)
@@ -663,34 +660,31 @@ const updateResourceSkillSchema = Joi.object({
     .max(10)
     .custom((value, helpers) => {
       if (!value) return value;
-
-      // Parse the date in MM/DD/YYYY format
+    
       const [month, day, year] = value.split("/").map(Number);
-      const inputDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-      const minDate = new Date('1950-01-01');
-      const currentDate = new Date();
-
-      // Check if date is valid
+      const inputDate = new Date(Date.UTC(year, month - 1, day));
+      const minDate = new Date(Date.UTC(1950, 0, 1));
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0); // Normalize to date only
+    
       if (isNaN(inputDate.getTime())) {
         return helpers.error("date.invalidFormat", {
           message: "Invalid date format. Please use MM/DD/YYYY."
         });
       }
-
-      // Check if date is before minimum date
+    
       if (inputDate < minDate) {
         return helpers.error("date.min", {
           message: "Start date cannot be before 01/01/1950"
         });
       }
-
-      // Check if date is in the future
-      if (inputDate > currentDate) {
+    
+      if (inputDate > today) {
         return helpers.error("date.max", {
           message: "Start date cannot be in the future"
         });
       }
-
+    
       return value;
     })
     .optional()
