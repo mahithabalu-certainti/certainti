@@ -146,7 +146,7 @@ export const GlobalModal = ({
               <div className='flex-1 flex flex-col space-y-1 p-6 overflow-y-auto'>
                 {accounts?.map((account: AccountFilter) => (
                   <div key={account.rid}>
-                    <label className='m-0'>
+                    <label className='m-0 flex items-center'>
                       <Checkbox
                         disableRipple
                         checked={selectedFilters.some(
@@ -173,7 +173,7 @@ export const GlobalModal = ({
                       account.child_accounts?.length > 0 && (
                         <div>
                           {account.child_accounts.map((child) => (
-                            <label key={child.rid} className='m-0 ml-6 block'>
+                            <label key={child.rid} className='m-0 ml-6 flex items-center'>
                               <Checkbox
                                 disableRipple
                                 checked={
@@ -223,13 +223,14 @@ export const GlobalModal = ({
                   Clear
                 </span>
               </div>
-              <div className='flex-1 overflow-y-auto'>
+              <div className='flex-1 pr-6 overflow-y-auto'>
+              <div className='flex-1'>
                 <p className='mt-3 text-[#807F94] text-[13px] font-normal'>Account</p>
                 {selectedFilters.map(({ account: id }) => {
                   const account = accounts?.find((it) => it.rid === id);
                   return account ? (
-                    <p className='flex justify-between items-center mt-1 text-[13px] text-[#000000] font-normal' key={id}>
-                      {account.account_name}{' '}
+                    <p className='flex justify-between items-center gap-2 mt-1 text-[13px] text-[#000000] font-normal' key={id}>
+                      <span title={account.account_name} className='truncate max-w-[150px] overflow-ellipsis'>{account.account_name}</span>
                       <img
                         src={closeIcon}
                         className='cursor-pointer'
@@ -251,10 +252,10 @@ export const GlobalModal = ({
                     )
                     .map((child) => (
                       <p
-                        className='flex justify-between items-center text-[13px] text-[#000000] font-normal'
+                        className='flex justify-between items-center text-[13px] gap-2 mt-1 text-[#000000] font-normal'
                         key={child.rid}
                       >
-                        {child.account_name}{' '}
+                        <span title={child.account_name} className='truncate max-w-[150px] overflow-ellipsis'>{child.account_name}</span>
                         <img
                           src={closeIcon}
                           className='cursor-pointer'
@@ -264,6 +265,7 @@ export const GlobalModal = ({
                       </p>
                     ))
                 )}
+              </div>
               </div>
             </div>
           </div>

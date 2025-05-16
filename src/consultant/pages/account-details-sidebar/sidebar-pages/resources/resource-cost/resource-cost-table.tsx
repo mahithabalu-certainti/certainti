@@ -145,12 +145,12 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
               }}
             >
              <TruncateWithTooltip text={String(cost.resourceFullName)}>
-             {cost.resourceFullName}
+             {cost.resourceFullName || 'NA'}
               </TruncateWithTooltip>
             </TableCell>
-            <TableCell sx={{ minWidth: '100px' }}>{cost.currency}</TableCell>
-            <TableCell sx={{ minWidth: '130px' }}>{startDate}</TableCell>
-            <TableCell sx={{ minWidth: '130px' }}>{endDate}</TableCell>
+            <TableCell sx={{ minWidth: '100px' }}>{cost.currency || 'NA'}</TableCell>
+            <TableCell sx={{ minWidth: '130px' }}>{startDate || 'NA'}</TableCell>
+            <TableCell sx={{ minWidth: '130px' }}>{endDate || 'NA'}</TableCell>
             <TableCell sx={{ minWidth: '130px' }}>
             <TruncateWithTooltip text={String(cost.hourlyCost)}>
             {cost.hourlyCost ? CostDisplay(cost.hourlyCost) : '-'}
@@ -176,11 +176,11 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
                 {cost.monthlyCost ? CostDisplay(cost.monthlyCost) : '-'}
               </TruncateWithTooltip>
             </TableCell>
-            <TableCell sx={{ minWidth: '140px' }}>
+            {/* <TableCell sx={{ minWidth: '140px' }}>
             <TruncateWithTooltip text={String(cost.semiAnnualCost)}>
             {cost.semiAnnualCost ? CostDisplay(cost.semiAnnualCost) : '-'}
               </TruncateWithTooltip>
-            </TableCell>
+            </TableCell> */}
             <TableCell sx={{ minWidth: '130px' }}>
             <TruncateWithTooltip text={String(cost.annualCost)}>
             {cost.annualCost ? CostDisplay(cost.annualCost) : '-'}
@@ -437,7 +437,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
                   Monthly
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ minWidth: '140px' }}>
+              {/* <TableCell sx={{ minWidth: '140px' }}>
                 <TableSortLabel
                   active={costorderBy === 'semi_annual_cost'}
                   direction={
@@ -451,7 +451,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
                 >
                   Semi Annual
                 </TableSortLabel>
-              </TableCell>
+              </TableCell> */}
               <TableCell sx={{ minWidth: '130px' }}>
                 <TableSortLabel
                   active={costorderBy === 'annual_cost'}

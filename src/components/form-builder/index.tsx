@@ -18,7 +18,7 @@ import {
 import { useLocation } from 'react-router-dom';
 import { FieldTypes, Layout, OnChange } from '../../common-service';
 import { ALLOWED_COUNTRIES } from '../../common-utils';
-import { FormType, FormTypeFields, SelectOption } from '../../consultant/types';
+import { FormType, FormTypeFields, GroupFields, SelectOption } from '../../consultant/types';
 
 interface FormBuilderProps {
   data: FormType[];
@@ -227,8 +227,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 {field.placeholder}
               </option>
               {field?.options?.map((option, i) => (
-                <option key={i} value={option.value}>
-                  {option.label}
+                <option key={i} value={option.value} title={option.label}>
+                  {option.label.length > 60
+                    ? option.label.slice(0, 60) + '…'
+                    : option.label}
                 </option>
               ))}
             </select>
@@ -329,7 +331,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return (
           <div className='flex gap-4 mt-1.5'>
             {field?.options?.map((option, i) => (
-              <label key={i} className='flex gap-2 cursor-pointer'>
+              <label key={i} className={`flex gap-2 ${field.disabled ? 'cursor-default' : 'cursor-pointer'}`}>
                 <input
                   type='radio'
                   name={field.name}
@@ -339,6 +341,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   onChange={(e) => {
                     handleChange(e.target.value);
                   }}
+                  className={`${field.disabled ? 'cursor-default' : 'cursor-pointer'}`}
                 />
                 <span className='text-[13px] text-[#7D98B6]'>
                   {option.label}
@@ -616,6 +619,19 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   const submitData = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     let hasError = false;
+
+        //get group fields from formData
+        const groupFields: GroupFields = new Map();
+        formData?.forEach((section) => {
+          section.fields.forEach((field) => {
+            if (field.group) {
+              if (!groupFields.has(field.group)) {
+                groupFields.set(field.group, []);
+              }
+              groupFields.get(field.group)?.push(field.name);
+            }
+          });
+        });
 
     const dataValidation = formData?.map((section) => {
       if (section.hide) return section;
@@ -1021,6 +1037,34 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         }),
       };
     });
+       //group field validation
+       groupFields.forEach((fieldNames, groupName) => {
+        const filledFields = fieldNames.filter(
+          (fieldName) => constructFormData[fieldName]?.toString().trim()
+        );
+
+        if (filledFields.length === 0) {
+          // No fields filled - show error on all fields in group
+          hasError = true;
+          dataValidation?.forEach((section) => {
+            section.fields.forEach((field) => {
+              if (field.group === groupName) {
+                field.error = `At least one field in the "${groupName}" group is required`;
+              }
+            });
+          });
+        } else if (filledFields.length > 1) {
+          // More than one field filled - show error on filled fields
+          hasError = true;
+          dataValidation?.forEach((section) => {
+            section.fields.forEach((field) => {
+              if (field.group === groupName && filledFields.includes(field.name)) {
+                field.error = `Only one field in the "${groupName}" group can be filled`;
+              }
+            });
+          });
+        }
+      });
     setFormData(dataValidation);
 
     if (!hasError) {

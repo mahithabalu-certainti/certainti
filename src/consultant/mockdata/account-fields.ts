@@ -8,7 +8,7 @@ export const mockAccountDetails: AccountFieldsApiResponse = {
     accountById: {
       r_number: 'ACC0010',
       account_name: 'Wipro-Global',
-      account_description: 'This is a description of the account.',
+      comments: 'This is a description of the account.',
       status: Status.Active,
       is_parent: true,
       annual_revenue: 10000,
