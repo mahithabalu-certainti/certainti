@@ -39,7 +39,7 @@ export const FormData = (
               {
                 regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_REGEX,
                 errorMessage:
-                  'Frist name cannot start or end with a space, apostrophe, or hyphen.',
+                  'First name cannot start or end with a space, apostrophe, or hyphen.',
               },
               {
                 regex:REGEX_PATTERNS.NAME_REGEX,
