@@ -139,7 +139,7 @@ const Resource: React.FC<ResourceProps> = ({
     setColumns(
       getResourceColumns({
         onResourceIdClick: handleResourceClick,
-        onClickId: 'resource_ref_id',
+        onClickId: 'resource_code',
       })
     );
   }, []);

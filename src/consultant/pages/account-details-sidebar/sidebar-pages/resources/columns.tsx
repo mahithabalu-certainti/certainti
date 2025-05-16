@@ -23,8 +23,8 @@ const displayValue = (value: any) => {
 
 const BASE_COLUMNS: ColumnDefinition[] = [
   {
-    id: 'resource_ref_id',
-    sortId: 'resource_ref_id',
+    id: 'resource_code',
+    sortId: 'resource_code',
     label: 'Resource Code',
     sortable: true,
     width: '150px',
@@ -40,8 +40,8 @@ const BASE_COLUMNS: ColumnDefinition[] = [
     ),
   },
   {
-    id: 'resource_fullname',
-    sortId: 'resource_fullname',
+    id: 'resource_name',
+    sortId: 'resource_name',
     label: 'Name',
     sortable: true,
     width: '200px',
