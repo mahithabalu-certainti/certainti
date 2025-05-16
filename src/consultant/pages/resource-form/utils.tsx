@@ -172,10 +172,15 @@ export const transformCostData = (
       ? formData.financial_start_date
       : '',
     end_date: formData.financial_end_date ? formData.financial_end_date : '',
-    cost_frequency: formData.cost_frequency,
-    cost: (formData.cost ?? '').toString().replace(/[^\d.]/g, ''),
+    annual_cost: formData.annual_cost || '',
+    monthly_cost: formData.monthly_cost || '',
+    weekly_cost: formData.weekly_cost || '',
+    bi_weekly_cost: formData.bi_weekly_cost || '',
+    daily_cost: formData.daily_cost || '',
+    hourly_cost: formData.hourly_cost || '',
     fiscal_year: formData.fiscal_year,
     resource_type: formData.resource_type,
+    resource_code: formData.resource_code,
     resource_ref_id: formData.resource_ref_id,
     currency_rid: formData.currency ? formData.currency : null,
     resource_rid: formData.resource_rid,
@@ -192,6 +197,7 @@ export const transformCostData = (
     delete data.resource_type;
     delete data.resource_ref_id;
     delete data.resource_number;
+    delete data.resource_code;
   }
 
   return data;
@@ -206,6 +212,7 @@ export const transformSkillData = (
     account_rid: formData.account_rid,
     resource_type: formData.resource_type,
     resource_rid: formData.resource_rid,
+    resource_code: formData.resource_code,
     resource_ref_id: formData.resource_ref_id,
     start_date: formData.skill_start_date ? formData.skill_start_date : '',
     skill_level: formData.skill_level as skillLevel,
@@ -226,6 +233,7 @@ export const transformSkillData = (
     delete data.resource_ref_id;
     delete data.resource_desc;
     delete data.resource_number;
+    delete data.resource_code;
 
     data.rid = formData.skill_rid;
   }

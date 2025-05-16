@@ -468,6 +468,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                   color: '#425A76',
                   padding: '0px',
                   pl: 1,
+                  pr: 1,
                   minHeight: '42px',
                   maxHeight: '42px',
                   height: '42px',
