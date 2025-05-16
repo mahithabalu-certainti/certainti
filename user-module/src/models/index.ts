@@ -1,7 +1,7 @@
 import { initSequelize } from "../config/dataSource";
 import { BusinessTeams } from "./businessTeamModel";
 import { Department } from "./departmentModel";
-import { Profile } from "./profileModel";
+import { Profile, setupProfileSequence} from "./profileModel";
 import { FunctionGroup } from "./functionGroupModel";
 import { ProfileModuleAccess } from "./profileModuleAccessModel";
 import { UserDetails } from "./userDetailsModel";
@@ -133,6 +133,7 @@ export async function initModels() {
       } 
     });
     await sequelize.sync({ force: false });
+    await setupProfileSequence(sequelize);
   } catch (err) {
     console.log("Errr loading models", err);
   }
