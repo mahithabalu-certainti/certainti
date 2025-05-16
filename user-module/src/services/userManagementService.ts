@@ -771,7 +771,7 @@ class UserManagementService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { profiles: any[] };
+    data?: { profiles: any[]; count: number };
   }> {
     try {
       const profiles = await Profile.findAll();
@@ -780,7 +780,8 @@ class UserManagementService {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
         data: {
-          profiles
+          profiles,
+          count: profiles.length
         }
       };
     } catch (err: any) {
@@ -814,8 +815,8 @@ class UserManagementService {
     message: string;
     errorMessage?: string;
     data?: {
-      profileId: string;
-      updatedPermissionCount: number;
+      profile_id: string;
+      updated_permission_count: number;
     };
   }> {
     try {
@@ -845,8 +846,8 @@ class UserManagementService {
               message: constants.BAD_REQUEST_MESSAGE,
               errorMessage: `Profile name '${profileName}' is already in use`,
               data: {
-                profileId,
-                updatedPermissionCount: 0
+                profile_id: profileId,
+                updated_permission_count: 0
               }
             };
           }
@@ -861,8 +862,8 @@ class UserManagementService {
           statusCode: constants.SUCCESS,
           message: constants.SUCCESS_MESSAGE,
           data: {
-            profileId,
-            updatedPermissionCount: 0
+            profile_id: profileId,
+            updated_permission_count: 0
           }
         };
       }
@@ -909,8 +910,8 @@ class UserManagementService {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
         data: {
-          profileId,
-          updatedPermissionCount
+          profile_id: profileId,
+          updated_permission_count: updatedPermissionCount
         }
       };
     } catch (err: any) {
