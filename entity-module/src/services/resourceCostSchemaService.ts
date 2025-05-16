@@ -656,7 +656,7 @@ class ResourceCostSchemaService {
           "Bi-Weekly": resource.bi_weekly_cost,
           "Weekly": resource.weekly_cost,
           "Monthly": resource.monthly_cost,
-          "Semi Annual": resource.semi_annual_cost,
+          // "Semi Annual": resource.semi_annual_cost,
           "Annual": resource.annual_cost,
         };
       });
@@ -750,7 +750,7 @@ class ResourceCostSchemaService {
       "effective_date",
       "end_date",
       "annual_cost",
-      "semi_annual_cost",
+      // "semi_annual_cost",
       "monthly_cost",
       "weekly_cost",
       "bi_weekly_cost",
@@ -784,7 +784,7 @@ class ResourceCostSchemaService {
       "daily",
       "hourly",
       "bi_weekly",
-      "semi_annual",
+      // "semi_annual",
     ];
     const dateFields = ["effective_date", "end_date"];
     const specialFields = ["resource_cost_number"];

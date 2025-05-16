@@ -16,7 +16,7 @@ interface ResourceCostAttributes {
   // cost?: number;
   // cost_type?: string;
   annual_cost?: number;
-  semi_annual_cost?: number;
+  // semi_annual_cost?: number;
   monthly_cost?: number;
   weekly_cost?: number;
   bi_weekly_cost?: number;
@@ -53,7 +53,7 @@ export class ResourceCost
   // cost_type?: string;
   fiscal_year!: number;
   annual_cost?: number;
-  semi_annual_cost?: number;
+  // semi_annual_cost?: number;
   monthly_cost?: number;
   weekly_cost?: number;
   bi_weekly_cost?: number;
@@ -157,10 +157,10 @@ export class ResourceCost
           type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },
-        semi_annual_cost: {
-          type: DataTypes.DECIMAL(18, 2),
-          allowNull: true,
-        },
+        // semi_annual_cost: {
+        //   type: DataTypes.DECIMAL(18, 2),
+        //   allowNull: true,
+        // },
         monthly_cost: {
           type: DataTypes.DECIMAL(18, 2),
           allowNull: true,

@@ -56,7 +56,7 @@ export interface IResourceCost {
   // cost_frequency: string;
   // cost: number;
   annual_cost?: number | "";
-  semi_annual_cost?: number | "";
+  // semi_annual_cost?: number | "";
   monthly_cost?: number | "";
   weekly_cost?: number | "";
   bi_weekly_cost?: number | "";
@@ -83,7 +83,7 @@ export interface IUpdateResourceCost {
   // cost_frequency: string;
   // cost: number;
   annual_cost?: number | "";
-  semi_annual_cost?: number | "";
+  // semi_annual_cost?: number | "";
   monthly_cost?: number | "";
   weekly_cost?: number | "";
   bi_weekly_cost?: number | "";
