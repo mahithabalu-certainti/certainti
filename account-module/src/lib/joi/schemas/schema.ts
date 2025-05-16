@@ -30,7 +30,7 @@ const allowedTLDs = [
 const accountSchema = Joi.object({
   account_id: Joi.string().max(255).allow(null).optional().label("Account ID"),
   account_name: Joi.string().min(7).max(125).required().label("Account Name"),
-  account_description: Joi.string().max(2000).optional().allow("").allow(null).label("Comments"),
+  comments: Joi.string().max(2000).optional().allow("").allow(null).label("Comments"),
   status: Joi.string().valid("active", "inactive").required().label("Status"),
   is_parent: Joi.boolean().required().label("Is Parent"),
   parent_account_rid: Joi.string().allow(null).optional().label("Parent Account"),
@@ -158,7 +158,7 @@ const updateAccountSchema = Joi.object({
   account_id: Joi.string().max(255).required().label("Account ID"),
   account_name: Joi.string().min(7).max(125).required().label("Account Name"),
   r_number: Joi.string().required().label("R number"),
-  account_description: Joi.string().max(2000).optional().allow("").allow(null).label("Comments"),
+  comments: Joi.string().max(2000).optional().allow("").allow(null).label("Comments"),
   status: Joi.string().valid("active", "inactive").required().label("Status"),
   is_parent: Joi.boolean().required().label("Is Parent"),
   parent_account_rid: Joi.string().allow(null).optional().label("Parent Account"),

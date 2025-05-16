@@ -448,7 +448,7 @@ class AccountService {
       let parent_account = null;
       const {
         account_name,
-        account_description,
+        comments,
         parent_account_rid,
         account_country_rid,
         account_currency_rid,
@@ -503,7 +503,7 @@ class AccountService {
 
       const account = await repository.create({
         account_name,
-        account_description: account_description || "",
+        comments: comments || "",
         r_number: "fnfdfn",
         region: parent_account
           ? parent_account.region
@@ -571,7 +571,7 @@ class AccountService {
       const {
         account_rid,
         account_name,
-        account_description,
+        comments,
         status,
         annual_revenue,
         account_country_region_rid,
@@ -602,7 +602,7 @@ class AccountService {
       const [affectedCounts, affectedRows] = await repository.update(
         {
           account_name,
-          account_description: account_description || "",
+          comments: comments || "",
           status,
           region: account_country_region_rid,
           country_rid: account_country_rid,
@@ -745,6 +745,12 @@ class AccountService {
             model: Currency,
             as: "currency",
             attributes: ["currency_code"],
+            required: false,
+          },
+          {
+            model: Industry,
+            as: "industry",
+            attributes: ["industry_name"],
             required: false,
           },
           {
