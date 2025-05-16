@@ -379,7 +379,7 @@ class SchemaService {
           project_manager = :project_manager,
           auto_access_rd = :auto_access_rd,
           modified_datetime = :modified_datetime,
-          business_details = :business_details,
+          business_details = :business_details
         WHERE account_rid = :account_rid;
       `,
       {
