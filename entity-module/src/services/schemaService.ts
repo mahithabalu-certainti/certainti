@@ -264,7 +264,7 @@ class SchemaService {
       });
 
       if (isRefIdExist) {
-        throw new Error("Resource ref ID must be unique.");
+        throw new Error("Resource Code must be unique.");
       }
 
       const resourceObject = {
@@ -307,7 +307,7 @@ class SchemaService {
           endDate
         );
         this.addTimeline(
-          resourceData.account_number,
+          accountNumber,
           resourceData,
           resource.rid,
           "create",
