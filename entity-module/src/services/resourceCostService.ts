@@ -252,7 +252,7 @@ async createResourceCost(
         // cost_frequency,
         // cost,
         annual_cost,
-        semi_annual_cost,
+        // semi_annual_cost,
         monthly_cost,
         weekly_cost,
         bi_weekly_cost,
@@ -306,7 +306,7 @@ async createResourceCost(
       try {
         const costFields = {
           annual_cost,
-          semi_annual_cost,
+          // semi_annual_cost,
           monthly_cost,
           weekly_cost,
           bi_weekly_cost,
@@ -509,7 +509,7 @@ async createResourceCost(
         // cost_frequency,
         // cost,
         annual_cost,
-        semi_annual_cost,
+        // semi_annual_cost,
         monthly_cost,
         weekly_cost,
         bi_weekly_cost,
@@ -572,7 +572,7 @@ async createResourceCost(
       try {
         const costFields = {
           annual_cost,
-          semi_annual_cost,
+          // semi_annual_cost,
           monthly_cost,
           weekly_cost,
           bi_weekly_cost,
@@ -796,7 +796,7 @@ async createResourceCost(
         "effective_date",
         "end_date",
         "annual_cost",
-        "semi_annual_cost",
+        // "semi_annual_cost",
         "monthly_cost",
         "weekly_cost",
         "bi_weekly_cost",
@@ -935,34 +935,34 @@ async createResourceCost(
           modified_by: costData.modified_by,
         });
 
-        // Find which cost frequency has a value
-        const frequencyMap: Record<string, string> = {
-          annual_cost: "annual",
-          semi_annual_cost: "semi_annual",
-          monthly_cost: "monthly",
-          weekly_cost: "weekly",
-          bi_weekly_cost: "bi_weekly",
-          daily_cost: "daily",
-          hourly_cost: "hourly",
-        };
+        // // Find which cost frequency has a value
+        // const frequencyMap: Record<string, string> = {
+        //   annual_cost: "annual",
+        //   semi_annual_cost: "semi_annual",
+        //   monthly_cost: "monthly",
+        //   weekly_cost: "weekly",
+        //   bi_weekly_cost: "bi_weekly",
+        //   daily_cost: "daily",
+        //   hourly_cost: "hourly",
+        // };
 
-        let foundFrequency = null;
-        let costValue = null;
+        // let foundFrequency = null;
+        // let costValue = null;
 
         // Check each cost field to find the one with a value
-        for (const [key, value] of Object.entries(frequencyMap)) {
-          // Use type assertion to tell TypeScript this is a valid key access
-          const costFieldValue = (costData as Record<string, any>)[key];
-          if (
-            costFieldValue !== null &&
-            costFieldValue !== undefined &&
-            costFieldValue !== ""
-          ) {
-            foundFrequency = value;
-            costValue = costFieldValue;
-            break;
-          }
-        }
+        // for (const [key, value] of Object.entries(frequencyMap)) {
+        //   // Use type assertion to tell TypeScript this is a valid key access
+        //   const costFieldValue = (costData as Record<string, any>)[key];
+        //   if (
+        //     costFieldValue !== null &&
+        //     costFieldValue !== undefined &&
+        //     costFieldValue !== ""
+        //   ) {
+        //     foundFrequency = value;
+        //     costValue = costFieldValue;
+        //     break;
+        //   }
+        // }
 
         costData.created_by = userNames.created_by_name;
         costData.modified_by = userNames.modified_by_name;
@@ -990,24 +990,22 @@ async createResourceCost(
           ).format("MM/DD/YYYY") as any;
         }
 
-        // Create a new response object with simplified cost data
+        //Create a new response object with simplified cost data
         const simplifiedCostData = {
           ...costData,
-          cost_frequency: foundFrequency,
-          cost: costValue,
           currency_name: currencyName,
           currency_code: currencyCode,
           currency_symbol: currencySymbol,
         };
 
-        // Remove the individual cost frequency fields
-        delete (simplifiedCostData as Record<string, any>).annual_cost;
-        delete (simplifiedCostData as Record<string, any>).semi_annual_cost;
-        delete (simplifiedCostData as Record<string, any>).monthly_cost;
-        delete (simplifiedCostData as Record<string, any>).weekly_cost;
-        delete (simplifiedCostData as Record<string, any>).bi_weekly_cost;
-        delete (simplifiedCostData as Record<string, any>).daily_cost;
-        delete (simplifiedCostData as Record<string, any>).hourly_cost;
+        // // Remove the individual cost frequency fields
+        // delete (simplifiedCostData as Record<string, any>).annual_cost;
+        // delete (simplifiedCostData as Record<string, any>).semi_annual_cost;
+        // delete (simplifiedCostData as Record<string, any>).monthly_cost;
+        // delete (simplifiedCostData as Record<string, any>).weekly_cost;
+        // delete (simplifiedCostData as Record<string, any>).bi_weekly_cost;
+        // delete (simplifiedCostData as Record<string, any>).daily_cost;
+        // delete (simplifiedCostData as Record<string, any>).hourly_cost;
 
         return {
           statusCode: HttpStatus.SUCCESS,
