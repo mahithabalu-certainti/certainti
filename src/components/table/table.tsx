@@ -95,7 +95,7 @@ const Table = <T extends RowData>({
     <>
     <Paper sx={{ boxShadow: 'none', borderBottom: '1px solid #CBD6E2',borderRadius: '0px' }}>
       <TableContainer sx={{ maxHeight: 'calc(85vh - 200px)', overflow:'auto', position:'relative' }}>
-        <MuiTable stickyHeader>
+        <MuiTable stickyHeader sx={{ tableLayout: 'fixed' }}>
           <TableHead
             sx={{
               '& .MuiTableCell-root': {
@@ -271,7 +271,7 @@ const Table = <T extends RowData>({
               ))}
 
               {/* Action column */}
-              {(onEdit || onDelete || onView) && <TableCell sx={{ minWidth: '100px', textAlign: 'center', pl: '0px !important' }}>Action</TableCell>}
+              {(onEdit || onDelete || onView) && <TableCell sx={{ minWidth: '100px', }}>Action</TableCell>}
             </TableRow>
           </TableHead>
 

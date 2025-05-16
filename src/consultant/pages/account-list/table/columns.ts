@@ -9,5 +9,4 @@ export const columns: Column<Account>[] = [
   { id: 'country', label: 'Country', sortable: true },
   { id: 'currency', label: 'Currency', sortable: true },
   { id: 'status', label: 'Status', sortable: false },
-  { id: 'primaryContact', label: 'Primary Contact', sortable: false },
 ];

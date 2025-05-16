@@ -34,7 +34,7 @@ export interface OnChange {
 }
 
 export enum UserRoles {
-  Admin = 'Admin',
+  Admin = 'Super Admin',
   AccountAdministration = 'Account Administration',
   ProjectAdministration = 'Project Administration',
   CaseAdministration = 'Case Administration',
@@ -76,4 +76,8 @@ export interface UploadImportPayload {
   related_to_rid: string;
   uploaded_by_user_rid: string;
   account_r_number: string;
+}
+
+export enum Layout {
+  TYPE_1 = 1,
 }

@@ -4,6 +4,16 @@ import { allAccountIcon, arrowDownIcon, arrowUpIcon } from '../../../../assets';
 import { Account, ConvertedAccount } from '../../../types';
 import ActionButton from './action-button';
 
+const formatNumberWithCommas = (num: number | string): string => {
+  if (num) {
+    if (typeof num === 'string') {
+      num = parseFloat(num);
+    }
+    return num.toLocaleString('en-US');
+  }
+  return '';
+};
+
 interface RenderRowsProps {
   accounts: ConvertedAccount[];
   openRows: Set<string>;
@@ -175,19 +185,18 @@ export const renderRows = ({
           <TableCell sx={{ minWidth: '200px' }}>{account.industry}</TableCell>
           <TableCell sx={{ minWidth: '150px' }}>{account.country}</TableCell>
           <TableCell sx={{ minWidth: '100px' }}>{account.currency}</TableCell>
-          <TableCell sx={{ minWidth: '160px' }}>{account.annualRevenue}</TableCell>
-          <TableCell sx={{color: account.status === 'Active' ? '#199806 !important' : '#f44336 !important'}}>{account.status}</TableCell>
+          <TableCell sx={{ minWidth: '160px' }}>
+            {formatNumberWithCommas(account.annualRevenue)}
+          </TableCell>
           <TableCell
-            title={account.primaryContact}
             sx={{
-              minWidth: '180px',
-              maxWidth: '180px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
+              color:
+                account.status === 'Active'
+                  ? '#199806 !important'
+                  : '#f44336 !important',
             }}
           >
-            {account.primaryContact}
+            {account.status === 'Active' ? 'Active' : 'In-Active'}
           </TableCell>
           <TableCell sx={{ padding: '0px !important' }}>
             <ActionButton
@@ -306,21 +315,21 @@ export const renderChildRows = ({
           >
             {account.currency}
           </TableCell>
-          <TableCell sx={{ minWidth: '160px' }}>{account.annualRevenue}</TableCell>
-          <TableCell sx={{color: account.status === 'Active' ? '#199806 !important' : '#f44336 !important', minWidth: '100px' }}>{account.status}</TableCell>
+          <TableCell sx={{ minWidth: '160px' }}>
+            {formatNumberWithCommas(account.annualRevenue)}
+          </TableCell>
           <TableCell
-            title={account.primaryContact}
             sx={{
-              minWidth: '180px',
-              maxWidth: '180px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
+              color:
+                account.status === 'Active'
+                  ? '#199806 !important'
+                  : '#f44336 !important',
+              minWidth: '100px',
             }}
           >
-            {account.primaryContact}
+            {account.status}
           </TableCell>
-          <TableCell sx={{ minWidth: '80px' }}>
+          <TableCell sx={{ padding: '0px !important' }}>
             <ActionButton
               onEdit={() => handleEdit(account)}
               onDelete={() => handleDelete(account)}

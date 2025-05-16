@@ -13,6 +13,7 @@ interface ResourceTableHeaderProps {
     variant: 'text' | 'outlined' | 'contained';
     onClick: () => void;
     sx?: SxProps<Theme>;
+    disabled?: boolean;
   }[];
   toggleViewMode?: () => void;
   showBackArrow?: boolean;
@@ -58,7 +59,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
           )}
           <h1 className='text-[14px] font-medium text-[#2D3E4F]'>{title}</h1>
           <div className='text-[14px] font-medium text-[#2D3E4F]'>
-            {value === 'details' && resourceNumber}
+          {(value === 'details' || value === 'cost' || value === 'skill') && resourceNumber}
           </div>
         </div>
 
@@ -76,6 +77,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
                 }
                 aria-label={button.label}
                 sx={button.sx}
+                disabled={button.disabled}
               />
             ))}
           </div>

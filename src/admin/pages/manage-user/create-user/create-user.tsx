@@ -123,20 +123,22 @@ export const CreateUser: React.FC = () => {
 
   const submitData = (data: Partial<UserDetail>) => {
     if (isEditView && userDatas) {
-      const normalizeValue = (value: any) => {
-        return value === undefined || value === null || value === '' ? '' : value;
-      };
+      // const normalizeValue = (value: unknown) => {
+      //   return value === undefined || value === null || value === ''
+      //     ? ''
+      //     : value;
+      // };
 
-      const compareData = (data: Partial<UserDetail>, userDatas: UserDetail) => {
-        return Object.entries(data).some(([key, value]) => {
-          return normalizeValue(value) !== normalizeValue(userDatas[key as keyof UserDetail]);
-        });
-      };
+      // const compareData = (data: Partial<UserDetail>, userDatas: UserDetail) => {
+      //   return Object.entries(data).some(([key, value]) => {
+      //     return normalizeValue(value) !== normalizeValue(userDatas[key as keyof UserDetail]);
+      //   });
+      // };
 
-      if (!compareData(data, userDatas)) {
-        window.history.back();
-        return;
-      }
+      // if (!compareData(data, userDatas)) {
+      //   window.history.back();
+      //   return;
+      // }
 
       const constructData = {
         ...data,
@@ -145,6 +147,7 @@ export const CreateUser: React.FC = () => {
         azure_id: userDatas?.azure_id,
         // modified_by: UserRole.Admin,
         profile_id: data.profile_rid,
+        country: data.country || null,
       } as Partial<UserDetail>;
       delete constructData.profile_rid;
       delete constructData.email;
@@ -156,6 +159,7 @@ export const CreateUser: React.FC = () => {
     } else {
       const constructData = {
         ...data,
+        country: data.country || null,
         role: data.role_rid,
         profile_id: data.profile_rid,
         created_by: UserRole.Admin,
@@ -174,10 +178,16 @@ export const CreateUser: React.FC = () => {
   };
 
   const onChangeField = ({ fieldName, fieldValue }: OnChange) => {
-    if (fieldName === 'country' || fieldName === 'state') {
+    if(fieldName === 'country'){
+      setCurrentCountry({
+        country: fieldValue as string,
+        state: '',
+      });
+    }
+    if (fieldName === 'state') {
       setCurrentCountry((prev) => ({
         ...prev,
-        [fieldName]: fieldValue as string,
+        state: fieldValue as string,
       }));
     }
   };
@@ -234,30 +244,28 @@ export const CreateUser: React.FC = () => {
               {isEditView && <TextButton label='Delete' variant='outlined' sx={{ width: '73px',minWidth: '73px', fontWeight:400, fontSize: '13px' }}/>}
             </div>
           </div>
-          <div className='p-5'>
-            <FormBuilder
-              loading={
-                userDetails.isLoading ||
-                userProfiles.isLoading ||
-                allCountries.isLoading ||
-                userRoles.isLoading
-              }
-              data={FormData(
-                memoizedCountry,
-                memoizeProfiles,
-                memoizeRole,
-                memoizedState,
-                memoizeCity,
-                isEditView,
-                states.isLoading,
-                city.isLoading
-              )}
-              values={isEditView && userDatas ? { ...userDatas } : undefined}
-              outData={submitData}
-              formRef={formRef}
-              onChange={onChangeField}
-            />
-          </div>
+          <FormBuilder
+            loading={
+              userDetails.isLoading ||
+              userProfiles.isLoading ||
+              allCountries.isLoading ||
+              userRoles.isLoading
+            }
+            data={FormData(
+              memoizedCountry,
+              memoizeProfiles,
+              memoizeRole,
+              memoizedState,
+              memoizeCity,
+              isEditView,
+              states.isLoading,
+              city.isLoading
+            )}
+            values={isEditView && userDatas ? { ...userDatas } : undefined}
+            outData={submitData}
+            formRef={formRef}
+            onChange={onChangeField}
+          />
         </div>
       </div>
     </>

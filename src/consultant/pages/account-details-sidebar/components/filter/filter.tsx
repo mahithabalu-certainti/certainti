@@ -40,7 +40,8 @@ const Filter: React.FC<FilterComponentProps> = ({
   onFilterStatesChange,
   savedSelectedFilters = [],
   onSelectedFiltersChange,
-  setCurrentPage
+  setCurrentPage,
+  mode,
 }) => {
   const [selectedFilters, setSelectedFilters] =
   useState<string[]>(savedSelectedFilters);
@@ -304,6 +305,24 @@ const Filter: React.FC<FilterComponentProps> = ({
     if (!selectedFilters.includes(field.value)) return null;
 
     const fieldState = filterStates[field.value] || {};
+    let enabled = false;
+    if (field.value === 'skill_subtype_rid') {
+      const skillTypeValue = filterStates['skill_type_rid']?.enum?.value;
+      enabled = !!skillTypeValue && !!skillTypeValue[0]; // Only enable if skill type is selected
+   
+      return (
+        <EnumFilterControl
+          filterStates={filterStates}
+          menuOption={enumOptions}
+          valueOptions={field.options as { option: string; value: string }[]}
+          fieldName={field.value}
+          state={fieldState}
+          onOptionChange={handleFilterOptionChange}
+          onChange={handleEnumSelectChange}
+          disabled={!enabled}
+        />
+      );
+    }
 
     switch (field.type) {
       case 'text':
@@ -372,6 +391,7 @@ const Filter: React.FC<FilterComponentProps> = ({
             state={fieldState}
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleDateChange}
+            mode={mode as 'date' | 'year'}
           // onChange={handleBooleanChange}
           />
         );
@@ -388,7 +408,6 @@ const Filter: React.FC<FilterComponentProps> = ({
         return null;
     }
   };
-
   return (
     <Box className='w-[248px] max-h-[450px] bg-white shadow-lg border border-[#CBD6E2] rounded flex flex-col'>
       <Box className='flex justify-between items-center p-2 border-b border-[#CBD6E2]'>

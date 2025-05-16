@@ -72,8 +72,8 @@ export const App: React.FC<IApp> = ({ instance }) => {
             _isAuthenticated ? <Navigate to={MAIN_ROUTE} replace /> : <Login />
           }
         />
-        <Route element={<AppLayout />}>
-          <Route element={<ProtectedRoute />}>
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppLayout />}>
             <Route index element={<HomePage />} />
             <Route index path={ACCOUNT} element={<Accounts />} />
             <Route path={ACCOUNT_CREATE} element={<AccountForm />} />
@@ -88,10 +88,14 @@ export const App: React.FC<IApp> = ({ instance }) => {
             <Route path={RESOURCESKILL_EDIT} element={<ResourceForm />} />
             <Route path={RESOURCE} element={<Resource />} />
             <Route path={PROFILE} element={<Profile />} />
+            {/* Page not found */}
+            <Route path={NOT_MATCH} element={<NotFound />} />
           </Route>
+        </Route>
 
-          {/* Admin protected routes */}
-          <Route element={<ProtectedRoute requireAdmin />}>
+        {/* Admin protected routes */}
+        <Route element={<ProtectedRoute requireAdmin />}>
+          <Route element={<AppLayout />}>
             <Route path={ADMIN_MANAGE_USER} element={<UserList />} />
             <Route
               path={ADMIN_MANAGE_USER_DETAILS}
@@ -101,7 +105,6 @@ export const App: React.FC<IApp> = ({ instance }) => {
             <Route path={ADMIN_EDIT_USER} element={<CreateUser />} />
             <Route path={MANAGE_PROFILE} element={<ProfileList />} />
           </Route>
-
           {/* Page not found */}
           <Route path={NOT_MATCH} element={<NotFound />} />
         </Route>

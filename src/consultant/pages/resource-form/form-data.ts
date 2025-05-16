@@ -19,6 +19,7 @@ import {
 const DATE_CONFIG = {
   FISCAL_YEARS_RANGE: 6,
   MIN_YEARS_BACK: 6,
+  COST_FISCAL_YEARS_RANGE: 20,
 } as const;
 
 // 2. Extract fiscal years calculation
@@ -27,6 +28,14 @@ const getFiscalYears = (range: number) => {
   return Array.from({ length: range }, (_, i) => {
     const year = currentYear - i;
     return { label: `FY-${year}`, value: String(year) };
+  });
+};
+
+const getSkillStartDateOptions = (range: number) => {
+  const currentYear = new Date().getFullYear();
+  return Array.from({ length: range }, (_, i) => {
+    const year = currentYear - i;
+    return { label: `${year}`, value: String(year) };
   });
 };
 
@@ -40,95 +49,250 @@ const getDateConstraints = (yearsBack: number) => {
   return { currentDate, minDate, previousDate };
 };
 
-export const fiscalYears = getFiscalYears(DATE_CONFIG.FISCAL_YEARS_RANGE);
-const { currentDate, minDate, previousDate } = getDateConstraints(DATE_CONFIG.MIN_YEARS_BACK);
+export const fiscalYears = getFiscalYears(DATE_CONFIG.COST_FISCAL_YEARS_RANGE);
+export const skillStartDateYears = getSkillStartDateOptions(
+  DATE_CONFIG.FISCAL_YEARS_RANGE
+);
+const { currentDate, minDate, previousDate } = getDateConstraints(
+  DATE_CONFIG.MIN_YEARS_BACK
+);
 
 export const ResourceFormData = (
   country: SelectOption[],
   states: SelectOption[],
   city: SelectOption[],
   currency: SelectOption[],
+  skillTypeOptions: SelectOption[],
+  skillSubTypeOptions: SelectOption[],
   stateLoading?: boolean,
   cityLoading?: boolean,
   currencyLoading?: boolean,
+  skillSubTypeLoading?: boolean,
   disableFields?: boolean,
-  hideSkill?: string,
-  disableCostAndSkill?: boolean
+  disableCostAndSkill?: boolean,
+  disableOrgname?: boolean,
+  currentSkillType?: string,
+  currentskillSubType?: string,
+  disableSkill?: boolean,
+  disableCost?: boolean,
+  createResource?: boolean,
+  isResourceFullNameEmpty?:boolean,
+  isAnyResourceNameFilled?:boolean
 ): FormType[] => {
   return useMemo(
     () => [
       {
         sectionName: 'Basic Information',
         fillType: 'half',
+        hide: disableCostAndSkill,
         fields: [
-          createTextField('resource_ref_id', 'Resource Ref ID', {
+          createTextField('resource_code', 'Resource Code', {
             required: true,
-            regex: RESOURCE_REGEX.RESOURCE_REF_ID,
-            regexErrorMessage:
-              'Please enter 1-50 characters, Special characters and spaces alone are not allowed.',
-            placeholder: 'Enter Resource Ref ID',
-            disabled: disableFields || disableCostAndSkill,
-          }),
-          createTextField('resource_fullname', 'Resource Full Name', {
-            required: false,
-            regex: RESOURCE_REGEX.FULL_NAME,
-            regexErrorMessage:
-              'Please enter 3-200 characters, including at least one letter. Special characters and numbers alone are not allowed.',
-            placeholder: 'Enter Full Name',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_3,
+                errorMessage: 'Please enter more than 2 characters.',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_50,
+                errorMessage: 'Max length exceeded',
+              },
+              {
+                regex: REGEX_PATTERNS.NO_LEADING_SPECIAL_REGEX,
+                errorMessage:
+                  'Cannot start with a number, hyphen, or underscore.',
+              },
+              {
+                regex: REGEX_PATTERNS.ALLOWED_CHARS_REGEX,
+                errorMessage:
+                  'Only letters, numbers, hyphens, and underscores are allowed.',
+              },
+              {
+                regex: REGEX_PATTERNS.NO_CONSECUTIVE_SPECIALS_REGEX,
+                errorMessage:
+                  'Consecutive hyphens or underscores are not allowed.',
+              },
+              {
+                regex: REGEX_PATTERNS.NO_TRAILING_SPECIAL_REGEX,
+                errorMessage: 'Cannot end with a hyphen or underscore.',
+              },
+            ],
+            placeholder: 'Enter Resource Code',
             disabled: disableCostAndSkill,
+            onChange: true,
           }),
           createSelectField('resource_type', 'Resource Type', {
             options: RESOURCE_TYPE_OPTIONS,
-            placeholder: '-Select-',
+            placeholder: 'Choose Resource Type',
             required: true,
-            disabled: disableCostAndSkill,
+            disabled: disableCostAndSkill || disableOrgname,
           }),
+          createTextField('resource_name', 'Name', {
+            required: false,
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_2,
+                errorMessage: 'PLease enter more than 1 characters.',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_64,
+                errorMessage: 'Max length exceeded.',
+              },
+              {
+                regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_REGEX,
+                errorMessage:
+                  'Name cannot start or end with a space, apostrophe, or hyphen.',
+              },
+              {
+                regex: REGEX_PATTERNS.ALLOWED_CHARS_NAME_REGEX,
+                errorMessage:
+                  'Only letters, spaces, apostrophes, and hyphens are allowed.',
+              },
+              {
+                regex: REGEX_PATTERNS.NO_CONSECUTIVE_SPECIALS_REGEX,
+                errorMessage:
+                  'Consecutive spaces, apostrophes, or hyphens are not allowed.',
+              },
+            ],
+            placeholder: 'Enter Name',
+            disabled: disableCostAndSkill ||isAnyResourceNameFilled,
+            onChange: true,
+          }),
+          createTextField('resource_firstname', 'First Name', {
+            required: false,
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_2,
+                errorMessage: 'Please enter more than 1 characters.',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_64,
+                errorMessage: 'Max length exceeded.',
+              },
+              {
+                regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_REGEX,
+                errorMessage:
+                  'Frist name cannot start or end with a space, apostrophe, or hyphen.',
+              },
+              {
+                regex: REGEX_PATTERNS.ALLOWED_CHARS_NAME_REGEX,
+                errorMessage:
+                  'Only letters, spaces, apostrophes, and hyphens are allowed.',
+              },
+              {
+                regex: REGEX_PATTERNS.NO_CONSECUTIVE_SPECIALS_REGEX,
+                errorMessage:
+                  'Consecutive spaces, apostrophes, or hyphens are not allowed.',
+              },
+            ],
+            placeholder: 'Enter First Name',
+            disabled: disableCostAndSkill || isResourceFullNameEmpty,
+            onChange: true,
+          }),
+          createTextField('resource_lastname', 'Last Name', {
+            required: false,
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_2,
+                errorMessage: 'Please enter more than 1 characters.',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_64,
+                errorMessage: 'Max length exceeded.',
+              },
+              {
+                regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_REGEX,
+                errorMessage:
+                  'Last name cannot start or end with a space, apostrophe, or hyphen.',
+              },
+              {
+                regex: REGEX_PATTERNS.ALLOWED_CHARS_NAME_REGEX,
+                errorMessage:
+                  'Only letters, spaces, apostrophes, and hyphens are allowed.',
+              },
+              {
+                regex: REGEX_PATTERNS.NO_CONSECUTIVE_SPECIALS_REGEX,
+                errorMessage:
+                  'Consecutive spaces, apostrophes, or hyphens are not allowed.',
+              },
+            ],
+            placeholder: 'Enter Last Name',
+            disabled: disableCostAndSkill || isResourceFullNameEmpty,
+            onChange: true,
+          }),
+
           createTextField('resource_orgname', 'Resource Org Name', {
             required: false,
-            regex: RESOURCE_REGEX.ORG_NAME,
-            regexErrorMessage:
-              'Please enter 3-100 characters, including at least one letter. Special characters and numbers alone are not allowed.',
-            placeholder: 'Enter Organization Name',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_3,
+                errorMessage: 'Please enter more than 2 characters.',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_100,
+                errorMessage: 'Max length exceeded.',
+              },
+              {
+                regex: REGEX_PATTERNS.ALLOWED_CHARS_EXTENDED_NAME_REGEX,
+                errorMessage:
+                  "Only letters, numbers, spaces, ampersands (&), hyphens (-), periods (.), apostrophes (') and commas (,) are allowed.",
+              },
+              {
+                regex:
+                  REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX,
+                errorMessage:
+                  'Cannot start or end with a space or special character',
+              },
+            ],
+            placeholder: 'Enter Resource Org Name',
             disabled: disableCostAndSkill,
+            clearValue: {
+              key: 'resource_type',
+              matchedValue: RESOURCE_TYPE_OPTIONS[0].value || RESOURCE_TYPE_OPTIONS[1].value || RESOURCE_TYPE_OPTIONS[2].value ,
+            },
           }),
-
-          createSelectField('resource_status', 'Resource Status', {
-            options: RESOURCE_STATUS_OPTIONS,
-            placeholder: '-Select-',
-            required: true,
-            disabled: disableCostAndSkill,
-          }),
-
-          createSelectField('fiscal_year', 'Fiscal Year', {
-            options: fiscalYears,
-            placeholder: '-Select-',
-            required: true,
-            onChange: true,
-            disabled: disableCostAndSkill,
-          }),
-          createTextField('resource_role', 'Resource Role', {
+          createTextField('resource_role', 'Role', {
             required: false,
-            regex: RESOURCE_REGEX.ROLE,
-            regexErrorMessage:
-              'Please enter 4-100 characters, including at least one letter. Special characters and numbers alone are not allowed.',
-            placeholder: 'Enter Resource Role',
+  
+            placeholder: 'Enter Role',
+            disabled: disableCostAndSkill,
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_3,
+                errorMessage: 'Please enter more than 2 characters.',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_64,
+                errorMessage: 'Max length exceeded.',
+              },
+              {
+                regex: RESOURCE_REGEX.ROLE,
+                errorMessage: 'Allows only letters, Apostrophe, spaces, hyphens, and Periods.',
+              },
+              {
+                regex:
+                  REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX,
+                errorMessage:
+                  'Cannot start or end with a space or special character',
+              },
+            ]
+          }),
+          createSelectField('resource_status', 'Status', {
+            options: RESOURCE_STATUS_OPTIONS,
+            placeholder: 'Choose Status',
+            required: true,
             disabled: disableCostAndSkill,
           }),
-          // createTextField('r_number', 'Resource ID', {
-          //   required: false,
-          //   placeholder: 'Enter Resource ID',
-          //   disabled: disableCostAndSkill,
-          //   hide: !disableCostAndSkill,
-          // }),
         ],
       },
       {
         sectionName: 'Location and Currency Information',
         fillType: 'half',
+        hide: disableCostAndSkill,
         fields: [
           createSelectField('country', 'Country', {
             options: country,
-            placeholder: 'Select Country',
+            placeholder: 'Choose Country',
             required: false,
             onChange: true,
             resetDependsFields: ['state, city'],
@@ -136,7 +300,7 @@ export const ResourceFormData = (
           }),
           createSelectField('state', 'Region', {
             options: states,
-            placeholder: 'Select State',
+            placeholder: 'Choose Region',
             required: false,
             onChange: true,
             isLoading: stateLoading,
@@ -144,7 +308,7 @@ export const ResourceFormData = (
           }),
           createSelectField('city', 'City', {
             options: city,
-            placeholder: 'Select City',
+            placeholder: 'Choose City',
             required: false,
             isLoading: stateLoading || cityLoading,
             disabled: disableCostAndSkill,
@@ -154,108 +318,177 @@ export const ResourceFormData = (
       {
         sectionName: 'Financial Information',
         fillType: 'half',
-        hide: hideSkill === 'cost' ? false : true,
+        hide: !disableCost,
         fields: [
-          createDateField('financial_start_date', 'Effective Date', {
+          createSelectField('fiscal_year', 'Fiscal Year', {
+            options: fiscalYears,
+            placeholder: 'Choose Fiscal Year',
+            required: true,
+            onChange: true,
+            resetDependsFields: ['financial_start_date, financial_end_date'],
+          }),
+          createSelectField('currency', 'Currency', {
+            options: currency,
+            placeholder: 'Choose Currency',
+            required: false,
+            isLoading: currencyLoading,
+          }),
+          createDateField('financial_start_date', 'Start Date', {
             required: false,
             minDate: new Date(minDate.getTime()),
-            maxDate: currentDate,
-            startValue: true,
+            maxDate: previousDate,
           }),
           createDateField('financial_end_date', 'End Date', {
             required: false,
             minDate: new Date(minDate.getTime()),
             maxDate: currentDate,
-            endDateValue: true,
             startDateLabel: 'financial_start_date',
           }),
           createSelectField('cost_frequency', 'Cost Frequency', {
             options: FREQUENCY_OPTIONS,
-            placeholder: '-Select-',
+            placeholder: 'Choose Cost Frequency',
             required: true,
           }),
           createTextField('cost', 'Cost', {
             required: true,
             regex: REGEX_PATTERNS.COST_REGEX,
             regexErrorMessage:
-              'Cost must be a 10-digit number with up to 2 decimals',
+              'Cost must be a 16-digit number with up to 2 decimals',
             placeholder: 'Enter Cost',
-          }),
-          createSelectField('currency', 'Currency', {
-            options: currency,
-            placeholder: '-Select-',
-            required: false,
-            isLoading: currencyLoading,
           }),
         ],
       },
       {
         sectionName: 'Skill Information',
         fillType: 'half',
-        hide: hideSkill === 'skill' ? false : true,
+        hide: !disableSkill,
         fields: [
           createDateField('skill_start_date', 'Start Date', {
             required: false,
-            minDate: new Date(minDate.getTime()),
+            minDate: new Date('1950-01-01'),
             maxDate: currentDate,
-            startValue: true,
+            disableFutureDates: true,
           }),
-          createTextField('skill_name', 'Skill Name', {
+          createSelectField('skill_type', 'Skill Type', {
+            options: skillTypeOptions,
+            placeholder: 'Choose Skill Type',
             required: true,
-            placeholder: 'Enter Skill Name',
+            onChange: true,
+            resetDependsFields: ['skill_sub_type'],
+          }),
+          createTextField('skill_type_others', 'Skill Type(Other)', {
+            required: true,
+            placeholder: 'Enter Skill Type',
             errorHandling: [
               {
-                regex: REGEX_PATTERNS.NOT_ALLOW_ONLY_SYMBOLS,
-                errorMessage: 'Only Symbols are not allowed',
+                regex: REGEX_PATTERNS.MIN_3,
+                errorMessage: 'Skill type must more than 2 characters.',
               },
               {
-                regex: REGEX_PATTERNS.LETTERS_3_TO_100,
-                errorMessage:
-                  'Please enter a valid Skill Name 3 to 100 characters.',
+                regex: REGEX_PATTERNS.MAX_64,
+                errorMessage: 'Max length exceeded.',
+              },
+              {
+                regex: REGEX_PATTERNS.SKILL_OTHERS_ALLOWED_CHARS_REGEX,
+                errorMessage: "Only letters, hyphens (-), apostrophes ('), periods (.), underscores (_), and spaces are allowed.",
               },
             ],
+            hide:
+              currentSkillType === 'f6044ae9-7b65-4cfc-8ad3-c18a8f7ee30a'
+                ? false
+                : true,
+          }),
+          createSelectField('skill_sub_type', 'Skill SubType', {
+            options: skillSubTypeOptions,
+            placeholder: 'Choose Skill SubType',
+            required: true,
+            isLoading: skillSubTypeLoading,
+            onChange: true,
+          }),
+          createTextField('skill_subtype_others', 'Skill SubType(Other)', {
+            required: true,
+            placeholder: 'Enter Skill SubType',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_3,
+                errorMessage: 'Skill subtype must more than 2 characters.',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_64,
+                errorMessage: 'Max length exceeded.',
+              },
+              {
+                regex: REGEX_PATTERNS.SKILL_OTHERS_ALLOWED_CHARS_REGEX,
+                errorMessage: "Only letters, hyphens (-), apostrophes ('), periods (.), underscores (_), and spaces are allowed.",
+              },
+            ],
+            hide:
+              currentskillSubType === 'b8894099-0385-4681-8237-21f89b0d1883'
+                ? false
+                : true,
+          }),
+          createTextField('skill_details', 'Skill Details', {
+            required: true,
+            placeholder: 'Enter Skill Details',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_2000,
+                errorMessage: 'Input must be between 1 and 2,000 characters.',
+              }
+          ],
           }),
           createSelectField('skill_level', 'Skill Level', {
             options: mockSkillLevelOptions,
-            placeholder: '-Select-',
+            placeholder: 'Choose Skill Level',
             required: false,
-          }),
-          createTextField('years_of_experience', 'Years of Experience', {
-            required: false,
-            regex: REGEX_PATTERNS.NUMBER_OPTIONAL_DECIMAL,
-            regexErrorMessage: 'Please enter a valid number between 0 and 99',
-            placeholder: 'Enter years of experience',
           }),
         ],
       },
       {
         sectionName: 'Employment Details',
         fillType: 'half',
+        hide: disableCostAndSkill,
         fields: [
-          createDateField('resource_startdate', 'Resource Effective From', {
+          createDateField('resource_startdate', 'Effective Date', {
             required: false,
             disabled: disableCostAndSkill,
             minDate: new Date('1950-01-01'),
             maxDate: previousDate,
             disableFutureDates: true,
           }),
-          createDateField('resource_enddate', 'Resource End Date', {
+          createDateField('resource_enddate', 'End Date', {
             required: false,
             disabled: disableCostAndSkill,
             maxDate: currentDate,
             greaterThan: {
               field: 'resource_startdate',
-              message:
-                'Resource End Date must be after Resource Effective From',
+              message: 'End Date must be after Effective Date',
             },
           }),
           createTextField('designation', 'Designation', {
             required: false,
-            regex: RESOURCE_REGEX.DESIGNATION,
-            regexErrorMessage:
-              'Please enter 4-100 characters, including at least one letter. Special characters and numbers alone are not allowed.',
             placeholder: 'Enter Designation',
             disabled: disableCostAndSkill,
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_3,
+                errorMessage: 'Please enter more than 2 characters.',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_64,
+                errorMessage: 'Max length exceeded.',
+              },
+              {
+                regex: RESOURCE_REGEX.ROLE,
+                errorMessage: 'Allows only letters, Apostrophe, spaces, hyphens, and Periods.',
+              },
+              {
+                regex:
+                  REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX,
+                errorMessage:
+                  'Cannot start or end with a space or special character',
+              },
+            ]
           }),
           createTextField(
             'total_years_experience',
@@ -263,7 +496,8 @@ export const ResourceFormData = (
             {
               required: false,
               regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
-              regexErrorMessage: 'Please enter a valid number between 0 and 99',
+              regexErrorMessage:
+                'Please enter a valid number between 0 and 99 with up to 2 decimals',
               placeholder: 'Enter Total Years Of Experience',
               disabled: disableCostAndSkill,
             }
@@ -274,7 +508,8 @@ export const ResourceFormData = (
             {
               required: false,
               regex: RESOURCE_REGEX.YEARS_EXPERIENCE,
-              regexErrorMessage: 'Please enter a valid number between 0 and 99',
+              regexErrorMessage:
+                'Please enter a valid number between 0 and 99 with up to 2 decimals',
               placeholder: 'Enter Total Years In The Organisation',
               disabled: disableCostAndSkill,
             }
@@ -282,30 +517,75 @@ export const ResourceFormData = (
         ],
       },
       {
-        sectionName: 'Description',
+        sectionName: 'Comments',
         fillType: 'full',
         fields: [
           createTextAreaField('comments', 'Comments', {
             required: false,
-            placeholder: 'Enter Any Additional Information',
-            regexErrorMessage: 'Maximum 1000 characters allowed',
+            placeholder: 'Enter Comments',
+            regexErrorMessage: 'Max length exceeded.',
             regex: RESOURCE_REGEX.DESCRIPTION,
-            disabled: disableCostAndSkill,
+          }),
+        ],
+      },
+      {
+        sectionName: 'Audit Information',
+        fillType: 'half',
+        hide: disableCostAndSkill || createResource,
+        fields: [
+          createTextField('Record_id', 'Record ID', {
+            required: false,
+            disabled: true,
+            hide: disableCostAndSkill,
+          }),
+          createTextField('Resource_id', 'Resource ID', {
+            required: false,
+            disabled: true,
+            hide: disableCostAndSkill,
+          }),
+          createTextField('Created_On', 'Created On', {
+            required: false,
+            disabled: true,
+            hide: disableCostAndSkill,
+          }),
+          createTextField('Created_By', 'Created By', {
+            required: false,
+            disabled: true,
+            hide: disableCostAndSkill,
+          }),
+          createTextField('Updated_On', 'Updated On', {
+            required: false,
+            disabled: true,
+            hide: disableCostAndSkill,
+          }),
+          createTextField('Updated_By', 'Updated By', {
+            required: false,
+            disabled: true,
+            hide: disableCostAndSkill,
           }),
         ],
       },
     ],
     [
-      disableFields,
       disableCostAndSkill,
+      disableFields,
+      disableOrgname,
       country,
       states,
       stateLoading,
       city,
       cityLoading,
+      disableCost,
       currency,
       currencyLoading,
-      hideSkill,
+      disableSkill,
+      skillTypeOptions,
+      skillSubTypeOptions,
+      skillSubTypeLoading,
+      currentSkillType,
+      currentskillSubType,
+      isResourceFullNameEmpty,
+      isAnyResourceNameFilled,
     ]
   );
 };

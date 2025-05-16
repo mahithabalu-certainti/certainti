@@ -12,6 +12,8 @@ import {
   CitysApiResponse,
   CurrencyApiResponse,
   GlobalAccountListResponse,
+  IndustrysApiResponse,
+  keyContactRolesApiResponse,
   ParentAccountApiResponse,
   StatesApiResponse,
 } from '../../types';
@@ -21,10 +23,13 @@ import {
   CityUrl,
   CurrencyUrl,
   getAccountExportUrl,
+  getKeyContactRolesUrl,
   GlobalAccountUrl,
+  IndustryUrl,
   ParentAccountUrl,
   StateUrl,
 } from '../urls/account-url';
+// import { mockAccountDetails } from '../../mockdata';
 
 export const fetchAccountFields = async (
   acctounId: string
@@ -32,6 +37,8 @@ export const fetchAccountFields = async (
   const { data } = await accountServiceApi.get<AccountFieldsApiResponse>(
     AccountDetailUrl(acctounId)
   );
+  // await new Promise((resolve) => setTimeout(resolve, 2000));  
+  // return mockAccountDetails;
   return data;
 };
 
@@ -75,6 +82,13 @@ export const fetchParentAccounts =
   async (): Promise<ParentAccountApiResponse> => {
     const { data } =
       await accountServiceApi.get<ParentAccountApiResponse>(ParentAccountUrl);
+    return data;
+  };
+
+  export const fetchIndustrys =
+  async (): Promise<IndustrysApiResponse> => {
+    const { data } =
+      await accountServiceApi.get<IndustrysApiResponse>(IndustryUrl);
     return data;
   };
 
@@ -128,4 +142,23 @@ export const exportAccountList = async (params: AccountListURLParams = {}) => {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+};
+
+export const fetchKeyContactRoles = async (): Promise<keyContactRolesApiResponse> => {
+  try {
+    const { data } =
+      await accountServiceApi.get<keyContactRolesApiResponse>(getKeyContactRolesUrl());
+    return data;
+  } catch (error) {
+    console.error('Error fetching key contact roles:', error);
+    throw error;
+  }
+};
+
+export const useKeyContactRoles = () => {
+  return useQuery<keyContactRolesApiResponse, Error>({
+    queryKey: ['keyContactRoles'], // Unique query key
+    queryFn: () => fetchKeyContactRoles(),
+    retry: 0,
+  });
 };

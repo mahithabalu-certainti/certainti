@@ -131,7 +131,7 @@ export interface NumberFilterState {
 }
 export interface EnumFilterState {
   option?: EnumFilterOption;
-  value?: [];
+  value?: string[];
 }
 export interface CurrencySelectFilterState {
   option?: EnumFilterOption;
@@ -172,8 +172,11 @@ export type FieldConfig = {
     | 'enum'
     | 'textCostAndSkill'
     | 'select'
-    | 'currencySelect';
+    | 'currencySelect'
+    | 'skillTypeFilter'
+    | 'skillSubTypeFilter';
   options?: { option: string; value: string }[];
+  dependsOn?: string;
 };
 
 export interface FilterComponentProps {
@@ -185,4 +188,5 @@ export interface FilterComponentProps {
   savedSelectedFilters?: string[];
   onSelectedFiltersChange?: (selectedFilters: string[]) => void;
   setCurrentPage: (page: number) => void;
+  mode?: string;
 }

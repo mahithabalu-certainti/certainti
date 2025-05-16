@@ -25,6 +25,7 @@ import ActionButton from '../../../../account-list/table/action-button';
 import { arrowDownIcon, arrowUpIcon } from '../../../../../../assets';
 import { TablePagination } from '../../../../../../components/table';
 import { formatDateToMMDDYYYY } from '../utils';
+import { TruncateWithTooltip } from '../../../../../../components';
 
 interface ResourceCostTableProps {
   fiscalYear?: number;
@@ -56,6 +57,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   const [resourceCostList, setResourceCostList] = useState<ResourceCostType[]>(
     []
   );
+  const accountInActive = accountDetails?.data?.accountById?.status === "inactive";
   const apiOrder = costOrder.toUpperCase() as 'ASC' | 'DESC';
   const { data: costList, isLoading: loading } = useResourceCost({
     page: currentPage+1,
@@ -139,49 +141,56 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
                 left: 0,
                 background: '#fff',
                 zIndex: 10,
-                borderRight: 'none !important',
-                '&::after': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  width: '1px',
-                  height: '100%',
-                  backgroundColor: '#CBD6E2',
-                  zIndex: 20,
-                },
+                borderRight: '1px solid #CBD6E2 !important',
               }}
             >
-              {cost.resourceFullName}
+             <TruncateWithTooltip text={String(cost.resourceFullName)}>
+             {cost.resourceFullName}
+              </TruncateWithTooltip>
             </TableCell>
             <TableCell sx={{ minWidth: '100px' }}>{cost.currency}</TableCell>
             <TableCell sx={{ minWidth: '130px' }}>{startDate}</TableCell>
             <TableCell sx={{ minWidth: '130px' }}>{endDate}</TableCell>
             <TableCell sx={{ minWidth: '130px' }}>
-              {cost.hourlyCost ? CostDisplay(cost.hourlyCost) : '-'}
+            <TruncateWithTooltip text={String(cost.hourlyCost)}>
+            {cost.hourlyCost ? CostDisplay(cost.hourlyCost) : '-'}
+              </TruncateWithTooltip>
             </TableCell>
             <TableCell sx={{ minWidth: '130px' }}>
-              {cost.dailyCost ? CostDisplay(cost.dailyCost) : '-'}
+            <TruncateWithTooltip text={String(cost.dailyCost)}>
+            {cost.dailyCost ? CostDisplay(cost.dailyCost) : '-'}
+              </TruncateWithTooltip>
             </TableCell>
             <TableCell sx={{ minWidth: '130px' }}>
-              {cost.biWeeklyCost ? CostDisplay(cost.biWeeklyCost) : '-'}
+            <TruncateWithTooltip text={String(cost.biWeeklyCost)}>
+            {cost.biWeeklyCost ? CostDisplay(cost.biWeeklyCost) : '-'}
+              </TruncateWithTooltip>
             </TableCell>
             <TableCell sx={{ minWidth: '130px' }}>
-              {cost.weeklyCost ? CostDisplay(cost.weeklyCost) : '-'}
+            <TruncateWithTooltip text={String(cost.weeklyCost)}>
+            {cost.weeklyCost ? CostDisplay(cost.weeklyCost) : '-'}
+              </TruncateWithTooltip>
             </TableCell>
             <TableCell sx={{ minWidth: '130px' }}>
-              {cost.monthlyCost ? CostDisplay(cost.monthlyCost) : '-'}
+              <TruncateWithTooltip text={String(cost.monthlyCost)}>
+                {cost.monthlyCost ? CostDisplay(cost.monthlyCost) : '-'}
+              </TruncateWithTooltip>
             </TableCell>
             <TableCell sx={{ minWidth: '140px' }}>
-              {cost.semiAnnualCost ? CostDisplay(cost.semiAnnualCost) : '-'}
+            <TruncateWithTooltip text={String(cost.semiAnnualCost)}>
+            {cost.semiAnnualCost ? CostDisplay(cost.semiAnnualCost) : '-'}
+              </TruncateWithTooltip>
             </TableCell>
             <TableCell sx={{ minWidth: '130px' }}>
-              {cost.annualCost ? CostDisplay(cost.annualCost) : '-'}
+            <TruncateWithTooltip text={String(cost.annualCost)}>
+            {cost.annualCost ? CostDisplay(cost.annualCost) : '-'}
+              </TruncateWithTooltip>
             </TableCell>
             <TableCell sx={{ padding: '0px !important' }}>
               <ActionButton
                 onEdit={() => handleEdit(cost)}
                 onDelete={() => {}}
+                isDisabled={accountInActive}
                 // onView={() => { }}
               />
             </TableCell>
@@ -270,7 +279,8 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       >
         <Table
           sx={{
-            borderCollapse: 'collapse',
+            borderCollapse: 'separate !important',
+            borderSpacing: 0,
             '& .MuiTableCell-root': {
               borderBottom: '1px solid #CBD6E2',
               borderRight: '1px solid #CBD6E2',
@@ -307,20 +317,10 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
                   left: 0,
                   background: '#fff',
                   zIndex: 8,
-                  borderRight: 'none !important',
-                  '&::after': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    right: 0,
-                    width: '1px',
-                    height: '100%',
-                    backgroundColor: '#CBD6E2',
-                    zIndex: 10,
-                  },
+                  borderRight: '1px solid #CBD6E2 !important',
                 }}
               >
-                Resource Full Name
+                Name
                 {/* <TableSortLabel
                   active={costorderBy === 'resource_fullname'}
                   direction={costorderBy === 'resource_fullname' ? costOrder : 'asc'}
@@ -468,8 +468,6 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
               <TableCell
                 sx={{
                   minWidth: '80px',
-                  textAlign: 'center',
-                  pl: '0 !important',
                 }}
               >
                 Action

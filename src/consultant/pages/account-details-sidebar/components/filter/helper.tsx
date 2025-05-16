@@ -306,11 +306,13 @@ export const DateFilterControl: React.FC<{
   menuOption: { option: string; value: string }[];
   fieldName: string;
   state: FilterState;
+   mode?: 'year' | 'date';
   onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
   onValueChange: (
     type: 'from' | 'to',
     fieldName: string,
-    dateValue: string
+    dateValue: string,
+    mode?: 'year' | 'date'
   ) => void;
 }> = ({
   filterStates,
@@ -319,6 +321,7 @@ export const DateFilterControl: React.FC<{
   state,
   onOptionChange,
   onValueChange,
+  mode = 'date',
 }) => {
     const option = formatString(filterStates?.[fieldName]?.date?.option);
     const isBetween = option === 'Between';
@@ -376,7 +379,30 @@ export const DateFilterControl: React.FC<{
             },
           }}
         >
-          {!disableInput && (
+          {!disableInput && ( 
+            mode === 'year' ? (
+              <FormControl fullWidth size="small" sx={{ mt: 1 }}>
+                <Select
+                  value={state.date?.value.from || ''}
+                  onChange={(e) => onValueChange('from', fieldName, e.target.value)}
+                  displayEmpty
+                  inputProps={{ 'aria-label': 'Select Year' }}
+                  sx={{ fontSize: '12px', fontWeight: 300, height: '40px' }}
+                >
+                  <MenuItem value="" disabled>Select Year</MenuItem>
+                  {Array.from({ length: 6 }).map((_, index) => {
+                    const year = new Date().getFullYear() - index;
+                    return (
+                      <MenuItem key={year} value={year.toString()}
+                      sx={{ fontSize: '12px', fontWeight: 300,}} 
+                      >
+                        {year}
+                      </MenuItem>
+                    );
+                  })}
+                </Select>
+              </FormControl>
+            ) : (
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DatePicker
                 name='from'
@@ -426,7 +452,8 @@ export const DateFilterControl: React.FC<{
                   },
                 }}
               />
-            </LocalizationProvider>
+            </LocalizationProvider> 
+          )
           )}
           {isBetween && (
             <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -773,6 +800,7 @@ export const EnumFilterControl: React.FC<{
   state: FilterState;
   onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
   onChange: (fieldName: string, svalues: string[]) => void;
+  disabled?: boolean;
 }> = ({
   filterStates,
   menuOption,
@@ -781,6 +809,7 @@ export const EnumFilterControl: React.FC<{
   state,
   onOptionChange,
   onChange,
+  disabled = false,
 }) => {
     const option = formatString(filterStates?.[fieldName]?.enum?.option);
     const isMultiple = option === 'In';
@@ -798,6 +827,7 @@ export const EnumFilterControl: React.FC<{
                 fontWeight: 300,
               },
             }}
+            disabled={disabled} 
           >
             <Select
               value={state?.enum?.option ?? 'equals'}
@@ -832,6 +862,7 @@ export const EnumFilterControl: React.FC<{
                   fontWeight: 300,
                 },
               }}
+              disabled={disabled}
             >
               <Select
                 multiple={isMultiple}
@@ -1032,3 +1063,92 @@ export const StatusFilterControl: React.FC<{
     </FormControl>
   </Box>
 );
+
+// Import the FilterState type from your main file
+// Since we don't have access to the full filterType.ts file, we'll recreate the necessary types based on usage
+
+interface FilterSelectState {
+  value: string;
+  option: string;
+}
+
+// This should match the FilterState type from your filterType.ts
+interface FilterStateSkill {
+  text?: { option: string; value: string };
+  textCostAndSkill?: { option: string; value: string };
+  number?: { option: string; value: { min?: string; max?: string } };
+  enum?: { option: string; value: string[] | string };
+  currencySelect?: { option: string; value: string[] };
+  date?: { option: string; value: { from?: string; to?: string } };
+  select?: FilterSelectState;
+  // Add other possible filter state types as needed
+}
+
+interface SkillTypeFilterControlProps {
+  fieldName: string;
+  state: FilterStateSkill;
+  menuOption: { option: string; value: string }[];
+  onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
+  setFilterStates: React.Dispatch<React.SetStateAction<Record<string, FilterStateSkill>>>;
+}
+
+// Modify your existing SkillTypeFilterControl:
+export const SkillTypeFilterControl: React.FC<SkillTypeFilterControlProps> = ({ 
+  fieldName, 
+  state, 
+  menuOption, 
+  onOptionChange,
+  setFilterStates
+}) => {
+  const handleChange = (e: SelectChangeEvent<string>) => {
+    onOptionChange(fieldName, e);
+    // Reset the subtype when type changes
+    setFilterStates(prev => ({
+      ...prev,
+      skill_subtype_rid: {
+        select: {
+          value: '',
+          option: ''
+        }
+      }
+    }));
+  };
+  return (
+    <Box sx={{ p: 1, mt: 1, borderBottom: '1px solid #CBD6E2' }}>
+      <FormControl fullWidth size='small'>
+        <Select
+          value={state.select?.value || ''}
+          displayEmpty
+          renderValue={(selected) => {
+            if (!selected) {
+              return <span style={{ color: '#aaa' }}>Select skill type</span>;
+            }
+            const selectedOption = menuOption.find(opt => opt.value === selected)?.option;
+            return selectedOption || selected;
+          }}
+          onChange={handleChange}
+          sx={{ height: '30px', minHeight: 20 }}
+          MenuProps={{
+            PaperProps: {
+              sx: {
+                '& .MuiMenuItem-root': {
+                  fontSize: '12px',
+                  fontWeight: 300,
+                },
+              },
+            },
+          }}
+        >
+          <MenuItem value='' disabled>
+            Select
+          </MenuItem>
+          {menuOption.map((menu) => (
+            <MenuItem key={menu.value} value={menu.value}>
+              {menu.option}
+            </MenuItem>   
+          ))}
+        </Select>
+      </FormControl>
+    </Box>
+  );
+};

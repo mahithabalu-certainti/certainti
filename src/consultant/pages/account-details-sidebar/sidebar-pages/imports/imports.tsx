@@ -122,6 +122,7 @@ const Import: React.FC<ImportProps> = ({ accountDetails }) => {
           <Overview
             accountNo={accountDetails?.data?.accountById.r_number}
             accountId={accountDetails?.data?.accountDetails?.account_rid}
+            accountInActive={accountDetails?.data?.accountById?.status === "inactive"}
           />
         )}
         {isActive === 'TimeLine' && <Timeline />}

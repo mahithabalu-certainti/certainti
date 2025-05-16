@@ -23,33 +23,9 @@ const displayValue = (value: any) => {
 
 const BASE_COLUMNS: ColumnDefinition[] = [
   {
-    id: 'r_number',
-    sortId: 'r_number',
-    label: 'Resource ID',
-    sortable: true,
-    width: '130px',
-    render: (value: string, row: any) => (
-      <span
-        className='text-[#425A76] font-normal text-sm hover:underline cursor-pointer'
-        onClick={(e) => {
-          e.stopPropagation();
-          (row.onResourceIdClick || (() => {}))(row);
-        }}
-      >
-        <TruncateWithTooltip
-          text={String(value)}
-          // className='font-medium text-[18px] text-[#2D3E4F] '
-        >
-          {displayValue(value)}
-        </TruncateWithTooltip>
-        {/* {displayValue(value)} */}
-      </span>
-    ),
-  },
-  {
-    id: 'resource_ref_id',
-    sortId: 'resource_ref_id',
-    label: 'Resource Ref ID',
+    id: 'resource_code',
+    sortId: 'resource_code',
+    label: 'Resource Code',
     sortable: true,
     width: '150px',
     render: (value: string) => (
@@ -64,9 +40,9 @@ const BASE_COLUMNS: ColumnDefinition[] = [
     ),
   },
   {
-    id: 'resource_fullname',
-    sortId: 'resource_fullname',
-    label: 'Resource Full Name',
+    id: 'resource_name',
+    sortId: 'resource_name',
+    label: 'Name',
     sortable: true,
     width: '200px',
     render: (value: string) => (
@@ -98,9 +74,9 @@ const BASE_COLUMNS: ColumnDefinition[] = [
     ),
   },
   {
-    id: 'designation',
-    sortId: 'designation',
-    label: 'Resource Designation',
+    id: 'resource_designation',
+    sortId: 'resource_designation',
+    label: 'Designation',
     sortable: true,
     width: '200px',
     render: (value: string) => (
@@ -116,8 +92,8 @@ const BASE_COLUMNS: ColumnDefinition[] = [
   },
   {
     id: 'country_name',
-    sortId: 'country',
-    label: 'Resource Country',
+    sortId: 'resource_country',
+    label: 'Country',
     sortable: true,
     width: '160px',
     render: (value: string) => (
@@ -132,9 +108,9 @@ const BASE_COLUMNS: ColumnDefinition[] = [
     ),
   },
   {
-    id: 'state_name',
-    sortId: 'state',
-    label: 'Resource Region',
+    id: 'region_name',
+    sortId: 'resource_region',
+    label: 'Region',
     sortable: true,
     width: '150px',
     render: (value: string) => (
@@ -153,7 +129,7 @@ const BASE_COLUMNS: ColumnDefinition[] = [
 const createStatusColumn = (): ColumnDefinition => ({
   id: 'resource_status',
   sortId: 'resource_status',
-  label: 'Resource Status',
+  label: 'Status',
   sortable: true,
   width: '150px',
   render: (value: string) => (
@@ -178,6 +154,9 @@ export const getResourceColumns = ({
         ? {
             ...column,
             render: (value: string, row: any) => (
+              <TruncateWithTooltip
+                text={String(value)}
+              >
               <span
                 className='text-[#425A76] text-[14px] font-normal cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
                 onClick={(e) => {
@@ -187,6 +166,7 @@ export const getResourceColumns = ({
               >
                 {displayValue(value)}
               </span>
+              </TruncateWithTooltip>
             ),
           }
         : column

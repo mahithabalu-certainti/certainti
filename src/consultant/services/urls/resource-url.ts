@@ -15,7 +15,6 @@ export const ResourceListURL = ({
   filters,
   limit,
   accountNumber,
-  fiscalYear,
 }: ResourceListURLParams) => {
   const searchParams = new URLSearchParams();
 
@@ -23,7 +22,6 @@ export const ResourceListURL = ({
   searchParams.set('sortBy', sortBy as string);
   searchParams.set('sortOrder', sortOrder as string);
   searchParams.set('limit', limit.toString());
-  searchParams.set('fiscalYear', fiscalYear.toString());
   // Only add filters if the object has properties
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
@@ -46,3 +44,6 @@ export const ExportResourcelUrl = ({
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };
+
+export const SKILLTYPEURL = `${baseUrl}/api/resource_skill/skilltypes`;
+export const SkillSubTypeUrl = (skillType : string | null) => `${baseUrl}/api/resource_skill/skillsubtypes?skillTypeRid=${skillType}`;

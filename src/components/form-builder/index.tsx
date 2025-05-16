@@ -2,7 +2,6 @@ import { Autocomplete, Checkbox, Skeleton, TextField } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-// import dayjs from 'dayjs';
 import dayjs, { Dayjs } from 'dayjs';
 
 import { CountryCode, parsePhoneNumberFromString } from 'libphonenumber-js';
@@ -17,7 +16,7 @@ import {
 } from '../../assets';
 
 import { useLocation } from 'react-router-dom';
-import { FieldTypes, OnChange } from '../../common-service';
+import { FieldTypes, Layout, OnChange } from '../../common-service';
 import { ALLOWED_COUNTRIES } from '../../common-utils';
 import { FormType, FormTypeFields, SelectOption } from '../../consultant/types';
 
@@ -26,6 +25,7 @@ interface FormBuilderProps {
   formRef: React.RefObject<HTMLFormElement>;
   loading?: boolean;
   values?: Record<string, string | string[] | boolean | number | null | object>;
+  layout?: Layout;
   outData: (e: object) => void;
   onChange?: (params: OnChange) => void;
 }
@@ -35,6 +35,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   formRef,
   values,
   loading = false,
+  layout,
   onChange,
   outData,
 }) => {
@@ -48,31 +49,43 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   const CommonSkeleton = (
     <Skeleton variant='rounded' width='100%' height={32} />
   );
+
+  useEffect(() => {
+    //if field.name === 'resource_type' then disable resource_orgname
+    if (constructFormData['resource_type'] === 'Full-Time') {
+      const resourceOrgNameField = formData?.[0].fields.find(
+        (f) => f.name === 'resource_orgname'
+      );
+      if (resourceOrgNameField) {
+        resourceOrgNameField.disabled = true;
+      }
+    }
+  }, [constructFormData, formData]);
+
   useEffect(() => {
     setFormData((prevFormData = []) => {
       return data.map((newSection) => {
         const oldSection = prevFormData.find(
           (s) => s.sectionName === newSection.sectionName
         );
-    
+
         return {
           ...newSection,
           fields: newSection.fields.map((newField) => {
             const oldField = oldSection?.fields.find(
               (f) => f.name === newField.name
             );
-    
+
             return {
               ...newField,
               error: oldField?.error ?? newField.error,
-              disabled: oldField?.disabled?? newField.disabled,
               value: oldField?.value ?? newField.value,
             };
           }),
         };
       });
     });
-      
+
     // Only set initial form data if constructFormData is empty
     if (Object.values(constructFormData).every((value) => !value)) {
       let constructFormData = {};
@@ -97,6 +110,21 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     const fieldDisabled = field.disabled ? ' bg-gray-100' : '';
 
     const handleChange = (value: FieldTypes, countryCode?: FieldTypes) => {
+      if (field.name === 'resource_type') {
+        const resourceOrgNameField = formData?.[0].fields.find(
+          (f) => f.name === 'resource_orgname'
+        );
+
+        if (resourceOrgNameField) {
+          if (fieldValue !== value) {
+            resourceOrgNameField.error = '';
+          }
+
+          resourceOrgNameField.required =
+            value === 'Sub Con' || value === 'Non-Labor';
+          resourceOrgNameField.disabled = value === 'Full-Time';
+        }
+      }
       const newData = {
         ...constructFormData,
         [field.name]: value,
@@ -116,6 +144,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         });
       }
 
+      // update value when change depends fields
+      if (field.defaultSelect) {
+        if (field.defaultSelect.matchedValue === value) {
+          newData[field.defaultSelect.key] = field.defaultSelect.ifMatchValue;
+        } else {
+          newData[field.defaultSelect.key] =
+            field.defaultSelect.ifNotMatchValue;
+        }
+      }
+
       if (field.onChange && onChange) {
         onChange({ fieldName: field.name, fieldValue: value });
       }
@@ -126,19 +164,18 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           fields: section.fields.map((f) => {
             const updatedField = { ...f };
 
+            // clear error message when change field
             if (f.name === field.name) {
               updatedField.error = '';
             }
 
-            if (f.dependsRequired?.key === field.name) {
-              const shouldDisable =
-                value === f.dependsRequired.disableDependsField;
-
-              updatedField.disabled = shouldDisable;
-
-              if (shouldDisable) {
-                newData[f.name] = '';
-              }
+            // clear selected value when other field change
+            if (
+              f.clearValue?.key === field.name &&
+              value === f.clearValue.matchedValue
+            ) {
+              newData[f.name] = '';
+              updatedField.error = '';
             }
 
             return updatedField;
@@ -317,24 +354,52 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           constructFormData['resource_startdate'];
         const today: Dayjs = dayjs();
         const isEndDateField =
-          field.name === 'financial_end_date' || field.name === 'resource_enddate';
+          field.name === 'financial_end_date' ||
+          field.name === 'resource_enddate';
         const parsedStartDate = startDateValue
           ? dayjs(startDateValue, 'MM/DD/YYYY')
           : undefined;
 
-        const customMinDate: Dayjs | undefined =
-          isEndDateField && parsedStartDate
-            ? parsedStartDate.add(1, 'day')
-            : field?.minDate
-              ? dayjs(field.minDate)
-              : undefined;
+        // Get the selected fiscal year from form data
+        const selectedFiscalYear = constructFormData['fiscal_year'];
+        const isFinancialDateField =
+          field.name === 'financial_start_date' ||
+          field.name === 'financial_end_date';
 
-        const customMaxDate: Dayjs | undefined =
-          isEndDateField && startDateValue
-            ? today
-            : field?.maxDate
-              ? dayjs(field.maxDate)
-              : undefined;
+        const customMinDate: Dayjs | undefined = (() => {
+          if (isFinancialDateField && selectedFiscalYear) {
+            const fiscalYearStart = dayjs(`01/01/${selectedFiscalYear}`, 'MM/DD/YYYY');
+
+            if (isEndDateField && parsedStartDate) {
+              return parsedStartDate.add(1, 'day').isAfter(fiscalYearStart)
+                ? parsedStartDate.add(1, 'day')
+                : fiscalYearStart;
+            }
+            return fiscalYearStart;
+          }
+          if (isEndDateField && parsedStartDate) {
+            return parsedStartDate.add(1, 'day');
+          }
+          return field?.minDate ? dayjs(field.minDate) : undefined;
+        })();
+
+        const customMaxDate: Dayjs | undefined = (() => {
+          if (isFinancialDateField && selectedFiscalYear) {
+            const fiscalYearEnd = dayjs(`12/31/${selectedFiscalYear}`, 'MM/DD/YYYY');
+            
+            if (field?.maxDate) {
+              const maxDate = dayjs(field.maxDate);
+              return fiscalYearEnd.isBefore(maxDate) ? fiscalYearEnd : maxDate;
+            }
+            return fiscalYearEnd;
+          }   
+          if (isEndDateField && startDateValue) {
+            return field?.maxDate 
+              ? (dayjs(field.maxDate).isBefore(today) ? dayjs(field.maxDate) : today)
+              : today;
+          }
+          return field?.maxDate ? dayjs(field.maxDate) : undefined;
+        })();
 
         return (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -377,6 +442,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   fullWidth: true,
                   size: 'small',
                   disabled: field.disabled,
+                  onKeyDown: (e) => {
+                    if (e.key.length === 1 && /[a-zA-Z]/.test(e.key)) {
+                      e.preventDefault();
+                    }
+                  },
                   sx: {
                     '& .MuiOutlinedInput-root': {
                       height: '32px',
@@ -420,24 +490,20 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           </LocalizationProvider>
         );
       }
-
       case 'fiscalDate':
         return (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
               className={fieldDisabled}
-              value={dayjs(fieldValue, 'DD/MM/YYYY')}
+              value={dayjs(fieldValue, 'DD/MM')}
               disabled={field.disabled}
               format='MM/DD'
               views={['month', 'day']}
-              minDate={dayjs().startOf('year')}
+              open={false}
               onChange={(newValue) => {
-                handleChange(dayjs(newValue).format('DD/MM/YYYY'));
+                handleChange(dayjs(newValue).format('DD/MM'));
               }}
               slots={{
-                openPickerIcon: () => (
-                  <img src={calendarIcon} alt='calendar' className='w-4 h-4' />
-                ),
                 clearIcon: () => (
                   <img src={closeIcon} alt='calendar' className='w-2.5 h-2.5' />
                 ),
@@ -461,7 +527,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                         },
                         color: 'black !important',
                         WebkitTextFillColor: 'black !important',
-
                         '&[value="MM/DD"]': {
                           color: '#7D98B6 !important',
                           WebkitTextFillColor: '#7D98B6 !important',
@@ -472,6 +537,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                           color: 'black',
                           WebkitTextFillColor: 'black',
                         },
+                      },
+                      '& .MuiIconButton-edgeEnd': {
+                        display: 'none',
                       },
                     },
                   },
@@ -594,8 +662,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           // Date validation
           if (field.type === 'fiscalDate' && constructFormData[field.name]) {
             const dateValue = constructFormData[field.name] as string;
-
-            if (!isValidDate(dateValue)) {
+            if (!isValidDate(dateValue, 'DD/MM')) {
               hasError = true;
               return {
                 ...field,
@@ -605,8 +672,90 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           }
 
           if (field.type === 'date') {
-            // cost date validation
             const dateValue = constructFormData[field.name] as string;
+            // cost date validation
+            if (field.name === 'financial_start_date' || field.name === 'financial_end_date') {
+              const selectedFiscalYear = constructFormData['fiscal_year'] as string;
+              
+              if (selectedFiscalYear) {
+                // Fiscal year bounds
+                const fiscalYearStart = dayjs(`01/01/${selectedFiscalYear}`, 'MM/DD/YYYY');
+                const fiscalYearEnd = dayjs(`12/31/${selectedFiscalYear}`, 'MM/DD/YYYY');
+                
+                if (dateValue) {
+                  const currentDate = dayjs(dateValue, 'MM/DD/YYYY');
+                  
+                  // Check against fiscal year bounds
+                  if (currentDate.isBefore(fiscalYearStart, 'day') || 
+                      currentDate.isAfter(fiscalYearEnd, 'day')) {
+                    hasError = true;
+                    return {
+                      ...field,
+                      error: `${field.name === 'financial_start_date' ? 'Start' : 'End'} date must be within the selected fiscal year (${selectedFiscalYear})`,
+                    };
+                  }
+            
+                  // Check against minDate (if specified)
+                  if (field.minDate && currentDate.isBefore(dayjs(field.minDate), 'day')) {
+                    hasError = true;
+                    return {
+                      ...field,
+                      error: `${field.name === 'financial_start_date' ? 'Start' : 'End'} date cannot be before ${dayjs(field.minDate).format('MM/DD/YYYY')}`,
+                    };
+                  }
+            
+                  // Check against maxDate (if specified)
+                  if (field.maxDate && currentDate.isAfter(dayjs(field.maxDate), 'day')) {
+                    hasError = true;
+                    return {
+                      ...field,
+                      error: `${field.name === 'financial_start_date' ? 'Start' : 'End'} date cannot be after ${dayjs(field.maxDate).format('MM/DD/YYYY')}`,
+                    };
+                  }
+                }
+              }
+            
+              // Validate financial end date against start date
+              if (field.name === 'financial_end_date' && dateValue) {
+                const startDateValue = constructFormData['financial_start_date'] as string;
+                
+                if (startDateValue) {
+                  const startDate = dayjs(startDateValue, 'MM/DD/YYYY');
+                  const endDate = dayjs(dateValue, 'MM/DD/YYYY');
+                  
+                  if (endDate.isSame(startDate, 'day')) {
+                    hasError = true;
+                    return {
+                      ...field,
+                      error: 'End date cannot be the same as start date',
+                    };
+                  }
+                  
+                  if (endDate.isBefore(startDate, 'day')) {
+                    hasError = true;
+                    return {
+                      ...field,
+                      error: 'End date must be after start date',
+                    };
+                  }
+                }
+              }
+            
+              // Validate both financial dates are either provided or not provided
+              if (field.name === 'financial_start_date' || field.name === 'financial_end_date') {
+                const startDate = constructFormData['financial_start_date'] as string;
+                const endDate = constructFormData['financial_end_date'] as string;
+                
+                if ((startDate && !endDate) || (!startDate && endDate)) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error: 'Both start date and end date must be provided',
+                  };
+                }
+              }
+            }
+
             if (field?.startValue && constructFormData[field.name]) {
               const dateValue = constructFormData[field.name] as string;
               if (
@@ -616,7 +765,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 hasError = true;
                 return {
                   ...field,
-                  error: `${field.name === 'skill_start_date' ? 'Start date' : 'Effective date'} must be within the last 7 years from today`,
+                  error: `Effective date must be within the last 7 years from today`,
                 };
               }
             }
@@ -646,7 +795,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 !endDate.isAfter(startDate)
               ) {
                 hasError = true;
-                return { ...field, error: 'End date must be after effective date'};
+                return {
+                  ...field,
+                  error: 'End date must be after effective date',
+                };
               }
             }
 
@@ -658,7 +810,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 hasError = true;
                 return {
                   ...field,
-                  error: `${field.name === 'resource_startdate' ? 'Resource effective from' : 'This date'} cannot be in the future`,
+                  error: `${field.name === 'resource_startdate' ? 'Effective Date' : field.name === 'skill_start_date' ? "Start Date" : 'This date'} cannot be in the future`,
                 };
               }
               if (dateValue && !isValidDate(dateValue, 'MM/DD/YYYY')) {
@@ -669,17 +821,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 };
               }
             }
-          }
-
-          // Depends Required Validation
-          if (
-            field.dependsRequired?.key &&
-            constructFormData[field.dependsRequired.key] ===
-              field.dependsRequired?.matchedValue &&
-            !hasValue
-          ) {
-            hasError = true;
-            return { ...field, error: field.dependsRequired.errorMessage };
           }
 
           if (field.type === 'date' && constructFormData[field.name]) {
@@ -693,16 +834,19 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               hasError = true;
               return {
                 ...field,
-                error: `${field.name === 'resource_startdate' ? 'Resource effective from' : 'This date'} cannot be in the future`,
+                error: `${field.name === 'resource_startdate' ? 'Effective Date' : 'This date'} cannot be in the future`,
               };
             }
             const currentDate = dayjs();
 
-            if (field.name === 'resource_enddate' && dayjs(dateValue).isAfter(currentDate, 'day')) {
+            if (
+              field.name === 'resource_enddate' &&
+              dayjs(dateValue).isAfter(currentDate, 'day')
+            ) {
               hasError = true;
               return {
                 ...field,
-                error: 'Resource end date cannot be in the future',
+                error: 'End Date cannot be in the future',
               };
             }
 
@@ -713,9 +857,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               return {
                 ...field,
                 error:
-                  field.name === 'resource_startdate'
-                      ? 'Resource effective from cannot be before 01-01-1950'
-                      : 'Date cannot be before 01-01-1950',
+                field.name === 'resource_startdate'
+                  ? 'Effective Date cannot be before 01-01-1950'
+                  : field.name === 'skill_start_date' ? 'Start Date cannot be before 01-01-1950'
+                  : 'Date cannot be before 01-01-1950',
               };
             }
 
@@ -734,7 +879,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 hasError = true;
                 return {
                   ...field,
-                  error: 'Both resource effective from and resource end dates must be provided',
+                  error: 'Both Effective Date and End Dates must be provided',
                 };
               }
 
@@ -749,9 +894,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   return {
                     ...field,
                     error:
-                    field.name === 'resource_startdate'
-                      ? 'Resource effective from cannot be the same as resource end date'
-                      : 'Resource end date cannot be the same as resource effective from',
+                      field.name === 'resource_startdate'
+                        ? 'Effective Date cannot be the same as End Date'
+                        : 'End Date cannot be the same as Effective Date',
                   };
                 }
 
@@ -762,8 +907,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     ...field,
                     error:
                       field.name === 'resource_startdate'
-                        ? 'Resource effective from cannot be after resource end date'
-                        : 'Resource end date cannot be before resource effective from',
+                        ? 'Effective Date cannot be after End Date'
+                        : 'End Date cannot be before Effective Date',
                   };
                 }
               }
@@ -787,14 +932,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
           }
 
-          // Fiscal Date custom Validation
-          if (field.differentThan) {
+          // Start & end not be same Validation
+          if (field.toBeNotSame) {
             const currentFieldDate = dayjs(
               constructFormData[field.name]?.toString() || '',
               'MM/DD'
             );
             const differentThanFieldDate = dayjs(
-              constructFormData[field.differentThan.key]?.toString() || '',
+              constructFormData[field.toBeNotSame.key]?.toString() || '',
               'MM/DD'
             );
 
@@ -809,7 +954,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 hasError = true;
                 return {
                   ...field,
-                  error: field.differentThan.errorMessage,
+                  error: field.toBeNotSame.errorMessage,
                 };
               }
             }
@@ -906,13 +1051,17 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         const isHalf = section.fillType === 'half';
         if (section.hide) return null;
         return (
-          <div key={i} className='pb-3'>
-            <h4
-              className={`font-semibold text-base text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle mb-6 ml-3 ${i !== 0 ? 'mt-10' : ''}`}
+          <div key={i}>
+            {section.sectionName && (
+              <h4
+                className={`font-semibold text-base text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle mb-6 py-2 bg-[#DCE8FF] text-[14px] ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'}`}
+              >
+                {section.sectionName}
+              </h4>
+            )}
+            <div
+              className={`grid md:grid-cols-${isHalf ? '2' : '1'} gap-4 ${layout === Layout.TYPE_1 ? 'px-10' : 'px-6'} mb-6`}
             >
-              {section.sectionName}
-            </h4>
-            <div className={`grid md:grid-cols-${isHalf ? '2' : '1'} gap-4`}>
               {section.fields.map((field, j) => {
                 if (field.hide) return null;
                 return (

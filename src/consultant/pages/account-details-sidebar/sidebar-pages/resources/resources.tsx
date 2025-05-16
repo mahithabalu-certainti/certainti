@@ -1,7 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { resourceProfileIcon } from '../../../../../assets';
 import { RESOURCE, RESOURCE_CREATE } from '../../../../../routes';
 import { RootState } from '../../../../../store/store';
@@ -13,10 +18,12 @@ import { getResourceColumns } from './columns';
 import ResourceSubComponents from './resource-sub-components';
 import ResourceTableHeader from './resource-table-header';
 import { ResourceCostList } from '../../../../types/resource-cost';
-import { ExportModule, ResourceSkillList } from '../../../../types/resource-skill';
+import {
+  ExportModule,
+  ResourceSkillList,
+} from '../../../../types/resource-skill';
 import { FilterState } from '../../components/filter/filterType';
 import { resetFilter } from '../../components/filter/utils';
-
 
 const BUTTON_STYLES = {
   height: '26px !important',
@@ -60,16 +67,18 @@ const Resource: React.FC<ResourceProps> = ({
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
   );
- const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
+  const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
     {}
   );
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
-
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
+  const accountInActive =
+    accountDetails?.data?.accountById?.status === 'inactive';
 
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const { accountid } = useParams();
   const {
     data: ResourceList,
     isLoading,
@@ -81,7 +90,6 @@ const Resource: React.FC<ResourceProps> = ({
     sortBy: sortField,
     sortOrder: sortOrder,
     filters: appliedFilters,
-    fiscalYear: convertedFiscalYear,
   });
 
   const handleFilter = () => {
@@ -93,11 +101,10 @@ const Resource: React.FC<ResourceProps> = ({
     setShowFilter(false);
     setAppliedFilters({});
     resetFilter({
-          setAppliedFilters,
-          setFilterStates,
-          setSelectedFilters,
-         
-        });
+      setAppliedFilters,
+      setFilterStates,
+      setSelectedFilters,
+    });
     // update the URL with the tab value
     searchParams.set('tab', newValue);
     navigate({ search: searchParams.toString() });
@@ -112,11 +119,10 @@ const Resource: React.FC<ResourceProps> = ({
     setShowFilter(false);
     setFilterVisibility(false);
     resetFilter({
-          setAppliedFilters,
-          setFilterStates,
-          setSelectedFilters,
-         
-        });
+      setAppliedFilters,
+      setFilterStates,
+      setSelectedFilters,
+    });
   };
 
   useEffect(() => {
@@ -133,7 +139,7 @@ const Resource: React.FC<ResourceProps> = ({
     setColumns(
       getResourceColumns({
         onResourceIdClick: handleResourceClick,
-        onClickId: 'r_number',
+        onClickId: 'resource_code',
       })
     );
   }, []);
@@ -150,8 +156,8 @@ const Resource: React.FC<ResourceProps> = ({
 
   const handleEdit = (resource: any) => {
     setFilterVisibility(false);
-    navigate(RESOURCE + '/edit/' + resource.rid, {
-      state: { resource, accountDetails },
+    navigate(RESOURCE + '/edit/' + resource.rid + `?account_id=${accountid}`, {
+      state: { resource, accountDetails, resources: true },
     });
   };
 
@@ -159,10 +165,12 @@ const Resource: React.FC<ResourceProps> = ({
     {
       label: 'Edit',
       onClick: handleEdit,
+      disabled: accountInActive,
     },
     {
       label: 'Delete',
       onClick: (row: any) => console.log('Delete', row),
+      disabled: accountInActive,
     },
     {
       label: 'View Summary',
@@ -188,6 +196,7 @@ const Resource: React.FC<ResourceProps> = ({
     {
       label: 'New',
       variant: 'outlined' as const,
+      disabled: accountInActive,
       onClick: () => handleCreateResource(),
       sx: { ...BUTTON_STYLES, width: '61px', minWidth: '61px' },
     },
@@ -212,11 +221,11 @@ const Resource: React.FC<ResourceProps> = ({
       }
     );
     setFilterVisibility(true);
-     resetFilter({
-              setAppliedFilters,
-              setFilterStates,
-              setSelectedFilters,
-            });
+    resetFilter({
+      setAppliedFilters,
+      setFilterStates,
+      setSelectedFilters,
+    });
   };
 
   const handleCreateResource = () => {
@@ -240,53 +249,56 @@ const Resource: React.FC<ResourceProps> = ({
         },
       });
     } else {
-      navigate(`${RESOURCE_CREATE}${resId ? `?res_id=${resId}` : ''}`, {
-        state: accountDetails,
-      });
+      navigate(
+        `${RESOURCE_CREATE}?account_id=${accountid}${resId ? `&res_id=${resId}` : ''}`,
+        {
+          state: {accountDetails, resourceCreate: true},
+        }
+      );
     }
   };
 
   // export function need handle in download btn export droopdown in parent
 
-useEffect(() => {
-  const updatedParams: Partial<ExportModule> = {
-    sortBy: '',
-    sortOrder: 'DESC',
-    resourceRid: searchParams.get('res_id') || '',
-    rNumber: accountDetails?.data?.accountById?.r_number,
-  };
+  useEffect(() => {
+    const updatedParams: Partial<ExportModule> = {
+      sortBy: '',
+      sortOrder: 'DESC',
+      resourceRid: searchParams.get('res_id') || '',
+      rNumber: accountDetails?.data?.accountById?.r_number,
+    };
 
-  if (value === 'cost') {
-    updatedParams.sortBy = costorderBy;
-    updatedParams.sortOrder = costOrder.toUpperCase() as 'ASC' | 'DESC';
-    setExportType?.('cost');
-  } else if (value === 'skill') {
-    updatedParams.sortBy = skillOrderBy;
-    updatedParams.sortOrder = skillOrder.toUpperCase() as 'ASC' | 'DESC';
-    setExportType?.('skill');
-  } else {
-    updatedParams.sortBy = sortField;
-    updatedParams.sortOrder = sortOrder;
-    setExportType?.('resource');
-  }
+    if (value === 'cost') {
+      updatedParams.sortBy = costorderBy;
+      updatedParams.sortOrder = costOrder.toUpperCase() as 'ASC' | 'DESC';
+      setExportType?.('cost');
+    } else if (value === 'skill') {
+      updatedParams.sortBy = skillOrderBy;
+      updatedParams.sortOrder = skillOrder.toUpperCase() as 'ASC' | 'DESC';
+      setExportType?.('skill');
+    } else {
+      updatedParams.sortBy = sortField;
+      updatedParams.sortOrder = sortOrder;
+      setExportType?.('resource');
+    }
 
-  setTableParams?.((prev) => ({
-    ...prev,
-    ...updatedParams,
-  }));
-}, [
-  value,
-  costOrder,
-  costorderBy,
-  skillOrder,
-  skillOrderBy,
-  sortField,
-  sortOrder,
-  searchParams,
-  setTableParams,
-  setExportType,
-]);
-
+    setTableParams?.((prev) => ({
+      ...prev,
+      ...updatedParams,
+    }));
+  }, [
+    value,
+    costOrder,
+    costorderBy,
+    skillOrder,
+    skillOrderBy,
+    sortField,
+    sortOrder,
+    searchParams,
+    setTableParams,
+    setExportType,
+    accountDetails?.data?.accountById?.r_number,
+  ]);
 
   return (
     <div className='w-full'>

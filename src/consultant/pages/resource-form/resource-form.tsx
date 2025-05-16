@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { createresourceIcon, editIcon } from '../../../assets';
-import { OnChange, useGetAllCountries } from '../../../common-service';
+import { Layout, OnChange, useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
@@ -21,6 +21,8 @@ import { useCreateResource } from '../../services/resource-create';
 import { useResourceDetail } from '../../services/resource-details';
 import {
   useCreateResourceSkill,
+  useFetchResourceSkillSubType,
+  useFetchResourceSkillType,
   // useFetchResourceSkillById,
   useUpdateResourceSkill,
 } from '../../services/resource-skill/resource-skill-service';
@@ -33,12 +35,8 @@ import {
   transformPayloadforUpdateResource,
   transformSkillData,
 } from './utils.tsx';
-
-enum FormSection {
-  COST = 'cost',
-  SKILL = 'skill',
-  NONE = '',
-}
+import { SkillSubtype, SkillType } from '../../types/resource.ts';
+import { formatDateToMMDDYYYYWithTime } from '../account-details-sidebar/sidebar-pages/resources/utils.tsx';
 
 const ResourceForm: React.FC = () => {
   // Refs
@@ -47,6 +45,11 @@ const ResourceForm: React.FC = () => {
   const [currentCountry, setCurrentCountry] = useState({
     country: '',
     state: '',
+  });
+  const [currentSkillType, setCurrentSkillType] = useState({
+    skillSubType:'',
+    skill_type: '',
+    skill_sub_type: '',
   });
   const [formValues, setFormValues] = useState<Record<string, any>>({});
 
@@ -57,12 +60,20 @@ const ResourceForm: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const resourceId = searchParams.get('res_id');
-
+  const [resourceDetails, setResourceDetails] = useState<any>(null);
+  const accountId = searchParams.get('account_id');
+  const [skillSubTypeData, setSkillSubTypeData] = useState<SelectOption[]>([]);
+  const [isResourceFullNameEmpty, setIsResourceFullNameEmpty] = useState(false);
+  const [isAnyResourceNameFilled, setIsAnyResourceNameFilled] = useState(false);
+  const [currentResource, setCurrentResource] = useState({
+    resource_firstname: '',
+    resource_lastname: '',
+  });
   // Derived values
   const isEditView = location.pathname.includes('/edit');
   const accountData = isEditView
-    ? location?.state?.accountDetails?.data?.accountById
-    : location?.state?.data?.accountById;
+  ? location?.state?.accountDetails?.data?.accountById
+  : location?.state?.accountDetails?.data?.accountById;
   const resourceName = isEditView
     ? location?.state?.resource?.resource_fullname
     : 'New Resource';
@@ -85,11 +96,6 @@ const ResourceForm: React.FC = () => {
       accountNumber: accountNumber,
       id: state?.costInfo?.costRid,
     });
-  // const { data: skillDetails, isSuccess: skillSuccess } = useFetchResourceSkillById({
-  //   accountNumber: accountNumber,
-  //   rid: state?.skillInfo?.skillRId,
-  // });
-  // console.log("skillDetails", skillDetails);
 
   const costInfo =
     (costDetails as { resourceCostById?: Record<string, any> })
@@ -100,8 +106,29 @@ const ResourceForm: React.FC = () => {
   const { data: resource, isSuccess } = useResourceDetail(
     resourceId || location?.state?.resource?.rid || resourceRId,
     location?.state?.accountDetails?.data?.accountById?.r_number ||
-      accountNumber
+    accountNumber
   );
+
+  useEffect(() => {
+    const resourceDetailsData = resource?.data?.resourceDetails;
+    const finalResourceDetails = {
+      ...resourceDetailsData,
+      country: resourceDetailsData?.resource_country,
+      state: resourceDetailsData?.resource_region,
+      city: resourceDetailsData?.resource_city,
+      designation: resourceDetailsData?.resource_designation,
+      total_years_experience: resourceDetailsData?.resource_total_experience,
+      total_years_in_org:
+        resourceDetailsData?.resource_total_experience_organization,
+        Record_id : resourceDetailsData?.rid,
+        Resource_id : resourceDetailsData?.r_number,
+        Created_On : formatDateToMMDDYYYYWithTime(resourceDetailsData?.created_datetime),
+        Created_By : resourceDetailsData?.created_by,
+        Updated_On : formatDateToMMDDYYYYWithTime(resourceDetailsData?.modified_datetime),
+        Updated_By : resourceDetailsData?.modified_by,
+    };
+    setResourceDetails(finalResourceDetails || null);
+  }, [resource]);
 
   useEffect(() => {
     const formValues = resource?.data?.resourceDetails;
@@ -113,25 +140,33 @@ const ResourceForm: React.FC = () => {
         cost: costInfo?.cost || '',
         currency: costInfo?.currency_rid || null,
         cost_frequency: costInfo?.cost_frequency || '',
+        fiscal_year: costInfo?.fiscal_year || '',
+        comments: costInfo?.comments || '',
       };
       setFormValues(costValues);
     } else if (state?.skill && isSuccess && skillInfo && isEditView) {
       const skillValues = {
         ...formValues,
         skill_level: skillInfo?.skillLevel || '',
-        skill_name: skillInfo?.skillName || '',
+        skill_details: skillInfo?.skillDetails || '',
+        skill_type: skillInfo?.skillTypeId || '',
+        skill_sub_type: skillInfo?.skillSubTypeId || '',
         skill_start_date: skillInfo?.startDate || '',
+        skill_type_others: skillInfo?.skillTypeOthers || '', 
+        skill_subtype_others: skillInfo?.skillSubTypeOthers || '',
         years_of_experience: skillInfo?.yearsOfExperience || '',
       };
       setFormValues(skillValues);
-    } else if (formValues && !isEditView) {
+    }
+    else if (formValues && !isEditView) {
       // Set form values with resource details when creataing cost and skill
       setFormValues(formValues);
     }
   }, [state, costDetails, resource]);
 
-  const countryId = resource?.data?.resourceDetails.country;
-  const stateId = resource?.data?.resourceDetails.state;
+
+  const countryId = resource?.data?.resourceDetails.resource_country;
+  const stateId = resource?.data?.resourceDetails.resource_region;
   useEffect(() => {
     if (countryId) {
       setCurrentCountry((prev) => ({ ...prev, country: countryId }));
@@ -141,15 +176,29 @@ const ResourceForm: React.FC = () => {
     }
   }, [countryId, stateId]);
 
+  const skillTypeId = skillInfo.skillTypeId;
+  const skillSubTypeId = skillInfo.skillSubTypeId;
+  useEffect(() => {
+    if (skillTypeId) {
+      setCurrentSkillType((prev) => ({ ...prev, skill_type: skillInfo.skillTypeId }));
+    }
+    if (skillSubTypeId) {
+      setCurrentSkillType((prev) => ({ ...prev, skillSubType: skillInfo.skillSubTypeId }));
+    }
+  }, [skillTypeId, skillSubTypeId]);
+
   // const resourceValues = resource?.data?.resourceDetails;
   const userDetails = JSON.parse(localStorage.getItem('auth') || '{}');
   const allCountries = useGetAllCountries();
   const states = useFetchState(currentCountry.country);
   const city = useFetchCity(currentCountry.state);
+  const { data: skillType } = useFetchResourceSkillType();
+  const { data: skillSubType, isLoading : skillSubTypeLoading } = useFetchResourceSkillSubType(currentSkillType.skill_type);
+
   const currency = useFetchCurrency();
   // Mutations
-  const createResource = useCreateResource();
-  const updateResource = useUpdateResource();
+  const createResource = useCreateResource(accountId as string);
+  const updateResource = useUpdateResource(accountId as string);
   const createResourceCost = useCreateResourceCost();
   const updateResourceCost = useUpdateResourceCost();
   const createResourceSkill = useCreateResourceSkill();
@@ -167,7 +216,7 @@ const ResourceForm: React.FC = () => {
   const memoizedCountry: SelectOption[] = useMemo(() => {
     const countries = allCountries.data?.data.country || [];
     return countries
-      .slice() // create a shallow copy to avoid mutating original data
+      .slice() 
       .sort((a, b) => a.country_name.localeCompare(b.country_name))
       .map((country) => ({
         label: country.country_name,
@@ -201,6 +250,25 @@ const ResourceForm: React.FC = () => {
       })) || [],
     [currency.data?.data.currency]
   );
+
+  const memoizedSkillType: SelectOption[] = useMemo(() => {
+    const data = skillType as SkillType[];
+    const convertData = data?.map((skill: SkillType) => ({
+      label: skill.skill_type_name,
+      value: skill.rid,
+    })) || []
+    return convertData
+  }, [skillType]);
+
+  useEffect(()=>{
+      const data = skillSubType as SkillSubtype[];
+      const finalData = data?.map((skill: SkillSubtype) => ({
+        label: skill.skill_subtype_name,
+        value: skill.rid,
+      })) || []
+      setSkillSubTypeData(finalData)
+  },[skillSubType])
+  
 
   useEffect(() => {
     if (commonSuccess) {
@@ -266,7 +334,6 @@ const ResourceForm: React.FC = () => {
         createResourceSkill.mutate(skillData);
       }
     }
-
     if (!state?.skill && !state?.cost) {
       if (isEditView) {
         const updatedData = transformPayloadforUpdateResource(
@@ -275,6 +342,7 @@ const ResourceForm: React.FC = () => {
           {
             resource_id: location?.state?.resource?.rid,
             account_number: accountData?.r_number,
+            text:"sample"
           }
         );
         updateResource.mutate(updatedData as any);
@@ -310,29 +378,69 @@ const ResourceForm: React.FC = () => {
         [fieldName]: fieldValue as string,
       }));
     }
+    if(fieldName === 'skill_type') {
+      setCurrentSkillType((prev) => ({
+       ...prev,
+        [fieldName]: fieldValue as string,
+      }));
+    }
+    if(fieldName === 'skill_sub_type') {
+      setCurrentSkillType((prev) => ({
+       ...prev,
+        [fieldName]: fieldValue as string,
+      }));
+    }
+    
+    if (fieldName === 'resource_name') {
+      setIsResourceFullNameEmpty((fieldValue as string).trim() !== '');
+    }
+  
+    if (fieldName === 'resource_firstname' || fieldName === 'resource_lastname') {
+      setCurrentResource((prev) => ({
+        ...prev,
+        [fieldName]: fieldValue as string,
+      }));
+      const updatedValues = {
+        ...currentResource,
+        [fieldName]: fieldValue as string,
+      };
+  
+      const hasName = !!updatedValues.resource_firstname?.trim() || !!updatedValues.resource_lastname?.trim();
+      setIsAnyResourceNameFilled(hasName);
+    }
   };
-  const activeFormSection = state?.cost
-    ? FormSection.COST
-    : state?.skill
-      ? FormSection.SKILL
-      : FormSection.NONE;
+
+  //disable orgname in the formdata if the user select resource type as full-time
+  const disableOrgname = resourceDetails?.resource_type === 'full-time';
+
+
   // Form configuration
   const formConfig = ResourceFormData(
     memoizedCountry,
     memoizedState,
     memoizeCity,
     memoizedCurrency,
+    memoizedSkillType,
+    skillSubTypeData,
     states.isLoading,
     city.isLoading,
     currency.isLoading,
+    skillSubTypeLoading,
     isEditView,
-    activeFormSection,
-    state?.cost || state?.skill
+    state?.cost || state?.skill,
+    disableOrgname,
+    currentSkillType.skill_type,
+    currentSkillType.skill_sub_type || currentSkillType.skillSubType,
+    state?.skill,
+    state?.cost,
+    state?.resourceCreate,
+    isResourceFullNameEmpty,
+    isAnyResourceNameFilled
   );
 
   return (
     <div className='resource-form-container'>
-      <div className='flex justify-between items-center border-b-2 h-[108px] border-gray-200 px-4 py-6'>
+      <div className='flex justify-between items-center border-b-2 border-gray-200 px-10 py-6'>
         <div className='flex items-center'>
           <img
             src={isEditView ? editIcon : createresourceIcon}
@@ -402,40 +510,39 @@ const ResourceForm: React.FC = () => {
           />
         </div>
       </div>
-      <div className='p-8'>
-        <FormBuilder
-          data={formConfig}
-          loading={allCountries.isLoading}
-          values={
-            isEditView &&
-            !state?.cost &&
-            !state?.skill &&
-            (resource?.data?.resourceDetails as unknown as Record<
-              string,
-              string | number | boolean | string[] | null
-            >)
-              ? (resource?.data?.resourceDetails as unknown as Record<
+      <FormBuilder
+        data={formConfig}
+        loading={allCountries.isLoading}
+        values={
+          isEditView &&
+          !state?.cost &&
+          !state?.skill &&
+          (resourceDetails as unknown as Record<
+            string,
+            string | number | boolean | string[] | null
+          >)
+            ? (resourceDetails as unknown as Record<
+                string,
+                string | number | boolean | string[] | null
+              >)
+            : state?.cost || state?.skill
+              ? (formValues as unknown as Record<
                   string,
                   string | number | boolean | string[] | null
                 >)
-              : state?.cost || state?.skill
-                ? (formValues as unknown as Record<
-                    string,
-                    string | number | boolean | string[] | null
-                  >)
-                : undefined
-          }
-          // values={
-          //   resource.data?.data?.resource as unknown as Record<
-          //     string,
-          //     string | number | boolean | string[] | null
-          //   >
-          // }
-          outData={handleSubmit}
-          formRef={formRef}
-          onChange={onChangeField}
-        />
-      </div>
+              : undefined
+        }
+        // values={
+        //   resource.data?.data?.resource as unknown as Record<
+        //     string,
+        //     string | number | boolean | string[] | null
+        //   >
+        // }
+        outData={handleSubmit}
+        formRef={formRef}
+        onChange={onChangeField}
+        layout={Layout.TYPE_1}
+      />
     </div>
   );
 };
