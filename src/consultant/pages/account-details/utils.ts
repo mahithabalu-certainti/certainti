@@ -14,7 +14,9 @@ export interface AccountData {
     parent_account: {
       account_name: string;
     };
-    industry: string;
+    industry: {
+      industry_name: string;
+    };
     primary_contact_name: string;
     parent_account_name: string;
   };
@@ -101,21 +103,16 @@ export const transformAccountData = (data: AccountData): DisplayColumn[] => {
     },
     {
       items: [
+        { label: 'Account Name', value: getValueOrDefault(account?.account_name) },
         {
           label: 'Is Parent Account',
-          value: account?.is_parent ? 'Yes' : 'No',
+          value: account?.is_parent ? 'YES' : 'NO',
         },
-        { label: 'Account Name', value: getValueOrDefault(account?.account_name) },
       ],
     },
     {
       items: [
-        { label: 'Primary Contact', value: getValueOrDefault(account?.primary_contact_name) },
-        { label: 'Industry', value: getValueOrDefault(account?.industry) },
-      ],
-    },
-    {
-      items: [
+        { label: 'Industry', value: getValueOrDefault(account?.industry?.industry_name) },
         {
           label: 'Status',
           value:

@@ -137,9 +137,13 @@ const ResourceForm: React.FC = () => {
         ...formValues,
         financial_start_date: costInfo?.effective_date || '',
         financial_end_date: costInfo?.end_date || '',
-        cost: costInfo?.cost || '',
         currency: costInfo?.currency_rid || null,
-        cost_frequency: costInfo?.cost_frequency || '',
+        annual_cost: costInfo?.annual_cost || '',
+        monthly_cost: costInfo?.monthly_cost || '',
+        weekly_cost: costInfo?.weekly_cost || '',
+        bi_weekly_cost: costInfo?.bi_weekly_cost || '',
+        daily_cost: costInfo?.daily_cost || '',
+        hourly_cost: costInfo?.hourly_cost || '',
         fiscal_year: costInfo?.fiscal_year || '',
         comments: costInfo?.comments || '',
       };
@@ -374,12 +378,19 @@ const ResourceForm: React.FC = () => {
   };
 
   const onChangeField = ({ fieldName, fieldValue }: OnChange) => {
-    if (fieldName === 'country' || fieldName === 'state') {
+    if(fieldName === 'country'){
+      setCurrentCountry({
+        country: fieldValue as string,
+        state: '',
+      });
+    }
+    if (fieldName === 'state') {
       setCurrentCountry((prev) => ({
         ...prev,
-        [fieldName]: fieldValue as string,
+        state: fieldValue as string,
       }));
     }
+    
     if(fieldName === 'skill_type') {
       setCurrentSkillType((prev) => ({
        ...prev,

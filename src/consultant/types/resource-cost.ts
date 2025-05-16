@@ -13,6 +13,7 @@ export interface ResourceCostListParams {
 }
 
 export type ResourceCostList = {
+  resource_name?: string;
   id?: string;
   rid?: string;
   status?: string;
@@ -88,8 +89,12 @@ export type ResourceCostSkillFormData = {
   currency?: string;
   financial_start_date?: string;
   financial_end_date?: string;
-  cost_frequency?: string;
-  cost?: string;
+  annual_cost?: string;
+  monthly_cost?: string;
+  weekly_cost?: string;
+  bi_weekly_cost?: string;
+  daily_cost?: string;
+  hourly_cost?: string;
   resource_effective_from?: string;
   resource_end_date?: string;
   designation?: string;
@@ -121,8 +126,12 @@ export type ResourceCostPayload = {
   resource_code?: string;
   effective_date?: string;
   end_date?: string;
-  cost?: string;
-  cost_frequency?: string;
+  annual_cost?: string;
+  monthly_cost?: string;
+  weekly_cost?: string;
+  bi_weekly_cost?: string;
+  daily_cost?: string;
+  hourly_cost?: string;
   fiscal_year?: string;
   currency_rid?: string | null;
   accountNumber?: string;

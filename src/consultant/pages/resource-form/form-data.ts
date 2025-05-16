@@ -326,44 +326,86 @@ export const ResourceFormData = (
           }),
           createTextField('annual_cost', 'Annual Compensation', {
             required: false,
-            regex: REGEX_PATTERNS.COST_REGEX,
-            regexErrorMessage: 'Cost must be a 16-digit number with up to 2 decimals',
             placeholder: 'Enter Annual Compensation',
+            regex: REGEX_PATTERNS.COST_REGEX,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 12 digits and 2 decimal places',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_COST_REVENUE,
+                errorMessage: 'Maximum length exceeded.',
+              },
+            ],
             group: 'compensation'
           }),
           createTextField('monthly_cost', 'Monthly Compensation', {
             required: false,
-            regex: REGEX_PATTERNS.COST_REGEX,
-            regexErrorMessage: 'Cost must be a 16-digit number with up to 2 decimals',
             placeholder: 'Enter Monthly Compensation',
+            regex: REGEX_PATTERNS.COST_REGEX,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 12 digits and 2 decimal places',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_COST_REVENUE,
+                errorMessage: 'Maximum length exceeded.',
+              },
+            ],
             group: 'compensation'
           }),
           createTextField('bi_weekly_cost', 'Bi-Weekly Compensation', {
             required: false,
-            regex: REGEX_PATTERNS.COST_REGEX,
-            regexErrorMessage: 'Cost must be a 16-digit number with up to 2 decimals',
             placeholder: 'Enter Bi-Weekly Compensation',
+            regex: REGEX_PATTERNS.COST_REGEX,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 12 digits and 2 decimal places',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_COST_REVENUE,
+                errorMessage: 'Maximum length exceeded.',
+              },
+            ],
             group: 'compensation'
           }),
           createTextField('weekly_cost', 'Weekly Compensation', {
             required: false,
-            regex: REGEX_PATTERNS.COST_REGEX,
-            regexErrorMessage: 'Cost must be a 16-digit number with up to 2 decimals',
             placeholder: 'Enter Weekly Compensation',
+            regex: REGEX_PATTERNS.COST_REGEX,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 12 digits and 2 decimal places',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_COST_REVENUE,
+                errorMessage: 'Maximum length exceeded.',
+              },
+            ],
             group: 'compensation'
           }),
           createTextField('daily_cost', 'Daily Compensation', {
             required: false,
-            regex: REGEX_PATTERNS.COST_REGEX,
-            regexErrorMessage: 'Cost must be a 16-digit number with up to 2 decimals',
             placeholder: 'Enter Daily Compensation',
+            regex: REGEX_PATTERNS.COST_REGEX,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 12 digits and 2 decimal places',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_COST_REVENUE,
+                errorMessage: 'Maximum length exceeded.',
+              },
+            ],
             group: 'compensation'
           }),
           createTextField('hourly_cost', 'Hourly Compensation', {
             required: false,
-            regex: REGEX_PATTERNS.COST_REGEX,
-            regexErrorMessage: 'Cost must be a 16-digit number with up to 2 decimals',
             placeholder: 'Enter Hourly Compensation',
+            regex: REGEX_PATTERNS.COST_REGEX,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 12 digits and 2 decimal places',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_COST_REVENUE,
+                errorMessage: 'Maximum length exceeded.',
+              },
+            ],
             group: 'compensation'
           })
         ],
