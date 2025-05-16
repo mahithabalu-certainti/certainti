@@ -516,6 +516,7 @@ class SchemaService {
 
       const updateResourceObject: any = {
         resource_name: resourceData.name || null,
+        resource_code: resourceData.resource_code || null,
         resource_firstname: resourceData.first_name || null,
         resource_lastname: resourceData.last_name || null,
         resource_orgname: resourceData.org_name || null,
