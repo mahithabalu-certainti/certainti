@@ -5,7 +5,7 @@ import {
   UserListParams,
 } from '../../types/manage-user';
 import { getProfileExportUrl, getProfileListUrl } from '../urls';
-// import { manageProfileMockData } from '../../mockdata';
+import { manageProfileMockData } from '../../mockdata';
 import { generateFile } from '../helpers';
 
 const ORGANIZATION = import.meta.env.VITE_ORGANIZATION;
@@ -23,9 +23,10 @@ export const fetchManageProfileList = async (params: UserListParams = {}) => {
   };
 
   const url = getProfileListUrl(queryParams);
-  const response = await userServiceApi.get<ManageProfileApiResponse>(url);
-  // await new Promise((resolve) => setTimeout(resolve, 1000));
-  return response.data;
+  // const response = await userServiceApi.get<ManageProfileApiResponse>(url);
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  // return response.data;
+  return manageProfileMockData
 };
 
 export const useManageProfileList = (params: UserListParams = {}) => {
