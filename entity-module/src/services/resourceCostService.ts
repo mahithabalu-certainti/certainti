@@ -1072,7 +1072,7 @@ async createResourceCost(
       // Fetch created_by user name if ID exists
       if (userIds.created_by) {
         const [createdByUser] = await sequelize.query(
-          `SELECT concat(first_name,last_name) as full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          `SELECT concat(first_name, ' ', last_name) as full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.created_by },
             type: "SELECT",
@@ -1087,7 +1087,7 @@ async createResourceCost(
       // Fetch modified_by user name if ID exists
       if (userIds.modified_by) {
         const [modifiedByUser] = await sequelize.query(
-          `SELECT concat(first_name,last_name) as full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          `SELECT concat(first_name, ' ', last_name) as full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.modified_by },
             type: "SELECT",
