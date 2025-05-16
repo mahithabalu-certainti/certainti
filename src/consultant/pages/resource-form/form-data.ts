@@ -118,7 +118,7 @@ export const ResourceFormData = (
               },
             ],
             placeholder: 'Enter Resource Code',
-            disabled: disableFields || disableCostAndSkill,
+            disabled: disableCostAndSkill,
             onChange: true,
           }),
           createSelectField('resource_type', 'Resource Type', {
