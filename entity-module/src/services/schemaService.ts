@@ -536,6 +536,7 @@ class SchemaService {
         resource_total_experience_organization:
           resourceData.total_years_in_org || null,
         modified_by: resourceData.modified_by,
+        modified_datetime: moment().toDate(),
         comments: resourceData.comments || "",
       };
 
