@@ -286,7 +286,7 @@ async exportResoucreSkill(
   const query = `
     SELECT rs.*,
     rs.start_date,
-    r.resource_fullname
+    r.resource_name
     FROM "${schemaName}"."resource_skill" rs
     INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
     WHERE 1=1 AND rs.resource_rid = :resource_rid
@@ -389,7 +389,7 @@ async executeQueries(
   const query = `
     SELECT rs.*,
     rs.start_date,
-    r.resource_fullname, r.resource_role, r.resource_type, r.resource_status
+    r.resource_name, r.resource_role, r.resource_type, r.resource_status
     FROM "${schemaName}"."resource_skill" rs
     INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
     WHERE 1=1 AND rs.resource_rid = :resource_rid
