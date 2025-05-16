@@ -392,7 +392,6 @@ const ResourceForm: React.FC = () => {
     }
     
     if (fieldName === 'resource_name') {
-      console.log("test",fieldValue)
       setIsResourceFullNameEmpty((fieldValue as string).trim() !== '');
     }
   
