@@ -315,13 +315,13 @@ async function getProfilePermissions(req: Request, res: Response): Promise<void>
     // If validation fails, validateRequest will handle the response
     if (!validatedData) return;
     
-    const profile_id = req.params.profileId;
+    const profileId = req.params.profileId;
     // Get type and id from validated data
     const { type, id } = validatedData;
 
     // Call service method to get permissions
     const result = await services.userManagementServices.getProfilePermissions({
-      profile_id,
+      profileId,
       type: type as string,
       id: id as string
     });
