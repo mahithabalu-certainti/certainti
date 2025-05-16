@@ -18,7 +18,8 @@ const systemFilters = ["Touched Records", "Untouched Records", "Record Action"];
 const FilterModal: React.FC<FilterModalProps> = ({
   setAppliedFilters,
   filterFields,
-  setPage
+  setPage,
+  handleCloseFilter,
 }) => {
   const location = useLocation();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -330,7 +331,7 @@ const handleFilterValueChange = (
             {systemFilters.map((label) => (
               <span
                 key={label}
-                className="border border-[#CBD6E2] cursor-pointer rounded-full px-1 h-[23px] text-[12px] font-normal flex items-center gap-0.5 text-[#425A76]"
+                className="border border-[#CBD6E2] cursor-pointer rounded-full px-1 h-[24px] text-[12px] font-normal flex items-center gap-0.5 text-[#425A76]"
               >
                 <img src={checkedIcon} alt="checked-icon" />
                 {label}
@@ -350,7 +351,7 @@ const handleFilterValueChange = (
                 return fieldConfig ? (
                   <div key={fieldName}>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 flex items-center gap-2">
+                      <div className="flex-1 flex items-center gap-2 w-[450px] max-w-[450px]">
                         <div className="flex items-center gap-1">
                           <Select
                             size="small"
@@ -462,12 +463,17 @@ const handleFilterValueChange = (
                       </div>
                       <button
                         onClick={() => {
-                          setSelectedFilters(prev => prev.filter(f => f !== fieldName));
-                          setFilterStates(prev => {
-                            const newState = { ...prev };
-                            delete newState[fieldName];
-                            return newState;
-                          });
+                          const newSelectedFilters = selectedFilters.filter(f => f !== fieldName);
+                          if (newSelectedFilters.length === 0) {
+                            handleResetFilters();
+                          } else {
+                            setSelectedFilters(newSelectedFilters);
+                            setFilterStates(prev => {
+                              const newState = { ...prev };
+                              delete newState[fieldName];
+                              return newState;
+                            });
+                          }
                         }}
                         className="cursor-pointer"
                       >
@@ -494,12 +500,12 @@ const handleFilterValueChange = (
           <div className="flex justify-end gap-2">
             <button 
               className="text-[12px] rounded-[2px] text-[#425A76] h-[24px] flex items-center px-2 border border-[#CBD6E2] cursor-pointer"
-              onClick={handleResetFilters}
+              onClick={handleCloseFilter}
             >
-              Cancel
+              Close
             </button>
             <button 
-              className="text-[12px] rounded-[2px] text-white h-[24px] flex items-center px-2 bg-[#1755E7] cursor-pointer"
+              className="text-[12px] rounded-[2px] text-white h-[24px] flex items-center px-2 bg-[#2D3E4F] cursor-pointer"
               onClick={handleApplyFilters}
             >
               Apply

@@ -214,15 +214,17 @@ const AccountTable: React.FC<Record<string, any>> = ({
     });
 
   return (
-    <div className='border-t border-[#CBD6E2] h-auto'>
+    <div className='border-t border-[#CBD6E2] h-full'>
       <Paper
         sx={{
           boxShadow: 'none',
           borderRadius: '0px',
+          height: '100%',
         }}
       >
         <TableContainer
           sx={{
+            height: '100%',
             overflowX: 'auto',
             scrollbarWidth: 'none',
             '&::-webkit-scrollbar': {

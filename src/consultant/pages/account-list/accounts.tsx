@@ -63,6 +63,10 @@ export const Accounts: React.FC = () => {
   const accountFilterFields = getAccountFilterfields(allCountries, allCurrencies);
 
   const [totalCount, setTotalCount] = useState<number>(0);
+
+  const handleCloseFilter = () => {
+    setIsFilterOpen(false);
+  };
   return (
     <div className='flex flex-col w-full h-full'>
       <div className="flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4">
@@ -145,11 +149,20 @@ export const Accounts: React.FC = () => {
       <div className='flex items-center justify-end h-[45px] min-h-[45px] px-4'>
         <div className='relative'>
           <button
-            className='w-[64px] h-[26px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] border border-[#CBD6E2]'
+            className='w-[64px] h-[26px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] border border-[#CBD6E2] relative'
             onClick={() => setIsFilterOpen(!isFilterOpen)}
           >
             <img src={newFilterIcon} alt="filter-icon" />
             Filter
+
+            {appliedFilters && Object.keys(appliedFilters).length > 0 && (
+              <div className="absolute -top-2 -right-2 w-4 h-4 flex items-center justify-center text-xs">
+                <span className="absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0"></span>
+                <span className="w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold">
+                  {Object.keys(appliedFilters).length}
+                </span>
+              </div>
+            )}
           </button>
           {isFilterOpen &&
             <div className='absolute mt-1 right-0 z-50'>
@@ -157,12 +170,13 @@ export const Accounts: React.FC = () => {
                 filterFields={accountFilterFields}
                 setAppliedFilters={setAppliedFilters}
                 setPage={setPage}
+                handleCloseFilter={handleCloseFilter}
               />
             </div>
           }
         </div>
       </div>
-      <div>
+      <div className='flex-1'>
         <AccountTable
           appliedFilters={appliedFilters}
           setTotalCount={setTotalCount}

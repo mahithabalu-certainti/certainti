@@ -61,6 +61,7 @@ export interface FilterModalProps {
   setAppliedFilters: (filters: Record<string, any>) => void;
   filterFields: FieldConfig[];
   setPage: (page: number) => void;
+  handleCloseFilter: () => void;
 }
 
 export const StatusOptions = [

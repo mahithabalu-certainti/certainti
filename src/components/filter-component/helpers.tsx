@@ -348,8 +348,8 @@ export const NewTextFilterControl: React.FC<{
     >
       <MenuItem value="equals" sx={{ fontSize: '14px', color: '#425A76', fontWeight: 600, py: '1px' }}>=</MenuItem>
       <MenuItem value="contains" sx={{ fontSize: '14px', color: '#425A76', fontWeight: 600, py: '1px' }}>∈</MenuItem>
-      <MenuItem value="starts_with" sx={{ fontSize: '14px', color: '#425A76', fontWeight: 600, py: '1px' }}>↦</MenuItem>
-      <MenuItem value="ends_with" sx={{ fontSize: '14px', color: '#425A76', fontWeight: 600, py: '1px' }}>⇥</MenuItem>
+      {/* <MenuItem value="starts_with" sx={{ fontSize: '14px', color: '#425A76', fontWeight: 600, py: '1px' }}>↦</MenuItem>
+      <MenuItem value="ends_with" sx={{ fontSize: '14px', color: '#425A76', fontWeight: 600, py: '1px' }}>⇥</MenuItem> */}
     </Select>
     <TextField
       size="small"
@@ -427,12 +427,24 @@ export const NewMultiSelectFilterControl: React.FC<{
       size="small"
       value={state.multiSelect?.values || []}
       onChange={(e) => onChange(fieldName, e.target.value as string[])}
-      className="h-[28px] mr-1.5"
+      className="h-[28px]"
       IconComponent={() => (
         <img src={arrowIcon} alt="arrowIcon" className="pr-3" />
       )}
+      renderValue={(selected) => (selected as string[]).join(', ')}
       sx={SELECT_STYLES}
-      MenuProps={MENU_PROPS}
+      MenuProps={{
+        ...MENU_PROPS,
+        PaperProps: {
+          ...MENU_PROPS.PaperProps,
+          style: {
+            ...(MENU_PROPS.PaperProps?.style || {}),
+            width: 100,
+            maxWidth: 100,
+            maxHeight: 200,
+          }
+        }
+      }}
     >
       {menuItems}
     </Select>
@@ -449,12 +461,12 @@ export const NewNumberFilterControl: React.FC<{
     index?: number
   ) => void;
 }> = ({ fieldName, state, onOptionChange, onValueChange }) => {
-  const option = state.number?.option || 'equals';
+  const option = state.number?.option || 'greater_than';
   const value = state.number?.value;
   const hasError = state.number?.error ?? false;
 
   return (
-    <div className="flex gap-2 items-center">
+    <div className="flex gap-2 items-center w-full">
       <Select
         size="small"
         value={option}
@@ -466,14 +478,13 @@ export const NewNumberFilterControl: React.FC<{
         sx={SELECT_STYLES}
         MenuProps={MENU_PROPS}
       >
-        <MenuItem value="equals" sx={{ fontSize: '12px', color: '#425A76', fontWeight: 600, py: '1px' }}>=</MenuItem>
         <MenuItem value="greater_than" sx={{ fontSize: '12px', color: '#425A76', fontWeight: 600, py: '1px' }}>&gt;</MenuItem>
         <MenuItem value="less_than" sx={{ fontSize: '12px', color: '#425A76', fontWeight: 600, py: '1px' }}>&lt;</MenuItem>
         <MenuItem value="between" sx={{ fontSize: '12px', color: '#425A76', fontWeight: 600, py: '1px' }}>⟷</MenuItem>
       </Select>
       
       {option === 'between' ? (
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-1">
           {[0, 1].map((i) => (
             <TextField
               key={i}
@@ -488,6 +499,7 @@ export const NewNumberFilterControl: React.FC<{
                 if (e.key === '-' || e.key === 'e') e.preventDefault();
               }}
               sx={{
+                flex: 1,
                 '& .MuiOutlinedInput-root': {
                   borderRadius: '2px',
                   '& fieldset': {
@@ -504,7 +516,6 @@ export const NewNumberFilterControl: React.FC<{
                   fontSize: '12px',
                   color: '#425A76',
                   height: '12px',
-                  width: '82px'
                 },
                 '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button': {
                   '-webkit-appearance': 'none',
@@ -529,6 +540,7 @@ export const NewNumberFilterControl: React.FC<{
           onKeyDown={(e) => {
             if (e.key === '-' || e.key === 'e') e.preventDefault();
           }}
+          className="flex-1"
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: '2px',
@@ -546,7 +558,6 @@ export const NewNumberFilterControl: React.FC<{
               fontSize: '12px',
               color: '#425A76',
               height: '12px',
-              width: '170px'
             },
             '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button': {
               '-webkit-appearance': 'none',
@@ -573,7 +584,7 @@ export const NewStatusFilterControl: React.FC<{
       size="small"
       value={state.status?.value || 'Active'}
       onChange={(e) => onOptionChange(fieldName, e)}
-      className="mr-1.5 h-[28px]"
+      className="h-[28px]"
       IconComponent={() => (
         <img src={arrowIcon} alt="arrowIcon" className="pr-3" />
       )}
@@ -608,7 +619,7 @@ export const NewBooleanFilterControl: React.FC<{
       size="small"
       value={state.boolean?.value ? 'true' : 'false'}
       onChange={(e) => onChange(fieldName, e.target.value === 'true')}
-      className="mr-1.5 h-[28px]"
+      className="h-[28px]"
       IconComponent={() => (
         <img src={arrowIcon} alt="arrowIcon" className="pr-3" />
       )}
