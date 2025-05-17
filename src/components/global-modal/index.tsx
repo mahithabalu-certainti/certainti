@@ -146,7 +146,7 @@ export const GlobalModal = ({
               <div className='flex-1 flex flex-col space-y-1 p-6 overflow-y-auto'>
                 {accounts?.map((account: AccountFilter) => (
                   <div key={account.rid}>
-                    <label className='m-0 flex items-center'>
+                    <label className='m-0 flex items-center break-all'>
                       <Checkbox
                         disableRipple
                         checked={selectedFilters.some(
@@ -166,14 +166,14 @@ export const GlobalModal = ({
                           },
                         }}
                       />
-                      <span className='text-[13px] font-normal text-[#2D3E4F] cursor-pointer'>{account.account_name}</span>
+                      <span className='text-[13px] font-normal break-all text-[#2D3E4F] cursor-pointer'>{account.account_name}</span>
                     </label>
                     {selectedFilters.some((f) => f.account === account.rid) &&
                       account.child_accounts &&
                       account.child_accounts?.length > 0 && (
                         <div>
                           {account.child_accounts.map((child) => (
-                            <label key={child.rid} className='m-0 ml-6 flex items-center'>
+                            <label key={child.rid} className='m-0 ml-6 flex items-center break-all'>
                               <Checkbox
                                 disableRipple
                                 checked={
@@ -195,7 +195,7 @@ export const GlobalModal = ({
                                   },
                                 }}
                               />
-                              <span className='text-[13px] font-normal text-[#2D3E4F] cursor-pointer'>{child.account_name}</span>
+                              <span className='text-[13px] font-normal break-all text-[#2D3E4F] cursor-pointer'>{child.account_name}</span>
                             </label>
                           ))}
                         </div>

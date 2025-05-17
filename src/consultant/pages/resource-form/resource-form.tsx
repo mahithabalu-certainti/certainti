@@ -36,7 +36,7 @@ import {
   transformSkillData,
 } from './utils.tsx';
 import { SkillSubtype, SkillType } from '../../types/resource.ts';
-import { formatDateToMMDDYYYYWithTime } from '../account-details-sidebar/sidebar-pages/resources/utils.tsx';
+import { formatDateToMMDDYYYY, formatDateToMMDDYYYYWithTime } from '../account-details-sidebar/sidebar-pages/resources/utils.tsx';
 
 const ResourceForm: React.FC = () => {
   // Refs
@@ -155,10 +155,11 @@ const ResourceForm: React.FC = () => {
         skill_details: skillInfo?.skillDetails || '',
         skill_type: skillInfo?.skillTypeId || '',
         skill_sub_type: skillInfo?.skillSubTypeId || '',
-        skill_start_date: skillInfo?.startDate || '',
+        skill_start_date: formatDateToMMDDYYYY(skillInfo?.startDate as string) || '',
         skill_type_others: skillInfo?.skillTypeOthers || '', 
         skill_subtype_others: skillInfo?.skillSubTypeOthers || '',
         years_of_experience: skillInfo?.yearsOfExperience || '',
+        comments: skillInfo?.comments || '',
       };
       setFormValues(skillValues);
     }
@@ -394,6 +395,7 @@ const ResourceForm: React.FC = () => {
     if(fieldName === 'skill_type') {
       setCurrentSkillType((prev) => ({
        ...prev,
+        skill_sub_type: '',
         [fieldName]: fieldValue as string,
       }));
     }
