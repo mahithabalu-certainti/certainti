@@ -1382,6 +1382,163 @@ const rawResult = users || [];
     return result;
   }
 
+  /**
+   * Retrieves the role information for a user by their Azure ID.
+   *
+   * This method finds a user by their Azure ID and returns the role ID (`role_rid`) and associated user role
+   * from the `business_teams` model. If no user or associated `business_teams` are found, it returns an error message.
+   *
+   * @param {string} azureId - The Azure ID of the user whose role is to be retrieved.
+   *
+   * @returns {Promise<{ statusCode: string, message: string, data: { rid: string; user_role: string } | null }>}
+   */
+  async fetchuserExtendedpermission(userId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { rid: string; user_role: string; user_id: string; permissions: any[] } | null;
+  }> {
+    try {
+      const roles = await User.findOne({
+        attributes: ["role_rid", "rid", "profile_rid"],
+        where: { rid: userId },
+        include: [
+          {
+            model: BusinessTeams,
+            as: "business_teams",
+            required: true,
+            attributes: ["business_teams"],
+          },
+        ],
+      });
+      console.log(`After Profile retrieve: ${new Date(Date.now()).toISOString()}`);
+
+
+      if (!roles || !roles.business_teams) {
+        return {
+          statusCode: constants.NOT_FOUND,
+          message: constants.NOT_FOUND_MESSAGE,
+          data: null,
+        };
+      }
+
+      // Call getAllUserPermission here
+      const permissions = await this.getAllUserExtendedPermission(roles.rid, roles.profile_rid || "");
+
+      return {
+        statusCode: constants.SUCCESS,
+        message: constants.SUCCESS_MESSAGE,
+        data: {
+          rid: roles.role_rid || "",
+          user_role: roles.business_teams?.business_teams,
+          user_id: roles.rid,
+          permissions
+        },
+      };
+    } catch (err) {
+      console.log(err);
+      return this.throwServiceError(err as Error);
+    }
+  }
+
+    // Consolidate all permissions for a user
+// ... existing code ...
+async getAllUserExtendedPermission(userId: string, profileId: string) {
+  console.log("User ID:", userId);
+  console.log("Profile ID:", profileId);
+
+  const [profilePermissions, userPermissions] = await Promise.all([
+    this.getProfilePermission(profileId),
+    this.getUserPermission(userId)
+  ]);
+
+  console.log("User Permissions:", userPermissions);
+
+  const userPermissionMap = new Map(
+    userPermissions.map(permission => [permission.name, permission])
+  );
+
+  // Update profilePermissions with hasExtendedPermission
+  const updatedProfilePermissions = profilePermissions.map(permission => {
+  const userPermission = userPermissionMap.get(permission.name);
+
+    return {
+      ...permission,
+      is_enabled: permission.is_enabled, 
+      hasExtendedPermission: permission.is_enabled 
+        ? false 
+        : userPermission?.is_enabled === true
+    };
+  });
+
+  // Directly update userPermissions with hasExtendedPermission for consistency
+  const updatedUserPermissions = userPermissions.map(permission => {
+    const profilePermission = updatedProfilePermissions.find(
+      (p) => p.name === permission.name
+    );
+ const hasExtended = profilePermission?.hasExtendedPermission ?? false;
+      //const hasExtended = profilePermission.hasExtendedPermission;
+    return {
+      ...permission,
+       is_enabled: profilePermission?.is_enabled ?? false,
+      hasExtendedPermission: profilePermission
+        ? profilePermission.hasExtendedPermission
+        : false,
+      rid: hasExtended ? permission.rid : profilePermission?.rid
+    };
+  });
+
+  // Merge and prioritize updatedProfilePermissions over updatedUserPermissions
+  const mergedPermissions = [...updatedProfilePermissions, ...updatedUserPermissions];
+  const uniquePermissions: { [key: string]: any } = {};
+
+  mergedPermissions.forEach(item => {
+    const key = `${item.type}::${item.name}`;
+    if (!uniquePermissions[key] || item.is_enabled) {
+      uniquePermissions[key] = item;
+    }
+  });
+
+  console.log("Final Permissions:", Object.values(uniquePermissions));
+  return Object.values(uniquePermissions);
+}
+
+/**
+   * Retrieves a list of all profiles from the `Profile` model.
+   *
+   * This method fetches all the available profiles from the database and returns them in the response.
+   * If the fetch is successful, it returns the profiles in the `data` field of the response.
+   *
+   * @returns {Promise<{ statusCode: string, message: string, data: { profiles: any[] } }>}
+   * A promise that resolves to an object containing the status, message, and the list of profiles.
+   */
+  async exportUserprofiles(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { profiles: any };
+  }> {
+    try {
+      const profiles = await Profile.findAll( {order: [["profile_name", "ASC"]]} );
+      const profileExportData = profiles.map((profile: any) => {
+        return {
+          "Profile Name":profile.profile_name,
+          "Created On":profile.created_datetime,
+          "Created By":profile.created_by,          
+        };
+      });
+      return {
+        statusCode: constants.SUCCESS,
+        message: constants.SUCCESS_MESSAGE,
+        data: {
+          profiles: profileExportData,
+        },
+      };
+    } catch (err) {
+      return this.throwServiceError(err as Error);
+    }
+  }
+
 }
 
 
