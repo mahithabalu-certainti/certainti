@@ -169,6 +169,27 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               updatedField.error = '';
             }
 
+            // If this field is part of a group and the value is being cleared
+            if (field.group && !value && f.group === field.group) {
+              updatedField.error = '';
+            }
+            // If this field is part of a group and a value is being set
+            if (field.group && value && f.group === field.group) {
+              // Clear error messages for all fields in the same group
+              const otherFieldsInGroupHaveValue = section.fields
+                .filter(groupField => 
+                  groupField.group === field.group && 
+                  groupField.name !== field.name
+                )
+                .some(groupField => 
+                  constructFormData[groupField.name]?.toString().trim()
+                );
+
+              if (!otherFieldsInGroupHaveValue) {
+                updatedField.error = '';
+              }
+            }
+
             // clear selected value when other field change
             if (
               f.clearValue?.key === field.name &&
@@ -205,7 +226,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
             disabled={field.disabled}
             onChange={(e) => handleChange(e.target.value)}
-            value={fieldValue}
+            value={fieldValue || field.defaultValue}
           />
         );
       case 'select':
@@ -877,7 +898,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
           }
 
-          if (field.type === 'date' && constructFormData[field.name]) {
+          if (field.type === 'date') {
             const dateValue = constructFormData[field.name] as string;
 
             // Check if future dates are disabled
@@ -933,7 +954,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 hasError = true;
                 return {
                   ...field,
-                  error: 'Both Effective Date and End Dates must be provided',
+                  error: 'Both Effective Date and End Date must be provided',
                 };
               }
 

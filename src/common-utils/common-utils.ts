@@ -28,6 +28,7 @@ export const createTextField = (
     onChange?: boolean;
     anyOneRequired?: boolean;
     hide?: boolean;
+    defaultValue?: string;
     errorHandling?: ErrorHandling[];
     clearValue?: Record<string, string>;
     lengthRequired?: {
@@ -53,7 +54,8 @@ export const createTextField = (
   hide: options.hide,
   lengthRequired: options.lengthRequired,
   errorHandling: options.errorHandling,
-  clearValue: options.clearValue
+  clearValue: options.clearValue,
+  defaultValue: options.defaultValue
 });
 
 export const createPhoneInputField = (
