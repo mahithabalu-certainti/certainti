@@ -41,6 +41,7 @@ export const FormData = (
           // }),
           createTextField('account_name', 'Account Name', {
             required: true,
+            placeholder: 'Enter Account Name',
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_ACCOUNT_NAME_REGEX,
