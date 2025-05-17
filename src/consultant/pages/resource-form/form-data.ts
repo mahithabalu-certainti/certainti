@@ -76,7 +76,8 @@ export const ResourceFormData = (
   disableCost?: boolean,
   createResource?: boolean,
   isResourceFullNameEmpty?:boolean,
-  isAnyResourceNameFilled?:boolean
+  isAnyResourceNameFilled?:boolean,
+  currentResource?: { resource_firstname: string; resource_lastname: string; },
 ): FormType[] => {
   return useMemo(
     () => [
@@ -145,8 +146,9 @@ export const ResourceFormData = (
 
             ],
             placeholder: 'Enter Name',
-            disabled: disableCostAndSkill ||isAnyResourceNameFilled,
+            disabled: disableCostAndSkill || isAnyResourceNameFilled,
             onChange: true,
+            defaultValue: (currentResource?.resource_firstname || currentResource?.resource_lastname) ? `${currentResource?.resource_firstname} ${currentResource?.resource_lastname}` : '',
           }),
           createTextField('resource_firstname', 'First Name', {
             required: false,
@@ -651,6 +653,7 @@ export const ResourceFormData = (
       currentskillSubType,
       isResourceFullNameEmpty,
       isAnyResourceNameFilled,
+      currentResource,
     ]
   );
 };

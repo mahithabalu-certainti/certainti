@@ -120,24 +120,24 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
           >
             {/* <TableCell sx={{ minWidth: '200px' }}>{skill.resourceRole}</TableCell> */}
             <TableCell sx={{ minWidth: '120px' }}>
-           { formatDateToMMDDYYYY(skill.startDate as string)}
+           { formatDateToMMDDYYYY(skill.startDate as string) || 'NA'}
              </TableCell>
             <TableCell sx={{ minWidth: '120px' }}>
               <TruncateWithTooltip text={String(skill.skillType)}>
-                {skill.skillType}
+                {skill.skillType || 'NA'}
               </TruncateWithTooltip>
             </TableCell>
             <TableCell sx={{ minWidth: '120px' }}>
               <TruncateWithTooltip text={String(skill.skillSubType)}>
-                {skill.skillSubType}
+                {skill.skillSubType || 'NA'}
               </TruncateWithTooltip>
             </TableCell>
             <TableCell sx={{ minWidth: '140px' }}>
               <TruncateWithTooltip text={String(skill.skillDetails)}>
-                {skill.skillDetails}
+                {skill.skillDetails || 'NA'}
               </TruncateWithTooltip>
             </TableCell>
-            <TableCell sx={{ minWidth: '120px' }}>{skill.skillLevel}</TableCell>
+            <TableCell sx={{ minWidth: '120px' }}>{skill.skillLevel || 'NA'}</TableCell>
             <TableCell sx={{ padding: '0px !important' }}>
               <ActionButton
                 onEdit={() => handleEdit(skill)}
