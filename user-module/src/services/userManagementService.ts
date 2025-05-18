@@ -807,6 +807,9 @@ class UserManagementService {
     privileges: Array<{
       rid: string;
       type: string;
+      field_id:string;
+      permission_id:string;
+      module_id:string;
       menu_id:string;
       is_modified: boolean;
       hasExtendedPermission:boolean;
@@ -814,8 +817,8 @@ class UserManagementService {
       read?: boolean;
       edit?: boolean;
     }>,
-    userId: string,
-    originalUrl: string = ""
+    requestedUserId : string,
+    loggedInUsername : string,
   ): Promise<{
     statusCode: number;
     message: string;
@@ -835,12 +838,12 @@ class UserManagementService {
           errorMessage: `Profile with ID ${profileId} not found`
         };
       }
-      const user = await User.findByPk(userId);
+      const user = await User.findByPk(requestedUserId);
       if (!user) {
         return {
           statusCode: constants.NOT_FOUND,
           message: constants.NOT_FOUND_MESSAGE,
-          errorMessage: `UserId with ID ${userId} not found`
+          errorMessage: `UserId with ID ${requestedUserId} not found`
         };
       }
 
@@ -863,18 +866,19 @@ class UserManagementService {
       const updatePromises = modifiedPermissions.map(async (permission) => {
         switch (permission.type) {
           case 'menu':
-            return this.updateUserMenuAccessIfChanged(permission.menu_id, permission.hasExtendedPermission || false, userId, originalUrl);
+            return this.updateUserMenuAccessIfChanged(permission.rid,permission.menu_id, permission.hasExtendedPermission || false, requestedUserId ,loggedInUsername
+            );
           case 'module':
-            return this.updateUserModuleAccessIfChanged(permission.rid, permission.is_enabled || false, userId, originalUrl);
+            return this.updateUserModuleAccessIfChanged(permission.rid,permission.module_id, permission.hasExtendedPermission || false, requestedUserId ,loggedInUsername);
           case 'permission':
-            return this.updateUserPermissionAccessIfChanged(permission.rid, permission.is_enabled || false, userId, originalUrl);
+            return this.updateUserPermissionAccessIfChanged(permission.rid,permission.permission_id, permission.hasExtendedPermission || false, requestedUserId ,loggedInUsername);
           case 'field':
             return this.updateUserFieldAccessIfChanged(
               permission.rid,
+              permission.field_id,
               permission.read || false,
               permission.edit || false,
-              userId,
-              originalUrl
+              requestedUserId ,loggedInUsername,
             );
 
           default:
@@ -888,14 +892,14 @@ class UserManagementService {
       const updatedPermissionCount = updateResults.filter(result => result === true).length;
 
       // Record the update event in profile timeline only if changes were made
-      if (updatedPermissionCount > 0 && originalUrl.includes('edit')) {
-        await this.recordProfileEvent(
-          profileId,
-          "update",
-          "success",
-          userId
-        );
-      }
+      // if (updatedPermissionCount > 0 && originalUrl.includes('edit')) {
+      //   await this.recordProfileEvent(
+      //     profileId,
+      //     "update",
+      //     "success",
+      //     userId
+      //   );
+      // }
 
       return {
         statusCode: constants.SUCCESS,
@@ -1328,57 +1332,55 @@ class UserManagementService {
    */
   private async updateUserMenuAccessIfChanged(
     accessId: string,
+    menu_id:string,
     isEnabled: boolean,
-    userId: string,
-    originalUrl: string = "create"
+    requestedUserId:string,
+    loggedInUsername:string
+   
   ): Promise<boolean> {
     try {
       // First fetch the current value
       const currentAccess = await UserMenuAccess.findOne({
         where: {
-          user_id: userId,
-          menu_id:accessId
+          user_id: requestedUserId,
+          menu_id:menu_id
         }
       });
       if (!currentAccess) {
         UserMenuAccess.create({
-          user_id : userId,
-          menu_id:accessId,
+          user_id : requestedUserId,
+          menu_id:menu_id,
           is_enabled:isEnabled
          });
-       // console.error(`Menu access with ID ${accessId} not found`);
       return true;
       }
       else
       {
       // Check if the value has actually changed
-      if (currentAccess?.is_enabled === isEnabled) {
-        console.log(`Menu access ${accessId} value unchanged, skipping update`);
-        return false;
-      }
+        if (currentAccess?.is_enabled === isEnabled) {
+          console.log(`Menu access ${accessId} value unchanged, skipping update`);
+          return false;
+        }
 
       // Store history if this is an edit operation
-
          await UserMenuAccessHistory.create({
-           user_menu_access_rid: accessId,
+           user_menu_access_rid: currentAccess.rid,
            attribute_name: 'is_enabled',
            old_value: currentAccess.is_enabled.toString(),
            new_value: isEnabled.toString(),
-           modified_by: userId
+           modified_by: loggedInUsername
          });
-      
 
-      // Update only if the value has changed
-      const [updated] = await UserMenuAccess.update(
-        {
-          is_enabled: isEnabled,
-          modified_by: userId
-        },
-        {
-          where: { menu_id: accessId ,user_id:userId}
-        }
-      );
-      console.log(updated)
+        // Update only if the value has changed
+        const [updated] = await UserMenuAccess.update(
+          {
+            is_enabled: isEnabled,
+            modified_by: loggedInUsername
+          },
+          {
+            where: { rid: currentAccess.rid }
+          }
+        );
       return updated > 0;
     }
     } catch (error) {
@@ -1393,64 +1395,59 @@ class UserManagementService {
    */
   private async updateUserModuleAccessIfChanged(
     accessId: string,
+    module_id:string,
     hasExtendedPermission: boolean,
-    userId: string,
-    originalUrl: string = "create"
+    requestedUserId:string,
+    loggedInUsername:string
   ): Promise<boolean> {
     try {
       // First fetch the current value
       const currentAccess = await UserModuleAccess.findOne({
         where: {
-          user_id: userId,
-          menu_module_id:accessId
+          user_id: requestedUserId,
+          menu_module_id:module_id
         }
       });
       
       if (!currentAccess) {
         UserModuleAccess.create({
-          user_id : userId,
-          menu_module_id:accessId,
+          user_id : requestedUserId,
+          menu_module_id:module_id,
           is_enabled:hasExtendedPermission
          });
-       // console.error(`Menu access with ID ${accessId} not found`);
       return true;
       }
       else
       {
- // Check if the value has actually changed
+      // Check if the value has actually changed
       if (currentAccess?.is_enabled === hasExtendedPermission) {
         console.log(`Module access ${accessId} value unchanged, skipping update`);
         return false;
       }
       // Store history if this is an edit operation
         await UserModuleAccessHistory.create({
-          user_module_access_rid: accessId,
+          user_module_access_rid: currentAccess.rid,
           attribute_name: 'is_enabled',
           old_value: currentAccess.is_enabled.toString(),
           new_value: hasExtendedPermission.toString(),
-          modified_by: userId
+          modified_by: loggedInUsername
         });
      
 
       // Update only if the value has changed
-      const [updated] = await ProfileModuleAccess.update(
+      const [updated] = await UserModuleAccess.update(
         {
           is_enabled: hasExtendedPermission,
-          modified_by: userId
+          modified_by: loggedInUsername
         },
         {
-          where: { rid: accessId }
+          where: { rid: currentAccess.rid }
         }
       );
 
       return updated > 0;
 
       }
-
-     
-
-
-      
       
     } catch (error) {
       console.error('Error updating module access:', error);
@@ -1459,31 +1456,30 @@ class UserManagementService {
   }
 
 
-
   /**
    * Updates permission access for a profile if the value has changed
    */
   private async updateUserPermissionAccessIfChanged(
     accessId: string,
+    permissionId:string,
     isEnabled: boolean,
-    userId: string,
-    originalUrl: string = "create"
+    requestedUserId:string,
+    loggedInUsername:string
   ): Promise<boolean> {
     try {
       // First fetch the current value
        const currentAccess = await UserPermissionAccess.findOne({
         where: {
-          user_id: userId,
-          module_permission_id:accessId
+          user_id: requestedUserId,
+          module_permission_id:permissionId
         }
       });
       if (!currentAccess) {
         UserPermissionAccess.create({
-          user_id : userId,
-          module_permission_id:accessId,
+          user_id : requestedUserId,
+          module_permission_id:permissionId,
           is_enabled:isEnabled
          });
-       // console.error(`Menu access with ID ${accessId} not found`);
       return true;
       }
       else
@@ -1495,11 +1491,11 @@ class UserManagementService {
       }
       
         await UserPermissionAccessHistory.create({
-          user_permission_access_rid: accessId,
+          user_permission_access_rid: currentAccess.rid,
           attribute_name: 'is_enabled',
           old_value: currentAccess.is_enabled.toString(),
           new_value: isEnabled.toString(),
-          modified_by: userId
+          modified_by: loggedInUsername
         });
       
 
@@ -1507,7 +1503,7 @@ class UserManagementService {
       const [updated] = await UserPermissionAccess.update(
         {
           is_enabled: isEnabled,
-          modified_by: userId
+          modified_by: loggedInUsername
         },
         {
           where: { rid: accessId }
@@ -1516,8 +1512,6 @@ class UserManagementService {
 
       return updated > 0;
       }
-
-
      
     } catch (error) {
       console.error('Error updating permission access:', error);
@@ -1530,23 +1524,24 @@ class UserManagementService {
    */
   private async updateUserFieldAccessIfChanged(
     accessId: string,
+    fieldId:string,
     read: boolean,
     edit: boolean,
-    userId: string,
-    originalUrl: string = "create"
+    requestedUserId:string,
+    loggedInUsername:string
   ): Promise<boolean> {
     try {
       // First fetch the current values
       const currentAccess = await UserFieldsAccess.findOne({
         where: {
-          user_id: userId,
-          permission_field_id:accessId
+          user_id: requestedUserId,
+          permission_field_id:fieldId
         }
       });
       if (!currentAccess) {
        UserFieldsAccess.create({
-          user_id : userId,
-          permission_field_id:accessId,
+          user_id : requestedUserId,
+          permission_field_id:fieldId,
           read,
           edit,
          });
@@ -1567,43 +1562,38 @@ class UserManagementService {
         // Create history entry for read permission if changed
         if (readChanged) {
           await UserFieldsAccessHistory.create({
-            user_fields_access_rid: accessId,
+            user_fields_access_rid: currentAccess.rid,
             attribute_name: 'read',
             old_value: currentAccess.read.toString(),
             new_value: read.toString(),
-            modified_by: userId
+            modified_by: loggedInUsername
           });
         }
 
         // Create history entry for edit permission if changed
         if (editChanged) {
           await UserFieldsAccessHistory.create({
-            user_fields_access_rid: accessId,
+            user_fields_access_rid: currentAccess.rid,
             attribute_name: 'edit',
             old_value: currentAccess.edit.toString(),
             new_value: edit.toString(),
-            modified_by: userId
+            modified_by: loggedInUsername
           });
         }
       
       // Update only if values have changed
-      const [updated] = await ProfileFieldsAccess.update(
+      const [updated] = await UserFieldsAccess.update(
         {
           read,
           edit,
-          modified_by: userId
+          modified_by: loggedInUsername
         },
         {
-          where: { rid: accessId }
+          where: { permission_field_id: fieldId,user_id:requestedUserId }
         }
       );
-
       return updated > 0;
       }
-
-     
-
-    
     } catch (error) {
       console.error('Error updating field access:', error);
       return false;

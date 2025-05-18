@@ -499,14 +499,14 @@ async function updateUserExtendedPermissions(req: Request, res: Response): Promi
   const { profile_id, profile_name, privileges } = validatedData;
     
     // Get user ID from request (assuming it's set by auth middleware)
-    const userId = req.params.userId
+    const requestedUserId  = req.params.userId
+    const loggedInUsername = req.headers['x-user-id'] as string;
     // Call service method to update permissions
     const result = await services.userManagementServices.updateUserExtendedPermissions(
       profile_id,
       profile_name,
       privileges,
-      userId,
-      req.originalUrl // Pass "edit" as the event name
+      requestedUserId ,loggedInUsername
     );
     
     if (result.statusCode === constants.SUCCESS) {
