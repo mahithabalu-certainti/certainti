@@ -1445,8 +1445,7 @@ const rawResult = users || [];
 
   
     // Consolidate all permissions for a user
-// ... existing code ...
-async getAllUserExtendedPermission(userId: string, profileId: string) {
+ async getAllUserExtendedPermission(userId: string, profileId: string) {
   console.log("User ID:", userId);
   console.log("Profile ID:", profileId);
 
@@ -1454,95 +1453,60 @@ async getAllUserExtendedPermission(userId: string, profileId: string) {
     this.getProfilePermission(profileId),
     this.getUserPermission(userId)
   ]);
+
+  // Create map of user permissions by key for quick lookup
   const userPermissionMap = new Map<string, any>();
+  userPermissions.forEach(p => userPermissionMap.set(getPermissionKey(p), p));
 
-  userPermissions.forEach(permission => {
-    const key = getPermissionKey(permission);
-    userPermissionMap.set(key, permission);
-  });
+  // Result array for merged permissions
+  const mergedPermissions: any[] = [];
 
-  const updatedProfilePermissions = profilePermissions.map(permission => {
-  const key = getPermissionKey(permission);
-  const userPermission = userPermissionMap.get(key);
-  if (permission.type === 'field') {
-      return {
-        ...permission,
-          read: permission.read,
-          edit: permission.edit,
-        hasReadExtendedPermsission: permission.read ? false : userPermission?.read ?? false,
-        hasEditExtendedPermsission: permission.edit ? false : userPermission?.edit ?? false
-      };
+  // Merge profilePermissions with userPermissions overrides
+  for (const profilePerm of profilePermissions) {
+    const key = getPermissionKey(profilePerm);
+    const userPerm = userPermissionMap.get(key);
+
+    if (profilePerm.type === 'field') {
+      // For field permissions, merge read/edit and extended flags
+      mergedPermissions.push({
+        ...profilePerm,
+        read: profilePerm.read,
+        edit: profilePerm.edit,
+        hasReadExtendedPermsission: profilePerm.read ? false : (userPerm?.read ?? false),
+        hasEditExtendedPermsission: profilePerm.edit ? false : (userPerm?.edit ?? false),
+      });
+    } else {
+      // For other types (menu, module, etc.)
+      mergedPermissions.push({
+        ...profilePerm,
+        is_enabled: profilePerm.is_enabled,
+        hasExtendedPermission: profilePerm.is_enabled ? false : (userPerm?.is_enabled === true),
+      });
     }
-    return {
-      ...permission,
-      is_enabled: permission.is_enabled, 
-      hasExtendedPermission: permission.is_enabled 
-        ? false 
-        : userPermission?.is_enabled === true
-    };
-  });
 
-  // Directly update userPermissions with hasExtendedPermission for consistency
-  const updatedUserPermissions = userPermissions.map(permission => {
-  const key = getPermissionKey(permission);
-  const profilePermission = updatedProfilePermissions.find(p => getPermissionKey(p) === key);
-  const hasExtended = profilePermission?.hasExtendedPermission ?? false;
-      if (permission.type === 'field') {
-      return {
-        ...permission,
-         read: profilePermission?.read ?? false,
-          edit: profilePermission?.edit ?? false,
-        hasReadExtendedPermsission:profilePermission
-        ? profilePermission.hasReadExtendedPermsission
-        : false,
-        hasEditExtendedPermsission: profilePermission
-        ? profilePermission.hasEditExtendedPermsission
-        : false,
-      };
+    // Remove merged user permission from map to track leftover user-only permissions
+    if (userPerm) userPermissionMap.delete(key);
+  }
+
+  // Add remaining user permissions that weren't in profilePermissions (user-only perms)
+  for (const userPerm of userPermissionMap.values()) {
+    if (userPerm.type === 'field') {
+      mergedPermissions.push({
+        ...userPerm,
+        hasReadExtendedPermsission: false,
+        hasEditExtendedPermsission: false,
+      });
+    } else {
+      mergedPermissions.push({
+        ...userPerm,
+        hasExtendedPermission: false,
+      });
     }
-    return {
-      ...permission,
-       is_enabled: profilePermission?.is_enabled ?? false,
-      hasExtendedPermission: profilePermission
-        ? profilePermission.hasExtendedPermission
-        : false,
-      rid: hasExtended ? permission.rid : profilePermission?.rid
-    };
-  });
-  // Merge and prioritize updatedProfilePermissions over updatedUserPermissions
-const uniquePermissions:any = {};
-[...updatedProfilePermissions, ...updatedUserPermissions].forEach(item => {
-  let key = `${item.type}::${item.name}`;
-  if (item.type === 'field') {
-     key = `${item.type}::${item.name}::${item.permission_id}`;
   }
-  else if (item.type === 'module') {
-     key = `${item.type}::${item.name}::${item.module_id}`;
-  }
-  
-  if (!uniquePermissions[key]) {
-    uniquePermissions[key] = item;
-  } else {
-    const existing = uniquePermissions[key];
-if (item.type === 'field') {
-        uniquePermissions[key] = {
-          ...existing,
-          hasReadExtendedPermsission: existing.hasReadExtendedPermsission || item.hasReadExtendedPermsission,
-          hasEditExtendedPermsission: existing.hasEditExtendedPermsission || item.hasEditExtendedPermsission
-        };
-      } else {
-    uniquePermissions[key] = {
-      ...existing,
-      is_enabled: existing.is_enabled || item.is_enabled,
-      hasExtendedPermission: existing.hasExtendedPermission || item.hasExtendedPermission,
-      rid: item.hasExtendedPermission ? item.rid : existing.rid
-    };
-  }
-  }
-});
 
-  return Object.values(uniquePermissions);
+  return mergedPermissions;
 }
+
 
 /**
    * Retrieves a list of all profiles from the `Profile` model.
