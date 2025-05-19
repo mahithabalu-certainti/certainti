@@ -505,6 +505,9 @@ class SchemaService {
           resource_code: {
             [Op.iLike]: resourceData.resource_code,
           },
+          rid: {
+            [Op.ne]: resourceData.resource_id // Exclude current resource being updated
+          }
         },
       });
 
