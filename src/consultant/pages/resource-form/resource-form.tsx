@@ -69,6 +69,7 @@ const ResourceForm: React.FC = () => {
     resource_firstname: '',
     resource_lastname: '',
   });
+  const [disableOrgname, setDisableOrgname] = useState<string>("");
   // Derived values
   const isEditView = location.pathname.includes('/edit');
   const accountData = isEditView
@@ -126,20 +127,33 @@ const ResourceForm: React.FC = () => {
         Created_By : resourceDetailsData?.created_by,
         Updated_On : formatDateToMMDDYYYYWithTime(resourceDetailsData?.modified_datetime),
         Updated_By : resourceDetailsData?.modified_by,
+        resource_name:
+        resourceDetailsData?.resource_firstname && resourceDetailsData?.resource_lastname
+          ? ""
+          : (!resourceDetailsData?.resource_firstname && !resourceDetailsData?.resource_lastname
+              ? resourceDetailsData?.resource_name
+              : resourceDetailsData?.resource_firstname || resourceDetailsData?.resource_lastname || "")
     };
     setResourceDetails(finalResourceDetails || null);
   }, [resource]);
 
   useEffect(()=>{
     const resourceDetailsData = resource?.data?.resourceDetails;
+    setDisableOrgname(resourceDetailsData?.resource_type || "");
+    setCurrentResource({
+      resource_firstname: resourceDetailsData?.resource_firstname || '',
+      resource_lastname: resourceDetailsData?.resource_lastname || '',
+    });
+
     if(isEditView && (resourceDetailsData?.resource_firstname || resourceDetailsData?.resource_lastname)) {
-      console.log('test-1')
       setIsAnyResourceNameFilled(true);
     }
-    if(isEditView && resourceDetailsData?.resource_name) {
-      console.log('test-2')
+    else if (isEditView && resourceDetailsData?.resource_name) {
       setIsResourceFullNameEmpty(true);
       setIsAnyResourceNameFilled(false);
+    }else {
+      setIsAnyResourceNameFilled(false);
+      setIsResourceFullNameEmpty(false);
     }
   },[resource, isEditView])
 
@@ -436,11 +450,13 @@ const ResourceForm: React.FC = () => {
       const hasName = !!updatedValues.resource_firstname?.trim() || !!updatedValues.resource_lastname?.trim();
       setIsAnyResourceNameFilled(hasName);
     }
+    if (fieldName ==='resource_type') {
+      setDisableOrgname(String(fieldValue))
+    }
   };
 
   //disable orgname in the formdata if the user select resource type as full-time
-  const disableOrgname = resourceDetails?.resource_type === 'full-time';
-
+  // const disableOrgname = resourceDetails?.resource_type === 'full-time';
 
   // Form configuration
   const formConfig = ResourceFormData(

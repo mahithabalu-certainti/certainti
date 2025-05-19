@@ -109,21 +109,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     const fieldDisabled = field.disabled ? ' bg-gray-100' : '';
 
     const handleChange = (value: FieldTypes, countryCode?: FieldTypes) => {
-      if (field.name === 'resource_type') {
-        const resourceOrgNameField = formData?.[0].fields.find(
-          (f) => f.name === 'resource_orgname'
-        );
-
-        if (resourceOrgNameField) {
-          if (fieldValue !== value) {
-            resourceOrgNameField.error = '';
-          }
-
-          resourceOrgNameField.required =
-            value === 'Sub Con' || value === 'Non-Labor';
-          resourceOrgNameField.disabled = value === 'Full-Time';
-        }
-      }
       const newData = {
         ...constructFormData,
         [field.name]: value,
@@ -188,7 +173,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 updatedField.error = '';
               }
             }
-
             // clear selected value when other field change
             if (
               f.clearValue?.key === field.name &&
@@ -197,7 +181,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               newData[f.name] = '';
               updatedField.error = '';
             }
-
+            
             return updatedField;
           }),
         }));

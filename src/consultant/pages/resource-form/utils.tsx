@@ -91,7 +91,15 @@ export function transformPayloadforUpdateResource(
   existingResource?: ResourceDetailsTypes,
   options: ResourceTransformationOptions = {}
 ) {
-  const fullName = `${rawData.resource_firstname?.trim() || ''} ${rawData.resource_lastname?.trim() || ''}`.trim();
+  const firstName = rawData.resource_firstname?.trim() || "";
+  const lastName = rawData.resource_lastname?.trim() || "";
+
+  let name = "";
+  if (firstName && lastName) {
+    name = "";
+  } else if (!firstName && !lastName) {
+    name = rawData.resource_name || "";
+  } 
   return {
     resource_id: options.resource_id || '',
     account_number: options.account_number || '',
@@ -101,11 +109,11 @@ export function transformPayloadforUpdateResource(
       rawData.resource_type || existingResource?.resource_type || '',
 
     name:
-      rawData.resource_name || fullName || existingResource?.resource_name || '',
+   name || '',
       first_name:
-      rawData.resource_firstname || existingResource?.resource_firstname || '',
+      rawData.resource_firstname  || '',
       last_name:
-      rawData.resource_lastname || existingResource?.resource_lastname || '',
+      rawData.resource_lastname  || '',
     org_name:
       rawData.resource_orgname || existingResource?.resource_orgname || '',
     role: rawData.resource_role || existingResource?.resource_role,
@@ -138,7 +146,15 @@ export function transformPayloadforUpdateResource(
 export const transformPayloadforCreateResource = (
   formData: ResourceDetailsForPayload
 ) => {
-  const fullName = `${formData.resource_firstname?.trim() || ''} ${formData.resource_lastname?.trim() || ''}`.trim();
+  const firstName = formData.resource_firstname?.trim() || "";
+  const lastName = formData.resource_lastname?.trim() || "";
+
+  let name = "";
+  if (firstName && lastName) {
+    name = "";
+  } else if (!firstName && !lastName) {
+    name = formData.resource_name || "";
+  } 
   return {
     account_id: formData.account_id,
     account_number: formData.account_number,
@@ -146,7 +162,7 @@ export const transformPayloadforCreateResource = (
     resource_type: formData.resource_type,
     first_name: formData.resource_firstname,
     last_name: formData.resource_lastname,
-    name: formData.resource_name || fullName,
+    name,
     org_name: formData.resource_orgname,
     role: formData.resource_role,
     resource_country: formData.country,

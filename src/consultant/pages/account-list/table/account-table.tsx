@@ -389,15 +389,6 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     Account Name
                   </TableSortLabel>
                 </TableCell>
-                <TableCell sx={{ minWidth: '200px' }}>
-                  <TableSortLabel
-                    active={orderBy === 'is_parent'}
-                    direction={orderBy === 'is_parent' ? order : 'asc'}
-                    IconComponent={getSortIcon(orderBy, 'is_parent', order)}
-                  >
-                    Parent Account
-                  </TableSortLabel>
-                </TableCell>
                 <TableCell sx={{ minWidth: '180px' }}>
                   <TableSortLabel
                     active={orderBy === 'r_number'}
