@@ -90,7 +90,7 @@ export const AccountForm: React.FC = () => {
     }),
     [account]
   );
-  const defaultAciveValue = STATUS_OPTIONS[0].value;
+  const defaultActiveValue = STATUS_OPTIONS[0].value;
   const isValueUpdateInKeyContact = Object.values(primaryKeyContactInfo).some(
     (val) => val.trim() !== ''
   );
@@ -327,8 +327,8 @@ export const AccountForm: React.FC = () => {
           isEditView && accountData
             ? { ...accountData }
             : {
-                status: defaultAciveValue,
-                key_contact_status: defaultAciveValue,
+                status: defaultActiveValue,
+                key_contact_status: defaultActiveValue,
                 autosend_interaction: YesNo.Yes,
                 auto_access_rd: YesNo.Yes,
               } // Set default values in Create Account

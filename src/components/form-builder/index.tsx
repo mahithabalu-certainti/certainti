@@ -9,7 +9,6 @@ import React, { useEffect } from 'react';
 import PhoneInput, { CountryData } from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import {
-  arrowDownIcon,
   calendarIcon,
   closeIcon,
   searchBlackIcon,
@@ -275,19 +274,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 },
                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                   borderColor: field.error ? '#ef4444' : 'black',
+                },
+                '& svg': {
+                  color: '#7D98B6',
                 }
               }}
-              IconComponent={() => (
-                <img
-                  src={arrowDownIcon}
-                  alt='dropdown arrow'
-                  className='mr-2'
-                  style={{
-                    width: 15,
-                    height: 15,
-                  }}
-                />
-              )}
             >
               <MenuItem value="" sx={{ color: '#7D98B6' }}>
                 {field.placeholder}

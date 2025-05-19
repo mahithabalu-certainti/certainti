@@ -77,7 +77,7 @@ interface OutputData {
 
 const getValueOrDefault = (
   value?: string | number | null,
-  defaultValue = 'N/A'
+  defaultValue = 'NA'
 ): string => {
   return value?.toString() || defaultValue;
 };
