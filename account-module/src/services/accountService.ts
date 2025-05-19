@@ -101,7 +101,10 @@ class AccountService {
           finalSortOrder,
         ]);
       }
-
+      if (finalSortBy == "country" || finalSortBy == "currency" || finalSortBy == "industry") {
+           order.push(["account_name", "ASC"]);
+        }
+  
       // Determine if we should include the parent_account_rid filter
       // Only apply this filter if is_parent_account is not set to "NO"
       const baseWhereClause = { ...allWhereClause };
@@ -300,6 +303,10 @@ class AccountService {
             finalSortOrder,
           ]);
         }
+        if (finalSortBy == "country" || finalSortBy == "currency" || finalSortBy == "industry") {
+           order.push(["account_name", "ASC"]);
+        }
+  
         // Determine if we should include the parent_account_rid filter
         // Only apply this filter if is_parent_account is not set to "NO"
         const baseWhereClause = { ...allWhereClause };
