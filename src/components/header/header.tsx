@@ -79,15 +79,15 @@ export const PageHeader: React.FC<HeaderProps> = ({
       style={customStyles.header}
     >
       <div className='flex justify-between w-full'>
-        <div className='flex'>
-          <div className='flex items-center gap-4 justify-center'>
+        <div className='flex w-[80%] max-w-[80%]'>
+          <div className='flex items-center gap-3 w-full'>
             <img
               src={icon}
               alt='menu-icon'
               className={iconClasses}
               style={{ backgroundColor: iconBackgroundColor }}
             />
-            <div className='flex flex-col'>
+            <div className='flex flex-col w-[90%]'>
               {variant === 'sub' && placeholder ? (
                 <div className='font-semibold text-[#7D98B6] text-[11px]'>
                   {placeholder}
@@ -106,7 +106,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
                   )}
                 </>
               )}
-              <div className='font-semibold text-[20px] text-[#2D3E4F]'>
+              <div className='font-semibold text-[20px] -mt-1 text-[#2D3E4F] overflow-ellipsis truncate'>
                 {title}
               </div>
             </div>

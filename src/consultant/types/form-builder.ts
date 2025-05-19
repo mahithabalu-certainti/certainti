@@ -44,6 +44,7 @@ export interface FormTypeFields {
   errorMessage?: string;
   startDateLabel?: string;
   endDateLabel?: string;
+  defaultValue?: string;
   errorHandling?: ErrorHandling[];
   onClick?: () => void;
   iconUrl?: string;

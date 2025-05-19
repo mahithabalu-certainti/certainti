@@ -36,7 +36,7 @@ import {
   transformSkillData,
 } from './utils.tsx';
 import { SkillSubtype, SkillType } from '../../types/resource.ts';
-import { formatDateToMMDDYYYYWithTime } from '../account-details-sidebar/sidebar-pages/resources/utils.tsx';
+import { formatDateToMMDDYYYY, formatDateToMMDDYYYYWithTime } from '../account-details-sidebar/sidebar-pages/resources/utils.tsx';
 
 const ResourceForm: React.FC = () => {
   // Refs
@@ -63,9 +63,9 @@ const ResourceForm: React.FC = () => {
   const [resourceDetails, setResourceDetails] = useState<any>(null);
   const accountId = searchParams.get('account_id');
   const [skillSubTypeData, setSkillSubTypeData] = useState<SelectOption[]>([]);
-  const [isResourceFullNameEmpty, setIsResourceFullNameEmpty] = useState(false);
-  const [isAnyResourceNameFilled, setIsAnyResourceNameFilled] = useState(false);
-  const [currentResource, setCurrentResource] = useState({
+  const [isResourceFullNameEmpty, setIsResourceFullNameEmpty] = useState<boolean>(false);
+  const [isAnyResourceNameFilled, setIsAnyResourceNameFilled] = useState<boolean>(false);
+  const [currentResource, setCurrentResource] = useState<{ resource_firstname: string; resource_lastname: string; }>({
     resource_firstname: '',
     resource_lastname: '',
   });
@@ -131,6 +131,19 @@ const ResourceForm: React.FC = () => {
   }, [resource]);
 
   useEffect(() => {
+    const resourceDetailsData = resource?.data?.resourceDetails;
+    if (isEditView && (resourceDetailsData?.resource_firstname || resourceDetailsData?.resource_lastname)) {
+      console.log('test-1')
+      setIsAnyResourceNameFilled(true);
+    }
+    if (isEditView && resourceDetailsData?.resource_name) {
+      console.log('test-2')
+      setIsResourceFullNameEmpty(true);
+      setIsAnyResourceNameFilled(false);
+    }
+  }, [resource, isEditView])
+
+  useEffect(() => {
     const formValues = resource?.data?.resourceDetails;
     if (state?.cost && isSuccess && costSuccess && isEditView) {
       const costValues = {
@@ -155,10 +168,11 @@ const ResourceForm: React.FC = () => {
         skill_details: skillInfo?.skillDetails || '',
         skill_type: skillInfo?.skillTypeId || '',
         skill_sub_type: skillInfo?.skillSubTypeId || '',
-        skill_start_date: skillInfo?.startDate || '',
+        skill_start_date: formatDateToMMDDYYYY(skillInfo?.startDate as string) || '',
         skill_type_others: skillInfo?.skillTypeOthers || '',
         skill_subtype_others: skillInfo?.skillSubTypeOthers || '',
         years_of_experience: skillInfo?.yearsOfExperience || '',
+        comments: skillInfo?.comments || '',
       };
       setFormValues(skillValues);
     }
@@ -394,6 +408,7 @@ const ResourceForm: React.FC = () => {
     if (fieldName === 'skill_type') {
       setCurrentSkillType((prev) => ({
         ...prev,
+        skill_sub_type: '',
         [fieldName]: fieldValue as string,
       }));
     }
@@ -448,7 +463,8 @@ const ResourceForm: React.FC = () => {
     state?.cost,
     state?.resourceCreate,
     isResourceFullNameEmpty,
-    isAnyResourceNameFilled
+    isAnyResourceNameFilled,
+    currentResource,
   );
 
   return (

@@ -52,7 +52,7 @@ export const fiscalYears = getFiscalYears(DATE_CONFIG.COST_FISCAL_YEARS_RANGE);
 export const skillStartDateYears = getSkillStartDateOptions(
   DATE_CONFIG.FISCAL_YEARS_RANGE
 );
-const { currentDate, minDate, previousDate } = getDateConstraints(
+const { currentDate, previousDate } = getDateConstraints(
   DATE_CONFIG.MIN_YEARS_BACK
 );
 
@@ -76,7 +76,8 @@ export const ResourceFormData = (
   disableCost?: boolean,
   createResource?: boolean,
   isResourceFullNameEmpty?:boolean,
-  isAnyResourceNameFilled?:boolean
+  isAnyResourceNameFilled?:boolean,
+  currentResource?: { resource_firstname: string; resource_lastname: string; },
 ): FormType[] => {
   return useMemo(
     () => [
@@ -145,8 +146,9 @@ export const ResourceFormData = (
 
             ],
             placeholder: 'Enter Name',
-            disabled: disableCostAndSkill ||isAnyResourceNameFilled,
+            disabled: disableCostAndSkill || isAnyResourceNameFilled,
             onChange: true,
+            defaultValue: (currentResource?.resource_firstname || currentResource?.resource_lastname) ? `${currentResource?.resource_firstname} ${currentResource?.resource_lastname}` : '',
           }),
           createTextField('resource_firstname', 'First Name', {
             required: false,
@@ -315,12 +317,12 @@ export const ResourceFormData = (
           }),
           createDateField('financial_start_date', 'Start Date', {
             required: false,
-            minDate: new Date(minDate.getTime()),
+            // minDate: new Date(minDate.getTime()),
             maxDate: previousDate,
           }),
           createDateField('financial_end_date', 'End Date', {
             required: false,
-            minDate: new Date(minDate.getTime()),
+            // minDate: new Date(minDate.getTime()),
             maxDate: currentDate,
             startDateLabel: 'financial_start_date',
           }),
@@ -428,7 +430,7 @@ export const ResourceFormData = (
             onChange: true,
             resetDependsFields: ['skill_sub_type'],
           }),
-          createTextField('skill_type_others', 'Skill Type(Other)', {
+          createTextField('skill_type_others', 'Skill Type(Others)', {
             required: true,
             placeholder: 'Enter Skill Type',
             errorHandling: [
@@ -463,7 +465,7 @@ export const ResourceFormData = (
             isLoading: skillSubTypeLoading,
             onChange: true,
           }),
-          createTextField('skill_subtype_others', 'Skill SubType(Other)', {
+          createTextField('skill_subtype_others', 'Skill SubType(Others)', {
             required: true,
             placeholder: 'Enter Skill SubType',
             errorHandling: [
@@ -589,7 +591,7 @@ export const ResourceFormData = (
             placeholder: 'Enter Comments',
             regexErrorMessage: 'Max length exceeded.',
             regex: RESOURCE_REGEX.DESCRIPTION,
-            disabled: disableCostAndSkill,
+            // disabled: disableCostAndSkill,
           }),
         ],
       },
@@ -651,6 +653,7 @@ export const ResourceFormData = (
       currentskillSubType,
       isResourceFullNameEmpty,
       isAnyResourceNameFilled,
+      currentResource,
     ]
   );
 };

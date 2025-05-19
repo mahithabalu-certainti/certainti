@@ -1,4 +1,4 @@
-import { Autocomplete, Checkbox, Skeleton, Table, TableBody, TableCell, TableHead, TableRow, TextField } from '@mui/material';
+import { Autocomplete, Checkbox, MenuItem, Select, Skeleton, Table, TableBody, TableCell, TableHead, TableRow, TextField } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -174,6 +174,27 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               updatedField.error = '';
             }
 
+            // If this field is part of a group and the value is being cleared
+            if (field.group && !value && f.group === field.group) {
+              updatedField.error = '';
+            }
+            // If this field is part of a group and a value is being set
+            if (field.group && value && f.group === field.group) {
+              // Clear error messages for all fields in the same group
+              const otherFieldsInGroupHaveValue = section.fields
+                .filter(groupField =>
+                  groupField.group === field.group &&
+                  groupField.name !== field.name
+                )
+                .some(groupField =>
+                  constructFormData[groupField.name]?.toString().trim()
+                );
+
+              if (!otherFieldsInGroupHaveValue) {
+                updatedField.error = '';
+              }
+            }
+
             // clear selected value when other field change
             if (
               f.clearValue?.key === field.name &&
@@ -204,13 +225,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             placeholder={field.placeholder}
             autoComplete='off'
             className={
-              'focus:outline-none placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium w-full sm:text-sm px-2 h-[32px] border border-[#CBD6E2] rounded-xs ' +
+              'focus:outline-none placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium w-full sm:text-sm px-2 h-[32px] border border-[#CBD6E2] rounded-xs focus:border focus:border-black focus:outline-none focus:ring-0 ' +
               isError +
               fieldDisabled
             }
             disabled={field.disabled}
             onChange={(e) => handleChange(e.target.value)}
-            value={fieldValue}
+            value={fieldValue || field.defaultValue}
           />
         );
       case 'website':
@@ -227,13 +248,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
             disabled={field.disabled}
             onChange={(e) => handleChange(e.target.value)}
-            value={fieldValue}
+            value={fieldValue || field.defaultValue}
           />
         );
       case 'select':
         return (
-          <div className='relative w-full'>
-            <select
+          <div className='w-full'>
+            <Select
               name={field.name}
               className={
                 'focus:outline-none custom-select-no-arrow w-full sm:text-sm px-1.5 py-[6px] border border-[#CBD6E2] ' +
@@ -244,34 +265,87 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               onChange={(e) => handleChange(e.target.value)}
               value={fieldValue}
               disabled={field.disabled}
-            >
-              <option value='' className='text-[13px] text-[#425A76] font-medium'>
-                {field.placeholder}
-              </option>
-              {field?.options?.map((option, i) => (
-                <option key={i} value={option.value} title={option.label} className='text-[13px] text-[#425A76] font-medium'>
-                  {option.label.length > 60
-                    ? option.label.slice(0, 60) + '…'
-                    : option.label}
-                </option>
-              ))}
-            </select>
-            <img
-              src={arrowDownIcon}
-              alt='dropdown arrow'
-              className='absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none'
-              style={{
-                width: 15,
-                height: 15,
+              displayEmpty
+              fullWidth
+              size="small"
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    maxWidth: 300,
+                    maxHeight: 300,
+                    marginTop: '4px',
+                    boxShadow: "rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px",
+                    '& .MuiMenuItem-root': {
+                      fontSize: '13px',
+                      padding: '6px 12px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }
+                  }
+                }
               }}
-            />
+              sx={{
+                height: '32px',
+                fontSize: '13px',
+                '.MuiSelect-select': {
+                  padding: '6px 12px',
+                  color: fieldValue === '' ? '#7D98B6' : 'black',
+                },
+                '&.Mui-disabled': {
+                  backgroundColor: '#f3f4f6',
+                },
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: field.error ? '#ef4444' : '#CBD6E2',
+                  borderRadius: '2px'
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: field.error ? '#ef4444' : 'black',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: field.error ? '#ef4444' : 'black',
+                }
+              }}
+              IconComponent={() => (
+                <img
+                  src={arrowDownIcon}
+                  alt='dropdown arrow'
+                  className='mr-2'
+                  style={{
+                    width: 15,
+                    height: 15,
+                  }}
+                />
+              )}
+            >
+              <MenuItem value="" sx={{
+                color: '#425A76',
+                fontSize: '13px',
+                fontWeight: '500',
+              }}>
+                {field.placeholder}
+              </MenuItem>
+              {field?.options?.map((option, i) => (
+                <MenuItem
+                  sx={{
+                    color: '#425A76',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                  }}
+                  key={i}
+                  value={option.value}
+                  title={option.label}
+                >
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
           </div>
         );
       case 'textarea':
         return (
           <textarea
             className={
-              'focus:outline-none placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium w-full sm:text-sm p-2 border border-[#CBD6E2] rounded-xs h-[95px] resize-none ' +
+              'focus:outline-none placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium w-full sm:text-sm p-2 border border-[#CBD6E2] rounded-xs h-[95px] resize-none focus:border focus:border-black focus:outline-none focus:ring-0' +
               isError +
               fieldDisabled
             }
@@ -435,6 +509,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               value={dayjs(fieldValue, 'MM/DD/YYYY')}
               disabled={field.disabled}
               format='MM/DD/YYYY'
+              // onOpen={() => {
+              //   if (!fieldValue && isFinancialDateField && selectedFiscalYear) {
+              //     // Show calendar from Jan 1 of fiscal year
+              //     const date = dayjs().month(dayjs().month()).year(Number(selectedFiscalYear));
+              //     handleChange(date.format('MM/DD/YYYY'));
+              //   }
+              // }}
               onChange={(newValue) => {
                 handleChange(
                   newValue ? dayjs(newValue).format('MM/DD/YYYY') : null
@@ -888,7 +969,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
           }
 
-          if (field.type === 'date' && constructFormData[field.name]) {
+          if (field.type === 'date') {
             const dateValue = constructFormData[field.name] as string;
 
             // Check if future dates are disabled
@@ -944,7 +1025,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 hasError = true;
                 return {
                   ...field,
-                  error: 'Both Effective Date and End Dates must be provided',
+                  error: 'Both Effective Date and End Date must be provided',
                 };
               }
 
