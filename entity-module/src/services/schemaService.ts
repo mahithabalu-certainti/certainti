@@ -228,19 +228,7 @@ class SchemaService {
           rid: accountId,
         },
       });
-
-      if (!resource) {
-        return null;
-      }
-
-      const resourceObj = resource.toJSON();
-      if (!resourceObj.resource_name && (resourceObj.resource_firstname || resourceObj.resource_lastname)) {
-        resourceObj.resource_name = [resourceObj.resource_firstname, resourceObj.resource_lastname]
-          .filter(Boolean)
-          .join(' ');
-      }
-      
-      return resourceObj;
+      return resource;
     } catch (err) {
       throw new Error(
         "Error creating table resources: " + (err as Error).message
