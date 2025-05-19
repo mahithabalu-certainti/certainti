@@ -139,10 +139,12 @@ const ResourceForm: React.FC = () => {
 
   useEffect(()=>{
     const resourceDetailsData = resource?.data?.resourceDetails;
+    setDisableOrgname(resourceDetailsData?.resource_type || "");
     setCurrentResource({
       resource_firstname: resourceDetailsData?.resource_firstname || '',
       resource_lastname: resourceDetailsData?.resource_lastname || '',
     });
+
     if(isEditView && (resourceDetailsData?.resource_firstname || resourceDetailsData?.resource_lastname)) {
       setIsAnyResourceNameFilled(true);
     }
