@@ -349,9 +349,9 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   // Section data with custom formatting where needed
   const basicInfo = CreateSectionData({
     resource_code: resourceData.resource_code,
-    resource_fullname: resourceData.resource_name,
+    resource_fullname: resourceData?.resource_name ||  resourceData.resource_firstname + ' ' + resourceData.resource_lastname ,
     resource_type: resourceData.resource_type,
-    frist_name: resourceData.resource_firstname,
+    first_name: resourceData.resource_firstname,
     last_name: resourceData.resource_lastname,
     resource_orgname: resourceData.resource_orgname,
     role: resourceData.resource_role,

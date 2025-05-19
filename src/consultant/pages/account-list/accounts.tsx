@@ -139,8 +139,7 @@ export const Accounts: React.FC = () => {
       </div>
       <div className='flex flex-1 transition-all duration-300 ease-in-out'>
         <div
-          className={`flex flex-1 transition-all duration-300 ease-in-out overflow-hidden ${isFilterOpen ? 'w-[260px] opacity-100' : 'w-0 opacity-0'
-            }`}
+          className={` ${isFilterOpen ? 'w-[260px] opacity-100 flex flex-1 transition-all duration-300 ease-in-out overflow-hidden' : 'w-0 opacity-0'}`}
         >
           {countriesList.isLoading || currencyList.isLoading ?
             <div className='w-full flex flex-1 justify-center items-center'>

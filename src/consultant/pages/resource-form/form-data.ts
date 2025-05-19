@@ -69,7 +69,7 @@ export const ResourceFormData = (
   skillSubTypeLoading?: boolean,
   disableFields?: boolean,
   disableCostAndSkill?: boolean,
-  disableOrgname?: boolean,
+  disableOrgname?: string,
   currentSkillType?: string,
   currentskillSubType?: string,
   disableSkill?: boolean,
@@ -120,7 +120,9 @@ export const ResourceFormData = (
             options: RESOURCE_TYPE_OPTIONS,
             placeholder: 'Choose Resource Type',
             required: true,
-            disabled: disableCostAndSkill || disableOrgname,
+            disabled: disableCostAndSkill,
+            onChange: true,
+            resetDependsFields: ['resource_orgname'],
           }),
           createTextField('resource_name', 'Name', {
             required: false,
@@ -204,7 +206,7 @@ export const ResourceFormData = (
           }),
 
           createTextField('resource_orgname', 'Resource Org Name', {
-            required: false,
+            required: disableOrgname && disableOrgname !== "Full-Time" ? true : false,
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_3,
@@ -227,10 +229,10 @@ export const ResourceFormData = (
               },
             ],
             placeholder: 'Enter Resource Org Name',
-            disabled: disableCostAndSkill,
+            disabled: disableOrgname && disableOrgname === "Full-Time" ? true : false,
             clearValue: {
               key: 'resource_type',
-              matchedValue: RESOURCE_TYPE_OPTIONS[0].value || RESOURCE_TYPE_OPTIONS[1].value || RESOURCE_TYPE_OPTIONS[2].value ,
+              matchedValue: 'Full-Time' ,
             },
           }),
           createTextField('resource_role', 'Role', {

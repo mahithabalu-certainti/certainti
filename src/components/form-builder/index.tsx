@@ -9,7 +9,6 @@ import React, { useEffect } from 'react';
 import PhoneInput, { CountryData } from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import {
-  arrowDownIcon,
   calendarIcon,
   closeIcon,
   keyContactRemoveIcon,
@@ -32,7 +31,7 @@ interface FormBuilderProps {
   outData: (e: object) => void;
   onChange?: (params: OnChange) => void;
   newContactLength?: number;
-  admin: boolean
+  admin?: boolean
 }
 
 export const FormBuilder: React.FC<FormBuilderProps> = ({
@@ -117,21 +116,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     const fieldDisabled = field.disabled ? ' bg-gray-100' : '';
 
     const handleChange = (value: FieldTypes, countryCode?: FieldTypes) => {
-      if (field.name === 'resource_type') {
-        const resourceOrgNameField = formData?.[0].fields.find(
-          (f) => f.name === 'resource_orgname'
-        );
-
-        if (resourceOrgNameField) {
-          if (fieldValue !== value) {
-            resourceOrgNameField.error = '';
-          }
-
-          resourceOrgNameField.required =
-            value === 'Sub Con' || value === 'Non-Labor';
-          resourceOrgNameField.disabled = value === 'Full-Time';
-        }
-      }
       const newData = {
         ...constructFormData,
         [field.name]: value,
@@ -196,7 +180,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 updatedField.error = '';
               }
             }
-
             // clear selected value when other field change
             if (
               f.clearValue?.key === field.name &&
@@ -313,19 +296,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 },
                 // '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                 //   borderColor: field.error ? '#ef4444' : 'black',
-                // }
+                // },
+                '& svg': {
+                  color: '#7D98B6',
+                }
               }}
-              IconComponent={() => (
-                <img
-                  src={arrowDownIcon}
-                  alt='dropdown arrow'
-                  className='mr-2'
-                  style={{
-                    width: 15,
-                    height: 15,
-                  }}
-                />
-              )}
             >
               <MenuItem value="" sx={{
                 color: '#425A76',

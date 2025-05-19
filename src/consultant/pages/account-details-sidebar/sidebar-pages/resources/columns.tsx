@@ -18,7 +18,7 @@ interface ResourceColumnsProps {
 
 // Helper function to display value or NA
 const displayValue = (value: any) => {
-  return value ? value : <span className='text-gray-400'>NA</span>;
+  return value ? value : "NA";
 };
 
 const BASE_COLUMNS: ColumnDefinition[] = [

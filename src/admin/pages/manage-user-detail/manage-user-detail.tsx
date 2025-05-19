@@ -28,6 +28,7 @@ export const ManageUserDetails: React.FC = () => {
   const userDetails = useManageUserDetail(userId as string);
   const navigate = useNavigate();
   const userDetail = userDetails.data?.data?.users;
+  const userFullName = `${userDetail?.first_name || ''} ${userDetail?.last_name || ''}`.trim();
 
   const userActionButtons: { label: string; width: string }[] = [
     { label: 'Suspend User', width: '104px' },
@@ -99,18 +100,18 @@ export const ManageUserDetails: React.FC = () => {
       </div>
       {/* User Details section  */}
       <div className='flex flex-col border border-[#CBD6E2] rounded-[4px]'>
-        <div className='flex justify-between items-center border-b border-[#CBD6E2] p-2'>
-          <div>
+        <div className='flex items-center justify-between w-full border-b border-[#CBD6E2] p-2'>
+          <div className='w-[50%]'>
             <div className='text-[11px] text-[#7D98B6]'>User</div>
-            <div className='font-semibold text-[16px] text-[#2D3E4F] leading-5 tracking-normal'>
+            <div className='font-semibold text-[16px] text-[#2D3E4F] leading-5 tracking-normal truncate overflow-ellipsis'>
               {userDetails.isLoading ? (
                 <Skeleton variant='rounded' width={200} />
               ) : (
-                userDetail?.full_name
+                userDetail?.full_name ?? userFullName
               )}
             </div>
           </div>
-          <div className='flex gap-2 m-2'>
+          <div className='w-[50%] flex justify-end gap-2'>
             {userActionButtons.map((button) => (
               <TextButton
                 key={button.label}
