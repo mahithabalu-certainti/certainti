@@ -67,14 +67,14 @@ export const AppLayout: React.FC = () => {
 
       {/* Body Content */}
       <div
-        className={`flex flex-col flex-1 transition-all ease-in-out ${!mobileView && sidebarExpand ? 'ml-[240px] duration-500' : !mobileView ? 'ml-[74px] duration-300' : 'ml-0'
+        className={`flex flex-col flex-1 transition-all ease-in-out ${!mobileView && sidebarExpand ? 'ml-[200px] duration-500' : !mobileView ? 'ml-[65px] duration-300' : 'ml-0'
           }`}
       >
         <Navbar handleSidebarToggle={handleSidebarToggle} />
         <div
           className={`flex-1 overflow-y-auto transition-all ease-in-out ${sidebarExpand
-            ? 'max-w-[calc(100vw-240px)] duration-500'
-            : 'max-w-[calc(100vw-74px)] duration-300'
+            ? 'max-w-[calc(100vw-200px)] duration-500'
+            : 'max-w-[calc(100vw-65px)] duration-300'
             }`}
         >
           <Outlet />

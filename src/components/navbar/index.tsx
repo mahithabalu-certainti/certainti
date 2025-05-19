@@ -293,10 +293,10 @@ export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle }) => {
   return (
     <>
       <AppBar position='sticky'>
-        <Toolbar className='justify-between !min-h-[55px] !pl-0'>
+        <Toolbar className='justify-between !min-h-[40px] !pl-0'>
           <div className='relative rounded-md mr-2 flex gap-2'>
-            <button className='cursor-pointer' type='button' onClick={handleSidebarToggle}>
-              <img src={burgerMenuIcon} alt='menu' className='h-[40px] w-[40px]' />
+            <button className='cursor-pointer ' type='button' onClick={handleSidebarToggle}>
+              <img src={burgerMenuIcon} alt='menu' className='h-[32px] w-[32px]' />
             </button>
             {/* <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
               <img

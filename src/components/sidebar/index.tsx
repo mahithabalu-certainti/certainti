@@ -69,6 +69,7 @@ import {
   MANAGE_USER_ACCESS,
   MANAGE_USER_GROUP,
   TASK_TEMPLATES,
+  SURVEY_TEMPLATES,
 } from '../../routes';
 
 const accountNavItems: INavItem[] = [
@@ -224,7 +225,7 @@ const sideNavAdminItems: AdminNavItem[] = [
         name: 'Interaction templates',
         icon: interactionTemplateIcon,
         link: INTERACTION_TEMPLATES,
-        matchLink: '',
+        matchLink: INTERACTION_TEMPLATES,
       },
       {
         name: 'Email templates',
@@ -235,8 +236,8 @@ const sideNavAdminItems: AdminNavItem[] = [
       {
         name: 'Survey templates',
         icon: surveyTemplateIcon,
-        link: TASK_TEMPLATES,
-        matchLink: TASK_TEMPLATES,
+        link: SURVEY_TEMPLATES,
+        matchLink: SURVEY_TEMPLATES,
       },
       {
         name: 'Task templates',
@@ -302,9 +303,8 @@ export const Sidebar: React.FC<SideBarProps> = ({
       open={mobileView ? sidebarExpand : true}
       // onClose={handleBackdropClick}
       classes={{
-        paper: `transform transition-all ease-in-out ${
-          sidebarExpand ? 'w-[240px] duration-400' : 'w-[74px] duration-300'
-        }`,
+        paper: `transform transition-all ease-in-out ${sidebarExpand ? 'w-[200px] duration-400' : 'w-[65px] duration-300'
+          }`,
       }}
       sx={{
         '& .MuiDrawer-paper': {
@@ -318,122 +318,126 @@ export const Sidebar: React.FC<SideBarProps> = ({
         },
       }}
     >
-      <div className='flex items-center justify-center h-[64px]'>
+      <div className='flex items-center justify-center h-[52px]'>
         <Link aria-label='logo'>
           <img
             src={sidebarExpand ? logo : logoSmall}
             alt='logo'
-            className={sidebarExpand ? 'h-[19px]' : 'h-[22px]'}
+            className={sidebarExpand ? 'h-[16px]' : 'h-[18px]'}
           />
         </Link>
       </div>
 
-      <List sx={{ mx: !sidebarExpand ? 'auto' : 'none', mt: 1, flexGrow: 1,  display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <List sx={{ mx: !sidebarExpand ? 'auto' : 'none', mt: 1, flexGrow: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
         {!showAdminSidebar &&
           accountNavItems.map((item, i) => {
             if (item.type === 'divider') {
               return <React.Fragment key={i} />;
-            } 
+            }
             const isAfterDivider = i > 0 && accountNavItems[i - 1]?.type === 'divider';
 
-              return (
-                <ListItem key={i} disablePadding sx={{maxWidth: '200px', mx: 'auto', ...(isAfterDivider && { mt: 'auto' }),}}>
-                  <ListItemButton
-                    sx={{
-                      justifyContent: !sidebarExpand ? 'center' : 'flex-start',
-                      minHeight: 40,
-                      width: !sidebarExpand ? '40px' : '100%',
-                      height: !sidebarExpand ? '40px' : '40px',
-                      px: '3px',
-                      mt: '9px',
-                      gap: 2,
-                      borderRadius: '2px',
-                      backgroundColor:
-                        item.matchLink === trimmedPathname(1)
-                          ? '#FFFFFF33'
-                          : '',
-                      '&:hover': {
-                        backgroundColor: '#FFFFFF33',
+            return (
+              <ListItem key={i} disablePadding sx={{
+                maxWidth: '170px', mx: 'auto', ...(isAfterDivider && { mt: 'auto' }),
+              }}>
+                <ListItemButton
+                  sx={{
+                    justifyContent: !sidebarExpand ? 'center' : 'flex-start',
+                    minHeight: 32,
+                    width: !sidebarExpand ? '40px' : '100%',
+                    height: !sidebarExpand ? '32px' : '32px',
+                    px: '4px',
+                    py: 0,
+                    mt: '0px',
+                    gap: '4px',
+                    borderRadius: '2px',
+                    backgroundColor:
+                      item.matchLink === trimmedPathname(1)
+                        ? '#FFFFFF33'
+                        : '',
+                    '&:hover': {
+                      backgroundColor: '#FFFFFF33',
+                    },
+                    transition: 'all 0.3s ease-in-out',
+                  }}
+                  onClick={() => {
+                    if (item.name === 'Logout') {
+                      handleLogout();
+                    } else {
+                      navigate(item.link);
+                    }
+                  }}
+                >
+                  <Tooltip
+                    title={item.name}
+                    placement='right-end'
+                    slotProps={{
+                      tooltip: {
+                        sx: {
+                          backgroundColor: '#fff',
+                          color: 'rgba(0, 0, 0, 0.87)',
+                          boxShadow: 2,
+                          borderRadius: '4px',
+                        },
                       },
-                      transition: 'all 0.3s ease-in-out',
-                    }}
-                    onClick={() => {
-                      if (item.name === 'Logout') {
-                        handleLogout();
-                      } else {
-                        navigate(item.link);
-                      }
+                      popper: {
+                        modifiers: [
+                          {
+                            name: 'offset',
+                            options: {
+                              offset: [30, -40],
+                            },
+                          },
+                        ],
+                      },
                     }}
                   >
-                    <Tooltip
-                      title={item.name}
-                      placement='right-end'
-                      slotProps={{
-                        tooltip: {
-                          sx: {
-                            backgroundColor: '#fff',
-                            color: 'rgba(0, 0, 0, 0.87)',
-                            boxShadow: 2,
-                            borderRadius: '4px',
-                          },
-                        },
-                        popper: {
-                          modifiers: [
-                            {
-                              name: 'offset',
-                              options: {
-                                offset: [30, -40],
-                              },
-                            },
-                          ],
+                    <ListItemIcon sx={{ minWidth: '32px', height: '26px', alignItems: 'center', justifyContent: 'center' }}>
+                      <img
+                        src={item.icon}
+                        alt='menu-icon'
+                        className='h-[16px]'
+                      />
+                    </ListItemIcon>
+                  </Tooltip>
+                  {sidebarExpand &&
+                    <ListItemText
+                      sx={{
+                        '& .MuiTypography-root': {
+                          fontWeight: 600,
+                          fontSize: '13px',
                         },
                       }}
-                    >
-                      <ListItemIcon sx={{minWidth: '40px', height:'40px', alignItems:'center', justifyContent:'center'}}>
-                        <img
-                          src={item.icon}
-                          alt='menu-icon'
-                          className='h-[18px]'
-                        />
-                      </ListItemIcon>
-                    </Tooltip>
-                    {sidebarExpand &&
-                      <ListItemText
-                        sx={{
-                          '& .MuiTypography-root': {
-                            fontWeight: 500,
-                            fontSize: '14px',
-                          },
-                        }}
-                        primary={item.name}
-                      />
-                    }
-                  </ListItemButton>
-                </ListItem>
-              );
+                      primary={item.name}
+                    />
+                  }
+                </ListItemButton>
+              </ListItem>
+            );
           })}
         {showAdminSidebar && (
-          <ListItem disablePadding sx={{maxWidth: '200px', mx: 'auto'}}>
+          <ListItem disablePadding sx={{ maxWidth: '170px', mx: 'auto' }}>
             <ListItemButton
               sx={{
                 justifyContent: !sidebarExpand ? 'center' : 'flex-start',
-                minHeight: 40,
+                minHeight: 32,
                 width: !sidebarExpand ? '40px' : '100%',
-                height: !sidebarExpand ? '40px' : '40px',
-                px: '3px',
-                mt: 1,
-                gap: 2,
+                height: !sidebarExpand ? '32px' : '32px',
+                px: '4px',
+                py: 0,
+                mt: 0,
+                gap: '4px',
                 borderRadius: '2px',
                 '&:hover': {
                   backgroundColor: 'transparent',
                 },
               }}
             >
-              <ListItemIcon sx={{minWidth: '40px', height:'40px', alignItems:'center', justifyContent:'center'}}>
+              <ListItemIcon sx={{ minWidth: '26px', height: '26px', alignItems: 'center', justifyContent: 'center' }}>
                 <img
                   src={administrationIcon}
                   alt='menu-icon'
-                  className='h-[18px]'
+                  className='h-[16px]'
                 />
               </ListItemIcon>
               {sidebarExpand &&
@@ -441,7 +445,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                   sx={{
                     '& .MuiTypography-root': {
                       fontWeight: 600,
-                      fontSize: '14px',
+                      fontSize: '13px',
                     },
                   }}
                   primary={'Administration'}
@@ -453,16 +457,18 @@ export const Sidebar: React.FC<SideBarProps> = ({
         {showAdminSidebar &&
           adminNavItems.map((item, index) => (
             <div key={index}>
-              <ListItem key={index} disablePadding sx={{maxWidth: '200px', mx: 'auto'}}>
+              <ListItem key={index} disablePadding sx={{ maxWidth: '170px', mx: 'auto' }}>
                 <ListItemButton
                   sx={{
                     display: !sidebarExpand && !noItemsOpen && !item.openStatus ? 'none' : 'flex',
                     justifyContent: !sidebarExpand ? 'center' : 'flex-start',
-                    minHeight: 40,
+                    minHeight: 32,
                     width: !sidebarExpand ? '40px' : '100%',
-                    height: !sidebarExpand ? '40px' : '40px',
-                    px: '3px',
-                    mt: 1,
+                    height: !sidebarExpand ? '32px' : '32px',
+                    px: '4px',
+                    py: 0,
+                    mt: 0,
+                    gap: '4px',
                     borderRadius: '2px',
                     backgroundColor: item.openStatus ? '#FFFFFF33' : '',
                     '&:hover': {
@@ -496,11 +502,11 @@ export const Sidebar: React.FC<SideBarProps> = ({
                       },
                     }}
                   >
-                    <ListItemIcon sx={{minWidth: '40px', height:'40px', alignItems:'center', justifyContent:'center'}}>
+                    <ListItemIcon sx={{ minWidth: '26px', height: '26px', alignItems: 'center', justifyContent: 'center' }}>
                       <img
                         src={item.icon}
                         alt='menu-icon'
-                        className='h-[18px]'
+                        className='h-[16px]'
                       />
                     </ListItemIcon>
                   </Tooltip>
@@ -509,17 +515,17 @@ export const Sidebar: React.FC<SideBarProps> = ({
                       <ListItemText
                         sx={{
                           '& .MuiTypography-root': {
-                            fontWeight: 400,
-                            fontSize: '14px',
+                            fontWeight: 600,
+                            fontSize: '13px',
                           },
                         }}
                         primary={item.title}
                       />
                       {item.subItemTitle.length > 0 &&
                         (item.openStatus ? (
-                          <img src={adminChevronUpIcon} alt='down' className='h-[18px] mr-0.5' />
+                          <img src={adminChevronUpIcon} alt='up' className='h-[16px] mr-0.5' />
                         ) : (
-                          <img src={adminChevronDownIcon} alt='down' className='h-[18px] mr-0.5' />
+                          <img src={adminChevronDownIcon} alt='down' className='h-[16px] mr-0.5' />
                         ))}
                     </Box>
                   }
@@ -531,22 +537,23 @@ export const Sidebar: React.FC<SideBarProps> = ({
                     <List
                       key={subIndex}
                       component='div'
-                      sx={{ fontWeight: 300, fontSize: '14px', maxWidth: '200px', mx: 'auto' }}
+                      sx={{ fontWeight: 300, fontSize: '13px', maxWidth: '170px', mx: 'auto' }}
                       disablePadding
                     >
                       <ListItemButton
-                      sx={{
-                        justifyContent: !sidebarExpand ? 'center' : 'flex-start',
-                        mt: 1,
-                        minHeight: 40,
-                        height: '40px',
-                        width: !sidebarExpand ? '40px' : '100%',
-                        px: '3px',
-                        borderRadius: '2px',
-                        '&:hover': {
-                        backgroundColor: '#FFFFFF33',
-                      },
-                      }}
+                        sx={{
+                          justifyContent: !sidebarExpand ? 'center' : 'flex-start',
+                          mt: 0,
+                          minHeight: 32,
+                          height: '32px',
+                          width: !sidebarExpand ? '40px' : '100%',
+                          gap: '4px',
+                          px: '4px',
+                          borderRadius: '2px',
+                          '&:hover': {
+                            backgroundColor: '#FFFFFF33',
+                          },
+                        }}
                         onClick={() => navigate(subItem.link)}
                       >
                         <Tooltip
@@ -573,11 +580,11 @@ export const Sidebar: React.FC<SideBarProps> = ({
                             },
                           }}
                         >
-                          <ListItemIcon sx={{ minWidth: '40px', height: '35px', alignItems: 'center', justifyContent: 'center' }}>
+                          <ListItemIcon sx={{ minWidth: '26px', height: '26px', alignItems: 'center', justifyContent: 'center' }}>
                             <img
                               src={subItem.icon}
                               alt='menu-icon'
-                              className='h-[18px]'
+                              className='h-[16px]'
                               style={{
                                 filter: !sidebarExpand && matchCheck(subItem, trimmedPathname(2))
                                   ? 'brightness(0) saturate(100%) invert(53%) sepia(89%) saturate(1295%) hue-rotate(340deg) brightness(99%) contrast(93%)'
@@ -587,33 +594,33 @@ export const Sidebar: React.FC<SideBarProps> = ({
                           </ListItemIcon>
                         </Tooltip>
                         {sidebarExpand &&
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-start', gap: 1, alignItems: 'center', width:'100%' }}>
-                          <ListItemText
-                            sx={{
-                              flex: 'unset',
-                              '& .MuiTypography-root': {
-                                fontWeight: matchCheck(
-                                  subItem,
-                                  trimmedPathname(2)
-                                )
-                                  ? 400
-                                  : 300,
-                                fontSize: '14px',
-                                color: matchCheck(subItem, trimmedPathname(2))
-                                  ? '#F16137'
-                                  : '#FFFFFF',
-                              },
-                            }}
-                            primary={subItem.name}
-                          />
-                          {matchCheck(subItem, trimmedPathname(2)) && (
-                            <img
-                              src={adminSubmenuActiveIcon}
-                              alt='menu-icon'
-                              className='h-[16px] w-[16px] mr-0.5'
+                          <Box sx={{ display: 'flex', justifyContent: 'flex-start', gap: 1, alignItems: 'center', width: '100%' }}>
+                            <ListItemText
+                              sx={{
+                                flex: 'unset',
+                                '& .MuiTypography-root': {
+                                  fontWeight: matchCheck(
+                                    subItem,
+                                    trimmedPathname(2)
+                                  )
+                                    ? 400
+                                    : 300,
+                                  fontSize: '13px',
+                                  color: matchCheck(subItem, trimmedPathname(2))
+                                    ? '#F16137'
+                                    : '#FFFFFF',
+                                },
+                              }}
+                              primary={subItem.name}
                             />
-                          )}
-                        </Box>
+                            {matchCheck(subItem, trimmedPathname(2)) && (
+                              <img
+                                src={adminSubmenuActiveIcon}
+                                alt='menu-icon'
+                                className='h-[16px] w-[16px] mr-0.5'
+                              />
+                            )}
+                          </Box>
                         }
                       </ListItemButton>
                     </List>
