@@ -656,33 +656,33 @@ class ResourceCostSchemaService {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
             maximumSignificantDigits: 16
-          }).format(Number(resource.hourly_cost)) : "-",
+          }).format(Number(resource.hourly_cost)) : "NA",
           "Daily": resource.daily_cost ? new Intl.NumberFormat('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
             maximumSignificantDigits: 16
-          }).format(Number(resource.daily_cost)) : "-",
+          }).format(Number(resource.daily_cost)) : "NA",
           "Bi-Weekly": resource.bi_weekly_cost ? new Intl.NumberFormat('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
             maximumSignificantDigits: 16
-          }).format(Number(resource.bi_weekly_cost)) : "-",
+          }).format(Number(resource.bi_weekly_cost)) : "NA",
           "Weekly": resource.weekly_cost ? new Intl.NumberFormat('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
             maximumSignificantDigits: 16
-          }).format(Number(resource.weekly_cost)) : "-",
+          }).format(Number(resource.weekly_cost)) : "NA",
           "Monthly": resource.monthly_cost ? new Intl.NumberFormat('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
             maximumSignificantDigits: 16
-          }).format(Number(resource.monthly_cost)) : "-",
+          }).format(Number(resource.monthly_cost)) : "NA",
           // "Semi Annual": resource.semi_annual_cost,
           "Annual": resource.annual_cost ? new Intl.NumberFormat('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
             maximumSignificantDigits: 16
-          }).format(Number(resource.annual_cost)) : "-",
+          }).format(Number(resource.annual_cost)) : "NA",
         };
       });
 

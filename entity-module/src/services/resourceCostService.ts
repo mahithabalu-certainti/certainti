@@ -361,16 +361,15 @@ async createResourceCost(
         const effectiveDate = this.formatDateForDb(effective_date as string);
         const endDate = this.formatDateForDb(end_date as string);
         if (effectiveDate && endDate) {
+          // Find which cost type has a value
+          const costType = Object.entries(costValues).find(([key, value]) => value !== null)?.[0];
+          
           const existingCost = await ResourceCost.findOne({
             where: {
               resource_rid,
               effective_date: effectiveDate,
               end_date: endDate,
-              [Op.or]: [
-                {
-                  ...costValues,
-                }
-              ]
+              [costType as string]: { [Op.ne]: null } // Check for existing record with same cost type
             },
           });
           if (existingCost) {
@@ -633,16 +632,15 @@ async createResourceCost(
           });
 
           if (existingRow) {
+            // Find which cost type has a value
+          const costType = Object.entries(costValues).find(([key, value]) => value !== null)?.[0];
+
             const existingCost = await ResourceCost.findOne({
               where: {
                 resource_rid: existingRow.resource_rid,
                 effective_date: effectiveDate,
                 end_date: endDate,
-                [Op.or]: [
-                  {
-                    ...costValues,
-                  }
-                ],
+                [costType as string]: { [Op.ne]: null }, // Check for existing record with same cost type
                 rid: { [Op.ne]: rid } // Exclude the current record being updated
               },
             });
