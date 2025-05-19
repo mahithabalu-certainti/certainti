@@ -91,15 +91,7 @@ export function transformPayloadforUpdateResource(
   existingResource?: ResourceDetailsTypes,
   options: ResourceTransformationOptions = {}
 ) {
-  const firstName = rawData.resource_firstname?.trim() || "";
-  const lastName = rawData.resource_lastname?.trim() || "";
-
-  let name = "";
-  if (firstName && lastName) {
-    name = "";
-  } else if (!firstName && !lastName) {
-    name = rawData.resource_name || "";
-  } 
+  const fullName = `${rawData.resource_firstname || ''} ${rawData.resource_lastname || ''}`.trim();
   return {
     resource_id: options.resource_id || '',
     account_number: options.account_number || '',
@@ -109,7 +101,7 @@ export function transformPayloadforUpdateResource(
       rawData.resource_type || existingResource?.resource_type || '',
 
     name:
-   name || '',
+    fullName || rawData.resource_name ||'',
       first_name:
       rawData.resource_firstname  || '',
       last_name:
@@ -146,15 +138,7 @@ export function transformPayloadforUpdateResource(
 export const transformPayloadforCreateResource = (
   formData: ResourceDetailsForPayload
 ) => {
-  const firstName = formData.resource_firstname?.trim() || "";
-  const lastName = formData.resource_lastname?.trim() || "";
-
-  let name = "";
-  if (firstName && lastName) {
-    name = "";
-  } else if (!firstName && !lastName) {
-    name = formData.resource_name || "";
-  } 
+  const fullName = `${formData.resource_firstname || ''} ${formData.resource_lastname || ''}`.trim();
   return {
     account_id: formData.account_id,
     account_number: formData.account_number,
@@ -162,7 +146,7 @@ export const transformPayloadforCreateResource = (
     resource_type: formData.resource_type,
     first_name: formData.resource_firstname,
     last_name: formData.resource_lastname,
-    name,
+    name: fullName || formData.resource_name,
     org_name: formData.resource_orgname,
     role: formData.resource_role,
     resource_country: formData.country,
