@@ -500,6 +500,18 @@ class SchemaService {
 
       const Resource = Resources.initialize(sequelize, schemaName);
 
+      const isRefIdExist = await Resource.findOne({
+        where: {
+          resource_code: {
+            [Op.iLike]: resourceData.resource_code,
+          },
+        },
+      });
+
+      if (isRefIdExist) {
+        throw new Error("Resource Code must be unique.");
+      }
+
       // Parse dates and set to UTC midnight to avoid timezone issues
       const startDate = moment
         .utc(resourceData.effective_from_date, "MM/DD/YYYY")
@@ -576,7 +588,7 @@ class SchemaService {
 
       return updateResource;
     } catch (err) {
-      throw new Error("Error updating resource: " + (err as Error).message);
+      throw new Error((err as Error).message);
     }
   }
 

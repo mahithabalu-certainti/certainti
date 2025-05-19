@@ -400,14 +400,14 @@ class AccountService {
         let exportDetails: any[] = [];
         cleanedUsers.forEach((account: any) => {
           const baseRow = {
-            "Account Name": account?.account_name || "",
-            "Parent Account": account?.parent_account?.account_name || "",
-            "Account ID": account?.r_number || "",
-            "Industry": account?.industry?.industry_name || "",
-            "Country": account?.country?.country_name || "",
-            "Currency": account?.currency?.currency_code || "",
-            "Annual Revenue": account?.annual_revenue || "",
-            "Status": account?.status === 'active' ? 'Active' : 'In-Active',
+            "Account Name": account?.account_name || "NA",
+            "Parent Account": account?.parent_account?.account_name || "NA",
+            "Account ID": account?.r_number || "NA",
+            "Industry": account?.industry?.industry_name || "NA",
+            "Country": account?.country?.country_name || "NA",
+            "Currency": account?.currency?.currency_code || "NA",
+            "Annual Revenue": account?.annual_revenue || "NA",
+            "Status": account?.status.toLowerCase() === 'active' ? 'Active' : 'In-Active',
           };
           exportDetails.push(baseRow);
           if (Array.isArray(account.child_accounts) && account.child_accounts.length > 0) {
