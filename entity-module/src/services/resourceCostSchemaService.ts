@@ -651,13 +651,13 @@ class ResourceCostSchemaService {
           "End Date": resource.end_date ? moment(resource.end_date).format(
             "MM/DD/YYYY"
           ) : "NA" as any,
-          "Hourly": resource.hourly_cost || "NA",
-          "Daily": resource.daily_cost || "NA", 
-          "Bi-Weekly": resource.bi_weekly_cost || "NA",
-          "Weekly": resource.weekly_cost || "NA",
-          "Monthly": resource.monthly_cost || "NA",
+          "Hourly": resource.hourly_cost || "-",
+          "Daily": resource.daily_cost || "-", 
+          "Bi-Weekly": resource.bi_weekly_cost || "-",
+          "Weekly": resource.weekly_cost || "-",
+          "Monthly": resource.monthly_cost || "-",
           // "Semi Annual": resource.semi_annual_cost,
-          "Annual": resource.annual_cost || "NA",
+          "Annual": resource.annual_cost || "-",
         };
       });
 
