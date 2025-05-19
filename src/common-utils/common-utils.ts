@@ -1,0 +1,383 @@
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+import { UserDetail } from '../admin/types/manage-user';
+import { AxiosErrorMsg, CheckError } from '../common-service';
+
+import {
+  AllowedCountry,
+  ErrorHandling,
+  FieldType,
+  SelectOption,
+  YesNo,
+} from '../consultant/types';
+
+export const createTextField = (
+  name: string,
+  label: string,
+  options: {
+    required?: boolean;
+    regex?: RegExp;
+    regexErrorMessage?: string;
+    placeholder?: string;
+    group?: string;
+    disabled?: boolean;
+    onChange?: boolean;
+    anyOneRequired?: boolean;
+    hide?: boolean;
+    defaultValue?: string;
+    errorHandling?: ErrorHandling[];
+    clearValue?: Record<string, string>;
+    lengthRequired?: {
+      key: string;
+      minMatchedValue: RegExp;
+      maxMatchedValue: RegExp;
+      minErrorMessage: string;
+      maxErrorMessage: string;
+    };
+  } = {}
+): FieldType => ({
+  type: 'text',
+  name,
+  label,
+  required: options.required ?? false,
+  regex: options.regex,
+  regexErrorMessage: options.regexErrorMessage,
+  placeholder: options.placeholder,
+  disabled: options.disabled,
+  group: options.group,
+  onChange: options.onChange,
+  anyOneRequired: options.anyOneRequired,
+  hide: options.hide,
+  lengthRequired: options.lengthRequired,
+  errorHandling: options.errorHandling,
+  clearValue: options.clearValue,
+  defaultValue: options.defaultValue
+});
+
+export const createPhoneInputField = (
+  name: string,
+  label: string,
+  options: {
+    required?: boolean;
+    placeholder?: string;
+    disabled?: boolean;
+    onChange?: boolean;
+  } = {}
+): FieldType => ({
+  type: 'phone',
+  name,
+  label,
+  required: options.required ?? false,
+  placeholder: options.placeholder,
+  disabled: options.disabled,
+  onChange: options.onChange,
+});
+
+export const createTextAreaField = (
+  name: string,
+  label: string,
+  options: {
+    required?: boolean;
+    regex?: RegExp;
+    regexErrorMessage?: string;
+    placeholder?: string;
+    disabled?: boolean;
+  } = {}
+): FieldType => ({
+  type: 'textarea',
+  name,
+  label,
+  required: options.required ?? false,
+  regex: options.regex,
+  regexErrorMessage: options.regexErrorMessage,
+  placeholder: options.placeholder,
+  disabled: options.disabled,
+});
+
+export const createCheckboxField = (
+  name: string,
+  label: string,
+  options: {
+    required?: boolean;
+    checkboxOptions: SelectOption[];
+    defaultValue?: string;
+  }
+): FieldType => ({
+  type: 'checkbox',
+  name,
+  label,
+  required: options.required ?? false,
+  options: options.checkboxOptions,
+  defaultValue: options.defaultValue,
+});
+
+export const createRadioField = (
+  name: string,
+  label: string,
+  options: {
+    required?: boolean;
+    radioOptions: SelectOption[];
+    defaultValue?: string;
+    disabled?: boolean;
+    onChange?: boolean;
+    defaultSelect?: {
+      key: string;
+      matchedValue: YesNo.Yes;
+      ifMatchValue: string;
+      ifNotMatchValue: string;
+    };
+  }
+): FieldType => ({
+  type: 'radio',
+  name,
+  label,
+  required: options.required ?? false,
+  options: options.radioOptions,
+  disabled: options.disabled,
+  onChange: options.onChange,
+  defaultSelect: options.defaultSelect,
+});
+
+export const createSelectField = (
+  name: string,
+  label: string,
+  others: {
+    options: SelectOption[];
+    required: boolean;
+    placeholder?: string;
+    disabled?: boolean;
+    clearValue?: Record<string, string>;
+    onChange?: boolean;
+    isLoading?: boolean;
+    resetDependsFields?: string[];
+  }
+): FieldType => ({
+  type: 'select',
+  name,
+  label,
+  required: others.required,
+  options: others.options,
+  disabled: others.disabled,
+  placeholder: others.placeholder,
+  clearValue: others.clearValue,
+  onChange: others.onChange,
+  isLoading: others.isLoading,
+  resetDependsFields: others.resetDependsFields,
+});
+
+export const createDateField = (
+  name: string,
+  label: string,
+  others: {
+    required: boolean;
+    disabled?: boolean;
+    disableFutureDates?: boolean;
+    minDate?: Date;
+    maxDate?: Date;
+    endDateValue?: boolean;
+    startDateLabel?: string;
+    endDateLabel?: string;
+    greaterThan?: Record<string, string>;
+    dateRangeError?: boolean;
+    startValue?: boolean;
+    errorMessage?: string;
+  }
+): FieldType => ({
+  type: 'date',
+  name,
+  label,
+  required: others.required,
+  placeholder: 'MM/DD/YYYY',
+  minDate: others.minDate,
+  maxDate: others.maxDate,
+  disabled: others.disabled,
+  disableFutureDates: others.disableFutureDates,
+  greaterThan: others.greaterThan,
+  dateRangeError: others.dateRangeError,
+  startValue: others.startValue,
+  endDateValue: others.endDateValue,
+  startDateLabel: others.startDateLabel,
+  endDateLabel: others.endDateLabel,
+  errorMessage: others.errorMessage,
+});
+
+export const createFiscalDateField = (
+  name: string,
+  label: string,
+  others: {
+    required: boolean;
+    disabled?: boolean;
+    greaterThan?: Record<string, string>;
+    toBeNotSame?: Record<string, string>;
+  }
+): FieldType => ({
+  type: 'fiscalDate',
+  name,
+  label,
+  required: others.required,
+  disabled: others.disabled,
+  greaterThan: others.greaterThan,
+  toBeNotSame: others.toBeNotSame,
+});
+
+export const YES_NO_OPTIONS: SelectOption[] = [
+  { label: 'Yes', value: YesNo.Yes },
+  { label: 'No', value: YesNo.No },
+];
+
+// Regex patterns
+export const REGEX_PATTERNS = {
+  ALPHANUMERIC: /^[A-Za-z0-9-]+$/,
+  LETTERS_SPACES: /^[A-Za-z\s]+$/,
+  ACCOUNT_NAME: /^[A-Za-z0-9 &'.,-]+$/,
+  CONTACT_NAME: /^[A-Za-z &'’.,\-\\–\\—]+$/,
+  INDUSTRY: /^[A-Za-z &]{5,25}$/,
+  LETTERS_5_TO_25: /^[A-Za-z\s]{5,25}$/,
+  LETTERS_3_TO_25: /^(?!.*\s{2,-'})[A-Za-z\s]{3,25}$/,
+  LETTERS_3_TO_100: /^[\s\S]{3,100}$/,
+  LENGTH_3_TO_50_REGEX: /^.{3,50}$/,
+  NOT_ALLOW_ONLY_SYMBOLS: /^(?![\W_]+$).+$/,
+  ALPHANUMERIC_SPEC_5_TO_50: /^[\s\S]{5,50}$/,
+  EMAIL:
+    /^(?=.{6,254}$)[a-zA-Z0-9]+(?:[._+-][a-zA-Z0-9]+)*@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63}$/,
+  PHONE: /^([0-9]{10})$/,
+  WEBSITE: /^(https?:\/\/|www\.)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(:[0-9]+)?(\/[a-zA-Z0-9\-.:\/]*)?$/,
+  MAX_WEBSITE: /^.{0,255}$/,
+  MIN_WEBSITE: /^.{10,}$/,
+  DATA_RESIDENCY: /^[A-Za-z0-9\s-]+$/,
+  NUMBER_OPTIONAL_DECIMAL: /^([0-9]{1,10}(\.[0-9]{1,2})?)?$/,
+  BLENDED_NUMBER: /^(?:[0-9]{1,3})(?:\.[0-9]{1,2})?$/,
+  DESCRIPTION: /^.{0,500}$/,
+  RESOURCE_DESCRIPTION: /^.{0,1000}$/,
+  ACCOUNT_DESCRIPTION: /^[\s\S]{0,2000}$/,
+  POSTAL_CODE:/^(?!^[A-Za-z]+$)[A-Za-z0-9-]+$/,
+  MAX_AI_INTRACTION: /^[3-5]$/,
+  NUMBERS: /^[0-9]{1,20}$/,
+  NUMBERS_50: /^[0-9]{5,50}$/,
+  ANNUAL_REVENUE: /^(0|([1-9]\d{0,11}))(\.\d{1,2})?$/,
+  MAX_ANNUAL_REVENUE: /^.{1,15}$/,
+  MAX_COST_REVENUE: /^.{1,15}$/,
+  COST_REGEX: /^(0|([1-9]\d{0,11}))(\.\d{1,2})?$/,
+  NAME_REGEX: /^(?!.*[ '-]{2})[A-Za-z]+(?:['-][A-Za-z]+)*$/,
+  USER_NAME:/^(?!.*['-]{2})(?!.*^\s)(?!.*\s$)[A-Za-z]+(?:['-][A-Za-z]+)*$/,
+  STREET_REGEX: /^(?![\W_]+$)(?!\s*$)[a-zA-Z0-9\s,.\-#]+$/,
+  MAX_255: /^.{0,255}$/,
+  MAX_64: /^.{0,64}$/,
+  MAX_2000: /^[\s\S]{0,2000}$/,
+  MAX_50: /^.{0,50}$/,
+  MAX_100: /^.{0,100}$/,
+  MIN_3: /^.{3,}$/,
+  MIN_2: /^.{2,}$/,
+  CITY_REGEX: /^[A-Za-z\s]{3,100}$/,
+  NUMBERS_GREATER_THAN_ZERO: /^[1-9]\d*$/,
+  MANAGER_REGEX: /^[A-Za-z\s.'-]*$/,
+  MIN_NAME_REGEX: /^.{2,}$/,
+  MAX_NAME_REGEX: /^.{0,128}$/,
+  MIN_ACCOUNT_NAME_REGEX: /^.{7,}$/,
+  MAX_ACCOUNT_NAME_REGEX: /^.{0,125}$/,
+  MAX_EMAIL_REGEX: /^.{0,254}$/,
+  MAX_POSTAL_REGEX: /^.{1,20}$/,
+  NOT_ALLOW_SPACE_SYMBOLS_AT_START_END:
+    /^[a-zA-Z0-9][\w !@#$%^&*()_+=\-[\]{};':’"\\|,.<>\\/?\u2013\u2014]*[a-zA-Z0-9]$/,
+  NAME_LENGTH_2_TO_64_REGEX: /^.{2,64}$/,
+  NAME_LENGTH_3_TO_64_REGEX: /^.{3,64}$/,
+  NO_LEADING_OR_TRAILING_SPECIAL_REGEX: /^(?!^[-' ]|.*[-' ]$)/,
+  ALLOWED_CHARS_NAME_REGEX: /^[A-Za-z-' ]+$/,
+  NO_CONSECUTIVE_SPECIALS_REGEX: /^(?!.*[-' ]{2})/,
+  NAME_LENGTH_3_TO_100_REGEX: /^.{3,100}$/,
+  ALLOWED_CHARS_EXTENDED_NAME_REGEX: /^[A-Za-z0-9 &'.,-]+$/,
+  NO_CONSECUTIVE_SPECIALS_EXTENDED_REGEX: /^(?!.*[ &'.,-]{2})/,
+  NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX: /^(?!^[ &'.,-])(?!(.*[ &'.,-]$))/,
+  NO_LEADING_SPECIAL_REGEX: /^[a-zA-Z]/,
+  ALLOWED_CHARS_REGEX: /^[a-zA-Z0-9_-]+$/,
+  NO_CONSECUTIVE_SPECIALS_REGEX_FOR_ORG_NAME: /^(?!.*[-_]{2}).+$/,
+  NO_TRAILING_SPECIAL_REGEX: /[^-_]$/,
+  POSTAL_NO_CONSECUTIVE_HYPHENS: /^(?!-)(?!.*--)[a-zA-Z0-9-]{1,20}(?<!-)$/,
+  POSTAL_NO_LEADING_OR_TRAILING: /^(?!-)(?!.*--)(?!.*-.*-)[a-zA-Z0-9]{1,19}(-[a-zA-Z0-9]{1,19})?$/,
+  POSTAL_ALLOWED_CHARS: /^(?!^[a-zA-Z-]+$).*$/,
+  // NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX:
+  //   /^(?!^[ &'.,-])(?!(.*[ &'.,-]$))/,
+  SKILL_OTHERS_ALLOWED_CHARS_REGEX: /^[A-Za-z\-'._\s]+$/,
+};
+
+/**
+ * Resource Form Field Regex Patterns
+ *
+ * Each pattern is optimized for its specific field requirements with:
+ * - Exact character allowances
+ * - Proper length validation
+ * - Prevention of edge cases
+ */
+
+export const RESOURCE_REGEX = {
+  RESOURCE_CODE: /^(?![0-9_-])[a-zA-Z][a-zA-Z0-9_-]{2,49}$/,
+  RESOURCE_NAME: /^(?!.*[-' ]{2})[A-Za-z](?:[A-Za-z]|[-' ](?=[A-Za-z])){0,62}[A-Za-z]$/,
+  ORG_NAME: /^(?!.*[&\-.'", ]{2})[A-Za-z0-9](?:[A-Za-z0-9]|[&\-.'", ](?=[A-Za-z0-9])){1,98}[A-Za-z0-9]$/,
+  EMAIL: /^[a-zA-Z0-9._%+-]{1,64}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+  MOBILE: /^\+?[0-9][0-9\- ]{3,14}[0-9]$/,
+  MANAGER_NAME: /^(?=(.*[a-zA-Z0-9]){3})[a-zA-Z0-9][a-zA-Z0-9 .'-]{1,99}$/,
+  ROLE:/^(?=.*[a-zA-Z])[a-zA-Z\s\-'.]+$/,
+  DESIGNATION: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{4,100}$/,
+  YEARS_EXPERIENCE: /^(?:0|[1-9]\d?)(?:\.\d{1,2})?$/,
+  DESCRIPTION: /^[\s\S]{0,2000}$/,
+  ENUM_VALIDATION: /^(Active|Inactive|Full-time|Contract|Mandatory)$/,
+  COUNTRY:
+    /^(?![\s-])(?!.*[\s-]{2})[A-Za-zÀ-ÖØ-öø-ÿ\s-]{2,49}[A-Za-zÀ-ÖØ-öø-ÿ]$/,
+  DATE_FORMAT: /^\d{4}-\d{2}-\d{2}$/,
+};
+
+export const ALLOWED_COUNTRIES: AllowedCountry[] = [
+  'us',
+  'ca',
+  'gb',
+  'ie',
+  'se',
+  'ro',
+  'au',
+  'fr',
+];
+
+export const fiscalYears = Array.from({ length: 26 }, (_, i) => {
+  const year = new Date().getFullYear() - i;
+  return { value: year.toString(), label: `FY-${year}` };
+});
+
+export const checkError = (data: CheckError[]) => {
+  return data.some((value) => value.isError === true);
+};
+
+export const errorHandling = (data: AxiosErrorMsg): string => {
+  const errorData = data.response?.data;
+  return `<p>${
+    errorData?.statusMessage
+      ? typeof errorData.statusMessage === 'object'
+        ? Object.values(errorData.statusMessage).join(', ')
+        : errorData.statusMessage || ''
+      : errorData?.message || data.message
+  }</p>`;
+};
+
+export const formatAddress = (userDatas?: UserDetail) => {
+  const addressParts = [
+    userDatas?.street,
+    userDatas?.city,
+    userDatas?.state_name,
+    userDatas?.zip_code,
+    userDatas?.country_name,
+  ].filter(Boolean);
+  return addressParts.join(', ');
+};
+
+export const getDateTimeFormat = (date?: string) => {
+  if (!date) return '';
+  return dayjs.utc(date).local().format('MM-DD-YYYY HH:mm:ss');
+};
+
+export const STATUS_OPTIONS: SelectOption[] = [
+  { label: 'Active', value: 'active' },
+  { label: 'In-Active', value: 'inactive' },
+];
