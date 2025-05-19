@@ -234,6 +234,7 @@ export const ResourceFormData = (
               key: 'resource_type',
               matchedValue: 'Full-Time' ,
             },
+            defaultValue: '',
           }),
           createTextField('resource_role', 'Role', {
             required: false,

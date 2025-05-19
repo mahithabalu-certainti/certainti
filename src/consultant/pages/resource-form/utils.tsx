@@ -98,7 +98,7 @@ export function transformPayloadforUpdateResource(
     resource_code:
       rawData.resource_code || existingResource?.resource_code || '',
     resource_type:
-      rawData.resource_type || existingResource?.resource_type || '',
+      rawData.resource_type || '',
 
     name:
     fullName || rawData.resource_name ||'',
@@ -107,7 +107,7 @@ export function transformPayloadforUpdateResource(
       last_name:
       rawData.resource_lastname  || '',
     org_name:
-      rawData.resource_orgname || existingResource?.resource_orgname || '',
+      rawData.resource_orgname || '',
     role: rawData.resource_role || existingResource?.resource_role,
     resource_status:
       rawData.resource_status || existingResource?.resource_status,
