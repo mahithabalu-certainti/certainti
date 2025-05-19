@@ -895,6 +895,7 @@ async getAllUserPermission(userId: string, profileId: string) {
         "profile_name",
         sortOrder,
       ]);
+      order.push(["first_name", "asc"]);
     }
 
     const { count, rows } = await User.findAndCountAll({
@@ -1265,6 +1266,7 @@ const rawResult = users || [];
         "profile_name",
         sortOrder,
       ]);
+      order.push(["first_name", "asc"]);
     }
 
     const { count, rows } = await User.findAndCountAll({

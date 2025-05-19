@@ -220,8 +220,22 @@ export class ResourceService {
         whereClause,
         geoDataSort
       );
+
       const rawResult = resources.resources || [];
-      let exportData = rawResult.map((resource: any) => {
+      let exportData = rawResult.map((resource: any) => {        
+        if(!resource.resource_name){
+          // Create full name from first and last name if available
+          const fullName = [
+            resource.resource_firstname,
+            resource.resource_lastname
+          ].filter(Boolean).join(' ');
+          
+          // Only update resource_name if we actually have a name to set
+          if (fullName) {
+            resource.resource_name = fullName;
+          }
+        }
+        
         return {
           "Resource Code":resource.resource_code || "NA",
           "Name":resource.resource_name || "NA",
