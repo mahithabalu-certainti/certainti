@@ -94,6 +94,7 @@ export const renderRows = ({
             zIndex: 7,
             maxWidth: '50px',
             minWidth: '50px',
+            width: '50px',
             padding: '0 !important',
             borderBottom: '1px solid #CBD6E2 !important',
           }}
@@ -270,6 +271,7 @@ export const renderChildRows = ({
             zIndex: 7,
             maxWidth: '50px',
             minWidth: '50px',
+            width: '50px',
             padding: '0 !important',
             borderBottom: '1px solid #CBD6E2 !important',
           }}

@@ -304,6 +304,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
           <Table
             stickyHeader
             sx={{
+              tableLayout: 'fixed',
               borderCollapse: 'separate !important',
               borderSpacing: 0,
               '& .MuiTableCell-root': {
@@ -337,8 +338,9 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     left: 0,
                     background: '#fff',
                     zIndex: 11,
-                    maxWidth: '50px',
                     minWidth: '50px',
+                    width: '50px',
+                    maxWidth: '50px',
                     padding: '0px !important',
                     borderRight: '1px solid #CBD6E2',
                     borderBottom: '1px solid #CBD6E2 !important',
@@ -377,6 +379,8 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     background: '#fff',
                     zIndex: 10,
                     minWidth: '300px',
+                    maxWidth: '300px',
+                    width: '300px',
                     borderRight: '1px solid #CBD6E2',
                     borderBottom: '1px solid #CBD6E2 !important',
                   }}
@@ -389,7 +393,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     Account Name
                   </TableSortLabel>
                 </TableCell>
-                <TableCell sx={{ minWidth: '180px' }}>
+                <TableCell sx={{ width: '180px',  maxWidth: '180px', minWidth: '180px' }}>
                   <TableSortLabel
                     active={orderBy === 'r_number'}
                     direction={orderBy === 'r_number' ? order : 'asc'}
@@ -398,7 +402,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     Account ID
                   </TableSortLabel>
                 </TableCell>
-                <TableCell sx={{ minWidth: '200px' }}>
+                <TableCell sx={{ width: '200px',  maxWidth: '200px', minWidth: '200px' }}>
                   <TableSortLabel
                     active={orderBy === 'industry'}
                     direction={orderBy === 'industry' ? order : 'asc'}
@@ -407,7 +411,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     Industry
                   </TableSortLabel>
                 </TableCell>
-                <TableCell sx={{ minWidth: '150px' }}>
+                <TableCell sx={{ width: '150px',  maxWidth: '150px', minWidth: '150px' }}>
                   <TableSortLabel
                     active={orderBy === 'country'}
                     direction={orderBy === 'country' ? order : 'asc'}
@@ -416,7 +420,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     Country
                   </TableSortLabel>
                 </TableCell>
-                <TableCell sx={{ minWidth: '100px' }}>
+                <TableCell sx={{ width: '100px',  maxWidth: '100px', minWidth: '100px' }}>
                   <TableSortLabel
                     active={orderBy === 'currency'}
                     direction={orderBy === 'currency' ? order : 'asc'}
@@ -425,7 +429,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     Currency
                   </TableSortLabel>
                 </TableCell>
-                <TableCell sx={{ minWidth: '160px' }}>
+                <TableCell sx={{ width: '160px',  maxWidth: '160px', minWidth: '160px' }}>
                   <TableSortLabel
                     active={orderBy === 'annual_revenue'}
                     direction={orderBy === 'annual_revenue' ? order : 'asc'}
@@ -438,7 +442,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     Annual Revenue
                   </TableSortLabel>
                 </TableCell>
-                <TableCell sx={{ minWidth: '100px' }}>
+                <TableCell sx={{ width: '100px',  maxWidth: '100px', minWidth: '100px' }}>
                   <TableSortLabel
                     active={orderBy === 'status'}
                     direction={orderBy === 'status' ? order : 'asc'}
@@ -447,7 +451,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     Status
                   </TableSortLabel>
                 </TableCell>
-                <TableCell sx={{ minWidth: '100px', }}>Action</TableCell>
+                <TableCell sx={{ width: '100px',  maxWidth: '100px', minWidth: '100px' }}>Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody
@@ -469,13 +473,13 @@ const AccountTable: React.FC<Record<string, any>> = ({
             >
               {loading ? (
                 <TableRow sx={{ height: 'calc(85vh - 200px)' }}>
-                  <TableCell colSpan={10} align='center'>
+                  <TableCell colSpan={9} align='center'>
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
               ) : accounts?.length === 0 ? (
                 <TableRow sx={{ height: loading ? 'calc(85vh - 200px)': "auto" }}>
-                  <TableCell colSpan={10} align='center'>
+                  <TableCell colSpan={9} align='center'>
                     <Typography variant='body1'>No data available</Typography>
                   </TableCell>
                 </TableRow>
