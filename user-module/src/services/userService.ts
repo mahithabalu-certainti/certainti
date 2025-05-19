@@ -1228,10 +1228,10 @@ const rawResult = users || [];
        users = cleanedUsers.map((user: any) => {
         const { profile, business_teams, ...basicUserInfo } = user;
         return {
-          "Username":basicUserInfo.first_name,
-          "Email":basicUserInfo.email,
-          "Profile": profile?.profile_name,
-          "Status": basicUserInfo.status === 'active' ? "Active" : "In-Active",
+          "Username": basicUserInfo.first_name || "NA",
+          "Email": basicUserInfo.email || "NA", 
+          "Profile": profile?.profile_name || "NA",
+          "Status": basicUserInfo.status ? (basicUserInfo.status.toLowerCase() === 'active' ? "Active" : "In-Active") : "NA",
         };
       });
 

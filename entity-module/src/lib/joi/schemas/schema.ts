@@ -230,34 +230,31 @@ const createResourcesSchema = Joi.object({
     .max(10)
     .custom((value, helpers) => {
       if (!value) return value;
-
-      // Parse the date in MM/DD/YYYY format
+    
       const [month, day, year] = value.split("/").map(Number);
-      const inputDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-      const minDate = new Date('1950-01-01');
-      const currentDate = new Date();
-
-      // Check if date is valid
+      const inputDate = new Date(Date.UTC(year, month - 1, day));
+      const minDate = new Date(Date.UTC(1950, 0, 1));
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0); // Normalize to date only
+    
       if (isNaN(inputDate.getTime())) {
         return helpers.error("date.invalidFormat", {
           message: "Invalid date format. Please use MM/DD/YYYY."
         });
       }
-
-      // Check if date is before minimum date
+    
       if (inputDate < minDate) {
         return helpers.error("date.min", {
-          message: "Effective from date cannot be before 01/01/1950"
+          message: "Effective From date cannot be before 01/01/1950"
         });
       }
-
-      // Check if date is in the future
-      if (inputDate > currentDate) {
+    
+      if (inputDate > today) {
         return helpers.error("date.max", {
-          message: "Effective from date cannot be in the future"
+          message: "Effective From date cannot be in the future"
         });
       }
-
+    
       return value;
     })
     .optional()
@@ -427,34 +424,31 @@ const updateResourceSchema = Joi.object({
     .max(10)
     .custom((value, helpers) => {
       if (!value) return value;
-
-      // Parse the date in MM/DD/YYYY format
+    
       const [month, day, year] = value.split("/").map(Number);
-      const inputDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-      const minDate = new Date('1950-01-01');
-      const currentDate = new Date();
-
-      // Check if date is valid
+      const inputDate = new Date(Date.UTC(year, month - 1, day));
+      const minDate = new Date(Date.UTC(1950, 0, 1));
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0); // Normalize to date only
+    
       if (isNaN(inputDate.getTime())) {
         return helpers.error("date.invalidFormat", {
           message: "Invalid date format. Please use MM/DD/YYYY."
         });
       }
-
-      // Check if date is before minimum date
+    
       if (inputDate < minDate) {
         return helpers.error("date.min", {
-          message: "Effective from date cannot be before 01/01/1950"
+          message: "Effective From date cannot be before 01/01/1950"
         });
       }
-
-      // Check if date is in the future
-      if (inputDate > currentDate) {
+    
+      if (inputDate > today) {
         return helpers.error("date.max", {
-          message: "Effective from date cannot be in the future"
+          message: "Effective From date cannot be in the future"
         });
       }
-
+    
       return value;
     })
     .optional()
@@ -478,7 +472,8 @@ const updateResourceSchema = Joi.object({
       "string.pattern.base":
         "effective_end_date must be in the format MM/DD/YYYY",
       "any.invalid": "Effective end date must be after the start date.",
-      "date.invalidFormat": "Invalid effective end date.",
+      "date.invalidFormat":
+        "Invalid effective end date. Please use the format MM/DD/YYYY",
     }),
   resource_designation: Joi.string()
     .pattern(/^[A-Za-z][A-Za-z\s\-'.]{1,62}[A-Za-z]$/)
@@ -492,7 +487,7 @@ const updateResourceSchema = Joi.object({
       "string.min": "Resource designation must be at least 3 characters long",
       "string.max": "Resource designation must not exceed 64 characters"
     }),
-    total_years_experience: Joi.number()
+  total_years_experience: Joi.number()
     .precision(2)
     .min(0)
     .max(99.99)

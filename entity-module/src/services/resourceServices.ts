@@ -223,13 +223,13 @@ export class ResourceService {
       const rawResult = resources.resources || [];
       let exportData = rawResult.map((resource: any) => {
         return {
-          "Resource Code":resource.resource_code,
-          "Name":resource.resource_name,
-          "Resource Type": resource?.resource_type,
-          "Designation": resource.resource_designation,
-          "Country": resource.country_name,
-          "Region": resource.region_name,
-          "Status": resource.resource_status === "active" ? "Active" : "In-Active",
+          "Resource Code":resource.resource_code || "NA",
+          "Name":resource.resource_name || "NA",
+          "Resource Type": resource?.resource_type || "NA",
+          "Designation": resource.resource_designation || "NA",
+          "Country": resource.country_name || "NA",
+          "Region": resource.region_name || "NA",
+          "Status": resource.resource_status.toLowerCase() === "active" ? "Active" : "In-Active",
         };
       });
       return {
