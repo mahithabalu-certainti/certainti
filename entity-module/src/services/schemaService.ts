@@ -194,24 +194,6 @@ class SchemaService {
       });
 
       if (resources) {
-        // Process resources to combine firstname and lastname when name is empty
-        const processedResources = resources.map(resource => {
-          const resourceObj = resource.toJSON();
-          // Only set resource_name if it's empty and both first/last names exist
-          if (!resourceObj.resource_name) {
-            // Create full name from first and last name if available
-            const fullName = [
-              resourceObj.resource_firstname,
-              resourceObj.resource_lastname
-            ].filter(Boolean).join(' ');
-            
-            // Only update resource_name if we actually have a name to set
-            if (fullName) {
-              resourceObj.resource_name = fullName;
-            }
-          }
-          return resourceObj;
-        });
         // Process geo data for all records
         finalResources = await this.insertGeoData(resources, mainDdSequilze);
         finalResources = await this.sortGeoData(finalResources, geoDataSort);
@@ -246,19 +228,7 @@ class SchemaService {
           rid: accountId,
         },
       });
-
-      if (!resource) {
-        return null;
-      }
-
-      const resourceObj = resource.toJSON();
-      if (!resourceObj.resource_name && (resourceObj.resource_firstname || resourceObj.resource_lastname)) {
-        resourceObj.resource_name = [resourceObj.resource_firstname, resourceObj.resource_lastname]
-          .filter(Boolean)
-          .join(' ');
-      }
-      
-      return resourceObj;
+      return resource;
     } catch (err) {
       throw new Error(
         "Error creating table resources: " + (err as Error).message
