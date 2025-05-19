@@ -32,6 +32,7 @@ interface FormBuilderProps {
   outData: (e: object) => void;
   onChange?: (params: OnChange) => void;
   newContactLength?: number;
+  admin: boolean
 }
 
 export const FormBuilder: React.FC<FormBuilderProps> = ({
@@ -42,7 +43,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   layout,
   onChange,
   outData,
-  newContactLength
+  newContactLength,
+  admin = false
 }) => {
   const location = useLocation();
   const { state } = location;
@@ -225,7 +227,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             placeholder={field.placeholder}
             autoComplete='off'
             className={
-              'focus:outline-none placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium w-full sm:text-sm px-2 h-[32px] border border-[#CBD6E2] rounded-xs focus:border focus:border-black focus:outline-none focus:ring-0 ' +
+              'focus:outline-none placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium w-full sm:text-sm px-2 h-[32px] border border-[#CBD6E2] rounded-xs ' +
               isError +
               fieldDisabled
             }
@@ -257,7 +259,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             <Select
               name={field.name}
               className={
-                'focus:outline-none custom-select-no-arrow w-full sm:text-sm px-1.5 py-[6px] border border-[#CBD6E2] ' +
+                'custom-select-no-arrow w-full sm:text-sm px-1.5 py-[6px]  ' +
                 (fieldValue === '' ? 'text-[#7D98B6] ' : '') +
                 isError +
                 fieldDisabled
@@ -287,6 +289,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               sx={{
                 height: '32px',
                 fontSize: '13px',
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  border: '1px solid #CBD6E2',
+                },
+                '& .MuiOutlinedInput-root': {
+                  '&.Mui-focused': {
+                    boxShadow: 'none',
+                  },
+                },
                 '.MuiSelect-select': {
                   padding: '6px 12px',
                   color: fieldValue === '' ? '#7D98B6' : 'black',
@@ -295,15 +305,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   backgroundColor: '#f3f4f6',
                 },
                 '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: field.error ? '#ef4444' : '#CBD6E2',
+                  border: field.error ? '1px solid #ef4444' : '1px solid #CBD6E2',
                   borderRadius: '2px'
                 },
                 '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: field.error ? '#ef4444' : 'black',
+                  border: field.error ? '1px solid #ef4444' : '1px solid #CBD6E2',
                 },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: field.error ? '#ef4444' : 'black',
-                }
+                // '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                //   borderColor: field.error ? '#ef4444' : 'black',
+                // }
               }}
               IconComponent={() => (
                 <img
@@ -362,7 +372,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             <img
               src={searchBlackIcon}
               alt='search'
-              className='focus:outline-none absolute top-1/2 right-3 -translate-y-1/2 z-10'
+              className='focus:outline-none absolute top-1/2 right-3 -translate-y-1/2 z-10 border border-[#CBD6E2]'
             />
             <Autocomplete
               options={field.options || []}
@@ -678,7 +688,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             onChange={(phone, country: CountryData) =>
               handleChange(phone, country.countryCode)
             }
-            inputClass={`placeholder:text-[13px] placeholder:color[#425A76] placeholder:font-medium !w-full !text-[13px] !p-2 !pl-12 !border !h-[32px] !rounded-xs ${field.error ? '!border-red-500' : '!border-gray-300'
+            inputClass={`placeholder:text-[13px] placeholder:color[#425A76] placeholder:font-medium !w-full !text-[13px] !p-2 !pl-12 !border !h-[32px] !rounded-xs ${field.error ? '!border-red-500' : '!border-[#CBD6E2]'
               }${field.disabled ? ' !bg-gray-100' : ''}`}
             buttonClass={`!bg-transparent !border-r ${field.error ? '!border-red-500' : '!border-gray-300'} !rounded-tl-xs !rounded-bl-xs !hover:bg-transparent !shadow-none !px-0 !m-0`}
             containerClass='!w-full'
@@ -1399,7 +1409,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           <div key={i}>
             {section.sectionName && (
               <h4
-                className={`${i === 0 ? 'border-b' : 'border'} h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 bg-[#F5F9FF] ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'}`}
+                className={`${i === 0 ? 'border-b' : 'border'} h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 ${admin ? 'bg-[#FCFCFC]' : 'bg-[#F5F9FF]'}  ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'}`}
               >
                 {section.sectionName}
               </h4>

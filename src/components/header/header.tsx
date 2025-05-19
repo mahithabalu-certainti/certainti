@@ -121,7 +121,9 @@ export const PageHeader: React.FC<HeaderProps> = ({
           </div>
         </div>
         <div className='flex gap-2 justify-center items-center'>
-          {actionItems.length > 0 && <ActionsDropdown actions={actionItems} />}
+          {actionItems.length > 0 && <ActionsDropdown sx={{
+            fontSize: '13px', fontWeight: 400
+          }} actions={actionItems} />}
 
           {primaryButton && (
             <TextButton
@@ -131,7 +133,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
               sx={{
                 ...DEFAULT_BUTTON_STYLES,
                 ...customStyles.button,
-                width: '57px', minWidth: '57px', fontSize: '13px', fontWeight: 400,
+                width: '43px', minWidth: '43px', fontSize: '13px', fontWeight: 400,
               }}
             />
           )}
@@ -140,7 +142,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
             <div className='flex'>
               {showRefresh && (
                 <button
-                  className='flex border border-gray-300 p-2 h-[35px] justify-center items-center'
+                  className='flex border border-[#CBD6E2] h-[32px] w-[32px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center'
                   onClick={onRefreshClick}
                 >
                   <img src={refreshIcon} alt='menu-icon' className='h-[15px]' />
@@ -148,7 +150,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
               )}
               {showDownload && (
                 <button
-                  className='flex border border-gray-300 p-2 h-[35px] justify-center items-center'
+                  className='flex border border-[#CBD6E2] h-[32px] w-[32px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center'
                   onClick={onDownloadClick}
                 >
                   <img
@@ -163,7 +165,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
 
           {showActions && (
             <button
-              className='flex border border-gray-300 p-2 h-[35px] justify-center items-center bg-[#EAF0F6]'
+              className='flex border border-[#CBD6E2] h-[32px] w-[32px] justify-center items-center bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'
               onClick={onActionsClick}
             >
               <img src={actionIcon} alt='menu-icon' className='h-[13px]' />
@@ -172,7 +174,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
 
           {showSettings && (
             <button
-              className='flex border border-gray-300 p-2 h-[35px] justify-center items-center bg-[#EAF0F6]'
+              className='flex border border-[#CBD6E2] h-[32px] w-[32px] justify-center items-center bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'
               onClick={onSettingsClick}
             >
               <img

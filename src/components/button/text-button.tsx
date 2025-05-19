@@ -57,7 +57,7 @@ const StyledButton = styled(Button)(() => {
     textTransform: 'none',
     fontSize: '13px',
     fontWeight: '400',
-    padding: '8px 16px',
+    // padding: '8px 16px',
     borderRadius: '2px',
   }
 });

@@ -14,7 +14,7 @@ import { UserListParams } from '../../../types/manage-user';
 
 const BUTTON_STYLES = {
   height: '32px',
-  color: '#F15A29',
+  // color: '#F15A29',
 };
 
 const HEADER_STYLES = {
@@ -36,10 +36,10 @@ const UserList: React.FC = () => {
   });
 
   const userActionButtons = [
-    { label: 'Suspend User', width: '119px' },
-    { label: 'Reinstate User', width: '120px' },
-    { label: 'Reset Password', width: '132px' },
-    { label: 'Delete', width: '73px' },
+    { label: 'Suspend User', width: '104px' },
+    { label: 'Reinstate User', width: '116px' },
+    { label: 'Reset Password', width: '118px' },
+    { label: 'Delete', width: '58px' },
   ];
 
   const MENU_ITEMS = [
@@ -115,11 +115,8 @@ const UserList: React.FC = () => {
             onClick={() => navigate(ADMIN_CREATE_USER)}
             sx={{
               ...BUTTON_STYLES,
-              backgroundColor: '#F16137',
-              color: '#fff',
-              borderRadius: '2px',
               fontSize: '13px',
-              fontWeight: 400,
+              fontWeight: 700,
             }}
           />
         </div>
@@ -140,10 +137,9 @@ const UserList: React.FC = () => {
                 onClick={() => handleAction(button.label)}
                 sx={{
                   ...BUTTON_STYLES,
-                  borderRadius: '2px',
                   fontSize: '13px',
-                  fontWeight: 400,
-                  padding: '4px',
+                  fontWeight: 700,
+                  // padding: '4px',
                   width: button.width,
                 }}
               />

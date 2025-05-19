@@ -292,7 +292,7 @@ export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle }) => {
 
   return (
     <>
-      <AppBar position='sticky'>
+      <AppBar sx={{ boxShadow: 'none' }} position='sticky'>
         <Toolbar className='justify-between !min-h-[40px] !pl-0'>
           <div className='relative rounded-md mr-2 flex gap-2'>
             <button className='cursor-pointer ' type='button' onClick={handleSidebarToggle}>
@@ -343,7 +343,7 @@ export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle }) => {
               </>
             )}
             <IconButton size='large' color='inherit'>
-              <img src={phoneIcon} alt='phone' className='h-[18px] w-[18px]' />
+              <img src={phoneIcon} alt='phone' className='h-[20px] w-[20px]' />
             </IconButton>
             <IconButton
               size='large'
@@ -353,10 +353,10 @@ export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle }) => {
               color='inherit'
               aria-controls={notificationId}
             >
-              <img src={notificationIcon} alt='notification' className='h-[22px] w-[22px]' />
+              <img src={notificationIcon} alt='notification' className='h-[20px] w-[20px]' />
             </IconButton>
             <IconButton size='large' color='inherit'>
-              <img src={settingsIcon} alt='settings' className='h-[18px] w-[18px]' />
+              <img src={settingsIcon} alt='settings' className='h-[20px] w-[20px]' />
             </IconButton>
             <div className='border-l border-[#FFFFFF4D] mx-2 h-6' />
             <IconButton
@@ -374,7 +374,7 @@ export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle }) => {
                 src='https://mui.com/static/images/avatar/2.jpg'
                 alt='User Avatar'
               />
-              <span className='text-[13px] font-[300] px-2'>{name}</span>
+              <span className='text-[12px] font-[400] px-2'>{name}</span>
               <img src={chevronDownIcon} alt='down nav' />
             </IconButton>
           </Box>

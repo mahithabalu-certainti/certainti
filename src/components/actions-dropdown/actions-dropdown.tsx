@@ -46,8 +46,9 @@ const StyledButton = styled(Button)(() => {
     background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
     textTransform: 'none',
     fontSize: '13px',
-    fontWeight: '400',
-    padding: '8px 16px',
+    fontWeight: '700',
+    width: '81px',
+    // padding: '8px 16px',
     borderRadius: '2px',
   }
 });

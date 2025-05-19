@@ -24,7 +24,7 @@ interface TabProps {
   setAppliedFilters: (filters: Record<string, any>) => void;
   filterStates?: Record<string, FilterState>;
   selectedFilters?: string[];
-  setFilterStates: (filterStates: Record<string, FilterState>) => void;  
+  setFilterStates: (filterStates: Record<string, FilterState>) => void;
   setSelectedFilters: (selectedFilters: string[]) => void;
 }
 const TabPanel: React.FC<TabProps> = ({
@@ -48,7 +48,7 @@ const TabPanel: React.FC<TabProps> = ({
 
   const [skillSubTypeData, setSkillSubTypeData] = useState<{ option: string; value: string }[]>([]);
   const [, setSelectedSort] = useState('Accounts');
- 
+
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
     setCurrentPage(0)
@@ -72,23 +72,23 @@ const TabPanel: React.FC<TabProps> = ({
     );
   }, [skillType]);
 
-  useEffect(()=>{
-      const data = skillSubType as SkillSubtype[];
-      const finalData = data?.map((skill: SkillSubtype) => ({
-        option: skill.skill_subtype_name,
-        value: skill.rid,
-      })) || []
-      setSkillSubTypeData(finalData)
-  },[skillSubType])
+  useEffect(() => {
+    const data = skillSubType as SkillSubtype[];
+    const finalData = data?.map((skill: SkillSubtype) => ({
+      option: skill.skill_subtype_name,
+      value: skill.rid,
+    })) || []
+    setSkillSubTypeData(finalData)
+  }, [skillSubType])
 
-  useEffect(()=>{
-    if(filterStates?.skill_type_rid?.enum?.value){
+  useEffect(() => {
+    if (filterStates?.skill_type_rid?.enum?.value) {
       setCurrentSkillType({
         skill_type_rid: filterStates?.skill_type_rid?.enum?.value as unknown as string,
         skill_subtype_rid: filterStates?.skill_sub_type?.enum?.value as unknown as string
       })
     }
-  },[filterStates])
+  }, [filterStates])
   const handleSortClose = () => {
     setSortAnchorEl(null);
   };
@@ -234,6 +234,13 @@ const TabPanel: React.FC<TabProps> = ({
             variant={'filled'}
             actions={menuActivity}
             label='Add Activity'
+            sx={{
+              fontWeight: 400,
+              fontSize: '13px',
+              width: '143px',
+              height: '32px',
+              paddingLeft: '16px',
+            }}
           />
 
           {/* <ActionImportDropdown

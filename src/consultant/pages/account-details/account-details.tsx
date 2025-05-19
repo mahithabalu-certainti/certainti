@@ -42,7 +42,7 @@ export const AccountDetails = () => {
   const [accountDetailsForEdit, setAccountDetailsForEdit] = useState<any>(null);
   const { accountid } = useParams();
   const { filters, fiscalYear } = useSelector<RootState, AccountState>(
-    (state: RootState) => state.account
+    (state: RootState) => state?.account
   );
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 

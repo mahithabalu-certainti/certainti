@@ -30,9 +30,6 @@ const BUTTON_STYLES = {
   height: '26px !important',
   fontSize: '13px',
   fontWeight: 400,
-  // color: '#F16137',
-  bgcolor: '#FFF8F6',
-  borderRadius: '2px',
 };
 
 interface ResourceProps {
@@ -202,17 +199,17 @@ const Resource: React.FC<ResourceProps> = ({
 
   const headerButtons = [
     {
-      label: 'Download',
-      variant: 'outlined' as const,
-      onClick: () => console.log('Download'),
-      sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
-    },
-    {
       label: 'New',
       variant: 'outlined' as const,
       disabled: accountInActive,
       onClick: () => handleCreateResource(),
-      sx: { ...BUTTON_STYLES, width: '61px', minWidth: '61px' },
+      sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
+    },
+    {
+      label: 'Download',
+      variant: 'outlined' as const,
+      onClick: () => console.log('Download'),
+      sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
     },
   ];
 

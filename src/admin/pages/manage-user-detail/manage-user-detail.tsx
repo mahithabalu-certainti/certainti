@@ -30,10 +30,10 @@ export const ManageUserDetails: React.FC = () => {
   const userDetail = userDetails.data?.data?.users;
 
   const userActionButtons: { label: string; width: string }[] = [
-    { label: 'Suspend User', width: '119px' },
-    { label: 'Reinstate User', width: '120px' },
-    { label: 'Reset Password', width: '132px' },
-    { label: 'Delete', width: '73px' },
+    { label: 'Suspend User', width: '104px' },
+    { label: 'Reinstate User', width: '116px' },
+    { label: 'Reset Password', width: '118px' },
+    { label: 'Delete', width: '58px' },
   ];
 
   const handleAction = (action: string) => {
@@ -81,11 +81,9 @@ export const ManageUserDetails: React.FC = () => {
             label='Create User'
             sx={{
               ...BUTTON_STYLES,
-              // backgroundColor: '#F16137',
-              // color: '#fff',
-              // borderRadius: '2px',
               fontSize: '13px',
-              fontWeight: 400,
+              fontWeight: 700,
+              width: '91px'
             }}
             onClick={() => navigate(ADMIN_CREATE_USER)}
           />
@@ -95,7 +93,7 @@ export const ManageUserDetails: React.FC = () => {
             // variant='outlined'
             // color='inherit'
             onClick={goBack}
-            sx={{ width: '45px', minWidth: '45px', fontWeight: 400, fontSize: '12px' }}
+            sx={{ width: '49px', minWidth: '49px', fontWeight: 700, fontSize: '13px' }}
           />
         </div>
       </div>
@@ -121,9 +119,8 @@ export const ManageUserDetails: React.FC = () => {
                 onClick={() => handleAction(button.label)}
                 sx={{
                   ...BUTTON_STYLES,
-                  borderRadius: '2px',
                   fontSize: '13px',
-                  fontWeight: 400,
+                  fontWeight: 700,
                   // padding: '4px',
                   width: button.width,
                 }}

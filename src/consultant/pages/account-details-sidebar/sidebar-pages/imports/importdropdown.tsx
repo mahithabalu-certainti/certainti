@@ -1,5 +1,5 @@
 import { Box, Button, Menu, MenuItem } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { styled, SxProps } from '@mui/material/styles';
 import React, { useState } from 'react';
 import { arrowDownIcon, arrowUpIcon, addIcon } from '../../../../../assets';
 
@@ -13,6 +13,7 @@ interface ImportDropdownItemProps {
   actions: ImportDropdownItem[];
   label: string;
   split?: string; // optional string
+  sx?: SxProps
 }
 
 const StyledButton = styled(Button)(() => {
@@ -25,7 +26,7 @@ const StyledButton = styled(Button)(() => {
     textTransform: 'none',
     fontSize: '13px',
     fontWeight: '400',
-    padding: '8px 16px',
+    // padding: '8px 16px',
     borderRadius: '2px',
   }
 });
