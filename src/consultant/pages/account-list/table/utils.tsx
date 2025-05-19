@@ -126,6 +126,8 @@ export const renderRows = ({
               borderRight: '1px solid #CBD6E2',
               borderBottom: '1px solid #CBD6E2 !important',
               minWidth: '300px',
+              width: '300px',
+              maxWidth: '300px',
             }}
           >
             {hasChildren ? ( // Only show the icon if there are children
@@ -179,34 +181,37 @@ export const renderRows = ({
             </Box>
             </TruncateWithTooltip>
           </TableCell>
-          <TableCell sx={{ minWidth: '200px' }}>
+          <TableCell sx={{ width: '200px', maxWidth: '200px', minWidth: '200px' }}>
             <TruncateWithTooltip text={account.parentAccount || '-'} maxWidth={200}>
              {account.parentAccount || '-'}
             </TruncateWithTooltip>
           </TableCell>
-          <TableCell sx={{ minWidth: '180px' }}>
+          <TableCell sx={{ width: '180px', maxWidth: '180px', minWidth: '180px' }}>
             <TruncateWithTooltip text={account.accountNumber || '-'} maxWidth={180}>
              {account.accountNumber || '-'}
             </TruncateWithTooltip>
           </TableCell>
-          <TableCell sx={{ minWidth: '200px' }}>
+          <TableCell sx={{ width: '200px', maxWidth: '200px', minWidth: '200px' }}>
             <TruncateWithTooltip text={account.industry || '-'} maxWidth={200}>
              {account.industry || '-'}
             </TruncateWithTooltip>
           </TableCell>
-          <TableCell sx={{ minWidth: '150px' }}>
+          <TableCell sx={{ width: '150px', maxWidth: '150px', minWidth: '150px' }}>
             <TruncateWithTooltip text={account.country || '-'} maxWidth={150}>
              {account.country || '-'}
             </TruncateWithTooltip>
           </TableCell>
-          <TableCell sx={{ minWidth: '100px' }}>{account.currency}</TableCell>
-          <TableCell sx={{ minWidth: '160px' }}>
+          <TableCell sx={{ width: '100px', maxWidth: '100px', minWidth: '100px' }}>{account.currency}</TableCell>
+          <TableCell sx={{ width: '160px', maxWidth: '160px', minWidth: '160px' }}>
             <TruncateWithTooltip text={formatNumberWithCommas(account.annualRevenue) || '-'} maxWidth={160}>
              {formatNumberWithCommas(account.annualRevenue)}
             </TruncateWithTooltip>
           </TableCell>
           <TableCell
             sx={{
+              width: '100px', 
+              maxWidth: '100px',
+              minWidth: '100px',
               color:
                 account.status === 'Active'
                   ? '#199806 !important'

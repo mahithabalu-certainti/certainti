@@ -478,13 +478,13 @@ const AccountTable: React.FC<Record<string, any>> = ({
             >
               {loading ? (
                 <TableRow sx={{ height: 'calc(85vh - 200px)' }}>
-                  <TableCell colSpan={11} align='center'>
+                  <TableCell colSpan={10} align='center'>
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
               ) : accounts?.length === 0 ? (
-                <TableRow sx={{ height: '42px' }}>
-                  <TableCell colSpan={11} align='center'>
+                <TableRow sx={{ height: loading ? 'calc(85vh - 200px)': "auto" }}>
+                  <TableCell colSpan={10} align='center'>
                     <Typography variant='body1'>No data available</Typography>
                   </TableCell>
                 </TableRow>
