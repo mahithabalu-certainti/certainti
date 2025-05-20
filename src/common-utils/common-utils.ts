@@ -234,6 +234,7 @@ export const REGEX_PATTERNS = {
   ALPHANUMERIC: /^[A-Za-z0-9-]+$/,
   LETTERS_SPACES: /^[A-Za-z\s]+$/,
   ACCOUNT_NAME: /^[A-Za-z0-9 &'.,-]+$/,
+  PROJECT_NAME: /^[A-Za-z0-9 &'.,-_]+$/,
   CONTACT_NAME: /^[A-Za-z &'’.,\-\\–\\—]+$/,
   INDUSTRY: /^[A-Za-z &]{5,25}$/,
   LETTERS_5_TO_25: /^[A-Za-z\s]{5,25}$/,

@@ -18,6 +18,7 @@ import { transformFormData } from './utils';
 import { NewProjectData } from '../../types/project';
 import { useCreateProject, useUpdateProject } from '../../services/project/project-create-service';
 import { useProjectDetail } from '../../services/project';
+import { othersIndustryId } from '../account-create/utils';
 
 const ProjectForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -27,6 +28,7 @@ const ProjectForm: React.FC = () => {
     key_contact_role: '',
     key_contact_email: '',
   });
+  const [showOthersField, setShowOthersField] = useState(false);
   const { successToast } = useToast();
   const location = useLocation();
   const { accountID, projectID } = location.state;
@@ -173,13 +175,23 @@ console.log(isEditView);
         [data.fieldName]: data.fieldValue,
       }));
     }
+    if (data.fieldName === 'industry') {
+      console.log(data.fieldName);
+      setShowOthersField(
+        data.fieldValue === othersIndustryId 
+      );
+    }
   };
   useEffect(() => {
     if (projectData.country_rid) {
       setCurrentCountry(projectData.country_rid);
     }
   }, [projectData.country_rid]);
-
+  useEffect(() => {
+    if (account?.industry === othersIndustryId) {
+      setShowOthersField(true);
+    }
+  }, [account?.industry]);
  
 
   return (
@@ -229,6 +241,7 @@ console.log(isEditView);
             memoizedRole,
             isValueUpdateInKeyContact,
             isEditView,
+            showOthersField,
             states.isLoading
           )}
           // loading={
