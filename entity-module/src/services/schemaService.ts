@@ -180,6 +180,8 @@ class SchemaService {
           "r_number",
           "resource_code",
           "resource_name",
+          "resource_firstname",
+          "resource_lastname",
           "resource_type",
           "resource_status",
           "resource_role",
@@ -500,6 +502,21 @@ class SchemaService {
 
       const Resource = Resources.initialize(sequelize, schemaName);
 
+      const isRefIdExist = await Resource.findOne({
+        where: {
+          resource_code: {
+            [Op.iLike]: resourceData.resource_code,
+          },
+          rid: {
+            [Op.ne]: resourceData.resource_id // Exclude current resource being updated
+          }
+        },
+      });
+
+      if (isRefIdExist) {
+        throw new Error("Resource Code must be unique.");
+      }
+
       // Parse dates and set to UTC midnight to avoid timezone issues
       const startDate = moment
         .utc(resourceData.effective_from_date, "MM/DD/YYYY")
@@ -576,7 +593,7 @@ class SchemaService {
 
       return updateResource;
     } catch (err) {
-      throw new Error("Error updating resource: " + (err as Error).message);
+      throw new Error((err as Error).message);
     }
   }
 

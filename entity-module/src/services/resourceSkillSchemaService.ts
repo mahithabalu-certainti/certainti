@@ -332,13 +332,13 @@ async exportResoucreSkill(
     // Add names to resource skills and format for export
     resourceSkill = resourceSkill.map((rs: any) => ({
 
-      "Start Date": rs.start_date = moment(rs.start_date).format(
+      "Start Date": rs.start_date ? moment(rs.start_date).format(
         "MM/DD/YYYY"
-      ) as any,
-      "Skill Type": skillTypeMap.get(rs.skill_type_rid) || '',
-      "Skill Subtype": skillSubtypeMap.get(rs.skill_subtype_rid) || '',
-      "Skill Details": rs.skill_details,
-      "Skill Level": rs.skill_level,
+      ) : "NA" as any,
+      "Skill Type": skillTypeMap.get(rs.skill_type_rid) || "NA",
+      "Skill Subtype": skillSubtypeMap.get(rs.skill_subtype_rid) || "NA",
+      "Skill Details": rs.skill_details || "NA",
+      "Skill Level": rs.skill_level || "NA",
     }));
 
     // Apply sorting if needed

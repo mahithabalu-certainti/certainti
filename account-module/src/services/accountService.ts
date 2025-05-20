@@ -101,7 +101,10 @@ class AccountService {
           finalSortOrder,
         ]);
       }
-
+      if (finalSortBy == "country" || finalSortBy == "currency" || finalSortBy == "industry") {
+           order.push(["account_name", "ASC"]);
+        }
+  
       // Determine if we should include the parent_account_rid filter
       // Only apply this filter if is_parent_account is not set to "NO"
       const baseWhereClause = { ...allWhereClause };
@@ -300,6 +303,10 @@ class AccountService {
             finalSortOrder,
           ]);
         }
+        if (finalSortBy == "country" || finalSortBy == "currency" || finalSortBy == "industry") {
+           order.push(["account_name", "ASC"]);
+        }
+  
         // Determine if we should include the parent_account_rid filter
         // Only apply this filter if is_parent_account is not set to "NO"
         const baseWhereClause = { ...allWhereClause };
@@ -400,27 +407,35 @@ class AccountService {
         let exportDetails: any[] = [];
         cleanedUsers.forEach((account: any) => {
           const baseRow = {
-            "Account Name": account?.account_name || "",
-            "Parent Account": account?.parent_account?.account_name || "",
-            "Account ID": account?.r_number || "",
-            "Industry": account?.industry?.industry_name || "",
-            "Country": account?.country?.country_name || "",
-            "Currency": account?.currency?.currency_code || "",
-            "Annual Revenue": account?.annual_revenue || "",
-            "Status": account?.status === 'active' ? 'Active' : 'In-Active',
+            "Account Name": account?.account_name || "NA",
+            "Parent Account": account?.parent_account?.account_name || "NA",
+            "Account ID": account?.r_number || "NA",
+            "Industry": account?.industry?.industry_name || "NA",
+            "Country": account?.country?.country_name || "NA",
+            "Currency": account?.currency?.currency_code || "NA",
+            "Annual Revenue": account?.annual_revenue ? new Intl.NumberFormat('en-US', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+              useGrouping: true
+            }).format(Number(account.annual_revenue)) : "NA",
+            "Status": account?.status.toLowerCase() === 'active' ? 'Active' : 'In-Active',
           };
           exportDetails.push(baseRow);
           if (Array.isArray(account.child_accounts) && account.child_accounts.length > 0) {
             account.child_accounts.forEach((child: any) => {
               exportDetails.push({
-                "Account Name": child?.account_name || "",
-                "Parent Account": account?.account_name || "", // parent is current account
-                "Account ID": child?.r_number || "",
-                "Industry": child?.industry?.industry_name || "",
-                "Country": child?.country?.country_name || "",
-                "Currency": child?.currency?.currency_code || "",
-                "Annual Revenue": child?.annual_revenue || "",
-                "Status": child?.status === 'active' ? 'Active' : 'In-Active',
+                "Account Name": child?.account_name || "NA",
+                "Parent Account": account?.account_name || "NA", // parent is current account
+                "Account ID": child?.r_number || "NA",
+                "Industry": child?.industry?.industry_name || "NA",
+                "Country": child?.country?.country_name || "NA",
+                "Currency": child?.currency?.currency_code || "NA",
+                "Annual Revenue": account?.annual_revenue ? new Intl.NumberFormat('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                  useGrouping: true
+                }).format(Number(account.annual_revenue)) : "NA",                
+                "Status": child?.status.toLowerCase() === 'active' ? 'Active' : 'In-Active',
               });
             });
           }
