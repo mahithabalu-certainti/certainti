@@ -141,59 +141,49 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
                 left: 0,
                 background: '#fff',
                 zIndex: 10,
-                borderRight: 'none !important',
-                '&::after': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  width: '1px',
-                  height: '100%',
-                  backgroundColor: '#CBD6E2',
-                  zIndex: 20,
-                },
+                borderRight: '1px solid #CBD6E2 !important',
               }}
             >
              <TruncateWithTooltip text={String(cost.resourceFullName)}>
-             {cost.resourceFullName}
+             {cost.resourceFullName || 'NA'}
               </TruncateWithTooltip>
             </TableCell>
-            <TableCell sx={{ minWidth: '100px' }}>{cost.currency}</TableCell>
-            <TableCell sx={{ minWidth: '130px' }}>{startDate}</TableCell>
-            <TableCell sx={{ minWidth: '130px' }}>{endDate}</TableCell>
+            <TableCell sx={{ minWidth: '100px' }}>{cost.currency || 'NA'}</TableCell>
+            <TableCell sx={{ minWidth: '130px' }}>{startDate || 'NA'}</TableCell>
+            <TableCell sx={{ minWidth: '130px' }}>{endDate || 'NA'}</TableCell>
             <TableCell sx={{ minWidth: '130px' }}>
             <TruncateWithTooltip text={String(cost.hourlyCost)}>
-            {cost.hourlyCost ? CostDisplay(cost.hourlyCost) : '-'}
+            {cost.hourlyCost ? CostDisplay(cost.hourlyCost) : 'NA'}
               </TruncateWithTooltip>
             </TableCell>
             <TableCell sx={{ minWidth: '130px' }}>
             <TruncateWithTooltip text={String(cost.dailyCost)}>
-            {cost.dailyCost ? CostDisplay(cost.dailyCost) : '-'}
+            {cost.dailyCost ? CostDisplay(cost.dailyCost) : 'NA'}
               </TruncateWithTooltip>
             </TableCell>
             <TableCell sx={{ minWidth: '130px' }}>
             <TruncateWithTooltip text={String(cost.biWeeklyCost)}>
-            {cost.biWeeklyCost ? CostDisplay(cost.biWeeklyCost) : '-'}
+            {cost.biWeeklyCost ? CostDisplay(cost.biWeeklyCost) : 'NA'}
               </TruncateWithTooltip>
             </TableCell>
             <TableCell sx={{ minWidth: '130px' }}>
             <TruncateWithTooltip text={String(cost.weeklyCost)}>
-            {cost.weeklyCost ? CostDisplay(cost.weeklyCost) : '-'}
+            {cost.weeklyCost ? CostDisplay(cost.weeklyCost) : 'NA'}
               </TruncateWithTooltip>
             </TableCell>
             <TableCell sx={{ minWidth: '130px' }}>
               <TruncateWithTooltip text={String(cost.monthlyCost)}>
-                {cost.monthlyCost ? CostDisplay(cost.monthlyCost) : '-'}
+                {cost.monthlyCost ? CostDisplay(cost.monthlyCost) : 'NA'}
               </TruncateWithTooltip>
             </TableCell>
-            <TableCell sx={{ minWidth: '140px' }}>
+            {/* <TableCell sx={{ minWidth: '140px' }}>
             <TruncateWithTooltip text={String(cost.semiAnnualCost)}>
-            {cost.semiAnnualCost ? CostDisplay(cost.semiAnnualCost) : '-'}
+            {cost.semiAnnualCost ? CostDisplay(cost.semiAnnualCost) : 'NA'}
               </TruncateWithTooltip>
-            </TableCell>
+            </TableCell> */}
             <TableCell sx={{ minWidth: '130px' }}>
             <TruncateWithTooltip text={String(cost.annualCost)}>
-            {cost.annualCost ? CostDisplay(cost.annualCost) : '-'}
+            {cost.annualCost ? CostDisplay(cost.annualCost) : 'NA'}
               </TruncateWithTooltip>
             </TableCell>
             <TableCell sx={{ padding: '0px !important' }}>
@@ -289,7 +279,8 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       >
         <Table
           sx={{
-            borderCollapse: 'collapse',
+            borderCollapse: 'separate !important',
+            borderSpacing: 0,
             '& .MuiTableCell-root': {
               borderBottom: '1px solid #CBD6E2',
               borderRight: '1px solid #CBD6E2',
@@ -326,17 +317,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
                   left: 0,
                   background: '#fff',
                   zIndex: 8,
-                  borderRight: 'none !important',
-                  '&::after': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    right: 0,
-                    width: '1px',
-                    height: '100%',
-                    backgroundColor: '#CBD6E2',
-                    zIndex: 10,
-                  },
+                  borderRight: '1px solid #CBD6E2 !important',
                 }}
               >
                 Name
@@ -456,7 +437,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
                   Monthly
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ minWidth: '140px' }}>
+              {/* <TableCell sx={{ minWidth: '140px' }}>
                 <TableSortLabel
                   active={costorderBy === 'semi_annual_cost'}
                   direction={
@@ -470,7 +451,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
                 >
                   Semi Annual
                 </TableSortLabel>
-              </TableCell>
+              </TableCell> */}
               <TableCell sx={{ minWidth: '130px' }}>
                 <TableSortLabel
                   active={costorderBy === 'annual_cost'}

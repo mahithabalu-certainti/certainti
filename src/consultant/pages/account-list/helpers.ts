@@ -2,7 +2,7 @@ import { AccountList, ConvertedAccount } from '../../types';
 import { FieldConfig, StatusOptions } from '../../types/account-filter';
 
 export const getAccountFilterfields = (countryOptions: string[], currencyOptions: string[]): FieldConfig[] => [
-  { label: 'Parent Account', name: 'parent_account', type: 'text' },
+  // { label: 'Parent Account', name: 'parent_account', type: 'text' },
   { label: 'Account Number', name: 'account_number', type: 'text' },
   { label: 'Account Name', name: 'account_name', type: 'text' },
   // { label: 'Record ID', name: 'account_id', type: 'text' },
@@ -30,11 +30,11 @@ export function convertAccounts(
       accountId: account.rid,
       parentAccount: parentAccountName,
       accountNumber: account.r_number,
-      industry: account?.industry?.industry_name || account?.industry_name_other || 'N/A',
-      country: account.country?.country_name || 'N/A',
-      currency: account.currency?.currency_code || 'N/A',
+      industry: account?.industry?.industry_name || account?.industry_name_other || 'NA',
+      country: account.country?.country_name || 'NA',
+      currency: account.currency?.currency_code || 'NA',
       status: account.status === 'active' ? 'Active' : 'In Active',
-      primaryContact: account.primary_contact_name || 'N/A',
+      primaryContact: account.primary_contact_name || 'NA',
       parentAccountID: account.parent_account_rid,
       annualRevenue: account.annual_revenue,
     };

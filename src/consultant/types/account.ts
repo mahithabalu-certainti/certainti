@@ -129,10 +129,12 @@ export interface AccountById {
   status: Status;
   primary_contact_name: string;
   is_parent: boolean;
-  account_description: string | null;
+  comments: string | null;
   annual_revenue: number;
   region: string;
   rid: string;
+  created_datetime: string;
+  modified_datetime: string;
 }
 
 export interface KeyContacts {
@@ -167,8 +169,6 @@ export interface AccountFieldsTypes {
   keyContacts: KeyContacts[];
   modified_by: string;
   created_by: string;
-  modified_datetime: string;
-  created_datetime: string;
 }
 
 export interface NewAccountData extends AccountFieldsTypes, AccountById {
@@ -252,7 +252,7 @@ export type AccountList = {
   r_number: string;
   serial_number: number;
   account_name: string;
-  account_description: string;
+  comments: string;
   eid: string | null;
   status: 'active' | 'inactive';
   is_parent: boolean;

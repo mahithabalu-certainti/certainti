@@ -24,6 +24,7 @@ import {
 } from '../../../../types/resource-skill';
 import { FilterState } from '../../components/filter/filterType';
 import { resetFilter } from '../../components/filter/utils';
+import { ResourceList } from '../../../../types/resource';
 
 const BUTTON_STYLES = {
   height: '26px !important',
@@ -71,6 +72,7 @@ const Resource: React.FC<ResourceProps> = ({
     {}
   );
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [resourceNumber, setResourceNumber] = useState<string | null>(null);
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const accountInActive =
     accountDetails?.data?.accountById?.status === 'inactive';
@@ -91,6 +93,18 @@ const Resource: React.FC<ResourceProps> = ({
     sortOrder: sortOrder,
     filters: appliedFilters,
   });
+
+  useEffect(() => {
+    if (searchParams.get('res_id') && ResourceList) {
+      const refId = searchParams.get('res_id') as string;
+      const resourceNumber = ResourceList?.resource?.find(
+        (resource: ResourceList) => resource.rid === refId
+      )?.r_number;
+      setResourceNumber(resourceNumber ?? '');
+    } else {
+      setResourceNumber(null);
+    }
+  }, [searchParams, ResourceList]);
 
   const handleFilter = () => {
     setShowFilter(!showFilter);
@@ -139,7 +153,7 @@ const Resource: React.FC<ResourceProps> = ({
     setColumns(
       getResourceColumns({
         onResourceIdClick: handleResourceClick,
-        onClickId: 'resource_ref_id',
+        onClickId: 'resource_code',
       })
     );
   }, []);
@@ -326,7 +340,7 @@ const Resource: React.FC<ResourceProps> = ({
         }}
         showFilter={showFilter}
         title='Resources'
-        resourceNumber={resourceData?.r_number}
+        resourceNumber={resourceData?.r_number ?? resourceNumber}
         titleIcon={<img src={resourceProfileIcon} alt='resource header icon' />}
         headerButtons={headerButtons}
         showBackArrow={showBackArrow}

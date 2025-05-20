@@ -1,6 +1,12 @@
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
 import { UserDetail } from '../admin/types/manage-user';
 import { AxiosErrorMsg, CheckError } from '../common-service';
+
 import {
   AllowedCountry,
   ErrorHandling,
@@ -17,10 +23,12 @@ export const createTextField = (
     regex?: RegExp;
     regexErrorMessage?: string;
     placeholder?: string;
+    group?: string;
     disabled?: boolean;
     onChange?: boolean;
     anyOneRequired?: boolean;
     hide?: boolean;
+    defaultValue?: string;
     errorHandling?: ErrorHandling[];
     clearValue?: Record<string, string>;
     lengthRequired?: {
@@ -40,12 +48,14 @@ export const createTextField = (
   regexErrorMessage: options.regexErrorMessage,
   placeholder: options.placeholder,
   disabled: options.disabled,
+  group: options.group,
   onChange: options.onChange,
   anyOneRequired: options.anyOneRequired,
   hide: options.hide,
   lengthRequired: options.lengthRequired,
   errorHandling: options.errorHandling,
-  clearValue: options.clearValue
+  clearValue: options.clearValue,
+  defaultValue: options.defaultValue
 });
 
 export const createPhoneInputField = (
@@ -232,24 +242,28 @@ export const REGEX_PATTERNS = {
   LENGTH_3_TO_50_REGEX: /^.{3,50}$/,
   NOT_ALLOW_ONLY_SYMBOLS: /^(?![\W_]+$).+$/,
   ALPHANUMERIC_SPEC_5_TO_50: /^[\s\S]{5,50}$/,
-  EMAIL: /^(?=.{6,254}$)[a-zA-Z0-9]+(?:[._+-][a-zA-Z0-9]+)*@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63}$/,
+  EMAIL:
+    /^(?=.{6,254}$)[a-zA-Z0-9]+(?:[._+-][a-zA-Z0-9]+)*@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63}$/,
   PHONE: /^([0-9]{10})$/,
-  WEBSITE:
-    /^https?:\/\/(?!.*\.\.)(?!.*\/\/)(?:[a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]{2,}(?::[0-9]+)?(?:\/[a-zA-Z0-9-.:/]*)*$/,
+  WEBSITE: /^(https?:\/\/|www\.)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(:[0-9]+)?(\/[a-zA-Z0-9\-.:\/]*)?$/,
   MAX_WEBSITE: /^.{0,255}$/,
+  MIN_WEBSITE: /^.{10,}$/,
   DATA_RESIDENCY: /^[A-Za-z0-9\s-]+$/,
   NUMBER_OPTIONAL_DECIMAL: /^([0-9]{1,10}(\.[0-9]{1,2})?)?$/,
-  BLENDED_NUMBER: /^(?!0\d)\d{1,16}(\.\d{1,2})?$/,
+  BLENDED_NUMBER: /^(?:[0-9]{1,3})(?:\.[0-9]{1,2})?$/,
   DESCRIPTION: /^.{0,500}$/,
   RESOURCE_DESCRIPTION: /^.{0,1000}$/,
   ACCOUNT_DESCRIPTION: /^[\s\S]{0,2000}$/,
-  POSTAL_CODE: /^[a-zA-Z0-9-]{1,20}$/,
+  POSTAL_CODE:/^(?!^[A-Za-z]+$)[A-Za-z0-9-]+$/,
   MAX_AI_INTRACTION: /^[3-5]$/,
   NUMBERS: /^[0-9]{1,20}$/,
   NUMBERS_50: /^[0-9]{5,50}$/,
-  ANNUAL_REVENUE: /^(\d{1,3}(,\d{3})+|\d{1,2}(,\d{2}){1,2},\d{3}|\d+)(\.\d+)?$/,
-  COST_REGEX: /^\d{1,3}(?:,\d{2,3})*(\.\d{1,2})?$|^\d{1,16}(\.\d{1,2})?$/,
+  ANNUAL_REVENUE: /^(0|([1-9]\d{0,11}))(\.\d{1,2})?$/,
+  MAX_ANNUAL_REVENUE: /^.{1,15}$/,
+  MAX_COST_REVENUE: /^.{1,15}$/,
+  COST_REGEX: /^(0|([1-9]\d{0,11}))(\.\d{1,2})?$/,
   NAME_REGEX: /^(?!.*[ '-]{2})[A-Za-z]+(?:['-][A-Za-z]+)*$/,
+  USER_NAME:/^(?!.*['-]{2})(?!.*^\s)(?!.*\s$)[A-Za-z]+(?:['-][A-Za-z]+)*$/,
   STREET_REGEX: /^(?![\W_]+$)(?!\s*$)[a-zA-Z0-9\s,.\-#]+$/,
   MAX_255: /^.{0,255}$/,
   MAX_64: /^.{0,64}$/,
@@ -263,6 +277,7 @@ export const REGEX_PATTERNS = {
   MIN_5: /^.{5,}$/,
   MIN_4: /^.{4,}$/,
   POSITIVE_INTEGER_REGEX: /^[1-9][0-9]*$/,
+  MIN_2: /^.{2,}$/,
   CITY_REGEX: /^[A-Za-z\s]{3,100}$/,
   NUMBERS_GREATER_THAN_ZERO: /^[1-9]\d*$/,
   MANAGER_REGEX: /^[A-Za-z\s.'-]*$/,
@@ -292,6 +307,7 @@ export const REGEX_PATTERNS = {
   POSTAL_ALLOWED_CHARS: /^(?!^[a-zA-Z-]+$).*$/,
   // NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX:
   //   /^(?!^[ &'.,-])(?!(.*[ &'.,-]$))/,
+  SKILL_OTHERS_ALLOWED_CHARS_REGEX: /^[A-Za-z\-'._\s]+$/,
 };
 
 /**
@@ -310,7 +326,7 @@ export const RESOURCE_REGEX = {
   EMAIL: /^[a-zA-Z0-9._%+-]{1,64}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
   MOBILE: /^\+?[0-9][0-9\- ]{3,14}[0-9]$/,
   MANAGER_NAME: /^(?=(.*[a-zA-Z0-9]){3})[a-zA-Z0-9][a-zA-Z0-9 .'-]{1,99}$/,
-  ROLE: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{4,100}$/,
+  ROLE:/^(?=.*[a-zA-Z])[a-zA-Z\s\-'.]+$/,
   DESIGNATION: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{4,100}$/,
   YEARS_EXPERIENCE: /^(?:0|[1-9]\d?)(?:\.\d{1,2})?$/,
   DESCRIPTION: /^[\s\S]{0,2000}$/,
@@ -364,7 +380,7 @@ export const formatAddress = (userDatas?: UserDetail) => {
 
 export const getDateTimeFormat = (date?: string) => {
   if (!date) return '';
-  return dayjs(date).format('MM-DD-YYYY HH:mm:ss');
+  return dayjs.utc(date).local().format('MM-DD-YYYY HH:mm:ss');
 };
 
 export const STATUS_OPTIONS: SelectOption[] = [

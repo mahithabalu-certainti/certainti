@@ -19,7 +19,7 @@ export const getCostFilterFields = (currencyOptions: { option: string; value: st
   { name: 'Weekly', value: 'weekly', type: 'number' },
   { name: 'Bi-Weekly', value: 'bi-weekly', type: 'number' },
   { name: 'Monthly', value: 'monthly', type: 'number' },
-  { name: 'Semi-Annual', value: 'semi_annual', type: 'number' },
+  // { name: 'Semi-Annual', value: 'semi_annual', type: 'number' },
   { name: 'Annual', value: 'annual', type: 'number' },
 ];
 export const getSkillFilterFields = (
@@ -51,15 +51,15 @@ export const getSkillFilterFields = (
   ];
 };
 export const resourceFilterFields: FieldConfig[] = [
-  { name: 'Resource Code', value: 'resource_ref_id', type: 'text' },
-  { name: 'Name', value: 'resource_fullname', type: 'text' },
+  { name: 'Resource Code', value: 'resource_code', type: 'text' },
+  { name: 'Name', value: 'resource_name', type: 'text' },
   {
     name: 'Resource Type',
     value: 'resource_type',
     type: 'enum',
     options: resourceTypeOptions,
   },
-  { name: 'Designation', value: 'designation', type: 'text' },
+  { name: 'Designation', value: 'resource_designation', type: 'text' },
   { name: 'Country', value: 'country', type: 'text' },
   { name: 'Region', value: 'region', type: 'text' },
   {

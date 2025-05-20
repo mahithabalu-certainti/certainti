@@ -19,9 +19,13 @@ import {
 } from '../../services/account-create';
 import { AccountFormData, SelectOption, YesNo } from '../../types';
 import { FormData } from './form-data';
-import { DATA_STORAGE_OPTIONS, formatDateValue, othersIndustryId, transformFormData } from './utils';
+import {
+  DATA_STORAGE_OPTIONS,
+  othersIndustryId,
+  transformFormData,
+} from './utils';
 import { ACCOUNT } from '../../../routes';
-import { STATUS_OPTIONS } from '../../../common-utils';
+import { getDateTimeFormat, STATUS_OPTIONS } from '../../../common-utils';
 
 export const AccountForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -74,15 +78,19 @@ export const AccountForm: React.FC = () => {
             : 'no',
           record_id: account?.accountDetails?.rid,
           account_id: account?.accountById?.r_number,
-          created_on: formatDateValue(account?.accountDetails?.created_datetime),
-          updated_on: formatDateValue(account?.accountDetails?.modified_datetime),
+          created_on: getDateTimeFormat(
+            account?.accountById?.created_datetime
+          ),
+          updated_on: getDateTimeFormat(
+            account?.accountById?.modified_datetime
+          ),
           created_by: account?.accountDetails?.created_by,
           updated_by: account?.accountDetails?.modified_by,
         }),
     }),
     [account]
   );
-  const defaultAciveValue = STATUS_OPTIONS[0].value;
+  const defaultActiveValue = STATUS_OPTIONS[0].value;
   const isValueUpdateInKeyContact = Object.values(primaryKeyContactInfo).some(
     (val) => val.trim() !== ''
   );
@@ -249,19 +257,19 @@ export const AccountForm: React.FC = () => {
   return (
     <>
       <div className='flex items-center justify-between px-10 py-6 border-b-2 border-gray-200'>
-        <div className='flex items-center'>
+        <div className='flex items-center w-[80%] max-w-[80%]'>
           <img
             src={isEditView ? editIcon : accountHomeIcon}
             alt='menu-icon'
             className='h-8 w-8 bg-[#7D98B6] p-2.5 rounded'
           />
-          <div>
+          <div className='w-[90%]'>
             {isEditView && (
-              <h5 className='text-[20px] font-semibold ml-2 text-[#2D3E4F] mb-1'>
+              <h5 className='text-[20px] font-semibold ml-2 text-[#2D3E4F]'>
                 Edit Account
               </h5>
             )}
-            <h4 className='text-[20px] font-semibold text-[#2D3E4F]  ml-2 leading-4'>
+            <h4 className={`${isEditView ? 'text-[14px]' : 'text-[20px]'} font-semibold text-[#2D3E4F] ml-2 leading-4 w-[95%] overflow-ellipsis truncate`}>
               {isEditView ? accountData.account_name : 'Create Account'}
             </h4>
           </div>
@@ -319,8 +327,8 @@ export const AccountForm: React.FC = () => {
           isEditView && accountData
             ? { ...accountData }
             : {
-                status: defaultAciveValue,
-                key_contact_status: defaultAciveValue,
+                status: defaultActiveValue,
+                key_contact_status: defaultActiveValue,
                 autosend_interaction: YesNo.Yes,
                 auto_access_rd: YesNo.Yes,
               } // Set default values in Create Account

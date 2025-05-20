@@ -24,37 +24,51 @@ export const FormData = (
         sectionName: 'Identity',
         fillType: 'half',
         fields: [
-          createTextField('first_name', 'First name', {
+          createTextField('first_name', 'First Name', {
             required: true,
-            regex: REGEX_PATTERNS.NAME_REGEX,
-            regexErrorMessage:
-              "First name must contain only letters, apostrophes (') or hyphens (-).",
-            placeholder: 'Enter First name',
+            placeholder: 'Enter First Name',
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_3,
-                errorMessage: 'Name must be more than 2 characters long',
+                errorMessage: 'First name must be more than 2 characters long',
               },
               {
                 regex: REGEX_PATTERNS.MAX_64,
                 errorMessage: 'Max length exceeded',
+              },
+              {
+                regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_REGEX,
+                errorMessage:
+                  'First name cannot start or end with a space, apostrophe, or hyphen.',
+              },
+              {
+                regex:REGEX_PATTERNS.NAME_REGEX,
+                errorMessage:
+                "Last name must contain only letters, apostrophes (') and hyphens (-).",
               },
             ],
           }),
-          createTextField('last_name', 'Last name', {
+          createTextField('last_name', 'Last Name', {
             required: true,
-            regex: REGEX_PATTERNS.NAME_REGEX,
-            placeholder: 'Enter Last name',
-            regexErrorMessage:
-              "Last name must contain only letters, apostrophes (') or hyphens (-).",
+            placeholder: 'Enter Last Name',
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_3,
-                errorMessage: 'Name must be more than 2 characters long',
+                errorMessage: 'Last name must be more than 2 characters long',
               },
               {
                 regex: REGEX_PATTERNS.MAX_64,
                 errorMessage: 'Max length exceeded',
+              },
+              {
+                regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_REGEX,
+                errorMessage:
+                  'Last name cannot start or end with a space, apostrophe, or hyphen.',
+              },
+              {
+                regex:REGEX_PATTERNS.NAME_REGEX,
+                errorMessage:
+                "Last name must contain only letters, apostrophes (') and hyphens (-).",
               },
             ],
           }),
@@ -86,11 +100,11 @@ export const FormData = (
           createSelectField('profile_rid', 'Profile', {
             options: profile,
             required: true,
-            placeholder: 'Select Profile',
+            placeholder: 'Choose Profile',
           }),
           createSelectField('role_rid', 'Role', {
             options: role,
-            placeholder: 'Select Role',
+            placeholder: 'Choose Role',
             required: true,
           }),
           createSelectField('status', 'Status', {
@@ -108,7 +122,7 @@ export const FormData = (
             required: false,
             regex: REGEX_PATTERNS.STREET_REGEX,
             regexErrorMessage:
-              'Street must contain only alphanumeric characters,letters, spaces, commas, periods, hyphens, and hash.',
+              'Street must contain only alphanumeric characters, spaces, commas, periods, hyphens and hash',
             placeholder: 'Enter Street',
             errorHandling: [
               {
@@ -119,21 +133,21 @@ export const FormData = (
           }),
           createSelectField('country', 'Country', {
             options: country,
-            placeholder: 'Select Country',
+            placeholder: 'Choose Country',
             required: false,
             onChange: true,
             resetDependsFields: ['state, city'],
           }),
           createSelectField('state', 'Region', {
             options: states,
-            placeholder: 'Select Region',
+            placeholder: 'Choose Region',
             required: false,
             onChange: true,
             isLoading: stateLoading,
           }),
           createSelectField('city', 'City', {
             options: city,
-            placeholder: 'Select City',
+            placeholder: 'Choose City',
             required: false,
             isLoading: stateLoading || cityLoading,
           }),
@@ -146,21 +160,16 @@ export const FormData = (
                 errorMessage: 'Max length exceeded',
               },
               {
+                regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_REGEX,
+                errorMessage:
+                  'Zip Code / Area cannot start or end with a space, or hyphen.',
+              },
+              {
                 regex: REGEX_PATTERNS.POSTAL_CODE,
-                errorMessage: 'Invalid postal code / zip code',
+                errorMessage:
+                  'Zip Code / Area code must contain only alphanumeric, numeric characters and hyphens (-)',
               },
-              {
-                regex: REGEX_PATTERNS.POSTAL_NO_CONSECUTIVE_HYPHENS,
-                errorMessage: 'Zip code cannot contain consecutive hyphens',
-              },
-              {
-                regex: REGEX_PATTERNS.POSTAL_NO_LEADING_OR_TRAILING,
-                errorMessage: 'Zip code cannot start or end with a hyphen and can contain at most one hyphen',
-              },
-              {
-                regex: REGEX_PATTERNS.POSTAL_ALLOWED_CHARS,
-                errorMessage: 'Zip code must be alphanumeric and contain at least one number',
-              },
+           
             ],
           }),
         ],

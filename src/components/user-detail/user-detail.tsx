@@ -8,7 +8,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     return data.map((detail, index) => (
       <div
         key={index}
-        className={`${detail.full ? 'col-span-2 border-t -mt-[1px] bg-[#DCE8FF]' : ''} grid ${detail.full ? 'grid-cols-1' : 'grid-cols-[150px_auto]'} gap-1 items-center border-gray-200 p-2`}
+        className={`${detail.full ? 'col-span-2 border-t -mt-[1px] bg-[#DCE8FF]' : ''} grid ${detail.full ? 'grid-cols-1' : 'grid-cols-[150px_auto]'} gap-1 items-center border-gray-200 p-2 px-4`}
       >
         <div
           className={`text-[14px] text-left ${detail.full ? 'font-semibold text-[#2D3E4F] ' : 'font-medium text-[#425A76]'}`}
@@ -20,7 +20,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
             {loading ? (
               <Skeleton variant='rounded' width='100%' />
             ) : (
-              (detail.value ?? '')
+              (detail.value ?? 'NA')
             )}
           </div>
         )}
@@ -32,23 +32,19 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     if (str) {
       return str.charAt(0).toUpperCase() + str.slice(1);
     }
-    return 'N/A';
+    return 'NA';
   };
 
   // Map your API data to the mock data structure
   const getValueOrDefault = (
     value?: string | number | null,
-    defaultValue = 'N/A'
+    defaultValue = 'NA'
   ): string => {
     return value?.toString() || defaultValue;
   };
 
   const mappedUserDetails: Detail[] = [
     { label: 'Identity', value: '', full: true },
-    {
-      label: 'User ID',
-      value: getValueOrDefault(data?.r_number),
-    },
     {
       label: 'First Name',
       value: getValueOrDefault(data?.first_name),
@@ -68,27 +64,32 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
       label: 'Role',
       value: getValueOrDefault(data?.business_teams?.business_teams),
     },
-    { label: 'Status', value: capitalizeFirstLetter(data?.status) },
+    { label: 'Status', value: capitalizeFirstLetter(data?.status === 'inactive' ? 'In-Active' : data?.status) },
     { label: 'Address', value: '', full: true },
     { label: 'Street', value: getValueOrDefault(data?.street) },
-    { label: 'City', value: getValueOrDefault(data?.city_name) },
-    {
-      label: 'State/Province',
-      value: getValueOrDefault(data?.state_name),
-    },
-    {
-      label: 'Zip/Postal Code',
-      value: getValueOrDefault(data?.zip_code),
-    },
     {
       label: 'Country',
       value: getValueOrDefault(data?.country_name),
     },
-    { label: 'Audit Info', value: '', full: true },
+    {
+      label: 'Region',
+      value: getValueOrDefault(data?.state_name),
+    },
+    { label: 'City', value: getValueOrDefault(data?.city_name) },
+    {
+      label: 'Zip Code / Area Code',
+      value: getValueOrDefault(data?.zip_code),
+    },
+
+    { label: 'Audit Information', value: '', full: true },
     { label: 'User Record ID', value: getValueOrDefault(data?.rid) },
     {
+      label: 'User ID',
+      value: getValueOrDefault(data?.r_number),
+    },
+    {
       label: 'Created On',
-      value: getDateTimeFormat(data?.created_datetime) || 'N/A',
+      value: getDateTimeFormat(data?.created_datetime) || 'NA',
     },
     {
       label: 'Created By',
@@ -96,7 +97,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     },
     {
       label: 'Updated On',
-      value: getDateTimeFormat(data?.modified_datetime) || 'N/A',
+      value: getDateTimeFormat(data?.modified_datetime) || 'NA',
     },
     { label: 'Updated By', value: capitalizeFirstLetter(data?.modified_by) },
   ];

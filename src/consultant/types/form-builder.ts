@@ -6,6 +6,7 @@ export interface FormType {
 }
 
 export interface FormTypeFields {
+  group?: string;
   type: InputType;
   name: string;
   label: string;
@@ -42,6 +43,7 @@ export interface FormTypeFields {
   errorMessage?: string;
   startDateLabel?: string;
   endDateLabel?: string;
+  defaultValue?: string;
   errorHandling?: ErrorHandling[];
 }
 
@@ -74,6 +76,7 @@ export interface ErrorHandling {
 export interface FieldType {
   type: InputType;
   name: string;
+  group?: string;
   label: string;
   required: boolean;
   minDate?: Date;
@@ -119,3 +122,5 @@ export type AllowedCountry =
   | 'ro'
   | 'au'
   | 'fr';
+
+  export type GroupFields = Map<string, string[]>;

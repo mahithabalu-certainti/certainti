@@ -41,9 +41,6 @@ export const FormData = (
           // }),
           createTextField('account_name', 'Account Name', {
             required: true,
-            regex: REGEX_PATTERNS.ACCOUNT_NAME,
-            regexErrorMessage:
-              "only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), and commas (,)",
             placeholder: 'Enter Account Name',
             errorHandling: [
               {
@@ -54,6 +51,11 @@ export const FormData = (
               {
                 regex: REGEX_PATTERNS.MAX_ACCOUNT_NAME_REGEX,
                 errorMessage: 'Max length exceeded',
+              },
+              {
+                regex: REGEX_PATTERNS.ACCOUNT_NAME,
+                errorMessage:
+                "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), and commas (,).",
               },
             ],
           }),
@@ -75,12 +77,26 @@ export const FormData = (
               ifNotMatchValue: DATA_STORAGE_OPTIONS[1].value,
             },
           }),
-          createTextField('industry_name_other', 'Industry - Others', {
+          createTextField('industry_name_other', 'Industry-other', {
             required: true,
-            regex: REGEX_PATTERNS.MAX_255,
-            regexErrorMessage: 'Max length exceeded',
-            placeholder: 'Enter Industry - Others',
+            placeholder: 'Enter Industry-other',
             hide: !showOthersField,
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_3,
+                errorMessage:
+                  'Industry-other must be more than 2 characters long',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_255,
+                errorMessage: 'Max length exceeded',
+              },
+              {
+                regex: REGEX_PATTERNS.ALLOWED_CHARS_EXTENDED_NAME_REGEX,
+                errorMessage:
+                "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), and commas (,).",
+              },
+            ],
           }),
           createSelectField('parent_account_rid', 'Parent Account', {
             options: parentAccount,
@@ -104,6 +120,10 @@ export const FormData = (
             placeholder: 'Enter Website',
             errorHandling: [
               {
+                regex: REGEX_PATTERNS.MIN_WEBSITE,
+                errorMessage: 'Minimum 10 characters required',
+              },
+              {
                 regex: REGEX_PATTERNS.MAX_WEBSITE,
                 errorMessage: 'Max length exceeded',
               },
@@ -112,12 +132,12 @@ export const FormData = (
           createTextField('project_manager', 'Delivery Manager', {
             required: false,
             regex: REGEX_PATTERNS.MANAGER_REGEX,
-            regexErrorMessage: 'Enter a valid name',
+            regexErrorMessage: "Only letters, spaces, apostrophes (') and hyphens (-) are allowed",
             placeholder: 'Enter Delivery Manager Name',
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_NAME_REGEX,
-                errorMessage: 'Name must be more than 1 characters long',
+                errorMessage: 'Delivery Manager Name must be more than 1 characters long',
               },
               {
                 regex: REGEX_PATTERNS.MAX_NAME_REGEX,
@@ -126,16 +146,22 @@ export const FormData = (
               {
                 regex: REGEX_PATTERNS.NOT_ALLOW_SPACE_SYMBOLS_AT_START_END,
                 errorMessage:
-                  'Cannot begin or end with a space or special character',
+                  'Cannot start or end with a space, apostrophe, or hyphens',
               },
             ],
           }),
           createTextField('annual_revenue', 'Annual Revenue', {
             required: false,
-            regex: REGEX_PATTERNS.BLENDED_NUMBER,
+            regex: REGEX_PATTERNS.ANNUAL_REVENUE,
             regexErrorMessage:
-              'Only allowed positive numbers, up to 16 digits & 2 decimal places',
+              'Only positive numbers allowed, up to 12 digits and 2 decimal places',
             placeholder: 'Enter Annual Revenue',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_ANNUAL_REVENUE,
+                errorMessage: 'Maximum length exceeded.',
+              },
+            ],
           }),
         ],
       },
@@ -145,7 +171,7 @@ export const FormData = (
         fields: [
           createTextAreaField('business_details', 'Business Details', {
             required: true,
-            regex: REGEX_PATTERNS.ACCOUNT_DESCRIPTION,
+            regex: REGEX_PATTERNS.MAX_2000,
             regexErrorMessage:
               'Business Details must be within 2000 characters',
             placeholder: 'Enter Business Details',
@@ -183,7 +209,7 @@ export const FormData = (
           createTextField('key_contact_name', 'Key Contact Name', {
             required: false,
             regex: REGEX_PATTERNS.CONTACT_NAME,
-            regexErrorMessage: 'Invalid Name',
+            regexErrorMessage: "Only letters, spaces, apostrophes ('), commas (,), periods (.), and hyphens (-) are allowed",
             placeholder: 'Enter Key Contact Name',
             onChange: true,
             errorHandling: [
@@ -199,7 +225,7 @@ export const FormData = (
               {
                 regex: REGEX_PATTERNS.NOT_ALLOW_SPACE_SYMBOLS_AT_START_END,
                 errorMessage:
-                  'Cannot begin or end with a space or special character',
+                  'Cannot start or end with a space, apostrophe, or hyphens',
               },
             ],
           }),
@@ -216,7 +242,7 @@ export const FormData = (
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MAX_EMAIL_REGEX,
-                errorMessage: 'Max length exceeded',
+                errorMessage: 'Key Contact Email must not exceed 254 characters',
               },
               {
                 regex: REGEX_PATTERNS.EMAIL,
@@ -272,7 +298,7 @@ export const FormData = (
         sectionName: 'Account Settings',
         fillType: 'half',
         fields: [
-          createFiscalDateField('fiscal_start_date', 'Fiscal start', {
+          createFiscalDateField('fiscal_start_date', 'Fiscal Start', {
             required: true,
             disabled: disableFields,
           }),
@@ -310,14 +336,14 @@ export const FormData = (
             required: false,
             regex: REGEX_PATTERNS.BLENDED_NUMBER,
             regexErrorMessage:
-              'Only allowed positive numbers, up to 16 digits & 2 decimal places',
+              'Only positive numbers allowed, up to 3 digits and 2 decimal places',
             placeholder: 'Enter Blended Rate - FTE',
           }),
           createTextField('blended_rate_subcon', 'Blended Rate - SubCon', {
             required: false,
             regex: REGEX_PATTERNS.BLENDED_NUMBER,
             regexErrorMessage:
-              'Only allowed positive numbers, up to 16 digits & 2 decimal places',
+              'Only positive numbers allowed, up to 3 digits and 2 decimal places',
             placeholder: 'Enter Blended Rate - SubCon',
           }),
           createRadioField('data_storage', 'Data Residency', {
@@ -331,7 +357,7 @@ export const FormData = (
         sectionName: 'Comments',
         fillType: 'full',
         fields: [
-          createTextAreaField('account_description', 'Comments', {
+          createTextAreaField('comments', 'Comments', {
             required: false,
             regex: REGEX_PATTERNS.ACCOUNT_DESCRIPTION,
             regexErrorMessage: 'Comments must be within 2000 characters',
