@@ -3,6 +3,7 @@ import React from 'react';
 import { arrowDownIcon, childAccountIcon } from '../../../../assets';
 import { Account, ConvertedAccount } from '../../../types';
 import ActionButton from './action-button';
+import { TruncateWithTooltip } from '../../../../components';
 
 const formatNumberWithCommas = (num: number | string): string => {
   if (num) {
@@ -11,9 +12,8 @@ const formatNumberWithCommas = (num: number | string): string => {
     }
     return num.toLocaleString('en-US');
   }
-  return '';
+  return 'NA';
 };
-import { TruncateWithTooltip } from '../../../../components';
 
 interface RenderRowsProps {
   accounts: ConvertedAccount[];
@@ -97,6 +97,7 @@ export const renderRows = ({
             left: 0,
             background: openRows.has(account.accountName) ? '#F2F2F2' : '#fff',
             zIndex: 7,
+            width: '32px',
             maxWidth: '32px',
             minWidth: '32px',
             padding: '0 !important',
@@ -129,6 +130,8 @@ export const renderRows = ({
               fontWeight: '400 !important',
               color: '#2D3E4F !important',
               minWidth: '300px',
+              width: '300px',
+              maxWidth: '300px',
             }}
           >
             {hasChildren ? ( // Only show the icon if there are children
@@ -164,65 +167,41 @@ export const renderRows = ({
               </IconButton>
             ) : null}
             <TruncateWithTooltip
-              text={account.accountName}
+              text={String(account.accountName)}
               maxWidth={250}
               className={`inline-flex items-center rounded-[4px] text-white text-[14px] px-2 font-semibold h-[26px] bg-[#FF6666] cursor-pointer no-underline hover:underline`}
             >
               <span onClick={() => handleAccountNameClick(account)}>
-                {account.accountName}
+                {account.accountName || 'NA'}
               </span>
             </TruncateWithTooltip>
           </TableCell>
-          <TableCell sx={{ minWidth: '200px' }}>
-            <TruncateWithTooltip
-              text={account.parentAccount || '-'}
-              maxWidth={200}
-            >
-              {account.parentAccount || '-'}
+          <TableCell sx={{ width: '180px', maxWidth: '180px', minWidth: '180px' }}>
+            <TruncateWithTooltip text={String(account.accountNumber)} maxWidth={180}>
+             {account.accountNumber || 'NA'}
             </TruncateWithTooltip>
           </TableCell>
-          <TableCell sx={{ minWidth: '180px' }}>
-            <TruncateWithTooltip
-              text={account.accountNumber || '-'}
-              maxWidth={180}
-            >
-              {account.accountNumber || '-'}
+          <TableCell sx={{ width: '200px', maxWidth: '200px', minWidth: '200px' }}>
+            <TruncateWithTooltip text={String(account.industry)} maxWidth={200}>
+             {account.industry || 'NA'}
             </TruncateWithTooltip>
           </TableCell>
-          <TableCell sx={{ minWidth: '200px' }}>
-            <TruncateWithTooltip
-              text={account.industry || '-'}
-              maxWidth={200}
-            >
-              {account.industry || '-'}
+          <TableCell sx={{ width: '150px', maxWidth: '150px', minWidth: '150px' }}>
+            <TruncateWithTooltip text={String(account.country)} maxWidth={150}>
+             {account.country || 'NA'}
             </TruncateWithTooltip>
           </TableCell>
-          <TableCell sx={{ minWidth: '150px' }}>
-            <TruncateWithTooltip
-              text={account.country || '-'}
-              maxWidth={150}
-            >
-              {account.country || '-'}
-            </TruncateWithTooltip>
-          </TableCell>
-          <TableCell sx={{ minWidth: '100px' }}>
-            <TruncateWithTooltip
-              text={account.currency || '-'}
-              maxWidth={100}
-            >
-              {account.currency || '-'}
-            </TruncateWithTooltip>
-          </TableCell>
-          <TableCell sx={{ minWidth: '160px' }}>
-            <TruncateWithTooltip
-              text={formatNumberWithCommas(account.annualRevenue) || '-'}
-              maxWidth={160}
-            >
-              {formatNumberWithCommas(account.annualRevenue) || '-'}
+          <TableCell sx={{ width: '100px', maxWidth: '100px', minWidth: '100px' }}>{account.currency || 'NA'}</TableCell>
+          <TableCell sx={{ width: '160px', maxWidth: '160px', minWidth: '160px' }}>
+            <TruncateWithTooltip text={formatNumberWithCommas(account.annualRevenue)} maxWidth={160}>
+             {formatNumberWithCommas(account.annualRevenue)}
             </TruncateWithTooltip>
           </TableCell>
           <TableCell
             sx={{
+              width: '100px', 
+              maxWidth: '100px',
+              minWidth: '100px',
               color:
                 account.status === 'Active'
                   ? '#199806 !important'
@@ -231,7 +210,7 @@ export const renderRows = ({
           >
             {account.status === 'Active' ? 'Active' : 'In-Active'}
           </TableCell>
-          <TableCell sx={{ padding: '0px !important' }}>
+          <TableCell sx={{ width: '100px', minWidth: '100px', maxWidth: '100px', padding: '0px !important' }}>
             <ActionButton
               onEdit={() => handleEdit(account)}
               onDelete={() => handleDelete(account)}
@@ -248,7 +227,7 @@ export const renderRows = ({
               padding: 0,
             }
           }}>
-          <TableCell colSpan={10} />
+          <TableCell colSpan={9} />
         </TableRow>
       </React.Fragment>
     );
@@ -294,6 +273,7 @@ export const renderChildRows = ({
             left: 0,
             background: '#fff',
             zIndex: 7,
+            width: '32px',
             maxWidth: '32px',
             minWidth: '32px',
             padding: '0 !important',
@@ -323,6 +303,8 @@ export const renderChildRows = ({
             fontWeight: '400 !important',
             color: '#2D3E4F !important',
             borderRight: '1px solid #CBD6E2',
+            width: '300px',
+            maxWidth: '300px',
             minWidth: '300px',
             borderBottom: '1px solid #CBD6E2 !important',
           }}
@@ -336,73 +318,66 @@ export const renderChildRows = ({
                 />
             </div>
               <TruncateWithTooltip
-                text={account.accountName || '-'}
+                text={String(account.accountName)}
                 maxWidth={250}
                 className={`text-[13px] font-semibold cursor-pointer hover:underline hover:text-[#1755E7]`}
               >
                 <span onClick={() => handleAccountNameClick(account)}>
-                  {account.accountName}
+                  {account.accountName || 'NA'}
                 </span>
               </TruncateWithTooltip>
             </Box>
           </TableCell>
-          <TableCell sx={{ minWidth: '200px' }}>
-            <TruncateWithTooltip
-              text={account.parentAccount || '-'}
-              maxWidth={200}
-            >
-              {account.parentAccount || '-'}
+          <TableCell sx={{ minWidth: '180px', maxWidth: '180px', width: '180px' }}>
+            <TruncateWithTooltip text={String(account.accountNumber)} maxWidth={180}>
+             {account.accountNumber || 'NA'}
             </TruncateWithTooltip>
           </TableCell>
-          <TableCell sx={{ minWidth: '180px' }}>
-          <TruncateWithTooltip
-              text={account.accountNumber || '-'}
-              maxWidth={180}
-            >
-              {account.accountNumber || '-'}
+          <TableCell sx={{ minWidth: '200px', maxWidth: '200px', width: '200px' }}>
+            <TruncateWithTooltip text={String(account.industry)} maxWidth={200}>
+             {account.industry || 'NA'}
             </TruncateWithTooltip>
           </TableCell>
-          <TableCell sx={{ minWidth: '200px' }}>
-            <TruncateWithTooltip
-              text={account.industry || '-'}
-              maxWidth={200}
-            >
-              {account.industry || '-'}
-            </TruncateWithTooltip>
-          </TableCell>
-          <TableCell sx={{ minWidth: '150px' }}>
-            <TruncateWithTooltip
-              text={account.country || '-'}
-              maxWidth={150}
-            >
-              {account.country || '-'}
+          <TableCell sx={{ minWidth: '150px',maxWidth: '150px', width: '150px' }}>
+            <TruncateWithTooltip text={String(account.country)} maxWidth={150}>
+             {account.country || 'NA'}
             </TruncateWithTooltip>
           </TableCell>
           <TableCell
-            sx={{ minWidth: '100px' }}
+            sx={{ minWidth: '100px',maxWidth: '100px', width: '100px' }}
             className={`last-column ${
               openRows.has(account.accountName) ? 'no-border-right' : ''
             }`}
           >
              <TruncateWithTooltip
-              text={account.currency || '-'}
+              text={String(account.currency)}
               maxWidth={100}
             >
-              {account.currency || '-'}
+              {account.currency || 'NA'}
             </TruncateWithTooltip>
           </TableCell>
-          <TableCell sx={{ minWidth: '160px' }}>
-            <TruncateWithTooltip
-              text={formatNumberWithCommas(account.annualRevenue) || '-'}
+          <TableCell sx={{ minWidth: '160px',maxWidth: '160px', width: '160px' }}>
+             <TruncateWithTooltip
+              text={formatNumberWithCommas(account.annualRevenue)}
               maxWidth={160}
             >
-              {formatNumberWithCommas(account.annualRevenue) || '-'}
+              {formatNumberWithCommas(account.annualRevenue)}
             </TruncateWithTooltip>
           </TableCell>
-          <TableCell sx={{color: account.status === 'Active' ? '#199806 !important' : '#f44336 !important',  minWidth: '100px'}}>
+          <TableCell
+            sx={{
+              color:
+                account.status === 'Active'
+                  ? '#199806 !important'
+                  : '#f44336 !important',
+              minWidth: '100px',
+              maxWidth: '100px',
+              width: '100px',
+            }}
+          >
             {account.status === 'Active' ? 'Active' : 'In-Active'}
           </TableCell>
-          <TableCell sx={{ padding: '0px !important' }}>
+          <TableCell sx={{ width: '100px', minWidth: '100px', maxWidth: '100px', padding: '0px !important' }}>
             <ActionButton
               onEdit={() => handleEdit(account)}
               onDelete={() => handleDelete(account)}

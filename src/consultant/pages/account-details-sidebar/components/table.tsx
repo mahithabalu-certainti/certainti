@@ -276,7 +276,16 @@ const DataTable: React.FC<DataTableProps> = ({
       <TableContainer
         sx={{ overflowX: 'auto', borderBottom: '1px solid #CBD6E2' }}
       >
-        <Table>
+        <Table
+          sx={{
+            borderCollapse: 'separate !important',
+            borderSpacing: 0,
+            '& .MuiTableCell-root': {
+              borderBottom: '1px solid #CBD6E2',
+              borderRight: '1px solid #CBD6E2',
+            },
+          }}
+        >
           <TableHead
             sx={{
               '& .MuiTableCell-root': {
@@ -315,21 +324,7 @@ const DataTable: React.FC<DataTableProps> = ({
                     background: index === 0 ? '#fff' : '#fff',
                     zIndex: index === 0 ? 10 : undefined,
                     left: index === 0 ? 0 : undefined,
-                    borderRight:
-                      index === 0 ? 'none !important' : '1px solid #CBD6E2',
-                    '&::after':
-                      index === 0
-                        ? {
-                            content: '""',
-                            position: 'absolute',
-                            top: 0,
-                            right: 0,
-                            width: '1px',
-                            height: '100%',
-                            backgroundColor: '#CBD6E2',
-                            zIndex: 20,
-                          }
-                        : undefined,
+                    borderRight: '1px solid #CBD6E2',
                   }}
                 >
                   {sortable && column.sortable !== false ? (
@@ -409,21 +404,7 @@ const DataTable: React.FC<DataTableProps> = ({
                         background: index === 0 ? '#fff' : undefined,
                         zIndex: index === 0 ? 10 : undefined,
                         left: index === 0 ? 0 : undefined,
-                        borderRight:
-                          index === 0 ? 'none !important' : '1px solid #CBD6E2',
-                        '&::after':
-                          index === 0
-                            ? {
-                                content: '""',
-                                position: 'absolute',
-                                top: 0,
-                                right: 0,
-                                width: '1px',
-                                height: '100%',
-                                backgroundColor: '#CBD6E2',
-                                zIndex: 20,
-                              }
-                            : undefined,
+                        borderRight: '1px solid #CBD6E2',
                       }}
                     >
                       {column.render

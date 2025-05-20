@@ -44,6 +44,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
 
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
   const [accounts, setAccounts] = useState<ConvertedAccount[]>();
+  const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
   const { filters, fiscalYear } = useSelector<
     RootState,
@@ -61,9 +62,15 @@ const AccountTable: React.FC<Record<string, any>> = ({
   });
 
   useEffect(() => {
-    setAccounts(convertAccounts(accountList?.accounts ?? []));
-    setTotalCount(accountList?.count ?? 0);
-  }, [accountList]);
+    if (!loading && accountList) {
+      const convertedData = convertAccounts(accountList.accounts || []);
+      setAccounts(convertedData);
+      setTotalCount(accountList.count || 0);
+      setIsDataLoaded(true);
+    } else {
+      setIsDataLoaded(false);
+    }
+  }, [loading, accountList]);  
 
   // Add this handler in the AccountTable component
   const handleAccountNameClick = (account: Account) => {
@@ -253,6 +260,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     left: 0,
                     background: '#fff',
                     zIndex: 11,
+                    width: '32px',
                     maxWidth: '32px',
                     minWidth: '32px',
                     padding: '0px !important',
@@ -297,7 +305,9 @@ const AccountTable: React.FC<Record<string, any>> = ({
                       order={order}
                       onSortChange={handleSortChange}
                       sx={{
+                        width: column.width || 160,
                         minWidth: column.width || 160,
+                        maxWidth: column.width || 160,
                         ...(column.sx || {})
                       }}
                     />
@@ -305,7 +315,9 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     <TableCell
                       key={column.id}
                       sx={{
+                        width: column.width || 160,
                         minWidth: column.width || 160,
+                        maxWidth: column.width || 160,
                         ...(column.sx || {})
                       }}
                     >
@@ -313,7 +325,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     </TableCell>
                   )
                 ))}
-                <TableCell sx={{ minWidth: '100px', textAlign: 'center', pl: '0px !important' }}>Action</TableCell>
+                <TableCell sx={{ width: '100px', minWidth: '100px', maxWidth: '100px', textAlign: 'center', pl: '0px !important' }}>Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody
@@ -330,7 +342,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                 },
               }}
             >
-              {loading ? (
+              {loading && !isDataLoaded ? (
                 <TableRow
                   sx={{
                     height: 'calc(85vh - 200px)',
@@ -339,11 +351,11 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     },
                   }}
                 >
-                  <TableCell colSpan={10} align='center'>
+                  <TableCell colSpan={9} align='center'>
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
-              ) : accounts?.length === 0 ? (
+              ) : !loading && isDataLoaded && accounts?.length === 0 ? (
                 <TableRow
                   sx={{
                     height: '32px',
@@ -352,7 +364,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     },
                   }}
                 >
-                  <TableCell colSpan={10} align='center'>
+                  <TableCell colSpan={9} align='center'>
                     <Typography variant='body1'>No data available</Typography>
                   </TableCell>
                 </TableRow>

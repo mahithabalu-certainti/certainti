@@ -28,13 +28,6 @@ export const accountColumns: AccountColumn[] = [
     }
   },
   {
-    id: 'is_parent',
-    sortId: 'is_parent',
-    label: 'Parent Account',
-    width: '200px',
-    sortable: true
-  },
-  {
     id: 'r_number',
     sortId: 'r_number',
     label: 'Account ID',

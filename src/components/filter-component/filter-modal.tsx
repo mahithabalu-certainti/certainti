@@ -251,6 +251,8 @@ const handleFilterValueChange = (
   };
 
   const handleResetFilters = () => {
+    if (!Object.keys(filterStates).length) return null;
+    
     setSelectedFilters([]);
     setFilterStates({});
     setAppliedFilters({});

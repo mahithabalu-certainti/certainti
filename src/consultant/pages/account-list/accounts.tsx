@@ -13,7 +13,7 @@ import { FilterModal } from '../../../components';
 import ActionsDropdown from '../../../components/actions-dropdown/actions-dropdown';
 import TextButton from '../../../components/button/text-button';
 import { ACCOUNT_CREATE } from '../../../routes';
-import { getAccountFilterfields } from './helpers';
+import { getAccountFilterFields } from './helpers';
 import AccountTable from './table/account-table';
 import { useGetAllCountries } from '../../../common-service';
 import { exportAccountList, useFetchCurrency } from '../../services/account';
@@ -60,7 +60,7 @@ export const Accounts: React.FC = () => {
     return currencyList.data?.data.currency.map(item => item.currency_code) || [];
   }, [currencyList]);
 
-  const accountFilterFields = getAccountFilterfields(allCountries, allCurrencies);
+  const accountFilterFields = getAccountFilterFields(allCountries, allCurrencies);
 
   const [totalCount, setTotalCount] = useState<number>(0);
 

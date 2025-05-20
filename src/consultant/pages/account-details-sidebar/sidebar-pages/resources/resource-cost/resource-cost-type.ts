@@ -36,7 +36,7 @@ export function convertResourceCost(
     const convertedCost: ResourceCostType = {
       accountRid: cost.account_rid,
       resourceType: cost.resource_type,
-      resourceFullName: cost.resource_fullname,
+      resourceFullName: cost.resource_name,
       resourceCostNumber: cost.r_number,
       resourceRID: cost.resource_rid,
       resourceRefId: cost.resource_ref_id,

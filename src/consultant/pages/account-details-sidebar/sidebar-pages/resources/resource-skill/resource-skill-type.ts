@@ -26,6 +26,7 @@ export interface ResourceSkillType {
   skillSubTypeId?: string;
   skillTypeOthers?: string;
   skillSubTypeOthers?: string;
+  comments?: string;
 }
 
 export function convertResourceSkill(
@@ -47,6 +48,7 @@ export function convertResourceSkill(
       skillSubTypeId: skill.skill_subtype_rid,
       skillTypeOthers: skill.skill_type_others,
       skillSubTypeOthers: skill.skill_subtype_others,
+      comments: skill.comments,
     };
     resourceSkillList.push(convertedSkill);
   }

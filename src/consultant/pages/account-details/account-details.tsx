@@ -195,7 +195,7 @@ export const AccountDetails = () => {
           placeholder='Account Name'
           icon={accountDetailsIcon}
           iconBackgroundColor='#4B9BFF'
-          iconClasses='h-[30px] w-[30px] rounded'
+          iconClasses='h-8 w-8 rounded'
           title={data?.data?.accountById?.account_name || 'Account Title'}
           totalRecords={5}
           actionItems={menuItems}

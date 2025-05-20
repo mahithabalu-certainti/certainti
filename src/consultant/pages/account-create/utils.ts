@@ -23,7 +23,7 @@ export const transformFormData = (
   const data: Partial<NewAccountData> = {
     account_id: account_rid,
     account_name: formData.account_name,
-    account_description: formData.account_description || null,
+    comments: formData.comments || null,
     status: formData.status,
     is_parent: formData.is_parent === 'yes',
     parent_account_rid: formData.parent_account_rid || null,
