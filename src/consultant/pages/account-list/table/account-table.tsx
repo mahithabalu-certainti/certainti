@@ -1,8 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  Box,
-  Checkbox,
   CircularProgress,
   Paper,
   Table,
@@ -17,7 +15,7 @@ import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { reshapeGlobalFilter } from '../../../../common-utils';
-import { TablePagination, TableSortHeader } from '../../../../components/table';
+import { TableSortHeader } from '../../../../components/table';
 import { ACCOUNT, ACCOUNT_DETAILS } from '../../../../routes';
 import { RootState } from '../../../../store/store';
 import { useAccounts } from '../../../services/account';
@@ -36,13 +34,13 @@ const AccountTable: React.FC<Record<string, any>> = ({
   orderBy,
   setOrderBy,
   page,
-  setPage
+  // setPage
 }) => {
   const navigate = useNavigate();
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
 
-  const [rowsPerPage, setRowsPerPage] = useState<number>(100);
+  // const [rowsPerPage, setRowsPerPage] = useState<number>(1000);
   const [accounts, setAccounts] = useState<ConvertedAccount[]>();
   const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
@@ -53,7 +51,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
 
   const { data: accountList, isLoading: loading } = useAccounts({
     page: page,
-    limit: rowsPerPage,
+    limit: 1000,
     sortBy: orderBy,
     sortOrder: apiOrder,
     filters: appliedFilters,
@@ -162,45 +160,45 @@ const AccountTable: React.FC<Record<string, any>> = ({
     setSelectedRows(newSelectedRows);
   };
 
-  const handleSelectAllRows = (selectAll: boolean) => {
-    if (!accounts) return;
+  // const handleSelectAllRows = (selectAll: boolean) => {
+  //   if (!accounts) return;
 
-    const newSelectedRows = new Set<number>();
+  //   const newSelectedRows = new Set<number>();
 
-    if (selectAll) {
-      accounts.forEach((account, index) => {
-        const hasParent = !!account.parentAccount;
+  //   if (selectAll) {
+  //     accounts.forEach((account, index) => {
+  //       const hasParent = !!account.parentAccount;
 
-        if (!hasParent) {
-          newSelectedRows.add(index);
+  //       if (!hasParent) {
+  //         newSelectedRows.add(index);
 
-          const children = accounts.filter(
-            (acc) => acc.parentAccount === account.accountName
-          );
+  //         const children = accounts.filter(
+  //           (acc) => acc.parentAccount === account.accountName
+  //         );
 
-          children.forEach((child) => {
-            const childIndex = accounts.findIndex(
-              (acc) => acc.accountName === child.accountName
-            );
-            newSelectedRows.add(childIndex);
-          });
-        }
-      });
-    }
+  //         children.forEach((child) => {
+  //           const childIndex = accounts.findIndex(
+  //             (acc) => acc.accountName === child.accountName
+  //           );
+  //           newSelectedRows.add(childIndex);
+  //         });
+  //       }
+  //     });
+  //   }
 
-    setSelectedRows(newSelectedRows);
-  };
+  //   setSelectedRows(newSelectedRows);
+  // };
 
-  // Handle page change
-  const handleChangePage = (newPage: number) => {
-    setPage(newPage + 1);
-  };
+  // // Handle page change
+  // const handleChangePage = (newPage: number) => {
+  //   setPage(newPage + 1);
+  // };
 
-  // Handle rows per page change
-  const handleChangeRowsPerPage = (newPageSize: number) => {
-    setRowsPerPage(newPageSize);
-    setPage(1);
-  };
+  // // Handle rows per page change
+  // const handleChangeRowsPerPage = (newPageSize: number) => {
+  //   setRowsPerPage(newPageSize);
+  //   setPage(1);
+  // };
 
   // Handle sorting
   const handleSortChange = (property: string, direction: 'asc' | 'desc') => {
@@ -325,7 +323,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     </TableCell>
                   )
                 ))}
-                <TableCell sx={{ width: '100px', minWidth: '100px', maxWidth: '100px', textAlign: 'center', pl: '0px !important' }}>Action</TableCell>
+                <TableCell sx={{ width: '100px', minWidth: '100px', maxWidth: '100px', textAlign: 'center', pl: '0px !important', borderRight: 'none' }}>Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody
