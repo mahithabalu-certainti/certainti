@@ -5,7 +5,7 @@ import {
   updateUser,
   listUserById,
 } from "./userController";
-import { userProfiles, userPermissionById, userRoles, userPermissionFields, createProfile, getProfilePermissions, updateProfilePermissions, editProfilePermissions } from "./userManagementController";
+import { userProfiles, userPermissionById, userRoles, userPermissionFields, createProfile, getProfilePermissions, updateProfilePermissions, editProfilePermissions,exportUserProfiles,getUserExtendedPermissions,updateUserExtendedPermissions } from "./userManagementController";
 
 const controller = {
   userController: {
@@ -23,7 +23,10 @@ const controller = {
     createProfile,
     getProfilePermissions,
     updateProfilePermissions,
-    editProfilePermissions
+    editProfilePermissions,
+    exportUserProfiles,
+    getUserExtendedPermissions,
+    updateUserExtendedPermissions
   },
 };
 

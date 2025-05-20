@@ -18,4 +18,8 @@ routes.post("/profile/clone",checkUserStatusMiddleware("profile_create"), contro
 routes.get("/profile/:profileId/permissions",checkUserStatusMiddleware("profile_view"), controller.userManagementController.getProfilePermissions);
 routes.put("/profile/permissions", checkUserStatusMiddleware("profile_create"), controller.userManagementController.updateProfilePermissions);
 routes.put("/profile/permissions/edit", checkUserStatusMiddleware("profile_edit_update"), controller.userManagementController.editProfilePermissions);
+routes.get("/:profileId/profile/export", checkUserStatusMiddleware("profile_export"), controller.userManagementController.exportUserProfiles);
+routes.get("/:userId/permission/extended",checkUserStatusMiddleware("user_extended_permission_view"), controller.userManagementController.getUserExtendedPermissions);
+routes.put("/:userId/permission/extended/edit",checkUserStatusMiddleware("user_extended_permission_edit"), controller.userManagementController.updateUserExtendedPermissions);
 export default routes;
+

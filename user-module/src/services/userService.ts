@@ -3,7 +3,7 @@ import { models } from "../models/index";
 import { constants } from "../utils/constant";
 import { IUpdateUserData, IUserData } from "../utils/types";
 import { Op, Sequelize, IndexHints } from "sequelize";
-
+import ExcelJS from 'exceljs';
   const { 
     User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams,
     ProfileMenuAccess, Menu, ProfileModuleAccess, MenuModule, ProfilePermissionAccess, ModulePermission,
@@ -1333,6 +1333,8 @@ const rawResult = users || [];
     };
   }
 
+
+
   /**
    * Fetches user names for user IDs from the main database
    * @param userIds - Object containing user IDs (created_by, modified_by)
@@ -1384,8 +1386,314 @@ const rawResult = users || [];
     return result;
   }
 
+  /**
+   * Retrieves the role information for a user by their Azure ID.
+   *
+   * This method finds a user by their Azure ID and returns the role ID (`role_rid`) and associated user role
+   * from the `business_teams` model. If no user or associated `business_teams` are found, it returns an error message.
+   *
+   * @param {string} azureId - The Azure ID of the user whose role is to be retrieved.
+   *
+   * @returns {Promise<{ statusCode: string, message: string, data: { rid: string; user_role: string } | null }>}
+   */
+  async fetchUserExtendedpermission(userId: string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { rid: string; user_role: string; user_id: string; permissions: any[] } | null;
+  }> {
+    try {
+      const roles = await User.findOne({
+        attributes: ["role_rid", "rid", "profile_rid"],
+        where: { rid: userId },
+        include: [
+          {
+            model: BusinessTeams,
+            as: "business_teams",
+            required: true,
+            attributes: ["business_teams"],
+          },
+        ],
+      });
+      console.log(`After Profile retrieve: ${new Date(Date.now()).toISOString()}`);
+
+
+      if (!roles || !roles.business_teams) {
+        return {
+          statusCode: constants.NOT_FOUND,
+          message: constants.NOT_FOUND_MESSAGE,
+          data: null,
+        };
+      }
+
+      // Call getAllUserPermission here
+      const permissions = await this.getAllUserExtendedPermission(roles.rid, roles.profile_rid || "");
+
+      return {
+        statusCode: constants.SUCCESS,
+        message: constants.SUCCESS_MESSAGE,
+        data: {
+          rid: roles.role_rid || "",
+          user_role: roles.business_teams?.business_teams,
+          user_id: roles.rid,
+          permissions
+        },
+      };
+    } catch (err) {
+      console.log(err);
+      return this.throwServiceError(err as Error);
+    }
+  }
+
+  
+    // Consolidate all permissions for a user
+ async getAllUserExtendedPermission(userId: string, profileId: string) {
+  console.log("User ID:", userId);
+  console.log("Profile ID:", profileId);
+
+  const [profilePermissions, userPermissions] = await Promise.all([
+    this.getProfilePermission(profileId),
+    this.getUserPermission(userId)
+  ]);
+
+  // Create map of user permissions by key for quick lookup
+  const userPermissionMap = new Map<string, any>();
+  userPermissions.forEach(p => userPermissionMap.set(getPermissionKey(p), p));
+
+  // Result array for merged permissions
+  const mergedPermissions: any[] = [];
+
+  // Merge profilePermissions with userPermissions overrides
+  for (const profilePerm of profilePermissions) {
+    const key = getPermissionKey(profilePerm);
+    const userPerm = userPermissionMap.get(key);
+
+    if (profilePerm.type === 'field') {
+      // For field permissions, merge read/edit and extended flags
+      mergedPermissions.push({
+        ...profilePerm,
+        read: profilePerm.read,
+        edit: profilePerm.edit,
+        hasReadExtendedPermsission: profilePerm.read ? false : (userPerm?.read ?? false),
+        hasEditExtendedPermsission: profilePerm.edit ? false : (userPerm?.edit ?? false),
+      });
+    } else {
+      // For other types (menu, module, etc.)
+      mergedPermissions.push({
+        ...profilePerm,
+        is_enabled: profilePerm.is_enabled,
+        has_extended_permission: profilePerm.is_enabled ? false : (userPerm?.is_enabled === true),
+      });
+    }
+
+    // Remove merged user permission from map to track leftover user-only permissions
+    if (userPerm) userPermissionMap.delete(key);
+  }
+
+  // Add remaining user permissions that weren't in profilePermissions (user-only perms)
+  for (const userPerm of userPermissionMap.values()) {
+    if (userPerm.type === 'field') {
+      mergedPermissions.push({
+        ...userPerm,
+        hasReadExtendedPermsission: false,
+        hasEditExtendedPermsission: false,
+      });
+    } else {
+      mergedPermissions.push({
+        ...userPerm,
+        has_extended_permission: false,
+      });
+    }
+  }
+
+  return mergedPermissions;
 }
 
 
+/**
+   * Retrieves a list of all profiles from the `Profile` model.
+   *
+   * This method fetches all the available profiles from the database and returns them in the response.
+   * If the fetch is successful, it returns the profiles in the `data` field of the response.
+   *
+   * @returns {Promise<{ statusCode: string, message: string, data: { profiles: any[] } }>}
+   * A promise that resolves to an object containing the status, message, and the list of profiles.
+   */
+  async exportUserprofiles(profileId:string): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { exportProfiles: any };
+  }> {
+    try {
+    const workbook = new ExcelJS.Workbook();
+    const headerSheet = workbook.addWorksheet('Headers')
+    const headers = ['Profile Name','Created By','Created On'];
+    headerSheet.addRow(headers);
+    const profile = await Profile.findByPk(profileId);
+          if (profile) {
+            headerSheet.addRow([profile.profile_name,profile.created_by, profile.created_datetime]);
+          }
+    const sheet = workbook.addWorksheet('Menu');
+    
+    const menuheaders = ['Menu','Is Selected'];
+   
+    const profileData = await ProfileMenuAccess.findAll({
+      where: { profile_id: profileId },
+      include: [
+             {
+              model: Menu,
+              as: "menu",
+              attributes: ["menu_name", "menu_desc"],
+              required: false,
+            },
+          ],
+      order: [[{ model: Menu, as: 'menu' }, 'menu_name', 'ASC']],
+    });
+    sheet.addRow(menuheaders);
+   
+    // Add rows
+    if (profileData.length > 0) {
+      profileData.forEach((entry) => {
+          const desc = (entry as any).menu?.menu_desc;
+        if (desc) {
+          const isEnabled = entry.is_enabled ? 'Enabled' : 'Disabled';
+          sheet.addRow([desc, isEnabled]);
+        }
+      });
+    }
+  
+  const moduleheaders = ['Menu','Module','Is Selected'];
+  const moduleSheet = workbook.addWorksheet('Module');
+  moduleSheet.addRow(moduleheaders);
 
+  const profileModuleData = await ProfileModuleAccess.findAll({
+    where: { profile_id: profileId },
+    include: [
+      {
+        model: MenuModule,
+        as: "menu_module",
+        attributes: ["module_name", "module_desc", "menu_id"],
+        required: false,
+        include: [
+          {
+            model: Menu,
+            as: "menu",
+            attributes: ["menu_desc"], // adjust according to your menu model column
+            required: false,
+          },
+        ],
+      },
+    ],
+  });
+
+  if (profileModuleData.length > 0) {
+    profileModuleData.forEach((entry) => {
+      const menuName = (entry as any).menu_module?.menu?.menu_desc;
+      const moduleName = (entry as any).menu_module?.module_desc;
+      if (menuName) {
+        const isEnabled = entry.is_enabled ? "Enabled" : "Disabled";
+        moduleSheet.addRow([menuName,moduleName, isEnabled]);
+      }
+    });
+  }
+const pemissionheaders = ['Module','Permission','Is Selected'];
+const permissionSheet = workbook.addWorksheet('Permission');
+permissionSheet.addRow(pemissionheaders);
+
+const ModulePermissionData = await ProfilePermissionAccess.findAll({
+  where: { profile_id: profileId },
+  include: [
+    {
+      model: ModulePermission,
+      as: "module_permission",
+      attributes: ["permission_name", "permission_desc", "menu_module_id"],
+      required: false,
+       include: [
+         {
+           model: MenuModule,
+           as: "menu_module",
+           attributes: ["module_desc"], // adjust according to your menu model column
+           required: false,
+         },
+       ],
+    },
+  ],
+  });
+  if (ModulePermissionData.length > 0) {
+    ModulePermissionData.forEach((entry) => {
+      const moduleName = (entry as any).module_permission?.menu_module?.module_desc;;
+      const permissionName = (entry as any).module_permission?.permission_desc;
+      if (moduleName) {
+        const isEnabled = entry.is_enabled ? "Enabled" : "Disabled";
+        permissionSheet.addRow([moduleName,permissionName, isEnabled]);
+      }
+  });
+}
+const fieldheaders = ['Permission','Field','View','Edit'];
+const fieldSheet = workbook.addWorksheet('Fields');
+fieldSheet.addRow(fieldheaders);
+const fieldData = await ProfileFieldsAccess.findAll({
+  where: { profile_id: profileId },
+  include: [
+    {
+      model: PermissionField,
+      as: "permission_field",
+      attributes: ["field_name", "field_desc", "module_permission_id"],
+      required: false,
+      include: [
+        {
+          model: ModulePermission,
+          as: "module_permission",
+          attributes: ["permission_desc"], // adjust according to your menu model column
+          required: false,
+        },
+      ],
+    },
+  ],
+});
+if (fieldData.length > 0) {
+  fieldData.forEach((entry) => {
+    const moduleName = (entry as any).permission_field?.module_permission?.permission_desc;
+    const permissionName = (entry as any).permission_field?.field_desc;
+    if (moduleName) {
+      const view = entry.read ? "Enabled" : "Disabled";
+      const edit = entry.edit ? "Enabled" : "Disabled";
+      fieldSheet.addRow([moduleName,permissionName, view,edit]);
+    }
+  });
+}
+  //await workbook.xlsx.writeFile('Profile_Permissions.xlsx');
+  const buffer = await workbook.xlsx.writeBuffer();
+  console.log('Excel file generated successfully.');
+      return {
+        statusCode: constants.SUCCESS,
+        message: constants.SUCCESS_MESSAGE,
+        data: {
+          exportProfiles: Buffer.from(buffer).toString('base64'),
+        },
+      };
+    } catch (err) {
+      return this.throwServiceError(err as Error);
+    }
+  }
+
+}
+
+
+  // Helper function to calculate unique key based on type
+function getPermissionKey(permission: any): string {
+  switch (permission.type) {
+    case 'field':
+      return `field::${permission.permission_id}`;
+    case 'module':
+      return `module::${permission.module_id}`;
+    case 'menu':
+      return `menu::${permission.menu_id}`;
+    case 'permission':
+      return `permission::${permission.permission_id}`;
+    default:
+      return `${permission.type}::${permission.name || permission.permission_id}`;
+  }
+}
 export default UserService;
