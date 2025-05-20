@@ -1396,7 +1396,7 @@ const rawResult = users || [];
    *
    * @returns {Promise<{ statusCode: string, message: string, data: { rid: string; user_role: string } | null }>}
    */
-  async fetchuserExtendedpermission(userId: string): Promise<{
+  async fetchUserExtendedpermission(userId: string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -1482,7 +1482,7 @@ const rawResult = users || [];
       mergedPermissions.push({
         ...profilePerm,
         is_enabled: profilePerm.is_enabled,
-        hasExtendedPermission: profilePerm.is_enabled ? false : (userPerm?.is_enabled === true),
+        has_extended_permission: profilePerm.is_enabled ? false : (userPerm?.is_enabled === true),
       });
     }
 
@@ -1501,7 +1501,7 @@ const rawResult = users || [];
     } else {
       mergedPermissions.push({
         ...userPerm,
-        hasExtendedPermission: false,
+        has_extended_permission: false,
       });
     }
   }
@@ -1527,7 +1527,15 @@ const rawResult = users || [];
   }> {
     try {
     const workbook = new ExcelJS.Workbook();
+    const headerSheet = workbook.addWorksheet('Headers')
+    const headers = ['Profile Name','Created By','Created On'];
+    headerSheet.addRow(headers);
+    const profile = await Profile.findByPk(profileId);
+          if (profile) {
+            headerSheet.addRow([profile.profile_name,profile.created_by, profile.created_datetime]);
+          }
     const sheet = workbook.addWorksheet('Menu');
+    
     const menuheaders = ['Menu','Is Selected'];
    
     const profileData = await ProfileMenuAccess.findAll({
@@ -1589,7 +1597,7 @@ const rawResult = users || [];
       }
     });
   }
-const pemissionheaders = ['Module','Action','Is Selected'];
+const pemissionheaders = ['Module','Permission','Is Selected'];
 const permissionSheet = workbook.addWorksheet('Permission');
 permissionSheet.addRow(pemissionheaders);
 
@@ -1622,7 +1630,7 @@ const ModulePermissionData = await ProfilePermissionAccess.findAll({
       }
   });
 }
-const fieldheaders = ['Module','Field','View','Edit'];
+const fieldheaders = ['Permission','Field','View','Edit'];
 const fieldSheet = workbook.addWorksheet('Fields');
 fieldSheet.addRow(fieldheaders);
 const fieldData = await ProfileFieldsAccess.findAll({

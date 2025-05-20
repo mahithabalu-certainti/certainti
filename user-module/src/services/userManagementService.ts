@@ -3,6 +3,7 @@ import { models } from "../models/index";
 const UserService = require('../services/userService').default;
 const userService = new UserService();
 import { ProfileTimeline } from "../models/profileTimelineModel";
+import { UserExtendedPermissionTimeline } from "../models/userExtendedPermissionTimelineModel";
 import { Op, IndexHints } from "sequelize";
 import { initSequelize } from "../config/dataSource";
 import { UserFieldsAccessHistory } from "../models/userFieldsAccessHistoryModel";
@@ -56,6 +57,7 @@ class UserManagementService {
     data?: {
       profile?: any;
       profile_id?: string;
+      source_profile_id?:string,
       profile_number?: string;
       privileges?: any[];
     };
@@ -119,6 +121,7 @@ class UserManagementService {
           data: {
             profile_id: profile.rid,
             profile_number: profile.r_number,
+            source_profile_id:source_profile_id,
             privileges
           }
         };
@@ -151,6 +154,40 @@ class UserManagementService {
         event_status: eventStatus,
         event_datetime: new Date(),
         modified_by: userId
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error recording profile event:', error);
+      return false;
+    }
+  }
+
+    /**
+ * Records a profile event in the profile_timeline table
+ * 
+ * @param {string} profileId - The ID of the profile
+ * @param {string} eventName - The name of the event (e.g., "create")
+ * @param {string} eventStatus - The status of the event (e.g., "success" or "failure")
+ * @param {string} userId - The ID of the user who performed the action
+ * @returns {Promise<boolean>} - Returns true if recording was successful
+ */
+  private async recordUserExtendedProfileEvent(
+    userId: string,
+    profile_rid:string,
+    eventName: string,
+    eventStatus: string,
+    loggedInUser: string
+  ): Promise<boolean> {
+    try {
+      // Create timeline entry
+      await UserExtendedPermissionTimeline.create({
+        user_rid: userId,
+        profile_rid: profile_rid,
+        event_name: eventName,
+        event_status: eventStatus,
+        event_datetime: new Date(),
+        modified_by: loggedInUser
       });
 
       return true;
@@ -328,20 +365,20 @@ class UserManagementService {
       // Get filtered permissions based on provided parameters
       let privileges = [];
       if (type === 'menu' && !id) {
-        // Case 5: If menu type is provided, get modules, permissions, and fields for that menu
+        // Case 1: If menu type is provided and id not provided, get all menus
         privileges = await this.getAllMenusForProfile(profileId);
       }
       else if (type === 'permission' && id) {
-        // Case 7: If permission type is provided, get only fields for that permission
+        // Case 2: If permission type is provided, get only fields for that permission
         privileges = await this.getFieldsForPermission(profileId, id);
       } else if (type === 'module' && id) {
-        // Case 6: If module type is provided, get permissions and fields for that module
+        // Case 3: If module type is provided, get permissions and fields for that module
         privileges = await this.getPermissionsForModule(profileId, id);
       } else if (type === 'menu' && id) {
-        // Case 5: If menu type is provided, get modules, permissions, and fields for that menu
+        // Case 4: If menu type is provided, get modules, permissions, and fields for that menu
         privileges = await this.getModulesForMenu(profileId, id);
       } else {
-        // Case 4: If no filters, get all permissions for the profile
+        // Case 5: If no filters, get all permissions for the profile
         privileges = await userService.getProfilePermission(profileId);
       }
 
@@ -827,12 +864,11 @@ class UserManagementService {
     }
   }
   /**
-   * Updates profile permissions based on modified items
+   * Extends the permissionfor a user based on modified items
    * 
    * @param {string} profileId - The profile ID to update permissions for
    * @param {Array} privileges - Array of permission objects with modification flags
    * @param {string} userId - The ID of the user making the update
- * @param {string} originalUrl - OriginalUrl of the request
  * @returns {Promise<Object>} - Response object with update status
  */
   async updateUserExtendedPermissions(
@@ -846,7 +882,7 @@ class UserManagementService {
       module_id:string;
       menu_id:string;
       is_modified: boolean;
-      hasExtendedPermission:boolean;
+      has_extended_permission:boolean;
       is_enabled?: boolean;
       read?: boolean;
       edit?: boolean;
@@ -872,19 +908,9 @@ class UserManagementService {
           errorMessage: `Profile with ID ${profileId} not found`
         };
       }
-      const user = await User.findByPk(requestedUserId);
-      if (!user) {
-        return {
-          statusCode: constants.NOT_FOUND,
-          message: constants.NOT_FOUND_MESSAGE,
-          errorMessage: `UserId with ID ${requestedUserId} not found`
-        };
-      }
-
-
+  
       // Filter only modified permissions
       const modifiedPermissions = privileges.filter(p => p.is_modified === true);
-
       if (modifiedPermissions.length === 0) {
         return {
           statusCode: constants.SUCCESS,
@@ -900,14 +926,15 @@ class UserManagementService {
       const updatePromises = modifiedPermissions.map(async (permission) => {
         switch (permission.type) {
           case 'menu':
-            return this.updateUserMenuAccessIfChanged(permission.rid,permission.menu_id, permission.hasExtendedPermission || false, requestedUserId ,loggedInUsername
+            return this.updateUserMenuAccessIfChanged(profileId,permission.rid,permission.menu_id, permission.has_extended_permission || false, requestedUserId ,loggedInUsername
             );
           case 'module':
-            return this.updateUserModuleAccessIfChanged(permission.rid,permission.module_id, permission.hasExtendedPermission || false, requestedUserId ,loggedInUsername);
+            return this.updateUserModuleAccessIfChanged(profileId,permission.rid,permission.module_id, permission.has_extended_permission || false, requestedUserId ,loggedInUsername);
           case 'permission':
-            return this.updateUserPermissionAccessIfChanged(permission.rid,permission.permission_id, permission.hasExtendedPermission || false, requestedUserId ,loggedInUsername);
+            return this.updateUserPermissionAccessIfChanged(profileId,permission.rid,permission.permission_id, permission.has_extended_permission || false, requestedUserId ,loggedInUsername);
           case 'field':
             return this.updateUserFieldAccessIfChanged(
+              profileId,
               permission.rid,
               permission.field_id,
               permission.read || false,
@@ -1365,6 +1392,7 @@ class UserManagementService {
    * Updates menu access for a profile if the value has changed
    */
   private async updateUserMenuAccessIfChanged(
+    profileId:string,
     accessId: string,
     menu_id:string,
     isEnabled: boolean,
@@ -1394,6 +1422,13 @@ class UserManagementService {
            new_value: isEnabled.toString(),
            modified_by: loggedInUsername
          });
+          await this.recordUserExtendedProfileEvent(
+          requestedUserId,
+          profileId,
+          "create",
+          "success",
+          loggedInUsername
+        );
 
       return true;
       }
@@ -1414,6 +1449,13 @@ class UserManagementService {
            modified_by: loggedInUsername
          });
 
+          await this.recordUserExtendedProfileEvent(
+          requestedUserId,
+          profileId,
+          "update",
+          "success",
+          loggedInUsername
+        );
         // Update only if the value has changed
         const [updated] = await UserMenuAccess.update(
           {
@@ -1437,9 +1479,10 @@ class UserManagementService {
    * Updates module access for a profile if the value has changed
    */
   private async updateUserModuleAccessIfChanged(
+     profileId:string,
     accessId: string,
     module_id:string,
-    hasExtendedPermission: boolean,
+    has_extended_permission: boolean,
     requestedUserId:string,
     loggedInUsername:string
   ): Promise<boolean> {
@@ -1456,21 +1499,28 @@ class UserManagementService {
         const newUserModuleAccessRecord =  await UserModuleAccess.create({
           user_id : requestedUserId,
           menu_module_id:module_id,
-          is_enabled:hasExtendedPermission
+          is_enabled:has_extended_permission
          });
           await UserModuleAccessHistory.create({
           user_module_access_rid: newUserModuleAccessRecord.rid,
           attribute_name: 'is_enabled',
           old_value: "",
-          new_value: hasExtendedPermission.toString(),
+          new_value: has_extended_permission.toString(),
           modified_by: loggedInUsername
         });
+         await this.recordUserExtendedProfileEvent(
+          requestedUserId,
+          profileId,
+          "create",
+          "success",
+          loggedInUsername
+        );
       return true;
       }
       else
       {
       // Check if the value has actually changed
-      if (currentAccess?.is_enabled === hasExtendedPermission) {
+      if (currentAccess?.is_enabled === has_extended_permission) {
         console.log(`Module access ${accessId} value unchanged, skipping update`);
         return false;
       }
@@ -1479,15 +1529,22 @@ class UserManagementService {
           user_module_access_rid: currentAccess.rid,
           attribute_name: 'is_enabled',
           old_value: currentAccess.is_enabled.toString(),
-          new_value: hasExtendedPermission.toString(),
+          new_value: has_extended_permission.toString(),
           modified_by: loggedInUsername
         });
+         await this.recordUserExtendedProfileEvent(
+          requestedUserId,
+          profileId,
+          "update",
+          "success",
+          loggedInUsername
+        );
      
 
       // Update only if the value has changed
       const [updated] = await UserModuleAccess.update(
         {
-          is_enabled: hasExtendedPermission,
+          is_enabled: has_extended_permission,
           modified_by: loggedInUsername
         },
         {
@@ -1510,6 +1567,7 @@ class UserManagementService {
    * Updates permission access for a profile if the value has changed
    */
   private async updateUserPermissionAccessIfChanged(
+     profileId:string,
     accessId: string,
     permissionId:string,
     isEnabled: boolean,
@@ -1537,6 +1595,13 @@ class UserManagementService {
           new_value: isEnabled.toString(),
           modified_by: loggedInUsername
         });
+         await this.recordUserExtendedProfileEvent(
+          requestedUserId,
+          profileId,
+          "create",
+          "success",
+          loggedInUsername
+        );
       return true;
       }
       else
@@ -1555,7 +1620,13 @@ class UserManagementService {
           modified_by: loggedInUsername
         });
       
-
+        await this.recordUserExtendedProfileEvent(
+          requestedUserId,
+          profileId,
+          "update",
+          "success",
+          loggedInUsername
+        );
       // Update only if the value has changed
       const [updated] = await UserPermissionAccess.update(
         {
@@ -1580,6 +1651,7 @@ class UserManagementService {
    * Updates field access for a profile if the values have changed
    */
   private async updateUserFieldAccessIfChanged(
+     profileId:string,
     accessId: string,
     fieldId:string,
     read: boolean,
@@ -1609,6 +1681,13 @@ class UserManagementService {
             new_value: read.toString(),
             modified_by: loggedInUsername
           });
+           await this.recordUserExtendedProfileEvent(
+          requestedUserId,
+          profileId,
+          "create",
+          "success",
+          loggedInUsername
+        );
        // console.error(`Menu access with ID ${accessId} not found`);
       return true;
       }
@@ -1632,6 +1711,13 @@ class UserManagementService {
             new_value: read.toString(),
             modified_by: loggedInUsername
           });
+           await this.recordUserExtendedProfileEvent(
+          requestedUserId,
+          profileId,
+          "update",
+          "success",
+          loggedInUsername
+        );
         }
 
         // Create history entry for edit permission if changed
@@ -1643,6 +1729,13 @@ class UserManagementService {
             new_value: edit.toString(),
             modified_by: loggedInUsername
           });
+           await this.recordUserExtendedProfileEvent(
+          requestedUserId,
+          profileId,
+          "update",
+          "success",
+          loggedInUsername
+        );
         }
       
       // Update only if values have changed

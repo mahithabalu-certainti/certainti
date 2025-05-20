@@ -245,7 +245,7 @@ const updateUserExtendedPermissionsSchema = Joi.object({
       name: Joi.string().optional(),
       desc: Joi.string().optional(),
       is_modified: Joi.boolean().required(),
-      hasExtendedPermission: Joi.boolean().required(),
+      has_extended_permission: Joi.boolean().required(),
       is_enabled: Joi.boolean().optional(),
       is_field_available: Joi.boolean().optional(),
       read: Joi.boolean().optional(),

@@ -544,17 +544,17 @@ async function getUserExtendedPermissions(req: Request, res: Response): Promise<
   const methodName = "Get User extended permission";
   try {
     const userId = req.params.userId;
-    const userRole = await services.userServices.fetchuserExtendedpermission(userId);
-    if (userRole.statusCode === constants.SUCCESS) {
+    const userExtendedPermsissions = await services.userServices.fetchUserExtendedpermission(userId);
+    if (userExtendedPermsissions.statusCode === constants.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, userRole.data);
+      handleSuccessResponse(res, userExtendedPermsissions.data);
     } else {
-      errorLog(methodName, userRole.errorMessage);
+      errorLog(methodName, userExtendedPermsissions.errorMessage);
       handleErrorResponse(
         res,
         constants.BAD_REQUEST,
         constants.BAD_REQUEST_MESSAGE,
-        userRole.errorMessage
+        userExtendedPermsissions.errorMessage
       );
     }
   } catch (error) {

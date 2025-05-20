@@ -20,6 +20,7 @@ import { UserPermissionAccess } from "./userPermissionAccessModel";
 import { UserFieldsAccess } from "./userFieldsAccessModel";
 import { UserApiAccessDenials } from "./userApiAccessDenialsModel";
 import { ProfileTimeline } from "./profileTimelineModel";
+import {UserExtendedPermissionTimeline } from "./userExtendedPermissionTimelineModel"
 
 import { ProfileMenuAccessHistory } from "./profileMenuAccessHistoryModel";
 import { ProfileModuleAccessHistory } from "./profileModuleAccessHistoryModel";
@@ -62,6 +63,7 @@ export const models: {
   UserPermissionAccessHistory: typeof UserPermissionAccessHistory;
   UserFieldsAccessHistory: typeof UserFieldsAccessHistory;
   ProfileHistory: typeof ProfileHistory;
+  UserExtendedPermissionTimeline: typeof UserExtendedPermissionTimeline;
 
 } = {
   BusinessTeams: BusinessTeams,
@@ -92,7 +94,8 @@ export const models: {
   UserModuleAccessHistory: UserModuleAccessHistory,
   UserPermissionAccessHistory: UserPermissionAccessHistory,
   UserFieldsAccessHistory: UserFieldsAccessHistory,
-  ProfileHistory: ProfileHistory
+  ProfileHistory: ProfileHistory,
+  UserExtendedPermissionTimeline:UserExtendedPermissionTimeline
 };
 
 export async function initModels() {
@@ -127,6 +130,7 @@ export async function initModels() {
     UserPermissionAccessHistory.initialize(sequelize);
     UserFieldsAccessHistory.initialize(sequelize);
     ProfileHistory.initialize(sequelize);
+    UserExtendedPermissionTimeline.initialize(sequelize)
     Object.values(models).forEach((model: any) => { 
       if (model.associate) { 
         model.associate(models); 
