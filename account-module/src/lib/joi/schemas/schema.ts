@@ -138,10 +138,10 @@ const accountSchema = Joi.object({
           "string.max": "Key Contact Email cannot exceed 254 characters.",
           "string.pattern.base": "Key Contact Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
         }),
-        key_contact_role_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
+        key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional(),
         include_in_communication: Joi.boolean().valid(true, false).optional(),
-        status: Joi.string().valid('active', 'inactive').required(),
+        status: Joi.string().valid('Active', 'Inactive').required(),
         action_type: Joi.string().valid('add', 'edit','delete').required()
       })
     )
@@ -248,7 +248,7 @@ const updateAccountSchema = Joi.object({
   key_contacts: Joi.array()
     .items(
       Joi.object({
-        key_contact_id: Joi.string().when("action_type", {
+        rid: Joi.string().when("action_type", {
           is: Joi.string().valid("edit", "delete"),
           then: Joi.required(),
           otherwise: Joi.forbidden(),
@@ -271,10 +271,10 @@ const updateAccountSchema = Joi.object({
           "string.max": "Key Contact Email cannot exceed 254 characters.",
           "string.pattern.base": "Key Contact Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
         }),
-        key_contact_role_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
+        key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional(),
         include_in_communication: Joi.boolean().valid(true, false).optional(),
-        status: Joi.string().valid('active', 'inactive').required(),
+        status: Joi.string().valid('Active', 'Inactive').required(),
         action_type: Joi.string().valid('add', 'edit','delete').required()
       })
     )

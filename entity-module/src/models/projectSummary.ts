@@ -1,64 +1,65 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { R_NUMBER_PREFIX } from "../utils/constants";
-export interface ProjectAttributes {
+
+export interface ProjectSummaryAttributes {
   rid?: string;
   r_number?: string;
-  eid?: string;
+
+  project_id: string;
+  project_number: string;
   project_code: string;
   industry_rid: string;
   industry_name?: string;
   account_rid: string;
-  account_fiscal_rid: string | null;
   program_name?: string | null;
   project_name?: string | null;
   project_startdate?: Date | null;
   project_enddate?: Date | null;
+  project_status: "Active" | "Inactive";
+  fiscal_year: number;
   project_type: "Fixed" | "Time & Material";
   project_classification_rid?: string | null;
   project_client_group?: string | null;
   project_group?: string | null;
-  project_status: "Active" | "Inactive";
-  fiscal_year: number;
+
   country?: string | null;
   region?: string | null;
   currency?: string | null;
+
   total_effort?: string | null;
   total_cost?: string | null;
   total_fte?: number;
   total_sub_con?: number;
   total_non_labor_cost?: string | null;
-  total_fte_effort?: string | null;
-  total_sub_con_effort?: string | null;
   total_fte_cost?: string | null;
   total_sub_con_cost?: string | null;
-  auto_send_ai_interaction: boolean;
-  auto_access_rd?: boolean;
-  max_ai_interaction: number;
-  blended_rate_fte?: string | null;
-  blended_rate_sub_con?: number | null;
-  project_description?: string | null;
+  comments?: string | null;
+
+  qualified_research_expenditure?: number | null;
+  is_rd_qualified?: boolean | null;
+  qre?: number | null;
+
+  project_point_of_contact?: string | null;
+  financial_consultant?: string | null;
+  technical_consultant?: string | null;
+
   created_datetime?: Date;
   modified_datetime?: Date;
   created_by: string;
   modified_by?: string | null;
-  blended_rate?: number | null;
-  comments?: string | null;
-  qualified_research_expenditure?: number | null;
-  is_rd_qualified?: boolean | null;
-  qre?: number | null;
 }
 
-interface ProjectCreationAttributes
-  extends Optional<ProjectAttributes, "rid"> {}
+interface ProjectSummaryCreationAttributes
+  extends Optional<ProjectSummaryAttributes, "rid"> {}
 
-export class Project
-  extends Model<ProjectAttributes, ProjectCreationAttributes>
-  implements ProjectAttributes
+export class ProjectSummary
+  extends Model<ProjectSummaryAttributes, ProjectSummaryCreationAttributes>
+  implements ProjectSummaryAttributes
 {
   public rid?: string;
   public r_number?: string;
+  public project_id!: string;
   public project_code!: string;
-  public account_fiscal_rid!: string;
   public account_rid!: string;
   public industry_rid!: string;
   public industry_name?: string;
@@ -66,11 +67,11 @@ export class Project
   public project_name?: string | null;
   public project_startdate?: Date | null;
   public project_enddate?: Date | null;
+  public project_status!: "Active" | "Inactive";
   public project_type!: "Fixed" | "Time & Material";
   public project_classification_rid?: string | null;
   public project_client_group?: string | null;
   public project_group?: string | null;
-  public project_status!: "Active" | "Inactive";
   public fiscal_year!: number;
   public country?: string | null;
   public region?: string | null;
@@ -80,28 +81,23 @@ export class Project
   public total_fte?: number;
   public total_sub_con?: number;
   public total_non_labor_cost?: string | null;
-  public total_fte_effort?: string | null;
-  public total_sub_con_effort?: string | null;
   public total_fte_cost?: string | null;
   public total_sub_con_cost?: string | null;
-  public auto_send_ai_interaction!: boolean;
-  public auto_access_rd?: boolean;
-  public max_ai_interaction!: number;
-  public blended_rate_fte?: string | null;
-  public blended_rate_sub_con?: number | null;
-  public project_description?: string | null;
   public created_datetime?: Date;
   public modified_datetime?: Date;
   public created_by!: string;
   public modified_by?: string | null;
-  public blended_rate?: number | null;
   public comments?: string | null;
   public qualified_research_expenditure?: number | null;
   public is_rd_qualified?: boolean | null;
   public qre?: number | null;
+  public project_point_of_contact?: string | null;
+  public technical_consultant?: string | null;
+  public financial_consultant?: string | null;
+  public project_number!: string;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
-    Project.init(
+    ProjectSummary.init(
       {
         rid: {
           type: DataTypes.UUID,
@@ -113,13 +109,13 @@ export class Project
           allowNull: false,
           unique: true,
         },
-        eid: {
-          type: DataTypes.UUID,
-          allowNull: true,
+        project_number: {
+          type: DataTypes.STRING(200),
+          allowNull: false,
         },
-        account_fiscal_rid: {
+        project_id: {
           type: DataTypes.UUID,
-          allowNull: true,
+          allowNull: false,
         },
         account_rid: {
           type: DataTypes.UUID,
@@ -128,7 +124,7 @@ export class Project
         project_code: {
           type: DataTypes.STRING(50),
           allowNull: false,
-          unique: true,
+          unique: false,
         },
         industry_rid: {
           type: DataTypes.UUID,
@@ -145,6 +141,10 @@ export class Project
         project_name: DataTypes.STRING(255),
         project_startdate: DataTypes.DATE,
         project_enddate: DataTypes.DATE,
+        project_status: {
+          type: DataTypes.ENUM("Active", "Inactive"),
+          allowNull: false,
+        },
         project_type: {
           type: DataTypes.ENUM("Fixed", "Time & Material"),
           allowNull: false,
@@ -152,10 +152,6 @@ export class Project
         project_classification_rid: DataTypes.STRING(100),
         project_client_group: DataTypes.STRING(200),
         project_group: DataTypes.STRING(150),
-        project_status: {
-          type: DataTypes.ENUM("Active", "Inactive"),
-          allowNull: false,
-        },
         fiscal_year: {
           type: DataTypes.INTEGER,
           allowNull: false,
@@ -176,42 +172,32 @@ export class Project
         total_cost: DataTypes.DOUBLE,
         total_fte: DataTypes.INTEGER,
         total_sub_con: DataTypes.INTEGER,
-        total_fte_effort: DataTypes.DOUBLE,
-        total_sub_con_effort: DataTypes.DOUBLE,
         total_fte_cost: DataTypes.DOUBLE,
         total_sub_con_cost: DataTypes.DOUBLE,
         total_non_labor_cost: DataTypes.DOUBLE,
-        auto_send_ai_interaction: {
-          type: DataTypes.BOOLEAN,
-          defaultValue: false,
-          allowNull: false,
-        },
-        auto_access_rd: {
-          type: DataTypes.BOOLEAN,
-          defaultValue: false,
-        },
-        max_ai_interaction: {
-          type: DataTypes.INTEGER,
-          allowNull: false,
-        },
-        blended_rate: {
-          type: DataTypes.INTEGER,
-          allowNull: true,
-        },
-        blended_rate_fte: DataTypes.DOUBLE,
-        blended_rate_sub_con: DataTypes.DOUBLE,
-        project_description: DataTypes.STRING(2000),
         qualified_research_expenditure: {
           type: DataTypes.DOUBLE,
-          allowNull: true
+          allowNull: true,
         },
         is_rd_qualified: {
           type: DataTypes.BOOLEAN,
-          allowNull: true
+          allowNull: true,
         },
         qre: {
           type: DataTypes.INTEGER,
-          allowNull: true
+          allowNull: true,
+        },
+        project_point_of_contact: {
+            type: DataTypes.STRING(100),
+            allowNull: true,
+        },
+        technical_consultant: {
+            type: DataTypes.STRING(100),
+            allowNull: true,
+        },
+        financial_consultant: {
+            type: DataTypes.STRING(100),
+            allowNull: true,
         },
         created_datetime: {
           type: DataTypes.DATE,
@@ -237,13 +223,13 @@ export class Project
       },
       {
         sequelize,
-        schema: schemaName,
-        tableName: "project",
+        schema: schemaName ? schemaName : "public",
+        tableName: "project_summary",
         timestamps: false,
         underscored: true,
         hooks: {
           beforeValidate: async (account) => {
-            const latestAccount = await Project.findOne({
+            const latestAccount = await ProjectSummary.findOne({
               order: [["r_number", "DESC"]],
             });
 
@@ -254,13 +240,23 @@ export class Project
               );
               nextNumber = (currentNumber + 1).toString().padStart(10, "0");
             }
-            const accountCode = `${R_NUMBER_PREFIX.PROJECT} ${nextNumber}`;
+            const accountCode = `${R_NUMBER_PREFIX.PROJECT_SUMMARY} ${nextNumber}`;
             account.setDataValue("r_number", accountCode);
           },
         },
       }
     );
 
-    return Project;
+    // ProjectSummary.belongsTo(sequelize.models.Account, {
+    //   foreignKey: "account_rid",
+    //   as: "account",
+    // });
+
+    // ProjectSummary.belongsTo(sequelize.models.Industry, {
+    //   foreignKey: "industry_rid",
+    //   as: "industry",
+    // });
+
+    return ProjectSummary;
   }
 }
