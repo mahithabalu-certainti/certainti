@@ -245,7 +245,7 @@ export const REGEX_PATTERNS = {
   EMAIL:
     /^(?=.{6,254}$)[a-zA-Z0-9]+(?:[._+-][a-zA-Z0-9]+)*@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63}$/,
   PHONE: /^([0-9]{10})$/,
-  WEBSITE: /^(https?:\/\/|www\.)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(:[0-9]+)?(\/[a-zA-Z0-9\-.:\/]*)?$/,
+  WEBSITE: /^(https?:\/\/|www\.)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(:[0-9]+)?(\/[a-zA-Z0-9\-.:/]*)?$/,
   MAX_WEBSITE: /^.{0,255}$/,
   MIN_WEBSITE: /^.{10,}$/,
   DATA_RESIDENCY: /^[A-Za-z0-9\s-]+$/,
