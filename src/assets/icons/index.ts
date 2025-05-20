@@ -29,6 +29,7 @@ import createresourceIcon from './create-resource.svg';
 import dashboardIcon from './dashboard.svg';
 import downloadIcon from './download.svg';
 import editIcon from './edit.svg';
+import errorInfoIcon from './error-info-icon.svg';
 import emailTemplateIcon from './email-template.svg';
 import filterIcon from './filter.svg';
 import filterArrowRightIcon from './filterArrowRightIcon.svg';
@@ -107,6 +108,7 @@ export {
   downloadIcon,
   eyeIcon,
   editIcon,
+  errorInfoIcon,
   emailTemplateIcon,
   filterArrowRightIcon,
   filterIcon,

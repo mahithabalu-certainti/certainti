@@ -286,12 +286,12 @@ export const AccountForm: React.FC = () => {
 
   return (
     <>
-      <div className='h-[60px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200'>
+      <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
           <img
             src={isEditView ? editIcon : accountHomeIcon}
             alt='menu-icon'
-            className='h-8 w-8 bg-[#7D98B6] p-2.5 rounded'
+            className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
           />
           <div className='w-[90%]'>
             {isEditView && (

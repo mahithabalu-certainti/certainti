@@ -202,7 +202,7 @@ export const CreateUser: React.FC = () => {
         {/* Header Section */}
         <div className='w-full min-h-[50px] h-[50px] border-box py-1 px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
           <div className='flex items-center gap-3'>
-            <img src={ManageUserIcon} alt='manage user' className='h-8 w-8 rounded' />
+            <img src={ManageUserIcon} alt='manage user' className='h-6 w-6 rounded' />
             <div className='flex flex-col mb-1'>
               <div className={HEADER_STYLES.adminPermission}>
                 Admin Permissions

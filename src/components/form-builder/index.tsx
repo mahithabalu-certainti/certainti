@@ -1,4 +1,4 @@
-import { Autocomplete, Checkbox, MenuItem, Select, Skeleton, Table, TableBody, TableCell, TableHead, TableRow, TextField } from '@mui/material';
+import { Autocomplete, Checkbox, MenuItem, Select, Skeleton, Table, TableBody, TableCell, TableHead, TableRow, TextField, Tooltip } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -15,6 +15,7 @@ import {
   keyContactAddIcon,
   searchBlackIcon,
   verticalSeparatorIcon,
+  errorInfoIcon,
 } from '../../assets';
 
 import { useLocation } from 'react-router-dom';
@@ -210,7 +211,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             placeholder={field.placeholder}
             autoComplete='off'
             className={
-              'focus:outline-none placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium w-full sm:text-sm px-2 h-[32px] border border-[#CBD6E2] rounded-xs ' +
+              'outline-none focus:border-2 focus:border-blue-400 placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium w-full sm:text-sm px-2 h-[32px] border border-[#CBD6E2] rounded-xs ' +
               isError +
               fieldDisabled
             }
@@ -242,7 +243,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             <Select
               name={field.name}
               className={
-                'custom-select-no-arrow w-full sm:text-sm px-1.5 py-[6px]  ' +
+                'custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]  ' +
                 (fieldValue === '' ? 'text-[#7D98B6] ' : '') +
                 isError +
                 fieldDisabled
@@ -273,7 +274,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 height: '32px',
                 fontSize: '13px',
                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  border: '1px solid #CBD6E2',
+                  border: '2px solid #60A5FA',
                 },
                 '& .MuiOutlinedInput-root': {
                   '&.Mui-focused': {
@@ -330,7 +331,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return (
           <textarea
             className={
-              'focus:outline-none placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium w-full sm:text-sm p-2 border border-[#CBD6E2] rounded-xs h-[95px] resize-none focus:border focus:border-black focus:outline-none focus:ring-0' +
+              // caret-blue-400 -  change cursor border color when focus
+              'outline-none  placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium w-full sm:text-sm p-2 border border-[#CBD6E2] rounded-xs h-[95px] resize-none focus:border-2 focus:border-blue-400 ' +
               isError +
               fieldDisabled
             }
@@ -347,7 +349,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             <img
               src={searchBlackIcon}
               alt='search'
-              className='focus:outline-none absolute top-1/2 right-3 -translate-y-1/2 z-10 border border-[#CBD6E2]'
+              className='absolute top-1/2 right-3 -translate-y-1/2 z-10'
             />
             <Autocomplete
               options={field.options || []}
@@ -561,7 +563,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                         border: '1px solid #CBD6E2', // match default
                       },
                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        border: '1px solid #CBD6E2',
+                        border: '2px solid #60A5FA'
                       },
                       '&.Mui-disabled': {
                         '& input': {
@@ -640,7 +642,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                         border: '1px solid #CBD6E2', // match default
                       },
                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        border: '1px solid #CBD6E2',
+                        border: '2px solid #60A5FA'
                       },
                       '& .MuiIconButton-edgeEnd': {
                         display: 'none',
@@ -663,10 +665,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             onChange={(phone, country: CountryData) =>
               handleChange(phone, country.countryCode)
             }
-            inputClass={`placeholder:text-[13px] placeholder:color[#425A76] placeholder:font-medium !w-full !text-[13px] !p-2 !pl-12 !border !h-[32px] !rounded-xs ${field.error ? '!border-red-500' : '!border-[#CBD6E2]'
-              }${field.disabled ? ' !bg-gray-100' : ''}`}
+            inputClass={`!outline-none placeholder:text-[13px] placeholder:color[#425A76] placeholder:font-medium !w-full !text-[13px] !p-2 !pl-12 !h-[32px] !rounded-xs ${field.error ? '!border-red-500' : ''}${field.disabled ? ' !bg-gray-100' : ''}`}
             buttonClass={`!bg-transparent !border-r ${field.error ? '!border-red-500' : '!border-gray-300'} !rounded-tl-xs !rounded-bl-xs !hover:bg-transparent !shadow-none !px-0 !m-0`}
-            containerClass='!w-full'
+            containerClass='!w-full focus-within:outline-none focus-within:!border-2 focus-within:!border-blue-400'
             inputProps={{
               name: field.name,
               disabled: field.disabled,
@@ -1252,9 +1253,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           <TableBody sx={{
             '& .MuiTableCell-root': {
               padding: '0px',
-              height: 30,
-              boxSizing: 'border-box',
-              '& input, & select': {
+              // boxSizing: 'border-box',
+              '& input': {
                 paddingLeft: '4px',
                 border: 'none',
                 outline: 'none',
@@ -1275,14 +1275,66 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               <TableRow key={rowIndex}>
                 {row.map((field, colIndex) => (
                   <TableCell sx={{
+                    height: '32px !important',
                     minWidth: `${field.width}`,
                     paddingLeft: `${field.type}` === 'iconButton' || `${field.type}` === 'radio' ? '10px !important' : 'none',
                     verticalAlign: `${field.type}` === 'iconButton' ? 'middle !important' : 'top',
                     '& input': {
-                      border: `${field.label}` === 'Key Contact Name' ? '1px dashed #D9D9D9 !important' : 'none'
-                    }
-                  }} key={colIndex} style={{ verticalAlign: 'top' }}>
-                    {getFields(field)}
+                      border: 'none'
+                    },
+                    // '& .MuiOutlinedInput-notchedOutline': {
+                    //   border: 'none !important',
+                    // },
+                    // '&:hover .MuiOutlinedInput-notchedOutline': {
+                    //   border: 'none',
+                    // },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      border: '2px solid #60A5FA',
+                      outline: 'none'
+                    },
+                  }} key={colIndex} style={{ verticalAlign: 'top', height: '32px !important' }}>
+                    {field.type === 'text' ? <div className={`h-[32px] border border-[#CBD6E2] rounded-[2px] overflow-hidden focus-within:border-2 focus-within:border-blue-400 ${field.error ? 'border-red-500 bg-[#FEF2F2]' : ''}`}>
+                      <div className=" box-border flex items-center gap-[4px]">
+                        {field.error &&
+                          <Tooltip
+                            title={field.error}
+                            placement='bottom-end'
+                            slotProps={{
+                              tooltip: {
+                                sx: {
+                                  backgroundColor: '#FEF2F2',
+                                  color: 'rgba(0, 0, 0, 0.87)',
+                                  fontSize: '12px',
+                                  fontWeight: 400,
+                                  boxShadow: 2,
+                                  borderRadius: '4px',
+                                },
+                              },
+                              popper: {
+                                modifiers: [
+                                  {
+                                    name: 'offset',
+                                    options: {
+                                      offset: [30, -40],
+                                    },
+                                  },
+                                ],
+                              },
+                            }}
+                          >
+
+                            <span className="pl-[8px] text-[13px] text-[#425A76]">
+                              <img src={errorInfoIcon} alt='error' />
+                            </span>
+                          </Tooltip>
+                        }
+                        {/* {showKeyContactError && <span className='absolute top-[5px]'>
+                          {field.error}
+                        </span>} */}
+                        {getFields(field)}
+                      </div>
+                    </div> :
+                      getFields(field)}
                   </TableCell>
                 ))}
               </TableRow>
@@ -1316,7 +1368,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               <div>
                 {
                   field.type === 'website' ?
-                    <div className={`border border-[#CBD6E2] rounded-[2px] overflow-hidden ${field.error ? 'border-red-500 bg-[#FEF2F2]' : ''}`}>
+                    <div className={`border border-[#CBD6E2] rounded-[2px] overflow-hidden focus-within:border-2 focus-within:border-blue-400 ${field.error ? 'border-red-500 bg-[#FEF2F2]' : ''}`}>
                       <div className="h-[32px]  box-border flex items-center gap-[4px]">
                         <span className="pl-[8px] text-[13px] text-[#425A76]">https://</span>
                         <img src={verticalSeparatorIcon} alt-='separtor' />

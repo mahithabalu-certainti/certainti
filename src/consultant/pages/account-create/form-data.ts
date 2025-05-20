@@ -19,13 +19,13 @@ export const newKeyContactFields = (
   roles: SelectOption[],
   isPrimaryContactRequired: boolean
 ) => [
-  createTextField('key_contact_name', 'Key Contact Name', {
+  createTextField('key_contact_name', 'Contact Name', {
     required: false,
     width: '190px',
     regex: REGEX_PATTERNS.CONTACT_NAME,
     regexErrorMessage:
       "Only letters, spaces, apostrophes ('), commas (,), periods (.), and hyphens (-) are allowed",
-    placeholder: 'Enter Key Contact Name',
+    placeholder: 'Enter Contact Name',
     onChange: true,
     errorHandling: [
       {
