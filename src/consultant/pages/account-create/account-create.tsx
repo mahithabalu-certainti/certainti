@@ -66,7 +66,7 @@ export const AccountForm: React.FC = () => {
         key_contact_name:
           account?.accountDetails?.keyContacts?.[0]?.key_contact_name,
         key_contact_role:
-          account?.accountDetails?.keyContacts?.[0]?.key_contact_role_rid,
+          account?.accountDetails?.keyContacts?.[0]?.key_contact_role,
         key_contact_email:
           account?.accountDetails?.keyContacts?.[0]?.key_contact_email,
         key_contact_status: account?.accountDetails?.keyContacts?.[0]?.status,

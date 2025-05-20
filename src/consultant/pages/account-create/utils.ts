@@ -58,7 +58,7 @@ export const transformFormData = (
           {
             key_contact_name: formData.key_contact_name as string,
             key_contact_email: formData.key_contact_email as string,
-            key_contact_role_rid: formData.key_contact_role as string,
+            key_contact_role: formData.key_contact_role as string,
             is_primary_contact: formData?.is_primary_contact === 'yes',
             include_in_communication:
               formData?.include_in_communication === 'yes',
