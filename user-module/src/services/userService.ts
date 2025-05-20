@@ -3,7 +3,7 @@ import { models } from "../models/index";
 import { constants } from "../utils/constant";
 import { IUpdateUserData, IUserData } from "../utils/types";
 import { Op, Sequelize, IndexHints } from "sequelize";
-
+import ExcelJS from 'exceljs';
   const { 
     User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams,
     ProfileMenuAccess, Menu, ProfileModuleAccess, MenuModule, ProfilePermissionAccess, ModulePermission,
@@ -1524,19 +1524,48 @@ const rawResult = users || [];
     data?: { profiles: any };
   }> {
     try {
-      const profiles = await Profile.findAll( {order: [["profile_name", "ASC"]]} );
-      const profileExportData = profiles.map((profile: any) => {
-        return {
-          "Profile Name":profile.profile_name,
-          "Created On":profile.created_datetime,
-          "Created By":profile.created_by,          
-        };
-      });
+      const mainDbSequelize = await initSequelize();
+    const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet('Profile Permissions');
+
+  // Set Headers
+  const headers = ['Menu','Is Selected'];
+  const profileDataMap: Record<string, Record<string, boolean>> = {};
+  let profileId = '73969357-dbf5-4b28-9acc-6b33968792f6'
+    const profileData = await ProfileMenuAccess.findAll({
+      where: { profile_id: profileId },
+      include: [
+             {
+              model: Menu,
+              as: "menu",
+              attributes: ["menu_name", "menu_desc"],
+              required: false,
+            },
+          ]
+    });
+sheet.addRow(headers);
+    // Add rows
+if (profileData.length > 0) {
+  profileData.forEach((entry) => {
+      const desc = (entry as any).menu?.menu_desc;
+    if (desc) {
+      const isEnabled = entry.is_enabled ? 'Enabled' : 'Disabled';
+      sheet.addRow([desc, isEnabled]);
+    }
+  });
+}
+  
+
+
+
+  // Save to file
+  await workbook.xlsx.writeFile('Profile_Permissions.xlsx');
+  console.log('Excel file generated successfully.');
       return {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
         data: {
-          profiles: profileExportData,
+          profiles: "",
         },
       };
     } catch (err) {

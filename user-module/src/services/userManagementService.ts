@@ -327,8 +327,11 @@ class UserManagementService {
       }
       // Get filtered permissions based on provided parameters
       let privileges = [];
-
-      if (type === 'permission' && id) {
+      if (type === 'menu' && !id) {
+        // Case 5: If menu type is provided, get modules, permissions, and fields for that menu
+        privileges = await this.getAllMenusForProfile(profileId);
+      }
+      else if (type === 'permission' && id) {
         // Case 7: If permission type is provided, get only fields for that permission
         privileges = await this.getFieldsForPermission(profileId, id);
       } else if (type === 'module' && id) {
@@ -419,6 +422,37 @@ class UserManagementService {
         desc: paWithPermission.module_permission.permission_desc,
         is_field_available: paWithPermission.module_permission.is_field_available,
         is_enabled: paWithPermission.is_enabled
+      });
+    }
+
+    return privileges;
+  }
+
+  
+    /**
+   * Gets  all menus for a profile
+   */
+  private async getAllMenusForProfile(profileId: string): Promise<any[]> {
+    const privileges = [];
+
+    // Get module access
+    const menuAccess = await ProfileMenuAccess.findAll({
+      where: {
+        profile_id: profileId
+      }
+    });
+
+    // Add modules to result
+    for (const ma of menuAccess) {
+      const menu = ma as any;
+      console.log(menu.rid)
+      privileges.push({
+        rid: menu.rid,
+        type: "menu",
+        menu_id: menu.menu_id,
+        name: menu.menu_name,
+        desc: menu.menu_desc,
+        is_enabled: menu.is_enabled
       });
     }
 
@@ -536,13 +570,13 @@ class UserManagementService {
           {
             model: User,
             as: 'creator',
-            attributes: ['first_name'],
+            attributes: ['first_name','last_name'],
             required: includeClause.find(clause => clause.as === 'creator')?.required ?? false
           },
           {
             model: User,
             as: 'modifier',
-            attributes: ['first_name'],
+            attributes: ['first_name','last_name'],
             required: false
           }
         ]
@@ -553,8 +587,8 @@ class UserManagementService {
         const plainProfile = profile.get({ plain: true });
 
         // Only use creator.first_name if it exists and doesn't conflict with filters
-        const createdByName = plainProfile.creator ? plainProfile.creator.first_name : null;
-        const modifiedByName = plainProfile.modifier ? plainProfile.modifier.first_name : null;
+        const createdByName = plainProfile.creator ?  `${plainProfile.creator.first_name || ''} ${plainProfile.creator.last_name || ''}`.trim() : null;
+        const modifiedByName = plainProfile.modifier ?  `${plainProfile.modifier.first_name || ''} ${plainProfile.modifier.last_name || ''}`.trim() : null;
 
         return {
           ...plainProfile,
@@ -1347,11 +1381,20 @@ class UserManagementService {
         }
       });
       if (!currentAccess) {
-        UserMenuAccess.create({
+        const newUserMenuAccessRecord =  await UserMenuAccess.create({
           user_id : requestedUserId,
           menu_id:menu_id,
           is_enabled:isEnabled
          });
+         // Store history if this is an edit operation
+         await UserMenuAccessHistory.create({
+           user_menu_access_rid: newUserMenuAccessRecord.rid,
+           attribute_name: 'is_enabled',
+           old_value: "",
+           new_value: isEnabled.toString(),
+           modified_by: loggedInUsername
+         });
+
       return true;
       }
       else
@@ -1410,11 +1453,18 @@ class UserManagementService {
       });
       
       if (!currentAccess) {
-        UserModuleAccess.create({
+        const newUserModuleAccessRecord =  await UserModuleAccess.create({
           user_id : requestedUserId,
           menu_module_id:module_id,
           is_enabled:hasExtendedPermission
          });
+          await UserModuleAccessHistory.create({
+          user_module_access_rid: newUserModuleAccessRecord.rid,
+          attribute_name: 'is_enabled',
+          old_value: "",
+          new_value: hasExtendedPermission.toString(),
+          modified_by: loggedInUsername
+        });
       return true;
       }
       else
@@ -1475,11 +1525,18 @@ class UserManagementService {
         }
       });
       if (!currentAccess) {
-        UserPermissionAccess.create({
+       const newUserPermisisonAccessRecord =  await UserPermissionAccess.create({
           user_id : requestedUserId,
           module_permission_id:permissionId,
           is_enabled:isEnabled
          });
+          await UserPermissionAccessHistory.create({
+          user_permission_access_rid: newUserPermisisonAccessRecord.rid,
+          attribute_name: 'is_enabled',
+          old_value: "",
+          new_value: isEnabled.toString(),
+          modified_by: loggedInUsername
+        });
       return true;
       }
       else
@@ -1539,12 +1596,19 @@ class UserManagementService {
         }
       });
       if (!currentAccess) {
-       UserFieldsAccess.create({
+      const newUserFieldAccessRecord = await UserFieldsAccess.create({
           user_id : requestedUserId,
           permission_field_id:fieldId,
           read,
           edit,
          });
+         await UserFieldsAccessHistory.create({
+            user_fields_access_rid: newUserFieldAccessRecord.rid,
+            attribute_name: 'read',
+            old_value: "",
+            new_value: read.toString(),
+            modified_by: loggedInUsername
+          });
        // console.error(`Menu access with ID ${accessId} not found`);
       return true;
       }
