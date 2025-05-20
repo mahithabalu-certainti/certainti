@@ -1,6 +1,4 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
-import { Account } from "./accountModel";
-
 interface AccountFileDropConfigAttributes {
   rid: string;
   account_id: string;
