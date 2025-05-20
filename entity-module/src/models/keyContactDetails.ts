@@ -1,15 +1,17 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
+import { Project } from "./project";
 
 export interface KeyContactDetailsAttributes {
   rid?: string;
-  account_rid?: string;
-  key_contact_id?: string;
-  key_contact_name: string;
-  key_contact_email: string;
-  key_contact_role: string;
-  is_primary_contact?: boolean;
-  include_in_communication?: boolean;
-  status?: "Active" | "Inactive";
+  entity_rid: string;
+  entity_type: string;
+  r_number?: string | null;
+  key_contact_name?: string | null;
+  key_contact_email?: string | null;
+  key_contact_role: string | null;
+  is_primary_contact: boolean;
+  include_in_communication?: boolean | null;
+  status: "Active" | "Inactive";
   created_datetime?: Date;
   modified_datetime?: Date;
   created_by?: string;
@@ -20,26 +22,29 @@ interface KeyContactDetailsCreationAttributes
   extends Optional<KeyContactDetailsAttributes, "rid"> {}
 
 export class KeyContact
-  extends Model<KeyContactDetailsAttributes, KeyContactDetailsCreationAttributes>
+  extends Model<
+    KeyContactDetailsAttributes,
+    KeyContactDetailsCreationAttributes
+  >
   implements KeyContactDetailsAttributes
 {
   public rid?: string;
-  public account_rid?: string;
-  public key_contact_id?: string;
-  public key_contact_name!: string;
-  public key_contact_email!: string;
-  public key_contact_role!: string;
-  public is_primary_contact?: boolean;
-  public include_in_communication?: boolean;
+  public entity_rid!: string;
+  public entity_type!: string;
+  public r_number?: string | null;
+  public key_contact_name!: string | null;
+  public key_contact_email!: string | null;
+  public key_contact_role!: string | null;
+  public is_primary_contact!: boolean;
+  public include_in_communication?: boolean | null;
   public status!: "Active" | "Inactive";
   public created_by?: string;
   public modified_by?: string;
   public created_datetime?: Date;
   public modified_datetime?: Date;
-  
 
   static initialize(sequelize: Sequelize, schemaName: string) {
-    return KeyContact.init(
+    KeyContact.init(
       {
         rid: {
           type: DataTypes.UUID,
@@ -47,25 +52,29 @@ export class KeyContact
           allowNull: false,
           primaryKey: true,
         },
-        account_rid: {
+        entity_rid: {
           type: DataTypes.UUID,
           allowNull: false,
-        },  
-        key_contact_id: {
-          type: DataTypes.STRING(50),
-          allowNull: false
+        },
+        entity_type: {
+          type: DataTypes.STRING(500),
+          allowNull: false,
+        },
+        r_number: {
+          type: DataTypes.STRING(14),
+          allowNull: true,
         },
         key_contact_name: {
-          type: DataTypes.STRING(100),
-          allowNull: false,
+          type: DataTypes.STRING(128),
+          allowNull: true,
         },
         key_contact_email: {
-          type: DataTypes.STRING(100),
-          allowNull: false,
+          type: DataTypes.STRING(125),
+          allowNull: true,
         },
         key_contact_role: {
-          type: DataTypes.STRING(100),
-          allowNull: false,
+          type: DataTypes.UUID,
+          allowNull: true,
         },
         is_primary_contact: {
           type: DataTypes.BOOLEAN,
@@ -76,8 +85,9 @@ export class KeyContact
           allowNull: true,
         },
         status: {
-          type: DataTypes.STRING(255),
-          defaultValue: "active",
+          type: DataTypes.ENUM("Active", "Inactive"),
+          defaultValue: "Active",
+          allowNull: true
         },
         created_datetime: {
           type: DataTypes.DATE,
@@ -96,7 +106,7 @@ export class KeyContact
         modified_by: {
           type: DataTypes.UUID,
           allowNull: true,
-        }
+        },
       },
       {
         sequelize,
@@ -105,6 +115,23 @@ export class KeyContact
         timestamps: false,
         underscored: true,
         hooks: {
+          beforeValidate: async (keyContact) => {
+            if (!keyContact.r_number) {
+              const latest = await KeyContact.findOne({
+                order: [["r_number", "DESC"]],
+              });
+
+              let nextNumber = "0000000001";
+              if (latest?.r_number?.startsWith("KEY")) {
+                const currentNum = parseInt(
+                  latest.r_number.split(" ")[1] || "0"
+                );
+                nextNumber = (currentNum + 1).toString().padStart(10, "0");
+              }
+
+              keyContact.setDataValue("r_number", `KEY ${nextNumber}`);
+            }
+          },
           beforeUpdate: (KeyContact) => {
             KeyContact.setDataValue("created_datetime", new Date());
             KeyContact.setDataValue("modified_datetime", new Date());
@@ -112,5 +139,19 @@ export class KeyContact
         },
       }
     );
+
+    KeyContact.belongsTo(Project, {
+      foreignKey: 'entity_rid',
+      targetKey: 'rid',
+      as: 'project',
+    });
+
+    Project.hasMany(KeyContact, {
+      foreignKey: 'entity_rid',
+      sourceKey: 'rid',
+      as: 'keyContact',
+    });
+
+    return KeyContact;
   }
 }

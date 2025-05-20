@@ -2,6 +2,7 @@ import Joi from "joi";
 
 const uuidRegex =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const decimal18_2Regex = /^\d{1,16}(\.\d{1,2})?$/;
 
 const isNotFutureDate = (value: string, helpers: Joi.CustomHelpers): any => {
   if (!value) return value;
@@ -1000,11 +1001,13 @@ const createProjectSchema = Joi.object({
   account_id: Joi.string()
     .guid({ version: ["uuidv4"] })
     .required(),
-  project_ref_id: Joi.string().min(5).max(50).required(),
-  project_name: Joi.string().min(4).max(100).optional().allow("").allow(null),
-  industry_rid: Joi.string().min(4).max(100).required(),
-  industry_name: Joi.string().min(4).max(100).required(),
-  client_organization: Joi.string().min(4).max(100).required(),
+  project_code: Joi.string().min(5).max(50).required(),
+  program_name: Joi.string().min(4).max(255).optional().allow("").allow(null),
+  project_name: Joi.string().min(4).max(255).optional().allow("").allow(null),
+  industry_rid: Joi.string()
+  .guid({ version: ["uuidv4"] })
+  .optional().allow(null),
+  industry_name: Joi.string().min(4).max(100).optional().allow(null).allow(""),
   project_startdate: Joi.string()
     .max(10)
     .optional()
@@ -1032,15 +1035,10 @@ const createProjectSchema = Joi.object({
       "date.invalidFormat": "Invalid Project end date.",
     }),
   project_type: Joi.string().valid("Fixed", "Time & Material").required(),
-  project_classification_rid: Joi.string()
-    .max(100)
-    .optional()
-    .allow("")
-    .allow(null),
+  project_classification_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow(null),
   project_client_group: Joi.string().max(200).optional().allow("").allow(null),
   project_group: Joi.string().max(150).optional().allow("").allow(null),
-  project_summary: Joi.string().max(1000).optional().allow("").allow(null),
-  project_status: Joi.string().valid("Active", "Inactive").optional(),
+  project_status: Joi.string().valid("Active", "Inactive").required(),
   fiscal_year: Joi.number().integer().min(1000).max(9999).required().messages({
     "number.base": "Fiscal year must be a number",
     "number.min": "Fiscal year must be a 4-digit number",
@@ -1059,105 +1057,221 @@ const createProjectSchema = Joi.object({
     .guid({ version: ["uuidv4"] })
     .optional()
     .allow("", null),
-  project_manager: Joi.string().min(3).max(100).required(),
-  project_lead: Joi.string().min(3).max(100).required(),
-  spoc_name: Joi.string().min(3).max(100).required(),
-  spoc_email: Joi.string().email().max(255).optional().allow("").allow(null),
-  spoc_mobile: Joi.string().max(15).optional().allow("").allow(null),
-  project_tpc_name: Joi.string()
-    .min(3)
-    .max(100)
-    .optional()
-    .allow("")
-    .allow(null),
-  project_tpc_email: Joi.string()
-    .email()
-    .max(255)
-    .optional()
-    .allow("")
-    .allow(null),
-  project_tpc_mobile: Joi.string().max(15).optional().allow("").allow(null),
-  project_cc_list: Joi.string()
-    .allow("")
-    .allow(null)
-    .optional()
-    .custom((value, helpers) => {
-      if (!value) return value;
+  // project_manager: Joi.string().min(3).max(100).required(),
+  // project_lead: Joi.string().min(3).max(100).required(),
+  // spoc_name: Joi.string().min(3).max(100).required(),
+  // spoc_email: Joi.string().email().max(255).optional().allow("").allow(null),
+  // spoc_mobile: Joi.string().max(15).optional().allow("").allow(null),
+  // project_tpc_name: Joi.string()
+  //   .min(3)
+  //   .max(100)
+  //   .optional()
+  //   .allow("")
+  //   .allow(null),
+  // project_tpc_email: Joi.string()
+  //   .email()
+  //   .max(255)
+  //   .optional()
+  //   .allow("")
+  //   .allow(null),
+  // project_tpc_mobile: Joi.string().max(15).optional().allow("").allow(null),
+  // project_cc_list: Joi.string()
+  //   .allow("")
+  //   .allow(null)
+  //   .optional()
+  //   .custom((value, helpers) => {
+  //     if (!value) return value;
 
-      const emails = value.split(",").map((e: string) => e.trim());
-      const invalidEmails = emails.filter(
-        (email: string) => Joi.string().email().validate(email).error
-      );
+  //     const emails = value.split(",").map((e: string) => e.trim());
+  //     const invalidEmails = emails.filter(
+  //       (email: string) => Joi.string().email().validate(email).error
+  //     );
 
-      if (invalidEmails.length > 0) {
-        return helpers.message({
-          custom: `Invalid email(s) in Project CC List: ${invalidEmails.join(
-            ", "
-          )}`,
-        });
-      }
+  //     if (invalidEmails.length > 0) {
+  //       return helpers.message({
+  //         custom: `Invalid email(s) in Project CC List: ${invalidEmails.join(
+  //           ", "
+  //         )}`,
+  //       });
+  //     }
 
-      return value;
-    }, "Comma-separated email validator"),
+  //     return value;
+  //   }, "Comma-separated email validator"),
   total_effort: Joi.string()
-  .pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Total Effort must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    const num = parseFloat(value);
+    if (isNaN(num) || num <= 0) {
+      return helpers.error("any.invalid");
+    }
+    return num;
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
   total_cost: Joi.string()
-  .pattern(/^\d+(\.\d{0,2})?$/)
-    .allow(null)
-    .optional(),
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Total Cost must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    const num = parseFloat(value);
+    if (isNaN(num) || num <= 0) {
+      return helpers.error("any.invalid");
+    }
+    return num;
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
   total_fte: Joi.number().greater(0).optional().allow(null),
   total_sub_con: Joi.number().greater(0).optional().allow(null),
   total_non_labor_cost: Joi.string()
-  .pattern(/^\d+(\.\d{0,2})?$/)
-    .optional()
-    .allow(null),
-  total_fte_effort: Joi.string()
-  .pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
-  total_sub_con_effort: Joi.string()
-  .pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
-  total_fte_cost: Joi.string()
-  .pattern(/^\d+(\.\d{0,2})?$/)
-    .allow(null),
-  total_sub_con_cost: Joi.string()
-  .pattern(/^\d+(\.\d{0,2})?$/)
-    .optional()
-    .allow(null),
-  last_rd_ai_assess_on: Joi.string()
-  .max(10)
-  .custom(isValidDate, "Effective date validation")
-  .optional()
-  .allow(null)
-  .allow("")
+  .pattern(decimal18_2Regex)
   .messages({
-    "string.pattern.base": "Last rd ai assess date must be in the format MM/DD/YYYY",
-    "any.invalid": "Date cannot be in the future.",
-    "date.invalidFormat":
-      "Last rd ai assess date. Please use the format MM/DD/YYYY",
-  }),
-  last_rd_ai_assess_by: Joi.string()
-    .guid({ version: ["uuidv4"] })
-    .optional()
-    .allow("", null),
-  auto_send_ai_interaction: Joi.boolean().optional().allow(null).default(false),
+    "string.pattern.base": "Total NON Labor Cost must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    const num = parseFloat(value);
+    if (isNaN(num) || num <= 0) {
+      return helpers.error("any.invalid");
+    }
+    return num;
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+  total_fte_effort: Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Total FTE Effort must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    const num = parseFloat(value);
+    if (isNaN(num) || num <= 0) {
+      return helpers.error("any.invalid");
+    }
+    return num;
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+  total_sub_con_effort: Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Total SUB Con Effort must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    const num = parseFloat(value);
+    if (isNaN(num) || num <= 0) {
+      return helpers.error("any.invalid");
+    }
+    return num;
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+  total_fte_cost: Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Total FTE Cost must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    const num = parseFloat(value);
+    if (isNaN(num) || num <= 0) {
+      return helpers.error("any.invalid");
+    }
+    return num;
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+  total_sub_con_cost: Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Total SUB Con Cost must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    const num = parseFloat(value);
+    if (isNaN(num) || num <= 0) {
+      return helpers.error("any.invalid");
+    }
+    return num;
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+  // last_rd_ai_assess_on: Joi.string()
+  // .max(10)
+  // .custom(isValidDate, "Effective date validation")
+  // .optional()
+  // .allow(null)
+  // .allow("")
+  // .messages({
+  //   "string.pattern.base": "Last rd ai assess date must be in the format MM/DD/YYYY",
+  //   "any.invalid": "Date cannot be in the future.",
+  //   "date.invalidFormat":
+  //     "Last rd ai assess date. Please use the format MM/DD/YYYY",
+  // }),
+  // last_rd_ai_assess_by: Joi.string()
+  //   .guid({ version: ["uuidv4"] })
+  //   .optional()
+  //   .allow("", null),
+  auto_send_ai_interaction: Joi.boolean().required(),
   auto_access_rd: Joi.boolean().optional().allow(null).default(false),
-  max_ai_interaction: Joi.number().greater(0).optional().allow(null),
+  max_ai_interaction: Joi.number().greater(0).required(),
   blended_rate_fte: Joi.string()
-    .pattern(/^\d+(\.\d{1,2})?\s+\$\s*\/\s*Hour$/, { name: "currencyPattern" })
-    .messages({
-      "string.pattern.name": `Blended Rate FTE must be in the format like "36 $/Hour"`,
-    })
-    .optional()
-    .allow("")
-    .allow(null),
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Blended Rate FTE must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    const num = parseFloat(value);
+    if (isNaN(num) || num <= 0) {
+      return helpers.error("any.invalid");
+    }
+    return num;
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
   blended_rate_sub_con: Joi.string()
-    .pattern(/^\d+(\.\d{1,2})?\s+\$\s*\/\s*Hour$/, { name: "currencyPattern" })
-    .messages({
-      "string.pattern.name": `Blended Rate Sub Con must be in the format like "40 $/Hour"`,
-    })
-    .optional()
-    .allow(null)
-    .allow(""),
-  project_description: Joi.string().max(2000).allow(null).allow(""),
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Blended Rate Sub Con must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    const num = parseFloat(value);
+    if (isNaN(num) || num <= 0) {
+      return helpers.error("any.invalid");
+    }
+    return num;
+  })
+  .messages({
+    "any.invalid": "Blended Rate Sub Con must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+  comments: Joi.string().max(2000).allow(null).allow(""),
   key_contacts: Joi.array()
   .items(
   Joi.object({
@@ -1179,25 +1293,27 @@ const createProjectSchema = Joi.object({
         "string.max": "Key Contact Email cannot exceed 254 characters.",
         "string.pattern.base": "Key Contact Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
       }),
-      key_contact_role_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
-      is_primary_contact: Joi.boolean().valid(true, false).optional(),
-      include_in_communication: Joi.boolean().valid(true, false).optional(),
-      status: Joi.string().valid('active', 'inactive').required(),
-      action_type: Joi.string().valid('add', 'edit','delete').required()
+      key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow(null),
+      is_primary_contact: Joi.boolean().valid(true, false).optional().allow(null),
+      include_in_communication: Joi.boolean().valid(true, false).optional().allow(null),
+      status: Joi.string().valid("Active", "Inactive").optional().allow(null),
+      action_type: Joi.string().valid('add').required()
     })
   )
-  .optional()
+  .optional(),
+  project_description: Joi.string().max(1000).allow(null).allow(""),
 });
 
 const updateProjectSchema = Joi.object({
   project_id: Joi.string().guid({ version: ["uuidv4"] }).required(),
   account_id: Joi.string().guid({ version: ["uuidv4"] }).required(),
-  project_ref_id: Joi.string().min(5).max(50).required(),
-  project_name: Joi.string().min(4).max(100).optional().allow("").allow(null),
-  industry_rid: Joi.string().min(4).max(100).required(),
-  industry_name: Joi.string().min(4).max(100).required(),
-  client_organization: Joi.string().min(4).max(100).required(),
-
+  project_code: Joi.string().min(5).max(50).required(),
+  program_name: Joi.string().min(4).max(255).optional().allow("").allow(null),
+  project_name: Joi.string().min(4).max(255).optional().allow("").allow(null),
+  industry_rid: Joi.string()
+  .guid({ version: ["uuidv4"] })
+  .optional().allow(null),
+  industry_name: Joi.string().min(4).max(100).optional().allow(null).allow(""),
   project_startdate: Joi.string()
     .max(10)
     .optional()
@@ -1223,11 +1339,10 @@ const updateProjectSchema = Joi.object({
     }),
 
   project_type: Joi.string().valid("Fixed", "Time & Material").required(),
-  project_classification_rid: Joi.string().max(100).optional().allow("").allow(null),
+  project_classification_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow(null),
   project_client_group: Joi.string().max(200).optional().allow("").allow(null),
   project_group: Joi.string().max(150).optional().allow("").allow(null),
-  project_summary: Joi.string().max(1000).optional().allow("").allow(null),
-  project_status: Joi.string().valid("Active", "Inactive").optional(),
+  project_status: Joi.string().valid("Active", "Inactive").required(),
   fiscal_year: Joi.number().integer().min(1000).max(9999).required().messages({
     "number.base": "Fiscal year must be a number",
     "number.min": "Fiscal year must be a 4-digit number",
@@ -1237,84 +1352,193 @@ const updateProjectSchema = Joi.object({
   country: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("", null),
   region: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("", null),
   currency: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("", null),
-  project_manager: Joi.string().min(3).max(100).required(),
-  project_lead: Joi.string().min(3).max(100).required(),
-  spoc_name: Joi.string().min(3).max(100).required(),
-  spoc_email: Joi.string().email().max(255).optional().allow("").allow(null),
-  spoc_mobile: Joi.string().max(15).optional().allow("").allow(null),
-  project_tpc_name: Joi.string().min(3).max(100).optional().allow("").allow(null),
-  project_tpc_email: Joi.string().email().max(255).optional().allow("").allow(null),
-  project_tpc_mobile: Joi.string().max(15).optional().allow("").allow(null),
+  total_effort: Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Total Effort must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    const num = parseFloat(value);
+    if (isNaN(num) || num <= 0) {
+      return helpers.error("any.invalid");
+    }
+    return num;
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+  total_cost: Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Total Cost must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    const num = parseFloat(value);
+    if (isNaN(num) || num <= 0) {
+      return helpers.error("any.invalid");
+    }
+    return num;
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
 
-  project_cc_list: Joi.string()
-    .allow("")
-    .allow(null)
-    .optional()
-    .custom((value, helpers) => {
-      if (!value) return value;
-      const emails = value.split(",").map((e: string) => e.trim());
-      const invalid = emails.filter((e: any) => Joi.string().email().validate(e).error);
-      if (invalid.length > 0) {
-        return helpers.message({
-          custom: `Invalid email(s) in Project CC List: ${invalid.join(", ")}`,
-        });
-      }
-      return value;
-    }),
-
-  total_effort: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
-  total_cost: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
   total_fte: Joi.number().greater(0).optional().allow(null),
   total_sub_con: Joi.number().greater(0).optional().allow(null),
-  total_non_labor_cost: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
-  total_fte_effort: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
-  total_sub_con_effort: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
-  total_fte_cost: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
-  total_sub_con_cost: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional().allow(null),
-
-  last_rd_ai_assess_on: Joi.string()
-  .max(10)
-  .custom(isValidDate, "Effective date validation")
-  .optional()
-  .allow(null)
-  .allow("")
+  
+  total_fte_effort: Joi.string()
+  .pattern(decimal18_2Regex)
   .messages({
-    "string.pattern.base": "Last rd ai assess date must be in the format MM/DD/YYYY",
-    "any.invalid": "Date cannot be in the future.",
-    "date.invalidFormat":
-      "Last rd ai assess date. Please use the format MM/DD/YYYY",
-  }),
+    "string.pattern.base": "Total FTE Effort must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    const num = parseFloat(value);
+    if (isNaN(num) || num <= 0) {
+      return helpers.error("any.invalid");
+    }
+    return num;
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+  total_sub_con_effort: Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Total SUB Con Effort must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    const num = parseFloat(value);
+    if (isNaN(num) || num <= 0) {
+      return helpers.error("any.invalid");
+    }
+    return num;
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+  total_fte_cost: Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Total FTE Cost must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    const num = parseFloat(value);
+    if (isNaN(num) || num <= 0) {
+      return helpers.error("any.invalid");
+    }
+    return num;
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+  total_sub_con_cost: Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Total SUB Con Cost must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    const num = parseFloat(value);
+    if (isNaN(num) || num <= 0) {
+      return helpers.error("any.invalid");
+    }
+    return num;
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+  total_non_labor_cost: Joi.string()
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Total NON Labor Cost must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    const num = parseFloat(value);
+    if (isNaN(num) || num <= 0) {
+      return helpers.error("any.invalid");
+    }
+    return num;
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
+
+  // last_rd_ai_assess_on: Joi.string()
+  // .max(10)
+  // .custom(isValidDate, "Effective date validation")
+  // .optional()
+  // .allow(null)
+  // .allow("")
+  // .messages({
+  //   "string.pattern.base": "Last rd ai assess date must be in the format MM/DD/YYYY",
+  //   "any.invalid": "Date cannot be in the future.",
+  //   "date.invalidFormat":
+  //     "Last rd ai assess date. Please use the format MM/DD/YYYY",
+  // }),
   last_rd_ai_assess_by: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("", null),
   auto_send_ai_interaction: Joi.boolean().optional().allow(null).default(false),
   auto_access_rd: Joi.boolean().optional().allow(null).default(false),
   max_ai_interaction: Joi.number().greater(0).optional().allow(null),
 
   blended_rate_fte: Joi.string()
-    .pattern(/^\d+(\.\d{1,2})?\s+\$\s*\/\s*Hour$/, { name: "currencyPattern" })
-    .messages({
-      "string.pattern.name": `Blended Rate FTE must be in the format like "36 $/Hour"`,
-    })
-    .optional()
-    .allow("")
-    .allow(null),
-
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Blended Rate FTE  must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    const num = parseFloat(value);
+    if (isNaN(num) || num <= 0) {
+      return helpers.error("any.invalid");
+    }
+    return num;
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
   blended_rate_sub_con: Joi.string()
-    .pattern(/^\d+(\.\d{1,2})?\s+\$\s*\/\s*Hour$/, { name: "currencyPattern" })
-    .messages({
-      "string.pattern.name": `Blended Rate Sub Con must be in the format like "40 $/Hour"`,
-    })
-    .optional()
-    .allow("")
-    .allow(null),
+  .pattern(decimal18_2Regex)
+  .messages({
+    "string.pattern.base": "Blened Rate SUB Con must have up to 16 digits before the decimal and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    const num = parseFloat(value);
+    if (isNaN(num) || num <= 0) {
+      return helpers.error("any.invalid");
+    }
+    return num;
+  })
+  .messages({
+    "any.invalid": "Total Effort must be a valid positive number",
+  })
+  .optional()
+  .allow(null),
 
   project_description: Joi.string().max(2000).allow(null).allow(""),
   key_contacts: Joi.array()
     .items(
       Joi.object({
-        key_contact_id: Joi.string().when("action_type", {
-          is: Joi.string().valid("edit", "delete"),
+        action_type: Joi.string().valid('edit', "add", "delete").required(),
+        rid: Joi.string()
+        .guid({ version: ["uuidv4"] })
+        .when("action_type", {
+          is: "edit",
           then: Joi.required(),
-          otherwise: Joi.forbidden(),
+          otherwise: Joi.optional().allow(null),
         }),
         key_contact_name: Joi.string().pattern(/^(?!.*(['-])\1)[A-Za-z][A-Za-z' -]{0,126}[A-Za-z]$/).min(2).max(128).optional().allow("").allow(null)
         .messages({
@@ -1334,14 +1558,14 @@ const updateProjectSchema = Joi.object({
           "string.max": "Key Contact Email cannot exceed 254 characters.",
           "string.pattern.base": "Key Contact Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
         }),
-        key_contact_role_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
-        is_primary_contact: Joi.boolean().valid(true, false).optional(),
-        include_in_communication: Joi.boolean().valid(true, false).optional(),
-        status: Joi.string().valid('active', 'inactive').required(),
-        action_type: Joi.string().valid('add', 'edit','delete').required()
+        key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow(null),
+        is_primary_contact: Joi.boolean().valid(true, false).optional().allow(null),
+        include_in_communication: Joi.boolean().valid(true, false).optional().allow(null),
+        status: Joi.string().valid("Active", "Inactive").optional().allow(null)
       })
     )
-    .optional()
+    .optional(),
+  comments: Joi.string().max(2000).allow(null).allow(""),
 });
 
 export {
