@@ -1517,21 +1517,17 @@ const rawResult = users || [];
    * @returns {Promise<{ statusCode: string, message: string, data: { profiles: any[] } }>}
    * A promise that resolves to an object containing the status, message, and the list of profiles.
    */
-  async exportUserprofiles(): Promise<{
+  async exportUserprofiles(profileId:string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { profiles: any };
+    data?: { exportProfiles: any };
   }> {
     try {
-      const mainDbSequelize = await initSequelize();
     const workbook = new ExcelJS.Workbook();
-  const sheet = workbook.addWorksheet('Profile Permissions');
-
-  // Set Headers
-  const headers = ['Menu','Is Selected'];
-  const profileDataMap: Record<string, Record<string, boolean>> = {};
-  let profileId = '73969357-dbf5-4b28-9acc-6b33968792f6'
+    const sheet = workbook.addWorksheet('Menu');
+    const menuheaders = ['Menu','Is Selected'];
+   
     const profileData = await ProfileMenuAccess.findAll({
       where: { profile_id: profileId },
       include: [
@@ -1541,31 +1537,130 @@ const rawResult = users || [];
               attributes: ["menu_name", "menu_desc"],
               required: false,
             },
-          ]
+          ],
+      order: [[{ model: Menu, as: 'menu' }, 'menu_name', 'ASC']],
     });
-sheet.addRow(headers);
+    sheet.addRow(menuheaders);
+   
     // Add rows
-if (profileData.length > 0) {
-  profileData.forEach((entry) => {
-      const desc = (entry as any).menu?.menu_desc;
-    if (desc) {
-      const isEnabled = entry.is_enabled ? 'Enabled' : 'Disabled';
-      sheet.addRow([desc, isEnabled]);
+    if (profileData.length > 0) {
+      profileData.forEach((entry) => {
+          const desc = (entry as any).menu?.menu_desc;
+        if (desc) {
+          const isEnabled = entry.is_enabled ? 'Enabled' : 'Disabled';
+          sheet.addRow([desc, isEnabled]);
+        }
+      });
+    }
+  
+  const moduleheaders = ['Menu','Module','Is Selected'];
+  const moduleSheet = workbook.addWorksheet('Module');
+  moduleSheet.addRow(moduleheaders);
+
+  const profileModuleData = await ProfileModuleAccess.findAll({
+    where: { profile_id: profileId },
+    include: [
+      {
+        model: MenuModule,
+        as: "menu_module",
+        attributes: ["module_name", "module_desc", "menu_id"],
+        required: false,
+        include: [
+          {
+            model: Menu,
+            as: "menu",
+            attributes: ["menu_desc"], // adjust according to your menu model column
+            required: false,
+          },
+        ],
+      },
+    ],
+  });
+
+  if (profileModuleData.length > 0) {
+    profileModuleData.forEach((entry) => {
+      const menuName = (entry as any).menu_module?.menu?.menu_desc;
+      const moduleName = (entry as any).menu_module?.module_desc;
+      if (menuName) {
+        const isEnabled = entry.is_enabled ? "Enabled" : "Disabled";
+        moduleSheet.addRow([menuName,moduleName, isEnabled]);
+      }
+    });
+  }
+const pemissionheaders = ['Module','Action','Is Selected'];
+const permissionSheet = workbook.addWorksheet('Permission');
+permissionSheet.addRow(pemissionheaders);
+
+const ModulePermissionData = await ProfilePermissionAccess.findAll({
+  where: { profile_id: profileId },
+  include: [
+    {
+      model: ModulePermission,
+      as: "module_permission",
+      attributes: ["permission_name", "permission_desc", "menu_module_id"],
+      required: false,
+       include: [
+         {
+           model: MenuModule,
+           as: "menu_module",
+           attributes: ["module_desc"], // adjust according to your menu model column
+           required: false,
+         },
+       ],
+    },
+  ],
+  });
+  if (ModulePermissionData.length > 0) {
+    ModulePermissionData.forEach((entry) => {
+      const moduleName = (entry as any).module_permission?.menu_module?.module_desc;;
+      const permissionName = (entry as any).module_permission?.permission_desc;
+      if (moduleName) {
+        const isEnabled = entry.is_enabled ? "Enabled" : "Disabled";
+        permissionSheet.addRow([moduleName,permissionName, isEnabled]);
+      }
+  });
+}
+const fieldheaders = ['Module','Field','View','Edit'];
+const fieldSheet = workbook.addWorksheet('Fields');
+fieldSheet.addRow(fieldheaders);
+const fieldData = await ProfileFieldsAccess.findAll({
+  where: { profile_id: profileId },
+  include: [
+    {
+      model: PermissionField,
+      as: "permission_field",
+      attributes: ["field_name", "field_desc", "module_permission_id"],
+      required: false,
+      include: [
+        {
+          model: ModulePermission,
+          as: "module_permission",
+          attributes: ["permission_desc"], // adjust according to your menu model column
+          required: false,
+        },
+      ],
+    },
+  ],
+});
+if (fieldData.length > 0) {
+  fieldData.forEach((entry) => {
+    const moduleName = (entry as any).permission_field?.module_permission?.permission_desc;
+    const permissionName = (entry as any).permission_field?.field_desc;
+    if (moduleName) {
+      const view = entry.read ? "Enabled" : "Disabled";
+      const edit = entry.edit ? "Enabled" : "Disabled";
+      fieldSheet.addRow([moduleName,permissionName, view,edit]);
     }
   });
 }
-  
-
-
-
-  // Save to file
-  await workbook.xlsx.writeFile('Profile_Permissions.xlsx');
+  //await workbook.xlsx.writeFile('Profile_Permissions.xlsx');
+  const buffer = await workbook.xlsx.writeBuffer();
   console.log('Excel file generated successfully.');
       return {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
         data: {
-          profiles: "",
+          exportProfiles: Buffer.from(buffer).toString('base64'),
         },
       };
     } catch (err) {

@@ -474,7 +474,7 @@ async function editProfilePermissions(req: Request, res: Response): Promise<void
 }
 
 /**
- * Edits profile permissions based on the provided data
+ * Edits profile permissions for specific user based on the provided data
  * 
  * @param {Request} req - Express request object containing profile ID and permissions to update
  * @param {Response} res - Express response object
@@ -532,7 +532,13 @@ async function updateUserExtendedPermissions(req: Request, res: Response): Promi
     );
   }
 }
-
+/**
+ * Returns profile permissions for specific user with profile permissions
+ * 
+ * @param {Request} req - Express request object containing profile ID and permissions to update
+ * @param {Response} res - Express response object
+ * @returns {Promise<void>} - Returns updated profile data
+ */
 
 async function getUserExtendedPermissions(req: Request, res: Response): Promise<void> {
   const methodName = "Get User extended permission";
@@ -576,11 +582,14 @@ async function getUserExtendedPermissions(req: Request, res: Response): Promise<
 async function exportUserProfiles(req: Request, res: Response): Promise<void> {
   const methodName = "Export user profiles"
   try {
-    const profiles = await services.userServices.exportUserprofiles();
+    //  const validatedData = await validateRequest(req, exportUserProfilesSchema,"PLATFORM_TWO", res, "GET");
+    //   if (!validatedData) return;
+    const profileId = req.params.profileId;
+    const profiles = await services.userServices.exportUserprofiles(profileId);
 
     if (profiles.statusCode === constants.SUCCESS) {
       successLog(methodName)
-      handleSuccessResponse(res, await generateExcelBase64(profiles?.data?.profiles,'Profiles'));
+      handleSuccessResponse(res, profiles?.data?.exportProfiles);
     } else {
       errorLog(methodName, profiles.errorMessage);
       handleErrorResponse(

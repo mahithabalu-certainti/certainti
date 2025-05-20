@@ -176,16 +176,16 @@ const createProfileSchema = Joi.object({
  */
 const getProfilePermissionsSchema = Joi.object({
   type: Joi.string().valid('menu', 'module', 'permission').optional(),
-  id: Joi.string().when('type', {
-    is: Joi.exist(),
-    then: Joi.required().messages({
-      "string.empty": "ID is required when type is specified",
-      "any.required": "ID is required when type is specified"
-    }),
-    otherwise: Joi.optional()
-  })
+  id: Joi.string().optional()
+  // id: Joi.string().when('type', {
+  //   is: Joi.exist(),
+  //   then: Joi.required().messages({
+  //     "string.empty": "ID is required when type is specified",
+  //     "any.required": "ID is required when type is specified"
+  //   }),
+  //   otherwise: Joi.optional()
+  // })
 });
-
 /**
  * Schema for validating update/edit profile permissions requests
  */
