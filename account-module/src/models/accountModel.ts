@@ -4,6 +4,7 @@ import { Country } from "./countryModel";
 import { Currency } from "./currencyModel";
 import { Industry } from "./industryModel";
 import { R_NUMBER_PREFIX } from "../utils/constant";
+import { AccountFileDropConfig } from "./accountFileDropConfigModel";
 interface AccountAttributes {
   rid: string;
   eid?: string;
@@ -21,6 +22,9 @@ interface AccountAttributes {
   industry_name_other?: string;
   status: string;
   annual_revenue: string;
+  is_file_drop_enabled?: boolean;
+  file_drop_medium?: string;
+  file_drop_config_id?: string; 
   created_datetime?: Date;
   modified_datetime?: Date;
   created_by?: string;
@@ -50,6 +54,9 @@ export class Account
   public industry_name_other?: string;
   public status!: string;
   public annual_revenue!: string;
+  public is_file_drop_enabled?: boolean;
+  public file_drop_medium?: string;
+  public file_drop_config_id?: string; 
   public created_datetime?: Date;
   public modified_datetime?: Date;
   public created_by?: string;
@@ -127,6 +134,23 @@ export class Account
           type: DataTypes.STRING(255),
           allowNull: true
         },
+        is_file_drop_enabled: {
+          type: DataTypes.BOOLEAN,
+          allowNull: true,
+          defaultValue: false,
+        },
+        file_drop_medium: {
+          type: DataTypes.ENUM('SFTP', 'FTP', 'AZURE_BLOB', 'AWS_S3'),
+          allowNull: true,
+        },
+        file_drop_config_id: {
+          type: DataTypes.UUID,
+          allowNull: true,
+          references: {
+            model: "account_file_drop_config",
+            key: "rid"
+          }
+        },
         created_datetime: {
           type: DataTypes.DATE,
           allowNull: false,
@@ -203,6 +227,11 @@ export class Account
     Account.belongsTo(Currency, {
       foreignKey: "currency_rid",
       as: "currency",
+    });
+
+    Account.belongsTo(AccountFileDropConfig, {
+      foreignKey: "file_drop_config_id",
+      as: "file_drop_config",
     });
   }
 }

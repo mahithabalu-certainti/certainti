@@ -7,6 +7,7 @@ import { Region } from "./regionModel";
 import { States } from "./stateModel";
 import { City } from "./cityModel";
 import { Industry } from "./industryModel";
+import { AccountFileDropConfig } from "./accountFileDropConfigModel";
 export const models: {
   Account: typeof Account;
   Currency: typeof Currency;
@@ -16,6 +17,7 @@ export const models: {
   States: typeof States;
   City: typeof City;
   Industry: typeof Industry;
+  AccountFileDropConfig: typeof AccountFileDropConfig;
 } = {
   Account: Account,
   Currency: Currency,
@@ -25,6 +27,7 @@ export const models: {
   States: States,
   City: City,
   Industry: Industry,
+  AccountFileDropConfig: AccountFileDropConfig,
 };
 
 export async function initModels() {
@@ -37,6 +40,7 @@ export async function initModels() {
     City.initialize(sequelize);
     Industry.initialize(sequelize);
     DatabaseConnection.initialize(sequelize);
+    AccountFileDropConfig.initialize(sequelize);
     Account.initialize(sequelize);
     await sequelize.sync({ force: false });
   } catch (err) {
