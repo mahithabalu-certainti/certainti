@@ -101,7 +101,10 @@ class AccountService {
           finalSortOrder,
         ]);
       }
-
+      if (finalSortBy == "country" || finalSortBy == "currency" || finalSortBy == "industry") {
+           order.push(["account_name", "ASC"]);
+        }
+  
       // Determine if we should include the parent_account_rid filter
       // Only apply this filter if is_parent_account is not set to "NO"
       const baseWhereClause = { ...allWhereClause };
@@ -302,6 +305,10 @@ class AccountService {
             finalSortOrder,
           ]);
         }
+        if (finalSortBy == "country" || finalSortBy == "currency" || finalSortBy == "industry") {
+           order.push(["account_name", "ASC"]);
+        }
+  
         // Determine if we should include the parent_account_rid filter
         // Only apply this filter if is_parent_account is not set to "NO"
         const baseWhereClause = { ...allWhereClause };
@@ -402,29 +409,35 @@ class AccountService {
         let exportDetails: any[] = [];
         cleanedUsers.forEach((account: any) => {
           const baseRow = {
-            "Account name": account?.account_name || "",
-            "Parent Account": account?.parent_account?.account_name || "",
-            // "RecordId": account?.rid || "",
-            "Account Id": account?.r_number || "",
-            "Indutry": account?.industry?.industry_name || "",
-            "Country": account?.country?.country_name || "",
-            "Currency": account?.currency?.currency_code || "",
-            "Annual Revenue": account?.annual_revenue || "",
-            "Status": account?.status === 'active' ? 'Active' : 'In Active',
+            "Account Name": account?.account_name || "NA",
+            "Parent Account": account?.parent_account?.account_name || "NA",
+            "Account ID": account?.r_number || "NA",
+            "Industry": account?.industry?.industry_name || "NA",
+            "Country": account?.country?.country_name || "NA",
+            "Currency": account?.currency?.currency_code || "NA",
+            "Annual Revenue": account?.annual_revenue ? new Intl.NumberFormat('en-US', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+              useGrouping: true
+            }).format(Number(account.annual_revenue)) : "NA",
+            "Status": account?.status.toLowerCase() === 'active' ? 'Active' : 'In-Active',
           };
           exportDetails.push(baseRow);
           if (Array.isArray(account.child_accounts) && account.child_accounts.length > 0) {
             account.child_accounts.forEach((child: any) => {
               exportDetails.push({
-                "Account name": child?.account_name || "",
-                // "RecordId": child?.rid || "",
-                "Parent Account": account?.account_name || "", // parent is current account
-                "Account Id": child?.r_number || "",
-                "Indutry": child?.industry?.industry_name || "",
-                "Country": child?.country?.country_name || "",
-                "Currency": child?.currency?.currency_code || "",
-                "Annual Revenue": child?.annual_revenue || "",
-                "Status": child?.status === 'active' ? 'Active' : 'In Active',
+                "Account Name": child?.account_name || "NA",
+                "Parent Account": account?.account_name || "NA", // parent is current account
+                "Account ID": child?.r_number || "NA",
+                "Industry": child?.industry?.industry_name || "NA",
+                "Country": child?.country?.country_name || "NA",
+                "Currency": child?.currency?.currency_code || "NA",
+                "Annual Revenue": account?.annual_revenue ? new Intl.NumberFormat('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                  useGrouping: true
+                }).format(Number(account.annual_revenue)) : "NA",                
+                "Status": child?.status.toLowerCase() === 'active' ? 'Active' : 'In-Active',
               });
             });
           }
@@ -452,7 +465,7 @@ class AccountService {
       let parent_account = null;
       const {
         account_name,
-        account_description,
+        comments,
         parent_account_rid,
         account_country_rid,
         account_currency_rid,
@@ -507,7 +520,7 @@ class AccountService {
 
       const account = await repository.create({
         account_name,
-        account_description: account_description || "",
+        comments: comments || "",
         r_number: "fnfdfn",
         region: parent_account
           ? parent_account.region
@@ -515,12 +528,8 @@ class AccountService {
         is_parent: parent_account_rid ? false : true,
         parent_account_rid: parent_account_rid || null,
         storage_type: data_storage,
-        country_rid: parent_account
-          ? parent_account.country_rid
-          : account_country_rid,
-        currency_rid: parent_account
-          ? parent_account.currency_rid
-          : account_currency_rid,
+        country_rid:account_country_rid,
+        currency_rid:account_currency_rid,
         industry_rid: industry_rid,
         industry_name_other: industry_name_other,
         status,
@@ -586,7 +595,7 @@ class AccountService {
       const {
         account_rid,
         account_name,
-        account_description,
+        comments,
         status,
         annual_revenue,
         account_country_region_rid,
@@ -628,7 +637,7 @@ class AccountService {
       const [affectedCounts, affectedRows] = await repository.update(
         {
           account_name,
-          account_description: account_description || "",
+          comments: comments || "",
           status,
           region: account_country_region_rid,
           country_rid: account_country_rid,
@@ -636,7 +645,8 @@ class AccountService {
           industry_rid: industry_rid,
           modified_by: userId,
           industry_name_other: industry_name_other,
-          annual_revenue: annual_revenue ? new Decimal(annual_revenue).toNumber().toString() : ""
+          annual_revenue: annual_revenue ? new Decimal(annual_revenue).toNumber().toString() : "",
+          modified_datetime: new Date()
         },
         {
           where: {
@@ -776,6 +786,12 @@ class AccountService {
             required: false,
           },
           {
+            model: Industry,
+            as: "industry",
+            attributes: ["industry_name"],
+            required: false,
+          },
+          {
             model: Account,
             as: "parent_account",
             attributes: ["account_name"],
@@ -808,6 +824,17 @@ class AccountService {
         accountById?.rid || "",
         acconuntNumber
       );
+      let userNames;
+      if(accountById)
+      {
+         userNames = await this.fetchUserNames({
+            created_by: accountById?.created_by || "",
+            modified_by: accountById?.modified_by || "",
+          });
+        (accountById as any).dataValues.created_by = userNames.created_by_name;
+        (accountById as any).dataValues.modified_by = userNames.modified_by_name;
+      }
+    
 
       accountById = await this.schemaService.insertIndustyName(accountById);
 
@@ -815,6 +842,8 @@ class AccountService {
       const accountData = {
         ...accountDetails.length > 0 ? accountDetails[0] : {},
         keyContacts: keyContacts.length > 0 ? keyContacts : [],
+        created_by: accountDetails.length > 0 ? userNames?.created_by_name || "" : "",
+        modified_by: accountDetails.length > 0 ? userNames?.modified_by_name || "" : ""
       };
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -848,6 +877,43 @@ class AccountService {
       return this.throwServiceError(err as Error);
     }
   }
+  
+   /**
+   * Fetches user names for user IDs from the main database
+   * @param userIds - Object containing user IDs (created_by, modified_by)
+   * @returns Promise resolving to object with user names
+   */
+  private async fetchUserNames(userIds: { created_by?: string, modified_by?: string }): Promise<{ created_by_name: string, modified_by_name: string }> {
+    const result = {
+      created_by_name: '',
+      modified_by_name: ''
+    };
+    
+    try {
+      
+      // Fetch created_by user name if ID exists
+      if (userIds.created_by) {
+        const [createdByUser] = await this.schemaService.fetchUserNames(userIds.created_by)
+        if (createdByUser) {
+          result.created_by_name = (createdByUser as any).full_name;
+        }
+      }
+      
+      // Fetch modified_by user name if ID exists
+      if (userIds.modified_by) {
+        const [modifiedByUser] = await this.schemaService.fetchUserNames(userIds.modified_by)    
+        if (modifiedByUser) {
+          result.modified_by_name = (modifiedByUser as any).full_name;
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user names:', error);
+      // Return empty strings if there's an error
+    }
+    
+    return result;
+  }
+
   
   async listGlobalAccounts(): Promise<{
     statusCode: number;

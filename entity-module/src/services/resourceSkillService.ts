@@ -57,7 +57,7 @@ class ResourceSkillService {
         account_rid,
         resource_type,
         resource_rid,
-        resource_ref_id,
+        resource_code,
         start_date,
         skill_description,
         skill_level,
@@ -78,43 +78,43 @@ class ResourceSkillService {
       const schemaName = `platform_v2_${accountNumberFetched}`;
 
       
-      if (skill_type_rid && resource_rid) {
-        const sequelizeInstance = await this.getOrgSequelize();
-        console.log("Before Initialize");
-        Resources.initialize(sequelizeInstance, schemaName);
-        const ResourceModel = ResourceSkill.initialize(
-          sequelizeInstance,
-          schemaName
-        );
-        console.log("After Initialize");
+      // if (skill_type_rid && resource_rid) {
+      //   const sequelizeInstance = await this.getOrgSequelize();
+      //   console.log("Before Initialize");
+      //   Resources.initialize(sequelizeInstance, schemaName);
+      //   const ResourceModel = ResourceSkill.initialize(
+      //     sequelizeInstance,
+      //     schemaName
+      //   );
+      //   console.log("After Initialize");
 
-        try {
+      //   try {
 
-            if(!skill_type_others){
-            // Then check if this skill type rid exists for the resource
-            const existingResourceSkill = await ResourceModel.findOne({
-              where: {
-                skill_type_rid: skill_type_rid,
-                resource_rid,
-              },
-              attributes: ["rid"], // Only fetch the rid
-            });
+      //       if(!skill_type_others){
+      //       // Then check if this skill type rid exists for the resource
+      //       const existingResourceSkill = await ResourceModel.findOne({
+      //         where: {
+      //           skill_type_rid: skill_type_rid,
+      //           resource_rid,
+      //         },
+      //         attributes: ["rid"], // Only fetch the rid
+      //       });
 
-            if (existingResourceSkill) {
-              return {
-                statusCode: HttpStatus.FAILED,
-                message: HttpStatus.FAILED_MESSAGE,
-                errorMessage: `Skill already exists for this resource`,
-              };
-            }
-          }
+      //       if (existingResourceSkill) {
+      //         return {
+      //           statusCode: HttpStatus.FAILED,
+      //           message: HttpStatus.FAILED_MESSAGE,
+      //           errorMessage: `Skill already exists for this resource`,
+      //         };
+      //       }
+      //     }
           
-        } catch (error) {
-          console.error("Error checking for duplicate skill:", error);
-          // Continue with creation if check fails
-        }
+      //   } catch (error) {
+      //     console.error("Error checking for duplicate skill:", error);
+      //     // Continue with creation if check fails
+      //   }
       
-      }
+      // }
     
 
       // Create tables in parallel for better performance
@@ -199,6 +199,7 @@ class ResourceSkillService {
         const sequelizeInstance = await this.getOrgSequelize();
         ResourceSkill.initialize(sequelizeInstance, schemaName);
 
+        const startDate = start_date ? this.formatDateForDb(start_date.toString()) : undefined;
 
         // Use the model's create method to leverage default values
         createdResourceSkill = await ResourceSkill.create({
@@ -207,8 +208,8 @@ class ResourceSkillService {
           resource_type,
           resource_rid,
           resource_number,
-          resource_ref_id,
-          start_date,
+          resource_code,
+          start_date: startDate || undefined,
           skill_description,
           skill_level: skill_level || "",
           skill_type_rid,
@@ -434,11 +435,13 @@ class ResourceSkillService {
 
       try {
 
+        const startDate = start_date ? this.formatDateForDb(start_date.toString()) : undefined;
+
         const [affectedCounts, affectedRows] = await ResourceSkill.update(
           {
             rid,
             eid,
-            start_date,
+            start_date: startDate || undefined,
             skill_description,
             skill_level,
             skill_type_rid,
@@ -550,10 +553,8 @@ class ResourceSkillService {
         "skill_subtype_others",
         "comments",
         "skill_details",
-        "years_of_experience",
         "fiscal_year",
         "modified_by",
-        "technical_weightage",
         "status",
       ];
 
@@ -918,7 +919,7 @@ class ResourceSkillService {
       // Fetch created_by user name if ID exists
       if (userIds.created_by) {
         const [createdByUser] = await sequelize.query(
-          `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          `SELECT concat(first_name, ' ', last_name) as full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.created_by },
             type: "SELECT",
@@ -933,7 +934,7 @@ class ResourceSkillService {
       // Fetch modified_by user name if ID exists
       if (userIds.modified_by) {
         const [modifiedByUser] = await sequelize.query(
-          `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          `SELECT concat(first_name, ' ', last_name) as full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.modified_by },
             type: "SELECT",

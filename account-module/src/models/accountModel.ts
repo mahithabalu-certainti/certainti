@@ -9,7 +9,7 @@ interface AccountAttributes {
   eid?: string;
   r_number: string;
   account_name: string;
-  account_description: string;
+  comments?: string;
   region?: string;
   is_parent: boolean;
   parent_account_rid?: string | null;
@@ -37,7 +37,7 @@ export class Account
   public rid!: string;
   public r_number!: string;
   public account_name!: string;
-  public account_description!: string;
+  public comments?: string;
   public is_parent!: boolean;
   public eid?: string;
   public region?: string;
@@ -72,8 +72,8 @@ export class Account
           allowNull: false,
           unique: true,
         },
-        account_description: {
-          type: DataTypes.STRING(255),
+        comments: {
+          type: DataTypes.STRING(2000),
           allowNull: true,
         },
         eid: {

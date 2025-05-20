@@ -7,6 +7,7 @@ interface ModulePermissionAttributes {
   permission_desc: string;
   menu_module_id: string;
   status: string;
+  is_field_available?: boolean;
   created_datetime?: Date;
   modified_datetime?: Date;
 }
@@ -22,6 +23,7 @@ export class ModulePermission
   public permission_desc!: string;
   public menu_module_id!: string;
   public status!: string;
+  public is_field_available?: boolean;
   public created_datetime?: Date;
   public modified_datetime?: Date;
 
@@ -53,6 +55,11 @@ export class ModulePermission
           type: DataTypes.STRING,
           allowNull: false,
           defaultValue: "active",
+        },
+        is_field_available: {
+          type: DataTypes.BOOLEAN,
+          allowNull: false,
+          defaultValue: false,
         },
         created_datetime: {
           type: DataTypes.DATE,

@@ -100,40 +100,121 @@ const isEndDateAfterStartDate = (
   return value;
 };
 
+const costFields = [
+  'annual_cost',
+  'semi_annual_cost',
+  'monthly_cost',
+  'bi_weekly_cost',
+  'weekly_cost',
+  'daily_cost',
+  'hourly_cost'
+];
+
+// Shared validation method
+const MAX_COST_VALUE = 999999999999.99;
+
+const costFieldValidator = (fieldName: string) => {
+  return Joi.string()
+    .pattern(/^\d+(\.\d{1,2})?$/)
+    .custom((value, helpers) => {
+      if (!value) return value; // skip empty string, already allowed
+
+      const numValue = parseFloat(value);
+      if (numValue > MAX_COST_VALUE) {
+        return helpers.error('number.maxCost');
+      }
+
+      return value;
+    })
+    .allow('')
+    .messages({
+      'string.pattern.base': `${fieldName.replace(/_/g, ' ')} must be a valid number with up to 2 decimal places`,
+      'number.maxCost': `${fieldName.replace(/_/g, ' ')} must be a valid string number maximum up to (${MAX_COST_VALUE})`
+    });
+};
+
 const createResourcesSchema = Joi.object({
   account_number: Joi.string().max(50).required(),
   account_id: Joi.string()
     .guid({ version: ["uuidv4"] })
     .required(),
-  resource_ref_id: Joi.string().min(5).max(50).required().messages({
-    'string.base': 'Resource Ref ID must be a string.',
-    'string.empty': 'Resource Ref ID is required.',
-    'string.min': 'Resource Ref ID must be at least 5 characters long.',
-    'string.max': 'Resource Ref ID must not exceed 50 characters.',
-    'any.required': 'Resource Ref ID is a required field.'
-  }),
+  resource_code: Joi.string()
+    .pattern(/^[A-Za-z][A-Za-z0-9\-_]{2,49}$/)
+    .required()
+    .messages({
+      'string.base': 'Resource Code must be a string.',
+      'string.empty': 'Resource Code is required.',
+      'string.pattern.base': 'Resource Code must start with a letter and can only contain letters, numbers, hyphens and underscores.',
+      'string.min': 'Resource Code must be at least 3 characters long.',
+      'string.max': 'Resource Code must not exceed 50 characters.',
+      'any.required': 'Resource Code is a required field.'
+    }),
   resource_type: Joi.string().valid("Full-Time", "Sub Con", "Non-Labor").required().messages({
     'any.only': 'Resource type must be one of: Full-Time, Sub Con, or Non-Labor',
     'any.required': 'Resource type is required'
   }),
-  full_name: Joi.string().min(3).max(200).optional().allow("").allow(null),
-  first_name: Joi.string().min(3).max(64).optional().allow("").allow(null),
-  last_name: Joi.string().min(3).max(64).optional().allow("").allow(null),
+  name: Joi.string()
+    .pattern(/^[A-Za-z][A-Za-z\s\-']{0,62}[A-Za-z]$/)
+    .min(2)
+    .max(64)
+    .optional()
+    .allow("")
+    .allow(null)
+    .messages({
+      "string.pattern.base": "Name must start and end with a letter and contain only letters, spaces, hyphens and apostrophes",
+      "string.min": "Name must be at least 2 characters long",
+      "string.max": "Name must not exceed 64 characters"
+    }),
+  first_name: Joi.string()
+    .pattern(/^[A-Za-z][A-Za-z\s\-']{0,62}[A-Za-z]$/)
+    .min(2)
+    .max(64)
+    .optional()
+    .allow("")
+    .allow(null)
+    .messages({
+      "string.pattern.base": "First name must start and end with a letter and contain only letters, spaces, hyphens and apostrophes",
+      "string.min": "First name must be at least 2 characters long",
+      "string.max": "First name must not exceed 64 characters"
+    }),
+  last_name: Joi.string()
+    .pattern(/^[A-Za-z][A-Za-z\s\-']{0,62}[A-Za-z]$/)
+    .min(2)
+    .max(64)
+    .optional()
+    .allow("")
+    .allow(null)
+    .messages({
+      "string.pattern.base": "Last name must start and end with a letter and contain only letters, spaces, hyphens and apostrophes",
+      "string.min": "Last name must be at least 2 characters long", 
+      "string.max": "Last name must not exceed 64 characters"
+    }),
   org_name: Joi.string()
+    .pattern(/^[A-Za-z0-9][A-Za-z0-9\s&\-.'(),]{1,98}[A-Za-z0-9]$/)
     .min(3)
     .max(100)
     .optional()
     .allow("")
     .allow(null)
     .messages({
-      "string.min":
-        '"organization name" should have a minimum length of {#limit}',
-      "string.max":
-        '"organization name" should have a maximum length of {#limit}',
-      "string.empty": '"organization name" cannot be an empty string',
-      "any.allowOnly": '"organization name" cannot be null or empty',
+      "string.pattern.base": "Organization name must start and end with alphanumeric characters and can only contain letters, numbers, spaces, and the following characters: & - . ' , ()",
+      "string.min": "Organization name must be at least 3 characters long",
+      "string.max": "Organization name must not exceed 100 characters",
+      "string.empty": "Organization name cannot be an empty string",
+      "any.allowOnly": "Organization name cannot be null or empty"
     }),
-  role: Joi.string().min(4).max(100).optional().allow("").allow(null),
+  role: Joi.string()
+    .pattern(/^[A-Za-z][A-Za-z\s\-'.]{1,98}[A-Za-z]$/)
+    .min(3)
+    .max(100)
+    .optional()
+    .allow("")
+    .allow(null)
+    .messages({
+      "string.pattern.base": "Role must contain only letters, hyphens, apostrophes, periods and spaces",
+      "string.min": "Role must be at least 3 characters long",
+      "string.max": "Role must not exceed 100 characters"
+    }),
   resource_country: Joi.string()
     .guid({ version: ["uuidv4"] })
     .optional()
@@ -148,17 +229,44 @@ const createResourcesSchema = Joi.object({
     .allow("", null),
   effective_from_date: Joi.string()
     .max(10)
+    .custom((value, helpers) => {
+      if (!value) return value;
+    
+      const [month, day, year] = value.split("/").map(Number);
+      const inputDate = new Date(Date.UTC(year, month - 1, day));
+      const minDate = new Date(Date.UTC(1950, 0, 1));
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0); // Normalize to date only
+    
+      if (isNaN(inputDate.getTime())) {
+        return helpers.error("date.invalidFormat", {
+          message: "Invalid date format. Please use MM/DD/YYYY."
+        });
+      }
+    
+      if (inputDate < minDate) {
+        return helpers.error("date.min", {
+          message: "Effective From date cannot be before 01/01/1950"
+        });
+      }
+    
+      if (inputDate > today) {
+        return helpers.error("date.max", {
+          message: "Effective From date cannot be in the future"
+        });
+      }
+    
+      return value;
+    })
     .optional()
     .allow("")
     .allow(null)
-    .custom(isNotFutureDate, "Future Date Validation")
-    .optional()
     .messages({
-      "string.pattern.base":
-        "effective_from_date must be in the format MM/DD/YYYY",
-      "any.invalid": "Date cannot be in the future.",
-      "date.invalidFormat":
-        "Invalid effective start date. Please use the format MM/DD/YYYY",
+      "string.base": "Effective from date must be a valid date",
+      "string.max": "Effective from date format should be MM/DD/YYYY",
+      "date.invalidFormat": "Invalid date format. Please use MM/DD/YYYY",
+      "date.min": "Effective from date cannot be before 01/01/1950",
+      "date.max": "Effective from date cannot be in the future"
     }),
   effective_end_date: Joi.string()
     .max(10)
@@ -174,7 +282,18 @@ const createResourcesSchema = Joi.object({
       "date.invalidFormat":
         "Invalid effective end date. Please use the format MM/DD/YYYY",
     }),
-  resource_designation: Joi.string().min(4).max(100).optional().allow("").allow(null),
+  resource_designation: Joi.string()
+    .pattern(/^[A-Za-z][A-Za-z\s\-'.]{1,62}[A-Za-z]$/)
+    .min(3)
+    .max(64)
+    .optional()
+    .allow("")
+    .allow(null)
+    .messages({
+      "string.pattern.base": "Resource designation must contain only letters, hyphens, apostrophes, periods and spaces",
+      "string.min": "Resource designation must be at least 3 characters long",
+      "string.max": "Resource designation must not exceed 64 characters"
+    }),
   total_years_experience: Joi.number()
     .precision(2)
     .min(0)
@@ -205,7 +324,7 @@ const createResourcesSchema = Joi.object({
   created_by: Joi.string()
     .guid({ version: ["uuidv4"] })
     .optional(),
-  comments: Joi.string().max(1000).optional().allow("").allow(null),
+  comments: Joi.string().optional().allow("").allow(null),
 });
 
 const updateResourceSchema = Joi.object({
@@ -213,29 +332,83 @@ const updateResourceSchema = Joi.object({
     .guid({ version: ["uuidv4"] })
     .required(),
   account_number: Joi.string().max(50).required(),
-  resource_ref_id: Joi.string().max(50).required(),
+  resource_code: Joi.string()
+    .pattern(/^[A-Za-z][A-Za-z0-9\-_]{2,49}$/)
+    .required()
+    .messages({
+      'string.base': 'Resource Code must be a string.',
+      'string.empty': 'Resource Code is required.',
+      'string.pattern.base': 'Resource Code must start with a letter and can only contain letters, numbers, hyphens and underscores.',
+      'string.min': 'Resource Code must be at least 3 characters long.',
+      'string.max': 'Resource Code must not exceed 50 characters.',
+      'any.required': 'Resource Code is a required field.'
+    }),
   resource_type: Joi.string().valid("Full-Time", "Sub Con", "Non-Labor").required().messages({
     'any.only': 'Resource type must be one of: Full-Time, Sub Con, or Non-Labor',
     'any.required': 'Resource type is required'
   }),
-  full_name: Joi.string().min(3).max(200).optional().allow("").allow(null),
-  first_name: Joi.string().min(3).max(64).optional().allow("").allow(null),
-  last_name: Joi.string().min(3).max(64).optional().allow("").allow(null),
+  name: Joi.string()
+    .pattern(/^[A-Za-z][A-Za-z\s\-']{0,62}[A-Za-z]$/)
+    .min(2)
+    .max(64)
+    .optional()
+    .allow("")
+    .allow(null)
+    .messages({
+      "string.pattern.base": "Name must start and end with a letter and contain only letters, spaces, hyphens and apostrophes",
+      "string.min": "Name must be at least 2 characters long",
+      "string.max": "Name must not exceed 64 characters"
+    }),
+  first_name: Joi.string()
+    .pattern(/^[A-Za-z][A-Za-z\s\-']{0,62}[A-Za-z]$/)
+    .min(2)
+    .max(64)
+    .optional()
+    .allow("")
+    .allow(null)
+    .messages({
+      "string.pattern.base": "First name must start and end with a letter and contain only letters, spaces, hyphens and apostrophes",
+      "string.min": "First name must be at least 2 characters long",
+      "string.max": "First name must not exceed 64 characters"
+    }),
+  last_name: Joi.string()
+    .pattern(/^[A-Za-z][A-Za-z\s\-']{0,62}[A-Za-z]$/)
+    .min(2)
+    .max(64)
+    .optional()
+    .allow("")
+    .allow(null)
+    .messages({
+      "string.pattern.base": "Last name must start and end with a letter and contain only letters, spaces, hyphens and apostrophes",
+      "string.min": "Last name must be at least 2 characters long", 
+      "string.max": "Last name must not exceed 64 characters"
+    }),
   org_name: Joi.string()
+    .pattern(/^[A-Za-z0-9][A-Za-z0-9\s&\-.'(),]{1,98}[A-Za-z0-9]$/)
     .min(3)
     .max(100)
     .optional()
     .allow("")
     .allow(null)
     .messages({
-      "string.min":
-        '"organization name" should have a minimum length of {#limit}',
-      "string.max":
-        '"organization name" should have a maximum length of {#limit}',
-      "string.empty": '"organization name" cannot be an empty string',
-      "any.allowOnly": '"organization name" cannot be null or empty',
+      "string.pattern.base": "Organization name must start and end with alphanumeric characters and can only contain letters, numbers, spaces, and the following characters: & - . ' , ()",
+      "string.min": "Organization name must be at least 3 characters long",
+      "string.max": "Organization name must not exceed 100 characters",
+      "string.empty": "Organization name cannot be an empty string",
+      "any.allowOnly": "Organization name cannot be null or empty"
     }),
-  role: Joi.string().min(4).max(100).optional().allow("").allow(null),
+  role: Joi.string()
+    .pattern(/^[A-Za-z][A-Za-z\s\-'.]{1,98}[A-Za-z]$/)
+    .min(3)
+    .max(100)
+    .optional()
+    .allow("")
+    .allow(null)
+    .messages({
+      "string.pattern.base": "Role must contain only letters, hyphens, apostrophes, periods and spaces",
+      "string.min": "Role must be at least 3 characters long",
+      "string.max": "Role must not exceed 100 characters"
+    }),
   resource_country: Joi.string()
     .guid({ version: ["uuidv4"] })
     .optional()
@@ -250,16 +423,44 @@ const updateResourceSchema = Joi.object({
     .allow("", null),
   effective_from_date: Joi.string()
     .max(10)
+    .custom((value, helpers) => {
+      if (!value) return value;
+    
+      const [month, day, year] = value.split("/").map(Number);
+      const inputDate = new Date(Date.UTC(year, month - 1, day));
+      const minDate = new Date(Date.UTC(1950, 0, 1));
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0); // Normalize to date only
+    
+      if (isNaN(inputDate.getTime())) {
+        return helpers.error("date.invalidFormat", {
+          message: "Invalid date format. Please use MM/DD/YYYY."
+        });
+      }
+    
+      if (inputDate < minDate) {
+        return helpers.error("date.min", {
+          message: "Effective From date cannot be before 01/01/1950"
+        });
+      }
+    
+      if (inputDate > today) {
+        return helpers.error("date.max", {
+          message: "Effective From date cannot be in the future"
+        });
+      }
+    
+      return value;
+    })
     .optional()
     .allow("")
     .allow(null)
-    .custom(isNotFutureDate, "Future Date Validation")
-    .optional()
     .messages({
-      "string.pattern.base":
-        "effective_from_date must be in the format MM/DD/YYYY",
-      "any.invalid": "Date cannot be in the future.",
-      "date.invalidFormat": "Invalid effective start date.",
+      "string.base": "Effective from date must be a valid date",
+      "string.max": "Effective from date format should be MM/DD/YYYY",
+      "date.invalidFormat": "Invalid date format. Please use MM/DD/YYYY",
+      "date.min": "Effective from date cannot be before 01/01/1950",
+      "date.max": "Effective from date cannot be in the future"
     }),
   effective_end_date: Joi.string()
     .max(10)
@@ -272,23 +473,49 @@ const updateResourceSchema = Joi.object({
       "string.pattern.base":
         "effective_end_date must be in the format MM/DD/YYYY",
       "any.invalid": "Effective end date must be after the start date.",
-      "date.invalidFormat": "Invalid effective end date.",
+      "date.invalidFormat":
+        "Invalid effective end date. Please use the format MM/DD/YYYY",
     }),
-  resource_designation: Joi.string().min(4).max(100).optional().allow("").allow(null),
+  resource_designation: Joi.string()
+    .pattern(/^[A-Za-z][A-Za-z\s\-'.]{1,62}[A-Za-z]$/)
+    .min(3)
+    .max(64)
+    .optional()
+    .allow("")
+    .allow(null)
+    .messages({
+      "string.pattern.base": "Resource designation must contain only letters, hyphens, apostrophes, periods and spaces",
+      "string.min": "Resource designation must be at least 3 characters long",
+      "string.max": "Resource designation must not exceed 64 characters"
+    }),
   total_years_experience: Joi.number()
-    .optional()
+    .precision(2)
     .min(0)
-    .max(99)
+    .max(99.99)
+    .optional()
     .allow("")
-    .allow(null),
+    .allow(null)
+    .messages({
+      "number.base": "Total years experience must be a number",
+      "number.min": "Total years experience cannot be negative",
+      "number.max": "Total years experience cannot exceed 99.99",
+      "number.precision": "Total years experience can only have up to 2 decimal places"
+    }),
   total_years_in_org: Joi.number()
-    .optional()
+    .precision(2)
     .min(0)
-    .max(99)
+    .max(99.99)
+    .optional()
     .allow("")
-    .allow(null),
+    .allow(null)
+    .messages({
+      "number.base": "Total years in organization must be a number",
+      "number.min": "Total years in organization cannot be negative",
+      "number.max": "Total years in organization cannot exceed 99.99",
+      "number.precision": "Total years in organization can only have up to 2 decimal places"
+    }),
   resource_status: Joi.string().valid("Active", "Inactive").optional(),
-  comments: Joi.string().max(1000).optional().allow("").allow(null),
+  comments: Joi.string().optional().allow("").allow(null),
 });
 
 const listResourceSchema = Joi.object({
@@ -341,19 +568,47 @@ const createResourceSkillSchema = Joi.object({
   }),
   resource_rid: Joi.string().max(255).optional().allow(null).allow(""),
   resource_number: Joi.string().max(255).required(),
-  resource_ref_id: Joi.string().max(255).required(),
-  start_date: Joi.number()
-    .integer()
-    .min(1900)
-    .max(9999)
+  resource_code: Joi.string().max(255).required(),
+  start_date: Joi.string()
+    .max(10)
+    .custom((value, helpers) => {
+      if (!value) return value;
+    
+      const [month, day, year] = value.split("/").map(Number);
+      const inputDate = new Date(Date.UTC(year, month - 1, day));
+      const minDate = new Date(Date.UTC(1950, 0, 1));
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0); // Normalize to date only
+    
+      if (isNaN(inputDate.getTime())) {
+        return helpers.error("date.invalidFormat", {
+          message: "Invalid date format. Please use MM/DD/YYYY."
+        });
+      }
+    
+      if (inputDate < minDate) {
+        return helpers.error("date.min", {
+          message: "Start date cannot be before 01/01/1950"
+        });
+      }
+    
+      if (inputDate > today) {
+        return helpers.error("date.max", {
+          message: "Start date cannot be in the future"
+        });
+      }
+    
+      return value;
+    })    
     .optional()
-    .allow(null)
     .allow("")
+    .allow(null)
     .messages({
-      "number.base": "Start date must be a valid year",
-      "number.min": "Start date must be a 4-digit year",
-      "number.max": "Start date must be a 4-digit year",
-      "any.invalid": "Year cannot be in the future"
+      "string.base": "Start date must be a valid date",
+      "string.max": "Start date format should be MM/DD/YYYY",
+      "date.invalidFormat": "Invalid date format. Please use MM/DD/YYYY",
+      "date.min": "Start date cannot be before 01/01/1950",
+      "date.max": "Start date cannot be in the future"
     }),
   skill_description: Joi.string().max(255).optional().allow(null).allow(""),
   skill_level: Joi.string()
@@ -363,10 +618,32 @@ const createResourceSkillSchema = Joi.object({
     .allow(null),
   skill_type_rid: Joi.string().max(255).required(),
   skill_subtype_rid: Joi.string().max(255).required(),
-  skill_type_others: Joi.string().max(255).optional().allow(null).allow(""),
-  skill_subtype_others: Joi.string().max(255).optional().allow(null).allow(""),
-  skill_details: Joi.string().max(2000).optional().allow(null).allow(""),
-  comments: Joi.string().max(2000).optional().allow(null).allow(""),  
+  skill_type_others: Joi.string()
+    .pattern(/^[A-Za-z][A-Za-z\s\-'._]{1,62}[A-Za-z]$/)
+    .min(3)
+    .max(64)
+    .optional()
+    .allow(null)
+    .allow("")
+    .messages({
+      "string.pattern.base": "Skill type others must contain only letters, hyphens, apostrophes, periods, underscores and spaces",
+      "string.min": "Skill type others must be at least 3 characters long",
+      "string.max": "Skill type others must not exceed 64 characters"
+    }),
+  skill_subtype_others: Joi.string()
+  .pattern(/^[A-Za-z][A-Za-z\s\-'._]{1,62}[A-Za-z]$/)
+  .min(3)
+  .max(64)
+  .optional()
+  .allow(null)
+  .allow("")
+  .messages({
+    "string.pattern.base": "Skill type others must contain only letters, hyphens, apostrophes, periods, underscores and spaces",
+    "string.min": "Skill type others must be at least 3 characters long",
+    "string.max": "Skill type others must not exceed 64 characters"
+  }),
+  skill_details: Joi.string().optional().allow(null).allow(""),
+  comments: Joi.string().optional().allow(null).allow(""),  
   created_by: Joi.string().max(255).optional().allow(null).allow(""),
   modified_by: Joi.string().max(255).optional().allow(null).allow(""),
   accountNumber: Joi.string().max(255).required(),
@@ -375,18 +652,46 @@ const createResourceSkillSchema = Joi.object({
 const updateResourceSkillSchema = Joi.object({
   rid: Joi.string().max(255).required(),
   eid: Joi.string().max(255).optional().allow(null).allow(""),
-  start_date: Joi.number()
-    .integer()
-    .min(1900)
-    .max(9999)
+  start_date: Joi.string()
+    .max(10)
+    .custom((value, helpers) => {
+      if (!value) return value;
+    
+      const [month, day, year] = value.split("/").map(Number);
+      const inputDate = new Date(Date.UTC(year, month - 1, day));
+      const minDate = new Date(Date.UTC(1950, 0, 1));
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0); // Normalize to date only
+    
+      if (isNaN(inputDate.getTime())) {
+        return helpers.error("date.invalidFormat", {
+          message: "Invalid date format. Please use MM/DD/YYYY."
+        });
+      }
+    
+      if (inputDate < minDate) {
+        return helpers.error("date.min", {
+          message: "Start date cannot be before 01/01/1950"
+        });
+      }
+    
+      if (inputDate > today) {
+        return helpers.error("date.max", {
+          message: "Start date cannot be in the future"
+        });
+      }
+    
+      return value;
+    })
     .optional()
-    .allow(null)
     .allow("")
+    .allow(null)
     .messages({
-      "number.base": "Start date must be a valid year",
-      "number.min": "Start date must be a 4-digit year",
-      "number.max": "Start date must be a 4-digit year",
-      "any.invalid": "Year cannot be in the future"
+      "string.base": "Start date must be a valid date",
+      "string.max": "Start date format should be MM/DD/YYYY",
+      "date.invalidFormat": "Invalid date format. Please use MM/DD/YYYY",
+      "date.min": "Start date cannot be before 01/01/1950",
+      "date.max": "Start date cannot be in the future"
     }),
   skill_description: Joi.string().max(255).optional().allow(null).allow(""),
   skill_level: Joi.string()
@@ -397,10 +702,32 @@ const updateResourceSkillSchema = Joi.object({
   modified_by: Joi.string().max(255).optional(),
   skill_type_rid: Joi.string().max(255).required(),
   skill_subtype_rid: Joi.string().max(255).required(),
-  skill_type_others: Joi.string().max(255).optional().allow(null).allow(""),
-  skill_subtype_others: Joi.string().max(255).optional().allow(null).allow(""),
-  skill_details: Joi.string().max(2000).optional().allow(null).allow(""),
-  comments: Joi.string().max(2000).optional().allow(null).allow(""),
+  skill_type_others: Joi.string()
+    .pattern(/^[A-Za-z][A-Za-z\s\-'._]{1,62}[A-Za-z]$/)
+    .min(3)
+    .max(64)
+    .optional()
+    .allow(null)
+    .allow("")
+    .messages({
+      "string.pattern.base": "Skill type others must contain only letters, hyphens, apostrophes, periods, underscores and spaces",
+      "string.min": "Skill type others must be at least 3 characters long",
+      "string.max": "Skill type others must not exceed 64 characters"
+    }),
+  skill_subtype_others: Joi.string()
+  .pattern(/^[A-Za-z][A-Za-z\s\-'._]{1,62}[A-Za-z]$/)
+  .min(3)
+  .max(64)
+  .optional()
+  .allow(null)
+  .allow("")
+  .messages({
+    "string.pattern.base": "Skill type others must contain only letters, hyphens, apostrophes, periods, underscores and spaces",
+    "string.min": "Skill type others must be at least 3 characters long",
+    "string.max": "Skill type others must not exceed 64 characters"
+  }),
+  skill_details: Joi.string().optional().allow(null).allow(""),
+  comments: Joi.string().optional().allow(null).allow(""),
   status: Joi.string().max(255).optional(),
   modified_datetime: Joi.date()
     .iso()
@@ -464,6 +791,7 @@ const exportResourceSkillSchema = Joi.object({
       "any.required": "Fiscal year is required",
     }),
 });
+
 const updateResourceCostSchema = Joi.object({
   rid: Joi.string().pattern(uuidRegex).required(),
   eid: Joi.string().max(255).optional().allow(null).allow(""),
@@ -492,26 +820,13 @@ const updateResourceCostSchema = Joi.object({
       "date.invalidFormat":
         "Invalid end date. Please use the format MM/DD/YYYY",
     }),
-  cost_frequency: Joi.string()
-    .valid(
-      "annual",
-      "semi_annual",
-      "monthly",
-      "bi_weekly",
-      "weekly",
-      "daily",
-      "hourly"
-    )
-    .required(),
-    cost: Joi.string()
-    .pattern(/^\d+(\.\d{0,2})?$/)
-    .required()
-    .messages({
-      "string.base": "Cost must be a valid string number maximum up to (9999999999999999.99)",
-      "string.pattern.base": "Cost must be a valid number with up to 2 decimal places",
-      "string.empty": "Cost is required",
-      "any.required": "Cost is required"
-    }),
+  annual_cost: costFieldValidator('annual_cost'),
+  // semi_annual_cost: costFieldValidator('semi_annual_cost'),
+  monthly_cost: costFieldValidator('monthly_cost'),
+  bi_weekly_cost: costFieldValidator('bi_weekly_cost'),
+  weekly_cost: costFieldValidator('weekly_cost'),
+  daily_cost: costFieldValidator('daily_cost'),
+  hourly_cost: costFieldValidator('hourly_cost'),
   status: Joi.string().max(255).default("active").optional(),
   fiscal_year: Joi.number()
    .integer()
@@ -525,12 +840,28 @@ const updateResourceCostSchema = Joi.object({
       "number.max": "Fiscal year must be a 4-digit number",
       "any.required": "Fiscal year is required",
    }),
-  comments: Joi.string().max(2000).optional().allow("").allow(null), 
+  comments: Joi.string().optional().allow("").allow(null), 
   modified_datetime: Joi.date()
     .iso()
     .default(() => new Date()),
   modified_by: Joi.string().max(255).optional(),
+}).custom((value, helpers) => {
+  const filled = costFields.filter(field => value[field] && value[field].toString().trim() !== '');
+
+  if (filled.length === 0) {
+    return helpers.error('any.atLeastOneCostRequired');
+  }
+
+  if (filled.length > 1) {
+    return helpers.error('any.onlyOneCostAllowed');
+  }
+
+  return value;
+}).messages({
+  'any.onlyOneCostAllowed': 'Only one cost field should have a value',
+  'any.atLeastOneCostRequired': 'At least one cost field is required'
 });
+
 
 const getResourceCostSchema = Joi.object({
   id: Joi.string().pattern(uuidRegex).required(),
@@ -595,7 +926,7 @@ const resourceCostSchema = Joi.object({
     'any.required': 'Resource type is required'
   }),
   resource_rid: Joi.string().pattern(uuidRegex).required(),
-  resource_ref_id: Joi.string().max(255).required(),
+  resource_code: Joi.string().max(255).required(),
   effective_date: Joi.string()
     .max(10)
     .custom(isValidDate, "Effective date validation")
@@ -619,27 +950,14 @@ const resourceCostSchema = Joi.object({
       "date.invalidFormat":
         "Invalid end date. Please use the format MM/DD/YYYY",
     }),
-  cost_frequency: Joi.string()
-    .valid(
-      "annual",
-      "semi_annual",
-      "monthly",
-      "bi_weekly",
-      "weekly",
-      "daily",
-      "hourly"
-    )
-    .required(),
-  cost: Joi.string()
-    .pattern(/^\d+(\.\d{0,2})?$/)
-    .required()
-    .messages({
-      "string.base": "Cost must be a valid string number maximum up to (9999999999999999.99)",
-      "string.pattern.base": "Cost must be a valid number with up to 2 decimal places",
-      "string.empty": "Cost is required",
-      "any.required": "Cost is required"
-    }),
-    fiscal_year: Joi.number()
+  annual_cost: costFieldValidator('annual_cost'),
+  // semi_annual_cost: costFieldValidator('semi_annual_cost'),
+  monthly_cost: costFieldValidator('monthly_cost'),
+  bi_weekly_cost: costFieldValidator('bi_weekly_cost'),
+  weekly_cost: costFieldValidator('weekly_cost'),
+  daily_cost: costFieldValidator('daily_cost'),
+  hourly_cost: costFieldValidator('hourly_cost'),
+  fiscal_year: Joi.number()
     .integer()
     .min(1000)
     .max(9999)
@@ -653,7 +971,7 @@ const resourceCostSchema = Joi.object({
     }),
   currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
   status: Joi.string().max(255).default("active"),
-  comments: Joi.string().max(2000).optional().allow(null).allow(""),
+  comments: Joi.string().optional().allow(null).allow(""),
   created_datetime: Joi.date()
     .iso()
     .default(() => new Date()),
@@ -662,6 +980,21 @@ const resourceCostSchema = Joi.object({
     .default(() => new Date()),
   created_by: Joi.string().max(255).optional(),
   modified_by: Joi.string().max(255).optional(),
+}).custom((value, helpers) => {
+  const filled = costFields.filter(field => value[field] && value[field].toString().trim() !== '');
+
+  if (filled.length === 0) {
+    return helpers.error('any.atLeastOneCostRequired');
+  }
+
+  if (filled.length > 1) {
+    return helpers.error('any.onlyOneCostAllowed');
+  }
+
+  return value;
+}).messages({
+  'any.onlyOneCostAllowed': 'Only one cost field should have a value',
+  'any.atLeastOneCostRequired': 'At least one cost field is required'
 });
 
 const createProjectSchema = Joi.object({

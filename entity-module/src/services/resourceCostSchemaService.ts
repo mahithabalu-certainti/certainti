@@ -7,6 +7,7 @@ import { initOrgSequelize } from "../config/orgDataSource";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { HttpStatus } from "../utils/constants";
 import { ResourceFiscal } from "../models/resourceFiscal";
+import moment from "moment";
 
 class ResourceCostSchemaService {
   private sequelizeInstance: Sequelize | null = null;
@@ -350,7 +351,7 @@ class ResourceCostSchemaService {
 
       //Build the base query without sorting or pagination
       let query = `
-        SELECT rc.*,rc.r_number as r_number, r.resource_fullname,
+        SELECT rc.*,rc.r_number as r_number, r.resource_name,
         TO_CHAR(rc.effective_date, 'MM/DD/YYYY') as effective_date,
         TO_CHAR(rc.end_date, 'MM/DD/YYYY') as end_date
         FROM "${schemaName}"."resource_cost" rc
@@ -527,7 +528,7 @@ class ResourceCostSchemaService {
 
       //Build the base query without sorting or pagination
       let query = `
-        SELECT rc.*,rc.r_number as r_number, r.resource_fullname,
+        SELECT rc.*,rc.r_number as r_number, r.resource_name,
         TO_CHAR(rc.effective_date, 'MM/DD/YYYY') as effective_date,
         TO_CHAR(rc.end_date, 'MM/DD/YYYY') as end_date
         FROM "${schemaName}"."resource_cost" rc
@@ -639,20 +640,49 @@ class ResourceCostSchemaService {
           }
         });
       }
+      
       const rawResult = resourceCost || [];
       let exportData = rawResult.map((resource: any) => {
         return {
-          "Name": resource.resource_fullname,
-          "Currency": resource.currency_code,
-          "Start Date": resource.effective_date,
-          "End Date": resource.end_date,
-          "Hourly": resource.hourly_cost,
-          "Daily": resource.daily_cost,
-          "Bi-Weekly": resource.bi_weekly_cost,
-          "Weekly": resource.weekly_cost,
-          "Monthly": resource.monthly_cost,
-          "Semi Annual": resource.semi_annual_cost,
-          "Annual": resource.annual_cost,
+          "Name": resource.resource_name || "NA",
+          "Currency": resource.currency_code || "NA",
+          "Start Date": resource.effective_date ? moment(resource.effective_date).format(
+            "MM/DD/YYYY"
+          ) : "NA" as any,
+          "End Date": resource.end_date ? moment(resource.end_date).format(
+            "MM/DD/YYYY"
+          ) : "NA" as any,
+          "Hourly": resource.hourly_cost ? new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+            maximumSignificantDigits: 16
+          }).format(Number(resource.hourly_cost)) : "NA",
+          "Daily": resource.daily_cost ? new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+            maximumSignificantDigits: 16
+          }).format(Number(resource.daily_cost)) : "NA",
+          "Bi-Weekly": resource.bi_weekly_cost ? new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+            maximumSignificantDigits: 16
+          }).format(Number(resource.bi_weekly_cost)) : "NA",
+          "Weekly": resource.weekly_cost ? new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+            maximumSignificantDigits: 16
+          }).format(Number(resource.weekly_cost)) : "NA",
+          "Monthly": resource.monthly_cost ? new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+            maximumSignificantDigits: 16
+          }).format(Number(resource.monthly_cost)) : "NA",
+          // "Semi Annual": resource.semi_annual_cost,
+          "Annual": resource.annual_cost ? new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+            maximumSignificantDigits: 16
+          }).format(Number(resource.annual_cost)) : "NA",
         };
       });
 
@@ -745,7 +775,7 @@ class ResourceCostSchemaService {
       "effective_date",
       "end_date",
       "annual_cost",
-      "semi_annual_cost",
+      // "semi_annual_cost",
       "monthly_cost",
       "weekly_cost",
       "bi_weekly_cost",
@@ -779,7 +809,7 @@ class ResourceCostSchemaService {
       "daily",
       "hourly",
       "bi_weekly",
-      "semi_annual",
+      // "semi_annual",
     ];
     const dateFields = ["effective_date", "end_date"];
     const specialFields = ["resource_cost_number"];

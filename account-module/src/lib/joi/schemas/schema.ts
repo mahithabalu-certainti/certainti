@@ -28,12 +28,12 @@ const allowedTLDs = [
 ];
 
 const accountSchema = Joi.object({
-  account_id: Joi.string().max(255).allow(null).optional(),
-  account_name: Joi.string().min(7).max(125).required(),
-  account_description: Joi.string().max(500).optional().allow("").allow(null),
-  status: Joi.string().valid("active", "inactive").required(),
-  is_parent: Joi.boolean().required(),
-  parent_account_rid: Joi.string().allow(null).optional(),
+  account_id: Joi.string().max(255).allow(null).optional().label("Account ID"),
+  account_name: Joi.string().min(7).max(125).required().label("Account Name"),
+  comments: Joi.string().max(2000).optional().allow("").allow(null).label("Comments"),
+  status: Joi.string().valid("active", "inactive").required().label("Status"),
+  is_parent: Joi.boolean().required().label("Is Parent"),
+  parent_account_rid: Joi.string().allow(null).optional().label("Parent Account"),
   account_currency_rid: Joi.string().allow("").allow(null)
     .pattern(uuidRegex, "valid UUID")
     .optional()
@@ -55,68 +55,73 @@ const accountSchema = Joi.object({
       "string.pattern.base": "Invalid UUID format for region RID",
       "any.required": "Account country region RID is required",
     }),
-  max_ai_interactions: Joi.number().integer().min(3).max(5).required(),
-  autosend_interaction: Joi.boolean().required(),
-  auto_access_rd: Joi.boolean().required(),
+  max_ai_interactions: Joi.number().integer().min(3).max(5).required().label("Max interaction Follow up"),
+  autosend_interaction: Joi.boolean().required().label("Auto Send Interaction"),
+  auto_access_rd: Joi.boolean().required().label("Auto Assessment"),
   fiscal_start_date: Joi.string()
     .pattern(/^\d{2}\/\d{2}$/)
     .required()
     .messages({
       "string.pattern.base":
-        "fiscal_start_date must be in the format DD/MM",
+        "Fiscal Start Date must be in the format DD/MM",
     }),
 
   fiscal_end_date: Joi.string()
     .pattern(/^\d{2}\/\d{2}$/)
     .required()
     .messages({
-      "string.pattern.base": "fiscal_end_date must be in the format DD/MM",
+      "string.pattern.base": "Fiscal End Date must be in the format DD/MM",
     }),
-  interaction_cc_list: Joi.string().allow(null),
-  blended_rate_fte: Joi.string()
-    .pattern(/^\d+(\.\d{0,2})?$/)
-    .optional()
-    .messages({
-      "string.pattern.base":"Blended Rate - FTE  must be a valid  number maximum up to (9999999999999999.99)",
-    })
-    .allow(null)
-    .allow(""),
-
-  blended_rate_subcon: Joi.string()
-    .pattern(/^\d+(\.\d{0,2})?$/)
-    .optional()
-    .messages({
-      "string.pattern.base":"Blended Rate - SubCon must be a valid  number maximum up to (9999999999999999.99)",
-      "string.max": "Blended Rate - SubCon must not exceed 10 digits",
-    })
-    .allow(null)
-    .allow(""),
+  interaction_cc_list: Joi.string().allow(null).label("Interaction CC List"),
+  blended_rate_fte: Joi.string().optional().pattern(/^\d{1,3}(\.\d{1,2})?$/)
+    .custom((value, helpers) => {
+      const numValue = parseFloat(value);
+      if (numValue < 0.0 || numValue > 999.99) {
+        return helpers.error("any.invalid");
+      }
+      return value;
+    }).messages({
+      "string.pattern.base": "Blended Rate - FTE must be a valid  number maximum up to (999.99)",
+      "any.invalid": "Blended Rate - FTE must be a valid  number maximum up to (999.99)",
+    }).allow(null).allow(""),
+  blended_rate_subcon: Joi.string().optional().pattern(/^\d{1,3}(\.\d{1,2})?$/)
+  .custom((value, helpers) => {
+    const numValue = parseFloat(value);
+    if (numValue < 0.0 || numValue > 999.99) {
+      return helpers.error("any.invalid");
+    }
+    return value;
+  })
+  .messages({
+    "string.pattern.base": "Blended Rate - SubCon must be a valid  number maximum up to (999.99)",
+    "any.invalid": "Blended Rate - SubCon must be a valid  number maximum up to (999.99)",
+  }).allow(null).allow(""),
   created_by: Joi.string().max(255).optional(),
   modified_by: Joi.string().max(255).optional(),
-  industry_rid: Joi.string().required(),
-  industry_name_other: Joi.string().optional().allow("").allow(null),
-  business_details: Joi.string().min(1).max(2000).required(),
-  comments: Joi.string().min(1).max(2000).optional(),
+  industry_rid: Joi.string().required().label("Industry"),
+  industry_name_other: Joi.string().min(3).max(255).optional().allow("").allow(null).label("Industry Other"),
+  business_details: Joi.string().min(1).max(2000).required().label("Business Details"),
   website: Joi.string()
+    .min(10)
     .max(50)
     .allow(null)
     .optional()
-    .pattern(/^(https?:\/\/)[a-zA-Z0-9.-]+(:[0-9]+)?(\/[a-zA-Z0-9.-]*)*\/?$/)
+    .pattern(/^(https?:\/\/|www\.)[a-zA-Z0-9.-]+(:[0-9]+)?(\/[a-zA-Z0-9.-]*)*\/?$/)
     .messages({
-      "string.pattern.base": `Website URL must begin with 'http' or 'https://'`,
+      "string.pattern.base": `Website URL must begin with 'http' ,'www.' or 'https://'`,
       "string.max": "The website must not exceed 255 characters."
     }),
-  project_manager: Joi.string().pattern(/^(?!.*(['-])\1)[A-Za-z][A-Za-z' -]{0,126}[A-Za-z]$/).min(2).max(128).optional().allow("").allow(null),
+  project_manager: Joi.string().pattern(/^(?!.*(['-])\1)[A-Za-z][A-Za-z' -]{0,126}[A-Za-z]$/).min(2).max(128).optional().allow("").allow(null).label("Project Manager"),
   created_datetime: Joi.date().iso().allow(null),
   modified_datetime: Joi.date().iso().allow(null),
   annual_revenue: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional()
     .messages({
-      "string.pattern.base":"Annual Revenue must be a valid  number maximum up to (9999999999999999.99)",
+      "string.pattern.base":"Annual Revenue must be a valid  number maximum up to (999999999999.99)",
     }).allow("").allow(null),
   data_storage: Joi.string()
     .valid("separate_db", "store_in_parent")
     .max(255)
-    .required(),
+    .required().label("Data Storage"),
   key_contacts: Joi.array()
     .items(
     Joi.object({
@@ -131,12 +136,12 @@ const accountSchema = Joi.object({
         key_contact_email: Joi.string()
         .trim()
         .regex(/^[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]*[a-zA-Z0-9])?@[a-zA-Z0-9-]+\.[a-zA-Z]{2,63}$/) 
-        .min(3).max(125).optional().allow("").allow(null).messages({
+        .min(6).max(254).optional().allow("").allow(null).messages({
           "string.base": "Key Contact Email must be a text value.",
           "string.empty": "Key Contact Email cannot be empty.",
           "string.min": "Key Contact Email must be at least 6 characters long.",
           "string.max": "Key Contact Email cannot exceed 254 characters.",
-          "string.pattern.base": "Key Contact Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
+          "string.pattern.base": "Invalid Key Contact Email Address."
         }),
         key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional(),
@@ -149,84 +154,88 @@ const accountSchema = Joi.object({
 });
 
 const updateAccountSchema = Joi.object({
-  account_rid: Joi.string().max(255).required(),
-  account_id: Joi.string().max(255).required(),
-  account_name: Joi.string().min(7).max(125).required(),
-  r_number: Joi.string().required(),
-  account_description: Joi.string().max(500).optional().allow("").allow(null),
-  status: Joi.string().valid("active", "inactive").required(),
-  is_parent: Joi.boolean().required(),
-  parent_account_rid: Joi.string().allow(null).optional(),
+  account_rid: Joi.string().max(255).required().label("Account RID"),
+  account_id: Joi.string().max(255).required().label("Account ID"),
+  account_name: Joi.string().min(7).max(125).required().label("Account Name"),
+  r_number: Joi.string().required().label("R number"),
+  comments: Joi.string().max(2000).optional().allow("").allow(null).label("Comments"),
+  status: Joi.string().valid("active", "inactive").required().label("Status"),
+  is_parent: Joi.boolean().required().label("Is Parent"),
+  parent_account_rid: Joi.string().allow(null).optional().label("Parent Account"),
   account_currency_rid: Joi.string().allow("").allow(null)
     .pattern(uuidRegex, "valid UUID")
     .optional()
     .messages({
       "string.pattern.base": "Invalid UUID format for currency RID",
       "any.required": "Account currency RID is required",
-    }),
+    }).label("Currency"),
   account_country_rid: Joi.string()
     .pattern(uuidRegex, "valid UUID").allow("").allow(null)
     .optional()
     .messages({
       "string.pattern.base": "Invalid UUID format for country RID",
       "any.required": "Account country RID is required",
-    }),
+    }).label("Country"),
   account_country_region_rid: Joi.string().allow("").allow(null)
     .pattern(uuidRegex, "valid UUID")
     .optional()
     .messages({
       "string.pattern.base": "Invalid UUID format for region RID",
       "any.required": "Account country region RID is required",
-    }),
-  max_ai_interactions: Joi.number().integer().min(3).max(5).required(),
-  autosend_interaction: Joi.boolean().required(),
-  auto_access_rd: Joi.boolean().required(),
+    }).label("Region"),
+  max_ai_interactions: Joi.number().integer().min(3).max(5).required().label("Max interaction Follow up"),
+  autosend_interaction: Joi.boolean().required().label("Auto Send Interaction"),
+  auto_access_rd: Joi.boolean().required().label("Auto Assessment"),
   fiscal_start_date: Joi.string()
     .pattern(/^\d{2}\/\d{2}$/)
     .required()
     .messages({
       "string.pattern.base":
-        "fiscal_start_date must be in the format DD/MM",
+        "Fiscal Start Date must be in the format DD/MM",
     }),
 
   fiscal_end_date: Joi.string()
     .pattern(/^\d{2}\/\d{2}$/)
     .required()
     .messages({
-      "string.pattern.base": "fiscal_end_date must be in the format DD/MM",
+      "string.pattern.base": "Fiscal End Date must be in the format DD/MM",
     }),
-  interaction_cc_list: Joi.string().allow(null),
-  blended_rate_fte: Joi.string()
-    .pattern(/^\d+(\.\d{0,2})?$/)
-    .optional()
-    .messages({
-      "string.pattern.base":"Blended Rate - FTE  must be a valid  number maximum up to (9999999999999999.99)",
-    })
-    .allow(null)
-    .allow(""),
-
-  blended_rate_subcon: Joi.string()
-    .pattern(/^\d+(\.\d{0,2})?$/)
-    .optional()
-    .messages({
-      "string.pattern.base":"Blended Rate - SubCon must be a valid  number maximum up to (9999999999999999.99)",
-      "string.max": "Blended Rate - SubCon must not exceed 10 digits",
-    })
-    .allow(null)
-    .allow(""),
+  interaction_cc_list: Joi.string().allow(null).label("Interaction cc list"),
+  blended_rate_fte: Joi.string().optional().pattern(/^\d{1,3}(\.\d{1,2})?$/)
+    .custom((value, helpers) => {
+      const numValue = parseFloat(value);
+      if (numValue < 0.0 || numValue > 999.99) {
+        return helpers.error("any.invalid");
+      }
+      return value;
+    }).messages({
+      "string.pattern.base": "Blended Rate - FTE must be a valid  number maximum up to (999.99)",
+      "any.invalid": "Blended Rate - FTE must be a valid  number maximum up to (999.99)",
+    }).allow(null).allow(""),
+  blended_rate_subcon: Joi.string().optional().pattern(/^\d{1,3}(\.\d{1,2})?$/)
+  .custom((value, helpers) => {
+    const numValue = parseFloat(value);
+    if (numValue < 0.0 || numValue > 999.99) {
+      return helpers.error("any.invalid");
+    }
+    return value;
+  })
+  .messages({
+    "string.pattern.base": "Blended Rate - SubCon must be a valid  number maximum up to (999.99)",
+    "any.invalid": "Blended Rate - SubCon must be a valid  number maximum up to (999.99)",
+  }).allow(null).allow(""),
   modified_by: Joi.string().max(255).optional(),
-  industry_rid: Joi.string().min(5).required(),
-  industry_name_other: Joi.string().optional().allow("").allow(null),
-  business_details: Joi.string().min(1).max(2000).required(),
-  comments: Joi.string().min(1).max(2000).optional(),
+  industry_rid: Joi.string().required().label("Industry"),
+  industry_name_other: Joi.string().min(3).max(255).optional().allow("").allow(null).label("Industry Other"),
+  business_details: Joi.string().min(1).max(2000).required().label("Business Details"),
   website: Joi.string()
     .min(10)
     .max(255)
     .allow(null)
     .optional()
-    .pattern(/^(https?:\/\/)[a-zA-Z0-9.-]+(:[0-9]+)?(\/[a-zA-Z0-9.-]*)*\/?$/)
+   .pattern(/^(https?:\/\/|www\.)[a-zA-Z0-9.-]+(:[0-9]+)?(\/[a-zA-Z0-9.-]*)*\/?$/)
     .messages({
-      "string.pattern.base": `Website URL must begin with 'http' or 'https://'`,
+      "string.pattern.base": `Website URL must begin with 'http','www.' or 'https://'`,
       "string.max": "The website must not exceed 255 characters."
     }),
   project_manager: Joi.string().pattern(/^(?!.*(['-])\1)[A-Za-z][A-Za-z' -]{0,126}[A-Za-z]$/).min(2).max(128).optional().allow("").allow(null)
@@ -240,11 +249,11 @@ const updateAccountSchema = Joi.object({
   annual_revenue: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional()
     .messages({
       "string.pattern.base":"Annual Revenue must be a valid  number maximum up to (9999999999999999.99)",
-    }).allow("").allow(null),
+    }).allow("").allow(null).label("Annual Revenue"),
   data_storage: Joi.string()
     .valid("separate_db", "store_in_parent")
     .max(255)
-    .required(),
+    .required().label("Data Storage"),
   key_contacts: Joi.array()
     .items(
       Joi.object({
@@ -264,12 +273,12 @@ const updateAccountSchema = Joi.object({
         key_contact_email: Joi.string()
         .trim()
         .regex(/^[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]*[a-zA-Z0-9])?@[a-zA-Z0-9-]+\.[a-zA-Z]{2,63}$/) 
-        .min(3).max(125).optional().allow("").allow(null).messages({
+        .min(6).max(254).optional().allow("").allow(null).messages({
           "string.base": "Key Contact Email must be a text value.",
           "string.empty": "Key Contact Email cannot be empty.",
           "string.min": "Key Contact Email must be at least 6 characters long.",
           "string.max": "Key Contact Email cannot exceed 254 characters.",
-          "string.pattern.base": "Key Contact Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
+          "string.pattern.base": "Invalid Key Contact Email Address"
         }),
         key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional(),

@@ -181,8 +181,10 @@ class SchemaService {
         attributes: [
           "rid",
           "r_number",
-          "resource_ref_id",
-          "resource_fullname",
+          "resource_code",
+          "resource_name",
+          "resource_firstname",
+          "resource_lastname",
           "resource_type",
           "resource_status",
           "resource_role",
@@ -260,20 +262,20 @@ class SchemaService {
 
       const isRefIdExist = await Resource.findOne({
         where: {
-          resource_ref_id: {
-            [Op.iLike]: resourceData.resource_ref_id,
+          resource_code: {
+            [Op.iLike]: resourceData.resource_code,
           },
         },
       });
 
       if (isRefIdExist) {
-        throw new Error("Resource ref ID must be unique.");
+        throw new Error("Resource Code must be unique.");
       }
 
       const resourceObject = {
-        resource_ref_id: resourceData.resource_ref_id,
+        resource_code: resourceData.resource_code,
         resource_type: resourceData.resource_type,
-        resource_fullname: resourceData.full_name || null,
+        resource_name: resourceData.name || null,
         resource_firstname: resourceData.first_name || null,
         resource_lastname: resourceData.last_name || null,
         resource_status: resourceData.resource_status,
@@ -310,7 +312,7 @@ class SchemaService {
           endDate
         );
         this.addTimeline(
-          resourceData.account_number,
+          accountNumber,
           resourceData,
           resource.rid,
           "create",
@@ -355,8 +357,8 @@ class SchemaService {
         attributes: [
           "rid",
           "r_number",
-          "resource_ref_id",
-          "resource_fullname",
+          "resource_code",
+          "resource_name",
           "resource_firstname",
           "resource_lastname",
           "resource_type",
@@ -503,6 +505,21 @@ class SchemaService {
 
       const Resource = Resources.initialize(sequelize, schemaName);
 
+      const isRefIdExist = await Resource.findOne({
+        where: {
+          resource_code: {
+            [Op.iLike]: resourceData.resource_code,
+          },
+          rid: {
+            [Op.ne]: resourceData.resource_id // Exclude current resource being updated
+          }
+        },
+      });
+
+      if (isRefIdExist) {
+        throw new Error("Resource Code must be unique.");
+      }
+
       // Parse dates and set to UTC midnight to avoid timezone issues
       const startDate = moment
         .utc(resourceData.effective_from_date, "MM/DD/YYYY")
@@ -518,7 +535,8 @@ class SchemaService {
       });
 
       const updateResourceObject: any = {
-        resource_fullname: resourceData.full_name || null,
+        resource_name: resourceData.name || null,
+        resource_code: resourceData.resource_code || null,
         resource_firstname: resourceData.first_name || null,
         resource_lastname: resourceData.last_name || null,
         resource_orgname: resourceData.org_name || null,
@@ -539,6 +557,7 @@ class SchemaService {
         resource_total_experience_organization:
           resourceData.total_years_in_org || null,
         modified_by: resourceData.modified_by,
+        modified_datetime: moment().toDate(),
         comments: resourceData.comments || "",
       };
 
@@ -577,7 +596,7 @@ class SchemaService {
 
       return updateResource;
     } catch (err) {
-      throw new Error("Error updating resource: " + (err as Error).message);
+      throw new Error((err as Error).message);
     }
   }
 

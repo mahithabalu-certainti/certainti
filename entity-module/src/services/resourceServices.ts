@@ -220,16 +220,17 @@ export class ResourceService {
         whereClause,
         geoDataSort
       );
+
       const rawResult = resources.resources || [];
-      let exportData = rawResult.map((resource: any) => {
+      let exportData = rawResult.map((resource: any) => {        
         return {
-          "Resource Code":resource.resource_ref_id,
-          "Name":resource.resource_fullname,
-          "Resource Type": resource?.resource_type,
-          "Designation": resource.designation,
-          "Country": resource.country_name,
-          "Region": resource.region_name,
-          "Status": resource.resource_status,
+          "Resource Code":resource.resource_code || "NA",
+          "Name":resource.resource_name || "NA",
+          "Resource Type": resource?.resource_type || "NA",
+          "Designation": resource.resource_designation || "NA",
+          "Country": resource.country_name || "NA",
+          "Region": resource.region_name || "NA",
+          "Status": resource.resource_status.toLowerCase() === "active" ? "Active" : "In-Active",
         };
       });
       return {
@@ -402,8 +403,8 @@ export class ResourceService {
     const validSortColumns = [
       "rid",
       "r_number",
-      "resource_ref_id",
-      "resource_fullname",
+      "resource_code",
+      "resource_name",
       "resource_type",
       "resource_status",
       "resource_role",
@@ -460,7 +461,7 @@ export class ResourceService {
   ): Record<string, any> {
     const searchCondition = {
       [Op.or]: [
-        { resource_fullname: { [Op.iLike]: `%${search}%` } },
+        { resource_name: { [Op.iLike]: `%${search}%` } },
         { r_number: { [Op.iLike]: `%${search}%` } },
       ],
     };
@@ -483,13 +484,13 @@ export class ResourceService {
     filters: Record<string, any>,
     whereClause: Record<string, any>
   ): Record<string, any> {
-    const castToTextFields = ["resource_type", "resource_fullname", "resource_designation", "r_number", "resource_ref_id","resource_status"];
+    const castToTextFields = ["resource_type", "resource_name", "resource_designation", "r_number", "resource_code","resource_status"];
     const uuidFields = ["resource_country","resource_region"];
 
     const filterFields = [
-      { clientField: "resource_ref_id", dbField: "resource_ref_id" },
+      { clientField: "resource_code", dbField: "resource_code" },
       { clientField: "r_number", dbField: "r_number" },
-      { clientField: "resource_fullname", dbField: "resource_fullname" },
+      { clientField: "resource_name", dbField: "resource_name" },
       { clientField: "resource_type", dbField: "resource_type" },
       { clientField: "resource_status", dbField: "resource_status" },
       { clientField: "resource_designation", dbField: "resource_designation" },
@@ -657,7 +658,7 @@ processGeoDataSort(
       // Fetch created_by user name if ID exists
       if (userIds.created_by) {
         const [createdByUser] = await sequelize.query(
-          `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          `SELECT concat(first_name, ' ', last_name) as full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.created_by },
             type: "SELECT",
@@ -672,7 +673,7 @@ processGeoDataSort(
       // Fetch modified_by user name if ID exists
       if (userIds.modified_by) {
         const [modifiedByUser] = await sequelize.query(
-          `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          `SELECT concat(first_name, ' ', last_name) as full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.modified_by },
             type: "SELECT",

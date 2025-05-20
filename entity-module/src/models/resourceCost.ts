@@ -10,13 +10,13 @@ interface ResourceCostAttributes {
   resource_type: string;
   resource_rid: string;
   resource_number: string;
-  resource_ref_id: string;
+  resource_code: string;
   effective_date?: Date | null;
   end_date?: Date | null;
-  cost?: number;
-  cost_type?: string;
+  // cost?: number;
+  // cost_type?: string;
   annual_cost?: number;
-  semi_annual_cost?: number;
+  // semi_annual_cost?: number;
   monthly_cost?: number;
   weekly_cost?: number;
   bi_weekly_cost?: number;
@@ -46,14 +46,14 @@ export class ResourceCost
   resource_type!: string;
   resource_rid!: string;
   resource_number!: string;
-  resource_ref_id!: string;
+  resource_code!: string;
   effective_date?: Date;
   end_date?: Date;
-  cost?: number;
-  cost_type?: string;
+  // cost?: number;
+  // cost_type?: string;
   fiscal_year!: number;
   annual_cost?: number;
-  semi_annual_cost?: number;
+  // semi_annual_cost?: number;
   monthly_cost?: number;
   weekly_cost?: number;
   bi_weekly_cost?: number;
@@ -95,7 +95,7 @@ export class ResourceCost
           type: DataTypes.UUID,
           allowNull: true,
         },
-        resource_ref_id: {
+        resource_code: {
           type: DataTypes.STRING(255),
           allowNull: false,
         },
@@ -145,22 +145,22 @@ export class ResourceCost
             },
           },
         },
-        cost: {
-          type: DataTypes.DECIMAL(18, 2),
-          allowNull: true,
-        },
-        cost_type: {
-          type: DataTypes.STRING(255),
-          allowNull: true,
-        },
+        // cost: {
+        //   type: DataTypes.DECIMAL(18, 2),
+        //   allowNull: true,
+        // },
+        // cost_type: {
+        //   type: DataTypes.STRING(255),
+        //   allowNull: true,
+        // },
         annual_cost: {
           type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },
-        semi_annual_cost: {
-          type: DataTypes.DECIMAL(18, 2),
-          allowNull: true,
-        },
+        // semi_annual_cost: {
+        //   type: DataTypes.DECIMAL(18, 2),
+        //   allowNull: true,
+        // },
         monthly_cost: {
           type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
@@ -190,7 +190,7 @@ export class ResourceCost
           defaultValue: "active",
         },
         comments: {
-          type: DataTypes.STRING(2000),
+          type: DataTypes.TEXT,
           allowNull: true,
         },
         created_datetime: {

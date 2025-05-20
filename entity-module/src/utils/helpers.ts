@@ -36,13 +36,29 @@ export async function validateRequest(
   return value;
 }
 
-export function requestErrorMessages(error: any): Record<string, string> {
-  return error.details.reduce((acc: Record<string, string>, err: any) => {
-    const field = err.path.join(".");
-    acc[field] = err.message.replace(/"/g, "");
+export function requestErrorMessages(error: any): Record<string, string> | string {
+  const errors = error.details.map((err: any) => {
+    const field = err.path.length ? err.path.join(".") : null;
+    const message = err.message.replace(/"/g, "");
+    return field ? { [field]: message } : message;
+  });
+
+  // If only one message and it's a string (object-level), return it directly
+  if (errors.length === 1 && typeof errors[0] === "string") {
+    return errors[0];
+  }
+
+  // Merge all object field errors
+  return errors.reduce((acc: Record<string, string>, curr: Record<string, string> | string) => {
+    if (typeof curr === "string") {
+      acc["message"] = curr;
+    } else {
+      Object.assign(acc, curr);
+    }
     return acc;
-  }, {});
+  }, {} as Record<string, string>);
 }
+
 
 
 export function successLog(methodName: string): void {

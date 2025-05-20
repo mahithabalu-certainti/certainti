@@ -21,7 +21,7 @@ const typeDefs = gql`
     rid: ID!
     r_number: String!
     account_name: String!
-    account_description: String
+    comments: String
     status: String!
     eid: String
     parent_account_rid: Int
@@ -44,7 +44,6 @@ const typeDefs = gql`
     annual_revenue: String
     data_storage: String!
     business_details: String!
-    comments:String
     created_datetime: Date
     modified_datetime: Date
     country: Country

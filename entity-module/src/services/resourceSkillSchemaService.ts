@@ -8,6 +8,7 @@ import { ResourceSkillTimeline } from "../models/resourceSkillTimeline";
 import { ResourceSkillHistory } from "../models/resourceSkillHistory";
 import { ResourceFiscal } from "../models/resourceFiscal";
 import { initMainDbSequelize } from "../config/mainDataSource";
+import moment from "moment";
 
 class ResourceSkillSchemaService {
   private sequelizeInstance: Sequelize | null = null;
@@ -244,14 +245,14 @@ class ResourceSkillSchemaService {
       }
 
       // Then create the skill table
-      const skillTableCreated = await this.createTablesInSchema(
-        schemaName,
-        "skill"
-      );
-      if (!skillTableCreated) {
-        console.error(`Failed to create skill table in schema ${schemaName}`);
-        return false;
-      }
+      // const skillTableCreated = await this.createTablesInSchema(
+      //   schemaName,
+      //   "skill"
+      // );
+      // if (!skillTableCreated) {
+      //   console.error(`Failed to create skill table in schema ${schemaName}`);
+      //   return false;
+      // }
     }
 
     // Then create the requested table
@@ -286,7 +287,7 @@ async exportResoucreSkill(
   const query = `
     SELECT rs.*,
     rs.start_date,
-    r.resource_fullname
+    r.resource_name
     FROM "${schemaName}"."resource_skill" rs
     INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
     WHERE 1=1 AND rs.resource_rid = :resource_rid
@@ -330,10 +331,14 @@ async exportResoucreSkill(
 
     // Add names to resource skills and format for export
     resourceSkill = resourceSkill.map((rs: any) => ({
-      "Start Date": rs.start_date,
-      "Skill Type Name": skillTypeMap.get(rs.skill_type_rid) || '',
-      "Skill Subtype Name": skillSubtypeMap.get(rs.skill_subtype_rid) || '',
-      "Skill Level": rs.skill_level,
+
+      "Start Date": rs.start_date ? moment(rs.start_date).format(
+        "MM/DD/YYYY"
+      ) : "NA" as any,
+      "Skill Type": skillTypeMap.get(rs.skill_type_rid) || "NA",
+      "Skill Subtype": skillSubtypeMap.get(rs.skill_subtype_rid) || "NA",
+      "Skill Details": rs.skill_details || "NA",
+      "Skill Level": rs.skill_level || "NA",
     }));
 
     // Apply sorting if needed
@@ -388,7 +393,7 @@ async executeQueries(
   const query = `
     SELECT rs.*,
     rs.start_date,
-    r.resource_fullname, r.resource_role, r.resource_type, r.resource_status
+    r.resource_name, r.resource_role, r.resource_type, r.resource_status
     FROM "${schemaName}"."resource_skill" rs
     INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
     WHERE 1=1 AND rs.resource_rid = :resource_rid
@@ -500,6 +505,7 @@ async executeQueries(
       "skill_subtype_name",
       "skill_level",
       "start_date",
+      "skill_details",
     ];
     if (!validSortColumns.includes(sortBy)) {
       sortBy = "created_datetime";
@@ -567,8 +573,8 @@ async executeQueries(
     let filterConditions = "";
 
     // Define field types for proper filter handling
-    // const alphanumericFields = ["skill_type_name"];
-    // const numericFields = ["years_of_experience"];
+    // const alphanumericFields = [];
+    // const numericFields = [];
     const dateFields = ["start_date"];
     const enumFields = ["skill_level","status","skill_type_rid","skill_subtype_rid"];
 
@@ -579,12 +585,13 @@ async executeQueries(
         // if (alphanumericFields.includes(key)) {
         //   filterConditions += this.processAlphanumericFilter(key, value);
         // } 
-        // else if (numericFields.includes(key)) {
+        // if (numericFields.includes(key)) {
         //   filterConditions += this.processNumericFilter(key, value);
         // } 
         if (dateFields.includes(key)) {
           filterConditions += this.processDateFilter(key, value);
-        } else if (enumFields.includes(key)) {
+        } 
+        else if (enumFields.includes(key)) {
           filterConditions += this.processEnumFilter(key, value);
         } else {
           filterConditions += this.processDefaultFilter(key, value);
@@ -608,35 +615,35 @@ processAlphanumericFilter(key: string, value: any): string {
     let condition = "";
 
     if (value.equals) {
-      condition += ` AND LOWER(s."${key}") = LOWER('${value.equals}')`;
+      condition += ` AND LOWER(rs."${key}") = LOWER('${value.equals}')`;
     } else if (value.not_equals) {
-      condition += ` AND LOWER(s."${key}") != LOWER('${value.not_equals}')`;
+      condition += ` AND LOWER(rs."${key}") != LOWER('${value.not_equals}')`;
     } else if (value.contains) {
-      condition += ` AND LOWER(s."${key}") LIKE LOWER('%${value.contains}%')`;
+      condition += ` AND LOWER(rs."${key}") LIKE LOWER('%${value.contains}%')`;
     } else if (value.not_contains) {
-      condition += ` AND LOWER(s."${key}") NOT LIKE LOWER('%${value.not_contains}%')`;
+      condition += ` AND LOWER(rs."${key}") NOT LIKE LOWER('%${value.not_contains}%')`;
     } else if (value.starts_with) {
-      condition += ` AND LOWER(s."${key}") LIKE LOWER('${value.starts_with}%')`;
+      condition += ` AND LOWER(rs."${key}") LIKE LOWER('${value.starts_with}%')`;
     } else if (value.ends_with) {
-      condition += ` AND LOWER(s."${key}") LIKE LOWER('%${value.ends_with}')`;
+      condition += ` AND LOWER(rs."${key}") LIKE LOWER('%${value.ends_with}')`;
     } else if (value.is_empty !== undefined) {
       if (value.is_empty) {
-        condition += ` AND (s."${key}" IS NULL OR s."${key}" = '')`;
+        condition += ` AND (rs."${key}" IS NULL OR rs."${key}" = '')`;
       }
     } else if (value.is_not_empty !== undefined) {
       if (value.is_not_empty) {
-        condition += ` AND s."${key}" IS NOT NULL AND s."${key}" != ''`;
+        condition += ` AND rs."${key}" IS NOT NULL AND rs."${key}" != ''`;
       }
     } else if (value.in && Array.isArray(value.in) && value.in.length > 0) {
       const values = value.in.map((item: string) => `'${item.toLowerCase()}'`).join(",");
-      condition += ` AND LOWER(s."${key}") IN (${values})`;
+      condition += ` AND LOWER(rs."${key}") IN (${values})`;
     } else if (
       value.not_in &&
       Array.isArray(value.not_in) &&
       value.not_in.length > 0
     ) {
       const values = value.not_in.map((item: string) => `'${item.toLowerCase()}'`).join(",");
-      condition += ` AND LOWER(s."${key}") NOT IN (${values})`;
+      condition += ` AND LOWER(rs."${key}") NOT IN (${values})`;
     }
 
     return condition;

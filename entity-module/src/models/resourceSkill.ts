@@ -11,14 +11,14 @@ interface ResourceSkillAttributes  {
  resource_type: string,
  resource_rid: string,
  resource_number: string,
- resource_ref_id: string,
+ resource_code: string,
  status?: string, 
  skill_type_rid: string,
  skill_subtype_rid: string,
  skill_type_name?: string,
  skill_subtype_name?: string,
  skill_details?: string,             
- start_date?: number | null,
+ start_date?: Date,
  skill_description?: string,     
  skill_level: string,  
  skill_type_others?: string,
@@ -42,12 +42,12 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
   resource_type!: string;
   resource_rid!: string;
   resource_number!: string;
-  resource_ref_id!: string;
+  resource_code!: string;
   status?: string;
   skill_type_rid!: string;
   skill_subtype_rid!: string;
   skill_details?: string;
-  start_date?: number;
+  start_date?: Date;
   skill_description?: string;
   skill_level!: string;
   skill_type_others?: string;
@@ -91,14 +91,10 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
         allowNull: false,
        },
        start_date: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.DATE,
         allowNull: true,
         validate: {
-          isYear(value: number) {
-            if (value && (value < 1900 || value > 9999)) {
-              throw new Error('Start date must be a valid year between 1900 and 9999');
-            }
-          }
+          isDate: true
         }
        },
        skill_description: {
@@ -118,7 +114,7 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
         type: DataTypes.STRING(255),
         allowNull: true,
        },
-       resource_ref_id: {
+       resource_code: {
         type: DataTypes.STRING(255),
         allowNull: false,
        },
@@ -136,11 +132,11 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
         allowNull: false,
        },
        skill_details: {
-        type: DataTypes.STRING(2000),
+        type: DataTypes.TEXT,
         allowNull: true,
        },
        comments: {
-        type: DataTypes.STRING(2000),
+        type: DataTypes.TEXT,
         allowNull: true,
        },
        created_datetime: {

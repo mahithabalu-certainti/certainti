@@ -1,8 +1,8 @@
 export interface ICreateResource {
   account_number: string;
-  resource_ref_id: string;
+  resource_code: string;
   resource_type: "Full-Time" | "Sub Con"| "Non-Labor";
-  full_name?: string | null;
+  name?: string | null;
   first_name?: string | null;
   last_name?: string | null;
   org_name?: string | null;
@@ -25,9 +25,9 @@ export interface ICreateResource {
 export interface IUpdateResource {
   resource_id: string;
   account_number: string;
-  resource_ref_id: string;
+  resource_code: string;
   resource_type: "Full-Time" | "Sub Con" | "Non-Labor";
-  full_name?: string | null;
+  name?: string | null;
   first_name?: string | null;
   last_name?: string | null;
   org_name?: string | null;
@@ -49,12 +49,19 @@ export interface IResourceCost {
   account_rid: string;
   resource_type: string;
   resource_rid: string;
-  resource_ref_id: string;
+  resource_code: string;
   effective_date?: string | null;
   end_date?: string | null;
   currency_rid?: string;
-  cost_frequency: string;
-  cost: number;
+  // cost_frequency: string;
+  // cost: number;
+  annual_cost?: number | "";
+  // semi_annual_cost?: number | "";
+  monthly_cost?: number | "";
+  weekly_cost?: number | "";
+  bi_weekly_cost?: number | "";
+  daily_cost?: number | "";
+  hourly_cost?: number | "";
   fiscal_year: number;
   created_datetime?: string | null;
   modified_datetime?: string | null;
@@ -73,8 +80,15 @@ export interface IUpdateResourceCost {
   end_date?: string | null;
   currency_rid?: string;
   fiscal_year: number;
-  cost_frequency: string;
-  cost: number;
+  // cost_frequency: string;
+  // cost: number;
+  annual_cost?: number | "";
+  // semi_annual_cost?: number | "";
+  monthly_cost?: number | "";
+  weekly_cost?: number | "";
+  bi_weekly_cost?: number | "";
+  daily_cost?: number | "";
+  hourly_cost?: number | "";
   comments?: string;
   modified_datetime?: string | null;
   modified_by?: string | null;
@@ -87,8 +101,8 @@ export interface IResourceSkill {
    account_rid: string;
    resource_type: string;
    resource_rid: string;
-   resource_ref_id: string,
-   start_date?: number;
+   resource_code: string,
+   start_date?: Date | null;
    skill_description?: string;
    skill_level?: string;
    skill_type_rid: string;
@@ -107,7 +121,7 @@ export interface IResourceSkill {
 export interface IUpdateResourceSkill {
   rid: string;
   eid?: string;
-  start_date?: number;
+  start_date?: Date | null;
   skill_description?: string;
   skill_level?: string;
   status?: string;

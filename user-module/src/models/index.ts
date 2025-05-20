@@ -1,7 +1,7 @@
 import { initSequelize } from "../config/dataSource";
 import { BusinessTeams } from "./businessTeamModel";
 import { Department } from "./departmentModel";
-import { Profile } from "./profileModel";
+import { Profile, setupProfileSequence} from "./profileModel";
 import { FunctionGroup } from "./functionGroupModel";
 import { ProfileModuleAccess } from "./profileModuleAccessModel";
 import { UserDetails } from "./userDetailsModel";
@@ -19,6 +19,17 @@ import { UserModuleAccess } from "./userModuleAccessModel";
 import { UserPermissionAccess } from "./userPermissionAccessModel";
 import { UserFieldsAccess } from "./userFieldsAccessModel";
 import { UserApiAccessDenials } from "./userApiAccessDenialsModel";
+import { ProfileTimeline } from "./profileTimelineModel";
+
+import { ProfileMenuAccessHistory } from "./profileMenuAccessHistoryModel";
+import { ProfileModuleAccessHistory } from "./profileModuleAccessHistoryModel";
+import { ProfilePermissionAccessHistory } from "./profilePermissionAccessHistoryModel";
+import { ProfileFieldsAccessHistory } from "./profileFieldsAccessHistoryModel";
+import { UserMenuAccessHistory } from "./userMenuAccessHistoryModel";
+import { UserModuleAccessHistory } from "./userModuleAccessHistoryModel";
+import { UserPermissionAccessHistory } from "./userPermissionAccessHistoryModel";
+import { UserFieldsAccessHistory } from "./userFieldsAccessHistoryModel";
+import { ProfileHistory } from "./profileHistoryModel";
 
 
 export const models: {
@@ -41,6 +52,16 @@ export const models: {
   UserPermissionAccess: typeof UserPermissionAccess;
   UserFieldsAccess: typeof UserFieldsAccess;
   UserApiAccessDenials: typeof UserApiAccessDenials;
+  ProfileTimeline: typeof ProfileTimeline;
+  ProfileMenuAccessHistory: typeof ProfileMenuAccessHistory;
+  ProfileModuleAccessHistory: typeof ProfileModuleAccessHistory;
+  ProfilePermissionAccessHistory: typeof ProfilePermissionAccessHistory;
+  ProfileFieldsAccessHistory: typeof ProfileFieldsAccessHistory;
+  UserMenuAccessHistory: typeof UserMenuAccessHistory;
+  UserModuleAccessHistory: typeof UserModuleAccessHistory;
+  UserPermissionAccessHistory: typeof UserPermissionAccessHistory;
+  UserFieldsAccessHistory: typeof UserFieldsAccessHistory;
+  ProfileHistory: typeof ProfileHistory;
 
 } = {
   BusinessTeams: BusinessTeams,
@@ -61,7 +82,17 @@ export const models: {
   UserModuleAccess: UserModuleAccess,
   UserPermissionAccess: UserPermissionAccess,
   UserFieldsAccess: UserFieldsAccess,
-  UserApiAccessDenials: UserApiAccessDenials
+  UserApiAccessDenials: UserApiAccessDenials,
+  ProfileTimeline: ProfileTimeline,
+  ProfileMenuAccessHistory: ProfileMenuAccessHistory,
+  ProfileModuleAccessHistory: ProfileModuleAccessHistory,
+  ProfilePermissionAccessHistory: ProfilePermissionAccessHistory,
+  ProfileFieldsAccessHistory: ProfileFieldsAccessHistory,
+  UserMenuAccessHistory: UserMenuAccessHistory,
+  UserModuleAccessHistory: UserModuleAccessHistory,
+  UserPermissionAccessHistory: UserPermissionAccessHistory,
+  UserFieldsAccessHistory: UserFieldsAccessHistory,
+  ProfileHistory: ProfileHistory
 };
 
 export async function initModels() {
@@ -86,7 +117,23 @@ export async function initModels() {
     UserPermissionAccess.initialize(sequelize);
     UserFieldsAccess.initialize(sequelize);
     UserApiAccessDenials.initialize(sequelize);
+    ProfileTimeline.initialize(sequelize);
+    ProfileMenuAccessHistory.initialize(sequelize);
+    ProfileModuleAccessHistory.initialize(sequelize);
+    ProfilePermissionAccessHistory.initialize(sequelize);
+    ProfileFieldsAccessHistory.initialize(sequelize);
+    UserMenuAccessHistory.initialize(sequelize);
+    UserModuleAccessHistory.initialize(sequelize);
+    UserPermissionAccessHistory.initialize(sequelize);
+    UserFieldsAccessHistory.initialize(sequelize);
+    ProfileHistory.initialize(sequelize);
+    Object.values(models).forEach((model: any) => { 
+      if (model.associate) { 
+        model.associate(models); 
+      } 
+    });
     await sequelize.sync({ force: false });
+    await setupProfileSequence(sequelize);
   } catch (err) {
     console.log("Errr loading models", err);
   }

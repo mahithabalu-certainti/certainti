@@ -52,7 +52,6 @@ class SchemaService {
         data_storage VARCHAR(255) CHECK (data_storage IN ('separate_db', 'store_in_parent')),
         auto_access_rd BOOLEAN NOT NULL,
         business_details VARCHAR(2000) NOT NULL,
-        comments VARCHAR(2000),
         created_datetime DATE DEFAULT CURRENT_TIMESTAMP NULL,
         modified_datetime DATE DEFAULT CURRENT_TIMESTAMP NULL
       );
@@ -275,7 +274,7 @@ class SchemaService {
           interaction_cc_list, blended_rate_fte, blended_rate_subcon, 
           created_by, modified_by, website, 
           project_manager, 
-          data_residency, data_storage, auto_access_rd,business_details,comments
+          data_residency, data_storage, auto_access_rd,business_details
         ) 
         VALUES (
           :account_rid, :max_ai_interactions, 
@@ -284,7 +283,7 @@ class SchemaService {
           :created_by, :modified_by, 
           :website, 
           :project_manager, 
-          :data_residency, :data_storage, :auto_access_rd,:business_details,:comments
+          :data_residency, :data_storage, :auto_access_rd,:business_details
         );
       `,
       {
@@ -390,8 +389,7 @@ class SchemaService {
           project_manager = :project_manager,
           auto_access_rd = :auto_access_rd,
           modified_datetime = :modified_datetime,
-          business_details = :business_details,
-          comments = :comments
+          business_details = :business_details
         WHERE account_rid = :account_rid;
       `,
       {
@@ -434,6 +432,17 @@ class SchemaService {
     } catch (err) {
       throw new Error("Error retrieving account details");
     }
+  }
+  async fetchUserNames(created_by:string)
+  {
+     const sequelize = await initSequelize();
+     return await sequelize.query(
+          `SELECT first_name || ' ' || last_name AS full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          {
+            replacements: { userId: created_by },
+            type: 'SELECT'
+          }
+        )
   }
 
   async fetchKeyContacts(account_rid: string, accountNumber: string) {

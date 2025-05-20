@@ -2,7 +2,7 @@ import { initSequelize } from "../config/dataSource";
 import { models } from "../models/index";
 import { constants } from "../utils/constant";
 import { IUpdateUserData, IUserData } from "../utils/types";
-import { Op, Sequelize } from "sequelize";
+import { Op, Sequelize, IndexHints } from "sequelize";
 
   const { 
     User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams,
@@ -94,8 +94,6 @@ class UserService {
         role_rid: role,
         middle_name,
         phone,
-        full_name:
-          first_name + (middle_name ? " " + middle_name : "") + " " + last_name,
         created_by: userId,
         modified_by: userId,
       });
@@ -182,11 +180,6 @@ class UserService {
           role_rid: role,
           middle_name,
           phone,
-          full_name:
-            first_name +
-            (middle_name ? " " + middle_name : "") +
-            " " +
-            last_name,
           modified_by: loggedInUser,
           modified_datetime: new Date(),
         },
@@ -331,7 +324,7 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
       manager_name,
       employee_id,
       function_group_id,
-      mobile,
+      mobile,      
     });
   }
 
@@ -601,7 +594,7 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { rid: string; user_role: string; user_id: string; permissions: any[] } | null;
+    data?: { rid: string; user_role: string; user_id: string; profile_id: string; permissions: any[] } | null;
   }> {
     try {
       const roles = await User.findOne({
@@ -637,6 +630,7 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
           rid: roles.role_rid || "",
           user_role: roles.business_teams?.business_teams,
           user_id: roles.rid,
+          profile_id: roles.profile_rid || "",
           permissions
         },
       };
@@ -689,7 +683,9 @@ async getAllUserPermission(userId: string, profileId: string) {
       const maWithMenu = ma as any;
       if (maWithMenu.menu) {
         permissions.push({
+          rid: maWithMenu.rid,
           type: "menu",
+          menu_id: maWithMenu.menu.rid,
           name: maWithMenu.menu.menu_name,
           desc: maWithMenu.menu.menu_desc,
           is_enabled: maWithMenu.is_enabled
@@ -710,7 +706,10 @@ async getAllUserPermission(userId: string, profileId: string) {
       const moWithModule = mo as any;
       if (moWithModule.menu_module) {
         permissions.push({
+          rid: moWithModule.rid,
           type: "module",
+          module_id: moWithModule.menu_module.rid,
+          menu_id: moWithModule.menu_module.menu_id,
           name: moWithModule.menu_module.module_name,
           desc: moWithModule.menu_module.module_desc,
           is_enabled: moWithModule.is_enabled
@@ -722,19 +721,47 @@ async getAllUserPermission(userId: string, profileId: string) {
     // Permissions
     const permissionAccess = await ProfilePermissionAccess.findAll({
       where: { profile_id: profileId},
-      include: [{ model: ModulePermission, as: "module_permission" }]
+      include: [{ model: ModulePermission, as: "module_permission" }],
+      indexHints: [{ type: IndexHints.USE, values: ['idx_profile_permission_access_profile_id'] }]
     });
     console.log(`After permission access retrieve: ${new Date(Date.now()).toISOString()}`);
+
 
     permissionAccess.forEach(pa => {
       const paWithPerm = pa as any;
       if (paWithPerm.module_permission) {
         permissions.push({
+          rid: paWithPerm.rid,
           type: "permission",
           permission_id: paWithPerm.module_permission_id,
+          module_id: paWithPerm.module_permission.menu_module_id,
           name: paWithPerm.module_permission.permission_name,
           desc: paWithPerm.module_permission.permission_desc,
+          is_field_available: paWithPerm.module_permission.is_field_available,
           is_enabled: paWithPerm.is_enabled
+        });
+      }
+    });
+
+    const fieldAccess = await ProfileFieldsAccess.findAll({
+      where: { profile_id: profileId },
+      include: [{ model: PermissionField, as: "permission_field" }],
+      indexHints: [{ type: IndexHints.USE, values: ['idx_profile_fields_access_profile_id'] }]
+    });
+    console.log(`After fieldAccess retrieve: ${new Date(Date.now()).toISOString()}`);
+
+    fieldAccess.forEach(fa => {
+      const faWithField = fa as any;
+      if (faWithField.permission_field) {
+        permissions.push({
+          rid: faWithField.rid,
+          type: "field",
+          field_id: faWithField.permission_field.rid,
+          permission_id: faWithField.permission_field.module_permission_id,
+          name: faWithField.permission_field.field_name,
+          desc: faWithField.permission_field.field_desc,
+          read: faWithField.read,
+          edit: faWithField.edit
         });
       }
     });
@@ -756,7 +783,9 @@ async getAllUserPermission(userId: string, profileId: string) {
       const maWithMenu = ma as any;
       if (maWithMenu.menu) {
         permissions.push({
+          rid: maWithMenu.rid,
           type: "menu",
+          menu_id: maWithMenu.menu.rid,
           name: maWithMenu.menu.menu_name,
           desc: maWithMenu.menu.menu_desc,
           is_enabled: maWithMenu.is_enabled
@@ -773,7 +802,10 @@ async getAllUserPermission(userId: string, profileId: string) {
       const moWithModule = mo as any;
       if (moWithModule.menu_module) {
         permissions.push({
+          rid: moWithModule.rid,
           type: "module",
+          module_id: moWithModule.menu_module.rid,
+          menu_id: moWithModule.menu_module.menu_id,
           name: moWithModule.menu_module.module_name,
           desc: moWithModule.menu_module.module_desc,
           is_enabled: moWithModule.is_enabled
@@ -784,14 +816,17 @@ async getAllUserPermission(userId: string, profileId: string) {
     // Permissions
     const permissionAccess = await UserPermissionAccess.findAll({
       where: { user_id: userId},
-      include: [{ model: ModulePermission, as: "module_permission" }]
+      include: [{ model: ModulePermission, as: "module_permission" }],
+      indexHints: [{ type: IndexHints.USE, values: ['idx_user_permission_access_user_id'] }]
     });
     permissionAccess.forEach(pa => {
       const paWithPerm = pa as any;
       if (paWithPerm.module_permission) {
         permissions.push({
+          rid: paWithPerm.rid,
           type: "permission",
           permission_id: paWithPerm.module_permission_id,
+          module_id: paWithPerm.module_permission.menu_module_id,
           name: paWithPerm.module_permission.permission_name,
           desc: paWithPerm.module_permission.permission_desc,
           is_enabled: paWithPerm.is_enabled
@@ -799,37 +834,30 @@ async getAllUserPermission(userId: string, profileId: string) {
       }
     });
 
+    const fieldAccess = await UserFieldsAccess.findAll({
+      where: { user_id: userId },
+      include: [{ model: PermissionField, as: "permission_field" }],
+      indexHints: [{ type: IndexHints.USE, values: ['idx_user_fields_access_user_id'] }]
+    });
+    console.log(`After user fieldAccess retrieve: ${new Date(Date.now()).toISOString()}`);
+
+    fieldAccess.forEach(fa => {
+      const faWithField = fa as any;
+      if (faWithField.permission_field) {
+        permissions.push({
+          rid: faWithField.rid,
+          type: "field",
+          field_id: faWithField.permission_field.rid,
+          permission_id: faWithField.permission_field.module_permission_id,
+          name: faWithField.permission_field.field_name,
+          read: faWithField.read,
+          edit: faWithField.edit
+        });
+      }
+    });
+
+
     return permissions;
-  }
-
-
-  /**
-   * Retrieves a list of all profiles from the `Profile` model.
-   *
-   * This method fetches all the available profiles from the database and returns them in the response.
-   * If the fetch is successful, it returns the profiles in the `data` field of the response.
-   *
-   * @returns {Promise<{ statusCode: string, message: string, data: { profiles: any[] } }>}
-   * A promise that resolves to an object containing the status, message, and the list of profiles.
-   */
-  async profiles(): Promise<{
-    statusCode: number;
-    message: string;
-    errorMessage?: string;
-    data?: { profiles: any };
-  }> {
-    try {
-      const profiles = await Profile.findAll( {order: [["profile_name", "ASC"]]} );
-      return {
-        statusCode: constants.SUCCESS,
-        message: constants.SUCCESS_MESSAGE,
-        data: {
-          profiles,
-        },
-      };
-    } catch (err) {
-      return this.throwServiceError(err as Error);
-    }
   }
 
   /**
@@ -867,11 +895,12 @@ async getAllUserPermission(userId: string, profileId: string) {
         "profile_name",
         sortOrder,
       ]);
+      order.push(["first_name", "asc"]);
     }
 
     const { count, rows } = await User.findAndCountAll({
       where: whereClause,
-      attributes: ["rid", "email", "status", "full_name", "first_name"],
+      attributes: ["rid", "email", "status", "first_name"],
       limit,
       offset,
       order,
@@ -947,7 +976,7 @@ async getAllUserPermission(userId: string, profileId: string) {
    * Builds a `whereClause` object for filtering database queries based on provided filters and search criteria.
    *
    * This method constructs a `whereClause` object used to filter database records. It supports searching
-   * for users by fields such as `full_name`, `first_name`, `email`, and `business_teams.business_teams`,
+   * for users by fields such as  `first_name`, `email`, and `business_teams.business_teams`,
    * as well as applying additional filters for specific fields (e.g., `user_name`, `status`, etc.).
    *
    * @param {Record<string, any>} filters - The filtering conditions for specific fields (e.g., user_name, status).
@@ -964,7 +993,6 @@ async getAllUserPermission(userId: string, profileId: string) {
     if (search) {
       const searchCondition = {
         [Op.or]: [
-          { full_name: { [Op.iLike]: `%${search}%` } },
           { first_name: { [Op.iLike]: `%${search}%` } },
           { last_name: { [Op.iLike]: `%${search}%` } },
           { middle_name: { [Op.iLike]: `%${search}%` } },
@@ -988,7 +1016,6 @@ async getAllUserPermission(userId: string, profileId: string) {
       { clientField: "first_name", dbField: "first_name" },
       { clientField: "last_name", dbField: "last_name" },
       { clientField: "middle_name", dbField: "middle_name" },
-      { clientField: "full_name", dbField: "full_name" },
       { clientField: "r_number", dbField: "r_number" },
       { clientField: "email", dbField: "email" },
       // Status is handled separately
@@ -1072,7 +1099,6 @@ async getAllUserPermission(userId: string, profileId: string) {
       "status",
       "created_datetime",
       "modified_datetime",
-      "full_name",
       "profile",
     ];
 
@@ -1203,10 +1229,10 @@ const rawResult = users || [];
        users = cleanedUsers.map((user: any) => {
         const { profile, business_teams, ...basicUserInfo } = user;
         return {
-          "Username":basicUserInfo.first_name,
-          "Email":basicUserInfo.email,
-          "Profile": profile?.profile_name,
-          "Status": basicUserInfo.status === 'active' ? "Active" : "In Active",
+          "Username": basicUserInfo.first_name || "NA",
+          "Email": basicUserInfo.email || "NA", 
+          "Profile": profile?.profile_name || "NA",
+          "Status": basicUserInfo.status ? (basicUserInfo.status.toLowerCase() === 'active' ? "Active" : "In-Active") : "NA",
         };
       });
 
@@ -1240,11 +1266,12 @@ const rawResult = users || [];
         "profile_name",
         sortOrder,
       ]);
+      order.push(["first_name", "asc"]);
     }
 
     const { count, rows } = await User.findAndCountAll({
       where: whereClause,
-      attributes: ["rid", "email", "status", "full_name", "first_name"],
+      attributes: ["rid", "email", "status", "first_name"],
       order,
       include: [
         {
@@ -1323,7 +1350,7 @@ const rawResult = users || [];
       // Fetch created_by user name if ID exists
       if (userIds.created_by) {
         const [createdByUser] = await sequelize.query(
-          `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          `SELECT first_name || ' ' || last_name AS full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.created_by },
             type: 'SELECT'
@@ -1338,7 +1365,7 @@ const rawResult = users || [];
       // Fetch modified_by user name if ID exists
       if (userIds.modified_by) {
         const [modifiedByUser] = await sequelize.query(
-          `SELECT full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
+          `SELECT first_name || ' ' || last_name AS full_name FROM public."user" WHERE rid = :userId LIMIT 1`,
           {
             replacements: { userId: userIds.modified_by },
             type: 'SELECT'

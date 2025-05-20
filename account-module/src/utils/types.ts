@@ -2,7 +2,7 @@ export interface IAccount {
   account_id: string;
   account_number: string;
   account_name: string;
-  account_description?: string | null;
+  comments?: string | null;
   status: "active" | "inactive";
   eid: number;
   is_parent: boolean;
@@ -38,7 +38,6 @@ export interface IAccount {
   data_storage: "separate_db" | "store_in_parent";
   key_contacts:any;
   business_details:string
-  comments?:string;
 }
 
 export interface IUpdateAccount {
@@ -46,7 +45,7 @@ export interface IUpdateAccount {
   account_id: string;
   account_number: string;
   account_name: string;
-  account_description?: string | null;
+  comments?: string | null;
   status: "active" | "inactive";
   eid: number;
   is_parent: boolean;
@@ -82,7 +81,6 @@ export interface IUpdateAccount {
   data_storage: "separate_db" | "store_in_parent";
   r_number: string;
   business_details:string;
-  comments?:string;
   key_contacts:any;
 }
 
