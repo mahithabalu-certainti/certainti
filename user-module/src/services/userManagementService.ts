@@ -58,6 +58,7 @@ class UserManagementService {
       profile?: any;
       profile_id?: string;
       source_profile_id?:string,
+      profile_name?:string,
       profile_number?: string;
       privileges?: any[];
     };
@@ -122,6 +123,7 @@ class UserManagementService {
             profile_id: profile.rid,
             profile_number: profile.r_number,
             source_profile_id:source_profile_id,
+            profile_name,
             privileges
           }
         };
