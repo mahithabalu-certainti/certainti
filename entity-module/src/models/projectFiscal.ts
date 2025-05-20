@@ -1,5 +1,6 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { R_NUMBER_PREFIX } from "../utils/constants";
+import { Project } from "./project";
 
 export interface ProjectFiscalAttributes {
   rid?: string;
@@ -189,7 +190,7 @@ export class ProjectFiscal
   public claim_status?: string | null;
 
   static initialize(sequelize: Sequelize, schema: string) {
-    return ProjectFiscal.init(
+    ProjectFiscal.init(
       {
         rid: {
           type: DataTypes.UUID,
@@ -320,5 +321,19 @@ export class ProjectFiscal
         },
       }
     );
+
+    ProjectFiscal.belongsTo(Project, {
+      foreignKey: 'project_rid',
+      targetKey: 'rid',
+      as: 'project',
+    });
+
+    Project.hasMany(ProjectFiscal, {
+      foreignKey: 'project_rid',
+      sourceKey: 'rid',
+      as: 'ProjectFiscal',
+    });
+
+    return ProjectFiscal;
   }
 }

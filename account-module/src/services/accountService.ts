@@ -198,6 +198,8 @@ class AccountService {
         });
       }
 
+      const updatedAccount = await this.schemaService.insertKeyContactInfo(parentAccounts);
+
       // Get total count without pagination
       const totalCount = await repository.count({
         where: baseWhereClause,
@@ -225,7 +227,7 @@ class AccountService {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          account: parentAccounts,
+          account: updatedAccount,
           count: totalCount,
         },
       };
@@ -543,6 +545,12 @@ class AccountService {
           account.rid,
           userId
         );
+        await this.schemaService.manageKeyContacts(
+          key_contacts,
+          account.rid,
+          userId,
+          parent_account?.r_number,
+        );
       } else {
         await this.schemaService.createNewSchema(account.r_number);
         await this.schemaService.insertAccountDetails(
@@ -551,12 +559,13 @@ class AccountService {
           account.rid,
           userId
         );
+        await this.schemaService.manageKeyContacts(
+          key_contacts,
+          account.rid,
+          userId,
+          account.r_number,
+        );
       }
-      await this.schemaService.manageKeyContacts(
-        key_contacts,
-        account.rid,
-        userId
-      );
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -596,6 +605,7 @@ class AccountService {
         industry_rid,
         industry_name_other,
         key_contacts,
+        parent_account_rid
       } = accountData;
 
       // Check if account name already exists before update
@@ -612,6 +622,16 @@ class AccountService {
           message: HttpStatus.BAD_REQUEST_MESSAGE,
           errorMessage: `An account with the name "${account_name}" already exists. Please choose a different name.`
         };
+      }
+
+      let parent_account: any = null;
+
+      if (data_storage === "store_in_parent" && parent_account_rid !== null) {
+        parent_account = await repository.findOne({
+          where: {
+            rid: parent_account_rid || "",
+          },
+        });
       }
 
       const [affectedCounts, affectedRows] = await repository.update(
@@ -640,30 +660,32 @@ class AccountService {
       const default_r_number = affectedRows[0].r_number;
 
       if (default_parent_id && data_storage === "separate_db") {
-        this.schemaService.updateAccountDetails(
+        await this.schemaService.updateAccountDetails(
           account_rid,
           accountData,
           default_r_number,
           userId
         );
-        this.schemaService.manageKeyContacts(
+        await this.schemaService.manageKeyContacts(
           key_contacts,
           account_rid,
-          userId
+          userId,
+          default_r_number
         );
       }
 
-      if (default_parent_id === "store_in_parent") {
-        this.schemaService.updateAccountDetails(
+      if (default_parent_id && data_storage === "store_in_parent") {
+        await this.schemaService.updateAccountDetails(
           default_parent_id,
           accountData,
-          default_r_number,
+          parent_account?.r_number,
           userId
         );
-        this.schemaService.manageKeyContacts(
+        await this.schemaService.manageKeyContacts(
           key_contacts,
-          default_parent_id,
-          userId
+          account_rid,
+          userId,
+          parent_account?.r_number,
         );
       }
 
@@ -677,7 +699,8 @@ class AccountService {
         this.schemaService.manageKeyContacts(
           key_contacts,
           account_rid,
-          userId
+          userId,
+          default_r_number
         );
       }
 
@@ -741,7 +764,7 @@ class AccountService {
   }> {
     try {
       const repository = await this.getAccountRepository();
-      const accountById = await repository.findOne({
+      let accountById = await repository.findOne({
         where: {
           rid: account_id,
         },
@@ -773,6 +796,12 @@ class AccountService {
             as: "parent_account",
             attributes: ["account_name"],
           },
+          {
+            model: Industry,
+            as: "industry",
+            attributes: ["rid", "industry_name"],
+            required: false,
+          }
         ],
       });
 
@@ -792,7 +821,8 @@ class AccountService {
       );
       // Fetch key contacts for the account
       const keyContacts = await this.schemaService.fetchKeyContacts(
-        accountById?.rid || ""
+        accountById?.rid || "",
+        acconuntNumber
       );
       let userNames;
       if(accountById)
@@ -805,6 +835,9 @@ class AccountService {
         (accountById as any).dataValues.modified_by = userNames.modified_by_name;
       }
     
+
+      accountById = await this.schemaService.insertIndustyName(accountById);
+
       // Add key contacts to account details
       const accountData = {
         ...accountDetails.length > 0 ? accountDetails[0] : {},

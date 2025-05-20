@@ -244,7 +244,7 @@ export interface IProjectService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { projects: any };
+    data?: { projects: any, totalCount: number };
   }>;
   allProjectList(
     fiscal_year: number,

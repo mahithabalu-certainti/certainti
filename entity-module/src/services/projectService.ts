@@ -1,4 +1,4 @@
-import moment from "moment";
+import moment, { Moment } from "moment";
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Project } from "../models/project";
 import { HttpStatus } from "../utils/constants";
@@ -11,6 +11,8 @@ import { ProjectHistory } from "../models/projectHistory";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { RedisService } from "./redisService";
 import Decimal from "decimal.js";
+import { KeyContact } from "../models/keyContactDetails";
+import { ProjectSummary } from "../models/projectSummary";
 
 export class ProjectService {
   private schemaService: SchemaService;
@@ -33,21 +35,19 @@ export class ProjectService {
     try {
       const { account_id } = projectData;
 
-      const accountData =
-        await this.schemaService.fetchAccountById(
-          account_id
-        );
+      const accountData = await this.schemaService.fetchAccountById(account_id);
 
       if (!accountData) {
-        throw new Error(
-          "Error creating project: Invalid account ID"
-        );
+        throw new Error("Error creating project: Invalid account ID");
       }
 
       let accountNumber = accountData.r_number;
 
-      if(accountData.parent_account_rid === null || accountData.parent_account_rid === ""){
-        throw new Error("Error creating project: Invalid account ID")
+      if (
+        accountData.parent_account_rid === null ||
+        accountData.parent_account_rid === ""
+      ) {
+        throw new Error("Error creating project: Invalid account ID");
       }
 
       if (accountData.storage_type === "store_in_parent") {
@@ -61,9 +61,7 @@ export class ProjectService {
       );
 
       if (!isExists) {
-        throw new Error(
-          "Invalid account ID: schema doesn't exists"
-        );
+        throw new Error("Invalid account ID: schema doesn't exists");
       }
 
       await this.createProjectTables(accountNumber);
@@ -86,6 +84,7 @@ export class ProjectService {
         },
       };
     } catch (err) {
+      console.log("Error creatng projec", err);
       return this.throwServiceError(err as Error);
     }
   }
@@ -93,8 +92,15 @@ export class ProjectService {
   async createProjectTables(accountNumber: string) {
     try {
       const orgDbSequlize = await initOrgSequelize();
+      const mainDbSequlize = await initMainDbSequelize();
       const schemaName = `platform_v2_${accountNumber}`;
+
       const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
+
+      const KeyContactModel = await KeyContact.initialize(
+        orgDbSequlize,
+        schemaName
+      );
       const ProjectTimelineModel = await ProjectTimeline.initialize(
         orgDbSequlize,
         schemaName
@@ -107,14 +113,20 @@ export class ProjectService {
         orgDbSequlize,
         schemaName
       );
-
-      await ProjectHistory.sync({ force: false });
+      const ProjectSummaryModel = await ProjectSummary.initialize(
+        mainDbSequlize,
+        ""
+      );
 
       await ProjectModel.sync({ force: false });
+      await KeyContactModel.sync({ force: false });
       await ProjectFiscalModel.sync({ force: false });
+      await ProjectHistory.sync({ force: false });
       await ProjectTimelineModel.sync({ force: false });
       await ProjectHistoryModel.sync({ force: false });
+      await ProjectSummaryModel.sync({ force: false });
     } catch (err) {
+      console.log("Error project tales", err);
       return this.throwServiceError(err as Error);
     }
   }
@@ -130,7 +142,7 @@ export class ProjectService {
 
       const isRefIdExist = await ProjectModel.findOne({
         where: {
-          project_ref_id: projectData.project_ref_id,
+          project_code: projectData.project_code,
         },
       });
 
@@ -142,55 +154,45 @@ export class ProjectService {
       const endDate = moment(projectData.project_enddate, "MM/DD/YYYY");
 
       const projectCreationData = {
-        project_ref_id: projectData.project_ref_id,
+        project_code: projectData.project_code,
         industry_rid: projectData.industry_rid,
         industry_name: projectData.industry_name,
         account_rid: projectData.account_id,
         account_fiscal_rid: null,
+        program_name: projectData.program_name || null,
         project_name: projectData.project_name || null,
-        client_organization: projectData.client_organization,
         project_startdate: startDate?.toDate() || null,
         project_enddate: endDate?.toDate() || null,
         project_type: projectData.project_type,
-        project_classification_rid: projectData.project_classification_rid || null,
+        project_classification_rid:
+          projectData.project_classification_rid || null,
         project_client_group: projectData.project_client_group || null,
         project_group: projectData.project_group || null,
-        project_summary: projectData.project_summary || null,
         project_status: projectData.project_status,
         fiscal_year: projectData.fiscal_year,
         country: projectData.country || null,
         region: projectData.region || null,
         currency: projectData.currency || null,
-        project_manager: projectData.project_manager,
-        project_lead: projectData.project_lead,
-        spoc_name: projectData.spoc_name,
-        spoc_email: projectData.spoc_email || null,
-        spoc_mobile: projectData.spoc_mobile || null,
-        project_tpc_name: projectData.project_tpc_name || null,
-        project_tpc_email: projectData.project_tpc_email || null,
-        project_tpc_mobile: projectData.project_tpc_mobile || null,
-        project_cc_list: projectData.project_cc_list || null,
-        total_effort: projectData.total_effort ? this.getNumericRate(projectData.total_effort) : null,
-        total_cost: projectData.total_cost ? this.getNumericRate(projectData.total_cost) : null,
+        total_effort: projectData.total_effort || null,
+        total_cost: projectData.total_cost || null,
         total_fte: projectData.total_fte || 0,
         total_sub_con: projectData.total_sub_con || 0,
-        total_non_labor_cost: projectData.total_non_labor_cost ? this.getNumericRate(projectData.total_non_labor_cost) : null,
-        total_fte_effort: projectData.total_fte_effort ? this.getNumericRate(projectData.total_fte_effort) : null,
-        total_sub_con_effort: projectData.total_sub_con_effort ? this.getNumericRate(projectData.total_sub_con_effort) : null,
-        total_fte_cost: projectData.total_fte_cost ? this.getNumericRate(projectData.total_fte_cost) : null,
-        total_sub_con_cost: projectData.total_sub_con_cost ? this.getNumericRate(projectData.total_sub_con_cost) : null,
-        last_rd_ai_assess_on: projectData.last_rd_ai_assess_on || null,
-        last_rd_ai_assess_by: projectData.last_rd_ai_assess_by || null,
-        auto_send_ai_interaction: projectData.auto_send_ai_interaction ?? false,
+        total_non_labor_cost: projectData.total_non_labor_cost || null,
+        total_fte_effort: projectData.total_fte_effort || null,
+        total_sub_con_effort: projectData.total_sub_con_effort || null,
+        total_fte_cost: projectData.total_fte_cost || null,
+        total_sub_con_cost: projectData.total_sub_con_cost || null,
+        auto_send_ai_interaction: projectData.auto_send_ai_interaction,
         auto_access_rd: projectData.auto_access_rd ?? false,
-        max_ai_interaction: projectData.max_ai_interaction || 0,
-        blended_rate_fte: projectData.blended_rate_fte ? this.getNumericForBlendedRate(projectData.blended_rate_fte) : null,
-        blended_rate_sub_con: projectData.blended_rate_sub_con ? this.getNumericForBlendedRate(projectData.blended_rate_sub_con)  : null,
+        max_ai_interaction: projectData.max_ai_interaction,
+        blended_rate_fte: projectData.blended_rate_fte || null,
+        blended_rate_sub_con: projectData.blended_rate_sub_con || null,
         project_description: projectData.project_description || null,
         created_datetime: new Date(),
         modified_datetime: new Date(),
         created_by: projectData.created_by,
         modified_by: projectData.modified_by || null,
+        comments: projectData.comments || null,
       };
 
       const project = await ProjectModel.create({
@@ -198,12 +200,22 @@ export class ProjectService {
       });
 
       if (project && project.rid) {
-        await this.schemaService.manageKeyContacts(
-          projectData.key_contacts,
-          projectData.account_id,
-          project.rid,
-          projectCreationData.created_by
+        await this.addProjectSummary(
+          projectData,
+          project,
+          startDate,
+          endDate,
+          projectData.key_contacts
         );
+
+        if (projectData.key_contacts) {
+          await this.schemaService.manageKeyContacts(
+            projectData.key_contacts,
+            project.rid,
+            projectCreationData.created_by,
+            schemaName
+          );
+        }
         this.addProjectFiscalRecords(
           projectCreationData,
           orgDbSequlize,
@@ -221,6 +233,7 @@ export class ProjectService {
 
       return project;
     } catch (err) {
+      console.log(err);
       throw new Error("Error creating project: " + (err as Error).message);
     }
   }
@@ -236,17 +249,18 @@ export class ProjectService {
   }> {
     try {
       const { account_id } = projectData;
-      
+
       const accountData = await this.schemaService.fetchAccountById(account_id);
 
       if (!accountData) {
-        throw new Error(
-          "Invalid account ID."
-        );
+        throw new Error("Invalid account ID.");
       }
 
-      if(accountData.parent_account_rid === null || accountData.parent_account_rid === ""){
-        throw new Error("Invalid account ID")
+      if (
+        accountData.parent_account_rid === null ||
+        accountData.parent_account_rid === ""
+      ) {
+        throw new Error("Invalid account ID");
       }
 
       let accountNumber = accountData.r_number;
@@ -262,9 +276,7 @@ export class ProjectService {
       );
 
       if (!isExists) {
-        throw new Error(
-          "Invalid account ID: project does not exist."
-        );
+        throw new Error("Invalid account ID: project does not exist.");
       }
 
       const orgDbSequlize = await initOrgSequelize();
@@ -282,13 +294,13 @@ export class ProjectService {
 
       const existingRefId = await ProjectModel.findOne({
         where: {
-          project_ref_id: projectData.project_ref_id,
+          project_code: projectData.project_code,
         },
       });
 
       if (existingRefId && existingRefId.rid !== projectData.project_id) {
         throw new Error(
-          `Duplicate Project Ref ID: '${projectData.project_ref_id}' already exists.`
+          `Duplicate Project Ref ID: '${projectData.project_code}' already exists.`
         );
       }
 
@@ -303,44 +315,39 @@ export class ProjectService {
       const updateProjectData = {
         project_name: projectData.project_name || null,
         project_description: projectData.project_description || null,
-        project_status: (projectData.project_status as "Active" | "Inactive") || "Active",
+        program_name: projectData.program_name || null,
+        project_status:
+          (projectData.project_status as "Active" | "Inactive") || "Active",
         project_startdate: startDate?.toDate() || null,
         project_enddate: endDate?.toDate() || null,
-        project_ref_id: projectData.project_ref_id,
-        project_lead: projectData.project_lead,
-        project_manager: projectData.project_manager,
+        project_code: projectData.project_code,
         project_type: projectData.project_type as "Fixed" | "Time & Material",
-        spoc_name: projectData.spoc_name,
-        spoc_email: projectData.spoc_email || null,
-        spoc_mobile: projectData.spoc_mobile || null,
-        project_tpc_name: projectData.project_tpc_name || null,
-        project_tpc_email: projectData.project_tpc_email || null,
-        project_tpc_mobile: projectData.project_tpc_mobile || null,
-        project_cc_list: projectData.project_cc_list || null,
-        project_classification_rid: projectData.project_classification_rid || null,
+        project_classification_rid:
+          projectData.project_classification_rid || null,
         project_client_group: projectData.project_client_group || null,
         project_group: projectData.project_group || null,
         project_summary: projectData.project_summary || null,
         industry_rid: projectData.industry_rid,
         industry_name: projectData.industry_name,
         fiscal_year: projectData.fiscal_year,
-        total_effort: projectData.total_effort ? this.getNumericRate(projectData.total_effort): null,
-        total_cost: projectData.total_cost ? this.getNumericRate(projectData.total_cost) : null,
+        total_effort: projectData.total_effort || null,
+        total_cost: projectData.total_cost || null,
         total_fte: projectData.total_fte || 0,
         total_sub_con: projectData.total_sub_con || 0,
 
-        total_non_labor_cost: projectData.total_non_labor_cost ? this.getNumericRate(projectData.total_non_labor_cost)  : null,
-        total_fte_effort: projectData.total_fte_effort ? this.getNumericRate(projectData.total_fte_effort)  : null,
-        total_sub_con_effort: projectData.total_sub_con_effort ? this.getNumericRate(projectData.total_sub_con_effort)  : null,
-        total_fte_cost: projectData.total_fte_cost ? this.getNumericRate(projectData.total_fte_cost)  : null,
-        total_sub_con_cost: projectData.total_sub_con_cost ? this.getNumericRate(projectData.total_sub_con_cost)  : null,
+        total_non_labor_cost: projectData.total_non_labor_cost || null,
+        total_fte_effort: projectData.total_fte_effort || null,
+        total_sub_con_effort: projectData.total_sub_con_effort || null,
+        total_fte_cost: projectData.total_fte_cost || null,
+        total_sub_con_cost: projectData.total_sub_con_cost || null,
         auto_send_ai_interaction: projectData.auto_send_ai_interaction ?? false,
         auto_access_rd: projectData.auto_access_rd ?? false,
         max_ai_interaction: projectData.max_ai_interaction || 0,
-        blended_rate_fte: projectData.blended_rate_fte ? this.getNumericForBlendedRate(projectData.blended_rate_fte) : null,
-        blended_rate_sub_con: projectData.blended_rate_sub_con ? this.getNumericForBlendedRate(projectData.blended_rate_sub_con)  : null,
+        blended_rate_fte: projectData.blended_rate_fte || null,
+        blended_rate_sub_con: projectData.blended_rate_sub_con || null,
         modified_by: userId,
         modified_datetime: new Date(),
+        comments: projectData.comments || null,
       };
 
       const updateProject = await ProjectModel.update(
@@ -357,8 +364,15 @@ export class ProjectService {
       if (updateProject) {
         await this.schemaService.manageKeyContacts(
           projectData.key_contacts,
-          projectData.account_id,
           projectData.project_id,
+          userId,
+          schemaName
+        );
+        await this.updateProjectSummary(
+          projectData,
+          startDate,
+          endDate,
+          projectData.key_contacts,
           userId
         );
         await this.updateProjectFiscal(
@@ -408,18 +422,19 @@ export class ProjectService {
     try {
       const accountData = await this.schemaService.fetchAccountById(accountId);
 
-       if(!accountData){
-        throw new Error(
-          "Invalid account ID"
-        );
+      if (!accountData) {
+        throw new Error("Invalid account ID");
       }
 
-      if(accountData.parent_account_rid === null || accountData.parent_account_rid === ""){
-        throw new Error("Invalid account ID")
+      if (
+        accountData.parent_account_rid === null ||
+        accountData.parent_account_rid === ""
+      ) {
+        throw new Error("Invalid account ID");
       }
 
       let accountRNumber = accountData.r_number;
-      
+
       if (accountData.storage_type === "store_in_parent") {
         accountRNumber = await this.schemaService.fetchParentAccount(
           accountData.parent_account_rid
@@ -444,23 +459,35 @@ export class ProjectService {
       const mainDbSequlize = await initMainDbSequelize();
       const schemaName = `platform_v2_${accountRNumber}`;
       const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
+      const KeyContactModel = await KeyContact.initialize(
+        orgDbSequlize,
+        schemaName
+      );
 
       let projectData = await ProjectModel.findOne({
         where: {
           rid: projectId,
         },
+        include: [
+          {
+            model: KeyContactModel,
+            as: "keyContact",
+          },
+        ],
       });
-      
 
       if (projectData) {
-        const keyContacts = await this.schemaService.fetchKeyContacts(
-          projectData.account_rid,
-          projectId
-        );
         projectData = await this.schemaService.insertProjectGeoData(
           projectData,
-          mainDbSequlize,
-          keyContacts
+          mainDbSequlize
+        );
+        projectData = await this.schemaService.insertIndustyName(
+          projectData,
+          mainDbSequlize
+        );
+        projectData = await this.schemaService.projectKeyContactData(
+          projectData,
+          mainDbSequlize
         );
       }
 
@@ -491,23 +518,24 @@ export class ProjectService {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { projects: any };
+    data?: { projects: any; totalCount: number };
   }> {
     try {
       const accountData = await this.schemaService.fetchAccountById(accountId);
 
-      if(!accountData){
-        throw new Error(
-          "Invalid account account ID."
-        );
+      if (!accountData) {
+        throw new Error("Invalid account account ID.");
       }
 
-      if(accountData.parent_account_rid === null || accountData.parent_account_rid === ""){
-        throw new Error("Invalid account ID")
+      if (
+        accountData.parent_account_rid === null ||
+        accountData.parent_account_rid === ""
+      ) {
+        throw new Error("Invalid account ID");
       }
 
       let accountRNumber = accountData.r_number;
-      
+
       if (accountData.storage_type === "store_in_parent") {
         accountRNumber = await this.schemaService.fetchParentAccount(
           accountData.parent_account_rid
@@ -524,6 +552,7 @@ export class ProjectService {
           message: HttpStatus.SUCCESS_MESSAGE,
           data: {
             projects: [],
+            totalCount: 0,
           },
         };
       }
@@ -531,6 +560,10 @@ export class ProjectService {
       const orgDbSequlize = await initOrgSequelize();
       const schemaName = `platform_v2_${accountRNumber}`;
       const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
+      const KeyContactModel = await KeyContact.initialize(
+        orgDbSequlize,
+        schemaName
+      );
 
       const [finalSortBy, finalSortOrder] = this.getSortParameters(
         sortBy,
@@ -541,7 +574,7 @@ export class ProjectService {
 
       const offset = (page - 1) * limit;
 
-      let projectData = await ProjectModel.findAll({
+      let { rows: projectData, count } = await ProjectModel.findAndCountAll({
         where: {
           account_rid: accountData.rid,
           ...whereClause,
@@ -553,8 +586,12 @@ export class ProjectService {
         offset,
         limit,
         attributes: [
+          "rid",
           "r_number",
-          "project_ref_id",
+          "project_code",
+          "project_name",
+          "program_name",
+          "fiscal_year",
           "industry_rid",
           "industry_name",
           "project_startdate",
@@ -565,15 +602,51 @@ export class ProjectService {
           "project_group",
           "project_status",
           "account_rid",
-          "rid"
+          "rid",
+          "total_cost",
+          "total_effort",
+          "total_fte",
+          "total_fte_cost",
+          "total_sub_con",
+          "total_sub_con_cost",
+          "total_non_labor_cost",
+          "comments",
+          "country",
+          "region",
+          "currency",
+          "industry_name",
+          "qualified_research_expenditure",
+          "is_rd_qualified",
+          "qre",
+          "created_datetime",
+        ],
+        include: [
+          {
+            model: KeyContactModel,
+            as: "keyContact",
+          },
         ],
       });
 
       if (projectData) {
+        const mainDbInit = await initMainDbSequelize();
+
         projectData.forEach((val) => {
-          (val.dataValues as any).account_name = accountData.account_name;
-          (val.dataValues as any).account_number = accountRNumber;
+          const dataValues = val.dataValues as any;
+          dataValues.account_name = accountData.account_name;
         });
+        projectData = await this.schemaService.insertProjectListGeoData(
+          projectData,
+          mainDbInit
+        );
+        projectData = await this.schemaService.insertIndusty(
+          projectData,
+          mainDbInit
+        );
+        projectData = await this.schemaService.insertKeyRole(
+          projectData,
+          mainDbInit
+        );
       }
 
       return {
@@ -581,6 +654,7 @@ export class ProjectService {
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
           projects: projectData,
+          totalCount: count,
         },
       };
     } catch (err) {
@@ -607,33 +681,6 @@ export class ProjectService {
     try {
       const offset = (page - 1) * limit;
 
-      const keyParams = {
-        fiscalYear,
-        page,
-        limit,
-        search,
-        filters,
-        sortBy,
-        sortOrder,
-        globalFilters,
-        userId,
-      };
-
-      // const cacheKey = this.redisService.generateCacheKey(`project_${userId}`, keyParams);
-
-      // const cachedData = await this.redisService.get(cacheKey);
-      // if(cachedData){
-      //   return {
-      //     statusCode: HttpStatus.SUCCESS,
-      //     message: HttpStatus.SUCCESS_MESSAGE,
-      //     data: {
-      //       ...cachedData
-      //     },
-      //   };
-      // }
-
-      // await this.redisService.deleteUserProjectCache(userId);
-
       const [finalSortBy, finalSortOrder] =
         this.getSortParametersForAllProjects(sortBy, sortOrder);
 
@@ -647,7 +694,10 @@ export class ProjectService {
         sortOrder: finalSortOrder,
       };
 
-      const appliedAccountNumber = await this.schemaService.computeGlobalAccountFilter(globalFilters, userId);
+      const appliedAccountNumber =
+        await this.schemaService.computeGlobalAccountFilter(
+          globalFilters,
+        );
 
       const { finalResult: allProjectList, totalCount } =
         await this.schemaService.fetchAllProjects(
@@ -661,11 +711,6 @@ export class ProjectService {
           search,
           accountDataSort
         );
-
-      // await this.redisService.set(cacheKey, {
-      //   projects: allProjectList,
-      //   count: totalCount,
-      // }, 420);
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -782,7 +827,6 @@ export class ProjectService {
       );
 
       const updateData = {
-        project_ref_id: projectData.project_ref_id,
         account_rid: projectData.account_id,
         fiscal_year: projectData.fiscal_year,
         max_ai_interaction: projectData.max_ai_interaction || 0,
@@ -897,15 +941,214 @@ export class ProjectService {
     }
   }
 
+  async addProjectSummary(
+    projectData: any,
+    project: any,
+    startDate: Moment,
+    endDate: Moment,
+    keyContacts: any[]
+  ) {
+    try {
+      const mainDbSequlize = await initMainDbSequelize();
+      const ProjectSummaryModel = await ProjectSummary.initialize(
+        mainDbSequlize,
+        ""
+      );
+      await ProjectSummaryModel.sync({ force: false });
+
+      const {
+        technicalConsultant,
+        financialConsultant,
+        projectPointOfContact,
+      } = await this.calculateKeyContactDetails(keyContacts, mainDbSequlize);
+
+      await ProjectSummaryModel.create({
+        project_code: projectData.project_code,
+        industry_rid: projectData.industry_rid,
+        industry_name: projectData.industry_name,
+        account_rid: projectData.account_id,
+        program_name: projectData.program_name || null,
+        project_name: projectData.project_name || null,
+        project_startdate: startDate?.toDate() || null,
+        project_enddate: endDate?.toDate() || null,
+        project_status: projectData.project_status,
+        project_type: projectData.project_type,
+        project_client_group: projectData.project_client_group,
+        project_group: projectData.project_group,
+        project_classification_rid: projectData.project_classification_rid,
+        fiscal_year: projectData.fiscal_year,
+        country: projectData.country || null,
+        region: projectData.region || null,
+        currency: projectData.currency || null,
+        total_effort: projectData.total_effort || null,
+        total_cost: projectData.total_cost || null,
+        total_fte: projectData.total_fte || 0,
+        total_sub_con: projectData.total_sub_con || 0,
+        total_non_labor_cost: projectData.total_non_labor_cost || null,
+        total_fte_cost: projectData.total_fte_cost || null,
+        total_sub_con_cost: projectData.total_sub_con_cost || null,
+        comments: projectData.comments || null,
+        created_datetime: new Date(),
+        modified_datetime: new Date(),
+        created_by: projectData.created_by,
+        modified_by: projectData.modified_by || null,
+        project_number: project.r_number || "",
+        project_id: project.rid || "",
+        technical_consultant: technicalConsultant,
+        financial_consultant: financialConsultant,
+        project_point_of_contact: projectPointOfContact,
+      });
+    } catch (err) {
+      console.log("Error addiing porjct smmary", err);
+      throw err;
+    }
+  }
+
+  async updateProjectSummary(
+    projectData: any,
+    startDate: Moment,
+    endDate: Moment,
+    keyContacts: any[],
+    userId: string
+  ) {
+    try {
+      const mainDbSequlize = await initMainDbSequelize();
+      const ProjectSummaryModel = await ProjectSummary.initialize(
+        mainDbSequlize,
+        ""
+      );
+
+      const {
+        technicalConsultant,
+        financialConsultant,
+        projectPointOfContact,
+      } = await this.calculateKeyContactDetails(keyContacts, mainDbSequlize);
+
+      const updateProjectData = {
+        project_name: projectData.project_name || null,
+        program_name: projectData.program_name || null,
+        project_status:
+          (projectData.project_status as "Active" | "Inactive") || "Active",
+        project_startdate: startDate?.toDate() || null,
+        project_enddate: endDate?.toDate() || null,
+        project_code: projectData.project_code,
+        industry_rid: projectData.industry_rid,
+        industry_name: projectData.industry_name,
+        fiscal_year: projectData.fiscal_year,
+
+        project_type: projectData.project_type,
+        project_client_group: projectData.project_client_group,
+        project_group: projectData.project_group,
+        project_classification_rid: projectData.project_classification_rid,
+
+        total_effort: projectData.total_effort || null,
+        total_cost: projectData.total_cost || null,
+
+        total_fte: projectData.total_fte || 0,
+        total_sub_con: projectData.total_sub_con || 0,
+
+        total_fte_cost: projectData.total_fte_cost || null,
+        total_sub_con_cost: projectData.total_sub_con_cost || null,
+        total_non_labor_cost: projectData.total_non_labor_cost || null,
+
+        modified_by: userId,
+        modified_datetime: new Date(),
+        comments: projectData.comments || null,
+
+        ...(technicalConsultant && {
+          technical_consultant: technicalConsultant,
+        }),
+        ...(financialConsultant && {
+          financial_consultant: financialConsultant,
+        }),
+        ...(projectPointOfContact && {
+          project_point_of_contact: projectPointOfContact,
+        }),
+      };
+
+      await ProjectSummaryModel.update(
+        {
+          ...updateProjectData,
+        },
+        {
+          where: {
+            project_id: projectData.project_id,
+          },
+        }
+      );
+    } catch (err) {
+      console.log("Error addiing porjct smmary", err);
+      throw err;
+    }
+  }
+
+  async calculateKeyContactDetails(keyContacts: any[], mainDbSequlize: any) {
+    let technicalConsultant = "N/A";
+    let financialConsultant = "N/A";
+    let projectPointOfContact = "N/A";
+
+    if (keyContacts) {
+      const keyContactIds = [
+        ...new Set(keyContacts.map((r: any) => r.key_contact_role)),
+      ].filter(Boolean);
+
+      let keyContactMap: Record<string, string> = {};
+
+      if (keyContactIds.length > 0) {
+        const keyContactRows = await mainDbSequlize.query(
+          `SELECT rid, role_name FROM key_contact_role WHERE rid IN (:ids)`,
+          {
+            replacements: { ids: keyContactIds },
+            type: "SELECT",
+          }
+        );
+
+        keyContactMap = Object.fromEntries(
+          keyContactRows.map((c: any) => [c.rid, c.role_name])
+        );
+      }
+
+      const enrichedKeyContacts = keyContacts.map((kc: any) => ({
+        ...kc,
+        role_name: keyContactMap[kc.key_contact_role] || null,
+      }));
+
+      const technicalContact = enrichedKeyContacts.find(
+        (e: any) =>
+          e.role_name === "Technical Consultant" && e.is_primary_contact
+      );
+      const financialContact = enrichedKeyContacts.find(
+        (e: any) =>
+          e.role_name === "Financial Consultant" && e.is_primary_contact
+      );
+      const pointOfContact = enrichedKeyContacts.find(
+        (e: any) =>
+          e.role_name === "Project Point of Contact" && e.is_primary_contact
+      );
+      
+      technicalConsultant = technicalContact ? technicalContact.key_contact_name : "N/A";
+      financialConsultant = financialContact ? financialContact.key_contact_name : "N/A";
+      projectPointOfContact = pointOfContact ? pointOfContact.key_contact_name : "N/A";
+    } else {
+      return {
+        technicalConsultant: "",
+        financialConsultant: "",
+        projectPointOfContact: "",
+      };
+    }
+
+    return { technicalConsultant, financialConsultant, projectPointOfContact };
+  }
+
   getSortParameters(sortBy: string, sortOrder: string): [string, string] {
     const validSortColumns = [
       "r_number",
-      "project_ref_id",
+      "project_code",
       "industry",
       "project_startdate",
       "project_enddate",
       "project_type",
-      "project_classification",
+      "project_classification_rid",
       "project_client_group",
       "project_group",
       "project_status",
@@ -958,13 +1201,9 @@ export class ProjectService {
       AllProjectsearchCondition = [
         { industry: { [Op.iLike]: `%${search}%` } },
         { r_number: { [Op.iLike]: `%${search}%` } },
-        { project_ref_id: { [Op.iLike]: `%${search}%` } },
+        { project_code: { [Op.iLike]: `%${search}%` } },
         { project_name: { [Op.iLike]: `%${search}%` } },
         { project_description: { [Op.iLike]: `%${search}%` } },
-        { project_manager: { [Op.iLike]: `%${search}%` } },
-        { project_lead: { [Op.iLike]: `%${search}%` } },
-        { spoc_name: { [Op.iLike]: `%${search}%` } },
-        { spoc_email: { [Op.iLike]: `%${search}%` } },
         { project_status: { [Op.iLike]: `%${search}%` } },
         ...(isNaN(parseInt(search))
           ? []
@@ -1067,47 +1306,57 @@ export class ProjectService {
   ): [string, string] {
     const validSortColumns = [
       "r_number",
-      "project_ref_id",
-      "industry_rid",
+      "project_code",
+      "industry_name",
       "project_startdate",
       "project_enddate",
       "project_name",
-      "project_description",
-      "project_manager",
-      "project_lead",
       "total_effort",
       "total_cost",
-      "spoc_name",
-      "spoc_email",
       "project_status",
-      "account_rid",
+      "fiscal_year",
+      "account_name",
+      "program_name",
+      "qualified_research_expenditure",
+      "is_rd_qualified",
+      "qre",
+      "total_fte",
+      "total_fte_cost",
+      "total_sub_con",
+      "total_sub_con_cost",
+      "total_non_labor_cost",
+      "comments",
+      "country_name",
+      "currency_code",
+      "region_name",
+      "project_number",
+      "project_point_of_contact",
+      "financial_consultant",
+      "technical_consultant"
     ];
 
     if (!validSortColumns.includes(sortBy)) {
-      sortBy = "created_datetime";
+      sortBy = "ps.created_datetime";
     }
 
     sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
     return [sortBy, sortOrder];
   }
 
-  processAccountDataSort(
-    sortBy: string, 
-    sortOrder: string
-  ) {
-      const accountDataSort: string[][] = [];
-      const accountFields = ["account_number", "account_name"];
+  processAccountDataSort(sortBy: string, sortOrder: string) {
+    const accountDataSort: string[][] = [];
+    const accountFields = ["account_number", "account_name"];
 
-      if (accountFields.includes(sortBy)) {
-        accountDataSort.push([
-              sortBy,
-              sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC"
-          ]);
-      }
+    if (accountFields.includes(sortBy)) {
+      accountDataSort.push([
+        sortBy,
+        sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC",
+      ]);
+    }
 
-      return {
-        accountDataSort,
-      };
+    return {
+      accountDataSort,
+    };
   }
 
   private normalizeDate(input: string): string | null {
@@ -1124,13 +1373,13 @@ export class ProjectService {
   ): { clientField: string; dbField: string }[] {
     const projectFilterFields = [
       { clientField: "applyFilters", dbField: "applyFilters" },
-      { clientField: "project_ref_id", dbField: "project_ref_id" },
+      { clientField: "project_code", dbField: "project_code" },
       { clientField: "industry", dbField: "industry_name" },
       { clientField: "project_startdate", dbField: "project_startdate" },
       { clientField: "project_enddate", dbField: "project_enddate" },
       { clientField: "project_type", dbField: "project_type" },
       {
-        clientField: "project_classification",
+        clientField: "project_classification_rid",
         dbField: "project_classification_rid",
       },
       { clientField: "project_client_group", dbField: "project_client_group" },
@@ -1142,16 +1391,12 @@ export class ProjectService {
     const allProjectFields = [
       { clientField: "rid", dbField: "rid" },
       { clientField: "r_number", dbField: "r_number" },
-      { clientField: "project_ref_id", dbField: "project_ref_id" },
+      { clientField: "project_code", dbField: "project_code" },
       { clientField: "industry", dbField: "industry" },
       { clientField: "project_name", dbField: "project_name" },
       { clientField: "project_description", dbField: "project_description" },
-      { clientField: "project_manager", dbField: "project_manager" },
-      { clientField: "project_lead", dbField: "project_lead" },
       { clientField: "total_effort", dbField: "total_effort" },
       { clientField: "total_cost", dbField: "total_cost" },
-      { clientField: "spoc_name", dbField: "spoc_name" },
-      { clientField: "spoc_email", dbField: "spoc_email" },
       { clientField: "project_status", dbField: "project_status" },
       { clientField: "project_startdate", dbField: "project_startdate" },
       { clientField: "project_enddate", dbField: "project_enddate" },
@@ -1169,16 +1414,16 @@ export class ProjectService {
       if (numericValue) {
         // Convert to Decimal for precision
         const decimalValue = new Decimal(numericValue[0]);
-        const formattedValue = decimalValue.isInteger() 
-          ? `${decimalValue.toFixed(0)} $/Hour` 
+        const formattedValue = decimalValue.isInteger()
+          ? `${decimalValue.toFixed(0)} $/Hour`
           : `${decimalValue.toFixed(2)} $/Hour`;
-  
+
         return formattedValue;
       }
     }
     return null;
   }
-  
+
   private getNumericRate(rateString: string): string | null {
     if (rateString) {
       // Extract numeric value only (including decimals)
@@ -1186,10 +1431,10 @@ export class ProjectService {
       if (numericValue) {
         // Convert to Decimal for precision
         const decimalValue = new Decimal(numericValue[0]);
-  
+
         // Format based on whole number or decimal
-        return decimalValue.isInteger() 
-          ? decimalValue.toFixed(0) 
+        return decimalValue.isInteger()
+          ? decimalValue.toFixed(0)
           : decimalValue.toString();
       }
     }
@@ -1218,10 +1463,10 @@ export class ProjectService {
          WHERE classification_status = 'Active'
          ORDER BY classification_name ASC`,
         {
-          type: "SELECT"
+          type: "SELECT",
         }
       );
-      
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -1231,7 +1476,7 @@ export class ProjectService {
         },
       };
     } catch (err) {
-      console.log(err)
+      console.log(err);
       return this.throwServiceError(err as Error);
     }
   }

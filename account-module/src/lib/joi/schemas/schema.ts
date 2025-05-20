@@ -143,10 +143,10 @@ const accountSchema = Joi.object({
           "string.max": "Key Contact Email cannot exceed 254 characters.",
           "string.pattern.base": "Invalid Key Contact Email Address."
         }),
-        key_contact_role_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null).label("Key Contact Role"),
-        is_primary_contact: Joi.boolean().valid(true, false).optional().label("Is Primary Contact"),
-        include_in_communication: Joi.boolean().valid(true, false).optional().label("Include In Communication"),
-        status: Joi.string().valid('active', 'inactive').required().label("Key Contact Status"),
+        key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
+        is_primary_contact: Joi.boolean().valid(true, false).optional(),
+        include_in_communication: Joi.boolean().valid(true, false).optional(),
+        status: Joi.string().valid('Active', 'Inactive').required(),
         action_type: Joi.string().valid('add', 'edit','delete').required()
       })
     )
@@ -257,7 +257,7 @@ const updateAccountSchema = Joi.object({
   key_contacts: Joi.array()
     .items(
       Joi.object({
-        key_contact_id: Joi.string().when("action_type", {
+        rid: Joi.string().when("action_type", {
           is: Joi.string().valid("edit", "delete"),
           then: Joi.required(),
           otherwise: Joi.forbidden(),
@@ -280,11 +280,11 @@ const updateAccountSchema = Joi.object({
           "string.max": "Key Contact Email cannot exceed 254 characters.",
           "string.pattern.base": "Invalid Key Contact Email Address"
         }),
-        key_contact_role_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
+        key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional(),
         include_in_communication: Joi.boolean().valid(true, false).optional(),
-        status: Joi.string().valid('active', 'inactive').required().label("Key Contact Staus"),
-        action_type: Joi.string().valid('add', 'edit','delete').required(),
+        status: Joi.string().valid('Active', 'Inactive').required(),
+        action_type: Joi.string().valid('add', 'edit','delete').required()
       })
     )
     .optional()

@@ -1,5 +1,6 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { R_NUMBER_PREFIX } from "../utils/constants";
+import { Project } from "./project";
 
 interface ProjectHistoryAttributes {
   rid?: string;
@@ -103,6 +104,20 @@ export class ProjectHistory
         },
       }
     );
+    
+
+    ProjectHistory.belongsTo(Project, {
+      foreignKey: 'project_rid',
+      targetKey: 'rid',
+      as: 'project',
+    });
+
+    Project.hasMany(ProjectHistory, {
+      foreignKey: 'project_rid',
+      sourceKey: 'rid',
+      as: 'ProjectHistory',
+    });
+
     return ProjectHistory;
   }
 }

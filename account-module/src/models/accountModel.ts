@@ -1,4 +1,4 @@
-import { DataTypes, Model, Optional, Sequelize } from "sequelize";
+import { DataTypes, Model, Optional, Sequelize, UUID } from "sequelize";
 import { DatabaseConnection } from "./dbConnectionModel";
 import { Country } from "./countryModel";
 import { Currency } from "./currencyModel";
@@ -127,7 +127,7 @@ export class Account
           allowNull: true,
         },
         industry_rid: {
-          type: DataTypes.STRING(25),
+          type: UUID,
           allowNull: false,
         },
         industry_name_other: {

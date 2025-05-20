@@ -1,5 +1,6 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { R_NUMBER_PREFIX } from "../utils/constants";
+import { Project } from "./project";
 
 interface ProjectTimelineAttributes {
   rid?: string;
@@ -31,7 +32,7 @@ export class ProjectTimeline
   public modified_by!: string;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
-    return ProjectTimeline.init(
+    ProjectTimeline.init(
       {
         rid: {
           type: DataTypes.UUID,
@@ -101,5 +102,19 @@ export class ProjectTimeline
         },
       }
     );
+
+    ProjectTimeline.belongsTo(Project, {
+      foreignKey: 'entity_rid',
+      targetKey: 'rid',
+      as: 'project',
+    });
+
+    Project.hasMany(ProjectTimeline, {
+      foreignKey: 'entity_rid',
+      sourceKey: 'rid',
+      as: 'ProjectTimeline',
+    });
+
+    return ProjectTimeline;
   }
 }
