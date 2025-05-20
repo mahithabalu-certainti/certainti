@@ -1,23 +1,33 @@
+import { MenuOption } from '../../common-service';
+
 export interface INavItem {
+  id: MenuOption | '';
   type: 'link' | 'divider';
   name: string;
   icon: string;
   link: string;
   matchLink: string;
+  disabled?: boolean;
+  tooltip?: string;
 }
 
 export interface AdminNavItem {
   title: string;
   icon: string;
   openStatus: boolean;
+  disabled?: boolean;
+  tooltip?: string;
   subItemTitle: SubItemTitle[];
 }
 
 export interface SubItemTitle {
+  id: MenuOption;
   name: string;
   icon: string;
   link: string;
   matchLink: string;
+  disabled?: boolean;
+  tooltip?: string;
 }
 
 export interface SideBarProps {

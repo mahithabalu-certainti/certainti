@@ -8,6 +8,7 @@ import {
   MenuItem,
   Popover,
   Toolbar,
+  Tooltip,
 } from '@mui/material';
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -33,7 +34,15 @@ import { useNavigate } from 'react-router-dom';
 import { PROFILE } from '../../routes';
 import { FiscalYearDropdown } from '../fiscal-dropdown';
 
-export const Navbar: React.FC = () => {
+interface NavbarProps {
+  showAdminSidebar: boolean;
+  switchSideBarMenus: () => void;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({
+  showAdminSidebar,
+  switchSideBarMenus,
+}) => {
   const msalSigninInstance = new PublicClientApplication(msalConfig);
   const msalResetInstance = new PublicClientApplication(
     msalResetPasswordConfig
@@ -54,7 +63,7 @@ export const Navbar: React.FC = () => {
   const { role, name } = useSelector((state: RootState) => state.auth);
   const { fiscalYear } = useSelector((state: RootState) => state.account);
 
-  const isConsultant = role !== UserRoles.Admin;
+  const isAdmin = role === UserRoles.Admin;
   const menuId = 'account-menu';
   const mobileMenuId = 'account-menu-mobile';
   const notificationId = 'notification-menu';
@@ -137,6 +146,7 @@ export const Navbar: React.FC = () => {
       await msalSigninInstance.initialize();
       await msalSigninInstance.logoutPopup();
       await msalSigninInstance.clearCache();
+      localStorage.removeItem('showAdminSidebar');
       logout();
       window.location.replace('/login');
     } catch (error) {
@@ -165,9 +175,15 @@ export const Navbar: React.FC = () => {
       open={isMenuOpen}
       onClose={handleMenuClose}
     >
-      <MenuItem sx={{ fontSize:'14px' }} onClick={goToProfile}>View Profile Details</MenuItem>
-      <MenuItem sx={{ fontSize:'14px' }} onClick={changePassword}>Change Password</MenuItem>
-      <MenuItem sx={{ fontSize:'14px' }} onClick={handleLogout}>Logout</MenuItem>
+      <MenuItem sx={{ fontSize: '14px' }} onClick={goToProfile}>
+        View Profile Details
+      </MenuItem>
+      <MenuItem sx={{ fontSize: '14px' }} onClick={changePassword}>
+        Change Password
+      </MenuItem>
+      <MenuItem sx={{ fontSize: '14px' }} onClick={handleLogout}>
+        Logout
+      </MenuItem>
     </Menu>
   );
 
@@ -315,14 +331,18 @@ export const Navbar: React.FC = () => {
           <Box
             sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}
           >
-            {isConsultant && (
+            {!showAdminSidebar && (
               <>
                 <IconButton
                   color='inherit'
                   disableRipple
                   onClick={() => setIsGlobalModalOpen(true)}
                 >
-                  <img src={globeIcon} alt='global' className='h-[16px] w-[16px]' />
+                  <img
+                    src={globeIcon}
+                    alt='global'
+                    className='h-[16px] w-[16px]'
+                  />
                   <span className='text-[13px] font-normal px-2'>Global</span>
                 </IconButton>
                 <div className='border-l border-[#FFFFFF4D] h-6 mx-1' />
@@ -345,11 +365,30 @@ export const Navbar: React.FC = () => {
               color='inherit'
               aria-controls={notificationId}
             >
-              <img src={notificationIcon} alt='notification' className='h-[22px] w-[22px]' />
+              <img
+                src={notificationIcon}
+                alt='notification'
+                className='h-[22px] w-[22px]'
+              />
             </IconButton>
-            <IconButton size='large' color='inherit'>
-              <img src={settingsIcon} alt='settings' className='h-[18px] w-[18px]' />
-            </IconButton>
+            {isAdmin && (
+              <Tooltip
+                title={`Switch to ${showAdminSidebar ? 'Consultant' : 'Admin'}`}
+                arrow
+              >
+                <IconButton
+                  size='large'
+                  color='inherit'
+                  onClick={switchSideBarMenus}
+                >
+                  <img
+                    src={settingsIcon}
+                    alt='settings'
+                    className='h-[18px] w-[18px]'
+                  />
+                </IconButton>
+              </Tooltip>
+            )}
             <div className='border-l border-[#FFFFFF4D] mx-2 h-6' />
             <IconButton
               size='large'

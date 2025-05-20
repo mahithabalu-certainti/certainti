@@ -30,9 +30,16 @@ import { transformAccountData } from './utils';
 import { CircularProgress } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
-import { AccountState } from '../../../store/slices/account-slice';
 import { ExportModule } from '../../types/resource-skill';
 import { exportData } from '../../services/resource-details/resource-details-service';
+import {
+  ActionsDropdownItem,
+  checkPermission,
+  DONT_HAVE_ACCESS,
+} from '../../../common-utils';
+import { AllModules, AllPermissions } from '../../../common-service';
+import { AccessRestricted } from '../../../components/account-restricted';
+import { AccountState } from '../../../store/type';
 
 export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
@@ -41,9 +48,24 @@ export const AccountDetails = () => {
   const [accountDetails, setAccountDetails] = useState<any>(null);
   const [accountDetailsForEdit, setAccountDetailsForEdit] = useState<any>(null);
   const { accountid } = useParams();
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
   const { filters, fiscalYear } = useSelector<RootState, AccountState>(
     (state: RootState) => state.account
   );
+
+  // Permission Mangement
+  const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
+  const isAccountEditEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_EDIT
+  );
+  const isAccountExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_EXPORT
+  );
+
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const defaultTab = searchParams.get('list') || 'financial';
@@ -76,7 +98,7 @@ export const AccountDetails = () => {
     const exportPayload = {
       ...commonPayload,
       ...(exportType !== 'resource' && { resourceRid }),
-      ...(exportType === 'cost' && { fiscalYear })
+      ...(exportType === 'cost' && { fiscalYear }),
     };
 
     exportData(exportType, exportPayload);
@@ -119,7 +141,7 @@ export const AccountDetails = () => {
     }
   }, [data]);
 
-  const menuItems = [
+  const menuItems: ActionsDropdownItem[] = [
     {
       label: 'Manage user',
       onClick: () => console.log('manage user clicked'),
@@ -127,6 +149,8 @@ export const AccountDetails = () => {
     {
       label: 'Export',
       onClick: () => handleExport(exportType),
+      disabled: !isAccountExportEnable,
+      tooltip: isAccountExportEnable ? '' : DONT_HAVE_ACCESS,
     },
   ];
 
@@ -187,6 +211,8 @@ export const AccountDetails = () => {
     }
   };
 
+  if (!accountIsEnable) return <AccessRestricted />;
+
   return (
     <div className='flex flex-col'>
       <div className='flex h-[108px]'>
@@ -202,6 +228,8 @@ export const AccountDetails = () => {
           primaryButton={{
             label: 'Edit',
             onClick: handleEditAccount,
+            disabled: !isAccountEditEnable,
+            tooltip: isAccountEditEnable ? '' : DONT_HAVE_ACCESS,
           }}
           onActionsClick={handleActionsClick}
           onSettingsClick={handleSettingsClick}

@@ -15,10 +15,23 @@ import TextButton from '../../../components/button/text-button';
 import { ACCOUNT_CREATE } from '../../../routes';
 import { getAccountFilterfields } from './helpers';
 import AccountTable from './table/account-table';
-import { useGetAllCountries } from '../../../common-service';
+import {
+  AllModules,
+  AllPermissions,
+  useGetAllCountries,
+} from '../../../common-service';
 import { exportAccountList, useFetchCurrency } from '../../services/account';
 import { CircularProgress } from '@mui/material';
 import { AccountList } from '../../types';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../store/store';
+import { Tooltip } from '@mui/material';
+import {
+  ActionsDropdownItem,
+  checkPermission,
+  DONT_HAVE_ACCESS,
+} from '../../../common-utils';
+import { AccessRestricted } from '../../../components/account-restricted';
 
 const BUTTON_STYLES = {
   height: '32px',
@@ -32,20 +45,45 @@ export const Accounts: React.FC = () => {
   const [order, setOrder] = useState<'asc' | 'desc'>('desc');
   const [orderBy, setOrderBy] = useState<keyof AccountList>('createdAt');
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
- const [page, setPage] = useState<number>(1);
+  const [page, setPage] = useState<number>(1);
 
-  const menuItems = [
+  // Permission Mangement
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
+  const isAccountCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_CREATE
+  );
+  const isAccountEditEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_EDIT
+  );
+  const isAccountDeleteEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_DELETE
+  );
+  const isAccountExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_EXPORT
+  );
+
+  const menuItems: ActionsDropdownItem[] = [
     {
       label: 'Manage user',
       onClick: () => console.log('manage user clicked'),
     },
     {
       label: 'Export',
-      onClick: () => exportAccountList({
-        sortBy: orderBy,
-        sortOrder: apiOrder,
-        filters: appliedFilters,
-      }),
+      disabled: !isAccountExportEnable,
+      tooltip: isAccountExportEnable ? '' : DONT_HAVE_ACCESS,
+      onClick: () =>
+        exportAccountList({
+          sortBy: orderBy,
+          sortOrder: apiOrder,
+          filters: appliedFilters,
+        }),
     },
   ];
 
@@ -59,16 +97,26 @@ export const Accounts: React.FC = () => {
   const currencyList = useFetchCurrency();
 
   const allCountries = useMemo(() => {
-    return countriesList.data?.data.country.map(item => item.country_name) || [];
+    return (
+      countriesList.data?.data.country.map((item) => item.country_name) || []
+    );
   }, [countriesList]);
-  
+
   const allCurrencies = useMemo(() => {
-    return currencyList.data?.data.currency.map(item => item.currency_code) || [];
+    return (
+      currencyList.data?.data.currency.map((item) => item.currency_code) || []
+    );
   }, [currencyList]);
 
-  const accountFilterfields = getAccountFilterfields(allCountries, allCurrencies);
+  const accountFilterfields = getAccountFilterfields(
+    allCountries,
+    allCurrencies
+  );
 
   const [totalCount, setTotalCount] = useState<number>(0);
+
+  if (!accountIsEnable) return <AccessRestricted />;
+
   return (
     <div className='flex flex-col w-full h-full'>
       <div className='flex justify-between w-full border-b-2 border-[#CBD6E2] p-6'>
@@ -100,40 +148,37 @@ export const Accounts: React.FC = () => {
         </div>
         <div className='flex gap-3 justify-center items-center'>
           <ActionsDropdown actions={menuItems} />
-          <TextButton
-            label='Create Account'
-            onClick={handleCreateAcount}
-            sx={{
-              ...BUTTON_STYLES,
-              backgroundColor: '#F16137',
-              color: '#fff',
-              borderRadius: '2px',
-              fontSize: '13px',
-              fontWeight: 400,
-            }}
-          />
+          <Tooltip arrow title={!isAccountCreateEnable ? DONT_HAVE_ACCESS : ''}>
+            <span>
+              <TextButton
+                label='Create Account'
+                onClick={handleCreateAcount}
+                disabled={!isAccountCreateEnable}
+                sx={{
+                  ...BUTTON_STYLES,
+                  backgroundColor: '#F16137',
+                  color: '#fff',
+                  borderRadius: '2px',
+                  fontSize: '13px',
+                  fontWeight: 400,
+                }}
+              />
+            </span>
+          </Tooltip>
           <div className='flex items-center justify-center border border-[#EAF0F5] w-16 h-8'>
             <div className='flex items-center justify-center w-1/2'>
               <img src={refreshIcon} alt='refresh-icon' className='h-4' />
             </div>
             <div className='border-l border-[#EAF0F5] h-full'></div>
             <div className='flex items-center justify-center w-1/2'>
-              <img
-                src={downloadIcon}
-                alt='download-icon'
-                className='h-4'
-              />
+              <img src={downloadIcon} alt='download-icon' className='h-4' />
             </div>
           </div>
           <div className='flex border border-[#EAF0F5] w-8 h-8 justify-center items-center bg-[#EAF0F6]'>
             <img src={actionIcon} alt='menu-icon' className='h-4' />
           </div>
           <div className='flex border border-[#EAF0F5] w-8 h-8 justify-center items-center bg-[#EAF0F6]'>
-            <img
-              src={accountSettingsIcon}
-              alt='menu-icon'
-              className='h-4'
-            />
+            <img src={accountSettingsIcon} alt='menu-icon' className='h-4' />
           </div>
         </div>
       </div>
@@ -141,11 +186,11 @@ export const Accounts: React.FC = () => {
         <div
           className={` ${isFilterOpen ? 'w-[260px] opacity-100 flex flex-1 transition-all duration-300 ease-in-out overflow-hidden' : 'w-0 opacity-0'}`}
         >
-          {countriesList.isLoading || currencyList.isLoading ?
+          {countriesList.isLoading || currencyList.isLoading ? (
             <div className='w-full flex flex-1 justify-center items-center'>
               <CircularProgress />
             </div>
-            :
+          ) : (
             <Filter
               setAppliedFilters={setAppliedFilters}
               searchTerm={searchTerm}
@@ -153,7 +198,8 @@ export const Accounts: React.FC = () => {
               filterFields={accountFilterfields}
               filterLabel='Filter Accounts by'
               setPage={setPage}
-            />}
+            />
+          )}
         </div>
 
         <div
@@ -169,12 +215,14 @@ export const Accounts: React.FC = () => {
             appliedFilters={appliedFilters}
             searchTerm={searchTerm}
             setTotalCount={setTotalCount}
-            order={order} 
+            order={order}
             setOrder={setOrder}
             orderBy={orderBy}
             setOrderBy={setOrderBy}
             setPage={setPage}
             page={page}
+            isAccountEditEnable={isAccountEditEnable}
+            isAccountDeleteEnable={isAccountDeleteEnable}
           />
         </div>
       </div>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { setUserId } from '../store/slices/account-slice';
 import { clearAuthDetail, setAuthDetail } from '../store/slices/auth-slice';
-import { IAuthDetails } from '../store/type/auth-slice-type';
+import { IAuthDetails } from '../store/type';
 
 const DEFAULT_AUTH_DETAIL: IAuthDetails = {
   authToken: null,

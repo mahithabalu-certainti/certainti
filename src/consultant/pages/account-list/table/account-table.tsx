@@ -37,7 +37,9 @@ const AccountTable: React.FC<Record<string, any>> = ({
   orderBy,
   setOrderBy,
   page,
-  setPage
+  setPage,
+  isAccountEditEnable,
+  isAccountDeleteEnable
 }) => {
   const navigate = useNavigate();
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
@@ -494,6 +496,8 @@ const AccountTable: React.FC<Record<string, any>> = ({
                   handleDelete,
                   renderChildRows: childRowsRenderer,
                   handleAccountNameClick,
+                  isAccountEditEnable,
+                  isAccountDeleteEnable
                 })
               )}
             </TableBody>

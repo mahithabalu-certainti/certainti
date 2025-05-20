@@ -4,6 +4,7 @@ import { allAccountIcon, arrowDownIcon, arrowUpIcon } from '../../../../assets';
 import { Account, ConvertedAccount } from '../../../types';
 import ActionButton from './action-button';
 import { TruncateWithTooltip } from '../../../../components';
+import { DONT_HAVE_ACCESS } from '../../../../common-utils';
 
 const formatNumberWithCommas = (num: number | string): string => {
   if (num) {
@@ -25,6 +26,8 @@ interface RenderRowsProps {
   handleDelete: (account: Account) => void;
   renderChildRows: (parentAccount: string | null) => React.ReactNode;
   handleAccountNameClick: (account: Account) => void;
+  isAccountEditEnable?: boolean;
+  isAccountDeleteEnable?: boolean;
 }
 
 interface RenderChildRowsProps {
@@ -48,6 +51,8 @@ export const renderRows = ({
   handleDelete,
   renderChildRows,
   handleAccountNameClick,
+  isAccountEditEnable,
+  isAccountDeleteEnable,
 }: RenderRowsProps) => {
   const rows = accounts?.filter((account) => !account?.parentAccount);
   return rows?.map((account) => {
@@ -220,6 +225,14 @@ export const renderRows = ({
             <ActionButton
               onEdit={() => handleEdit(account)}
               onDelete={() => handleDelete(account)}
+              editCustomOption={{
+                tooltip: isAccountEditEnable ? '' : DONT_HAVE_ACCESS,
+                disabled: !isAccountEditEnable,
+              }}
+              deleteCustomOption={{
+                tooltip: isAccountDeleteEnable ? '' : DONT_HAVE_ACCESS,
+                disabled: !isAccountDeleteEnable,
+              }}
             />
           </TableCell>
         </TableRow>
@@ -291,18 +304,18 @@ export const renderChildRows = ({
             borderBottom: '1px solid #CBD6E2 !important',
           }}
           >
-          <Box className='inline-flex items-center -ml-2.5'>
-            <Checkbox
-              disableRipple
-              checked={selectedRows.has(globalIndex)}
-              onChange={() => handleSelectRow(globalIndex)}
-              sx={{
-                color: '#CBD6E2',
-                '&.Mui-checked': {
-                  color: '#1755E7',
-                },
-              }}
-            />
+            <Box className='inline-flex items-center -ml-2.5'>
+              <Checkbox
+                disableRipple
+                checked={selectedRows.has(globalIndex)}
+                onChange={() => handleSelectRow(globalIndex)}
+                sx={{
+                  color: '#CBD6E2',
+                  '&.Mui-checked': {
+                    color: '#1755E7',
+                  },
+                }}
+              />
               <img
                 src={allAccountIcon}
                 alt='accountIcon'
@@ -316,7 +329,7 @@ export const renderChildRows = ({
                 <span  onClick={() => handleAccountNameClick(account)}>
                   {account.accountName || 'NA'}
                 </span>
-            </TruncateWithTooltip>
+              </TruncateWithTooltip>
             </Box>
           </TableCell>
           <TableCell sx={{ minWidth: '180px', maxWidth: '180px', width: '180px' }}>

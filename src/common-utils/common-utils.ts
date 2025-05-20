@@ -5,7 +5,14 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 import { UserDetail } from '../admin/types/manage-user';
-import { AxiosErrorMsg, CheckError } from '../common-service';
+import {
+  AllModules,
+  AllPermissions,
+  AxiosErrorMsg,
+  CheckError,
+  Permissions,
+  PermissionsMenus,
+} from '../common-service';
 
 import {
   AllowedCountry,
@@ -14,6 +21,7 @@ import {
   SelectOption,
   YesNo,
 } from '../consultant/types';
+import { PermissionState } from '../store/type';
 
 export const createTextField = (
   name: string,
@@ -55,7 +63,7 @@ export const createTextField = (
   lengthRequired: options.lengthRequired,
   errorHandling: options.errorHandling,
   clearValue: options.clearValue,
-  defaultValue: options.defaultValue
+  defaultValue: options.defaultValue,
 });
 
 export const createPhoneInputField = (
@@ -229,6 +237,13 @@ export const YES_NO_OPTIONS: SelectOption[] = [
   { label: 'No', value: YesNo.No },
 ];
 
+export interface ActionsDropdownItem {
+  label: string;
+  disabled?: boolean;
+  tooltip?: string;
+  onClick: () => void;
+}
+
 // Regex patterns
 export const REGEX_PATTERNS = {
   ALPHANUMERIC: /^[A-Za-z0-9-]+$/,
@@ -245,7 +260,8 @@ export const REGEX_PATTERNS = {
   EMAIL:
     /^(?=.{6,254}$)[a-zA-Z0-9]+(?:[._+-][a-zA-Z0-9]+)*@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63}$/,
   PHONE: /^([0-9]{10})$/,
-  WEBSITE: /^(https?:\/\/|www\.)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(:[0-9]+)?(\/[a-zA-Z0-9\-.:\/]*)?$/,
+  WEBSITE:
+    /^(https?:\/\/|www\.)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(:[0-9]+)?(\/[a-zA-Z0-9\-.:\\/]*)?$/,
   MAX_WEBSITE: /^.{0,255}$/,
   MIN_WEBSITE: /^.{10,}$/,
   DATA_RESIDENCY: /^[A-Za-z0-9\s-]+$/,
@@ -254,7 +270,7 @@ export const REGEX_PATTERNS = {
   DESCRIPTION: /^.{0,500}$/,
   RESOURCE_DESCRIPTION: /^.{0,1000}$/,
   ACCOUNT_DESCRIPTION: /^[\s\S]{0,2000}$/,
-  POSTAL_CODE:/^(?!^[A-Za-z]+$)[A-Za-z0-9-]+$/,
+  POSTAL_CODE: /^(?!^[A-Za-z]+$)[A-Za-z0-9-]+$/,
   MAX_AI_INTRACTION: /^[3-5]$/,
   NUMBERS: /^[0-9]{1,20}$/,
   NUMBERS_50: /^[0-9]{5,50}$/,
@@ -263,7 +279,7 @@ export const REGEX_PATTERNS = {
   MAX_COST_REVENUE: /^.{1,15}$/,
   COST_REGEX: /^(0|([1-9]\d{0,11}))(\.\d{1,2})?$/,
   NAME_REGEX: /^(?!.*[ '-]{2})[A-Za-z]+(?:['-][A-Za-z]+)*$/,
-  USER_NAME:/^(?!.*['-]{2})(?!.*^\s)(?!.*\s$)[A-Za-z]+(?:['-][A-Za-z]+)*$/,
+  USER_NAME: /^(?!.*['-]{2})(?!.*^\s)(?!.*\s$)[A-Za-z]+(?:['-][A-Za-z]+)*$/,
   STREET_REGEX: /^(?![\W_]+$)(?!\s*$)[a-zA-Z0-9\s,.\-#]+$/,
   MAX_255: /^.{0,255}$/,
   MAX_64: /^.{0,64}$/,
@@ -291,13 +307,15 @@ export const REGEX_PATTERNS = {
   NAME_LENGTH_3_TO_100_REGEX: /^.{3,100}$/,
   ALLOWED_CHARS_EXTENDED_NAME_REGEX: /^[A-Za-z0-9 &'.,-]+$/,
   NO_CONSECUTIVE_SPECIALS_EXTENDED_REGEX: /^(?!.*[ &'.,-]{2})/,
-  NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX: /^(?!^[ &'.,-])(?!(.*[ &'.,-]$))/,
+  NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX:
+    /^(?!^[ &'.,-])(?!(.*[ &'.,-]$))/,
   NO_LEADING_SPECIAL_REGEX: /^[a-zA-Z]/,
   ALLOWED_CHARS_REGEX: /^[a-zA-Z0-9_-]+$/,
   NO_CONSECUTIVE_SPECIALS_REGEX_FOR_ORG_NAME: /^(?!.*[-_]{2}).+$/,
   NO_TRAILING_SPECIAL_REGEX: /[^-_]$/,
   POSTAL_NO_CONSECUTIVE_HYPHENS: /^(?!-)(?!.*--)[a-zA-Z0-9-]{1,20}(?<!-)$/,
-  POSTAL_NO_LEADING_OR_TRAILING: /^(?!-)(?!.*--)(?!.*-.*-)[a-zA-Z0-9]{1,19}(-[a-zA-Z0-9]{1,19})?$/,
+  POSTAL_NO_LEADING_OR_TRAILING:
+    /^(?!-)(?!.*--)(?!.*-.*-)[a-zA-Z0-9]{1,19}(-[a-zA-Z0-9]{1,19})?$/,
   POSTAL_ALLOWED_CHARS: /^(?!^[a-zA-Z-]+$).*$/,
   // NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX:
   //   /^(?!^[ &'.,-])(?!(.*[ &'.,-]$))/,
@@ -315,12 +333,14 @@ export const REGEX_PATTERNS = {
 
 export const RESOURCE_REGEX = {
   RESOURCE_CODE: /^(?![0-9_-])[a-zA-Z][a-zA-Z0-9_-]{2,49}$/,
-  RESOURCE_NAME: /^(?!.*[-' ]{2})[A-Za-z](?:[A-Za-z]|[-' ](?=[A-Za-z])){0,62}[A-Za-z]$/,
-  ORG_NAME: /^(?!.*[&\-.'", ]{2})[A-Za-z0-9](?:[A-Za-z0-9]|[&\-.'", ](?=[A-Za-z0-9])){1,98}[A-Za-z0-9]$/,
+  RESOURCE_NAME:
+    /^(?!.*[-' ]{2})[A-Za-z](?:[A-Za-z]|[-' ](?=[A-Za-z])){0,62}[A-Za-z]$/,
+  ORG_NAME:
+    /^(?!.*[&\-.'", ]{2})[A-Za-z0-9](?:[A-Za-z0-9]|[&\-.'", ](?=[A-Za-z0-9])){1,98}[A-Za-z0-9]$/,
   EMAIL: /^[a-zA-Z0-9._%+-]{1,64}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
   MOBILE: /^\+?[0-9][0-9\- ]{3,14}[0-9]$/,
   MANAGER_NAME: /^(?=(.*[a-zA-Z0-9]){3})[a-zA-Z0-9][a-zA-Z0-9 .'-]{1,99}$/,
-  ROLE:/^(?=.*[a-zA-Z])[a-zA-Z\s\-'.]+$/,
+  ROLE: /^(?=.*[a-zA-Z])[a-zA-Z\s\-'.]+$/,
   DESIGNATION: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{4,100}$/,
   YEARS_EXPERIENCE: /^(?:0|[1-9]\d?)(?:\.\d{1,2})?$/,
   DESCRIPTION: /^[\s\S]{0,2000}$/,
@@ -381,3 +401,40 @@ export const STATUS_OPTIONS: SelectOption[] = [
   { label: 'Active', value: 'active' },
   { label: 'In-Active', value: 'inactive' },
 ];
+
+export const reShapePermissionData = (all: Permissions[]): PermissionState => {
+  const [menus, modules, permission] = all.reduce<
+    [Permissions[], Permissions[], Permissions[]]
+  >(
+    (acc, item) => {
+      const [menus, mods, perms] = acc;
+
+      if (item.type === PermissionsMenus.MENU) {
+        menus.push(item);
+      } else if (item.type === PermissionsMenus.MODULE) {
+        mods.push(item);
+      } else if (item.type === PermissionsMenus.PERMISSION) {
+        perms.push(item);
+      } else if (item.type === PermissionsMenus.FIELD) {
+        const permIndex = perms.findIndex(
+          (p) => p.permission_id === item.permission_id
+        );
+        if (permIndex !== -1) {
+          perms[permIndex].fields = [...(perms[permIndex].fields || []), item];
+        }
+      }
+      return [menus, mods, perms];
+    },
+    [[], [], []]
+  );
+  return { menus, modules, permission };
+};
+
+export const checkPermission = (
+  data: Permissions[],
+  condition: AllPermissions | AllModules
+) => {
+  return data?.find((item) => item?.name === condition)?.is_enabled;
+};
+
+export const DONT_HAVE_ACCESS = "Access Restricted. Contact administrator to gain access.";

@@ -2,11 +2,8 @@ import { Box, Button, Menu, MenuItem } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React, { useState } from 'react';
 import { arrowDownIcon, arrowUpIcon } from '../../assets';
-
-interface ActionsDropdownItem {
-  label: string;
-  onClick: () => void;
-}
+import { Tooltip } from '@mui/material';
+import { ActionsDropdownItem } from '../../common-utils';
 
 interface ActionsDropdownProps {
   variant?: 'filled' | 'outlined';
@@ -82,16 +79,20 @@ const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
       </StyledButton>
       <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
         {actions.map((action, index) => (
-          <MenuItem
-            key={index}
-            onClick={() => {
-              handleClose();
-              action.onClick();
-            }}
-            sx={{ fontSize:'14px', fontWeight: 400, color: '#2D3E4F' }}
-          >
-            {action.label}
-          </MenuItem>
+          <Tooltip title={action.tooltip} placement='left' arrow key={index}>
+            <span>
+              <MenuItem
+                disabled={action.disabled}
+                onClick={() => {
+                  handleClose();
+                  action.onClick();
+                }}
+                sx={{ fontSize: '14px', fontWeight: 400, color: '#2D3E4F' }}
+              >
+                {action.label}
+              </MenuItem>
+            </span>
+          </Tooltip>
         ))}
       </Menu>
     </Box>

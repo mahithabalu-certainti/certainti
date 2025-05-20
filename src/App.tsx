@@ -1,5 +1,5 @@
 import { MsalProvider } from '@azure/msal-react';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { CreateUser, ManageUserDetails, UserList } from './admin/pages';
@@ -42,7 +42,10 @@ import {
   RESOURCESKILL_CREATE,
   RESOURCESKILL_EDIT,
 } from './routes';
-import { RootState } from './store/store';
+import { RootState, useAppDispatch } from './store/store';
+import { mockCurrentUserRole } from './common-service';
+import { updatePermissions } from './store/slices';
+import { reShapePermissionData } from './common-utils';
 
 /**
  * App component serves as the root component of the application.
@@ -55,7 +58,19 @@ export const App: React.FC<IApp> = ({ instance }) => {
   const { isAuthenticated } = useAuthHook();
   const _isAuthenticated = isAuthenticated();
   const { hideToast } = useToast();
+  const dispatch = useAppDispatch();
   const toastProps = useSelector((state: RootState) => state.toast);
+
+  // temporary solution
+  useEffect(() => {
+    const cloneData = JSON.parse(JSON.stringify(mockCurrentUserRole.data.permissions))
+    dispatch(
+      updatePermissions(
+        reShapePermissionData(cloneData)
+      )
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <MsalProvider instance={instance}>

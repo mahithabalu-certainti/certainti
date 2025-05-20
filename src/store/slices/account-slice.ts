@@ -4,17 +4,8 @@ import {
   saveFiltersToStorage,
 } from '../../common-utils';
 import { fetchGlobalAccounts } from '../../consultant/services/account';
-import { AccountList, FilterState } from '../../consultant/types';
-
-export interface AccountState {
-  userId: string;
-  accounts: AccountList[];
-  count: number;
-  filters: FilterState;
-  loading: boolean;
-  error: string | null;
-  fiscalYear: string;
-}
+import { FilterState } from '../../consultant/types';
+import { AccountState } from '../type';
 
 const initialState: AccountState = {
   userId: '',
@@ -33,7 +24,7 @@ export const fetchAccountsThunk = createAsyncThunk(
   }
 );
 
-const accountSlice = createSlice({
+export const accountSlice = createSlice({
   name: 'account',
   initialState,
   reducers: {
@@ -82,4 +73,3 @@ const accountSlice = createSlice({
 
 export const { setUserId, setFilters, setFiscalYear, resetFilters } =
   accountSlice.actions;
-export default accountSlice.reducer;
