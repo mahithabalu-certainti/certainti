@@ -224,6 +224,10 @@ const updateProfilePermissionsSchema = Joi.object({
 
 
 const updateUserExtendedPermissionsSchema = Joi.object({
+  user_id: Joi.string().required().messages({
+    "string.empty": "User ID is required",
+    "any.required": "User ID is required"
+  }),
   profile_id: Joi.string().required().messages({
     "string.empty": "Profile ID is required",
     "any.required": "Profile ID is required"

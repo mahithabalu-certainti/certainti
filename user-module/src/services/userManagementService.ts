@@ -4,7 +4,7 @@ const UserService = require('../services/userService').default;
 const userService = new UserService();
 import { ProfileTimeline } from "../models/profileTimelineModel";
 import { UserExtendedPermissionTimeline } from "../models/userExtendedPermissionTimelineModel";
-import { Op, IndexHints } from "sequelize";
+import { Op, IndexHints,WhereOptions  } from "sequelize";
 import { initSequelize } from "../config/dataSource";
 import { UserFieldsAccessHistory } from "../models/userFieldsAccessHistoryModel";
 import { UserPermissionAccessHistory } from "../models/userPermissionAccessHistoryModel";
@@ -81,6 +81,15 @@ class UserManagementService {
         };
       }
 
+      // Verify profile exists
+      const sourceprofile = await Profile.findByPk(source_profile_id);
+      if (!sourceprofile) {
+        return {
+          statusCode: constants.NOT_FOUND,
+          message: constants.NOT_FOUND_MESSAGE,
+          errorMessage: `Source profile not exists`
+        };
+      }
       // Create the profile
       const profile = await Profile.create({
         profile_name: profile_name,
@@ -787,57 +796,57 @@ class UserManagementService {
   }
 
   private processRelationFilter(
-    field: string,
-    value: any,
-    whereClause: Record<string, any>,
-    includeClause: Array<any>
-  ): void {
-    const relationConfig: Record<string, { model: any; as: string; attribute: string }> = {
-      'created_by': { model: User, as: 'creator', attribute: 'first_name' }
-    };
-  
-    const config = relationConfig[field];
-    if (!config) return;
-  
-    // Ensure the User model is included as a LEFT JOIN
-    const existingInclude = includeClause.find(inc => inc.as === config.as);
-    if (!existingInclude) {
-      includeClause.push({
-        model: config.model,
-        as: config.as,
-        attributes: [], // No need to select attributes
-        required: false // LEFT JOIN
-      });
-    }
-  
-    // Reference the nested field (e.g., $creator.first_name$)
-    const nestedField = `$${config.as}.${config.attribute}$`;
-  
-    if (typeof value === 'object') {
-      if (value.equals !== undefined) {
-        // Case-insensitive match
-        whereClause[nestedField] = { [Op.iLike]: value.equals };
-      } else if (value.not_equals !== undefined) {
-        whereClause[nestedField] = {
-          [Op.or]: [
-            { [Op.notILike]: value.not_equals }, // Case-insensitive not equal
-            { [Op.is]: null } // Include profiles without a creator
-          ]
-        };
-      } else if (value.contains !== undefined) {
-        whereClause[nestedField] = { [Op.iLike]: `%${value.contains}%` };
-      } else if (value.is_empty !== undefined) {
-        // Handle is_empty filter for relation fields
-        if (value.is_empty) {
-          // If is_empty is true, find records where the relation is null
-          whereClause[nestedField] = { [Op.is]: null };
-        } else {
-          // If is_empty is false, find records where the relation is not null
-          whereClause[nestedField] = { [Op.not]: null };
-        }
+  field: string,
+  value: any,
+  whereClause: WhereOptions,
+  includeClause: Array<any>
+): void {
+  const relationConfig: Record<string, { model: any; as: string; attributes: string[] }> = {
+    'created_by': { model: User, as: 'creator', attributes: ['first_name', 'last_name'] }
+  };
+
+  const config = relationConfig[field];
+  if (!config) return;
+
+  // Ensure the relation is included (LEFT JOIN)
+  const existingInclude = includeClause.find(inc => inc.as === config.as);
+  if (!existingInclude) {
+    includeClause.push({
+      model: config.model,
+      as: config.as,
+      attributes: [],
+      required: false
+    });
+  }
+
+  if (typeof value === 'object') {
+    const orConditions: any[] = [];
+
+    if (value.equals !== undefined) {
+      for (const attr of config.attributes) {
+        orConditions.push({ [`$${config.as}.${attr}$`]: { [Op.iLike]: value.equals } });
+      }
+    } else if (value.not_equals !== undefined) {
+      for (const attr of config.attributes) {
+        orConditions.push({ [`$${config.as}.${attr}$`]: { [Op.notILike]: value.not_equals } });
+      }
+    } else if (value.contains !== undefined) {
+      for (const attr of config.attributes) {
+        orConditions.push({ [`$${config.as}.${attr}$`]: { [Op.iLike]: `%${value.contains}%` } });
       }
     }
+
+    if (orConditions.length > 0) {
+      (whereClause as any)[Op.or] = orConditions;
+    } else if (value.is_empty !== undefined) {
+      const emptyCondition = value.is_empty
+        ? { [`$${config.as}.id$`]: { [Op.is]: null } }
+        : { [`$${config.as}.id$`]: { [Op.not]: null } };
+
+      Object.assign(whereClause, emptyCondition);
+    }
   }
+}
 
   /**
    * Gets all profiles
