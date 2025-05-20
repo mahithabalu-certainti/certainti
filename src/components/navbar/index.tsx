@@ -26,12 +26,12 @@ import { UserRoles } from '../../common-service';
 import { msalConfig, msalResetPasswordConfig } from '../../config/msalConfig';
 import { useAuthHook, useToast } from '../../hooks';
 import { RootState } from '../../store/store';
-import { GlobalModal } from '../global-modal';
 import { setFiscalYear } from '../../store/slices/account-slice';
 import { fiscalYears } from '../../common-utils';
 import { useNavigate } from 'react-router-dom';
 import { PROFILE } from '../../routes';
 import { FiscalYearDropdown } from '../fiscal-dropdown';
+import GlobalFilterModal from '../global-modal/global-filter';
 
 export const Navbar: React.FC = () => {
   const msalSigninInstance = new PublicClientApplication(msalConfig);
@@ -165,9 +165,15 @@ export const Navbar: React.FC = () => {
       open={isMenuOpen}
       onClose={handleMenuClose}
     >
-      <MenuItem sx={{ fontSize:'14px' }} onClick={goToProfile}>View Profile Details</MenuItem>
-      <MenuItem sx={{ fontSize:'14px' }} onClick={changePassword}>Change Password</MenuItem>
-      <MenuItem sx={{ fontSize:'14px' }} onClick={handleLogout}>Logout</MenuItem>
+      <MenuItem sx={{ fontSize: '14px' }} onClick={goToProfile}>
+        View Profile Details
+      </MenuItem>
+      <MenuItem sx={{ fontSize: '14px' }} onClick={changePassword}>
+        Change Password
+      </MenuItem>
+      <MenuItem sx={{ fontSize: '14px' }} onClick={handleLogout}>
+        Logout
+      </MenuItem>
     </Menu>
   );
 
@@ -317,14 +323,24 @@ export const Navbar: React.FC = () => {
           >
             {isConsultant && (
               <>
-                <IconButton
-                  color='inherit'
-                  disableRipple
-                  onClick={() => setIsGlobalModalOpen(true)}
-                >
-                  <img src={globeIcon} alt='global' className='h-[16px] w-[16px]' />
-                  <span className='text-[13px] font-normal px-2'>Global</span>
-                </IconButton>
+                <div className='relative'>
+                  <IconButton
+                    color='inherit'
+                    disableRipple
+                    onClick={() => setIsGlobalModalOpen(!isGlobalModalOpen)}
+                  >
+                    <img
+                      src={globeIcon}
+                      alt='global'
+                      className='h-[16px] w-[16px]'
+                    />
+                    <span className='text-[13px] font-normal px-2'>Global</span>
+                  </IconButton>
+                  <GlobalFilterModal
+                    isGlobalModalOpen={isGlobalModalOpen}
+                    handleCloseGlobalModal={handleCloseGlobalModal}
+                  />
+                </div>
                 <div className='border-l border-[#FFFFFF4D] h-6 mx-1' />
                 <FiscalYearDropdown
                   fiscalYear={fiscalYear}
@@ -345,10 +361,18 @@ export const Navbar: React.FC = () => {
               color='inherit'
               aria-controls={notificationId}
             >
-              <img src={notificationIcon} alt='notification' className='h-[22px] w-[22px]' />
+              <img
+                src={notificationIcon}
+                alt='notification'
+                className='h-[22px] w-[22px]'
+              />
             </IconButton>
             <IconButton size='large' color='inherit'>
-              <img src={settingsIcon} alt='settings' className='h-[18px] w-[18px]' />
+              <img
+                src={settingsIcon}
+                alt='settings'
+                className='h-[18px] w-[18px]'
+              />
             </IconButton>
             <div className='border-l border-[#FFFFFF4D] mx-2 h-6' />
             <IconButton
@@ -389,10 +413,6 @@ export const Navbar: React.FC = () => {
       {renderMenu}
       {renderNotificationMenu}
       {renderSearchMenu}
-      <GlobalModal
-        isGlobalModalOpen={isGlobalModalOpen}
-        handleCloseGlobalModal={handleCloseGlobalModal}
-      />
     </>
   );
 };
