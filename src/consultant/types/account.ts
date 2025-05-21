@@ -108,7 +108,7 @@ export enum YesNo {
 export enum KeyContactsUpdate {
   Edit = 'edit',
   Delete = 'delete',
-  Add = 'add'
+  Add = 'add',
 }
 
 export interface AccountById {
@@ -141,6 +141,7 @@ export interface KeyContacts {
   include_in_communication: boolean;
   status: Status;
   action_type?: string;
+  rid?: string;
 }
 
 export interface AccountFieldsTypes {
