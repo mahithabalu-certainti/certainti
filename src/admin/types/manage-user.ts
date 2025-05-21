@@ -9,14 +9,16 @@ export type ManageUser = {
   status: 'Active' | 'Inactive';
 };
 
-export type ManageUserColumn<T> = {
+export interface UserTableColumn<T> {
   id: string;
-  header: string;
+  label: string;
+  width: string | number;
+  sortId: string;
   sortable?: boolean;
-  sort?: string;
-  width?: string;
+  sticky?: boolean;
+  sx?: React.CSSProperties;
   render?: (row: T) => React.ReactNode;
-};
+}
 
 export type SortOrder = 'ASC' | 'DESC';
 

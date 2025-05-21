@@ -1,7 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  CircularProgress,
   Paper,
   Table,
   TableBody,
@@ -15,7 +14,7 @@ import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { reshapeGlobalFilter } from '../../../../common-utils';
-import { TableSortHeader } from '../../../../components/table';
+import { TableSkeleton, TableSortHeader } from '../../../../components/table';
 import { ACCOUNT, ACCOUNT_DETAILS } from '../../../../routes';
 import { RootState } from '../../../../store/store';
 import { useAccounts } from '../../../services/account';
@@ -68,7 +67,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
     } else {
       setIsDataLoaded(false);
     }
-  }, [loading, accountList]);  
+  }, [loading, accountList]);
 
   // Add this handler in the AccountTable component
   const handleAccountNameClick = (account: Account) => {
@@ -239,15 +238,15 @@ const AccountTable: React.FC<Record<string, any>> = ({
         >
           <Table stickyHeader>
             <TableHead
-               sx={{
-                "& .MuiTableCell-root": {
+              sx={{
+                '& .MuiTableCell-root': {
                   fontWeight: 700,
-                  fontSize: "13px",
-                  lineHeight: "21px",
-                  color: "#2A2A2A",
-                  padding: "0px",
-                  px: "8px",
-                  height: "28px",
+                  fontSize: '13px',
+                  lineHeight: '21px',
+                  color: '#2A2A2A',
+                  padding: '0px',
+                  px: '8px',
+                  height: '28px',
                 },
               }}
             >
@@ -293,7 +292,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     />
                   </Box> */}
                 </TableCell>
-                {accountColumns.map((column) => (
+                {accountColumns.map((column) =>
                   column.sortable ? (
                     <TableSortHeader
                       key={column.id}
@@ -306,7 +305,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                         width: column.width || 160,
                         minWidth: column.width || 160,
                         maxWidth: column.width || 160,
-                        ...(column.sx || {})
+                        ...(column.sx || {}),
                       }}
                     />
                   ) : (
@@ -316,43 +315,49 @@ const AccountTable: React.FC<Record<string, any>> = ({
                         width: column.width || 160,
                         minWidth: column.width || 160,
                         maxWidth: column.width || 160,
-                        ...(column.sx || {})
+                        ...(column.sx || {}),
                       }}
                     >
                       {column.label}
                     </TableCell>
                   )
-                ))}
-                <TableCell sx={{ width: '100px', minWidth: '100px', maxWidth: '100px', textAlign: 'center', pl: '0px !important', borderRight: 'none' }}>Action</TableCell>
+                )}
+                <TableCell
+                  sx={{
+                    width: '100px',
+                    minWidth: '100px',
+                    maxWidth: '100px',
+                    textAlign: 'center',
+                    pl: '0px !important',
+                    borderRight: 'none',
+                  }}
+                >
+                  Action
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody
               sx={{
-                "& .MuiTableCell-root": {
+                '& .MuiTableCell-root': {
                   fontWeight: 700,
-                  fontSize: "13px",
-                  lineHeight: "21px",
-                  color: "#2D3E4F",
-                  padding: "0px",
-                  paddingLeft: "8px",
-                  paddingRight: "8px",
-                  height: "32px",
+                  fontSize: '13px',
+                  lineHeight: '21px',
+                  color: '#2D3E4F',
+                  padding: '0px',
+                  paddingLeft: '8px',
+                  paddingRight: '8px',
+                  height: '32px',
                 },
               }}
             >
               {loading && !isDataLoaded ? (
-                <TableRow
-                  sx={{
-                    height: 'calc(85vh - 200px)',
-                    '& .MuiTableCell-root': {
-                      border: 'none',
-                    },
-                  }}
-                >
-                  <TableCell colSpan={9} align='center'>
-                    <CircularProgress />
-                  </TableCell>
-                </TableRow>
+                <TableSkeleton
+                  rowsPerPage={15}
+                  columnsCount={accountColumns.length}
+                  selectable={true}
+                  hasActions={true}
+                  borderHide={true}
+                />
               ) : !loading && isDataLoaded && accounts?.length === 0 ? (
                 <TableRow
                   sx={{

@@ -87,7 +87,7 @@ export interface AccountColumn {
   width: string;
   sortId: string;
   sortable?: boolean;
-  sx?: Record<string, any>;
+  sx?: React.CSSProperties;
 }
 
 export enum Storagetype {
