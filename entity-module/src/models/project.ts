@@ -149,7 +149,10 @@ export class Project
           type: DataTypes.ENUM("Fixed", "Time & Material"),
           allowNull: false,
         },
-        project_classification_rid: DataTypes.STRING(100),
+        project_classification_rid: {
+          type: DataTypes.UUID,
+          allowNull: true
+        },
         project_client_group: DataTypes.STRING(200),
         project_group: DataTypes.STRING(150),
         project_status: {

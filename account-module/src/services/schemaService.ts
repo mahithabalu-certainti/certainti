@@ -134,7 +134,7 @@ class SchemaService {
       project_startdate DATE,
       project_enddate DATE,
       project_type VARCHAR(50) CHECK (project_type IN ('Fixed', 'Time & Material')),
-      project_classification_rid VARCHAR(100),
+      project_classification_rid UUID,
       project_client_group VARCHAR(100),
       project_group VARCHAR(100),
       project_status VARCHAR(50) CHECK (project_status IN ('Active', 'Inactive')),
@@ -587,7 +587,7 @@ class SchemaService {
           :r_number, :account_rid, :key_contact_name, 
           :key_contact_email, :key_contact_role_rid, :status, 
           :is_primary_contact, :include_in_communication, 
-          :created_by, :modified_by,'Account'
+          :created_by, :modified_by, 'Account'
         );`,
         {
           replacements: {

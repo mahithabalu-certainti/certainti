@@ -511,8 +511,8 @@ class SchemaService {
             [Op.iLike]: resourceData.resource_code,
           },
           rid: {
-            [Op.ne]: resourceData.resource_id // Exclude current resource being updated
-          }
+            [Op.ne]: resourceData.resource_id, // Exclude current resource being updated
+          },
         },
       });
 
@@ -1127,66 +1127,7 @@ class SchemaService {
       const replacements: any[] = [];
 
       if (accountMeta.length > 0) {
-        // schemas = accountMeta.map((acc) => ({
-        //   table_schema: `platform_v2_${acc.r_number}`,
-        //   account_rid: acc.rid,
-        // }));
-
-        // const validSchemasRaw: any[] = await orgDbSequelize.query(
-        //   `
-        //   SELECT DISTINCT table_schema
-        //   FROM information_schema.tables
-        //   WHERE table_name = 'project'
-        //     AND table_type = 'BASE TABLE'
-        //     AND table_schema IN (${schemas
-        //       .map((_, i) => `:schema${i}`)
-        //       .join(", ")})
-        //   `,
-        //   {
-        //     replacements: Object.fromEntries(
-        //       schemas.map((s, i) => [`schema${i}`, s.table_schema])
-        //     ),
-        //     type: "SELECT",
-        //   }
-        // );
-
-        // const validSchemas = schemas.map(({ table_schema, account_rid }) => {
-        //   const match = validSchemasRaw.find(
-        //     (s) => s.table_schema === table_schema
-        //   );
-        //   return {
-        //     table_schema,
-        //     account_rid: match ? account_rid : "",
-        //   };
-        // });
-
-        // if (validSchemas.length === 0) {
-        //   return {
-        //     finalResult: [],
-        //     totalCount: 0,
-        //   };
-        // }
-
-        // const unionQueries = validSchemas
-        //   .map(({ table_schema, account_rid }) => {
-        //     let schemaConditions = [`account_rid = '${account_rid}'`];
-
-        //     if (fiscalYear && fiscalYear !== 0) {
-        //       schemaConditions.push(`fiscal_year = ${fiscalYear}`);
-        //     }
-
-        //     return `
-        //       SELECT * FROM "${table_schema}".project
-        //       ${
-        //         schemaConditions.length
-        //           ? `WHERE ${schemaConditions.join(" AND ")}`
-        //           : ""
-        //       }
-        //     `;
-        //   })
-        //   .join("\nUNION ALL\n");
-
-        const accountRids = accountMeta.map(acc => `'${acc}'`).join(', ');
+        const accountRids = accountMeta.map((acc) => `'${acc}'`).join(", ");
 
         const { whereSQL: filterWhereSQL, replacements: whereReplacements } =
           this.buildRawWhereClause(whereClause, search);
@@ -1209,7 +1150,7 @@ class SchemaService {
         const fullQuery = `
         SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, ind.industry_name, 
         ps.industry_name as industry_name_other,  ps.project_number, ps.project_type, ps.project_client_group , ps.project_group,
-        ps.project_classification_rid,
+        ps.project_classification_rid, pc.classification_name ,
         ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_consultant , ps.r_number,
         ps.program_name, ps.project_startdate , ps.project_enddate , ps.qualified_research_expenditure ,
         ps.is_rd_qualified , ps.qre, ps.total_cost , ps.total_effort , ps.total_fte , ps.total_fte_cost ,
@@ -1221,7 +1162,10 @@ class SchemaService {
         LEFT JOIN country cou ON cou.rid = ps.country 
         LEFT JOIN state st ON st.rid = ps.region 
         LEFT JOIN currency curr ON curr.rid = ps.currency 
-        WHERE acc.created_by = '${userId}' AND acc.rid in (${accountRids}) ${fullWhereClause ? 'AND ' + fullWhereClause : ''}
+        left join project_classification pc on pc.rid = ps.project_classification_rid 
+        WHERE acc.created_by = '${userId}' AND acc.rid in (${accountRids}) ${
+          fullWhereClause ? "AND " + fullWhereClause : ""
+        }
         ORDER BY ${sort.sortCol} ${sort.sortOrder}
         LIMIT ? OFFSET ?
       `;
@@ -1233,66 +1177,8 @@ class SchemaService {
           type: "SELECT",
         });
       } else {
-        // const accountByUserId = await this.fetchSchemaByUserId(userId);
-
-        // if (accountByUserId && accountByUserId.length === 0) {
-        //   return {
-        //     finalResult: [],
-        //     totalCount: 0,
-        //   };
-        // }
-
-        // schemas = accountByUserId.map((acc) => ({
-        //   table_schema: `platform_v2_${acc.r_number}`,
-        // }));
-
-        // if (schemas.length === 0) {
-        //   return {
-        //     finalResult: [],
-        //     totalCount: 0,
-        //   };
-        // }
-
-        // const validSchemas: any[] = await orgDbSequelize.query(
-        //   `
-        //   SELECT DISTINCT table_schema
-        //   FROM information_schema.tables
-        //   WHERE table_name = 'project'
-        //     AND table_type = 'BASE TABLE'
-        //     AND table_schema IN (${schemas
-        //       .map((_, i) => `:schema${i}`)
-        //       .join(", ")})
-        //   `,
-        //   {
-        //     replacements: Object.fromEntries(
-        //       schemas.map((s, i) => [`schema${i}`, s.table_schema])
-        //     ),
-        //     type: "SELECT",
-        //   }
-        // );
-
         const { whereSQL: filterWhereSQL, replacements: whereReplacements } =
           this.buildRawWhereClause(whereClause, search);
-
-        // const unionQueries = validSchemas
-        //   .map(({ table_schema }) => {
-        //     let schemaConditions = [];
-
-        //     if (fiscalYear && fiscalYear !== 0) {
-        //       schemaConditions.push(`fiscal_year = ${fiscalYear}`);
-        //     }
-
-        //     return `
-        //       SELECT rid, r_number, project_ref_id, industry_rid, project_name, project_description, total_effort, total_cost, project_status::text, project_startdate, project_enddate, created_datetime,
-        //     created_by, fiscal_year, account_rid FROM "${table_schema}".project
-        //       ${
-        //         schemaConditions.length
-        //           ? `WHERE ${schemaConditions.join(" AND ")}`
-        //           : ""
-        //       }
-        //     `;
-        //   })
-        //   .join("\nUNION ALL\n");
 
         const whereConditions = [];
         const replacements = [...whereReplacements];
@@ -1309,22 +1195,10 @@ class SchemaService {
             : `${whereConditions.join(" AND ")}`;
         }
 
-        // const fullQuery = `
-        //     WITH all_projects AS (
-        //       ${unionQueries}
-        //     )
-        //     SELECT rid, r_number, project_ref_id, industry_rid, project_name, project_description, total_effort, total_cost, project_status, project_startdate, project_enddate, created_datetime,
-        //     created_by, fiscal_year, account_rid
-        //     FROM all_projects
-        //     ${fullWhereClause}
-        //     ORDER BY ${sort.sortCol} ${sort.sortOrder}
-        //     LIMIT ? OFFSET ?;
-        //   `;
-
         const fullQuery = `
         SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, ind.industry_name, 
         ps.industry_name as industry_name_other, ps.project_type, ps.project_client_group , ps.project_group,
-        ps.project_classification_rid,
+        ps.project_classification_rid, pc.classification_name ,
         ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_consultant , ps.r_number, ps.project_number,
         ps.program_name, ps.project_startdate , ps.project_enddate , ps.qualified_research_expenditure ,
         ps.is_rd_qualified , ps.qre, ps.total_cost , ps.total_effort , ps.total_fte , ps.total_fte_cost ,
@@ -1336,7 +1210,10 @@ class SchemaService {
         LEFT JOIN country cou ON cou.rid = ps.country 
         LEFT JOIN state st ON st.rid = ps.region 
         LEFT JOIN currency curr ON curr.rid = ps.currency 
-        WHERE acc.created_by = '${userId}' ${fullWhereClause ? 'AND ' + fullWhereClause : ''}
+        left join project_classification pc on pc.rid = ps.project_classification_rid 
+        WHERE acc.created_by = '${userId}' ${
+          fullWhereClause ? "AND " + fullWhereClause : ""
+        }
         ORDER BY ${sort.sortCol} ${sort.sortOrder}
         LIMIT ? OFFSET ?
       `;
@@ -1349,42 +1226,6 @@ class SchemaService {
         });
       }
 
-      // if (results.length > 0) {
-      //   const accountIds = results.map((val) => val.account_rid);`
-      //   const placeholders = accountIds.map(() => "?").join(", ");
-
-      //   const accounts = await mainDbSequelize.query(
-      //     `SELECT rid, r_number, account_name FROM account WHERE rid IN (${placeholders})`,
-      //     {
-      //       replacements: accountIds,
-      //       type: "SELECT",
-      //     }
-      //   );
-
-      //   const accountMap = new Map(
-      //     accounts.map((acc: any) => [
-      //       acc.rid,
-      //       { r_number: acc.r_number, account_name: acc.account_name },
-      //     ])
-      //   );
-
-      //   results = results.map((res: any) => {
-      //     const accountInfo = accountMap.get(res.account_rid);
-      //     return {
-      //       ...res,
-      //       account_number: accountInfo?.r_number || null,
-      //       account_name: accountInfo?.account_name || null,
-      //     };
-      //   });
-
-      //   if (accountDataSort.length > 0) {
-      //     results = this.sortProjectByAccount(results, whereClause, {
-      //       sortCol: accountDataSort[0][0] || "",
-      //       sortOrder: accountDataSort[0][1] || "",
-      //     });
-      //   }
-      // }
-
       return {
         finalResult: results,
         totalCount: results.length,
@@ -1394,62 +1235,9 @@ class SchemaService {
     }
   }
 
-  async computeGlobalAccountFilter(
-    globalFilters: Record<string, string[]>,
-  ) {
+  async computeGlobalAccountFilter(globalFilters: Record<string, string[]>) {
     try {
       return Object.values(globalFilters).flat();
-      // const mainDbSequelize = await initMainDbSequelize();
-      // const accountIds = new Set<string>();
-
-      // for (const value of Object.values(globalFilters)) {
-      //   value.forEach((id) => accountIds.add(id));
-      // }
-
-      // const accountIdArray = Array.from(accountIds);
-
-      // if (accountIdArray.length === 0) {
-      //   return [];
-      // }
-
-      // const placeholders = accountIdArray.map((_, i) => `:id${i}`).join(", ");
-      // const replacements = Object.fromEntries(
-      //   accountIdArray.map((id, i) => [`id${i}`, id])
-      // );
-
-      // replacements["userId"] = userId;
-
-      // const accounts = await mainDbSequelize.query(
-      //   `
-      //   SELECT rid, r_number, storage_type, parent_account_rid
-      //   FROM account
-      //   WHERE rid IN (${placeholders}) AND created_by = :userId
-      //   `,
-      //   {
-      //     replacements,
-      //     type: "SELECT",
-      //   }
-      // );
-
-      // if (accounts && accounts.length > 0) {
-      //   for (const val of accounts as any[]) {
-      //     if (val.storage_type === "store_in_parent") {
-      //       const accountById = await this.fetchAccountById(
-      //         val.parent_account_rid
-      //       );
-      //       if (accountById) {
-      //         val.r_number = accountById.r_number;
-      //       }
-      //     }
-      //   }
-      // }
-
-      // return accounts as {
-      //   rid: string;
-      //   r_number: string;
-      //   storage_type: string;
-      //   parent_account_rid: string | null;
-      // }[];
     } catch (err) {
       throw new Error("Error computing global account filter");
     }
@@ -1479,7 +1267,11 @@ class SchemaService {
           }
         } else if (contact.action_type === "delete") {
           {
-            this.deleteKeyContactDetails(contact.rid, projectId, keyContactModel);
+            this.deleteKeyContactDetails(
+              contact.rid,
+              projectId,
+              keyContactModel
+            );
           }
         } else if (contact.action_type === "add") {
           if (
@@ -1500,12 +1292,16 @@ class SchemaService {
       console.log(Error);
     }
   }
-  async deleteKeyContactDetails(key_contact_id: string, project_rid: string, KeyContactModel: any) {
+  async deleteKeyContactDetails(
+    key_contact_id: string,
+    project_rid: string,
+    KeyContactModel: any
+  ) {
     await KeyContactModel.destroy({
       where: {
-        rid:key_contact_id
-      }
-    })
+        rid: key_contact_id,
+      },
+    });
   }
   async updateKeyContactDetails(
     key_contact: IUpdateKeyContactDetail,
@@ -1701,8 +1497,7 @@ class SchemaService {
       conditions.push(`(${searchConditions.join(" OR ")})`);
     }
 
-    const whereSQL =
-      conditions.length > 0 ? `${conditions.join(" AND ")}` : "";
+    const whereSQL = conditions.length > 0 ? `${conditions.join(" AND ")}` : "";
     return { whereSQL, replacements };
   }
 
@@ -1910,13 +1705,15 @@ class SchemaService {
             e.role_name === "Project Point of Contact" && e.is_primary_contact
         );
 
-        console.log("financialConsultant", financialConsultant);
-
         return {
           ...project,
-          keyContact: enrichedKeyContacts,
-          technical_consultant: technicalConsultant ? technicalConsultant.key_contact_name : "N/A",
-          financial_consultant: financialConsultant ? financialConsultant.key_contact_name : "N/A",
+          keyContact: [],
+          technical_consultant: technicalConsultant
+            ? technicalConsultant.key_contact_name
+            : "N/A",
+          financial_consultant: financialConsultant
+            ? financialConsultant.key_contact_name
+            : "N/A",
           project_point_of_contact: pointOfContact
             ? pointOfContact.key_contact_name
             : "N/A",
@@ -1991,6 +1788,95 @@ class SchemaService {
     } catch (err) {
       throw err;
     }
+  }
+
+  async projectClassificationData(project: any, mainDdSequilze: any) {
+    try {
+      let classificationName = null;
+
+      if (project && project.project_classification_rid) {
+        const [rows] = await mainDdSequilze.query(
+          `SELECT classification_name FROM project_classification WHERE rid = :rid`,
+          {
+            replacements: { rid: project.project_classification_rid },
+            type: mainDdSequilze.QueryTypes.SELECT,
+          }
+        );
+
+        if (rows) {
+          classificationName = rows.classification_name;
+        }
+      }
+
+      return {
+        ...(project.dataValues || project),
+        classification_name: classificationName,
+      };
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async insertProjectClassification(project: any, mainDdSequilze: Sequelize) {
+    try {
+      const classificationIds = [
+        ...new Set(project.map((r: any) => r.project_classification_rid)),
+      ].filter(Boolean);
+
+      let classificationRows: any[] = [];
+      let updatedProjects = project;
+
+      if (classificationIds.length > 0) {
+        classificationRows = await mainDdSequilze.query(
+          `SELECT rid, classification_name FROM project_classification WHERE rid IN (:ids)`,
+          {
+            replacements: { ids: classificationIds },
+            type: "SELECT",
+          }
+        );
+
+        const classificationMap = Object.fromEntries(
+          (Array.isArray(classificationRows) ? classificationRows : []).map((c: any) => [
+            c.rid,
+            c,
+          ])
+        );
+
+        updatedProjects = project.map((res: any) => ({
+          ...(typeof res.toJSON === "function" ? res.toJSON() : res),
+          classification_name:
+          classificationMap[res.project_classification_rid]?.classification_name || null,
+        }));
+      }
+
+      return updatedProjects;
+    } catch (err) {
+      throw new Error("Error fetching Industry" + (err as Error).message);
+    }
+  }
+
+  finalProjectSort(project: any[], sortBy: string, sortOrder: string){
+    if (sortBy) {
+      const sortedList = [...project].sort((a, b) => {
+        const valA = a[sortBy];
+        const valB = b[sortBy];
+  
+        if (valA == null) return sortOrder === 'ASC' ? 1 : -1;
+        if (valB == null) return sortOrder === 'ASC' ? -1 : 1;
+  
+        if (typeof valA === 'string' && typeof valB === 'string') {
+          return sortOrder === 'ASC'
+            ? valA.localeCompare(valB)
+            : valB.localeCompare(valA);
+        }
+  
+        return sortOrder === 'ASC' ? valA - valB : valB - valA;
+      });
+  
+      return sortedList;
+    }
+  
+    return project;
   }
 }
 
