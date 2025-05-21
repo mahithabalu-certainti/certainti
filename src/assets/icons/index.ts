@@ -11,6 +11,7 @@ import adminTemplateIcon from './admin-template.svg';
 import administrationIcon from './administration.svg';
 import allAccountIcon from './all-account.svg';
 import arrowDownIcon from './arrow-down.svg';
+import fiscalYearArrowIcon from './fiscal-year-arrow-icon.svg';
 import arrowUpIcon from './arrow-up.svg';
 import arrowBackIcon from './arrowBackIcon.svg';
 import attachmentIcon from './attachment.svg';
@@ -89,6 +90,7 @@ export {
   allAccountIcon,
   arrowBackIcon,
   arrowDownIcon,
+  fiscalYearArrowIcon,
   arrowUpIcon,
   attachmentIcon,
   backIcon,

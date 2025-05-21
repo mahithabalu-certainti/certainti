@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import { arrowDownIcon } from '../../assets';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { arrowDownIcon, fiscalYearArrowIcon } from '../../assets';
 
 interface FiscalYearOption {
   label: string;
@@ -17,16 +17,53 @@ const FiscalYearDropdown = ({
   fiscalYearsDropDown,
   onChange,
 }: Props) => {
+  const currentYear = new Date().getFullYear();
+  const minYear = 2000;
   const [open, setOpen] = useState(false);
+  const [selectedYear, setSelectedYear] = useState(fiscalYear);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [fiscalYearRange, setFiscalYearRange] = useState(2020);
 
-  const handleSelect = (value: string) => {
+  const yearsInDecade = useMemo(() => {
+    const years = [];
+    for (let i = 0; i <= 9; i++) {
+      years.push(fiscalYearRange + i);
+    }
+    return years;
+  }, [fiscalYearRange]);
+
+  const handlePrevDecade = useCallback(() => {
+    setFiscalYearRange(prev => prev - 10);
+  }, []);
+
+  const handleNextDecade = useCallback(() => {
+    setFiscalYearRange(prev => prev + 10);
+  }, []);
+
+  const handleYearClick = useCallback((value: number) => {
     const event = {
-      target: { value },
+      target: { value: value.toString() },
     } as React.ChangeEvent<HTMLSelectElement>;
+    setSelectedYear(value.toString())
     onChange(event);
     setOpen(false);
-  };
+  }, [onChange]);
+
+  const handleAllClick = useCallback(() => {
+    setSelectedYear('');
+    onChange({
+      target: { value: '' },
+    } as React.ChangeEvent<HTMLSelectElement>);
+    setOpen(false);
+  }, [onChange]);
+
+  // const handleSelect = (value: string) => {
+  //   const event = {
+  //     target: { value },
+  //   } as React.ChangeEvent<HTMLSelectElement>;
+  //   onChange(event);
+  //   setOpen(false);
+  // };
 
   const selectedLabel =
     fiscalYearsDropDown.find((fy) => fy.value === fiscalYear)?.label || 'FY-All';
@@ -47,14 +84,13 @@ const FiscalYearDropdown = ({
 
   return (
     <div
-      className="relative inline-block text-left w-[107px] min-w-[107px] max-w-[107px] mx-2 font-medium z-50"
+      className="relative inline-block text-left  mx-2 font-medium z-50"
       ref={dropdownRef}
     >
       <button
         onClick={() => setOpen((prev) => !prev)}
-        className={`${
-          open ? 'bg-[#FFFFFF33] border-t border-l border-r border-[#CBD6E2]' : 'bg-transparent'
-        } text-white text-[13px] font-normal px-3 h-[32px] w-full flex justify-center items-center gap-1.5 cursor-pointer focus:outline-none rounded-t-xs hover:bg-[#FFFFFF33] hover:rounded-xs whitespace-nowrap`}
+        className={`${open || Number(selectedYear) ? 'bg-[#FFFFFF26]' : 'bg-transparent'}
+        text-white text-[13px] font-normal px-3 h-[32px] w-full flex justify-center items-center gap-1.5 cursor-pointer focus:outline-none rounded-t-xs hover:bg-[#FFFFFF33] hover:rounded-xs whitespace-nowrap`}
         aria-haspopup="true"
         aria-expanded={open}
       >
@@ -62,19 +98,47 @@ const FiscalYearDropdown = ({
         <img
           src={arrowDownIcon}
           alt="dropdown arrow"
-          className={`transition-transform duration-300 ${
-            open ? 'rotate-180' : ''
-          }`}
+          className={`transition-transform duration-300 ${open ? 'rotate-180' : ''
+            }`}
           style={{ width: 15, height: 15, filter: 'brightness(0) invert(1)' }}
         />
       </button>
 
       {open && (
         <div
-          className="absolute w-full bg-white border-b border-l border-r rounded-b-xs shadow-lg max-h-[50vh] overflow-y-auto"
+          className="absolute  w-[261px] p-5 bg-white border border-[#CBD6E2] rounded-[8px] shadow-lg h-[206px]"
           style={{ borderColor: '#CBD6E2' }}
         >
-          {fiscalYearsDropDown.map((fy) => (
+          <div className="flex items-center justify-between text-[#425A76]">
+            <div className='flex items-center gap-x-4'>
+              <button type='button' disabled={yearsInDecade.includes(minYear)} className='cursor-pointer disabled:cursor-not-allowed' onClick={handlePrevDecade}>
+                <img src={fiscalYearArrowIcon} alt='less-than' className={`${yearsInDecade.includes(minYear) ? 'invert grayscale' : ''}`} />
+              </button>
+              <span className="text-[#425A76] text-[15px] font-bold">
+                {fiscalYearRange} - {fiscalYearRange + 9}
+              </span>
+              <button type='button' disabled={yearsInDecade.includes(currentYear)} className="cursor-pointer disabled:cursor-not-allowed" onClick={handleNextDecade}>
+                <img src={fiscalYearArrowIcon} className={`rotate-[180deg] ${yearsInDecade.includes(currentYear) ? 'invert grayscale' : ''}`} alt='less-than' />
+              </button>
+            </div>
+
+            <button type='button' className={`h-5 w-8 text-[#425A76] text-[14px] font-bold cursor-pointer ${selectedYear === 'FY-All' ? 'bg-[#425A76] text-[#FFFFFF] rounded-[30px]' : ''}`} onClick={handleAllClick}>
+              All
+            </button>
+          </div>
+          <div className="flex items-center gap-x-12 gap-y-3 mt-4 flex-wrap">
+            {yearsInDecade.map((year) => (
+              <button
+                className={`w-10 h-5 cursor-pointer disabled:text-gray-300 text-[#425A76] text-[14px] font-medium ${Number(selectedYear) === year ? 'bg-[#425A76] text-[#FFFFFF] rounded-[30px]' : ''}`}
+                key={year}
+                onClick={() => handleYearClick(year)}
+                disabled={year > currentYear}
+              >
+                {year}
+              </button>
+            ))}
+          </div>
+          {/* {fiscalYearsDropDown.map((fy) => (
             <div
               key={fy.value}
               onClick={() => handleSelect(fy.value)}
@@ -82,7 +146,7 @@ const FiscalYearDropdown = ({
             >
               {fy.label}
             </div>
-          ))}
+          ))} */}
         </div>
       )}
     </div>
