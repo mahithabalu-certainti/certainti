@@ -4,13 +4,13 @@ const UserService = require('../services/userService').default;
 const userService = new UserService();
 import { ProfileTimeline } from "../models/profileTimelineModel";
 import { UserExtendedPermissionTimeline } from "../models/userExtendedPermissionTimelineModel";
-import { Op, IndexHints,WhereOptions  } from "sequelize";
+import { Op, IndexHints,WhereOptions, Sequelize  } from "sequelize";
 import { initSequelize } from "../config/dataSource";
 import { UserFieldsAccessHistory } from "../models/userFieldsAccessHistoryModel";
 import { UserPermissionAccessHistory } from "../models/userPermissionAccessHistoryModel";
 import { UserModuleAccessHistory } from "../models/userModuleAccessHistoryModel";
 import { UserMenuAccessHistory } from "../models/userMenuAccessHistoryModel";
-
+import dayjs from 'dayjs';
 const {
   Profile, ProfileMenuAccess, Menu, ProfileModuleAccess, MenuModule, ProfilePermissionAccess, ModulePermission, User,
   UserMenuAccess, UserModuleAccess, UserPermissionAccess, PermissionField, ProfileFieldsAccess, UserFieldsAccess, ProfileMenuAccessHistory, ProfileModuleAccessHistory, ProfilePermissionAccessHistory, ProfileFieldsAccessHistory, ProfileHistory
@@ -750,52 +750,63 @@ class UserManagementService {
    * @param {any} value - Filter value
    * @param {Record<string, any>} whereClause - Where clause to modify
    */
-  private processDateFilter(field: string, value: any, whereClause: Record<string, any>): void {
-    if (typeof value === 'string') {
-      // Simple string date - treat as equals (on date)
-      const date = new Date(value);
-      const nextDay = new Date(date);
-      nextDay.setDate(nextDay.getDate() + 1);
+  private parseDate(value: string): string {
+  const parsed = dayjs(value, 'MM-DD-YYYY');
+  if (!parsed.isValid()) {
+    throw new Error(`Invalid date format: ${value}`);
+  }
+  return parsed.format('YYYY-MM-DDTHH:mm:ss[Z]'); 
+  //return parsed.toDate();
+}
+
+private processDateFilter(
+  field: string,
+  value: any,
+  whereClause: Record<string, any>
+): void {
+  if (typeof value === 'string') {
+    const date = dayjs(value, 'MM-DD-YYYY').startOf('day').toDate();
+    const nextDay = dayjs(date).add(1, 'day').toDate();
+
+    whereClause[field] = {
+      [Op.gte]: date,
+      [Op.lt]: nextDay
+    };
+  } else if (typeof value === 'object') {
+    if (value.equals !== undefined) {
+      const date = dayjs(value.equals, 'MM-DD-YYYY').startOf('day').toDate();
+      const nextDay = dayjs(date).add(1, 'day').toDate();
 
       whereClause[field] = {
         [Op.gte]: date,
         [Op.lt]: nextDay
       };
-    } else if (typeof value === 'object') {
-      if (value.equals !== undefined) {
-        const date = new Date(value.equals);
-        const nextDay = new Date(date);
-        nextDay.setDate(nextDay.getDate() + 1);
+    } else if (value.before !== undefined) {
+      const beforeDate = dayjs(value.before, 'MM-DD-YYYY').startOf('day').toDate();
+      whereClause[field] = { [Op.lt]: beforeDate };
+    } else if (value.after !== undefined) {
+      const afterDate = dayjs(value.after, 'MM-DD-YYYY').endOf('day').toDate();
+      whereClause[field] = { [Op.gt]: afterDate };
+    } else if (value.between?.from && value.between?.to) {
+       const fromDate = this.parseDate(value.between.from);
+    const toDate = dayjs(value.between.to, 'MM-DD-YYYY').endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
 
-        whereClause[field] = {
-          [Op.gte]: date,
-          [Op.lt]: nextDay
-        };
-      } else if (value.before !== undefined) {
-        whereClause[field] = { [Op.lt]: new Date(value.before) };
-      } else if (value.after !== undefined) {
-        whereClause[field] = { [Op.gt]: new Date(value.after) };
-      } else if (value.between !== undefined && value.between.from !== undefined && value.between.to !== undefined) {
-        const fromDate = new Date(value.between.from);
-        const toDate = new Date(value.between.to);
-        // Add one day to include the end date fully
-        toDate.setHours(23, 59, 59, 999);
-
-        whereClause[field] = {
-          [Op.gte]: fromDate,
-          [Op.lte]: toDate
-        };
-      } else if (value.is_empty !== undefined) {
-        if (value.is_empty) {
-          whereClause[field] = null;
-        } else {
-          whereClause[field] = { [Op.ne]: null };
-        }
+      whereClause[field] = {
+        [Op.gte]: fromDate,
+        [Op.lte]: toDate
+      };
+    } else if (value.is_empty !== undefined) {
+      if (value.is_empty) {
+        whereClause[field] = null;
+      } else {
+        whereClause[field] = { [Op.ne]: null };
       }
     }
   }
+}
 
-  private processRelationFilter(
+
+ private processRelationFilter(
   field: string,
   value: any,
   whereClause: WhereOptions,
@@ -823,21 +834,58 @@ class UserManagementService {
     const orConditions: any[] = [];
 
     if (value.equals !== undefined) {
-      for (const attr of config.attributes) {
-        orConditions.push({ [`$${config.as}.${attr}$`]: { [Op.iLike]: value.equals } });
-      }
+        const fullNameCondition = Sequelize.where(
+      Sequelize.fn(
+        'concat',
+        Sequelize.col(`${config.as}.first_name`),
+        Sequelize.literal(`' '`),
+        Sequelize.col(`${config.as}.last_name`)
+      ),
+      { [Op.iLike]: value.equals }
+    );
+
+    if ((whereClause as any)[Op.and]) {
+      (whereClause as any)[Op.and].push(fullNameCondition);
+    } else {
+      (whereClause as any)[Op.and] = [fullNameCondition];
+    }
     } else if (value.not_equals !== undefined) {
-      for (const attr of config.attributes) {
-        orConditions.push({ [`$${config.as}.${attr}$`]: { [Op.notILike]: value.not_equals } });
-      }
+       const fullNameCondition = Sequelize.where(
+      Sequelize.fn(
+        'concat',
+        Sequelize.col(`${config.as}.first_name`),
+        Sequelize.literal(`' '`),
+        Sequelize.col(`${config.as}.last_name`)
+      ),
+      { [Op.notILike]: value.not_equals }
+    );
+
+    if ((whereClause as any)[Op.and]) {
+      (whereClause as any)[Op.and].push(fullNameCondition);
+    } else {
+      (whereClause as any)[Op.and] = [fullNameCondition];
+    }
+      
     } else if (value.contains !== undefined) {
-      for (const attr of config.attributes) {
-        orConditions.push({ [`$${config.as}.${attr}$`]: { [Op.iLike]: `%${value.contains}%` } });
-      }
+      const fullNameCondition = Sequelize.where(
+      Sequelize.fn(
+        'concat',
+        Sequelize.col(`${config.as}.first_name`),
+        Sequelize.literal(`' '`),
+        Sequelize.col(`${config.as}.last_name`)
+      ),
+      { [Op.iLike]: `%${value.contains}%` }
+    );
+
+    if ((whereClause as any)[Op.and]) {
+      (whereClause as any)[Op.and].push(fullNameCondition);
+    } else {
+      (whereClause as any)[Op.and] = [fullNameCondition];
+    }
     }
 
     if (orConditions.length > 0) {
-      (whereClause as any)[Op.or] = orConditions;
+     (whereClause as any)[Op.or] = orConditions;
     } else if (value.is_empty !== undefined) {
       const emptyCondition = value.is_empty
         ? { [`$${config.as}.id$`]: { [Op.is]: null } }
