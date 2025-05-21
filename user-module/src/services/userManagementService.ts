@@ -750,60 +750,51 @@ class UserManagementService {
    * @param {any} value - Filter value
    * @param {Record<string, any>} whereClause - Where clause to modify
    */
-  private parseDate(value: string): string {
-  const parsed = dayjs(value, 'MM-DD-YYYY');
-  if (!parsed.isValid()) {
-    throw new Error(`Invalid date format: ${value}`);
-  }
-  return parsed.format('YYYY-MM-DDTHH:mm:ss[Z]'); 
-  //return parsed.toDate();
-}
-
-private processDateFilter(
-  field: string,
-  value: any,
-  whereClause: Record<string, any>
-): void {
-  if (typeof value === 'string') {
-    const date = dayjs(value, 'MM-DD-YYYY').startOf('day').toDate();
-    const nextDay = dayjs(date).add(1, 'day').toDate();
-
-    whereClause[field] = {
-      [Op.gte]: date,
-      [Op.lt]: nextDay
-    };
-  } else if (typeof value === 'object') {
-    if (value.equals !== undefined) {
-      const date = dayjs(value.equals, 'MM-DD-YYYY').startOf('day').toDate();
+  private processDateFilter(
+    field: string,
+    value: any,
+    whereClause: Record<string, any>
+  ): void {
+    if (typeof value === 'string') {
+      const date = dayjs(value, 'MM-DD-YYYY').startOf('day').toDate();
       const nextDay = dayjs(date).add(1, 'day').toDate();
 
       whereClause[field] = {
         [Op.gte]: date,
         [Op.lt]: nextDay
       };
-    } else if (value.before !== undefined) {
-      const beforeDate = dayjs(value.before, 'MM-DD-YYYY').startOf('day').toDate();
-      whereClause[field] = { [Op.lt]: beforeDate };
-    } else if (value.after !== undefined) {
-      const afterDate = dayjs(value.after, 'MM-DD-YYYY').endOf('day').toDate();
-      whereClause[field] = { [Op.gt]: afterDate };
-    } else if (value.between?.from && value.between?.to) {
-       const fromDate = this.parseDate(value.between.from);
-    const toDate = dayjs(value.between.to, 'MM-DD-YYYY').endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+    } else if (typeof value === 'object') {
+      if (value.equals !== undefined) {
+        const date = dayjs(value.equals, 'MM-DD-YYYY').startOf('day').toDate();
+        const nextDay = dayjs(date).add(1, 'day').toDate();
 
-      whereClause[field] = {
-        [Op.gte]: fromDate,
-        [Op.lte]: toDate
-      };
-    } else if (value.is_empty !== undefined) {
-      if (value.is_empty) {
-        whereClause[field] = null;
-      } else {
-        whereClause[field] = { [Op.ne]: null };
+        whereClause[field] = {
+          [Op.gte]: date,
+          [Op.lt]: nextDay
+        };
+      } else if (value.before !== undefined) {
+        const beforeDate = dayjs(value.before, 'MM-DD-YYYY').startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+        whereClause[field] = { [Op.lt]: beforeDate };
+      } else if (value.after !== undefined) {
+        const afterDate = dayjs(value.after, 'MM-DD-YYYY').endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+        whereClause[field] = { [Op.gt]: afterDate };
+      } else if (value.between?.from && value.between?.to) {
+        const fromDate = dayjs(value.between.from, 'MM-DD-YYYY').startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+        const toDate = dayjs(value.between.to, 'MM-DD-YYYY').endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+
+        whereClause[field] = {
+          [Op.gte]: fromDate,
+          [Op.lte]: toDate
+        };
+      } else if (value.is_empty !== undefined) {
+        if (value.is_empty) {
+          whereClause[field] = null;
+        } else {
+          whereClause[field] = { [Op.ne]: null };
+        }
       }
     }
   }
-}
 
 
  private processRelationFilter(
