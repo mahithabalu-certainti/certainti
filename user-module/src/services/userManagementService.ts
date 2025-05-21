@@ -826,15 +826,14 @@ class UserManagementService {
 
     if (value.equals !== undefined) {
         const fullNameCondition = Sequelize.where(
-      Sequelize.fn(
-        'concat',
+        Sequelize.fn('LOWER',
+        Sequelize.fn('concat',
         Sequelize.col(`${config.as}.first_name`),
         Sequelize.literal(`' '`),
-        Sequelize.col(`${config.as}.last_name`)
-      ),
-      { [Op.iLike]: value.equals }
-    );
-
+        Sequelize.col(`${config.as}.last_name`))),
+        {
+          [Op.eq]: value.equals.toLowerCase()
+        })
     if ((whereClause as any)[Op.and]) {
       (whereClause as any)[Op.and].push(fullNameCondition);
     } else {
@@ -842,13 +841,12 @@ class UserManagementService {
     }
     } else if (value.not_equals !== undefined) {
        const fullNameCondition = Sequelize.where(
-      Sequelize.fn(
-        'concat',
+        Sequelize.fn('LOWER',
+        Sequelize.fn('concat',
         Sequelize.col(`${config.as}.first_name`),
         Sequelize.literal(`' '`),
-        Sequelize.col(`${config.as}.last_name`)
-      ),
-      { [Op.notILike]: value.not_equals }
+        Sequelize.col(`${config.as}.last_name`))),
+      { [Op.ne]: value.not_equals.toLowerCase() }
     );
 
     if ((whereClause as any)[Op.and]) {
