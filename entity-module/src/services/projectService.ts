@@ -74,8 +74,6 @@ export class ProjectService {
         accountNumber
       );
 
-      // await this.redisService.deleteUserProjectCache(userId);
-
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -147,11 +145,11 @@ export class ProjectService {
       });
 
       if (isRefIdExist) {
-        throw new Error("Project reference ID must be unique.");
+        throw new Error("Project code must be unique.");
       }
 
-      const startDate = moment(projectData.project_startdate, "MM/DD/YYYY");
-      const endDate = moment(projectData.project_enddate, "MM/DD/YYYY");
+      const startDate = projectData.project_startdate !== null ? moment(projectData.project_startdate, "MM/DD/YYYY") : null;
+      const endDate = projectData.project_enddate !== null ? moment(projectData.project_enddate, "MM/DD/YYYY") : null;
 
       const projectCreationData = {
         project_code: projectData.project_code,
@@ -283,8 +281,8 @@ export class ProjectService {
       const schemaName = `platform_v2_${accountNumber}`;
       const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
 
-      const startDate = moment(projectData.project_startdate, "MM/DD/YYYY");
-      const endDate = moment(projectData.project_enddate, "MM/DD/YYYY");
+      const startDate = projectData.project_startdate !== null ? moment(projectData.project_startdate, "MM/DD/YYYY") : null;
+      const endDate = projectData.project_enddate !== null ? moment(projectData.project_enddate, "MM/DD/YYYY") : null;
 
       const existingData = await ProjectModel.findOne({
         where: {
@@ -477,6 +475,7 @@ export class ProjectService {
       });
 
       if (projectData) {
+
         projectData = await this.schemaService.insertProjectGeoData(
           projectData,
           mainDbSequlize
@@ -489,6 +488,12 @@ export class ProjectService {
           projectData,
           mainDbSequlize
         );
+        projectData = await this.schemaService.projectClassificationData(
+          projectData,
+          mainDbSequlize
+        );
+
+        projectData = this.insertAccount(projectData, accountData.account_name);
       }
 
       return {
@@ -502,6 +507,13 @@ export class ProjectService {
       throw new Error(
         "Error fetching project by ID: " + (err as Error).message
       );
+    }
+  }
+
+  insertAccount(project: any, accountName: string){
+    return {
+      ...(project.dataValues || project),
+      account_name: accountName
     }
   }
 
@@ -566,6 +578,10 @@ export class ProjectService {
       );
 
       const [finalSortBy, finalSortOrder] = this.getSortParameters(
+        sortBy,
+        sortOrder
+      );
+      const [finalMetaDataSortBy, finalMetaDataSortOrder] = this.getMetaDataSortParameters(
         sortBy,
         sortOrder
       );
@@ -647,6 +663,12 @@ export class ProjectService {
           projectData,
           mainDbInit
         );
+        projectData = await this.schemaService.insertProjectClassification(
+          projectData,
+          mainDbInit
+        );
+
+        projectData = this.schemaService.finalProjectSort(projectData, finalMetaDataSortBy, finalMetaDataSortOrder);
       }
 
       return {
@@ -944,8 +966,8 @@ export class ProjectService {
   async addProjectSummary(
     projectData: any,
     project: any,
-    startDate: Moment,
-    endDate: Moment,
+    startDate: Moment | null,
+    endDate: Moment | null,
     keyContacts: any[]
   ) {
     try {
@@ -1006,8 +1028,8 @@ export class ProjectService {
 
   async updateProjectSummary(
     projectData: any,
-    startDate: Moment,
-    endDate: Moment,
+    startDate: Moment | null,
+    endDate: Moment | null,
     keyContacts: any[],
     userId: string
   ) {
@@ -1144,7 +1166,7 @@ export class ProjectService {
     const validSortColumns = [
       "r_number",
       "project_code",
-      "industry",
+      "industry_name",
       "project_startdate",
       "project_enddate",
       "project_type",
@@ -1153,6 +1175,41 @@ export class ProjectService {
       "project_group",
       "project_status",
       "account_rid",
+      "rid",
+      "total_cost",
+      "total_effort",
+      "total_fte",
+      "total_fte_cost",
+      "total_sub_con",
+      "total_sub_con_cost",
+      "total_non_labor_cost",
+      "country",
+      "region",
+      "currency",
+      "qualified_research_expenditure",
+      "is_rd_qualified",
+      "qre",
+    ];
+
+    if (!validSortColumns.includes(sortBy)) {
+      sortBy = "created_datetime";
+    }
+
+    sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
+    return [sortBy, sortOrder];
+  }
+
+  getMetaDataSortParameters(sortBy: string, sortOrder: string): [string, string] {
+    const validSortColumns = [
+      "account_name",
+      "country_name",
+      "region_name",
+      "currency_name",
+      "technical_consultant",
+      "financial_consultant",
+      "project_point_of_contact",
+      "classification_name",
+      "industry_name"
     ];
 
     if (!validSortColumns.includes(sortBy)) {
