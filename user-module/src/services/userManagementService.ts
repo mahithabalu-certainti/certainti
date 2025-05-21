@@ -4,13 +4,13 @@ const UserService = require('../services/userService').default;
 const userService = new UserService();
 import { ProfileTimeline } from "../models/profileTimelineModel";
 import { UserExtendedPermissionTimeline } from "../models/userExtendedPermissionTimelineModel";
-import { Op, IndexHints } from "sequelize";
+import { Op, IndexHints,WhereOptions, Sequelize  } from "sequelize";
 import { initSequelize } from "../config/dataSource";
 import { UserFieldsAccessHistory } from "../models/userFieldsAccessHistoryModel";
 import { UserPermissionAccessHistory } from "../models/userPermissionAccessHistoryModel";
 import { UserModuleAccessHistory } from "../models/userModuleAccessHistoryModel";
 import { UserMenuAccessHistory } from "../models/userMenuAccessHistoryModel";
-
+import dayjs from 'dayjs';
 const {
   Profile, ProfileMenuAccess, Menu, ProfileModuleAccess, MenuModule, ProfilePermissionAccess, ModulePermission, User,
   UserMenuAccess, UserModuleAccess, UserPermissionAccess, PermissionField, ProfileFieldsAccess, UserFieldsAccess, ProfileMenuAccessHistory, ProfileModuleAccessHistory, ProfilePermissionAccessHistory, ProfileFieldsAccessHistory, ProfileHistory
@@ -81,6 +81,15 @@ class UserManagementService {
         };
       }
 
+      // Verify profile exists
+      const sourceprofile = await Profile.findByPk(source_profile_id);
+      if (!sourceprofile) {
+        return {
+          statusCode: constants.NOT_FOUND,
+          message: constants.NOT_FOUND_MESSAGE,
+          errorMessage: `Source profile not exists`
+        };
+      }
       // Create the profile
       const profile = await Profile.create({
         profile_name: profile_name,
@@ -741,12 +750,14 @@ class UserManagementService {
    * @param {any} value - Filter value
    * @param {Record<string, any>} whereClause - Where clause to modify
    */
-  private processDateFilter(field: string, value: any, whereClause: Record<string, any>): void {
+  private processDateFilter(
+    field: string,
+    value: any,
+    whereClause: Record<string, any>
+  ): void {
     if (typeof value === 'string') {
-      // Simple string date - treat as equals (on date)
-      const date = new Date(value);
-      const nextDay = new Date(date);
-      nextDay.setDate(nextDay.getDate() + 1);
+      const date = dayjs(value, 'MM-DD-YYYY').startOf('day').toDate();
+      const nextDay = dayjs(date).add(1, 'day').toDate();
 
       whereClause[field] = {
         [Op.gte]: date,
@@ -754,23 +765,22 @@ class UserManagementService {
       };
     } else if (typeof value === 'object') {
       if (value.equals !== undefined) {
-        const date = new Date(value.equals);
-        const nextDay = new Date(date);
-        nextDay.setDate(nextDay.getDate() + 1);
+        const date = dayjs(value.equals, 'MM-DD-YYYY').startOf('day').toDate();
+        const nextDay = dayjs(date).add(1, 'day').toDate();
 
         whereClause[field] = {
           [Op.gte]: date,
           [Op.lt]: nextDay
         };
       } else if (value.before !== undefined) {
-        whereClause[field] = { [Op.lt]: new Date(value.before) };
+        const beforeDate = dayjs(value.before, 'MM-DD-YYYY').startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+        whereClause[field] = { [Op.lt]: beforeDate };
       } else if (value.after !== undefined) {
-        whereClause[field] = { [Op.gt]: new Date(value.after) };
-      } else if (value.between !== undefined && value.between.from !== undefined && value.between.to !== undefined) {
-        const fromDate = new Date(value.between.from);
-        const toDate = new Date(value.between.to);
-        // Add one day to include the end date fully
-        toDate.setHours(23, 59, 59, 999);
+        const afterDate = dayjs(value.after, 'MM-DD-YYYY').endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+        whereClause[field] = { [Op.gt]: afterDate };
+      } else if (value.between?.from && value.between?.to) {
+        const fromDate = dayjs(value.between.from, 'MM-DD-YYYY').startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+        const toDate = dayjs(value.between.to, 'MM-DD-YYYY').endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
 
         whereClause[field] = {
           [Op.gte]: fromDate,
@@ -786,58 +796,94 @@ class UserManagementService {
     }
   }
 
-  private processRelationFilter(
-    field: string,
-    value: any,
-    whereClause: Record<string, any>,
-    includeClause: Array<any>
-  ): void {
-    const relationConfig: Record<string, { model: any; as: string; attribute: string }> = {
-      'created_by': { model: User, as: 'creator', attribute: 'first_name' }
-    };
-  
-    const config = relationConfig[field];
-    if (!config) return;
-  
-    // Ensure the User model is included as a LEFT JOIN
-    const existingInclude = includeClause.find(inc => inc.as === config.as);
-    if (!existingInclude) {
-      includeClause.push({
-        model: config.model,
-        as: config.as,
-        attributes: [], // No need to select attributes
-        required: false // LEFT JOIN
-      });
+
+ private processRelationFilter(
+  field: string,
+  value: any,
+  whereClause: WhereOptions,
+  includeClause: Array<any>
+): void {
+  const relationConfig: Record<string, { model: any; as: string; attributes: string[] }> = {
+    'created_by': { model: User, as: 'creator', attributes: ['first_name', 'last_name'] }
+  };
+
+  const config = relationConfig[field];
+  if (!config) return;
+
+  // Ensure the relation is included (LEFT JOIN)
+  const existingInclude = includeClause.find(inc => inc.as === config.as);
+  if (!existingInclude) {
+    includeClause.push({
+      model: config.model,
+      as: config.as,
+      attributes: [],
+      required: false
+    });
+  }
+
+  if (typeof value === 'object') {
+    const orConditions: any[] = [];
+
+    if (value.equals !== undefined) {
+        const fullNameCondition = Sequelize.where(
+        Sequelize.fn('LOWER',
+        Sequelize.fn('concat',
+        Sequelize.col(`${config.as}.first_name`),
+        Sequelize.literal(`' '`),
+        Sequelize.col(`${config.as}.last_name`))),
+        {
+          [Op.eq]: value.equals.toLowerCase()
+        })
+    if ((whereClause as any)[Op.and]) {
+      (whereClause as any)[Op.and].push(fullNameCondition);
+    } else {
+      (whereClause as any)[Op.and] = [fullNameCondition];
     }
-  
-    // Reference the nested field (e.g., $creator.first_name$)
-    const nestedField = `$${config.as}.${config.attribute}$`;
-  
-    if (typeof value === 'object') {
-      if (value.equals !== undefined) {
-        // Case-insensitive match
-        whereClause[nestedField] = { [Op.iLike]: value.equals };
-      } else if (value.not_equals !== undefined) {
-        whereClause[nestedField] = {
-          [Op.or]: [
-            { [Op.notILike]: value.not_equals }, // Case-insensitive not equal
-            { [Op.is]: null } // Include profiles without a creator
-          ]
-        };
-      } else if (value.contains !== undefined) {
-        whereClause[nestedField] = { [Op.iLike]: `%${value.contains}%` };
-      } else if (value.is_empty !== undefined) {
-        // Handle is_empty filter for relation fields
-        if (value.is_empty) {
-          // If is_empty is true, find records where the relation is null
-          whereClause[nestedField] = { [Op.is]: null };
-        } else {
-          // If is_empty is false, find records where the relation is not null
-          whereClause[nestedField] = { [Op.not]: null };
-        }
-      }
+    } else if (value.not_equals !== undefined) {
+       const fullNameCondition = Sequelize.where(
+        Sequelize.fn('LOWER',
+        Sequelize.fn('concat',
+        Sequelize.col(`${config.as}.first_name`),
+        Sequelize.literal(`' '`),
+        Sequelize.col(`${config.as}.last_name`))),
+      { [Op.ne]: value.not_equals.toLowerCase() }
+    );
+
+    if ((whereClause as any)[Op.and]) {
+      (whereClause as any)[Op.and].push(fullNameCondition);
+    } else {
+      (whereClause as any)[Op.and] = [fullNameCondition];
+    }
+      
+    } else if (value.contains !== undefined) {
+      const fullNameCondition = Sequelize.where(
+      Sequelize.fn(
+        'concat',
+        Sequelize.col(`${config.as}.first_name`),
+        Sequelize.literal(`' '`),
+        Sequelize.col(`${config.as}.last_name`)
+      ),
+      { [Op.iLike]: `%${value.contains}%` }
+    );
+
+    if ((whereClause as any)[Op.and]) {
+      (whereClause as any)[Op.and].push(fullNameCondition);
+    } else {
+      (whereClause as any)[Op.and] = [fullNameCondition];
+    }
+    }
+
+    if (orConditions.length > 0) {
+     (whereClause as any)[Op.or] = orConditions;
+    } else if (value.is_empty !== undefined) {
+      const emptyCondition = value.is_empty
+        ? { [`$${config.as}.id$`]: { [Op.is]: null } }
+        : { [`$${config.as}.id$`]: { [Op.not]: null } };
+
+      Object.assign(whereClause, emptyCondition);
     }
   }
+}
 
   /**
    * Gets all profiles

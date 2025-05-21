@@ -1530,10 +1530,28 @@ const rawResult = users || [];
     const headerSheet = workbook.addWorksheet('Headers')
     const headers = ['Profile Name','Created By','Created On'];
     headerSheet.addRow(headers);
-    const profile = await Profile.findByPk(profileId);
-          if (profile) {
-            headerSheet.addRow([profile.profile_name,profile.created_by, profile.created_datetime]);
-          }
+    const profile = await Profile.findByPk(profileId, {
+          include: [
+        {
+          model: User,
+          as: "creator",
+          attributes: ["first_name", "last_name"],
+          required: false,
+        },
+      ],
+    });
+
+    if (profile) {
+      const createdByName = profile.creator
+        ? `${profile.creator.first_name} ${profile.creator.last_name}`
+        : '';
+
+      headerSheet.addRow([
+        profile.profile_name,
+        createdByName,
+        profile.created_datetime
+      ]);
+    }
     const sheet = workbook.addWorksheet('Menu');
     
     const menuheaders = ['Menu','Is Selected'];
