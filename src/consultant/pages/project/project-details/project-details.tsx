@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
-import { useLocation, useParams, useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
 import { projectDetailsIcon } from '../../../../assets';
 import { CircularProgress } from '@mui/material';
@@ -8,29 +8,27 @@ import { useProjectDetail } from '../../../services/project';
 import { transformProjectData } from '../utils';
 
 const sideMenuItems = [
-    { name: 'Financial Highlights', key: 'financial' },
-    { name: 'Project Details', key: 'projectDetails' },
-    { name: 'Project Resources', key: 'projectResources' },
-    { name: 'Projects Task', key: 'projectsTask' },
-    { name: 'Interactions', key: 'interactions' },
-    { name: 'Technical Summary', key: 'technicalSummary' },
-    { name: 'Cases', key: 'cases' },
-    { name: 'Activities', key: 'activities' },
-    { name: 'Notes', key: 'notes' },
-    { name: 'Attachments', key: 'attachments' },
-    { name: 'Checklists', key: 'checklists' },
-  ];  
+  { name: 'Financial Highlights', key: 'financial' },
+  { name: 'Project Details', key: 'projectDetails' },
+  { name: 'Project Resources', key: 'projectResources' },
+  { name: 'Projects Task', key: 'projectsTask' },
+  { name: 'Interactions', key: 'interactions' },
+  { name: 'Technical Summary', key: 'technicalSummary' },
+  { name: 'Cases', key: 'cases' },
+  { name: 'Activities', key: 'activities' },
+  { name: 'Notes', key: 'notes' },
+  { name: 'Attachments', key: 'attachments' },
+  { name: 'Checklists', key: 'checklists' },
+];
 
 export const ProjectDetails = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const [projectDetails, setProjectDetails] = useState<any>([]);
-  const { projectid } = useParams();
-  const accountId = location.state?.accountId;
-
+  const { accountID, projectID } = location.state;
   const defaultTab = searchParams.get('list') || 'financial';
   const [activeKey, setActiveKey] = useState(defaultTab);
-
+  console.log('activeKey', accountID);
   useEffect(() => {
     const list = searchParams.get('list');
     if (list) {
@@ -38,11 +36,11 @@ export const ProjectDetails = () => {
     }
   }, [searchParams]);
 
-  const { data, isLoading, isError } = useProjectDetail(projectid ?? '', accountId);
+  const { data, isLoading, isError } = useProjectDetail(accountID, projectID);
 
   useEffect(() => {
     if (data?.data) {
-        setProjectDetails(transformProjectData(data.data));
+      setProjectDetails(transformProjectData(data.data));
     }
   }, [data]);
 
@@ -60,7 +58,7 @@ export const ProjectDetails = () => {
   const handleEditAccount = () => {
     console.log('Edit clicked');
   };
-  
+
   const handleActionsClick = () => {
     console.log('Actions clicked');
     // Add actions logic here
@@ -115,7 +113,7 @@ export const ProjectDetails = () => {
           icon={projectDetailsIcon}
           iconBackgroundColor='#AF78FF'
           iconClasses='h-8 w-8 rounded p-[6px]'
-        //   title={data?.data?.accountById?.account_name || 'Project Title'}
+          //   title={data?.data?.accountById?.account_name || 'Project Title'}
           title={'Project Title'}
           totalRecords={5}
           actionItems={menuItems}
@@ -138,18 +136,18 @@ export const ProjectDetails = () => {
             menuItems={sideMenuItems}
             activeKey={activeKey}
             onSelect={setActiveKey}
-            headerTitle="Related List"
+            headerTitle='Related List'
             showBackIcon={true}
           />
         </div>
         <div className='flex-1 p-4 overflow-hidden'>
-          {isLoading ?
+          {isLoading ? (
             <div className='flex items-center justify-center w-full h-full'>
               <CircularProgress />
             </div>
-            :
+          ) : (
             <>{renderContent()}</>
-          }
+          )}
         </div>
       </div>
     </div>

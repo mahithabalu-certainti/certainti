@@ -1,5 +1,5 @@
 export interface ProjectList {
-  id: string;
+  rid: string;
   account_number: string;
   account_name: string;
   r_number: string;
@@ -58,22 +58,35 @@ export type ProjectListResponse = {
     count: number;
   };
 };
+export interface KeyContacts {
+  key_contact_id?: string;
+  account_rid?: string;
+  key_contact_name: string;
+  key_contact_email: string;
+  key_contact_role_rid: string;
+  is_primary_contact: boolean;
+  include_in_communication: boolean;
+  status: Status;
+  action_type?: string;
+}
 export interface NewProjectData {
   account_id: string;
   account_number: string;
-  project_ref_id: string;
+  project_code: string;
+  project_name:string;
   project_id?:string;
-  industry: string; // "web3 conf"
+  industry: string; 
+  industry_rid: string;
   program_name: string;
   client_organization: string; // "TechCorp Inc."
-  project_start_date: string; // e.g., "04/22/2025"
-  project_end_date: string;   // e.g., "10/23/2025"
+  project_startdate: string; // e.g., "04/22/2025"
+  project_enddate: string;   // e.g., "10/23/2025"
   project_type: string; // "Fixed"
   project_classification: string;
   project_client_group: string;
   project_group: string;
   project_summary: string;
-  status: string; // "Active"
+  project_status: string; // "Active"
   fiscal_year: number; // 2025
   country: string; // UUID
   region: string;  // UUID
@@ -104,5 +117,6 @@ export interface NewProjectData {
   blended_rate_fte: string;
   blended_rate_sub_con: string;
   project_description: string;
-  created_by: string; // UUID
+  comments:string
+  key_contacts: KeyContacts[];
 }

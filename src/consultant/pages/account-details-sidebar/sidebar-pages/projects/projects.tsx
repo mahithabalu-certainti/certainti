@@ -52,15 +52,14 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
     setShowFilter(!showFilter);
   };
   const handleEdit = (account: any) => {
-    console.log(account);
     navigate(`/Project/edit/aaf4cdd9-3120-4faa-a2f4-30d0cbb3947f`, {
       state: {
-        accountID:account.account_rid,
-        projectID:"aaf4cdd9-3120-4faa-a2f4-30d0cbb3947f"
+        accountID: account?.account_rid,
+        projectID: account?.rid,
       },
     });
   };
-  
+
   const actionMenuItems = [
     {
       label: 'Edit',
@@ -100,17 +99,18 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
   ];
 
   const handleCreateProject = () => {
+    const accountID = accountDetails?.data?.accountById?.rid;
     navigate(`${PROJECT_CREATE}`, {
-      state: { accountId: accountDetails?.data?.accountById?.r_number },
+      state: { accountID },
     });
   };
 
   const handleProject = (project: ProjectList) => {
     const path = generatePath(PROJECT_DETAILS, {
-      projectid: project.id
+      projectid: project?.rid,
     });
     navigate(path, {
-      state: { accountId: accountDetails?.data?.accountById?.r_number },
+      state: { accountID: project?.account_rid, projectID: project?.rid },
     });
   };
 
@@ -128,13 +128,13 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
         setFilterStates={() => {}}
         setSelectedFilters={() => {}}
       />
-       <ResourceTableHeader
+      <ResourceTableHeader
         value={'projects'}
         title='Projects'
         titleIcon={<img src={projectHeaderIcon} alt='project-header-icon' />}
         headerButtons={headerButtons}
       />
-      <ListTable      
+      <ListTable
         data={data?.projects as any}
         columns={projectColumns}
         actionMenuItems={actionMenuItems}

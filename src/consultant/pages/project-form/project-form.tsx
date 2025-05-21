@@ -12,11 +12,14 @@ import {
   useFetchState,
   useKeyContactRoles,
 } from '../../services/account';
-import {SelectOption } from '../../types';
+import { SelectOption } from '../../types';
 import { FormData } from './form-data';
 import { transformFormData } from './utils';
 import { NewProjectData } from '../../types/project';
-import { useCreateProject, useUpdateProject } from '../../services/project/project-create-service';
+import {
+  useCreateProject,
+  useUpdateProject,
+} from '../../services/project/project-create-service';
 import { useProjectDetail } from '../../services/project';
 import { othersIndustryId } from '../account-create/utils';
 
@@ -37,19 +40,39 @@ const ProjectForm: React.FC = () => {
     'key_contact_role',
     'key_contact_email',
   ];
+  const formatDateToMMDDYYYY = (dateString?: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${month}/${day}/${year}`;
+  };
 
-  
-  const getProjectData = useProjectDetail(accountID,projectID);
+  const getProjectData = useProjectDetail(accountID, projectID);
   const account = getProjectData.data?.data?.project;
-  console.log(account);
   // need to change this
   const projectData = useMemo(
     () => ({
-      ...account
+      ...account,
+      ...(account && {
+        auto_send_ai_interaction: account?.auto_send_ai_interaction
+          ? 'Yes'
+          : 'No',
+        auto_access_rd: account?.auto_access_rd ? 'Yes' : 'No',
+        created_on: account?.created_datetime,
+        updated_on: account?.modified_datetime,
+        project_enddate: formatDateToMMDDYYYY(account?.project_enddate),
+        project_startdate: formatDateToMMDDYYYY(account?.project_startdate),
+        region: account?.region,
+      }),
     }),
     [account]
   );
 
+  // const account = useMemo(() => getProjectData.data?.data?.project, [
+  //   getProjectData.data?.data?.project,
+  // ]);
   const allCountries = useGetAllCountries();
   const currency = useFetchCurrency();
   const industry = useFetchIndustrys();
@@ -64,7 +87,7 @@ const ProjectForm: React.FC = () => {
   );
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
-console.log(isEditView);
+  // console.log(isEditView);
   const commonSuccess = createProject.isSuccess || updateProject.isSuccess;
   useEffect(() => {
     if (commonSuccess) {
@@ -73,7 +96,7 @@ console.log(isEditView);
           ? 'Project update successfully'
           : 'Project created successfully'
       );
-      goBack()
+      goBack();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
@@ -132,6 +155,7 @@ console.log(isEditView);
       })) || [],
     [states.data?.data.states]
   );
+
   const memoizedRole: SelectOption[] = useMemo(
     () =>
       keyContactRoles.data?.data.keyContactRoles.map((role) => ({
@@ -140,16 +164,17 @@ console.log(isEditView);
       })) || [],
     [keyContactRoles.data?.data.keyContactRoles]
   );
+
   const submitData = (formValues: Partial<NewProjectData>) => {
-    console.log(account?.rid);
     const projectData = transformFormData(
       {
         ...formValues,
-        account_id:accountID,
-        client_organization: "TechCorp Inc.",// need to remove
+        account_id: accountID,
+        project_id: projectID,
       },
       isEditView
     );
+
     if (isEditView) {
       updateProject.mutate(projectData);
     } else {
@@ -175,11 +200,9 @@ console.log(isEditView);
         [data.fieldName]: data.fieldValue,
       }));
     }
-    if (data.fieldName === 'industry') {
-      console.log(data.fieldName);
-      setShowOthersField(
-        data.fieldValue === othersIndustryId 
-      );
+    if (data.fieldName === 'industry_rid') {
+      // console.log(data.fieldName);
+      setShowOthersField(data.fieldValue === othersIndustryId);
     }
   };
   useEffect(() => {
@@ -187,12 +210,14 @@ console.log(isEditView);
       setCurrentCountry(projectData.country_rid);
     }
   }, [projectData.country_rid]);
+
   useEffect(() => {
-    if (account?.industry === othersIndustryId) {
+    if (account?.industry_rid === othersIndustryId) {
       setShowOthersField(true);
     }
-  }, [account?.industry]);
- 
+  }, [account?.industry_rid]);
+
+  console.log(projectData, 'projectData');
 
   return (
     <>
@@ -204,13 +229,14 @@ console.log(isEditView);
             className='h-[32px] w-[32px]  rounded'
           />
           <div>
-          {isEditView && (
-              <h5 className='font-semibold text-[11px] leading-[20px] ml-2 text-[#7D98B6]'>{projectData.project_name}</h5>
+            {isEditView && (
+              <h5 className='font-semibold text-[11px] leading-[20px] ml-2 text-[#7D98B6]'>
+                {projectData.project_name}
+              </h5>
             )}
             <div className='font-semibold text-[20px] ml-2 text-[#2D3E4F] leading-[20px]'>
-              {isEditView ? "Edit Project": 'New Project'}
+              {isEditView ? 'Edit Project' : 'New Project'}
             </div>
-           
           </div>
         </div>
         <div className='flex gap-3'>
@@ -219,14 +245,24 @@ console.log(isEditView);
             variant='outlined'
             color='inherit'
             onClick={goBack}
-            sx={{ height: '32px', width: '56px', fontSize:'12px', fontWeight: 400 }}
+            sx={{
+              height: '32px',
+              width: '56px',
+              fontSize: '12px',
+              fontWeight: 400,
+            }}
           />
           <TextButton
             label='Save'
             variant='filled'
             loading={createProject.isPending || updateProject.isPending}
             onClick={handleExternalSubmit}
-            sx={{ height: '32px', width: '64px', fontSize:'13px', fontWeight: 400 }}
+            sx={{
+              height: '32px',
+              width: '64px',
+              fontSize: '13px',
+              fontWeight: 400,
+            }}
           />
         </div>
       </div>
@@ -252,8 +288,8 @@ console.log(isEditView);
           outData={submitData}
           formRef={formRef}
           onChange={onChangeField}
-          keyStart='project_start_date'
-          keyEnd='project_end_date'
+          keyStart='project_startdate'
+          keyEnd='project_enddate'
         />
       </div>
     </>
