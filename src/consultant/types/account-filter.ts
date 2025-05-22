@@ -1,9 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Define filter options for each field type
-export type TextFilterOption = 'contains' | 'equals';
+export type TextFilterOption = 'contains' | 'equals' | 'not_equals';
 export type NumberFilterOption = 'greater_than' | 'less_than' | 'between';
 export type StatusFilterOption = 'equals';
 export type BooleanFilterOption = 'equals';
+export type DateOptions = 'equals' | 'before' | 'after' |'between' ;
+export const DateValueOptions = [
+  { value: 'equals', label: 'Equals' },
+  { value: 'before', label: 'Before' },
+  { value: 'after', label: 'After' },
+  { value: 'between', label: 'Between' },
+  // { value: 'is_empty', label: 'Is Empty' },
+];
 
 // Define filter state types for each field type
 interface TextFilterState {
@@ -31,6 +39,12 @@ interface MultiSelectFilterState {
   values: string[];
 }
 
+interface DateFilterState {
+  option: DateOptions;
+  value: string;
+  toValue?: string;
+}
+
 // Union type for all possible filter states
 export type FilterState = {
   text?: TextFilterState;
@@ -38,13 +52,14 @@ export type FilterState = {
   status?: StatusFilterState;
   boolean?: BooleanFilterState;
   multiSelect?: MultiSelectFilterState;
+  date?: DateFilterState;
 };
 
 // Define field configuration
 export type FieldConfig = {
   name: string;
   label: string;
-  type: 'text' | 'number' | 'status' | 'boolean' | 'multi-select';
+  type: 'text' | 'number' | 'status' | 'boolean' | 'multi-select' | 'date';
   options?: string[] | { value: string; label: string; }[];
 };
 

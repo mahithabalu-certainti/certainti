@@ -17,7 +17,7 @@ import {
 import React, { useState } from 'react';
 import { RowData, SortDirection, TableProps } from './types';
 import TablePagination from './pagination';
-import { arrowDownIcon, arrowUpIcon, editIcon, eyeIcon } from '../../assets';
+import { arrowDownIcon, arrowUpIcon, editIcon, eyeIcon, deleteIcon } from '../../assets';
 
 const Table = <T extends RowData>({
   data = [],
@@ -30,6 +30,7 @@ const Table = <T extends RowData>({
   onEdit,
   onDelete,
   onView,
+  onDeleteIcon,
   // State
   loading = false,
   error,
@@ -509,6 +510,38 @@ const Table = <T extends RowData>({
                               Delete
                             </Button>
                           </Tooltip>
+                        )}
+                        {onDeleteIcon && (
+                         <Tooltip
+                         arrow
+                         title='Click to delete'
+                         slotProps={{
+                           tooltip: {
+                             sx: {
+                               backgroundColor: '#fff',
+                               color: 'rgba(0, 0, 0, 0.87)',
+                               boxShadow: 2,
+                               borderRadius: '4px',
+                             },
+                           },
+                         }}
+                       >
+                         <IconButton
+                           size='small'
+                           onClick={() => onDeleteIcon(row)}
+                         >
+                           <img 
+                           src={deleteIcon} 
+                           alt='deleteIcon'
+                           style={{
+                             filter:
+                               'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
+                           }}
+
+                           className='w-4 h-4'
+                           />
+                         </IconButton>
+                       </Tooltip>
                         )}
                         </Box>
                       </TableCell>

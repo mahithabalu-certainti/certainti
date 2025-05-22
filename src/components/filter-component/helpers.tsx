@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import { FilterState } from '../../consultant/types/account-filter';
 import { useMemo } from 'react';
+import { DateValueOptions } from '../../consultant/types/account-filter';
 
 export const TextFilterControl: React.FC<{
   fieldName: string;
@@ -31,6 +32,9 @@ export const TextFilterControl: React.FC<{
       >
         <MenuItem value='contains' sx={{ fontSize: '14px' }}>Contains</MenuItem>
         <MenuItem value='equals' sx={{ fontSize: '14px' }}>Equals</MenuItem>
+        <MenuItem value='not_equals' sx={{ fontSize: '14px' }}>
+          Not Equals
+        </MenuItem>
       </Select>
     </FormControl>
     <TextField
@@ -275,3 +279,63 @@ export const MultiSelectFilterControl: React.FC<{
     </Box>
   );
 };
+
+export const DateFilterControl: React.FC<{
+  fieldName: string;
+  state: FilterState;
+  onOptionChange: (fieldName: string, event: SelectChangeEvent<string>) => void;
+  onValueChange: (
+    fieldName: string,
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    index?: number,
+    targetKey?: 'value' | 'toValue'
+  ) => void;
+}> = ({ fieldName, state, onOptionChange, onValueChange }) => (
+  <Box sx={{ pl: 3, mt: 1 }}>
+    <FormControl fullWidth size='small'>
+      <Select
+        value={state.date?.option || 'equals'}
+        onChange={(e) => onOptionChange(fieldName, e)}
+        sx={{ height: '30px', minHeight: 20, fontSize: '14px' }}
+      >
+        {DateValueOptions.map((option) => (
+          <MenuItem
+            key={option.value}
+            value={option.value}
+            sx={{ fontSize: '14px' }}
+          >
+            {option.label}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+    <TextField
+      size='small'
+      fullWidth
+      placeholder='Type here (MM-DD-YYYY)'
+      value={state.date?.value || ''}
+      onChange={(e) => onValueChange(fieldName, e, undefined, 'value')}
+      sx={{ mt: 1 }}
+      slotProps={{
+        input: {
+          sx: { height: '30px', paddingY: 0, fontSize: '0.75rem' },
+        },
+      }}
+    />
+    {state.date?.option === 'between' && (
+      <TextField
+        size='small'
+        fullWidth
+        placeholder='End date (MM-DD-YYYY)'
+        value={state.date?.toValue || ''}
+        onChange={(e) => onValueChange(fieldName, e, undefined, 'toValue')}
+        sx={{ mt: 1 }}
+        slotProps={{
+          input: {
+            sx: { height: '30px', paddingY: 0, fontSize: '0.75rem' },
+          },
+        }}
+      />
+    )}
+  </Box>
+);

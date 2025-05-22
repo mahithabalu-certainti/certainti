@@ -67,6 +67,14 @@ export interface Profile {
   createdOn: string;
   profileName: string;
 }
+export interface Profiles {
+  rid: string;
+  created_by: string;
+  created_datetime: string;
+  profile_name: string;
+  profile_type: string;
+  profile_status: string;
+}
 
 // User details
 export interface UserDetail {
@@ -135,7 +143,7 @@ export interface ManageUserApiResponse extends CommonApiResponse {
 
 export interface ManageProfileApiResponse extends CommonApiResponse {
   data: {
-    profile: Profile[];
+    profiles: Profiles[];
     count: number;
   };
 }

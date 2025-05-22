@@ -2,11 +2,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Table } from '../../../../components/table';
-import { ADMIN_MANAGE_USER } from '../../../../routes';
-import { Profile, UserListParams } from '../../../types/manage-user';
+import { Profiles, UserListParams } from '../../../types/manage-user';
 import { profileColumns } from './';
 import { ManageProfile } from '../../../types';
 import { useManageProfileList } from '../../../service';
+import { MANAGE_PROFILE } from '../../../../routes/routes';
 
 interface IUserTableProps {
   appliedFilters: Record<string, any>;
@@ -33,36 +33,37 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
   const { data, isLoading, isError } = useManageProfileList(tableParams);
   const totalItems = data?.data?.count || 0;
 
-  const convertUserListData = (data: Profile[]): ManageProfile[] => {
+  const convertUserListData = (data: Profiles[]): ManageProfile[] => {
     if (!data) return [];
     return data.map((item) => {
       return {
         id: item.rid,
-        createdBy: item.createdBy,
-        createdOn: item.createdOn,
-        profileName: item.profileName,
+        createdBy: item.created_by,
+        createdOn: item.created_datetime,
+        profileName: item.profile_name,
       };
     });
   };
 
   useEffect(() => {
     if (data?.data) {
-      setUsers(convertUserListData(data?.data?.profile));
+      setUsers(convertUserListData(data?.data?.profiles));
     }
   }, [data?.data]);
 
   const getRowId = (row: ManageProfile) => row.id;
 
   const handleEdit = (row: ManageProfile) => {
-    navigate(ADMIN_MANAGE_USER + '/edit/' + row.id, {
+    navigate(MANAGE_PROFILE + '/edit/' + row.id, {
       state: { user: row },
     });
   };
 
-  const handleView = (row: ManageProfile) => {
-    navigate(`/admin/manage-user/${row.id}`, {
-      state: { user: row },
-    });
+  const handleDelete = (row: ManageProfile) => {
+    // navigate(`/admin/manage-user/${row.id}`, {
+    //   state: { user: row },
+    // });
+    console.log('trigger row delete:', row);
   };
 
   const handleSort = (sortBy: string, sortOrder: 'ASC' | 'DESC') => {
@@ -98,7 +99,8 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
       onSelectionChange={(selectedIds) => console.log('Selected:', selectedIds)}
       // Actions
       onEdit={handleEdit}
-      onView={handleView}
+      // onView={handleView}
+      onDeleteIcon={handleDelete}
       // State
       loading={isLoading}
       error={isError ? 'Failed to load users' : undefined}

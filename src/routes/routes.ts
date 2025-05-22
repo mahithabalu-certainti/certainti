@@ -24,6 +24,7 @@ export const ADMIN_EDIT_USER = `${ADMIN_MANAGE_USER}/edit/:userid`;
 /** PROFILE ROUTES */
 export const MANAGE_PROFILE = `${ADMIN}/manage-profile`;
 export const MANAGE_PROFILE_CREATE = `${MANAGE_PROFILE}/create`;
+export const MANAGE_PROFILE_EDIT = `${MANAGE_PROFILE}/edit/:profileId`;
 
 /** ACCOUNT ROUTES */
 export const ACCOUNT = '/account';

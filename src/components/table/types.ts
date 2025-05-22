@@ -23,6 +23,7 @@ export interface TableProps<T extends RowData> {
   // Actions
   onEdit?: (row: T) => void;
   onDelete?: (row: T) => void;
+  onDeleteIcon?: (row: T) => void;
   onView?: (row: T) => void;
   // State
   loading?: boolean;

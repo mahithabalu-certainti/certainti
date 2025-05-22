@@ -8,14 +8,14 @@ export const profileColumns: ManageUserColumn<ManageProfile>[] = [
     header: 'Profile Name',
     sortable: true,
     sort: 'profile_name',
-    width: '180px',
+    width: '400px',
   },
   {
     id: 'createdOn',
     header: 'Created On',
     sortable: true,
     sort: 'created_on',
-    width: '200px',
+    width: '300px',
     render: (row: ManageProfile) => getDateFormat(row.createdOn),
   },
   {

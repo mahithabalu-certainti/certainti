@@ -30,15 +30,14 @@ export const getProfileListUrl = (params: UserListParams = {}): string => {
   };
 
   const queryParams = {
-    organization: ORGANIZATION,
     ...defaultParams,
   };
 
-  return `/api/profile/list?${buildQueryString(queryParams)}`;
+  return `/api/user/profiles?${buildQueryString(queryParams)}`;
 };
 
 export const getUserExportUrl = (params: UserListParams = {}): string => {
-  const queryParams: any = {
+  const queryParams: Record<string, unknown> = {
     organization: ORGANIZATION,
     sortBy: params.sortBy || 'createdAt',
     sortOrder: params.sortOrder || 'DESC',
