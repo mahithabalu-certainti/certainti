@@ -120,7 +120,7 @@ async function createUser(req: Request, res: Response): Promise<void> {
       handleSuccessResponse(res, user);
       return;
     } else {
-      errorLog(methodName, user.message);
+      errorLog(methodName, user.errorMessage);
       handleErrorResponse(
         res,
         constants.BAD_REQUEST,

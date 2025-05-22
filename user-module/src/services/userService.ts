@@ -110,6 +110,7 @@ class UserService {
         },
       };
     } catch (err) {
+      console.log("Error creating user", err);
       return this.throwServiceError(err as Error);
     }
   }
