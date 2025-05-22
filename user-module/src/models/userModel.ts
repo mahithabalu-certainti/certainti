@@ -77,6 +77,7 @@ export class User
         r_number: {
           type: DataTypes.STRING(20),
           allowNull: true,
+          unique: true,
         },
         eid: {
           type: DataTypes.INTEGER,

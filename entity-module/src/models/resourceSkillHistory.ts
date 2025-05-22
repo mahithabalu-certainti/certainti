@@ -37,6 +37,7 @@ export class ResourceSkillHistory extends Model<ResourceSkillHistoryAttributes, 
        r_number: {
         type: DataTypes.STRING(20),
         allowNull: true,
+        unique: true,
        },
        resource_skill_rid: {
         type: DataTypes.UUID,

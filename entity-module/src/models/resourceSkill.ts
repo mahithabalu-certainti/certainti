@@ -69,6 +69,7 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
        r_number: {
         type: DataTypes.STRING(20),
         allowNull: true,
+        unique: true,
        },
        eid: {
         type: DataTypes.STRING(255),

@@ -39,6 +39,7 @@ export class Country
         r_number: {
           type: DataTypes.STRING(20),
           allowNull: true,
+          unique: true,
         },
         country_code: {
           type: DataTypes.STRING,

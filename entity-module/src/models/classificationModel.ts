@@ -49,6 +49,7 @@ export class Classification
         r_number: {
           type: DataTypes.STRING,
           allowNull: true,
+          unique: true,
         },
         eid: {
           type: DataTypes.INTEGER,

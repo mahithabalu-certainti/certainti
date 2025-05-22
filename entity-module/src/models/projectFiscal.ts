@@ -200,6 +200,7 @@ export class ProjectFiscal
         r_number: {
           type: DataTypes.STRING(20),
           allowNull: true,
+          unique: true,
         },
         project_rid: {
           type: DataTypes.UUID,
