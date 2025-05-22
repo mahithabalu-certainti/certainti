@@ -1,5 +1,6 @@
 export interface ProjectList {
   rid: string;
+  account_rid?: string;
   account_number: string;
   account_name: string;
   r_number: string;
@@ -10,7 +11,7 @@ export interface ProjectList {
   project_type: string;
   project_classification: string;
   project_client_group: string;
-  project_group: string; 
+  project_group: string;
   project_status: string;
 }
 
@@ -19,7 +20,7 @@ export type Project = {
   accountNumber: string;
   accountName: string;
   projectNumber: string;
-  projectRefId: string;
+  project_code: string;
   industry: string;
   project_startdate: string;
   project_enddate: string;
@@ -28,6 +29,7 @@ export type Project = {
   projectClientGroup: string;
   projectGroup: string;
   project_status: string;
+  industry_name?: string;
 };
 
 export type ProjectColumn<T> = {
@@ -43,12 +45,15 @@ export interface ProjectListParams {
   page?: number;
   limit?: number;
   sortBy?: string;
-  sortOrder?: "ASC" | "DESC";
+  sortOrder?: 'ASC' | 'DESC';
   filters?: object;
   fiscalYear: number;
   accountNumber?: string;
 }
-
+export enum Status {
+  Active = 'active',
+  InActive = 'inactive',
+}
 export type ProjectListResponse = {
   statusCode: number;
   statusCodeValue: string;
@@ -63,60 +68,86 @@ export interface KeyContacts {
   account_rid?: string;
   key_contact_name: string;
   key_contact_email: string;
-  key_contact_role_rid: string;
+  key_contact_role: string;
   is_primary_contact: boolean;
   include_in_communication: boolean;
   status: Status;
   action_type?: string;
+  key_contact_status?: Status;
+  role_name?: string;
 }
 export interface NewProjectData {
-  account_id: string;
-  account_number: string;
-  project_code: string;
-  project_name:string;
-  project_id?:string;
-  industry: string; 
-  industry_rid: string;
+  account_id?: string;
+  name?: string;
+  industry_rid_name?: string;
+  start_date?: string | null;
+  end_date?: string | null;
+  clasification?: string | null;
+  client_group?: string | null;
+  account_rid?: string;
+  description?: string | null;
+  status?: string;
+  currency_name?: string;
+  region_name?: string;
+  country_name?: string;
+  record_id?: string;
+  created_on?: string;
+  created_by?: string;
+  modified_on?: string;
+  modified_by?: string;
+  is_active?: boolean;
+  updated_on?: string;
+  Updated_By?: string;
+  created_datetime?: string;
+  modified_datetime?: string;
+  keyContact?: KeyContacts[] | undefined;
+  efforts_in_hrs?: string | null;
+  total_fte_count?: number | null;
+  total_sub_con_count?: number | null;
+  account_number?: string;
+  project_code?: string;
+  project_name?: string;
+  project_id?: string;
+  industry: string;
+  industry_rid: string | null;
+  industry_name: string;
   program_name: string;
-  client_organization: string; // "TechCorp Inc."
-  project_startdate: string; // e.g., "04/22/2025"
-  project_enddate: string;   // e.g., "10/23/2025"
-  project_type: string; // "Fixed"
-  project_classification: string;
-  project_client_group: string;
-  project_group: string;
-  project_summary: string;
-  project_status: string; // "Active"
-  fiscal_year: number; // 2025
-  country: string; // UUID
-  region: string;  // UUID
-  currency: string; // UUID
-  project_manager: string; // e.g., "Alice Johnson"
-  project_lead: string;    // e.g., "Bob Smith"
-  spoc_name: string;
-  spoc_email: string;
-  spoc_mobile: string;
-  project_tpc_name: string;
-  project_tpc_email: string;
-  project_tpc_mobile: string;
-  project_cc_list: string;
-  total_effort: number | null;
-  total_cost: number | null;
-  total_fte: number | null;
-  total_sub_con: number | null;
-  total_non_labor_cost: number | null;
-  total_fte_effort: number | null;
-  total_sub_con_effort: number | null;
-  total_fte_cost: number | null;
-  total_sub_con_cost: number | null;
-  last_rd_ai_assess_on: string;
-  last_rd_ai_assess_by: string;
-  auto_send_ai_interaction: boolean;
-  auto_access_rd: boolean;
-  max_ai_interaction: number | null;
-  blended_rate_fte: string;
-  blended_rate_sub_con: string;
-  project_description: string;
-  comments:string
-  key_contacts: KeyContacts[];
+  client_organization?: string;
+  project_startdate?: string | null;
+  project_enddate?: string | null;
+  project_type?: string;
+  project_classification_rid?: string | null;
+  project_client_group?: string;
+  project_group?: string;
+  project_summary?: string;
+  project_status?: string;
+  fiscal_year?: number;
+  country?: string;
+  region?: string;
+  currency?: string;
+  total_effort?: string | null;
+  total_cost?: string | null;
+  total_fte?: number | null;
+  total_sub_con?: number | null;
+  total_non_labor_cost?: string | null;
+  total_fte_effort?: string | null;
+  total_sub_con_effort?: string | null;
+  total_fte_cost?: string | null;
+  total_sub_con_cost?: string | null;
+  auto_send_ai_interaction?: boolean | string;
+  auto_assessment?: boolean | string;
+  auto_access_rd?: boolean;
+  max_ai_interaction?: number | null;
+  blended_rate_fte?: string | null;
+  blended_rate_sub_con?: string | null;
+  project_description?: string;
+  comments?: string;
+  key_contacts?: KeyContacts[];
+  key_contact_name?: string;
+  key_contact_email?: string;
+  key_contact_role?: string;
+  rid?: string;
+  is_primary_contact?: string;
+  include_in_communication?: string;
+  key_contact_status?: Status;
 }

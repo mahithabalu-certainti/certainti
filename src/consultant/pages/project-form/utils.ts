@@ -1,7 +1,7 @@
-import { KeyContactsUpdate } from '../../types';
+import { KeyContactsUpdate, Status } from '../../types';
 import { NewProjectData } from '../../types/project';
 import { othersIndustryId } from '../account-create/utils';
-const parseNullableNumber = (value: any): number | null => {
+const parseNullableNumber = (value: unknown): number | null => {
   const parsed = Number(value);
   return isNaN(parsed) || value === '' ? null : parsed;
 };
@@ -10,7 +10,7 @@ export const transformFormData = (
   formData: Partial<NewProjectData>,
   isEdit: boolean,
   isValueUpdateInKeyContact?: boolean,
-  key_contact_id?: string
+  key_rid?: string
 ): Partial<NewProjectData> => {
   const data: Partial<NewProjectData> = {
     account_id: formData.account_id,
@@ -25,6 +25,7 @@ export const transformFormData = (
     project_enddate: formData.project_enddate || null,
     project_type: formData.project_type,
     project_classification_rid: formData.project_classification_rid || null,
+    // uuid: formData.project_classification_rid || null,
     project_client_group: formData.project_client_group || '',
     project_group: formData.project_group || '',
     project_description: formData.project_description || '',
@@ -59,14 +60,14 @@ export const transformFormData = (
           {
             key_contact_name: formData.key_contact_name as string,
             key_contact_email: formData.key_contact_email as string,
-            key_contact_role_rid: formData.key_contact_role as string,
+            key_contact_role: formData.key_contact_role as string,
             is_primary_contact: formData?.is_primary_contact === 'yes',
             include_in_communication:
               formData?.include_in_communication === 'yes',
             status: formData?.key_contact_status as Status,
-            ...(key_contact_id && { key_contact_id }),
+            ...(isEdit && { rid: key_rid }),
             action_type:
-              isEdit && key_contact_id
+              isEdit && key_rid
                 ? KeyContactsUpdate.Edit
                 : KeyContactsUpdate.Add,
           },

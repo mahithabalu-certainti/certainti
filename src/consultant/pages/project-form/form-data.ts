@@ -60,6 +60,16 @@ export const FormData = (
                 regex: REGEX_PATTERNS.MAX_50,
                 errorMessage: 'Max length exceeded',
               },
+              {
+                regex: REGEX_PATTERNS.NOT_ALLOW_SPACE_SYMBOLS_AT_START_END,
+                errorMessage:
+                  'Cannot begin or end with a space or special character',
+              },
+              {
+                regex: REGEX_PATTERNS.PROJECT_NAME,
+                errorMessage:
+                  "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_).",
+              },
             ],
           }),
           createTextField('project_name', 'Name', {
@@ -73,6 +83,11 @@ export const FormData = (
               {
                 regex: REGEX_PATTERNS.MAX_255,
                 errorMessage: 'Max length exceeded',
+              },
+              {
+                regex: REGEX_PATTERNS.NOT_ALLOW_SPACE_SYMBOLS_AT_START_END,
+                errorMessage:
+                  'Cannot begin or end with a space or special character',
               },
               {
                 regex: REGEX_PATTERNS.PROJECT_NAME,
@@ -102,9 +117,14 @@ export const FormData = (
                 errorMessage: 'Max length exceeded',
               },
               {
-                regex: REGEX_PATTERNS.ALLOWED_CHARS_EXTENDED_NAME_REGEX,
+                regex: REGEX_PATTERNS.NOT_ALLOW_SPACE_SYMBOLS_AT_START_END,
                 errorMessage:
-                  "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), and commas (,).",
+                  'Cannot begin or end with a space or special character',
+              },
+              {
+                regex: REGEX_PATTERNS.PROJECT_NAME,
+                errorMessage:
+                  "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_).",
               },
             ],
           }),
@@ -119,6 +139,11 @@ export const FormData = (
               {
                 regex: REGEX_PATTERNS.MAX_255,
                 errorMessage: 'Max length exceeded',
+              },
+              {
+                regex: REGEX_PATTERNS.NOT_ALLOW_SPACE_SYMBOLS_AT_START_END,
+                errorMessage:
+                  'Cannot begin or end with a space or special character',
               },
               {
                 regex: REGEX_PATTERNS.PROJECT_NAME,
@@ -167,6 +192,11 @@ export const FormData = (
                 errorMessage: 'Max length exceeded',
               },
               {
+                regex: REGEX_PATTERNS.NOT_ALLOW_SPACE_SYMBOLS_AT_START_END,
+                errorMessage:
+                  'Cannot begin or end with a space or special character',
+              },
+              {
                 regex: REGEX_PATTERNS.PROJECT_NAME,
                 errorMessage:
                   "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_).",
@@ -184,6 +214,11 @@ export const FormData = (
               {
                 regex: REGEX_PATTERNS.MAX_255,
                 errorMessage: 'Max length exceeded',
+              },
+              {
+                regex: REGEX_PATTERNS.NOT_ALLOW_SPACE_SYMBOLS_AT_START_END,
+                errorMessage:
+                  'Cannot begin or end with a space or special character',
               },
               {
                 regex: REGEX_PATTERNS.PROJECT_NAME,
@@ -242,8 +277,8 @@ export const FormData = (
         fields: [
           createTextField('key_contact_name', 'Key Contact Name', {
             required: false,
-            regex: REGEX_PATTERNS.CONTACT_NAME,
-            regexErrorMessage: 'Invalid Name',
+            // regex: REGEX_PATTERNS.CONTACT_NAME,
+            // regexErrorMessage: 'Invalid Name',
             placeholder: 'Enter Key Contact Name',
             onChange: true,
             errorHandling: [
@@ -260,6 +295,11 @@ export const FormData = (
                 regex: REGEX_PATTERNS.NOT_ALLOW_SPACE_SYMBOLS_AT_START_END,
                 errorMessage:
                   'Cannot begin or end with a space or special character',
+              },
+              {
+                regex: REGEX_PATTERNS.MANAGER_REGEX,
+                errorMessage:
+                  "Only letters, spaces, apostrophes (') and hyphens (-) are allowed",
               },
             ],
           }),
@@ -309,51 +349,59 @@ export const FormData = (
         fillType: 'half',
         fields: [
           createTextField('total_effort', 'Effort in Hrs', {
-            regex: REGEX_PATTERNS.BLENDED_NUMBER,
-            regexErrorMessage: 'Enter a Positive Integer or Decimal number ',
+            regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
+            regexErrorMessage:
+              'Enter a Positive Integer number allowed 16 digits',
             placeholder: 'Enter Total Effort',
           }),
           createTextField('total_cost', 'Total Cost', {
-            regex: REGEX_PATTERNS.BLENDED_NUMBER,
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
-              'Enter a only Positve Interger or Decimal number',
+              'Only positive numbers allowed, up to 3 digits and 2 decimal places',
             placeholder: 'Enter Total Cost',
           }),
           createTextField('total_fte', 'Total FTE Count', {
-            regex: REGEX_PATTERNS.POSITIVE_INTEGER_REGEX,
-            regexErrorMessage: 'Enter a Positive Integer or Decimal number ',
+            regex: REGEX_PATTERNS.EFFORTS_INTEGER_9,
+            regexErrorMessage:
+              'Enter a Positive Integer number allowed 9 digits',
             placeholder: 'Enter Total FTE',
           }),
           createTextField('total_sub_con', 'Total Sub Con Count', {
-            regex: REGEX_PATTERNS.POSITIVE_INTEGER_REGEX,
-            regexErrorMessage: 'Enter a Positive Integer or Decimal number',
+            regex: REGEX_PATTERNS.EFFORTS_INTEGER_9,
+            regexErrorMessage:
+              'Enter a Positive Integer number allowed 9 digits',
             placeholder: 'Enter Total Sub Con',
           }),
 
           createTextField('total_fte_effort', 'Total FTE Effort', {
-            regex: REGEX_PATTERNS.BLENDED_NUMBER,
-            regexErrorMessage: 'Enter a Positive Integer number ',
+            regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
+            regexErrorMessage:
+              'Enter a Positive Integer number allowed 16 digits',
             placeholder: 'Enter Total FTE Effort',
           }),
           createTextField('total_sub_con_effort', 'Total Sub Con Effort', {
-            regex: REGEX_PATTERNS.BLENDED_NUMBER,
-            regexErrorMessage: 'Enter a Positive Integer number ',
+            regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
+            regexErrorMessage:
+              'Enter a Positive Integer number allowed 16 digits',
             placeholder: 'Enter Total Sub Con Effort',
           }),
 
           createTextField('total_fte_cost', 'Total FTE Cost', {
-            regex: REGEX_PATTERNS.BLENDED_NUMBER,
-            regexErrorMessage: 'Enter a Positive Integer number ',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total FTE Cost',
           }),
           createTextField('total_sub_con_cost', 'Total Sub Con Cost', {
-            regex: REGEX_PATTERNS.BLENDED_NUMBER,
-            regexErrorMessage: 'Enter a Positive Integer number ',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Sub Con Cost',
           }),
           createTextField('total_non_labor_cost', 'Total Non Labour Cost', {
-            regex: REGEX_PATTERNS.BLENDED_NUMBER,
-            regexErrorMessage: 'Enter a Positive Integer number ',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Non Labour Cost',
           }),
         ],
@@ -377,7 +425,7 @@ export const FormData = (
             required: true,
             placeholder: 'Enter  Max AI Interactions',
             regex: REGEX_PATTERNS.POSITIVE_INTEGER_REGEX,
-            regexErrorMessage: 'Enter a only Positve Interger number',
+            regexErrorMessage: 'Only positive numbers allowed, 2 digits only',
           }),
           createRadioField('auto_access_rd', 'Auto Assessment', {
             required: false,
@@ -390,13 +438,15 @@ export const FormData = (
             required: false,
             placeholder: 'Enter Blended Rate FTE',
             regex: REGEX_PATTERNS.BLENDED_NUMBER,
-            regexErrorMessage: 'Enter a Positive Integer or Decimal number ',
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 3 digits and 2 decimal places',
           }),
           createTextField('blended_rate_sub_con', 'Blended Rate Sub Con', {
             required: false,
             placeholder: 'Enter Blended Rate Sub Con',
             regex: REGEX_PATTERNS.BLENDED_NUMBER,
-            regexErrorMessage: 'Enter a Positive Integer or Decimal number ',
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 3 digits and 2 decimal places',
           }),
         ],
       },
@@ -454,6 +504,14 @@ export const FormData = (
         ],
       },
     ],
-    [country, state, disableFields, currency, showOthersField, stateLoading]
+    [
+      country,
+      state,
+      disableFields,
+      currency,
+      showOthersField,
+      stateLoading,
+      isPrimaryContactRequired,
+    ]
   );
 };

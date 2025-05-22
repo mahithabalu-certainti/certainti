@@ -37,10 +37,15 @@ export const getProjectColumns = (
   },
   {
     id: 'project_code',
-    label: 'Project Code',
+    label: 'Project code',
     sortable: true,
-    sortId: 'project_ref_id',
+    sortId: 'project_code',
     width: '180px',
+    render: (_value, row: Project) => (
+      <TruncateWithTooltip text={String(row.project_code)}>
+        {row.project_code}
+      </TruncateWithTooltip>
+    ),
   },
   {
     id: 'industry_name',
@@ -50,7 +55,7 @@ export const getProjectColumns = (
     width: '150px',
     render: (_value, row: Project) => (
       <TruncateWithTooltip text={String(row.industry_name)}>
-        {row.industry_name ? row.industry_name : 'NA'}
+        {row.industry_name}
       </TruncateWithTooltip>
     ),
   },
@@ -61,9 +66,7 @@ export const getProjectColumns = (
     sortId: 'project_start_date',
     width: '180px',
     render: (_value, row: Project) => (
-      <span>
-        {row.project_startdate ? formatDate(row.project_startdate) : 'NA'}
-      </span>
+      <span>{formatDate(row.project_startdate)}</span>
     ),
   },
   {
@@ -73,9 +76,7 @@ export const getProjectColumns = (
     sortId: 'project_end_date',
     width: '180px',
     render: (_value, row: Project) => (
-      <span>
-        {row.project_enddate ? formatDate(row.project_enddate) : 'NA'}
-      </span>
+      <span>{formatDate(row.project_enddate)}</span>
     ),
   },
 

@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from "react";
-import { Project, ProjectList, ProjectListParams } from "../../../../types/project";
-import { Table } from "../../../../../components/table";
-import { getProjectColumns } from "./columns";
-import { useAllProjects } from "../../../../services/project";
-import { RootState } from "../../../../../store/store";
-import { useSelector } from "react-redux";
-import { generatePath, useNavigate } from "react-router-dom";
-import { PROJECT, PROJECT_DETAILS } from "../../../../../routes";
+import { useEffect } from 'react';
+import { Project, ProjectListParams } from '../../../../types/project';
+import { Table } from '../../../../../components/table';
+import { getProjectColumns } from './columns';
+import { useAllProjects } from '../../../../services/project';
+import { RootState } from '../../../../../store/store';
+import { useSelector } from 'react-redux';
+import { generatePath, useNavigate } from 'react-router-dom';
+import { PROJECT, PROJECT_DETAILS } from '../../../../../routes';
 
 interface IProjectTableProps {
   appliedFilters: Record<string, any>;
@@ -22,7 +22,6 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   setTableParams,
   setTotalCount,
 }) => {
-  const [projects, setProjects] = useState<Project[]>([]);
   const navigate = useNavigate();
   const { fiscalYear } = useSelector<
     RootState,
@@ -43,29 +42,8 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   const { data, isLoading, isError } = useAllProjects(tableParams);
   const totalItems = data?.count || 0;
 
-  const convertProjectListData = (data: ProjectList[]): Project[] => {
-    if (!data) return [];
-
-    return data.map((item) => ({
-      id: item.id,
-      accountNumber: item.account_number,
-      accountName: item.account_name,
-      projectNumber: item.r_number,
-      projectRefId: item.project_ref_id,
-      industry: item.industry,
-      projectStartDate: item.project_startdate,
-      projectEndDate: item.project_enddate,
-      projectType: item.project_type,
-      projectClassification: item.project_classification,
-      projectClientGroup: item.project_client_group,
-      projectGroup: item.project_group,
-      status: item.project_status,
-    }));
-  };
-
   useEffect(() => {
     if (data) {
-      setProjects(convertProjectListData(data?.projects || []));
       setTotalCount(data?.count || 0);
     }
   }, [data]);
@@ -78,11 +56,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     });
   };
 
-  const handleDelete = (project: Project) => {
-    console.log("Delete project:", project.id);
-  };
-
-  const handleSort = (sortBy: string, sortOrder: "ASC" | "DESC") => {
+  const handleSort = (sortBy: string, sortOrder: 'ASC' | 'DESC') => {
     setTableParams((prev) => ({
       ...prev,
       sortBy,
@@ -118,22 +92,17 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
 
   return (
     <Table
-      data={projects}
+      data={data?.projects || ([] as any)}
       columns={projectColumns}
       getRowId={getRowId}
-      actionRenderFlag="dropdown-menu"
-      disableTextHover={true}
-      headerHeight={50}
-      rowHeight={42}
       // Selection
       selectable={true}
-      onSelectionChange={(selectedIds) => console.log("Selected:", selectedIds)}
+      onSelectionChange={(selectedIds) => console.log('Selected:', selectedIds)}
       // Actions
       onEdit={handleEdit}
-      onDelete={handleDelete}
       // State
       loading={isLoading}
-      error={isError ? "Failed to load projects" : undefined}
+      error={isError ? 'Failed to load projects' : undefined}
       // Pagination
       rowsPerPage={tableParams.limit}
       currentPage={(tableParams.page ?? 1) - 1}

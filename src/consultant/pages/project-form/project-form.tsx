@@ -65,11 +65,21 @@ const ProjectForm: React.FC = () => {
         project_enddate: formatDateToMMDDYYYY(account?.project_enddate),
         project_startdate: formatDateToMMDDYYYY(account?.project_startdate),
         region: account?.region,
+        key_contact_name: account?.keyContact[0]?.key_contact_name,
+        key_contact_role: account?.keyContact[0]?.key_contact_role,
+        key_contact_email: account?.keyContact[0]?.key_contact_email,
+        key_contact_status: account?.keyContact[0]?.status,
+        is_primary_contact: account?.keyContact[0]?.is_primary_contact
+          ? 'yes'
+          : 'no',
+        include_in_communication: account?.keyContact[0]
+          ?.include_in_communication
+          ? 'yes'
+          : 'no',
       }),
     }),
     [account]
   );
-
   // const account = useMemo(() => getProjectData.data?.data?.project, [
   //   getProjectData.data?.data?.project,
   // ]);
@@ -101,17 +111,17 @@ const ProjectForm: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
 
-  // useEffect(() => {
-  //   setPrimaryKeyContactInfo({
-  //     key_contact_email: account.key_contact_email || '',
-  //     key_contact_name: account.key_contact_name || '',
-  //     key_contact_role: account.key_contact_role || '',
-  //   });
-  // }, [
-  //   account.key_contact_email,
-  //   account.key_contact_name,
-  //   account.key_contact_role,
-  // ]);
+  useEffect(() => {
+    setPrimaryKeyContactInfo({
+      key_contact_email: account?.key_contact_email || '',
+      key_contact_name: account?.key_contact_name || '',
+      key_contact_role: account?.key_contact_role || '',
+    });
+  }, [
+    account?.key_contact_email,
+    account?.key_contact_name,
+    account?.key_contact_role,
+  ]);
 
   const memoizedContry: SelectOption[] = useMemo(
     () =>
@@ -172,7 +182,9 @@ const ProjectForm: React.FC = () => {
         account_id: accountID,
         project_id: projectID,
       },
-      isEditView
+      isEditView,
+      isValueUpdateInKeyContact,
+      account?.keyContact?.[0]?.rid
     );
 
     if (isEditView) {
@@ -216,8 +228,6 @@ const ProjectForm: React.FC = () => {
       setShowOthersField(true);
     }
   }, [account?.industry_rid]);
-
-  console.log(projectData, 'projectData');
 
   return (
     <>

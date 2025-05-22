@@ -52,7 +52,7 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
     setShowFilter(!showFilter);
   };
   const handleEdit = (account: any) => {
-    navigate(`/Project/edit/aaf4cdd9-3120-4faa-a2f4-30d0cbb3947f`, {
+    navigate(`/Project/edit/${account?.rid}`, {
       state: {
         accountID: account?.account_rid,
         projectID: account?.rid,

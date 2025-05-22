@@ -52,6 +52,7 @@ import phoneIcon from './phone.svg';
 import plusIcon from './plus.svg';
 import projectHeaderIcon from './projects-header.svg';
 import projectsIcon from './projects.svg';
+import projectsBook from './project-book.svg';
 import projectCreateIcon from './new-project.svg';
 import refreshIcon from './refresh.svg';
 import resourceHeaderIcon from './resource-header.svg';
@@ -130,6 +131,7 @@ export {
   projectsIcon,
   projectDetailsIcon,
   projectCreateIcon,
+  projectsBook,
   refreshIcon,
   resourceFilterIcon,
   resourceHeaderIcon,

@@ -44,8 +44,8 @@ export type FilterState = {
 export type FieldConfig = {
   name: string;
   label: string;
-  type: 'text' | 'number' | 'status' | 'boolean' | 'multi-select';
-  options?: string[] | { value: string; label: string; }[];
+  type: 'text' | 'number' | 'status' | 'boolean' | 'multi-select' | 'enum';
+  options?: string[] | { value: string; label: string }[];
 };
 
 export interface FilterComponentProps {
@@ -60,4 +60,4 @@ export interface FilterComponentProps {
 export const StatusOptions = [
   { value: 'Active', label: 'Active' },
   { value: 'Inactive', label: 'In-Active' },
-]
+];

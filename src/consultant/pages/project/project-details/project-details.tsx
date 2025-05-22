@@ -6,6 +6,8 @@ import { projectDetailsIcon } from '../../../../assets';
 import { CircularProgress } from '@mui/material';
 import { useProjectDetail } from '../../../services/project';
 import { transformProjectData } from '../utils';
+import ProjectDetailsData from './details/project-data';
+import { NewProjectData } from '../../../types/project';
 
 const sideMenuItems = [
   { name: 'Financial Highlights', key: 'financial' },
@@ -25,10 +27,10 @@ export const ProjectDetails = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const [projectDetails, setProjectDetails] = useState<any>([]);
-  const { accountID, projectID } = location.state;
+  const { accountID, projectID } = location.state || {};
   const defaultTab = searchParams.get('list') || 'financial';
   const [activeKey, setActiveKey] = useState(defaultTab);
-  console.log('activeKey', accountID);
+  const [projectData, setProjectData] = useState<NewProjectData | null>(null);
   useEffect(() => {
     const list = searchParams.get('list');
     if (list) {
@@ -38,12 +40,13 @@ export const ProjectDetails = () => {
 
   const { data, isLoading, isError } = useProjectDetail(accountID, projectID);
 
+  // console.log('projectDetails outerr', data);
   useEffect(() => {
     if (data?.data) {
       setProjectDetails(transformProjectData(data.data));
+      setProjectData(data.data.project);
     }
   }, [data]);
-
   const menuItems = [
     {
       label: 'Manage user',
@@ -80,7 +83,7 @@ export const ProjectDetails = () => {
       case 'financial':
         return <div>Financial Highlights</div>;
       case 'projectDetails':
-        return <div>Project Details</div>;
+        return <ProjectDetailsData projectDetails={projectData} />;
       case 'projectResources':
         return <div>Project Resources</div>;
       case 'projectsTask':
