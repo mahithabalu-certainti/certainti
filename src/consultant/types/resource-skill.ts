@@ -47,6 +47,7 @@ export type ResourceSkillList = {
   skill_subtype_rid: string;
   skill_type_others?: string;
   skill_subtype_others?: string;
+  comments?: string;
 };
 
 export interface ResourceSkillApiResponse extends CommonApiResponse {
@@ -82,6 +83,7 @@ export type ResourceSkillPayload = {
   resource_number: string;
   resource_type?: string;
   resource_rid?: string;
+  resource_code?: string;
   resource_ref_id?: string;
   resource_desc?: string;
   start_date?: string;

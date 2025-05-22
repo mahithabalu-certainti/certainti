@@ -19,7 +19,7 @@ export const getCostFilterFields = (currencyOptions: { option: string; value: st
   { name: 'Weekly', value: 'weekly', type: 'number' },
   { name: 'Bi-Weekly', value: 'bi-weekly', type: 'number' },
   { name: 'Monthly', value: 'monthly', type: 'number' },
-  { name: 'Semi-Annual', value: 'semi_annual', type: 'number' },
+  // { name: 'Semi-Annual', value: 'semi_annual', type: 'number' },
   { name: 'Annual', value: 'annual', type: 'number' },
 ];
 export const getSkillFilterFields = (

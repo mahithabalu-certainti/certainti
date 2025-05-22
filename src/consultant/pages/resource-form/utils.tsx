@@ -91,22 +91,23 @@ export function transformPayloadforUpdateResource(
   existingResource?: ResourceDetailsTypes,
   options: ResourceTransformationOptions = {}
 ) {
+  const fullName = `${rawData.resource_firstname || ''} ${rawData.resource_lastname || ''}`.trim();
   return {
     resource_id: options.resource_id || '',
     account_number: options.account_number || '',
     resource_code:
       rawData.resource_code || existingResource?.resource_code || '',
     resource_type:
-      rawData.resource_type || existingResource?.resource_type || '',
+      rawData.resource_type || '',
 
     name:
-      rawData.resource_name || existingResource?.resource_name || '',
+    fullName || rawData.resource_name ||'',
       first_name:
-      rawData.resource_firstname || existingResource?.resource_firstname || '',
+      rawData.resource_firstname  || '',
       last_name:
-      rawData.resource_lastname || existingResource?.resource_lastname || '',
+      rawData.resource_lastname  || '',
     org_name:
-      rawData.resource_orgname || existingResource?.resource_orgname || '',
+      rawData.resource_orgname || '',
     role: rawData.resource_role || existingResource?.resource_role,
     resource_status:
       rawData.resource_status || existingResource?.resource_status,
@@ -137,6 +138,7 @@ export function transformPayloadforUpdateResource(
 export const transformPayloadforCreateResource = (
   formData: ResourceDetailsForPayload
 ) => {
+  const fullName = `${formData.resource_firstname || ''} ${formData.resource_lastname || ''}`.trim();
   return {
     account_id: formData.account_id,
     account_number: formData.account_number,
@@ -144,7 +146,7 @@ export const transformPayloadforCreateResource = (
     resource_type: formData.resource_type,
     first_name: formData.resource_firstname,
     last_name: formData.resource_lastname,
-    name: formData.resource_name,
+    name: fullName || formData.resource_name,
     org_name: formData.resource_orgname,
     role: formData.resource_role,
     resource_country: formData.country,
@@ -172,10 +174,15 @@ export const transformCostData = (
       ? formData.financial_start_date
       : '',
     end_date: formData.financial_end_date ? formData.financial_end_date : '',
-    cost_frequency: formData.cost_frequency,
-    cost: (formData.cost ?? '').toString().replace(/[^\d.]/g, ''),
+    annual_cost: formData.annual_cost || '',
+    monthly_cost: formData.monthly_cost || '',
+    weekly_cost: formData.weekly_cost || '',
+    bi_weekly_cost: formData.bi_weekly_cost || '',
+    daily_cost: formData.daily_cost || '',
+    hourly_cost: formData.hourly_cost || '',
     fiscal_year: formData.fiscal_year,
     resource_type: formData.resource_type,
+    resource_code: formData.resource_code,
     resource_ref_id: formData.resource_ref_id,
     currency_rid: formData.currency ? formData.currency : null,
     resource_rid: formData.resource_rid,
@@ -192,6 +199,7 @@ export const transformCostData = (
     delete data.resource_type;
     delete data.resource_ref_id;
     delete data.resource_number;
+    delete data.resource_code;
   }
 
   return data;
@@ -206,6 +214,7 @@ export const transformSkillData = (
     account_rid: formData.account_rid,
     resource_type: formData.resource_type,
     resource_rid: formData.resource_rid,
+    resource_code: formData.resource_code,
     resource_ref_id: formData.resource_ref_id,
     start_date: formData.skill_start_date ? formData.skill_start_date : '',
     skill_level: formData.skill_level as skillLevel,
@@ -226,6 +235,7 @@ export const transformSkillData = (
     delete data.resource_ref_id;
     delete data.resource_desc;
     delete data.resource_number;
+    delete data.resource_code;
 
     data.rid = formData.skill_rid;
   }

@@ -10,7 +10,6 @@ import {
 import { mockSkillLevelOptions } from '../../mockdata/resource-form';
 import { FormType, SelectOption } from '../../types';
 import {
-  FREQUENCY_OPTIONS,
   RESOURCE_STATUS_OPTIONS,
   RESOURCE_TYPE_OPTIONS,
 } from './utils.tsx';
@@ -53,7 +52,7 @@ export const fiscalYears = getFiscalYears(DATE_CONFIG.COST_FISCAL_YEARS_RANGE);
 export const skillStartDateYears = getSkillStartDateOptions(
   DATE_CONFIG.FISCAL_YEARS_RANGE
 );
-const { currentDate, minDate, previousDate } = getDateConstraints(
+const { currentDate, previousDate } = getDateConstraints(
   DATE_CONFIG.MIN_YEARS_BACK
 );
 
@@ -70,14 +69,15 @@ export const ResourceFormData = (
   skillSubTypeLoading?: boolean,
   disableFields?: boolean,
   disableCostAndSkill?: boolean,
-  disableOrgname?: boolean,
+  disableOrgname?: string,
   currentSkillType?: string,
   currentskillSubType?: string,
   disableSkill?: boolean,
   disableCost?: boolean,
   createResource?: boolean,
   isResourceFullNameEmpty?:boolean,
-  isAnyResourceNameFilled?:boolean
+  isAnyResourceNameFilled?:boolean,
+  currentResource?: { resource_firstname: string; resource_lastname: string; },
 ): FormType[] => {
   return useMemo(
     () => [
@@ -108,11 +108,6 @@ export const ResourceFormData = (
                   'Only letters, numbers, hyphens, and underscores are allowed.',
               },
               {
-                regex: REGEX_PATTERNS.NO_CONSECUTIVE_SPECIALS_REGEX,
-                errorMessage:
-                  'Consecutive hyphens or underscores are not allowed.',
-              },
-              {
                 regex: REGEX_PATTERNS.NO_TRAILING_SPECIAL_REGEX,
                 errorMessage: 'Cannot end with a hyphen or underscore.',
               },
@@ -125,7 +120,9 @@ export const ResourceFormData = (
             options: RESOURCE_TYPE_OPTIONS,
             placeholder: 'Choose Resource Type',
             required: true,
-            disabled: disableCostAndSkill || disableOrgname,
+            disabled: disableCostAndSkill,
+            onChange: true,
+            resetDependsFields: ['resource_orgname'],
           }),
           createTextField('resource_name', 'Name', {
             required: false,
@@ -148,15 +145,12 @@ export const ResourceFormData = (
                 errorMessage:
                   'Only letters, spaces, apostrophes, and hyphens are allowed.',
               },
-              {
-                regex: REGEX_PATTERNS.NO_CONSECUTIVE_SPECIALS_REGEX,
-                errorMessage:
-                  'Consecutive spaces, apostrophes, or hyphens are not allowed.',
-              },
+
             ],
             placeholder: 'Enter Name',
-            disabled: disableCostAndSkill ||isAnyResourceNameFilled,
+            disabled: disableCostAndSkill || isAnyResourceNameFilled,
             onChange: true,
+            defaultValue: (currentResource?.resource_firstname || currentResource?.resource_lastname) ? `${currentResource?.resource_firstname} ${currentResource?.resource_lastname}` : '',
           }),
           createTextField('resource_firstname', 'First Name', {
             required: false,
@@ -178,11 +172,6 @@ export const ResourceFormData = (
                 regex: REGEX_PATTERNS.ALLOWED_CHARS_NAME_REGEX,
                 errorMessage:
                   'Only letters, spaces, apostrophes, and hyphens are allowed.',
-              },
-              {
-                regex: REGEX_PATTERNS.NO_CONSECUTIVE_SPECIALS_REGEX,
-                errorMessage:
-                  'Consecutive spaces, apostrophes, or hyphens are not allowed.',
               },
             ],
             placeholder: 'Enter First Name',
@@ -210,11 +199,6 @@ export const ResourceFormData = (
                 errorMessage:
                   'Only letters, spaces, apostrophes, and hyphens are allowed.',
               },
-              {
-                regex: REGEX_PATTERNS.NO_CONSECUTIVE_SPECIALS_REGEX,
-                errorMessage:
-                  'Consecutive spaces, apostrophes, or hyphens are not allowed.',
-              },
             ],
             placeholder: 'Enter Last Name',
             disabled: disableCostAndSkill || isResourceFullNameEmpty,
@@ -222,7 +206,7 @@ export const ResourceFormData = (
           }),
 
           createTextField('resource_orgname', 'Resource Org Name', {
-            required: false,
+            required: disableOrgname && disableOrgname !== "Full-Time" ? true : false,
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_3,
@@ -245,11 +229,12 @@ export const ResourceFormData = (
               },
             ],
             placeholder: 'Enter Resource Org Name',
-            disabled: disableCostAndSkill,
+            disabled: disableOrgname && disableOrgname === "Full-Time" ? true : false,
             clearValue: {
               key: 'resource_type',
-              matchedValue: RESOURCE_TYPE_OPTIONS[0].value || RESOURCE_TYPE_OPTIONS[1].value || RESOURCE_TYPE_OPTIONS[2].value ,
+              matchedValue: 'Full-Time' ,
             },
+            defaultValue: '',
           }),
           createTextField('resource_role', 'Role', {
             required: false,
@@ -335,27 +320,99 @@ export const ResourceFormData = (
           }),
           createDateField('financial_start_date', 'Start Date', {
             required: false,
-            minDate: new Date(minDate.getTime()),
+            // minDate: new Date(minDate.getTime()),
             maxDate: previousDate,
           }),
           createDateField('financial_end_date', 'End Date', {
             required: false,
-            minDate: new Date(minDate.getTime()),
+            // minDate: new Date(minDate.getTime()),
             maxDate: currentDate,
             startDateLabel: 'financial_start_date',
           }),
-          createSelectField('cost_frequency', 'Cost Frequency', {
-            options: FREQUENCY_OPTIONS,
-            placeholder: 'Choose Cost Frequency',
-            required: true,
-          }),
-          createTextField('cost', 'Cost', {
-            required: true,
+          createTextField('annual_cost', 'Annual Compensation', {
+            required: false,
+            placeholder: 'Enter Annual Compensation',
             regex: REGEX_PATTERNS.COST_REGEX,
             regexErrorMessage:
-              'Cost must be a 16-digit number with up to 2 decimals',
-            placeholder: 'Enter Cost',
+              'Only positive numbers allowed, up to 12 digits and 2 decimal places',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_COST_REVENUE,
+                errorMessage: 'Maximum length exceeded.',
+              },
+            ],
+            group: 'compensation'
           }),
+          createTextField('monthly_cost', 'Monthly Compensation', {
+            required: false,
+            placeholder: 'Enter Monthly Compensation',
+            regex: REGEX_PATTERNS.COST_REGEX,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 12 digits and 2 decimal places',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_COST_REVENUE,
+                errorMessage: 'Maximum length exceeded.',
+              },
+            ],
+            group: 'compensation'
+          }),
+          createTextField('bi_weekly_cost', 'Bi-Weekly Compensation', {
+            required: false,
+            placeholder: 'Enter Bi-Weekly Compensation',
+            regex: REGEX_PATTERNS.COST_REGEX,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 12 digits and 2 decimal places',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_COST_REVENUE,
+                errorMessage: 'Maximum length exceeded.',
+              },
+            ],
+            group: 'compensation'
+          }),
+          createTextField('weekly_cost', 'Weekly Compensation', {
+            required: false,
+            placeholder: 'Enter Weekly Compensation',
+            regex: REGEX_PATTERNS.COST_REGEX,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 12 digits and 2 decimal places',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_COST_REVENUE,
+                errorMessage: 'Maximum length exceeded.',
+              },
+            ],
+            group: 'compensation'
+          }),
+          createTextField('daily_cost', 'Daily Compensation', {
+            required: false,
+            placeholder: 'Enter Daily Compensation',
+            regex: REGEX_PATTERNS.COST_REGEX,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 12 digits and 2 decimal places',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_COST_REVENUE,
+                errorMessage: 'Maximum length exceeded.',
+              },
+            ],
+            group: 'compensation'
+          }),
+          createTextField('hourly_cost', 'Hourly Compensation', {
+            required: false,
+            placeholder: 'Enter Hourly Compensation',
+            regex: REGEX_PATTERNS.COST_REGEX,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 12 digits and 2 decimal places',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_COST_REVENUE,
+                errorMessage: 'Maximum length exceeded.',
+              },
+            ],
+            group: 'compensation'
+          })
         ],
       },
       {
@@ -376,7 +433,7 @@ export const ResourceFormData = (
             onChange: true,
             resetDependsFields: ['skill_sub_type'],
           }),
-          createTextField('skill_type_others', 'Skill Type(Other)', {
+          createTextField('skill_type_others', 'Skill Type(Others)', {
             required: true,
             placeholder: 'Enter Skill Type',
             errorHandling: [
@@ -387,6 +444,12 @@ export const ResourceFormData = (
               {
                 regex: REGEX_PATTERNS.MAX_64,
                 errorMessage: 'Max length exceeded.',
+              },
+              {
+                regex:
+                  REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX,
+                errorMessage:
+                  'Cannot start or end with a space or special character',
               },
               {
                 regex: REGEX_PATTERNS.SKILL_OTHERS_ALLOWED_CHARS_REGEX,
@@ -405,7 +468,7 @@ export const ResourceFormData = (
             isLoading: skillSubTypeLoading,
             onChange: true,
           }),
-          createTextField('skill_subtype_others', 'Skill SubType(Other)', {
+          createTextField('skill_subtype_others', 'Skill SubType(Others)', {
             required: true,
             placeholder: 'Enter Skill SubType',
             errorHandling: [
@@ -416,6 +479,12 @@ export const ResourceFormData = (
               {
                 regex: REGEX_PATTERNS.MAX_64,
                 errorMessage: 'Max length exceeded.',
+              },
+              {
+                regex:
+                  REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX,
+                errorMessage:
+                  'Cannot start or end with a space or special character',
               },
               {
                 regex: REGEX_PATTERNS.SKILL_OTHERS_ALLOWED_CHARS_REGEX,
@@ -525,6 +594,7 @@ export const ResourceFormData = (
             placeholder: 'Enter Comments',
             regexErrorMessage: 'Max length exceeded.',
             regex: RESOURCE_REGEX.DESCRIPTION,
+            // disabled: disableCostAndSkill,
           }),
         ],
       },
@@ -586,6 +656,7 @@ export const ResourceFormData = (
       currentskillSubType,
       isResourceFullNameEmpty,
       isAnyResourceNameFilled,
+      currentResource,
     ]
   );
 };

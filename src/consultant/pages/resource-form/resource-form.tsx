@@ -36,7 +36,7 @@ import {
   transformSkillData,
 } from './utils.tsx';
 import { SkillSubtype, SkillType } from '../../types/resource.ts';
-import { formatDateToMMDDYYYYWithTime } from '../account-details-sidebar/sidebar-pages/resources/utils.tsx';
+import { formatDateToMMDDYYYY, formatDateToMMDDYYYYWithTime } from '../account-details-sidebar/sidebar-pages/resources/utils.tsx';
 
 const ResourceForm: React.FC = () => {
   // Refs
@@ -63,12 +63,13 @@ const ResourceForm: React.FC = () => {
   const [resourceDetails, setResourceDetails] = useState<any>(null);
   const accountId = searchParams.get('account_id');
   const [skillSubTypeData, setSkillSubTypeData] = useState<SelectOption[]>([]);
-  const [isResourceFullNameEmpty, setIsResourceFullNameEmpty] = useState(false);
-  const [isAnyResourceNameFilled, setIsAnyResourceNameFilled] = useState(false);
-  const [currentResource, setCurrentResource] = useState({
+  const [isResourceFullNameEmpty, setIsResourceFullNameEmpty] = useState<boolean>(false);
+  const [isAnyResourceNameFilled, setIsAnyResourceNameFilled] = useState<boolean>(false);
+  const [currentResource, setCurrentResource] = useState<{ resource_firstname: string; resource_lastname: string; }>({
     resource_firstname: '',
     resource_lastname: '',
   });
+  const [disableOrgname, setDisableOrgname] = useState<string>("");
   // Derived values
   const isEditView = location.pathname.includes('/edit');
   const accountData = isEditView
@@ -126,9 +127,35 @@ const ResourceForm: React.FC = () => {
         Created_By : resourceDetailsData?.created_by,
         Updated_On : formatDateToMMDDYYYYWithTime(resourceDetailsData?.modified_datetime),
         Updated_By : resourceDetailsData?.modified_by,
+        resource_name:
+        resourceDetailsData?.resource_firstname && resourceDetailsData?.resource_lastname
+          ? ""
+          : (!resourceDetailsData?.resource_firstname && !resourceDetailsData?.resource_lastname
+              ? resourceDetailsData?.resource_name
+              : resourceDetailsData?.resource_firstname || resourceDetailsData?.resource_lastname || "")
     };
     setResourceDetails(finalResourceDetails || null);
   }, [resource]);
+
+  useEffect(()=>{
+    const resourceDetailsData = resource?.data?.resourceDetails;
+    setDisableOrgname(resourceDetailsData?.resource_type || "");
+    setCurrentResource({
+      resource_firstname: resourceDetailsData?.resource_firstname || '',
+      resource_lastname: resourceDetailsData?.resource_lastname || '',
+    });
+
+    if(isEditView && (resourceDetailsData?.resource_firstname || resourceDetailsData?.resource_lastname)) {
+      setIsAnyResourceNameFilled(true);
+    }
+    else if (isEditView && resourceDetailsData?.resource_name) {
+      setIsResourceFullNameEmpty(true);
+      setIsAnyResourceNameFilled(false);
+    }else {
+      setIsAnyResourceNameFilled(false);
+      setIsResourceFullNameEmpty(false);
+    }
+  },[resource, isEditView])
 
   useEffect(() => {
     const formValues = resource?.data?.resourceDetails;
@@ -137,9 +164,13 @@ const ResourceForm: React.FC = () => {
         ...formValues,
         financial_start_date: costInfo?.effective_date || '',
         financial_end_date: costInfo?.end_date || '',
-        cost: costInfo?.cost || '',
         currency: costInfo?.currency_rid || null,
-        cost_frequency: costInfo?.cost_frequency || '',
+        annual_cost: costInfo?.annual_cost || '',
+        monthly_cost: costInfo?.monthly_cost || '',
+        weekly_cost: costInfo?.weekly_cost || '',
+        bi_weekly_cost: costInfo?.bi_weekly_cost || '',
+        daily_cost: costInfo?.daily_cost || '',
+        hourly_cost: costInfo?.hourly_cost || '',
         fiscal_year: costInfo?.fiscal_year || '',
         comments: costInfo?.comments || '',
       };
@@ -151,10 +182,11 @@ const ResourceForm: React.FC = () => {
         skill_details: skillInfo?.skillDetails || '',
         skill_type: skillInfo?.skillTypeId || '',
         skill_sub_type: skillInfo?.skillSubTypeId || '',
-        skill_start_date: skillInfo?.startDate || '',
+        skill_start_date: formatDateToMMDDYYYY(skillInfo?.startDate as string) || '',
         skill_type_others: skillInfo?.skillTypeOthers || '', 
         skill_subtype_others: skillInfo?.skillSubTypeOthers || '',
         years_of_experience: skillInfo?.yearsOfExperience || '',
+        comments: skillInfo?.comments || '',
       };
       setFormValues(skillValues);
     }
@@ -308,6 +340,7 @@ const ResourceForm: React.FC = () => {
         resource_rid: resourceId,
         resource_number: resource?.data.resourceDetails.r_number,
         cost_rid: state?.costInfo?.costRid,
+        resource_code: resource?.data.resourceDetails.resource_code,
       };
       const costData = transformCostData(updateFormValues, isEditView);
       if (isEditView) {
@@ -325,9 +358,10 @@ const ResourceForm: React.FC = () => {
         resource_number: resource?.data.resourceDetails.r_number,
         skill_rid: state?.skillInfo?.skillRId,
         resource_desc: resource?.data.resourceDetails.resource_role,
+        resource_code: resource?.data.resourceDetails.resource_code,
       };
       const skillData = transformSkillData(updateFormValues, isEditView);
-
+      // Update or create skill based on isEditView valu
       if (isEditView) {
         updateResourceSkill.mutate(skillData);
       } else {
@@ -372,15 +406,23 @@ const ResourceForm: React.FC = () => {
   };
 
   const onChangeField = ({ fieldName, fieldValue }: OnChange) => {
-    if (fieldName === 'country' || fieldName === 'state') {
+    if(fieldName === 'country'){
+      setCurrentCountry({
+        country: fieldValue as string,
+        state: '',
+      });
+    }
+    if (fieldName === 'state') {
       setCurrentCountry((prev) => ({
         ...prev,
-        [fieldName]: fieldValue as string,
+        state: fieldValue as string,
       }));
     }
+    
     if(fieldName === 'skill_type') {
       setCurrentSkillType((prev) => ({
        ...prev,
+        skill_sub_type: '',
         [fieldName]: fieldValue as string,
       }));
     }
@@ -408,11 +450,13 @@ const ResourceForm: React.FC = () => {
       const hasName = !!updatedValues.resource_firstname?.trim() || !!updatedValues.resource_lastname?.trim();
       setIsAnyResourceNameFilled(hasName);
     }
+    if (fieldName ==='resource_type') {
+      setDisableOrgname(String(fieldValue))
+    }
   };
 
   //disable orgname in the formdata if the user select resource type as full-time
-  const disableOrgname = resourceDetails?.resource_type === 'full-time';
-
+  // const disableOrgname = resourceDetails?.resource_type === 'full-time';
 
   // Form configuration
   const formConfig = ResourceFormData(
@@ -435,7 +479,8 @@ const ResourceForm: React.FC = () => {
     state?.cost,
     state?.resourceCreate,
     isResourceFullNameEmpty,
-    isAnyResourceNameFilled
+    isAnyResourceNameFilled,
+    currentResource,
   );
 
   return (

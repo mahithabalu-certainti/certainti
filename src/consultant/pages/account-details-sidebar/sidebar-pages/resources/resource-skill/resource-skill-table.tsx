@@ -22,6 +22,7 @@ import ActionButton from '../../../../account-list/table/action-button';
 import { TablePagination } from '../../../../../../components/table';
 import { arrowDownIcon, arrowUpIcon } from '../../../../../../assets';
 import { TruncateWithTooltip } from '../../../../../../components';
+import { formatDateToMMDDYYYY } from '../utils';
 
 interface ResourceSkillTableProps {
   fiscalYear?: number;
@@ -98,7 +99,6 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     (event: React.MouseEvent<unknown>) => {
       handleRequestSort(event, property);
     };
-
   const renderRows = ({ resourceSkill }: RenderSkillRowProps) => {
     return resourceSkill?.map((skill, i) => {
       return (
@@ -119,24 +119,26 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
             }}
           >
             {/* <TableCell sx={{ minWidth: '200px' }}>{skill.resourceRole}</TableCell> */}
-            <TableCell sx={{ minWidth: '120px' }}>{skill.startDate}</TableCell>
-            <TableCell sx={{ minWidth: '120px' }}>
+            <TableCell sx={{ width: '15%', maxWidth: '15%', minWidth: '15%' }}>
+           { formatDateToMMDDYYYY(skill.startDate as string) || 'NA'}
+             </TableCell>
+            <TableCell sx={{ width: '20%', maxWidth: '20%', minWidth: '20%' }}>
               <TruncateWithTooltip text={String(skill.skillType)}>
-                {skill.skillType}
+                {skill.skillType || 'NA'}
               </TruncateWithTooltip>
             </TableCell>
-            <TableCell sx={{ minWidth: '120px' }}>
+            <TableCell sx={{ width: '20%', maxWidth: '20%', minWidth: '20%' }}>
               <TruncateWithTooltip text={String(skill.skillSubType)}>
-                {skill.skillSubType}
+                {skill.skillSubType || 'NA'}
               </TruncateWithTooltip>
             </TableCell>
-            <TableCell sx={{ minWidth: '140px' }}>
+            <TableCell sx={{ width: '20%', maxWidth: '20%', minWidth: '20%' }}>
               <TruncateWithTooltip text={String(skill.skillDetails)}>
-                {skill.skillDetails}
+                {skill.skillDetails || 'NA'}
               </TruncateWithTooltip>
             </TableCell>
-            <TableCell sx={{ minWidth: '120px' }}>{skill.skillLevel}</TableCell>
-            <TableCell sx={{ padding: '0px !important' }}>
+            <TableCell sx={{ width: '15%', maxWidth: '15%', minWidth: '15%' }}>{skill.skillLevel || 'NA'}</TableCell>
+            <TableCell sx={{ width: '10%', maxWidth: '10%', minWidth: '10%', padding: '0px !important' }}>
               <ActionButton
                 onEdit={() => handleEdit(skill)}
                 onDelete={() => {}}
@@ -222,6 +224,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       <Paper sx={{ overflowX: 'auto', boxShadow: 'none', borderRadius: '0px' }}>
         <Table
           sx={{
+            tableLayout: 'fixed',
             borderCollapse: 'separate !important',
             borderSpacing: 0,
             '& .MuiTableCell-root': {
@@ -262,7 +265,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
                   Resource Role
                 </TableSortLabel>
               </TableCell> */}
-              <TableCell sx={{ minWidth: '120px' }}>
+              <TableCell sx={{ width: '15%', maxWidth: '15%', minWidth: '15%' }}>
                 <TableSortLabel
                   active={skillOrderBy === 'start_date'}
                   direction={skillOrderBy === 'start_date' ? skillOrder : 'asc'}
@@ -275,7 +278,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
                   Start Date
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ minWidth: '120px' }}>
+              <TableCell sx={{ width: '20%', maxWidth: '20%', minWidth: '20%' }}>
                 <TableSortLabel
                   active={skillOrderBy === 'skill_type'}
                   direction={skillOrderBy === 'skill_type' ? skillOrder : 'asc'}
@@ -288,7 +291,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
                   Skill Type
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ minWidth: '120px' }}>
+              <TableCell sx={{ width: '20%', maxWidth: '20%', minWidth: '20%' }}>
                 <TableSortLabel
                   active={skillOrderBy === 'skill_sub_type'}
                   direction={skillOrderBy === 'skill_sub_type' ? skillOrder : 'asc'}
@@ -301,7 +304,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
                   Skill SubType
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ minWidth: '140px' }}>
+              <TableCell sx={{ width: '20%', maxWidth: '20%', minWidth: '20%' }}>
                 <TableSortLabel
                   active={skillOrderBy === 'skill_details'}
                   direction={skillOrderBy === 'skill_details' ? skillOrder : 'asc'}
@@ -314,7 +317,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
                   Skill Details
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ minWidth: '120px' }}>
+              <TableCell sx={{ width: '15%', maxWidth: '15%', minWidth: '15%' }}>
                 <TableSortLabel
                   active={skillOrderBy === 'skill_level'}
                   direction={
@@ -329,10 +332,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
                   Skill Level
                 </TableSortLabel>
               </TableCell>
-              <TableCell
-                sx={{
-                  minWidth: '80px',
-                }}
+              <TableCell sx={{ width: '10%', maxWidth: '10%', minWidth: '10%' }}
               >
                 Action
               </TableCell>

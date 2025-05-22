@@ -1,3 +1,4 @@
+import { capitalize } from '@mui/material';
 import {
   AccountFormData,
   KeyContactsUpdate,
@@ -18,12 +19,12 @@ export const transformFormData = (
   isEdit: boolean,
   account_rid?: string,
   isValueUpdateInKeyContact?: boolean,
-  key_contact_id?: string
+  key_rid?: string
 ): Partial<NewAccountData> => {
   const data: Partial<NewAccountData> = {
     account_id: account_rid,
     account_name: formData.account_name,
-    account_description: formData.account_description || null,
+    comments: formData.comments || null,
     status: formData.status,
     is_parent: formData.is_parent === 'yes',
     parent_account_rid: formData.parent_account_rid || null,
@@ -58,14 +59,16 @@ export const transformFormData = (
           {
             key_contact_name: formData.key_contact_name as string,
             key_contact_email: formData.key_contact_email as string,
-            key_contact_role_rid: formData.key_contact_role as string,
+            key_contact_role: formData.key_contact_role as string,
             is_primary_contact: formData?.is_primary_contact === 'yes',
             include_in_communication:
               formData?.include_in_communication === 'yes',
-            status: formData?.key_contact_status as Status,
-            ...(key_contact_id && { key_contact_id }),
+            status: formData?.key_contact_status
+              ? (capitalize(formData.key_contact_status) as Status)
+              : ('Active' as Status),
+            ...(isEdit && { rid: key_rid }),
             action_type:
-              isEdit && key_contact_id
+              isEdit && key_rid
                 ? KeyContactsUpdate.Edit
                 : KeyContactsUpdate.Add,
           },
@@ -95,7 +98,7 @@ export const formatDateValue = (dateString?: string | null): string => {
   const minutes = String(date.getMinutes()).padStart(2, '0');
   const seconds = String(date.getSeconds()).padStart(2, '0');
   const ampm = hours >= 12 ? 'PM' : 'AM';
-  
+
   hours = hours % 12;
   hours = hours || 12; // Convert "0" hours to "12"
 

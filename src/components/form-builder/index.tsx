@@ -1,4 +1,4 @@
-import { Autocomplete, Checkbox, Skeleton, TextField } from '@mui/material';
+import { Autocomplete, Checkbox, MenuItem, Select, Skeleton, TextField } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -9,7 +9,6 @@ import React, { useEffect } from 'react';
 import PhoneInput, { CountryData } from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import {
-  arrowDownIcon,
   calendarIcon,
   closeIcon,
   searchBlackIcon,
@@ -18,7 +17,7 @@ import {
 import { useLocation } from 'react-router-dom';
 import { FieldTypes, Layout, OnChange } from '../../common-service';
 import { ALLOWED_COUNTRIES } from '../../common-utils';
-import { FormType, FormTypeFields, SelectOption } from '../../consultant/types';
+import { FormType, FormTypeFields, GroupFields, SelectOption } from '../../consultant/types';
 
 interface FormBuilderProps {
   data: FormType[];
@@ -110,21 +109,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     const fieldDisabled = field.disabled ? ' bg-gray-100' : '';
 
     const handleChange = (value: FieldTypes, countryCode?: FieldTypes) => {
-      if (field.name === 'resource_type') {
-        const resourceOrgNameField = formData?.[0].fields.find(
-          (f) => f.name === 'resource_orgname'
-        );
-
-        if (resourceOrgNameField) {
-          if (fieldValue !== value) {
-            resourceOrgNameField.error = '';
-          }
-
-          resourceOrgNameField.required =
-            value === 'Sub Con' || value === 'Non-Labor';
-          resourceOrgNameField.disabled = value === 'Full-Time';
-        }
-      }
       const newData = {
         ...constructFormData,
         [field.name]: value,
@@ -169,6 +153,26 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               updatedField.error = '';
             }
 
+            // If this field is part of a group and the value is being cleared
+            if (field.group && !value && f.group === field.group) {
+              updatedField.error = '';
+            }
+            // If this field is part of a group and a value is being set
+            if (field.group && value && f.group === field.group) {
+              // Clear error messages for all fields in the same group
+              const otherFieldsInGroupHaveValue = section.fields
+                .filter(groupField => 
+                  groupField.group === field.group && 
+                  groupField.name !== field.name
+                )
+                .some(groupField => 
+                  constructFormData[groupField.name]?.toString().trim()
+                );
+
+              if (!otherFieldsInGroupHaveValue) {
+                updatedField.error = '';
+              }
+            }
             // clear selected value when other field change
             if (
               f.clearValue?.key === field.name &&
@@ -177,7 +181,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               newData[f.name] = '';
               updatedField.error = '';
             }
-
+            
             return updatedField;
           }),
         }));
@@ -199,55 +203,87 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             placeholder={field.placeholder}
             autoComplete='off'
             className={
-              'placeholder-custom-color w-full sm:text-sm px-2 h-[32px] border border-[#CBD6E2] rounded-xs' +
+              'placeholder-custom-color w-full sm:text-sm px-2 h-[32px] border border-[#CBD6E2] rounded-xs focus:border focus:border-black focus:outline-none focus:ring-0' +
               isError +
               fieldDisabled
             }
             disabled={field.disabled}
             onChange={(e) => handleChange(e.target.value)}
-            value={fieldValue}
+            value={fieldValue || field.defaultValue}
           />
         );
       case 'select':
         return (
-          <div className='relative w-full'>
-            <select
+          <div className='w-full'>
+            <Select
               name={field.name}
-              className={
-                'custom-select-no-arrow w-full sm:text-sm px-1.5 py-[6px] border-1 ' +
-                (fieldValue === '' ? 'text-[#7D98B6] ' : '') +
-                isError +
-                fieldDisabled
-              }
-              onChange={(e) => handleChange(e.target.value)}
               value={fieldValue}
+              onChange={(e) => handleChange(e.target.value)}
               disabled={field.disabled}
-            >
-              <option value='' className='text-gray-500'>
-                {field.placeholder}
-              </option>
-              {field?.options?.map((option, i) => (
-                <option key={i} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <img
-              src={arrowDownIcon}
-              alt='dropdown arrow'
-              className='absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none'
-              style={{
-                width: 15,
-                height: 15,
+              displayEmpty
+              fullWidth
+              size="small"
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    maxWidth: 300,
+                    maxHeight: 300,
+                    marginTop: '4px',
+                    boxShadow: "rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px",
+                    '& .MuiMenuItem-root': {
+                      fontSize: '13px',
+                      padding: '6px 12px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }
+                  }
+                }
               }}
-            />
+              sx={{
+                height: '32px',
+                fontSize: '13px',
+                '.MuiSelect-select': {
+                  padding: '6px 12px',
+                  color: fieldValue === '' ? '#7D98B6' : 'black',
+                },
+                '&.Mui-disabled': {
+                  backgroundColor: '#f3f4f6',
+                },
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: field.error ? '#ef4444' : '#CBD6E2',
+                  borderRadius: '2px'
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: field.error ? '#ef4444' : 'black',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: field.error ? '#ef4444' : 'black',
+                },
+                '& svg': {
+                  color: '#7D98B6',
+                }
+              }}
+            >
+              <MenuItem value="" sx={{ color: '#7D98B6' }}>
+                {field.placeholder}
+              </MenuItem>
+              {field?.options?.map((option, i) => (
+                <MenuItem
+                  key={i}
+                  value={option.value}
+                  title={option.label}
+                >
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
           </div>
         );
       case 'textarea':
         return (
           <textarea
             className={
-              'placeholder-custom-color w-full sm:text-sm p-2 border border-[#CBD6E2] rounded-xs h-[95px] resize-none ' +
+              'placeholder-custom-color w-full sm:text-sm p-2 border border-[#CBD6E2] rounded-xs h-[95px] resize-none focus:border focus:border-black focus:outline-none focus:ring-0' +
               isError +
               fieldDisabled
             }
@@ -329,7 +365,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return (
           <div className='flex gap-4 mt-1.5'>
             {field?.options?.map((option, i) => (
-              <label key={i} className='flex gap-2 cursor-pointer'>
+              <label key={i} className={`flex gap-2 ${field.disabled ? 'cursor-default' : 'cursor-pointer'}`}>
                 <input
                   type='radio'
                   name={field.name}
@@ -339,6 +375,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   onChange={(e) => {
                     handleChange(e.target.value);
                   }}
+                  className={`${field.disabled ? 'cursor-default' : 'cursor-pointer'}`}
                 />
                 <span className='text-[13px] text-[#7D98B6]'>
                   {option.label}
@@ -410,6 +447,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               value={dayjs(fieldValue, 'MM/DD/YYYY')}
               disabled={field.disabled}
               format='MM/DD/YYYY'
+              // onOpen={() => {
+              //   if (!fieldValue && isFinancialDateField && selectedFiscalYear) {
+              //     // Show calendar from Jan 1 of fiscal year
+              //     const date = dayjs().month(dayjs().month()).year(Number(selectedFiscalYear));
+              //     handleChange(date.format('MM/DD/YYYY'));
+              //   }
+              // }}
               onChange={(newValue) => {
                 handleChange(
                   newValue ? dayjs(newValue).format('MM/DD/YYYY') : null
@@ -617,6 +661,21 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     e.preventDefault();
     let hasError = false;
 
+    // Get group fields only from visible sections
+    const groupFields: GroupFields = new Map();
+    formData?.forEach((section) => {
+      if (!section.hide) {
+        section.fields.forEach((field) => {
+          if (field.group && !field.hide) {
+            if (!groupFields.has(field.group)) {
+              groupFields.set(field.group, []);
+            }
+            groupFields.get(field.group)?.push(field.name);
+          }
+        });
+      }
+    });
+
     const dataValidation = formData?.map((section) => {
       if (section.hide) return section;
       return {
@@ -692,15 +751,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     return {
                       ...field,
                       error: `${field.name === 'financial_start_date' ? 'Start' : 'End'} date must be within the selected fiscal year (${selectedFiscalYear})`,
-                    };
-                  }
-            
-                  // Check against minDate (if specified)
-                  if (field.minDate && currentDate.isBefore(dayjs(field.minDate), 'day')) {
-                    hasError = true;
-                    return {
-                      ...field,
-                      error: `${field.name === 'financial_start_date' ? 'Start' : 'End'} date cannot be before ${dayjs(field.minDate).format('MM/DD/YYYY')}`,
                     };
                   }
             
@@ -823,7 +873,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
           }
 
-          if (field.type === 'date' && constructFormData[field.name]) {
+          if (field.type === 'date') {
             const dateValue = constructFormData[field.name] as string;
 
             // Check if future dates are disabled
@@ -879,7 +929,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 hasError = true;
                 return {
                   ...field,
-                  error: 'Both Effective Date and End Dates must be provided',
+                  error: 'Both Effective Date and End Date must be provided',
                 };
               }
 
@@ -1020,6 +1070,55 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           return { ...field, error: '' };
         }),
       };
+    });
+    // Group field validation - only for visible fields
+    groupFields.forEach((fieldNames, groupName) => {
+      // Filter out any fields that might be in hidden sections
+      const visibleFields = fieldNames.filter(fieldName => {
+        let isVisible = false;
+        dataValidation?.forEach(section => {
+          if (!section.hide) {
+            section.fields.forEach(field => {
+              if (field.name === fieldName && !field.hide) {
+                isVisible = true;
+              }
+            });
+          }
+        });
+        return isVisible;
+      });
+
+      const filledFields = visibleFields.filter(
+        (fieldName) => constructFormData[fieldName]?.toString().trim()
+      );
+
+      if (visibleFields.length > 0) {
+        if (filledFields.length === 0) {
+          // No fields filled - show error on all visible fields in group
+          hasError = true;
+          dataValidation?.forEach((section) => {
+            if (!section.hide) {
+              section.fields.forEach((field) => {
+                if (field.group === groupName && !field.hide) {
+                  field.error = `At least one field in the "${groupName}" group is required`;
+                }
+              });
+            }
+          });
+        } else if (filledFields.length > 1) {
+          // More than one field filled - show error on filled fields
+          hasError = true;
+          dataValidation?.forEach((section) => {
+            if (!section.hide) {
+              section.fields.forEach((field) => {
+                if (field.group === groupName && filledFields.includes(field.name) && !field.hide) {
+                  field.error = `Only one field in the "${groupName}" group can be filled`;
+                }
+              });
+            }
+          });
+        }
+      }
     });
     setFormData(dataValidation);
 
