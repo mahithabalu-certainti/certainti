@@ -182,7 +182,6 @@ export class Account
         },
       }
     );
-
     // Associations
     Account.belongsTo(Account, {
       foreignKey: "parent_account_rid",
