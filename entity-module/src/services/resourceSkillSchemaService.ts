@@ -160,12 +160,12 @@ class ResourceSkillSchemaService {
                 schema: schemaName, // Explicitly set schema
               });
               break;
-            case "skill":
-              await sequelize.models.Skill.sync({
-                force: false,
-                schema: schemaName, // Explicitly set schema
-              });
-              break;
+            // case "skill":
+            //   await sequelize.models.Skill.sync({
+            //     force: false,
+            //     schema: schemaName, // Explicitly set schema
+            //   });
+            //   break;
             case "resource_skill":
               await sequelize.models.ResourceSkill.sync({
                 force: false,
