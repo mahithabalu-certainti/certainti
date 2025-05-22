@@ -1,5 +1,6 @@
 import { initSequelize } from "../config/maindbDataSource";
 import { initOrgSequelize } from "../config/orgdbDataSource";
+import { R_NUMBER_PREFIX } from "../utils/constant";
 import {
   IAccount,
   IUpdateAccount,
@@ -78,7 +79,7 @@ class SchemaService {
     await sequelize.query(`
       CREATE TABLE IF NOT EXISTS "${schemaName}"."account_fiscal" (
         rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        r_number SET DEFAULT 'ACF ' || LPAD(nextval('account_fiscal_seq')::text, 10, '0'),
+        r_number VARCHAR(20) DEFAULT 'ACF ' || LPAD(nextval('"${schemaName}".account_fiscal_seq')::text, 10, '0'),        
         eid UUID,
         fiscal_year VARCHAR(10) NOT NULL,
         account_rid UUID NOT NULL REFERENCES "${schemaName}"."account_details"(account_rid),
@@ -119,7 +120,7 @@ class SchemaService {
         qualifying_project_rd_credits_subcon_fed VARCHAR(20),
         qualifying_project_rd_credits_fed VARCHAR(20),
         created_datetime TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        modified_datetime TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        modified_datetime TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );
     `);
   }
@@ -134,7 +135,7 @@ class SchemaService {
     await sequelize.query(`
       CREATE TABLE IF NOT EXISTS "${schemaName}"."project" (
       rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      r_number SET DEFAULT 'PRJ ' || LPAD(nextval('project_seq')::text, 10, '0'),
+      r_number VARCHAR(20) DEFAULT 'PRJ ' || LPAD(nextval('"${schemaName}".project_seq')::text, 10, '0'),      
       eid UUID,
       account_rid UUID NOT NULL REFERENCES "${schemaName}"."account_details"(account_rid),
       account_fiscal_rid UUID REFERENCES "${schemaName}"."account_fiscal"(rid),
@@ -192,7 +193,7 @@ class SchemaService {
     await sequelize.query(`
       CREATE TABLE IF NOT EXISTS "${schemaName}"."document" (
         rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        r_number SET DEFAULT 'DOC ' || LPAD(nextval('doc_seq')::text, 10, '0'),
+        r_number VARCHAR(20) DEFAULT 'DOC ' || LPAD(nextval('"${schemaName}".doc_seq')::text, 10, '0'),      
         eid UUID,
         account_rid UUID REFERENCES "${schemaName}"."account_details"(account_rid),
         related_to VARCHAR(50) NOT NULL,
@@ -224,7 +225,7 @@ class SchemaService {
     await sequelize.query(`
       CREATE TABLE IF NOT EXISTS "${schemaName}"."import" (
         rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        r_number SET DEFAULT 'IMP ' || LPAD(nextval('import_seq')::text, 10, '0'),
+        r_number VARCHAR(20) DEFAULT 'IMP ' || LPAD(nextval('"${schemaName}".import_seq')::text, 10, '0'),      
         eid UUID,
         account_rid UUID REFERENCES "${schemaName}"."account_details"(account_rid),
         project_rid UUID REFERENCES "${schemaName}"."project"(rid),
@@ -268,7 +269,7 @@ class SchemaService {
     await sequelize.query(`
       CREATE TABLE IF NOT EXISTS "${schemaName}"."kafka_events" (
         rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        r_number SET DEFAULT 'KFE ' || LPAD(nextval('kafka_events_seq')::text, 10, '0'),
+        r_number VARCHAR(20) DEFAULT 'KFE ' || LPAD(nextval('"${schemaName}".kafka_events_seq')::text, 10, '0'),      
         eid UUID,
         source_name VARCHAR(100) NOT NULL,
         producer_id UUID,

@@ -521,7 +521,7 @@ class AccountService {
       const account = await repository.create({
         account_name,
         comments: comments || "",
-        r_number: "fnfdfn",
+        // r_number: "fnfdfn",
         region: parent_account
           ? parent_account.region
           : account_country_region_rid,
@@ -540,7 +540,7 @@ class AccountService {
 
       if (parent_account && data_storage === "store_in_parent") {
         await this.schemaService.insertAccountDetails(
-          parent_account?.r_number || "",
+          parent_account?.r_number || '',
           accountData,
           account.rid,
           userId
