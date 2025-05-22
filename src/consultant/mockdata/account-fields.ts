@@ -49,7 +49,7 @@ export const mockAccountDetails: AccountFieldsApiResponse = {
           account_rid: '9dcfda7e-32a7-490a-aa18-e6e6f84fbce9',
           key_contact_name: 'Test User 2',
           key_contact_email: 'test@gmail.com',
-          key_contact_role_rid: '9dcfda7e-32a7-490a-aa18-e6e6f84fbce9',
+          key_contact_role: '9dcfda7e-32a7-490a-aa18-e6e6f84fbce9',
           is_primary_contact: false,
           include_in_communication: true,
           status: Status.Active,

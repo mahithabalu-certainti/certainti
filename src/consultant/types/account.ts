@@ -99,7 +99,7 @@ export enum YesNo {
 export enum KeyContactsUpdate {
   Edit = 'edit',
   Delete = 'delete',
-  Add = 'add'
+  Add = 'add',
 }
 
 export interface AccountById {
@@ -127,11 +127,12 @@ export interface KeyContacts {
   account_rid?: string;
   key_contact_name: string;
   key_contact_email: string;
-  key_contact_role_rid: string;
+  key_contact_role: string;
   is_primary_contact: boolean;
   include_in_communication: boolean;
   status: Status;
   action_type?: string;
+  rid?: string;
 }
 
 export interface AccountFieldsTypes {

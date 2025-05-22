@@ -64,10 +64,11 @@ export const AccountForm: React.FC = () => {
           key_contact_name:
             account?.accountDetails?.keyContacts?.[0]?.key_contact_name,
           key_contact_role:
-            account?.accountDetails?.keyContacts?.[0]?.key_contact_role_rid,
+            account?.accountDetails?.keyContacts?.[0]?.key_contact_role,
           key_contact_email:
             account?.accountDetails?.keyContacts?.[0]?.key_contact_email,
-          key_contact_status: account?.accountDetails?.keyContacts?.[0]?.status,
+          key_contact_status:
+            account?.accountDetails?.keyContacts?.[0]?.status.toLowerCase(),
           is_primary_contact: account?.accountDetails?.keyContacts?.[0]
             ?.is_primary_contact
             ? 'yes'
@@ -78,9 +79,7 @@ export const AccountForm: React.FC = () => {
             : 'no',
           record_id: account?.accountDetails?.rid,
           account_id: account?.accountById?.r_number,
-          created_on: getDateTimeFormat(
-            account?.accountById?.created_datetime
-          ),
+          created_on: getDateTimeFormat(account?.accountById?.created_datetime),
           updated_on: getDateTimeFormat(
             account?.accountById?.modified_datetime
           ),
@@ -205,7 +204,7 @@ export const AccountForm: React.FC = () => {
       isEditView,
       accountData?.rid,
       isValueUpdateInKeyContact,
-      account?.accountDetails?.keyContacts?.[0]?.key_contact_id
+      account?.accountDetails?.keyContacts?.[0]?.rid
     );
     if (isEditView) {
       updateAccount.mutate(transformData);
@@ -269,7 +268,9 @@ export const AccountForm: React.FC = () => {
                 Edit Account
               </h5>
             )}
-            <h4 className={`${isEditView ? 'text-[14px]' : 'text-[20px]'} font-semibold text-[#2D3E4F] ml-2 leading-4 w-[95%] overflow-ellipsis truncate`}>
+            <h4
+              className={`${isEditView ? 'text-[14px]' : 'text-[20px]'} font-semibold text-[#2D3E4F] ml-2 leading-4 w-[95%] overflow-ellipsis truncate`}
+            >
               {isEditView ? accountData.account_name : 'Create Account'}
             </h4>
           </div>
