@@ -11,8 +11,8 @@ import { ProjectHistory, setupProjectHistorySeq } from "../models/projectHistory
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { RedisService } from "./redisService";
 import Decimal from "decimal.js";
-import { KeyContact } from "../models/keyContactDetails";
-import { ProjectSummary } from "../models/projectSummary";
+import { KeyContact, setupKeyContactsSequence } from "../models/keyContactDetails";
+import { ProjectSummary, setupProjectSummarySequence } from "../models/projectSummary";
 
 export class ProjectService {
   private schemaService: SchemaService;
@@ -111,10 +111,10 @@ export class ProjectService {
         orgDbSequlize,
         schemaName
       );
-      const ProjectSummaryModel = await ProjectSummary.initialize(
-        mainDbSequlize,
-        ""
-      );
+      // const ProjectSummaryModel = await ProjectSummary.initialize(
+      //   mainDbSequlize,
+      //   ""
+      // );
 
       await ProjectModel.sync({ force: false });
       await KeyContactModel.sync({ force: false });
@@ -122,11 +122,13 @@ export class ProjectService {
       await ProjectHistory.sync({ force: false });
       await ProjectTimelineModel.sync({ force: false });
       await ProjectHistoryModel.sync({ force: false });
-      await ProjectSummaryModel.sync({ force: false });
+      // await ProjectSummaryModel.sync({ force: false });
       await setupProjectSequence(orgDbSequlize, schemaName);
       await setupProjectFiscal(orgDbSequlize, schemaName);
       await setupProjectTimelineSeq(orgDbSequlize, schemaName);
       await setupProjectHistorySeq(orgDbSequlize, schemaName);
+      await setupProjectSummarySequence(mainDbSequlize);
+      await setupKeyContactsSequence(orgDbSequlize, schemaName);
     } catch (err) {
       console.log("Error project tales", err);
       return this.throwServiceError(err as Error);
@@ -980,7 +982,7 @@ export class ProjectService {
         mainDbSequlize,
         ""
       );
-      await ProjectSummaryModel.sync({ force: false });
+      // await ProjectSummaryModel.sync({ force: false });
 
       const {
         technicalConsultant,
@@ -1433,23 +1435,6 @@ export class ProjectService {
     isAllProject: boolean
   ): { clientField: string; dbField: string }[] {
     const projectFilterFields = [
-      { clientField: "applyFilters", dbField: "applyFilters" },
-      { clientField: "project_code", dbField: "project_code" },
-      { clientField: "industry", dbField: "industry_name" },
-      { clientField: "project_startdate", dbField: "project_startdate" },
-      { clientField: "project_enddate", dbField: "project_enddate" },
-      { clientField: "project_type", dbField: "project_type" },
-      {
-        clientField: "project_classification_rid",
-        dbField: "project_classification_rid",
-      },
-      { clientField: "project_client_group", dbField: "project_client_group" },
-      { clientField: "project_group", dbField: "project_group" },
-      { clientField: "project_status", dbField: "project_status" },
-      { clientField: "r_number", dbField: "r_number" },
-    ];
-
-    const allProjectFields = [
       { clientField: "rid", dbField: "rid" },
       { clientField: "r_number", dbField: "r_number" },
       { clientField: "project_code", dbField: "project_code" },
@@ -1466,7 +1451,7 @@ export class ProjectService {
       { clientField: "source_schema", dbField: "source_schema" },
     ];
 
-    return isAllProject ? allProjectFields : projectFilterFields;
+    return projectFilterFields;
   }
   private getNumericForBlendedRate(rateString: string): string | null {
     if (rateString) {
