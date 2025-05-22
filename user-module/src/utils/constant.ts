@@ -31,4 +31,5 @@ export const NODE_ENV = {
 
 export const R_NUMBER_PREFIX = {
   USER: 'UID',
+  PROFILE: 'PRF',
 }

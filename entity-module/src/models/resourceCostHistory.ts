@@ -35,7 +35,7 @@ export class ResourceCostHistory extends Model<ResourceCostHistoryAttributes, Re
         primaryKey: true,
        },
        r_number: {
-        type: DataTypes.STRING(255),
+        type: DataTypes.STRING(20),
         allowNull: true,
        },
        resource_cost_rid: {
@@ -70,26 +70,26 @@ export class ResourceCostHistory extends Model<ResourceCostHistoryAttributes, Re
         modelName: "ResourceCostHistory",
         tableName: "resource_cost_history",
         timestamps: false,
-        hooks: {
-          beforeCreate: async (resourceCostHistory: ResourceCostHistory) => {
-            // Generate r_number if not provided
-            if (!resourceCostHistory.r_number) {
-              // Get the latest cost history number and increment it
-            const latestAccount = await ResourceCostHistory.findOne({
-              order: [['r_number', 'DESC']],
-            });
-            
-            let nextNumber = '0000000001';
-            if (latestAccount) {
-              const currentNumber = parseInt(latestAccount.r_number?.split(' ')[1] || '0');
-              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
-            }              
-              resourceCostHistory.r_number = `${R_NUMBER_PREFIX.RESOURCE_COST_HISTORY} ${nextNumber}`;
-            }
-          }
-        }
       }
     );
     return ResourceCostHistory;
+  }
+}
+
+
+export async function setupResourceCostHistorySeq(sequelize: Sequelize, schemaName: string) {
+  try {
+    // Step 1: Create the sequence if it doesn't exist
+    await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_cost_history_seq START 1`);
+    
+    // Step 2: Set the default value for r_number to use the sequence
+    await sequelize.query(`ALTER TABLE "${schemaName}".resource_cost_history
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE_COST_HISTORY} ' || LPAD(nextval('"${schemaName}".resource_cost_history_seq')::text, 10, '0')`);
+    
+    console.log('Resource cost history sequence setup complete');
+  } catch (error) {
+    console.error('Error setting up Resource cost history sequence:', error);
+    // Don't throw the error to allow the application to continue starting up
+    // The sequence setup can be handled separately if needed
   }
 }

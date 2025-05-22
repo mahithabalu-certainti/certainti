@@ -75,7 +75,7 @@ export class User
           primaryKey: true,
         },
         r_number: {
-          type: DataTypes.STRING,
+          type: DataTypes.STRING(20),
           allowNull: true,
         },
         eid: {
@@ -185,17 +185,9 @@ export class User
           beforeUpdate: (user) => {
             user.setDataValue("modified_datetime", new Date());
           },
-            beforeValidate: async (user: User) => {
-            if (!user.r_number) {
-              const [result] = await sequelize.query("SELECT nextval('usr_r_number_seq')");
-              const nextNum = (result[0] as { nextval: number }).nextval;
-              user.r_number = `${R_NUMBER_PREFIX.USER} ${String(nextNum).padStart(10, '0')}`;
-            }
-          },
         },
       }
     );
-
     User.belongsTo(Profile, {
       foreignKey: "profile_rid",
       as: "profile",
@@ -216,6 +208,24 @@ export class User
       as: 'modifiedProfiles'
     });
 
+    return User;
+  }
+}
+
+
+export async function setupUserSequence(sequelize: Sequelize) {
+  try {
+    // Step 1: Create the sequence if it doesn't exist
+    await sequelize.query('CREATE SEQUENCE IF NOT EXISTS user_seq START 1');
     
+    // Step 2: Set the default value for r_number to use the sequence
+    await sequelize.query(`ALTER TABLE user
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.USER} ' || LPAD(nextval('user_seq')::text, 10, '0')`);
+    
+    console.log('User sequence setup complete');
+  } catch (error) {
+    console.error('Error setting up User sequence:', error);
+    // Don't throw the error to allow the application to continue starting up
+    // The sequence setup can be handled separately if needed
   }
 }

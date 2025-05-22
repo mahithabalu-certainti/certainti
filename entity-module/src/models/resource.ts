@@ -63,7 +63,7 @@ export class Resources
   public comments?: string;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
-    return Resources.init(
+    Resources.init(
       {
         rid: {
           type: DataTypes.UUID,
@@ -73,8 +73,7 @@ export class Resources
         },
         r_number: {
           type: DataTypes.STRING(20),
-          allowNull: false,
-          unique: true,
+          allowNull: true,
         },
         eid: {
           type: DataTypes.STRING(50),
@@ -216,23 +215,30 @@ export class Resources
           beforeUpdate: (resources) => {
             resources.setDataValue("created_datetime", new Date());
             resources.setDataValue("modified_datetime", new Date());
-          },
-          beforeValidate: async (account) => {
-            // Get the latest resources number and increment it
-            const latestAccount = await Resources.findOne({
-              order: [['r_number', 'DESC']],
-            });
-            
-            let nextNumber = '0000000001';
-            if (latestAccount) {
-              const currentNumber = parseInt(latestAccount?.r_number?.split(' ')[1] || '0');
-              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
-            }            
-            const accountCode = `${R_NUMBER_PREFIX.RESOURCE} ${nextNumber}`;
-            account.setDataValue("r_number", accountCode);
           },           
         },        
       }      
     );
+    return Resources;
+  }
+}
+
+export async function setupResourceSeq(sequelize: Sequelize, schemaName: string) {
+  try {
+    // Step 1: Create the sequence if it doesn't exist
+    await sequelize.query(`
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resources_seq START 1;
+    `);
+
+    // Step 2: Set the default value for r_number to use the sequence
+    await sequelize.query(`
+      ALTER TABLE "${schemaName}".resources
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE} ' || LPAD(nextval('"${schemaName}".resources_seq')::text, 10, '0');
+    `);
+
+    console.log('Resource sequence setup complete');
+  } catch (error) {
+    console.error('Error setting up Resource sequence:', error);
+    // Optionally: log more detail or report somewhere
   }
 }

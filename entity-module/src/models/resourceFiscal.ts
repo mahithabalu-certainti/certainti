@@ -87,7 +87,7 @@ export class ResourceFiscal
   public modified_by?: string | null;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
-    return ResourceFiscal.init(
+    const model = ResourceFiscal.init(
       {
         rid: {
           type: DataTypes.UUID,
@@ -104,9 +104,8 @@ export class ResourceFiscal
           allowNull: false,
         },
         r_number: {
-          type: DataTypes.STRING(250),
+          type: DataTypes.STRING(20),
           allowNull: true,
-          unique: true,
         },
         resource_rid: {
           type: DataTypes.UUID,
@@ -320,22 +319,27 @@ export class ResourceFiscal
             resources.setDataValue("created_datetime", new Date());
             resources.setDataValue("modified_datetime", new Date());
           },
-          beforeValidate: async (account) => {
-            // Get the latest resource fiscal number and increment it
-            const latestAccount = await ResourceFiscal.findOne({
-              order: [['r_number', 'DESC']],
-            });
-            
-            let nextNumber = '0000000001';
-            if (latestAccount) {
-              const currentNumber = parseInt(latestAccount.r_number?.split(' ')[1] || '0');
-              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
-            }
-            const accountCode = `${R_NUMBER_PREFIX.RESOURCE_FISCAL} ${nextNumber}`;
-            account.setDataValue("r_number", accountCode);
-          },
         },
       }
     );
+    return model;
+  }
+}
+
+
+export async function setupResourceFiscalSeq(sequelize: Sequelize, schemaName: string) {
+  try {
+    // Step 1: Create the sequence if it doesn't exist
+    await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_fiscal_seq START 1`);
+    
+    // Step 2: Set the default value for r_number to use the sequence
+    await sequelize.query(`ALTER TABLE "${schemaName}".resource_fiscal
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE_FISCAL} ' || LPAD(nextval('"${schemaName}".resource_fiscal_seq')::text, 10, '0')`);
+    
+    console.log('Resource fiscal sequence setup complete');
+  } catch (error) {
+    console.error('Error setting up Resource fiscal sequence:', error);
+    // Don't throw the error to allow the application to continue starting up
+    // The sequence setup can be handled separately if needed
   }
 }

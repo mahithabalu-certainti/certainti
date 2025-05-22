@@ -5,7 +5,7 @@ import { Profile, setupProfileSequence} from "./profileModel";
 import { FunctionGroup } from "./functionGroupModel";
 import { ProfileModuleAccess } from "./profileModuleAccessModel";
 import { UserDetails } from "./userDetailsModel";
-import { User } from "./userModel";
+import { User, setupUserSequence } from "./userModel";
 
 import { ProfileMenuAccess } from "./profileMenuAccessModel";
 import { ProfilePermissionAccess } from "./profilePermissionAccessModel";
@@ -138,6 +138,7 @@ export async function initModels() {
     });
     await sequelize.sync({ force: false });
     await setupProfileSequence(sequelize);
+    await setupUserSequence(sequelize);
   } catch (err) {
     console.log("Errr loading models", err);
   }

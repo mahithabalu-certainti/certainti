@@ -8,7 +8,7 @@ import { AccountFileDropConfig } from "./accountFileDropConfigModel";
 interface AccountAttributes {
   rid: string;
   eid?: string;
-  r_number: string;
+  r_number?: string;
   account_name: string;
   comments?: string;
   region?: string;
@@ -39,7 +39,7 @@ export class Account
   implements AccountAttributes
 {
   public rid!: string;
-  public r_number!: string;
+  public r_number?: string;
   public account_name!: string;
   public comments?: string;
   public is_parent!: boolean;
@@ -71,8 +71,8 @@ export class Account
           primaryKey: true,
         },
         r_number: {
-          type: DataTypes.STRING(255),
-          allowNull: false,
+          type: DataTypes.STRING(20),
+          allowNull: true,
         },
         account_name: {
           type: DataTypes.STRING(255),
@@ -179,21 +179,6 @@ export class Account
           beforeUpdate: (user) => {
             user.setDataValue("modified_datetime", new Date());
           },
-          beforeValidate: async (account) => {
-            // Get the latest account number and increment it
-            const latestAccount = await Account.findOne({
-              order: [['r_number', 'DESC']],
-            });
-            
-            let nextNumber = '0000000001';
-            if (latestAccount) {
-              const currentNumber = parseInt(latestAccount.r_number?.split(' ')[1] || '0');
-              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
-            }
-            
-            const accountCode = `${R_NUMBER_PREFIX.ACCOUNT} ${nextNumber}`;
-            account.setDataValue("r_number", accountCode);
-          },
         },
       }
     );
@@ -233,5 +218,23 @@ export class Account
       foreignKey: "file_drop_config_id",
       as: "file_drop_config",
     });
+  }
+}
+
+
+export async function setupAccountSequence(sequelize: Sequelize) {
+  try {
+    // Step 1: Create the sequence if it doesn't exist
+    await sequelize.query('CREATE SEQUENCE IF NOT EXISTS account_seq START 1');
+    
+    // Step 2: Set the default value for r_number to use the sequence
+    await sequelize.query(`ALTER TABLE account
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.ACCOUNT} ' || LPAD(nextval('account_seq')::text, 10, '0')`);
+    
+    console.log('Account sequence setup complete');
+  } catch (error) {
+    console.error('Error setting up Account sequence:', error);
+    // Don't throw the error to allow the application to continue starting up
+    // The sequence setup can be handled separately if needed
   }
 }
