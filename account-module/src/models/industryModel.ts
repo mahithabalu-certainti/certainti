@@ -1,4 +1,5 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
+import { R_NUMBER_PREFIX } from "../utils/constant";
 interface IndustryAttributes {
   rid: string; // UUID
   r_number?: string;
@@ -45,7 +46,7 @@ export class Industry
           allowNull: false,
         },
         r_number: {
-          type: DataTypes.STRING,
+          type: DataTypes.STRING(20),
           allowNull: true,
         },
         eid: {
@@ -90,5 +91,23 @@ export class Industry
         timestamps: false,
       }
     );
+    return Industry;
+  }
+}
+
+export async function setupIndustrySequence(sequelize: Sequelize) {
+  try {
+    // Step 1: Create the sequence if it doesn't exist
+    await sequelize.query('CREATE SEQUENCE IF NOT EXISTS industry_seq START 1');
+    
+    // Step 2: Set the default value for r_number to use the sequence
+    await sequelize.query(`ALTER TABLE industry
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.INDUSTRY} ' || LPAD(nextval('industry_seq')::text, 10, '0')`);
+    
+    console.log('Industry sequence setup complete');
+  } catch (error) {
+    console.error('Error setting up Industry sequence:', error);
+    // Don't throw the error to allow the application to continue starting up
+    // The sequence setup can be handled separately if needed
   }
 }

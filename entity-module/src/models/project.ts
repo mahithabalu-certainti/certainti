@@ -101,7 +101,7 @@ export class Project
   public qre?: number | null;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
-    Project.init(
+    const model = Project.init(
       {
         rid: {
           type: DataTypes.UUID,
@@ -110,8 +110,7 @@ export class Project
         },
         r_number: {
           type: DataTypes.STRING(20),
-          allowNull: false,
-          unique: true,
+          allowNull: true,
         },
         eid: {
           type: DataTypes.UUID,
@@ -244,26 +243,26 @@ export class Project
         tableName: "project",
         timestamps: false,
         underscored: true,
-        hooks: {
-          beforeValidate: async (account) => {
-            const latestAccount = await Project.findOne({
-              order: [["r_number", "DESC"]],
-            });
-
-            let nextNumber = "0000000001";
-            if (latestAccount) {
-              const currentNumber = parseInt(
-                latestAccount.r_number?.split(" ")[1] || "0"
-              );
-              nextNumber = (currentNumber + 1).toString().padStart(10, "0");
-            }
-            const accountCode = `${R_NUMBER_PREFIX.PROJECT} ${nextNumber}`;
-            account.setDataValue("r_number", accountCode);
-          },
-        },
       }
     );
+    return model;
+  }
+}
 
-    return Project;
+
+ export async function setupProjectSequence(sequelize: Sequelize,schemaName:string) {
+  try {
+    // Step 1: Create the sequence if it doesn't exist
+    await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_seq START 1`);
+    
+    // Step 2: Set the default value for r_number to use the sequence
+    await sequelize.query(`ALTER TABLE "${schemaName}".project
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT} ' || LPAD(nextval('"${schemaName}".project_seq')::text, 10, '0')`);
+    
+    console.log('Project sequence setup complete');
+  } catch (error) {
+    console.error('Error setting up Project sequence:', error);
+    // Don't throw the error to allow the application to continue starting up
+    // The sequence setup can be handled separately if needed
   }
 }

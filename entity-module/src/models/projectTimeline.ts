@@ -32,7 +32,7 @@ export class ProjectTimeline
   public modified_by!: string;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
-    ProjectTimeline.init(
+     const model = ProjectTimeline.init(
       {
         rid: {
           type: DataTypes.UUID,
@@ -42,8 +42,7 @@ export class ProjectTimeline
         },
         r_number: {
           type: DataTypes.STRING(20),
-          allowNull: false,
-          unique: true,
+          allowNull: true,
         },
         account_rid: {
           type: DataTypes.UUID,
@@ -85,20 +84,6 @@ export class ProjectTimeline
           beforeUpdate: (resources) => {
             resources.setDataValue("event_datetime", new Date());
           },
-          beforeValidate: async (account) => {
-            // Get the latest project timeline number and increment it
-            const latestAccount = await ProjectTimeline.findOne({
-              order: [['r_number', 'DESC']],
-            });
-            
-            let nextNumber = '0000000001';
-            if (latestAccount) {
-              const currentNumber = parseInt(latestAccount.r_number?.split(' ')[1] || '0');
-              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
-            }            
-            const accountCode = `${R_NUMBER_PREFIX.PROJECT_TIMELINE} ${nextNumber}`;
-            account.setDataValue("r_number", accountCode);
-          },
         },
       }
     );
@@ -115,6 +100,23 @@ export class ProjectTimeline
       as: 'ProjectTimeline',
     });
 
-    return ProjectTimeline;
+    return model;
+  }
+}
+
+export async function setupProjectTimelineSeq(sequelize: Sequelize, schemaName: string) {
+  try {
+    // Step 1: Create the sequence if it doesn't exist
+    await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_timeline_seq START 1`);
+    
+    // Step 2: Set the default value for r_number to use the sequence
+    await sequelize.query(`ALTER TABLE "${schemaName}".project_timeline
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT_TIMELINE} ' || LPAD(nextval('"${schemaName}".project_timeline_seq')::text, 10, '0')`);
+    
+    console.log('Project timeline sequence setup complete');
+  } catch (error) {
+    console.error('Error setting up Project timeline sequence:', error);
+    // Don't throw the error to allow the application to continue starting up
+    // The sequence setup can be handled separately if needed
   }
 }

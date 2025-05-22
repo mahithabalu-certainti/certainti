@@ -540,7 +540,7 @@ class AccountService {
 
       if (parent_account && data_storage === "store_in_parent") {
         await this.schemaService.insertAccountDetails(
-          parent_account?.r_number,
+          parent_account?.r_number || "",
           accountData,
           account.rid,
           userId
@@ -549,12 +549,14 @@ class AccountService {
           key_contacts,
           account.rid,
           userId,
-          parent_account?.r_number,
+          parent_account?.r_number || '',
         );
       } else {
-        await this.schemaService.createNewSchema(account.r_number);
+        if (account.r_number) {
+          await this.schemaService.createNewSchema(account.r_number);
+        }
         await this.schemaService.insertAccountDetails(
-          account.r_number,
+          account.r_number || '',
           accountData,
           account.rid,
           userId
@@ -563,7 +565,7 @@ class AccountService {
           key_contacts,
           account.rid,
           userId,
-          account.r_number,
+          account.r_number || '',
         );
       }
 
@@ -663,14 +665,14 @@ class AccountService {
         await this.schemaService.updateAccountDetails(
           account_rid,
           accountData,
-          default_r_number,
+          default_r_number || '',
           userId
         );
         await this.schemaService.manageKeyContacts(
           key_contacts,
           account_rid,
           userId,
-          default_r_number
+          default_r_number || '',
         );
       }
 
@@ -693,14 +695,14 @@ class AccountService {
         this.schemaService.updateAccountDetails(
           account_rid,
           accountData,
-          default_r_number,
+          default_r_number || '',
           userId
         );
         this.schemaService.manageKeyContacts(
           key_contacts,
           account_rid,
           userId,
-          default_r_number
+          default_r_number || '',
         );
       }
 

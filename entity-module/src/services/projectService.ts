@@ -1,13 +1,13 @@
 import moment, { Moment } from "moment";
 import { initOrgSequelize } from "../config/orgDataSource";
-import { Project } from "../models/project";
+import { Project, setupProjectSequence } from "../models/project";
 import { HttpStatus } from "../utils/constants";
 import { ICreateProject, IUpdateProject } from "../utils/types";
 import SchemaService from "./schemaService";
-import { ProjectTimeline } from "../models/projectTimeline";
-import { ProjectFiscal } from "../models/projectFiscal";
+import { ProjectTimeline, setupProjectTimelineSeq } from "../models/projectTimeline";
+import { ProjectFiscal, setupProjectFiscal } from "../models/projectFiscal";
 import { Op, Sequelize } from "sequelize";
-import { ProjectHistory } from "../models/projectHistory";
+import { ProjectHistory, setupProjectHistorySeq } from "../models/projectHistory";
 import { initMainDbSequelize } from "../config/mainDataSource";
 import { RedisService } from "./redisService";
 import Decimal from "decimal.js";
@@ -123,6 +123,10 @@ export class ProjectService {
       await ProjectTimelineModel.sync({ force: false });
       await ProjectHistoryModel.sync({ force: false });
       await ProjectSummaryModel.sync({ force: false });
+      await setupProjectSequence(orgDbSequlize, schemaName);
+      await setupProjectFiscal(orgDbSequlize, schemaName);
+      await setupProjectTimelineSeq(orgDbSequlize, schemaName);
+      await setupProjectHistorySeq(orgDbSequlize, schemaName);
     } catch (err) {
       console.log("Error project tales", err);
       return this.throwServiceError(err as Error);

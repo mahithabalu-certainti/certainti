@@ -1,22 +1,27 @@
 import moment, { Moment } from "moment";
 import { initOrgSequelize } from "../config/orgDataSource";
-import { Resources } from "../models/resource";
+import { Resources, setupResourceSeq } from "../models/resource";
 import {
   ICreateResource,
   IKeyContactDetail,
   IUpdateKeyContactDetail,
   IUpdateResource,
 } from "../utils/types";
-import { DataTypes, Op, Sequelize, where } from "sequelize";
-import { ResourceFiscal } from "../models/resourceFiscal";
+
+import { DataTypes, Op, Sequelize } from "sequelize";
+import { ResourceFiscal,setupResourceFiscalSeq } from "../models/resourceFiscal";
 import { initMainDbSequelize } from "../config/mainDataSource";
-import { ResourcesHistory } from "../models/resourceHistory";
-import { ResourcesTimeline } from "../models/resourceTimeline";
-import { ResourceCost } from "../models/resourceCost";
-import { ResourceSkill } from "../models/resourceSkill";
-import { Skill } from "../models/skill";
+import { ResourcesHistory, setupResourceHistorySeq } from "../models/resourceHistory";
+import { ResourcesTimeline, setupResourceTimelineSeq } from "../models/resourceTimeline";
+import { ResourceCost, setupResourceCostSeq } from "../models/resourceCost";
+import { ResourceCostTimeline, setupResourceCostTimelineSeq} from "../models/resourceCostTimeline";
+import { ResourceCostHistory, setupResourceCostHistorySeq } from "../models/resourceCostHistory";
+import { ResourceSkill, setupResourceSkillSeq } from "../models/resourceSkill";
+import { ResourceSkillTimeline, setupResourceSkillTimelineSeq } from "../models/resourceSkillTimeline";
+import { ResourceSkillHistory, setupResourceSkillHistorySeq } from "../models/resourceSkillHistory";
 import { KeyContact } from "../models/keyContactDetails";
 
+// import { Skill } from "../models/skill";
 class SchemaService {
   constructor() {}
 
@@ -102,18 +107,52 @@ class SchemaService {
         sequelize,
         schemaName
       );
-      const SkillModel = await Skill.initialize(sequelize, schemaName);
+
+      const ResourceCostTimelineModel = await ResourceCostTimeline.initialize(
+        sequelize,
+        schemaName
+      );
+
+      const ResourceCostHistoryModel = await ResourceCostHistory.initialize(
+        sequelize,
+        schemaName
+      );
+
+      // const SkillModel = await Skill.initialize(sequelize, schemaName);
       const ResourceSkillModel = await ResourceSkill.initialize(
         sequelize,
         schemaName
       );
 
+      const ResourceSkillTimelineModel = await ResourceSkillTimeline.initialize(
+        sequelize,
+        schemaName
+      );
+
+      const ResourceSkillHistoryModel = await ResourceSkillHistory.initialize(
+        sequelize,
+        schemaName
+      )
+
       await Resource.sync({ force: false });
       await ResourcesHistoryModel.sync({ force: false });
       await ResourcesTimelineModel.sync({ force: false });
       await ResourceCostModel.sync({ force: false });
+      await ResourceCostTimelineModel.sync({ force: false });
+      await ResourceCostHistoryModel.sync({ force: false });
       // await SkillModel.sync({ force: false });
       await ResourceSkillModel.sync({ force: false });
+      await ResourceSkillTimelineModel.sync({ force: false });
+      await ResourceSkillHistoryModel.sync({ force: false });
+      await setupResourceSeq(sequelize, schemaName);
+      await setupResourceHistorySeq(sequelize, schemaName);
+      await setupResourceTimelineSeq(sequelize, schemaName);
+      await setupResourceCostSeq(sequelize, schemaName);
+      await setupResourceCostTimelineSeq(sequelize, schemaName);
+      await setupResourceCostHistorySeq(sequelize, schemaName);
+      await setupResourceSkillSeq(sequelize, schemaName);
+      await setupResourceSkillTimelineSeq(sequelize, schemaName);
+      await setupResourceSkillHistorySeq(sequelize, schemaName);
     } catch (err) {
       throw new Error(
         "Error creating table resources: " + (err as Error).message
@@ -412,6 +451,7 @@ class SchemaService {
         schemaName
       );
       await ResourceFiscalModel.sync({ force: false });
+      await setupResourceFiscalSeq(sequelize, schemaName);
       await ResourceFiscalModel.create({
         account_rid: resourceData.account_id,
         resource_type: resourceData.resource_type,

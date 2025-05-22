@@ -69,10 +69,16 @@ class SchemaService {
   }
 
   private async createAccountFiscalTable(schemaName: string, sequelize: any) {
+
+    // First, create the sequence (if needed)
+    await sequelize.query(`
+     CREATE SEQUENCE IF NOT EXISTS "${schemaName}".account_fiscal_seq START 1;
+   `);
+
     await sequelize.query(`
       CREATE TABLE IF NOT EXISTS "${schemaName}"."account_fiscal" (
         rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        r_number VARCHAR(100) NOT NULL,
+        r_number SET DEFAULT 'ACF ' || LPAD(nextval('account_fiscal_seq')::text, 10, '0'),
         eid UUID,
         fiscal_year VARCHAR(10) NOT NULL,
         account_rid UUID NOT NULL REFERENCES "${schemaName}"."account_details"(account_rid),
@@ -113,16 +119,22 @@ class SchemaService {
         qualifying_project_rd_credits_subcon_fed VARCHAR(20),
         qualifying_project_rd_credits_fed VARCHAR(20),
         created_datetime TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        modified_datetime TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+        modified_datetime TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
       );
     `);
   }
 
   private async createProjectTable(schemaName: string, sequelize: any) {
+
+    // First, create the sequence (if needed)
+    await sequelize.query(`
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_seq START 1;
+    `);
+
     await sequelize.query(`
       CREATE TABLE IF NOT EXISTS "${schemaName}"."project" (
       rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      r_number VARCHAR(20) NOT NULL UNIQUE,
+      r_number SET DEFAULT 'PRJ ' || LPAD(nextval('project_seq')::text, 10, '0'),
       eid UUID,
       account_rid UUID NOT NULL REFERENCES "${schemaName}"."account_details"(account_rid),
       account_fiscal_rid UUID REFERENCES "${schemaName}"."account_fiscal"(rid),
@@ -171,10 +183,16 @@ class SchemaService {
   }
 
   private async createDocumentTable(schemaName: string, sequelize: any) {
+
+    // First, create the sequence (if needed)
+    await sequelize.query(`
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".doc_seq START 1;
+    `);
+
     await sequelize.query(`
       CREATE TABLE IF NOT EXISTS "${schemaName}"."document" (
         rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        r_number VARCHAR(100) NOT NULL,
+        r_number SET DEFAULT 'DOC ' || LPAD(nextval('doc_seq')::text, 10, '0'),
         eid UUID,
         account_rid UUID REFERENCES "${schemaName}"."account_details"(account_rid),
         related_to VARCHAR(50) NOT NULL,
@@ -197,10 +215,16 @@ class SchemaService {
   }
 
   private async createImportTable(schemaName: string, sequelize: any) {
+
+    // First, create the sequence (if needed)
+    await sequelize.query(`
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".import_seq START 1;
+    `);
+
     await sequelize.query(`
       CREATE TABLE IF NOT EXISTS "${schemaName}"."import" (
         rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        r_number VARCHAR(100) NOT NULL,
+        r_number SET DEFAULT 'IMP ' || LPAD(nextval('import_seq')::text, 10, '0'),
         eid UUID,
         account_rid UUID REFERENCES "${schemaName}"."account_details"(account_rid),
         project_rid UUID REFERENCES "${schemaName}"."project"(rid),
@@ -235,10 +259,16 @@ class SchemaService {
   }
 
   private async createKafkaEventsTable(schemaName: string, sequelize: any) {
+
+    // First, create the sequence (if needed)
+    await sequelize.query(`
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".kafka_events_seq START 1;
+    `);
+
     await sequelize.query(`
       CREATE TABLE IF NOT EXISTS "${schemaName}"."kafka_events" (
         rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        r_number VARCHAR(100) NOT NULL,
+        r_number SET DEFAULT 'KFE ' || LPAD(nextval('kafka_events_seq')::text, 10, '0'),
         eid UUID,
         source_name VARCHAR(100) NOT NULL,
         producer_id UUID,

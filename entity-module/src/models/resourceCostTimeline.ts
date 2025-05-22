@@ -39,7 +39,7 @@ export class ResourceCostTimeline extends Model<ResourceCostTimelineAttributes, 
         primaryKey: true,
        },
        r_number: {
-        type: DataTypes.STRING(255),
+        type: DataTypes.STRING(20),
         allowNull: true,
        },
        account_rid: {
@@ -84,26 +84,26 @@ export class ResourceCostTimeline extends Model<ResourceCostTimelineAttributes, 
         modelName: "ResourceCostTimeline",
         tableName: "resource_cost_timeline",
         timestamps: false,
-        hooks: {
-          beforeCreate: async (resourceCostTimeline: ResourceCostTimeline) => {
-            // Generate r_number if not provided
-            if (!resourceCostTimeline.r_number) {
-              // Get the latest cost timeline number and increment it
-            const latestAccount = await ResourceCostTimeline.findOne({
-              order: [['r_number', 'DESC']],
-            });
-            
-            let nextNumber = '0000000001';
-            if (latestAccount) {
-              const currentNumber = parseInt(latestAccount.r_number?.split(' ')[1] || '0');
-              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
-            }              
-              resourceCostTimeline.r_number = `${R_NUMBER_PREFIX.RESOURCE_COST_TIMELINE} ${nextNumber}`;
-            }
-          }
-        }
       }
     );
     return ResourceCostTimeline; 
+  }
+}
+
+
+export async function setupResourceCostTimelineSeq(sequelize: Sequelize, schemaName: string) {
+  try {
+    // Step 1: Create the sequence if it doesn't exist
+    await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_cost_timeline_seq START 1`);
+    
+    // Step 2: Set the default value for r_number to use the sequence
+    await sequelize.query(`ALTER TABLE "${schemaName}".resource_cost_timeline
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE_COST_TIMELINE} ' || LPAD(nextval('"${schemaName}".resource_cost_timeline_seq')::text, 10, '0')`);
+    
+    console.log('Resource cost timeline sequence setup complete');
+  } catch (error) {
+    console.error('Error setting up Resource cost timeline sequence:', error);
+    // Don't throw the error to allow the application to continue starting up
+    // The sequence setup can be handled separately if needed
   }
 }
