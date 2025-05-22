@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   accountHomeIcon,
@@ -18,6 +18,25 @@ import AccountTable from './table/account-table';
 import { useGetAllCountries } from '../../../common-service';
 import { exportAccountList, useFetchCurrency } from '../../services/account';
 import { AccountList } from '../../types';
+import {
+  formatFilterForApi,
+  getStoredFilters,
+} from '../../../components/filter-component/utils';
+import { FilterState } from '../../types/account-filter';
+
+const BUTTON_STYLES = {
+  height: '32px',
+  background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+  border: '1px solid #CBD6E2',
+  color: '#425A76',
+  borderRadius: '2px',
+  fontSize: '13px',
+  fontWeight: 700,
+  padding: '0px',
+  '&:hover': {
+    color: '#425A76 !important',
+  },
+};
 
 export const Accounts: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
@@ -26,7 +45,16 @@ export const Accounts: React.FC = () => {
   const [order, setOrder] = useState<'asc' | 'desc'>('desc');
   const [orderBy, setOrderBy] = useState<keyof AccountList>('createdAt');
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
- const [page, setPage] = useState<number>(1);
+  const [page, setPage] = useState<number>(1);
+
+  useEffect(() => {
+    const saved = getStoredFilters();
+    if (saved) {
+      setAppliedFilters(
+        formatFilterForApi(saved as Record<string, FilterState>)
+      );
+    }
+  }, []);
 
   const menuItems = [
     {
@@ -35,11 +63,12 @@ export const Accounts: React.FC = () => {
     },
     {
       label: 'Export',
-      onClick: () => exportAccountList({
-        sortBy: orderBy,
-        sortOrder: apiOrder,
-        filters: appliedFilters,
-      }),
+      onClick: () =>
+        exportAccountList({
+          sortBy: orderBy,
+          sortOrder: apiOrder,
+          filters: appliedFilters,
+        }),
     },
   ];
 
@@ -53,14 +82,21 @@ export const Accounts: React.FC = () => {
   const currencyList = useFetchCurrency();
 
   const allCountries = useMemo(() => {
-    return countriesList.data?.data.country.map(item => item.country_name) || [];
+    return (
+      countriesList.data?.data.country.map((item) => item.country_name) || []
+    );
   }, [countriesList]);
-  
+
   const allCurrencies = useMemo(() => {
-    return currencyList.data?.data.currency.map(item => item.currency_code) || [];
+    return (
+      currencyList.data?.data.currency.map((item) => item.currency_code) || []
+    );
   }, [currencyList]);
 
-  const accountFilterFields = getAccountFilterFields(allCountries, allCurrencies);
+  const accountFilterFields = getAccountFilterFields(
+    allCountries,
+    allCurrencies
+  );
 
   const [totalCount, setTotalCount] = useState<number>(0);
 
@@ -69,102 +105,90 @@ export const Accounts: React.FC = () => {
   };
   return (
     <div className='flex flex-col w-full h-full'>
-      <div className="flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4">
-        <div className="flex h-[33px]">
-          <div className="flex items-center justify-center">
+      <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
+        <div className='flex h-[33px]'>
+          <div className='flex items-center justify-center'>
             <img
               src={accountHomeIcon}
-              alt="menu-icon"
-              className="h-7 w-7 bg-[#d16dd3] p-[7px] rounded"
+              alt='menu-icon'
+              className='h-7 w-7 bg-[#d16dd3] p-[7px] rounded'
             />
-            <div className="flex flex-col mx-2.5 pb-1">
-              <div className="font-bold text-[16px] text-[#2D3E4F]">
+            <div className='flex flex-col mx-2.5 pb-1'>
+              <div className='font-bold text-[16px] text-[#2D3E4F]'>
                 All Accounts
               </div>
-              <div className="font-semibold text-[#7D98B6] text-[12px] -mt-1">
+              <div className='font-semibold text-[#7D98B6] text-[12px] -mt-1'>
                 {`All Accounts • ${totalCount} items`}
               </div>
             </div>
           </div>
         </div>
-        <div className="flex gap-3 justify-center items-center">
+        <div className='flex gap-3 justify-center items-center'>
           <ActionsDropdown
             actions={menuItems}
             sx={{
-              height: "32px",
-              background: "linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)",
-              border: '1px solid #CBD6E2',
-              color: "#425A76",
-              borderRadius: "2px",
-              fontSize: "13px",
-              fontWeight: 700,
-              '&:hover': {
-                color: "#425A76 !important",
-              },
+              ...BUTTON_STYLES,
+              width: '81px',
+              minWidth: '81px',
+              maxWidth: '81px',
             }}
           />
           <TextButton
-            label="Create Account"
+            label='Create Account'
             onClick={handleCreateAccount}
             sx={{
-              height: "32px",
-              background: "linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)",
-              border: '1px solid #CBD6E2',
-              color: "#425A76",
-              borderRadius: "2px",
-              fontSize: "13px",
-              fontWeight: 700,
-              '&:hover': {
-                color: "#425A76 !important",
-              },
+              ...BUTTON_STYLES,
+              width: '114px',
+              minWidth: '114px',
+              maxWidth: '114px',
             }}
           />
-          <div className="flex items-center justify-center border border-[#EAF0F5] w-16 h-8">
-            <div className="flex items-center justify-center w-1/2">
-              <img src={refreshIcon} alt="refresh-icon" className="h-4" />
+          <div className='flex items-center justify-center border border-[#EAF0F5] w-16 h-8'>
+            <div className='flex items-center justify-center w-1/2'>
+              <img src={refreshIcon} alt='refresh-icon' className='h-4' />
             </div>
-            <div className="border-l border-[#EAF0F5] h-full"></div>
-            <div className="flex items-center justify-center w-1/2">
-              <img src={downloadIcon} alt="download-icon" className="h-4" />
+            <div className='border-l border-[#EAF0F5] h-full'></div>
+            <div className='flex items-center justify-center w-1/2'>
+              <img src={downloadIcon} alt='download-icon' className='h-4' />
             </div>
           </div>
           <div
-            className="flex border border-[#CBD6E2] w-8 h-8 rounded-[2px] justify-center items-center"
+            className='flex border border-[#CBD6E2] w-8 h-8 rounded-[2px] justify-center items-center'
             style={{
-              background: "linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)",
+              background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
             }}
           >
-            <img src={actionIcon} alt="menu-icon" className="h-4" />
+            <img src={actionIcon} alt='menu-icon' className='h-4' />
           </div>
           <div
-            className="flex border border-[#CBD6E2] w-8 h-8 rounded-[2px] justify-center items-center"
+            className='flex border border-[#CBD6E2] w-8 h-8 rounded-[2px] justify-center items-center'
             style={{
-              background: "linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)",
+              background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
             }}
           >
-            <img src={accountSettingsIcon} alt="menu-icon" className="h-4" />
+            <img src={accountSettingsIcon} alt='menu-icon' className='h-4' />
           </div>
         </div>
       </div>
-      <div className='flex items-center justify-end h-[45px] min-h-[45px] px-4'>
+      <div className='flex items-center justify-end h-[40px] min-h-[40px] px-4'>
         <div className='relative'>
           <button
-            className='w-[64px] h-[26px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] border border-[#CBD6E2] relative'
+            className={`w-[64px] h-[26px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
+              ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) ? 'bg-[#F3F3F3]' : ''}`}
             onClick={() => setIsFilterOpen(!isFilterOpen)}
           >
-            <img src={newFilterIcon} alt="filter-icon" />
+            <img src={newFilterIcon} alt='filter-icon' />
             Filter
-
             {appliedFilters && Object.keys(appliedFilters).length > 0 && (
-              <div className="absolute -top-2 -right-2 w-4 h-4 flex items-center justify-center text-xs">
-                <span className="absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0"></span>
-                <span className="w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold">
+              <div className='absolute -top-[5px] -right-2 w-4 h-4 flex items-center justify-center text-xs'>
+                <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
+                <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
                   {Object.keys(appliedFilters).length}
                 </span>
               </div>
             )}
           </button>
-          {isFilterOpen &&
+          {isFilterOpen && (
             <div className='absolute mt-1 right-0 z-50'>
               <FilterModal
                 filterFields={accountFilterFields}
@@ -173,7 +197,7 @@ export const Accounts: React.FC = () => {
                 handleCloseFilter={handleCloseFilter}
               />
             </div>
-          }
+          )}
         </div>
       </div>
       <div className='flex-1'>

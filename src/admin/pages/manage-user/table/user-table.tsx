@@ -122,11 +122,12 @@ export const UserTable: React.FC<IUserTableProps> = ({
       getRowId={getRowId}
       hoverHighlight={true}
       tableStyle={{
-        maxHeight: 'calc(85vh - 200px)',
+        maxHeight: 'calc(95vh - 200px)',
         borderBottom: '1px solid #CBD6E2',
         overflow: 'auto',
       }}
       stickyHeader={true}
+      stickyColumnsCount={2}
       // Selection
       selectable={true}
       onSelectionChange={(selectedIds) => console.log('Selected:', selectedIds)}

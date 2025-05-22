@@ -375,7 +375,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
             <h3 className='text-[13px] font-bold text-[#425A76] mb-2'>
               All filters
             </h3>
-            <div className='flex flex-col gap-3 mb-1 -mr-6 min-h-[40px] overflow-y-auto max-h-[150px]'>
+            <div className='flex flex-col gap-3 mb-1 pt-1 -mr-6 min-h-[80px] overflow-y-auto max-h-[150px]'>
               {selectedFilters.map((fieldName) => {
                 const fieldConfig = filterFields.find(
                   (f) => f.name === fieldName
@@ -509,12 +509,18 @@ const FilterModal: React.FC<FilterModalProps> = ({
           <div className='flex justify-end gap-2'>
             <button
               className='text-[12px] rounded-[2px] text-[#425A76] h-[24px] flex items-center px-2 border border-[#CBD6E2] cursor-pointer'
+              style={{
+                background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+              }}
               onClick={handleCloseFilter}
             >
               Close
             </button>
             <button
-              className='text-[12px] rounded-[2px] text-white h-[24px] flex items-center px-2 bg-[#2D3E4F] cursor-pointer'
+              className='text-[12px] rounded-[2px] text-[#425A76] h-[24px] flex items-center px-2 border border-[#CBD6E2] cursor-pointer'
+              style={{
+                background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+              }}
               onClick={handleApplyFilters}
             >
               Apply
@@ -535,24 +541,41 @@ const FilterModal: React.FC<FilterModalProps> = ({
           },
         }}
       >
-        {filterFields
-          .filter((field) => !selectedFilters.includes(field.name))
-          .map((field) => (
-            <MenuItem
-              key={field.name}
-              onClick={() => handleFilterSelect(field.name)}
-              sx={{
-                fontWeight: 600,
-                fontSize: '14px',
-                lineHeight: '30px',
-                color: '#425A76',
-                py: '1px',
-              }}
-            >
-              <img src={checkedIcon} alt='checked' className='w-4 mr-1' />
-              {field.label}
-            </MenuItem>
-          ))}
+        {filterFields.filter((field) => !selectedFilters.includes(field.name))
+          .length === 0 ? (
+          <MenuItem
+            disabled
+            sx={{
+              fontWeight: 600,
+              fontSize: '14px',
+              lineHeight: '30px',
+              color: '#425A76',
+              py: '1px',
+              justifyContent: 'center',
+            }}
+          >
+            No fields available
+          </MenuItem>
+        ) : (
+          filterFields
+            .filter((field) => !selectedFilters.includes(field.name))
+            .map((field) => (
+              <MenuItem
+                key={field.name}
+                onClick={() => handleFilterSelect(field.name)}
+                sx={{
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  lineHeight: '30px',
+                  color: '#425A76',
+                  py: '1px',
+                }}
+              >
+                <img src={checkedIcon} alt='checked' className='w-4 mr-1' />
+                {field.label}
+              </MenuItem>
+            ))
+        )}
       </Menu>
     </>
   );

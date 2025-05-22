@@ -334,7 +334,6 @@ const Resource: React.FC<ResourceProps> = ({
         value={value}
         setAppliedFilters={(data) => {
           setAppliedFilters(data);
-          setShowFilter(false);
         }}
         showFilter={showFilter}
         filterVisibility={filterVisibility}
@@ -350,7 +349,6 @@ const Resource: React.FC<ResourceProps> = ({
         value={value}
         setAppliedFilters={(data) => {
           setAppliedFilters(data);
-          setShowFilter(false);
         }}
         showFilter={showFilter}
         title='Resources'
@@ -392,12 +390,13 @@ const Resource: React.FC<ResourceProps> = ({
             hoverHighlight={false}
             tableStyle={{ borderBottom: '1px solid #CBD6E2', overflow: 'auto' }}
             stickyHeader={false}
+            stickyColumnsCount={1}
             selectable={false}
             actionWidth={150}
             actionDisplayMode='dropdown'
             actionMenuItems={actionMenuItems}
             loading={isLoading}
-            error={error ? 'Failed to load resource' : undefined}
+            error={error ? 'Failed to load resource data' : undefined}
             rowsPerPage={rowsPerPage}
             currentPage={currentPage}
             totalItems={ResourceList?.count || 0}

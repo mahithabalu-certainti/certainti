@@ -357,6 +357,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                   selectable={true}
                   hasActions={true}
                   borderHide={true}
+                  stickyColumnsCount={2}
                 />
               ) : !loading && isDataLoaded && accounts?.length === 0 ? (
                 <TableRow

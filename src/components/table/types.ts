@@ -75,6 +75,7 @@ export interface ListTableProps<T extends RowData> {
   hoverHighlight?: boolean;
   tableStyle?: React.CSSProperties;
   stickyHeader?: boolean;
+  stickyColumnsCount?: number;
   // Selection
   selectable?: boolean;
   onSelectionChange?: (selectedIds: string[]) => void;

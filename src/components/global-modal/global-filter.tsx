@@ -189,10 +189,10 @@ const GlobalFilterModal: React.FC<GlobalModalProps> = ({
     return availableAccounts?.length ? availableAccounts : null;
   };
 
+  if (!isGlobalModalOpen) return null;
+
   return (
-    <div
-      className={`${isGlobalModalOpen ? 'block' : 'hidden'} absolute right-0 z-50`}
-    >
+    <div className={`absolute right-0 z-50`}>
       <div className='h-auto min-h-[165px] w-[530px] min-w-[530px] max-w-[530px] flex flex-col gap-4 bg-white rounded-[8px] p-6 border border-[#CBD6E2]'>
         <div className='flex justify-between items-center'>
           <h2 className='text-[16px] font-bold text-[#2D3E4F]'>Filters</h2>
@@ -410,12 +410,18 @@ const GlobalFilterModal: React.FC<GlobalModalProps> = ({
           <div className='flex justify-end gap-2'>
             <button
               className='text-[12px] rounded-[2px] text-[#425A76] h-[24px] flex items-center px-2 border border-[#CBD6E2] cursor-pointer'
+              style={{
+                background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+              }}
               onClick={handleCloseGlobalModal}
             >
               Close
             </button>
             <button
-              className='text-[12px] rounded-[2px] text-white h-[24px] flex items-center px-2 bg-[#2D3E4F] cursor-pointer'
+              className='text-[12px] rounded-[2px] text-[#425A76] h-[24px] flex items-center px-2 border border-[#CBD6E2] cursor-pointer'
+              style={{
+                background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+              }}
               onClick={handleSaveFilters}
             >
               Apply

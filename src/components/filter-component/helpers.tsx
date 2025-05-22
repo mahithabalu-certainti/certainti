@@ -441,6 +441,8 @@ export const NewMultiSelectFilterControl: React.FC<{
             '&.Mui-checked': {
               color: '#1755E7',
             },
+            padding: '0px',
+            mr: 1,
           }}
         />
         {option}

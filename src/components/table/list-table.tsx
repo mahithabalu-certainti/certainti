@@ -26,6 +26,7 @@ const ListTable = <T extends RowData>({
   hoverHighlight = false,
   tableStyle,
   stickyHeader = false,
+  stickyColumnsCount = 0,
   // Selection
   selectable = false,
   onSelectionChange,
@@ -82,7 +83,7 @@ const ListTable = <T extends RowData>({
     : data.slice(currentPage * rowsPerPage, (currentPage + 1) * rowsPerPage);
 
   return (
-    <div className='w-full'>
+    <>
       <TableContainer sx={tableStyle}>
         <MuiTable
           stickyHeader={stickyHeader}
@@ -226,6 +227,7 @@ const ListTable = <T extends RowData>({
                 columnsCount={columns.length}
                 selectable={selectable}
                 hasActions={actionMenuItems?.length > 0}
+                stickyColumnsCount={stickyColumnsCount}
               />
             )}
 
@@ -437,7 +439,7 @@ const ListTable = <T extends RowData>({
           }
         />
       )}
-    </div>
+    </>
   );
 };
 

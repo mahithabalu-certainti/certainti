@@ -30,32 +30,23 @@ export interface ResourceSkillType {
 }
 
 export function convertResourceSkill(
-  resourceSkill: ResourceSkillList[]
-): ResourceSkillType[] {
-  const resourceSkillList: ResourceSkillType[] = [];
+  resourceSkill: ResourceSkillList
+): ResourceSkillType {
+  const convertedSkill: ResourceSkillType = {
+    resourceRole: resourceSkill.resource_role,
+    resourceRID: resourceSkill.resource_rid,
+    skillRId: resourceSkill.rid,
+    startDate: resourceSkill.start_date,
+    skillDetails: resourceSkill.skill_details,
+    skillType: resourceSkill.skill_type_name,
+    skillSubType: resourceSkill.skill_subtype_name,
+    skillLevel: resourceSkill.skill_level,
+    skillTypeId: resourceSkill.skill_type_rid,
+    skillSubTypeId: resourceSkill.skill_subtype_rid,
+    skillTypeOthers: resourceSkill.skill_type_others,
+    skillSubTypeOthers: resourceSkill.skill_subtype_others,
+    comments: resourceSkill.comments,
+  };
 
-  function ProcessResourceSkill(skill: ResourceSkillList): void {
-    const convertedSkill: ResourceSkillType = {
-      resourceRole: skill.resource_role,
-      resourceRID: skill.resource_rid,
-      skillRId: skill.rid,
-      startDate: skill.start_date,
-      skillDetails: skill.skill_details,
-      skillType: skill.skill_type_name,
-      skillSubType: skill.skill_subtype_name,
-      skillLevel: skill.skill_level,
-      skillTypeId: skill.skill_type_rid,
-      skillSubTypeId: skill.skill_subtype_rid,
-      skillTypeOthers: skill.skill_type_others,
-      skillSubTypeOthers: skill.skill_subtype_others,
-      comments: skill.comments,
-    };
-    resourceSkillList.push(convertedSkill);
-  }
-
-  resourceSkill.forEach((skill) => {
-    ProcessResourceSkill(skill);
-  });
-
-  return resourceSkillList;
+  return convertedSkill;
 }
