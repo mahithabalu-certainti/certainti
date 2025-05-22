@@ -1,5 +1,6 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { Project } from "./project";
+import { R_NUMBER_PREFIX } from "../utils/constants";
 
 export interface KeyContactDetailsAttributes {
   rid?: string;
@@ -114,29 +115,6 @@ export class KeyContact
         tableName: "key_contact_details",
         timestamps: false,
         underscored: true,
-        hooks: {
-          beforeValidate: async (keyContact) => {
-            if (!keyContact.r_number) {
-              const latest = await KeyContact.findOne({
-                order: [["r_number", "DESC"]],
-              });
-
-              let nextNumber = "0000000001";
-              if (latest?.r_number?.startsWith("KEY")) {
-                const currentNum = parseInt(
-                  latest.r_number.split(" ")[1] || "0"
-                );
-                nextNumber = (currentNum + 1).toString().padStart(10, "0");
-              }
-
-              keyContact.setDataValue("r_number", `KEY ${nextNumber}`);
-            }
-          },
-          beforeUpdate: (KeyContact) => {
-            KeyContact.setDataValue("created_datetime", new Date());
-            KeyContact.setDataValue("modified_datetime", new Date());
-          },
-        },
       }
     );
 
@@ -153,5 +131,20 @@ export class KeyContact
     });
 
     return KeyContact;
+  }
+}
+
+export async function setupKeyContactsSequence(sequelize: Sequelize, schemaName:string) {
+  try {
+    await sequelize.query(
+      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".key_contact_seq START 1`
+    );
+
+    await sequelize.query(`ALTER TABLE "${schemaName}".key_contact_details
+          ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.KEY_CONTACT_DETAILS} ' || LPAD(nextval('"${schemaName}".key_contact_seq')::text, 10, '0')`);
+
+    console.log("Key contact sequence setup complete");
+  } catch (error) {
+    console.error("Error setting up Key contact sequence:", error);
   }
 }

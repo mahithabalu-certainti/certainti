@@ -106,7 +106,7 @@ export class ProjectSummary
         },
         r_number: {
           type: DataTypes.STRING(20),
-          allowNull: false,
+          allowNull: true,
           unique: true,
         },
         project_number: {
@@ -151,7 +151,7 @@ export class ProjectSummary
         },
         project_classification_rid: {
           type: DataTypes.UUID,
-          allowNull: true
+          allowNull: true,
         },
         project_client_group: DataTypes.STRING(200),
         project_group: DataTypes.STRING(150),
@@ -191,16 +191,16 @@ export class ProjectSummary
           allowNull: true,
         },
         project_point_of_contact: {
-            type: DataTypes.STRING(100),
-            allowNull: true,
+          type: DataTypes.STRING(100),
+          allowNull: true,
         },
         technical_consultant: {
-            type: DataTypes.STRING(100),
-            allowNull: true,
+          type: DataTypes.STRING(100),
+          allowNull: true,
         },
         financial_consultant: {
-            type: DataTypes.STRING(100),
-            allowNull: true,
+          type: DataTypes.STRING(100),
+          allowNull: true,
         },
         created_datetime: {
           type: DataTypes.DATE,
@@ -230,36 +230,24 @@ export class ProjectSummary
         tableName: "project_summary",
         timestamps: false,
         underscored: true,
-        hooks: {
-          beforeValidate: async (account) => {
-            const latestAccount = await ProjectSummary.findOne({
-              order: [["r_number", "DESC"]],
-            });
-
-            let nextNumber = "0000000001";
-            if (latestAccount) {
-              const currentNumber = parseInt(
-                latestAccount.r_number?.split(" ")[1] || "0"
-              );
-              nextNumber = (currentNumber + 1).toString().padStart(10, "0");
-            }
-            const accountCode = `${R_NUMBER_PREFIX.PROJECT_SUMMARY} ${nextNumber}`;
-            account.setDataValue("r_number", accountCode);
-          },
-        },
       }
     );
 
-    // ProjectSummary.belongsTo(sequelize.models.Account, {
-    //   foreignKey: "account_rid",
-    //   as: "account",
-    // });
-
-    // ProjectSummary.belongsTo(sequelize.models.Industry, {
-    //   foreignKey: "industry_rid",
-    //   as: "industry",
-    // });
-
     return ProjectSummary;
+  }
+}
+
+export async function setupProjectSummarySequence(sequelize: Sequelize) {
+  try {
+    await sequelize.query(
+      "CREATE SEQUENCE IF NOT EXISTS project_summary_seq START 1"
+    );
+
+    await sequelize.query(`ALTER TABLE project_summary
+        ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT_SUMMARY} ' || LPAD(nextval('project_summary_seq')::text, 10, '0')`);
+
+    console.log("Project summary sequence setup complete");
+  } catch (error) {
+    console.error("Error setting up Project summary sequence:", error);
   }
 }

@@ -1,5 +1,6 @@
 import { initSequelize } from "../config/maindbDataSource";
 import { initOrgSequelize } from "../config/orgdbDataSource";
+import { setupKeyContactsSequence } from "../models/projectSummary";
 import { R_NUMBER_PREFIX } from "../utils/constant";
 import {
   IAccount,
@@ -30,6 +31,7 @@ class SchemaService {
     await this.createImportTable(schemaName, sequelize);
     await this.createKafkaEventsTable(schemaName, sequelize);
     await this.createKeyContact(schemaName, sequelize);
+    await setupKeyContactsSequence(sequelize, schemaName);
   }
 
   private async createAccountDetailsTable(schemaName: string, sequelize: any) {
