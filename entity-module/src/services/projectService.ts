@@ -674,7 +674,7 @@ export class ProjectService {
           mainDbInit
         );
 
-        projectData = this.schemaService.finalProjectSort(projectData, finalMetaDataSortBy, finalMetaDataSortOrder);
+        projectData = this.schemaService.finalProjectSort(projectData, finalMetaDataSortBy, finalMetaDataSortOrder, filters);
       }
 
       return {
@@ -1306,8 +1306,15 @@ export class ProjectService {
       "fiscal_year"
     ];
   
-    const numberFields = ["total_effort", "total_cost", "fiscal_year"]; 
+    const numberFields = ["total_effort", "total_cost", "fiscal_year", "total_fte", "total_fte_cost", "total_sub_con", 
+      "total_sub_con_cost", "total_non_labor_cost", "qualified_research_expenditure", "qre"]; 
     const dateFields = [ "project_startdate", "project_enddate"];
+    const enumFields = [
+      "project_status",
+      "project_type",
+      "fiscal_year",
+    ];
+    const booleanFields = [ "is_rd_qualified" ];
   
     const filterFields = this.getFilterFields(isAllProject);
   
@@ -1315,16 +1322,20 @@ export class ProjectService {
       if (filters[clientField]) {
         const fieldFilter = filters[clientField];
         const isNumber = numberFields.includes(dbField);
+        console.log("isNumber", isNumber);
         const isDate = dateFields.includes(dbField);
-        const isTextCastNeeded = castToTextFields.includes(dbField) && !isNumber && !isDate;
+        const isEnum = enumFields.includes(dbField);
+        const isBoolean = booleanFields.includes(dbField);
+        const isTextCastNeeded = castToTextFields.includes(dbField) && !isNumber && !isDate && !isBoolean;
+
 
         if (isTextCastNeeded) {
           whereClause[dbField] = Sequelize.where(
             Sequelize.cast(Sequelize.col(dbField), "TEXT"),
-            this.getFieldFilter(fieldFilter, dbField, isNumber, isDate)
+            this.getFieldFilter(fieldFilter, dbField, isNumber, isDate, isEnum, isBoolean)
           );
         } else {
-          whereClause[dbField] = this.getFieldFilter(fieldFilter, dbField, isNumber, isDate);
+          whereClause[dbField] = this.getFieldFilter(fieldFilter, dbField, isNumber, isDate, isEnum, isBoolean);
         }
       }
     });
@@ -1336,7 +1347,9 @@ export class ProjectService {
     fieldFilter: any,
     dbField: string,
     isNumberField: boolean,
-    isDateField: boolean
+    isDateField: boolean,
+    isEnumField: boolean,
+    isBooleanField: boolean
   ): any {
     if (isNumberField) {
       if (fieldFilter.equals !== undefined) {
@@ -1395,6 +1408,33 @@ export class ProjectService {
             this.normalizeDate(fieldFilter.between[1]),
           ],
         };
+      }
+      if (fieldFilter.isEmpty === true) {
+        return { [Op.or]: [null] };
+      }
+    }
+
+    if (isEnumField) {
+      if (fieldFilter.equals !== undefined) {
+        return { [Op.eq]: fieldFilter.equals };
+      }
+      if (fieldFilter.not_equals !== undefined) {
+        return { [Op.ne]: fieldFilter.not_equals };
+      }
+      if (fieldFilter.in && Array.isArray(fieldFilter.in)) {
+        return { [Op.in]: fieldFilter.in };
+      }
+      if (fieldFilter.isEmpty === true) {
+        return { [Op.or]: [null] };
+      }
+    }
+
+    if (isBooleanField) {
+      if (fieldFilter.isTrue === true) {
+        return { [Op.eq]: true };
+      }
+      if (fieldFilter.isFalse === true) {
+        return { [Op.eq]: false };
       }
       if (fieldFilter.isEmpty === true) {
         return { [Op.or]: [null] };
@@ -1503,7 +1543,6 @@ export class ProjectService {
       { clientField: "r_number", dbField: "r_number" },
       { clientField: "project_code", dbField: "project_code" },
       { clientField: "program_name", dbField: "program_name" },
-      { clientField: "industry_name", dbField: "industry_name" },
       { clientField: "project_name", dbField: "project_name" },
       { clientField: "project_description", dbField: "project_description" },
       { clientField: "fiscal_year", dbField: "fiscal_year" },
@@ -1513,12 +1552,41 @@ export class ProjectService {
       { clientField: "project_status", dbField: "project_status" },
       { clientField: "project_startdate", dbField: "project_startdate" },
       { clientField: "project_enddate", dbField: "project_enddate" },
+      { clientField: "project_client_group", dbField: "project_client_group" },
+      { clientField: "project_group", dbField: "project_group" },
+      { clientField: "project_status", dbField: "project_status" },
       { clientField: "created_datetime", dbField: "created_datetime" },
       { clientField: "created_by", dbField: "created_by" },
+      { clientField: "total_fte_cost", dbField: "total_fte_cost" },
+      { clientField: "total_fte", dbField: "total_fte" },
+      { clientField: "total_sub_con", dbField: "total_sub_con" },
+      { clientField: "total_sub_con_cost", dbField: "total_sub_con_cost" },
+      { clientField: "total_non_labor_cost", dbField: "total_non_labor_cost" },
+      { clientField: "comments", dbField: "comments" },
+      { clientField: "qualified_research_expenditure", dbField: "qualified_research_expenditure" },
+      { clientField: "is_rd_qualified", dbField: "is_rd_qualified" },
+      { clientField: "qre", dbField: "qre" },
     ];
 
     return projectFilterFields;
   }
+
+  buildMetaDataWhereClause(filters: Record<string, any>){
+
+    const filterFields = [
+      { clientField: "account_name", dbField: "account_name" },
+      { clientField: "country_name", dbField: "country_name" },
+      { clientField: "region_name", dbField: "region_name" },
+      { clientField: "currency_name", dbField: "currency_name" },
+      { clientField: "technical_consultant", dbField: "technical_consultant" },
+      { clientField: "financial_consultant", dbField: "financial_consultant" },
+      { clientField: "project_point_of_contact", dbField: "project_point_of_contact" },
+      { clientField: "classification_name", dbField: "classification_name" },
+    ]
+  
+    return filterFields;
+  }
+
   private getNumericForBlendedRate(rateString: string): string | null {
     if (rateString) {
       // Extract numeric value only (including decimals)

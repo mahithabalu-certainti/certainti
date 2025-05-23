@@ -9,16 +9,37 @@ import {
 } from "../utils/types";
 
 import { DataTypes, Op, Sequelize } from "sequelize";
-import { ResourceFiscal,setupResourceFiscalSeq } from "../models/resourceFiscal";
+import {
+  ResourceFiscal,
+  setupResourceFiscalSeq,
+} from "../models/resourceFiscal";
 import { initMainDbSequelize } from "../config/mainDataSource";
-import { ResourcesHistory, setupResourceHistorySeq } from "../models/resourceHistory";
-import { ResourcesTimeline, setupResourceTimelineSeq } from "../models/resourceTimeline";
+import {
+  ResourcesHistory,
+  setupResourceHistorySeq,
+} from "../models/resourceHistory";
+import {
+  ResourcesTimeline,
+  setupResourceTimelineSeq,
+} from "../models/resourceTimeline";
 import { ResourceCost, setupResourceCostSeq } from "../models/resourceCost";
-import { ResourceCostTimeline, setupResourceCostTimelineSeq} from "../models/resourceCostTimeline";
-import { ResourceCostHistory, setupResourceCostHistorySeq } from "../models/resourceCostHistory";
+import {
+  ResourceCostTimeline,
+  setupResourceCostTimelineSeq,
+} from "../models/resourceCostTimeline";
+import {
+  ResourceCostHistory,
+  setupResourceCostHistorySeq,
+} from "../models/resourceCostHistory";
 import { ResourceSkill, setupResourceSkillSeq } from "../models/resourceSkill";
-import { ResourceSkillTimeline, setupResourceSkillTimelineSeq } from "../models/resourceSkillTimeline";
-import { ResourceSkillHistory, setupResourceSkillHistorySeq } from "../models/resourceSkillHistory";
+import {
+  ResourceSkillTimeline,
+  setupResourceSkillTimelineSeq,
+} from "../models/resourceSkillTimeline";
+import {
+  ResourceSkillHistory,
+  setupResourceSkillHistorySeq,
+} from "../models/resourceSkillHistory";
 import { KeyContact } from "../models/keyContactDetails";
 
 // import { Skill } from "../models/skill";
@@ -132,7 +153,7 @@ class SchemaService {
       const ResourceSkillHistoryModel = await ResourceSkillHistory.initialize(
         sequelize,
         schemaName
-      )
+      );
 
       await Resource.sync({ force: false });
       await ResourcesHistoryModel.sync({ force: false });
@@ -1878,16 +1899,16 @@ class SchemaService {
         );
 
         const classificationMap = Object.fromEntries(
-          (Array.isArray(classificationRows) ? classificationRows : []).map((c: any) => [
-            c.rid,
-            c,
-          ])
+          (Array.isArray(classificationRows) ? classificationRows : []).map(
+            (c: any) => [c.rid, c]
+          )
         );
 
         updatedProjects = project.map((res: any) => ({
           ...(typeof res.toJSON === "function" ? res.toJSON() : res),
           classification_name:
-          classificationMap[res.project_classification_rid]?.classification_name || null,
+            classificationMap[res.project_classification_rid]
+              ?.classification_name || null,
         }));
       }
 
@@ -1897,28 +1918,79 @@ class SchemaService {
     }
   }
 
-  finalProjectSort(project: any[], sortBy: string, sortOrder: string){
-    if (sortBy && sortBy !== "created_datetime") {
-      const sortedList = [...project].sort((a, b) => {
-        const valA = a[sortBy];
-        const valB = b[sortBy];
+  finalProjectSort(
+    project: any[],
+    sortBy: string,
+    sortOrder: string,
+    filters?: Record<string, any>
+  ) {
+
+    const filterableClientFields = [
+      "account_name",
+      "country_name",
+      "region_name",
+      "currency_name",
+      "technical_consultant",
+      "financial_consultant",
+      "project_point_of_contact",
+      "classification_name"
+    ];
+
+    let filteredProjects = [...project];
+
+    if (filters) {
+      filteredProjects = filteredProjects.filter((project) => {
+        return filterableClientFields.every((key) => {
+          const filter = filters[key];
+          if (!filter) return true; 
   
-        if (valA == null) return sortOrder === 'ASC' ? 1 : -1;
-        if (valB == null) return sortOrder === 'ASC' ? -1 : 1;
+          const value = project[key];
   
-        if (typeof valA === 'string' && typeof valB === 'string') {
-          return sortOrder === 'ASC'
-            ? valA.localeCompare(valB)
-            : valB.localeCompare(valA);
-        }
+          if (filter.equals !== undefined) {
+            return value === filter.equals;
+          }
+          if (filter.not_equals !== undefined) {
+            return value !== filter.not_equals;
+          }
+          if (filter.contains !== undefined) {
+            if (typeof value === 'string') {
+              return value.toLowerCase().includes(filter.contains.toLowerCase());
+            }
+            return false;
+          }
+          if (filter.not_contains !== undefined && typeof value === 'string') {
+            return !value.toLowerCase().includes(filter.not_contains.toLowerCase());
+          }
+          if (filter.isEmpty === true) {
+            return value === null || value === '' || value === 'N/A';
+          }
   
-        return sortOrder === 'ASC' ? valA - valB : valB - valA;
+          return true;
+        });
       });
-  
-      return sortedList;
     }
-  
-    return project;
+
+    if (!sortBy || sortBy === "created_datetime") {
+      return filteredProjects;
+    }
+
+    const sortedList = filteredProjects.sort((a, b) => {
+      const valA = a[sortBy];
+      const valB = b[sortBy];
+
+      if (valA == null) return sortOrder === "ASC" ? 1 : -1;
+      if (valB == null) return sortOrder === "ASC" ? -1 : 1;
+
+      if (typeof valA === "string" && typeof valB === "string") {
+        return sortOrder === "ASC"
+          ? valA.localeCompare(valB)
+          : valB.localeCompare(valA);
+      }
+
+      return sortOrder === "ASC" ? valA - valB : valB - valA;
+    });
+
+    return sortedList;
   }
 }
 
