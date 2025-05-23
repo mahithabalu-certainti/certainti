@@ -640,24 +640,49 @@ class ResourceCostSchemaService {
           }
         });
       }
+      
       const rawResult = resourceCost || [];
       let exportData = rawResult.map((resource: any) => {
         return {
-          "Name": resource.resource_name,
-          "Currency": resource.currency_code,
-          "Start Date": resource.effective_date = moment(resource.effective_date).format(
+          "Name": resource.resource_name || "NA",
+          "Currency": resource.currency_code || "NA",
+          "Start Date": resource.effective_date ? moment(resource.effective_date).format(
             "MM/DD/YYYY"
-          ) as any,
-          "End Date": resource.end_date = moment(resource.end_date).format(
+          ) : "NA" as any,
+          "End Date": resource.end_date ? moment(resource.end_date).format(
             "MM/DD/YYYY"
-          ) as any,
-          "Hourly": resource.hourly_cost,
-          "Daily": resource.daily_cost,
-          "Bi-Weekly": resource.bi_weekly_cost,
-          "Weekly": resource.weekly_cost,
-          "Monthly": resource.monthly_cost,
+          ) : "NA" as any,
+          "Hourly": resource.hourly_cost ? new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+            maximumSignificantDigits: 16
+          }).format(Number(resource.hourly_cost)) : "NA",
+          "Daily": resource.daily_cost ? new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+            maximumSignificantDigits: 16
+          }).format(Number(resource.daily_cost)) : "NA",
+          "Bi-Weekly": resource.bi_weekly_cost ? new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+            maximumSignificantDigits: 16
+          }).format(Number(resource.bi_weekly_cost)) : "NA",
+          "Weekly": resource.weekly_cost ? new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+            maximumSignificantDigits: 16
+          }).format(Number(resource.weekly_cost)) : "NA",
+          "Monthly": resource.monthly_cost ? new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+            maximumSignificantDigits: 16
+          }).format(Number(resource.monthly_cost)) : "NA",
           // "Semi Annual": resource.semi_annual_cost,
-          "Annual": resource.annual_cost,
+          "Annual": resource.annual_cost ? new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+            maximumSignificantDigits: 16
+          }).format(Number(resource.annual_cost)) : "NA",
         };
       });
 

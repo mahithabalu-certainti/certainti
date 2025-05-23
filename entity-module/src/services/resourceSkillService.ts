@@ -121,7 +121,6 @@ class ResourceSkillService {
       const [
         resourceSkillTableCreated,
         timelineTableCreated,
-        skillTableCreated,
       ] = await Promise.all([
         resourceSkillSchemaService.createTablesInSchema(
           schemaName,
@@ -131,7 +130,6 @@ class ResourceSkillService {
           schemaName,
           "resource_skill_timeline"
         ),
-        resourceSkillSchemaService.createTablesInSchema(schemaName, "skill"),
       ]);
 
       if (!resourceSkillTableCreated) {
@@ -148,13 +146,7 @@ class ResourceSkillService {
           errorMessage:
             "Account schema or resource_skill_timeline table could not be created",
         };
-      } else if (!skillTableCreated) {
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: "Account schema or skill table could not be created",
-        };
-      }
+      } 
 
       // Check if skill exists or create a new one
       // let skillRidToUse = skill_rid;

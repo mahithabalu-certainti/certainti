@@ -1,13 +1,14 @@
-import { DataTypes, Model, Optional, Sequelize } from "sequelize";
+import { DataTypes, Model, Optional, Sequelize, UUID } from "sequelize";
 import { DatabaseConnection } from "./dbConnectionModel";
 import { Country } from "./countryModel";
 import { Currency } from "./currencyModel";
 import { Industry } from "./industryModel";
 import { R_NUMBER_PREFIX } from "../utils/constant";
+import { AccountFileDropConfig } from "./accountFileDropConfigModel";
 interface AccountAttributes {
   rid: string;
   eid?: string;
-  r_number: string;
+  r_number?: string;
   account_name: string;
   comments?: string;
   region?: string;
@@ -21,6 +22,9 @@ interface AccountAttributes {
   industry_name_other?: string;
   status: string;
   annual_revenue: string;
+  is_file_drop_enabled?: boolean;
+  file_drop_medium?: string;
+  file_drop_config_id?: string; 
   created_datetime?: Date;
   modified_datetime?: Date;
   created_by?: string;
@@ -35,7 +39,7 @@ export class Account
   implements AccountAttributes
 {
   public rid!: string;
-  public r_number!: string;
+  public r_number?: string;
   public account_name!: string;
   public comments?: string;
   public is_parent!: boolean;
@@ -50,6 +54,9 @@ export class Account
   public industry_name_other?: string;
   public status!: string;
   public annual_revenue!: string;
+  public is_file_drop_enabled?: boolean;
+  public file_drop_medium?: string;
+  public file_drop_config_id?: string; 
   public created_datetime?: Date;
   public modified_datetime?: Date;
   public created_by?: string;
@@ -64,8 +71,9 @@ export class Account
           primaryKey: true,
         },
         r_number: {
-          type: DataTypes.STRING(255),
-          allowNull: false,
+          type: DataTypes.STRING(20),
+          allowNull: true,
+          unique: true,
         },
         account_name: {
           type: DataTypes.STRING(255),
@@ -120,12 +128,29 @@ export class Account
           allowNull: true,
         },
         industry_rid: {
-          type: DataTypes.STRING(25),
+          type: UUID,
           allowNull: false,
         },
         industry_name_other: {
           type: DataTypes.STRING(255),
           allowNull: true
+        },
+        is_file_drop_enabled: {
+          type: DataTypes.BOOLEAN,
+          allowNull: true,
+          defaultValue: false,
+        },
+        file_drop_medium: {
+          type: DataTypes.ENUM('SFTP', 'FTP', 'AZURE_BLOB', 'AWS_S3'),
+          allowNull: true,
+        },
+        file_drop_config_id: {
+          type: DataTypes.UUID,
+          allowNull: true,
+          references: {
+            model: "account_file_drop_config",
+            key: "rid"
+          }
         },
         created_datetime: {
           type: DataTypes.DATE,
@@ -155,25 +180,9 @@ export class Account
           beforeUpdate: (user) => {
             user.setDataValue("modified_datetime", new Date());
           },
-          beforeValidate: async (account) => {
-            // Get the latest account number and increment it
-            const latestAccount = await Account.findOne({
-              order: [['r_number', 'DESC']],
-            });
-            
-            let nextNumber = '0000000001';
-            if (latestAccount) {
-              const currentNumber = parseInt(latestAccount.r_number?.split(' ')[1] || '0');
-              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
-            }
-            
-            const accountCode = `${R_NUMBER_PREFIX.ACCOUNT} ${nextNumber}`;
-            account.setDataValue("r_number", accountCode);
-          },
         },
       }
     );
-
     // Associations
     Account.belongsTo(Account, {
       foreignKey: "parent_account_rid",
@@ -204,5 +213,28 @@ export class Account
       foreignKey: "currency_rid",
       as: "currency",
     });
+
+    Account.belongsTo(AccountFileDropConfig, {
+      foreignKey: "file_drop_config_id",
+      as: "file_drop_config",
+    });
+  }
+}
+
+
+export async function setupAccountSequence(sequelize: Sequelize) {
+  try {
+    // Step 1: Create the sequence if it doesn't exist
+    await sequelize.query('CREATE SEQUENCE IF NOT EXISTS account_seq START 1');
+    
+    // Step 2: Set the default value for r_number to use the sequence
+    await sequelize.query(`ALTER TABLE account
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.ACCOUNT} ' || LPAD(nextval('account_seq')::text, 10, '0')`);
+    
+    console.log('Account sequence setup complete');
+  } catch (error) {
+    console.error('Error setting up Account sequence:', error);
+    // Don't throw the error to allow the application to continue starting up
+    // The sequence setup can be handled separately if needed
   }
 }

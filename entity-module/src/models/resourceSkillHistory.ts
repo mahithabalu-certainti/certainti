@@ -35,8 +35,9 @@ export class ResourceSkillHistory extends Model<ResourceSkillHistoryAttributes, 
         primaryKey: true,
        },
        r_number: {
-        type: DataTypes.STRING(255),
+        type: DataTypes.STRING(20),
         allowNull: true,
+        unique: true,
        },
        resource_skill_rid: {
         type: DataTypes.UUID,
@@ -70,27 +71,26 @@ export class ResourceSkillHistory extends Model<ResourceSkillHistoryAttributes, 
         modelName: "ResourceSkillHistory",
         tableName: "resource_skill_history",
         timestamps: false,
-        hooks: {
-          beforeCreate: async (resourceSkillHistory: ResourceSkillHistory) => {
-            console.log("line 80 : ");
-            // Generate r_number if not provided
-            if (!resourceSkillHistory.r_number) {
-              // Get the latest skill history number and increment it
-            const latestAccount = await ResourceSkillHistory.findOne({
-              order: [['r_number', 'DESC']],
-            });
-            
-            let nextNumber = '0000000001';
-            if (latestAccount) {
-              const currentNumber = parseInt(latestAccount.r_number?.split(' ')[1] || '0');
-              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
-            }
-              resourceSkillHistory.r_number = `${R_NUMBER_PREFIX.RESOURCE_SKILL_HISTORY} ${nextNumber}`;
-            }
-          }
-        }
       }
     );
     return ResourceSkillHistory;
+  }
+}
+
+
+export async function setupResourceSkillHistorySeq(sequelize: Sequelize, schemaName: string) {
+  try {
+    // Step 1: Create the sequence if it doesn't exist
+    await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_skill_history_seq START 1`);
+    
+    // Step 2: Set the default value for r_number to use the sequence
+    await sequelize.query(`ALTER TABLE "${schemaName}".resource_skill_history
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE_SKILL_HISTORY} ' || LPAD(nextval('"${schemaName}".resource_skill_history_seq')::text, 10, '0')`);
+    
+    console.log('Resource skill history sequence setup complete');
+  } catch (error) {
+    console.error('Error setting up Resource skill history sequence:', error);
+    // Don't throw the error to allow the application to continue starting up
+    // The sequence setup can be handled separately if needed
   }
 }

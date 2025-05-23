@@ -1,12 +1,15 @@
 import { initSequelize } from "../config/maindbDataSource";
-import { Account } from "./accountModel";
+import { Account, setupAccountSequence } from "./accountModel";
 import { Currency } from "./currencyModel";
-import { Country } from "./countryModel";
-import { DatabaseConnection } from "./dbConnectionModel";
-import { Region } from "./regionModel";
-import { States } from "./stateModel";
+import { Country, setupCountrySequence } from "./countryModel";
+import { DatabaseConnection, setupDbConnectionSequence } from "./dbConnectionModel";
+import { Region, setupRegionSequence } from "./regionModel";
+import { States, setupStateSequence } from "./stateModel";
 import { City } from "./cityModel";
-import { Industry } from "./industryModel";
+import { AccountFileDropConfig } from "./accountFileDropConfigModel";
+import { Industry, setupIndustrySequence} from "./industryModel";
+import { ProjectSummary, setupProjectSummarySequence } from "./projectSummary";
+
 export const models: {
   Account: typeof Account;
   Currency: typeof Currency;
@@ -16,6 +19,8 @@ export const models: {
   States: typeof States;
   City: typeof City;
   Industry: typeof Industry;
+  AccountFileDropConfig: typeof AccountFileDropConfig;
+  ProjectSummary: typeof ProjectSummary;
 } = {
   Account: Account,
   Currency: Currency,
@@ -25,6 +30,8 @@ export const models: {
   States: States,
   City: City,
   Industry: Industry,
+  AccountFileDropConfig: AccountFileDropConfig,
+  ProjectSummary: ProjectSummary
 };
 
 export async function initModels() {
@@ -37,8 +44,17 @@ export async function initModels() {
     City.initialize(sequelize);
     Industry.initialize(sequelize);
     DatabaseConnection.initialize(sequelize);
+    AccountFileDropConfig.initialize(sequelize);
     Account.initialize(sequelize);
+    ProjectSummary.initialize(sequelize);
     await sequelize.sync({ force: false });
+    await setupDbConnectionSequence(sequelize);
+    await setupCountrySequence(sequelize);
+    await setupRegionSequence(sequelize);
+    await setupStateSequence(sequelize);
+    await setupIndustrySequence(sequelize);
+    await setupAccountSequence(sequelize);
+    await setupProjectSummarySequence(sequelize);
   } catch (err) {
     console.log("Errr loading models", err);
   }

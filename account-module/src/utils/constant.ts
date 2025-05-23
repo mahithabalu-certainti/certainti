@@ -30,4 +30,11 @@ export const constants = {
 
 export const R_NUMBER_PREFIX = {
   ACCOUNT: 'ACC',
+  COUNTRY: 'CON',
+  DATABASE_CONNECTION: 'DBC',
+  INDUSTRY: 'IDU',
+  REGION: 'REG',
+  STATE: 'STA',
+  PROJECT_SUMMARY: 'PRS',
+  KEY_CONTACT_DETAILS: 'KEY'
 }

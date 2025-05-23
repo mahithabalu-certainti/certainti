@@ -1,5 +1,6 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { R_NUMBER_PREFIX } from "../utils/constants";
+import { Project } from "./project";
 
 export interface ProjectFiscalAttributes {
   rid?: string;
@@ -100,7 +101,7 @@ export class ProjectFiscal
   implements ProjectFiscalAttributes
 {
   public rid?: string;
-  public r_number!: string;
+  public r_number?: string;
   public project_rid!: string;
   public project_name!: string;
   public eid?: string;
@@ -189,7 +190,7 @@ export class ProjectFiscal
   public claim_status?: string | null;
 
   static initialize(sequelize: Sequelize, schema: string) {
-    return ProjectFiscal.init(
+    const model = ProjectFiscal.init(
       {
         rid: {
           type: DataTypes.UUID,
@@ -198,7 +199,8 @@ export class ProjectFiscal
         },
         r_number: {
           type: DataTypes.STRING(20),
-          allowNull: false,
+          allowNull: true,
+          unique: true,
         },
         project_rid: {
           type: DataTypes.UUID,
@@ -302,23 +304,38 @@ export class ProjectFiscal
         tableName: "project_fiscal",
         timestamps: false,
         underscored: true,
-        hooks: {
-          beforeValidate: async (projectFiscal) => {
-            // Get the latest project fiscal number and increment it
-            const latestAccount = await ProjectFiscal.findOne({
-              order: [['r_number', 'DESC']],
-            });
-            
-            let nextNumber = '0000000001';
-            if (latestAccount) {
-              const currentNumber = parseInt(latestAccount.r_number?.split(' ')[1] || '0');
-              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
-            }            
-            const accountCode = `${R_NUMBER_PREFIX.PROJECT_FISCAL} ${nextNumber}`;
-            projectFiscal.setDataValue("r_number", accountCode);
-          },
-        },
       }
     );
+
+    ProjectFiscal.belongsTo(Project, {
+      foreignKey: 'project_rid',
+      targetKey: 'rid',
+      as: 'project',
+    });
+
+    Project.hasMany(ProjectFiscal, {
+      foreignKey: 'project_rid',
+      sourceKey: 'rid',
+      as: 'ProjectFiscal',
+    });
+
+    return model;
+  }
+}
+
+export async function setupProjectFiscal(sequelize: Sequelize, schemaName: string) {
+  try {
+    // Step 1: Create the sequence if it doesn't exist
+    await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_fiscal_seq START 1`);
+    
+    // Step 2: Set the default value for r_number to use the sequence
+    await sequelize.query(`ALTER TABLE "${schemaName}".project_fiscal
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT_FISCAL} ' || LPAD(nextval('"${schemaName}".project_fiscal_seq')::text, 10, '0')`);
+    
+    console.log('Project fiscal sequence setup complete');
+  } catch (error) {
+    console.error('Error setting up Project fiscal sequence:', error);
+    // Don't throw the error to allow the application to continue starting up
+    // The sequence setup can be handled separately if needed
   }
 }

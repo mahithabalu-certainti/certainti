@@ -39,8 +39,9 @@ export class ResourceSkillTimeline extends Model<ResourceSkillTimelineAttributes
         primaryKey: true,
        },
        r_number: {
-        type: DataTypes.STRING(255),
+        type: DataTypes.STRING(20),
         allowNull: true,
+        unique: true,
        },
        account_rid: {
         type: DataTypes.UUID,
@@ -84,26 +85,26 @@ export class ResourceSkillTimeline extends Model<ResourceSkillTimelineAttributes
         modelName: "ResourceSkillTimeline",
         tableName: "resource_skill_timeline",
         timestamps: false,
-        hooks: {
-          beforeCreate: async (resourceSkillTimeline: ResourceSkillTimeline) => {
-            // Generate r_number if not provided
-            if (!resourceSkillTimeline.r_number) {
-              // Get the latest skill timeline number and increment it
-            const latestAccount = await ResourceSkillTimeline.findOne({
-              order: [['r_number', 'DESC']],
-            });
-            
-            let nextNumber = '0000000001';
-            if (latestAccount) {
-              const currentNumber = parseInt(latestAccount.r_number?.split(' ')[1] || '0');
-              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
-            }
-              resourceSkillTimeline.r_number = `${R_NUMBER_PREFIX.RESOURCE_SKILL_TIMELINE} ${nextNumber}`;
-            }
-          }
-        }
       }
     );
     return ResourceSkillTimeline;
+  }
+}
+
+
+export async function setupResourceSkillTimelineSeq(sequelize: Sequelize, schemaName: string) {
+  try {
+    // Step 1: Create the sequence if it doesn't exist
+    await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_skill_timeline_seq START 1`);
+    
+    // Step 2: Set the default value for r_number to use the sequence
+    await sequelize.query(`ALTER TABLE "${schemaName}".resource_skill_timeline
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE_SKILL_TIMELINE} ' || LPAD(nextval('"${schemaName}".resource_skill_timeline_seq')::text, 10, '0')`);
+    
+    console.log('Resource skill timeline sequence setup complete');
+  } catch (error) {
+    console.error('Error setting up Resource skill timeline sequence:', error);
+    // Don't throw the error to allow the application to continue starting up
+    // The sequence setup can be handled separately if needed
   }
 }

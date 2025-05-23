@@ -101,7 +101,10 @@ class AccountService {
           finalSortOrder,
         ]);
       }
-
+      if (finalSortBy == "country" || finalSortBy == "currency" || finalSortBy == "industry") {
+           order.push(["account_name", "ASC"]);
+        }
+  
       // Determine if we should include the parent_account_rid filter
       // Only apply this filter if is_parent_account is not set to "NO"
       const baseWhereClause = { ...allWhereClause };
@@ -195,6 +198,8 @@ class AccountService {
         });
       }
 
+      const updatedAccount = await this.schemaService.insertKeyContactInfo(parentAccounts);
+
       // Get total count without pagination
       const totalCount = await repository.count({
         where: baseWhereClause,
@@ -222,7 +227,7 @@ class AccountService {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          account: parentAccounts,
+          account: updatedAccount,
           count: totalCount,
         },
       };
@@ -300,6 +305,10 @@ class AccountService {
             finalSortOrder,
           ]);
         }
+        if (finalSortBy == "country" || finalSortBy == "currency" || finalSortBy == "industry") {
+           order.push(["account_name", "ASC"]);
+        }
+  
         // Determine if we should include the parent_account_rid filter
         // Only apply this filter if is_parent_account is not set to "NO"
         const baseWhereClause = { ...allWhereClause };
@@ -400,27 +409,35 @@ class AccountService {
         let exportDetails: any[] = [];
         cleanedUsers.forEach((account: any) => {
           const baseRow = {
-            "Account Name": account?.account_name || "",
-            "Parent Account": account?.parent_account?.account_name || "",
-            "Account ID": account?.r_number || "",
-            "Industry": account?.industry?.industry_name || "",
-            "Country": account?.country?.country_name || "",
-            "Currency": account?.currency?.currency_code || "",
-            "Annual Revenue": account?.annual_revenue || "",
-            "Status": account?.status === 'active' ? 'Active' : 'In-Active',
+            "Account Name": account?.account_name || "NA",
+            "Parent Account": account?.parent_account?.account_name || "NA",
+            "Account ID": account?.r_number || "NA",
+            "Industry": account?.industry?.industry_name || "NA",
+            "Country": account?.country?.country_name || "NA",
+            "Currency": account?.currency?.currency_code || "NA",
+            "Annual Revenue": account?.annual_revenue ? new Intl.NumberFormat('en-US', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+              useGrouping: true
+            }).format(Number(account.annual_revenue)) : "NA",
+            "Status": account?.status.toLowerCase() === 'active' ? 'Active' : 'In-Active',
           };
           exportDetails.push(baseRow);
           if (Array.isArray(account.child_accounts) && account.child_accounts.length > 0) {
             account.child_accounts.forEach((child: any) => {
               exportDetails.push({
-                "Account Name": child?.account_name || "",
-                "Parent Account": account?.account_name || "", // parent is current account
-                "Account ID": child?.r_number || "",
-                "Industry": child?.industry?.industry_name || "",
-                "Country": child?.country?.country_name || "",
-                "Currency": child?.currency?.currency_code || "",
-                "Annual Revenue": child?.annual_revenue || "",
-                "Status": child?.status === 'active' ? 'Active' : 'In-Active',
+                "Account Name": child?.account_name || "NA",
+                "Parent Account": account?.account_name || "NA", // parent is current account
+                "Account ID": child?.r_number || "NA",
+                "Industry": child?.industry?.industry_name || "NA",
+                "Country": child?.country?.country_name || "NA",
+                "Currency": child?.currency?.currency_code || "NA",
+                "Annual Revenue": account?.annual_revenue ? new Intl.NumberFormat('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                  useGrouping: true
+                }).format(Number(account.annual_revenue)) : "NA",                
+                "Status": child?.status.toLowerCase() === 'active' ? 'Active' : 'In-Active',
               });
             });
           }
@@ -504,7 +521,7 @@ class AccountService {
       const account = await repository.create({
         account_name,
         comments: comments || "",
-        r_number: "fnfdfn",
+        // r_number: "fnfdfn",
         region: parent_account
           ? parent_account.region
           : account_country_region_rid,
@@ -523,25 +540,34 @@ class AccountService {
 
       if (parent_account && data_storage === "store_in_parent") {
         await this.schemaService.insertAccountDetails(
-          parent_account?.r_number,
+          parent_account?.r_number || '',
           accountData,
           account.rid,
           userId
+        );
+        await this.schemaService.manageKeyContacts(
+          key_contacts,
+          account.rid,
+          userId,
+          parent_account?.r_number || '',
         );
       } else {
-        await this.schemaService.createNewSchema(account.r_number);
+        if (account.r_number) {
+          await this.schemaService.createNewSchema(account.r_number);
+        }
         await this.schemaService.insertAccountDetails(
-          account.r_number,
+          account.r_number || '',
           accountData,
           account.rid,
           userId
         );
+        await this.schemaService.manageKeyContacts(
+          key_contacts,
+          account.rid,
+          userId,
+          account.r_number || '',
+        );
       }
-      await this.schemaService.manageKeyContacts(
-        key_contacts,
-        account.rid,
-        userId
-      );
 
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -581,6 +607,7 @@ class AccountService {
         industry_rid,
         industry_name_other,
         key_contacts,
+        parent_account_rid
       } = accountData;
 
       // Check if account name already exists before update
@@ -597,6 +624,16 @@ class AccountService {
           message: HttpStatus.BAD_REQUEST_MESSAGE,
           errorMessage: `An account with the name "${account_name}" already exists. Please choose a different name.`
         };
+      }
+
+      let parent_account: any = null;
+
+      if (data_storage === "store_in_parent" && parent_account_rid !== null) {
+        parent_account = await repository.findOne({
+          where: {
+            rid: parent_account_rid || "",
+          },
+        });
       }
 
       const [affectedCounts, affectedRows] = await repository.update(
@@ -625,30 +662,32 @@ class AccountService {
       const default_r_number = affectedRows[0].r_number;
 
       if (default_parent_id && data_storage === "separate_db") {
-        this.schemaService.updateAccountDetails(
+        await this.schemaService.updateAccountDetails(
           account_rid,
           accountData,
-          default_r_number,
+          default_r_number || '',
           userId
         );
-        this.schemaService.manageKeyContacts(
+        await this.schemaService.manageKeyContacts(
           key_contacts,
           account_rid,
-          userId
+          userId,
+          default_r_number || '',
         );
       }
 
-      if (default_parent_id === "store_in_parent") {
-        this.schemaService.updateAccountDetails(
+      if (default_parent_id && data_storage === "store_in_parent") {
+        await this.schemaService.updateAccountDetails(
           default_parent_id,
           accountData,
-          default_r_number,
+          parent_account?.r_number,
           userId
         );
-        this.schemaService.manageKeyContacts(
+        await this.schemaService.manageKeyContacts(
           key_contacts,
-          default_parent_id,
-          userId
+          account_rid,
+          userId,
+          parent_account?.r_number,
         );
       }
 
@@ -656,13 +695,14 @@ class AccountService {
         this.schemaService.updateAccountDetails(
           account_rid,
           accountData,
-          default_r_number,
+          default_r_number || '',
           userId
         );
         this.schemaService.manageKeyContacts(
           key_contacts,
           account_rid,
-          userId
+          userId,
+          default_r_number || '',
         );
       }
 
@@ -726,7 +766,7 @@ class AccountService {
   }> {
     try {
       const repository = await this.getAccountRepository();
-      const accountById = await repository.findOne({
+      let accountById = await repository.findOne({
         where: {
           rid: account_id,
         },
@@ -758,6 +798,12 @@ class AccountService {
             as: "parent_account",
             attributes: ["account_name"],
           },
+          {
+            model: Industry,
+            as: "industry",
+            attributes: ["rid", "industry_name"],
+            required: false,
+          }
         ],
       });
 
@@ -777,7 +823,8 @@ class AccountService {
       );
       // Fetch key contacts for the account
       const keyContacts = await this.schemaService.fetchKeyContacts(
-        accountById?.rid || ""
+        accountById?.rid || "",
+        acconuntNumber
       );
       let userNames;
       if(accountById)
@@ -790,6 +837,9 @@ class AccountService {
         (accountById as any).dataValues.modified_by = userNames.modified_by_name;
       }
     
+
+      accountById = await this.schemaService.insertIndustyName(accountById);
+
       // Add key contacts to account details
       const accountData = {
         ...accountDetails.length > 0 ? accountDetails[0] : {},

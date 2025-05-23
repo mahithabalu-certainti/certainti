@@ -9,6 +9,7 @@ import {
   handleSuccessResponse,
   successLog,
   validateRequest,
+  generateExcelBase64
 } from "../utils/helpers";
 
 import {
@@ -17,6 +18,7 @@ import {
   getProfilePermissionsSchema,
   updateProfilePermissionsSchema,
   editProfilePermissionsSchema,
+  updateUserExtendedPermissionsSchema,
   listProfileSchema
 } from "../lib/joi/schemas/schema";
 
@@ -471,4 +473,137 @@ async function editProfilePermissions(req: Request, res: Response): Promise<void
   }
 }
 
-export { userProfiles, userRoles, userPermissionById, userPermissionFields, createProfile, getProfilePermissions, updateProfilePermissions, editProfilePermissions};
+/**
+ * Edits profile permissions for specific user based on the provided data
+ * 
+ * @param {Request} req - Express request object containing profile ID and permissions to update
+ * @param {Response} res - Express response object
+ * @returns {Promise<void>} - Returns updated profile data
+ */
+async function updateUserExtendedPermissions(req: Request, res: Response): Promise<void> {
+  const methodName = "Upate user extended profile permissions";
+  try {
+  // Validate request data
+  const validatedData = await validateRequest(
+    req,
+    updateUserExtendedPermissionsSchema,
+    "PLATFORM_TWO", // Or appropriate organization value
+    res,
+    "PUT"
+  );
+  
+  // If validation fails, validateRequest will handle the response
+  if (!validatedData) return;
+  
+  // Use the validated data instead of req.body
+  const {user_id, profile_id, profile_name, privileges } = validatedData;
+    
+    // Get user ID from request (assuming it's set by auth middleware)
+    const loggedInUsername = req.headers['x-user-id'] as string;
+    // Call service method to update permissions
+    const result = await services.userManagementServices.updateUserExtendedPermissions(
+      profile_id,
+      profile_name,
+      privileges,
+      user_id ,loggedInUsername
+    );
+    
+    if (result.statusCode === constants.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, result.data);
+    } else {
+      errorLog(methodName, result.errorMessage);
+      handleErrorResponse(
+        res,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+    }
+  } catch (error) {
+    const err = error as Error;
+    errorLog(methodName, err.message);
+    handleErrorResponse(
+      res,
+      constants.FAILED,
+      constants.FAILED_MESSAGE,
+      err.message
+    );
+  }
+}
+/**
+ * Returns profile permissions for specific user with profile permissions
+ * 
+ * @param {Request} req - Express request object containing profile ID and permissions to update
+ * @param {Response} res - Express response object
+ * @returns {Promise<void>} - Returns updated profile data
+ */
+
+async function getUserExtendedPermissions(req: Request, res: Response): Promise<void> {
+  const methodName = "Get User extended permission";
+  try {
+    const userId = req.params.userId;
+    const userExtendedPermsissions = await services.userServices.fetchUserExtendedpermission(userId);
+    if (userExtendedPermsissions.statusCode === constants.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, userExtendedPermsissions.data);
+    } else {
+      errorLog(methodName, userExtendedPermsissions.errorMessage);
+      handleErrorResponse(
+        res,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        userExtendedPermsissions.errorMessage
+      );
+    }
+  } catch (error) {
+    const err = error as Error;
+    errorLog(methodName, err.message);
+    handleErrorResponse(
+      res,
+      constants.FAILED,
+      constants.FAILED_MESSAGE,
+      err.message
+    );
+  }
+}
+
+/**
+ * Fetches the user profiles from the service and returns them in the response for excel download.
+ * Logs success or failure depending on the outcome.
+ *
+ * @param {Request} req - The Express request object containing any necessary request data.
+ * @param {Response} res - The Express response object used to send the response back to the client.
+ * @returns {Promise<void>} - A promise that resolves when the user profiles are fetched and the response is sent.
+ *
+ * @throws {Error} - Throws an error if the request to fetch profiles fails at any step.
+ */
+async function exportUserProfiles(req: Request, res: Response): Promise<void> {
+  const methodName = "Export user profiles"
+  try {
+    //  const validatedData = await validateRequest(req, exportUserProfilesSchema,"PLATFORM_TWO", res, "GET");
+    //   if (!validatedData) return;
+    const profileId = req.params.profileId;
+    const profiles = await services.userServices.exportUserprofiles(profileId);
+
+    if (profiles.statusCode === constants.SUCCESS) {
+      successLog(methodName)
+      handleSuccessResponse(res, profiles?.data?.exportProfiles);
+    } else {
+      errorLog(methodName, profiles.errorMessage);
+      handleErrorResponse(
+        res,
+        constants.BAD_REQUEST,
+        constants.BAD_REQUEST_MESSAGE,
+        profiles.errorMessage
+      );
+    }
+  } catch (error) {
+    const err = error as Error;
+    errorLog(methodName, err.message);
+    handleErrorResponse(res, constants.FAILED, constants.FAILED_MESSAGE, err.message);
+  }
+}
+
+
+export { userProfiles, userRoles, userPermissionById, userPermissionFields, createProfile, getProfilePermissions, updateProfilePermissions, editProfilePermissions,exportUserProfiles,getUserExtendedPermissions,updateUserExtendedPermissions};

@@ -1,8 +1,9 @@
 import { Model, DataTypes, Optional, Sequelize } from "sequelize";
 import { Country } from "./countryModel";
+import { R_NUMBER_PREFIX } from "../utils/constant";
 interface RegionAttributes {
   rid: string;
-  r_number: string;
+  r_number?: string;
   country_rid: string;
   country_name: string;
   region_name: string;
@@ -17,7 +18,7 @@ export class Region
   implements RegionAttributes
 {
   rid!: string;
-  r_number!: string;
+  r_number?: string;
   country_rid!: string;
   country_name!: string;
   region_name!: string;
@@ -34,8 +35,9 @@ export class Region
           allowNull: false,
         },
         r_number: {
-          type: DataTypes.STRING,
-          allowNull: false,
+          type: DataTypes.STRING(20),
+          allowNull: true,
+          unique: true,
         },
         country_rid: {
           type: DataTypes.UUID,
@@ -72,5 +74,23 @@ export class Region
       foreignKey: "country_rid",
       as: "country",
     });
+    return Region;
+  }
+}
+
+export async function setupRegionSequence(sequelize: Sequelize) {
+  try {
+    // Step 1: Create the sequence if it doesn't exist
+    await sequelize.query('CREATE SEQUENCE IF NOT EXISTS region_seq START 1');
+    
+    // Step 2: Set the default value for r_number to use the sequence
+    await sequelize.query(`ALTER TABLE regions
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.REGION} ' || LPAD(nextval('region_seq')::text, 10, '0')`);
+    
+    console.log('Region sequence setup complete');
+  } catch (error) {
+    console.error('Error setting up Region sequence:', error);
+    // Don't throw the error to allow the application to continue starting up
+    // The sequence setup can be handled separately if needed
   }
 }

@@ -138,7 +138,8 @@ export interface IUpdateResourceSkill {
 export interface ICreateProject {
   account_number: string;
   account_id: string;
-  project_ref_id: string;
+  project_code: string;
+  program_name?: string | null;
   project_name?: string | null;
   industry_rid: string;
   industry_name?: string;
@@ -150,7 +151,7 @@ export interface ICreateProject {
   project_client_group?: string | null;
   project_group?: string | null;
   project_summary?: string | null;
-  project_status?: "Active" | "Inactive";
+  project_status: "Active" | "Inactive";
   fiscal_year: number;
   country?: string | null;
   region?: string | null;
@@ -175,25 +176,27 @@ export interface ICreateProject {
   total_sub_con_cost?: string | null;
   last_rd_ai_assess_on?: Date | null;
   last_rd_ai_assess_by?: string | null;
-  auto_send_ai_interaction?: boolean;
+  auto_send_ai_interaction: boolean;
   auto_access_rd?: boolean;
-  max_ai_interaction?: number;
+  max_ai_interaction: number;
   blended_rate_fte?: string | null;
-  blended_rate_sub_con?: string | null;
+  blended_rate_sub_con?: number | null;
   project_description?: string | null;
   modified_by?: string;
   created_by: string;
-  key_contacts:any
+  key_contacts: any;
+  comments?: string;
 }
 
 export interface IUpdateProject {
   project_id: string;
   account_number: string;
   account_id: string;
-  project_ref_id: string;
+  project_code: string;
   project_name?: string | null;
   industry_rid: string;
   industry_name: string;
+  program_name?: string | null;
   client_organization: string;
   project_startdate?: Date | null;
   project_enddate?: Date | null;
@@ -202,7 +205,7 @@ export interface IUpdateProject {
   project_client_group?: string | null;
   project_group?: string | null;
   project_summary?: string | null;
-  project_status?: "Active" | "Inactive";
+  project_status: "Active" | "Inactive";
   fiscal_year: number;
   country?: string | null;
   region?: string | null;
@@ -227,22 +230,33 @@ export interface IUpdateProject {
   total_sub_con_cost?: string | null;
   last_rd_ai_assess_on?: Date | null;
   last_rd_ai_assess_by?: string | null;
-  auto_send_ai_interaction?: boolean;
+  auto_send_ai_interaction: boolean;
   auto_access_rd?: boolean;
-  max_ai_interaction?: number;
+  max_ai_interaction: number;
   blended_rate_fte?: string | null;
-  blended_rate_sub_con?: string | null;
+  blended_rate_sub_con?: number | null;
   project_description?: string | null;
   modified_by?: string;
   created_by: string;
   key_contacts:any;
+  comments?: string;
 }
 
 export interface IKeyContactDetail {
-  key_contact_id: string;
+  key_contact_rid: string;
   key_contact_name: string;
   key_contact_email: string;
-  key_contact_role_rid: string;
+  key_contact_role: string;
+  is_primary_contact: boolean;
+  include_in_communication: boolean;
+  status: "active" | "inactive";
+}
+
+export interface IUpdateKeyContactDetail {
+  rid: string;
+  key_contact_name: string;
+  key_contact_email: string;
+  key_contact_role: string;
   is_primary_contact: boolean;
   include_in_communication: boolean;
   status: "active" | "inactive";

@@ -41,7 +41,7 @@ export class ResourcesHistory
         },
         r_number: {
           type: DataTypes.STRING(20),
-          allowNull: false,
+          allowNull: true,
           unique: true,
         },
         resource_rid: {
@@ -86,23 +86,27 @@ export class ResourcesHistory
             resources.setDataValue("modified_datetime", new Date());
             resources.setDataValue("created_datetime", new Date());
           },
-          beforeValidate: async (resource) => {
-            // Get the latest resource history number and increment it
-            const latestAccount = await ResourcesHistory.findOne({
-              order: [['r_number', 'DESC']],
-            });
-            
-            let nextNumber = '0000000001';
-            if (latestAccount) {
-              const currentNumber = parseInt(latestAccount.r_number?.split(' ')[1] || '0');
-              nextNumber = (currentNumber + 1).toString().padStart(10, '0');
-            }            
-            const accountCode = `${R_NUMBER_PREFIX.RESOURCE_HISTORY} ${nextNumber}`;
-            resource.setDataValue("r_number", accountCode);
-          },
         },
       }
     );
     return ResourcesHistory;
+  }
+}
+
+
+export async function setupResourceHistorySeq(sequelize: Sequelize, schemaName: string) {
+  try {
+    // Step 1: Create the sequence if it doesn't exist
+    await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_history_seq START 1`);
+    
+    // Step 2: Set the default value for r_number to use the sequence
+    await sequelize.query(`ALTER TABLE "${schemaName}".resources_history
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE_HISTORY} ' || LPAD(nextval('"${schemaName}".resource_history_seq')::text, 10, '0')`);
+    
+    console.log('Resource history sequence setup complete');
+  } catch (error) {
+    console.error('Error setting up Resource history sequence:', error);
+    // Don't throw the error to allow the application to continue starting up
+    // The sequence setup can be handled separately if needed
   }
 }

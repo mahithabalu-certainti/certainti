@@ -1,9 +1,10 @@
 import { Model, DataTypes, Optional, Sequelize } from "sequelize";
 import { Currency } from "./currencyModel";
+import { R_NUMBER_PREFIX } from "../utils/constant";
 
 interface CountryAttributes {
   rid: string;
-  r_number: string;
+  r_number?: string;
   country_code: string;
   country_name: string;
   default_currency_rid: string;
@@ -19,7 +20,7 @@ export class Country
   implements CountryAttributes
 {
   rid!: string;
-  r_number!: string;
+  r_number?: string;
   country_code!: string;
   country_name!: string;
   default_currency_rid!: string;
@@ -36,8 +37,9 @@ export class Country
           allowNull: false,
         },
         r_number: {
-          type: DataTypes.STRING,
-          allowNull: false,
+          type: DataTypes.STRING(20),
+          allowNull: true,
+          unique: true,
         },
         country_code: {
           type: DataTypes.STRING,
@@ -83,5 +85,22 @@ export class Country
       foreignKey: "default_currency_rid",
       as: "currency",
     });
+  }
+}
+
+export async function setupCountrySequence(sequelize: Sequelize) {
+  try {
+    // Step 1: Create the sequence if it doesn't exist
+    await sequelize.query('CREATE SEQUENCE IF NOT EXISTS country_seq START 1');
+    
+    // Step 2: Set the default value for r_number to use the sequence
+    await sequelize.query(`ALTER TABLE country
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.COUNTRY} ' || LPAD(nextval('country_seq')::text, 10, '0')`);
+    
+    console.log('Country sequence setup complete');
+  } catch (error) {
+    console.error('Error setting up Country sequence:', error);
+    // Don't throw the error to allow the application to continue starting up
+    // The sequence setup can be handled separately if needed
   }
 }

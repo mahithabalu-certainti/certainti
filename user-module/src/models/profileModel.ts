@@ -1,4 +1,5 @@
 import { DataTypes, Model, Optional, Sequelize, Op } from "sequelize";
+import { R_NUMBER_PREFIX } from "../utils/constant";
 
 // Import User model
 // import { User } from "./userModel";
@@ -57,8 +58,9 @@ export class Profile
           allowNull: false,
         },
         r_number: {
-          type: DataTypes.STRING,
+          type: DataTypes.STRING(20),
           allowNull: true,
+          unique: true,
         },
         eid: {
           type: DataTypes.INTEGER,
@@ -114,8 +116,8 @@ export class Profile
         timestamps: false,
       }
     );
-                // Set up the sequence and default value for r_number
-      // setupProfileSequence(sequelize)
+      // Set up the sequence and default value for r_number
+      // setupProfileSequence(sequelize);
   }
   static associate(models: any) {
     // Set up associations after all models are initialized
@@ -128,6 +130,8 @@ export class Profile
       foreignKey: 'modified_by',
       as: 'modifier'
     });
+
+    return Profile;
   }
 }
 
@@ -138,7 +142,7 @@ export async function setupProfileSequence(sequelize: Sequelize) {
     
     // Step 2: Set the default value for r_number to use the sequence
     await sequelize.query(`ALTER TABLE profile
-      ALTER COLUMN r_number SET DEFAULT 'PRF ' || LPAD(nextval('profile_seq')::text, 10, '0')`);
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROFILE} ' || LPAD(nextval('profile_seq')::text, 10, '0')`);
     
     console.log('Profile sequence setup complete');
   } catch (error) {
