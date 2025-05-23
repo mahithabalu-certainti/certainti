@@ -43,7 +43,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeKey, onSelect }) => {
   }, [modules]);
 
   useEffect(() => {
-    if(!activeKey){
+    if (!activeKey) {
       //set current active key
       const activeItem = accountMenus.find((item) => item.hide === false);
       handleSelect(activeItem?.key as string);
@@ -81,12 +81,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeKey, onSelect }) => {
             <li key={item.key}>
               <button
                 onClick={() => handleSelect(item.key)}
-                className={`group w-full flex items-center text-[14px] font-normal gap-2 text-left px-3 py-2 rounded ${
-                  item.disabled
-                    ? 'text-gray-400'
-                    : 'cursor-pointer text-[#2D3E4F] hover:bg-[#0BBFB726]'
-                } ${activeKey === item.key ? 'bg-[#0BBFB726]' : ''}`}
-                disabled={item.disabled}
+                className={`group w-full flex items-center text-[14px] font-normal gap-2 text-left px-3 py-2 rounded cursor-pointer text-[#2D3E4F] hover:bg-[#0BBFB726] ${activeKey === item.key ? 'bg-[#0BBFB726]' : ''}`}
               >
                 <span>{item.name}</span>
                 <img
@@ -95,9 +90,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeKey, onSelect }) => {
                   className={`w-[14px] h-[14px] transition-opacity duration-150 ${
                     activeKey === item.key
                       ? 'opacity-100'
-                      : item.disabled
-                        ? 'opacity-0'
-                        : 'opacity-0 group-hover:opacity-100'
+                      : 'opacity-0 group-hover:opacity-100'
                   }`}
                 />
               </button>
