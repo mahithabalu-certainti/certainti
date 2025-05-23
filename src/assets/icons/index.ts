@@ -78,6 +78,8 @@ import arrowIcon from './arrow-icon.svg';
 import sortIcon from './sort-icon.svg';
 import newFilterIcon from './filter-icon.svg';
 import checkedIcon from './checked-icon.svg';
+import burgerMenuIcon from './burger-menu.svg';
+import fiscalYearArrowIcon from './fiscal-arrow-icon.svg';
 
 export {
   accountDetailsIcon,
@@ -99,6 +101,7 @@ export {
   arrowIcon,
   attachmentIcon,
   backIcon,
+  burgerMenuIcon,
   calendarIcon,
   caseIcon,
   checkedIcon,
@@ -116,6 +119,7 @@ export {
   editIcon,
   emailTemplateIcon,
   filterArrowRightIcon,
+  fiscalYearArrowIcon,
   filterIcon,
   globeIcon,
   helpIcon,

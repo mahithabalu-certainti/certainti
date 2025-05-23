@@ -218,12 +218,20 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
       <div className='h-auto min-h-[165px] w-[530px] min-w-[530px] max-w-[530px] flex flex-col gap-4 bg-white rounded-[8px] p-6 border border-[#CBD6E2]'>
         <div className='flex justify-between items-center'>
           <h2 className='text-[16px] font-bold text-[#2D3E4F]'>Filters</h2>
-          <button
-            className='text-[12px] font-medium text-[#425A76] underline cursor-pointer hover:text-[#FF6666]'
-            onClick={handleClearFilters}
-          >
-            Clear
-          </button>
+          <div className='flex justify-end gap-4'>
+            <button
+              className='text-[12px] font-medium text-[#425A76] underline cursor-pointer hover:text-[#131a20]'
+              onClick={handleSaveFilters}
+            >
+              Apply
+            </button>
+            <button
+              className='text-[12px] font-medium text-[#425A76] underline cursor-pointer hover:text-[#FF6666]'
+              onClick={handleClearFilters}
+            >
+              Clear
+            </button>
+          </div>
         </div>
 
         <div className='flex-1'>
@@ -429,7 +437,7 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
           >
             <span className='font-normal text-[16px]'>+</span> Add Account
           </button>
-          <div className='flex justify-end gap-2'>
+          {/* <div className='flex justify-end gap-2'>
             <button
               className='text-[12px] rounded-[2px] text-[#425A76] h-[24px] flex items-center px-2 border border-[#CBD6E2] cursor-pointer'
               style={{
@@ -448,7 +456,7 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
             >
               Apply
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
     </Popover>

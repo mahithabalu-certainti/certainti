@@ -180,6 +180,7 @@ export type FieldConfig = {
 };
 
 export interface FilterComponentProps {
+  value: string;
   isOpen: boolean;
   filterId: string | undefined;
   filterAnchorEl: HTMLButtonElement | null;

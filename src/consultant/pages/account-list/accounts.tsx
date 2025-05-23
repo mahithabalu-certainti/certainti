@@ -178,7 +178,7 @@ export const Accounts: React.FC = () => {
           </div>
         </div>
       </div>
-      <div className='flex items-center justify-end h-[40px] min-h-[40px] px-4'>
+      <div className='flex items-center justify-end h-[34px] min-h-[34px] px-4'>
         <div className='relative'>
           <button
             aria-describedby={filterId}

@@ -1,12 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Table } from '../../../../components/table';
-import { Profiles, UserListParams } from '../../../types/manage-user';
+import { ListTable } from '../../../../components/table';
+import { UserListParams } from '../../../types/manage-user';
 import { profileColumns } from './';
-import { ManageProfile } from '../../../types';
+import { ManageProfile, ManageProfileList } from '../../../types';
 import { useManageProfileList } from '../../../service';
 import { MANAGE_PROFILE } from '../../../../routes/routes';
+import { ActionItem } from '../../../../components/table/types';
+import { deleteIcon, editIcon } from '../../../../assets';
 
 interface IUserTableProps {
   appliedFilters: Record<string, any>;
@@ -19,7 +21,6 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
   tableParams,
   setTableParams,
 }) => {
-  const [users, setUsers] = useState<ManageProfile[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,50 +28,44 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
       ...prev,
       filters: appliedFilters,
     }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appliedFilters]);
 
   const { data, isLoading, isError } = useManageProfileList(tableParams);
   const totalItems = data?.data?.count || 0;
 
-  const convertUserListData = (data: Profiles[]): ManageProfile[] => {
-    if (!data) return [];
-    return data.map((item) => {
-      return {
-        id: item.rid,
-        createdBy: item.created_by,
-        createdOn: item.created_datetime,
-        profileName: item.profile_name,
-      };
+  const convertUserListData = (data: ManageProfileList): ManageProfile => {
+    if (!data) return {} as ManageProfile;
+    return {
+      id: data?.rid,
+      createdBy: data?.created_by || '',
+      createdOn: data?.created_datetime,
+      profileName: data?.profile_name,
+    };
+  };
+
+  const getRowId = (row: ManageProfileList) => row.rid;
+
+  const handleEdit = (row: ManageProfileList) => {
+    const data = convertUserListData(row);
+    navigate(MANAGE_PROFILE + '/edit/' + data.id, {
+      state: { user: data },
     });
   };
 
-  useEffect(() => {
-    if (data?.data) {
-      setUsers(convertUserListData(data?.data?.profiles));
-    }
-  }, [data?.data]);
-
-  const getRowId = (row: ManageProfile) => row.id;
-
-  const handleEdit = (row: ManageProfile) => {
-    navigate(MANAGE_PROFILE + '/edit/' + row.id, {
-      state: { user: row },
-    });
-  };
-
-  const handleDelete = (row: ManageProfile) => {
+  const handleDelete = (row: ManageProfileList) => {
     // navigate(`/admin/manage-user/${row.id}`, {
     //   state: { user: row },
     // });
     console.log('trigger row delete:', row);
   };
 
-  const handleSort = (sortBy: string, sortOrder: 'ASC' | 'DESC') => {
+  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
     setTableParams((prev) => ({
       ...prev,
       sortBy,
-      sortOrder,
+      sortOrder: apiOrder,
     }));
   };
 
@@ -89,28 +84,44 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
     }));
   };
 
+  const actionButtons: ActionItem<ManageProfileList>[] = [
+    {
+      label: 'Edit',
+      onClick: (row: ManageProfileList) => handleEdit(row),
+      icon: editIcon,
+      iconStyle: {
+        filter:
+          'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
+      },
+    },
+    {
+      label: 'Delete',
+      onClick: (row: ManageProfileList) => handleDelete(row),
+      icon: deleteIcon,
+    },
+  ];
+
   return (
-    <Table
-      data={users}
+    <ListTable
+      data={data?.data?.profiles as any}
       columns={profileColumns}
       getRowId={getRowId}
-      // Selection
+      hoverHighlight={false}
+      tableStyle={{ height: 'auto' }}
+      stickyHeader={false}
+      stickyColumnsCount={2}
       selectable={true}
       onSelectionChange={(selectedIds) => console.log('Selected:', selectedIds)}
-      // Actions
-      onEdit={handleEdit}
-      // onView={handleView}
-      onDeleteIcon={handleDelete}
-      // State
+      actionWidth={100}
+      actionDisplayMode='dropdown'
+      actionMenuItems={actionButtons}
       loading={isLoading}
-      error={isError ? 'Failed to load users' : undefined}
-      // Pagination
+      error={isError ? 'Failed to load profiles' : undefined}
       rowsPerPage={tableParams.limit}
       currentPage={(tableParams.page ?? 1) - 1}
       totalItems={totalItems}
       onPageChange={handlePageChange}
       onRowsPerPageChange={handleRowsPerPageChange}
-      // Sorting
       sortBy={tableParams.sortBy}
       sortOrder={tableParams.sortOrder}
       onSort={handleSort}

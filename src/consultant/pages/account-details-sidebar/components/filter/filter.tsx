@@ -43,6 +43,7 @@ const systemFilters = ['Touched Records', 'Untouched Records', 'Record Action'];
 
 // filter to use in resource, cost and skill list pages
 const Filter: React.FC<FilterComponentProps> = ({
+  value,
   isOpen,
   filterAnchorEl,
   filterId,
@@ -63,10 +64,6 @@ const Filter: React.FC<FilterComponentProps> = ({
 
   //new
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  // const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
-  // const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
-  //   {}
-  // );
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -76,6 +73,10 @@ const Filter: React.FC<FilterComponentProps> = ({
   const handleClose = () => {
     setAnchorEl(null);
   };
+
+  useEffect(() => {
+    handleResetFilter();
+  }, [value]);
 
   const handleFilterSelect = (field: string) => {
     const fieldConfig = filterMenu.find((f) => f.value === field);
@@ -475,12 +476,20 @@ const Filter: React.FC<FilterComponentProps> = ({
       <div className='h-auto min-h-[165px] w-[530px] min-w-[530px] max-w-[530px] mt-1 flex flex-col gap-4 bg-white rounded-[8px] p-6 border border-[#CBD6E2]'>
         <div className='flex justify-between items-center'>
           <h2 className='text-[16px] font-bold text-[#2D3E4F]'>Filters</h2>
-          <button
-            onClick={handleResetFilter}
-            className='text-[12px] font-medium text-[#425A76] underline cursor-pointer hover:text-[#FF6666]'
-          >
-            Clear
-          </button>
+          <div className='flex justify-end gap-4'>
+            <button
+              className='text-[12px] font-medium text-[#425A76] underline cursor-pointer hover:text-[#131a20]'
+              onClick={handleApplyFilters}
+            >
+              Apply
+            </button>
+            <button
+              onClick={handleResetFilter}
+              className='text-[12px] font-medium text-[#425A76] underline cursor-pointer hover:text-[#FF6666]'
+            >
+              Clear
+            </button>
+          </div>
         </div>
 
         <div>
@@ -649,7 +658,7 @@ const Filter: React.FC<FilterComponentProps> = ({
             Fields
             <img src={arrowIcon} alt={'arrowIcon'} className='mt-0.5' />
           </button>
-          <div className='flex justify-end gap-2'>
+          {/* <div className='flex justify-end gap-2'>
             <button
               className='text-[12px] rounded-[2px] text-[#425A76] h-[24px] flex items-center px-2 border border-[#CBD6E2] cursor-pointer'
               style={{
@@ -668,7 +677,7 @@ const Filter: React.FC<FilterComponentProps> = ({
             >
               Apply
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
 

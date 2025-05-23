@@ -9,6 +9,7 @@ import {
   SelectChangeEvent,
 } from '@mui/material';
 import {
+  DateOptions,
   FilterModalProps,
   FilterState,
   NumberFilterOption,
@@ -29,6 +30,7 @@ import {
   NewBooleanFilterControl,
   SELECT_STYLES,
   MENU_PROPS,
+  DateFilterControl,
 } from './helpers';
 import { useLocation } from 'react-router-dom';
 
@@ -126,6 +128,17 @@ const FilterModal: React.FC<FilterModalProps> = ({
                 },
               },
             };
+          case 'date':
+            return {
+              ...prev,
+              [fieldName]: {
+                ...currentState,
+                date: {
+                  ...currentState.date!,
+                  option: event.target.value as DateOptions,
+                },
+              },
+            };
           case 'number':
             return {
               ...prev,
@@ -158,7 +171,8 @@ const FilterModal: React.FC<FilterModalProps> = ({
   const handleFilterValueChange = (
     fieldName: string,
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    index?: number
+    index?: number,
+    targetKey: 'value' | 'toValue' = 'value'
   ) => {
     setPage(1);
     const fieldConfig = filterFields.find((f) => f.name === fieldName);
@@ -210,6 +224,17 @@ const FilterModal: React.FC<FilterModalProps> = ({
               },
             };
           }
+        case 'date':
+          return {
+            ...prev,
+            [fieldName]: {
+              ...currentState,
+              date: {
+                ...currentState.date!,
+                [targetKey]: event.target.value,
+              },
+            },
+          };
         default:
           return prev;
       }
@@ -237,6 +262,16 @@ const FilterModal: React.FC<FilterModalProps> = ({
 
     for (const key in updatedStates) {
       const state = updatedStates[key];
+
+      if (state.date) {
+        const isValueEmpty = !state.date.value?.trim();
+        const isToValueEmpty =
+          state.date.option === 'between' && !state.date.toValue?.trim();
+
+        if (isValueEmpty || isToValueEmpty) {
+          hasInvalid = true;
+        }
+      }
 
       if (state.text) {
         const isEmpty = !state.text.value.trim();
@@ -344,6 +379,15 @@ const FilterModal: React.FC<FilterModalProps> = ({
             onChange={handleBooleanChange}
           />
         );
+      case 'date':
+        return (
+          <DateFilterControl
+            fieldName={fieldName}
+            state={state}
+            onOptionChange={handleFilterOptionChange}
+            onValueChange={handleFilterValueChange}
+          />
+        );
       default:
         return null;
     }
@@ -374,12 +418,20 @@ const FilterModal: React.FC<FilterModalProps> = ({
       <div className='h-auto min-h-[165px] w-[530px] min-w-[530px] max-w-[530px] flex flex-col gap-4 bg-white rounded-[8px] p-6 border border-[#CBD6E2]'>
         <div className='flex justify-between items-center'>
           <h2 className='text-[16px] font-bold text-[#2D3E4F]'>Filters</h2>
-          <button
-            onClick={handleResetFilters}
-            className='text-[12px] font-medium text-[#425A76] underline cursor-pointer hover:text-[#FF6666]'
-          >
-            Clear
-          </button>
+          <div className='flex justify-end gap-4'>
+            <button
+              onClick={handleApplyFilters}
+              className='text-[12px] font-medium text-[#425A76] underline cursor-pointer hover:text-[#131a20]'
+            >
+              Apply
+            </button>
+            <button
+              onClick={handleResetFilters}
+              className='text-[12px] font-medium text-[#425A76] underline cursor-pointer hover:text-[#FF6666]'
+            >
+              Clear
+            </button>
+          </div>
         </div>
 
         <div>
@@ -546,7 +598,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
             Fields
             <img src={arrowIcon} alt={'arrowIcon'} className='mt-0.5' />
           </button>
-          <div className='flex justify-end gap-2'>
+          {/* <div className='flex justify-end gap-2'>
             <button
               className='text-[12px] rounded-[2px] text-[#425A76] h-[24px] flex items-center px-2 border border-[#CBD6E2] cursor-pointer'
               style={{
@@ -565,7 +617,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
             >
               Apply
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
       <Menu

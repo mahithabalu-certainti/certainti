@@ -327,8 +327,6 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     width: '100px',
                     minWidth: '100px',
                     maxWidth: '100px',
-                    textAlign: 'center',
-                    pl: '0px !important',
                     borderRight: 'none',
                   }}
                 >

@@ -123,7 +123,6 @@ export const UserTable: React.FC<IUserTableProps> = ({
       hoverHighlight={true}
       tableStyle={{
         maxHeight: 'calc(95vh - 200px)',
-        borderBottom: '1px solid #CBD6E2',
         overflow: 'auto',
       }}
       stickyHeader={true}

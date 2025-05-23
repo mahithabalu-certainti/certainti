@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { filterIcon, userIcon } from '../../../../assets';
+import { newFilterIcon, userIcon } from '../../../../assets';
 import TextButton from '../../../../components/button/text-button';
 import { useNavigate } from 'react-router-dom';
 import { MANAGE_PROFILE_CREATE } from '../../../../routes';
-import { Filter } from '../../../../components';
+import { FilterModal } from '../../../../components';
 import { getManageProfileFilterfields } from './';
 import { UserListParams } from '../../../types/manage-user';
 import { ProfileTable } from '../';
@@ -11,21 +11,23 @@ import { FilterType } from '../../../types';
 import { exportProfileList } from '../../../service';
 
 const BUTTON_STYLES = {
-  height: '35px',
-  color: '#F15A29',
-};
-
-const HEADER_STYLES = {
-  adminPermission: 'font-medium text-[#7D98B6] text-[11px] leading-5 tracking-normal',
-  manageUser: 'font-semibold text-[20px] text-[#2D3E4F] leading-5 tracking-normal',
+  height: '32px',
+  background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+  border: '1px solid #CBD6E2',
+  color: '#425A76',
+  borderRadius: '2px',
+  fontSize: '13px',
+  fontWeight: 700,
+  padding: '0px',
+  '&:hover': {
+    color: '#425A76 !important',
+  },
 };
 
 export const ProfileList: React.FC = () => {
-  const [isFilterOpen, setIsFilterOpen] = useState<boolean>(true);
   const [appliedFilters, setAppliedFilters] = useState<
     Record<string, FilterType>
   >({});
-  const [searchTerm, setSearchTerm] = useState<string>('');
   const [page, setPage] = useState<number>(1);
   const [tableParams, setTableParams] = useState<UserListParams>({
     page: page,
@@ -35,6 +37,19 @@ export const ProfileList: React.FC = () => {
   });
   const navigate = useNavigate();
   const [isExporting, setIsExporting] = useState(false);
+
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+
+  const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseFilter = () => {
+    setAnchorEl(null);
+  };
+
+  const isFilterOpen = Boolean(anchorEl);
+  const filterId = isFilterOpen ? 'profile-filter-popover' : undefined;
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -48,89 +63,95 @@ export const ProfileList: React.FC = () => {
   };
 
   return (
-    <div className='flex flex-col h-full w-full p-4 gap-3'>
+    <div className='flex flex-col h-full w-full'>
       {/* Header Section */}
-      <div className='w-full min-h-[75px] h-[75px] px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
-        <div className='flex items-center gap-2'>
-          <img
-            src={userIcon}
-            alt='menu-icon'
-            className='h-8 w-8 bg-[#BE3EB5] p-2.5 rounded'
-          />
-          <div className='flex flex-col mb-1'>
-            <div className={HEADER_STYLES.adminPermission}>
-              Admin Permission
+      <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
+        <div className='flex h-[33px]'>
+          <div className='flex items-center justify-center'>
+            <img
+              src={userIcon}
+              alt='manage user'
+              className='h-7 w-7 rounded bg-[#BE3EB5] p-[7px]'
+            />
+            <div className='flex flex-col mx-2.5 pb-1'>
+              <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>
+                Admin Permission
+              </div>
+              <div className='font-bold text-[16px] text-[#2D3E4F] -mt-1'>
+                Manage Profile
+              </div>
             </div>
-            <div className={HEADER_STYLES.manageUser}>Manage Profile</div>
-          </div>
-          <div
-            className={`flex items-center justify-center border mt-0.5 ml-2 rounded-xs w-8 h-8 cursor-pointer transition-colors duration-300 ${isFilterOpen ? 'bg-[#EAF0F6] border-[#CBD6E2]' : 'border-[#EAF0F5]'}`}
-            onClick={() => setIsFilterOpen((prev) => !prev)}
-          >
-            <img src={filterIcon} alt='menu-icon' className='h-[12px]' />
           </div>
         </div>
-        <div className='flex gap-2 items-center'>
+        <div className='flex gap-3 justify-center items-center'>
           <TextButton
             label='Create Profile'
-            variant='filled'
             onClick={() => navigate(MANAGE_PROFILE_CREATE)}
             sx={{
               ...BUTTON_STYLES,
-              backgroundColor: '#F16137',
-              color: '#fff',
-              borderRadius: '2px',
-              fontSize: '13px',
-              fontWeight: 400,
+              width: '119px',
+              minWidth: '119px',
+              maxWidth: '119px',
             }}
           />
         </div>
       </div>
 
-      {/* User Table Section */}
-      <div className='flex flex-col flex-1 border border-[#CBD6E2] rounded-[4px]'>
-        <div className='flex justify-between items-center border-b border-[#CBD6E2] h-[50px] px-4'>
-          <div className='font-semibold text-base leading-[32px] tracking-[0%] align-middle text-[#2D3E4F]'>
-            All Profiles
-          </div>
-          <div className='flex gap-3'>
-            <TextButton
-              label='Export'
-              variant='outlined'
-              sx={{
-                ...BUTTON_STYLES,
-                borderRadius: '2px',
-                fontSize: '13px',
-                fontWeight: 400,
-              }}
-              onClick={handleExport}
-              loading={isExporting}
-            />
-          </div>
+      <div className='flex items-center justify-between h-[42px] min-h-[42px] max-h-[42px] px-4'>
+        <div className='font-bold text-[14px] leading-[32px] text-[#2D3E4F]'>
+          All Profiles
         </div>
-        <div className='flex flex-1 transition-all duration-300 ease-in-out'>
-          <div
-            className={`flex flex-1 transition-all duration-300 ease-in-out overflow-hidden ${isFilterOpen ? 'w-[20%] opacity-100' : 'w-0 opacity-0'
-            }`}
-          >
-            <Filter
-              setAppliedFilters={setAppliedFilters}
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
+        <div className='flex items-center gap-3'>
+          <div className='relative h-[32px]'>
+            <button
+              aria-describedby={filterId}
+              className={`w-[64px] h-[26px] text-[13px] mt-[3px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
+              ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) ? 'bg-[#F3F3F3]' : ''}`}
+              onClick={handleFilterModal}
+            >
+              <img src={newFilterIcon} alt='filter-icon' />
+              Filter
+              {appliedFilters && Object.keys(appliedFilters).length > 0 && (
+                <div className='absolute -top-[5px] -right-2 w-4 h-4 flex items-center justify-center text-xs'>
+                  <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
+                  <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
+                    {Object.keys(appliedFilters).length}
+                  </span>
+                </div>
+              )}
+            </button>
+            <FilterModal
+              isOpen={isFilterOpen}
+              filterAnchorEl={anchorEl}
+              filterId={filterId}
               filterFields={getManageProfileFilterfields()}
-              filterLabel="Filter User by"
+              setAppliedFilters={setAppliedFilters}
               setPage={setPage}
+              handleCloseFilter={handleCloseFilter}
             />
           </div>
-
-          <div className={`transition-all duration-300 ease-in-out border-l border-[#CBD6E2] ${isFilterOpen ? 'w-[80%]' : 'w-full border-none'}`}>
-            <ProfileTable
-              appliedFilters={appliedFilters}
-              tableParams={tableParams}
-              setTableParams={setTableParams}
-            />
-          </div>
+          <TextButton
+            label='Export'
+            variant='outlined'
+            sx={{
+              ...BUTTON_STYLES,
+              width: '74px',
+              minWidth: '74px',
+              maxWidth: '74px',
+            }}
+            onClick={handleExport}
+            loading={isExporting}
+          />
         </div>
+      </div>
+
+      {/* Profile Table Section */}
+      <div className='border border-[#CBD6E2]'>
+        <ProfileTable
+          appliedFilters={appliedFilters}
+          tableParams={tableParams}
+          setTableParams={setTableParams}
+        />
       </div>
     </div>
   );

@@ -13,6 +13,7 @@ import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   accountsIcon,
+  burgerMenuIcon,
   chevronDownIcon,
   globeIcon,
   menuIcon,
@@ -33,7 +34,11 @@ import { PROFILE } from '../../routes';
 import { FiscalYearDropdown } from '../fiscal-dropdown';
 import GlobalFilterModal from '../global-modal/global-filter';
 
-export const Navbar: React.FC = () => {
+interface NavbarProps {
+  handleSidebarToggle: () => void;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle }) => {
   const msalSigninInstance = new PublicClientApplication(msalConfig);
   const msalResetInstance = new PublicClientApplication(
     msalResetPasswordConfig
@@ -306,9 +311,20 @@ export const Navbar: React.FC = () => {
 
   return (
     <>
-      <AppBar position='sticky'>
-        <Toolbar className='justify-between !min-h-[55px]'>
+      <AppBar sx={{ boxShadow: 'none' }} position='sticky'>
+        <Toolbar className='justify-between !h-[40px] !max-h-[40px] !min-h-[40px] !pl-0'>
           <div className='relative rounded-md mr-2 flex gap-2'>
+            <button
+              className='cursor-pointer '
+              type='button'
+              onClick={handleSidebarToggle}
+            >
+              <img
+                src={burgerMenuIcon}
+                alt='menu'
+                className='h-[32px] w-[32px]'
+              />
+            </button>
             {/* <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
               <img
                 src={searchIcon}
@@ -387,7 +403,7 @@ export const Navbar: React.FC = () => {
               <img
                 src={settingsIcon}
                 alt='settings'
-                className='h-[18px] w-[18px]'
+                className='h-[20px] w-[20px]'
               />
             </IconButton>
             <div className='border-l border-[#FFFFFF4D] mx-2 h-6' />
@@ -406,7 +422,7 @@ export const Navbar: React.FC = () => {
                 src='https://mui.com/static/images/avatar/2.jpg'
                 alt='User Avatar'
               />
-              <span className='text-[13px] font-[300] px-2'>{name}</span>
+              <span className='text-[12px] font-[400] px-2'>{name}</span>
               <img src={chevronDownIcon} alt='down nav' />
             </IconButton>
           </Box>

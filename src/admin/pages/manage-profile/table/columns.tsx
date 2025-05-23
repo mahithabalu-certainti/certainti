@@ -1,28 +1,36 @@
 import { getDateFormat } from '../../../../common-utils';
-import { ManageProfile } from '../../../types';
-import { ManageUserColumn } from '../../../types/manage-user';
+import { ManageProfileList, ProfileTableColumn } from '../../../types';
 
-export const profileColumns: ManageUserColumn<ManageProfile>[] = [
+export const profileColumns: ProfileTableColumn<ManageProfileList>[] = [
   {
-    id: 'profileName',
-    header: 'Profile Name',
+    id: 'profile_name',
+    sortId: 'profile_name',
+    label: 'Profile Name',
+    width: 400,
     sortable: true,
-    sort: 'profile_name',
-    width: '400px',
+    sticky: true,
+    sx: {
+      position: 'sticky',
+      left: '32px',
+      background: '#fff',
+      zIndex: 10,
+      borderRight: '1px solid #CBD6E2',
+      borderBottom: '1px solid #CBD6E2 !important',
+    },
   },
   {
-    id: 'createdOn',
-    header: 'Created On',
+    id: 'created_datetime',
+    sortId: 'created_on',
+    label: 'Created On',
+    width: 300,
     sortable: true,
-    sort: 'created_on',
-    width: '300px',
-    render: (row: ManageProfile) => getDateFormat(row.createdOn),
+    render: (row: ManageProfileList) => getDateFormat(row.created_datetime),
   },
   {
-    id: 'createdBy',
-    header: 'Created By',
+    id: 'created_by',
+    sortId: 'created_by',
+    label: 'Created By',
+    width: 300,
     sortable: true,
-    sort: 'created_by',
-    width: '300px',
   },
 ];

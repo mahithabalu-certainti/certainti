@@ -1,15 +1,15 @@
-import { useState } from "react";
-import { TableCell, IconButton, Menu, MenuItem, SxProps } from "@mui/material";
-import { arrowIcon, sortIcon } from "../../assets";
-import { Theme } from "@emotion/react";
+import { useState } from 'react';
+import { TableCell, IconButton, Menu, MenuItem, SxProps } from '@mui/material';
+import { arrowIcon, sortIcon } from '../../assets';
+import { Theme } from '@emotion/react';
 
 interface TableSortHeaderProps {
   columnId: string;
   label: string;
   sx?: SxProps<Theme>;
   orderBy: string;
-  order: "asc" | "desc";
-  onSortChange: (property: string, order: "asc" | "desc") => void;
+  order: 'asc' | 'desc';
+  onSortChange: (property: string, order: 'asc' | 'desc') => void;
 }
 
 const TableSortHeader: React.FC<TableSortHeaderProps> = ({
@@ -31,39 +31,42 @@ const TableSortHeader: React.FC<TableSortHeaderProps> = ({
     setAnchorEl(null);
   };
 
-  const handleSort = (direction: "asc" | "desc") => {
+  const handleSort = (direction: 'asc' | 'desc') => {
     onSortChange(columnId, direction);
     handleClose();
   };
 
   return (
-    <TableCell {...rest} className={`group cursor-pointer ${open ? 'bg-[#F5F9FF]' : ''} hover:bg-[#F5F9FF]`}>
-      <div className="flex items-center justify-between">
+    <TableCell
+      {...rest}
+      className={`group cursor-pointer ${open ? 'bg-[#F5F9FF]' : ''} hover:bg-[#F5F9FF]`}
+    >
+      <div className='flex items-center justify-between'>
         {label}
         <IconButton
-          size="small"
+          size='small'
           disableRipple
           onClick={handleClick}
           sx={{
-            width: "18px",
-            height: "18px",
-            borderRadius: "2px",
-            bgcolor: (open || orderBy === columnId) ? "#D9E8FF" : "transparent",
-            p: "0px !important",
-            "&:hover": {
-              bgcolor: "#D9E8FF!important",
+            width: '18px',
+            height: '18px',
+            borderRadius: '2px',
+            bgcolor: open || orderBy === columnId ? '#D9E8FF' : 'transparent',
+            p: '0px !important',
+            '&:hover': {
+              bgcolor: '#D9E8FF!important',
             },
           }}
           className={`${
-            (open || orderBy === columnId)
-              ? "opacity-100"
-              : "opacity-0 group-hover:opacity-100"
+            open || orderBy === columnId
+              ? 'opacity-100'
+              : 'opacity-0 group-hover:opacity-100'
           } transition-opacity duration-150`}
         >
           <img
             src={arrowIcon}
-            alt={"arrowIcon"}
-            className="w-[10px] h-[10px] mr-[1px]"
+            alt={'arrowIcon'}
+            className='w-[10px] h-[10px] mr-[1px]'
           />
         </IconButton>
       </div>
@@ -73,19 +76,19 @@ const TableSortHeader: React.FC<TableSortHeaderProps> = ({
         open={open}
         onClose={handleClose}
         anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "right",
+          vertical: 'bottom',
+          horizontal: 'right',
         }}
         transformOrigin={{
-          vertical: "top",
-          horizontal: "right",
+          vertical: 'top',
+          horizontal: 'right',
         }}
         PaperProps={{
           sx: {
-            width: "164px",
-            border: "1px solid #CBD6E2",
-            boxShadow: "0px 3px 2px 0px #00000014",
-            borderRadius: "2px",
+            width: '164px',
+            border: '1px solid #CBD6E2',
+            boxShadow: '0px 3px 2px 0px #00000014',
+            borderRadius: '2px',
             padding: 0,
           },
         }}
@@ -94,39 +97,39 @@ const TableSortHeader: React.FC<TableSortHeaderProps> = ({
         }}
       >
         <MenuItem
-          selected={orderBy === columnId && order === "asc"}
-          onClick={() => handleSort("asc")}
+          selected={orderBy === columnId && order === 'asc'}
+          onClick={() => handleSort('asc')}
           sx={{
-            height: "37px",
+            height: '37px',
             fontWeight: 600,
-            fontSize: "13px",
-            color: "#2D3E4F",
-            borderBottom: "1px solid #CBD6E2",
+            fontSize: '13px',
+            color: '#2D3E4F',
+            borderBottom: '1px solid #CBD6E2',
           }}
         >
-         <img
+          <img
             src={sortIcon}
-            alt={"sortIcon"}
-            className="w-[16px] h-[16px] mr-[6px]"
+            alt={'sortIcon'}
+            className='w-[16px] h-[16px] mr-[6px]'
           />
-          Sort ascending
+          Sort Ascending
         </MenuItem>
         <MenuItem
-          selected={orderBy === columnId && order === "desc"}
-          onClick={() => handleSort("desc")}
+          selected={orderBy === columnId && order === 'desc'}
+          onClick={() => handleSort('desc')}
           sx={{
-            height: "37px",
+            height: '37px',
             fontWeight: 600,
-            fontSize: "13px",
-            color: "#2D3E4F",
+            fontSize: '13px',
+            color: '#2D3E4F',
           }}
         >
-            <img
+          <img
             src={sortIcon}
-            alt={"sortIcon"}
-            className="w-[16px] h-[16px] mr-[6px] scale-y-[-1]"
+            alt={'sortIcon'}
+            className='w-[16px] h-[16px] mr-[6px] scale-y-[-1]'
           />
-          Sort descending
+          Sort Descending
         </MenuItem>
       </Menu>
     </TableCell>

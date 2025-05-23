@@ -252,6 +252,7 @@ const TabPanel: React.FC<TabProps> = ({
             )}
             {value !== 'details' && (
               <Filter
+                value={value}
                 isOpen={isFilterOpen && showFilter}
                 filterAnchorEl={filterAnchorEl}
                 filterId={filterId}

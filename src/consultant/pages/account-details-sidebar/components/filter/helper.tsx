@@ -100,7 +100,7 @@ export const TextFilterControl: React.FC<{
               fontSize: '12px',
               color: '#425A76',
               height: '12px',
-              width: '170px',
+              width: '168px',
             },
           }}
         />
@@ -273,6 +273,7 @@ export const NumberFilterControl: React.FC<{
                 fontSize: '12px',
                 color: '#425A76',
                 height: '12px',
+                width: isBetween ? '50%' : '168px',
               },
               '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button':
                 {
@@ -490,7 +491,7 @@ export const DateFilterControl: React.FC<{
                       '& .MuiInputBase-input': {
                         fontSize: '12px',
                         color: '#425A76',
-                        width: isBetween ? '50%' : '120px',
+                        width: isBetween ? '50%' : '140px',
                       },
                     },
                     placeholder: 'MM/DD/YYYY',
@@ -550,7 +551,7 @@ export const DateFilterControl: React.FC<{
                     '& .MuiInputBase-input': {
                       fontSize: '12px',
                       color: '#425A76',
-                      width: isBetween ? '50%' : '120px',
+                      width: isBetween ? '50%' : '140px',
                     },
                   },
                   placeholder: 'MM/DD/YYYY',
@@ -641,7 +642,7 @@ export const CurrencySelectFilterControl: React.FC<{
                 return selectedOption ? selectedOption.option : '';
               }
             }}
-            className='h-[28px] w-[175px]'
+            className='h-[28px] w-[196px] min-w-[196px] max-w-[196px]'
             IconComponent={(props) => (
               <img src={arrowIcon} alt='arrowIcon' {...props} />
             )}
@@ -757,7 +758,7 @@ export const EnumFilterControl: React.FC<{
           disabled={disabled}
           value={state.enum?.value || []}
           name='value'
-          className='h-[28px] w-[175px]'
+          className='h-[28px] w-[196px] min-w-[196px] max-w-[196px]'
           IconComponent={(props) => (
             <img src={arrowIcon} alt='arrowIcon' {...props} />
           )}
@@ -939,7 +940,7 @@ export const StatusFilterControl: React.FC<{
       value={state.select?.value}
       displayEmpty
       onChange={(e) => onOptionChange(fieldName, e)}
-      className='h-[28px]'
+      className='h-[28px] w-[196px] min-w-[196px] max-w-[196px]'
       IconComponent={(props) => (
         <img src={arrowIcon} alt='arrowIcon' {...props} />
       )}

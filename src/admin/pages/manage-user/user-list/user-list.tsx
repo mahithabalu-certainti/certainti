@@ -156,7 +156,7 @@ const UserList: React.FC = () => {
         </div>
       </div>
 
-      <div className='flex items-center justify-between h-[50px] min-h-[50px] px-4'>
+      <div className='flex items-center justify-between h-[42px] min-h-[42px] max-h-[42px] px-4'>
         <div className='font-bold text-[14px] leading-[32px] text-[#2D3E4F]'>
           All Users
         </div>

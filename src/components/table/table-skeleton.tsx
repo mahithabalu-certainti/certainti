@@ -30,16 +30,13 @@ const TableSkeleton: React.FC<TableSkeletonProps> = ({
   selectable = false,
   hasActions = false,
   borderHide = false,
-  stickyColumnsCount = 0, // NEW PROP DEFAULT
+  stickyColumnsCount = 0,
 }) => {
-  // Helper to calculate left offset for sticky columns
   const getStickyLeft = (colIndex: number) => {
-    // If selectable, first column is selectable, so colIndex 0 is selectable
-    // Each sticky column after selectable shifts right
     let left = 0;
     if (selectable && colIndex === 0) return 0;
-    if (selectable) left += 56; // typical checkbox cell width
-    left += (colIndex - (selectable ? 1 : 0)) * 120; // assume 120px per column
+    if (selectable) left += 32;
+    left += (colIndex - (selectable ? 1 : 0)) * 120;
     return left;
   };
 
@@ -87,7 +84,7 @@ const TableSkeleton: React.FC<TableSkeletonProps> = ({
           )}
           {[...Array(columnsCount)].map((_, colIndex) => {
             const isSticky =
-              colIndex < (stickyColumnsCount - (selectable ? 1 : 0));
+              colIndex < stickyColumnsCount - (selectable ? 1 : 0);
             return (
               <TableCell
                 key={`skeleton-cell-${colIndex}`}

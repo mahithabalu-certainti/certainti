@@ -16,6 +16,55 @@ import { useMemo } from 'react';
 import { DateValueOptions } from '../../consultant/types/account-filter';
 import { arrowIcon } from '../../assets';
 
+export const SELECT_STYLES = {
+  fontWeight: 600,
+  fontSize: '12px',
+  lineHeight: '30px',
+  borderRadius: '2px',
+  '& .MuiSelect-select': {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    fontWeight: 600,
+    fontSize: '12px',
+    lineHeight: '30px',
+    color: '#425A76',
+    py: 0,
+  },
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderColor: '#CBD6E2',
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: '#CBD6E2',
+  },
+  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    borderColor: '#CBD6E2',
+  },
+  '& .MuiSelect-icon': {
+    top: '40%',
+  },
+};
+
+export const MENU_PROPS: Partial<MenuProps> = {
+  anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
+  transformOrigin: { vertical: 'top', horizontal: 'left' },
+  PaperProps: {
+    style: {
+      borderRadius: '0px 0px 8px 8px',
+      border: '1px solid #CBD6E2',
+      borderTop: 'none',
+      marginTop: '1px',
+      boxShadow: 'none',
+    },
+  },
+  MenuListProps: {
+    sx: {
+      paddingTop: 0,
+      paddingBottom: 0,
+    },
+  },
+};
+
 export const TextFilterControl: React.FC<{
   fieldName: string;
   state: FilterState;
@@ -306,34 +355,57 @@ export const DateFilterControl: React.FC<{
     targetKey?: 'value' | 'toValue'
   ) => void;
 }> = ({ fieldName, state, onOptionChange, onValueChange }) => (
-  <Box sx={{ pl: 3, mt: 1 }}>
-    <FormControl fullWidth size='small'>
-      <Select
-        value={state.date?.option || 'equals'}
-        onChange={(e) => onOptionChange(fieldName, e)}
-        sx={{ height: '30px', minHeight: 20, fontSize: '14px' }}
-      >
-        {DateValueOptions.map((option) => (
-          <MenuItem
-            key={option.value}
-            value={option.value}
-            sx={{ fontSize: '14px' }}
-          >
-            {option.label}
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
+  <div className='flex gap-2 items-center'>
+    <Select
+      value={state.date?.option || 'equals'}
+      onChange={(e) => onOptionChange(fieldName, e)}
+      className='min-w-[65px] max-w-[65px] h-[28px]'
+      IconComponent={(props) => (
+        <img src={arrowIcon} alt='arrowIcon' {...props} />
+      )}
+      sx={SELECT_STYLES}
+      MenuProps={MENU_PROPS}
+    >
+      {DateValueOptions.map((option) => (
+        <MenuItem
+          key={option.value}
+          value={option.value}
+          sx={{
+            fontSize: '14px',
+            color: '#425A76',
+            fontWeight: 600,
+            py: '1px',
+          }}
+        >
+          {option.label}
+        </MenuItem>
+      ))}
+    </Select>
     <TextField
       size='small'
       fullWidth
-      placeholder='Type here (MM-DD-YYYY)'
+      placeholder='MM-DD-YYYY'
       value={state.date?.value || ''}
       onChange={(e) => onValueChange(fieldName, e, undefined, 'value')}
-      sx={{ mt: 1 }}
-      slotProps={{
-        input: {
-          sx: { height: '30px', paddingY: 0, fontSize: '0.75rem' },
+      sx={{
+        flex: 1,
+        '& .MuiOutlinedInput-root': {
+          borderRadius: '2px',
+          '& fieldset': {
+            borderColor: '#CBD6E2',
+          },
+          '&:hover fieldset': {
+            borderColor: '#CBD6E2',
+          },
+          '&.Mui-focused fieldset': {
+            borderColor: '#CBD6E2',
+          },
+        },
+        '& .MuiInputBase-input': {
+          fontSize: '12px',
+          color: '#425A76',
+          height: '12px',
+          width: state.date?.option === 'between' ? '50%' : '167px',
         },
       }}
     />
@@ -341,68 +413,33 @@ export const DateFilterControl: React.FC<{
       <TextField
         size='small'
         fullWidth
-        placeholder='End date (MM-DD-YYYY)'
+        placeholder='MM-DD-YYYY'
         value={state.date?.toValue || ''}
         onChange={(e) => onValueChange(fieldName, e, undefined, 'toValue')}
-        sx={{ mt: 1 }}
-        slotProps={{
-          input: {
-            sx: { height: '30px', paddingY: 0, fontSize: '0.75rem' },
+        sx={{
+          flex: 1,
+          '& .MuiOutlinedInput-root': {
+            borderRadius: '2px',
+            '& fieldset': {
+              borderColor: '#CBD6E2',
+            },
+            '&:hover fieldset': {
+              borderColor: '#CBD6E2',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: '#CBD6E2',
+            },
+          },
+          '& .MuiInputBase-input': {
+            fontSize: '12px',
+            color: '#425A76',
+            height: '12px',
           },
         }}
       />
     )}
-  </Box>
+  </div>
 );
-
-export const SELECT_STYLES = {
-  fontWeight: 600,
-  fontSize: '12px',
-  lineHeight: '30px',
-  borderRadius: '2px',
-  '& .MuiSelect-select': {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
-    fontWeight: 600,
-    fontSize: '12px',
-    lineHeight: '30px',
-    color: '#425A76',
-    py: 0,
-  },
-  '& .MuiOutlinedInput-notchedOutline': {
-    borderColor: '#CBD6E2',
-  },
-  '&:hover .MuiOutlinedInput-notchedOutline': {
-    borderColor: '#CBD6E2',
-  },
-  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-    borderColor: '#CBD6E2',
-  },
-  '& .MuiSelect-icon': {
-    top: '40%',
-  },
-};
-
-export const MENU_PROPS: Partial<MenuProps> = {
-  anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
-  transformOrigin: { vertical: 'top', horizontal: 'left' },
-  PaperProps: {
-    style: {
-      borderRadius: '0px 0px 8px 8px',
-      border: '1px solid #CBD6E2',
-      borderTop: 'none',
-      marginTop: '1px',
-      boxShadow: 'none',
-    },
-  },
-  MenuListProps: {
-    sx: {
-      paddingTop: 0,
-      paddingBottom: 0,
-    },
-  },
-};
 
 export const NewTextFilterControl: React.FC<{
   fieldName: string;
@@ -462,7 +499,7 @@ export const NewTextFilterControl: React.FC<{
           fontSize: '12px',
           color: '#425A76',
           height: '12px',
-          width: '170px',
+          width: '167px',
         },
       }}
     />
