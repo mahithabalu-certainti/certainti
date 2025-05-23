@@ -17,6 +17,11 @@ export interface CurrencyApiResponse extends CommonApiResponse {
     currency: Currencys[];
   };
 }
+export interface ClassificationApiResponse extends CommonApiResponse {
+  data: {
+    projectClassifications: Classification[];
+  };
+}
 
 export interface StatesApiResponse extends CommonApiResponse {
   data: {
@@ -50,6 +55,16 @@ export interface Cities {
 export interface Currencys {
   rid: string;
   currency_name: string;
+  currency_code: string;
+}
+export interface Industries {
+  rid: string;
+  currency_name: string;
+  currency_code: string;
+}
+export interface Classification {
+  rid: string;
+  classification_name: string;
   currency_code: string;
 }
 

@@ -1,4 +1,11 @@
-import { Autocomplete, Checkbox, MenuItem, Select, Skeleton, TextField } from '@mui/material';
+import {
+  Autocomplete,
+  Checkbox,
+  MenuItem,
+  Select,
+  Skeleton,
+  TextField,
+} from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -8,16 +15,17 @@ import { CountryCode, parsePhoneNumberFromString } from 'libphonenumber-js';
 import React, { useEffect } from 'react';
 import PhoneInput, { CountryData } from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
-import {
-  calendarIcon,
-  closeIcon,
-  searchBlackIcon,
-} from '../../assets';
+import { calendarIcon, closeIcon, searchBlackIcon } from '../../assets';
 
 import { useLocation } from 'react-router-dom';
 import { FieldTypes, Layout, OnChange } from '../../common-service';
 import { ALLOWED_COUNTRIES } from '../../common-utils';
-import { FormType, FormTypeFields, GroupFields, SelectOption } from '../../consultant/types';
+import {
+  FormType,
+  FormTypeFields,
+  GroupFields,
+  SelectOption,
+} from '../../consultant/types';
 
 interface FormBuilderProps {
   data: FormType[];
@@ -27,6 +35,8 @@ interface FormBuilderProps {
   layout?: Layout;
   outData: (e: object) => void;
   onChange?: (params: OnChange) => void;
+  keyStart?: string;
+  keyEnd?: string;
 }
 
 export const FormBuilder: React.FC<FormBuilderProps> = ({
@@ -37,6 +47,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   layout,
   onChange,
   outData,
+  keyStart,
+  keyEnd,
 }) => {
   const location = useLocation();
   const { state } = location;
@@ -161,11 +173,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             if (field.group && value && f.group === field.group) {
               // Clear error messages for all fields in the same group
               const otherFieldsInGroupHaveValue = section.fields
-                .filter(groupField => 
-                  groupField.group === field.group && 
-                  groupField.name !== field.name
+                .filter(
+                  (groupField) =>
+                    groupField.group === field.group &&
+                    groupField.name !== field.name
                 )
-                .some(groupField => 
+                .some((groupField) =>
                   constructFormData[groupField.name]?.toString().trim()
                 );
 
@@ -181,7 +194,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               newData[f.name] = '';
               updatedField.error = '';
             }
-            
+
             return updatedField;
           }),
         }));
@@ -222,22 +235,23 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               disabled={field.disabled}
               displayEmpty
               fullWidth
-              size="small"
+              size='small'
               MenuProps={{
                 PaperProps: {
                   sx: {
                     maxWidth: 300,
                     maxHeight: 300,
                     marginTop: '4px',
-                    boxShadow: "rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px",
+                    boxShadow:
+                      'rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px',
                     '& .MuiMenuItem-root': {
                       fontSize: '13px',
                       padding: '6px 12px',
                       overflow: 'hidden',
-                      textOverflow: 'ellipsis'
-                    }
-                  }
-                }
+                      textOverflow: 'ellipsis',
+                    },
+                  },
+                },
               }}
               sx={{
                 height: '32px',
@@ -251,7 +265,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 },
                 '& .MuiOutlinedInput-notchedOutline': {
                   borderColor: field.error ? '#ef4444' : '#CBD6E2',
-                  borderRadius: '2px'
+                  borderRadius: '2px',
                 },
                 '&:hover .MuiOutlinedInput-notchedOutline': {
                   borderColor: field.error ? '#ef4444' : 'black',
@@ -261,18 +275,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 },
                 '& svg': {
                   color: '#7D98B6',
-                }
+                },
               }}
             >
-              <MenuItem value="" sx={{ color: '#7D98B6' }}>
+              <MenuItem value='' sx={{ color: '#7D98B6' }}>
                 {field.placeholder}
               </MenuItem>
               {field?.options?.map((option, i) => (
-                <MenuItem
-                  key={i}
-                  value={option.value}
-                  title={option.label}
-                >
+                <MenuItem key={i} value={option.value} title={option.label}>
                   {option.label}
                 </MenuItem>
               ))}
@@ -365,7 +375,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return (
           <div className='flex gap-4 mt-1.5'>
             {field?.options?.map((option, i) => (
-              <label key={i} className={`flex gap-2 ${field.disabled ? 'cursor-default' : 'cursor-pointer'}`}>
+              <label
+                key={i}
+                className={`flex gap-2 ${field.disabled ? 'cursor-default' : 'cursor-pointer'}`}
+              >
                 <input
                   type='radio'
                   name={field.name}
@@ -386,13 +399,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         );
       case 'date': {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const startDateValue: string | undefined | any =
-          constructFormData['financial_start_date'] ||
-          constructFormData['resource_startdate'];
+        const startDateValue: string | undefined | any = keyStart
+          ? constructFormData[keyStart]
+          : undefined;
         const today: Dayjs = dayjs();
-        const isEndDateField =
-          field.name === 'financial_end_date' ||
-          field.name === 'resource_enddate';
+        const isEndDateField = field.name === keyEnd;
         const parsedStartDate = startDateValue
           ? dayjs(startDateValue, 'MM/DD/YYYY')
           : undefined;
@@ -405,7 +416,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
         const customMinDate: Dayjs | undefined = (() => {
           if (isFinancialDateField && selectedFiscalYear) {
-            const fiscalYearStart = dayjs(`01/01/${selectedFiscalYear}`, 'MM/DD/YYYY');
+            const fiscalYearStart = dayjs(
+              `01/01/${selectedFiscalYear}`,
+              'MM/DD/YYYY'
+            );
 
             if (isEndDateField && parsedStartDate) {
               return parsedStartDate.add(1, 'day').isAfter(fiscalYearStart)
@@ -422,17 +436,22 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
         const customMaxDate: Dayjs | undefined = (() => {
           if (isFinancialDateField && selectedFiscalYear) {
-            const fiscalYearEnd = dayjs(`12/31/${selectedFiscalYear}`, 'MM/DD/YYYY');
-            
+            const fiscalYearEnd = dayjs(
+              `12/31/${selectedFiscalYear}`,
+              'MM/DD/YYYY'
+            );
+
             if (field?.maxDate) {
               const maxDate = dayjs(field.maxDate);
               return fiscalYearEnd.isBefore(maxDate) ? fiscalYearEnd : maxDate;
             }
             return fiscalYearEnd;
-          }   
+          }
           if (isEndDateField && startDateValue) {
-            return field?.maxDate 
-              ? (dayjs(field.maxDate).isBefore(today) ? dayjs(field.maxDate) : today)
+            return field?.maxDate
+              ? dayjs(field.maxDate).isBefore(today)
+                ? dayjs(field.maxDate)
+                : today
               : today;
           }
           return field?.maxDate ? dayjs(field.maxDate) : undefined;
@@ -733,29 +752,45 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           if (field.type === 'date') {
             const dateValue = constructFormData[field.name] as string;
             // cost date validation
-            if (field.name === 'financial_start_date' || field.name === 'financial_end_date') {
-              const selectedFiscalYear = constructFormData['fiscal_year'] as string;
-              
+            if (
+              field.name === 'financial_start_date' ||
+              field.name === 'financial_end_date'
+            ) {
+              const selectedFiscalYear = constructFormData[
+                'fiscal_year'
+              ] as string;
+
               if (selectedFiscalYear) {
                 // Fiscal year bounds
-                const fiscalYearStart = dayjs(`01/01/${selectedFiscalYear}`, 'MM/DD/YYYY');
-                const fiscalYearEnd = dayjs(`12/31/${selectedFiscalYear}`, 'MM/DD/YYYY');
-                
+                const fiscalYearStart = dayjs(
+                  `01/01/${selectedFiscalYear}`,
+                  'MM/DD/YYYY'
+                );
+                const fiscalYearEnd = dayjs(
+                  `12/31/${selectedFiscalYear}`,
+                  'MM/DD/YYYY'
+                );
+
                 if (dateValue) {
                   const currentDate = dayjs(dateValue, 'MM/DD/YYYY');
-                  
+
                   // Check against fiscal year bounds
-                  if (currentDate.isBefore(fiscalYearStart, 'day') || 
-                      currentDate.isAfter(fiscalYearEnd, 'day')) {
+                  if (
+                    currentDate.isBefore(fiscalYearStart, 'day') ||
+                    currentDate.isAfter(fiscalYearEnd, 'day')
+                  ) {
                     hasError = true;
                     return {
                       ...field,
                       error: `${field.name === 'financial_start_date' ? 'Start' : 'End'} date must be within the selected fiscal year (${selectedFiscalYear})`,
                     };
                   }
-            
+
                   // Check against maxDate (if specified)
-                  if (field.maxDate && currentDate.isAfter(dayjs(field.maxDate), 'day')) {
+                  if (
+                    field.maxDate &&
+                    currentDate.isAfter(dayjs(field.maxDate), 'day')
+                  ) {
                     hasError = true;
                     return {
                       ...field,
@@ -764,15 +799,17 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   }
                 }
               }
-            
+
               // Validate financial end date against start date
               if (field.name === 'financial_end_date' && dateValue) {
-                const startDateValue = constructFormData['financial_start_date'] as string;
-                
+                const startDateValue = constructFormData[
+                  'financial_start_date'
+                ] as string;
+
                 if (startDateValue) {
                   const startDate = dayjs(startDateValue, 'MM/DD/YYYY');
                   const endDate = dayjs(dateValue, 'MM/DD/YYYY');
-                  
+
                   if (endDate.isSame(startDate, 'day')) {
                     hasError = true;
                     return {
@@ -780,7 +817,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       error: 'End date cannot be the same as start date',
                     };
                   }
-                  
+
                   if (endDate.isBefore(startDate, 'day')) {
                     hasError = true;
                     return {
@@ -790,12 +827,19 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   }
                 }
               }
-            
+
               // Validate both financial dates are either provided or not provided
-              if (field.name === 'financial_start_date' || field.name === 'financial_end_date') {
-                const startDate = constructFormData['financial_start_date'] as string;
-                const endDate = constructFormData['financial_end_date'] as string;
-                
+              if (
+                field.name === 'financial_start_date' ||
+                field.name === 'financial_end_date'
+              ) {
+                const startDate = constructFormData[
+                  'financial_start_date'
+                ] as string;
+                const endDate = constructFormData[
+                  'financial_end_date'
+                ] as string;
+
                 if ((startDate && !endDate) || (!startDate && endDate)) {
                   hasError = true;
                   return {
@@ -860,7 +904,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 hasError = true;
                 return {
                   ...field,
-                  error: `${field.name === 'resource_startdate' ? 'Effective Date' : field.name === 'skill_start_date' ? "Start Date" : 'This date'} cannot be in the future`,
+                  error: `${field.name === 'resource_startdate' ? 'Effective Date' : field.name === 'skill_start_date' ? 'Start Date' : 'This date'} cannot be in the future`,
                 };
               }
               if (dateValue && !isValidDate(dateValue, 'MM/DD/YYYY')) {
@@ -907,10 +951,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               return {
                 ...field,
                 error:
-                field.name === 'resource_startdate'
-                  ? 'Effective Date cannot be before 01-01-1950'
-                  : field.name === 'skill_start_date' ? 'Start Date cannot be before 01-01-1950'
-                  : 'Date cannot be before 01-01-1950',
+                  field.name === 'resource_startdate'
+                    ? 'Effective Date cannot be before 01-01-1950'
+                    : field.name === 'skill_start_date'
+                      ? 'Start Date cannot be before 01-01-1950'
+                      : 'Date cannot be before 01-01-1950',
               };
             }
 
@@ -1074,11 +1119,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     // Group field validation - only for visible fields
     groupFields.forEach((fieldNames, groupName) => {
       // Filter out any fields that might be in hidden sections
-      const visibleFields = fieldNames.filter(fieldName => {
+      const visibleFields = fieldNames.filter((fieldName) => {
         let isVisible = false;
-        dataValidation?.forEach(section => {
+        dataValidation?.forEach((section) => {
           if (!section.hide) {
-            section.fields.forEach(field => {
+            section.fields.forEach((field) => {
               if (field.name === fieldName && !field.hide) {
                 isVisible = true;
               }
@@ -1088,8 +1133,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return isVisible;
       });
 
-      const filledFields = visibleFields.filter(
-        (fieldName) => constructFormData[fieldName]?.toString().trim()
+      const filledFields = visibleFields.filter((fieldName) =>
+        constructFormData[fieldName]?.toString().trim()
       );
 
       if (visibleFields.length > 0) {
@@ -1111,7 +1156,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           dataValidation?.forEach((section) => {
             if (!section.hide) {
               section.fields.forEach((field) => {
-                if (field.group === groupName && filledFields.includes(field.name) && !field.hide) {
+                if (
+                  field.group === groupName &&
+                  filledFields.includes(field.name) &&
+                  !field.hide
+                ) {
                   field.error = `Only one field in the "${groupName}" group can be filled`;
                 }
               });

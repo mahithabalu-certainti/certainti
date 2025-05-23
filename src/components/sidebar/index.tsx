@@ -69,6 +69,7 @@ import {
   MANAGE_USER_ACCESS,
   MANAGE_USER_GROUP,
   TASK_TEMPLATES,
+  PROJECT,
 } from '../../routes';
 
 const accountNavItems: INavItem[] = [
@@ -89,9 +90,9 @@ const accountNavItems: INavItem[] = [
   {
     icon: projectsIcon,
     name: 'Projects',
-    link: NOT_FOUND,
+    link: PROJECT,
     type: 'link',
-    matchLink: '',
+    matchLink: PROJECT,
   },
   {
     icon: timesheetIcon,

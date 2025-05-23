@@ -4,7 +4,7 @@ export type TextFilterOption = 'contains' | 'equals' | 'not_equals';
 export type NumberFilterOption = 'greater_than' | 'less_than' | 'between';
 export type StatusFilterOption = 'equals';
 export type BooleanFilterOption = 'equals';
-export type DateOptions = 'equals' | 'before' | 'after' |'between' ;
+export type DateOptions = 'equals' | 'before' | 'after' | 'between';
 export const DateValueOptions = [
   { value: 'equals', label: 'Equals' },
   { value: 'before', label: 'Before' },
@@ -60,7 +60,7 @@ export type FieldConfig = {
   name: string;
   label: string;
   type: 'text' | 'number' | 'status' | 'boolean' | 'multi-select' | 'date';
-  options?: string[] | { value: string; label: string; }[];
+  options?: string[] | { value: string; label: string }[];
 };
 
 export interface FilterComponentProps {
@@ -75,4 +75,4 @@ export interface FilterComponentProps {
 export const StatusOptions = [
   { value: 'Active', label: 'Active' },
   { value: 'Inactive', label: 'In-Active' },
-]
+];

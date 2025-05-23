@@ -1,0 +1,1 @@
+export { default as SideMenuPanel } from './side-menu-panel';

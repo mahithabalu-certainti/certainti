@@ -52,7 +52,12 @@ import phoneIcon from './phone.svg';
 import plusIcon from './plus.svg';
 import projectHeaderIcon from './projects-header.svg';
 import projectsIcon from './projects.svg';
+<<<<<<< HEAD
 import profileIcon from './profile.svg';
+=======
+import projectsBook from './project-book.svg';
+import projectCreateIcon from './new-project.svg';
+>>>>>>> ea882e3ab081ed4698ea8c735fe9f89e92c4e934
 import refreshIcon from './refresh.svg';
 import resourceHeaderIcon from './resource-header.svg';
 import resourceFilterIcon from './resourceFilterIcon.svg';
@@ -69,7 +74,11 @@ import addIcon from './addicon.svg';
 import userIcon from './user.svg';
 import eyeIcon from './eye-icon.svg';
 import backIcon from './chevron-double-left.svg';
+<<<<<<< HEAD
 import deleteIcon from './delete-icon.svg';
+=======
+import projectDetailsIcon from './project-details.svg';
+>>>>>>> ea882e3ab081ed4698ea8c735fe9f89e92c4e934
 
 export {
   accountDetailsIcon,
@@ -129,7 +138,13 @@ export {
   plusIcon,
   projectHeaderIcon,
   projectsIcon,
+<<<<<<< HEAD
   profileIcon,
+=======
+  projectDetailsIcon,
+  projectCreateIcon,
+  projectsBook,
+>>>>>>> ea882e3ab081ed4698ea8c735fe9f89e92c4e934
   refreshIcon,
   resourceFilterIcon,
   resourceHeaderIcon,
