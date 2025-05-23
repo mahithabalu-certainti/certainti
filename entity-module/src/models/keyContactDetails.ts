@@ -64,6 +64,7 @@ export class KeyContact
         r_number: {
           type: DataTypes.STRING(14),
           allowNull: true,
+          unique: true,
         },
         key_contact_name: {
           type: DataTypes.STRING(128),

@@ -78,6 +78,7 @@ export class ResourceCost
         r_number: {
           type: DataTypes.STRING(20),
           allowNull: true,
+          unique:true,
         },
         eid: {
           type: DataTypes.STRING(255),

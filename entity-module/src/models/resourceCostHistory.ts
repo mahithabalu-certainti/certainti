@@ -37,6 +37,7 @@ export class ResourceCostHistory extends Model<ResourceCostHistoryAttributes, Re
        r_number: {
         type: DataTypes.STRING(20),
         allowNull: true,
+        unique: true,
        },
        resource_cost_rid: {
         type: DataTypes.UUID,

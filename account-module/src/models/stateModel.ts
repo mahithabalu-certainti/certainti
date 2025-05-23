@@ -35,6 +35,7 @@ export class States
         r_number: {
           type: DataTypes.STRING(20),
           allowNull: false,
+          unique: true,
         },
         country_rid: {
           type: DataTypes.UUID,

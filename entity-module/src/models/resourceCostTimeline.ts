@@ -41,6 +41,7 @@ export class ResourceCostTimeline extends Model<ResourceCostTimelineAttributes, 
        r_number: {
         type: DataTypes.STRING(20),
         allowNull: true,
+        unique: true,
        },
        account_rid: {
         type: DataTypes.UUID,
