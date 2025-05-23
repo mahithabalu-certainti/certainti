@@ -79,6 +79,16 @@ export interface FilterComponentProps {
   setPage: (page: number) => void;
 }
 
+export interface FilterModalProps {
+  isOpen: boolean;
+  filterId: string | undefined;
+  filterAnchorEl: HTMLButtonElement | null;
+  setAppliedFilters: (filters: Record<string, any>) => void;
+  filterFields: FieldConfig[];
+  setPage: (page: number) => void;
+  handleCloseFilter: () => void;
+}
+
 export const StatusOptions = [
   { value: 'Active', label: 'Active' },
   { value: 'Inactive', label: 'In-Active' },
