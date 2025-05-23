@@ -10,6 +10,7 @@ export const mockResourcesList: ResourcesListResponse = {
       {
         rid: '4e15cef8-3efb-4e98-8ec7-e16f27ae8d63',
         r_number: 'ACC0001',
+        resource_code: 'ACC0001',
         resource_ref_id: 'resource-005',
         resource_fullname: 'jack miller',
         resource_type: 'FullTime',
@@ -18,6 +19,7 @@ export const mockResourcesList: ResourcesListResponse = {
       {
         rid: '85dd287c-ff89-4d25-9742-c6fd5062f3c2',
         r_number: 'ACC0002',
+        resource_code: 'ACC0002',
         resource_ref_id: 'resource-007',
         resource_fullname: 'jack miller',
         resource_type: 'FullTime',
@@ -26,6 +28,7 @@ export const mockResourcesList: ResourcesListResponse = {
       {
         rid: '0aac0571-a734-4502-9b81-3b07a38615b9',
         r_number: 'ACC0003',
+        resource_code: 'ACC0003',
         resource_ref_id: 'resource-008',
         resource_fullname: 'jack miller',
         resource_type: 'FullTime',
@@ -34,6 +37,7 @@ export const mockResourcesList: ResourcesListResponse = {
       {
         rid: '34625fab-98ee-4782-b0da-e49a02e34398',
         r_number: 'ACC0004',
+        resource_code: 'ACC0004',
         resource_ref_id: 'resource-009',
         resource_fullname: 'jack miller',
         resource_type: 'FullTime',

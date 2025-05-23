@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Table } from '../../../../components/table';
+import { ListTable } from '../../../../components/table';
 import { ADMIN_MANAGE_USER } from '../../../../routes';
 import { useManageUserList } from '../../../service/manage-user/manage-user-service';
 import { ManageUser, User, UserListParams } from '../../../types/manage-user';
 import { userColumns } from './columns';
+import { ActionItem } from '../../../../components/table/types';
+import { editIcon, eyeIcon } from '../../../../assets';
 
 interface IUserTableProps {
   appliedFilters: Record<string, any>;
@@ -13,7 +15,11 @@ interface IUserTableProps {
   setTableParams: React.Dispatch<React.SetStateAction<UserListParams>>;
 }
 
-export const UserTable: React.FC<IUserTableProps> = ({ appliedFilters, tableParams, setTableParams }) => {
+export const UserTable: React.FC<IUserTableProps> = ({
+  appliedFilters,
+  tableParams,
+  setTableParams,
+}) => {
   const [users, setUsers] = useState<ManageUser[]>([]);
   const navigate = useNavigate();
 
@@ -68,11 +74,12 @@ export const UserTable: React.FC<IUserTableProps> = ({ appliedFilters, tablePara
     });
   };
 
-  const handleSort = (sortBy: string, sortOrder: 'ASC' | 'DESC') => {
+  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
     setTableParams((prev) => ({
       ...prev,
       sortBy,
-      sortOrder,
+      sortOrder: apiOrder,
     }));
   };
 
@@ -91,17 +98,43 @@ export const UserTable: React.FC<IUserTableProps> = ({ appliedFilters, tablePara
     }));
   };
 
+  const actionButtons: ActionItem<ManageUser>[] = [
+    {
+      label: 'View',
+      onClick: (row: ManageUser) => handleView(row),
+      icon: eyeIcon,
+    },
+    {
+      label: 'Edit',
+      onClick: (row: ManageUser) => handleEdit(row),
+      icon: editIcon,
+      iconStyle: {
+        filter:
+          'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
+      },
+    },
+  ];
+
   return (
-    <Table
+    <ListTable
       data={users}
       columns={userColumns}
       getRowId={getRowId}
+      hoverHighlight={true}
+      tableStyle={{
+        maxHeight: 'calc(95vh - 200px)',
+        borderBottom: '1px solid #CBD6E2',
+        overflow: 'auto',
+      }}
+      stickyHeader={true}
+      stickyColumnsCount={2}
       // Selection
       selectable={true}
       onSelectionChange={(selectedIds) => console.log('Selected:', selectedIds)}
       // Actions
-      onEdit={handleEdit}
-      onView={handleView}
+      actionWidth={100}
+      actionDisplayMode='icon'
+      actionMenuItems={actionButtons}
       // State
       loading={isLoading}
       error={isError ? 'Failed to load users' : undefined}

@@ -1,9 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  Box,
-  Checkbox,
-  CircularProgress,
   Paper,
   Table,
   TableBody,
@@ -11,23 +8,22 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TableSortLabel,
   Typography,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { generatePath, useNavigate } from 'react-router-dom';
-import { arrowDownIcon, arrowUpIcon } from '../../../../assets';
 import { reshapeGlobalFilter } from '../../../../common-utils';
-import { TablePagination } from '../../../../components/table';
+import { TableSkeleton, TableSortHeader } from '../../../../components/table';
 import { ACCOUNT, ACCOUNT_DETAILS } from '../../../../routes';
 import { RootState } from '../../../../store/store';
 import { useAccounts } from '../../../services/account';
 import { FilterState } from '../../../types';
-import { Account, AccountList, ConvertedAccount } from '../../../types/account';
+import { Account, ConvertedAccount } from '../../../types/account';
 import { convertAccounts } from '../helpers';
 import './styles.css';
 import { renderChildRows, renderRows } from './utils';
+import { accountColumns } from './columns';
 
 const AccountTable: React.FC<Record<string, any>> = ({
   appliedFilters,
@@ -37,14 +33,15 @@ const AccountTable: React.FC<Record<string, any>> = ({
   orderBy,
   setOrderBy,
   page,
-  setPage
+  // setPage
 }) => {
   const navigate = useNavigate();
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
 
-  const [rowsPerPage, setRowsPerPage] = useState<number>(10);
+  // const [rowsPerPage, setRowsPerPage] = useState<number>(1000);
   const [accounts, setAccounts] = useState<ConvertedAccount[]>();
+  const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
   const { filters, fiscalYear } = useSelector<
     RootState,
@@ -53,7 +50,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
 
   const { data: accountList, isLoading: loading } = useAccounts({
     page: page,
-    limit: rowsPerPage,
+    limit: 1000,
     sortBy: orderBy,
     sortOrder: apiOrder,
     filters: appliedFilters,
@@ -62,9 +59,15 @@ const AccountTable: React.FC<Record<string, any>> = ({
   });
 
   useEffect(() => {
-    setAccounts(convertAccounts(accountList?.accounts ?? []));
-    setTotalCount(accountList?.count ?? 0);
-  }, [accountList]);
+    if (!loading && accountList) {
+      const convertedData = convertAccounts(accountList.accounts || []);
+      setAccounts(convertedData);
+      setTotalCount(accountList.count || 0);
+      setIsDataLoaded(true);
+    } else {
+      setIsDataLoaded(false);
+    }
+  }, [loading, accountList]);
 
   // Add this handler in the AccountTable component
   const handleAccountNameClick = (account: Account) => {
@@ -156,60 +159,51 @@ const AccountTable: React.FC<Record<string, any>> = ({
     setSelectedRows(newSelectedRows);
   };
 
-  const handleSelectAllRows = (selectAll: boolean) => {
-    if (!accounts) return;
+  // const handleSelectAllRows = (selectAll: boolean) => {
+  //   if (!accounts) return;
 
-    const newSelectedRows = new Set<number>();
+  //   const newSelectedRows = new Set<number>();
 
-    if (selectAll) {
-      accounts.forEach((account, index) => {
-        const hasParent = !!account.parentAccount;
+  //   if (selectAll) {
+  //     accounts.forEach((account, index) => {
+  //       const hasParent = !!account.parentAccount;
 
-        if (!hasParent) {
-          newSelectedRows.add(index);
+  //       if (!hasParent) {
+  //         newSelectedRows.add(index);
 
-          const children = accounts.filter(
-            (acc) => acc.parentAccount === account.accountName
-          );
+  //         const children = accounts.filter(
+  //           (acc) => acc.parentAccount === account.accountName
+  //         );
 
-          children.forEach((child) => {
-            const childIndex = accounts.findIndex(
-              (acc) => acc.accountName === child.accountName
-            );
-            newSelectedRows.add(childIndex);
-          });
-        }
-      });
-    }
+  //         children.forEach((child) => {
+  //           const childIndex = accounts.findIndex(
+  //             (acc) => acc.accountName === child.accountName
+  //           );
+  //           newSelectedRows.add(childIndex);
+  //         });
+  //       }
+  //     });
+  //   }
 
-    setSelectedRows(newSelectedRows);
-  };
+  //   setSelectedRows(newSelectedRows);
+  // };
 
-  // Handle page change
-  const handleChangePage = (newPage: number) => {
-    setPage(newPage + 1);
-  };
+  // // Handle page change
+  // const handleChangePage = (newPage: number) => {
+  //   setPage(newPage + 1);
+  // };
 
-  // Handle rows per page change
-  const handleChangeRowsPerPage = (newPageSize: number) => {
-    setRowsPerPage(newPageSize);
-    setPage(1);
-  };
+  // // Handle rows per page change
+  // const handleChangeRowsPerPage = (newPageSize: number) => {
+  //   setRowsPerPage(newPageSize);
+  //   setPage(1);
+  // };
 
   // Handle sorting
-  const handleRequestSort = (
-    _event: React.MouseEvent<unknown>,
-    property: keyof AccountList
-  ) => {
-    const isAsc = orderBy === property && order === 'asc';
-    setOrder(isAsc ? 'desc' : 'asc');
+  const handleSortChange = (property: string, direction: 'asc' | 'desc') => {
     setOrderBy(property);
+    setOrder(direction);
   };
-
-  const createSortHandler =
-    (property: keyof AccountList) => (event: React.MouseEvent<unknown>) => {
-      handleRequestSort(event, property);
-    };
 
   const childRowsRenderer = (parentAccount: string | null) =>
     renderChildRows({
@@ -223,111 +217,36 @@ const AccountTable: React.FC<Record<string, any>> = ({
       handleAccountNameClick,
     });
 
-  const getSortIcon =
-    (orderBy: string, columnKey: keyof AccountList, order: 'asc' | 'desc') =>
-      () => {
-        if (orderBy !== columnKey) {
-          return (
-            <div
-              className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
-              onClick={createSortHandler(columnKey)}
-            >
-              <img
-                src={arrowUpIcon}
-                alt='sort-up'
-                className='w-4 h-4 filter grayscale brightness-0 opacity-50'
-              />
-              <img
-                src={arrowDownIcon}
-                alt='sort-down'
-                className='w-4 h-4 filter grayscale brightness-0 opacity-50 mt-[-9px]'
-              />
-            </div>
-          );
-        }
-        return order === 'asc' ? (
-          <div
-            className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
-            onClick={createSortHandler(columnKey)}
-          >
-            <img
-              src={arrowUpIcon}
-              alt='sort-up-active'
-              className='w-4 h-4'
-              style={{
-                filter: 'brightness(0) saturate(100%)',
-              }}
-            />
-            <img
-              src={arrowDownIcon}
-              alt='sort-down-inactive'
-              className='w-4 h-4 filter grayscale brightness-0 opacity-50 mt-[-9px]'
-            />
-          </div>
-        ) : (
-          <div
-            className='inline-flex flex-col justify-center items-center pl-0.5 cursor-pointer mt-0.5'
-            onClick={createSortHandler(columnKey)}
-          >
-            <img
-              src={arrowUpIcon}
-              alt='sort-up-inactive'
-              className='w-4 h-4 filter grayscale brightness-0 opacity-50'
-            />
-            <img
-              src={arrowDownIcon}
-              alt='sort-down-active'
-              className='w-4 h-4 mt-[-9px]'
-              style={{
-                filter: 'brightness(0) saturate(100%)',
-              }}
-            />
-          </div>
-        );
-      };
-
   return (
-    <div className='border border-[#CBD6E2] h-auto'>
+    <div className='border-t border-[#CBD6E2] h-full'>
       <Paper
         sx={{
           boxShadow: 'none',
-          borderBottom: '1px solid #CBD6E2',
           borderRadius: '0px',
+          height: '100%',
         }}
       >
         <TableContainer
           sx={{
-            maxHeight: 'calc(85vh - 200px)',
-            overflow: 'auto',
+            height: '100%',
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
+            '&::-webkit-scrollbar': {
+              display: 'none',
+            },
           }}
         >
-          <Table
-            stickyHeader
-            sx={{
-              tableLayout: 'fixed',
-              borderCollapse: 'separate !important',
-              borderSpacing: 0,
-              '& .MuiTableCell-root': {
-                borderBottom: '1px solid #CBD6E2',
-              },
-            }}
-          >
+          <Table stickyHeader>
             <TableHead
               sx={{
                 '& .MuiTableCell-root': {
-                  fontWeight: 500,
-                  fontSize: '14px',
+                  fontWeight: 700,
+                  fontSize: '13px',
                   lineHeight: '21px',
                   color: '#2A2A2A',
                   padding: '0px',
-                  pl: 1,
-                  height: '50px',
-                },
-                '& .MuiTableSortLabel-root': {
-                  '&:hover': {
-                    color: 'inherit',
-                    cursor: 'auto',
-                  },
+                  px: '8px',
+                  height: '28px',
                 },
               }}
             >
@@ -338,16 +257,17 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     left: 0,
                     background: '#fff',
                     zIndex: 11,
-                    minWidth: '50px',
-                    width: '50px',
-                    maxWidth: '50px',
+                    width: '32px',
+                    maxWidth: '32px',
+                    minWidth: '32px',
                     padding: '0px !important',
-                    borderRight: '1px solid #CBD6E2',
+                    borderRight: 'none',
                     borderBottom: '1px solid #CBD6E2 !important',
                   }}
                 >
-                  <Box className='flex items-center justify-center'>
+                  {/* <Box className='flex items-center justify-center !h-[28px] !w-[32px]'>
                     <Checkbox
+                      size="small"
                       disableRipple
                       checked={Boolean(
                         accounts?.length &&
@@ -370,115 +290,84 @@ const AccountTable: React.FC<Record<string, any>> = ({
                         },
                       }}
                     />
-                  </Box>
+                  </Box> */}
                 </TableCell>
+                {accountColumns.map((column) =>
+                  column.sortable ? (
+                    <TableSortHeader
+                      key={column.id}
+                      columnId={column.sortId}
+                      label={column.label}
+                      orderBy={orderBy}
+                      order={order}
+                      onSortChange={handleSortChange}
+                      sx={{
+                        width: column.width || 160,
+                        minWidth: column.width || 160,
+                        maxWidth: column.width || 160,
+                        ...(column.sx || {}),
+                      }}
+                    />
+                  ) : (
+                    <TableCell
+                      key={column.id}
+                      sx={{
+                        width: column.width || 160,
+                        minWidth: column.width || 160,
+                        maxWidth: column.width || 160,
+                        ...(column.sx || {}),
+                      }}
+                    >
+                      {column.label}
+                    </TableCell>
+                  )
+                )}
                 <TableCell
                   sx={{
-                    position: 'sticky',
-                    left: '50px',
-                    background: '#fff',
-                    zIndex: 10,
-                    minWidth: '300px',
-                    maxWidth: '300px',
-                    width: '300px',
-                    borderRight: '1px solid #CBD6E2',
-                    borderBottom: '1px solid #CBD6E2 !important',
+                    width: '100px',
+                    minWidth: '100px',
+                    maxWidth: '100px',
+                    textAlign: 'center',
+                    pl: '0px !important',
+                    borderRight: 'none',
                   }}
                 >
-                  <TableSortLabel
-                    active={orderBy === 'account_name'}
-                    direction={orderBy === 'account_name' ? order : 'asc'}
-                    IconComponent={getSortIcon(orderBy, 'account_name', order)}
-                  >
-                    Account Name
-                  </TableSortLabel>
+                  Action
                 </TableCell>
-                <TableCell sx={{ width: '180px',  maxWidth: '180px', minWidth: '180px' }}>
-                  <TableSortLabel
-                    active={orderBy === 'r_number'}
-                    direction={orderBy === 'r_number' ? order : 'asc'}
-                    IconComponent={getSortIcon(orderBy, 'r_number', order)}
-                  >
-                    Account ID
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sx={{ width: '200px',  maxWidth: '200px', minWidth: '200px' }}>
-                  <TableSortLabel
-                    active={orderBy === 'industry'}
-                    direction={orderBy === 'industry' ? order : 'asc'}
-                    IconComponent={getSortIcon(orderBy, 'industry', order)}
-                  >
-                    Industry
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sx={{ width: '150px',  maxWidth: '150px', minWidth: '150px' }}>
-                  <TableSortLabel
-                    active={orderBy === 'country'}
-                    direction={orderBy === 'country' ? order : 'asc'}
-                    IconComponent={getSortIcon(orderBy, 'country', order)}
-                  >
-                    Country
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sx={{ width: '100px',  maxWidth: '100px', minWidth: '100px' }}>
-                  <TableSortLabel
-                    active={orderBy === 'currency'}
-                    direction={orderBy === 'currency' ? order : 'asc'}
-                    IconComponent={getSortIcon(orderBy, 'currency', order)}
-                  >
-                    Currency
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sx={{ width: '160px',  maxWidth: '160px', minWidth: '160px' }}>
-                  <TableSortLabel
-                    active={orderBy === 'annual_revenue'}
-                    direction={orderBy === 'annual_revenue' ? order : 'asc'}
-                    IconComponent={getSortIcon(
-                      orderBy,
-                      'annual_revenue',
-                      order
-                    )}
-                  >
-                    Annual Revenue
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sx={{ width: '100px',  maxWidth: '100px', minWidth: '100px' }}>
-                  <TableSortLabel
-                    active={orderBy === 'status'}
-                    direction={orderBy === 'status' ? order : 'asc'}
-                    IconComponent={getSortIcon(orderBy, 'status', order)}
-                  >
-                    Status
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sx={{ width: '100px',  maxWidth: '100px', minWidth: '100px' }}>Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody
               sx={{
                 '& .MuiTableCell-root': {
-                  fontWeight: 300,
-                  fontSize: '14px',
+                  fontWeight: 700,
+                  fontSize: '13px',
                   lineHeight: '21px',
-                  color: '#425A76',
+                  color: '#2D3E4F',
                   padding: '0px',
-                  pl: 1,
-                  pr: 1,
-                  minHeight: '42px',
-                  maxHeight: '42px',
-                  height: '42px',
-                  borderBottom: '1px solid #CBD6E2 !important',
+                  paddingLeft: '8px',
+                  paddingRight: '8px',
+                  height: '32px',
                 },
               }}
             >
-              {loading ? (
-                <TableRow sx={{ height: 'calc(85vh - 200px)' }}>
-                  <TableCell colSpan={9} align='center'>
-                    <CircularProgress />
-                  </TableCell>
-                </TableRow>
-              ) : accounts?.length === 0 ? (
-                <TableRow sx={{ height: loading ? 'calc(85vh - 200px)': "auto" }}>
+              {loading && !isDataLoaded ? (
+                <TableSkeleton
+                  rowsPerPage={15}
+                  columnsCount={accountColumns.length}
+                  selectable={true}
+                  hasActions={true}
+                  borderHide={true}
+                  stickyColumnsCount={2}
+                />
+              ) : !loading && isDataLoaded && accounts?.length === 0 ? (
+                <TableRow
+                  sx={{
+                    height: '32px',
+                    '& .MuiTableCell-root': {
+                      border: 'none',
+                    },
+                  }}
+                >
                   <TableCell colSpan={9} align='center'>
                     <Typography variant='body1'>No data available</Typography>
                   </TableCell>
@@ -500,14 +389,14 @@ const AccountTable: React.FC<Record<string, any>> = ({
           </Table>
         </TableContainer>
       </Paper>
-      <TablePagination
+      {/* <TablePagination
         rowsPerPageOptions={[5, 10, 25, 50]}
         count={accountList?.count ?? 0}
         rowsPerPage={rowsPerPage}
         page={(page ?? 1) - 1}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
-      />
+      /> */}
     </div>
   );
 };
