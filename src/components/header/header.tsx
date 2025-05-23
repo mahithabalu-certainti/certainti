@@ -9,7 +9,6 @@ import {
 } from '../../assets';
 import { ActionsDropdown } from '../actions-dropdown';
 import TextButton from '../button/text-button';
-import { Tooltip } from '@mui/material';
 import { ActionsDropdownItem } from '../../common-utils';
 
 const DEFAULT_BUTTON_STYLES = {
@@ -30,8 +29,6 @@ interface HeaderProps {
     onClick: () => void;
     navigateTo?: string;
     variant?: 'create' | 'edit'; // To distinguish between create/edit button styles if needed
-    disabled?: boolean;
-    tooltip?: string;
   };
   showFilter?: boolean;
   showRefresh?: boolean;
@@ -125,24 +122,19 @@ export const PageHeader: React.FC<HeaderProps> = ({
           {actionItems.length > 0 && <ActionsDropdown actions={actionItems} />}
 
           {primaryButton && (
-            <Tooltip arrow title={primaryButton.tooltip}>
-              <span>
-                <TextButton
-                  label={primaryButton.label}
-                  onClick={primaryButton.onClick}
-                  variant='outlined'
-                  disabled={primaryButton.disabled}
-                  sx={{
-                    ...DEFAULT_BUTTON_STYLES,
-                    ...customStyles.button,
-                    width: '57px',
-                    minWidth: '57px',
-                    fontSize: '13px',
-                    fontWeight: 400,
-                  }}
-                />
-              </span>
-            </Tooltip>
+            <TextButton
+              label={primaryButton.label}
+              onClick={primaryButton.onClick}
+              variant='outlined'
+              sx={{
+                ...DEFAULT_BUTTON_STYLES,
+                ...customStyles.button,
+                width: '57px',
+                minWidth: '57px',
+                fontSize: '13px',
+                fontWeight: 400,
+              }}
+            />
           )}
 
           {(showRefresh || showDownload) && (

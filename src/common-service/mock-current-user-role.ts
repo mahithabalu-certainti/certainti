@@ -15,7 +15,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         menu_id: '7da1d879-0970-4b8e-a9a1-2ff359a1157e',
         name: 'accounts',
         desc: 'Accounts',
-        is_enabled: false,
+        is_enabled: true,
       },
       {
         rid: 'a991faf9-1388-438a-bc4f-beb1e8669fae',
@@ -47,7 +47,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         menu_id: '377b95f9-ab27-4a98-9ab3-7dd89dff2729',
         name: 'cases',
         desc: 'Cases',
-        is_enabled: false,
+        is_enabled: true,
       },
       {
         rid: '48f5a291-b578-41f8-bdd8-40c1fe81be48',
@@ -111,7 +111,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         menu_id: '9ae6c51a-f207-41f2-87da-b299017c8f57',
         name: 'manage_user_group',
         desc: 'Manage User Group',
-        is_enabled: false,
+        is_enabled: true,
       },
       {
         rid: '1875dca2-a6f2-4120-9d1c-e572a0e52243',
@@ -326,7 +326,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: 'b24c351c-803c-49ce-a5ed-4ea59b473a93',
         name: 'user_export',
         desc: 'User Export',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -336,7 +336,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: 'b24c351c-803c-49ce-a5ed-4ea59b473a93',
         name: 'user_view_permission',
         desc: 'User View Permission',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -346,7 +346,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: 'b24c351c-803c-49ce-a5ed-4ea59b473a93',
         name: 'user_assign_permission',
         desc: 'Assign Permission to User',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -356,7 +356,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: '7f690af4-90af-44fd-8204-7596b169f3b9',
         name: 'profile_view_all',
         desc: 'View All Profiles',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -366,7 +366,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: 'f2f1bbc7-9cf4-4118-8454-ecdd44e3453b',
         name: 'account_resources_download',
         desc: 'Account Resources Download',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -386,7 +386,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: 'f2f1bbc7-9cf4-4118-8454-ecdd44e3453b',
         name: 'account_resources_create',
         desc: 'Account Resources Create',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -396,7 +396,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: 'f2f1bbc7-9cf4-4118-8454-ecdd44e3453b',
         name: 'account_resources_cost_create',
         desc: 'Account Resources Cost Create',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -406,7 +406,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: 'f2f1bbc7-9cf4-4118-8454-ecdd44e3453b',
         name: 'account_resources_skill_create',
         desc: 'Account Resources Skill Create',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -426,7 +426,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: 'f2f1bbc7-9cf4-4118-8454-ecdd44e3453b',
         name: 'account_resources_resource_cost_delete',
         desc: 'Account Resources Resource Cost Delete',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -436,7 +436,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: 'f2f1bbc7-9cf4-4118-8454-ecdd44e3453b',
         name: 'account_resources_resource_skill_delete',
         desc: 'Account Resources Resource Skill Delete',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -446,7 +446,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: 'f2f1bbc7-9cf4-4118-8454-ecdd44e3453b',
         name: 'account_resources_edit_update',
         desc: 'Account Resources Edit Update',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -456,7 +456,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: 'b24c351c-803c-49ce-a5ed-4ea59b473a93',
         name: 'user_create',
         desc: 'Create User',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -476,7 +476,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: '7f690af4-90af-44fd-8204-7596b169f3b9',
         name: 'profile_create',
         desc: 'Create Profile',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -496,7 +496,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: 'c2b752be-780d-475e-89e3-55e9b4662ab0',
         name: 'accounts_create',
         desc: 'Accounts - Create',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -516,8 +516,8 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: 'c2b752be-780d-475e-89e3-55e9b4662ab0',
         name: 'accounts_export',
         desc: 'Accounts - Export',
-        is_field_available: false,
-        is_enabled: false,
+        is_field_available: true,
+        is_enabled: true,
       },
       {
         rid: '1183f109-113d-45e7-ab48-15ba55cf59d0',
@@ -526,8 +526,8 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: 'c2b752be-780d-475e-89e3-55e9b4662ab0',
         name: 'accounts_delete',
         desc: 'Accounts - Delete',
-        is_field_available: false,
-        is_enabled: false,
+        is_field_available: true,
+        is_enabled: true,
       },
       {
         rid: 'f7bd9e27-26d4-40d7-9407-5ae955a15be4',
@@ -546,7 +546,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: 'f2f1bbc7-9cf4-4118-8454-ecdd44e3453b',
         name: 'account_resources_view_overview',
         desc: 'Account Resources Overview',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -556,7 +556,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: 'f2f1bbc7-9cf4-4118-8454-ecdd44e3453b',
         name: 'account_resources_view_timeline',
         desc: 'Account Resources Timeline',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -566,7 +566,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: 'f2f1bbc7-9cf4-4118-8454-ecdd44e3453b',
         name: 'account_resources_delete',
         desc: 'Account Resources - Delete',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -616,7 +616,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: 'b24c351c-803c-49ce-a5ed-4ea59b473a93',
         name: 'user_suspend',
         desc: 'Suspend User',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -626,7 +626,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: 'b24c351c-803c-49ce-a5ed-4ea59b473a93',
         name: 'user_activate',
         desc: 'Activate User',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -636,7 +636,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: 'b24c351c-803c-49ce-a5ed-4ea59b473a93',
         name: 'user_reset_password',
         desc: 'Reset Password',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -646,7 +646,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: 'b24c351c-803c-49ce-a5ed-4ea59b473a93',
         name: 'user_delete',
         desc: 'User Delete',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -656,7 +656,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: '7f690af4-90af-44fd-8204-7596b169f3b9',
         name: 'profile_edit_update',
         desc: 'Edit & Update Profile',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -666,7 +666,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: '7f690af4-90af-44fd-8204-7596b169f3b9',
         name: 'profile_view',
         desc: 'View Profile',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -676,7 +676,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: '7f690af4-90af-44fd-8204-7596b169f3b9',
         name: 'profile_export',
         desc: 'Export Profile',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -686,7 +686,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: '7f690af4-90af-44fd-8204-7596b169f3b9',
         name: 'profile_delete',
         desc: 'Delete Profile',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -716,7 +716,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: 'f2f1bbc7-9cf4-4118-8454-ecdd44e3453b',
         name: 'account_resources_cost_download',
         desc: 'Account Resources Cost Download',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {
@@ -726,7 +726,7 @@ export const mockCurrentUserRole: GetCurrentUserRoleApiResponse = {
         module_id: 'f2f1bbc7-9cf4-4118-8454-ecdd44e3453b',
         name: 'account_resources_skill_download',
         desc: 'Account Resources Skill Download',
-        is_field_available: false,
+        is_field_available: true,
         is_enabled: true,
       },
       {

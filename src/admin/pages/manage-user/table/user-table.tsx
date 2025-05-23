@@ -10,10 +10,12 @@ import { userColumns } from './columns';
 interface IUserTableProps {
   appliedFilters: Record<string, any>;
   tableParams: UserListParams;
+  isUserEditEnable?: boolean;
+  isUserViewEnable?: boolean;
   setTableParams: React.Dispatch<React.SetStateAction<UserListParams>>;
 }
 
-export const UserTable: React.FC<IUserTableProps> = ({ appliedFilters, tableParams, setTableParams }) => {
+export const UserTable: React.FC<IUserTableProps> = ({ appliedFilters, tableParams, isUserEditEnable, isUserViewEnable, setTableParams }) => {
   const [users, setUsers] = useState<ManageUser[]>([]);
   const navigate = useNavigate();
 
@@ -100,8 +102,8 @@ export const UserTable: React.FC<IUserTableProps> = ({ appliedFilters, tablePara
       selectable={true}
       onSelectionChange={(selectedIds) => console.log('Selected:', selectedIds)}
       // Actions
-      onEdit={handleEdit}
-      onView={handleView}
+      onEdit={isUserEditEnable ? handleEdit : undefined}
+      onView={isUserViewEnable ? handleView : undefined}
       // State
       loading={isLoading}
       error={isError ? 'Failed to load users' : undefined}

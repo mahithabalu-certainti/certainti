@@ -11,6 +11,11 @@ import { getUserFilterfields } from './helpers';
 import { exportUserList, useManageUserProfile } from '../../../service';
 import { CircularProgress } from '@mui/material';
 import { UserListParams } from '../../../types/manage-user';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { checkPermission } from '../../../../common-utils';
+import { AllModules, AllPermissions } from '../../../../common-service';
+import { AccessRestricted } from '../../../../components/account-restricted';
 
 const BUTTON_STYLES = {
   height: '32px',
@@ -18,8 +23,10 @@ const BUTTON_STYLES = {
 };
 
 const HEADER_STYLES = {
-  adminPermission: 'font-medium text-[#7D98B6] text-[11px] leading-5 tracking-normal',
-  manageUser: 'font-semibold text-[20px] text-[#2D3E4F] leading-5 tracking-normal',
+  adminPermission:
+    'font-medium text-[#7D98B6] text-[11px] leading-5 tracking-normal',
+  manageUser:
+    'font-semibold text-[20px] text-[#2D3E4F] leading-5 tracking-normal',
 };
 
 const UserList: React.FC = () => {
@@ -35,32 +42,91 @@ const UserList: React.FC = () => {
     sortOrder: 'DESC',
   });
 
+  // Permission Mangement
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const userIsEnable = checkPermission(modules, AllModules.USER_MANAGEMENT);
+  const isUserCreateEnable = checkPermission(
+    permission,
+    AllPermissions.USER_CREATE
+  );
+  const isUserEditEnable = checkPermission(
+    permission,
+    AllPermissions.USER_EDIT_UPDATE
+  );
+  const isUserDeleteEnable = checkPermission(
+    permission,
+    AllPermissions.USER_DELETE
+  );
+  const isUserViewEnable = checkPermission(
+    permission,
+    AllPermissions.USER_VIEW
+  );
+  const isUserViewAllEnable = checkPermission(
+    permission,
+    AllPermissions.USER_VIEW_ALL
+  );
+  const isUserSuspendEnable = checkPermission(
+    permission,
+    AllPermissions.USER_SUSPEND
+  );
+  const isUserResetPasswordEnable = checkPermission(
+    permission,
+    AllPermissions.USER_RESET_PASSWORD
+  );
+  const isUserExportEnable = checkPermission(
+    permission,
+    AllPermissions.USER_EXPORT
+  );
+  const isUserViewPermissionEnable = checkPermission(
+    permission,
+    AllPermissions.USER_VIEW_PERMISSION
+  );
+  const isUserAssignPermissionEnable = checkPermission(
+    permission,
+    AllPermissions.USER_ASSIGN_PERMISSION
+  );
+
   const userActionButtons = [
-    { label: 'Suspend User', width: '119px' },
-    { label: 'Reinstate User', width: '120px' },
-    { label: 'Reset Password', width: '132px' },
-    { label: 'Delete', width: '73px' },
+    {
+      label: 'Suspend User',
+      width: '119px',
+      hide: !isUserSuspendEnable,
+    },
+    { label: 'Reinstate User', width: '120px', hide: false },
+    {
+      label: 'Reset Password',
+      width: '132px',
+      hide: !isUserResetPasswordEnable,
+    },
+    { label: 'Delete', width: '73px', hide: !isUserDeleteEnable },
   ];
 
   const MENU_ITEMS = [
     {
       label: 'Assign Permission to User',
       onClick: () => console.log('user clicked'),
+      hide: !isUserAssignPermissionEnable,
     },
     {
       label: 'View Permissions',
       onClick: () => console.log('View Permissions clicked'),
+      hide: !isUserViewPermissionEnable,
     },
     {
       label: 'Export',
       onClick: () => exportUserList(tableParams),
+      hide: !isUserExportEnable,
     },
   ];
 
   const profileList = useManageUserProfile();
 
   const userProfiles = useMemo(() => {
-    return profileList.data?.data.profiles.map(item => item.profile_name) || [];
+    return (
+      profileList.data?.data.profiles.map((item) => item.profile_name) || []
+    );
   }, [profileList]);
 
   const userFilterfields = getUserFilterfields(userProfiles);
@@ -83,6 +149,8 @@ const UserList: React.FC = () => {
         break;
     }
   };
+
+  if (!userIsEnable || !isUserViewAllEnable) return <AccessRestricted />;
 
   return (
     <div className='flex flex-col h-full w-full p-4 gap-3'>
@@ -109,19 +177,21 @@ const UserList: React.FC = () => {
         </div>
         <div className='flex gap-2 items-center'>
           <ActionsDropdown actions={MENU_ITEMS} />
-          <TextButton
-            label='Create User'
-            variant='filled'
-            onClick={() => navigate(ADMIN_CREATE_USER)}
-            sx={{
-              ...BUTTON_STYLES,
-              backgroundColor: '#F16137',
-              color: '#fff',
-              borderRadius: '2px',
-              fontSize: '13px',
-              fontWeight: 400,
-            }}
-          />
+          {isUserCreateEnable && (
+            <TextButton
+              label='Create User'
+              variant='filled'
+              onClick={() => navigate(ADMIN_CREATE_USER)}
+              sx={{
+                ...BUTTON_STYLES,
+                backgroundColor: '#F16137',
+                color: '#fff',
+                borderRadius: '2px',
+                fontSize: '13px',
+                fontWeight: 400,
+              }}
+            />
+          )}
         </div>
       </div>
 
@@ -132,50 +202,58 @@ const UserList: React.FC = () => {
             All Users
           </div>
           <div className='flex gap-3'>
-            {userActionButtons.map((button) => (
-              <TextButton
-                key={button.label}
-                label={button.label}
-                variant='outlined'
-                onClick={() => handleAction(button.label)}
-                sx={{
-                  ...BUTTON_STYLES,
-                  borderRadius: '2px',
-                  fontSize: '13px',
-                  fontWeight: 400,
-                  padding: '4px',
-                  width: button.width,
-                }}
-              />
-            ))}
+            {userActionButtons.map((button) => {
+              if (button.hide) return null;
+              return (
+                <TextButton
+                  key={button.label}
+                  label={button.label}
+                  variant='outlined'
+                  onClick={() => handleAction(button.label)}
+                  sx={{
+                    ...BUTTON_STYLES,
+                    borderRadius: '2px',
+                    fontSize: '13px',
+                    fontWeight: 400,
+                    padding: '4px',
+                    width: button.width,
+                  }}
+                />
+              );
+            })}
           </div>
         </div>
         <div className='flex flex-1 transition-all duration-300 ease-in-out'>
           <div
-            className={`flex flex-1 transition-all duration-300 ease-in-out overflow-hidden ${isFilterOpen ? 'w-[20%] opacity-100' : 'w-0 opacity-0'
-              }`}
+            className={`flex flex-1 transition-all duration-300 ease-in-out overflow-hidden ${
+              isFilterOpen ? 'w-[20%] opacity-100' : 'w-0 opacity-0'
+            }`}
           >
-            {profileList.isLoading ?
+            {profileList.isLoading ? (
               <div className='w-full flex flex-1 justify-center items-center'>
                 <CircularProgress />
               </div>
-              :
+            ) : (
               <Filter
                 setAppliedFilters={setAppliedFilters}
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
                 filterFields={userFilterfields}
-                filterLabel="Filter User by"
+                filterLabel='Filter User by'
                 setPage={setPage}
               />
-            }
+            )}
           </div>
 
-          <div className={`transition-all duration-300 ease-in-out border-l border-[#CBD6E2] ${isFilterOpen ? 'w-[80%]' : 'w-full border-none'}`}>
+          <div
+            className={`transition-all duration-300 ease-in-out border-l border-[#CBD6E2] ${isFilterOpen ? 'w-[80%]' : 'w-full border-none'}`}
+          >
             <UserTable
               appliedFilters={appliedFilters}
               tableParams={tableParams}
               setTableParams={setTableParams}
+              isUserEditEnable={isUserEditEnable}
+              isUserViewEnable={isUserViewEnable}
             />
           </div>
         </div>

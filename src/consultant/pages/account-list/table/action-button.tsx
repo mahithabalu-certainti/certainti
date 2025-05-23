@@ -3,7 +3,7 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import * as React from 'react';
 import { actionIcon } from '../../../../assets';
-import { ListItemText, Tooltip } from '@mui/material';
+import { ListItemText } from '@mui/material';
 import { ActionsDropdownItem } from '../../../../common-utils';
 
 interface ActionButtonProps {
@@ -15,8 +15,7 @@ interface ActionButtonProps {
 }
 
 interface CustomOption {
-  disabled: boolean;
-  tooltip: string;
+  hide?: boolean;
 }
 
 export default function ActionButton({
@@ -39,14 +38,12 @@ export default function ActionButton({
     {
       label: 'Edit',
       onClick: () => onEdit(),
-      disabled: isDisabled || editCustomOption?.disabled,
-      tooltip: editCustomOption?.tooltip,
+      hide: editCustomOption?.hide || isDisabled,
     },
     {
       label: 'Delete',
       onClick: () => onDelete(),
-      disabled: isDisabled || deleteCustomOption?.disabled,
-      tooltip: deleteCustomOption?.tooltip,
+      hide: deleteCustomOption?.hide || isDisabled,
     },
   ];
 
@@ -101,40 +98,41 @@ export default function ActionButton({
           },
         }}
       >
-        {actionMenuItems.map((item, i) => (
-          <Tooltip title={item.tooltip} placement='left' arrow key={i}>
-            <span>
-              <MenuItem
+        {actionMenuItems.map((item, i) => {
+          if (item.hide) {
+            return null;
+          }
+          return (
+            <MenuItem
+              key={i}
+              sx={{
+                display: 'flex',
+                borderBottom: '1px solid',
+                borderColor: '#CBD6E2',
+                backgroundColor: '#fff',
+                '&:last-child': {
+                  borderBottom: 'none',
+                },
+              }}
+              onClick={() => {
+                item.onClick();
+                handleClose();
+              }}
+            >
+              <ListItemText
                 sx={{
-                  display: 'flex',
-                  borderBottom: '1px solid',
-                  borderColor: '#CBD6E2',
-                  backgroundColor: '#fff',
-                  '&:last-child': {
-                    borderBottom: 'none',
+                  span: {
+                    fontSize: '14px',
+                    fontWeight: 400,
+                    color: '#2D3E4F',
                   },
                 }}
-                onClick={() => {
-                  item.onClick();
-                  handleClose();
-                }}
-                disabled={item.disabled}
               >
-                <ListItemText
-                  sx={{
-                    span: {
-                      fontSize: '14px',
-                      fontWeight: 400,
-                      color: '#2D3E4F',
-                    },
-                  }}
-                >
-                  {item.label}
-                </ListItemText>
-              </MenuItem>
-            </span>
-          </Tooltip>
-        ))}
+                {item.label}
+              </ListItemText>
+            </MenuItem>
+          );
+        })}
       </Menu>
     </div>
   );

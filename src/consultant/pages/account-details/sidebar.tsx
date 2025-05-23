@@ -1,25 +1,55 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { adminSubmenuActiveIcon, backIcon } from '../../../assets';
 import { MenuItem, SidebarProps } from '../../types';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { AllModules } from '../../../common-service';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../store/store';
 
 const menuItems: MenuItem[] = [
-  { name: 'Financial Highlights', key: 'financial' },
-  { name: 'Details', key: 'details' },
-  { name: 'Resources', key: 'resources' },
-  { name: 'Projects', key: 'projects' },
-  { name: 'Cases', key: 'cases' },
-  { name: 'Activities', key: 'activities' },
-  { name: 'Notes', key: 'notes' },
-  { name: 'Attachments', key: 'attachments' },
-  { name: 'Checklist', key: 'checklist' },
-  { name: 'Timesheet', key: 'timesheet' },
-  { name: 'Imports', key: 'imports' },
+  {
+    name: 'Financial Highlights',
+    key: 'financial',
+    id: AllModules.FINANCIAL_HIGHLIGHTS,
+  },
+  { name: 'Details', key: 'details', id: AllModules.DETAILS },
+  { name: 'Resources', key: 'resources', id: AllModules.RESOURCES },
+  { name: 'Projects', key: 'projects', id: AllModules.PROJECTS },
+  { name: 'Cases', key: 'cases', id: AllModules.CASES },
+  { name: 'Activities', key: 'activities', id: AllModules.ACTIVITIES },
+  { name: 'Notes', key: 'notes', id: AllModules.NOTES },
+  { name: 'Attachments', key: 'attachments', id: AllModules.ATTACHMENTS },
+  { name: 'Checklist', key: 'checklist', id: AllModules.CHECKLISTS },
+  { name: 'Timesheet', key: 'timesheet', id: AllModules.TIMESHEETS },
+  { name: 'Imports', key: 'imports', id: AllModules.IMPORTS },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ activeKey, onSelect }) => {
+  const [accountMenus, setAccountMenus] = useState<MenuItem[]>(menuItems);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  // Permission Mangement
+  const { modules } = useSelector((state: RootState) => state.permission);
+  useEffect(() => {
+    const updatedItems = menuItems.map((item) => {
+      const menu = modules.find((menu) => menu.name === item.id);
+      return {
+        ...item,
+        hide: menu && !menu.is_enabled,
+      };
+    });
+    setAccountMenus(updatedItems);
+  }, [modules]);
+
+  useEffect(() => {
+    if(!activeKey){
+      //set current active key
+      const activeItem = accountMenus.find((item) => item.hide === false);
+      handleSelect(activeItem?.key as string);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountMenus, activeKey]);
 
   const handleSelect = (key: string) => {
     if (searchParams.get('list') !== key) {
@@ -45,27 +75,35 @@ const Sidebar: React.FC<SidebarProps> = ({ activeKey, onSelect }) => {
 
       {/* List */}
       <ul className='space-y-2 pl-3'>
-        {menuItems.map((item) => (
-          <li key={item.key}>
-            <button
-              onClick={() => handleSelect(item.key)}
-              className={`group w-full flex items-center cursor-pointer text-[14px] font-normal gap-2 text-[#2D3E4F] text-left px-3 py-2 rounded hover:bg-[#0BBFB726] ${
-                activeKey === item.key ? 'bg-[#0BBFB726]' : ''
-              }`}
-            >
-              <span>{item.name}</span>
-              <img
-                src={adminSubmenuActiveIcon}
-                alt='active'
-                className={`w-[14px] h-[14px] transition-opacity duration-150 ${
-                  activeKey === item.key
-                    ? 'opacity-100'
-                    : 'opacity-0 group-hover:opacity-100'
-                }`}
-              />
-            </button>
-          </li>
-        ))}
+        {accountMenus.map((item) => {
+          if (item.hide) return null;
+          return (
+            <li key={item.key}>
+              <button
+                onClick={() => handleSelect(item.key)}
+                className={`group w-full flex items-center text-[14px] font-normal gap-2 text-left px-3 py-2 rounded ${
+                  item.disabled
+                    ? 'text-gray-400'
+                    : 'cursor-pointer text-[#2D3E4F] hover:bg-[#0BBFB726]'
+                } ${activeKey === item.key ? 'bg-[#0BBFB726]' : ''}`}
+                disabled={item.disabled}
+              >
+                <span>{item.name}</span>
+                <img
+                  src={adminSubmenuActiveIcon}
+                  alt='active'
+                  className={`w-[14px] h-[14px] transition-opacity duration-150 ${
+                    activeKey === item.key
+                      ? 'opacity-100'
+                      : item.disabled
+                        ? 'opacity-0'
+                        : 'opacity-0 group-hover:opacity-100'
+                  }`}
+                />
+              </button>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

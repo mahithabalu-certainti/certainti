@@ -37,6 +37,8 @@ interface ResourceSkillTableProps {
   setSkillOrderBy: (field: keyof ResourceSkillList) => void;
   currentPage: number;
   setCurrentPage: (page: number) => void;
+  isResourceSkillEditEnable?: boolean;
+  isResourceSkillDeleteEnable?: boolean;
 }
 const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   appliedFilters,
@@ -46,6 +48,8 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   setSkillOrder,
   skillOrderBy,
   setSkillOrderBy,
+  isResourceSkillEditEnable,
+  isResourceSkillDeleteEnable
 }) => {
   const navigate = useNavigate();
   // const location = useLocation();
@@ -143,6 +147,8 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
                 onEdit={() => handleEdit(skill)}
                 onDelete={() => {}}
                 isDisabled={accountInActive}
+                editCustomOption={{hide: !isResourceSkillEditEnable}}
+                deleteCustomOption={{hide: !isResourceSkillDeleteEnable}}
                 // onView={() => { }}
               />
             </TableCell>

@@ -35,7 +35,6 @@ import { exportData } from '../../services/resource-details/resource-details-ser
 import {
   ActionsDropdownItem,
   checkPermission,
-  DONT_HAVE_ACCESS,
 } from '../../../common-utils';
 import { AllModules, AllPermissions } from '../../../common-service';
 import { AccessRestricted } from '../../../components/account-restricted';
@@ -68,7 +67,7 @@ export const AccountDetails = () => {
 
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
-  const defaultTab = searchParams.get('list') || 'financial';
+  const defaultTab = searchParams.get('list');
   const [activeKey, setActiveKey] = useState(defaultTab);
 
   const [tableParams, setTableParams] = useState<ExportModule>({
@@ -149,8 +148,7 @@ export const AccountDetails = () => {
     {
       label: 'Export',
       onClick: () => handleExport(exportType),
-      disabled: !isAccountExportEnable,
-      tooltip: isAccountExportEnable ? '' : DONT_HAVE_ACCESS,
+      hide: !isAccountExportEnable,
     },
   ];
 
@@ -188,6 +186,7 @@ export const AccountDetails = () => {
             accountDetails={{ ...data, activeKey: 'resources' }}
             setTableParams={setTableParams}
             setExportType={setExportType}
+            permission={permission}
           />
         );
       case 'attachments':
@@ -225,12 +224,14 @@ export const AccountDetails = () => {
           title={data?.data?.accountById?.account_name || 'Account Title'}
           totalRecords={5}
           actionItems={menuItems}
-          primaryButton={{
-            label: 'Edit',
-            onClick: handleEditAccount,
-            disabled: !isAccountEditEnable,
-            tooltip: isAccountEditEnable ? '' : DONT_HAVE_ACCESS,
-          }}
+          primaryButton={
+            isAccountEditEnable
+              ? {
+                  label: 'Edit',
+                  onClick: handleEditAccount,
+                }
+              : undefined
+          }
           onActionsClick={handleActionsClick}
           onSettingsClick={handleSettingsClick}
         />

@@ -8,17 +8,11 @@ import { BUTTON_STYLES, HEADER_STYLES } from './styles';
 import { ADMIN_CREATE_USER } from '../../../routes';
 import { UserDetailComponent } from '../../../components';
 import { Skeleton } from '@mui/material';
-
-const MENU_ITEMS = [
-  {
-    label: 'Assign Permission to User',
-    onClick: () => console.log('user clicked'),
-  },
-  {
-    label: 'View Permissions',
-    onClick: () => console.log('View Permissions clicked'),
-  },
-];
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../store/store';
+import { checkPermission } from '../../../common-utils';
+import { AllModules, AllPermissions } from '../../../common-service';
+import { AccessRestricted } from '../../../components/account-restricted';
 
 export const ManageUserDetails: React.FC = () => {
   // Get userId from URL params
@@ -28,13 +22,65 @@ export const ManageUserDetails: React.FC = () => {
   const userDetails = useManageUserDetail(userId as string);
   const navigate = useNavigate();
   const userDetail = userDetails.data?.data?.users;
-  const userFullName = `${userDetail?.first_name || ''} ${userDetail?.last_name || ''}`.trim();
+  const userFullName =
+    `${userDetail?.first_name || ''} ${userDetail?.last_name || ''}`.trim();
 
-  const userActionButtons: { label: string; width: string }[] = [
-    { label: 'Suspend User', width: '119px' },
-    { label: 'Reinstate User', width: '120px' },
-    { label: 'Reset Password', width: '132px' },
-    { label: 'Delete', width: '73px' },
+  // Permission Mangement
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const userIsEnable = checkPermission(modules, AllModules.USER_MANAGEMENT);
+  const isUserViewEnable = checkPermission(
+    permission,
+    AllPermissions.USER_VIEW
+  );
+  const isUserCreateEnable = checkPermission(
+    permission,
+    AllPermissions.USER_CREATE
+  );
+  const isUserDeleteEnable = checkPermission(
+    permission,
+    AllPermissions.USER_DELETE
+  );
+  const isUserSuspendEnable = checkPermission(
+    permission,
+    AllPermissions.USER_SUSPEND
+  );
+  const isUserViewPermissionEnable = checkPermission(
+    permission,
+    AllPermissions.USER_VIEW_PERMISSION
+  );
+  const isUserResetPasswordEnable = checkPermission(
+    permission,
+    AllPermissions.USER_RESET_PASSWORD
+  );
+  const isUserAssignPermissionEnable = checkPermission(
+    permission,
+    AllPermissions.USER_ASSIGN_PERMISSION
+  );
+
+  const MENU_ITEMS = [
+    {
+      label: 'Assign Permission to User',
+      onClick: () => console.log('user clicked'),
+      hide: !isUserAssignPermissionEnable,
+    },
+    {
+      label: 'View Permissions',
+      onClick: () => console.log('View Permissions clicked'),
+      hide: !isUserViewPermissionEnable,
+    },
+  ];
+
+  const userActionButtons = [
+    { label: 'Suspend User', width: '119px', hide: !isUserSuspendEnable },
+    { label: 'Reinstate User', width: '120px', hide: false },
+    {
+      label: 'Reset Password',
+      width: '132px',
+      hide: !isUserResetPasswordEnable,
+    },
+    { label: 'Delete', width: '73px', hide: !isUserDeleteEnable },
   ];
 
   const handleAction = (action: string) => {
@@ -64,11 +110,17 @@ export const ManageUserDetails: React.FC = () => {
     window.history.back();
   };
 
+  if (!userIsEnable || !isUserViewEnable) return <AccessRestricted />;
+
   return (
     <div className='flex flex-col h-[calc(100vh-64px)] w-full overflow-y-auto p-4 gap-3'>
       <div className='w-full min-h-[75px] h-[75px] px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
         <div className='flex items-center gap-2'>
-          <img src={ManageUserIcon} alt='manage user' className='w-8 h-8 rounded' />
+          <img
+            src={ManageUserIcon}
+            alt='manage user'
+            className='w-8 h-8 rounded'
+          />
           <div className='flex flex-col mb-1'>
             <div className={HEADER_STYLES.adminPermission}>
               Admin Permission
@@ -78,25 +130,32 @@ export const ManageUserDetails: React.FC = () => {
         </div>
         <div className='flex gap-2 items-center'>
           <ActionsDropdown actions={MENU_ITEMS} />
-          <TextButton
-            label='Create User'
-            sx={{
-              ...BUTTON_STYLES,
-              backgroundColor: '#F16137',
-              color: '#fff',
-              borderRadius: '2px',
-              fontSize: '13px',
-              fontWeight: 400,
-            }}
-            onClick={() => navigate(ADMIN_CREATE_USER)}
-          />
+          {isUserCreateEnable && (
+            <TextButton
+              label='Create User'
+              sx={{
+                ...BUTTON_STYLES,
+                backgroundColor: '#F16137',
+                color: '#fff',
+                borderRadius: '2px',
+                fontSize: '13px',
+                fontWeight: 400,
+              }}
+              onClick={() => navigate(ADMIN_CREATE_USER)}
+            />
+          )}
 
           <TextButton
             label='Back'
             variant='outlined'
             color='inherit'
             onClick={goBack}
-            sx={{ width: '45px',minWidth:'45px', fontWeight:400,fontSize: '12px' }}
+            sx={{
+              width: '45px',
+              minWidth: '45px',
+              fontWeight: 400,
+              fontSize: '12px',
+            }}
           />
         </div>
       </div>
@@ -104,32 +163,35 @@ export const ManageUserDetails: React.FC = () => {
       <div className='flex flex-col border border-[#CBD6E2] rounded-[4px]'>
         <div className='flex items-center justify-between w-full border-b border-[#CBD6E2] p-4'>
           <div className='w-[50%]'>
-          <div className='text-[11px] text-[#7D98B6]'>User</div>
-          <div className='font-semibold text-[16px] text-[#2D3E4F] leading-5 tracking-normal truncate overflow-ellipsis'>
+            <div className='text-[11px] text-[#7D98B6]'>User</div>
+            <div className='font-semibold text-[16px] text-[#2D3E4F] leading-5 tracking-normal truncate overflow-ellipsis'>
               {userDetails.isLoading ? (
                 <Skeleton variant='rounded' width={200} />
               ) : (
-                userDetail?.full_name ?? userFullName
+                (userDetail?.full_name ?? userFullName)
               )}
             </div>
           </div>
           <div className='w-[50%] flex justify-end gap-2'>
-          {userActionButtons.map((button) => (
-              <TextButton
-              key={button.label}
-              label={button.label}              
-                variant='outlined'
-                onClick={() => handleAction(button.label)}
-                sx={{
-                  ...BUTTON_STYLES,
-                  borderRadius: '2px',
-                  fontSize: '13px',
-                  fontWeight: 400,
-                  padding: '4px',
-                  width: button.width,
-                }}
-              />
-            ))}
+            {userActionButtons.map((button) => {
+              if (button.hide) return null;
+              return (
+                <TextButton
+                  key={button.label}
+                  label={button.label}
+                  variant='outlined'
+                  onClick={() => handleAction(button.label)}
+                  sx={{
+                    ...BUTTON_STYLES,
+                    borderRadius: '2px',
+                    fontSize: '13px',
+                    fontWeight: 400,
+                    padding: '4px',
+                    width: button.width,
+                  }}
+                />
+              );
+            })}
           </div>
         </div>
         <UserDetailComponent

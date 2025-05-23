@@ -17,10 +17,10 @@ import {
   ResourceCostType,
 } from './resource-cost-type';
 import React from 'react';
-import { useNavigate } from "react-router-dom";
-import { ResourceCostList } from "../../../../../types/resource-cost";
-import { useResourceCost } from "../../../../../services/resource-cost/resource-cost-service";
-import { RESOURCECOST } from "../../../../../../routes";
+import { useNavigate } from 'react-router-dom';
+import { ResourceCostList } from '../../../../../types/resource-cost';
+import { useResourceCost } from '../../../../../services/resource-cost/resource-cost-service';
+import { RESOURCECOST } from '../../../../../../routes';
 import ActionButton from '../../../../account-list/table/action-button';
 import { arrowDownIcon, arrowUpIcon } from '../../../../../../assets';
 import { TablePagination } from '../../../../../../components/table';
@@ -40,27 +40,34 @@ interface ResourceCostTableProps {
   setCostOrder: (costOrder: 'asc' | 'desc') => void;
   costorderBy: string;
   setCostorderBy: (field: keyof ResourceCostList) => void;
+  isResourceCostDeleteEnable?: boolean;
+  isResourceCostEditEnable?: boolean;
 }
 
 const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   fiscalYear,
   appliedFilters,
   accountDetails,
-  resourceRid, currentPage, setCurrentPage,
+  resourceRid,
+  currentPage,
+  setCurrentPage,
   costOrder,
   setCostOrder,
   costorderBy,
   setCostorderBy,
+  isResourceCostDeleteEnable,
+  isResourceCostEditEnable,
 }) => {
   const navigate = useNavigate();
   const [rowsPerPage, setRowsPerPage] = useState<number>(25);
   const [resourceCostList, setResourceCostList] = useState<ResourceCostType[]>(
     []
   );
-  const accountInActive = accountDetails?.data?.accountById?.status === "inactive";
+  const accountInActive =
+    accountDetails?.data?.accountById?.status === 'inactive';
   const apiOrder = costOrder.toUpperCase() as 'ASC' | 'DESC';
   const { data: costList, isLoading: loading } = useResourceCost({
-    page: currentPage+1,
+    page: currentPage + 1,
     limit: rowsPerPage,
     sortBy: costorderBy,
     sortOrder: apiOrder,
@@ -144,31 +151,35 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
                 borderRight: '1px solid #CBD6E2 !important',
               }}
             >
-             <TruncateWithTooltip text={String(cost.resourceFullName)}>
-             {cost.resourceFullName || 'NA'}
+              <TruncateWithTooltip text={String(cost.resourceFullName)}>
+                {cost.resourceFullName || 'NA'}
               </TruncateWithTooltip>
             </TableCell>
-            <TableCell sx={{ minWidth: '100px' }}>{cost.currency || 'NA'}</TableCell>
-            <TableCell sx={{ minWidth: '130px' }}>{startDate || 'NA'}</TableCell>
+            <TableCell sx={{ minWidth: '100px' }}>
+              {cost.currency || 'NA'}
+            </TableCell>
+            <TableCell sx={{ minWidth: '130px' }}>
+              {startDate || 'NA'}
+            </TableCell>
             <TableCell sx={{ minWidth: '130px' }}>{endDate || 'NA'}</TableCell>
             <TableCell sx={{ minWidth: '130px' }}>
-            <TruncateWithTooltip text={String(cost.hourlyCost)}>
-            {cost.hourlyCost ? CostDisplay(cost.hourlyCost) : 'NA'}
+              <TruncateWithTooltip text={String(cost.hourlyCost)}>
+                {cost.hourlyCost ? CostDisplay(cost.hourlyCost) : 'NA'}
               </TruncateWithTooltip>
             </TableCell>
             <TableCell sx={{ minWidth: '130px' }}>
-            <TruncateWithTooltip text={String(cost.dailyCost)}>
-            {cost.dailyCost ? CostDisplay(cost.dailyCost) : 'NA'}
+              <TruncateWithTooltip text={String(cost.dailyCost)}>
+                {cost.dailyCost ? CostDisplay(cost.dailyCost) : 'NA'}
               </TruncateWithTooltip>
             </TableCell>
             <TableCell sx={{ minWidth: '130px' }}>
-            <TruncateWithTooltip text={String(cost.biWeeklyCost)}>
-            {cost.biWeeklyCost ? CostDisplay(cost.biWeeklyCost) : 'NA'}
+              <TruncateWithTooltip text={String(cost.biWeeklyCost)}>
+                {cost.biWeeklyCost ? CostDisplay(cost.biWeeklyCost) : 'NA'}
               </TruncateWithTooltip>
             </TableCell>
             <TableCell sx={{ minWidth: '130px' }}>
-            <TruncateWithTooltip text={String(cost.weeklyCost)}>
-            {cost.weeklyCost ? CostDisplay(cost.weeklyCost) : 'NA'}
+              <TruncateWithTooltip text={String(cost.weeklyCost)}>
+                {cost.weeklyCost ? CostDisplay(cost.weeklyCost) : 'NA'}
               </TruncateWithTooltip>
             </TableCell>
             <TableCell sx={{ minWidth: '130px' }}>
@@ -182,8 +193,8 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
               </TruncateWithTooltip>
             </TableCell> */}
             <TableCell sx={{ minWidth: '130px' }}>
-            <TruncateWithTooltip text={String(cost.annualCost)}>
-            {cost.annualCost ? CostDisplay(cost.annualCost) : 'NA'}
+              <TruncateWithTooltip text={String(cost.annualCost)}>
+                {cost.annualCost ? CostDisplay(cost.annualCost) : 'NA'}
               </TruncateWithTooltip>
             </TableCell>
             <TableCell sx={{ padding: '0px !important' }}>
@@ -191,6 +202,8 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
                 onEdit={() => handleEdit(cost)}
                 onDelete={() => {}}
                 isDisabled={accountInActive}
+                deleteCustomOption={{ hide: !isResourceCostDeleteEnable }}
+                editCustomOption={{ hide: !isResourceCostEditEnable }}
                 // onView={() => { }}
               />
             </TableCell>
@@ -493,13 +506,13 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
             }}
           >
             {loading ? (
-              <TableRow style={{ height: '300px'}}>
+              <TableRow style={{ height: '300px' }}>
                 <TableCell colSpan={11} align='center'>
                   <CircularProgress />
                 </TableCell>
               </TableRow>
             ) : resourceCostList?.length === 0 ? (
-              <TableRow style={{ height: loading ? '300px': "auto" }}>
+              <TableRow style={{ height: loading ? '300px' : 'auto' }}>
                 <TableCell colSpan={11} align='center'>
                   <Typography variant='body1'>
                     No cost information found

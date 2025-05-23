@@ -23,13 +23,13 @@ import {
   // searchIcon,
   settingsIcon,
 } from '../../assets';
-import { UserRoles } from '../../common-service';
+import { AllModules } from '../../common-service';
 import { msalConfig, msalResetPasswordConfig } from '../../config/msalConfig';
 import { useAuthHook, useToast } from '../../hooks';
 import { RootState } from '../../store/store';
 import { GlobalModal } from '../global-modal';
 import { setFiscalYear } from '../../store/slices/account-slice';
-import { fiscalYears } from '../../common-utils';
+import { checkPermission, fiscalYears } from '../../common-utils';
 import { useNavigate } from 'react-router-dom';
 import { PROFILE } from '../../routes';
 import { FiscalYearDropdown } from '../fiscal-dropdown';
@@ -60,10 +60,15 @@ export const Navbar: React.FC<NavbarProps> = ({
   const dispatch = useDispatch();
   const { logout } = useAuthHook();
   const navigate = useNavigate();
-  const { role, name } = useSelector((state: RootState) => state.auth);
+  const { name } = useSelector((state: RootState) => state.auth);
   const { fiscalYear } = useSelector((state: RootState) => state.account);
 
-  const isAdmin = role === UserRoles.Admin;
+  // Permission Mangement
+  const { modules } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const isAdminEnable = checkPermission(modules, [AllModules.USER_MANAGEMENT, AllModules.PROFILE_MANAGEMENT]);
+
   const menuId = 'account-menu';
   const mobileMenuId = 'account-menu-mobile';
   const notificationId = 'notification-menu';
@@ -371,7 +376,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className='h-[22px] w-[22px]'
               />
             </IconButton>
-            {isAdmin && (
+            {isAdminEnable && (
               <Tooltip
                 title={`Switch to ${showAdminSidebar ? 'Consultant' : 'Admin'}`}
                 arrow

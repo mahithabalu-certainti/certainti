@@ -1,14 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Box, Tab, Tabs } from '@mui/material';
-import React, { Fragment } from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 import { AccountData } from '../../../account-details/utils';
 import ResourceCostTable from './resource-cost/resource-cost-table';
 import ResourceDetails from './resource-details/resource-details';
 import ResourceSkillTable from './resource-skill/resource-skill-table';
 import { ResourceCostList } from '../../../../types/resource-cost';
 import { ResourceSkillList } from '../../../../types/resource-skill';
+import { AllPermissions, Permissions } from '../../../../../common-service';
+import { checkPermission } from '../../../../../common-utils';
 
 interface SubcomponentProps {
+  permission?: Permissions[];
   handleTabChange: (event: React.SyntheticEvent, newValue: string) => void;
   value: string;
   resourceId: string;
@@ -30,7 +33,29 @@ interface SubcomponentProps {
   setSkillOrderBy: (field: keyof ResourceSkillList) => void;
 }
 
+const tabs = [
+  {
+    label: 'Details',
+    value: 'details',
+    hide: false,
+    id: AllPermissions.RESOURCE_VIEW,
+  },
+  {
+    label: 'Resource Cost',
+    value: 'cost',
+    hide: false,
+    id: AllPermissions.RESOURCE_COST_VIEW,
+  },
+  {
+    label: 'Resource Skill',
+    value: 'skill',
+    hide: false,
+    id: AllPermissions.RESOURCE_SKILL_VIEW,
+  },
+];
+
 const ResourceSubComponents: React.FC<SubcomponentProps> = ({
+  permission,
   handleTabChange,
   value,
   resourceId,
@@ -51,6 +76,59 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   skillOrderBy,
   setSkillOrderBy,
 }) => {
+  const [tabMenus, setTabMenus] = useState(tabs);
+
+  useEffect(() => {
+    const updatedData = tabs.map((tab) => {
+      return {
+        ...tab,
+        hide:
+          !permission?.find((item) => item.name === tab.id)?.is_enabled ||
+          false,
+      };
+    });
+    setTabMenus(updatedData);
+  }, [permission]);
+
+  useEffect(() => {
+    // assign default tab value
+    if(!value){
+      const activeTab = tabMenus.find((tab) => !tab.hide)?.value;
+      handleTabChange({} as React.SyntheticEvent, activeTab as string);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabMenus,value]);
+
+  // Permission Mangement
+  const isResourceViewEnable = checkPermission(
+    permission || [],
+    AllPermissions.RESOURCE_VIEW
+  );
+  const isResourceCostViewEnable = checkPermission(
+    permission || [],
+    AllPermissions.RESOURCE_COST_VIEW
+  );
+  const isResourceCostEditEnable = checkPermission(
+    permission || [],
+    AllPermissions.RESOURCE_COST_EDIT
+  );
+  const isResourceCostDeleteEnable = checkPermission(
+    permission || [],
+    AllPermissions.RESOURCE_COST_DELETE
+  );
+  const isResourceSkillViewEnable = checkPermission(
+    permission || [],
+    AllPermissions.RESOURCE_SKILL_VIEW
+  );
+  const isResourceSkillEditEnable = checkPermission(
+    permission || [],
+    AllPermissions.RESOURCE_SKILL_EDIT
+  );
+  const isResourceSkillDeleteEnable = checkPermission(
+    permission || [],
+    AllPermissions.RESOURCE_SKILL_DELETE
+  );
+
   return (
     <Fragment>
       <Box className='max-w-[100%]  border-b border-[1px] border-t-0 border-[#CBD6E2] rounded-bl-[2px] rounded-br-[2px] bg-white'>
@@ -65,55 +143,37 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
             },
           }}
         >
-          <Tab
-            label='Details'
-            value={'details'}
-            onClick={() => {
-              setFilterVisibility(false);
-              setShowFilter(false);
-            }}
-            sx={{
-              textTransform: 'none',
-              '&.Mui-selected': {
-                color: '#2D3E4F',
-                fontWeight: 600,
-              },
-            }}
-          />
-          <Tab
-            label='Resource Cost'
-            value={'cost'}
-            onClick={() => setFilterVisibility(true)}
-            sx={{
-              textTransform: 'none',
-              '&.Mui-selected': {
-                color: '#2D3E4F',
-                fontWeight: 600,
-              },
-            }}
-          />
-          <Tab
-            label='Resource Skill'
-            value={'skill'}
-            onClick={() => setFilterVisibility(true)}
-            sx={{
-              textTransform: 'none',
-              '&.Mui-selected': {
-                color: '#2D3E4F',
-                fontWeight: 600,
-              },
-            }}
-          />
+          {tabMenus.map((tab, index) => {
+            if (tab.hide) return null;
+            return (
+              <Tab
+                key={index}
+                label={tab.label}
+                value={tab.value}
+                onClick={() => {
+                  setFilterVisibility(tab.value !== 'details');
+                  setShowFilter(false);
+                }}
+                sx={{
+                  textTransform: 'none',
+                  '&.Mui-selected': {
+                    color: '#2D3E4F',
+                    fontWeight: 600,
+                  },
+                }}
+              />
+            );
+          })}
         </Tabs>
 
         {/* You can add the content for each tab below */}
-        {value === 'details' && (
+        {value === 'details' && isResourceViewEnable && (
           <Box>
             <ResourceDetails resourceId={resourceId} accountId={accountId} />
           </Box>
         )}
 
-        {value === 'cost' && (
+        {value === 'cost' && isResourceCostViewEnable && (
           <Box sx={{ width: '100%', overflowX: 'auto' }}>
             <ResourceCostTable
               fiscalYear={fiscalYearValue}
@@ -126,11 +186,13 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               setCostOrder={setCostOrder}
               costorderBy={costorderBy}
               setCostorderBy={setCostorderBy}
+              isResourceCostEditEnable={isResourceCostEditEnable}
+              isResourceCostDeleteEnable={isResourceCostDeleteEnable}
             />
           </Box>
         )}
 
-        {value === 'skill' && (
+        {value === 'skill' && isResourceSkillViewEnable && (
           <Box sx={{ width: '100%', overflowX: 'auto' }}>
             <ResourceSkillTable
               fiscalYear={fiscalYearValue}
@@ -143,6 +205,8 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               setSkillOrder={setSkillOrder}
               skillOrderBy={skillOrderBy}
               setSkillOrderBy={setSkillOrderBy}
+              isResourceSkillEditEnable={isResourceSkillEditEnable}
+              isResourceSkillDeleteEnable={isResourceSkillDeleteEnable}
             />
           </Box>
         )}

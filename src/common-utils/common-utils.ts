@@ -239,8 +239,7 @@ export const YES_NO_OPTIONS: SelectOption[] = [
 
 export interface ActionsDropdownItem {
   label: string;
-  disabled?: boolean;
-  tooltip?: string;
+  hide?: boolean;
   onClick: () => void;
 }
 
@@ -432,8 +431,11 @@ export const reShapePermissionData = (all: Permissions[]): PermissionState => {
 
 export const checkPermission = (
   data: Permissions[],
-  condition: AllPermissions | AllModules
+  condition: AllPermissions | AllModules | AllModules[]
 ) => {
+  if (Array.isArray(condition)) {
+    return condition.some((cond) => data?.find((item) => item?.name === cond)?.is_enabled);
+  }
   return data?.find((item) => item?.name === condition)?.is_enabled;
 };
 

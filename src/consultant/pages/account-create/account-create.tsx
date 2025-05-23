@@ -1,7 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { accountHomeIcon, editIcon } from '../../../assets';
-import { Layout, OnChange, useGetAllCountries } from '../../../common-service';
+import {
+  AllModules,
+  AllPermissions,
+  Layout,
+  OnChange,
+  useGetAllCountries,
+} from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
@@ -25,7 +31,14 @@ import {
   transformFormData,
 } from './utils';
 import { ACCOUNT } from '../../../routes';
-import { getDateTimeFormat, STATUS_OPTIONS } from '../../../common-utils';
+import {
+  checkPermission,
+  getDateTimeFormat,
+  STATUS_OPTIONS,
+} from '../../../common-utils';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../store/store';
+import { AccessRestricted } from '../../../components/account-restricted';
 
 export const AccountForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -41,6 +54,21 @@ export const AccountForm: React.FC = () => {
   const { successToast } = useToast();
   const location = useLocation();
   const { accountid } = useParams();
+
+  // Permission Mangement
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
+  const isAccountCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_CREATE
+  );
+  const isAccountEditEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_EDIT
+  );
+
   const keyContactInfo = [
     'key_contact_name',
     'key_contact_role',
@@ -78,9 +106,7 @@ export const AccountForm: React.FC = () => {
             : 'no',
           record_id: account?.accountDetails?.rid,
           account_id: account?.accountById?.r_number,
-          created_on: getDateTimeFormat(
-            account?.accountById?.created_datetime
-          ),
+          created_on: getDateTimeFormat(account?.accountById?.created_datetime),
           updated_on: getDateTimeFormat(
             account?.accountById?.modified_datetime
           ),
@@ -254,6 +280,12 @@ export const AccountForm: React.FC = () => {
     window.history.back();
   };
 
+  if (
+    !accountIsEnable ||
+    (isEditView ? !isAccountEditEnable : !isAccountCreateEnable)
+  )
+    return <AccessRestricted />;
+
   return (
     <>
       <div className='flex items-center justify-between px-10 py-6 border-b-2 border-gray-200'>
@@ -269,7 +301,9 @@ export const AccountForm: React.FC = () => {
                 Edit Account
               </h5>
             )}
-            <h4 className={`${isEditView ? 'text-[14px]' : 'text-[20px]'} font-semibold text-[#2D3E4F] ml-2 leading-4 w-[95%] overflow-ellipsis truncate`}>
+            <h4
+              className={`${isEditView ? 'text-[14px]' : 'text-[20px]'} font-semibold text-[#2D3E4F] ml-2 leading-4 w-[95%] overflow-ellipsis truncate`}
+            >
               {isEditView ? accountData.account_name : 'Create Account'}
             </h4>
           </div>

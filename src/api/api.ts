@@ -155,6 +155,17 @@ const processQueue = (error: unknown, token: string | null = null) => {
           }, 3000);
           return Promise.reject(refreshError);
         }
+      } else if (error.response?.status === 403) {
+        //If Account was In-active
+        showToast(
+          'Your account is currently inactive. Please contact support or check your email for reactivation instructions.',
+          'error'
+        );
+        setTimeout(() => {
+          localStorage.removeItem('auth');
+          window.location.href = LOGIN;
+        }, 3000);
+        return Promise.reject(error);
       } else {
         //common error handling
         const errorMsg = errorHandling(error as AxiosErrorMsg);

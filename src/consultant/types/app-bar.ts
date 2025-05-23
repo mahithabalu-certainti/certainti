@@ -7,16 +7,14 @@ export interface INavItem {
   icon: string;
   link: string;
   matchLink: string;
-  disabled?: boolean;
-  tooltip?: string;
+  hide?: boolean;
 }
 
 export interface AdminNavItem {
   title: string;
   icon: string;
   openStatus: boolean;
-  disabled?: boolean;
-  tooltip?: string;
+  hide?: boolean;
   subItemTitle: SubItemTitle[];
 }
 
@@ -26,8 +24,7 @@ export interface SubItemTitle {
   icon: string;
   link: string;
   matchLink: string;
-  disabled?: boolean;
-  tooltip?: string;
+  hide?: boolean;
 }
 
 export interface SideBarProps {

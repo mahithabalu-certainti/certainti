@@ -25,6 +25,8 @@ import {
 import { FilterState } from '../../components/filter/filterType';
 import { resetFilter } from '../../components/filter/utils';
 import { ResourceList } from '../../../../types/resource';
+import { AllPermissions, Permissions } from '../../../../../common-service';
+import { checkPermission } from '../../../../../common-utils';
 
 const BUTTON_STYLES = {
   height: '26px !important',
@@ -36,22 +38,40 @@ const BUTTON_STYLES = {
 };
 
 interface ResourceProps {
+  permission?: Permissions[];
   accountDetails?: Record<string, any>;
   activeKey?: string;
   setTableParams?: React.Dispatch<React.SetStateAction<ExportModule>>;
   setExportType?: (type: 'resource' | 'cost' | 'skill') => void;
 }
 
+export interface ResourceTabs {
+  id: AllPermissions;
+  name: string;
+  hide: boolean;
+}
+
+const resourceTabs: ResourceTabs[] = [
+  { id: AllPermissions.RESOURCES_OVERVIEW, name: 'Overview', hide: false },
+  {
+    id: AllPermissions.RESOURCE_VIEW_TIMELINE,
+    name: 'Timeline',
+    hide: false,
+  },
+];
+
 const Resource: React.FC<ResourceProps> = ({
   accountDetails,
+  permission,
   setTableParams,
   setExportType,
 }) => {
+  const [resourceTab, setResourceTab] = useState(resourceTabs);
   const [viewResourceList, setViewResourceList] = useState<boolean>(true);
   const [columns, setColumns] = useState<any>([]);
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [filterVisibility, setFilterVisibility] = useState<boolean>(true);
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState(''); // Resource inner tab value
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
   const [showBackArrow, setShowBackArrow] = useState<boolean>(false);
   const [resourceData, setResourceData] = useState<any>({});
@@ -94,6 +114,56 @@ const Resource: React.FC<ResourceProps> = ({
     filters: appliedFilters,
   });
 
+  // Permission Mangement
+  const isResourceDownloadEnable = checkPermission(
+    permission || [],
+    AllPermissions.RESOURCES_DOWNLOAD
+  );
+  const isResourceCostDownloadEnable = checkPermission(
+    permission || [],
+    AllPermissions.RESOURCE_COST_DOWNLOAD
+  );
+  const isResourceSkillDownloadEnable = checkPermission(
+    permission || [],
+    AllPermissions.RESOURCE_SKILL_DOWNLOAD
+  );
+  const isResourceViewAllEnable = checkPermission(
+    permission || [],
+    AllPermissions.RESOURCE_VIEW_ALL
+  );
+  const isResourceCreateEnable = checkPermission(
+    permission || [],
+    AllPermissions.RESOURCE_CREATE
+  );
+  const isResourceDeleteEnable = checkPermission(
+    permission || [],
+    AllPermissions.RESOURCE_DELETE
+  );
+  const isResourceEditEnable = checkPermission(
+    permission || [],
+    AllPermissions.RESOURCE_EDIT
+  );
+  const isResourceCostCreateEnable = checkPermission(
+    permission || [],
+    AllPermissions.RESOURCE_COST_CREATE
+  );
+  const isResourceSkillCreateEnable = checkPermission(
+    permission || [],
+    AllPermissions.RESOURCE_SKILL_CREATE
+  );
+  const isResoureceOverviewHide = resourceTab[0].hide;
+  useEffect(() => {
+    const updatedData = resourceTabs.map((tab) => {
+      return {
+        ...tab,
+        hide:
+          !permission?.find((item) => item.name === tab.id)?.is_enabled ||
+          false,
+      };
+    });
+    setResourceTab(updatedData);
+  }, [permission]);
+
   useEffect(() => {
     if (searchParams.get('res_id') && ResourceList) {
       const refId = searchParams.get('res_id') as string;
@@ -111,7 +181,7 @@ const Resource: React.FC<ResourceProps> = ({
   };
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
-    setValue(newValue);
+    // setValue(newValue);
     setShowFilter(false);
     setAppliedFilters({});
     resetFilter({
@@ -129,7 +199,7 @@ const Resource: React.FC<ResourceProps> = ({
     setResourceData(row);
     setViewResourceList(!viewResourceList);
     setShowBackArrow(!showBackArrow);
-    setValue('details');
+    // setValue('details');
     setShowFilter(false);
     setFilterVisibility(false);
     resetFilter({
@@ -179,12 +249,12 @@ const Resource: React.FC<ResourceProps> = ({
     {
       label: 'Edit',
       onClick: handleEdit,
-      disabled: accountInActive,
+      disabled: accountInActive || !isResourceEditEnable,
     },
     {
       label: 'Delete',
       onClick: (row: any) => console.log('Delete', row),
-      disabled: accountInActive,
+      disabled: accountInActive || !isResourceDeleteEnable,
     },
     {
       label: 'View Summary',
@@ -200,19 +270,42 @@ const Resource: React.FC<ResourceProps> = ({
     },
   ];
 
+  const handleCreateButtonEnable = () => {
+    if (value === 'details' || value === '') {
+      return !isResourceCreateEnable;
+    } else if (value === 'cost') {
+      return !isResourceCostCreateEnable;
+    } else if (value === 'skill') {
+      return !isResourceSkillCreateEnable;
+    }
+    return accountInActive;
+  };
+
+  const handleDownloadButtonEnable = () => {
+    if (value === 'details' || value === '') {
+      return !isResourceDownloadEnable;
+    } else if (value === 'cost') {
+      return !isResourceCostDownloadEnable;
+    } else if (value === 'skill') {
+      return !isResourceSkillDownloadEnable;
+    }
+    return false;
+  };
+
   const headerButtons = [
     {
       label: 'Download',
       variant: 'outlined' as const,
       onClick: () => console.log('Download'),
       sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
+      hide: handleDownloadButtonEnable(),
     },
     {
       label: 'New',
       variant: 'outlined' as const,
-      disabled: accountInActive,
       onClick: () => handleCreateResource(),
       sx: { ...BUTTON_STYLES, width: '61px', minWidth: '61px' },
+      hide: handleCreateButtonEnable(),
     },
   ];
 
@@ -266,7 +359,7 @@ const Resource: React.FC<ResourceProps> = ({
       navigate(
         `${RESOURCE_CREATE}?account_id=${accountid}${resId ? `&res_id=${resId}` : ''}`,
         {
-          state: {accountDetails, resourceCreate: true},
+          state: { accountDetails, resourceCreate: true },
         }
       );
     }
@@ -317,13 +410,20 @@ const Resource: React.FC<ResourceProps> = ({
   return (
     <div className='w-full'>
       <TabPanel
+        resourceTab={resourceTab}
         value={value}
         setAppliedFilters={(data) => {
           setAppliedFilters(data);
           setShowFilter(false);
         }}
         showFilter={showFilter}
-        filterVisibility={filterVisibility}
+        filterVisibility={
+          isResoureceOverviewHide
+            ? false
+            : isResourceViewAllEnable
+              ? filterVisibility
+              : false
+        }
         handleFilter={handleFilter}
         setCurrentPage={setCurrentPage}
         filterStates={filterStates}
@@ -331,65 +431,72 @@ const Resource: React.FC<ResourceProps> = ({
         setFilterStates={setFilterStates}
         setSelectedFilters={setSelectedFilters}
       />
-      <ResourceTableHeader
-        handleFilter={handleFilter}
-        value={value}
-        setAppliedFilters={(data) => {
-          setAppliedFilters(data);
-          setShowFilter(false);
-        }}
-        showFilter={showFilter}
-        title='Resources'
-        resourceNumber={resourceData?.r_number ?? resourceNumber}
-        titleIcon={<img src={resourceProfileIcon} alt='resource header icon' />}
-        headerButtons={headerButtons}
-        showBackArrow={showBackArrow}
-        onBackClick={handleBackClick}
-        filterVisibility={filterVisibility}
-      />
-      {!viewResourceList ? (
-        <ResourceSubComponents
-          setFilterVisibility={setFilterVisibility}
-          handleTabChange={handleTabChange}
-          value={value}
-          resourceId={searchParams.get('res_id') as string}
-          accountId={accountDetails?.data?.accountById?.r_number}
-          appliedFilters={appliedFilters || {}}
-          fiscalYearValue={convertedFiscalYear}
-          accountDetails={accountDetails as AccountData}
-          setShowFilter={setShowFilter}
-          currentPage={currentPage}
-          setCurrentPage={setCurrentPage}
-          costOrder={costOrder}
-          setCostOrder={setCostOrder}
-          costorderBy={costorderBy}
-          setCostorderBy={setCostOrderBy}
-          skillOrder={skillOrder}
-          setSkillOrder={setSkillOrder}
-          skillOrderBy={skillOrderBy}
-          setSkillOrderBy={setSkillOrderBy}
-        />
-      ) : (
-        <ListTable
-          data={ResourceList?.resource as any}
-          columns={columns}
-          actionMenuItems={actionMenuItems}
-          pagination={true}
-          rowsPerPage={rowsPerPage}
-          rowsPerPageOptions={[25, 30, 40, 50, 100]}
-          sortable={true}
-          isLoading={isLoading}
-          error={error}
-          rowIdentifier='rid'
-          setCurrentPage={setCurrentPage}
-          setSortOrder={setSortOrder}
-          setSortField={setSortField}
-          setRowsPerPage={setRowsPerPage}
-          sortField={sortField}
-          sortOrder={sortOrder}
-          currentPage={currentPage}
-          totalCount={ResourceList?.count || 0}
-        />
+      {!isResoureceOverviewHide && isResourceViewAllEnable && (
+        <>
+          <ResourceTableHeader
+            handleFilter={handleFilter}
+            value={value}
+            setAppliedFilters={(data) => {
+              setAppliedFilters(data);
+              setShowFilter(false);
+            }}
+            showFilter={showFilter}
+            title='Resources'
+            resourceNumber={resourceData?.r_number ?? resourceNumber}
+            titleIcon={
+              <img src={resourceProfileIcon} alt='resource header icon' />
+            }
+            headerButtons={headerButtons}
+            showBackArrow={showBackArrow}
+            onBackClick={handleBackClick}
+            filterVisibility={filterVisibility}
+          />
+          {!viewResourceList ? (
+            <ResourceSubComponents
+              permission={permission}
+              setFilterVisibility={setFilterVisibility}
+              handleTabChange={handleTabChange}
+              value={value}
+              resourceId={searchParams.get('res_id') as string}
+              accountId={accountDetails?.data?.accountById?.r_number}
+              appliedFilters={appliedFilters || {}}
+              fiscalYearValue={convertedFiscalYear}
+              accountDetails={accountDetails as AccountData}
+              setShowFilter={setShowFilter}
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+              costOrder={costOrder}
+              setCostOrder={setCostOrder}
+              costorderBy={costorderBy}
+              setCostorderBy={setCostOrderBy}
+              skillOrder={skillOrder}
+              setSkillOrder={setSkillOrder}
+              skillOrderBy={skillOrderBy}
+              setSkillOrderBy={setSkillOrderBy}
+            />
+          ) : (
+            <ListTable
+              data={ResourceList?.resource as any}
+              columns={columns}
+              actionMenuItems={actionMenuItems}
+              pagination={true}
+              rowsPerPage={rowsPerPage}
+              rowsPerPageOptions={[25, 30, 40, 50, 100]}
+              sortable={true}
+              isLoading={isLoading}
+              error={error}
+              rowIdentifier='rid'
+              setCurrentPage={setCurrentPage}
+              setSortOrder={setSortOrder}
+              setSortField={setSortField}
+              setRowsPerPage={setRowsPerPage}
+              sortField={sortField}
+              sortOrder={sortOrder}
+              currentPage={currentPage}
+              totalCount={ResourceList?.count || 0}
+            />
+          )}
+        </>
       )}
     </div>
   );

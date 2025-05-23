@@ -13,7 +13,7 @@ interface ResourceTableHeaderProps {
     variant: 'text' | 'outlined' | 'contained';
     onClick: () => void;
     sx?: SxProps<Theme>;
-    disabled?: boolean;
+    hide?: boolean;
   }[];
   toggleViewMode?: () => void;
   showBackArrow?: boolean;
@@ -35,14 +35,20 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
   value,
   resourceNumber,
 }) => {
-
   return (
     <div className='border-t border-[1px] border-b-0 border-[#CBD6E2] rounded-tl-[2px] h-[50px] rounded-tr-[2px]'>
       <div className='flex items-center justify-between h-full px-4'>
         <div className='flex items-center gap-2'>
           {showBackArrow && (
-            <div className='cursor-pointer w-[24px] h-[24px] flex justify-center items-center -ml-2' onClick={onBackClick}>
-              <img src={leftArrowIcon} className='h-[14px]' alt='leftArrowIcon' />
+            <div
+              className='cursor-pointer w-[24px] h-[24px] flex justify-center items-center -ml-2'
+              onClick={onBackClick}
+            >
+              <img
+                src={leftArrowIcon}
+                className='h-[14px]'
+                alt='leftArrowIcon'
+              />
             </div>
             //   <button
             //     onClick={onBackClick}
@@ -53,33 +59,36 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
             //   </button>
           )}
           {titleIcon && (
-            < div className='w-[24px] h-[24px] flex items-center justify-center'>
+            <div className='w-[24px] h-[24px] flex items-center justify-center'>
               {titleIcon}
             </div>
           )}
           <h1 className='text-[14px] font-medium text-[#2D3E4F]'>{title}</h1>
           <div className='text-[14px] font-medium text-[#2D3E4F]'>
-          {(value === 'details' || value === 'cost' || value === 'skill') && resourceNumber}
+            {(value === 'details' || value === 'cost' || value === 'skill') &&
+              resourceNumber}
           </div>
         </div>
 
         <div className='flex items-center gap-2'>
           <div className='flex gap-2'>
-            {headerButtons?.map((button, index) => (
-              <TextButton
-                key={`header-button-${index}`}
-                label={button.label}
-                variant={button.variant}
-                onClick={
-                  button.label.toLowerCase() === 'view'
-                    ? toggleViewMode
-                    : button.onClick
-                }
-                aria-label={button.label}
-                sx={button.sx}
-                disabled={button.disabled}
-              />
-            ))}
+            {headerButtons?.map((button, index) => {
+              if (button.hide) return null;
+              return (
+                <TextButton
+                  key={`header-button-${index}`}
+                  label={button.label}
+                  variant={button.variant}
+                  onClick={
+                    button.label.toLowerCase() === 'view'
+                      ? toggleViewMode
+                      : button.onClick
+                  }
+                  aria-label={button.label}
+                  sx={button.sx}
+                />
+              );
+            })}
           </div>
         </div>
       </div>

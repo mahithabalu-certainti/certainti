@@ -25,11 +25,9 @@ import { CircularProgress } from '@mui/material';
 import { AccountList } from '../../types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
-import { Tooltip } from '@mui/material';
 import {
   ActionsDropdownItem,
   checkPermission,
-  DONT_HAVE_ACCESS,
 } from '../../../common-utils';
 import { AccessRestricted } from '../../../components/account-restricted';
 
@@ -76,8 +74,7 @@ export const Accounts: React.FC = () => {
     },
     {
       label: 'Export',
-      disabled: !isAccountExportEnable,
-      tooltip: isAccountExportEnable ? '' : DONT_HAVE_ACCESS,
+      hide: !isAccountExportEnable,
       onClick: () =>
         exportAccountList({
           sortBy: orderBy,
@@ -148,23 +145,21 @@ export const Accounts: React.FC = () => {
         </div>
         <div className='flex gap-3 justify-center items-center'>
           <ActionsDropdown actions={menuItems} />
-          <Tooltip arrow title={!isAccountCreateEnable ? DONT_HAVE_ACCESS : ''}>
-            <span>
-              <TextButton
-                label='Create Account'
-                onClick={handleCreateAcount}
-                disabled={!isAccountCreateEnable}
-                sx={{
-                  ...BUTTON_STYLES,
-                  backgroundColor: '#F16137',
-                  color: '#fff',
-                  borderRadius: '2px',
-                  fontSize: '13px',
-                  fontWeight: 400,
-                }}
-              />
-            </span>
-          </Tooltip>
+          {isAccountCreateEnable && (
+            <TextButton
+              label='Create Account'
+              onClick={handleCreateAcount}
+              disabled={!isAccountCreateEnable}
+              sx={{
+                ...BUTTON_STYLES,
+                backgroundColor: '#F16137',
+                color: '#fff',
+                borderRadius: '2px',
+                fontSize: '13px',
+                fontWeight: 400,
+              }}
+            />
+          )}
           <div className='flex items-center justify-center border border-[#EAF0F5] w-16 h-8'>
             <div className='flex items-center justify-center w-1/2'>
               <img src={refreshIcon} alt='refresh-icon' className='h-4' />
