@@ -17,6 +17,11 @@ export interface CurrencyApiResponse extends CommonApiResponse {
     currency: Currencys[];
   };
 }
+export interface ClassificationApiResponse extends CommonApiResponse {
+  data: {
+    projectClassifications: Classification[];
+  };
+}
 
 export interface StatesApiResponse extends CommonApiResponse {
   data: {
@@ -52,6 +57,16 @@ export interface Currencys {
   currency_name: string;
   currency_code: string;
 }
+export interface Industries {
+  rid: string;
+  currency_name: string;
+  currency_code: string;
+}
+export interface Classification {
+  rid: string;
+  classification_name: string;
+  currency_code: string;
+}
 
 export interface GloablAcconunts {
   rid: string;
@@ -79,6 +94,15 @@ export interface Column<T> {
   id: keyof T;
   label: string;
   sortable?: boolean;
+}
+
+export interface AccountColumn {
+  id: string;
+  label: string;
+  width: string;
+  sortId: string;
+  sortable?: boolean;
+  sx?: React.CSSProperties;
 }
 
 export enum Storagetype {

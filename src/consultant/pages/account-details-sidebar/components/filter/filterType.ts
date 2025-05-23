@@ -9,10 +9,10 @@ export type TextFilterOption =
   | 'Is Empty';
 
 export const textOptions: { option: string; value: string }[] = [
-  { option: 'Equals', value: 'equals' },
-  { option: 'Not Equals', value: 'not_equals' },
-  { option: 'Contains', value: 'contains' },
-  { option: 'Is Empty', value: 'is_empty' },
+  { option: '=', value: 'equals' },
+  { option: '≠', value: 'not_equals' },
+  { option: '∈', value: 'contains' },
+  { option: '∅', value: 'is_empty' },
 ];
 
 export type TextFilterOptionForCostAndSkill =
@@ -26,10 +26,10 @@ export type TextFilterOptionForCostAndSkill =
 // | 'Is Not Empty';
 
 export const textOptionForCostAndSkill: { option: string; value: string }[] = [
-  { option: 'Equals', value: 'equals' },
-  { option: 'Not Equals', value: 'not_equals' },
-  { option: 'Contains', value: 'contains' },
-  { option: 'Is Empty', value: 'is_empty' },
+  { option: '=', value: 'equals' },
+  { option: '≠', value: 'not_equals' },
+  { option: '∈', value: 'contains' },
+  { option: '∅', value: 'is_empty' },
   // { option: 'Does Not Contain', value: 'does_not_contain' },
   // { option: 'Starts With', value: 'starts_with' },
   // { option: 'Ends With', value: 'ends_with' },
@@ -45,12 +45,12 @@ export type NumberFilterOption =
 // | 'Is Not Empty';
 
 export const numberOptions: { option: string; value: string }[] = [
-  { option: 'Equals', value: 'equals' },
-  { option: 'Not Equals', value: 'not_equals' },
-  { option: 'Less Than', value: 'less_than' },
-  { option: 'Greater Than', value: 'greater_than' },
-  { option: 'Between', value: 'between' },
-  { option: 'Is Empty', value: 'is_empty' },
+  { option: '=', value: 'equals' },
+  { option: '≠', value: 'not_equals' },
+  { option: '<', value: 'less_than' },
+  { option: '>', value: 'greater_than' },
+  { option: '↔', value: 'between' },
+  { option: '∅', value: 'is_empty' },
   // { option: 'Is Not Empty', value: 'is_not_empty' },
 ];
 export type EnumFilterOption = 'Equals' | 'Not Equals' | 'In' | 'Is Empty';
@@ -58,10 +58,10 @@ export type EnumFilterOption = 'Equals' | 'Not Equals' | 'In' | 'Is Empty';
 // | 'Is Not Empty';
 
 export const enumOptions: { option: string; value: string }[] = [
-  { option: 'Equals', value: 'equals' },
-  { option: 'Not Equals', value: 'not_equals' },
-  { option: 'In', value: 'in' },
-  { option: 'Is Empty', value: 'is_empty' },
+  { option: '=', value: 'equals' },
+  { option: '≠', value: 'not_equals' },
+  { option: '⊂', value: 'in' },
+  { option: '∅', value: 'is_empty' },
   // { option: 'Not In', value: 'not_in' },
   // { option: 'Is Not Empty', value: 'is_not_empty' },
 ];
@@ -86,11 +86,11 @@ export type DateFilterOption =
 // | 'Is Not Empty';
 
 export const dateOptions: { option: string; value: string }[] = [
-  { option: 'Equals', value: 'equals' },
-  { option: 'Before', value: 'before' },
-  { option: 'After', value: 'after' },
-  { option: 'Between', value: 'between' },
-  { option: 'Is Empty', value: 'is_empty' },
+  { option: '=', value: 'equals' },
+  { option: '←', value: 'before' },
+  { option: '→', value: 'after' },
+  { option: '↔', value: 'between' },
+  { option: '∅', value: 'is_empty' },
   // { option: 'This Week', value: 'this_week' },
   // { option: 'This Month', value: 'this_month' },
   // { option: 'This Quarter', value: 'this_quarter' },
@@ -180,6 +180,10 @@ export type FieldConfig = {
 };
 
 export interface FilterComponentProps {
+  value: string;
+  isOpen: boolean;
+  filterId: string | undefined;
+  filterAnchorEl: HTMLButtonElement | null;
   filterMenu: FieldConfig[];
   setAppliedFilters: (filters: Record<string, any>) => void;
   handleFilter: () => void;

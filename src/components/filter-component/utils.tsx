@@ -53,6 +53,8 @@ export const getInitialStateForField = (
       return { boolean: { option: 'equals', value: true } };
     case 'multi-select':
       return { multiSelect: { values: [] } };
+      case 'date':
+        return { date: { option: 'equals', value: '' } };
     default:
       return {};
   }
@@ -64,6 +66,19 @@ export const formatFilterForApi = (
   const formattedFilters: Record<string, any> = {};
 
   Object.entries(filterStates).forEach(([fieldName, state]) => {
+    if (state.date) {
+      formattedFilters[fieldName] =
+        state.date.option === 'between'
+          ? {
+              [state.date.option]: {
+                from: state.date.value?.toLowerCase() || undefined,
+                to: state.date.toValue?.toLowerCase() || undefined,
+              },
+            }
+          : {
+              [state.date.option]: state.date.value?.toLowerCase() || '',
+            };
+    }
     if (state.text) {
       formattedFilters[fieldName] = { [state.text.option]: state.text.value.toLowerCase() };
     } else if (state.number) {

@@ -1,19 +1,44 @@
-import { ManageUser, ManageUserColumn } from '../../../types/manage-user';
+import { ManageUser, UserTableColumn } from '../../../types/manage-user';
 
-export const userColumns: ManageUserColumn<ManageUser>[] = [
-  { id: 'username', header: 'Username', sortable: true, sort: 'first_name', width: '20%' },
-  { id: 'email', header: 'Email', sortable: true, sort: 'email', width: '30%' },
-  { id: 'profile', header: 'Profile', sortable: true, sort: 'profile', width: '25%' },
+export const userColumns: UserTableColumn<ManageUser>[] = [
+  {
+    id: 'username',
+    sortId: 'first_name',
+    label: 'Username',
+    width: 300,
+    sortable: true,
+    sticky: true,
+    sx: {
+      position: 'sticky',
+      left: '32px',
+      background: '#fff',
+      zIndex: 10,
+      borderRight: '1px solid #CBD6E2',
+      borderBottom: '1px solid #CBD6E2 !important',
+    },
+  },
+  {
+    id: 'email',
+    sortId: 'email',
+    label: 'Email',
+    width: 300,
+    sortable: true,
+  },
+  {
+    id: 'profile',
+    sortId: 'profile',
+    label: 'Profile',
+    width: 300,
+    sortable: true,
+  },
   {
     id: 'status',
-    header: 'Status',
+    sortId: 'status',
+    label: 'Status',
+    width: 100,
     sortable: true,
-    sort: 'status',
-    width: '10%',
     render: (row: ManageUser) => (
-      <span>
-        {row.status === 'Active' ? 'Active' : 'In-Active'}
-      </span>
+      <span>{row.status === 'Active' ? 'Active' : 'In-Active'}</span>
     ),
   },
 ];

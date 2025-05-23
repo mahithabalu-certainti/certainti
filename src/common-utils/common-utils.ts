@@ -55,7 +55,7 @@ export const createTextField = (
   lengthRequired: options.lengthRequired,
   errorHandling: options.errorHandling,
   clearValue: options.clearValue,
-  defaultValue: options.defaultValue
+  defaultValue: options.defaultValue,
 });
 
 export const createPhoneInputField = (
@@ -234,6 +234,7 @@ export const REGEX_PATTERNS = {
   ALPHANUMERIC: /^[A-Za-z0-9-]+$/,
   LETTERS_SPACES: /^[A-Za-z\s]+$/,
   ACCOUNT_NAME: /^[A-Za-z0-9 &'.,-]+$/,
+  PROJECT_NAME: /^[A-Za-z0-9 &'.,-_]+$/,
   CONTACT_NAME: /^[A-Za-z &'’.,\-\\–\\—]+$/,
   INDUSTRY: /^[A-Za-z &]{5,25}$/,
   LETTERS_5_TO_25: /^[A-Za-z\s]{5,25}$/,
@@ -245,16 +246,20 @@ export const REGEX_PATTERNS = {
   EMAIL:
     /^(?=.{6,254}$)[a-zA-Z0-9]+(?:[._+-][a-zA-Z0-9]+)*@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63}$/,
   PHONE: /^([0-9]{10})$/,
-  WEBSITE: /^(https?:\/\/|www\.)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(:[0-9]+)?(\/[a-zA-Z0-9\-.:\/]*)?$/,
+  WEBSITE:
+    /^(https?:\/\/|www\.)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(:[0-9]+)?(\/[a-zA-Z0-9\-.:/]*)?$/,
   MAX_WEBSITE: /^.{0,255}$/,
   MIN_WEBSITE: /^.{10,}$/,
   DATA_RESIDENCY: /^[A-Za-z0-9\s-]+$/,
   NUMBER_OPTIONAL_DECIMAL: /^([0-9]{1,10}(\.[0-9]{1,2})?)?$/,
   BLENDED_NUMBER: /^(?:[0-9]{1,3})(?:\.[0-9]{1,2})?$/,
+  EFFORTS_NUMBER: /^(?:[0-9]{1,16})(?:\.[0-9]{1,2})?$/,
+  EFFORTS_INTEGER_NUMBER: /^[0-9]{1,16}$/,
+  EFFORTS_INTEGER_9: /^[0-9]{1,9}$/,
   DESCRIPTION: /^.{0,500}$/,
   RESOURCE_DESCRIPTION: /^.{0,1000}$/,
   ACCOUNT_DESCRIPTION: /^[\s\S]{0,2000}$/,
-  POSTAL_CODE:/^(?!^[A-Za-z]+$)[A-Za-z0-9-]+$/,
+  POSTAL_CODE: /^(?!^[A-Za-z]+$)[A-Za-z0-9-]+$/,
   MAX_AI_INTRACTION: /^[3-5]$/,
   NUMBERS: /^[0-9]{1,20}$/,
   NUMBERS_50: /^[0-9]{5,50}$/,
@@ -263,14 +268,20 @@ export const REGEX_PATTERNS = {
   MAX_COST_REVENUE: /^.{1,15}$/,
   COST_REGEX: /^(0|([1-9]\d{0,11}))(\.\d{1,2})?$/,
   NAME_REGEX: /^(?!.*[ '-]{2})[A-Za-z]+(?:['-][A-Za-z]+)*$/,
-  USER_NAME:/^(?!.*['-]{2})(?!.*^\s)(?!.*\s$)[A-Za-z]+(?:['-][A-Za-z]+)*$/,
+  USER_NAME: /^(?!.*['-]{2})(?!.*^\s)(?!.*\s$)[A-Za-z]+(?:['-][A-Za-z]+)*$/,
   STREET_REGEX: /^(?![\W_]+$)(?!\s*$)[a-zA-Z0-9\s,.\-#]+$/,
   MAX_255: /^.{0,255}$/,
   MAX_64: /^.{0,64}$/,
-  MAX_2000: /^[\s\S]{0,2000}$/,
   MAX_50: /^.{0,50}$/,
   MAX_100: /^.{0,100}$/,
+  MAX_150: /^.{0,150}$/,
+  MAX_200: /^.{0,200}$/,
+  MAX_1000: /^.{0,1000}$/,
+  MAX_2000: /^.{0,2000}$/,
   MIN_3: /^.{3,}$/,
+  MIN_5: /^.{5,}$/,
+  MIN_4: /^.{4,}$/,
+  POSITIVE_INTEGER_REGEX: /^(?:[1-9]|[1-9][0-9])$/,
   MIN_2: /^.{2,}$/,
   CITY_REGEX: /^[A-Za-z\s]{3,100}$/,
   NUMBERS_GREATER_THAN_ZERO: /^[1-9]\d*$/,
@@ -291,13 +302,15 @@ export const REGEX_PATTERNS = {
   NAME_LENGTH_3_TO_100_REGEX: /^.{3,100}$/,
   ALLOWED_CHARS_EXTENDED_NAME_REGEX: /^[A-Za-z0-9 &'.,-]+$/,
   NO_CONSECUTIVE_SPECIALS_EXTENDED_REGEX: /^(?!.*[ &'.,-]{2})/,
-  NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX: /^(?!^[ &'.,-])(?!(.*[ &'.,-]$))/,
+  NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX:
+    /^(?!^[ &'.,-])(?!(.*[ &'.,-]$))/,
   NO_LEADING_SPECIAL_REGEX: /^[a-zA-Z]/,
   ALLOWED_CHARS_REGEX: /^[a-zA-Z0-9_-]+$/,
   NO_CONSECUTIVE_SPECIALS_REGEX_FOR_ORG_NAME: /^(?!.*[-_]{2}).+$/,
   NO_TRAILING_SPECIAL_REGEX: /[^-_]$/,
   POSTAL_NO_CONSECUTIVE_HYPHENS: /^(?!-)(?!.*--)[a-zA-Z0-9-]{1,20}(?<!-)$/,
-  POSTAL_NO_LEADING_OR_TRAILING: /^(?!-)(?!.*--)(?!.*-.*-)[a-zA-Z0-9]{1,19}(-[a-zA-Z0-9]{1,19})?$/,
+  POSTAL_NO_LEADING_OR_TRAILING:
+    /^(?!-)(?!.*--)(?!.*-.*-)[a-zA-Z0-9]{1,19}(-[a-zA-Z0-9]{1,19})?$/,
   POSTAL_ALLOWED_CHARS: /^(?!^[a-zA-Z-]+$).*$/,
   // NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX:
   //   /^(?!^[ &'.,-])(?!(.*[ &'.,-]$))/,
@@ -315,12 +328,14 @@ export const REGEX_PATTERNS = {
 
 export const RESOURCE_REGEX = {
   RESOURCE_CODE: /^(?![0-9_-])[a-zA-Z][a-zA-Z0-9_-]{2,49}$/,
-  RESOURCE_NAME: /^(?!.*[-' ]{2})[A-Za-z](?:[A-Za-z]|[-' ](?=[A-Za-z])){0,62}[A-Za-z]$/,
-  ORG_NAME: /^(?!.*[&\-.'", ]{2})[A-Za-z0-9](?:[A-Za-z0-9]|[&\-.'", ](?=[A-Za-z0-9])){1,98}[A-Za-z0-9]$/,
+  RESOURCE_NAME:
+    /^(?!.*[-' ]{2})[A-Za-z](?:[A-Za-z]|[-' ](?=[A-Za-z])){0,62}[A-Za-z]$/,
+  ORG_NAME:
+    /^(?!.*[&\-.'", ]{2})[A-Za-z0-9](?:[A-Za-z0-9]|[&\-.'", ](?=[A-Za-z0-9])){1,98}[A-Za-z0-9]$/,
   EMAIL: /^[a-zA-Z0-9._%+-]{1,64}@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
   MOBILE: /^\+?[0-9][0-9\- ]{3,14}[0-9]$/,
   MANAGER_NAME: /^(?=(.*[a-zA-Z0-9]){3})[a-zA-Z0-9][a-zA-Z0-9 .'-]{1,99}$/,
-  ROLE:/^(?=.*[a-zA-Z])[a-zA-Z\s\-'.]+$/,
+  ROLE: /^(?=.*[a-zA-Z])[a-zA-Z\s\-'.]+$/,
   DESIGNATION: /^(?=.*[a-zA-Z])[a-zA-Z0-9\s!-~]{4,100}$/,
   YEARS_EXPERIENCE: /^(?:0|[1-9]\d?)(?:\.\d{1,2})?$/,
   DESCRIPTION: /^[\s\S]{0,2000}$/,
@@ -377,7 +392,15 @@ export const getDateTimeFormat = (date?: string) => {
   return dayjs.utc(date).local().format('MM-DD-YYYY HH:mm:ss');
 };
 
+export const getDateFormat = (date?: string) => {
+  if (!date) return '';
+  return dayjs(date).format('MM-DD-YYYY');
+};
 export const STATUS_OPTIONS: SelectOption[] = [
   { label: 'Active', value: 'active' },
   { label: 'In-Active', value: 'inactive' },
+];
+export const PROJECT_TYPE: SelectOption[] = [
+  { label: 'Fixed', value: 'Fixed' },
+  { label: 'Time & Material', value: 'Time & Material' },
 ];

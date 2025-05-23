@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 * {
-  font-family: 'Lexend', sans-serif;
+  font-family: 'Mulish', 'Lexend', sans-serif;
   scrollbar-width: thin;
   scrollbar-color: #888 #fff; 
 }

@@ -52,6 +52,9 @@ import phoneIcon from './phone.svg';
 import plusIcon from './plus.svg';
 import projectHeaderIcon from './projects-header.svg';
 import projectsIcon from './projects.svg';
+import profileIcon from './profile.svg';
+import projectsBook from './project-book.svg';
+import projectCreateIcon from './new-project.svg';
 import refreshIcon from './refresh.svg';
 import resourceHeaderIcon from './resource-header.svg';
 import resourceFilterIcon from './resourceFilterIcon.svg';
@@ -65,8 +68,18 @@ import taskTemplateIcon from './task-template.svg';
 import timesheetIcon from './timesheet.svg';
 import uploadIcon from './Vector.svg';
 import addIcon from './addicon.svg';
+import userIcon from './user.svg';
 import eyeIcon from './eye-icon.svg';
 import backIcon from './chevron-double-left.svg';
+import deleteIcon from './delete-icon.svg';
+import projectDetailsIcon from './project-details.svg';
+import childAccountIcon from './child-account.svg';
+import arrowIcon from './arrow-icon.svg';
+import sortIcon from './sort-icon.svg';
+import newFilterIcon from './filter-icon.svg';
+import checkedIcon from './checked-icon.svg';
+import burgerMenuIcon from './burger-menu.svg';
+import fiscalYearArrowIcon from './fiscal-arrow-icon.svg';
 
 export {
   accountDetailsIcon,
@@ -85,11 +98,15 @@ export {
   arrowBackIcon,
   arrowDownIcon,
   arrowUpIcon,
+  arrowIcon,
   attachmentIcon,
   backIcon,
+  burgerMenuIcon,
   calendarIcon,
   caseIcon,
+  checkedIcon,
   checklistTemplateIcon,
+  childAccountIcon,
   chevronDownIcon,
   chevronLeftIcon,
   closeCircleIcon,
@@ -102,6 +119,7 @@ export {
   editIcon,
   emailTemplateIcon,
   filterArrowRightIcon,
+  fiscalYearArrowIcon,
   filterIcon,
   globeIcon,
   helpIcon,
@@ -120,12 +138,17 @@ export {
   manageUserAccessIcon,
   ManageUserIcon,
   menuIcon,
+  newFilterIcon,
   notesIcon,
   notificationIcon,
   phoneIcon,
   plusIcon,
   projectHeaderIcon,
   projectsIcon,
+  profileIcon,
+  projectDetailsIcon,
+  projectCreateIcon,
+  projectsBook,
   refreshIcon,
   resourceFilterIcon,
   resourceHeaderIcon,
@@ -133,9 +156,12 @@ export {
   searchBlackIcon,
   searchIcon,
   settingsIcon,
+  sortIcon,
   surveyIcon,
   surveyTemplateIcon,
   taskTemplateIcon,
   timesheetIcon,
   uploadIcon,
+  userIcon,
+  deleteIcon,
 };

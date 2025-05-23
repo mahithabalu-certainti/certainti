@@ -12,6 +12,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { arrowDownIcon, searchIcon } from '../../assets';
 import {
+  DateOptions,
   FieldConfig,
   FilterComponentProps,
   FilterState,
@@ -24,6 +25,7 @@ import {
   NumberFilterControl,
   StatusFilterControl,
   TextFilterControl,
+  DateFilterControl,
 } from './helpers';
 import { clearFilters, formatFilterForApi, getInitialStateForField, getStoredFilters, storeFilters } from './utils';
 import { useLocation } from 'react-router-dom';
@@ -120,6 +122,17 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
     setFilterStates((prev) => {
       const currentState = prev[fieldName] || {};
       switch (fieldConfig.type) {
+        case 'date':
+          return {
+            ...prev,
+            [fieldName]: {
+              ...currentState,
+              date: {
+                ...currentState.date!,
+                option: event.target.value as DateOptions,
+              },
+            },
+          };
         case 'text':
           return {
             ...prev,
@@ -162,7 +175,8 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
   const handleFilterValueChange = (
     fieldName: string,
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    index?: number
+    index?: number,
+    targetKey: 'value' | 'toValue' = 'value'
   ) => {
     setPage(1);
     const fieldConfig = filterFields.find((f) => f.name === fieldName);
@@ -213,6 +227,17 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
               },
             }
           }
+          case 'date':
+            return {
+              ...prev,
+              [fieldName]: {
+                ...currentState,
+                date: {
+                  ...currentState.date!,
+                  [targetKey]: event.target.value,
+                },
+              },
+            };
         default:
           return prev;
       }
@@ -241,6 +266,16 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
     for (const key in updatedStates) {
       const state = updatedStates[key];
   
+      if (state.date) {
+        const isValueEmpty = !state.date.value?.trim();
+        const isToValueEmpty =
+          state.date.option === 'between' && !state.date.toValue?.trim();
+
+        if (isValueEmpty || isToValueEmpty) {
+          hasInvalid = true;
+        }
+      }
+
       if (state.text) {
         const isEmpty = !state.text.value.trim();
         if (isEmpty) hasInvalid = true;
@@ -342,6 +377,15 @@ const FilterComponent: React.FC<FilterComponentProps> = ({
             onChange={handleMultiSelectChange}
           />
         );
+        case 'date':
+          return (
+            <DateFilterControl
+              fieldName={field.name}
+              state={fieldState}
+              onOptionChange={handleFilterOptionChange}
+              onValueChange={handleFilterValueChange}
+            />
+          );
       default:
         return null;
     }
