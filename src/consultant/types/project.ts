@@ -79,6 +79,7 @@ export interface KeyContacts {
 export interface NewProjectData {
   account_id?: string;
   name?: string;
+  r_number?: string;
   industry_rid_name?: string;
   start_date?: string | null;
   end_date?: string | null;

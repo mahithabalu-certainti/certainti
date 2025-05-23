@@ -396,10 +396,6 @@ export const STATUS_OPTIONS: SelectOption[] = [
   { label: 'Active', value: 'active' },
   { label: 'In-Active', value: 'inactive' },
 ];
-export const STATUS_OPTIONS2: SelectOption[] = [
-  { label: 'Active', value: 'Active' },
-  { label: 'In-Active', value: 'Inactive' },
-];
 export const PROJECT_TYPE: SelectOption[] = [
   { label: 'Fixed', value: 'Fixed' },
   { label: 'Time & Material', value: 'Time & Material' },

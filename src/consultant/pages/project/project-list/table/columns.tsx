@@ -4,7 +4,7 @@ export const getProjectColumns = (
   onClick: (row: Project) => void
 ): ProjectColumn<Project>[] => [
   {
-    id: 'accountNumber',
+    id: 'account_number',
     header: 'Account Number',
     sortable: true,
     sort: 'account_number',

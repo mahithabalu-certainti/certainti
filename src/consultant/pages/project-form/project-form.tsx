@@ -22,6 +22,7 @@ import {
 } from '../../services/project/project-create-service';
 import { useProjectDetail } from '../../services/project';
 import { othersIndustryId } from '../account-create/utils';
+import { STATUS_OPTIONS } from '../../../common-utils';
 
 const ProjectForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -69,6 +70,7 @@ const ProjectForm: React.FC = () => {
         key_contact_role: account?.keyContact[0]?.key_contact_role,
         key_contact_email: account?.keyContact[0]?.key_contact_email,
         key_contact_status: account?.keyContact[0]?.status,
+        project_status: account?.project_status.toLowerCase(),
         is_primary_contact: account?.keyContact[0]?.is_primary_contact
           ? 'yes'
           : 'no',
@@ -97,6 +99,7 @@ const ProjectForm: React.FC = () => {
   );
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
+  const defaultActiveValue = STATUS_OPTIONS[0].value;
   // console.log(isEditView);
   const commonSuccess = createProject.isSuccess || updateProject.isSuccess;
   useEffect(() => {
@@ -294,7 +297,15 @@ const ProjectForm: React.FC = () => {
           //   allCountries.isLoading || currency.isLoading || state.isLoading
           // }
           loading={false}
-          values={isEditView && projectData ? { ...projectData } : undefined}
+          values={
+            isEditView && projectData
+              ? { ...projectData }
+              : {
+                  project_status: defaultActiveValue,
+                  status: defaultActiveValue,
+                  max_ai_interaction: 3,
+                }
+          }
           outData={submitData}
           formRef={formRef}
           onChange={onChangeField}

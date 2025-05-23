@@ -8,7 +8,6 @@ import {
   PROJECT_TYPE,
   REGEX_PATTERNS,
   STATUS_OPTIONS,
-  STATUS_OPTIONS2,
   YES_NO_OPTIONS,
 } from '../../../common-utils';
 import { FormType, SelectOption } from '../../types';
@@ -239,7 +238,7 @@ export const FormData = (
           }),
           createSelectField('project_status', 'Status', {
             required: true,
-            options: STATUS_OPTIONS2,
+            options: STATUS_OPTIONS,
             placeholder: 'Choose Status',
           }),
         ],
@@ -261,7 +260,7 @@ export const FormData = (
             placeholder: 'Choose Region',
             required: false,
             isLoading: stateLoading,
-            // disabled: disableFields,
+            disabled: disableFields,
           }),
           createSelectField('currency', 'Currency', {
             options: currency,
@@ -456,13 +455,13 @@ export const FormData = (
         hide: !disableFields,
         fields: [
           createTextField('rid', 'Record ID', {
-            required: true,
+            required: false,
             placeholder: 'Enter Project Number',
             disabled: disableFields,
             hide: !disableFields,
           }),
-          createTextField('rid', 'Project ID', {
-            required: true,
+          createTextField('r_number', 'Project ID', {
+            required: false,
             placeholder: 'Enter Project Number',
             disabled: disableFields,
             hide: !disableFields,

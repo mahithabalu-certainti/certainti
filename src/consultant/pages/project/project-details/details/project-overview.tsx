@@ -5,7 +5,10 @@ import { leftArrowIcon } from '../../../../../assets';
 import TextButton from '../../../../../components/button/text-button';
 import { Theme } from '@emotion/react';
 import { NewProjectData } from '../../../../types/project';
-import { formatDateToMMDDYYYY } from '../../../account-details-sidebar/sidebar-pages/resources/utils';
+import {
+  formatDateToMMDDYYYY,
+  formatDateToMMDDYYYYWithTime,
+} from '../../../account-details-sidebar/sidebar-pages/resources/utils';
 interface DetailItem {
   label: string;
   value: React.ReactNode;
@@ -29,7 +32,11 @@ interface ProjectOverviewProps {
 const formatKey = (key: string): string => {
   return key
     .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word) =>
+      word.toLowerCase() === 'id'
+        ? 'ID'
+        : word.charAt(0).toUpperCase() + word.slice(1)
+    )
     .join(' ');
 };
 const ProjectOverview: React.FC<ProjectOverviewProps> = ({
@@ -145,21 +152,24 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
           value: Object.values(value).join(', ') || 'NA', // or handle nested objects differently
         };
       }
-
-      if (key === 'project_startdate' && !Array.isArray(value)) {
+      if (
+        (key === 'created_on' || key === 'updated_on') &&
+        typeof value === 'string'
+      ) {
         return {
-          label: 'Effective Date',
-          value: formatDateToMMDDYYYY(value as string) || 'NA', // or handle nested objects differently
+          label: formatKey(key),
+          value: formatDateToMMDDYYYYWithTime(value), // custom formatter
         };
       }
-
-      if (key === 'project_enddate' && !Array.isArray(value)) {
+      if (
+        (key === 'project_enddate' || key === 'project_startdate') &&
+        typeof value === 'string'
+      ) {
         return {
-          label: 'End Date',
-          value: formatDateToMMDDYYYY(value as string) || 'NA', // or handle nested objects differently
+          label: formatKey(key),
+          value: formatDateToMMDDYYYY(value), // custom formatter
         };
       }
-
       const displayValue =
         value === null || value === '' || value === undefined
           ? 'NA'
@@ -181,8 +191,8 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       projectDetails?.industry_name || projectDetails?.industry_rid_name,
     program_name: projectDetails?.program_name,
     fiscal_year: projectDetails?.fiscal_year,
-    start_date: projectDetails?.project_startdate,
-    end_date: projectDetails?.project_enddate,
+    project_startdate: projectDetails?.project_startdate,
+    project_enddate: projectDetails?.project_enddate,
     project_type: projectDetails?.project_type,
     clasification: projectDetails?.project_classification_rid,
     client_group: projectDetails?.project_client_group,
@@ -218,8 +228,8 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     total_non_labor_cost: projectDetails?.total_non_labor_cost,
   });
   const auditInfo = CreateSectionData({
-    record_id: projectDetails?.record_id,
-    project_id: projectDetails?.rid,
+    record_id: projectDetails?.rid,
+    project_id: projectDetails?.r_number,
     created_on: projectDetails?.created_datetime,
     created_by: projectDetails?.created_by,
     updated_on: projectDetails?.modified_datetime,

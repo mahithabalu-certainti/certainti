@@ -1,3 +1,4 @@
+import { capitalize } from '@mui/material';
 import { KeyContactsUpdate, Status } from '../../types';
 import { NewProjectData } from '../../types/project';
 import { othersIndustryId } from '../account-create/utils';
@@ -29,7 +30,9 @@ export const transformFormData = (
     project_client_group: formData.project_client_group || '',
     project_group: formData.project_group || '',
     project_description: formData.project_description || '',
-    project_status: formData.project_status,
+    project_status: formData.project_status
+      ? (capitalize(formData.project_status) as Status)
+      : ('Active' as Status),
     fiscal_year: formData.fiscal_year,
     country: formData.country,
     region: formData.region,
@@ -64,7 +67,9 @@ export const transformFormData = (
             is_primary_contact: formData?.is_primary_contact === 'yes',
             include_in_communication:
               formData?.include_in_communication === 'yes',
-            status: formData?.key_contact_status as Status,
+            status: formData?.key_contact_status
+              ? (capitalize(formData.key_contact_status) as Status)
+              : ('Active' as Status),
             ...(isEdit && { rid: key_rid }),
             action_type:
               isEdit && key_rid

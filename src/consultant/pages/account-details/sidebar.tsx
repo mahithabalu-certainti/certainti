@@ -3,24 +3,22 @@ import { adminSubmenuActiveIcon, backIcon } from '../../../assets';
 import { MenuItem, SidebarProps } from '../../types';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-const menuItems: MenuItem[] = [
-  { name: 'Financial Highlights', key: 'financial' },
-  { name: 'Details', key: 'details' },
-  { name: 'Resources', key: 'resources' },
-  { name: 'Projects', key: 'projects' },
-  { name: 'Cases', key: 'cases' },
-  { name: 'Activities', key: 'activities' },
-  { name: 'Notes', key: 'notes' },
-  { name: 'Attachments', key: 'attachments' },
-  { name: 'Checklist', key: 'checklist' },
-  { name: 'Timesheet', key: 'timesheet' },
-  { name: 'Imports', key: 'imports' },
-];
-
-const Sidebar: React.FC<SidebarProps> = ({ activeKey, onSelect }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeKey, onSelect, disble }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-
+  const menuItems: MenuItem[] = [
+    { name: 'Financial Highlights', key: 'financial', disabled: false },
+    { name: 'Details', key: 'details', disabled: false },
+    { name: 'Resources', key: 'resources', disabled: false },
+    { name: 'Projects', key: 'projects', disabled: disble },
+    { name: 'Cases', key: 'cases', disabled: false },
+    { name: 'Activities', key: 'activities', disabled: false },
+    { name: 'Notes', key: 'notes', disabled: false },
+    { name: 'Attachments', key: 'attachments', disabled: false },
+    { name: 'Checklist', key: 'checklist', disabled: false },
+    { name: 'Timesheet', key: 'timesheet', disabled: false },
+    { name: 'Imports', key: 'imports', disabled: false },
+  ];
   const handleSelect = (key: string) => {
     if (searchParams.get('list') !== key) {
       searchParams.delete('res_id');
@@ -49,9 +47,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeKey, onSelect }) => {
           <li key={item.key}>
             <button
               onClick={() => handleSelect(item.key)}
-              className={`group w-full flex items-center cursor-pointer text-[14px] font-normal gap-2 text-[#2D3E4F] text-left px-3 py-2 rounded hover:bg-[#0BBFB726] ${
+              disabled={item.disabled}
+              className={`group w-full flex items-center  text-[14px] font-normal gap-2 text-[#2D3E4F] text-left px-3 py-2 rounded hover:bg-[#0BBFB726] ${
                 activeKey === item.key ? 'bg-[#0BBFB726]' : ''
-              }`}
+              } ${item.disabled ? 'cursor-not-allowed' : 'cursor-pointer'}  `}
             >
               <span>{item.name}</span>
               <img
