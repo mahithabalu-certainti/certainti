@@ -1,7 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from 'react';
 import { arrowIcon, checkedIcon, closeIcon } from '../../assets';
-import { Menu, MenuItem, Select, SelectChangeEvent } from '@mui/material';
+import {
+  Menu,
+  MenuItem,
+  Popover,
+  Select,
+  SelectChangeEvent,
+} from '@mui/material';
 import {
   FilterModalProps,
   FilterState,
@@ -29,6 +35,9 @@ import { useLocation } from 'react-router-dom';
 const systemFilters = ['Touched Records', 'Untouched Records', 'Record Action'];
 
 const FilterModal: React.FC<FilterModalProps> = ({
+  isOpen,
+  filterAnchorEl,
+  filterId,
   setAppliedFilters,
   filterFields,
   setPage,
@@ -341,7 +350,27 @@ const FilterModal: React.FC<FilterModalProps> = ({
   };
 
   return (
-    <>
+    <Popover
+      id={filterId}
+      open={isOpen}
+      anchorEl={filterAnchorEl}
+      onClose={handleCloseFilter}
+      anchorOrigin={{
+        vertical: 'bottom',
+        horizontal: 'right',
+      }}
+      transformOrigin={{
+        vertical: 'top',
+        horizontal: 'right',
+      }}
+      PaperProps={{
+        sx: {
+          boxShadow: 'none',
+          bgcolor: 'transparent',
+          mt: 0.5,
+        },
+      }}
+    >
       <div className='h-auto min-h-[165px] w-[530px] min-w-[530px] max-w-[530px] flex flex-col gap-4 bg-white rounded-[8px] p-6 border border-[#CBD6E2]'>
         <div className='flex justify-between items-center'>
           <h2 className='text-[16px] font-bold text-[#2D3E4F]'>Filters</h2>
@@ -414,7 +443,18 @@ const FilterModal: React.FC<FilterModalProps> = ({
                               }
                             }}
                             sx={SELECT_STYLES}
-                            MenuProps={MENU_PROPS}
+                            MenuProps={{
+                              ...MENU_PROPS,
+                              PaperProps: {
+                                ...MENU_PROPS.PaperProps,
+                                style: {
+                                  ...(MENU_PROPS.PaperProps?.style || {}),
+                                  width: 100,
+                                  maxWidth: 100,
+                                  maxHeight: 200,
+                                },
+                              },
+                            }}
                             renderValue={(selected) => {
                               const selectedField = filterFields.find(
                                 (f) => f.name === selected
@@ -577,7 +617,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
             ))
         )}
       </Menu>
-    </>
+    </Popover>
   );
 };
 

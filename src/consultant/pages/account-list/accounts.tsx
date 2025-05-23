@@ -41,11 +41,22 @@ const BUTTON_STYLES = {
 export const Accounts: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
   // const [searchTerm, setSearchTerm] = useState<string>('');
-  const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
   const [order, setOrder] = useState<'asc' | 'desc'>('desc');
   const [orderBy, setOrderBy] = useState<keyof AccountList>('createdAt');
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
   const [page, setPage] = useState<number>(1);
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+
+  const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseFilter = () => {
+    setAnchorEl(null);
+  };
+
+  const isFilterOpen = Boolean(anchorEl);
+  const filterId = isFilterOpen ? 'account-filter-popover' : undefined;
 
   useEffect(() => {
     const saved = getStoredFilters();
@@ -100,9 +111,6 @@ export const Accounts: React.FC = () => {
 
   const [totalCount, setTotalCount] = useState<number>(0);
 
-  const handleCloseFilter = () => {
-    setIsFilterOpen(false);
-  };
   return (
     <div className='flex flex-col w-full h-full'>
       <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
@@ -173,9 +181,10 @@ export const Accounts: React.FC = () => {
       <div className='flex items-center justify-end h-[40px] min-h-[40px] px-4'>
         <div className='relative'>
           <button
+            aria-describedby={filterId}
             className={`w-[64px] h-[26px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
               ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) ? 'bg-[#F3F3F3]' : ''}`}
-            onClick={() => setIsFilterOpen(!isFilterOpen)}
+            onClick={handleFilterModal}
           >
             <img src={newFilterIcon} alt='filter-icon' />
             Filter
@@ -188,16 +197,15 @@ export const Accounts: React.FC = () => {
               </div>
             )}
           </button>
-          {isFilterOpen && (
-            <div className='absolute mt-1 right-0 z-50'>
-              <FilterModal
-                filterFields={accountFilterFields}
-                setAppliedFilters={setAppliedFilters}
-                setPage={setPage}
-                handleCloseFilter={handleCloseFilter}
-              />
-            </div>
-          )}
+          <FilterModal
+            isOpen={isFilterOpen}
+            filterAnchorEl={anchorEl}
+            filterId={filterId}
+            filterFields={accountFilterFields}
+            setAppliedFilters={setAppliedFilters}
+            setPage={setPage}
+            handleCloseFilter={handleCloseFilter}
+          />
         </div>
       </div>
       <div className='flex-1'>

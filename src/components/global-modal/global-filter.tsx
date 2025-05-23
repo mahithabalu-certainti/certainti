@@ -13,8 +13,9 @@ import {
   MenuProps,
   Checkbox,
   Skeleton,
+  Popover,
 } from '@mui/material';
-import { FilterState, GlobalModalProps } from '../../consultant/types';
+import { FilterState, GlobalFilterModalProps } from '../../consultant/types';
 import { arrowIcon, closeIcon, allAccountIcon } from '../../assets';
 import { useToast } from '../../hooks';
 
@@ -86,9 +87,11 @@ const MENU_ITEM_STYLES = {
   gap: '4px',
 };
 
-const GlobalFilterModal: React.FC<GlobalModalProps> = ({
-  isGlobalModalOpen,
-  handleCloseGlobalModal,
+const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
+  isOpen,
+  filterAnchorEl,
+  filterId,
+  handleClose,
 }) => {
   const dispatch = useAppDispatch();
   const { errorToast } = useToast();
@@ -107,11 +110,11 @@ const GlobalFilterModal: React.FC<GlobalModalProps> = ({
   }, [error]);
 
   useEffect(() => {
-    if (isGlobalModalOpen) {
+    if (isOpen) {
       dispatch(fetchAccountsThunk());
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isGlobalModalOpen]);
+  }, [isOpen]);
 
   useEffect(() => {
     if (filters?.length > 0) {
@@ -151,7 +154,6 @@ const GlobalFilterModal: React.FC<GlobalModalProps> = ({
       (filter) => filter.account !== ''
     );
     dispatch(setFilters(validFilters));
-    // handleCloseGlobalModal();
   };
 
   const handleClearFilters = () => {
@@ -189,10 +191,30 @@ const GlobalFilterModal: React.FC<GlobalModalProps> = ({
     return availableAccounts?.length ? availableAccounts : null;
   };
 
-  if (!isGlobalModalOpen) return null;
+  if (!isOpen) return null;
 
   return (
-    <div className={`absolute right-0 z-50`}>
+    <Popover
+      id={filterId}
+      open={isOpen}
+      anchorEl={filterAnchorEl}
+      onClose={handleClose}
+      anchorOrigin={{
+        vertical: 'bottom',
+        horizontal: 'right',
+      }}
+      transformOrigin={{
+        vertical: 'top',
+        horizontal: 'right',
+      }}
+      PaperProps={{
+        sx: {
+          boxShadow: 'none',
+          bgcolor: 'transparent',
+          mt: 0.5,
+        },
+      }}
+    >
       <div className='h-auto min-h-[165px] w-[530px] min-w-[530px] max-w-[530px] flex flex-col gap-4 bg-white rounded-[8px] p-6 border border-[#CBD6E2]'>
         <div className='flex justify-between items-center'>
           <h2 className='text-[16px] font-bold text-[#2D3E4F]'>Filters</h2>
@@ -413,7 +435,7 @@ const GlobalFilterModal: React.FC<GlobalModalProps> = ({
               style={{
                 background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
               }}
-              onClick={handleCloseGlobalModal}
+              onClick={handleClose}
             >
               Close
             </button>
@@ -429,7 +451,7 @@ const GlobalFilterModal: React.FC<GlobalModalProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </Popover>
   );
 };
 

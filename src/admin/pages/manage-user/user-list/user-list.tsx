@@ -33,7 +33,6 @@ const UserList: React.FC = () => {
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   // const [searchTerm, setSearchTerm] = useState<string>('');
-  const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
   const [page, setPage] = useState<number>(1);
   const [tableParams, setTableParams] = useState<UserListParams>({
     page: page,
@@ -41,6 +40,19 @@ const UserList: React.FC = () => {
     sortBy: 'createdAt',
     sortOrder: 'DESC',
   });
+
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+
+  const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseFilter = () => {
+    setAnchorEl(null);
+  };
+
+  const isFilterOpen = Boolean(anchorEl);
+  const filterId = isFilterOpen ? 'user-filter-popover' : undefined;
 
   const userActionButtons = [
     { label: 'Suspend User', width: '104px' },
@@ -100,10 +112,6 @@ const UserList: React.FC = () => {
     }
   };
 
-  const handleCloseFilter = () => {
-    setIsFilterOpen(false);
-  };
-
   return (
     <div className='flex flex-col w-full h-full'>
       {/* Header Section */}
@@ -155,9 +163,10 @@ const UserList: React.FC = () => {
         <div className='flex items-center gap-3'>
           <div className='relative h-[32px]'>
             <button
+              aria-describedby={filterId}
               className={`w-[64px] h-[26px] text-[13px] mt-[3px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
               ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) ? 'bg-[#F3F3F3]' : ''}`}
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              onClick={handleFilterModal}
             >
               <img src={newFilterIcon} alt='filter-icon' />
               Filter
@@ -170,16 +179,15 @@ const UserList: React.FC = () => {
                 </div>
               )}
             </button>
-            {isFilterOpen && (
-              <div className='absolute mt-1 right-0 z-50'>
-                <FilterModal
-                  filterFields={userFilterfields}
-                  setAppliedFilters={setAppliedFilters}
-                  setPage={setPage}
-                  handleCloseFilter={handleCloseFilter}
-                />
-              </div>
-            )}
+            <FilterModal
+              isOpen={isFilterOpen}
+              filterAnchorEl={anchorEl}
+              filterId={filterId}
+              filterFields={userFilterfields}
+              setAppliedFilters={setAppliedFilters}
+              setPage={setPage}
+              handleCloseFilter={handleCloseFilter}
+            />
           </div>
           {userActionButtons.map((button) => (
             <TextButton

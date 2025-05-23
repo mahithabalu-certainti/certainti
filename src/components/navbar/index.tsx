@@ -46,13 +46,30 @@ export const Navbar: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] =
     React.useState<null | HTMLElement>(null);
-  const [isGlobalModalOpen, setIsGlobalModalOpen] = useState(false);
 
   const dispatch = useDispatch();
   const { logout } = useAuthHook();
   const navigate = useNavigate();
   const { role, name } = useSelector((state: RootState) => state.auth);
   const { fiscalYear } = useSelector((state: RootState) => state.account);
+
+  const [globalAnchorEl, setGlobalAnchorEl] =
+    useState<HTMLButtonElement | null>(null);
+
+  const handleGlobalFilterModal = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setGlobalAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseGlobalFilter = () => {
+    setGlobalAnchorEl(null);
+  };
+
+  const isGlobalModalOpen = Boolean(globalAnchorEl);
+  const globalFilterId = isGlobalModalOpen
+    ? 'global-filter-popover'
+    : undefined;
 
   const isConsultant = role !== UserRoles.Admin;
   const menuId = 'account-menu';
@@ -100,10 +117,6 @@ export const Navbar: React.FC = () => {
   // const handleSearchMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
   //   setSearchAnchor(event.currentTarget);
   // };
-
-  const handleCloseGlobalModal = () => {
-    setIsGlobalModalOpen(false);
-  };
 
   const changePassword = async () => {
     handleMenuClose();
@@ -326,8 +339,9 @@ export const Navbar: React.FC = () => {
                 <div className='relative'>
                   <IconButton
                     color='inherit'
+                    aria-describedby={globalFilterId}
                     disableRipple
-                    onClick={() => setIsGlobalModalOpen(!isGlobalModalOpen)}
+                    onClick={handleGlobalFilterModal}
                   >
                     <img
                       src={globeIcon}
@@ -337,8 +351,10 @@ export const Navbar: React.FC = () => {
                     <span className='text-[13px] font-normal px-2'>Global</span>
                   </IconButton>
                   <GlobalFilterModal
-                    isGlobalModalOpen={isGlobalModalOpen}
-                    handleCloseGlobalModal={handleCloseGlobalModal}
+                    isOpen={isGlobalModalOpen}
+                    filterAnchorEl={globalAnchorEl}
+                    filterId={globalFilterId}
+                    handleClose={handleCloseGlobalFilter}
                   />
                 </div>
                 <div className='border-l border-[#FFFFFF4D] h-6 mx-1' />

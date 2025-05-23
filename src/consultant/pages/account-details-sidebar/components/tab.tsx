@@ -155,6 +155,26 @@ const TabPanel: React.FC<TabProps> = ({
       : getSkillFilterFields(memoizedSkillType, skillSubTypeData);
   };
 
+  const [filterAnchorEl, setFilterAnchorEl] =
+    useState<HTMLButtonElement | null>(null);
+
+  const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setFilterAnchorEl(event.currentTarget);
+    if (!showFilter) {
+      handleFilter();
+    }
+  };
+
+  const handleCloseFilter = () => {
+    setFilterAnchorEl(null);
+    if (showFilter) {
+      handleFilter();
+    }
+  };
+
+  const isFilterOpen = Boolean(filterAnchorEl);
+  const filterId = isFilterOpen ? `resource${value}-filter-popover` : undefined;
+
   return (
     <Box className=' rounded-lg'>
       <Box className='flex justify-between items-center mb-4'>
@@ -222,26 +242,29 @@ const TabPanel: React.FC<TabProps> = ({
           <Box className='relative'>
             {filterVisibility && (
               <Box
-                onClick={handleFilter}
+                component='button'
+                onClick={handleFilterModal}
                 className='h-[32px] w-[32px] flex items-center justify-center border border-[#CBD6E2] rounded-[2px] cursor-pointer'
+                aria-describedby={filterId}
               >
                 <Image src={resourceFilterIcon} />
               </Box>
             )}
-            {showFilter && value !== 'details' && (
-              <Box className='absolute right-0 z-50'>
-                <Filter
-                  filterMenu={getFilterFields()}
-                  setAppliedFilters={setAppliedFilters}
-                  handleFilter={handleFilter}
-                  savedFilterStates={filterStates}
-                  onFilterStatesChange={setFilterStates}
-                  savedSelectedFilters={selectedFilters}
-                  onSelectedFiltersChange={setSelectedFilters}
-                  setCurrentPage={setCurrentPage}
-                  mode={'date'}
-                />
-              </Box>
+            {value !== 'details' && (
+              <Filter
+                isOpen={isFilterOpen && showFilter}
+                filterAnchorEl={filterAnchorEl}
+                filterId={filterId}
+                filterMenu={getFilterFields()}
+                setAppliedFilters={setAppliedFilters}
+                handleFilter={handleCloseFilter}
+                savedFilterStates={filterStates}
+                onFilterStatesChange={setFilterStates}
+                savedSelectedFilters={selectedFilters}
+                onSelectedFiltersChange={setSelectedFilters}
+                setCurrentPage={setCurrentPage}
+                mode={'date'}
+              />
             )}
           </Box>
           <ActionImportDropdown

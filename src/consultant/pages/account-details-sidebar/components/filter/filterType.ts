@@ -180,6 +180,9 @@ export type FieldConfig = {
 };
 
 export interface FilterComponentProps {
+  isOpen: boolean;
+  filterId: string | undefined;
+  filterAnchorEl: HTMLButtonElement | null;
   filterMenu: FieldConfig[];
   setAppliedFilters: (filters: Record<string, any>) => void;
   handleFilter: () => void;

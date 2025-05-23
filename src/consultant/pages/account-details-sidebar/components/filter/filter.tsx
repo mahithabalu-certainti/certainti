@@ -1,5 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Menu, MenuItem, Select, SelectChangeEvent } from '@mui/material';
+import {
+  Menu,
+  MenuItem,
+  Popover,
+  Select,
+  SelectChangeEvent,
+} from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
 import { arrowIcon, checkedIcon, closeIcon } from '../../../../../assets';
 import { getInitialStateForField } from '../../sidebar-pages/resources/utils';
@@ -37,6 +43,9 @@ const systemFilters = ['Touched Records', 'Untouched Records', 'Record Action'];
 
 // filter to use in resource, cost and skill list pages
 const Filter: React.FC<FilterComponentProps> = ({
+  isOpen,
+  filterAnchorEl,
+  filterId,
   filterMenu,
   setAppliedFilters,
   handleFilter,
@@ -442,7 +451,27 @@ const Filter: React.FC<FilterComponentProps> = ({
     }
   };
   return (
-    <>
+    <Popover
+      id={filterId}
+      open={isOpen}
+      anchorEl={filterAnchorEl}
+      onClose={handleFilter}
+      anchorOrigin={{
+        vertical: 'bottom',
+        horizontal: 'right',
+      }}
+      transformOrigin={{
+        vertical: 'top',
+        horizontal: 'right',
+      }}
+      PaperProps={{
+        sx: {
+          boxShadow: 'none',
+          bgcolor: 'transparent',
+          mt: 0.5,
+        },
+      }}
+    >
       <div className='h-auto min-h-[165px] w-[530px] min-w-[530px] max-w-[530px] mt-1 flex flex-col gap-4 bg-white rounded-[8px] p-6 border border-[#CBD6E2]'>
         <div className='flex justify-between items-center'>
           <h2 className='text-[16px] font-bold text-[#2D3E4F]'>Filters</h2>
@@ -568,23 +597,28 @@ const Filter: React.FC<FilterComponentProps> = ({
                       <button
                         onClick={() => {
                           const fieldToRemove = [fieldValue];
-                          
+
                           // If clearing skill_type_rid, also remove skill_subtype_rid
-                          if (fieldValue === 'skill_type_rid' && selectedFilters.includes('skill_subtype_rid')) {
+                          if (
+                            fieldValue === 'skill_type_rid' &&
+                            selectedFilters.includes('skill_subtype_rid')
+                          ) {
                             fieldToRemove.push('skill_subtype_rid');
                           }
-                          
+
                           const newSelectedFilters = selectedFilters.filter(
                             (f) => !fieldToRemove.includes(f)
                           );
-                          
+
                           if (newSelectedFilters.length === 0) {
                             handleResetFilter();
                           } else {
                             setSelectedFilters(newSelectedFilters);
                             setFilterStates((prev) => {
                               const newState = { ...prev };
-                              fieldToRemove.forEach(field => delete newState[field]);
+                              fieldToRemove.forEach(
+                                (field) => delete newState[field]
+                              );
                               return newState;
                             });
                           }
@@ -687,7 +721,7 @@ const Filter: React.FC<FilterComponentProps> = ({
             ))
         )}
       </Menu>
-    </>
+    </Popover>
   );
 };
 

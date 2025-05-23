@@ -45,7 +45,7 @@ export type FieldConfig = {
   name: string;
   label: string;
   type: 'text' | 'number' | 'status' | 'boolean' | 'multi-select';
-  options?: string[] | { value: string; label: string; }[];
+  options?: string[] | { value: string; label: string }[];
 };
 
 export interface FilterComponentProps {
@@ -58,6 +58,9 @@ export interface FilterComponentProps {
 }
 
 export interface FilterModalProps {
+  isOpen: boolean;
+  filterId: string | undefined;
+  filterAnchorEl: HTMLButtonElement | null;
   setAppliedFilters: (filters: Record<string, any>) => void;
   filterFields: FieldConfig[];
   setPage: (page: number) => void;
@@ -67,4 +70,4 @@ export interface FilterModalProps {
 export const StatusOptions = [
   { value: 'Active', label: 'Active' },
   { value: 'Inactive', label: 'In-Active' },
-]
+];
