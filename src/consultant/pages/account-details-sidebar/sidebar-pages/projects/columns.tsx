@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { TruncateWithTooltip } from '../../../../../components';
 import { Project, ProjectList } from '../../../../types/project';
 

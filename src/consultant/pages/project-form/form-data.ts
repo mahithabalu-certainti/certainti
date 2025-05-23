@@ -165,7 +165,7 @@ export const FormData = (
           createDateField('project_enddate', 'End Date', {
             required: false,
             minDate: new Date(minDate.getTime()),
-            // maxDate: currentDate,
+            maxDate: currentDate,
             startDateLabel: 'project_start_date',
           }),
           createSelectField('project_type', 'Project Type', {
