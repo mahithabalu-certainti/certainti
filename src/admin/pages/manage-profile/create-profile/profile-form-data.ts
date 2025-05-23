@@ -6,7 +6,7 @@ import {
   REGEX_PATTERNS,
 } from '../../../../common-utils';
 
-export const FormData = (
+export const ProfileFormData = (
   country: SelectOption[],
   profile: SelectOption[],
   role: SelectOption[],
@@ -17,12 +17,11 @@ export const FormData = (
   cityLoading?: boolean
 ): FormType[] => {
   return useMemo(
-    () => [ 
-       
+    () => [
       {
         sectionName: 'Create Profile',
         fillType: 'half',
-        fields: [ 
+        fields: [
           createSelectField('existing_profile', 'Select an Existing Profile', {
             options: country,
             placeholder: '-Select-',

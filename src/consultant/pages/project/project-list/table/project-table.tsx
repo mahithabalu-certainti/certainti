@@ -79,7 +79,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     }));
   };
 
-  const handleProject = (project: Project) => {
+  const handleProject = (project: any) => {
     const path = generatePath(PROJECT_DETAILS, {
       projectid: project.id,
     });
@@ -93,7 +93,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   return (
     <Table
       data={data?.projects || ([] as any)}
-      columns={projectColumns}
+      columns={projectColumns as any}
       getRowId={getRowId}
       // Selection
       selectable={true}

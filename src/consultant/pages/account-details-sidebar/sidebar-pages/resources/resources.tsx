@@ -345,19 +345,13 @@ const Resource: React.FC<ResourceProps> = ({
         setSelectedFilters={setSelectedFilters}
       />
       <ResourceTableHeader
-        handleFilter={handleFilter}
         value={value}
-        setAppliedFilters={(data) => {
-          setAppliedFilters(data);
-        }}
-        showFilter={showFilter}
         title='Resources'
         resourceNumber={resourceData?.r_number ?? resourceNumber}
         titleIcon={<img src={resourceProfileIcon} alt='resource header icon' />}
         headerButtons={headerButtons}
         showBackArrow={showBackArrow}
         onBackClick={handleBackClick}
-        filterVisibility={filterVisibility}
       />
       {!viewResourceList ? (
         <ResourceSubComponents

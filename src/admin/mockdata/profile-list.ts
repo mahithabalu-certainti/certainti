@@ -1,6 +1,6 @@
-import { ManageProfileApiResponse } from "../types/manage-user";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-export const manageProfileMockData: ManageProfileApiResponse = {
+export const manageProfileMockData: any = {
   statusCode: 200,
   statusCodeValue: 'Success',
   statusMessage: 'Success',
@@ -29,8 +29,8 @@ export const manageProfileMockData: ManageProfileApiResponse = {
         createdBy: 'Mike Johnson',
         createdOn: '2023-08-05T08:15:00.000Z',
         profileName: 'Software Engineer',
-      }
+      },
     ],
-    count: 4,  // Updated count to match the number of profiles
+    count: 4, // Updated count to match the number of profiles
   },
 };

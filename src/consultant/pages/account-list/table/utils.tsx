@@ -175,7 +175,7 @@ export const renderRows = ({
             <TruncateWithTooltip
               text={String(account.accountName)}
               maxWidth={250}
-              className={`inline-flex items-center rounded-[4px] text-white text-[14px] px-2 font-semibold h-[26px] bg-[#FF6666] cursor-pointer no-underline hover:underline`}
+              className={`inline-flex items-center rounded-[4px] text-white text-[14px] px-2 font-semibold h-[26px] bg-[#00B7A8] cursor-pointer no-underline hover:underline`}
             >
               <span onClick={() => handleAccountNameClick(account)}>
                 {account.accountName || 'NA'}
@@ -342,8 +342,8 @@ export const renderChildRows = ({
               borderBottom: '1px solid #CBD6E2 !important',
             }}
           >
-            <Box className='inline-flex items-center gap-1 ml-5'>
-              <div className='flex items-center justify-center w-[18px] h-[17px] bg-[#FF6666] rounded-[4px]'>
+            <Box className='inline-flex items-center gap-1 ml-[22px]'>
+              <div className='flex items-center justify-center w-[18px] h-[17px] bg-[#425A76] rounded-[4px]'>
                 <img
                   src={childAccountIcon}
                   alt='childAccountIcon'
