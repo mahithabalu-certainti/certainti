@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { TruncateWithTooltip } from '../../../../../components';
 import { ProjectColumn, ProjectList } from '../../../../types/project';
 const renderWithTooltip = (value: any) => {
@@ -217,7 +218,7 @@ export const getProjectColumns = (
     sortable: true,
     sort: 'project_status',
     width: '130px',
-    render: (_value, row: Project) => (
+    render: (row) => (
       <span
         className={
           row.project_status === 'Active'

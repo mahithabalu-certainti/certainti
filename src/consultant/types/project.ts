@@ -13,6 +13,31 @@ export interface ProjectList {
   project_client_group: string;
   project_group: string;
   project_status: string;
+  technical_consultant?: string;
+  financial_consultant?: string;
+  project_point_of_contact: string;
+  currency_code?: string;
+  region_name?: string;
+  country_name?: string;
+  description?: string;
+  status: string;
+  comments?: string;
+  total_effort?: string;
+  total_cost?: string;
+  total_fte?: number;
+  total_sub_con?: number;
+  total_non_labor_cost?: string;
+  total_fte_effort?: string;
+  total_sub_con_cost?: string;
+  total_fte_cost?: string;
+  qre?: string;
+  is_rd_qualified?: string;
+  qualified_research_expenditure?: string;
+  program_name?: string;
+  industry_name?: string;
+  fiscal_year: string;
+  name?: string;
+  project_code?: string;
 }
 
 export type Project = {

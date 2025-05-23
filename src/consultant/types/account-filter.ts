@@ -59,7 +59,14 @@ export type FilterState = {
 export type FieldConfig = {
   name: string;
   label: string;
-  type: 'text' | 'number' | 'status' | 'boolean' | 'multi-select' | 'date';
+  type:
+    | 'text'
+    | 'number'
+    | 'status'
+    | 'boolean'
+    | 'multi-select'
+    | 'date'
+    | 'enum';
   options?: string[] | { value: string; label: string }[];
 };
 
