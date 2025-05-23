@@ -1174,6 +1174,8 @@ export class ProjectService {
       "project_code",
       "industry_name",
       "project_startdate",
+      "project_name",
+      "program_name",
       "project_enddate",
       "project_type",
       "project_classification_rid",
@@ -1195,6 +1197,8 @@ export class ProjectService {
       "qualified_research_expenditure",
       "is_rd_qualified",
       "qre",
+      "fiscal_year",
+      "comments"
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -1299,68 +1303,125 @@ export class ProjectService {
       "project_enddate",
       "total_effort",
       "total_cost",
+      "fiscal_year"
     ];
-
+  
+    const numberFields = ["total_effort", "total_cost", "fiscal_year"]; 
+    const dateFields = [ "project_startdate", "project_enddate"];
+  
     const filterFields = this.getFilterFields(isAllProject);
-
+  
     filterFields.forEach(({ clientField, dbField }) => {
       if (filters[clientField]) {
         const fieldFilter = filters[clientField];
+        const isNumber = numberFields.includes(dbField);
+        const isDate = dateFields.includes(dbField);
+        const isTextCastNeeded = castToTextFields.includes(dbField) && !isNumber && !isDate;
 
-        if (castToTextFields.includes(dbField)) {
+        if (isTextCastNeeded) {
           whereClause[dbField] = Sequelize.where(
             Sequelize.cast(Sequelize.col(dbField), "TEXT"),
-            this.getFieldFilter(fieldFilter, dbField)
+            this.getFieldFilter(fieldFilter, dbField, isNumber, isDate)
           );
         } else {
-          whereClause[dbField] = this.getFieldFilter(fieldFilter, dbField);
+          whereClause[dbField] = this.getFieldFilter(fieldFilter, dbField, isNumber, isDate);
         }
       }
     });
-
+  
     return whereClause;
   }
-
-  private getFieldFilter(fieldFilter: any, dbField: string): any {
+  
+  private getFieldFilter(
+    fieldFilter: any,
+    dbField: string,
+    isNumberField: boolean,
+    isDateField: boolean
+  ): any {
+    if (isNumberField) {
+      if (fieldFilter.equals !== undefined) {
+        return { [Op.eq]: fieldFilter.equals };
+      }
+      if (fieldFilter.not_equals !== undefined) {
+        return { [Op.ne]: fieldFilter.not_equals };
+      }
+      if (fieldFilter.less_than !== undefined) {
+        return { [Op.lt]: fieldFilter.less_than };
+      }
+      if (fieldFilter.greater_than !== undefined) {
+        return { [Op.gt]: fieldFilter.greater_than };
+      }
+      if (
+        fieldFilter.between &&
+        Array.isArray(fieldFilter.between) &&
+        fieldFilter.between.length === 2
+      ) {
+        return {
+          [Op.between]: [fieldFilter.between[0], fieldFilter.between[1]],
+        };
+      }
+      if (fieldFilter.isEmpty === true) {
+        return { [Op.or]: [null] };
+      }
+    }
+  
+    if (isDateField) {
+      if (fieldFilter.equals !== undefined) {
+        if (fieldFilter.equals !== undefined) {
+          const startOfDay = new Date(fieldFilter.equals);
+          startOfDay.setHours(0, 0, 0, 0);
+          const endOfDay = new Date(fieldFilter.equals);
+          endOfDay.setHours(23, 59, 59, 999);
+      
+          return {
+            [Op.between]: [startOfDay, endOfDay],
+          };
+        }
+      }
+      if (fieldFilter.before !== undefined) {
+        return { [Op.lt]: this.normalizeDate(fieldFilter.before) };
+      }
+      if (fieldFilter.after !== undefined) {
+        return { [Op.gt]: this.normalizeDate(fieldFilter.after) };
+      }
+      if (
+        fieldFilter.between &&
+        Array.isArray(fieldFilter.between) &&
+        fieldFilter.between.length === 2
+      ) {
+        return {
+          [Op.between]: [
+            this.normalizeDate(fieldFilter.between[0]),
+            this.normalizeDate(fieldFilter.between[1]),
+          ],
+        };
+      }
+      if (fieldFilter.isEmpty === true) {
+        return { [Op.or]: [null] };
+      }
+    }
+  
+    // String (default)
     if (fieldFilter.equals) {
       return { [Op.iLike]: fieldFilter.equals };
     }
     if (fieldFilter.not_equals) {
       return { [Op.notILike]: fieldFilter.not_equals };
     }
-
     if (fieldFilter.contains) {
       return { [Op.iLike]: `%${fieldFilter.contains}%` };
     }
     if (fieldFilter.not_contains) {
       return { [Op.notILike]: `%${fieldFilter.not_contains}%` };
     }
-
     if (fieldFilter.isEmpty === true) {
       return { [Op.or]: [null, ""] };
     }
-
     if (fieldFilter.value) {
       return fieldFilter.value;
     }
-    if (fieldFilter.greater_than) {
-      return { [Op.gt]: this.normalizeDate(fieldFilter.greater_than) };
-    }
-    if (fieldFilter.lesser_than) {
-      return { [Op.lt]: this.normalizeDate(fieldFilter.lesser_than) };
-    }
-    if (
-      fieldFilter.between &&
-      Array.isArray(fieldFilter.between) &&
-      fieldFilter.between.length === 2
-    ) {
-      return {
-        [Op.between]: [
-          this.normalizeDate(fieldFilter.between[0]),
-          this.normalizeDate(fieldFilter.between[1]),
-        ],
-      };
-    }
+  
+    return undefined;
   }
 
   getSortParametersForAllProjects(
@@ -1395,7 +1456,10 @@ export class ProjectService {
       "project_number",
       "project_point_of_contact",
       "financial_consultant",
-      "technical_consultant"
+      "technical_consultant",
+      "project_client_group",
+      "project_group",
+      "classification_name"
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -1438,17 +1502,19 @@ export class ProjectService {
       { clientField: "rid", dbField: "rid" },
       { clientField: "r_number", dbField: "r_number" },
       { clientField: "project_code", dbField: "project_code" },
-      { clientField: "industry", dbField: "industry" },
+      { clientField: "program_name", dbField: "program_name" },
+      { clientField: "industry_name", dbField: "industry_name" },
       { clientField: "project_name", dbField: "project_name" },
       { clientField: "project_description", dbField: "project_description" },
+      { clientField: "fiscal_year", dbField: "fiscal_year" },
       { clientField: "total_effort", dbField: "total_effort" },
       { clientField: "total_cost", dbField: "total_cost" },
+      { clientField: "project_type", dbField: "project_type" },
       { clientField: "project_status", dbField: "project_status" },
       { clientField: "project_startdate", dbField: "project_startdate" },
       { clientField: "project_enddate", dbField: "project_enddate" },
       { clientField: "created_datetime", dbField: "created_datetime" },
       { clientField: "created_by", dbField: "created_by" },
-      { clientField: "source_schema", dbField: "source_schema" },
     ];
 
     return projectFilterFields;

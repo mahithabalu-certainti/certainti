@@ -1188,8 +1188,9 @@ class SchemaService {
         }
 
         const fullQuery = `
-        SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, ind.industry_name, 
-        ps.industry_name as industry_name_other,  ps.project_number, ps.project_type, ps.project_client_group , ps.project_group,
+        SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, 
+        COALESCE(ind.industry_name, ps.industry_name) AS industry_name, 
+        ps.project_number, ps.project_type, ps.project_client_group , ps.project_group,
         ps.project_classification_rid, pc.classification_name ,
         ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_consultant , ps.r_number,
         ps.program_name, ps.project_startdate , ps.project_enddate , ps.qualified_research_expenditure ,
@@ -1236,8 +1237,9 @@ class SchemaService {
         }
 
         const fullQuery = `
-        SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, ind.industry_name, 
-        ps.industry_name as industry_name_other, ps.project_type, ps.project_client_group , ps.project_group,
+        SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, 
+        COALESCE(ind.industry_name, ps.industry_name) AS industry_name,
+        ps.project_type, ps.project_client_group , ps.project_group,
         ps.project_classification_rid, pc.classification_name ,
         ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_consultant , ps.r_number, ps.project_number,
         ps.program_name, ps.project_startdate , ps.project_enddate , ps.qualified_research_expenditure ,
@@ -1896,7 +1898,7 @@ class SchemaService {
   }
 
   finalProjectSort(project: any[], sortBy: string, sortOrder: string){
-    if (sortBy) {
+    if (sortBy && sortBy !== "created_datetime") {
       const sortedList = [...project].sort((a, b) => {
         const valA = a[sortBy];
         const valB = b[sortBy];
