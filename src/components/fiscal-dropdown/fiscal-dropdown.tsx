@@ -122,7 +122,7 @@ const FiscalYearDropdown = ({
               </button>
             </div>
 
-            <button type='button' className={`h-5 w-8 text-[#425A76] text-[14px] font-bold cursor-pointer ${selectedYear === 'FY-All' ? 'bg-[#425A76] text-[#FFFFFF] rounded-[30px]' : ''}`} onClick={handleAllClick}>
+            <button type='button' className={`h-5 w-8 text-[#425A76] text-[14px] font-bold cursor-pointer ${!selectedYear ? 'bg-[#425A76] text-[#FFFFFF] rounded-[30px]' : ''}`} onClick={handleAllClick}>
               All
             </button>
           </div>

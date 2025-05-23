@@ -143,14 +143,14 @@ const TabPanel: React.FC<TabProps> = ({
 
   return (
     <Box className=' rounded-lg'>
-      <Box className='flex justify-between items-center mb-4'>
+      <Box className='flex justify-between items-center mb-2'>
         <Tabs
           value={tabValue}
           onChange={handleTabChange}
           sx={{
             border: '1px solid #CBD6E27D',
             padding: '3px',
-            minHeight: '36px',
+            minHeight: '34px',
             '& .MuiTabs-indicator': {
               display: 'none',
               '& .MuiTabs-root': {
@@ -164,7 +164,7 @@ const TabPanel: React.FC<TabProps> = ({
             sx={{
               textTransform: 'none',
               fontSize: '14px',
-              fontWeight: 500,
+              fontWeight: tabValue === 0 ? '500' : '400',
               color: '#2D3E4F',
               backgroundColor: tabValue === 0 ? '#0BBFB70D' : '',
               margin: '0',
@@ -185,7 +185,7 @@ const TabPanel: React.FC<TabProps> = ({
             sx={{
               textTransform: 'none',
               fontSize: '14px',
-              fontWeight: 500,
+              fontWeight: tabValue === 1 ? '500' : '400',
               color: '#2D3E4F',
               backgroundColor: tabValue === 1 ? '#0BBFB70D' : '',
               margin: '0',

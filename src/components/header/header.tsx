@@ -75,7 +75,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
 }) => {
   return (
     <div
-      className='flex w-full border-b-2 border-[#CBD6E2] p-4'
+      className='flex w-full border-b-1 h-[60px] border-box border-[#CBD6E2] px-4 py-2'
       style={customStyles.header}
     >
       <div className='flex justify-between w-full'>
@@ -89,7 +89,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
             />
             <div className='flex flex-col w-[90%]'>
               {variant === 'sub' && placeholder ? (
-                <div className='font-semibold text-[#7D98B6] text-[11px]'>
+                <div className='font-semibold text-[#7D98B6] text-[12px]'>
                   {placeholder}
                 </div>
               ) : (
@@ -106,7 +106,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
                   )}
                 </>
               )}
-              <div className='font-semibold text-[20px] -mt-1 text-[#2D3E4F] overflow-ellipsis truncate'>
+              <div className='font-bold text-[16px] -mt-1 text-[#2D3E4F] overflow-ellipsis truncate'>
                 {title}
               </div>
             </div>
