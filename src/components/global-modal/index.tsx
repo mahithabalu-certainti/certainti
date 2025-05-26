@@ -119,7 +119,9 @@ export const GlobalModal = ({
       fullWidth
     >
       <DialogTitle className='flex justify-between items-center border-b border-[#CBD6E2]'>
-        <span className='text-[#2D3E4F] text-[20px] font-medium leading-[20px]'>Filters</span>
+        <span className='text-[#2D3E4F] text-[20px] font-medium leading-[20px]'>
+          Filters
+        </span>
         <img
           src={closeCircleIcon}
           alt='close'
@@ -135,14 +137,24 @@ export const GlobalModal = ({
         ) : (
           <div className='flex w-full h-[380px] max-h-[380px] min-h-[380px]'>
             <div className='flex-1 border-r border-[#CBD6E2] pl-9 py-4'>
-              <p className='text-[#7D98B6] text-[13px] font-normal leading-6'>Filter Types</p>
+              <p className='text-[#7D98B6] text-[13px] font-normal leading-6'>
+                Filter Types
+              </p>
               <div className='flex items-center gap-3 h-[28px]'>
-                <img src={allAccountIcon} alt='all account' className='w-5 h-5' />
-                <span className='text-[#425A76] text-[13px] font-normal'>All Accounts</span>
+                <img
+                  src={allAccountIcon}
+                  alt='all account'
+                  className='w-5 h-5'
+                />
+                <span className='text-[#425A76] text-[13px] font-normal'>
+                  All Accounts
+                </span>
               </div>
             </div>
             <div className='flex-2 flex flex-col border-r border-[#CBD6E2]'>
-              <p className='text-[#7D98B6] text-[13px] font-normal leading-6 px-8 pt-4'>Account</p>
+              <p className='text-[#7D98B6] text-[13px] font-normal leading-6 px-8 pt-4'>
+                Account
+              </p>
               <div className='flex-1 flex flex-col space-y-1 p-6 overflow-y-auto'>
                 {accounts?.map((account: AccountFilter) => (
                   <div key={account.rid}>
@@ -166,14 +178,19 @@ export const GlobalModal = ({
                           },
                         }}
                       />
-                      <span className='text-[13px] font-normal break-all text-[#2D3E4F] cursor-pointer'>{account.account_name}</span>
+                      <span className='text-[13px] font-normal break-all text-[#2D3E4F] cursor-pointer'>
+                        {account.account_name}
+                      </span>
                     </label>
                     {selectedFilters.some((f) => f.account === account.rid) &&
                       account.child_accounts &&
                       account.child_accounts?.length > 0 && (
                         <div>
                           {account.child_accounts.map((child) => (
-                            <label key={child.rid} className='m-0 ml-6 flex items-center break-all'>
+                            <label
+                              key={child.rid}
+                              className='m-0 ml-6 flex items-center break-all'
+                            >
                               <Checkbox
                                 disableRipple
                                 checked={
@@ -195,7 +212,9 @@ export const GlobalModal = ({
                                   },
                                 }}
                               />
-                              <span className='text-[13px] font-normal break-all text-[#2D3E4F] cursor-pointer'>{child.account_name}</span>
+                              <span className='text-[13px] font-normal break-all text-[#2D3E4F] cursor-pointer'>
+                                {child.account_name}
+                              </span>
                             </label>
                           ))}
                         </div>
@@ -224,48 +243,67 @@ export const GlobalModal = ({
                 </span>
               </div>
               <div className='flex-1 pr-6 overflow-y-auto'>
-              <div className='flex-1'>
-                <p className='mt-3 text-[#807F94] text-[13px] font-normal'>Account</p>
-                {selectedFilters.map(({ account: id }) => {
-                  const account = accounts?.find((it) => it.rid === id);
-                  return account ? (
-                    <p className='flex justify-between items-center gap-2 mt-1 text-[13px] text-[#000000] font-normal' key={id}>
-                      <span title={account.account_name} className='truncate max-w-[150px] overflow-ellipsis'>{account.account_name}</span>
-                      <img
-                        src={closeIcon}
-                        className='cursor-pointer'
-                        alt='close'
-                        onClick={() => handleFilterToggle(id, 'account')}
-                      />
-                    </p>
-                  ) : null;
-                })}
-
-                <p className='mt-3 text-[#807F94] text-[13px] font-normal'>Child Account</p>
-                {selectedFilters.flatMap(({ account }, i) =>
-                  (
-                    accounts?.find((a) => a.rid === account)?.child_accounts ||
-                    []
-                  )
-                    .filter((child) =>
-                      selectedFilters[i].child.includes(child.rid)
-                    )
-                    .map((child) => (
+                <div className='flex-1'>
+                  <p className='mt-3 text-[#807F94] text-[13px] font-normal'>
+                    Account
+                  </p>
+                  {selectedFilters.map(({ account: id }) => {
+                    const account = accounts?.find((it) => it.rid === id);
+                    return account ? (
                       <p
-                        className='flex justify-between items-center text-[13px] gap-2 mt-1 text-[#000000] font-normal'
-                        key={child.rid}
+                        className='flex justify-between items-center gap-2 mt-1 text-[13px] text-[#000000] font-normal'
+                        key={id}
                       >
-                        <span title={child.account_name} className='truncate max-w-[150px] overflow-ellipsis'>{child.account_name}</span>
+                        <span
+                          title={account.account_name}
+                          className='truncate max-w-[150px] overflow-ellipsis'
+                        >
+                          {account.account_name}
+                        </span>
                         <img
                           src={closeIcon}
                           className='cursor-pointer'
                           alt='close'
-                          onClick={() => handleFilterToggle(child.rid, 'child')}
+                          onClick={() => handleFilterToggle(id, 'account')}
                         />
                       </p>
-                    ))
-                )}
-              </div>
+                    ) : null;
+                  })}
+
+                  <p className='mt-3 text-[#807F94] text-[13px] font-normal'>
+                    Child Account
+                  </p>
+                  {selectedFilters.flatMap(({ account }, i) =>
+                    (
+                      accounts?.find((a) => a.rid === account)
+                        ?.child_accounts || []
+                    )
+                      .filter((child) =>
+                        selectedFilters[i].child.includes(child.rid)
+                      )
+                      .map((child) => (
+                        <p
+                          className='flex justify-between items-center text-[13px] gap-2 mt-1 text-[#000000] font-normal'
+                          key={child.rid}
+                        >
+                          <span
+                            title={child.account_name}
+                            className='truncate max-w-[150px] overflow-ellipsis'
+                          >
+                            {child.account_name}
+                          </span>
+                          <img
+                            src={closeIcon}
+                            className='cursor-pointer'
+                            alt='close'
+                            onClick={() =>
+                              handleFilterToggle(child.rid, 'child')
+                            }
+                          />
+                        </p>
+                      ))
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -274,10 +312,8 @@ export const GlobalModal = ({
       <DialogActions className='border-t border-[#CBD6E2]'>
         <Box className='flex items-center justify-end gap-3 pr-6 w-full h-[48px]'>
           <TextButton
-            label="Cancel"
-            // color='inherit'
+            label='Cancel'
             onClick={handleCloseModal}
-            // variant='outlined'
             sx={{
               width: '55px',
               minWidth: '55px',
@@ -288,7 +324,6 @@ export const GlobalModal = ({
           />
           <TextButton
             label='Save'
-            // variant='filled'
             onClick={handleSaveFilters}
             sx={{
               width: '64px',

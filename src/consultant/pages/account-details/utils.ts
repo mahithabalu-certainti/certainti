@@ -115,7 +115,7 @@ export const transformAccountData = (data: AccountData): DisplayColumn[] => {
         },
         {
           label: 'Is Parent Account',
-          value: account?.is_parent ? 'YES' : 'NO',
+          value: account?.is_parent ? 'Yes' : 'No',
         },
       ],
     },

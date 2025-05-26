@@ -28,7 +28,8 @@ export const ManageUserDetails: React.FC = () => {
   const userDetails = useManageUserDetail(userId as string);
   const navigate = useNavigate();
   const userDetail = userDetails.data?.data?.users;
-  const userFullName = `${userDetail?.first_name || ''} ${userDetail?.last_name || ''}`.trim();
+  const userFullName =
+    `${userDetail?.first_name || ''} ${userDetail?.last_name || ''}`.trim();
 
   const userActionButtons: { label: string; width: string }[] = [
     { label: 'Suspend User', width: '104px' },
@@ -68,7 +69,11 @@ export const ManageUserDetails: React.FC = () => {
     <div className='flex flex-col h-[calc(100vh-64px)] w-full overflow-y-auto p-4 gap-3'>
       <div className='w-full min-h-[75px] h-[75px] px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
         <div className='flex items-center gap-2'>
-          <img src={ManageUserIcon} alt='manage user' className='w-8 h-8 rounded' />
+          <img
+            src={ManageUserIcon}
+            alt='manage user'
+            className='w-8 h-8 rounded'
+          />
           <div className='flex flex-col mb-1'>
             <div className={HEADER_STYLES.adminPermission}>
               Admin Permission
@@ -84,17 +89,21 @@ export const ManageUserDetails: React.FC = () => {
               ...BUTTON_STYLES,
               fontSize: '13px',
               fontWeight: 700,
-              width: '91px'
+              width: '91px',
+              minWidth: '91px',
             }}
             onClick={() => navigate(ADMIN_CREATE_USER)}
           />
 
           <TextButton
             label='Back'
-            // variant='outlined'
-            // color='inherit'
             onClick={goBack}
-            sx={{ width: '49px', minWidth: '49px', fontWeight: 700, fontSize: '13px' }}
+            sx={{
+              width: '49px',
+              minWidth: '49px',
+              fontWeight: 700,
+              fontSize: '13px',
+            }}
           />
         </div>
       </div>
@@ -107,7 +116,7 @@ export const ManageUserDetails: React.FC = () => {
               {userDetails.isLoading ? (
                 <Skeleton variant='rounded' width={200} />
               ) : (
-                userDetail?.full_name ?? userFullName
+                (userDetail?.full_name ?? userFullName)
               )}
             </div>
           </div>
@@ -116,14 +125,14 @@ export const ManageUserDetails: React.FC = () => {
               <TextButton
                 key={button.label}
                 label={button.label}
-                // variant='outlined'
                 onClick={() => handleAction(button.label)}
                 sx={{
                   ...BUTTON_STYLES,
                   fontSize: '13px',
                   fontWeight: 700,
-                  // padding: '4px',
                   width: button.width,
+                  minWidth: button.width,
+                  maxWidth: button.width,
                 }}
               />
             ))}

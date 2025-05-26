@@ -25,7 +25,7 @@ export const RightPane: React.FC = () => {
       <Box className='flex-1 flex flex-col justify-center'>
         <Box className='flex flex-col gap-2'>
           <Text className='text-[48px] text-primary font-bold'>
-            {t('core', 'login.platform20')}
+            {t('core', 'login.thinkR&D')}
           </Text>
           <Box className='flex flex-wrap items-center gap-2'>
             <Text className='text-[12px] md:text-[18px] text-primary font-bold'>

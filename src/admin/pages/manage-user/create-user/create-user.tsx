@@ -1,10 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ManageUserIcon } from '../../../../assets/icons';
-import {
-  OnChange,
-  useGetAllCountries,
-} from '../../../../common-service';
+import { OnChange, useGetAllCountries } from '../../../../common-service';
 import { FormBuilder } from '../../../../components';
 import TextButton from '../../../../components/button/text-button';
 import {
@@ -202,7 +199,11 @@ export const CreateUser: React.FC = () => {
         {/* Header Section */}
         <div className='w-full min-h-[50px] h-[50px] border-box py-1 px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
           <div className='flex items-center gap-3'>
-            <img src={ManageUserIcon} alt='manage user' className='h-6 w-6 rounded' />
+            <img
+              src={ManageUserIcon}
+              alt='manage user'
+              className='h-6 w-6 rounded'
+            />
             <div className='flex flex-col mb-1'>
               <div className={HEADER_STYLES.adminPermission}>
                 Admin Permissions
@@ -216,7 +217,13 @@ export const CreateUser: React.FC = () => {
               // variant='outlined'
               // color='inherit'
               onClick={goBack}
-              sx={{ width: '49px', minWidth: '49px', fontWeight: 700, fontSize: '13px', height: '32px' }}
+              sx={{
+                width: '49px',
+                minWidth: '49px',
+                fontWeight: 700,
+                fontSize: '13px',
+                height: '32px',
+              }}
             />
           </div>
         </div>
@@ -229,7 +236,6 @@ export const CreateUser: React.FC = () => {
               <div className='flex gap-2'>
                 <TextButton
                   label='Save'
-                  // variant='filled'
                   loading={updateUser.isPending || createUser.isPending}
                   onClick={handleExternalSubmit}
                   sx={{ width: '64px', minWidth: '64px', fontWeight: 400, fontSize: '13px' }}
@@ -237,8 +243,6 @@ export const CreateUser: React.FC = () => {
                 {isEditView && <TextButton label='Delete' sx={{ width: '75px', minWidth: '75px', fontWeight: 400, fontSize: '13px' }} />}
                 <TextButton
                   label='Cancel'
-                  // variant='outlined'
-                  // color='inherit'
                   onClick={goBack}
                   sx={{ width: '75px', minWidth: '75px', fontWeight: 400, fontSize: '13px' }}
                 />

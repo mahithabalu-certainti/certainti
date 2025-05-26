@@ -311,24 +311,22 @@ export const AccountForm: React.FC = () => {
             loading={createAccount.isPending || updateAccount.isPending}
             onClick={handleExternalSubmit}
             sx={{
-              height: '32px',
               width: '64px',
+              minWidth: '64px',
               fontSize: '13px',
               fontWeight: 400,
             }}
           />
           <TextButton
             label='Cancel'
-            // color='inherit'
             onClick={goBack}
             sx={{
-              height: '32px',
-              width: '56px',
+              width: '75px',
+              minWidth: '75px',
               fontSize: '12px',
               fontWeight: 400,
             }}
           />
-
         </div>
       </div>
       <FormBuilder

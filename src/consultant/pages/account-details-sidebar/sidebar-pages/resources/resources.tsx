@@ -30,6 +30,7 @@ const BUTTON_STYLES = {
   height: '26px !important',
   fontSize: '13px',
   fontWeight: 400,
+  borderRadius: '2px',
 };
 
 interface ResourceProps {
@@ -49,7 +50,7 @@ const Resource: React.FC<ResourceProps> = ({
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [filterVisibility, setFilterVisibility] = useState<boolean>(true);
   const [value, setValue] = useState('');
-  const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
+  const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [showBackArrow, setShowBackArrow] = useState<boolean>(false);
   const [resourceData, setResourceData] = useState<any>({});
   const [currentPage, setCurrentPage] = useState(0);
@@ -329,6 +330,7 @@ const Resource: React.FC<ResourceProps> = ({
     <div className='w-full p-2'>
       <TabPanel
         value={value}
+        appliedFilters={appliedFilters}
         setAppliedFilters={(data) => {
           setAppliedFilters(data);
         }}

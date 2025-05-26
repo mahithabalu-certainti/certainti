@@ -16,9 +16,6 @@ const BUTTON_STYLES = {
   height: '26px !important',
   fontSize: '13px',
   fontWeight: 400,
-  color: '#F16137',
-  bgcolor: '#FFF8F6',
-  borderRadius: '2px',
 };
 
 interface ProjectsProps {
@@ -29,7 +26,7 @@ interface ProjectsProps {
 const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
   const navigate = useNavigate();
   const [showFilter, setShowFilter] = useState<boolean>(false);
-  const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
+  const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [currentPage, setCurrentPage] = useState(0);
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
   const [sortField, setSortField] = useState<string>('created_datetime');
@@ -120,6 +117,7 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
     <div className='w-full'>
       <TabPanel
         value={'projects'}
+        appliedFilters={appliedFilters}
         setAppliedFilters={setAppliedFilters}
         showFilter={showFilter}
         filterVisibility={true}

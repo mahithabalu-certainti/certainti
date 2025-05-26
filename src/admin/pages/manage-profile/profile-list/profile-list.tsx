@@ -132,7 +132,6 @@ export const ProfileList: React.FC = () => {
           </div>
           <TextButton
             label='Export'
-            variant='outlined'
             sx={{
               ...BUTTON_STYLES,
               width: '74px',

@@ -13,7 +13,7 @@ interface ImportDropdownItemProps {
   actions: ImportDropdownItem[];
   label: string;
   split?: string; // optional string
-  sx?: SxProps
+  sx?: SxProps;
 }
 
 const StyledButton = styled(Button)(() => {
@@ -28,7 +28,7 @@ const StyledButton = styled(Button)(() => {
     fontWeight: '400',
     // padding: '8px 16px',
     borderRadius: '2px',
-  }
+  };
 });
 
 const ActionImportDropdown: React.FC<ImportDropdownItemProps> = ({
@@ -54,15 +54,21 @@ const ActionImportDropdown: React.FC<ImportDropdownItemProps> = ({
   //     ? 'brightness(0) invert(1)' // white
   //     : 'brightness(0) saturate(100%) invert(46%) sepia(8%) saturate(489%) hue-rotate(169deg) brightness(95%) contrast(89%)';
 
-
   return (
     <Box>
       <StyledButton
         {...rest}
         onClick={split === 'true' ? undefined : handleClick}
-        startIcon={variant === 'filled' && <img src={addIcon} />}
+      // startIcon={variant === 'filled' && <img src={addIcon} />}
       >
-        <Box component='span' sx={{ flexGrow: 1, pr: 1 }}>
+        <Box
+          component='span'
+          sx={{ flexGrow: 1, color: '#425A76' }}
+          className='flex gap-2 items-center'
+        >
+          {variant === 'filled' && (
+            <img src={addIcon} className='w-3 p-[1px]' />
+          )}{' '}
           {label}
         </Box>
         {split === 'true' && (

@@ -1,6 +1,5 @@
 export const BUTTON_STYLES = {
   height: '32px',
-  // color: 'secondary.main',
 };
 
 export const HEADER_STYLES = {
