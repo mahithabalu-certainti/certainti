@@ -380,34 +380,37 @@ const ListTable = <T extends RowData>({
                       >
                         {actionDisplayMode === 'icon' ? (
                           <Box className='w-full inline-flex items-center justify-center gap-2'>
-                            {actionMenuItems.map((item, index) => (
-                              <Tooltip
-                                key={index}
-                                title={`Click to ${item.label.toLowerCase()}`}
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      backgroundColor: '#fff',
-                                      color: 'rgba(0, 0, 0, 0.87)',
-                                      boxShadow: 2,
-                                      borderRadius: '4px',
+                            {actionMenuItems.map((item, index) => {
+                              if (item.hide) return null;
+                              return (
+                                <Tooltip
+                                  key={index}
+                                  title={`Click to ${item.label.toLowerCase()}`}
+                                  slotProps={{
+                                    tooltip: {
+                                      sx: {
+                                        backgroundColor: '#fff',
+                                        color: 'rgba(0, 0, 0, 0.87)',
+                                        boxShadow: 2,
+                                        borderRadius: '4px',
+                                      },
                                     },
-                                  },
-                                }}
-                              >
-                                <IconButton
-                                  size='small'
-                                  onClick={() => item.onClick(row)}
+                                  }}
                                 >
-                                  <img
-                                    src={item.icon?.toString()}
-                                    alt='actionIcon'
-                                    className='w-4 h-4'
-                                    style={item.iconStyle}
-                                  />
-                                </IconButton>
-                              </Tooltip>
-                            ))}
+                                  <IconButton
+                                    size='small'
+                                    onClick={() => item.onClick(row)}
+                                  >
+                                    <img
+                                      src={item.icon?.toString()}
+                                      alt='actionIcon'
+                                      className='w-4 h-4'
+                                      style={item.iconStyle}
+                                    />
+                                  </IconButton>
+                                </Tooltip>
+                              );
+                            })}
                           </Box>
                         ) : (
                           <TableActionButton
