@@ -1081,22 +1081,43 @@ class AccountService {
   }
 
   private getAnnualRevenueFilter(revenueFilter: any): any {
-    if (revenueFilter.greater_than) {
-      return { [Op.gt]: parseFloat(revenueFilter.greater_than) };
-    }
-    if (revenueFilter.less_than) {
-      return { [Op.lt]: parseFloat(revenueFilter.less_than) };
-    }
-    if (
-      revenueFilter.between &&
-      Array.isArray(revenueFilter.between) &&
-      revenueFilter.between.length === 2
-    ) {
-      const [min, max] = revenueFilter.between.map((val: string | number) => parseFloat(String(val)));
-      return { [Op.between]: [min, max] };
-    }
-    return null;
+  const { greater_than, less_than, between } = revenueFilter;
+
+  // Handle empty strings and invalid values by casting to NULL first
+  const annualRevenueColumn = Sequelize.literal(`
+    CAST(
+      NULLIF("annual_revenue", '') 
+      AS DOUBLE PRECISION
+    )
+  `);
+
+  if (greater_than) {
+    return Sequelize.where(
+      annualRevenueColumn,
+      Op.gt,
+      parseFloat(greater_than)
+    );
   }
+
+  if (less_than) {
+    return Sequelize.where(
+      annualRevenueColumn,
+      Op.lt,
+      parseFloat(less_than)
+    );
+  }
+  if (between && Array.isArray(between) && between.length === 2) {
+    const [min, max] = between.map((val: string | number) =>
+      parseFloat(String(val))
+    );
+    return Sequelize.where(
+      annualRevenueColumn,
+      Op.between,
+      [min, max]
+    );
+  }
+  return null;
+}
 
   private getMultiValueFilter(filter: any): any {
     if (!filter) return null;
