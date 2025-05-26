@@ -418,8 +418,8 @@ export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle }) => {
               disableRipple
             >
               <img
-                className='w-6 h-6 rounded-full object-cover'
-                src='https://mui.com/static/images/avatar/2.jpg'
+                className='w-6 h-6 p-0.5 rounded-full bg-white object-cover'
+                src='https://cdn-icons-png.flaticon.com/512/666/666201.png'
                 alt='User Avatar'
               />
               <span className='text-[12px] font-[400] px-2'>{name}</span>
