@@ -22,7 +22,8 @@ export type ManageProfileList = {
 export interface ProfileTableColumn<T> {
   id: string;
   label: string;
-  width: string | number;
+  sort?: string;
+  width?: string;
   sortId: string;
   sortable?: boolean;
   sticky?: boolean;

@@ -1,5 +1,5 @@
 import { getDateFormat } from '../../../../common-utils';
-import { ManageProfileList, ManageProfile, ProfileTableColumn } from '../../../types';
+import { ManageProfileList, ProfileTableColumn } from '../../../types';
 
 export const profileColumns: ProfileTableColumn<ManageProfileList>[] = [
   {
@@ -16,7 +16,7 @@ export const profileColumns: ProfileTableColumn<ManageProfileList>[] = [
     label: 'Created On',
     sortable: true,
     sort: 'created_on',
-    render: (row: ManageProfile) => getDateFormat(row.createdOn),
+    render: (row: ManageProfileList) => getDateFormat(row.created_datetime), 
   },
   {
     id: 'created_by',

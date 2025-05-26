@@ -8,12 +8,18 @@ import TextButton from '../../../../components/button/text-button';
 import { ADMIN_CREATE_USER } from '../../../../routes';
 import { UserTable } from '../table/user-table';
 import { getUserFilterfields } from './helpers';
-import { exportUserList, useManageUserProfile } from '../../../service';
-import { UserListParams } from '../../../types/manage-user';
+import { exportUserList, useExtendedPermissionToUser, useManageUserProfile } from '../../../service';
+import {
+  UserListParams,
+  // UserPermissionApiResponse
+} from '../../../types/manage-user';
 import {
   formatFilterForApi,
   getStoredFilters,
 } from '../../../../components/filter-component/utils';
+import { useToast } from '../../../../hooks';
+// import { ProfileHeaderDetail } from '../../manage-profile/create-profile/profile-header-details';
+// import { ProfilePermissions } from '../../manage-profile/create-profile/profile-permissions';
 
 const BUTTON_STYLES = {
   height: '32px',
@@ -32,9 +38,15 @@ const UserList: React.FC = () => {
     sortBy: 'createdAt',
     sortOrder: 'DESC',
   });
-
+  // const [ assignedUsersData, setAssignedUsersData] = useState<UserPermissionApiResponse | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { mutate: extendPermissionToUser, isSuccess: extendedUserSuccess,
+    // isPending: extendedUserPending,
+    // isLoading
+  } = useExtendedPermissionToUser();
+  const { successToast, errorToast } = useToast();
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
-
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -52,11 +64,28 @@ const UserList: React.FC = () => {
     { label: 'Reset Password', width: '118px' },
     { label: 'Delete', width: '58px' },
   ];
-
+  const handleSelectionChange = (selectedIds: string[]) => {
+    setSelectedUserId(selectedIds);
+  };
   const MENU_ITEMS = [
     {
-      label: 'Assign Permission to User',
-      onClick: () => console.log('user clicked'),
+      label: 'Assign Permissions to User',
+      onClick: () => {
+        if (selectedUserId.length === 1) {
+          extendPermissionToUser(selectedUserId[0], {
+            onSuccess: () => {
+              // (data) => {
+              // setAssignedUsersData(data);
+              successToast('Permissions have been successfully assigned to the selected user.')
+            },
+            onError: () => errorToast('Failed to assign permissions. Please try again.'),
+          });
+        } else if (selectedUserId.length > 1) {
+          errorToast('Please select only one user to assign permissions.');
+        } else {
+          errorToast('You must select a user to assign permissions.');
+        }
+      },
     },
     {
       label: 'View Permissions',
@@ -103,100 +132,126 @@ const UserList: React.FC = () => {
         break;
     }
   };
-
+  
   return (
     <div className='flex flex-col w-full h-full'>
-      {/* Header Section */}
-      <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
-        <div className='flex h-[33px]'>
-          <div className='flex items-center justify-center'>
-            <img
-              src={ManageUserIcon}
-              alt='manage user'
-              className='h-7 w-7 rounded'
-            />
-            <div className='flex flex-col mx-2.5 pb-1'>
-              <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>
-                Admin Permission
+       
+      {(!extendedUserSuccess) ?  
+        (
+          <>
+            {/* Header Section */}
+            <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
+              <div className='flex h-[33px]'>
+                <div className='flex items-center justify-center'>
+                  <img
+                    src={ManageUserIcon}
+                    alt='manage user'
+                    className='h-7 w-7 rounded'
+                  />
+                  <div className='flex flex-col mx-2.5 pb-1'>
+                    <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>
+                      Admin Permission
+                    </div>
+                    <div className='font-bold text-[16px] text-[#2D3E4F] -mt-1'>
+                      Manage User
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className='font-bold text-[16px] text-[#2D3E4F] -mt-1'>
-                Manage User
+              <div className='flex gap-3 justify-center items-center'>
+                <ActionsDropdown actions={MENU_ITEMS} />
+                <TextButton
+                  label='Create User'
+                  onClick={() => navigate(ADMIN_CREATE_USER)}
+                  sx={{
+                    ...BUTTON_STYLES,
+                    width: '91px',
+                    minWidth: '91px',
+                    maxWidth: '91px',
+                  }}
+                />
               </div>
             </div>
-          </div>
-        </div>
-        <div className='flex gap-3 justify-center items-center'>
-          <ActionsDropdown actions={MENU_ITEMS} />
-          <TextButton
-            label='Create User'
-            onClick={() => navigate(ADMIN_CREATE_USER)}
-            sx={{
-              ...BUTTON_STYLES,
-              width: '91px',
-              minWidth: '91px',
-              maxWidth: '91px',
-            }}
-          />
-        </div>
-      </div>
 
-      <div className='flex items-center justify-between h-[42px] min-h-[42px] max-h-[42px] px-4'>
-        <div className='font-bold text-[14px] leading-[32px] text-[#2D3E4F]'>
-          All Users
-        </div>
-        <div className='flex items-center gap-3'>
-          <div className='relative h-[32px]'>
-            <button
-              aria-describedby={filterId}
-              className={`w-[64px] h-[26px] text-[13px] mt-[3px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
-              ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) ? 'bg-[#F3F3F3]' : ''}`}
-              onClick={handleFilterModal}
-            >
-              <img src={newFilterIcon} alt='filter-icon' />
-              Filter
-              {appliedFilters && Object.keys(appliedFilters).length > 0 && (
-                <div className='absolute -top-[5px] -right-2 w-4 h-4 flex items-center justify-center text-xs'>
-                  <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
-                  <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
-                    {Object.keys(appliedFilters).length}
-                  </span>
+            <div className='flex items-center justify-between h-[42px] min-h-[42px] max-h-[42px] px-4'>
+              <div className='font-bold text-[14px] leading-[32px] text-[#2D3E4F]'>
+                All Users
+              </div>
+              <div className='flex items-center gap-3'>
+                <div className='relative h-[32px]'>
+                  <button
+                    aria-describedby={filterId}
+                    className={`w-[64px] h-[26px] text-[13px] mt-[3px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
+                    ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) ? 'bg-[#F3F3F3]' : ''}`}
+                    onClick={handleFilterModal}
+                  >
+                    <img src={newFilterIcon} alt='filter-icon' />
+                    Filter
+                    {appliedFilters && Object.keys(appliedFilters).length > 0 && (
+                      <div className='absolute -top-[5px] -right-2 w-4 h-4 flex items-center justify-center text-xs'>
+                        <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
+                        <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
+                          {Object.keys(appliedFilters).length}
+                        </span>
+                      </div>
+                    )}
+                  </button>
+                  <FilterModal
+                    isOpen={isFilterOpen}
+                    filterAnchorEl={anchorEl}
+                    filterId={filterId}
+                    filterFields={userFilterfields}
+                    setAppliedFilters={setAppliedFilters}
+                    setPage={setPage}
+                    handleCloseFilter={handleCloseFilter}
+                  />
                 </div>
-              )}
-            </button>
-            <FilterModal
-              isOpen={isFilterOpen}
-              filterAnchorEl={anchorEl}
-              filterId={filterId}
-              filterFields={userFilterfields}
-              setAppliedFilters={setAppliedFilters}
-              setPage={setPage}
-              handleCloseFilter={handleCloseFilter}
-            />
-          </div>
-          {userActionButtons.map((button) => (
-            <TextButton
-              key={button.label}
-              label={button.label}
-              onClick={() => handleAction(button.label)}
-              sx={{
-                ...BUTTON_STYLES,
-                width: button.width,
-                minWidth: button.width,
-                maxWidth: button.width,
-              }}
-            />
-          ))}
-        </div>
-      </div>
+                {userActionButtons.map((button) => (
+                  <TextButton
+                    key={button.label}
+                    label={button.label}
+                    onClick={() => handleAction(button.label)}
+                    sx={{
+                      ...BUTTON_STYLES,
+                      width: button.width,
+                      minWidth: button.width,
+                      maxWidth: button.width,
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
 
-      {/* User Table Section */}
-      <div className='border border-[#CBD6E2]'>
-        <UserTable
-          appliedFilters={appliedFilters}
-          tableParams={tableParams}
-          setTableParams={setTableParams}
-        />
-      </div>
+            {/* User Table Section */}
+            <div className='border border-[#CBD6E2]'>
+              <UserTable
+                appliedFilters={appliedFilters}
+                tableParams={tableParams}
+                setTableParams={setTableParams}
+                onSelectionChange={handleSelectionChange}
+              />
+            </div>
+          </>
+         )
+        :
+        (
+          <>
+            <h1>Extended permission to the user</h1>
+            {/* <ProfileHeaderDetail
+                  profileHeaderData={assignedUsersData}
+                  onSave={}
+                  loading={extendedUserPending}
+                  isEditView={isEditView}
+                />
+                <div className='py-2'>
+                  <ProfilePermissions
+                    // createProfilePermissionsData={createProfile.data}
+                    // onPrivilegesChange={handlePrivilegesChange} 
+                  />
+                </div> */}
+          </>
+        )
+      }  
     </div>
   );
 };

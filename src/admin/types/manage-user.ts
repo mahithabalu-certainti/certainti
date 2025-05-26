@@ -178,3 +178,28 @@ export interface UserRolesApiResponse extends CommonApiResponse {
 //   status: string;
 //   businessTeam: string; // mapped from business_teams.business_teams
 // };
+
+// User Permission Types
+interface UserPermission {
+  rid: string;
+  type: string;
+  menu_id: string;
+  name: string;
+  desc: string;
+  is_enabled: boolean;
+  has_extended_permission: boolean;
+}
+
+interface UserPermissionData {
+  rid: string;
+  user_role: string;
+  user_id: string;
+  permissions: UserPermission[];
+}
+
+export interface UserPermissionApiResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: UserPermissionData;
+}

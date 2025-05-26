@@ -8,6 +8,7 @@ import {
   UserListParams,
   UserProfileApiResponse,
   UserRolesApiResponse,
+  UserPermissionApiResponse
 } from '../../types/manage-user';
 import { getUserExportUrl, getUserListUrl } from '../urls';
 import { generateFile } from '../helpers';
@@ -218,3 +219,39 @@ export const useManageUserRole = () => {
     retry: 0,
   });
 };
+
+
+
+/**
+ * Assign permission to user
+ * @returns Promise with user details
+ */
+export const extendedPermissionToUser = async (
+  userId: string
+): Promise<UserPermissionApiResponse> => {
+  try {
+    const { data } = await userServiceApi.get<UserPermissionApiResponse>(
+      getUserExtendedPermissionUrl(userId), 
+    );
+    return data;
+  } catch (error) {
+    console.error('Error fetching user details:', error);
+    throw error;
+  }
+};
+
+/**
+ * React Query hook for extended permission to user by userId
+ * @param userId - The ID of the user to fetch
+ * @returns UseQueryResult for profile details
+ */
+ 
+export const useExtendedPermissionToUser = () => {
+  return useMutation<UserPermissionApiResponse, Error, string>({
+    mutationFn: (userId: string) => extendedPermissionToUser(userId),
+  });
+};
+export const getUserExtendedPermissionUrl = (userId: string): string => {
+  return `/api/user/${userId}/permission/extended`;
+};
+
