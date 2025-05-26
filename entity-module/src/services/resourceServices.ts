@@ -117,7 +117,7 @@ export class ResourceService {
     data?: { resources: any; count: number };
   }> {
     try {
-      const { accountNumber: accountRNumber } =
+      const { accountNumber: accountRNumber, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
 
       const isExists = await this.schemaService.checkIfSchemaExists(
@@ -149,7 +149,8 @@ export class ResourceService {
         limit,
         [[finalSortBy, finalSortOrder]],
         whereClause,
-        geoDataSort
+        geoDataSort,
+        accountId
       );
 
       return {

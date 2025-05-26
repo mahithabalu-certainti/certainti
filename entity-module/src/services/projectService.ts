@@ -1290,179 +1290,179 @@ export class ProjectService {
       : finalSearchCondition;
   }
 
-  private applyFilters(
-    filters: Record<string, any>,
-    whereClause: Record<string, any>,
-    isAllProject: boolean
-  ): Record<string, any> {
-    const castToTextFields = [
-      "rid",
-      "project_type",
-      "project_status",
-      "project_startdate",
-      "project_enddate",
-      "total_effort",
-      "total_cost",
-      "fiscal_year"
-    ];
-  
-    const numberFields = ["total_effort", "total_cost", "fiscal_year", "total_fte", "total_fte_cost", "total_sub_con", 
-      "total_sub_con_cost", "total_non_labor_cost", "qualified_research_expenditure", "qre"]; 
-    const dateFields = [ "project_startdate", "project_enddate"];
-    const enumFields = [
-      "project_status",
-      "project_type",
-      "fiscal_year",
-    ];
-    const booleanFields = [ "is_rd_qualified" ];
-  
-    const filterFields = this.getFilterFields(isAllProject);
-  
-    filterFields.forEach(({ clientField, dbField }) => {
-      if (filters[clientField]) {
-        const fieldFilter = filters[clientField];
-        const isNumber = numberFields.includes(dbField);
-        console.log("isNumber", isNumber);
-        const isDate = dateFields.includes(dbField);
-        const isEnum = enumFields.includes(dbField);
-        const isBoolean = booleanFields.includes(dbField);
-        const isTextCastNeeded = castToTextFields.includes(dbField) && !isNumber && !isDate && !isBoolean;
+    private applyFilters(
+      filters: Record<string, any>,
+      whereClause: Record<string, any>,
+      isAllProject: boolean
+    ): Record<string, any> {
+      const castToTextFields = [
+        "rid",
+        "project_type",
+        "project_status",
+        "project_startdate",
+        "project_enddate",
+        "total_effort",
+        "total_cost",
+        "fiscal_year"
+      ];
+    
+      const numberFields = ["total_effort", "total_cost", "fiscal_year", "total_fte", "total_fte_cost", "total_sub_con", 
+        "total_sub_con_cost", "total_non_labor_cost", "qualified_research_expenditure", "qre"]; 
+      const dateFields = [ "project_startdate", "project_enddate"];
+      const enumFields = [
+        "project_status",
+        "project_type",
+        "fiscal_year",
+      ];
+      const booleanFields = [ "is_rd_qualified" ];
+    
+      const filterFields = this.getFilterFields(isAllProject);
+    
+      filterFields.forEach(({ clientField, dbField }) => {
+        if (filters[clientField]) {
+          const fieldFilter = filters[clientField];
+          const isNumber = numberFields.includes(dbField);
+          console.log("isNumber", isNumber);
+          const isDate = dateFields.includes(dbField);
+          const isEnum = enumFields.includes(dbField);
+          const isBoolean = booleanFields.includes(dbField);
+          const isTextCastNeeded = castToTextFields.includes(dbField) && !isNumber && !isDate && !isBoolean;
 
 
-        if (isTextCastNeeded) {
-          whereClause[dbField] = Sequelize.where(
-            Sequelize.cast(Sequelize.col(dbField), "TEXT"),
-            this.getFieldFilter(fieldFilter, dbField, isNumber, isDate, isEnum, isBoolean)
-          );
-        } else {
-          whereClause[dbField] = this.getFieldFilter(fieldFilter, dbField, isNumber, isDate, isEnum, isBoolean);
+          if (isTextCastNeeded) {
+            whereClause[dbField] = Sequelize.where(
+              Sequelize.cast(Sequelize.col(dbField), "TEXT"),
+              this.getFieldFilter(fieldFilter, dbField, isNumber, isDate, isEnum, isBoolean)
+            );
+          } else {
+            whereClause[dbField] = this.getFieldFilter(fieldFilter, dbField, isNumber, isDate, isEnum, isBoolean);
+          }
         }
-      }
-    });
-  
-    return whereClause;
-  }
-  
-  private getFieldFilter(
-    fieldFilter: any,
-    dbField: string,
-    isNumberField: boolean,
-    isDateField: boolean,
-    isEnumField: boolean,
-    isBooleanField: boolean
-  ): any {
-    if (isNumberField) {
-      if (fieldFilter.equals !== undefined) {
-        return { [Op.eq]: fieldFilter.equals };
-      }
-      if (fieldFilter.not_equals !== undefined) {
-        return { [Op.ne]: fieldFilter.not_equals };
-      }
-      if (fieldFilter.less_than !== undefined) {
-        return { [Op.lt]: fieldFilter.less_than };
-      }
-      if (fieldFilter.greater_than !== undefined) {
-        return { [Op.gt]: fieldFilter.greater_than };
-      }
-      if (
-        fieldFilter.between &&
-        Array.isArray(fieldFilter.between) &&
-        fieldFilter.between.length === 2
-      ) {
-        return {
-          [Op.between]: [fieldFilter.between[0], fieldFilter.between[1]],
-        };
-      }
-      if (fieldFilter.isEmpty === true) {
-        return { [Op.or]: [null] };
-      }
+      });
+    
+      return whereClause;
     }
-  
-    if (isDateField) {
-      if (fieldFilter.equals !== undefined) {
+    
+    private getFieldFilter(
+      fieldFilter: any,
+      dbField: string,
+      isNumberField: boolean,
+      isDateField: boolean,
+      isEnumField: boolean,
+      isBooleanField: boolean
+    ): any {
+      if (isNumberField) {
         if (fieldFilter.equals !== undefined) {
-          const startOfDay = new Date(fieldFilter.equals);
-          startOfDay.setHours(0, 0, 0, 0);
-          const endOfDay = new Date(fieldFilter.equals);
-          endOfDay.setHours(23, 59, 59, 999);
-      
+          return { [Op.eq]: fieldFilter.equals };
+        }
+        if (fieldFilter.not_equals !== undefined) {
+          return { [Op.ne]: fieldFilter.not_equals };
+        }
+        if (fieldFilter.less_than !== undefined) {
+          return { [Op.lt]: fieldFilter.less_than };
+        }
+        if (fieldFilter.greater_than !== undefined) {
+          return { [Op.gt]: fieldFilter.greater_than };
+        }
+        if (
+          fieldFilter.between &&
+          Array.isArray(fieldFilter.between) &&
+          fieldFilter.between.length === 2
+        ) {
           return {
-            [Op.between]: [startOfDay, endOfDay],
+            [Op.between]: [fieldFilter.between[0], fieldFilter.between[1]],
           };
         }
+        if (fieldFilter.isEmpty === true) {
+          return { [Op.or]: [null] };
+        }
       }
-      if (fieldFilter.before !== undefined) {
-        return { [Op.lt]: this.normalizeDate(fieldFilter.before) };
+    
+      if (isDateField) {
+        if (fieldFilter.equals !== undefined) {
+          if (fieldFilter.equals !== undefined) {
+            const startOfDay = new Date(fieldFilter.equals);
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(fieldFilter.equals);
+            endOfDay.setHours(23, 59, 59, 999);
+        
+            return {
+              [Op.between]: [startOfDay, endOfDay],
+            };
+          }
+        }
+        if (fieldFilter.before !== undefined) {
+          return { [Op.lt]: this.normalizeDate(fieldFilter.before) };
+        }
+        if (fieldFilter.after !== undefined) {
+          return { [Op.gt]: this.normalizeDate(fieldFilter.after) };
+        }
+        if (
+          fieldFilter.between &&
+          Array.isArray(fieldFilter.between) &&
+          fieldFilter.between.length === 2
+        ) {
+          return {
+            [Op.between]: [
+              this.normalizeDate(fieldFilter.between[0]),
+              this.normalizeDate(fieldFilter.between[1]),
+            ],
+          };
+        }
+        if (fieldFilter.isEmpty === true) {
+          return { [Op.or]: [null] };
+        }
       }
-      if (fieldFilter.after !== undefined) {
-        return { [Op.gt]: this.normalizeDate(fieldFilter.after) };
-      }
-      if (
-        fieldFilter.between &&
-        Array.isArray(fieldFilter.between) &&
-        fieldFilter.between.length === 2
-      ) {
-        return {
-          [Op.between]: [
-            this.normalizeDate(fieldFilter.between[0]),
-            this.normalizeDate(fieldFilter.between[1]),
-          ],
-        };
-      }
-      if (fieldFilter.isEmpty === true) {
-        return { [Op.or]: [null] };
-      }
-    }
 
-    if (isEnumField) {
-      if (fieldFilter.equals !== undefined) {
-        return { [Op.eq]: fieldFilter.equals };
+      if (isEnumField) {
+        if (fieldFilter.equals !== undefined) {
+          return { [Op.eq]: fieldFilter.equals };
+        }
+        if (fieldFilter.not_equals !== undefined) {
+          return { [Op.ne]: fieldFilter.not_equals };
+        }
+        if (fieldFilter.in && Array.isArray(fieldFilter.in)) {
+          return { [Op.in]: fieldFilter.in };
+        }
+        if (fieldFilter.isEmpty === true) {
+          return { [Op.or]: [null] };
+        }
       }
-      if (fieldFilter.not_equals !== undefined) {
-        return { [Op.ne]: fieldFilter.not_equals };
-      }
-      if (fieldFilter.in && Array.isArray(fieldFilter.in)) {
-        return { [Op.in]: fieldFilter.in };
-      }
-      if (fieldFilter.isEmpty === true) {
-        return { [Op.or]: [null] };
-      }
-    }
 
-    if (isBooleanField) {
-      if (fieldFilter.isTrue === true) {
-        return { [Op.eq]: true };
+      if (isBooleanField) {
+        if (fieldFilter.isTrue === true) {
+          return { [Op.eq]: true };
+        }
+        if (fieldFilter.isFalse === true) {
+          return { [Op.eq]: false };
+        }
+        if (fieldFilter.isEmpty === true) {
+          return { [Op.or]: [null] };
+        }
       }
-      if (fieldFilter.isFalse === true) {
-        return { [Op.eq]: false };
+    
+      // String (default)
+      if (fieldFilter.equals) {
+        return { [Op.iLike]: fieldFilter.equals };
+      }
+      if (fieldFilter.not_equals) {
+        return { [Op.notILike]: fieldFilter.not_equals };
+      }
+      if (fieldFilter.contains) {
+        return { [Op.iLike]: `%${fieldFilter.contains}%` };
+      }
+      if (fieldFilter.not_contains) {
+        return { [Op.notILike]: `%${fieldFilter.not_contains}%` };
       }
       if (fieldFilter.isEmpty === true) {
-        return { [Op.or]: [null] };
+        return { [Op.or]: [null, ""] };
       }
+      if (fieldFilter.value) {
+        return fieldFilter.value;
+      }
+    
+      return undefined;
     }
-  
-    // String (default)
-    if (fieldFilter.equals) {
-      return { [Op.iLike]: fieldFilter.equals };
-    }
-    if (fieldFilter.not_equals) {
-      return { [Op.notILike]: fieldFilter.not_equals };
-    }
-    if (fieldFilter.contains) {
-      return { [Op.iLike]: `%${fieldFilter.contains}%` };
-    }
-    if (fieldFilter.not_contains) {
-      return { [Op.notILike]: `%${fieldFilter.not_contains}%` };
-    }
-    if (fieldFilter.isEmpty === true) {
-      return { [Op.or]: [null, ""] };
-    }
-    if (fieldFilter.value) {
-      return fieldFilter.value;
-    }
-  
-    return undefined;
-  }
 
   getSortParametersForAllProjects(
     sortBy: string,
