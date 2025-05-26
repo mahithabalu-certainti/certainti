@@ -12,7 +12,10 @@ import Filter from './filter/filter';
 import { FilterState } from './filter/filterType';
 import { useFetchCurrency } from '../../../services/account';
 import { resetFilter } from './filter/utils';
-import { useFetchResourceSkillSubType, useFetchResourceSkillType } from '../../../services/resource-skill/resource-skill-service';
+import {
+  useFetchResourceSkillSubType,
+  useFetchResourceSkillType,
+} from '../../../services/resource-skill/resource-skill-service';
 import { SkillSubtype, SkillType } from '../../../types/resource';
 interface TabProps {
   filterVisibility: boolean;
@@ -37,7 +40,7 @@ const TabPanel: React.FC<TabProps> = ({
   filterStates,
   selectedFilters,
   setFilterStates,
-  setSelectedFilters
+  setSelectedFilters,
 }) => {
   const [tabValue, setTabValue] = useState(0);
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
@@ -46,12 +49,14 @@ const TabPanel: React.FC<TabProps> = ({
     skill_subtype_rid: '',
   });
 
-  const [skillSubTypeData, setSkillSubTypeData] = useState<{ option: string; value: string }[]>([]);
+  const [skillSubTypeData, setSkillSubTypeData] = useState<
+    { option: string; value: string }[]
+  >([]);
   const [, setSelectedSort] = useState('Accounts');
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
-    setCurrentPage(0)
+    setCurrentPage(0);
     resetFilter({
       setAppliedFilters,
       setFilterStates,
@@ -60,7 +65,9 @@ const TabPanel: React.FC<TabProps> = ({
   };
   const currency = useFetchCurrency();
   const { data: skillType } = useFetchResourceSkillType();
-  const { data: skillSubType } = useFetchResourceSkillSubType(currentSkillType.skill_type_rid || null as string | null);
+  const { data: skillSubType } = useFetchResourceSkillSubType(
+    currentSkillType.skill_type_rid || (null as string | null)
+  );
 
   const memoizedSkillType: { option: string; value: string }[] = useMemo(() => {
     const data = skillType as SkillType[];
@@ -74,21 +81,24 @@ const TabPanel: React.FC<TabProps> = ({
 
   useEffect(() => {
     const data = skillSubType as SkillSubtype[];
-    const finalData = data?.map((skill: SkillSubtype) => ({
-      option: skill.skill_subtype_name,
-      value: skill.rid,
-    })) || []
-    setSkillSubTypeData(finalData)
-  }, [skillSubType])
+    const finalData =
+      data?.map((skill: SkillSubtype) => ({
+        option: skill.skill_subtype_name,
+        value: skill.rid,
+      })) || [];
+    setSkillSubTypeData(finalData);
+  }, [skillSubType]);
 
   useEffect(() => {
     if (filterStates?.skill_type_rid?.enum?.value) {
       setCurrentSkillType({
-        skill_type_rid: filterStates?.skill_type_rid?.enum?.value as unknown as string,
-        skill_subtype_rid: filterStates?.skill_sub_type?.enum?.value as unknown as string
-      })
+        skill_type_rid: filterStates?.skill_type_rid?.enum
+          ?.value as unknown as string,
+        skill_subtype_rid: filterStates?.skill_sub_type?.enum
+          ?.value as unknown as string,
+      });
     }
-  }, [filterStates])
+  }, [filterStates]);
   const handleSortClose = () => {
     setSortAnchorEl(null);
   };
@@ -129,17 +139,41 @@ const TabPanel: React.FC<TabProps> = ({
 
   const memoizedCurrency: { option: string; value: string }[] = useMemo(
     () =>
-      currency.data?.data.currency.map((account: { currency_code: string; rid: string }) => ({
-        option: account.currency_code,
-        value: account.rid,
-      })) || [],
+      currency.data?.data.currency.map(
+        (account: { currency_code: string; rid: string }) => ({
+          option: account.currency_code,
+          value: account.rid,
+        })
+      ) || [],
     [currency.data?.data.currency]
   );
 
   const getFilterFields = () => {
     if (!value) return resourceFilterFields;
-    return value === 'cost' ? getCostFilterFields(memoizedCurrency) : getSkillFilterFields(memoizedSkillType, skillSubTypeData);
+    return value === 'cost'
+      ? getCostFilterFields(memoizedCurrency)
+      : getSkillFilterFields(memoizedSkillType, skillSubTypeData);
   };
+
+  const [filterAnchorEl, setFilterAnchorEl] =
+    useState<HTMLButtonElement | null>(null);
+
+  const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setFilterAnchorEl(event.currentTarget);
+    if (!showFilter) {
+      handleFilter();
+    }
+  };
+
+  const handleCloseFilter = () => {
+    setFilterAnchorEl(null);
+    if (showFilter) {
+      handleFilter();
+    }
+  };
+
+  const isFilterOpen = Boolean(filterAnchorEl);
+  const filterId = isFilterOpen ? `resource${value}-filter-popover` : undefined;
 
   return (
     <Box className=' rounded-lg'>
@@ -208,26 +242,30 @@ const TabPanel: React.FC<TabProps> = ({
           <Box className='relative'>
             {filterVisibility && (
               <Box
-                onClick={handleFilter}
+                component='button'
+                onClick={handleFilterModal}
                 className='h-[32px] w-[32px] flex items-center justify-center border border-[#CBD6E2] rounded-[2px] cursor-pointer'
+                aria-describedby={filterId}
               >
                 <Image src={resourceFilterIcon} />
               </Box>
             )}
-            {showFilter && value !== 'details' && (
-              <Box className='absolute right-0 z-50'>
-                <Filter
-                  filterMenu={getFilterFields()}
-                  setAppliedFilters={setAppliedFilters}
-                  handleFilter={handleFilter}
-                  savedFilterStates={filterStates}
-                  onFilterStatesChange={setFilterStates}
-                  savedSelectedFilters={selectedFilters}
-                  onSelectedFiltersChange={setSelectedFilters}
-                  setCurrentPage={setCurrentPage}
-                  mode={'date'}
-                />
-              </Box>
+            {value !== 'details' && (
+              <Filter
+                value={value}
+                isOpen={isFilterOpen && showFilter}
+                filterAnchorEl={filterAnchorEl}
+                filterId={filterId}
+                filterMenu={getFilterFields()}
+                setAppliedFilters={setAppliedFilters}
+                handleFilter={handleCloseFilter}
+                savedFilterStates={filterStates}
+                onFilterStatesChange={setFilterStates}
+                savedSelectedFilters={selectedFilters}
+                onSelectedFiltersChange={setSelectedFilters}
+                setCurrentPage={setCurrentPage}
+                mode={'date'}
+              />
             )}
           </Box>
           <ActionImportDropdown

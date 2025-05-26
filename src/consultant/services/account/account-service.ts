@@ -3,13 +3,14 @@ import {
   UseQueryOptions,
   UseQueryResult,
 } from '@tanstack/react-query';
-import { accountServiceApi } from '../../../api/api';
+import { accountServiceApi, resourceServiceApi } from '../../../api/api';
 import {
   AccountFieldsApiResponse,
   AccountList,
   AccountListResponse,
   AccountListURLParams,
   CitysApiResponse,
+  ClassificationApiResponse,
   CurrencyApiResponse,
   GlobalAccountListResponse,
   IndustrysApiResponse,
@@ -21,6 +22,7 @@ import {
   AccountDetailUrl,
   AccountListURL,
   CityUrl,
+  ClassificationUrl,
   CurrencyUrl,
   getAccountExportUrl,
   getKeyContactRolesUrl,
@@ -95,6 +97,11 @@ export const fetchParentAccounts =
 export const fetchCurrency = async (): Promise<CurrencyApiResponse> => {
   const { data } =
     await accountServiceApi.get<CurrencyApiResponse>(CurrencyUrl);
+  return data;
+};
+export const fetchClassification = async (): Promise<ClassificationApiResponse> => {
+  const { data } =
+    await resourceServiceApi.get<ClassificationApiResponse>(ClassificationUrl);
   return data;
 };
 

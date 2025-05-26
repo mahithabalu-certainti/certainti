@@ -1,7 +1,7 @@
 import { AccountList, ConvertedAccount } from '../../types';
 import { FieldConfig, StatusOptions } from '../../types/account-filter';
 
-export const getAccountFilterfields = (countryOptions: string[], currencyOptions: string[]): FieldConfig[] => [
+export const getAccountFilterFields = (countryOptions: string[], currencyOptions: string[]): FieldConfig[] => [
   // { label: 'Parent Account', name: 'parent_account', type: 'text' },
   { label: 'Account Number', name: 'account_number', type: 'text' },
   { label: 'Account Name', name: 'account_name', type: 'text' },

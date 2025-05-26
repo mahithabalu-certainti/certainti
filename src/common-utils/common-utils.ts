@@ -278,6 +278,7 @@ export const REGEX_PATTERNS = {
   ALPHANUMERIC: /^[A-Za-z0-9-]+$/,
   LETTERS_SPACES: /^[A-Za-z\s]+$/,
   ACCOUNT_NAME: /^[A-Za-z0-9 &'.,-]+$/,
+  PROJECT_NAME: /^[A-Za-z0-9 &'.,-_]+$/,
   CONTACT_NAME: /^[A-Za-z &'’.,\-\\–\\—]+$/,
   INDUSTRY: /^[A-Za-z &]{5,25}$/,
   LETTERS_5_TO_25: /^[A-Za-z\s]{5,25}$/,
@@ -290,12 +291,15 @@ export const REGEX_PATTERNS = {
     /^(?=.{6,254}$)[a-zA-Z0-9]+(?:[._+-][a-zA-Z0-9]+)*@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63}$/,
   PHONE: /^([0-9]{10})$/,
   WEBSITE:
-    /^(https?:\/\/|www\.)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(:[0-9]+)?(\/[a-zA-Z0-9\-.:\/]*)?$/,
+    /^(https?:\/\/|www\.)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(:[0-9]+)?(\/[a-zA-Z0-9\-.:/]*)?$/,
   MAX_WEBSITE: /^.{0,255}$/,
   MIN_WEBSITE: /^.{10,}$/,
   DATA_RESIDENCY: /^[A-Za-z0-9\s-]+$/,
   NUMBER_OPTIONAL_DECIMAL: /^([0-9]{1,10}(\.[0-9]{1,2})?)?$/,
   BLENDED_NUMBER: /^(?:[0-9]{1,3})(?:\.[0-9]{1,2})?$/,
+  EFFORTS_NUMBER: /^(?:[0-9]{1,16})(?:\.[0-9]{1,2})?$/,
+  EFFORTS_INTEGER_NUMBER: /^[0-9]{1,16}$/,
+  EFFORTS_INTEGER_9: /^[0-9]{1,9}$/,
   DESCRIPTION: /^.{0,500}$/,
   RESOURCE_DESCRIPTION: /^.{0,1000}$/,
   ACCOUNT_DESCRIPTION: /^[\s\S]{0,2000}$/,
@@ -312,10 +316,16 @@ export const REGEX_PATTERNS = {
   STREET_REGEX: /^(?![\W_]+$)(?!\s*$)[a-zA-Z0-9\s,.\-#]+$/,
   MAX_255: /^.{0,255}$/,
   MAX_64: /^.{0,64}$/,
-  MAX_2000: /^[\s\S]{0,2000}$/,
   MAX_50: /^.{0,50}$/,
   MAX_100: /^.{0,100}$/,
+  MAX_150: /^.{0,150}$/,
+  MAX_200: /^.{0,200}$/,
+  MAX_1000: /^.{0,1000}$/,
+  MAX_2000: /^.{0,2000}$/,
   MIN_3: /^.{3,}$/,
+  MIN_5: /^.{5,}$/,
+  MIN_4: /^.{4,}$/,
+  POSITIVE_INTEGER_REGEX: /^(?:[1-9]|[1-9][0-9])$/,
   MIN_2: /^.{2,}$/,
   CITY_REGEX: /^[A-Za-z\s]{3,100}$/,
   NUMBERS_GREATER_THAN_ZERO: /^[1-9]\d*$/,
@@ -426,7 +436,15 @@ export const getDateTimeFormat = (date?: string) => {
   return dayjs.utc(date).local().format('MM-DD-YYYY HH:mm:ss');
 };
 
+export const getDateFormat = (date?: string) => {
+  if (!date) return '';
+  return dayjs(date).format('MM-DD-YYYY');
+};
 export const STATUS_OPTIONS: SelectOption[] = [
   { label: 'Active', value: 'active' },
   { label: 'In-Active', value: 'inactive' },
+];
+export const PROJECT_TYPE: SelectOption[] = [
+  { label: 'Fixed', value: 'Fixed' },
+  { label: 'Time & Material', value: 'Time & Material' },
 ];

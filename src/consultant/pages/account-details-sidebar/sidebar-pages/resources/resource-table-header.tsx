@@ -5,7 +5,6 @@ import { leftArrowIcon } from '../../../../../assets';
 import TextButton from '../../../../../components/button/text-button';
 import { Theme } from '@emotion/react';
 interface ResourceTableHeaderProps {
-  filterVisibility: boolean;
   title: string;
   titleIcon: React.ReactNode;
   headerButtons: {
@@ -18,10 +17,7 @@ interface ResourceTableHeaderProps {
   toggleViewMode?: () => void;
   showBackArrow?: boolean;
   onBackClick?: () => void;
-  handleFilter: () => void;
   value: string;
-  showFilter: boolean;
-  setAppliedFilters: (filters: Record<string, any>) => void;
   resourceNumber?: string;
 }
 

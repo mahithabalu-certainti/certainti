@@ -33,21 +33,24 @@ const FiscalYearDropdown = ({
   }, [fiscalYearRange]);
 
   const handlePrevDecade = useCallback(() => {
-    setFiscalYearRange(prev => prev - 10);
+    setFiscalYearRange((prev) => prev - 10);
   }, []);
 
   const handleNextDecade = useCallback(() => {
-    setFiscalYearRange(prev => prev + 10);
+    setFiscalYearRange((prev) => prev + 10);
   }, []);
 
-  const handleYearClick = useCallback((value: number) => {
-    const event = {
-      target: { value: value.toString() },
-    } as React.ChangeEvent<HTMLSelectElement>;
-    setSelectedYear(value.toString())
-    onChange(event);
-    setOpen(false);
-  }, [onChange]);
+  const handleYearClick = useCallback(
+    (value: number) => {
+      const event = {
+        target: { value: value.toString() },
+      } as React.ChangeEvent<HTMLSelectElement>;
+      setSelectedYear(value.toString());
+      onChange(event);
+      setOpen(false);
+    },
+    [onChange]
+  );
 
   const handleAllClick = useCallback(() => {
     setSelectedYear('');
@@ -66,7 +69,8 @@ const FiscalYearDropdown = ({
   // };
 
   const selectedLabel =
-    fiscalYearsDropDown.find((fy) => fy.value === fiscalYear)?.label || 'FY-All';
+    fiscalYearsDropDown.find((fy) => fy.value === fiscalYear)?.label ||
+    'FY-All';
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -84,20 +88,20 @@ const FiscalYearDropdown = ({
 
   return (
     <div
-      className="relative inline-block text-left  mx-2 font-medium z-50"
+      className='relative inline-block text-left  mx-2 font-medium z-50'
       ref={dropdownRef}
     >
       <button
         onClick={() => setOpen((prev) => !prev)}
         className={`${open || Number(selectedYear) ? 'bg-[#FFFFFF26]' : 'bg-transparent'}
-        text-white text-[13px] font-normal px-3 h-[32px] w-full flex justify-center items-center gap-1.5 cursor-pointer focus:outline-none rounded-t-xs hover:bg-[#FFFFFF33] hover:rounded-xs whitespace-nowrap`}
-        aria-haspopup="true"
+        text-white text-[13px] font-normal w-[107px] min-w-[107px] px-3 h-[25px] flex justify-center items-center gap-1.5 cursor-pointer focus:outline-none rounded-[2px] hover:bg-[#FFFFFF33] hover:rounded-xs whitespace-nowrap`}
+        aria-haspopup='true'
         aria-expanded={open}
       >
         {selectedLabel}
         <img
           src={arrowDownIcon}
-          alt="dropdown arrow"
+          alt='dropdown arrow'
           className={`transition-transform duration-300 ${open ? 'rotate-180' : ''
             }`}
           style={{ width: 15, height: 15, filter: 'brightness(0) invert(1)' }}
@@ -106,30 +110,52 @@ const FiscalYearDropdown = ({
 
       {open && (
         <div
-          className="absolute  w-[261px] p-5 bg-white border border-[#CBD6E2] rounded-[8px] shadow-lg h-[206px]"
+          className='absolute right-0 mt-1 w-[261px] min-w-[261px] max-w-[261px] p-5 bg-white border border-[#CBD6E2] rounded-[8px] h-[204px]'
           style={{ borderColor: '#CBD6E2' }}
         >
-          <div className="flex items-center justify-between text-[#425A76]">
+          <div className='flex items-center justify-between text-[#425A76]'>
             <div className='flex items-center gap-x-4'>
-              <button type='button' disabled={yearsInDecade.includes(minYear)} className='cursor-pointer disabled:cursor-not-allowed' onClick={handlePrevDecade}>
-                <img src={fiscalYearArrowIcon} alt='less-than' className={`${yearsInDecade.includes(minYear) ? 'invert grayscale' : ''}`} />
+              <button
+                type='button'
+                disabled={yearsInDecade.includes(minYear)}
+                className='cursor-pointer disabled:cursor-not-allowed'
+                onClick={handlePrevDecade}
+              >
+                <img
+                  src={fiscalYearArrowIcon}
+                  alt='less-than'
+                  className={`${yearsInDecade.includes(minYear) ? 'invert grayscale' : ''}`}
+                />
               </button>
-              <span className="text-[#425A76] text-[15px] font-bold">
+              <span className='text-[#2D3E4F] text-[15px] font-bold'>
                 {fiscalYearRange} - {fiscalYearRange + 9}
               </span>
-              <button type='button' disabled={yearsInDecade.includes(currentYear)} className="cursor-pointer disabled:cursor-not-allowed" onClick={handleNextDecade}>
-                <img src={fiscalYearArrowIcon} className={`rotate-[180deg] ${yearsInDecade.includes(currentYear) ? 'invert grayscale' : ''}`} alt='less-than' />
+              <button
+                type='button'
+                disabled={yearsInDecade.includes(currentYear)}
+                className='cursor-pointer disabled:cursor-not-allowed'
+                onClick={handleNextDecade}
+              >
+                <img
+                  src={fiscalYearArrowIcon}
+                  className={`rotate-[180deg] ${yearsInDecade.includes(currentYear) ? 'invert grayscale' : ''}`}
+                  alt='less-than'
+                />
               </button>
             </div>
 
-            <button type='button' className={`h-5 w-8 text-[#425A76] text-[14px] font-bold cursor-pointer ${!selectedYear ? 'bg-[#425A76] text-[#FFFFFF] rounded-[30px]' : ''}`} onClick={handleAllClick}>
+            <button
+              type='button'
+              className={`h-[20px] w-[32px] text-[#425A76] text-[14px] font-bold cursor-pointer ${!selectedYear ? 'bg-[#425A76] text-[#FFFFFF] rounded-[30px]' : ''}`}
+              onClick={handleAllClick}
+            >
               All
             </button>
           </div>
-          <div className="flex items-center gap-x-12 gap-y-3 mt-4 flex-wrap">
+          <div className='flex items-center gap-x-9 gap-y-3 mt-4 flex-wrap'>
             {yearsInDecade.map((year) => (
               <button
-                className={`w-10 h-5 cursor-pointer disabled:text-gray-300 text-[#425A76] text-[14px] font-medium ${Number(selectedYear) === year ? 'bg-[#425A76] text-[#FFFFFF] rounded-[30px]' : ''}`}
+                className={`w-11 h-[20px] cursor-pointer disabled:text-gray-300 text-[#425A76] text-[14px] font-medium ${Number(selectedYear) === year ? 'bg-[#425A76] text-[#FFFFFF] rounded-[30px]' : ''}`}
                 key={year}
                 onClick={() => handleYearClick(year)}
                 disabled={year > currentYear}

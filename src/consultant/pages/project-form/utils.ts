@@ -1,41 +1,88 @@
-import { AccountFormData, NewAccountData } from '../../types';
+import { capitalize } from '@mui/material';
+import { KeyContactsUpdate, Status } from '../../types';
+import { NewProjectData } from '../../types/project';
+import { othersIndustryId } from '../account-create/utils';
+const parseNullableNumber = (value: unknown): number | null => {
+  const parsed = Number(value);
+  return isNaN(parsed) || value === '' ? null : parsed;
+};
 
 export const transformFormData = (
-  formData: Partial<AccountFormData>,
-  isEdit: boolean
-): Partial<NewAccountData> => {
-  const data: Partial<NewAccountData> = {
-    account_id: formData.rid,
-    account_name: formData.account_name,
-    comments: formData.comments || null,
-    status: formData.status,
-    is_parent: formData.is_parent === 'yes',
-    parent_account_rid: formData.parent_account_rid || null,
-    account_currency_rid: formData.currency_rid,
-    account_country_rid: formData.country_rid,
-    account_country_region_rid: formData.region,
-    max_ai_interactions: Number(formData.max_ai_interactions),
-    autosend_interaction: formData.autosend_interaction === 'yes',
-    auto_access_rd: formData.auto_access_rd === 'yes',
-    fiscal_start_date: formData.fiscal_start_date,
-    fiscal_end_date: formData.fiscal_end_date,
-    blended_rate_fte: formData.blended_rate_fte || null,
-    blended_rate_subcon: formData.blended_rate_subcon || null,
-    primary_contact_name: formData.primary_contact_name,
-    primary_contact_email: formData.primary_contact_email,
-    primary_contact_number: formData.primary_contact_number,
-    finance_poc_name: formData.finance_poc_name,
-    finance_poc_email: formData.finance_poc_email,
-    finance_poc_number: formData.finanace_poc_number,
-    industry: formData.industry,
-    website: formData.website || null,
-    project_manager: formData.project_manager,
-    annual_revenue: Number(formData.annual_revenue),
-    data_storage: formData.data_storage,
+  formData: Partial<NewProjectData>,
+  isEdit: boolean,
+  isValueUpdateInKeyContact?: boolean,
+  key_rid?: string
+): Partial<NewProjectData> => {
+  const data: Partial<NewProjectData> = {
+    account_id: formData.account_id,
+    account_number: formData.account_number,
+    project_code: formData.project_code,
+    project_name: formData.project_name,
+    industry_rid: formData.industry_rid || null,
+    industry_name:
+      othersIndustryId === formData.industry_rid ? formData.industry_name : '',
+    program_name: formData.program_name || '',
+    project_startdate: formData.project_startdate || null,
+    project_enddate: formData.project_enddate || null,
+    project_type: formData.project_type,
+    project_classification_rid: formData.project_classification_rid || null,
+    // uuid: formData.project_classification_rid || null,
+    project_client_group: formData.project_client_group || '',
+    project_group: formData.project_group || '',
+    project_description: formData.project_description || '',
+    project_status: formData.project_status
+      ? (capitalize(formData.project_status) as Status)
+      : ('Active' as Status),
+    fiscal_year: formData.fiscal_year,
+    country: formData.country,
+    region: formData.region,
+    currency: formData.currency,
+    total_effort: String(formData.total_effort) || null,
+    total_cost: String(formData.total_cost) || null,
+    total_fte: parseNullableNumber(formData.total_fte) || null,
+    total_sub_con: formData.total_sub_con || null,
+    total_non_labor_cost: String(formData.total_non_labor_cost) || null,
+    total_fte_effort: String(formData.total_fte_effort) || null,
+    total_sub_con_effort: String(formData.total_sub_con_effort) || null,
+    total_fte_cost: String(formData.total_fte_cost) || null,
+    total_sub_con_cost: String(formData.total_sub_con_cost) || null,
+    auto_send_ai_interaction:
+      String(formData.auto_send_ai_interaction) === 'Yes',
+    auto_access_rd: String(formData.auto_access_rd) === 'Yes',
+    max_ai_interaction:
+      parseNullableNumber(formData.max_ai_interaction) || null,
+    blended_rate_fte: formData.blended_rate_fte
+      ? `${formData.blended_rate_fte}`
+      : null,
+    blended_rate_sub_con: formData.blended_rate_sub_con
+      ? `${formData.blended_rate_sub_con}`
+      : null,
+    comments: formData.comments || '',
+    key_contacts: isValueUpdateInKeyContact
+      ? [
+          {
+            key_contact_name: formData.key_contact_name as string,
+            key_contact_email: formData.key_contact_email as string,
+            key_contact_role: formData.key_contact_role as string,
+            is_primary_contact: formData?.is_primary_contact === 'yes',
+            include_in_communication:
+              formData?.include_in_communication === 'yes',
+            status: formData?.key_contact_status
+              ? (capitalize(formData.key_contact_status) as Status)
+              : ('Active' as Status),
+            ...(isEdit && { rid: key_rid }),
+            action_type:
+              isEdit && key_rid
+                ? KeyContactsUpdate.Edit
+                : KeyContactsUpdate.Add,
+          },
+        ]
+      : [],
   };
-  if (isEdit) {
-    data.account_rid = formData.rid;
-    data.r_number = formData.rid;
+
+  if (isEdit && formData.rid) {
+    data.project_id = formData.rid;
   }
+
   return data;
 };

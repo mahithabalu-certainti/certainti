@@ -1,7 +1,8 @@
 import { Box, Button, Menu, MenuItem } from '@mui/material';
-import { styled, SxProps, Theme } from '@mui/material/styles';
+import { styled, SxProps, SxProps, Theme } from '@mui/material/styles';
 import React, { useState } from 'react';
-import { arrowDownIcon, arrowUpIcon } from '../../assets';
+import { arrowUpIcon } from '../../assets';
+import { Theme } from '@emotion/react';
 
 interface ActionsDropdownItem {
   label: string;
@@ -72,19 +73,18 @@ const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
     <Box>
       <StyledButton
         {...rest}
+        variantType={variant}
         onClick={handleClick}
         endIcon={
-          open ? (
-            <img
-              src={arrowUpIcon}
-              alt='arrowUp'
-            />
-          ) : (
-            <img
-              src={arrowDownIcon}
-              alt='arrowDown'
-            />
-          )
+          <img
+            src={arrowUpIcon}
+            alt={open ? 'arrowUp' : 'arrowDown'}
+            style={{
+              filter: "brightness(0) saturate(100%) invert(42%) sepia(11%) saturate(1204%) hue-rotate(169deg) brightness(93%) contrast(87%)",
+              transform: open ? 'rotate(0deg)' : 'rotate(180deg)',
+              transition: 'transform 0.3s ease'
+            }}
+          />
         }
       >
         Actions

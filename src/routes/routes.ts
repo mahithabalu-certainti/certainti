@@ -4,7 +4,6 @@ export const LOGIN = '/login';
 export const PROFILE = '/profile';
 
 export const MANAGE_USER = '/manage-user';
-export const MANAGE_PROFILE = '/manage-profile';
 export const MANAGE_USER_GROUP = '/manage-user-group';
 export const MANAGE_USER_ACCESS = '/manage-user-access';
 export const MANAGE_SETTINGS = '/manage-settings';
@@ -22,6 +21,10 @@ export const ADMIN_MANAGE_USER = `${ADMIN}/manage-user`;
 export const ADMIN_MANAGE_USER_DETAILS = `${ADMIN_MANAGE_USER}/:userid`;
 export const ADMIN_CREATE_USER = `${ADMIN_MANAGE_USER}/create`;
 export const ADMIN_EDIT_USER = `${ADMIN_MANAGE_USER}/edit/:userid`;
+/** PROFILE ROUTES */
+export const MANAGE_PROFILE = `${ADMIN}/manage-profile`;
+export const MANAGE_PROFILE_CREATE = `${MANAGE_PROFILE}/create`;
+export const MANAGE_PROFILE_EDIT = `${MANAGE_PROFILE}/edit/:profileId`;
 
 /** ACCOUNT ROUTES */
 export const ACCOUNT = '/account';
@@ -48,6 +51,7 @@ export const RESOURCESKILL_EDIT = `${RESOURCESKILL}/edit/:skillid`;
 export const PROJECT = '/project';
 export const PROJECT_CREATE = `${PROJECT}/create`;
 export const PROJECT_EDIT = `${PROJECT}/edit/:projectid`;
+export const PROJECT_DETAILS = `${PROJECT}/details/:projectid`;
 
 export const NOT_FOUND = '/page-not-found';
 export const NOT_MATCH = '*';
