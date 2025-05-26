@@ -26,6 +26,8 @@ interface TabProps {
   showFilter: boolean;
   setCurrentPage: (page: number) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  appliedFilters: Record<string, any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setAppliedFilters: (filters: Record<string, any>) => void;
   filterStates?: Record<string, FilterState>;
   selectedFilters?: string[];
@@ -34,6 +36,7 @@ interface TabProps {
 }
 const TabPanel: React.FC<TabProps> = ({
   resourceTab,
+  appliedFilters,
   handleFilter,
   setAppliedFilters,
   value,
@@ -238,6 +241,7 @@ const TabPanel: React.FC<TabProps> = ({
 
         <Box className='flex items-center space-x-2'>
           {/* <ActionsDropdown actions={MENU_ITEMS} /> */}
+
           <Box className='relative'>
             {filterVisibility && (
               <Box
@@ -247,6 +251,14 @@ const TabPanel: React.FC<TabProps> = ({
                 aria-describedby={filterId}
               >
                 <Image src={resourceFilterIcon} />
+                {appliedFilters && Object.keys(appliedFilters).length > 0 && (
+                  <div className='absolute -top-[8px] -right-1.5 w-4 h-4 flex items-center justify-center text-xs'>
+                    <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
+                    <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
+                      {Object.keys(appliedFilters).length}
+                    </span>
+                  </div>
+                )}
               </Box>
             )}
             {value !== 'details' && (
@@ -271,6 +283,12 @@ const TabPanel: React.FC<TabProps> = ({
             variant={'filled'}
             actions={menuActivity}
             label='Add Activity'
+            sx={{
+              fontWeight: 400,
+              fontSize: '13px',
+              width: '143px',
+              height: '32px',
+            }}
           />
 
           {/* <ActionImportDropdown

@@ -1,42 +1,33 @@
 import { Box, Button, Menu, MenuItem } from '@mui/material';
-import { styled, SxProps } from '@mui/material/styles';
+import { styled, SxProps, Theme } from '@mui/material/styles';
 import React, { useState } from 'react';
 import { arrowUpIcon } from '../../assets';
 import { ActionsDropdownItem } from '../../common-utils';
-import { Theme } from '@emotion/react';
-
 
 interface ActionsDropdownProps {
-  variant?: 'filled' | 'outlined';
   actions: ActionsDropdownItem[];
   sx?: SxProps<Theme>;
 }
 
-const StyledButton = styled(Button)<{ buttontype: 'filled' | 'outlined' }>(
-  ({ buttontype, theme }) => ({
-    backgroundColor:
-      buttontype === 'filled' ? theme.palette.secondary.main : 'transparent',
+const StyledButton = styled(Button)(() => {
+  return {
     height: '32px !important',
-    width: '95px',
-    color: buttontype === 'filled' ? '#fff' : theme.palette.secondary.main,
-    border:
-      buttontype === 'outlined'
-        ? `1px solid ${theme.palette.secondary.main}`
-        : 'none',
+    color: '#425A76',
+    border: '1px solid #CBD6E2',
+    boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+    background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
     textTransform: 'none',
     fontSize: '13px',
-    fontWeight: 400,
-    // padding: '8px 14px',
+    fontWeight: '700',
+    width: '81px',
+    minWidth: '81px',
+    maxWidth: '81px',
+    padding: '0px',
     borderRadius: '2px',
-    '&:hover': {
-      backgroundColor: theme.palette.secondary.main,
-      color: '#fff',
-    },
-  })
-);
+  };
+});
 
 const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
-  variant = 'outlined',
   actions,
   ...rest
 }) => {
@@ -59,7 +50,6 @@ const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
   return (
     <Box>
       <StyledButton
-        buttontype={variant}
         {...rest}
         onClick={handleClick}
         endIcon={
@@ -67,9 +57,10 @@ const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
             src={arrowUpIcon}
             alt={open ? 'arrowUp' : 'arrowDown'}
             style={{
-              filter: "brightness(0) saturate(100%) invert(42%) sepia(11%) saturate(1204%) hue-rotate(169deg) brightness(93%) contrast(87%)",
+              filter:
+                'brightness(0) saturate(100%) invert(42%) sepia(11%) saturate(1204%) hue-rotate(169deg) brightness(93%) contrast(87%)',
               transform: open ? 'rotate(0deg)' : 'rotate(180deg)',
-              transition: 'transform 0.3s ease'
+              transition: 'transform 0.3s ease',
             }}
           />
         }

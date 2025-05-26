@@ -249,14 +249,12 @@ export const CreateUser: React.FC = () => {
           <div className='flex gap-2 items-center'>
             <TextButton
               label='Back'
-              variant='outlined'
-              color='inherit'
               onClick={goBack}
               sx={{
-                width: '45px',
-                minWidth: '45px',
-                fontWeight: 400,
-                fontSize: '12px',
+                width: '49px',
+                minWidth: '49px',
+                fontWeight: 700,
+                fontSize: '13px',
                 height: '32px',
               }}
             />
@@ -270,20 +268,7 @@ export const CreateUser: React.FC = () => {
             </div>
             <div className='flex gap-2 m-2'>
               <TextButton
-                label='Cancel'
-                variant='outlined'
-                color='inherit'
-                onClick={goBack}
-                sx={{
-                  width: '56px',
-                  minWidth: '56px',
-                  fontWeight: 400,
-                  fontSize: '12px',
-                }}
-              />
-              <TextButton
                 label='Save'
-                variant='filled'
                 loading={updateUser.isPending || createUser.isPending}
                 onClick={handleExternalSubmit}
                 sx={{
@@ -296,15 +281,24 @@ export const CreateUser: React.FC = () => {
               {isEditView && isUserDeleteEnable && (
                 <TextButton
                   label='Delete'
-                  variant='outlined'
                   sx={{
-                    width: '73px',
-                    minWidth: '73px',
+                    width: '75px',
+                    minWidth: '75px',
                     fontWeight: 400,
                     fontSize: '13px',
                   }}
                 />
               )}
+              <TextButton
+                label='Cancel'
+                onClick={goBack}
+                sx={{
+                  width: '75px',
+                  minWidth: '75px',
+                  fontWeight: 400,
+                  fontSize: '13px',
+                }}
+              />
             </div>
           </div>
           <FormBuilder

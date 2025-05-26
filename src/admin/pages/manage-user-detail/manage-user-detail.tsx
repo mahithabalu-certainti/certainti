@@ -73,14 +73,14 @@ export const ManageUserDetails: React.FC = () => {
   ];
 
   const userActionButtons = [
-    { label: 'Suspend User', width: '119px', hide: !isUserSuspendEnable },
-    { label: 'Reinstate User', width: '120px', hide: false },
+    { label: 'Suspend User', width: '104px', hide: !isUserSuspendEnable },
+    { label: 'Reinstate User', width: '116px', hide: false },
     {
       label: 'Reset Password',
-      width: '132px',
+      width: '118px',
       hide: !isUserResetPasswordEnable,
     },
-    { label: 'Delete', width: '73px', hide: !isUserDeleteEnable },
+    { label: 'Delete', width: '58px', hide: !isUserDeleteEnable },
   ];
 
   const handleAction = (action: string) => {
@@ -135,11 +135,10 @@ export const ManageUserDetails: React.FC = () => {
               label='Create User'
               sx={{
                 ...BUTTON_STYLES,
-                backgroundColor: '#F16137',
-                color: '#fff',
-                borderRadius: '2px',
                 fontSize: '13px',
-                fontWeight: 400,
+                fontWeight: 700,
+                width: '91px',
+                minWidth: '91px',
               }}
               onClick={() => navigate(ADMIN_CREATE_USER)}
             />
@@ -147,14 +146,12 @@ export const ManageUserDetails: React.FC = () => {
 
           <TextButton
             label='Back'
-            variant='outlined'
-            color='inherit'
             onClick={goBack}
             sx={{
-              width: '45px',
-              minWidth: '45px',
-              fontWeight: 400,
-              fontSize: '12px',
+              width: '49px',
+              minWidth: '49px',
+              fontWeight: 700,
+              fontSize: '13px',
             }}
           />
         </div>
@@ -179,15 +176,14 @@ export const ManageUserDetails: React.FC = () => {
                 <TextButton
                   key={button.label}
                   label={button.label}
-                  variant='outlined'
                   onClick={() => handleAction(button.label)}
                   sx={{
                     ...BUTTON_STYLES,
-                    borderRadius: '2px',
                     fontSize: '13px',
-                    fontWeight: 400,
-                    padding: '4px',
+                    fontWeight: 700,
                     width: button.width,
+                    minWidth: button.width,
+                    maxWidth: button.width,
                   }}
                 />
               );

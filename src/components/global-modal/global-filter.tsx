@@ -236,7 +236,7 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
 
         <div className='flex-1'>
           <h3 className='text-[13px] font-bold text-[#425A76] mb-2'>
-            All filters
+            All Accounts
           </h3>
 
           <div className='flex flex-col gap-2 min-h-[40px] overflow-y-auto max-h-[250px] -mr-6'>

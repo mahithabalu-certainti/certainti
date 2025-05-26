@@ -29,12 +29,7 @@ export const Profile: React.FC = () => {
           </div>
         </div>
         <div className='flex gap-3'>
-          <TextButton
-            label='Back'
-            variant='outlined'
-            color='inherit'
-            onClick={goBack}
-          />
+          <TextButton label='Back' onClick={goBack} />
         </div>
       </div>
       <div className='m-4 border border-gray-200'>

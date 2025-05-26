@@ -13,6 +13,7 @@ interface ResourceTableHeaderProps {
     onClick: () => void;
     sx?: SxProps<Theme>;
     hide?: boolean;
+    disabled?: boolean;
   }[];
   toggleViewMode?: () => void;
   showBackArrow?: boolean;
@@ -74,7 +75,6 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
                 <TextButton
                   key={`header-button-${index}`}
                   label={button.label}
-                  variant={button.variant}
                   onClick={
                     button.label.toLowerCase() === 'view'
                       ? toggleViewMode
@@ -82,6 +82,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
                   }
                   aria-label={button.label}
                   sx={button.sx}
+                  disabled={button.disabled}
                 />
               );
             })}

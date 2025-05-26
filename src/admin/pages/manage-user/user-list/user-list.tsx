@@ -22,16 +22,8 @@ import {
 
 const BUTTON_STYLES = {
   height: '32px',
-  background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-  border: '1px solid #CBD6E2',
-  color: '#425A76',
-  borderRadius: '2px',
   fontSize: '13px',
   fontWeight: 700,
-  padding: '0px',
-  '&:hover': {
-    color: '#425A76 !important',
-  },
 };
 
 const UserList: React.FC = () => {
@@ -197,15 +189,7 @@ const UserList: React.FC = () => {
           </div>
         </div>
         <div className='flex gap-3 justify-center items-center'>
-          <ActionsDropdown
-            actions={MENU_ITEMS}
-            sx={{
-              ...BUTTON_STYLES,
-              width: '81px',
-              minWidth: '81px',
-              maxWidth: '81px',
-            }}
-          />
+          <ActionsDropdown actions={MENU_ITEMS} />
           {isUserCreateEnable && (
             <TextButton
               label='Create User'
@@ -260,7 +244,6 @@ const UserList: React.FC = () => {
               <TextButton
                 key={button.label}
                 label={button.label}
-                variant='outlined'
                 onClick={() => handleAction(button.label)}
                 sx={{
                   ...BUTTON_STYLES,

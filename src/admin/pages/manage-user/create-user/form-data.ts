@@ -43,9 +43,9 @@ export const FormData = (
                   'First name cannot start or end with a space, apostrophe, or hyphen.',
               },
               {
-                regex:REGEX_PATTERNS.NAME_REGEX,
+                regex: REGEX_PATTERNS.NAME_REGEX,
                 errorMessage:
-                "Last name must contain only letters, apostrophes (') and hyphens (-).",
+                  "First name must contain only letters, apostrophes (') and hyphens (-).",
               },
             ],
           }),
@@ -67,9 +67,9 @@ export const FormData = (
                   'Last name cannot start or end with a space, apostrophe, or hyphen.',
               },
               {
-                regex:REGEX_PATTERNS.NAME_REGEX,
+                regex: REGEX_PATTERNS.NAME_REGEX,
                 errorMessage:
-                "Last name must contain only letters, apostrophes (') and hyphens (-).",
+                  "Last name must contain only letters, apostrophes (') and hyphens (-).",
               },
             ],
           }),
@@ -171,7 +171,6 @@ export const FormData = (
                 errorMessage:
                   'Zip Code / Area code must contain only alphanumeric, numeric characters and hyphens (-)',
               },
-           
             ],
           }),
         ],
