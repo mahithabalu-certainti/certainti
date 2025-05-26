@@ -415,11 +415,13 @@ class AccountService {
             "Industry": account?.industry?.industry_name || "NA",
             "Country": account?.country?.country_name || "NA",
             "Currency": account?.currency?.currency_code || "NA",
-            "Annual Revenue": account?.annual_revenue ? new Intl.NumberFormat('en-US', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-              useGrouping: true
-            }).format(Number(account.annual_revenue)) : "NA",
+            "Annual Revenue": account?.annual_revenue 
+            ? new Intl.NumberFormat('en-US', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2,
+                useGrouping: true
+              }).format(Number(account.annual_revenue)) 
+            : "NA",
             "Status": account?.status.toLowerCase() === 'active' ? 'Active' : 'In-Active',
           };
           exportDetails.push(baseRow);
@@ -432,11 +434,12 @@ class AccountService {
                 "Industry": child?.industry?.industry_name || "NA",
                 "Country": child?.country?.country_name || "NA",
                 "Currency": child?.currency?.currency_code || "NA",
-                "Annual Revenue": account?.annual_revenue ? new Intl.NumberFormat('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                  useGrouping: true
-                }).format(Number(account.annual_revenue)) : "NA",                
+                "Annual Revenue": child?.annual_revenue 
+                  ? new Intl.NumberFormat('en-US', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2,
+                useGrouping: true
+                 }).format(Number(child.annual_revenue)) : "NA",           
                 "Status": child?.status.toLowerCase() === 'active' ? 'Active' : 'In-Active',
               });
             });
