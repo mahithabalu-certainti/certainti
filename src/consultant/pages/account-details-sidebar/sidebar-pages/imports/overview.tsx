@@ -14,7 +14,11 @@ interface OverviewProps {
 
 const MAX_FILE_SIZE_MB = 50;
 
-const Overview: React.FC<OverviewProps> = ({ accountNo, accountId, accountInActive }) => {
+const Overview: React.FC<OverviewProps> = ({
+  accountNo,
+  accountId,
+  accountInActive,
+}) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [message, setMessage] = useState<{
     type: 'error' | 'success';
@@ -26,7 +30,6 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId, accountInActi
   const [entityType, setEntityType] = useState<string>('Select Type');
   const [fiscalYear, setFiscalYear] = useState<string>('Year');
   const [loading, setLoading] = useState<boolean>(false);
-
 
   useEffect(() => {
     if (
@@ -171,16 +174,15 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId, accountInActi
     }
   };
 
- const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-   e.preventDefault();
-   const validFiles = validateFiles(e.dataTransfer.files);
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const validFiles = validateFiles(e.dataTransfer.files);
 
-   if (validFiles.length > 0) {
-     setSelectedFiles((prevFiles) => [...prevFiles, ...validFiles]);
+    if (validFiles.length > 0) {
+      setSelectedFiles((prevFiles) => [...prevFiles, ...validFiles]);
       showSuccess(`File "${validFiles[0].name}" added successfully.`);
-   }
- };
-
+    }
+  };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -208,12 +210,10 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId, accountInActi
         <div className='flex gap-2'>
           <TextButton
             label='Cancel'
-            variant='outlined'
-            color='inherit'
             onClick={goBack}
             sx={{
-              width: '56px',
-              minWidth: '56px',
+              width: '75px',
+              minWidth: '75px',
               fontWeight: 400,
               fontSize: '12px',
             }}
@@ -221,7 +221,6 @@ const Overview: React.FC<OverviewProps> = ({ accountNo, accountId, accountInActi
           <TextButton
             label='Save'
             loading={loading}
-            variant='filled'
             onClick={handleSubmit}
             disabled={accountInActive}
             sx={{

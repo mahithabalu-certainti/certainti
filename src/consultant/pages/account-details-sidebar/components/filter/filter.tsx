@@ -1,15 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Box, SelectChangeEvent } from '@mui/material';
-import React, { useEffect, useState } from 'react';
-import { filterArrowRightIcon } from '../../../../../assets';
-import { Button } from '../../../../../components/button';
+import {
+  Menu,
+  MenuItem,
+  Popover,
+  Select,
+  SelectChangeEvent,
+} from '@mui/material';
+import React, { useEffect, useRef, useState } from 'react';
+import { arrowIcon, checkedIcon, closeIcon } from '../../../../../assets';
 import { getInitialStateForField } from '../../sidebar-pages/resources/utils';
 import {
   DateFilterOption,
   dateOptions,
   EnumFilterOption,
   enumOptions,
-  FieldConfig,
   FilterComponentProps,
   FilterState,
   NumberFilterOption,
@@ -30,9 +34,19 @@ import {
   TextFilterControlForCostAndSKill,
 } from './helper';
 import { resetFilter } from './utils';
+import {
+  MENU_PROPS,
+  SELECT_STYLES,
+} from '../../../../../components/filter-component/helpers';
+
+const systemFilters = ['Touched Records', 'Untouched Records', 'Record Action'];
 
 // filter to use in resource, cost and skill list pages
 const Filter: React.FC<FilterComponentProps> = ({
+  value,
+  isOpen,
+  filterAnchorEl,
+  filterId,
   filterMenu,
   setAppliedFilters,
   handleFilter,
@@ -44,9 +58,37 @@ const Filter: React.FC<FilterComponentProps> = ({
   mode,
 }) => {
   const [selectedFilters, setSelectedFilters] =
-  useState<string[]>(savedSelectedFilters);
+    useState<string[]>(savedSelectedFilters);
   const [filterStates, setFilterStates] =
-  useState<Record<string, FilterState>>(savedFilterStates);
+    useState<Record<string, FilterState>>(savedFilterStates);
+
+  //new
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  useEffect(() => {
+    handleResetFilter();
+  }, [value]);
+
+  const handleFilterSelect = (field: string) => {
+    const fieldConfig = filterMenu.find((f) => f.value === field);
+    if (fieldConfig) {
+      setSelectedFilters((prev) => [...prev, field]);
+      setFilterStates((prev) => ({
+        ...prev,
+        [field]: getInitialStateForField(fieldConfig),
+      }));
+    }
+    handleClose();
+  };
 
   // Update parent component when local states change
   useEffect(() => {
@@ -64,11 +106,13 @@ const Filter: React.FC<FilterComponentProps> = ({
   const handleApplyFilters = () => {
     const formattedFilters = formatFilterForApi(filterStates);
     setAppliedFilters(formattedFilters);
-    setCurrentPage(0)
+    setCurrentPage(0);
     // handleFilter();
   };
 
   const handleResetFilter = () => {
+    if (!Object.keys(filterStates).length) return null;
+
     resetFilter({
       setAppliedFilters,
       setFilterStates,
@@ -76,26 +120,25 @@ const Filter: React.FC<FilterComponentProps> = ({
       onFilterStatesChange,
       onSelectedFiltersChange,
     });
-  }
-
-
-  const handleClickFilterMenu = (fieldName: string) => {
-    setSelectedFilters((prev) =>
-      prev.includes(fieldName)
-        ? prev.filter((item) => item !== fieldName)
-        : [...prev, fieldName]
-    );
-  
-    if (!filterStates[fieldName]) {
-      const fieldConfig = filterMenu.find((f) => f.value === fieldName);
-      if (!fieldConfig) return;
-  
-      setFilterStates((prev) => ({
-        ...prev,
-        [fieldName]: getInitialStateForField(fieldConfig),
-      }));
-    }
   };
+
+  // const handleClickFilterMenu = (fieldName: string) => {
+  //   setSelectedFilters((prev) =>
+  //     prev.includes(fieldName)
+  //       ? prev.filter((item) => item !== fieldName)
+  //       : [...prev, fieldName]
+  //   );
+
+  //   if (!filterStates[fieldName]) {
+  //     const fieldConfig = filterMenu.find((f) => f.value === fieldName);
+  //     if (!fieldConfig) return;
+
+  //     setFilterStates((prev) => ({
+  //       ...prev,
+  //       [fieldName]: getInitialStateForField(fieldConfig),
+  //     }));
+  //   }
+  // };
 
   const handleFilterOptionChange = (
     fieldName: string,
@@ -148,7 +191,7 @@ const Filter: React.FC<FilterComponentProps> = ({
               enum: {
                 ...currentState.enum!,
                 option: event.target.value as EnumFilterOption,
-                value: []
+                value: [],
               },
             },
           };
@@ -160,7 +203,7 @@ const Filter: React.FC<FilterComponentProps> = ({
               currencySelect: {
                 ...currentState.currencySelect!,
                 option: event.target.value as EnumFilterOption,
-                value: []
+                value: [],
               },
             },
           };
@@ -265,10 +308,7 @@ const Filter: React.FC<FilterComponentProps> = ({
       };
     });
   };
-  const handleCurrencySelectChange = (
-    fieldName: string,
-    value: string[]
-  ) => {
+  const handleCurrencySelectChange = (fieldName: string, value: string[]) => {
     setFilterStates((prev: any) => {
       return {
         ...prev,
@@ -301,15 +341,18 @@ const Filter: React.FC<FilterComponentProps> = ({
     });
   };
 
-  const renderFilterControls = (field: FieldConfig) => {
-    if (!selectedFilters.includes(field.value)) return null;
+  const renderFilterControls = (fieldName: string) => {
+    if (!selectedFilters.includes(fieldName)) return null;
+
+    const field = filterMenu.find((f) => f.value === fieldName);
+    if (!field) return null;
 
     const fieldState = filterStates[field.value] || {};
     let enabled = false;
     if (field.value === 'skill_subtype_rid') {
       const skillTypeValue = filterStates['skill_type_rid']?.enum?.value;
       enabled = !!skillTypeValue && !!skillTypeValue[0]; // Only enable if skill type is selected
-   
+
       return (
         <EnumFilterControl
           filterStates={filterStates}
@@ -392,7 +435,7 @@ const Filter: React.FC<FilterComponentProps> = ({
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleDateChange}
             mode={mode as 'date' | 'year'}
-          // onChange={handleBooleanChange}
+            // onChange={handleBooleanChange}
           />
         );
       case 'select':
@@ -409,73 +452,285 @@ const Filter: React.FC<FilterComponentProps> = ({
     }
   };
   return (
-    <Box className='w-[248px] max-h-[450px] bg-white shadow-lg border border-[#CBD6E2] rounded flex flex-col'>
-      <Box className='flex justify-between items-center p-2 border-b border-[#CBD6E2]'>
-        <Box>Filters</Box>
-        <Button
-          onClick={handleResetFilter}
-          label='Reset'
-          variant='text'
-          sx={{
-            textDecoration: 'underline',
-            '&:hover': {
-              background: 'none',
-              color: '#F16137',
-              textDecoration: 'underline',
-            },
-          }}
-        />
-      </Box>
-      <Box className='flex-1 overflow-y-auto'>
-        {filterMenu &&
-          filterMenu.map((item, index) => (
-            <React.Fragment key={index}>
-              <Box
-                key={index}
-                className='flex gap-2 justify-between items-center p-2 border-b border-[#CBD6E2] cursor-pointer'
-                onClick={() => handleClickFilterMenu(item.value as string)}
+    <Popover
+      id={filterId}
+      open={isOpen}
+      anchorEl={filterAnchorEl}
+      onClose={handleFilter}
+      anchorOrigin={{
+        vertical: 'bottom',
+        horizontal: 'right',
+      }}
+      transformOrigin={{
+        vertical: 'top',
+        horizontal: 'right',
+      }}
+      PaperProps={{
+        sx: {
+          boxShadow: 'none',
+          bgcolor: 'transparent',
+          mt: 0.5,
+        },
+      }}
+    >
+      <div className='h-auto min-h-[165px] w-[530px] min-w-[530px] max-w-[530px] mt-1 flex flex-col gap-4 bg-white rounded-[8px] p-6 border border-[#CBD6E2]'>
+        <div className='flex justify-between items-center'>
+          <h2 className='text-[16px] font-bold text-[#2D3E4F]'>Filters</h2>
+          <div className='flex justify-end gap-4'>
+            <button
+              className='text-[12px] font-medium text-[#425A76] underline cursor-pointer hover:text-[#131a20]'
+              onClick={handleApplyFilters}
+            >
+              Apply
+            </button>
+            <button
+              onClick={handleResetFilter}
+              className='text-[12px] font-medium text-[#425A76] underline cursor-pointer hover:text-[#FF6666]'
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <h3 className='text-[13px] font-bold text-[#425A76] mb-2'>
+            System Define filters
+          </h3>
+          <div className='flex gap-2 flex-wrap'>
+            {systemFilters.map((label) => (
+              <span
+                key={label}
+                className='border border-[#CBD6E2] cursor-pointer rounded-full px-1 h-[24px] text-[12px] font-normal flex items-center gap-0.5 text-[#425A76]'
               >
-                <Box className='text-[#2D3E4F] font-light text-sm'>
-                  {item.name}
-                </Box>
-                <Box className='text-[#2D3E4F] '>
-                  <img
-                    src={filterArrowRightIcon}
-                    alt='icon'
-                    className='w-[16px] h-[16px]'
-                  />
-                </Box>
-              </Box>
-              {renderFilterControls(item)}
-            </React.Fragment>
-          ))}
-      </Box>
-      <Box className='flex justify-end items-center gap-2 p-2 border-t border-[#CBD6E2]'>
-        <Button
-          onClick={handleFilter}
-          label='Cancel'
-          variant='outlined'
-          color='inherit'
-          sx={{
-            width: '55px',
-            minWidth: '55px',
-            fontSize: '12px',
-            fontWeight: 400,
-          }}
-        />
-        <Button
-          label='Find'
-          variant='filled'
-          sx={{
-            width: '60px',
-            minWidth: '60px',
-            fontSize: '13px',
-            fontWeight: 400,
-          }}
-          onClick={handleApplyFilters}
-        />
-      </Box>
-    </Box>
+                <img src={checkedIcon} alt='checked-icon' />
+                {label}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {selectedFilters.length > 0 && (
+          <div className='flex-1'>
+            <h3 className='text-[13px] font-bold text-[#425A76] mb-2'>
+              All filters
+            </h3>
+            <div className='flex flex-col gap-3 mb-1 pt-1 -mr-6 min-h-[80px] overflow-y-auto max-h-[150px]'>
+              {selectedFilters.map((fieldValue) => {
+                const fieldConfig = filterMenu.find(
+                  (f) => f.value === fieldValue
+                );
+                return fieldConfig ? (
+                  <div key={fieldValue}>
+                    <div className='flex items-center gap-2'>
+                      <div className='flex-1 flex items-center gap-2 w-[450px] max-w-[450px]'>
+                        <div className='flex items-center gap-1'>
+                          <Select
+                            size='small'
+                            value={fieldValue}
+                            className='min-w-[173px] max-w-[173px] h-[28px]'
+                            IconComponent={(props) => (
+                              <img src={arrowIcon} alt='arrowIcon' {...props} />
+                            )}
+                            onChange={(e) => {
+                              const newFieldValue = e.target.value;
+                              const newFieldConfig = filterMenu.find(
+                                (f) => f.value === newFieldValue
+                              );
+                              if (newFieldConfig) {
+                                setSelectedFilters((prev) => {
+                                  const index = prev.indexOf(fieldValue);
+                                  const newFilters = [...prev];
+                                  newFilters[index] = newFieldValue;
+                                  return newFilters;
+                                });
+                                setFilterStates((prev) => {
+                                  const newState = { ...prev };
+                                  delete newState[fieldValue];
+                                  newState[newFieldValue] =
+                                    getInitialStateForField(newFieldConfig);
+                                  return newState;
+                                });
+                              }
+                            }}
+                            sx={SELECT_STYLES}
+                            MenuProps={MENU_PROPS}
+                            renderValue={(selected) => {
+                              const selectedField = filterMenu.find(
+                                (f) => f.value === selected
+                              );
+                              return (
+                                <div className='flex items-center gap-1'>
+                                  <img
+                                    src={checkedIcon}
+                                    alt='checked'
+                                    className='w-3'
+                                  />
+                                  <span className='pt-0.5'>
+                                    {selectedField?.name || selected}
+                                  </span>
+                                </div>
+                              );
+                            }}
+                          >
+                            {filterMenu.map((field) => (
+                              <MenuItem
+                                key={field.value}
+                                value={field.value}
+                                disabled={
+                                  selectedFilters.includes(field.value) &&
+                                  field.value !== fieldValue
+                                }
+                                sx={{
+                                  fontWeight: 600,
+                                  fontSize: '14px',
+                                  lineHeight: '30px',
+                                  color: '#425A76',
+                                  py: '1px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                }}
+                              >
+                                <img
+                                  src={checkedIcon}
+                                  alt='checked'
+                                  className='w-4'
+                                />
+                                {field.name}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </div>
+                        {renderFilterControls(fieldValue)}
+                      </div>
+                      <button
+                        onClick={() => {
+                          const fieldToRemove = [fieldValue];
+
+                          // If clearing skill_type_rid, also remove skill_subtype_rid
+                          if (
+                            fieldValue === 'skill_type_rid' &&
+                            selectedFilters.includes('skill_subtype_rid')
+                          ) {
+                            fieldToRemove.push('skill_subtype_rid');
+                          }
+
+                          const newSelectedFilters = selectedFilters.filter(
+                            (f) => !fieldToRemove.includes(f)
+                          );
+
+                          if (newSelectedFilters.length === 0) {
+                            handleResetFilter();
+                          } else {
+                            setSelectedFilters(newSelectedFilters);
+                            setFilterStates((prev) => {
+                              const newState = { ...prev };
+                              fieldToRemove.forEach(
+                                (field) => delete newState[field]
+                              );
+                              return newState;
+                            });
+                          }
+                        }}
+                        className='cursor-pointer pl-1'
+                      >
+                        <img
+                          src={closeIcon}
+                          alt='closeIcon'
+                          className='w-[12px] h-[12px]'
+                        />
+                      </button>
+                    </div>
+                  </div>
+                ) : null;
+              })}
+            </div>
+          </div>
+        )}
+
+        <div className='flex items-center justify-between mt-1'>
+          <button
+            ref={buttonRef}
+            onClick={handleClick}
+            className='text-[14px] font-bold text-[#425A76] flex items-center gap-1 cursor-pointer'
+          >
+            <span className='font-normal text-[16px]'>+</span> Add Filter By
+            Fields
+            <img src={arrowIcon} alt={'arrowIcon'} className='mt-0.5' />
+          </button>
+          {/* <div className='flex justify-end gap-2'>
+            <button
+              className='text-[12px] rounded-[2px] text-[#425A76] h-[24px] flex items-center px-2 border border-[#CBD6E2] cursor-pointer'
+              style={{
+                background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+              }}
+              onClick={handleFilter}
+            >
+              Close
+            </button>
+            <button
+              className='text-[12px] rounded-[2px] text-[#425A76] h-[24px] flex items-center px-2 border border-[#CBD6E2] cursor-pointer'
+              style={{
+                background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+              }}
+              onClick={handleApplyFilters}
+            >
+              Apply
+            </button>
+          </div> */}
+        </div>
+      </div>
+
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleClose}
+        PaperProps={{
+          style: {
+            minWidth: 170,
+            borderRadius: '8px',
+            border: '1px solid #CBD6E2',
+            boxShadow: 'none',
+          },
+        }}
+      >
+        {filterMenu.filter((field) => !selectedFilters.includes(field.value))
+          .length === 0 ? (
+          <MenuItem
+            disabled
+            sx={{
+              fontWeight: 600,
+              fontSize: '14px',
+              lineHeight: '30px',
+              color: '#425A76',
+              py: '1px',
+              justifyContent: 'center',
+            }}
+          >
+            No fields available
+          </MenuItem>
+        ) : (
+          filterMenu
+            .filter((field) => !selectedFilters.includes(field.value))
+            .map((field) => (
+              <MenuItem
+                key={field.name}
+                onClick={() => handleFilterSelect(field.value)}
+                sx={{
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  lineHeight: '30px',
+                  color: '#425A76',
+                  py: '1px',
+                }}
+              >
+                <img src={checkedIcon} alt='checked' className='w-4 mr-1' />
+                {field.name}
+              </MenuItem>
+            ))
+        )}
+      </Menu>
+    </Popover>
   );
 };
 

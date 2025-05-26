@@ -89,7 +89,10 @@ export const transformAccountData = (data: AccountData): DisplayColumn[] => {
     {
       items: [
         { label: 'Account ID', value: account?.r_number },
-        { label: 'Country', value: getValueOrDefault(account?.country?.country_name) },
+        {
+          label: 'Country',
+          value: getValueOrDefault(account?.country?.country_name),
+        },
       ],
     },
     {
@@ -98,21 +101,30 @@ export const transformAccountData = (data: AccountData): DisplayColumn[] => {
           label: 'Parent Name',
           value: getValueOrDefault(account?.parent_account?.account_name),
         },
-        { label: 'Currency', value: getValueOrDefault(account?.currency?.currency_code) },
-      ],
-    },
-    {
-      items: [
-        { label: 'Account Name', value: getValueOrDefault(account?.account_name) },
         {
-          label: 'Is Parent Account',
-          value: account?.is_parent ? 'YES' : 'NO',
+          label: 'Currency',
+          value: getValueOrDefault(account?.currency?.currency_code),
         },
       ],
     },
     {
       items: [
-        { label: 'Industry', value: getValueOrDefault(account?.industry?.industry_name) },
+        {
+          label: 'Account Name',
+          value: getValueOrDefault(account?.account_name),
+        },
+        {
+          label: 'Is Parent Account',
+          value: account?.is_parent ? 'Yes' : 'No',
+        },
+      ],
+    },
+    {
+      items: [
+        {
+          label: 'Industry',
+          value: getValueOrDefault(account?.industry?.industry_name),
+        },
         {
           label: 'Status',
           value:

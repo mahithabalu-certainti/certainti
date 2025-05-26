@@ -9,14 +9,16 @@ export type ManageUser = {
   status: 'Active' | 'Inactive';
 };
 
-export type ManageUserColumn<T> = {
+export interface UserTableColumn<T> {
   id: string;
-  header: string;
+  label: string;
+  width: string | number;
+  sortId: string;
   sortable?: boolean;
-  sort?: string;
-  width?: string;
+  sticky?: boolean;
+  sx?: React.CSSProperties;
   render?: (row: T) => React.ReactNode;
-};
+}
 
 export type SortOrder = 'ASC' | 'DESC';
 
@@ -59,6 +61,21 @@ export interface User {
   first_name: string;
   profile: UserProfile;
   business_teams: BusinessTeams;
+}
+
+export interface Profile {
+  rid: string;
+  createdBy: string;
+  createdOn: string;
+  profileName: string;
+}
+export interface Profiles {
+  rid: string;
+  created_by: string;
+  created_datetime: string;
+  profile_name: string;
+  profile_type: string;
+  profile_status: string;
 }
 
 // User details
@@ -122,6 +139,13 @@ export interface UsersData {
 export interface ManageUserApiResponse extends CommonApiResponse {
   data: {
     users: User[];
+    count: number;
+  };
+}
+
+export interface ManageProfileApiResponse extends CommonApiResponse {
+  data: {
+    profiles: Profiles[];
     count: number;
   };
 }

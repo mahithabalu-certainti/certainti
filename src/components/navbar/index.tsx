@@ -13,6 +13,7 @@ import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   accountsIcon,
+  burgerMenuIcon,
   chevronDownIcon,
   globeIcon,
   menuIcon,
@@ -26,14 +27,18 @@ import { UserRoles } from '../../common-service';
 import { msalConfig, msalResetPasswordConfig } from '../../config/msalConfig';
 import { useAuthHook, useToast } from '../../hooks';
 import { RootState } from '../../store/store';
-import { GlobalModal } from '../global-modal';
 import { setFiscalYear } from '../../store/slices/account-slice';
 import { fiscalYears } from '../../common-utils';
 import { useNavigate } from 'react-router-dom';
 import { PROFILE } from '../../routes';
 import { FiscalYearDropdown } from '../fiscal-dropdown';
+import GlobalFilterModal from '../global-modal/global-filter';
 
-export const Navbar: React.FC = () => {
+interface NavbarProps {
+  handleSidebarToggle: () => void;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle }) => {
   const msalSigninInstance = new PublicClientApplication(msalConfig);
   const msalResetInstance = new PublicClientApplication(
     msalResetPasswordConfig
@@ -46,13 +51,30 @@ export const Navbar: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] =
     React.useState<null | HTMLElement>(null);
-  const [isGlobalModalOpen, setIsGlobalModalOpen] = useState(false);
 
   const dispatch = useDispatch();
   const { logout } = useAuthHook();
   const navigate = useNavigate();
   const { role, name } = useSelector((state: RootState) => state.auth);
   const { fiscalYear } = useSelector((state: RootState) => state.account);
+
+  const [globalAnchorEl, setGlobalAnchorEl] =
+    useState<HTMLButtonElement | null>(null);
+
+  const handleGlobalFilterModal = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setGlobalAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseGlobalFilter = () => {
+    setGlobalAnchorEl(null);
+  };
+
+  const isGlobalModalOpen = Boolean(globalAnchorEl);
+  const globalFilterId = isGlobalModalOpen
+    ? 'global-filter-popover'
+    : undefined;
 
   const isConsultant = role !== UserRoles.Admin;
   const menuId = 'account-menu';
@@ -100,10 +122,6 @@ export const Navbar: React.FC = () => {
   // const handleSearchMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
   //   setSearchAnchor(event.currentTarget);
   // };
-
-  const handleCloseGlobalModal = () => {
-    setIsGlobalModalOpen(false);
-  };
 
   const changePassword = async () => {
     handleMenuClose();
@@ -165,9 +183,15 @@ export const Navbar: React.FC = () => {
       open={isMenuOpen}
       onClose={handleMenuClose}
     >
-      <MenuItem sx={{ fontSize:'14px' }} onClick={goToProfile}>View Profile Details</MenuItem>
-      <MenuItem sx={{ fontSize:'14px' }} onClick={changePassword}>Change Password</MenuItem>
-      <MenuItem sx={{ fontSize:'14px' }} onClick={handleLogout}>Logout</MenuItem>
+      <MenuItem sx={{ fontSize: '14px' }} onClick={goToProfile}>
+        View Profile Details
+      </MenuItem>
+      <MenuItem sx={{ fontSize: '14px' }} onClick={changePassword}>
+        Change Password
+      </MenuItem>
+      <MenuItem sx={{ fontSize: '14px' }} onClick={handleLogout}>
+        Logout
+      </MenuItem>
     </Menu>
   );
 
@@ -287,9 +311,20 @@ export const Navbar: React.FC = () => {
 
   return (
     <>
-      <AppBar position='sticky'>
-        <Toolbar className='justify-between !min-h-[55px]'>
+      <AppBar sx={{ boxShadow: 'none' }} position='sticky'>
+        <Toolbar className='justify-between !h-[40px] !max-h-[40px] !min-h-[40px] !pl-0'>
           <div className='relative rounded-md mr-2 flex gap-2'>
+            <button
+              className='cursor-pointer '
+              type='button'
+              onClick={handleSidebarToggle}
+            >
+              <img
+                src={burgerMenuIcon}
+                alt='menu'
+                className='h-[32px] w-[32px]'
+              />
+            </button>
             {/* <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
               <img
                 src={searchIcon}
@@ -317,14 +352,27 @@ export const Navbar: React.FC = () => {
           >
             {isConsultant && (
               <>
-                <IconButton
-                  color='inherit'
-                  disableRipple
-                  onClick={() => setIsGlobalModalOpen(true)}
-                >
-                  <img src={globeIcon} alt='global' className='h-[16px] w-[16px]' />
-                  <span className='text-[13px] font-normal px-2'>Global</span>
-                </IconButton>
+                <div className='relative'>
+                  <IconButton
+                    color='inherit'
+                    aria-describedby={globalFilterId}
+                    disableRipple
+                    onClick={handleGlobalFilterModal}
+                  >
+                    <img
+                      src={globeIcon}
+                      alt='global'
+                      className='h-[16px] w-[16px]'
+                    />
+                    <span className='text-[13px] font-normal px-2'>Global</span>
+                  </IconButton>
+                  <GlobalFilterModal
+                    isOpen={isGlobalModalOpen}
+                    filterAnchorEl={globalAnchorEl}
+                    filterId={globalFilterId}
+                    handleClose={handleCloseGlobalFilter}
+                  />
+                </div>
                 <div className='border-l border-[#FFFFFF4D] h-6 mx-1' />
                 <FiscalYearDropdown
                   fiscalYear={fiscalYear}
@@ -345,10 +393,18 @@ export const Navbar: React.FC = () => {
               color='inherit'
               aria-controls={notificationId}
             >
-              <img src={notificationIcon} alt='notification' className='h-[22px] w-[22px]' />
+              <img
+                src={notificationIcon}
+                alt='notification'
+                className='h-[22px] w-[22px]'
+              />
             </IconButton>
             <IconButton size='large' color='inherit'>
-              <img src={settingsIcon} alt='settings' className='h-[18px] w-[18px]' />
+              <img
+                src={settingsIcon}
+                alt='settings'
+                className='h-[20px] w-[20px]'
+              />
             </IconButton>
             <div className='border-l border-[#FFFFFF4D] mx-2 h-6' />
             <IconButton
@@ -366,7 +422,7 @@ export const Navbar: React.FC = () => {
                 src='https://mui.com/static/images/avatar/2.jpg'
                 alt='User Avatar'
               />
-              <span className='text-[13px] font-[300] px-2'>{name}</span>
+              <span className='text-[12px] font-[400] px-2'>{name}</span>
               <img src={chevronDownIcon} alt='down nav' />
             </IconButton>
           </Box>
@@ -389,10 +445,6 @@ export const Navbar: React.FC = () => {
       {renderMenu}
       {renderNotificationMenu}
       {renderSearchMenu}
-      <GlobalModal
-        isGlobalModalOpen={isGlobalModalOpen}
-        handleCloseGlobalModal={handleCloseGlobalModal}
-      />
     </>
   );
 };

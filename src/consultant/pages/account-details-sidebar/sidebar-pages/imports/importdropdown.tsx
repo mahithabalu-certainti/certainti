@@ -1,5 +1,5 @@
 import { Box, Button, Menu, MenuItem } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { styled, SxProps } from '@mui/material/styles';
 import React, { useState } from 'react';
 import { arrowDownIcon, arrowUpIcon, addIcon } from '../../../../../assets';
 
@@ -13,34 +13,30 @@ interface ImportDropdownItemProps {
   actions: ImportDropdownItem[];
   label: string;
   split?: string; // optional string
+  sx?: SxProps;
 }
 
-const StyledButton = styled(Button)<{ variantType: 'filled' | 'outlined' }>(
-  ({ variantType, theme }) => ({
-    backgroundColor:
-      variantType === 'filled' ? theme.palette.secondary.main : 'transparent',
-    height: '32px',
-    color: variantType === 'filled' ? '#fff' : '#64707D',
-    border: variantType === 'outlined' ? `1px solid #CBD6E2` : 'none',
+const StyledButton = styled(Button)(() => {
+  return {
+    height: '32px !important',
+    color: '#425A76',
+    border: '1px solid #CBD6E2',
+    boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
+    background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
     textTransform: 'none',
     fontSize: '13px',
-    fontWeight: 400,
-    padding: '0px 16px',
+    fontWeight: '400',
+    // padding: '8px 16px',
     borderRadius: '2px',
-    display: 'flex',
-    alignItems: 'center',
-    position: 'relative',
-    '&:hover': {
-      color: variantType === 'filled' ? '#fff' : '#64707D',
-    },
-  })
-);
+  };
+});
 
 const ActionImportDropdown: React.FC<ImportDropdownItemProps> = ({
   variant = 'outlined',
   actions,
   label,
   split,
+  ...rest
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -53,20 +49,26 @@ const ActionImportDropdown: React.FC<ImportDropdownItemProps> = ({
     setAnchorEl(null);
   };
 
- const iconFilter =
-   variant === 'filled'
-     ? 'brightness(0) invert(1)' // white
-     : 'brightness(0) saturate(100%) invert(46%) sepia(8%) saturate(489%) hue-rotate(169deg) brightness(95%) contrast(89%)';
-
+  // const iconFilter =
+  //   variant === 'filled'
+  //     ? 'brightness(0) invert(1)' // white
+  //     : 'brightness(0) saturate(100%) invert(46%) sepia(8%) saturate(489%) hue-rotate(169deg) brightness(95%) contrast(89%)';
 
   return (
     <Box>
       <StyledButton
-        variantType={variant}
+        {...rest}
         onClick={split === 'true' ? undefined : handleClick}
-        startIcon={variant === 'filled' && <img src={addIcon} />}
+        // startIcon={variant === 'filled' && <img src={addIcon} />}
       >
-        <Box component='span' sx={{ flexGrow: 1, pr: 1 }}>
+        <Box
+          component='span'
+          sx={{ flexGrow: 1, color: '#425A76' }}
+          className='flex gap-2 items-center'
+        >
+          {variant === 'filled' && (
+            <img src={addIcon} className='w-3 p-[1px]' />
+          )}{' '}
           {label}
         </Box>
         {split === 'true' && (
@@ -84,7 +86,7 @@ const ActionImportDropdown: React.FC<ImportDropdownItemProps> = ({
         <img
           src={open ? arrowUpIcon : arrowDownIcon}
           alt={open ? 'arrowUp' : 'arrowDown'}
-          style={{ filter: iconFilter }}
+          // style={{ filter: iconFilter }}
           onClick={(event) =>
             handleClick(event as unknown as React.MouseEvent<HTMLButtonElement>)
           }
@@ -102,7 +104,7 @@ const ActionImportDropdown: React.FC<ImportDropdownItemProps> = ({
             sx={{
               minWidth: '130px',
               fontSize: '14px',
-              color:'#2D3E4F',
+              color: '#2D3E4F',
               borderBottom:
                 index !== actions.length - 1 ? '1px solid #CBD6E2' : 'none',
             }}

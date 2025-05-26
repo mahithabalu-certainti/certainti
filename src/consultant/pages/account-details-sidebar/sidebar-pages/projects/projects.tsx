@@ -1,109 +1,157 @@
-// /* eslint-disable @typescript-eslint/no-explicit-any */
-// import { useState } from 'react';
-// import { projectHeaderIcon } from '../../../../../assets';
-// import { mockProjectsList } from '../../../../mockdata/project-list';
-// import TabPanel from '../../components/tab';
-// import ListTable from '../../components/table';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState } from 'react';
+import { projectHeaderIcon } from '../../../../../assets';
+import TabPanel from '../../components/tab';
+import ListTable from '../../components/table';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../../store/store';
+import ResourceTableHeader from '../resources/resource-table-header';
+import { getProjectColumns } from './columns';
+import { useAccountProjects } from '../../../../services/project';
+import { PROJECT_CREATE, PROJECT_DETAILS } from '../../../../../routes';
+import { generatePath, useNavigate } from 'react-router-dom';
+import { ProjectList } from '../../../../types/project';
 
-// const Projects = () => {
-//   const [viewMode, setViewMode] = useState<boolean>(false);
+const BUTTON_STYLES = {
+  height: '26px !important',
+  fontSize: '13px',
+  fontWeight: 400,
+};
 
-//   const columns = [
-//     { id: 'id', label: 'Project Id', sortable: true },
-//     { id: 'number', label: 'Project Number', sortable: true },
-//     { id: 'refId', label: 'Project Ref Id', sortable: true },
-//     { id: 'industry', label: 'Industry', sortable: true },
-//     { id: 'startDate', label: 'Project Start Date', sortable: true },
-//     { id: 'endDate', label: 'Project End Date', sortable: true },
-//     {
-//       id: 'status',
-//       label: 'Status',
-//       sortable: true,
-//       render: (value: string) => (
-//         <span className='text-green-600 font-medium'>{value}</span>
-//       ),
-//     },
-//   ];
+interface ProjectsProps {
+  accountDetails?: Record<string, any>;
+  activeKey?: string;
+}
 
-//   const actionMenuItems = [
-//     {
-//       label: 'Edit',
-//       onClick: (row: any) => console.log('Edit', row),
-//     },
-//     {
-//       label: 'Delete',
-//       onClick: (row: any) => console.log('Delete', row),
-//     },
-//     {
-//       label: 'View Summary',
-//       onClick: (row: any) => console.log('Summary', row),
-//     },
-//     {
-//       label: 'View Activities',
-//       onClick: (row: any) => console.log('Activities', row),
-//     },
-//     {
-//       label: 'View Notes',
-//       onClick: (row: any) => console.log('Notes', row),
-//     },
-//   ];
+const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
+  const navigate = useNavigate();
+  const [showFilter, setShowFilter] = useState<boolean>(false);
+  const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
+  const [currentPage, setCurrentPage] = useState(0);
+  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
+  const [sortField, setSortField] = useState<string>('created_datetime');
+  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
+    (state: RootState) => state.account
+  );
+  const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
-//   const headerButtons: {
-//     label: string;
-//     variant: 'text' | 'outlined' | 'contained';
-//     onClick: () => void;
-//   }[] = [
-//     {
-//       label: 'Download',
-//       variant: 'outlined',
-//       onClick: () => console.log('Download'),
-//     },
-//     {
-//       label: 'New',
-//       variant: 'outlined',
-//       onClick: () => console.log('New'),
-//     },
-//     {
-//       label: 'View',
-//       variant: 'outlined',
-//       onClick: () => setViewMode(true),
-//     },
-//   ];
+  const { data, isLoading, error } = useAccountProjects({
+    page: currentPage + 1,
+    limit: rowsPerPage,
+    sortBy: sortField,
+    sortOrder: sortOrder,
+    filters: appliedFilters,
+    fiscalYear: convertedFiscalYear,
+    accountNumber: accountDetails?.data?.accountDetails?.account_rid || '',
+  });
+  const handleFilter = () => {
+    setShowFilter(!showFilter);
+  };
+  const handleEdit = (account: any) => {
+    navigate(`/Project/edit/${account?.rid}`, {
+      state: {
+        accountID: account?.account_rid,
+        projectID: account?.rid,
+      },
+    });
+  };
 
-//   const toggleViewMode = () => {
-//     setViewMode(!viewMode);
-//   };
+  const actionMenuItems = [
+    {
+      label: 'Edit',
+      onClick: (row: any) => handleEdit(row),
+    },
+    {
+      label: 'Delete',
+      onClick: (row: any) => console.log('Delete', row),
+    },
+    {
+      label: 'View Summary',
+      onClick: (row: any) => console.log('Summary', row),
+    },
+    {
+      label: 'View Activities',
+      onClick: (row: any) => console.log('Activities', row),
+    },
+    {
+      label: 'View Notes',
+      onClick: (row: any) => console.log('Notes', row),
+    },
+  ];
 
-//   return (
-//     <div className='w-full'>
-//       <TabPanel
-//         viewMode={viewMode}
-//         onExitView={toggleViewMode}
-//         title='Project'
-//       />
-//       <ListTable
-//         data={mockProjectsList}
-//         columns={columns}
-//         actionMenuItems={actionMenuItems}
-//         title='Projects'
-//         titleIcon={<img src={projectHeaderIcon} alt='project header icon' />}
-//         headerButtons={viewMode ? [] : headerButtons}
-//         pagination={!viewMode}
-//         rowsPerPage={5}
-//         sortable={true}
-//         setViewMode={setViewMode}
-//         viewMode={viewMode}
-//       />
-//     </div>
-//   );
-// };
+  const headerButtons = [
+    {
+      label: 'Download',
+      variant: 'outlined' as const,
+      onClick: () => console.log('Download'),
+      sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
+    },
+    {
+      label: 'New',
+      variant: 'outlined' as const,
+      onClick: () => handleCreateProject(),
+      sx: { ...BUTTON_STYLES, width: '61px', minWidth: '61px' },
+    },
+  ];
 
-// export default Projects;
+  const handleCreateProject = () => {
+    const accountID = accountDetails?.data?.accountById?.rid;
+    navigate(`${PROJECT_CREATE}`, {
+      state: { accountID },
+    });
+  };
 
-const Projects = () => {
+  const handleProject = (project: ProjectList) => {
+    const path = generatePath(PROJECT_DETAILS, {
+      projectid: project?.rid,
+    });
+    navigate(path, {
+      state: { accountID: project?.account_rid, projectID: project?.rid },
+    });
+  };
+
+  const projectColumns = getProjectColumns(handleProject);
+
   return (
-    <div className='p-6'>
-      <h1 className='text-2xl font-bold mb-4'>Projects</h1>
+    <div className='w-full'>
+      <TabPanel
+        value={'projects'}
+        appliedFilters={appliedFilters}
+        setAppliedFilters={setAppliedFilters}
+        showFilter={showFilter}
+        filterVisibility={true}
+        handleFilter={handleFilter}
+        setCurrentPage={setCurrentPage}
+        setFilterStates={() => {}}
+        setSelectedFilters={() => {}}
+      />
+      <ResourceTableHeader
+        value={'projects'}
+        title='Projects'
+        titleIcon={<img src={projectHeaderIcon} alt='project-header-icon' />}
+        headerButtons={headerButtons}
+      />
+      <ListTable
+        data={data?.projects as any}
+        columns={projectColumns}
+        actionMenuItems={actionMenuItems}
+        pagination={true}
+        rowsPerPage={rowsPerPage}
+        rowsPerPageOptions={[25, 30, 40, 50, 100]}
+        sortable={true}
+        isLoading={isLoading}
+        error={error}
+        rowIdentifier='rid'
+        setCurrentPage={setCurrentPage}
+        setSortOrder={setSortOrder}
+        setSortField={setSortField}
+        setRowsPerPage={setRowsPerPage}
+        sortField={sortField}
+        sortOrder={sortOrder}
+        currentPage={currentPage}
+        totalCount={data?.count || 0}
+      />
     </div>
   );
 };

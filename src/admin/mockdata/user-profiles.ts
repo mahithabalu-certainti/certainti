@@ -1,6 +1,6 @@
-import { UserProfileApiResponse } from '../types/manage-user';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-export const mockUserProfiles: UserProfileApiResponse = {
+export const mockUserProfiles: any = {
   statusCode: 200,
   statusCodeValue: 'Success',
   statusMessage: 'Success',

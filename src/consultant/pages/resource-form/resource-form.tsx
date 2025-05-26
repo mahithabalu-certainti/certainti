@@ -36,7 +36,10 @@ import {
   transformSkillData,
 } from './utils.tsx';
 import { SkillSubtype, SkillType } from '../../types/resource.ts';
-import { formatDateToMMDDYYYY, formatDateToMMDDYYYYWithTime } from '../account-details-sidebar/sidebar-pages/resources/utils.tsx';
+import {
+  formatDateToMMDDYYYY,
+  formatDateToMMDDYYYYWithTime,
+} from '../account-details-sidebar/sidebar-pages/resources/utils.tsx';
 
 const ResourceForm: React.FC = () => {
   // Refs
@@ -47,7 +50,7 @@ const ResourceForm: React.FC = () => {
     state: '',
   });
   const [currentSkillType, setCurrentSkillType] = useState({
-    skillSubType:'',
+    skillSubType: '',
     skill_type: '',
     skill_sub_type: '',
   });
@@ -63,18 +66,23 @@ const ResourceForm: React.FC = () => {
   const [resourceDetails, setResourceDetails] = useState<any>(null);
   const accountId = searchParams.get('account_id');
   const [skillSubTypeData, setSkillSubTypeData] = useState<SelectOption[]>([]);
-  const [isResourceFullNameEmpty, setIsResourceFullNameEmpty] = useState<boolean>(false);
-  const [isAnyResourceNameFilled, setIsAnyResourceNameFilled] = useState<boolean>(false);
-  const [currentResource, setCurrentResource] = useState<{ resource_firstname: string; resource_lastname: string; }>({
+  const [isResourceFullNameEmpty, setIsResourceFullNameEmpty] =
+    useState<boolean>(false);
+  const [isAnyResourceNameFilled, setIsAnyResourceNameFilled] =
+    useState<boolean>(false);
+  const [currentResource, setCurrentResource] = useState<{
+    resource_firstname: string;
+    resource_lastname: string;
+  }>({
     resource_firstname: '',
     resource_lastname: '',
   });
-  const [disableOrgname, setDisableOrgname] = useState<string>("");
+  const [disableOrgname, setDisableOrgname] = useState<string>('');
   // Derived values
   const isEditView = location.pathname.includes('/edit');
   const accountData = isEditView
-  ? location?.state?.accountDetails?.data?.accountById
-  : location?.state?.accountDetails?.data?.accountById;
+    ? location?.state?.accountDetails?.data?.accountById
+    : location?.state?.accountDetails?.data?.accountById;
   const resourceName = isEditView
     ? location?.state?.resource?.resource_fullname
     : 'New Resource';
@@ -107,7 +115,7 @@ const ResourceForm: React.FC = () => {
   const { data: resource, isSuccess } = useResourceDetail(
     resourceId || location?.state?.resource?.rid || resourceRId,
     location?.state?.accountDetails?.data?.accountById?.r_number ||
-    accountNumber
+      accountNumber
   );
 
   useEffect(() => {
@@ -121,41 +129,52 @@ const ResourceForm: React.FC = () => {
       total_years_experience: resourceDetailsData?.resource_total_experience,
       total_years_in_org:
         resourceDetailsData?.resource_total_experience_organization,
-        Record_id : resourceDetailsData?.rid,
-        Resource_id : resourceDetailsData?.r_number,
-        Created_On : formatDateToMMDDYYYYWithTime(resourceDetailsData?.created_datetime),
-        Created_By : resourceDetailsData?.created_by,
-        Updated_On : formatDateToMMDDYYYYWithTime(resourceDetailsData?.modified_datetime),
-        Updated_By : resourceDetailsData?.modified_by,
-        resource_name:
-        resourceDetailsData?.resource_firstname && resourceDetailsData?.resource_lastname
-          ? ""
-          : (!resourceDetailsData?.resource_firstname && !resourceDetailsData?.resource_lastname
-              ? resourceDetailsData?.resource_name
-              : resourceDetailsData?.resource_firstname || resourceDetailsData?.resource_lastname || "")
+      Record_id: resourceDetailsData?.rid,
+      Resource_id: resourceDetailsData?.r_number,
+      Created_On: formatDateToMMDDYYYYWithTime(
+        resourceDetailsData?.created_datetime
+      ),
+      Created_By: resourceDetailsData?.created_by,
+      Updated_On: formatDateToMMDDYYYYWithTime(
+        resourceDetailsData?.modified_datetime
+      ),
+      Updated_By: resourceDetailsData?.modified_by,
+      resource_name:
+        resourceDetailsData?.resource_firstname &&
+        resourceDetailsData?.resource_lastname
+          ? ''
+          : !resourceDetailsData?.resource_firstname &&
+              !resourceDetailsData?.resource_lastname
+            ? resourceDetailsData?.resource_name
+            : resourceDetailsData?.resource_firstname ||
+              resourceDetailsData?.resource_lastname ||
+              '',
     };
     setResourceDetails(finalResourceDetails || null);
   }, [resource]);
 
-  useEffect(()=>{
+  useEffect(() => {
     const resourceDetailsData = resource?.data?.resourceDetails;
-    setDisableOrgname(resourceDetailsData?.resource_type || "");
+    setDisableOrgname(resourceDetailsData?.resource_type || '');
     setCurrentResource({
       resource_firstname: resourceDetailsData?.resource_firstname || '',
       resource_lastname: resourceDetailsData?.resource_lastname || '',
     });
 
-    if(isEditView && (resourceDetailsData?.resource_firstname || resourceDetailsData?.resource_lastname)) {
+    if (
+      isEditView &&
+      (resourceDetailsData?.resource_firstname ||
+        resourceDetailsData?.resource_lastname)
+    ) {
       setIsAnyResourceNameFilled(true);
-    }
-    else if (isEditView && resourceDetailsData?.resource_name) {
+    } else if (isEditView && resourceDetailsData?.resource_name) {
       setIsResourceFullNameEmpty(true);
       setIsAnyResourceNameFilled(false);
-    }else {
+    } else {
       setIsAnyResourceNameFilled(false);
       setIsResourceFullNameEmpty(false);
     }
-  },[resource, isEditView])
+  }, [resource, isEditView]);
 
   useEffect(() => {
     const formValues = resource?.data?.resourceDetails;
@@ -182,20 +201,19 @@ const ResourceForm: React.FC = () => {
         skill_details: skillInfo?.skillDetails || '',
         skill_type: skillInfo?.skillTypeId || '',
         skill_sub_type: skillInfo?.skillSubTypeId || '',
-        skill_start_date: formatDateToMMDDYYYY(skillInfo?.startDate as string) || '',
-        skill_type_others: skillInfo?.skillTypeOthers || '', 
+        skill_start_date:
+          formatDateToMMDDYYYY(skillInfo?.startDate as string) || '',
+        skill_type_others: skillInfo?.skillTypeOthers || '',
         skill_subtype_others: skillInfo?.skillSubTypeOthers || '',
         years_of_experience: skillInfo?.yearsOfExperience || '',
         comments: skillInfo?.comments || '',
       };
       setFormValues(skillValues);
-    }
-    else if (formValues && !isEditView) {
+    } else if (formValues && !isEditView) {
       // Set form values with resource details when creataing cost and skill
       setFormValues(formValues);
     }
   }, [state, costDetails, resource]);
-
 
   const countryId = resource?.data?.resourceDetails.resource_country;
   const stateId = resource?.data?.resourceDetails.resource_region;
@@ -212,10 +230,16 @@ const ResourceForm: React.FC = () => {
   const skillSubTypeId = skillInfo.skillSubTypeId;
   useEffect(() => {
     if (skillTypeId) {
-      setCurrentSkillType((prev) => ({ ...prev, skill_type: skillInfo.skillTypeId }));
+      setCurrentSkillType((prev) => ({
+        ...prev,
+        skill_type: skillInfo.skillTypeId,
+      }));
     }
     if (skillSubTypeId) {
-      setCurrentSkillType((prev) => ({ ...prev, skillSubType: skillInfo.skillSubTypeId }));
+      setCurrentSkillType((prev) => ({
+        ...prev,
+        skillSubType: skillInfo.skillSubTypeId,
+      }));
     }
   }, [skillTypeId, skillSubTypeId]);
 
@@ -225,7 +249,8 @@ const ResourceForm: React.FC = () => {
   const states = useFetchState(currentCountry.country);
   const city = useFetchCity(currentCountry.state);
   const { data: skillType } = useFetchResourceSkillType();
-  const { data: skillSubType, isLoading : skillSubTypeLoading } = useFetchResourceSkillSubType(currentSkillType.skill_type);
+  const { data: skillSubType, isLoading: skillSubTypeLoading } =
+    useFetchResourceSkillSubType(currentSkillType.skill_type);
 
   const currency = useFetchCurrency();
   // Mutations
@@ -248,7 +273,7 @@ const ResourceForm: React.FC = () => {
   const memoizedCountry: SelectOption[] = useMemo(() => {
     const countries = allCountries.data?.data.country || [];
     return countries
-      .slice() 
+      .slice()
       .sort((a, b) => a.country_name.localeCompare(b.country_name))
       .map((country) => ({
         label: country.country_name,
@@ -285,22 +310,23 @@ const ResourceForm: React.FC = () => {
 
   const memoizedSkillType: SelectOption[] = useMemo(() => {
     const data = skillType as SkillType[];
-    const convertData = data?.map((skill: SkillType) => ({
-      label: skill.skill_type_name,
-      value: skill.rid,
-    })) || []
-    return convertData
+    const convertData =
+      data?.map((skill: SkillType) => ({
+        label: skill.skill_type_name,
+        value: skill.rid,
+      })) || [];
+    return convertData;
   }, [skillType]);
 
-  useEffect(()=>{
-      const data = skillSubType as SkillSubtype[];
-      const finalData = data?.map((skill: SkillSubtype) => ({
+  useEffect(() => {
+    const data = skillSubType as SkillSubtype[];
+    const finalData =
+      data?.map((skill: SkillSubtype) => ({
         label: skill.skill_subtype_name,
         value: skill.rid,
-      })) || []
-      setSkillSubTypeData(finalData)
-  },[skillSubType])
-  
+      })) || [];
+    setSkillSubTypeData(finalData);
+  }, [skillSubType]);
 
   useEffect(() => {
     if (commonSuccess) {
@@ -376,7 +402,7 @@ const ResourceForm: React.FC = () => {
           {
             resource_id: location?.state?.resource?.rid,
             account_number: accountData?.r_number,
-            text:"sample"
+            text: 'sample',
           }
         );
         updateResource.mutate(updatedData as any);
@@ -406,7 +432,7 @@ const ResourceForm: React.FC = () => {
   };
 
   const onChangeField = ({ fieldName, fieldValue }: OnChange) => {
-    if(fieldName === 'country'){
+    if (fieldName === 'country') {
       setCurrentCountry({
         country: fieldValue as string,
         state: '',
@@ -418,26 +444,29 @@ const ResourceForm: React.FC = () => {
         state: fieldValue as string,
       }));
     }
-    
-    if(fieldName === 'skill_type') {
+
+    if (fieldName === 'skill_type') {
       setCurrentSkillType((prev) => ({
-       ...prev,
+        ...prev,
         skill_sub_type: '',
         [fieldName]: fieldValue as string,
       }));
     }
-    if(fieldName === 'skill_sub_type') {
+    if (fieldName === 'skill_sub_type') {
       setCurrentSkillType((prev) => ({
-       ...prev,
+        ...prev,
         [fieldName]: fieldValue as string,
       }));
     }
-    
+
     if (fieldName === 'resource_name') {
       setIsResourceFullNameEmpty((fieldValue as string).trim() !== '');
     }
-  
-    if (fieldName === 'resource_firstname' || fieldName === 'resource_lastname') {
+
+    if (
+      fieldName === 'resource_firstname' ||
+      fieldName === 'resource_lastname'
+    ) {
       setCurrentResource((prev) => ({
         ...prev,
         [fieldName]: fieldValue as string,
@@ -446,12 +475,14 @@ const ResourceForm: React.FC = () => {
         ...currentResource,
         [fieldName]: fieldValue as string,
       };
-  
-      const hasName = !!updatedValues.resource_firstname?.trim() || !!updatedValues.resource_lastname?.trim();
+
+      const hasName =
+        !!updatedValues.resource_firstname?.trim() ||
+        !!updatedValues.resource_lastname?.trim();
       setIsAnyResourceNameFilled(hasName);
     }
-    if (fieldName ==='resource_type') {
-      setDisableOrgname(String(fieldValue))
+    if (fieldName === 'resource_type') {
+      setDisableOrgname(String(fieldValue));
     }
   };
 
@@ -480,7 +511,7 @@ const ResourceForm: React.FC = () => {
     state?.resourceCreate,
     isResourceFullNameEmpty,
     isAnyResourceNameFilled,
-    currentResource,
+    currentResource
   );
 
   return (
@@ -523,20 +554,7 @@ const ResourceForm: React.FC = () => {
         </div>
         <div className='flex gap-3'>
           <TextButton
-            label='Cancel'
-            variant='outlined'
-            color='inherit'
-            onClick={handleGoBack}
-            sx={{
-              width: '56px',
-              minWidth: '56px',
-              fontSize: '12px',
-              fontWeight: 400,
-            }}
-          />
-          <TextButton
             label='Save'
-            variant='filled'
             loading={
               createResource.isPending ||
               updateResource.isPending ||
@@ -550,6 +568,16 @@ const ResourceForm: React.FC = () => {
               width: '64px',
               minWidth: '64px',
               fontSize: '13px',
+              fontWeight: 400,
+            }}
+          />
+          <TextButton
+            label='Cancel'
+            onClick={handleGoBack}
+            sx={{
+              width: '75px',
+              minWidth: '75px',
+              fontSize: '12px',
               fontWeight: 400,
             }}
           />
@@ -587,6 +615,8 @@ const ResourceForm: React.FC = () => {
         formRef={formRef}
         onChange={onChangeField}
         layout={Layout.TYPE_1}
+        keyStart={state.cost ? 'financial_start_date' : 'resource_startdate'}
+        keyEnd={state.cost ? 'financial_end_date' : 'resource_enddate'}
       />
     </div>
   );

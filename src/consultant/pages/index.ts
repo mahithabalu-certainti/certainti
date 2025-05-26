@@ -7,3 +7,4 @@ export * from './not-found';
 export * from './project-form';
 export * from './resource-form';
 export * from './profile';
+export * from './project';

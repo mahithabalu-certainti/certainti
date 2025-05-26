@@ -31,6 +31,13 @@ export interface GlobalModalProps {
   handleCloseGlobalModal: () => void;
 }
 
+export interface GlobalFilterModalProps {
+  isOpen: boolean;
+  filterId: string | undefined;
+  filterAnchorEl: HTMLButtonElement | null;
+  handleClose: () => void;
+}
+
 export interface FilterEntry {
   account: string;
   child: string[];

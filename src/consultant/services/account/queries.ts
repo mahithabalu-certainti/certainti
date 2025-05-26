@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   AccountFieldsApiResponse,
   CitysApiResponse,
+  ClassificationApiResponse,
   CurrencyApiResponse,
   IndustrysApiResponse,
   ParentAccountApiResponse,
@@ -10,6 +11,7 @@ import {
 import {
   fetchAccountFields,
   fetchCity,
+  fetchClassification,
   fetchCurrency,
   fetchIndustrys,
   fetchParentAccounts,
@@ -48,6 +50,13 @@ export const useFetchCurrency = () => {
   return useQuery<CurrencyApiResponse, Error>({
     queryKey: ['currency'],
     queryFn: fetchCurrency,
+    retry: 0,
+  });
+};
+export const useFetchClassification = () => {
+  return useQuery<ClassificationApiResponse, Error>({
+    queryKey: ['classification'],
+    queryFn: fetchClassification,
     retry: 0,
   });
 };

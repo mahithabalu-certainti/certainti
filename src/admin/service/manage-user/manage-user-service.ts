@@ -10,6 +10,7 @@ import {
   UserRolesApiResponse,
 } from '../../types/manage-user';
 import { getUserExportUrl, getUserListUrl } from '../urls';
+import { generateFile } from '../helpers';
 const ORGANIZATION = import.meta.env.VITE_ORGANIZATION;
 
 export const fetchManageUserList = async (params: UserListParams = {}) => {
@@ -41,31 +42,8 @@ export const useManageUserList = (params: UserListParams = {}) => {
 export const exportUserList = async (params: UserListParams = {}) => {
   const url = getUserExportUrl(params);
   const response = await userServiceApi.get(url);
-
   const base64Data = response.data?.data;
-
-  if (!base64Data) {
-    console.error('No base64 data found in the response.');
-    return;
-  }
-
-  const binary = atob(base64Data);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-
-  const blob = new Blob([bytes], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  });
-
-  // Trigger download
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = 'user_records.xlsx';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  generateFile(base64Data);
 };
 
 export const getUserDetailUrl = (userId: string): string => {
