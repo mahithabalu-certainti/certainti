@@ -11,8 +11,7 @@ import { ActionsDropdown } from '../actions-dropdown';
 import TextButton from '../button/text-button';
 
 const DEFAULT_BUTTON_STYLES = {
-  height: '35px',
-  color: 'secondary.main',
+  height: '32px',
 };
 
 interface HeaderProps {
@@ -121,41 +120,44 @@ export const PageHeader: React.FC<HeaderProps> = ({
           </div>
         </div>
         <div className='flex gap-2 justify-center items-center'>
-          {actionItems.length > 0 && <ActionsDropdown actions={actionItems} />}
+          {actionItems.length > 0 && (
+            <ActionsDropdown actions={actionItems} sx={{ fontWeight: 400 }} />
+          )}
 
           {primaryButton && (
             <TextButton
               label={primaryButton.label}
               onClick={primaryButton.onClick}
-              variant='outlined'
               sx={{
                 ...DEFAULT_BUTTON_STYLES,
                 ...customStyles.button,
-                width: '57px', minWidth: '57px', fontSize:'13px', fontWeight: 400,
+                width: '43px',
+                minWidth: '43px',
+                fontSize: '13px',
+                fontWeight: 400,
               }}
             />
           )}
 
           {(showRefresh || showDownload) && (
-            <div className='flex'>
+            <div className='flex items-center justify-center border border-[#EAF0F5] w-16 h-8'>
               {showRefresh && (
                 <button
-                  className='flex border border-gray-300 p-2 h-[35px] justify-center items-center'
+                  className='flex items-center justify-center w-1/2'
                   onClick={onRefreshClick}
                 >
-                  <img src={refreshIcon} alt='menu-icon' className='h-[15px]' />
+                  <img src={refreshIcon} alt='refresh-icon' className='h-4' />
                 </button>
+              )}
+              {showDownload && showRefresh && (
+                <div className='border-l border-[#EAF0F5] h-full'></div>
               )}
               {showDownload && (
                 <button
-                  className='flex border border-gray-300 p-2 h-[35px] justify-center items-center'
+                  className='flex items-center justify-center w-1/2'
                   onClick={onDownloadClick}
                 >
-                  <img
-                    src={downloadIcon}
-                    alt='menu-icon'
-                    className='h-[18px]'
-                  />
+                  <img src={downloadIcon} alt='download-icon' className='h-4' />
                 </button>
               )}
             </div>
@@ -163,23 +165,25 @@ export const PageHeader: React.FC<HeaderProps> = ({
 
           {showActions && (
             <button
-              className='flex border border-gray-300 p-2 h-[35px] justify-center items-center bg-[#EAF0F6]'
               onClick={onActionsClick}
+              className='flex border border-[#CBD6E2] w-8 h-8 rounded-[2px] justify-center items-center cursor-pointer'
+              style={{
+                background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+              }}
             >
-              <img src={actionIcon} alt='menu-icon' className='h-[13px]' />
+              <img src={actionIcon} alt='menu-icon' className='h-4' />
             </button>
           )}
 
           {showSettings && (
             <button
-              className='flex border border-gray-300 p-2 h-[35px] justify-center items-center bg-[#EAF0F6]'
               onClick={onSettingsClick}
+              className='flex border border-[#CBD6E2] w-8 h-8 rounded-[2px] justify-center items-center cursor-pointer'
+              style={{
+                background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
+              }}
             >
-              <img
-                src={accountSettingsIcon}
-                alt='menu-icon'
-                className='h-[13px]'
-              />
+              <img src={accountSettingsIcon} alt='menu-icon' className='h-4' />
             </button>
           )}
         </div>

@@ -277,26 +277,23 @@ export const AccountForm: React.FC = () => {
         </div>
         <div className='flex gap-3'>
           <TextButton
-            label='Cancel'
-            variant='outlined'
-            color='inherit'
-            onClick={goBack}
+            label='Save'
+            loading={createAccount.isPending || updateAccount.isPending}
+            onClick={handleExternalSubmit}
             sx={{
-              height: '32px',
-              width: '56px',
-              fontSize: '12px',
+              width: '64px',
+              minWidth: '64px',
+              fontSize: '13px',
               fontWeight: 400,
             }}
           />
           <TextButton
-            label='Save'
-            variant='filled'
-            loading={createAccount.isPending || updateAccount.isPending}
-            onClick={handleExternalSubmit}
+            label='Cancel'
+            onClick={goBack}
             sx={{
-              height: '32px',
-              width: '64px',
-              fontSize: '13px',
+              width: '75px',
+              minWidth: '75px',
+              fontSize: '12px',
               fontWeight: 400,
             }}
           />
