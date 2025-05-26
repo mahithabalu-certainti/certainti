@@ -319,9 +319,9 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
         { label: 'Annual Revenue', value: accountById?.annual_revenue },
     ]
     const locationInfo: DetailItem[] = [
-        { label: 'Country', value: accountById?.country.country_name },
-        { label: 'Region', value: accountById?.region.region_name }, // need to inform BE
-        { label: 'Currency', value: accountById?.currency.currency_code },
+        { label: 'Country', value: accountById?.country?.country_name },
+        { label: 'Region', value: accountById?.region?.region_name }, // need to inform BE
+        { label: 'Currency', value: accountById?.currency?.currency_code },
     ]
     const keyContactsList: trasnformedKeyContacts[] | undefined = accountDetails?.keyContacts.map((contact: KeyContactProps) => ({
         keyContactId: contact.r_number,

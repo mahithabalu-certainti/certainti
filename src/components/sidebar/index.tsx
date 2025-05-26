@@ -310,7 +310,6 @@ export const Sidebar: React.FC<SideBarProps> = ({
       sx={{
         '& .MuiDrawer-paper': {
           backgroundColor: 'primary.main',
-          border: 'none',
           color: 'white', // Set text color to white
           border: 'none !important',
           transition: (theme) =>
