@@ -2,7 +2,13 @@ import { MsalProvider } from '@azure/msal-react';
 import React, { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { CreateUser, ManageUserDetails, UserList } from './admin/pages';
+import {
+  CreateUser,
+  ManageUserDetails,
+  ProfileList,
+  CreateProfile,
+  UserList,
+} from './admin/pages';
 import { AppLayout, Toast } from './components';
 import {
   AccountDetails,
@@ -12,7 +18,9 @@ import {
   Login,
   NotFound,
   Profile,
+  ProjectDetails,
   ProjectForm,
+  Projects,
   ResourceForm,
 } from './consultant/pages';
 import Resource from './consultant/pages/account-details-sidebar/sidebar-pages/resources/resources';
@@ -30,9 +38,15 @@ import {
   ADMIN_MANAGE_USER_DETAILS,
   LOGIN,
   MAIN_ROUTE,
+  MANAGE_PROFILE,
+  MANAGE_PROFILE_CREATE,
+  MANAGE_PROFILE_EDIT,
   NOT_MATCH,
   PROFILE,
+  PROJECT,
   PROJECT_CREATE,
+  PROJECT_DETAILS,
+  PROJECT_EDIT,
   ProtectedRoute,
   RESOURCE,
   RESOURCE_CREATE,
@@ -88,7 +102,10 @@ export const App: React.FC<IApp> = ({ instance }) => {
             <Route path={ACCOUNT_CREATE} element={<AccountForm />} />
             <Route path={ACCOUNT_EDIT} element={<AccountForm />} />
             <Route path={ACCOUNT_DETAILS} element={<AccountDetails />} />
+            <Route path={PROJECT} element={<Projects />} />
+            <Route path={PROJECT_DETAILS} element={<ProjectDetails />} />
             <Route path={PROJECT_CREATE} element={<ProjectForm />} />
+            <Route path={ PROJECT_EDIT} element={<ProjectForm />} />
             <Route path={RESOURCE_CREATE} element={<ResourceForm />} />
             <Route path={RESOURCE_EDIT} element={<ResourceForm />} />
             <Route path={RESOURCECOST_CREATE} element={<ResourceForm />} />
@@ -112,6 +129,9 @@ export const App: React.FC<IApp> = ({ instance }) => {
             />
             <Route path={ADMIN_CREATE_USER} element={<CreateUser />} />
             <Route path={ADMIN_EDIT_USER} element={<CreateUser />} />
+            <Route path={MANAGE_PROFILE} element={<ProfileList />} />
+            <Route path={MANAGE_PROFILE_CREATE} element={<CreateProfile />} />
+            <Route path={MANAGE_PROFILE_EDIT} element={<CreateProfile />} />
           </Route>
           {/* Page not found */}
           <Route path={NOT_MATCH} element={<NotFound />} />

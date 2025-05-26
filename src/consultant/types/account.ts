@@ -17,6 +17,11 @@ export interface CurrencyApiResponse extends CommonApiResponse {
     currency: Currencys[];
   };
 }
+export interface ClassificationApiResponse extends CommonApiResponse {
+  data: {
+    projectClassifications: Classification[];
+  };
+}
 
 export interface StatesApiResponse extends CommonApiResponse {
   data: {
@@ -52,6 +57,16 @@ export interface Currencys {
   currency_name: string;
   currency_code: string;
 }
+export interface Industries {
+  rid: string;
+  currency_name: string;
+  currency_code: string;
+}
+export interface Classification {
+  rid: string;
+  classification_name: string;
+  currency_code: string;
+}
 
 export interface GloablAcconunts {
   rid: string;
@@ -81,6 +96,15 @@ export interface Column<T> {
   sortable?: boolean;
 }
 
+export interface AccountColumn {
+  id: string;
+  label: string;
+  width: string;
+  sortId: string;
+  sortable?: boolean;
+  sx?: React.CSSProperties;
+}
+
 export enum Storagetype {
   SeperateDB = 'separate_db',
   StoredDB = 'store_in_parent',
@@ -99,7 +123,7 @@ export enum YesNo {
 export enum KeyContactsUpdate {
   Edit = 'edit',
   Delete = 'delete',
-  Add = 'add'
+  Add = 'add',
 }
 
 export interface AccountById {
@@ -132,6 +156,7 @@ export interface KeyContacts {
   include_in_communication: boolean;
   status: Status;
   action_type?: string;
+  rid?: string;
 }
 
 export interface AccountFieldsTypes {

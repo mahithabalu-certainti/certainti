@@ -167,7 +167,7 @@ export const AccountDetails = () => {
     console.log('Settings clicked');
     // Add settings logic here
   };
-
+  // Set active key from location stat
   useEffect(() => {
     if (location.state?.activeKey) {
       setActiveKey(location.state.activeKey);
@@ -192,7 +192,7 @@ export const AccountDetails = () => {
       case 'attachments':
         return <Attachments />;
       case 'projects':
-        return <Projects />;
+        return <Projects accountDetails={{ ...data, activeKey: 'Projects' }} />;
       case 'cases':
         return <Cases />;
       case 'activities':
@@ -243,7 +243,11 @@ export const AccountDetails = () => {
       />
       <div className='flex flex-row w-full'>
         <div className='flex w-[261px] min-w-[261px] max-w-[261px]'>
-          <Sidebar activeKey={activeKey} onSelect={setActiveKey} />
+          <Sidebar
+            activeKey={activeKey}
+            onSelect={setActiveKey}
+            disble={data?.data?.accountById?.is_parent}
+          />
         </div>
         <div className='flex-1 p-4 overflow-hidden'>
           {isLoading ? (

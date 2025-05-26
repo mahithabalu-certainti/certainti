@@ -5,9 +5,11 @@ export type MenuItem = {
   key: string;
   id: AllModules;
   hide?: boolean;
+  disabled?: boolean;
 };
 
 export type SidebarProps = {
   activeKey: string | null;
   onSelect: (key: string) => void;
+  disble?: boolean;
 };

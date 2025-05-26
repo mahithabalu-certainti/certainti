@@ -1,12 +1,15 @@
 import { Box, Button, Menu, MenuItem } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { styled, SxProps } from '@mui/material/styles';
 import React, { useState } from 'react';
-import { arrowDownIcon, arrowUpIcon } from '../../assets';
+import { arrowUpIcon } from '../../assets';
 import { ActionsDropdownItem } from '../../common-utils';
+import { Theme } from '@emotion/react';
+
 
 interface ActionsDropdownProps {
   variant?: 'filled' | 'outlined';
   actions: ActionsDropdownItem[];
+  sx?: SxProps<Theme>;
 }
 
 const StyledButton = styled(Button)<{ buttontype: 'filled' | 'outlined' }>(
@@ -35,6 +38,7 @@ const StyledButton = styled(Button)<{ buttontype: 'filled' | 'outlined' }>(
 const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
   variant = 'outlined',
   actions,
+  ...rest
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -56,27 +60,18 @@ const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
     <Box>
       <StyledButton
         buttontype={variant}
+        {...rest}
         onClick={handleClick}
         endIcon={
-          open ? (
-            <img
-              src={arrowUpIcon}
-              alt='arrowUp'
-              style={{
-                filter:
-                  'invert(52%) sepia(82%) saturate(749%) hue-rotate(343deg) brightness(97%) contrast(89%)',
-              }}
-            />
-          ) : (
-            <img
-              src={arrowDownIcon}
-              alt='arrowDown'
-              style={{
-                filter:
-                  'invert(52%) sepia(82%) saturate(749%) hue-rotate(343deg) brightness(97%) contrast(89%)',
-              }}
-            />
-          )
+          <img
+            src={arrowUpIcon}
+            alt={open ? 'arrowUp' : 'arrowDown'}
+            style={{
+              filter: "brightness(0) saturate(100%) invert(42%) sepia(11%) saturate(1204%) hue-rotate(169deg) brightness(93%) contrast(87%)",
+              transform: open ? 'rotate(0deg)' : 'rotate(180deg)',
+              transition: 'transform 0.3s ease'
+            }}
+          />
         }
       >
         Actions

@@ -6,25 +6,66 @@ import { AllModules } from '../../../common-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
 
-const menuItems: MenuItem[] = [
-  {
-    name: 'Financial Highlights',
-    key: 'financial',
-    id: AllModules.FINANCIAL_HIGHLIGHTS,
-  },
-  { name: 'Details', key: 'details', id: AllModules.DETAILS },
-  { name: 'Resources', key: 'resources', id: AllModules.RESOURCES },
-  { name: 'Projects', key: 'projects', id: AllModules.PROJECTS },
-  { name: 'Cases', key: 'cases', id: AllModules.CASES },
-  { name: 'Activities', key: 'activities', id: AllModules.ACTIVITIES },
-  { name: 'Notes', key: 'notes', id: AllModules.NOTES },
-  { name: 'Attachments', key: 'attachments', id: AllModules.ATTACHMENTS },
-  { name: 'Checklist', key: 'checklist', id: AllModules.CHECKLISTS },
-  { name: 'Timesheet', key: 'timesheet', id: AllModules.TIMESHEETS },
-  { name: 'Imports', key: 'imports', id: AllModules.IMPORTS },
-];
+const Sidebar: React.FC<SidebarProps> = ({ activeKey, onSelect, disble }) => {
+  const menuItems: MenuItem[] = [
+    {
+      name: 'Financial Highlights',
+      key: 'financial',
+      id: AllModules.FINANCIAL_HIGHLIGHTS,
+      disabled: false,
+    },
+    {
+      name: 'Details',
+      key: 'details',
+      id: AllModules.DETAILS,
+      disabled: false,
+    },
+    {
+      name: 'Resources',
+      key: 'resources',
+      id: AllModules.RESOURCES,
+      disabled: false,
+    },
+    {
+      name: 'Projects',
+      key: 'projects',
+      id: AllModules.PROJECTS,
+      disabled: disble,
+    },
+    { name: 'Cases', key: 'cases', id: AllModules.CASES, disabled: false },
+    {
+      name: 'Activities',
+      key: 'activities',
+      id: AllModules.ACTIVITIES,
+      disabled: false,
+    },
+    { name: 'Notes', key: 'notes', id: AllModules.NOTES, disabled: false },
+    {
+      name: 'Attachments',
+      key: 'attachments',
+      id: AllModules.ATTACHMENTS,
+      disabled: false,
+    },
+    {
+      name: 'Checklist',
+      key: 'checklist',
+      id: AllModules.CHECKLISTS,
+      disabled: false,
+    },
+    {
+      name: 'Timesheet',
+      key: 'timesheet',
+      id: AllModules.TIMESHEETS,
+      disabled: false,
+    },
+    {
+      name: 'Imports',
+      key: 'imports',
+      id: AllModules.IMPORTS,
+      disabled: false,
+    },
+  ];
 
-const Sidebar: React.FC<SidebarProps> = ({ activeKey, onSelect }) => {
   const [accountMenus, setAccountMenus] = useState<MenuItem[]>(menuItems);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -40,6 +81,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeKey, onSelect }) => {
       };
     });
     setAccountMenus(updatedItems);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modules]);
 
   useEffect(() => {
@@ -75,13 +117,16 @@ const Sidebar: React.FC<SidebarProps> = ({ activeKey, onSelect }) => {
 
       {/* List */}
       <ul className='space-y-2 pl-3'>
-        {accountMenus.map((item) => {
+        {menuItems.map((item) => {
           if (item.hide) return null;
           return (
             <li key={item.key}>
               <button
                 onClick={() => handleSelect(item.key)}
-                className={`group w-full flex items-center text-[14px] font-normal gap-2 text-left px-3 py-2 rounded cursor-pointer text-[#2D3E4F] hover:bg-[#0BBFB726] ${activeKey === item.key ? 'bg-[#0BBFB726]' : ''}`}
+                disabled={item.disabled}
+                className={`group w-full flex items-center  text-[14px] font-normal gap-2 text-[#2D3E4F] text-left px-3 py-2 rounded hover:bg-[#0BBFB726] ${
+                  activeKey === item.key ? 'bg-[#0BBFB726]' : ''
+                } ${item.disabled ? 'cursor-not-allowed' : 'cursor-pointer'}  `}
               >
                 <span>{item.name}</span>
                 <img

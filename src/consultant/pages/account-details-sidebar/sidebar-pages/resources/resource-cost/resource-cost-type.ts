@@ -28,37 +28,28 @@ export interface ResourceCostType {
 }
 
 export function convertResourceCost(
-  resourceCost: ResourceCostList[]
-): ResourceCostType[] {
-  const resourceCostList: ResourceCostType[] = [];
+  resourceCost: ResourceCostList
+): ResourceCostType {
+  const convertedCost: ResourceCostType = {
+    accountRid: resourceCost.account_rid,
+    resourceType: resourceCost.resource_type,
+    resourceFullName: resourceCost.resource_name,
+    resourceCostNumber: resourceCost.r_number,
+    resourceRID: resourceCost.resource_rid,
+    resourceRefId: resourceCost.resource_ref_id,
+    currency: resourceCost.currency_code,
+    startDate: resourceCost.effective_date,
+    endDate: resourceCost.end_date,
+    annualCost: resourceCost.annual_cost?.toString() ?? '',
+    semiAnnualCost: resourceCost.semi_annual_cost?.toString() ?? '',
+    monthlyCost: resourceCost.monthly_cost?.toString() ?? '',
+    weeklyCost: resourceCost.weekly_cost?.toString() ?? '',
+    biWeeklyCost: resourceCost.bi_weekly_cost?.toString() ?? '',
+    dailyCost: resourceCost.daily_cost?.toString() ?? '',
+    hourlyCost: resourceCost.hourly_cost?.toString() ?? '',
+    costRid: resourceCost.rid,
+    fiscal_year: resourceCost.fiscal_year,
+  };
 
-  function processResourceCost(cost: ResourceCostList): void {
-    const convertedCost: ResourceCostType = {
-      accountRid: cost.account_rid,
-      resourceType: cost.resource_type,
-      resourceFullName: cost.resource_name,
-      resourceCostNumber: cost.r_number,
-      resourceRID: cost.resource_rid,
-      resourceRefId: cost.resource_ref_id,
-      currency: cost.currency_code,
-      startDate: cost.effective_date,
-      endDate: cost.end_date,
-      annualCost: cost.annual_cost?.toString() ?? '',
-      semiAnnualCost: cost.semi_annual_cost?.toString() ?? '',
-      monthlyCost: cost.monthly_cost?.toString() ?? '',
-      weeklyCost: cost.weekly_cost?.toString() ?? '',
-      biWeeklyCost: cost.bi_weekly_cost?.toString() ?? '',
-      dailyCost: cost.daily_cost?.toString() ?? '',
-      hourlyCost: cost.hourly_cost?.toString() ?? '',
-      costRid: cost.rid,
-      fiscal_year: cost.fiscal_year,
-    };
-    resourceCostList.push(convertedCost);
-  }
-
-  resourceCost.forEach((cost) => {
-    processResourceCost(cost);
-  });
-
-  return resourceCostList;
+  return convertedCost;
 }

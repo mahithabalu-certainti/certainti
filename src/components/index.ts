@@ -14,3 +14,5 @@ export * from './toast-message';
 export * from './truncate-with-tooltip';
 export * from './user-detail';
 export * from './fiscal-dropdown';
+export * from './info-section';
+export * from './side-menu-panel';

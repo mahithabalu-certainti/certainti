@@ -95,7 +95,8 @@ export const AccountForm: React.FC = () => {
             account?.accountDetails?.keyContacts?.[0]?.key_contact_role,
           key_contact_email:
             account?.accountDetails?.keyContacts?.[0]?.key_contact_email,
-          key_contact_status: account?.accountDetails?.keyContacts?.[0]?.status,
+          key_contact_status:
+            account?.accountDetails?.keyContacts?.[0]?.status.toLowerCase(),
           is_primary_contact: account?.accountDetails?.keyContacts?.[0]
             ?.is_primary_contact
             ? 'yes'
@@ -231,7 +232,7 @@ export const AccountForm: React.FC = () => {
       isEditView,
       accountData?.rid,
       isValueUpdateInKeyContact,
-      account?.accountDetails?.keyContacts?.[0]?.key_contact_id
+      account?.accountDetails?.keyContacts?.[0]?.rid
     );
     if (isEditView) {
       updateAccount.mutate(transformData);

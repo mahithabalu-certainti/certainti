@@ -13,7 +13,6 @@ import { RootState } from '../../../../../store/store';
 import { useResourceList } from '../../../../services/resource-list';
 import { AccountData } from '../../../account-details/utils';
 import TabPanel from '../../components/tab';
-import ListTable from '../../components/table';
 import { getResourceColumns } from './columns';
 import ResourceSubComponents from './resource-sub-components';
 import ResourceTableHeader from './resource-table-header';
@@ -27,6 +26,7 @@ import { resetFilter } from '../../components/filter/utils';
 import { ResourceList } from '../../../../types/resource';
 import { AllPermissions, Permissions } from '../../../../../common-service';
 import { checkPermission } from '../../../../../common-utils';
+import { ListTable } from '../../../../../components/table';
 
 const BUTTON_STYLES = {
   height: '26px !important',
@@ -97,7 +97,7 @@ const Resource: React.FC<ResourceProps> = ({
   const [resourceTab, setResourceTab] = useState(resourceTabs);
   const [tabMenus, setTabMenus] = useState<TabMenus[]>(tabs);
   const [viewResourceList, setViewResourceList] = useState<boolean>(true);
-  const [columns, setColumns] = useState<any>([]);
+  // const [columns, setColumns] = useState<any>([]);
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [filterVisibility, setFilterVisibility] = useState<boolean>(true);
   const [value, setValue] = useState(''); // Resource inner tab value
@@ -257,15 +257,9 @@ const Resource: React.FC<ResourceProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resourceData.rid, viewResourceList, value]);
 
-  useEffect(() => {
-    setColumns(
-      getResourceColumns({
-        onResourceIdClick: handleResourceClick,
-        onClickId: 'resource_code',
-      })
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // useEffect(() => {
+  //   setColumns(getResourceColumns(handleResourceClick));
+  // }, []);
 
   useEffect(() => {
     // update sub tab when refereshing the page
@@ -288,12 +282,14 @@ const Resource: React.FC<ResourceProps> = ({
     {
       label: 'Edit',
       onClick: handleEdit,
-      disabled: accountInActive || !isResourceEditEnable,
+      disabled: accountInActive,
+      hide: !isResourceEditEnable,
     },
     {
       label: 'Delete',
       onClick: (row: any) => console.log('Delete', row),
       disabled: accountInActive || !isResourceDeleteEnable,
+      hide: !isResourceDeleteEnable,
     },
     {
       label: 'View Summary',
@@ -446,6 +442,25 @@ const Resource: React.FC<ResourceProps> = ({
     accountDetails?.data?.accountById?.r_number,
   ]);
 
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
+
+  const handleRowsPerPageChange = (newPageSize: number) => {
+    setRowsPerPage(newPageSize);
+    setCurrentPage(1);
+  };
+
+  const handleSortRequest = (property: string, sortOrder: 'asc' | 'desc') => {
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+    setSortOrder(apiOrder);
+    setSortField(property);
+  };
+
+  const getRowId = (row: ResourceList) => row.rid;
+
+  const resourceColumns = getResourceColumns(handleResourceClick);
+
   return (
     <div className='w-full'>
       <TabPanel
@@ -453,7 +468,6 @@ const Resource: React.FC<ResourceProps> = ({
         value={value}
         setAppliedFilters={(data) => {
           setAppliedFilters(data);
-          setShowFilter(false);
         }}
         showFilter={showFilter}
         filterVisibility={
@@ -473,13 +487,7 @@ const Resource: React.FC<ResourceProps> = ({
       {!isResoureceOverviewHide && isResourceViewAllEnable && (
         <>
           <ResourceTableHeader
-            handleFilter={handleFilter}
             value={value}
-            setAppliedFilters={(data) => {
-              setAppliedFilters(data);
-              setShowFilter(false);
-            }}
-            showFilter={showFilter}
             title='Resources'
             resourceNumber={resourceData?.r_number ?? resourceNumber}
             titleIcon={
@@ -488,7 +496,6 @@ const Resource: React.FC<ResourceProps> = ({
             headerButtons={headerButtons}
             showBackArrow={showBackArrow}
             onBackClick={handleBackClick}
-            filterVisibility={filterVisibility}
           />
           {!viewResourceList ? (
             <ResourceSubComponents
@@ -515,26 +522,34 @@ const Resource: React.FC<ResourceProps> = ({
               setSkillOrderBy={setSkillOrderBy}
             />
           ) : (
-            <ListTable
-              data={ResourceList?.resource as any}
-              columns={columns}
-              actionMenuItems={actionMenuItems}
-              pagination={true}
-              rowsPerPage={rowsPerPage}
-              rowsPerPageOptions={[25, 30, 40, 50, 100]}
-              sortable={true}
-              isLoading={isLoading}
-              error={error}
-              rowIdentifier='rid'
-              setCurrentPage={setCurrentPage}
-              setSortOrder={setSortOrder}
-              setSortField={setSortField}
-              setRowsPerPage={setRowsPerPage}
-              sortField={sortField}
-              sortOrder={sortOrder}
-              currentPage={currentPage}
-              totalCount={ResourceList?.count || 0}
-            />
+            <div className='border border-[#CBD6E2]'>
+              <ListTable
+                data={ResourceList?.resource as any}
+                columns={resourceColumns}
+                getRowId={getRowId}
+                hoverHighlight={false}
+                tableStyle={{
+                  borderBottom: '1px solid #CBD6E2',
+                  overflow: 'auto',
+                }}
+                stickyHeader={false}
+                stickyColumnsCount={1}
+                selectable={false}
+                actionWidth={150}
+                actionDisplayMode='dropdown'
+                actionMenuItems={actionMenuItems}
+                loading={isLoading}
+                error={error ? 'Failed to load resource data' : undefined}
+                rowsPerPage={rowsPerPage}
+                currentPage={currentPage}
+                totalItems={ResourceList?.count || 0}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
+                sortBy={sortField}
+                sortOrder={sortOrder}
+                onSort={handleSortRequest}
+              />
+            </div>
           )}
         </>
       )}

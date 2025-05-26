@@ -20,8 +20,24 @@ export const getUserListUrl = (params: UserListParams = {}): string => {
   return `/api/user/list?${buildQueryString(queryParams)}`;
 };
 
+export const getProfileListUrl = (params: UserListParams = {}): string => {
+  const defaultParams: UserListParams = {
+    page: 1,
+    limit: 10,
+    sortBy: 'createdAt',
+    sortOrder: 'DESC',
+    ...params,
+  };
+
+  const queryParams = {
+    ...defaultParams,
+  };
+
+  return `/api/user/profiles?${buildQueryString(queryParams)}`;
+};
+
 export const getUserExportUrl = (params: UserListParams = {}): string => {
-  const queryParams: any = {
+  const queryParams: Record<string, unknown> = {
     organization: ORGANIZATION,
     sortBy: params.sortBy || 'createdAt',
     sortOrder: params.sortOrder || 'DESC',
@@ -29,6 +45,17 @@ export const getUserExportUrl = (params: UserListParams = {}): string => {
   };
 
   return `/api/user/export?${buildQueryString(queryParams)}`;
+};
+
+export const getProfileExportUrl = (params: UserListParams = {}): string => {
+  const queryParams: Record<string, unknown> = {
+    organization: ORGANIZATION,
+    sortBy: params.sortBy || 'createdAt',
+    sortOrder: params.sortOrder || 'DESC',
+    filters: params.filters,
+  };
+
+  return `/api/profile/export?${buildQueryString(queryParams)}`;
 };
 
 export const getUserDetailUrl = (userId: string): string => {

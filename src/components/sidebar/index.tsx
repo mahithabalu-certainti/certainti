@@ -8,6 +8,7 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Tooltip,
 } from '@mui/material';
 import { useState, useEffect, Fragment, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -67,6 +68,8 @@ import {
   MANAGE_USER_ACCESS,
   MANAGE_USER_GROUP,
   TASK_TEMPLATES,
+  PROJECT,
+  SURVEY_TEMPLATES,
 } from '../../routes';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
@@ -93,9 +96,9 @@ const accountNavItems: INavItem[] = [
     id: MenuOption.PROJECTS,
     icon: projectsIcon,
     name: 'Projects',
-    link: NOT_FOUND,
+    link: PROJECT,
     type: 'link',
-    matchLink: '',
+    matchLink: PROJECT,
   },
   {
     id: MenuOption.TIMESHEET,
@@ -244,7 +247,7 @@ const sideNavAdminItems: AdminNavItem[] = [
         name: 'Interaction templates',
         icon: interactionTemplateIcon,
         link: INTERACTION_TEMPLATES,
-        matchLink: '',
+        matchLink: INTERACTION_TEMPLATES,
       },
       {
         id: MenuOption.EMAIL_TEMPLATE,
@@ -257,8 +260,8 @@ const sideNavAdminItems: AdminNavItem[] = [
         id: MenuOption.SURVEY_TEMPLATE,
         name: 'Survey templates',
         icon: surveyTemplateIcon,
-        link: TASK_TEMPLATES,
-        matchLink: TASK_TEMPLATES,
+        link: SURVEY_TEMPLATES,
+        matchLink: SURVEY_TEMPLATES,
       },
       {
         id: MenuOption.TASK_TEMPLATE,
@@ -355,13 +358,14 @@ export const Sidebar: React.FC<SideBarProps> = ({
       // onClose={handleBackdropClick}
       classes={{
         paper: `transform transition-all ease-in-out ${
-          sidebarExpand ? 'w-[240px] duration-400' : 'w-[74px] duration-300'
+          sidebarExpand ? 'w-[200px] duration-400' : 'w-[65px] duration-300'
         }`,
       }}
       sx={{
         '& .MuiDrawer-paper': {
           backgroundColor: 'primary.main',
           color: 'white', // Set text color to white
+          border: 'none !important',
           transition: (theme) =>
             theme.transitions.create(['width', 'background-color'], {
               easing: theme.transitions.easing.sharp,
@@ -370,12 +374,12 @@ export const Sidebar: React.FC<SideBarProps> = ({
         },
       }}
     >
-      <div className='flex items-center justify-center h-[64px]'>
+      <div className='flex items-center justify-center h-[40px]'>
         <Link aria-label='logo'>
           <img
             src={sidebarExpand ? logo : logoSmall}
             alt='logo'
-            className={sidebarExpand ? 'h-[19px]' : 'h-[22px]'}
+            className={sidebarExpand ? 'h-[16px]' : 'h-[18px]'}
           />
         </Link>
       </div>
@@ -383,7 +387,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
       <List
         sx={{
           mx: !sidebarExpand ? 'auto' : 'none',
-          mt: 1,
+          mt: 0.5,
           flexGrow: 1,
           display: 'flex',
           flexDirection: 'column',
@@ -404,7 +408,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                 key={i}
                 disablePadding
                 sx={{
-                  maxWidth: '200px',
+                  maxWidth: '170px',
                   mx: 'auto',
                   ...(isAfterDivider && { mt: 'auto' }),
                 }}
@@ -412,12 +416,13 @@ export const Sidebar: React.FC<SideBarProps> = ({
                 <ListItemButton
                   sx={{
                     justifyContent: !sidebarExpand ? 'center' : 'flex-start',
-                    minHeight: 40,
-                    width: !sidebarExpand ? '40px' : '100%',
-                    height: !sidebarExpand ? '40px' : '40px',
-                    px: '3px',
-                    mt: '9px',
-                    gap: 2,
+                    minHeight: 32,
+                    width: !sidebarExpand ? '32px' : '100%',
+                    height: !sidebarExpand ? '32px' : '32px',
+                    px: '4px',
+                    py: 0,
+                    mt: '4px',
+                    gap: '4px',
                     borderRadius: '2px',
                     backgroundColor:
                       item.matchLink === trimmedPathname(1) ? '#FFFFFF33' : '',
@@ -434,22 +439,51 @@ export const Sidebar: React.FC<SideBarProps> = ({
                     }
                   }}
                 >
-                  <ListItemIcon
-                    sx={{
-                      minWidth: '40px',
-                      height: '40px',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                  <Tooltip
+                    title={item.name}
+                    placement='right-end'
+                    slotProps={{
+                      tooltip: {
+                        sx: {
+                          backgroundColor: '#fff',
+                          color: 'rgba(0, 0, 0, 0.87)',
+                          boxShadow: 2,
+                          borderRadius: '4px',
+                        },
+                      },
+                      popper: {
+                        modifiers: [
+                          {
+                            name: 'offset',
+                            options: {
+                              offset: [30, -40],
+                            },
+                          },
+                        ],
+                      },
                     }}
                   >
-                    <img src={item.icon} alt='menu-icon' className='h-[18px]' />
-                  </ListItemIcon>
+                    <ListItemIcon
+                      sx={{
+                        minWidth: '32px',
+                        height: '26px',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <img
+                        src={item.icon}
+                        alt='menu-icon'
+                        className='h-[16px]'
+                      />
+                    </ListItemIcon>
+                  </Tooltip>
                   {sidebarExpand && (
                     <ListItemText
                       sx={{
                         '& .MuiTypography-root': {
-                          fontWeight: 500,
-                          fontSize: '14px',
+                          fontWeight: 600,
+                          fontSize: '13px',
                         },
                       }}
                       primary={item.name}
@@ -460,16 +494,17 @@ export const Sidebar: React.FC<SideBarProps> = ({
             );
           })}
         {showAdminSidebar && (
-          <ListItem disablePadding sx={{ maxWidth: '200px', mx: 'auto' }}>
+          <ListItem disablePadding sx={{ maxWidth: '170px', mx: 'auto' }}>
             <ListItemButton
               sx={{
                 justifyContent: !sidebarExpand ? 'center' : 'flex-start',
-                minHeight: 40,
-                width: !sidebarExpand ? '40px' : '100%',
-                height: !sidebarExpand ? '40px' : '40px',
-                px: '3px',
-                mt: 1,
-                gap: 2,
+                minHeight: 32,
+                width: !sidebarExpand ? '32px' : '100%',
+                height: !sidebarExpand ? '32px' : '32px',
+                px: '4px',
+                py: 0,
+                mt: 0,
+                gap: '4px',
                 borderRadius: '2px',
                 '&:hover': {
                   backgroundColor: 'transparent',
@@ -478,8 +513,8 @@ export const Sidebar: React.FC<SideBarProps> = ({
             >
               <ListItemIcon
                 sx={{
-                  minWidth: '40px',
-                  height: '40px',
+                  minWidth: '26px',
+                  height: '26px',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
@@ -487,7 +522,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                 <img
                   src={administrationIcon}
                   alt='menu-icon'
-                  className='h-[18px]'
+                  className='h-[16px]'
                 />
               </ListItemIcon>
               {sidebarExpand && (
@@ -495,7 +530,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                   sx={{
                     '& .MuiTypography-root': {
                       fontWeight: 600,
-                      fontSize: '14px',
+                      fontSize: '13px',
                     },
                   }}
                   primary='Administration'
@@ -510,7 +545,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
               <ListItem
                 key={index}
                 disablePadding
-                sx={{ maxWidth: '200px', mx: 'auto' }}
+                sx={{ maxWidth: '170px', mx: 'auto', mt: '4px' }}
               >
                 <ListItemButton
                   sx={{
@@ -519,11 +554,13 @@ export const Sidebar: React.FC<SideBarProps> = ({
                         ? 'none'
                         : 'flex',
                     justifyContent: !sidebarExpand ? 'center' : 'flex-start',
-                    minHeight: 40,
-                    width: !sidebarExpand ? '40px' : '100%',
-                    height: !sidebarExpand ? '40px' : '40px',
-                    px: '3px',
-                    mt: 1,
+                    minHeight: 32,
+                    width: !sidebarExpand ? '32px' : '100%',
+                    height: !sidebarExpand ? '32px' : '32px',
+                    px: '4px',
+                    py: 0,
+                    mt: 0,
+                    gap: '4px',
                     borderRadius: '2px',
                     backgroundColor: item.openStatus ? '#FFFFFF33' : '',
                     '&:hover': {
@@ -535,13 +572,13 @@ export const Sidebar: React.FC<SideBarProps> = ({
                 >
                   <ListItemIcon
                     sx={{
-                      minWidth: '40px',
-                      height: '40px',
+                      minWidth: '26px',
+                      height: '26px',
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <img src={item.icon} alt='menu-icon' className='h-[18px]' />
+                    <img src={item.icon} alt='menu-icon' className='h-[16px]' />
                   </ListItemIcon>
                   {sidebarExpand && (
                     <Box
@@ -554,8 +591,8 @@ export const Sidebar: React.FC<SideBarProps> = ({
                       <ListItemText
                         sx={{
                           '& .MuiTypography-root': {
-                            fontWeight: 400,
-                            fontSize: '14px',
+                            fontWeight: 600,
+                            fontSize: '13px',
                           },
                         }}
                         primary={item.title}
@@ -564,14 +601,14 @@ export const Sidebar: React.FC<SideBarProps> = ({
                         (item.openStatus ? (
                           <img
                             src={adminChevronUpIcon}
-                            alt='down'
-                            className='h-[18px] mr-0.5'
+                            alt='up'
+                            className='h-[16px] mr-0.5'
                           />
                         ) : (
                           <img
                             src={adminChevronDownIcon}
                             alt='down'
-                            className='h-[18px] mr-0.5'
+                            className='h-[16px] mr-0.5'
                           />
                         ))}
                     </Box>
@@ -588,9 +625,10 @@ export const Sidebar: React.FC<SideBarProps> = ({
                         component='div'
                         sx={{
                           fontWeight: 300,
-                          fontSize: '14px',
-                          maxWidth: '200px',
+                          fontSize: '13px',
+                          maxWidth: '170px',
                           mx: 'auto',
+                          mt: '4px',
                         }}
                         disablePadding
                       >
@@ -613,8 +651,8 @@ export const Sidebar: React.FC<SideBarProps> = ({
                         >
                           <ListItemIcon
                             sx={{
-                              minWidth: '40px',
-                              height: '35px',
+                              minWidth: '26px',
+                              height: '26px',
                               alignItems: 'center',
                               justifyContent: 'center',
                             }}
@@ -622,7 +660,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                             <img
                               src={subItem.icon}
                               alt='menu-icon'
-                              className='h-[18px]'
+                              className='h-[16px]'
                               style={{
                                 filter:
                                   !sidebarExpand &&
@@ -652,7 +690,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                                     )
                                       ? 400
                                       : 300,
-                                    fontSize: '14px',
+                                    fontSize: '13px',
                                     color: matchCheck(
                                       subItem,
                                       trimmedPathname(2)

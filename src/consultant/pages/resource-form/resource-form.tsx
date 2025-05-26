@@ -587,6 +587,8 @@ const ResourceForm: React.FC = () => {
         formRef={formRef}
         onChange={onChangeField}
         layout={Layout.TYPE_1}
+        keyStart= {state.cost ?"financial_start_date":"resource_startdate"}
+        keyEnd={state.cost ? "financial_end_date":"resource_enddate" }
       />
     </div>
   );
