@@ -73,6 +73,8 @@ import addIcon from './addicon.svg';
 import eyeIcon from './eye-icon.svg';
 import backIcon from './chevron-double-left.svg';
 import verticalSeparatorIcon from './verticalSeparatorIcon.svg';
+import realatedListDetailsIcon from './related-list-details-icon.svg';
+import detailsKeyContactErrorIcon from './details-key-contact-error-icon.svg';
 
 export {
   accountDetailsIcon,
@@ -102,6 +104,7 @@ export {
   chevronLeftIcon,
   closeCircleIcon,
   closeIcon,
+  detailsKeyContactErrorIcon,
   keyContactRemoveIcon,
   keyContactAddIcon,
   configureSettingIcon,
@@ -142,6 +145,7 @@ export {
   verticalSeparatorIcon,
   resourceHeaderIcon,
   resourceProfileIcon,
+  realatedListDetailsIcon,
   searchBlackIcon,
   searchIcon,
   settingsIcon,

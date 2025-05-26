@@ -104,6 +104,8 @@ export const AccountDetails = () => {
     }
   }, [searchParams]);
 
+  // getting user is inactive error, need to uncomment once details page UI is done
+
   const {
     data,
     isLoading,
@@ -157,7 +159,7 @@ export const AccountDetails = () => {
       case 'financial':
         return <FinancialSummary />;
       case 'details':
-        return <Details />;
+        return <Details accountDetails={{ ...data?.data }} isLoading={isLoading} isError={isError} />;
       case 'resources':
         return (
           <Resources
@@ -213,10 +215,10 @@ export const AccountDetails = () => {
         error={isError}
       />
       <div className='flex flex-row w-full'>
-        <div className='flex w-[181px] min-w-[181px] max-w-[181px]'>
+        <div className='flex w-[200px] min-w-[200px] max-w-[200px]'>
           <Sidebar activeKey={activeKey} onSelect={setActiveKey} />
         </div>
-        <div className='flex-1 p-2 overflow-hidden'>
+        <div className='flex-1 overflow-hidden'>
           {isLoading ? (
             <div className='flex items-center justify-center w-full h-full'>
               <CircularProgress />

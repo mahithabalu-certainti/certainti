@@ -309,6 +309,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
       sx={{
         '& .MuiDrawer-paper': {
           backgroundColor: 'primary.main',
+          border: 'none',
           color: 'white', // Set text color to white
           transition: (theme) =>
             theme.transitions.create(['width', 'background-color'], {
@@ -338,7 +339,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
 
             return (
               <ListItem key={i} disablePadding sx={{
-                maxWidth: '170px', mx: 'auto', ...(isAfterDivider && { mt: 'auto' }),
+                maxWidth: '170px', mx: 'auto', ...(isAfterDivider ? { mt: 'auto' } : { mt: '4px' }),
               }}>
                 <ListItemButton
                   sx={{
@@ -457,7 +458,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
         {showAdminSidebar &&
           adminNavItems.map((item, index) => (
             <div key={index}>
-              <ListItem key={index} disablePadding sx={{ maxWidth: '170px', mx: 'auto' }}>
+              <ListItem key={index} disablePadding sx={{ maxWidth: '170px', mx: 'auto', mt: 1 }}>
                 <ListItemButton
                   sx={{
                     display: !sidebarExpand && !noItemsOpen && !item.openStatus ? 'none' : 'flex',
@@ -537,7 +538,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                     <List
                       key={subIndex}
                       component='div'
-                      sx={{ fontWeight: 300, fontSize: '13px', maxWidth: '170px', mx: 'auto' }}
+                      sx={{ fontWeight: 300, fontSize: '13px', maxWidth: '170px', mx: 'auto', mt: 1 }}
                       disablePadding
                     >
                       <ListItemButton

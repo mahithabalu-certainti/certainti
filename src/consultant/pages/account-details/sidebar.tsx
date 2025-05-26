@@ -50,7 +50,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeKey, onSelect }) => {
             <button
               onClick={() => handleSelect(item.key)}
               className={`${activeKey === item.key ? 'bg-[#0BBFB726] !font-bold' : ''
-                } group w-full flex items-center cursor-pointer text-[14px] font-semibold gap-2 text-[#2D3E4F] text-left px-3 py-2 rounded hover:bg-[#0BBFB726]`}
+                } group w-full flex items-center cursor-pointer text-[14px] font-semibold gap-2 text-[#2D3E4F] text-left pl-7.5 pr-3 py-2 rounded hover:bg-[#0BBFB726]`}
             >
               <span>{item.name}</span>
               <img

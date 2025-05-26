@@ -312,7 +312,7 @@ const Resource: React.FC<ResourceProps> = ({
   ]);
 
   return (
-    <div className='w-full'>
+    <div className='w-full p-2'>
       <TabPanel
         value={value}
         setAppliedFilters={(data) => {

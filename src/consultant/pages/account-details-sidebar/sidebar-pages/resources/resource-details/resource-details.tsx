@@ -83,19 +83,19 @@ const AuditDetailsSection: React.FC<AuditDetailsSectionProps> = ({ title, data }
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* First Column */}
-        <div>
+        <div className='text-sm my-[6px] grid gap-y-3'>
           {columnOneItems.map((item, index) => (
             <AuditItemRow key={`col1-${index}`} item={item} />
           ))}
         </div>
 
         {/* Second Column */}
-        <div>
+        <div className='text-sm my-[6px] grid gap-y-3'>
           {/* First row - Resource Id */}
           <AuditItemRow item={columnTwoItems[0]} />
 
           {/* Second row - Empty space for alignment */}
-          <div>&nbsp;</div>
+          {/* <div>&nbsp;</div> */}
 
           {/* Remaining items */}
           {columnTwoItems.slice(1).map((item, index) => (
@@ -112,7 +112,7 @@ const AuditItemRow: React.FC<{ item: AuditItem }> = ({ item }) => {
   if (!item) return null;
 
   return (
-    <div className="grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2">
+    <div className="grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2 gap-y-3">
       <div className="text-right font-semibold text-[13px] text-[#425A76] pr-1">
         {item.label}
       </div>
@@ -381,6 +381,18 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   const description = CreateSectionData({
     comments: resourceData.comments,
   });
+
+  // const auditInfo = CreateSectionData(
+  //   {
+  //     rid: resourceData.rid,
+  //     r_number: resourceData.r_number,
+  //     created_datetime: resourceData.created_datetime,
+  //     created_by: resourceData.created_by,
+  //     modified_datetime: resourceData.modified_datetime,
+  //     modified_by: resourceData.modified_by,
+  //   }
+  // )
+
 
   return (
     <div className='max-w-6xl px-6 py-2'>
