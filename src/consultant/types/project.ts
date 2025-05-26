@@ -1,4 +1,4 @@
-export interface ProjectList {
+export type ProjectList = {
   rid: string;
   account_rid?: string;
   account_number: string;
@@ -38,7 +38,7 @@ export interface ProjectList {
   fiscal_year: string;
   name?: string;
   project_code?: string;
-}
+};
 
 export type Project = {
   id: string;

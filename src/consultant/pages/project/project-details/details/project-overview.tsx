@@ -48,8 +48,6 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   onBackClick,
   projectDetails,
 }) => {
-  console.log('projectDetails', projectDetails);
-
   const DetailsSection: React.FC<{
     title: string;
     data: DetailItem[];
