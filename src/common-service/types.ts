@@ -1,12 +1,25 @@
 import dayjs from 'dayjs';
 import { User } from '../admin/types/admin-user-detail';
+import { Privilege } from '../admin/types';
 
 export interface CommonApiResponse {
   statusCode: number;
   statusCodeValue: string;
   statusMessage: string;
 }
-
+export interface CommonProfileApiResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: createProfileData;
+}
+export interface createProfileData {
+  profile_id: string;
+  profile_number: string;
+  profile_name: string;
+  source_profile_id: string;
+  privileges: Privilege[]; 
+}
 export interface GetAllCountriesApiResponse extends CommonApiResponse {
   data: {
     country: Country[];
