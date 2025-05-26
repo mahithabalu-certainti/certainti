@@ -254,26 +254,23 @@ const ProjectForm: React.FC = () => {
         </div>
         <div className='flex gap-3'>
           <TextButton
-            label='Cancel'
-            variant='outlined'
-            color='inherit'
-            onClick={goBack}
-            sx={{
-              height: '32px',
-              width: '56px',
-              fontSize: '12px',
-              fontWeight: 400,
-            }}
-          />
-          <TextButton
             label='Save'
-            variant='filled'
             loading={createProject.isPending || updateProject.isPending}
             onClick={handleExternalSubmit}
             sx={{
               height: '32px',
               width: '64px',
               fontSize: '13px',
+              fontWeight: 400,
+            }}
+          />
+          <TextButton
+            label='Cancel'
+            onClick={goBack}
+            sx={{
+              height: '32px',
+              width: '75px',
+              fontSize: '12px',
               fontWeight: 400,
             }}
           />

@@ -1,10 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ManageUserIcon } from '../../../../assets/icons';
-import {
-  OnChange,
-  useGetAllCountries,
-} from '../../../../common-service';
+import { OnChange, useGetAllCountries } from '../../../../common-service';
 import { FormBuilder } from '../../../../components';
 import TextButton from '../../../../components/button/text-button';
 import {
@@ -25,8 +22,10 @@ import { UserDetail, UserRole } from '../../../types/manage-user';
 import { FormData } from './form-data';
 
 const HEADER_STYLES = {
-  adminPermission: 'font-medium text-[#7D98B6] text-[11px] leading-5 tracking-normal',
-  manageUser: 'font-semibold text-[20px] text-[#2D3E4F] leading-5 tracking-normal',
+  adminPermission:
+    'font-medium text-[#7D98B6] text-[11px] leading-5 tracking-normal',
+  manageUser:
+    'font-semibold text-[20px] text-[#2D3E4F] leading-5 tracking-normal',
 };
 
 export const CreateUser: React.FC = () => {
@@ -178,7 +177,7 @@ export const CreateUser: React.FC = () => {
   };
 
   const onChangeField = ({ fieldName, fieldValue }: OnChange) => {
-    if(fieldName === 'country'){
+    if (fieldName === 'country') {
       setCurrentCountry({
         country: fieldValue as string,
         state: '',
@@ -202,21 +201,29 @@ export const CreateUser: React.FC = () => {
         {/* Header Section */}
         <div className='w-full min-h-[75px] h-[75px] px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
           <div className='flex items-center gap-2'>
-            <img src={ManageUserIcon} alt='manage user' className='h-8 w-8 rounded'/>
+            <img
+              src={ManageUserIcon}
+              alt='manage user'
+              className='h-8 w-8 rounded'
+            />
             <div className='flex flex-col mb-1'>
-            <div className={HEADER_STYLES.adminPermission}>
-              Admin Permission
+              <div className={HEADER_STYLES.adminPermission}>
+                Admin Permission
+              </div>
+              <div className={HEADER_STYLES.manageUser}>Manage User</div>
             </div>
-            <div className={HEADER_STYLES.manageUser}>Manage User</div>
-          </div>
           </div>
           <div className='flex gap-2 items-center'>
             <TextButton
               label='Back'
-              variant='outlined'
-              color='inherit'
               onClick={goBack}
-              sx={{ width: '45px', minWidth: '45px', fontWeight:400,fontSize: '12px' , height: '32px'}}
+              sx={{
+                width: '49px',
+                minWidth: '49px',
+                fontWeight: 700,
+                fontSize: '13px',
+                height: '32px',
+              }}
             />
           </div>
         </div>
@@ -228,20 +235,37 @@ export const CreateUser: React.FC = () => {
             </div>
             <div className='flex gap-2 m-2'>
               <TextButton
-                label='Cancel'
-                variant='outlined'
-                color='inherit'
-                onClick={goBack}
-                sx={{ width: '56px', minWidth: '56px', fontWeight:400, fontSize: '12px' }}
-              />
-              <TextButton
                 label='Save'
-                variant='filled'
                 loading={updateUser.isPending || createUser.isPending}
                 onClick={handleExternalSubmit}
-                sx={{ width: '64px', minWidth: '64px', fontWeight:400, fontSize: '13px' }}
+                sx={{
+                  width: '64px',
+                  minWidth: '64px',
+                  fontWeight: 400,
+                  fontSize: '13px',
+                }}
               />
-              {isEditView && <TextButton label='Delete' variant='outlined' sx={{ width: '73px',minWidth: '73px', fontWeight:400, fontSize: '13px' }}/>}
+              {isEditView && (
+                <TextButton
+                  label='Delete'
+                  sx={{
+                    width: '75px',
+                    minWidth: '75px',
+                    fontWeight: 400,
+                    fontSize: '13px',
+                  }}
+                />
+              )}
+              <TextButton
+                label='Cancel'
+                onClick={goBack}
+                sx={{
+                  width: '75px',
+                  minWidth: '75px',
+                  fontWeight: 400,
+                  fontSize: '13px',
+                }}
+              />
             </div>
           </div>
           <FormBuilder

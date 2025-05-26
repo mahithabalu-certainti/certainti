@@ -31,14 +31,20 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
   value,
   resourceNumber,
 }) => {
-
   return (
     <div className='border-t border-[1px] border-b-0 border-[#CBD6E2] rounded-tl-[2px] h-[50px] rounded-tr-[2px]'>
       <div className='flex items-center justify-between h-full px-4'>
         <div className='flex items-center gap-2'>
           {showBackArrow && (
-            <div className='cursor-pointer w-[24px] h-[24px] flex justify-center items-center -ml-2' onClick={onBackClick}>
-              <img src={leftArrowIcon} className='h-[14px]' alt='leftArrowIcon' />
+            <div
+              className='cursor-pointer w-[24px] h-[24px] flex justify-center items-center -ml-2'
+              onClick={onBackClick}
+            >
+              <img
+                src={leftArrowIcon}
+                className='h-[14px]'
+                alt='leftArrowIcon'
+              />
             </div>
             //   <button
             //     onClick={onBackClick}
@@ -49,13 +55,14 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
             //   </button>
           )}
           {titleIcon && (
-            < div className='w-[24px] h-[24px] flex items-center justify-center'>
+            <div className='w-[24px] h-[24px] flex items-center justify-center'>
               {titleIcon}
             </div>
           )}
           <h1 className='text-[14px] font-medium text-[#2D3E4F]'>{title}</h1>
           <div className='text-[14px] font-medium text-[#2D3E4F]'>
-          {(value === 'details' || value === 'cost' || value === 'skill') && resourceNumber}
+            {(value === 'details' || value === 'cost' || value === 'skill') &&
+              resourceNumber}
           </div>
         </div>
 
@@ -65,7 +72,6 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
               <TextButton
                 key={`header-button-${index}`}
                 label={button.label}
-                variant={button.variant}
                 onClick={
                   button.label.toLowerCase() === 'view'
                     ? toggleViewMode

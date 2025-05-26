@@ -285,7 +285,6 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
                 <TextButton
                   key={`header-button-${index}`}
                   label={button.label}
-                  variant={button.variant}
                   onClick={
                     button.label.toLowerCase() === 'view'
                       ? toggleViewMode
