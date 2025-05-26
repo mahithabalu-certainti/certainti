@@ -6,11 +6,11 @@ import {
   accountSettingsIcon,
   actionIcon,
   downloadIcon,
-  filterIcon,
+  newFilterIcon,
   projectDetailsIcon,
   refreshIcon,
 } from '../../../../assets';
-import { ActionsDropdown, Filter } from '../../../../components';
+import { ActionsDropdown, FilterModal } from '../../../../components';
 import TextButton from '../../../../components/button/text-button';
 import { getProjectFilterFields } from './helpers';
 import { ProjectTable } from './table/project-table';
@@ -22,8 +22,6 @@ const BUTTON_STYLES = {
 
 export const Projects: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [isFilterOpen, setIsFilterOpen] = useState<boolean>(true);
   const [page, setPage] = useState<number>(1);
   const [totalCount, setTotalCount] = useState<number>(0);
   const [tableParams, setTableParams] = useState<ProjectListParams>({
@@ -33,6 +31,17 @@ export const Projects: React.FC = () => {
     sortOrder: 'DESC',
     fiscalYear: 0,
   });
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+  const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseFilter = () => {
+    setAnchorEl(null);
+  };
+
+  const isFilterOpen = Boolean(anchorEl);
+  const filterId = isFilterOpen ? 'all-project-filter-popover' : undefined;
 
   const menuItems = [
     {
@@ -59,57 +68,34 @@ export const Projects: React.FC = () => {
 
   return (
     <div className='flex flex-col w-full h-full'>
-      <div className='flex justify-between w-full h-[108px] min-h-[108px] max-h-[108px] border-b-2 border-[#CBD6E2] px-4'>
-        <div className='flex'>
+      <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
+        <div className='flex h-[33px]'>
           <div className='flex items-center justify-center'>
             <img
               src={projectDetailsIcon}
               alt='menu-icon'
-              className='h-8 w-8 bg-[#d16dd3] p-[6px] rounded'
+              className='h-7 w-7 bg-[#d16dd3] p-[7px] rounded'
             />
             <div className='flex flex-col mx-2.5 pb-1'>
-              <div className='font-semibold text-[20px] text-[#2D3E4F]'>
+              <div className='font-bold text-[16px] text-[#2D3E4F]'>
                 All Projects
               </div>
-              <div className='font-medium text-[#7D98B6] text-[11px] -mt-1'>
-                Total Records found -{' '}
-                <span className='font-semibold text-[#2D3E4F]'>
-                  {totalCount}
-                </span>
+              <div className='font-semibold text-[#7D98B6] text-[12px] -mt-1'>
+                {`All Projects • ${totalCount} items`}
               </div>
-            </div>
-            <div
-              className={`flex items-center justify-center border mt-0.5 ml-2 rounded-xs w-8 h-8 cursor-pointer transition-colors duration-300 ${
-                isFilterOpen
-                  ? 'bg-[#EAF0F6] border-[#CBD6E2]'
-                  : 'border-[#EAF0F5]'
-              }`}
-              onClick={() => setIsFilterOpen((prev) => !prev)}
-            >
-              <img src={filterIcon} alt='menu-icon' className='h-[12px]' />
             </div>
           </div>
         </div>
         <div className='flex gap-3 justify-center items-center'>
           <ActionsDropdown actions={menuItems} />
           <TextButton
-            label='New Project'
+            label='Create Project'
             onClick={handleCreateProject}
             sx={{
               ...BUTTON_STYLES,
-              fontSize: '13px',
-              fontWeight: 400,
               width: '114px',
               minWidth: '114px',
-            }}
-          />
-          <TextButton
-            label='Import'
-            sx={{
-              ...BUTTON_STYLES,
-              borderRadius: '2px',
-              fontSize: '13px',
-              fontWeight: 400,
+              maxWidth: '114px',
             }}
           />
           <div className='flex items-center justify-center border border-[#EAF0F5] w-16 h-8'>
@@ -139,40 +125,44 @@ export const Projects: React.FC = () => {
           </div>
         </div>
       </div>
-      <div className='flex flex-1 transition-all duration-300 ease-in-out'>
-        <div
-          className={`flex flex-1 transition-all duration-300 ease-in-out overflow-hidden ${
-            isFilterOpen ? 'w-[260px] opacity-100' : 'hidden w-0 opacity-0'
-          }`}
-        >
-          <Filter
-            setAppliedFilters={setAppliedFilters}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
+      <div className='flex items-center justify-end h-[34px] min-h-[34px] px-4'>
+        <div className='relative'>
+          <button
+            aria-describedby={filterId}
+            className={`w-[64px] h-[26px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
+              ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) ? 'bg-[#F3F3F3]' : ''}`}
+            onClick={handleFilterModal}
+          >
+            <img src={newFilterIcon} alt='filter-icon' />
+            Filter
+            {appliedFilters && Object.keys(appliedFilters).length > 0 && (
+              <div className='absolute -top-[5px] -right-2 w-4 h-4 flex items-center justify-center text-xs'>
+                <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
+                <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
+                  {Object.keys(appliedFilters).length}
+                </span>
+              </div>
+            )}
+          </button>
+          <FilterModal
+            isOpen={isFilterOpen}
+            filterAnchorEl={anchorEl}
+            filterId={filterId}
             filterFields={projectFilterFields}
-            filterLabel='Filter Projects by'
+            setAppliedFilters={setAppliedFilters}
             setPage={setPage}
+            handleCloseFilter={handleCloseFilter}
           />
         </div>
+      </div>
 
-        <div
-          className={`transition-all duration-300 ease-in-out flex flex-1 flex-col border-l-2 border-[#CBD6E2] bg-[#FCFCFC] ${
-            isFilterOpen ? 'w-[calc(100%-260px)]' : 'w-full'
-          } p-5 -ml-[2px]`}
-        >
-          <div className='font-semibold text-[16px] leading-5 text-[#2D3E4F] mb-3.5'>
-            All Projects
-            <span className='font-normal'> • {totalCount} items</span>
-          </div>
-          <div className='border border-[#CBD6E2]'>
-            <ProjectTable
-              appliedFilters={appliedFilters}
-              tableParams={tableParams}
-              setTableParams={setTableParams}
-              setTotalCount={setTotalCount}
-            />
-          </div>
-        </div>
+      <div className='border border-[#CBD6E2]'>
+        <ProjectTable
+          appliedFilters={appliedFilters}
+          tableParams={tableParams}
+          setTableParams={setTableParams}
+          setTotalCount={setTotalCount}
+        />
       </div>
     </div>
   );
