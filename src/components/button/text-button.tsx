@@ -13,11 +13,11 @@ interface TextButtonProps {
 }
 
 const StyledButton = styled(Button)<{
-  variantType: 'contained' | 'text' | 'outlined' | 'filled';
-}>(({ theme, variantType, color }) => {
+  buttontype: 'contained' | 'text' | 'outlined' | 'filled';
+}>(({ theme, buttontype, color }) => {
   const secondaryColor = theme.palette.secondary.main;
   const whiteColor = theme.palette.common.white;
-  const isFilled = variantType === 'filled';
+  const isFilled = buttontype === 'filled';
   const colorInherit = color === 'inherit';
   return {
     backgroundColor: isFilled ? secondaryColor : 'transparent',
@@ -28,7 +28,7 @@ const StyledButton = styled(Button)<{
         ? whiteColor
         : secondaryColor,
     border:
-      variantType === 'outlined'
+      buttontype === 'outlined'
         ? `1px solid ${colorInherit ? theme.palette.grey[400] : secondaryColor}`
         : 'none',
     textTransform: 'none',
@@ -43,7 +43,7 @@ const StyledButton = styled(Button)<{
     '&:disabled': {
       backgroundColor: `${colorInherit ? theme.palette.grey[700] : theme.palette.secondary.light}`,
       color: theme.palette.grey[100],
-    }
+    },
   };
 });
 
@@ -53,7 +53,7 @@ const TextButton: React.FC<TextButtonProps> = ({
   ...rest
 }) => {
   return (
-    <StyledButton variantType={variant} {...rest}>
+    <StyledButton buttontype={variant} {...rest}>
       {label}
     </StyledButton>
   );

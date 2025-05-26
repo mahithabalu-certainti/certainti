@@ -9,15 +9,15 @@ interface ActionsDropdownProps {
   actions: ActionsDropdownItem[];
 }
 
-const StyledButton = styled(Button)<{ variantType: 'filled' | 'outlined' }>(
-  ({ variantType, theme }) => ({
+const StyledButton = styled(Button)<{ buttontype: 'filled' | 'outlined' }>(
+  ({ buttontype, theme }) => ({
     backgroundColor:
-      variantType === 'filled' ? theme.palette.secondary.main : 'transparent',
+      buttontype === 'filled' ? theme.palette.secondary.main : 'transparent',
     height: '32px !important',
     width: '95px',
-    color: variantType === 'filled' ? '#fff' : theme.palette.secondary.main,
+    color: buttontype === 'filled' ? '#fff' : theme.palette.secondary.main,
     border:
-      variantType === 'outlined'
+      buttontype === 'outlined'
         ? `1px solid ${theme.palette.secondary.main}`
         : 'none',
     textTransform: 'none',
@@ -55,7 +55,7 @@ const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
   return (
     <Box>
       <StyledButton
-        variantType={variant}
+        buttontype={variant}
         onClick={handleClick}
         endIcon={
           open ? (

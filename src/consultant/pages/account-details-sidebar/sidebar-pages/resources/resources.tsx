@@ -51,12 +51,40 @@ export interface ResourceTabs {
   hide: boolean;
 }
 
+export interface TabMenus {
+  label: string;
+  value: string;
+  hide: boolean;
+  id: AllPermissions;
+}
+
 const resourceTabs: ResourceTabs[] = [
   { id: AllPermissions.RESOURCES_OVERVIEW, name: 'Overview', hide: false },
   {
     id: AllPermissions.RESOURCE_VIEW_TIMELINE,
     name: 'Timeline',
     hide: false,
+  },
+];
+
+const tabs: TabMenus[] = [
+  {
+    label: 'Details',
+    value: 'details',
+    hide: false,
+    id: AllPermissions.RESOURCE_VIEW,
+  },
+  {
+    label: 'Resource Cost',
+    value: 'cost',
+    hide: false,
+    id: AllPermissions.RESOURCE_COST_VIEW,
+  },
+  {
+    label: 'Resource Skill',
+    value: 'skill',
+    hide: false,
+    id: AllPermissions.RESOURCE_SKILL_VIEW,
   },
 ];
 
@@ -67,6 +95,7 @@ const Resource: React.FC<ResourceProps> = ({
   setExportType,
 }) => {
   const [resourceTab, setResourceTab] = useState(resourceTabs);
+  const [tabMenus, setTabMenus] = useState<TabMenus[]>(tabs);
   const [viewResourceList, setViewResourceList] = useState<boolean>(true);
   const [columns, setColumns] = useState<any>([]);
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -152,16 +181,26 @@ const Resource: React.FC<ResourceProps> = ({
     AllPermissions.RESOURCE_SKILL_CREATE
   );
   const isResoureceOverviewHide = resourceTab[0].hide;
+
   useEffect(() => {
-    const updatedData = resourceTabs.map((tab) => {
-      return {
+    const isHide = (tab: ResourceTabs | TabMenus) => {
+      return (
+        !permission?.find((item) => item.name === tab.id)?.is_enabled || false
+      );
+    };
+    // updated sub tabs(Overview, Timeline)
+    setResourceTab(
+      resourceTabs.map((tab) => ({
         ...tab,
-        hide:
-          !permission?.find((item) => item.name === tab.id)?.is_enabled ||
-          false,
-      };
-    });
-    setResourceTab(updatedData);
+        hide: isHide(tab),
+      }))
+    );
+    // updated sub tabs(Details, Cost, Skill)
+    const updatedTabs = tabs.map((tab) => ({ ...tab, hide: isHide(tab) }));
+    setTabMenus(updatedTabs);
+    // assign default tab value
+    const activeTab = updatedTabs.find((tab) => !tab.hide)?.value;
+    setValue(activeTab as string);
   }, [permission]);
 
   useEffect(() => {
@@ -199,7 +238,6 @@ const Resource: React.FC<ResourceProps> = ({
     setResourceData(row);
     setViewResourceList(!viewResourceList);
     setShowBackArrow(!showBackArrow);
-    // setValue('details');
     setShowFilter(false);
     setFilterVisibility(false);
     resetFilter({
@@ -213,11 +251,11 @@ const Resource: React.FC<ResourceProps> = ({
     // update the URL when open a resource sub tab
     if (!viewResourceList && resourceData.rid) {
       searchParams.set('res_id', resourceData.rid);
-      searchParams.set('tab', 'details');
+      searchParams.set('tab', value);
       navigate({ search: searchParams.toString() });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resourceData.rid, viewResourceList]);
+  }, [resourceData.rid, viewResourceList, value]);
 
   useEffect(() => {
     setColumns(
@@ -226,6 +264,7 @@ const Resource: React.FC<ResourceProps> = ({
         onClickId: 'resource_code',
       })
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -454,6 +493,7 @@ const Resource: React.FC<ResourceProps> = ({
           {!viewResourceList ? (
             <ResourceSubComponents
               permission={permission}
+              tabMenus={tabMenus}
               setFilterVisibility={setFilterVisibility}
               handleTabChange={handleTabChange}
               value={value}
