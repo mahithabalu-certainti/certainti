@@ -197,7 +197,8 @@ class SchemaService {
     limit: number,
     order: any[],
     whereClause: Record<string, string> = {},
-    geoDataSort: string[][]
+    geoDataSort: string[][],
+    accountId: string
   ) {
     try {
       const schemaName = `platform_v2_${accountNumber}`;
@@ -235,6 +236,7 @@ class SchemaService {
       const resources = await Resource.findAll({
         where: {
           ...whereClause,
+          account_rid: accountId,
         },
         order: queryOrder,
         subQuery: false,
@@ -1210,7 +1212,7 @@ class SchemaService {
 
         const fullQuery = `
         SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, 
-        COALESCE(ind.industry_name, ps.industry_name) AS industry_name, 
+        COALESCE(ind.industry_name, ps.industry_name) AS industry_name_other, 
         ps.project_number, ps.project_type, ps.project_client_group , ps.project_group,
         ps.project_classification_rid, pc.classification_name ,
         ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_consultant , ps.r_number,
@@ -1259,7 +1261,7 @@ class SchemaService {
 
         const fullQuery = `
         SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, 
-        COALESCE(ind.industry_name, ps.industry_name) AS industry_name,
+        COALESCE(ind.industry_name, ps.industry_name) AS industry_name_other,
         ps.project_type, ps.project_client_group , ps.project_group,
         ps.project_classification_rid, pc.classification_name ,
         ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_consultant , ps.r_number, ps.project_number,
@@ -1497,64 +1499,118 @@ class SchemaService {
   }
 
   buildRawWhereClause(where: Record<string, any>, search: string) {
-    const conditions: string[] = [];
-    const replacements: any[] = [];
+    const fieldAliasMap: Record<string, string> = {
+      r_number: "ps.r_number",
+      comments: "ps.comments",
+      region_name: "st.state_name",
+      industry_name_other: "COALESCE(ind.industry_name, ps.industry_name)",
+    };
 
-    for (const [field, condition] of Object.entries(where)) {
-      if (typeof condition === "object" && condition !== null) {
-        if ("equals" in condition) {
-          conditions.push(`${field} = ?`);
-          replacements.push(condition.equals);
-        } else if ("contains" in condition) {
-          conditions.push(`${field} ILIKE ?`);
-          replacements.push(`%${condition.contains}%`);
-        } else if ("not_contains" in condition) {
-          conditions.push(`${field} NOT ILIKE ?`);
-          replacements.push(`%${condition.not_contains}%`);
-        } else if ("greater_than" in condition) {
-          conditions.push(`${field} > ?`);
-          replacements.push(condition.greater_than);
-        } else if ("lesser_than" in condition) {
-          conditions.push(`${field} < ?`);
-          replacements.push(condition.lesser_than);
-        } else if (
-          "between" in condition &&
-          Array.isArray(condition.between) &&
-          condition.between.length === 2
-        ) {
-          conditions.push(`${field} BETWEEN ? AND ?`);
-          replacements.push(condition.between[0], condition.between[1]);
-        } else {
-          console.warn(`Unsupported filter on field "${field}"`);
-        }
-      } else {
-        conditions.push(`${field} = ?`);
-        replacements.push(condition);
-      }
-    }
+    const numberFields = [
+      "total_effort",
+      "total_cost",
+      "fiscal_year",
+      "total_fte",
+      "total_fte_cost",
+      "total_sub_con",
+      "total_sub_con_cost",
+      "total_non_labor_cost",
+      "qualified_research_expenditure",
+      "qre",
+    ];
+    const dateFields = ["project_startdate", "project_enddate"];
+    const enumFields = ["project_status", "project_type", "fiscal_year"];
+    const booleanFields = ["is_rd_qualified"];
+
+    const { conditions, replacements } = this.buildWhereCondition(
+      where,
+      dateFields,
+      enumFields,
+      booleanFields,
+      numberFields,
+      fieldAliasMap
+    );
 
     if (search) {
-      const numericSearch = !isNaN(parseInt(search));
-      const baseSearchFields = ["industry_name", "r_number"];
+      const numericSearch = !isNaN(parseFloat(search));
+
       const allProjectFields = [
         "project_code",
         "project_name",
-        "project_description",
-        "spoc_name",
-        "spoc_email",
-        // "project_status",
+        "fiscal_year",
+        "account_name",
+        "industry_name_other",
+        "project_type",
+        "project_client_group",
+        "project_group",
+        "classification_name",
+        "project_status",
+        "project_point_of_contact",
+        "technical_consultant",
+        "r_number",
+        "project_number",
+        "program_name",
+        "project_startdate",
+        "project_enddate",
+        "qualified_research_expenditure",
+        "is_rd_qualified",
+        "qre",
+        "total_cost",
+        "total_effort",
+        "total_fte",
+        "total_fte_cost",
+        "total_sub_con",
+        "total_sub_con_cost",
+        "total_non_labor_cost",
+        "comments",
+        "country_name",
+        "currency_code",
+        "region_name",
+        "financial_consultant",
       ];
 
-      const searchFields = [...baseSearchFields, ...allProjectFields];
+      const searchFieldAliasMap: Record<string, string> = {
+        r_number: "ps.r_number",
+        comments: "ps.comments",
+        region_name: "st.state_name",
+        industry_name_other: "COALESCE(ind.industry_name, ps.industry_name)",
+        project_status: "CAST(ps.project_status AS TEXT)",
+        project_type: "CAST(ps.project_type AS TEXT)",
+        fiscal_year: "CAST(ps.fiscal_year AS TEXT)",
+        is_rd_qualified: "CAST(ps.is_rd_qualified AS TEXT)",
+        project_startdate: "CAST(ps.project_startdate AS TEXT)",
+        project_enddate: "CAST(ps.project_enddate AS TEXT)",
+        total_cost: "CAST(ps.total_cost AS TEXT)",
+        total_effort: "CAST(ps.total_effort AS TEXT)",
+        total_fte: "CAST(ps.total_fte AS TEXT)",
+        total_fte_cost: "CAST(ps.total_fte_cost AS TEXT)",
+        total_sub_con: "CAST(ps.total_sub_con AS TEXT)",
+        total_sub_con_cost: "CAST(ps.total_sub_con_cost AS TEXT)",
+        total_non_labor_cost: "CAST(ps.total_non_labor_cost AS TEXT)",
+        qualified_research_expenditure:
+          "CAST(ps.qualified_research_expenditure AS TEXT)",
+        qre: "CAST(ps.qre AS TEXT)",
+      };
 
-      const searchConditions: string[] = searchFields.map(
-        (field) => `${field} ILIKE ?`
-      );
-      replacements.push(...searchFields.map(() => `%${search}%`));
+      const searchConditions: string[] = [];
+
+      for (const field of allProjectFields) {
+        const qualifiedField = searchFieldAliasMap[field] || field;
+        searchConditions.push(`${qualifiedField} ILIKE ?`);
+        replacements.push(`%${search}%`);
+      }
 
       if (numericSearch) {
-        searchConditions.push("total_cost = ?", "total_effort = ?");
-        replacements.push(parseInt(search), parseInt(search));
+        searchConditions.push(
+          "ps.total_cost = ?",
+          "ps.total_effort = ?",
+          "ps.fiscal_year = ?"
+        );
+        replacements.push(
+          parseFloat(search),
+          parseFloat(search),
+          parseFloat(search)
+        );
       }
 
       conditions.push(`(${searchConditions.join(" OR ")})`);
@@ -1562,6 +1618,181 @@ class SchemaService {
 
     const whereSQL = conditions.length > 0 ? `${conditions.join(" AND ")}` : "";
     return { whereSQL, replacements };
+  }
+
+  buildWhereCondition(
+    where: Record<string, any>,
+    dateFields: string[],
+    enumFields: string[],
+    booleanFields: string[],
+    numberFields: string[],
+    fieldAliasMap: Record<string, string>
+  ) {
+    const conditions: string[] = [];
+    const replacements: any[] = [];
+
+    for (const [field, condition] of Object.entries(where)) {
+      const qualifiedField = fieldAliasMap[field] || field;
+
+      const isNumberField = numberFields.includes(qualifiedField);
+      const isDateField = dateFields.includes(qualifiedField);
+      const isEnumField = enumFields.includes(qualifiedField);
+      const isBooleanField = booleanFields.includes(qualifiedField);
+
+      // Skip empty string values for typed fields to avoid SQL type errors
+      if (
+        (condition?.equals === "" || condition === "") &&
+        (isNumberField || isDateField || isBooleanField)
+      ) {
+        continue;
+      }
+
+      if (typeof condition === "object" && condition !== null) {
+        // NUMBER fields
+        if (isNumberField) {
+          if (condition.equals !== undefined) {
+            conditions.push(`${qualifiedField} = ?`);
+            replacements.push(condition.equals);
+          }
+          if (condition.not_equals !== undefined) {
+            conditions.push(
+              `(${qualifiedField} != ? OR ${qualifiedField} IS NULL)`
+            );
+            replacements.push(condition.not_equals);
+          }
+          if (condition.greater_than !== undefined) {
+            conditions.push(`${qualifiedField} > ?`);
+            replacements.push(condition.greater_than);
+          }
+          if (condition.less_than !== undefined) {
+            conditions.push(`${qualifiedField} < ?`);
+            replacements.push(condition.less_than);
+          }
+          if (
+            Array.isArray(condition.between) &&
+            condition.between.length === 2
+          ) {
+            conditions.push(`${qualifiedField} BETWEEN ? AND ?`);
+            replacements.push(condition.between[0], condition.between[1]);
+          }
+          if (condition.isEmpty === true) {
+            conditions.push(`${qualifiedField} IS NULL`);
+          }
+          continue;
+        }
+
+        // DATE fields
+        if (isDateField) {
+          const normalize = (d: any) => new Date(d);
+          if (condition.equals !== undefined) {
+            const startOfDay = new Date(condition.equals);
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(condition.equals);
+            endOfDay.setHours(23, 59, 59, 999);
+            conditions.push(`${field} BETWEEN ? AND ?`);
+            replacements.push(startOfDay, endOfDay);
+          }
+          if (condition.before !== undefined) {
+            conditions.push(`${field} < ?`);
+            replacements.push(normalize(condition.before));
+          }
+          if (condition.after !== undefined) {
+            conditions.push(`${field} > ?`);
+            replacements.push(normalize(condition.after));
+          }
+          if (
+            Array.isArray(condition.between) &&
+            condition.between.length === 2
+          ) {
+            conditions.push(`${field} BETWEEN ? AND ?`);
+            replacements.push(
+              normalize(condition.between[0]),
+              normalize(condition.between[1])
+            );
+          }
+          if (condition.isEmpty === true) {
+            conditions.push(`${field} IS NULL`);
+          }
+          continue;
+        }
+
+        // ENUM fields
+        if (isEnumField) {
+          if (condition.equals !== undefined) {
+            conditions.push(`${qualifiedField} = ?`);
+            replacements.push(condition.equals);
+          }
+          if (condition.not_equals !== undefined) {
+            conditions.push(`${qualifiedField} != ?`);
+            replacements.push(condition.not_equals);
+          }
+          if (condition.in && Array.isArray(condition.in)) {
+            const placeholders = condition.in.map(() => "?").join(", ");
+            conditions.push(`${qualifiedField} IN (${placeholders})`);
+            replacements.push(...condition.in);
+          }
+          if (condition.isEmpty === true) {
+            conditions.push(`${qualifiedField} IS NULL`);
+          }
+          continue;
+        }
+
+        // BOOLEAN fields
+        if (isBooleanField) {
+          if (condition.isTrue === true) {
+            conditions.push(`${qualifiedField} = ?`);
+            replacements.push(true);
+          }
+          if (condition.isFalse === true) {
+            conditions.push(`${qualifiedField} = ?`);
+            replacements.push(false);
+          }
+          if (condition.isEmpty === true) {
+            conditions.push(`${qualifiedField} IS NULL`);
+          }
+          continue;
+        }
+
+        // STRING fields (default)
+        if (condition.equals !== undefined) {
+          conditions.push(`${qualifiedField} ILIKE ?`);
+          replacements.push(condition.equals);
+        }
+        if (condition.not_equals !== undefined) {
+          conditions.push(
+            `(${qualifiedField} NOT ILIKE ? OR ${qualifiedField} IS NULL)`
+          );
+          replacements.push(condition.not_equals);
+        }
+        if (condition.contains !== undefined) {
+          conditions.push(`${qualifiedField} ILIKE ?`);
+          replacements.push(`%${condition.contains}%`);
+        }
+        if (condition.not_contains !== undefined) {
+          conditions.push(
+            `(${qualifiedField} NOT ILIKE ? OR ${qualifiedField} IS NULL)`
+          );
+          replacements.push(`%${condition.not_contains}%`);
+        }
+        if (condition.isEmpty === true) {
+          conditions.push(
+            `(${qualifiedField} IS NULL OR ${qualifiedField} = '' OR ${qualifiedField} = 'N/A')`
+          );
+        }
+        if (condition.value !== undefined) {
+          conditions.push(`${qualifiedField} = ?`);
+          replacements.push(condition.value);
+        }
+      } else {
+        // Primitive direct equality
+        conditions.push(`${field} = ?`);
+        replacements.push(condition);
+      }
+    }
+    return {
+      conditions,
+      replacements,
+    };
   }
 
   private sortProjectByAccount(
@@ -1924,7 +2155,6 @@ class SchemaService {
     sortOrder: string,
     filters?: Record<string, any>
   ) {
-
     const filterableClientFields = [
       "account_name",
       "country_name",
@@ -1933,7 +2163,7 @@ class SchemaService {
       "technical_consultant",
       "financial_consultant",
       "project_point_of_contact",
-      "classification_name"
+      "classification_name",
     ];
 
     let filteredProjects = [...project];
@@ -1942,10 +2172,10 @@ class SchemaService {
       filteredProjects = filteredProjects.filter((project) => {
         return filterableClientFields.every((key) => {
           const filter = filters[key];
-          if (!filter) return true; 
-  
+          if (!filter) return true;
+
           const value = project[key];
-  
+
           if (filter.equals !== undefined) {
             return value === filter.equals;
           }
@@ -1953,18 +2183,22 @@ class SchemaService {
             return value !== filter.not_equals;
           }
           if (filter.contains !== undefined) {
-            if (typeof value === 'string') {
-              return value.toLowerCase().includes(filter.contains.toLowerCase());
+            if (typeof value === "string") {
+              return value
+                .toLowerCase()
+                .includes(filter.contains.toLowerCase());
             }
             return false;
           }
-          if (filter.not_contains !== undefined && typeof value === 'string') {
-            return !value.toLowerCase().includes(filter.not_contains.toLowerCase());
+          if (filter.not_contains !== undefined && typeof value === "string") {
+            return !value
+              .toLowerCase()
+              .includes(filter.not_contains.toLowerCase());
           }
           if (filter.isEmpty === true) {
-            return value === null || value === '' || value === 'N/A';
+            return value === null || value === "" || value === "N/A";
           }
-  
+
           return true;
         });
       });
