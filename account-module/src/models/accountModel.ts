@@ -73,6 +73,7 @@ export class Account
         r_number: {
           type: DataTypes.STRING(20),
           allowNull: true,
+          unique: true,
         },
         account_name: {
           type: DataTypes.STRING(255),
@@ -182,7 +183,6 @@ export class Account
         },
       }
     );
-
     // Associations
     Account.belongsTo(Account, {
       foreignKey: "parent_account_rid",

@@ -77,6 +77,7 @@ export class User
         r_number: {
           type: DataTypes.STRING(20),
           allowNull: true,
+          unique: true,
         },
         eid: {
           type: DataTypes.INTEGER,
@@ -219,7 +220,7 @@ export async function setupUserSequence(sequelize: Sequelize) {
     await sequelize.query('CREATE SEQUENCE IF NOT EXISTS user_seq START 1');
     
     // Step 2: Set the default value for r_number to use the sequence
-    await sequelize.query(`ALTER TABLE user
+    await sequelize.query(`ALTER TABLE public."user"
       ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.USER} ' || LPAD(nextval('user_seq')::text, 10, '0')`);
     
     console.log('User sequence setup complete');

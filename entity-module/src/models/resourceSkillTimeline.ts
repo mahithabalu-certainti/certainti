@@ -41,6 +41,7 @@ export class ResourceSkillTimeline extends Model<ResourceSkillTimelineAttributes
        r_number: {
         type: DataTypes.STRING(20),
         allowNull: true,
+        unique: true,
        },
        account_rid: {
         type: DataTypes.UUID,

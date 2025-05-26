@@ -106,6 +106,7 @@ export class ResourceFiscal
         r_number: {
           type: DataTypes.STRING(20),
           allowNull: true,
+          unique: true,
         },
         resource_rid: {
           type: DataTypes.UUID,
