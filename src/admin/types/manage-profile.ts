@@ -67,7 +67,6 @@ export interface ProfilePermission {
   profile_name: string;
   privileges: Privilege[];
 }
-
 export interface Privilege {
   rid: string;
   type: 'menu' | 'module' | 'permission' | 'field';
@@ -82,6 +81,7 @@ export interface Privilege {
   is_field_available?: boolean;
   read?: boolean;
   edit?: boolean;
+  has_extended_permission?: boolean;
 }
 export interface ProfileHeaderData {
   profile_id: string;
@@ -97,28 +97,6 @@ export interface ProfileHeaderResponse {
   data: ProfileHeaderData;
 }
 
-// create profile permision api input types 
-interface PrivilegePermission {
-  rid: string;
-  type: 'menu' | 'module' | 'permission' | 'field';
-  menu_id?: string;
-  module_id?: string;
-  permission_id?: string;
-  field_id?: string;
-  name: string;
-  desc: string;
-  is_enabled?: boolean;
-  is_modified?: boolean;
-  is_field_available?: boolean;
-  read?: boolean;
-  edit?: boolean;
-}
-
-export interface ProfilePermission {
-  profile_id: string;
-  profile_name: string;
-  privileges: PrivilegePermission[];
-}
 // create profile permision api response types 
 interface ProfilePermissionResponse {
   profile_id: string;

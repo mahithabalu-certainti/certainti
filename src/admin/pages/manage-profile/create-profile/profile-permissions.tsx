@@ -1,18 +1,8 @@
 import React, { useState } from 'react';
 import { menuArrowRight, menuArrowRightHover, moduleArrowright, checkboxChecked, checkboxUnchecked } from '../../../../assets/icons';
 import ConfirmationPopup from '../../../../common-utils/confirmation-popup';
+import { Privilege } from '../../../types';
  
- 
-type ApiResponse = {
-  statusCode: number;
-  statusCodeValue: string;
-  statusMessage: string;
-  data: {
-    profile_id: string;
-    privileges: Privilege[];
-  };
-  requestId: string;
-};
 
 type BasePrivilege = {
   rid: string;
@@ -51,10 +41,10 @@ type FieldPrivilege = BasePrivilege & {
   edit: boolean;
 };
 
-type Privilege = MenuPrivilege | ModulePrivilege | PermissionPrivilege | FieldPrivilege;
+// type Privilege = MenuPrivilege | ModulePrivilege | PermissionPrivilege | FieldPrivilege;
 
 interface ProfileModuleListProps {
-  createProfilePermissionsData:  ApiResponse | undefined;   
+  createProfilePermissionsData?:  Privilege[];   
   onPrivilegesChange: (updatedPrivileges: Privilege[]) => void;
 }
 
@@ -732,7 +722,7 @@ const handleModuleCheck = (moduleId: string) => (e: React.MouseEvent) => {
 };
 
 export const ProfilePermissions: React.FC<ProfileModuleListProps> = ({ createProfilePermissionsData, onPrivilegesChange }) => { 
-  const privileges = createProfilePermissionsData?.data?.privileges || [];
+  const privileges = createProfilePermissionsData || [];
     
   // const isField = (privilege: Privilege): privilege is FieldPrivilege => {
   //   return privilege.type === 'field' && 

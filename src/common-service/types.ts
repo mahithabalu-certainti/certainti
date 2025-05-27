@@ -20,6 +20,12 @@ export interface createProfileData {
   source_profile_id: string;
   privileges: Privilege[]; 
 }
+export interface UpdateExtendedPermission {
+  profile_id: string;
+  user_id: string;
+  profile_name: string;
+  privileges: Privilege[];
+}
 export interface GetAllCountriesApiResponse extends CommonApiResponse {
   data: {
     country: Country[];

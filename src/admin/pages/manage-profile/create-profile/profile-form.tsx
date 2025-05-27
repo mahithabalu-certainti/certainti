@@ -174,7 +174,6 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ profileOptions, loadin
             </div>
             <TextButton
                 label='Next'
-                variant='outlined'
                 color='inherit'
                 loading={loading}
                 onClick={handleNext}
