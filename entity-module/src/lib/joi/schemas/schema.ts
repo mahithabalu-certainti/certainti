@@ -8,7 +8,7 @@ const isNotFutureDate = (value: string, helpers: Joi.CustomHelpers): any => {
   if (!value) return value;
 
   // Parse the date in MM/DD/YYYY format
-  const [month, day, year] = value.split("/").map(Number);
+  const [year, month, day] = value.split("-").map(Number);
 
   // Create date objects with time set to noon UTC
   const inputDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
@@ -68,6 +68,53 @@ const isEndDateAfterStartDate = (
   const [endMonth, endDay, endYear] = value.split("/").map(Number);
   const [startMonth, startDay, startYear] = context.effective_from_date
     .split("/")
+    .map(Number);
+
+  // Create date objects with time set to noon UTC to avoid timezone issues
+  const endDate = new Date(Date.UTC(endYear, endMonth - 1, endDay, 12, 0, 0));
+  const startDate = new Date(
+    Date.UTC(startYear, startMonth - 1, startDay, 12, 0, 0)
+  );
+
+  // Check if the end date is valid
+  if (isNaN(endDate.getTime())) {
+    return helpers.error("date.invalidFormat", {
+      message: "Invalid effective end date.",
+    });
+  }
+
+  // Check if the start date is valid
+  if (isNaN(startDate.getTime())) {
+    return helpers.error("date.invalidFormat", {
+      message: "Invalid effective start date.",
+    });
+  }
+
+  // Compare dates
+  if (endDate <= startDate) {
+    return helpers.error("any.invalid", {
+      message: "Effective end date must be after the start date.",
+    });
+  }
+
+  return value;
+};
+
+const isEndDateAfterStartDateForProject = (
+  value: string,
+  helpers: Joi.CustomHelpers
+): any => {
+  const context = helpers.state?.ancestors[0];
+
+  // If either value or effective_from_date is missing, return the value as-is
+  if (!context?.project_startdate || !value) {
+    return value;
+  }
+
+  // Parse dates in MM/DD/YYYY format
+  const [endYear, endMonth, endDay] = value.split("-").map(Number);
+  const [startYear, startMonth, startDay] = context.project_startdate
+    .split("-")
     .map(Number);
 
   // Create date objects with time set to noon UTC to avoid timezone issues
@@ -1017,7 +1064,7 @@ const createProjectSchema = Joi.object({
     .optional()
     .messages({
       "string.pattern.base":
-        "project start date must be in the format DD/MM/YYYY",
+        "project start date must be in the format YYYY-MM-DD",
       "any.invalid": "Date cannot be in the future.",
       "date.invalidFormat": "Invalid project start date.",
     }),
@@ -1026,11 +1073,11 @@ const createProjectSchema = Joi.object({
     .optional()
     .allow("")
     .allow(null)
-    .custom(isEndDateAfterStartDate, "End Date Validation")
+    .custom(isEndDateAfterStartDateForProject, "End Date Validation")
     .optional()
     .messages({
       "string.pattern.base":
-        "Project end date must be in the format DD/MM/YYYY",
+        "Project end date must be in the format YYYY-MM-DD",
       "any.invalid": "Project end date must be after the start date.",
       "date.invalidFormat": "Invalid Project end date.",
     }),
@@ -1266,7 +1313,7 @@ const updateProjectSchema = Joi.object({
     .allow(null)
     .custom(isNotFutureDate, "Future Date Validation")
     .messages({
-      "string.pattern.base": "project start date must be in the format DD/MM/YYYY",
+      "string.pattern.base": "project start date must be in the format YYYY-MM-DD",
       "any.invalid": "Date cannot be in the future.",
       "date.invalidFormat": "Invalid project start date.",
     }),
@@ -1276,9 +1323,9 @@ const updateProjectSchema = Joi.object({
     .optional()
     .allow("")
     .allow(null)
-    .custom(isEndDateAfterStartDate, "End Date Validation")
+    .custom(isEndDateAfterStartDateForProject, "End Date Validation")
     .messages({
-      "string.pattern.base": "Project end date must be in the format DD/MM/YYYY",
+      "string.pattern.base": "Project end date must be in the format YYYY-MM-DD",
       "any.invalid": "Project end date must be after the start date.",
       "date.invalidFormat": "Invalid Project end date.",
     }),

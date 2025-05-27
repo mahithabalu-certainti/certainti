@@ -1213,7 +1213,7 @@ class SchemaService {
         const fullQuery = `
         SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, 
         ps.project_id,
-        COALESCE(ind.industry_name, ps.industry_name) AS industry_name_other, 
+        COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other, 
         ps.project_number, ps.project_type, ps.project_client_group , ps.project_group,
         ps.project_classification_rid, pc.classification_name ,
         ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_consultant , ps.r_number,
@@ -1228,7 +1228,7 @@ class SchemaService {
         LEFT JOIN state st ON st.rid = ps.region 
         LEFT JOIN currency curr ON curr.rid = ps.currency 
         left join project_classification pc on pc.rid = ps.project_classification_rid 
-        WHERE acc.created_by = '${userId}' AND acc.rid in (${accountRids}) ${
+        WHERE acc.created_by = '${userId}' AND acc.rid in (${accountRids}) and ind.industry_name != "Other" ${
           fullWhereClause ? "AND " + fullWhereClause : ""
         }
         ORDER BY ${sort.sortCol} ${sort.sortOrder}
@@ -1263,7 +1263,7 @@ class SchemaService {
         const fullQuery = `
         SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, 
         ps.project_id,
-        COALESCE(ind.industry_name, ps.industry_name) AS industry_name_other,
+        COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other,
         ps.project_type, ps.project_client_group , ps.project_group,
         ps.project_classification_rid, pc.classification_name ,
         ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_consultant , ps.r_number, ps.project_number,
@@ -1505,7 +1505,7 @@ class SchemaService {
       r_number: "ps.r_number",
       comments: "ps.comments",
       region_name: "st.state_name",
-      industry_name_other: "COALESCE(ind.industry_name, ps.industry_name)",
+      industry_name_other: "COALESCE(ps.industry_name, ind.industry_name)",
     };
 
     const numberFields = [
@@ -1947,7 +1947,7 @@ class SchemaService {
         updatedProjects = project.map((res: any) => ({
           ...(typeof res.toJSON === "function" ? res.toJSON() : res),
           industry_name:
-            industryMap[res.industry_rid]?.industry_name || res.industry_name,
+            industryMap[res.industry_rid]?.industry_name !== "Other" ? industryMap[res.industry_rid]?.industry_name : res.industry_name,
         }));
       }
 
@@ -2024,7 +2024,7 @@ class SchemaService {
 
   async insertIndustyName(project: any, mainDdSequilze: Sequelize) {
     try {
-      if (project.industry_rid) {
+      if (project.industry_rid && !project.industry_name) {
         const industryResult: any = await mainDdSequilze.query(
           `SELECT industry_name FROM industry WHERE rid = :id`,
           {

@@ -154,8 +154,8 @@ export class ProjectService {
         throw new Error("Project code must be unique.");
       }
 
-      const startDate = projectData.project_startdate !== null ? moment(projectData.project_startdate, "MM/DD/YYYY") : null;
-      const endDate = projectData.project_enddate !== null ? moment(projectData.project_enddate, "MM/DD/YYYY") : null;
+      const startDate = projectData.project_startdate !== null ? moment.utc(projectData.project_startdate, "YYYY-MM-DD") : null;
+      const endDate = projectData.project_enddate !== null ? moment.utc(projectData.project_enddate, "YYYY-MM-DD") : null;
 
       const projectCreationData = {
         project_code: projectData.project_code,
@@ -288,8 +288,8 @@ export class ProjectService {
       const schemaName = `platform_v2_${accountNumber}`;
       const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
 
-      const startDate = projectData.project_startdate !== null ? moment(projectData.project_startdate, "MM/DD/YYYY") : null;
-      const endDate = projectData.project_enddate !== null ? moment(projectData.project_enddate, "MM/DD/YYYY") : null;
+      const startDate = projectData.project_startdate !== null ? moment.utc(projectData.project_startdate, "YYYY-MM-DD") : null;
+      const endDate = projectData.project_enddate !== null ? moment.utc(projectData.project_enddate, "YYYY-MM-DD") : null;
 
       const existingData = await ProjectModel.findOne({
         where: {
@@ -1383,11 +1383,11 @@ export class ProjectService {
       if (isDateField) {
         if (fieldFilter.equals !== undefined) {
           if (fieldFilter.equals !== undefined) {
-            const startOfDay = new Date(fieldFilter.equals);
-            startOfDay.setHours(0, 0, 0, 0);
-            const endOfDay = new Date(fieldFilter.equals);
-            endOfDay.setHours(23, 59, 59, 999);
-        
+            const dateStr = fieldFilter.equals;
+
+            const startOfDay = moment.utc(dateStr, "YYYY-MM-DD").startOf("day").toDate();
+            const endOfDay = moment.utc(dateStr, "YYYY-MM-DD").endOf("day").toDate();
+
             return {
               [Op.between]: [startOfDay, endOfDay],
             };
@@ -1528,13 +1528,12 @@ export class ProjectService {
     };
   }
 
-  private normalizeDate(input: string): string | null {
-    let parsed = moment(input, "MM/DD/YYYY", true);
-    if (parsed.isValid()) {
-      return parsed.format("YYYY-MM-DD");
-    }
+  private normalizeDate(input: string): any | null {
+    let parsed = moment.utc(input, "YYYY-MM-DD", true);
+    if (!parsed.isValid()) throw new Error("Invalid date");
 
-    throw new Error("Invalid Date format");
+    const startOfDay = parsed.startOf("day").toDate();
+    return startOfDay;
   }
 
   private getFilterFields(
