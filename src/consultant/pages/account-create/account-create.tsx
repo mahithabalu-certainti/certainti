@@ -58,36 +58,36 @@ export const AccountForm: React.FC = () => {
       ...account?.accountById,
       ...(account?.accountById &&
         account?.accountDetails && {
-        is_parent: account?.accountById.is_parent ? 'yes' : 'no',
-        autosend_interaction: account?.accountDetails.autosend_interaction
-          ? 'yes'
-          : 'no',
-        auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
-        key_contact_name:
-          account?.accountDetails?.keyContacts?.[0]?.key_contact_name,
-        key_contact_role:
-          account?.accountDetails?.keyContacts?.[0]?.key_contact_role,
-        key_contact_email:
-          account?.accountDetails?.keyContacts?.[0]?.key_contact_email,
-        key_contact_status:
-          account?.accountDetails?.keyContacts?.[0]?.status.toLowerCase(),
-        is_primary_contact: account?.accountDetails?.keyContacts?.[0]
-          ?.is_primary_contact
-          ? 'yes'
-          : 'no',
-        include_in_communication: account?.accountDetails?.keyContacts?.[0]
-          ?.include_in_communication
-          ? 'yes'
-          : 'no',
-        record_id: account?.accountDetails?.rid,
-        account_id: account?.accountById?.r_number,
-        created_on: getDateTimeFormat(account?.accountById?.created_datetime),
-        updated_on: getDateTimeFormat(
-          account?.accountById?.modified_datetime
-        ),
-        created_by: account?.accountDetails?.created_by,
-        updated_by: account?.accountDetails?.modified_by,
-      }),
+          is_parent: account?.accountById.is_parent ? 'yes' : 'no',
+          autosend_interaction: account?.accountDetails.autosend_interaction
+            ? 'yes'
+            : 'no',
+          auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
+          key_contact_name:
+            account?.accountDetails?.keyContacts?.[0]?.key_contact_name,
+          key_contact_role:
+            account?.accountDetails?.keyContacts?.[0]?.key_contact_role,
+          key_contact_email:
+            account?.accountDetails?.keyContacts?.[0]?.key_contact_email,
+          key_contact_status:
+            account?.accountDetails?.keyContacts?.[0]?.status.toLowerCase(),
+          is_primary_contact: account?.accountDetails?.keyContacts?.[0]
+            ?.is_primary_contact
+            ? 'yes'
+            : 'no',
+          include_in_communication: account?.accountDetails?.keyContacts?.[0]
+            ?.include_in_communication
+            ? 'yes'
+            : 'no',
+          record_id: account?.accountDetails?.rid,
+          account_id: account?.accountById?.r_number,
+          created_on: getDateTimeFormat(account?.accountById?.created_datetime),
+          updated_on: getDateTimeFormat(
+            account?.accountById?.modified_datetime
+          ),
+          created_by: account?.accountDetails?.created_by,
+          updated_by: account?.accountDetails?.modified_by,
+        }),
     }),
     [account]
   );
@@ -201,32 +201,47 @@ export const AccountForm: React.FC = () => {
   );
 
   useEffect(() => {
-    setNewContactLength(newKeyContactFields(memoizedRole, isValueUpdateInKeyContact).length);
-    setKeyContacts(newKeyContactFields(memoizedRole, isValueUpdateInKeyContact) as []);
+    setNewContactLength(
+      newKeyContactFields(memoizedRole, isValueUpdateInKeyContact).length
+    );
+    setKeyContacts(
+      newKeyContactFields(memoizedRole, isValueUpdateInKeyContact) as []
+    );
   }, [memoizedRole, isValueUpdateInKeyContact]);
 
   const removeKeyContactInfo = (index: number) => {
     // shallow copy keyContacts array
     const contactsArr = [...keyContacts];
     //Every time new contact is added it add newKeyContacts length fields
-    // and we need to remove same number of fields from the array for that 
+    // and we need to remove same number of fields from the array for that
     // we calculated the length
-    const lengthOfKeyContacts = newKeyContactFields(memoizedRole, isValueUpdateInKeyContact).length;
+    const lengthOfKeyContacts = newKeyContactFields(
+      memoizedRole,
+      isValueUpdateInKeyContact
+    ).length;
     // Finds how many contacts is added like 1, 2, 3 etc
-    const totalContactGrp = Math.floor(keyContacts.length / lengthOfKeyContacts);
+    const totalContactGrp = Math.floor(
+      keyContacts.length / lengthOfKeyContacts
+    );
     // Finds which contact is clicked
-    const clickedGroup = totalContactGrp - 1 - (Math.floor(index / lengthOfKeyContacts));
+    const clickedGroup =
+      totalContactGrp - 1 - Math.floor(index / lengthOfKeyContacts);
     // Finds the index of the first contact in the clicked contact group
-    const groupStartIndex = keyContacts.length - ((clickedGroup + 1) * lengthOfKeyContacts);
+    const groupStartIndex =
+      keyContacts.length - (clickedGroup + 1) * lengthOfKeyContacts;
 
     // Remove the clicked contact group from the array with the added newKeyContacts length
-    contactsArr.splice(groupStartIndex, lengthOfKeyContacts)
+    contactsArr.splice(groupStartIndex, lengthOfKeyContacts);
     setKeyContacts(contactsArr);
   };
+
   const addKeyContactInfo = () => {
-    const newKeyData = newKeyContactFields(memoizedRole, isValueUpdateInKeyContact)
+    const newKeyData = newKeyContactFields(
+      memoizedRole,
+      isValueUpdateInKeyContact
+    );
     setKeyContacts([...keyContacts, ...newKeyData]);
-  }
+  };
 
   const submitData = (formValues: Partial<AccountFormData>) => {
     const transformData = transformFormData(
@@ -345,8 +360,7 @@ export const AccountForm: React.FC = () => {
           removeKeyContactInfo,
           isEditView,
           states.isLoading,
-          showOthersField,
-
+          showOthersField
         )}
         loading={
           allCountries.isLoading ||
@@ -359,11 +373,11 @@ export const AccountForm: React.FC = () => {
           isEditView && accountData
             ? { ...accountData }
             : {
-              status: defaultActiveValue,
-              key_contact_status: defaultActiveValue,
-              autosend_interaction: YesNo.Yes,
-              auto_access_rd: YesNo.Yes,
-            } // Set default values in Create Account
+                status: defaultActiveValue,
+                key_contact_status: defaultActiveValue,
+                autosend_interaction: YesNo.Yes,
+                auto_access_rd: YesNo.Yes,
+              } // Set default values in Create Account
         }
         outData={submitData}
         formRef={formRef}

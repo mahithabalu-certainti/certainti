@@ -99,7 +99,7 @@ export const Projects: React.FC = () => {
               maxWidth: '114px',
             }}
           />
-          <div className='flex items-center justify-center border border-[#EAF0F5] w-16 h-8'>
+          <div className='flex items-center justify-center border border-[#EAF0F5] w-[48px] h-[24px]'>
             <div className='flex items-center justify-center w-1/2'>
               <img src={refreshIcon} alt='refresh-icon' className='h-4' />
             </div>
@@ -108,20 +108,10 @@ export const Projects: React.FC = () => {
               <img src={downloadIcon} alt='download-icon' className='h-4' />
             </div>
           </div>
-          <div
-            className='flex border border-[#CBD6E2] w-8 h-8 rounded-[2px] justify-center items-center'
-            style={{
-              background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-            }}
-          >
+          <div className='flex border border-[#CBD6E2] w-[24px] h-[24px] justify-center items-center bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'>
             <img src={actionIcon} alt='menu-icon' className='h-4' />
           </div>
-          <div
-            className='flex border border-[#CBD6E2] w-8 h-8 rounded-[2px] justify-center items-center'
-            style={{
-              background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-            }}
-          >
+          <div className='flex border border-[#CBD6E2] w-[24px] h-[24px]  justify-center items-center bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'>
             <img src={accountSettingsIcon} alt='menu-icon' className='h-4' />
           </div>
         </div>
@@ -152,7 +142,7 @@ export const Projects: React.FC = () => {
             filterId={filterId}
             filterMenu={projectFilterFields}
             setAppliedFilters={setAppliedFilters}
-            handleFilter={handleCloseFilter}
+            handleCloseFilter={handleCloseFilter}
             setCurrentPage={setPage}
             mode={'date'}
           />

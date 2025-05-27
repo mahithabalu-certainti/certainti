@@ -922,7 +922,15 @@ export const formatFilterForApi = (
         };
       }
     } else if (state.select) {
-      formattedFilters[fieldKey] = state.select.value;
+      console.log('formattedFilters[fieldKey]', formattedFilters[fieldKey]);
+      if (fieldKey === 'is_rd_qualified') {
+        const selectedValue = state.select.value;
+        formattedFilters[fieldKey] = {
+          [selectedValue]: true,
+        };
+      } else {
+        formattedFilters[fieldKey] = state.select.value;
+      }
     }
   });
 
@@ -946,17 +954,8 @@ export const StatusFilterControl: React.FC<{
       )}
       sx={SELECT_STYLES}
       MenuProps={MENU_PROPS}
-      renderValue={(selected) => {
-        if (!selected) {
-          return <span style={{ color: '#aaa' }}>Select an option</span>;
-        }
-        return selected;
-      }}
     >
-      <MenuItem value='' disabled hidden>
-        Select
-      </MenuItem>
-      {menuOption.map((menu) => (
+      {menuOption?.map((menu) => (
         <MenuItem
           key={menu.option}
           value={menu.value}

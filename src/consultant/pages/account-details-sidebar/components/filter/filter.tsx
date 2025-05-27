@@ -400,7 +400,7 @@ const Filter: React.FC<FilterComponentProps> = ({
         return (
           <NumberFilterControl
             filterStates={filterStates}
-            menuOption={numberOptions}
+            menuOption={field.operatorOption || numberOptions}
             fieldName={field.value}
             state={fieldState}
             onOptionChange={handleFilterOptionChange}
@@ -411,7 +411,7 @@ const Filter: React.FC<FilterComponentProps> = ({
         return (
           <EnumFilterControl
             filterStates={filterStates}
-            menuOption={enumOptions}
+            menuOption={field.operatorOption || enumOptions}
             valueOptions={field.options as { option: string; value: string }[]}
             fieldName={field.value}
             state={fieldState}
@@ -435,7 +435,7 @@ const Filter: React.FC<FilterComponentProps> = ({
         return (
           <DateFilterControl
             filterStates={filterStates}
-            menuOption={dateOptions}
+            menuOption={field.operatorOption || dateOptions}
             fieldName={field.value}
             state={fieldState}
             onOptionChange={handleFilterOptionChange}

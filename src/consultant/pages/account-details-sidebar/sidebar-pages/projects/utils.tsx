@@ -17,6 +17,11 @@ export const numberOptions: { option: string; value: string }[] = [
   { option: '↔', value: 'between' },
   { option: '∅', value: 'is_empty' },
 ];
+export const booleanOptions: { option: string; value: string }[] = [
+  { option: '=', value: 'isTrue' },
+  { option: '≠', value: 'isFalse' },
+  { option: '∅', value: 'is_empty' },
+];
 export const textOptions: { option: string; value: string }[] = [
   { option: '=', value: 'equals' },
   { option: '≠', value: 'not_equals' },
@@ -100,9 +105,9 @@ export const projectFilterFields: FieldConfig[] = [
   },
   {
     name: 'is RD Qualifiled ?',
-    value: 'qre',
-    type: 'number',
-    operatorOption: numberOptions,
+    value: 'is_rd_qualified',
+    type: 'select',
+    options: booleanOptions,
   },
   {
     name: 'QRE %',
