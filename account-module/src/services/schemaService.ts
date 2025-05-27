@@ -1,7 +1,9 @@
+import { QueryTypes } from "sequelize";
 import { initSequelize } from "../config/maindbDataSource";
 import { initOrgSequelize } from "../config/orgdbDataSource";
 import { setupKeyContactsSequence } from "../models/projectSummary";
 import { R_NUMBER_PREFIX } from "../utils/constant";
+import { getTableSchemaByEntity} from  "../utils/helpers";
 import {
   IAccount,
   IUpdateAccount,
@@ -32,6 +34,8 @@ class SchemaService {
     await this.createKafkaEventsTable(schemaName, sequelize);
     await this.createKeyContact(schemaName, sequelize);
     await setupKeyContactsSequence(sequelize, schemaName);
+    await this.createClientFirmDocumentTemplate(schemaName,sequelize)
+    await this.createClientFirmDocumentTemplateMetadata(schemaName,sequelize)
   }
 
   private async createAccountDetailsTable(schemaName: string, sequelize: any) {
@@ -262,9 +266,37 @@ class SchemaService {
     `);
   }
 
+  private async createClientFirmDocumentTemplate(schemaName: string, sequelize: any) {
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}"."clientfirm_document_template" (
+        rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        eid UUID,
+        client_document_template_name VARCHAR(100) NOT NULL,
+        account_rid UUID NOT NULL,
+        entity_type VARCHAR(500) NOT NULL,
+        version VARCHAR(10),
+        status VARCHAR(50) NOT NULL
+      );
+    `);
+  }
+  
+  private async createClientFirmDocumentTemplateMetadata(schemaName: string, sequelize: any) {
+    await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}"."clientfirm_document_template_metadata" (
+        rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        eid UUID,
+        account_rid UUID NOT NULL,
+        client_template_rid UUID NOT NULL,
+        sheet_name VARCHAR(100), 
+        col_seq VARCHAR(100) NOT NULL,
+        col_name VARCHAR(100) NOT NULL,
+        col_type VARCHAR(100) NOT NULL
+      );
+    `);
+  }
+  
   private async createKafkaEventsTable(schemaName: string, sequelize: any) {
-
-    // First, create the sequence (if needed)
+     // First, create the sequence (if needed)
     await sequelize.query(`
       CREATE SEQUENCE IF NOT EXISTS "${schemaName}".kafka_events_seq START 1;
     `);
@@ -347,7 +379,92 @@ class SchemaService {
       }
     );
   }
+ async insertClientTemplateMetaDataDetails(
+  account_number: string,
+  entity: string,
+  tableSchema: Array<{ column_name: string; data_type: string }>,
+  client_template_rid: string,
+  account_rid: string,
+) {
 
+  const schemaName = `platform_v2_${account_number}`;
+  const sequelize = await initOrgSequelize();
+  // Generate VALUES for each column in tableSchema
+  const values = tableSchema
+    .map((col, index) => `(
+      :client_template_rid, 
+      :account_rid, 
+      :sheet_name, 
+      :col_seq_${index}, 
+      :col_name_${index}, 
+      :col_type_${index}
+    )`)
+    .join(", ");
+
+  // Build replacements dynamically
+  const replacements: Record<string, any> = {
+    account_rid: account_rid,
+    client_template_rid,
+    sheet_name: entity,
+  };
+
+  // Add column-specific replacements
+  tableSchema.forEach((col, index) => {
+    replacements[`col_seq_${index}`] = index + 1; // Sequence starts at 1
+    replacements[`col_name_${index}`] = col.column_name;
+    replacements[`col_type_${index}`] = col.data_type;
+  });
+
+  // Execute the query
+  await sequelize.query(
+    `
+      INSERT INTO "${schemaName}"."clientfirm_document_template_metadata" (
+      client_template_rid, account_rid, sheet_name, col_seq, col_name, col_type
+      ) 
+      VALUES ${values};
+    `,
+    {
+      replacements,
+      type: QueryTypes.INSERT,
+    }
+  );
+}
+ async insertClientTemplateDetails(
+    account_number: string,
+    template_name:string,
+    entity_type:string,
+    account_rid: string,
+  ): Promise<string> {
+    const schemaName = `platform_v2_${account_number}`;
+    const sequelize = await initOrgSequelize();
+    const [result] = await sequelize.query(
+      `INSERT INTO "${schemaName}"."clientfirm_document_template" (
+        client_document_template_name,account_rid,entity_type,version,status
+        ) 
+        VALUES (
+          :template_name, 
+          :account_rid, :entity_type, :version, 
+          :status
+        )
+         RETURNING rid;`,
+      {
+        replacements: {
+          account_rid: account_rid,
+          template_name: template_name,
+          entity_type,
+          version:'2.0',
+          status:'active'
+        },
+      }
+    );
+    const rows = result as { rid: string }[];
+    // Validate the result
+    if (!rows || rows.length === 0) {
+      throw new Error("Failed to retrieve rid after insertion");
+    }
+    return rows[0].rid; // Return the rid
+ 
+  }
   async manageKeyContacts(
     key_contacts: IKeyContactDetail,
     account_rid: string,
@@ -696,133 +813,133 @@ class SchemaService {
   }
 
   async insertKeyContactInfo(accountData: any) {
-    try {
-      const sequelize = await initSequelize();
-      const orgDbSequelize = await initOrgSequelize();
-  
-      const allAccounts = accountData.flatMap((account: any) => [
-        account.dataValues,
-        ...(account.dataValues.child_accounts || []),
-      ]);
-      
-      // Step 2: Build a map of parent rid to r_number
-      const parentRidToRNumber: Record<string, string> = {};
-      for (const parent of accountData) {
-        parentRidToRNumber[parent.dataValues.rid] = parent.dataValues.r_number;
-      }
-      
-      // Step 3: Build schema to accountRids map
-      const schemaToAccountRids: Record<string, string[]> = {};
-      
-      for (const acc of allAccounts) {
-        let schema: string | undefined;
-      
-        if (acc.storage_type === "store_in_parent") {
-          const parentRNumber = parentRidToRNumber[acc.parent_account_rid];
-          if (!parentRNumber) {
-            console.warn(`Missing parent r_number for account ${acc.rid}`);
-            continue;
-          }
-          schema = parentRNumber;
-        } else {
-          schema = acc.r_number;
+  try {
+    const sequelize = await initSequelize();
+    const orgDbSequelize = await initOrgSequelize();
+
+    const allAccounts = accountData.flatMap((account: any) => [
+      account.dataValues,
+      ...(account.dataValues.child_accounts || []),
+    ]);
+
+    // Step 2: Build a map of parent rid to r_number
+    const parentRidToRNumber: Record<string, string> = {};
+    for (const parent of accountData) {
+      parentRidToRNumber[parent.dataValues.rid] = parent.dataValues.r_number;
+    }
+
+    // Step 3: Build schema to accountRids map
+    const schemaToAccountRids: Record<string, string[]> = {};
+
+    for (const acc of allAccounts) {
+      let schema: string | undefined;
+
+      if (acc.storage_type === "store_in_parent") {
+        const parentRNumber = parentRidToRNumber[acc.parent_account_rid];
+        if (!parentRNumber) {
+          console.warn(`Missing parent r_number for account ${acc.rid}`);
+          continue;
         }
-      
-        if (!schema) continue;
-      
-        if (!schemaToAccountRids[schema]) {
-          schemaToAccountRids[schema] = [];
+        schema = parentRNumber;
+      } else {
+        schema = acc.r_number;
+      }
+
+      if (!schema) continue;
+
+      if (!schemaToAccountRids[schema]) {
+        schemaToAccountRids[schema] = [];
+      }
+
+      schemaToAccountRids[schema].push(acc.rid);
+    }
+
+    // Step 3: Query each schema's key_contact_details
+    let allKeyContacts: any[] = [];
+
+    for (const [schema, accountRids] of Object.entries(schemaToAccountRids)) {
+      const schemaName = `platform_v2_${schema}`;
+      const keyContacts = await orgDbSequelize.query(
+        `SELECT * FROM "${schemaName}".key_contact_details WHERE entity_rid IN (:accountRids) and entity_type = 'Account'`,
+        {
+          replacements: { accountRids },
+          type: "SELECT",
         }
-      
-        schemaToAccountRids[schema].push(acc.rid);
-      }
-  
-      // Step 3: Query each schema's key_contact_details
-      let allKeyContacts: any[] = [];
-  
-      for (const [schema, accountRids] of Object.entries(schemaToAccountRids)) {
-        const schemaName = `platform_v2_${schema}`;
-        const keyContacts = await orgDbSequelize.query(
-          `SELECT * FROM "${schemaName}".key_contact_details WHERE entity_rid IN (:accountRids) and entity_type = 'Account'`,
-          {
-            replacements: { accountRids },
-            type: "SELECT",
-          }
-        );
-        allKeyContacts = allKeyContacts.concat(keyContacts);
-      }
-  
-      // Step 4: Get unique role RIDs
-      const keyContactRoleRids = [
-        ...new Set(
-          allKeyContacts.map((kc: any) => kc.key_contact_role).filter(Boolean)
-        ),
-      ];
-  
-      // Step 5: Query key_contact_role table
-      let keyContactRoleMap: Record<string, string> = {};
-  
-      if (keyContactRoleRids.length > 0) {
-        const roleRows = await sequelize.query(
-          `SELECT rid, role_name FROM key_contact_role WHERE rid IN (:ids)`,
-          {
-            replacements: { ids: keyContactRoleRids },
-            type: "SELECT",
-          }
-        );
-  
-        keyContactRoleMap = Object.fromEntries(
-          roleRows.map((row: any) => [row.rid, row.role_name])
-        );
-      }
-  
+      );
+      allKeyContacts = allKeyContacts.concat(keyContacts);
+    }
+
+    // Step 4: Get unique role RIDs
+    const keyContactRoleRids = [
+      ...new Set(
+        allKeyContacts.map((kc: any) => kc.key_contact_role).filter(Boolean)
+      ),
+    ];
+
+    // Step 5: Query key_contact_role table
+    let keyContactRoleMap: Record<string, string> = {};
+
+    if (keyContactRoleRids.length > 0) {
+      const roleRows = await sequelize.query(
+        `SELECT rid, role_name FROM key_contact_role WHERE rid IN (:ids)`,
+        {
+          replacements: { ids: keyContactRoleRids },
+          type: "SELECT",
+        }
+      );
+
+      keyContactRoleMap = Object.fromEntries(
+        roleRows.map((row: any) => [row.rid, row.role_name])
+      );
+    }
+
       // Step 6: Create accountKeyContactMap
-      const accountKeyContactMap: Record<string, any[]> = {};
-  
-      for (const kc of allKeyContacts) {
-        const contact = kc as {
-          account_rid: string;
-          key_contact_role: string;
-          is_primary_contact: boolean;
-          [key: string]: any;
-        };
-  
-        const enriched = {
-          ...contact,
-          role_name: keyContactRoleMap[contact.key_contact_role] || null,
-        };
-  
-        if (!accountKeyContactMap[contact.entity_rid]) {
-          accountKeyContactMap[contact.entity_rid] = [];
-        }
-  
-        accountKeyContactMap[contact.entity_rid].push(enriched);
+    const accountKeyContactMap: Record<string, any[]> = {};
+
+    for (const kc of allKeyContacts) {
+      const contact = kc as {
+        account_rid: string;
+        key_contact_role: string;
+        is_primary_contact: boolean;
+        [key: string]: any;
+      };
+
+      const enriched = {
+        ...contact,
+        role_name: keyContactRoleMap[contact.key_contact_role] || null,
+      };
+
+      if (!accountKeyContactMap[contact.entity_rid]) {
+        accountKeyContactMap[contact.entity_rid] = [];
       }
-  
+
+      accountKeyContactMap[contact.entity_rid].push(enriched);
+    }
+
       // Step 7: Helper to enrich a single account
       function enrichAccount(account: any) {
-        const keyContacts = accountKeyContactMap[account.rid] || [];
+      const keyContacts = accountKeyContactMap[account.rid] || [];
   
-        const hasTechnical = keyContacts.some(
-          (e: any) =>
-            e.role_name === "Technical Consultant" && e.is_primary_contact
-        );
-        const hasFinancial = keyContacts.some(
-          (e: any) =>
-            e.role_name === "Financial Consultant" && e.is_primary_contact
-        );
-        const hasDeliveryHead = keyContacts.some(
-          (e: any) =>
-            e.role_name === "Client Project Delivery Head" && e.is_primary_contact
-        );
-        const hasFinanceExecutive = keyContacts.some(
-          (e: any) =>
-            e.role_name === "Client Finance Executive" && e.is_primary_contact
-        );
+      const hasTechnical = keyContacts.some(
+        (e: any) =>
+          e.role_name === "Technical Consultant" && e.is_primary_contact
+      );
+      const hasFinancial = keyContacts.some(
+        (e: any) =>
+          e.role_name === "Financial Consultant" && e.is_primary_contact
+      );
+      const hasDeliveryHead = keyContacts.some(
+        (e: any) =>
+          e.role_name === "Client Project Delivery Head" && e.is_primary_contact
+      );
+      const hasFinanceExecutive = keyContacts.some(
+        (e: any) =>
+          e.role_name === "Client Finance Executive" && e.is_primary_contact
+      );
   
         return {
-          ...account,
-          key_contacts: keyContacts,
+        ...account,
+        key_contacts: keyContacts,
           technical_consultant: hasTechnical
             ? "Technical Consultant"
             : "N/A",
@@ -835,22 +952,22 @@ class SchemaService {
           finance_executive: hasFinanceExecutive
             ? "Project Point of Contact"
             : "N/A",
-        };
-      }
-  
+      };
+    }
+
       // Step 8: Enrich all parent and child accounts
       const enrichedAccounts = accountData.map((account: any) => {
         const enrichedParent = enrichAccount(account.dataValues);
         const enrichedChildren = (account.dataValues.child_accounts || []).map((e: any) => enrichAccount(e.dataValues));
-        return {
-          ...enrichedParent,
-          child_accounts: enrichedChildren,
-        };
+    return {
+      ...enrichedParent,
+      child_accounts: enrichedChildren,
+    };
       });
-  
+
       return enrichedAccounts;
-    } catch (err) {
-      throw err;
+  } catch (err) {
+    throw err;
     }
   }
 }

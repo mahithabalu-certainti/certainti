@@ -1,6 +1,7 @@
 import { Op, Sequelize,UniqueConstraintError  } from "sequelize";
 import { HttpStatus } from "../utils/constant";
 import { IAccount, IUpdateAccount,IKeyContactDetail } from "../utils/types";
+import { getTableSchemaByEntity} from  "../utils/helpers";
 import SchemaService from "./schemaService";
 import { models } from "../models";
 import { initOrgSequelize } from "../config/orgdbDataSource";
@@ -548,6 +549,10 @@ class AccountService {
           account.rid,
           userId
         );
+         await this.insertClientTemplateDetails(
+          parent_account?.r_number || '',
+          account.rid
+        );
         await this.schemaService.manageKeyContacts(
           key_contacts,
           account.rid,
@@ -563,6 +568,10 @@ class AccountService {
           accountData,
           account.rid,
           userId
+        );
+         await this.insertClientTemplateDetails(
+          account.r_number || '',
+          account.rid
         );
         await this.schemaService.manageKeyContacts(
           key_contacts,
@@ -588,6 +597,39 @@ class AccountService {
       }
     }
   }
+async insertClientTemplateDetails(
+  account_number: string,
+  account_rid: string,
+) {
+  const entityTypes = ['resource','resource_cost','resource_skill','project','project_resource'];
+  
+  // Loop through each entity type
+  for (const entity of entityTypes) {
+    try {
+      // Step 1: Insert client template details for the current entity
+      const templateDetailsRid = await this.schemaService.insertClientTemplateDetails(
+        account_number,
+        entity,
+        entity,
+        account_rid
+      );
+
+      const tableSchema = getTableSchemaByEntity(entity);
+      // Step 2: Insert metadata using the rid from the previous step
+      await this.schemaService.insertClientTemplateMetaDataDetails(
+        account_number,
+        entity,
+        tableSchema,
+        templateDetailsRid,
+        account_rid
+      );
+    } catch (error) {
+      console.error(`Error processing entity "${entity}":`, error);
+      throw error; // Propagate the error if needed
+    }
+  }
+}
+
 
   async updateAccount(accountData: IUpdateAccount, userId: string): Promise<{
     statusCode: number;
