@@ -55,7 +55,7 @@ const accountSchema = Joi.object({
       "string.pattern.base": "Invalid UUID format for region RID",
       "any.required": "Account country region RID is required",
     }),
-  max_ai_interactions: Joi.number().integer().min(3).max(10).required().label("Max interaction Follow up"),
+  max_ai_interactions: Joi.number().integer().min(1).max(10).required().label("Max interaction Follow up"),
   autosend_interaction: Joi.boolean().required().label("Auto Send Interaction"),
   auto_access_rd: Joi.boolean().required().label("Auto Assessment"),
   fiscal_start_date: Joi.string()
@@ -182,7 +182,7 @@ const updateAccountSchema = Joi.object({
       "string.pattern.base": "Invalid UUID format for region RID",
       "any.required": "Account country region RID is required",
     }).label("Region"),
-  max_ai_interactions: Joi.number().integer().min(3).max(10).required().label("Max interaction Follow up"),
+  max_ai_interactions: Joi.number().integer().min(1).max(10).required().label("Max interaction Follow up"),
   autosend_interaction: Joi.boolean().required().label("Auto Send Interaction"),
   auto_access_rd: Joi.boolean().required().label("Auto Assessment"),
   fiscal_start_date: Joi.string()
