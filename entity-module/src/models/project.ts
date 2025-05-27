@@ -15,6 +15,7 @@ export interface ProjectAttributes {
   project_enddate?: Date | null;
   project_type: "Fixed" | "Time & Material";
   project_classification_rid?: string | null;
+  project_classification_other?: string | null;
   project_client_group?: string | null;
   project_group?: string | null;
   project_status: "Active" | "Inactive";
@@ -99,6 +100,7 @@ export class Project
   public qualified_research_expenditure?: number | null;
   public is_rd_qualified?: boolean | null;
   public qre?: number | null;
+  public project_classification_other?: string | null | undefined;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
     const model = Project.init(
@@ -152,6 +154,10 @@ export class Project
         project_classification_rid: {
           type: DataTypes.UUID,
           allowNull: true
+        },
+        project_classification_other: {
+          type: DataTypes.STRING(300),
+          allowNull: true,
         },
         project_client_group: DataTypes.STRING(200),
         project_group: DataTypes.STRING(150),

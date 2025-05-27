@@ -170,6 +170,7 @@ export class ProjectService {
         project_type: projectData.project_type,
         project_classification_rid:
           projectData.project_classification_rid || null,
+        project_classification_other: projectData.project_classification_other || null, 
         project_client_group: projectData.project_client_group || null,
         project_group: projectData.project_group || null,
         project_status: projectData.project_status,
@@ -328,6 +329,7 @@ export class ProjectService {
         project_type: projectData.project_type as "Fixed" | "Time & Material",
         project_classification_rid:
           projectData.project_classification_rid || null,
+        project_classification_other: projectData.project_classification_other || null, 
         project_client_group: projectData.project_client_group || null,
         project_group: projectData.project_group || null,
         project_summary: projectData.project_summary || null,
@@ -620,6 +622,7 @@ export class ProjectService {
           "project_enddate",
           "project_type",
           "project_classification_rid",
+          "project_classification_other",
           "project_client_group",
           "project_group",
           "project_status",
@@ -1111,9 +1114,9 @@ export class ProjectService {
   }
 
   async calculateKeyContactDetails(keyContacts: any[], mainDbSequlize: any) {
-    let technicalConsultant = "N/A";
-    let financialConsultant = "N/A";
-    let projectPointOfContact = "N/A";
+    let technicalConsultant = "-";
+    let financialConsultant = "-";
+    let projectPointOfContact = "-";
 
     if (keyContacts) {
       const keyContactIds = [
@@ -1154,14 +1157,14 @@ export class ProjectService {
           e.role_name === "Project Point of Contact" && e.is_primary_contact
       );
       
-      technicalConsultant = technicalContact ? technicalContact.key_contact_name : "N/A";
-      financialConsultant = financialContact ? financialContact.key_contact_name : "N/A";
-      projectPointOfContact = pointOfContact ? pointOfContact.key_contact_name : "N/A";
+      technicalConsultant = technicalContact ? technicalContact.key_contact_name : null;
+      financialConsultant = financialContact ? financialContact.key_contact_name : null;
+      projectPointOfContact = pointOfContact ? pointOfContact.key_contact_name : null;
     } else {
       return {
-        technicalConsultant: "",
-        financialConsultant: "",
-        projectPointOfContact: "",
+        technicalConsultant: null,
+        financialConsultant: null,
+        projectPointOfContact: null,
       };
     }
 
@@ -1322,7 +1325,6 @@ export class ProjectService {
         if (filters[clientField]) {
           const fieldFilter = filters[clientField];
           const isNumber = numberFields.includes(dbField);
-          console.log("isNumber", isNumber);
           const isDate = dateFields.includes(dbField);
           const isEnum = enumFields.includes(dbField);
           const isBoolean = booleanFields.includes(dbField);
@@ -1373,7 +1375,7 @@ export class ProjectService {
             [Op.between]: [fieldFilter.between[0], fieldFilter.between[1]],
           };
         }
-        if (fieldFilter.isEmpty === true) {
+        if (fieldFilter.is_empty === true) {
           return { [Op.or]: [null] };
         }
       }
@@ -1409,7 +1411,7 @@ export class ProjectService {
             ],
           };
         }
-        if (fieldFilter.isEmpty === true) {
+        if (fieldFilter.is_empty === true) {
           return { [Op.or]: [null] };
         }
       }
@@ -1424,7 +1426,7 @@ export class ProjectService {
         if (fieldFilter.in && Array.isArray(fieldFilter.in)) {
           return { [Op.in]: fieldFilter.in };
         }
-        if (fieldFilter.isEmpty === true) {
+        if (fieldFilter.is_empty === true) {
           return { [Op.or]: [null] };
         }
       }
@@ -1436,7 +1438,7 @@ export class ProjectService {
         if (fieldFilter.isFalse === true) {
           return { [Op.eq]: false };
         }
-        if (fieldFilter.isEmpty === true) {
+        if (fieldFilter.is_empty === true) {
           return { [Op.or]: [null] };
         }
       }
@@ -1454,7 +1456,7 @@ export class ProjectService {
       if (fieldFilter.not_contains) {
         return { [Op.notILike]: `%${fieldFilter.not_contains}%` };
       }
-      if (fieldFilter.isEmpty === true) {
+      if (fieldFilter.is_empty === true) {
         return { [Op.or]: [null, ""] };
       }
       if (fieldFilter.value) {
