@@ -703,7 +703,7 @@ class ResourceCostSchemaService {
           "Designation": resource.resource_designation || "-",
           "Role": resource.resource_role || "-",
           "Comments": resource.comments || "-",
-          "Cost Id": resource.r_number || "-",
+          "Cost ID": resource.r_number || "-",
           // "Semi Annual": resource.semi_annual_cost,
         };
       });
