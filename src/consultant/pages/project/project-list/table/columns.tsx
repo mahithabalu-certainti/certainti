@@ -2,7 +2,7 @@
 import { TruncateWithTooltip } from '../../../../../components';
 import { ProjectColumn, ProjectList } from '../../../../types/project';
 const renderWithTooltip = (value: any) => {
-  const displayValue = (value ?? value === 0) ? String(value) : 'NA';
+  const displayValue = (value ?? value === 0) ? String(value) : '-';
   return (
     <TruncateWithTooltip text={displayValue}>
       {displayValue}
@@ -11,7 +11,7 @@ const renderWithTooltip = (value: any) => {
 };
 
 const formatDate = (dateString: string) => {
-  if (!dateString) return 'NA';
+  if (!dateString) return '-';
   const date = new Date(dateString);
   const yyyy = date.getFullYear();
   const mm = String(date.getMonth() + 1).padStart(2, '0');
@@ -32,7 +32,7 @@ export const getProjectColumns = (
         className='cursor-pointer hover:!text-blue-600 hover:underline'
         onClick={() => onClick(row)}
       >
-        {row.r_number || 'NA'}
+        {row.r_number || '-'}
       </span>
     ),
   },
@@ -226,7 +226,7 @@ export const getProjectColumns = (
             : '!text-[#f44336]'
         }
       >
-        {row.project_status || 'NA'}
+        {row.project_status || '-'}
       </span>
     ),
   },

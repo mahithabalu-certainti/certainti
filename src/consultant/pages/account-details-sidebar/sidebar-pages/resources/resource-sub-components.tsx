@@ -93,7 +93,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
             }}
           />
           <Tab
-            label='Resource Skill'
+            label='Resource Skills'
             value={'skill'}
             onClick={() => setFilterVisibility(true)}
             sx={{

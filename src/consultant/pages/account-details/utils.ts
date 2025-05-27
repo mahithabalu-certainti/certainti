@@ -77,7 +77,7 @@ interface OutputData {
 
 const getValueOrDefault = (
   value?: string | number | null,
-  defaultValue = 'NA'
+  defaultValue = '-'
 ): string => {
   return value?.toString() || defaultValue;
 };
@@ -88,7 +88,7 @@ export const transformAccountData = (data: AccountData): DisplayColumn[] => {
   return [
     {
       items: [
-        { label: 'Account ID', value: account?.r_number },
+        { label: 'Account ID', value: account?.r_number || '-' },
         {
           label: 'Country',
           value: getValueOrDefault(account?.country?.country_name),

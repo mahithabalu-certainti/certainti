@@ -14,14 +14,14 @@ interface TextButtonProps {
 
 const StyledButton = styled(Button)(() => {
   return {
-    height: '32px !important',
+    height: '24px !important',
     color: '#425A76',
     border: '1px solid #CBD6E2',
     boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
     background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
     textTransform: 'none',
     fontSize: '13px',
-    fontWeight: '400',
+    fontWeight: 600,
     padding: '0px',
     borderRadius: '2px',
     '&:hover': {

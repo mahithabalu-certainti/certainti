@@ -12,7 +12,7 @@ const formatNumberWithCommas = (num: number | string): string => {
     }
     return num.toLocaleString('en-US');
   }
-  return 'NA';
+  return '-';
 };
 
 interface RenderRowsProps {
@@ -73,7 +73,7 @@ export const renderRows = ({
       <React.Fragment key={account.accountName}>
         <TableRow
           hover
-          className={`${openRows.has(account.accountName) ? 'bg-[#F2F2F2]' : ''}`}
+          className={`${openRows.has(account.accountName) ? 'bg-[#F2F2F2]' : ''} group`}
           selected={selectedRows.has(globalIndex as number)}
           sx={{
             '&:hover td': {
@@ -171,14 +171,17 @@ export const renderRows = ({
                   />
                 )}
               </IconButton>
-            ) : null}
+            ) : (
+              <div className='h-[10px] w-[22px] inline-flex'></div>
+            )}
             <TruncateWithTooltip
               text={String(account.accountName)}
               maxWidth={250}
-              className={`inline-flex items-center rounded-[4px] text-white text-[14px] px-2 font-semibold h-[26px] bg-[#00B7A8] cursor-pointer no-underline hover:underline`}
+              className={`inline-flex items-center rounded-[4px] text-[14px] px-2 font-semibold h-[26px] cursor-pointer group-hover:underline`}
+              style={{ backgroundColor: account.bgColor, color: account.color }}
             >
               <span onClick={() => handleAccountNameClick(account)}>
-                {account.accountName || 'NA'}
+                {account.accountName || '-'}
               </span>
             </TruncateWithTooltip>
           </TableCell>
@@ -189,30 +192,35 @@ export const renderRows = ({
               text={String(account.accountNumber)}
               maxWidth={180}
             >
-              {account.accountNumber || 'NA'}
+              {account.accountNumber || '-'}
             </TruncateWithTooltip>
           </TableCell>
           <TableCell
             sx={{ width: '200px', maxWidth: '200px', minWidth: '200px' }}
           >
             <TruncateWithTooltip text={String(account.industry)} maxWidth={200}>
-              {account.industry || 'NA'}
+              {account.industry || '-'}
             </TruncateWithTooltip>
           </TableCell>
           <TableCell
             sx={{ width: '150px', maxWidth: '150px', minWidth: '150px' }}
           >
             <TruncateWithTooltip text={String(account.country)} maxWidth={150}>
-              {account.country || 'NA'}
+              {account.country || '-'}
             </TruncateWithTooltip>
           </TableCell>
           <TableCell
             sx={{ width: '100px', maxWidth: '100px', minWidth: '100px' }}
           >
-            {account.currency || 'NA'}
+            {account.currency || '-'}
           </TableCell>
           <TableCell
-            sx={{ width: '160px', maxWidth: '160px', minWidth: '160px' }}
+            sx={{
+              width: '160px',
+              maxWidth: '160px',
+              minWidth: '160px',
+              textAlign: 'right',
+            }}
           >
             <TruncateWithTooltip
               text={formatNumberWithCommas(account.annualRevenue)}
@@ -353,10 +361,10 @@ export const renderChildRows = ({
               <TruncateWithTooltip
                 text={String(account.accountName)}
                 maxWidth={250}
-                className={`text-[13px] font-semibold cursor-pointer hover:underline hover:text-[#1755E7]`}
+                className={`text-[13px] font-semibold cursor-pointer underline text-[#1755E7]`}
               >
                 <span onClick={() => handleAccountNameClick(account)}>
-                  {account.accountName || 'NA'}
+                  {account.accountName || '-'}
                 </span>
               </TruncateWithTooltip>
             </Box>
@@ -368,21 +376,21 @@ export const renderChildRows = ({
               text={String(account.accountNumber)}
               maxWidth={180}
             >
-              {account.accountNumber || 'NA'}
+              {account.accountNumber || '-'}
             </TruncateWithTooltip>
           </TableCell>
           <TableCell
             sx={{ minWidth: '200px', maxWidth: '200px', width: '200px' }}
           >
             <TruncateWithTooltip text={String(account.industry)} maxWidth={200}>
-              {account.industry || 'NA'}
+              {account.industry || '-'}
             </TruncateWithTooltip>
           </TableCell>
           <TableCell
             sx={{ minWidth: '150px', maxWidth: '150px', width: '150px' }}
           >
             <TruncateWithTooltip text={String(account.country)} maxWidth={150}>
-              {account.country || 'NA'}
+              {account.country || '-'}
             </TruncateWithTooltip>
           </TableCell>
           <TableCell
@@ -392,11 +400,16 @@ export const renderChildRows = ({
             }`}
           >
             <TruncateWithTooltip text={String(account.currency)} maxWidth={100}>
-              {account.currency || 'NA'}
+              {account.currency || '-'}
             </TruncateWithTooltip>
           </TableCell>
           <TableCell
-            sx={{ minWidth: '160px', maxWidth: '160px', width: '160px' }}
+            sx={{
+              minWidth: '160px',
+              maxWidth: '160px',
+              width: '160px',
+              textAlign: 'right',
+            }}
           >
             <TruncateWithTooltip
               text={formatNumberWithCommas(account.annualRevenue)}

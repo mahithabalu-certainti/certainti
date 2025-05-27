@@ -56,7 +56,11 @@ export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle }) => {
   const { logout } = useAuthHook();
   const navigate = useNavigate();
   const { role, name } = useSelector((state: RootState) => state.auth);
-  const { fiscalYear } = useSelector((state: RootState) => state.account);
+  const { fiscalYear, filters } = useSelector(
+    (state: RootState) => state.account
+  );
+
+  const isFilterApplied = filters.length > 0;
 
   const [globalAnchorEl, setGlobalAnchorEl] =
     useState<HTMLButtonElement | null>(null);
@@ -353,19 +357,27 @@ export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle }) => {
             {isConsultant && (
               <>
                 <div className='relative'>
-                  <IconButton
-                    color='inherit'
+                  <button
                     aria-describedby={globalFilterId}
-                    disableRipple
                     onClick={handleGlobalFilterModal}
+                    className={`${isGlobalModalOpen || isFilterApplied ? 'bg-[#FFFFFF26]' : 'bg-transparent'} w-[85px] min-w-[85px] px-3 h-[25px] flex justify-center items-center gap-1.5 mr-2 cursor-pointer focus:outline-none rounded-[2px] hover:bg-[#FFFFFF33] hover:rounded-xs whitespace-nowrap`}
                   >
-                    <img
-                      src={globeIcon}
-                      alt='global'
-                      className='h-[16px] w-[16px]'
-                    />
-                    <span className='text-[13px] font-normal px-2'>Global</span>
-                  </IconButton>
+                    <div className='relative'>
+                      <img
+                        src={globeIcon}
+                        alt='global'
+                        className='h-[16px] w-[16px]'
+                      />
+                      {isFilterApplied && (
+                        <div className='absolute -top-[5px] -right-[5px] w-4 h-4 flex items-center justify-center text-xs'>
+                          <span className='w-[8px] h-[8px] bg-[#FF3C03] rounded-full flex items-center justify-center z-10'></span>
+                        </div>
+                      )}
+                    </div>
+                    <span className='text-[13px] font-normal text-white'>
+                      Global
+                    </span>
+                  </button>
                   <GlobalFilterModal
                     isOpen={isGlobalModalOpen}
                     filterAnchorEl={globalAnchorEl}

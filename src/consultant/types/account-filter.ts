@@ -6,10 +6,10 @@ export type StatusFilterOption = 'equals';
 export type BooleanFilterOption = 'equals';
 export type DateOptions = 'equals' | 'before' | 'after' | 'between';
 export const DateValueOptions = [
-  { value: 'equals', label: '=' },
-  { value: 'before', label: '←' },
-  { value: 'after', label: '→' },
-  { value: 'between', label: '↔' },
+  { value: 'equals', label: 'Equals' },
+  { value: 'before', label: 'Before' },
+  { value: 'after', label: 'After' },
+  { value: 'between', label: 'Between' },
   // { value: 'is_empty', label: 'Is Empty' },
 ];
 

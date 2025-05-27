@@ -18,7 +18,7 @@ interface ImportDropdownItemProps {
 
 const StyledButton = styled(Button)(() => {
   return {
-    height: '32px !important',
+    height: '24px !important',
     color: '#425A76',
     border: '1px solid #CBD6E2',
     boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
@@ -26,7 +26,7 @@ const StyledButton = styled(Button)(() => {
     textTransform: 'none',
     fontSize: '13px',
     fontWeight: '400',
-    // padding: '8px 16px',
+    padding: '0px',
     borderRadius: '2px',
   };
 });
@@ -59,12 +59,12 @@ const ActionImportDropdown: React.FC<ImportDropdownItemProps> = ({
       <StyledButton
         {...rest}
         onClick={split === 'true' ? undefined : handleClick}
-      // startIcon={variant === 'filled' && <img src={addIcon} />}
+        // startIcon={variant === 'filled' && <img src={addIcon} />}
       >
         <Box
           component='span'
           sx={{ flexGrow: 1, color: '#425A76' }}
-          className='flex gap-2 items-center'
+          className='flex gap-1.5 items-center pl-2'
         >
           {variant === 'filled' && (
             <img src={addIcon} className='w-3 p-[1px]' />
@@ -87,6 +87,7 @@ const ActionImportDropdown: React.FC<ImportDropdownItemProps> = ({
           src={open ? arrowUpIcon : arrowDownIcon}
           alt={open ? 'arrowUp' : 'arrowDown'}
           // style={{ filter: iconFilter }}
+          className='mr-1'
           onClick={(event) =>
             handleClick(event as unknown as React.MouseEvent<HTMLButtonElement>)
           }

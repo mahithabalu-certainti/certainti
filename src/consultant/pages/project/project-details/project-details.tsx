@@ -134,7 +134,7 @@ export const ProjectDetails = () => {
         error={isError}
       />
       <div className='flex flex-row w-full'>
-        <div className='flex w-[261px] min-w-[261px] max-w-[261px]'>
+        <div className='flex w-[200px] min-w-[200px] max-w-[200px]'>
           <SideMenuPanel
             menuItems={sideMenuItems}
             activeKey={activeKey}

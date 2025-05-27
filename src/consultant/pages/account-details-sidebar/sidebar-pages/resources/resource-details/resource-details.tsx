@@ -52,19 +52,22 @@ interface AuditItem {
   row?: number;
 }
 
-const AuditDetailsSection: React.FC<AuditDetailsSectionProps> = ({ title, data }) => {
+const AuditDetailsSection: React.FC<AuditDetailsSectionProps> = ({
+  title,
+  data,
+}) => {
   // Define audit items with their columns
   const auditItems: AuditItem[] = [
     { label: 'Record ID', value: data.rid, column: 1 },
     {
       label: 'Created On',
       value: formatDateToMMDDYYYYWithTime(data.created_datetime),
-      column: 1
+      column: 1,
     },
     {
       label: 'Updated On',
       value: formatDateToMMDDYYYYWithTime(data.modified_datetime),
-      column: 1
+      column: 1,
     },
     { label: 'Resource ID', value: data.r_number, column: 2 },
     { label: 'Created By', value: data.created_by, column: 2 },
@@ -72,16 +75,14 @@ const AuditDetailsSection: React.FC<AuditDetailsSectionProps> = ({ title, data }
   ];
 
   // Group items by column
-  const columnOneItems = auditItems.filter(item => item.column === 1);
-  const columnTwoItems = auditItems.filter(item => item.column === 2);
+  const columnOneItems = auditItems.filter((item) => item.column === 1);
+  const columnTwoItems = auditItems.filter((item) => item.column === 2);
 
   return (
-    <div className="mt-3">
-      <div className="text-[15px] text-[#2D3E4F] font-bold">
-        {title}
-      </div>
+    <div className='mt-3'>
+      <div className='text-[15px] text-[#2D3E4F] font-bold'>{title}</div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
         {/* First Column */}
         <div className='text-sm my-[6px] grid gap-y-3'>
           {columnOneItems.map((item, index) => (
@@ -112,19 +113,18 @@ const AuditItemRow: React.FC<{ item: AuditItem }> = ({ item }) => {
   if (!item) return null;
 
   return (
-    <div className="grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2 gap-y-3">
-      <div className="text-right font-semibold text-[13px] text-[#425A76] pr-1">
+    <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2 gap-y-3'>
+      <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
         {item.label}
       </div>
-      <div className="font-medium text-[13px] break-all overflow-hidden">
-        <span className="font-medium text-[13px] text-[#425A76]">
-          {item.value || 'NA'}
+      <div className='font-medium text-[13px] break-all overflow-hidden'>
+        <span className='font-medium text-[13px] text-[#425A76]'>
+          {item.value || '-'}
         </span>
       </div>
     </div>
   );
 };
-
 
 const DetailsSection: React.FC<{
   title: string;
@@ -154,7 +154,7 @@ const DetailsSection: React.FC<{
     }
     return (
       <span className='font-medium text-[13px] text-[#425A76]'>
-        {value || 'NA'}
+        {value || '-'}
       </span>
     );
   };
@@ -163,57 +163,55 @@ const DetailsSection: React.FC<{
     <div className={title === 'Basic Information' ? 'mt-0' : 'mt-3'}>
       <div className='text-[15px] text-[#2D3E4F] font-bold'>{title}</div>
       <div className='text-sm my-[6px] grid gap-y-3'>
-        {title === 'Comments' ? (
-          // Full-width single column layout for Comments
-          data.map((item, index) => (
-            <div
-              key={`comment-row-${index}`}
-              className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2'
-            >
-              <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
-                {item.label}
-              </div>
-              <div className='font-medium text-[13px] break-all overflow-hidden'>
-                {renderValue(item.value)}
-              </div>
-            </div>
-          ))
-        ) : (
-          leftColumn.map((leftItem, index) => {
-            const rightItem = rightColumn[index];
-
-            return (
+        {title === 'Comments'
+          ? // Full-width single column layout for Comments
+            data.map((item, index) => (
               <div
-                key={`row-${index}`}
-                className='grid grid-cols-1 md:grid-cols-2 gap-6'
+                key={`comment-row-${index}`}
+                className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2'
               >
-                {/* Left column */}
-                <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2'>
-                  <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
-                    {leftItem.label}
-                  </div>
-                  <div className='font-medium text-[13px] break-all overflow-hidden'>
-                    {renderValue(leftItem.value)}
-                  </div>
+                <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
+                  {item.label}
                 </div>
+                <div className='font-medium text-[13px] break-all overflow-hidden'>
+                  {renderValue(item.value)}
+                </div>
+              </div>
+            ))
+          : leftColumn.map((leftItem, index) => {
+              const rightItem = rightColumn[index];
 
-                {/* Right column */}
-                {rightItem ? (
+              return (
+                <div
+                  key={`row-${index}`}
+                  className='grid grid-cols-1 md:grid-cols-2 gap-6'
+                >
+                  {/* Left column */}
                   <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2'>
                     <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
-                      {rightItem.label}
+                      {leftItem.label}
                     </div>
                     <div className='font-medium text-[13px] break-all overflow-hidden'>
-                      {renderValue(rightItem.value)}
+                      {renderValue(leftItem.value)}
                     </div>
                   </div>
-                ) : (
-                  <div />
-                )}
-              </div>
-            );
-          })
-        )}
+
+                  {/* Right column */}
+                  {rightItem ? (
+                    <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2'>
+                      <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
+                        {rightItem.label}
+                      </div>
+                      <div className='font-medium text-[13px] break-all overflow-hidden'>
+                        {renderValue(rightItem.value)}
+                      </div>
+                    </div>
+                  ) : (
+                    <div />
+                  )}
+                </div>
+              );
+            })}
       </div>
     </div>
   );
@@ -240,62 +238,62 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
       if (value && typeof value === 'object' && !Array.isArray(value)) {
         return {
           label: formatKey(key),
-          value: Object.values(value).join(', ') || 'NA', // or handle nested objects differently
+          value: Object.values(value).join(', ') || '-', // or handle nested objects differently
         };
       }
 
       if (key === 'resource_ref_id' && !Array.isArray(value)) {
         return {
           label: 'Resource Code',
-          value: value ?? 'NA', // or handle nested objects differently
+          value: value ?? '-', // or handle nested objects differently
         };
       }
 
       if (key === 'resource_startdate' && !Array.isArray(value)) {
         return {
           label: 'Effective Date',
-          value: formatDateToMMDDYYYY(value as string) || 'NA', // or handle nested objects differently
+          value: formatDateToMMDDYYYY(value as string) || '-', // or handle nested objects differently
         };
       }
 
       if (key === 'resource_enddate' && !Array.isArray(value)) {
         return {
           label: 'End Date',
-          value: formatDateToMMDDYYYY(value as string) || 'NA', // or handle nested objects differently
+          value: formatDateToMMDDYYYY(value as string) || '-', // or handle nested objects differently
         };
       }
 
       if (key === 'total_years_in_org' && !Array.isArray(value)) {
         return {
           label: 'Total Years in Organization',
-          value: value || 'NA', // or handle nested objects differently
+          value: value || '-', // or handle nested objects differently
         };
       }
 
       if (key === 'total_years_experience' && !Array.isArray(value)) {
         return {
           label: 'Total Years of Experience',
-          value: value || 'NA', // or handle nested objects differently
+          value: value || '-', // or handle nested objects differently
         };
       }
 
       if (key === 'resource_fullname' && !Array.isArray(value)) {
         return {
           label: 'Name',
-          value: value ?? 'NA', // or handle nested objects differently
+          value: value ?? '-', // or handle nested objects differently
         };
       }
 
       if (key === 'resource_orgname' && !Array.isArray(value)) {
         return {
           label: 'Resource Org Name',
-          value: value ?? 'NA', // or handle nested objects differently
+          value: value ?? '-', // or handle nested objects differently
         };
       }
 
       const displayValue =
         value === null || value === '' || value === undefined
-          ? 'NA'
+          ? '-'
           : customMappings?.[key]
             ? customMappings[key](value)
             : value;
@@ -349,7 +347,9 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   // Section data with custom formatting where needed
   const basicInfo = CreateSectionData({
     resource_code: resourceData.resource_code,
-    resource_fullname: resourceData?.resource_name || resourceData.resource_firstname + ' ' + resourceData.resource_lastname,
+    resource_fullname:
+      resourceData?.resource_name ||
+      resourceData.resource_firstname + ' ' + resourceData.resource_lastname,
     resource_type: resourceData.resource_type,
     first_name: resourceData.resource_firstname,
     last_name: resourceData.resource_lastname,
@@ -392,7 +392,6 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   //     modified_by: resourceData.modified_by,
   //   }
   // )
-
 
   return (
     <div className='max-w-6xl px-6 py-2'>

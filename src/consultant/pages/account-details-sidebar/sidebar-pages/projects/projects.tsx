@@ -13,9 +13,9 @@ import { generatePath, useNavigate } from 'react-router-dom';
 import { ProjectList } from '../../../../types/project';
 
 const BUTTON_STYLES = {
-  height: '26px !important',
+  height: '24px !important',
   fontSize: '13px',
-  fontWeight: 400,
+  fontWeight: 600,
 };
 
 interface ProjectsProps {
@@ -82,16 +82,16 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
 
   const headerButtons = [
     {
-      label: 'Download',
-      variant: 'outlined' as const,
-      onClick: () => console.log('Download'),
-      sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
-    },
-    {
       label: 'New',
       variant: 'outlined' as const,
       onClick: () => handleCreateProject(),
       sx: { ...BUTTON_STYLES, width: '61px', minWidth: '61px' },
+    },
+    {
+      label: 'Download',
+      variant: 'outlined' as const,
+      onClick: () => console.log('Download'),
+      sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
     },
   ];
 
@@ -114,7 +114,7 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
   const projectColumns = getProjectColumns(handleProject);
 
   return (
-    <div className='w-full'>
+    <div className='w-full py-3 pl-3 pr-4'>
       <TabPanel
         value={'projects'}
         appliedFilters={appliedFilters}
@@ -123,8 +123,6 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
         filterVisibility={true}
         handleFilter={handleFilter}
         setCurrentPage={setCurrentPage}
-        setFilterStates={() => {}}
-        setSelectedFilters={() => {}}
       />
       <ResourceTableHeader
         value={'projects'}
