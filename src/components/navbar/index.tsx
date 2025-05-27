@@ -409,13 +409,6 @@ export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle,  showAdminS
                 className='h-[22px] w-[22px]'
               />
             </IconButton>
-            <IconButton size='large' color='inherit'>
-              <img
-                src={settingsIcon}
-                alt='settings'
-                className='h-[20px] w-[20px]'
-              />
-            </IconButton>
             {isAdminEnable && (
               <Tooltip
                 title={`Switch to ${showAdminSidebar ? 'Consultant' : 'Admin'}`}
@@ -429,7 +422,7 @@ export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle,  showAdminS
                   <img
                     src={settingsIcon}
                     alt='settings'
-                    className='h-[18px] w-[18px]'
+                     className='h-[20px] w-[20px]'
                   />
                 </IconButton>
               </Tooltip>
