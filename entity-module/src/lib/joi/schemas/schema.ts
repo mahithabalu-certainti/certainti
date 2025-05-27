@@ -37,8 +37,8 @@ const isNotFutureDate = (value: string, helpers: Joi.CustomHelpers): any => {
 const isValidDate = (value: string, helpers: Joi.CustomHelpers): any => {
   if (!value) return value;
 
-  // Parse the date in MM/DD/YYYY format
-  const [month, day, year] = value.split("/").map(Number);
+  // Parse the date in yyyy-mm-dd format
+  const [year, month, day] = value.split("-").map(Number);
 
   // Create a date object with time set to noon UTC
   const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
@@ -46,7 +46,7 @@ const isValidDate = (value: string, helpers: Joi.CustomHelpers): any => {
   // Check if the date is valid
   if (isNaN(date.getTime())) {
     return helpers.error("date.invalidFormat", {
-      message: "Invalid date format. Please use MM/DD/YYYY.",
+      message: "Invalid date format. Please use yyyy-mm-dd.",
     });
   }
 
@@ -64,10 +64,10 @@ const isEndDateAfterStartDate = (
     return value;
   }
 
-  // Parse dates in MM/DD/YYYY format
-  const [endMonth, endDay, endYear] = value.split("/").map(Number);
-  const [startMonth, startDay, startYear] = context.effective_from_date
-    .split("/")
+  // Parse dates in yyyy-mm-dd format
+  const [ endYear, endMonth, endDay ] = value.split("-").map(Number);
+  const [startYear,startMonth, startDay] = context.effective_from_date
+    .split("-")
     .map(Number);
 
   // Create date objects with time set to noon UTC to avoid timezone issues
@@ -232,7 +232,7 @@ const createResourcesSchema = Joi.object({
     .custom((value, helpers) => {
       if (!value) return value;
     
-      const [month, day, year] = value.split("/").map(Number);
+      const [year,month, day] = value.split("-").map(Number);
       const inputDate = new Date(Date.UTC(year, month - 1, day));
       const minDate = new Date(Date.UTC(1950, 0, 1));
       const today = new Date();
@@ -240,13 +240,13 @@ const createResourcesSchema = Joi.object({
     
       if (isNaN(inputDate.getTime())) {
         return helpers.error("date.invalidFormat", {
-          message: "Invalid date format. Please use MM/DD/YYYY."
+          message: "Invalid date format. Please use yyyy-mm-dd."
         });
       }
     
       if (inputDate < minDate) {
         return helpers.error("date.min", {
-          message: "Effective From date cannot be before 01/01/1950"
+          message: "Effective From date cannot be before 1950-01-01"
         });
       }
     
@@ -263,9 +263,9 @@ const createResourcesSchema = Joi.object({
     .allow(null)
     .messages({
       "string.base": "Effective from date must be a valid date",
-      "string.max": "Effective from date format should be MM/DD/YYYY",
-      "date.invalidFormat": "Invalid date format. Please use MM/DD/YYYY",
-      "date.min": "Effective from date cannot be before 01/01/1950",
+      "string.max": "Effective from date format should be yyyy-mm-dd",
+      "date.invalidFormat": "Invalid date format. Please use yyyy-mm-dd",
+      "date.min": "Effective from date cannot be before 1950-01-01",
       "date.max": "Effective from date cannot be in the future"
     }),
   effective_end_date: Joi.string()
@@ -277,10 +277,10 @@ const createResourcesSchema = Joi.object({
     .optional()
     .messages({
       "string.pattern.base":
-        "effective_end_date must be in the format MM/DD/YYYY",
+        "effective_end_date must be in the format yyyy-mm-dd",
       "any.invalid": "Effective end date must be after the start date.",
       "date.invalidFormat":
-        "Invalid effective end date. Please use the format MM/DD/YYYY",
+        "Invalid effective end date. Please use the format yyyy-mm-dd",
     }),
   resource_designation: Joi.string()
     .pattern(/^[A-Za-z][A-Za-z\s\-'.]{1,62}[A-Za-z]$/)
@@ -421,12 +421,12 @@ const updateResourceSchema = Joi.object({
     .guid({ version: ["uuidv4"] })
     .optional()
     .allow("", null),
-  effective_from_date: Joi.string()
+    effective_from_date: Joi.string()
     .max(10)
     .custom((value, helpers) => {
       if (!value) return value;
     
-      const [month, day, year] = value.split("/").map(Number);
+      const [year,month, day] = value.split("-").map(Number);
       const inputDate = new Date(Date.UTC(year, month - 1, day));
       const minDate = new Date(Date.UTC(1950, 0, 1));
       const today = new Date();
@@ -434,13 +434,13 @@ const updateResourceSchema = Joi.object({
     
       if (isNaN(inputDate.getTime())) {
         return helpers.error("date.invalidFormat", {
-          message: "Invalid date format. Please use MM/DD/YYYY."
+          message: "Invalid date format. Please use yyyy-mm-dd."
         });
       }
     
       if (inputDate < minDate) {
         return helpers.error("date.min", {
-          message: "Effective From date cannot be before 01/01/1950"
+          message: "Effective From date cannot be before 1950-01-01"
         });
       }
     
@@ -457,9 +457,9 @@ const updateResourceSchema = Joi.object({
     .allow(null)
     .messages({
       "string.base": "Effective from date must be a valid date",
-      "string.max": "Effective from date format should be MM/DD/YYYY",
-      "date.invalidFormat": "Invalid date format. Please use MM/DD/YYYY",
-      "date.min": "Effective from date cannot be before 01/01/1950",
+      "string.max": "Effective from date format should be yyyy-mm-dd",
+      "date.invalidFormat": "Invalid date format. Please use yyyy-mm-dd",
+      "date.min": "Effective from date cannot be before 1950-01-01",
       "date.max": "Effective from date cannot be in the future"
     }),
   effective_end_date: Joi.string()
@@ -471,10 +471,10 @@ const updateResourceSchema = Joi.object({
     .optional()
     .messages({
       "string.pattern.base":
-        "effective_end_date must be in the format MM/DD/YYYY",
+        "effective_end_date must be in the format yyyy-mm-dd",
       "any.invalid": "Effective end date must be after the start date.",
       "date.invalidFormat":
-        "Invalid effective end date. Please use the format MM/DD/YYYY",
+        "Invalid effective end date. Please use the format yyyy-mm-dd",
     }),
   resource_designation: Joi.string()
     .pattern(/^[A-Za-z][A-Za-z\s\-'.]{1,62}[A-Za-z]$/)
@@ -574,7 +574,7 @@ const createResourceSkillSchema = Joi.object({
     .custom((value, helpers) => {
       if (!value) return value;
     
-      const [month, day, year] = value.split("/").map(Number);
+      const [ year, month, day ] = value.split("-").map(Number);
       const inputDate = new Date(Date.UTC(year, month - 1, day));
       const minDate = new Date(Date.UTC(1950, 0, 1));
       const today = new Date();
@@ -582,13 +582,13 @@ const createResourceSkillSchema = Joi.object({
     
       if (isNaN(inputDate.getTime())) {
         return helpers.error("date.invalidFormat", {
-          message: "Invalid date format. Please use MM/DD/YYYY."
+          message: "Invalid date format. Please use yyyy-mm-dd."
         });
       }
     
       if (inputDate < minDate) {
         return helpers.error("date.min", {
-          message: "Start date cannot be before 01/01/1950"
+          message: "Start date cannot be before 1950-01-01"
         });
       }
     
@@ -605,9 +605,9 @@ const createResourceSkillSchema = Joi.object({
     .allow(null)
     .messages({
       "string.base": "Start date must be a valid date",
-      "string.max": "Start date format should be MM/DD/YYYY",
-      "date.invalidFormat": "Invalid date format. Please use MM/DD/YYYY",
-      "date.min": "Start date cannot be before 01/01/1950",
+      "string.max": "Start date format should be yyyy-mm-dd",
+      "date.invalidFormat": "Invalid date format. Please use yyyy-mm-dd",
+      "date.min": "Start date cannot be before 1950-01-01",
       "date.max": "Start date cannot be in the future"
     }),
   skill_description: Joi.string().max(255).optional().allow(null).allow(""),
@@ -657,7 +657,7 @@ const updateResourceSkillSchema = Joi.object({
     .custom((value, helpers) => {
       if (!value) return value;
     
-      const [month, day, year] = value.split("/").map(Number);
+      const [year,month,day] = value.split("-").map(Number);
       const inputDate = new Date(Date.UTC(year, month - 1, day));
       const minDate = new Date(Date.UTC(1950, 0, 1));
       const today = new Date();
@@ -665,13 +665,13 @@ const updateResourceSkillSchema = Joi.object({
     
       if (isNaN(inputDate.getTime())) {
         return helpers.error("date.invalidFormat", {
-          message: "Invalid date format. Please use MM/DD/YYYY."
+          message: "Invalid date format. Please use yyyy-mm-dd."
         });
       }
     
       if (inputDate < minDate) {
         return helpers.error("date.min", {
-          message: "Start date cannot be before 01/01/1950"
+          message: "Start date cannot be before 1950-01-01"
         });
       }
     
@@ -688,9 +688,9 @@ const updateResourceSkillSchema = Joi.object({
     .allow(null)
     .messages({
       "string.base": "Start date must be a valid date",
-      "string.max": "Start date format should be MM/DD/YYYY",
-      "date.invalidFormat": "Invalid date format. Please use MM/DD/YYYY",
-      "date.min": "Start date cannot be before 01/01/1950",
+      "string.max": "Start date format should be yyyy-mm-dd",
+      "date.invalidFormat": "Invalid date format. Please use yyyy-mm-dd",
+      "date.min": "Start date cannot be before 1950-01-01",
       "date.max": "Start date cannot be in the future"
     }),
   skill_description: Joi.string().max(255).optional().allow(null).allow(""),
@@ -804,10 +804,10 @@ const updateResourceCostSchema = Joi.object({
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "effective_date must be in the format MM/DD/YYYY",
+      "string.pattern.base": "effective_date must be in the format yyyy-mm-dd",
       "any.invalid": "Date cannot be in the future.",
       "date.invalidFormat":
-        "Invalid effective date. Please use the format MM/DD/YYYY",
+        "Invalid effective date. Please use the format yyyy-mm-dd",
     }),
   end_date: Joi.string()
     .max(10)
@@ -816,9 +816,9 @@ const updateResourceCostSchema = Joi.object({
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "end_date must be in the format MM/DD/YYYY",
+      "string.pattern.base": "end_date must be in the format yyyy-mm-dd",
       "date.invalidFormat":
-        "Invalid end date. Please use the format MM/DD/YYYY",
+        "Invalid end date. Please use the format yyyy-mm-dd",
     }),
   annual_cost: costFieldValidator('annual_cost'),
   // semi_annual_cost: costFieldValidator('semi_annual_cost'),
@@ -934,10 +934,10 @@ const resourceCostSchema = Joi.object({
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "effective_date must be in the format MM/DD/YYYY",
+      "string.pattern.base": "effective_date must be in the format yyyy-mm-dd",
       "any.invalid": "Date cannot be in the future.",
       "date.invalidFormat":
-        "Invalid effective date. Please use the format MM/DD/YYYY",
+        "Invalid effective date. Please use the format yyyy-mm-dd",
     }),
   end_date: Joi.string()
     .max(10)
@@ -946,9 +946,9 @@ const resourceCostSchema = Joi.object({
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "end_date must be in the format MM/DD/YYYY",
+      "string.pattern.base": "end_date must be in the format yyyy-mm-dd",
       "date.invalidFormat":
-        "Invalid end date. Please use the format MM/DD/YYYY",
+        "Invalid end date. Please use the format yyyy-mm-dd",
     }),
   annual_cost: costFieldValidator('annual_cost'),
   // semi_annual_cost: costFieldValidator('semi_annual_cost'),

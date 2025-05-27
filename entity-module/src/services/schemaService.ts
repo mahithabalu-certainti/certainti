@@ -41,6 +41,7 @@ import {
   setupResourceSkillHistorySeq,
 } from "../models/resourceSkillHistory";
 import { KeyContact } from "../models/keyContactDetails";
+import AccountDetails from "../models/accountDetails";
 
 // import { Skill } from "../models/skill";
 class SchemaService {
@@ -197,8 +198,9 @@ class SchemaService {
     limit: number,
     order: any[],
     whereClause: Record<string, string> = {},
+    havingClause: Record<string, string> = {},
     geoDataSort: string[][],
-    accountId: string
+    accountId: string,
   ) {
     try {
       const schemaName = `platform_v2_${accountNumber}`;
@@ -213,6 +215,10 @@ class SchemaService {
       let queryOrder = order;
       const isResourceTypeSort =
         order?.length && order[0][0] === "resource_type";
+      const isAccountNameSort = 
+        order?.length && order[0][0] === "account_name";
+      const isTotalProjectHoursSort = 
+        order?.length && order[0][0] === "total_project_hours";    
 
       if (isResourceTypeSort) {
         const direction =
@@ -230,7 +236,28 @@ class SchemaService {
             direction,
           ],
         ];
+      } else if (isAccountNameSort) {
+        const direction = order[0][1]?.toUpperCase() === "DESC" ? "DESC" : "ASC";
+        queryOrder = [[Sequelize.col('AccountDetails.account_name'), direction]];
+      } else if (isTotalProjectHoursSort) {
+        const direction = order[0][1]?.toUpperCase() === "DESC" ? "DESC" : "ASC";
+        queryOrder = [[Sequelize.literal('total_project_hours'), direction]];
       }
+
+      const AccountDetailsModel = AccountDetails.initialize(sequelize, schemaName);
+      const ResourceFiscalModel = ResourceFiscal.initialize(sequelize, schemaName);
+
+      Resource.belongsTo(AccountDetailsModel, {
+        foreignKey: 'account_rid',
+        as: 'AccountDetails',
+        targetKey: 'account_rid'
+      });
+
+      Resource.hasMany(ResourceFiscalModel, {
+        foreignKey: 'resource_rid',
+        sourceKey: 'rid',
+        as: 'ResourceFiscal'
+      });
 
       // First get all resources without pagination
       const resources = await Resource.findAll({
@@ -238,24 +265,61 @@ class SchemaService {
           ...whereClause,
           account_rid: accountId,
         },
+        having: havingClause,
+        group: [
+          'Resources.rid',
+          'Resources.r_number',
+          'Resources.resource_code',
+          'Resources.resource_name', 
+          'Resources.resource_firstname',
+          'Resources.resource_lastname',
+          'Resources.resource_type',
+          'Resources.resource_status',
+          'Resources.resource_role',
+          'Resources.resource_designation',
+          'Resources.resource_total_experience',
+          'Resources.resource_country',
+          'Resources.resource_region',
+          'Resources.resource_city',
+          'AccountDetails.rid',
+          'AccountDetails.account_rid',
+          'AccountDetails.account_name',
+          'ResourceFiscal.rid',
+        ],
         order: queryOrder,
         subQuery: false,
         attributes: [
           "rid",
-          "r_number",
+          "r_number", 
           "resource_code",
           "resource_name",
           "resource_firstname",
-          "resource_lastname",
+          "resource_lastname", 
           "resource_type",
           "resource_status",
           "resource_role",
           "resource_designation",
           "resource_total_experience",
-          "resource_country",
+          "resource_country", 
           "resource_region",
           "resource_city",
+          [Sequelize.col('AccountDetails.account_name'), 'account_name'],
+          [Sequelize.literal('COALESCE("ResourceFiscal"."total_effort_for_year_project",0)'), 'total_project_hours']
         ],
+        include: [
+          {
+            model: ResourceFiscalModel,
+            as: 'ResourceFiscal',
+            attributes: [],
+            required: false
+          },
+          {
+            model: AccountDetailsModel,
+            as: 'AccountDetails',
+            attributes: [],
+            required: false
+          }
+        ]
       });
 
       if (resources) {
@@ -400,6 +464,7 @@ class SchemaService {
     accountNumber: string,
     order: any[],
     whereClause: Record<string, string> = {},
+    havingClause: Record<string, string> = {},
     geoDataSort: string[][]
   ) {
     try {
@@ -410,10 +475,47 @@ class SchemaService {
 
       const Resource = Resources.initialize(sequelize, schemaName);
       await Resource.sync({ force: false });
+
+      const AccountDetailsModel = AccountDetails.initialize(sequelize, schemaName);
+      const ResourceFiscalModel = ResourceFiscal.initialize(sequelize, schemaName);
+
+      Resource.belongsTo(AccountDetailsModel, {
+        foreignKey: 'account_rid',
+        as: 'AccountDetails',
+        targetKey: 'account_rid'
+      });
+
+      Resource.hasMany(ResourceFiscalModel, {
+        foreignKey: 'resource_rid',
+        sourceKey: 'rid',
+        as: 'ResourceFiscal'
+      });
+
       const resources = await Resource.findAll({
         where: {
           ...whereClause,
         },
+        having: havingClause,
+        group: [
+          'Resources.rid',
+          'Resources.r_number',
+          'Resources.resource_code',
+          'Resources.resource_name', 
+          'Resources.resource_firstname',
+          'Resources.resource_lastname',
+          'Resources.resource_type',
+          'Resources.resource_status',
+          'Resources.resource_role',
+          'Resources.resource_designation',
+          'Resources.resource_total_experience',
+          'Resources.resource_country',
+          'Resources.resource_region',
+          'Resources.resource_city',
+          'AccountDetails.rid',
+          'AccountDetails.account_rid',
+          'AccountDetails.account_name',
+          'ResourceFiscal.rid',
+        ],
         order,
         subQuery: false,
         attributes: [
@@ -431,14 +533,69 @@ class SchemaService {
           "resource_country",
           "resource_region",
           "resource_city",
+          [Sequelize.col('AccountDetails.account_name'), 'account_name'],
+          [Sequelize.literal('COALESCE("ResourceFiscal"."total_effort_for_year_project",0)'), 'total_project_hours'],
         ],
+        include: [
+          {
+            model: ResourceFiscalModel,
+            as: 'ResourceFiscal',
+            attributes: [],
+            required: false
+          },
+          {
+            model: AccountDetailsModel,
+            as: 'AccountDetails',
+            attributes: [],
+            required: false
+          }
+        ]
       });
 
-      const totalCount = await Resource.count({
+      const results = await Resource.findAll({
         where: {
           ...whereClause,
         },
+        having: havingClause,
+        group: [
+          'Resources.rid',
+          'Resources.r_number',
+          'Resources.resource_code',
+          'Resources.resource_name',
+          'Resources.resource_firstname',
+          'Resources.resource_lastname',
+          'Resources.resource_type',
+          'Resources.resource_status',
+          'Resources.resource_role',
+          'Resources.resource_designation',
+          'Resources.resource_total_experience',
+          'Resources.resource_country',
+          'Resources.resource_region',
+          'Resources.resource_city',
+          'AccountDetails.rid',
+          'AccountDetails.account_rid',
+          'AccountDetails.account_name',
+          'ResourceFiscal.rid',
+        ],
+        raw: true,
+        include: [
+          {
+            model: ResourceFiscalModel,
+            as: 'ResourceFiscal',
+            attributes: [],
+            required: false
+          },
+          {
+            model: AccountDetailsModel,
+            as: 'AccountDetails',
+            attributes: [],
+            required: false
+          }
+        ]
       });
+      
+      const totalCount = results.length;
+      
 
       if (resources) {
         finalResources = await this.insertGeoData(resources, mainDdSequilze);
@@ -585,10 +742,10 @@ class SchemaService {
 
       // Parse dates and set to UTC midnight to avoid timezone issues
       const startDate = moment
-        .utc(resourceData.effective_from_date, "MM/DD/YYYY")
+        .utc(resourceData.effective_from_date, "yyyy-mm-dd")
         .startOf("day");
       const endDate = moment
-        .utc(resourceData.effective_end_date, "MM/DD/YYYY")
+        .utc(resourceData.effective_end_date, "yyyy-mm-dd")
         .startOf("day");
 
       const existingResourceData = await Resource.findOne({
@@ -895,14 +1052,14 @@ class SchemaService {
           country?.country_name || null;
         (resource as any).dataValues.region_name = state?.state_name || null;
         (resource as any).dataValues.city_name = city?.city_name || null;
-        //Added to format date as MM/DD/YYYY
+        //Added to format date as yyyy-mm-dd
         resource = {
           ...resource.toJSON(),
           resource_startdate: resource.resource_startdate
-            ? moment(resource.resource_startdate).format("MM/DD/YYYY")
+            ? moment(resource.resource_startdate).format("yyyy-mm-dd")
             : null,
           resource_enddate: resource.resource_enddate
-            ? moment(resource.resource_enddate).format("MM/DD/YYYY")
+            ? moment(resource.resource_enddate).format("yyyy-mm-dd")
             : null,
         };
       }
