@@ -36,6 +36,17 @@ class SchemaService {
     await setupKeyContactsSequence(sequelize, schemaName);
     await this.createClientFirmDocumentTemplate(schemaName,sequelize)
     await this.createClientFirmDocumentTemplateMetadata(schemaName,sequelize)
+
+    await this.createResourcesTable(schemaName,sequelize);
+    await this.createResourceHistoryTable(schemaName,sequelize)
+    await this.createResourceTimelineTable(schemaName,sequelize)
+    await this.createResourceCostTable(schemaName,sequelize)
+    await this.createResourceCostTimelineTable(schemaName,sequelize)
+    await this.createResourceCostHistoryTable(schemaName,sequelize)
+    await this.createResourceSkillTable(schemaName,sequelize)
+    await this.createResourceSkillTimelineTable(schemaName,sequelize)
+    await this.createResourceSkillHistoryTable(schemaName,sequelize)
+
   }
 
   private async createAccountDetailsTable(schemaName: string, sequelize: any) {
@@ -54,7 +65,6 @@ class SchemaService {
         created_by VARCHAR(255),
         modified_by VARCHAR(255),
         website VARCHAR(50),
-        project_manager VARCHAR(50) NOT NULL,
         data_residency VARCHAR(255),
         data_storage VARCHAR(255) CHECK (data_storage IN ('separate_db', 'store_in_parent')),
         auto_access_rd BOOLEAN NOT NULL,
@@ -323,6 +333,251 @@ class SchemaService {
     `);
   }
 
+   private async createResourcesTable(schemaName: string, sequelize: any) {
+     await sequelize.query(`
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resources_seq START 1;
+    `);
+     await sequelize.query(`
+        CREATE TABLE IF NOT EXISTS "${schemaName}".resources (
+      rid uuid NOT NULL DEFAULT gen_random_uuid(),
+      r_number character varying(20) DEFAULT ('RES ' || lpad((nextval('"${schemaName}".resources_seq'))::text, 10, '0')),
+      eid character varying(50),
+      account_rid uuid NOT NULL,
+      resource_code character varying(50) NOT NULL,
+      resource_type VARCHAR(50) CHECK (resource_type IN ('Full-Time','Sub Con','Non-Labor')),
+      resource_name character varying(200),
+      resource_firstname character varying(100),
+      resource_lastname character varying(100),
+      resource_orgname character varying(100),
+      resource_role character varying(100),
+      resource_country uuid,
+      resource_region uuid,
+      resource_city uuid,
+      resource_startdate timestamp with time zone,
+      resource_enddate timestamp with time zone,
+      resource_designation character varying(100),
+      resource_total_experience numeric(4,2),
+      resource_total_experience_organization numeric(4,2),
+      resource_status VARCHAR(50) CHECK (resource_status IN ('Active','Inactive')),
+      created_datetime timestamp with time zone NOT NULL,
+      modified_datetime timestamp with time zone NOT NULL,
+      created_by uuid,
+      modified_by uuid,
+      comments text,
+      CONSTRAINT resources_pkey PRIMARY KEY (rid),
+      CONSTRAINT resources_resource_code_key UNIQUE (resource_code))
+     `)
+   }
+
+   private async createResourceHistoryTable(schemaName: string, sequelize: any) {
+     await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_history_seq START 1`);
+
+     await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".resources_history
+      (
+          rid uuid NOT NULL DEFAULT gen_random_uuid(),
+          r_number varchar(20) DEFAULT (
+            'REH ' || lpad((nextval('"${schemaName}".resource_history_seq'::regclass))::text, 10, '0')
+          ),
+          resource_rid uuid NOT NULL,
+          attribute_name varchar(100) NOT NULL,
+          old_value varchar(1000),
+          new_value varchar(1000) NOT NULL,
+          modified_datetime timestamptz NOT NULL,
+          created_datetime timestamptz NOT NULL,
+          modified_by uuid NOT NULL,
+          CONSTRAINT resources_history_pkey PRIMARY KEY (rid)
+      )
+     `)
+   }
+
+  private async createResourceTimelineTable(schemaName: string, sequelize: any) {
+    await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_timeline_seq START 1`);
+
+     await sequelize.query(`
+     CREATE TABLE IF NOT EXISTS "${schemaName}".resources_timeline (
+        rid uuid NOT NULL DEFAULT gen_random_uuid(),
+        r_number varchar(20) DEFAULT ('RTL ' || lpad((nextval('"${schemaName}".resource_timeline_seq'::regclass))::text, 10, '0')),
+        account_rid uuid NOT NULL,
+        entity_rid uuid NOT NULL,
+        event_name varchar(100) NOT NULL,
+        event_type varchar(100) NOT NULL,
+        event_status varchar(100) NOT NULL,
+        event_datetime timestamptz NOT NULL,
+        modified_by uuid NOT NULL,
+        CONSTRAINT resources_timeline_pkey PRIMARY KEY (rid)
+      )
+    `)
+   }
+
+   
+   private async createResourceCostTable(schemaName: string, sequelize: any) {
+     await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_cost_seq START 1`);
+
+     await sequelize.query(`
+          CREATE TABLE IF NOT EXISTS "${schemaName}".resource_cost (
+          rid uuid NOT NULL,
+          r_number varchar(20) DEFAULT (
+            'RCO ' || lpad((nextval('"${schemaName}".resource_cost_seq'::regclass))::text, 10, '0')
+          ),
+          eid varchar(255),
+          account_rid uuid NOT NULL,
+          resource_type varchar(255) NOT NULL,
+          resource_rid uuid,
+          resource_code varchar(255) NOT NULL,
+          resource_number varchar(255) NOT NULL,
+          fiscal_year integer NOT NULL,
+          effective_date timestamptz,
+          end_date timestamptz,
+          annual_cost numeric(18,2),
+          monthly_cost numeric(18,2),
+          weekly_cost numeric(18,2),
+          bi_weekly_cost numeric(18,2),
+          daily_cost numeric(18,2),
+          hourly_cost numeric(18,2),
+          currency_rid uuid,
+          status varchar(255) DEFAULT 'active',
+          comments text,
+          created_datetime timestamptz,
+          modified_datetime timestamptz,
+          created_by uuid,
+          modified_by uuid,
+          CONSTRAINT resource_cost_pkey PRIMARY KEY (rid),
+          CONSTRAINT resource_cost_resource_rid_fkey FOREIGN KEY (resource_rid)
+              REFERENCES "${schemaName}".resources (rid)
+              ON UPDATE CASCADE
+              ON DELETE SET NULL
+      )
+    `)
+   }
+   
+  private async createResourceCostTimelineTable(schemaName: string, sequelize: any) {
+     await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_cost_timeline_seq START 1`);
+
+     await sequelize.query(`
+        CREATE TABLE IF NOT EXISTS "${schemaName}".resource_cost_timeline (
+        rid uuid NOT NULL,
+        r_number varchar(20) DEFAULT (
+          'RCT ' || lpad((nextval('"${schemaName}".resource_cost_timeline_seq'::regclass))::text, 10, '0')
+        ),
+        account_rid uuid NOT NULL,
+        event_name varchar(255) NOT NULL,
+        event_status varchar(255) NOT NULL,
+        event_type varchar(255) DEFAULT 'Ui Handler',
+        entity_rid uuid NOT NULL,
+        event_datetime timestamptz NOT NULL,
+        modified_datetime timestamptz,
+        modified_by varchar(255) NOT NULL,
+        CONSTRAINT resource_cost_timeline_pkey PRIMARY KEY (rid)
+    );
+
+    `)
+   }
+
+  
+  private async createResourceCostHistoryTable(schemaName: string, sequelize: any) {
+     await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_cost_history_seq START 1`);
+
+     await sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "${schemaName}".resource_cost_history (
+          rid uuid NOT NULL,
+          r_number varchar(20) DEFAULT (
+            'RCH ' || lpad((nextval('"${schemaName}".resource_cost_history_seq'::regclass))::text, 10, '0')
+          ),
+          resource_cost_rid uuid NOT NULL,
+          attribute_name varchar(255) NOT NULL,
+          old_value varchar(255),
+          new_value varchar(255) NOT NULL,
+          modified_datetime timestamptz,
+          modified_by varchar(255) NOT NULL,
+          CONSTRAINT resource_cost_history_pkey PRIMARY KEY (rid)
+      );
+    `)
+   }
+
+   
+  private async createResourceSkillTable(schemaName: string, sequelize: any) {
+     await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_skill_seq START 1`);
+
+     await sequelize.query(`
+           CREATE TABLE IF NOT EXISTS "${schemaName}".resource_skill (
+    rid uuid NOT NULL,
+    r_number varchar(20) DEFAULT (
+      'RSK ' || lpad((nextval('"${schemaName}".resource_skill_seq'::regclass))::text, 10, '0')
+    ),
+    eid varchar(255),
+    account_rid uuid NOT NULL,
+    resource_type varchar(255) NOT NULL,
+    resource_rid uuid NOT NULL,
+    resource_number varchar(255) NOT NULL,
+    start_date timestamptz,
+    skill_description varchar(255),
+    skill_level varchar(255) DEFAULT 'Beginner',
+    skill_type_others varchar(255),
+    skill_subtype_others varchar(255),
+    resource_code varchar(255) NOT NULL,
+    status varchar(255) DEFAULT 'active',
+    skill_type_rid varchar(255) NOT NULL,
+    skill_subtype_rid varchar(255) NOT NULL,
+    skill_details text,
+    comments text,
+    created_datetime timestamptz,
+    modified_datetime timestamptz,
+    created_by varchar(255),
+    modified_by varchar(255),
+    CONSTRAINT resource_skill_pkey PRIMARY KEY (rid),
+    CONSTRAINT resource_skill_resource_rid_fkey FOREIGN KEY (resource_rid)
+        REFERENCES "${schemaName}".resources (rid)
+        ON UPDATE CASCADE
+        ON DELETE NO ACTION
+);
+
+    `)
+   }
+  private async createResourceSkillTimelineTable(schemaName: string, sequelize: any) {
+    await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_skill_timeline_seq START 1`);
+    
+    await sequelize.query(`
+          CREATE TABLE IF NOT EXISTS "${schemaName}".resource_skill_timeline (
+          rid uuid NOT NULL,
+          r_number varchar(20) DEFAULT (
+            'RST ' || lpad((nextval('"${schemaName}".resource_skill_timeline_seq'::regclass))::text, 10, '0')
+          ),
+          account_rid uuid NOT NULL,
+          event_name varchar(255) NOT NULL,
+          event_status varchar(255) NOT NULL,
+          event_type varchar(255) DEFAULT 'Ui Handler',
+          entity_rid uuid NOT NULL,
+          event_datetime timestamptz NOT NULL,
+          modified_datetime timestamptz,
+          modified_by varchar(255) NOT NULL,
+          CONSTRAINT resource_skill_timeline_pkey PRIMARY KEY (rid)
+        );
+
+    `)
+   }
+
+  private async createResourceSkillHistoryTable(schemaName: string, sequelize: any) {
+    await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_skill_history_seq START 1`);
+
+    await sequelize.query(`
+          CREATE TABLE IF NOT EXISTS "${schemaName}".resource_skill_history (
+          rid uuid NOT NULL,
+          r_number varchar(20) DEFAULT (
+            'RSH ' || lpad((nextval('"${schemaName}".resource_skill_history_seq'::regclass))::text, 10, '0')
+          ),
+          resource_skill_rid uuid NOT NULL,
+          attribute_name varchar(255) NOT NULL,
+          old_value varchar(255),
+          new_value varchar(255) NOT NULL,
+          modified_datetime timestamptz,
+          modified_by varchar(255) NOT NULL,
+          CONSTRAINT resource_skill_history_pkey PRIMARY KEY (rid)
+      );
+    `)
+   }
+
+
   async insertAccountDetails(
     account_number: string,
     accountData: IAccount,
@@ -338,7 +593,6 @@ class SchemaService {
           autosend_interaction, fiscal_start_date, fiscal_end_date, 
           interaction_cc_list, blended_rate_fte, blended_rate_subcon, 
           created_by, modified_by, website, 
-          project_manager, 
           data_residency, data_storage, auto_access_rd,business_details
         ) 
         VALUES (
@@ -347,7 +601,6 @@ class SchemaService {
           :interaction_cc_list, :blended_rate_fte, :blended_rate_subcon, 
           :created_by, :modified_by, 
           :website, 
-          :project_manager, 
           :data_residency, :data_storage, :auto_access_rd,:business_details
         );
       `,
@@ -368,7 +621,6 @@ class SchemaService {
           created_by: userId,
           modified_by: userId,
           website: accountData.website ?? null,
-          project_manager: accountData.project_manager,
           data_residency: accountData.data_residency ?? null,
           data_storage: accountData.data_storage ?? null,
           auto_access_rd: accountData.auto_access_rd,
@@ -536,7 +788,6 @@ class SchemaService {
           modified_by = :modified_by,
          
           website = :website,
-          project_manager = :project_manager,
           auto_access_rd = :auto_access_rd,
           modified_datetime = :modified_datetime,
           business_details = :business_details
@@ -556,7 +807,6 @@ class SchemaService {
             : null,
           modified_by: userId,
           website: accountData.website ?? null,
-          project_manager: accountData.project_manager,
           auto_access_rd: accountData.auto_access_rd,
           business_details: accountData.business_details,
           comments: accountData.comments ?? null,

@@ -55,7 +55,7 @@ const accountSchema = Joi.object({
       "string.pattern.base": "Invalid UUID format for region RID",
       "any.required": "Account country region RID is required",
     }),
-  max_ai_interactions: Joi.number().integer().min(3).max(5).required().label("Max interaction Follow up"),
+  max_ai_interactions: Joi.number().integer().min(1).max(10).required().label("Max interaction Follow up"),
   autosend_interaction: Joi.boolean().required().label("Auto Send Interaction"),
   auto_access_rd: Joi.boolean().required().label("Auto Assessment"),
   fiscal_start_date: Joi.string()
@@ -111,7 +111,6 @@ const accountSchema = Joi.object({
       "string.pattern.base": `Website URL must begin with 'http' ,'www.' or 'https://'`,
       "string.max": "The website must not exceed 255 characters."
     }),
-  project_manager: Joi.string().pattern(/^(?!.*(['-])\1)[A-Za-z][A-Za-z' -]{0,126}[A-Za-z]$/).min(2).max(128).optional().allow("").allow(null).label("Project Manager"),
   created_datetime: Joi.date().iso().allow(null),
   modified_datetime: Joi.date().iso().allow(null),
   annual_revenue: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional()
@@ -183,7 +182,7 @@ const updateAccountSchema = Joi.object({
       "string.pattern.base": "Invalid UUID format for region RID",
       "any.required": "Account country region RID is required",
     }).label("Region"),
-  max_ai_interactions: Joi.number().integer().min(3).max(5).required().label("Max interaction Follow up"),
+  max_ai_interactions: Joi.number().integer().min(1).max(10).required().label("Max interaction Follow up"),
   autosend_interaction: Joi.boolean().required().label("Auto Send Interaction"),
   auto_access_rd: Joi.boolean().required().label("Auto Assessment"),
   fiscal_start_date: Joi.string()
@@ -238,14 +237,6 @@ const updateAccountSchema = Joi.object({
       "string.pattern.base": `Website URL must begin with 'http','www.' or 'https://'`,
       "string.max": "The website must not exceed 255 characters."
     }),
-  project_manager: Joi.string().pattern(/^(?!.*(['-])\1)[A-Za-z][A-Za-z' -]{0,126}[A-Za-z]$/).min(2).max(128).optional().allow("").allow(null)
-  .messages({
-    "string.base": "Delivary Manager must be a text value.",
-    "string.min": "Delivary Manager must be at least 2 characters long.",
-    "string.max": "Delivary Manager cannot exceed 128 characters.",
-    "string.pattern.base":
-      " Delivary Manager is not valid",
-  }),
   annual_revenue: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional()
     .messages({
       "string.pattern.base":"Annual Revenue must be a valid  number maximum up to (9999999999999999.99)",
