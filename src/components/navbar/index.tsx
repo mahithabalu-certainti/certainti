@@ -383,7 +383,7 @@ export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle }) => {
               </>
             )}
             <IconButton size='large' color='inherit'>
-              <img src={phoneIcon} alt='phone' className='h-[18px] w-[18px]' />
+              <img src={phoneIcon} alt='phone' className='h-[20px] w-[20px]' />
             </IconButton>
             <IconButton
               size='large'

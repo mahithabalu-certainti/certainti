@@ -11,6 +11,7 @@ import {
   AllowedCountry,
   ErrorHandling,
   FieldType,
+  InputType,
   SelectOption,
   YesNo,
 } from '../consultant/types';
@@ -19,6 +20,8 @@ export const createTextField = (
   name: string,
   label: string,
   options: {
+    type?: InputType;
+    width?: string;
     required?: boolean;
     regex?: RegExp;
     regexErrorMessage?: string;
@@ -40,10 +43,11 @@ export const createTextField = (
     };
   } = {}
 ): FieldType => ({
-  type: 'text',
+  type: options.type ?? 'text',
   name,
   label,
   required: options.required ?? false,
+  width: options.width,
   regex: options.regex,
   regexErrorMessage: options.regexErrorMessage,
   placeholder: options.placeholder,
@@ -120,6 +124,7 @@ export const createRadioField = (
   label: string,
   options: {
     required?: boolean;
+    width?: string;
     radioOptions: SelectOption[];
     defaultValue?: string;
     disabled?: boolean;
@@ -136,6 +141,7 @@ export const createRadioField = (
   name,
   label,
   required: options.required ?? false,
+  width: options.width,
   options: options.radioOptions,
   disabled: options.disabled,
   onChange: options.onChange,
@@ -148,6 +154,7 @@ export const createSelectField = (
   others: {
     options: SelectOption[];
     required: boolean;
+    width?: string;
     placeholder?: string;
     disabled?: boolean;
     clearValue?: Record<string, string>;
@@ -161,12 +168,49 @@ export const createSelectField = (
   label,
   required: others.required,
   options: others.options,
+  width: others.width,
   disabled: others.disabled,
   placeholder: others.placeholder,
   clearValue: others.clearValue,
   onChange: others.onChange,
   isLoading: others.isLoading,
   resetDependsFields: others.resetDependsFields,
+});
+
+export const createButton = (
+  name: string,
+  label: string,
+  others: {
+    iconUrl?: string;
+    onClick?: () => void;
+  }
+): FieldType => ({
+  type: 'button',
+  name: name,
+  label: label,
+  required: false,
+  iconUrl: others.iconUrl,
+  onClick: others.onClick,
+});
+
+export const createImgButton = (
+  iconUrl: string,
+  others?: {
+    width?: string;
+    onClick?: (index: number) => void;
+  }
+): FieldType => ({
+  type: 'iconButton',
+  iconUrl: iconUrl,
+  name: '',
+  label: '',
+  required: false,
+  width: others?.width,
+  onClick: (index?: number) => {
+    if (others?.onClick && index !== undefined) {
+      others.onClick(index);
+    }
+  },
 });
 
 export const createDateField = (

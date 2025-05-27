@@ -167,6 +167,64 @@ interface InputAccountById {
   } | null;
 }
 
+export interface accountByIdProps {
+  account_name: string;
+  industry: {
+    industry_name: string;
+  };
+  business_details: string;
+  is_parent: boolean;
+  parent_account: string;
+  status: string;
+  annual_revenue: string;
+  country: {
+    country_name: string;
+  };
+  region: {
+    region_name: string;
+  };
+  currency: {
+    currency_code: string;
+  };
+  r_number: string;
+  comments: string;
+}
+
+export interface accountByDetailsProps {
+  account_rid: string;
+  created_datetime: string;
+  created_by: string;
+  modified_datetime: string;
+  modified_by: string;
+  fiscal_start_date: string;
+  fiscal_end_date: string;
+  autosend_interaction: string;
+  max_ai_interactions: string;
+  auto_access_rd: string;
+  blended_rate_fte: string;
+  blended_rate_subcon: string;
+  data_residency: string;
+  website: string;
+  project_manager: string;
+  keyContacts: KeyContactProps[];
+  business_details: string;
+}
+
+export interface KeyContactProps {
+  r_number?: string;
+  key_contact_name?: string;
+  role_name?: string;
+  key_contact_email?: string;
+  is_primary_contact?: boolean;
+  include_in_communication?: boolean;
+  status?: string;
+}
+
+export interface accountDetailsProps {
+  accountById?: accountByIdProps;
+  accountDetails?: accountByDetailsProps;
+}
+
 function capitalizeFirstLetter(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }

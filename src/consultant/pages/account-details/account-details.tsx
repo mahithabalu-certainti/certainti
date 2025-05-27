@@ -104,6 +104,8 @@ export const AccountDetails = () => {
     }
   }, [searchParams]);
 
+  // getting user is inactive error, need to uncomment once details page UI is done
+
   const {
     data,
     isLoading,
@@ -157,7 +159,7 @@ export const AccountDetails = () => {
       case 'financial':
         return <FinancialSummary />;
       case 'details':
-        return <Details />;
+        return <Details accountDetails={{ ...data?.data }} isLoading={isLoading} isError={isError} />;
       case 'resources':
         return (
           <Resources
@@ -189,13 +191,13 @@ export const AccountDetails = () => {
 
   return (
     <div className='flex flex-col'>
-      <div className='flex h-[108px]'>
+      <div className='flex h-[60px]'>
         <PageHeader
           variant='sub'
           placeholder='Account Name'
           icon={accountDetailsIcon}
           iconBackgroundColor='#4B9BFF'
-          iconClasses='h-8 w-8 rounded'
+          iconClasses='h-6 w-6 rounded'
           title={data?.data?.accountById?.account_name || 'Account Title'}
           totalRecords={5}
           actionItems={menuItems}
@@ -213,14 +215,14 @@ export const AccountDetails = () => {
         error={isError}
       />
       <div className='flex flex-row w-full'>
-        <div className='flex w-[261px] min-w-[261px] max-w-[261px]'>
+        <div className='flex w-[200px] min-w-[200px] max-w-[200px]'>
           <Sidebar
             activeKey={activeKey}
             onSelect={setActiveKey}
             disble={data?.data?.accountById?.is_parent}
           />
         </div>
-        <div className='flex-1 p-4 overflow-hidden'>
+        <div className='flex-1 overflow-hidden'>
           {isLoading ? (
             <div className='flex items-center justify-center w-full h-full'>
               <CircularProgress />

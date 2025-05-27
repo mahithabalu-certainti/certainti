@@ -17,8 +17,8 @@ import {
   useCreateAccount,
   useUpdateAccount,
 } from '../../services/account-create';
-import { AccountFormData, SelectOption, YesNo } from '../../types';
-import { FormData } from './form-data';
+import { AccountFormData, FieldType, SelectOption, YesNo } from '../../types';
+import { FormData, newKeyContactFields } from './form-data';
 import {
   DATA_STORAGE_OPTIONS,
   othersIndustryId,
@@ -38,6 +38,8 @@ export const AccountForm: React.FC = () => {
   const [isParentAccountRequired, setIsParentAccountRequired] = useState(false);
   const [showOthersField, setShowOthersField] = useState(false);
   const [dataResidency, setDataResidency] = useState(DATA_STORAGE_OPTIONS);
+  const [keyContacts, setKeyContacts] = useState<FieldType[]>([]);
+  const [newContactLength, setNewContactLength] = useState<number>(0);
   const { successToast } = useToast();
   const location = useLocation();
   const { accountid } = useParams();
@@ -56,36 +58,36 @@ export const AccountForm: React.FC = () => {
       ...account?.accountById,
       ...(account?.accountById &&
         account?.accountDetails && {
-          is_parent: account?.accountById.is_parent ? 'yes' : 'no',
-          autosend_interaction: account?.accountDetails.autosend_interaction
-            ? 'yes'
-            : 'no',
-          auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
-          key_contact_name:
-            account?.accountDetails?.keyContacts?.[0]?.key_contact_name,
-          key_contact_role:
-            account?.accountDetails?.keyContacts?.[0]?.key_contact_role,
-          key_contact_email:
-            account?.accountDetails?.keyContacts?.[0]?.key_contact_email,
-          key_contact_status:
-            account?.accountDetails?.keyContacts?.[0]?.status.toLowerCase(),
-          is_primary_contact: account?.accountDetails?.keyContacts?.[0]
-            ?.is_primary_contact
-            ? 'yes'
-            : 'no',
-          include_in_communication: account?.accountDetails?.keyContacts?.[0]
-            ?.include_in_communication
-            ? 'yes'
-            : 'no',
-          record_id: account?.accountDetails?.rid,
-          account_id: account?.accountById?.r_number,
-          created_on: getDateTimeFormat(account?.accountById?.created_datetime),
-          updated_on: getDateTimeFormat(
-            account?.accountById?.modified_datetime
-          ),
-          created_by: account?.accountDetails?.created_by,
-          updated_by: account?.accountDetails?.modified_by,
-        }),
+        is_parent: account?.accountById.is_parent ? 'yes' : 'no',
+        autosend_interaction: account?.accountDetails.autosend_interaction
+          ? 'yes'
+          : 'no',
+        auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
+        key_contact_name:
+          account?.accountDetails?.keyContacts?.[0]?.key_contact_name,
+        key_contact_role:
+          account?.accountDetails?.keyContacts?.[0]?.key_contact_role,
+        key_contact_email:
+          account?.accountDetails?.keyContacts?.[0]?.key_contact_email,
+        key_contact_status:
+          account?.accountDetails?.keyContacts?.[0]?.status.toLowerCase(),
+        is_primary_contact: account?.accountDetails?.keyContacts?.[0]
+          ?.is_primary_contact
+          ? 'yes'
+          : 'no',
+        include_in_communication: account?.accountDetails?.keyContacts?.[0]
+          ?.include_in_communication
+          ? 'yes'
+          : 'no',
+        record_id: account?.accountDetails?.rid,
+        account_id: account?.accountById?.r_number,
+        created_on: getDateTimeFormat(account?.accountById?.created_datetime),
+        updated_on: getDateTimeFormat(
+          account?.accountById?.modified_datetime
+        ),
+        created_by: account?.accountDetails?.created_by,
+        updated_by: account?.accountDetails?.modified_by,
+      }),
     }),
     [account]
   );
@@ -198,6 +200,34 @@ export const AccountForm: React.FC = () => {
     [keyContactRoles.data?.data.keyContactRoles]
   );
 
+  useEffect(() => {
+    setNewContactLength(newKeyContactFields(memoizedRole, isValueUpdateInKeyContact).length);
+    setKeyContacts(newKeyContactFields(memoizedRole, isValueUpdateInKeyContact) as []);
+  }, [memoizedRole, isValueUpdateInKeyContact]);
+
+  const removeKeyContactInfo = (index: number) => {
+    // shallow copy keyContacts array
+    const contactsArr = [...keyContacts];
+    //Every time new contact is added it add newKeyContacts length fields
+    // and we need to remove same number of fields from the array for that 
+    // we calculated the length
+    const lengthOfKeyContacts = newKeyContactFields(memoizedRole, isValueUpdateInKeyContact).length;
+    // Finds how many contacts is added like 1, 2, 3 etc
+    const totalContactGrp = Math.floor(keyContacts.length / lengthOfKeyContacts);
+    // Finds which contact is clicked
+    const clickedGroup = totalContactGrp - 1 - (Math.floor(index / lengthOfKeyContacts));
+    // Finds the index of the first contact in the clicked contact group
+    const groupStartIndex = keyContacts.length - ((clickedGroup + 1) * lengthOfKeyContacts);
+
+    // Remove the clicked contact group from the array with the added newKeyContacts length
+    contactsArr.splice(groupStartIndex, lengthOfKeyContacts)
+    setKeyContacts(contactsArr);
+  };
+  const addKeyContactInfo = () => {
+    const newKeyData = newKeyContactFields(memoizedRole, isValueUpdateInKeyContact)
+    setKeyContacts([...keyContacts, ...newKeyData]);
+  }
+
   const submitData = (formValues: Partial<AccountFormData>) => {
     const transformData = transformFormData(
       formValues,
@@ -255,21 +285,21 @@ export const AccountForm: React.FC = () => {
 
   return (
     <>
-      <div className='flex items-center justify-between px-10 py-6 border-b-2 border-gray-200'>
+      <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
           <img
             src={isEditView ? editIcon : accountHomeIcon}
             alt='menu-icon'
-            className='h-8 w-8 bg-[#7D98B6] p-2.5 rounded'
+            className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
           />
           <div className='w-[90%]'>
             {isEditView && (
-              <h5 className='text-[20px] font-semibold ml-2 text-[#2D3E4F]'>
+              <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F]'>
                 Edit Account
               </h5>
             )}
             <h4
-              className={`${isEditView ? 'text-[14px]' : 'text-[20px]'} font-semibold text-[#2D3E4F] ml-2 leading-4 w-[95%] overflow-ellipsis truncate`}
+              className={`${isEditView ? 'text-[14px]' : 'text-[16px]'} font-bold text-[#2D3E4F] ml-2 leading-4 w-[95%] overflow-ellipsis truncate`}
             >
               {isEditView ? accountData.account_name : 'Create Account'}
             </h4>
@@ -310,9 +340,13 @@ export const AccountForm: React.FC = () => {
           memoizedRole,
           isValueUpdateInKeyContact,
           isParentAccountRequired,
+          keyContacts,
+          addKeyContactInfo,
+          removeKeyContactInfo,
           isEditView,
           states.isLoading,
-          showOthersField
+          showOthersField,
+
         )}
         loading={
           allCountries.isLoading ||
@@ -325,16 +359,17 @@ export const AccountForm: React.FC = () => {
           isEditView && accountData
             ? { ...accountData }
             : {
-                status: defaultActiveValue,
-                key_contact_status: defaultActiveValue,
-                autosend_interaction: YesNo.Yes,
-                auto_access_rd: YesNo.Yes,
-              } // Set default values in Create Account
+              status: defaultActiveValue,
+              key_contact_status: defaultActiveValue,
+              autosend_interaction: YesNo.Yes,
+              auto_access_rd: YesNo.Yes,
+            } // Set default values in Create Account
         }
         outData={submitData}
         formRef={formRef}
         onChange={onChangeField}
         layout={Layout.TYPE_1}
+        newContactLength={newContactLength}
       />
     </>
   );

@@ -115,7 +115,7 @@ const ResourceForm: React.FC = () => {
   const { data: resource, isSuccess } = useResourceDetail(
     resourceId || location?.state?.resource?.rid || resourceRId,
     location?.state?.accountDetails?.data?.accountById?.r_number ||
-      accountNumber
+    accountNumber
   );
 
   useEffect(() => {
@@ -141,14 +141,14 @@ const ResourceForm: React.FC = () => {
       Updated_By: resourceDetailsData?.modified_by,
       resource_name:
         resourceDetailsData?.resource_firstname &&
-        resourceDetailsData?.resource_lastname
+          resourceDetailsData?.resource_lastname
           ? ''
           : !resourceDetailsData?.resource_firstname &&
-              !resourceDetailsData?.resource_lastname
+            !resourceDetailsData?.resource_lastname
             ? resourceDetailsData?.resource_name
             : resourceDetailsData?.resource_firstname ||
-              resourceDetailsData?.resource_lastname ||
-              '',
+            resourceDetailsData?.resource_lastname ||
+            '',
     };
     setResourceDetails(finalResourceDetails || null);
   }, [resource]);
@@ -516,24 +516,24 @@ const ResourceForm: React.FC = () => {
 
   return (
     <div className='resource-form-container'>
-      <div className='flex justify-between items-center border-b-2 border-gray-200 px-10 py-6'>
+      <div className='h-[50px] border-box flex justify-between items-center border-b-2 border-gray-200 px-10'>
         <div className='flex items-center'>
           <img
             src={isEditView ? editIcon : createresourceIcon}
             alt='menu-icon'
-            className={`${isEditView ? 'bg-[#7D98B6] p-2.5' : ''} h-8 w-8 rounded`}
+            className={`${isEditView ? 'bg-[#7D98B6] p-1.5' : ''} h-6 w-6 rounded`}
           />
           <div>
             {/* {isEditView && !state?.skill && !state?.cost && (
               <h5 className='mb-1 ml-2 text-xs text-gray-500'>Edit Resource</h5>
             )} */}
-            <div className='font-semibold text-[11px] leading-[20px] ml-2 text-[#7D98B6]'>
+            <div className='font-semibold text-[12px] leading-[20px] ml-2 text-[#7D98B6]'>
               {!state?.skill && !state?.cost
                 ? `Account > ${accountData?.account_name}`
                 : `Account > ${costAndSKillAccountInfo?.account_name}`}
             </div>
             {!isEditView && (
-              <h4 className='ml-2 font-semibold text-[20px] leading-[20px] tracking-[0] text-[#2D3E4F]'>
+              <h4 className='ml-2 font-bold text-[16px] leading-[20px] tracking-[0] text-[#2D3E4F]'>
                 {state?.cost
                   ? `${resourceName} Cost`
                   : state?.skill
@@ -542,7 +542,7 @@ const ResourceForm: React.FC = () => {
               </h4>
             )}
             {isEditView && (
-              <h4 className='ml-2 font-semibold text-[20px] leading-[20px] tracking-[0] text-[#2D3E4F]'>
+              <h4 className='ml-2 font-bold text-[16px] leading-[20px] tracking-[0] text-[#2D3E4F]'>
                 {state?.cost
                   ? 'Edit Resource Cost'
                   : state?.skill
@@ -588,21 +588,21 @@ const ResourceForm: React.FC = () => {
         loading={allCountries.isLoading}
         values={
           isEditView &&
-          !state?.cost &&
-          !state?.skill &&
-          (resourceDetails as unknown as Record<
-            string,
-            string | number | boolean | string[] | null
-          >)
+            !state?.cost &&
+            !state?.skill &&
+            (resourceDetails as unknown as Record<
+              string,
+              string | number | boolean | string[] | null
+            >)
             ? (resourceDetails as unknown as Record<
+              string,
+              string | number | boolean | string[] | null
+            >)
+            : state?.cost || state?.skill
+              ? (formValues as unknown as Record<
                 string,
                 string | number | boolean | string[] | null
               >)
-            : state?.cost || state?.skill
-              ? (formValues as unknown as Record<
-                  string,
-                  string | number | boolean | string[] | null
-                >)
               : undefined
         }
         // values={

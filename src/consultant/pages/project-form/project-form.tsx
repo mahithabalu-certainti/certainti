@@ -234,7 +234,7 @@ const ProjectForm: React.FC = () => {
 
   return (
     <>
-      <div className='flex justify-between items-center border-b-2 border-gray-200 px-10 py-6'>
+      <div className='h-[60px] border-box flex justify-between items-center border-b-2 border-gray-200 px-10'>
         <div className='flex items-center'>
           <img
             src={isEditView ? editIcon : projectCreateIcon}
@@ -298,10 +298,10 @@ const ProjectForm: React.FC = () => {
             isEditView && projectData
               ? { ...projectData }
               : {
-                  project_status: defaultActiveValue,
-                  status: defaultActiveValue,
-                  max_ai_interaction: 3,
-                }
+                project_status: defaultActiveValue,
+                status: defaultActiveValue,
+                max_ai_interaction: 3,
+              }
           }
           outData={submitData}
           formRef={formRef}
