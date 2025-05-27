@@ -177,6 +177,7 @@ export type FieldConfig = {
     | 'skillSubTypeFilter';
   options?: { option: string; value: string }[];
   dependsOn?: string;
+  operatorOption?: { option: string; value: string }[];
 };
 
 export interface FilterComponentProps {

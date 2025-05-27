@@ -1,14 +1,46 @@
-import { FieldConfig } from '../../account-details-sidebar/components/filter/filterType';
-import {
-  dateOptions,
-  enumOptions,
-  fiscalYearOption,
-  numberOptions,
-  textOptions,
-  statusOptions,
-} from '../../account-details-sidebar/sidebar-pages/projects/utils';
+import { fiscalYears } from '../../../resource-form/form-data';
+import { FieldConfig } from '../../components/filter/filterType';
 
-export const getAllProjectFilterFields = (): FieldConfig[] => [
+export const statusOptions: { option: string; value: string }[] = [
+  { option: 'Active', value: 'Active' },
+  { option: 'In-Active', value: 'Inactive' },
+];
+export const fiscalYearOption = fiscalYears.map((year) => ({
+  option: year.label,
+  value: year.value,
+}));
+export const numberOptions: { option: string; value: string }[] = [
+  { option: '=', value: 'equals' },
+  { option: '≠', value: 'not_equals' },
+  { option: '<', value: 'less_than' },
+  { option: '>', value: 'greater_than' },
+  { option: '↔', value: 'between' },
+  { option: '∅', value: 'is_empty' },
+];
+export const textOptions: { option: string; value: string }[] = [
+  { option: '=', value: 'equals' },
+  { option: '≠', value: 'not_equals' },
+  { option: '∈', value: 'contains' },
+  { option: '∉', value: 'not_contains' },
+  { option: '∅', value: 'is_empty' },
+];
+
+export const enumOptions: { option: string; value: string }[] = [
+  { option: '=', value: 'equals' },
+  { option: '≠', value: 'not_equals' },
+  { option: '⊂', value: 'in' },
+  { option: '∅', value: 'is_empty' },
+];
+
+export const dateOptions: { option: string; value: string }[] = [
+  { option: '=', value: 'equals' },
+  { option: '←', value: 'before' },
+  { option: '→', value: 'after' },
+  { option: '↔', value: 'between' },
+  { option: '∅', value: 'is_empty' },
+];
+
+export const projectFilterFields: FieldConfig[] = [
   // Text fields
   {
     name: 'Project Code',

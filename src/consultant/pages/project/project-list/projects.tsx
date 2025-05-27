@@ -10,11 +10,12 @@ import {
   projectDetailsIcon,
   refreshIcon,
 } from '../../../../assets';
-import { ActionsDropdown, FilterModal } from '../../../../components';
+import { ActionsDropdown } from '../../../../components';
 import TextButton from '../../../../components/button/text-button';
-import { getProjectFilterFields } from './helpers';
+import { getAllProjectFilterFields } from './helpers';
 import { ProjectTable } from './table/project-table';
 import { ProjectListParams } from '../../../types/project';
+import Filter from '../../account-details-sidebar/components/filter/filter';
 
 const BUTTON_STYLES = {
   height: '32px',
@@ -64,7 +65,7 @@ export const Projects: React.FC = () => {
     });
   };
 
-  const projectFilterFields = getProjectFilterFields();
+  const projectFilterFields = getAllProjectFilterFields();
 
   return (
     <div className='flex flex-col w-full h-full'>
@@ -144,14 +145,16 @@ export const Projects: React.FC = () => {
               </div>
             )}
           </button>
-          <FilterModal
+          <Filter
+            value={'allProjects'}
             isOpen={isFilterOpen}
             filterAnchorEl={anchorEl}
             filterId={filterId}
-            filterFields={projectFilterFields}
+            filterMenu={projectFilterFields}
             setAppliedFilters={setAppliedFilters}
-            setPage={setPage}
-            handleCloseFilter={handleCloseFilter}
+            handleFilter={handleCloseFilter}
+            setCurrentPage={setPage}
+            mode={'date'}
           />
         </div>
       </div>

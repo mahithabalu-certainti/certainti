@@ -372,7 +372,7 @@ const Filter: React.FC<FilterComponentProps> = ({
         return (
           <TextFilterControl
             filterStates={filterStates}
-            menuOption={textOptions}
+            menuOption={field.operatorOption || textOptions}
             fieldName={field.value}
             state={fieldState}
             onOptionChange={handleFilterOptionChange}

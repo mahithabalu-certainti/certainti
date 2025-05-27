@@ -21,7 +21,10 @@ import {
   useUpdateProject,
 } from '../../services/project/project-create-service';
 import { useProjectDetail } from '../../services/project';
-import { othersIndustryId } from '../account-create/utils';
+import {
+  othersClassificationId,
+  othersIndustryId,
+} from '../account-create/utils';
 import { STATUS_OPTIONS } from '../../../common-utils';
 
 const ProjectForm: React.FC = () => {
@@ -33,6 +36,7 @@ const ProjectForm: React.FC = () => {
     key_contact_email: '',
   });
   const [showOthersField, setShowOthersField] = useState(false);
+  const [showClassifyOthersField, setShowClassifyOthersField] = useState(false);
   const { successToast } = useToast();
   const location = useLocation();
   const { accountID, projectID } = location.state;
@@ -216,21 +220,29 @@ const ProjectForm: React.FC = () => {
       }));
     }
     if (data.fieldName === 'industry_rid') {
-      // console.log(data.fieldName);
       setShowOthersField(data.fieldValue === othersIndustryId);
+    }
+    if (data.fieldName === 'project_classification_rid') {
+      setShowClassifyOthersField(data.fieldValue === othersClassificationId);
     }
   };
   useEffect(() => {
-    if (projectData.country_rid) {
-      setCurrentCountry(projectData.country_rid);
+    if (account?.country) {
+      setCurrentCountry(account?.country);
     }
-  }, [projectData.country_rid]);
+  }, [account?.country]);
 
   useEffect(() => {
     if (account?.industry_rid === othersIndustryId) {
       setShowOthersField(true);
     }
   }, [account?.industry_rid]);
+  useEffect(() => {
+    if (account?.project_classification_rid === othersClassificationId) {
+      setShowClassifyOthersField(true);
+    }
+  }, [account?.project_classification_rid]);
+  console.log(projectData, 'projectData');
 
   return (
     <>
@@ -288,6 +300,7 @@ const ProjectForm: React.FC = () => {
             isValueUpdateInKeyContact,
             isEditView,
             showOthersField,
+            showClassifyOthersField,
             states.isLoading
           )}
           // loading={

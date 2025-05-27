@@ -38,6 +38,7 @@ export const FormData = (
   isPrimaryContactRequired: boolean,
   disableFields?: boolean,
   showOthersField?: boolean,
+  showClassifyOthersField?: boolean,
   stateLoading?: boolean
 ): FormType[] => {
   return useMemo(
@@ -177,6 +178,33 @@ export const FormData = (
             options: classification,
             placeholder: 'Choose Classification',
             required: false,
+            onChange: true,
+          }),
+          createTextField('classification_name', 'Classification-other', {
+            required: true,
+            placeholder: 'Enter tClassification-other',
+            hide: !showClassifyOthersField,
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_3,
+                errorMessage:
+                  'projectClassification-other must be more than 2 characters long',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_255,
+                errorMessage: 'Max length exceeded',
+              },
+              {
+                regex: REGEX_PATTERNS.NOT_ALLOW_SPACE_SYMBOLS_AT_START_END,
+                errorMessage:
+                  'Cannot begin or end with a space or special character',
+              },
+              {
+                regex: REGEX_PATTERNS.PROJECT_NAME,
+                errorMessage:
+                  "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_).",
+              },
+            ],
           }),
           createTextField('project_client_group', 'Client Group', {
             placeholder: 'Enter Client Group',
@@ -276,8 +304,6 @@ export const FormData = (
         fields: [
           createTextField('key_contact_name', 'Key Contact Name', {
             required: false,
-            // regex: REGEX_PATTERNS.CONTACT_NAME,
-            // regexErrorMessage: 'Invalid Name',
             placeholder: 'Enter Key Contact Name',
             onChange: true,
             errorHandling: [
@@ -509,6 +535,7 @@ export const FormData = (
       disableFields,
       currency,
       showOthersField,
+      showClassifyOthersField,
       stateLoading,
       isPrimaryContactRequired,
     ]

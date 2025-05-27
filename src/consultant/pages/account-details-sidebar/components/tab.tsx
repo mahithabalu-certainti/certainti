@@ -17,6 +17,9 @@ import {
   useFetchResourceSkillType,
 } from '../../../services/resource-skill/resource-skill-service';
 import { SkillSubtype, SkillType } from '../../../types/resource';
+import { projectFilterFields } from '../sidebar-pages/projects/utils';
+// import { useGetAllCountries } from '../../../../common-service';
+// import { SelectOption } from '../../../types';
 interface TabProps {
   filterVisibility: boolean;
   handleFilter: () => void;
@@ -67,10 +70,20 @@ const TabPanel: React.FC<TabProps> = ({
     });
   };
   const currency = useFetchCurrency();
+  // const allCountries = useGetAllCountries();
+
   const { data: skillType } = useFetchResourceSkillType();
   const { data: skillSubType } = useFetchResourceSkillSubType(
     currentSkillType.skill_type_rid || (null as string | null)
   );
+  // const memoizedContry: SelectOption[] = useMemo(
+  //   () =>
+  //     allCountries.data?.data.country.map((country) => ({
+  //       label: country.country_name,
+  //       value: country.rid,
+  //     })) || [],
+  //   [allCountries.data?.data.country]
+  // );
 
   const memoizedSkillType: { option: string; value: string }[] = useMemo(() => {
     const data = skillType as SkillType[];
@@ -153,6 +166,9 @@ const TabPanel: React.FC<TabProps> = ({
 
   const getFilterFields = () => {
     if (!value) return resourceFilterFields;
+    if (value === 'projects') {
+      return projectFilterFields;
+    }
     return value === 'cost'
       ? getCostFilterFields(memoizedCurrency)
       : getSkillFilterFields(memoizedSkillType, skillSubTypeData);
