@@ -18,7 +18,7 @@ interface ResourceSkillAttributes  {
  skill_type_name?: string,
  skill_subtype_name?: string,
  skill_details?: string,             
- start_date?: Date,
+ start_date?: Date | null,
  skill_description?: string,     
  skill_level: string,  
  skill_type_others?: string,
@@ -47,7 +47,7 @@ export class ResourceSkill extends Model<ResourceSkillAttributes, ResourceSkillC
   skill_type_rid!: string;
   skill_subtype_rid!: string;
   skill_details?: string;
-  start_date?: Date;
+  start_date?: Date | null;
   skill_description?: string;
   skill_level!: string;
   skill_type_others?: string;

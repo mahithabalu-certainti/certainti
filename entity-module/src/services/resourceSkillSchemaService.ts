@@ -286,14 +286,16 @@ async exportResoucreSkill(
   // Build the query to get data from the account-specific schema
   const query = `
     SELECT rs.*,
-    rs.start_date,
-    r.resource_name
+    TO_CHAR(rs.start_date, 'yyyy-mm-dd') as start_date,
+    r.resource_name, r.resource_role, r.resource_orgname, r.resource_designation, r.resource_total_experience as years_of_experience, ad.account_name
     FROM "${schemaName}"."resource_skill" rs
     INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
+    INNER JOIN "${schemaName}"."account_details" ad ON r.account_rid = ad.account_rid
     WHERE 1=1 AND rs.resource_rid = :resource_rid
     ${filterConditions}
     ${searchCondition}
-    ${finalSortBy === 'skill_type_name' || finalSortBy === 'skill_subtype_name' ? '' : `ORDER BY rs."${finalSortBy}" ${finalSortOrder}`}
+    ${finalSortBy === 'resource_name' || finalSortBy === 'resource_orgname' || finalSortBy === 'resource_designation' || finalSortBy === 'resource_role' || finalSortBy === 'resource_total_experience' ?
+    `ORDER BY r."${finalSortBy}" ${finalSortOrder}` : finalSortBy === 'account_name' ? `ORDER BY ad."${finalSortBy}" ${finalSortOrder}` : finalSortBy === 'skill_type_name' || finalSortBy === 'skill_subtype_name' ? '' : `ORDER BY rs."${finalSortBy}" ${finalSortOrder}`}
   `;
 
   const replacements = {
@@ -329,23 +331,37 @@ async exportResoucreSkill(
     const skillTypeMap = new Map(skillTypes.map((st: any) => [st.rid, st.skill_type_name]));
     const skillSubtypeMap = new Map(skillSubtypes.map((sst: any) => [sst.rid, sst.skill_subtype_name]));
 
+    // Add names to resource skills
+    resourceSkill = resourceSkill.map((rs: any) => ({
+      ...rs,
+      skill_type_name: skillTypeMap.get(rs.skill_type_rid) || '',
+      skill_subtype_name: skillSubtypeMap.get(rs.skill_subtype_rid) || ''
+    }));
+
     // Add names to resource skills and format for export
     resourceSkill = resourceSkill.map((rs: any) => ({
 
-      "Start Date": rs.start_date ? moment(rs.start_date).format(
-        "MM/DD/YYYY"
-      ) : "NA" as any,
-      "Skill Type": skillTypeMap.get(rs.skill_type_rid) || "NA",
-      "Skill Subtype": skillSubtypeMap.get(rs.skill_subtype_rid) || "NA",
-      "Skill Details": rs.skill_details || "NA",
-      "Skill Level": rs.skill_level || "NA",
+      "Account Name": rs.account_name || "-",
+      "Resource Code": rs.resource_code || "-",
+      "Name": rs.resource_name || "-",
+      "Resource Type": rs.resource_type || "-",
+      "Start Date": rs.start_date || "-",
+      "Skill Type": rs.skill_type_name || "-",
+      "Skill SubType": rs.skill_subtype_name || "-",
+      "Skill Level": rs.skill_level || "-",
+      "Skill Details": rs.skill_details || "-",
+      "Org Name": rs.resource_orgname || "-",
+      "Designation": rs.resource_designation || "-",
+      "Role": rs.resource_role || "-",
+      "Years of Experience": rs.years_of_experience || "-",
+      "Skill ID": rs.r_number || "-"
     }));
 
     // Apply sorting if needed
     if (finalSortBy === 'skill_type_name' || finalSortBy === 'skill_subtype_name') {
       resourceSkill.sort((a: any, b: any) => {
-        const aValue = a[finalSortBy].toLowerCase();
-        const bValue = b[finalSortBy].toLowerCase();
+        const aValue = (a[finalSortBy] || '').toLowerCase();
+        const bValue = (b[finalSortBy] || '').toLowerCase();
         return finalSortOrder === 'ASC' 
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue);
@@ -392,14 +408,16 @@ async executeQueries(
   // Build the query to get data from the account-specific schema
   const query = `
     SELECT rs.*,
-    rs.start_date,
-    r.resource_name, r.resource_role, r.resource_type, r.resource_status
+    TO_CHAR(rs.start_date, 'yyyy-mm-dd') as start_date,
+    r.resource_name, r.resource_role, r.resource_orgname, r.resource_designation, r.resource_total_experience as years_of_experience, ad.account_name
     FROM "${schemaName}"."resource_skill" rs
     INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
+    INNER JOIN "${schemaName}"."account_details" ad ON r.account_rid = ad.account_rid
     WHERE 1=1 AND rs.resource_rid = :resource_rid
     ${filterConditions}
     ${searchCondition}
-    ${finalSortBy === 'skill_type_name' || finalSortBy === 'skill_subtype_name' ? '' : `ORDER BY rs."${finalSortBy}" ${finalSortOrder}`}
+    ${finalSortBy === 'resource_name' || finalSortBy === 'resource_orgname' || finalSortBy === 'resource_designation' || finalSortBy === 'resource_role' || finalSortBy === 'resource_total_experience' ?
+      `ORDER BY r."${finalSortBy}" ${finalSortOrder}` : finalSortBy === 'account_name' ? `ORDER BY ad."${finalSortBy}" ${finalSortOrder}` : finalSortBy === 'skill_type_name' || finalSortBy === 'skill_subtype_name' ? '' : `ORDER BY rs."${finalSortBy}" ${finalSortOrder}`}
     LIMIT :limit OFFSET :offset
   `;
 
@@ -408,6 +426,7 @@ async executeQueries(
     SELECT COUNT(*) as total
     FROM "${schemaName}"."resource_skill" rs
     INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
+    INNER JOIN "${schemaName}"."account_details" ad ON r.account_rid = ad.account_rid
     WHERE 1=1 AND rs.resource_rid = :resource_rid
     ${filterConditions}
     ${searchCondition}
@@ -506,6 +525,15 @@ async executeQueries(
       "skill_level",
       "start_date",
       "skill_details",
+      "account_name",
+      "resource_code",
+      "resource_total_experience",
+      "resource_name",
+      "resource_type",
+      "resource_orgname",
+      "resource_role",
+      "resource_designation",
+      "r_number"
     ];
     if (!validSortColumns.includes(sortBy)) {
       sortBy = "created_datetime";
@@ -573,8 +601,8 @@ async executeQueries(
     let filterConditions = "";
 
     // Define field types for proper filter handling
-    // const alphanumericFields = [];
-    // const numericFields = [];
+    const alphanumericFields = ["resource_code","r_number"];
+    const numericFields = ["resource_total_experience"];
     const dateFields = ["start_date"];
     const enumFields = ["skill_level","status","skill_type_rid","skill_subtype_rid"];
 
@@ -582,13 +610,13 @@ async executeQueries(
     Object.entries(filters).forEach(([key, value]) => {
       // Handle different filter types based on field type
       if (typeof value === "object") {
-        // if (alphanumericFields.includes(key)) {
-        //   filterConditions += this.processAlphanumericFilter(key, value);
-        // } 
-        // if (numericFields.includes(key)) {
-        //   filterConditions += this.processNumericFilter(key, value);
-        // } 
-        if (dateFields.includes(key)) {
+        if (alphanumericFields.includes(key)) {
+          filterConditions += this.processAlphanumericFilter(key, value);
+        } 
+        else if (numericFields.includes(key)) {
+          filterConditions += this.processNumericFilter(key, value);
+        } 
+        else if (dateFields.includes(key)) {
           filterConditions += this.processDateFilter(key, value);
         } 
         else if (enumFields.includes(key)) {
@@ -617,7 +645,7 @@ processAlphanumericFilter(key: string, value: any): string {
     if (value.equals) {
       condition += ` AND LOWER(rs."${key}") = LOWER('${value.equals}')`;
     } else if (value.not_equals) {
-      condition += ` AND LOWER(rs."${key}") != LOWER('${value.not_equals}')`;
+      condition += ` AND LOWER(rs."${key}") != LOWER('${value.not_equals}') OR rs."${key}" IS NULL`;
     } else if (value.contains) {
       condition += ` AND LOWER(rs."${key}") LIKE LOWER('%${value.contains}%')`;
     } else if (value.not_contains) {
@@ -657,39 +685,40 @@ processAlphanumericFilter(key: string, value: any): string {
    */
   processNumericFilter(key: string, value: any): string {
     let condition = "";
+    let tableAlias = "r";
 
     if (value.equals !== undefined) {
-      condition += ` AND rs."${key}" = ${value.equals}`;
+      condition += ` AND ${tableAlias}."${key}" = ${value.equals}`;
     } else if (value.not_equals !== undefined) {
-      condition += ` AND rs."${key}" != ${value.not_equals}`;
+      condition += ` AND ${tableAlias}."${key}" != ${value.not_equals} OR ${tableAlias}."${key}" IS NULL`;
     } else if (value.greater_than !== undefined) {
-      condition += ` AND rs."${key}" > ${value.greater_than}`;
+      condition += ` AND ${tableAlias}."${key}" > ${value.greater_than}`;
     } else if (value.less_than !== undefined) {
-      condition += ` AND rs."${key}" < ${value.less_than}`;
+      condition += ` AND ${tableAlias}."${key}" < ${value.less_than}`;
     } else if (
       value.between &&
       Array.isArray(value.between) &&
       value.between.length === 2
     ) {
-      condition += ` AND rs."${key}" BETWEEN ${value.between[0]} AND ${value.between[1]}`;
+      condition += ` AND ${tableAlias}."${key}" BETWEEN ${value.between[0]} AND ${value.between[1]}`;
     } else if (value.is_empty !== undefined) {
       if (value.is_empty) {
-        condition += ` AND rs."${key}" IS NULL`;
+        condition += ` AND ${tableAlias}."${key}" IS NULL`;
       }
     } else if (value.is_not_empty !== undefined) {
       if (value.is_not_empty) {
-        condition += ` AND rs."${key}" IS NOT NULL`;
+        condition += ` AND ${tableAlias}."${key}" IS NOT NULL`;
       }
     } else if (value.in && Array.isArray(value.in) && value.in.length > 0) {
       const values = value.in.join(",");
-      condition += ` AND rs."${key}" IN (${values})`;
+      condition += ` AND ${tableAlias}."${key}" IN (${values})`;
     } else if (
       value.not_in &&
       Array.isArray(value.not_in) &&
       value.not_in.length > 0
     ) {
       const values = value.not_in.join(",");
-      condition += ` AND rs."${key}" NOT IN (${values})`;
+      condition += ` AND ${tableAlias}."${key}" NOT IN (${values})`;
     }
 
     return condition;
@@ -707,7 +736,7 @@ processAlphanumericFilter(key: string, value: any): string {
     if (value.equals) {
       condition += ` AND rs."${key}"::date = '${value.equals}'::date`;
     } else if (value.not_equals) {
-      condition += ` AND rs."${key}"::date != '${value.not_equals}'::date`;
+      condition += ` AND rs."${key}"::date != '${value.not_equals}'::date OR rs."${key}" IS NULL`;
     } else if (value.before) {
       condition += ` AND rs."${key}" < '${value.before}'`;
     } else if (value.after) {
@@ -757,7 +786,7 @@ processAlphanumericFilter(key: string, value: any): string {
    */
 processEnumFilter(key: string, value: any) {
   let condition = "";
-  let tableAlias = "rs"; // Default to rs since we're only handling skill_level
+  let tableAlias = "rs";
 
   // Check if the field is a UUID type
   const isUuidField = key.toLowerCase().includes('rid');
@@ -769,9 +798,9 @@ processEnumFilter(key: string, value: any) {
     }
   } else if (value.not_equals !== undefined) {
     if (isUuidField) {
-      condition += ` AND ${tableAlias}."${key}" != '${value.not_equals}'`;
+      condition += ` AND ${tableAlias}."${key}" != '${value.not_equals}' OR ${tableAlias}."${key}" IS NULL`;
     } else {
-      condition += ` AND LOWER(${tableAlias}."${key}") != LOWER('${value.not_equals}')`;
+      condition += ` AND LOWER(${tableAlias}."${key}") != LOWER('${value.not_equals}') OR ${tableAlias}."${key}" IS NULL`;
     }
   } else if (value.in && Array.isArray(value.in) && value.in.length > 0) {
     if (isUuidField) {
@@ -806,19 +835,69 @@ processEnumFilter(key: string, value: any) {
    * @param value - The filter value object
    * @returns SQL condition string
    */
-  processDefaultFilter(key: string, value: any): string {
-    let condition = "";
-
-    if (value.equals !== undefined) {
-      if (typeof value.equals === "string") {
-        condition += ` AND LOWER(rs."${key}") = LOWER('${value.equals}')`;
-      } else {
-        condition += ` AND rs."${key}" = ${value.equals}`;
-      }
-    }
-
-    return condition;
+processDefaultFilter(key: string, value: any): string {
+  let condition = "";
+  
+  // Determine table alias based on field name
+  let tableAlias = 'rs';
+  if (key === 'account_name') {
+    tableAlias = 'ad';
+  } else if (['resource_name', 'resource_orgname', 'resource_designation', 'resource_role'].includes(key)) {
+    tableAlias = 'r';
   }
+
+  // Handle equals operator
+  if (value.equals !== undefined) {
+    if (typeof value.equals === "string") {
+      condition += ` AND LOWER(${tableAlias}."${key}") = LOWER('${value.equals}')`;
+    } else {
+      condition += ` AND ${tableAlias}."${key}" = ${value.equals}`;
+    }
+  }
+
+  // Handle not equals operator
+  if (value.not_equals !== undefined) {
+    if (typeof value.not_equals === "string") {
+      condition += ` AND LOWER(${tableAlias}."${key}") != LOWER('${value.not_equals}') OR ${tableAlias}."${key}" IS NULL`;
+    } else {
+      condition += ` AND ${tableAlias}."${key}" != ${value.not_equals} OR ${tableAlias}."${key}" IS NULL`;
+    }
+  }
+
+  // Handle is empty operator
+  if (value.is_empty === true) {
+    condition += ` AND (${tableAlias}."${key}" IS NULL OR ${tableAlias}."${key}" = '')`;
+  }
+
+  // Handle is not empty operator
+  if (value.is_not_empty === true) {
+    condition += ` AND ${tableAlias}."${key}" IS NOT NULL AND ${tableAlias}."${key}" != ''`;
+  }
+
+  // Handle contains operator
+  if (value.contains !== undefined) {
+    condition += ` AND LOWER(${tableAlias}."${key}") LIKE LOWER('%${value.contains}%')`;
+  }
+
+  // Handle not contains operator
+  if (value.not_contains !== undefined) {
+    condition += ` AND LOWER(${tableAlias}."${key}") NOT LIKE LOWER('%${value.not_contains}%')`;
+  }
+
+  // Handle in operator
+  if (value.in !== undefined && Array.isArray(value.in)) {
+    const inValues = value.in.map((v: any) => typeof v === "string" ? `'${v}'` : v).join(',');
+    condition += ` AND ${tableAlias}."${key}" IN (${inValues})`;
+  }
+
+  // Handle not in operator
+  if (value.not_in !== undefined && Array.isArray(value.not_in)) {
+    const notInValues = value.not_in.map((v: any) => typeof v === "string" ? `'${v}'` : v).join(',');
+    condition += ` AND ${tableAlias}."${key}" NOT IN (${notInValues})`;
+  }
+
+  return condition;
+}
 
   /**
    * Process simple equality filter

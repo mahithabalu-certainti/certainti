@@ -64,8 +64,8 @@ export class ResourceService {
       await this.schemaService.createResourceTable(accountNumber);
 
       // Parse dates and set to UTC midnight to avoid timezone issues
-      const startDate = moment.utc(resourceData.effective_from_date, "MM/DD/YYYY").startOf('day');
-      const endDate = moment.utc(resourceData.effective_end_date, "MM/DD/YYYY").startOf('day');
+      const startDate = moment.utc(resourceData.effective_from_date, "yyyy-mm-dd").startOf('day');
+      const endDate = moment.utc(resourceData.effective_end_date, "yyyy-mm-dd").startOf('day');
 
       resourceData.created_by = userId;
       resourceData.modified_by = userId;
@@ -137,7 +137,7 @@ export class ResourceService {
         sortOrder
       );
 
-      const { whereClause } = this.buildWhereClause(filters, search);
+      const { whereClause, havingClause } = this.buildWhereClause(filters, search);
       const { geoDataSort } = this.processGeoDataSort(
         sortBy,
         sortOrder
@@ -149,6 +149,7 @@ export class ResourceService {
         limit,
         [[finalSortBy, finalSortOrder]],
         whereClause,
+        havingClause,
         geoDataSort,
         accountId
       );
@@ -209,7 +210,7 @@ export class ResourceService {
         sortOrder
       );
 
-      const { whereClause } = this.buildWhereClause(filters, search);
+      const { whereClause, havingClause } = this.buildWhereClause(filters, search);
       const { geoDataSort } = this.processGeoDataSort(
         sortBy,
         sortOrder
@@ -219,19 +220,26 @@ export class ResourceService {
         accountRNumber,
         [[finalSortBy, finalSortOrder]],
         whereClause,
+        havingClause,
         geoDataSort
       );
 
       const rawResult = resources.resources || [];
       let exportData = rawResult.map((resource: any) => {        
         return {
-          "Resource Code":resource.resource_code || "NA",
-          "Name":resource.resource_name || "NA",
-          "Resource Type": resource?.resource_type || "NA",
-          "Designation": resource.resource_designation || "NA",
-          "Country": resource.country_name || "NA",
-          "Region": resource.region_name || "NA",
+          "Account Name": resource.account_name || "-",
+          "Resource Code":resource.resource_code || "-",
+          "Name":resource.resource_name || "-",
+          "Resource Type": resource?.resource_type || "-",
+          "Org Name": resource.resource_orgname || "-",
+          "Designation": resource.resource_designation || "-",
+          "Role": resource.resource_role || "-",
+          "Region": resource.region_name || "-",
+          "Country": resource.country_name || "-",
+          "Total Project Hours": resource.total_project_hours || "-",
           "Status": resource.resource_status.toLowerCase() === "active" ? "Active" : "In-Active",
+          "Comments": resource.comments || "-",
+          "Resource ID": resource.r_number || "-"
         };
       });
       return {
@@ -415,6 +423,8 @@ export class ResourceService {
       "resource_total_experience",
       "resource_country",
       "resource_region",
+      "account_name",
+      "total_project_hours",
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -437,16 +447,20 @@ export class ResourceService {
     search: string
   ): {
     whereClause: Record<string, any>;
+    havingClause: Record<string, any>;
   } {
     let whereClause: Record<string, any> = {};
+    let havingClause: Record<string, any> = {};
 
     if (search) {
       whereClause = this.buildSearchCondition(search, whereClause);
     }
 
-    whereClause = this.applyFilters(filters, whereClause);
+    const result = this.applyFilters(filters, whereClause, havingClause);
+    whereClause = result.whereClause;
+    havingClause = result.havingClause;
 
-    return { whereClause };
+    return { whereClause, havingClause };
   }
 
   /**
@@ -483,8 +497,9 @@ export class ResourceService {
 
   private applyFilters(
     filters: Record<string, any>,
-    whereClause: Record<string, any>
-  ): Record<string, any> {
+    whereClause: Record<string, any>,
+    havingClause: Record<string, any>
+  ): { whereClause: Record<string, any>; havingClause: Record<string, any> } {
     const castToTextFields = ["resource_type", "resource_name", "resource_designation", "r_number", "resource_code","resource_status"];
     const uuidFields = ["resource_country","resource_region"];
 
@@ -518,7 +533,37 @@ export class ResourceService {
       }
     });
 
-    return whereClause;
+    if (filters.account_name) {
+      whereClause['$AccountDetails.account_name$'] = this.getFieldFilter(filters.account_name, 'account_name');
+    }
+
+   if (filters.total_project_hours) {
+
+    const totalProjectHoursExpr = Sequelize.literal(`
+      COALESCE("ResourceFiscal"."total_effort_for_year_project", 0)
+    `);
+          const filter = filters.total_project_hours;
+          if (filter.equals !== undefined) {
+            havingClause = Sequelize.where(totalProjectHoursExpr, { [Op.eq]: filter.equals });
+          } else if (filter.not_equals !== undefined) {
+            havingClause = Sequelize.where(totalProjectHoursExpr, { 
+              [Op.or]: [
+                { [Op.ne]: filter.not_equals },
+                { [Op.is]: null },
+              ]
+            });
+          } else if (filter.greater_than !== undefined) {
+            havingClause = Sequelize.where(totalProjectHoursExpr, { [Op.gt]: filter.greater_than });
+          } else if (filter.less_than !== undefined) {
+            havingClause = Sequelize.where(totalProjectHoursExpr, { [Op.lt]: filter.less_than });
+          } else if (filter.between && Array.isArray(filter.between) && filter.between.length === 2) {
+            havingClause = Sequelize.where(totalProjectHoursExpr, { [Op.between]: filter.between });
+          } else if (filter.is_empty === true) {
+            havingClause = Sequelize.where(totalProjectHoursExpr, { [Op.eq]: 0 });
+          }
+    }
+
+    return { whereClause, havingClause };
   }
 
   private getUuidFieldFilter(fieldFilter: any, dbField: string): any {
@@ -526,7 +571,12 @@ export class ResourceService {
       return fieldFilter.equals;
     }
     if (fieldFilter.not_equals) {
-      return { [Op.ne]: fieldFilter.not_equals };
+      return { 
+        [Op.or]: [
+          { [Op.ne]: fieldFilter.not_equals },
+          { [Op.is]: null },
+        ]
+      };
     }
     if (fieldFilter.is_empty === true) {
       return { [Op.is]: null };
@@ -556,9 +606,13 @@ export class ResourceService {
       return { [Op.iLike]: fieldFilter.equals };
     }
     if (fieldFilter.not_equals) {
-      return { [Op.notILike]: fieldFilter.not_equals };
+      return { 
+        [Op.or]: [
+          { [Op.notILike]: fieldFilter.not_equals },
+          { [Op.is]: null },
+        ]
+      };   
     }
-
     if (fieldFilter.contains) {
       return { [Op.iLike]: `%${fieldFilter.contains}%` };
     }

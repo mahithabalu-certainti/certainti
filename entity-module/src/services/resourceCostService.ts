@@ -965,15 +965,15 @@ async createResourceCost(
         costData.created_by = userNames.created_by_name;
         costData.modified_by = userNames.modified_by_name;
 
-        // Format dates to MM/DD/YYYY
+        // Format dates to yyyy-mm-dd format
         if (costData.effective_date) {
           costData.effective_date = moment(costData.effective_date).format(
-            "MM/DD/YYYY"
+            "yyyy-mm-dd"
           ) as any;
         }
         if (costData.end_date) {
           costData.end_date = moment(costData.end_date).format(
-            "MM/DD/YYYY"
+            "yyyy-mm-dd"
           ) as any;
         }
 
@@ -982,10 +982,10 @@ async createResourceCost(
         if (resourceInfo) {
           resourceInfo.resource_startdate = moment(
             resourceInfo.resource_startdate
-          ).format("MM/DD/YYYY") as any;
+          ).format("yyyy-mm-dd") as any;
           resourceInfo.resource_enddate = moment(
             resourceInfo.resource_enddate
-          ).format("MM/DD/YYYY") as any;
+          ).format("yyyy-mm-dd") as any;
         }
 
         //Create a new response object with simplified cost data
@@ -1111,7 +1111,7 @@ async createResourceCost(
     if (!dateString) return null;
 
     // Parse the date using moment to ensure consistent handling
-    const date = moment(dateString, "MM/DD/YYYY", true);
+    const date = moment(dateString, "yyyy-mm-dd", true);
     if (!date.isValid()) return null;
 
     // Set the time to noon to avoid timezone issues

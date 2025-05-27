@@ -590,14 +590,14 @@ class SchemaService {
     await sequelize.query(
       `
         INSERT INTO "${schemaName}"."account_details" (
-          account_rid, max_ai_interactions, 
+          account_rid, account_name, max_ai_interactions, 
           autosend_interaction, fiscal_start_date, fiscal_end_date, 
           interaction_cc_list, blended_rate_fte, blended_rate_subcon, 
           created_by, modified_by, website, 
           data_residency, data_storage, auto_access_rd,business_details
         ) 
         VALUES (
-          :account_rid, :max_ai_interactions, 
+          :account_rid, :account_name, :max_ai_interactions, 
           :autosend_interaction, :fiscal_start_date, :fiscal_end_date, 
           :interaction_cc_list, :blended_rate_fte, :blended_rate_subcon, 
           :created_by, :modified_by, 
@@ -608,6 +608,7 @@ class SchemaService {
       {
         replacements: {
           account_rid: account_rid,
+          account_name: accountData.account_name,
           max_ai_interactions: accountData.max_ai_interactions,
           autosend_interaction: accountData.autosend_interaction,
           fiscal_start_date: accountData.fiscal_start_date,
@@ -780,7 +781,7 @@ class SchemaService {
     await sequelize.query(
       `
         UPDATE "${schemaName}"."account_details"
-        SET 
+        SET
           max_ai_interactions = :max_ai_interactions,
           autosend_interaction = :autosend_interaction,
           interaction_cc_list = :interaction_cc_list,

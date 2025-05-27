@@ -57,13 +57,7 @@ class AccountDetails
   public created_datetime?: Date;
   public modified_datetime?: Date;
 
-}
-
-const sequelize = new Sequelize("database", "username", "password", {
-  host: "localhost",
-  dialect: "mysql", // Change to your dialect, e.g., 'postgres'
-});
-
+static initialize(sequelize: Sequelize, schema: string){
 AccountDetails.init(
   {
     rid: {
@@ -160,11 +154,15 @@ AccountDetails.init(
     },
   },
   {
-    sequelize,
+    sequelize: sequelize,
     modelName: "AccountDetails",
     tableName: "account_details",
+    schema: schema,
     timestamps: false,
   }
 );
+return AccountDetails;
+}
+}
 
 export default AccountDetails;
