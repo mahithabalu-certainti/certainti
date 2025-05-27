@@ -334,7 +334,7 @@ const ListTable = <T extends RowData>({
                         cellValue !== undefined &&
                         cellValue !== ''
                           ? cellValue
-                          : 'NA';
+                          : '-';
 
                       return (
                         <TableCell

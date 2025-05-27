@@ -34,7 +34,7 @@ import {
 } from './helpers';
 import { useLocation } from 'react-router-dom';
 
-const systemFilters = ['Touched Records', 'Untouched Records', 'Record Action'];
+// const systemFilters = ['Touched Records', 'Untouched Records', 'Record Action'];
 
 const FilterModal: React.FC<FilterModalProps> = ({
   isOpen,
@@ -59,6 +59,19 @@ const FilterModal: React.FC<FilterModalProps> = ({
 
   const handleClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleModalClose = () => {
+    const saved = getStoredFilters();
+    if (saved) {
+      const selected = Object.keys(saved);
+      setSelectedFilters(selected);
+      setFilterStates(saved as Record<string, FilterState>);
+    } else {
+      setSelectedFilters([]);
+      setFilterStates({});
+    }
+    handleCloseFilter();
   };
 
   useEffect(() => {
@@ -398,7 +411,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
       id={filterId}
       open={isOpen}
       anchorEl={filterAnchorEl}
-      onClose={handleCloseFilter}
+      onClose={handleModalClose}
       anchorOrigin={{
         vertical: 'bottom',
         horizontal: 'right',
@@ -409,13 +422,15 @@ const FilterModal: React.FC<FilterModalProps> = ({
       }}
       PaperProps={{
         sx: {
-          boxShadow: 'none',
+          boxShadow: '0px 4px 15px 11px #0000001A',
           bgcolor: 'transparent',
           mt: 0.5,
+          borderRadius: '8px',
+          border: '1px solid #CBD6E2',
         },
       }}
     >
-      <div className='h-auto min-h-[165px] w-[530px] min-w-[530px] max-w-[530px] flex flex-col gap-4 bg-white rounded-[8px] p-6 border border-[#CBD6E2]'>
+      <div className='h-auto min-h-[165px] w-[550px] min-w-[550px] max-w-[550px] flex flex-col gap-4 bg-white p-6'>
         <div className='flex justify-between items-center'>
           <h2 className='text-[16px] font-bold text-[#2D3E4F]'>Filters</h2>
           <div className='flex justify-end gap-4'>
@@ -434,7 +449,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
           </div>
         </div>
 
-        <div>
+        {/* <div>
           <h3 className='text-[13px] font-bold text-[#425A76] mb-2'>
             System Define filters
           </h3>
@@ -449,7 +464,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
               </span>
             ))}
           </div>
-        </div>
+        </div> */}
 
         {selectedFilters.length > 0 && (
           <div className='flex-1'>
@@ -464,7 +479,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                 return fieldConfig ? (
                   <div key={fieldName}>
                     <div className='flex items-center gap-2'>
-                      <div className='flex-1 flex items-center gap-2 w-[450px] max-w-[450px]'>
+                      <div className='flex-1 flex items-center gap-2 w-[480px] max-w-[480px]'>
                         <div className='flex items-center gap-1'>
                           <Select
                             size='small'
@@ -588,7 +603,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
           </div>
         )}
 
-        <div className='flex items-center justify-between mt-1'>
+        <div className='flex-1 flex items-end justify-between mt-1'>
           <button
             ref={buttonRef}
             onClick={handleClick}
@@ -630,6 +645,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
             borderRadius: '8px',
             border: '1px solid #CBD6E2',
             boxShadow: 'none',
+            maxHeight: 250,
           },
         }}
       >

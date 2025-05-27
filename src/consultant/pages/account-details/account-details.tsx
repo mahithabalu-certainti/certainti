@@ -8,7 +8,7 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { accountDetailsIcon } from '../../../assets';
-import { PageHeader } from '../../../components';
+import { InfoSection, PageHeader, SideMenuPanel } from '../../../components';
 import { ACCOUNT } from '../../../routes';
 import { useAccountDetail } from '../../services/account-details/account-details-service';
 import {
@@ -24,8 +24,6 @@ import {
   Resources,
   Timesheet,
 } from '../account-details-sidebar';
-import { AccountInfo } from './account-info';
-import Sidebar from './sidebar';
 import { transformAccountData } from './utils';
 import { CircularProgress } from '@mui/material';
 import { useSelector } from 'react-redux';
@@ -159,7 +157,13 @@ export const AccountDetails = () => {
       case 'financial':
         return <FinancialSummary />;
       case 'details':
-        return <Details accountDetails={{ ...data?.data }} isLoading={isLoading} isError={isError} />;
+        return (
+          <Details
+            accountDetails={{ ...data?.data }}
+            isLoading={isLoading}
+            isError={isError}
+          />
+        );
       case 'resources':
         return (
           <Resources
@@ -189,6 +193,22 @@ export const AccountDetails = () => {
     }
   };
 
+  const disable = data?.data?.accountById?.is_parent;
+
+  const sideMenuItems = [
+    { name: 'Financial Highlights', key: 'financial', disabled: false },
+    { name: 'Details', key: 'details', disabled: false },
+    { name: 'Resources', key: 'resources', disabled: false },
+    { name: 'Projects', key: 'projects', disabled: disable },
+    { name: 'Cases', key: 'cases', disabled: false },
+    { name: 'Activities', key: 'activities', disabled: false },
+    { name: 'Notes', key: 'notes', disabled: false },
+    { name: 'Attachments', key: 'attachments', disabled: false },
+    { name: 'Checklist', key: 'checklist', disabled: false },
+    { name: 'Timesheet', key: 'timesheet', disabled: false },
+    { name: 'Imports', key: 'imports', disabled: false },
+  ];
+
   return (
     <div className='flex flex-col'>
       <div className='flex h-[60px]'>
@@ -209,17 +229,19 @@ export const AccountDetails = () => {
           onSettingsClick={handleSettingsClick}
         />
       </div>
-      <AccountInfo
+      <InfoSection
         columns={accountDetails}
         loading={isLoading}
         error={isError}
       />
       <div className='flex flex-row w-full'>
         <div className='flex w-[200px] min-w-[200px] max-w-[200px]'>
-          <Sidebar
+          <SideMenuPanel
+            menuItems={sideMenuItems}
             activeKey={activeKey}
             onSelect={setActiveKey}
-            disble={data?.data?.accountById?.is_parent}
+            headerTitle='Related List'
+            showBackIcon={true}
           />
         </div>
         <div className='flex-1 overflow-hidden'>

@@ -115,7 +115,7 @@ const ResourceForm: React.FC = () => {
   const { data: resource, isSuccess } = useResourceDetail(
     resourceId || location?.state?.resource?.rid || resourceRId,
     location?.state?.accountDetails?.data?.accountById?.r_number ||
-    accountNumber
+      accountNumber
   );
 
   useEffect(() => {
@@ -141,14 +141,14 @@ const ResourceForm: React.FC = () => {
       Updated_By: resourceDetailsData?.modified_by,
       resource_name:
         resourceDetailsData?.resource_firstname &&
-          resourceDetailsData?.resource_lastname
+        resourceDetailsData?.resource_lastname
           ? ''
           : !resourceDetailsData?.resource_firstname &&
-            !resourceDetailsData?.resource_lastname
+              !resourceDetailsData?.resource_lastname
             ? resourceDetailsData?.resource_name
             : resourceDetailsData?.resource_firstname ||
-            resourceDetailsData?.resource_lastname ||
-            '',
+              resourceDetailsData?.resource_lastname ||
+              '',
     };
     setResourceDetails(finalResourceDetails || null);
   }, [resource]);
@@ -530,7 +530,7 @@ const ResourceForm: React.FC = () => {
             <div className='font-semibold text-[12px] leading-[20px] ml-2 text-[#7D98B6]'>
               {!state?.skill && !state?.cost
                 ? `Account > ${accountData?.account_name}`
-                : `Account > ${costAndSKillAccountInfo?.account_name}`}
+                : `Account > ${costAndSKillAccountInfo?.account_name} > ${resource?.data?.resourceDetails?.r_number || ''}`}
             </div>
             {!isEditView && (
               <h4 className='ml-2 font-bold text-[16px] leading-[20px] tracking-[0] text-[#2D3E4F]'>
@@ -588,21 +588,21 @@ const ResourceForm: React.FC = () => {
         loading={allCountries.isLoading}
         values={
           isEditView &&
-            !state?.cost &&
-            !state?.skill &&
-            (resourceDetails as unknown as Record<
-              string,
-              string | number | boolean | string[] | null
-            >)
+          !state?.cost &&
+          !state?.skill &&
+          (resourceDetails as unknown as Record<
+            string,
+            string | number | boolean | string[] | null
+          >)
             ? (resourceDetails as unknown as Record<
-              string,
-              string | number | boolean | string[] | null
-            >)
-            : state?.cost || state?.skill
-              ? (formValues as unknown as Record<
                 string,
                 string | number | boolean | string[] | null
               >)
+            : state?.cost || state?.skill
+              ? (formValues as unknown as Record<
+                  string,
+                  string | number | boolean | string[] | null
+                >)
               : undefined
         }
         // values={

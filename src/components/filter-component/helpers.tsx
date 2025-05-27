@@ -359,7 +359,7 @@ export const DateFilterControl: React.FC<{
     <Select
       value={state.date?.option || 'equals'}
       onChange={(e) => onOptionChange(fieldName, e)}
-      className='min-w-[65px] max-w-[65px] h-[28px]'
+      className='min-w-[110px] max-w-[110px] h-[28px]'
       IconComponent={(props) => (
         <img src={arrowIcon} alt='arrowIcon' {...props} />
       )}
@@ -371,7 +371,7 @@ export const DateFilterControl: React.FC<{
           key={option.value}
           value={option.value}
           sx={{
-            fontSize: '14px',
+            fontSize: '13px',
             color: '#425A76',
             fontWeight: 600,
             py: '1px',
@@ -405,7 +405,7 @@ export const DateFilterControl: React.FC<{
           fontSize: '12px',
           color: '#425A76',
           height: '12px',
-          width: state.date?.option === 'between' ? '50%' : '167px',
+          width: state.date?.option === 'between' ? '50%' : '153px',
         },
       }}
     />
@@ -455,7 +455,7 @@ export const NewTextFilterControl: React.FC<{
       size='small'
       value={state.text?.option || 'contains'}
       onChange={(e) => onOptionChange(fieldName, e)}
-      className='min-w-[65px] max-w-[65px] h-[28px]'
+      className='min-w-[110px] max-w-[110px] h-[28px]'
       IconComponent={(props) => (
         <img src={arrowIcon} alt='arrowIcon' {...props} />
       )}
@@ -464,15 +464,15 @@ export const NewTextFilterControl: React.FC<{
     >
       <MenuItem
         value='equals'
-        sx={{ fontSize: '14px', color: '#425A76', fontWeight: 600, py: '1px' }}
+        sx={{ fontSize: '12px', color: '#425A76', fontWeight: 600, py: '1px' }}
       >
-        =
+        Equals
       </MenuItem>
       <MenuItem
         value='contains'
-        sx={{ fontSize: '14px', color: '#425A76', fontWeight: 600, py: '1px' }}
+        sx={{ fontSize: '12px', color: '#425A76', fontWeight: 600, py: '1px' }}
       >
-        ∈
+        Contains
       </MenuItem>
       {/* <MenuItem value="starts_with" sx={{ fontSize: '14px', color: '#425A76', fontWeight: 600, py: '1px' }}>↦</MenuItem>
       <MenuItem value="ends_with" sx={{ fontSize: '14px', color: '#425A76', fontWeight: 600, py: '1px' }}>⇥</MenuItem> */}
@@ -499,7 +499,7 @@ export const NewTextFilterControl: React.FC<{
           fontSize: '12px',
           color: '#425A76',
           height: '12px',
-          width: '167px',
+          width: '153px',
         },
       }}
     />
@@ -600,7 +600,7 @@ export const NewNumberFilterControl: React.FC<{
         size='small'
         value={option}
         onChange={(e) => onOptionChange(fieldName, e)}
-        className='min-w-[65px] max-w-[65px] h-[28px]'
+        className='min-w-[110px] max-w-[110px] h-[28px]'
         IconComponent={(props) => (
           <img src={arrowIcon} alt='arrowIcon' {...props} />
         )}
@@ -616,7 +616,7 @@ export const NewNumberFilterControl: React.FC<{
             py: '1px',
           }}
         >
-          &gt;
+          Greater Than
         </MenuItem>
         <MenuItem
           value='less_than'
@@ -627,7 +627,7 @@ export const NewNumberFilterControl: React.FC<{
             py: '1px',
           }}
         >
-          &lt;
+          Less Than
         </MenuItem>
         <MenuItem
           value='between'
@@ -638,7 +638,7 @@ export const NewNumberFilterControl: React.FC<{
             py: '1px',
           }}
         >
-          ⟷
+          Between
         </MenuItem>
       </Select>
 

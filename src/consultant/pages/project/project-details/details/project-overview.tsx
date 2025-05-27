@@ -76,7 +76,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       }
       return (
         <span className='font-light text-[14px] text-[#2D3E4F]'>
-          {value || 'NA'}
+          {value || '-'}
         </span>
       );
     };
@@ -147,7 +147,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       if (value && typeof value === 'object' && !Array.isArray(value)) {
         return {
           label: formatKey(key),
-          value: Object.values(value).join(', ') || 'NA', // or handle nested objects differently
+          value: Object.values(value).join(', ') || '-', // or handle nested objects differently
         };
       }
       if (
@@ -170,7 +170,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       }
       const displayValue =
         value === null || value === '' || value === undefined
-          ? 'NA'
+          ? '-'
           : customMappings?.[key]
             ? customMappings[key](value)
             : value;

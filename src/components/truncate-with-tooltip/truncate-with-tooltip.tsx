@@ -1,11 +1,12 @@
 import { Tooltip } from '@mui/material';
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import React, { ReactNode, useEffect, useRef, useState } from 'react';
 
 interface TruncateWithTooltipProps {
   text: string;
   maxWidth?: number; // Optional max width in pixels
   className?: string;
   children?: ReactNode;
+  style?: React.CSSProperties;
 }
 
 const TruncateWithTooltip = ({
@@ -13,6 +14,7 @@ const TruncateWithTooltip = ({
   maxWidth,
   className = '',
   children,
+  style = {},
 }: TruncateWithTooltipProps) => {
   const [isOverflowing, setIsOverflowing] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
@@ -40,6 +42,7 @@ const TruncateWithTooltip = ({
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap' as const,
     maxWidth: maxWidth ? `${maxWidth}px` : '100%',
+    ...style,
   };
 
   return isOverflowing ? (

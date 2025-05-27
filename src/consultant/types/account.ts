@@ -299,6 +299,8 @@ export interface ConvertedAccount {
   primaryContact: string;
   parentAccountID: string | null;
   annualRevenue: string;
+  color: string;
+  bgColor: string;
 }
 
 export interface keyContactRoles {

@@ -11,7 +11,7 @@ import { ActionsDropdown } from '../actions-dropdown';
 import TextButton from '../button/text-button';
 
 const DEFAULT_BUTTON_STYLES = {
-  height: '32px',
+  height: '24px',
 };
 
 interface HeaderProps {
@@ -140,10 +140,10 @@ export const PageHeader: React.FC<HeaderProps> = ({
           )}
 
           {(showRefresh || showDownload) && (
-            <div className='flex items-center justify-center border border-[#EAF0F5] w-16 h-8'>
+            <div className='flex items-center justify-center border border-[#EAF0F5] w-[48px] h-[24px]'>
               {showRefresh && (
                 <button
-                  className='flex border border-[#CBD6E2] h-[32px] w-[32px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center'
+                  className='flex border border-[#CBD6E2] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center'
                   onClick={onRefreshClick}
                 >
                   <img src={refreshIcon} alt='refresh-icon' className='h-4' />
@@ -166,7 +166,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
           {showActions && (
             <button
               onClick={onActionsClick}
-              className='flex border border-[#CBD6E2] w-8 h-8 rounded-[2px] justify-center items-center cursor-pointer'
+              className='flex border border-[#CBD6E2] w-[24px] h-[24px] rounded-[2px] justify-center items-center cursor-pointer'
               style={{
                 background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
               }}
@@ -178,7 +178,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
           {showSettings && (
             <button
               onClick={onSettingsClick}
-              className='flex border border-[#CBD6E2] w-8 h-8 rounded-[2px] justify-center items-center cursor-pointer'
+              className='flex border border-[#CBD6E2] w-[24px] h-[24px] rounded-[2px] justify-center items-center cursor-pointer'
               style={{
                 background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
               }}
