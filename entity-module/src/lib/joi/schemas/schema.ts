@@ -1036,6 +1036,7 @@ const createProjectSchema = Joi.object({
     }),
   project_type: Joi.string().valid("Fixed", "Time & Material").required(),
   project_classification_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow(null),
+  project_classification_other: Joi.string().optional().allow(null).allow(""),
   project_client_group: Joi.string().max(200).optional().allow("").allow(null),
   project_group: Joi.string().max(150).optional().allow("").allow(null),
   project_status: Joi.string().valid("Active", "Inactive").required(),
@@ -1057,46 +1058,6 @@ const createProjectSchema = Joi.object({
     .guid({ version: ["uuidv4"] })
     .optional()
     .allow("", null),
-  // project_manager: Joi.string().min(3).max(100).required(),
-  // project_lead: Joi.string().min(3).max(100).required(),
-  // spoc_name: Joi.string().min(3).max(100).required(),
-  // spoc_email: Joi.string().email().max(255).optional().allow("").allow(null),
-  // spoc_mobile: Joi.string().max(15).optional().allow("").allow(null),
-  // project_tpc_name: Joi.string()
-  //   .min(3)
-  //   .max(100)
-  //   .optional()
-  //   .allow("")
-  //   .allow(null),
-  // project_tpc_email: Joi.string()
-  //   .email()
-  //   .max(255)
-  //   .optional()
-  //   .allow("")
-  //   .allow(null),
-  // project_tpc_mobile: Joi.string().max(15).optional().allow("").allow(null),
-  // project_cc_list: Joi.string()
-  //   .allow("")
-  //   .allow(null)
-  //   .optional()
-  //   .custom((value, helpers) => {
-  //     if (!value) return value;
-
-  //     const emails = value.split(",").map((e: string) => e.trim());
-  //     const invalidEmails = emails.filter(
-  //       (email: string) => Joi.string().email().validate(email).error
-  //     );
-
-  //     if (invalidEmails.length > 0) {
-  //       return helpers.message({
-  //         custom: `Invalid email(s) in Project CC List: ${invalidEmails.join(
-  //           ", "
-  //         )}`,
-  //       });
-  //     }
-
-  //     return value;
-  //   }, "Comma-separated email validator"),
   total_effort: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
@@ -1218,22 +1179,6 @@ const createProjectSchema = Joi.object({
   })
   .optional()
   .allow(null),
-  // last_rd_ai_assess_on: Joi.string()
-  // .max(10)
-  // .custom(isValidDate, "Effective date validation")
-  // .optional()
-  // .allow(null)
-  // .allow("")
-  // .messages({
-  //   "string.pattern.base": "Last rd ai assess date must be in the format MM/DD/YYYY",
-  //   "any.invalid": "Date cannot be in the future.",
-  //   "date.invalidFormat":
-  //     "Last rd ai assess date. Please use the format MM/DD/YYYY",
-  // }),
-  // last_rd_ai_assess_by: Joi.string()
-  //   .guid({ version: ["uuidv4"] })
-  //   .optional()
-  //   .allow("", null),
   auto_send_ai_interaction: Joi.boolean().required(),
   auto_access_rd: Joi.boolean().optional().allow(null).default(false),
   max_ai_interaction: Joi.number().greater(0).required(),
@@ -1340,6 +1285,7 @@ const updateProjectSchema = Joi.object({
 
   project_type: Joi.string().valid("Fixed", "Time & Material").required(),
   project_classification_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow(null),
+  project_classification_other: Joi.string().optional().allow(null).allow(""),
   project_client_group: Joi.string().max(200).optional().allow("").allow(null),
   project_group: Joi.string().max(150).optional().allow("").allow(null),
   project_status: Joi.string().valid("Active", "Inactive").required(),
@@ -1475,19 +1421,6 @@ const updateProjectSchema = Joi.object({
   })
   .optional()
   .allow(null),
-
-  // last_rd_ai_assess_on: Joi.string()
-  // .max(10)
-  // .custom(isValidDate, "Effective date validation")
-  // .optional()
-  // .allow(null)
-  // .allow("")
-  // .messages({
-  //   "string.pattern.base": "Last rd ai assess date must be in the format MM/DD/YYYY",
-  //   "any.invalid": "Date cannot be in the future.",
-  //   "date.invalidFormat":
-  //     "Last rd ai assess date. Please use the format MM/DD/YYYY",
-  // }),
   last_rd_ai_assess_by: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("", null),
   auto_send_ai_interaction: Joi.boolean().optional().allow(null).default(false),
   auto_access_rd: Joi.boolean().optional().allow(null).default(false),

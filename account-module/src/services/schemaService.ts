@@ -150,6 +150,7 @@ class SchemaService {
       project_enddate DATE,
       project_type VARCHAR(50) CHECK (project_type IN ('Fixed', 'Time & Material')),
       project_classification_rid UUID,
+      project_classification_other VARCHAR(300),
       project_client_group VARCHAR(100),
       project_group VARCHAR(100),
       project_status VARCHAR(50) CHECK (project_status IN ('Active', 'Inactive')),

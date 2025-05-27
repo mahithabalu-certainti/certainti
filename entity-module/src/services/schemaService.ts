@@ -1212,6 +1212,7 @@ class SchemaService {
 
         const fullQuery = `
         SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, 
+        ps.project_id,
         COALESCE(ind.industry_name, ps.industry_name) AS industry_name_other, 
         ps.project_number, ps.project_type, ps.project_client_group , ps.project_group,
         ps.project_classification_rid, pc.classification_name ,
@@ -1261,6 +1262,7 @@ class SchemaService {
 
         const fullQuery = `
         SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, 
+        ps.project_id,
         COALESCE(ind.industry_name, ps.industry_name) AS industry_name_other,
         ps.project_type, ps.project_client_group , ps.project_group,
         ps.project_classification_rid, pc.classification_name ,
@@ -1675,7 +1677,7 @@ class SchemaService {
             conditions.push(`${qualifiedField} BETWEEN ? AND ?`);
             replacements.push(condition.between[0], condition.between[1]);
           }
-          if (condition.isEmpty === true) {
+          if (condition.is_empty === true) {
             conditions.push(`${qualifiedField} IS NULL`);
           }
           continue;
@@ -1710,7 +1712,7 @@ class SchemaService {
               normalize(condition.between[1])
             );
           }
-          if (condition.isEmpty === true) {
+          if (condition.is_empty === true) {
             conditions.push(`${field} IS NULL`);
           }
           continue;
@@ -1731,7 +1733,7 @@ class SchemaService {
             conditions.push(`${qualifiedField} IN (${placeholders})`);
             replacements.push(...condition.in);
           }
-          if (condition.isEmpty === true) {
+          if (condition.is_empty === true) {
             conditions.push(`${qualifiedField} IS NULL`);
           }
           continue;
@@ -1747,7 +1749,7 @@ class SchemaService {
             conditions.push(`${qualifiedField} = ?`);
             replacements.push(false);
           }
-          if (condition.isEmpty === true) {
+          if (condition.is_empty === true) {
             conditions.push(`${qualifiedField} IS NULL`);
           }
           continue;
@@ -1774,9 +1776,9 @@ class SchemaService {
           );
           replacements.push(`%${condition.not_contains}%`);
         }
-        if (condition.isEmpty === true) {
+        if (condition.is_empty === true) {
           conditions.push(
-            `(${qualifiedField} IS NULL OR ${qualifiedField} = '' OR ${qualifiedField} = 'N/A')`
+            `(${qualifiedField} IS NULL OR ${qualifiedField} = '')`
           );
         }
         if (condition.value !== undefined) {
@@ -2004,13 +2006,13 @@ class SchemaService {
           keyContact: [],
           technical_consultant: technicalConsultant
             ? technicalConsultant.key_contact_name
-            : "N/A",
+            : null,
           financial_consultant: financialConsultant
             ? financialConsultant.key_contact_name
-            : "N/A",
+            : null,
           project_point_of_contact: pointOfContact
             ? pointOfContact.key_contact_name
-            : "N/A",
+            : null,
         };
       });
 
@@ -2032,9 +2034,7 @@ class SchemaService {
         );
 
         const industry = industryResult[0];
-        project.dataValues.industry_rid_name = industry?.industry_name || null;
-      } else {
-        project.dataValues.industry_rid_name = null;
+        project.dataValues.industry_name = industry?.industry_name || project.industry_name;
       }
 
       return project;
@@ -2086,7 +2086,7 @@ class SchemaService {
 
   async projectClassificationData(project: any, mainDdSequilze: any) {
     try {
-      let classificationName = null;
+      let classificationName = project.project_classification_other;
 
       if (project && project.project_classification_rid) {
         const [rows] = await mainDdSequilze.query(
@@ -2139,7 +2139,7 @@ class SchemaService {
           ...(typeof res.toJSON === "function" ? res.toJSON() : res),
           classification_name:
             classificationMap[res.project_classification_rid]
-              ?.classification_name || null,
+              ?.classification_name || res.project_classification_other,
         }));
       }
 
@@ -2195,8 +2195,8 @@ class SchemaService {
               .toLowerCase()
               .includes(filter.not_contains.toLowerCase());
           }
-          if (filter.isEmpty === true) {
-            return value === null || value === "" || value === "N/A";
+          if (filter.is_empty === true) {
+            return value === null || value === "";
           }
 
           return true;
