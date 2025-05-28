@@ -1039,7 +1039,16 @@ async getAllUserPermission(userId: string, profileId: string) {
             Sequelize.fn('LOWER', Sequelize.col(dbField)),
             Sequelize.fn('LOWER', fieldFilter.equals)
           );
-        } else if (typeof fieldFilter === 'string') {
+        } 
+        else if (fieldFilter.not_equals) {
+          const value = fieldFilter.not_equals.toLowerCase();
+          whereClause[dbField] = Sequelize.where(
+            Sequelize.fn('LOWER', Sequelize.col(dbField)),
+            '!=',
+            value
+        );
+      }
+        else if (typeof fieldFilter === 'string') {
           whereClause[dbField] = { [Op.eq]: fieldFilter };
         }
       }
@@ -1229,10 +1238,10 @@ const rawResult = users || [];
        users = cleanedUsers.map((user: any) => {
         const { profile, business_teams, ...basicUserInfo } = user;
         return {
-          "Username": basicUserInfo.first_name || "NA",
-          "Email": basicUserInfo.email || "NA", 
-          "Profile": profile?.profile_name || "NA",
-          "Status": basicUserInfo.status ? (basicUserInfo.status.toLowerCase() === 'active' ? "Active" : "In-Active") : "NA",
+          "Username": basicUserInfo.first_name || "-",
+          "Email": basicUserInfo.email || "-", 
+          "Profile": profile?.profile_name || "-",
+          "Status": basicUserInfo.status ? (basicUserInfo.status.toLowerCase() === 'active' ? "Active" : "In-Active") : "-",
         };
       });
 

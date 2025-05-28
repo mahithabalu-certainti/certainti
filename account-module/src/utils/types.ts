@@ -28,7 +28,6 @@ export interface IAccount {
   industry_rid: string;
   industry_name_other?:string;
   website?: string | null;
-  project_manager: string;
   database_level: boolean;
   database_connection_rid?: number | null;
   created_datetime?: string | null;
@@ -71,7 +70,6 @@ export interface IUpdateAccount {
   industry_rid: string;
   industry_name_other?:string;
   website?: string | null;
-  project_manager: string;
   database_level: boolean;
   database_connection_rid?: number | null;
   created_datetime?: string | null;
