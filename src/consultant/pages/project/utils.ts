@@ -1,4 +1,10 @@
-export const transformProjectData = (data: any): any[] => {
+interface DisplayColumn {
+  items: Array<{
+    label: string;
+    value: string;
+  }>;
+}
+export const transformProjectData = (data: any): DisplayColumn[] => {
   const project = data?.project;
 
   return [
@@ -24,7 +30,7 @@ export const transformProjectData = (data: any): any[] => {
       items: [
         {
           label: 'Program Name',
-          value: project?.program_name,
+          value: project?.program_name || '-',
         },
         { label: 'Industry', value: project?.industry_rid_name || '-' },
       ],

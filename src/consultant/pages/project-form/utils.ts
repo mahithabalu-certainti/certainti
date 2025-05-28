@@ -6,6 +6,15 @@ const parseNullableNumber = (value: unknown): number | null => {
   const parsed = Number(value);
   return isNaN(parsed) || value === '' ? null : parsed;
 };
+export const formatSlashDateToDash = (
+  dateString?: string | null
+): string | null => {
+  if (!dateString) return null;
+  const parts = dateString.split('/');
+  if (parts.length !== 3) return null;
+  const [year, month, day] = parts;
+  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+};
 
 export const transformFormData = (
   formData: Partial<NewProjectData>,
@@ -22,10 +31,11 @@ export const transformFormData = (
     industry_name:
       othersIndustryId === formData.industry_rid ? formData.industry_name : '',
     program_name: formData.program_name || '',
-    project_startdate: formData.project_startdate || null,
-    project_enddate: formData.project_enddate || null,
+    project_startdate: formatSlashDateToDash(formData.project_startdate),
+    project_enddate: formatSlashDateToDash(formData.project_enddate),
     project_type: formData.project_type,
     project_classification_rid: formData.project_classification_rid || null,
+    project_classification_other: formData.classification_name || null,
     // uuid: formData.project_classification_rid || null,
     project_client_group: formData.project_client_group || '',
     project_group: formData.project_group || '',

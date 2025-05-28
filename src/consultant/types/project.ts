@@ -1,10 +1,12 @@
 export type ProjectList = {
   rid: string;
+  account_id?: string;
   account_rid?: string;
   account_number: string;
   account_name: string;
   r_number: string;
   project_ref_id: string;
+  modified_datetime?: string;
   industry: string;
   project_startdate: string;
   project_enddate: string;
@@ -111,6 +113,8 @@ export interface NewProjectData {
   start_date?: string | null;
   end_date?: string | null;
   clasification?: string | null;
+  project_classification_other?: string | null;
+  classification_name?: string | null;
   client_group?: string | null;
   account_rid?: string;
   description?: string | null;
