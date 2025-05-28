@@ -218,7 +218,9 @@ class SchemaService {
       const isAccountNameSort = 
         order?.length && order[0][0] === "account_name";
       const isTotalProjectHoursSort = 
-        order?.length && order[0][0] === "total_project_hours";    
+        order?.length && order[0][0] === "total_project_hours";
+      const isEstimatedRDSort =
+        order?.length && order[0][0] === "estimated_rd_hours";      
 
       if (isResourceTypeSort) {
         const direction =
@@ -242,6 +244,9 @@ class SchemaService {
       } else if (isTotalProjectHoursSort) {
         const direction = order[0][1]?.toUpperCase() === "DESC" ? "DESC" : "ASC";
         queryOrder = [[Sequelize.literal('total_project_hours'), direction]];
+      } else if (isEstimatedRDSort) {
+        const direction = order[0][1]?.toUpperCase() === "DESC"? "DESC" : "ASC";
+        queryOrder = [[Sequelize.literal('estimated_rd_hours'), direction]];
       }
 
       const AccountDetailsModel = AccountDetails.initialize(sequelize, schemaName);
@@ -273,6 +278,8 @@ class SchemaService {
           'Resources.resource_name', 
           'Resources.resource_firstname',
           'Resources.resource_lastname',
+          'Resources.resource_orgname',
+          'Resources.comments',
           'Resources.resource_type',
           'Resources.resource_status',
           'Resources.resource_role',
@@ -299,12 +306,15 @@ class SchemaService {
           "resource_status",
           "resource_role",
           "resource_designation",
+          "resource_orgname",
+          "comments",
           "resource_total_experience",
           "resource_country", 
           "resource_region",
           "resource_city",
           [Sequelize.col('AccountDetails.account_name'), 'account_name'],
-          [Sequelize.literal('COALESCE("ResourceFiscal"."total_effort_for_year_project",0)'), 'total_project_hours']
+          [Sequelize.literal('COALESCE("ResourceFiscal"."total_effort_for_year_project",0)'), 'total_project_hours'],
+          [Sequelize.literal('COALESCE("ResourceFiscal"."estimated_rd_hours",0)'), 'estimated_rd_hours']
         ],
         include: [
           {
@@ -476,6 +486,43 @@ class SchemaService {
       const Resource = Resources.initialize(sequelize, schemaName);
       await Resource.sync({ force: false });
 
+      let queryOrder = order;
+      const isResourceTypeSort =
+        order?.length && order[0][0] === "resource_type";
+      const isAccountNameSort = 
+        order?.length && order[0][0] === "account_name";
+      const isTotalProjectHoursSort = 
+        order?.length && order[0][0] === "total_project_hours";
+      const isEstimatedRDSort =
+        order?.length && order[0][0] === "estimated_rd_hours";      
+
+      if (isResourceTypeSort) {
+        const direction =
+          order[0][1]?.toUpperCase() === "DESC" ? "DESC" : "ASC";
+        queryOrder = [
+          [
+            Sequelize.literal(`
+            CASE resource_type
+              WHEN 'Full-Time' THEN 1
+              WHEN 'Non-Labor' THEN 2 
+              WHEN 'Sub Con' THEN 3
+              ELSE 4
+            END
+          `),
+            direction,
+          ],
+        ];
+      } else if (isAccountNameSort) {
+        const direction = order[0][1]?.toUpperCase() === "DESC" ? "DESC" : "ASC";
+        queryOrder = [[Sequelize.col('AccountDetails.account_name'), direction]];
+      } else if (isTotalProjectHoursSort) {
+        const direction = order[0][1]?.toUpperCase() === "DESC" ? "DESC" : "ASC";
+        queryOrder = [[Sequelize.literal('total_project_hours'), direction]];
+      } else if (isEstimatedRDSort) {
+        const direction = order[0][1]?.toUpperCase() === "DESC"? "DESC" : "ASC";
+        queryOrder = [[Sequelize.literal('estimated_rd_hours'), direction]];
+      }
+
       const AccountDetailsModel = AccountDetails.initialize(sequelize, schemaName);
       const ResourceFiscalModel = ResourceFiscal.initialize(sequelize, schemaName);
 
@@ -503,6 +550,8 @@ class SchemaService {
           'Resources.resource_name', 
           'Resources.resource_firstname',
           'Resources.resource_lastname',
+          'Resources.resource_orgname',
+          'Resources.comments',
           'Resources.resource_type',
           'Resources.resource_status',
           'Resources.resource_role',
@@ -516,7 +565,7 @@ class SchemaService {
           'AccountDetails.account_name',
           'ResourceFiscal.rid',
         ],
-        order,
+        order: queryOrder,
         subQuery: false,
         attributes: [
           "rid",
@@ -529,12 +578,15 @@ class SchemaService {
           "resource_status",
           "resource_role",
           "resource_designation",
+          "resource_orgname",
+          "comments",
           "resource_total_experience",
           "resource_country",
           "resource_region",
           "resource_city",
           [Sequelize.col('AccountDetails.account_name'), 'account_name'],
           [Sequelize.literal('COALESCE("ResourceFiscal"."total_effort_for_year_project",0)'), 'total_project_hours'],
+          [Sequelize.literal('COALESCE("ResourceFiscal"."estimated_rd_hours",0)'), 'estimated_rd_hours'],
         ],
         include: [
           {
@@ -564,6 +616,8 @@ class SchemaService {
           'Resources.resource_name',
           'Resources.resource_firstname',
           'Resources.resource_lastname',
+          'Resources.resource_orgname',
+          'Resources.comments',
           'Resources.resource_type',
           'Resources.resource_status',
           'Resources.resource_role',
