@@ -18,7 +18,7 @@ export class ProjectService {
   private schemaService: SchemaService;
   // private redisService: RedisService;
 
-  constructor(redisService: RedisService) {
+  constructor() {
     this.schemaService = new SchemaService();
     // this.redisService = redisService;
   }
@@ -82,7 +82,6 @@ export class ProjectService {
         },
       };
     } catch (err) {
-      console.log("Error creatng projec", err);
       return this.throwServiceError(err as Error);
     }
   }
@@ -238,7 +237,6 @@ export class ProjectService {
 
       return project;
     } catch (err) {
-      console.log(err);
       throw new Error("Error creating project: " + (err as Error).message);
     }
   }
@@ -670,6 +668,7 @@ export class ProjectService {
           projectData,
           mainDbInit
         );
+
         projectData = await this.schemaService.insertKeyRole(
           projectData,
           mainDbInit
@@ -1529,7 +1528,8 @@ export class ProjectService {
       "project_group",
       "classification_name",
       "modified_datetime",
-      "assessment_status"
+      "assessment_status",
+      "project_type"
     ];
 
     if (!validSortColumns.includes(sortBy)) {
