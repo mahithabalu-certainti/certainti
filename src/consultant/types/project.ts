@@ -1,6 +1,7 @@
 export type ProjectList = {
   rid: string;
   account_id?: string;
+  project_id?: string;
   account_rid?: string;
   account_number: string;
   account_name: string;

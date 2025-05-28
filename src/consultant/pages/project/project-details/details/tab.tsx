@@ -11,28 +11,7 @@ const TabPanel: React.FC<TabProps> = ({ setCurrentPage }) => {
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
 
   const [, setSelectedSort] = useState('Accounts');
-  const menuYear = [
-    {
-      label: '2024',
-      onClick: () => console.log('manage user clicked'),
-    },
-    {
-      label: '2023',
-      onClick: () => console.log('Export clicked'),
-    },
-    {
-      label: '2023',
-      onClick: () => console.log('Export clicked'),
-    },
-    {
-      label: '2022',
-      onClick: () => console.log('Export clicked'),
-    },
-    {
-      label: '2021',
-      onClick: () => console.log('Export clicked'),
-    },
-  ];
+
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
     setCurrentPage(0);
@@ -129,11 +108,6 @@ const TabPanel: React.FC<TabProps> = ({ setCurrentPage }) => {
         </Tabs>
 
         <Box className='flex items-center space-x-2'>
-          <ActionImportDropdown
-            variant={'outlined'}
-            actions={menuYear}
-            label='Fy-2024'
-          />
           <ActionImportDropdown
             variant={'filled'}
             actions={menuActivity}

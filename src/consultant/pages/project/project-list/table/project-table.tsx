@@ -7,7 +7,7 @@ import { useAllProjects } from '../../../../services/project';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { generatePath, useNavigate } from 'react-router-dom';
-import { ACCOUNT_DETAILS, PROJECT } from '../../../../../routes';
+import { PROJECT, PROJECT_DETAILS } from '../../../../../routes';
 import { ActionItem } from '../../../../../components/table/types';
 import { deleteIcon, editIcon } from '../../../../../assets';
 
@@ -83,11 +83,11 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   };
 
   const handleAccountName = (project: ProjectList) => {
-    const path = generatePath(ACCOUNT_DETAILS, {
-      accountid: project?.account_id ?? null,
+    const path = generatePath(PROJECT_DETAILS, {
+      projectid: project?.project_id ?? null,
     });
     navigate(path, {
-      state: { project },
+      state: { accountID: project?.account_id, projectID: project?.project_id },
     });
   };
 

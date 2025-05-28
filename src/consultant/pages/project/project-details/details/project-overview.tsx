@@ -516,11 +516,11 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
             title='Project Settings'
             data={settingInfo as DetailItem[]}
           />
+          <DetailsSection title='Comments' data={comments as DetailItem[]} />
           <DetailsSection
             title='Audit Information'
             data={auditInfo as DetailItem[]}
           />
-          <DetailsSection title='Comments' data={comments as DetailItem[]} />
         </div>
       </div>
     </>

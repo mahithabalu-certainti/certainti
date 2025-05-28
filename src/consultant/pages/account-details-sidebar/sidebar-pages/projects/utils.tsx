@@ -10,39 +10,41 @@ export const fiscalYearOption = fiscalYears.map((year) => ({
   value: year.value,
 }));
 export const numberOptions: { option: string; value: string }[] = [
-  { option: '=', value: 'equals' },
-  { option: '≠', value: 'not_equals' },
-  { option: '<', value: 'less_than' },
-  { option: '>', value: 'greater_than' },
-  { option: '↔', value: 'between' },
-  { option: '∅', value: 'is_empty' },
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not-Equals', value: 'not_equals' },
+  { option: 'Less-Than', value: 'less_than' },
+  { option: 'Greater-Than', value: 'greater_than' },
+  { option: 'Between', value: 'between' },
+  { option: 'Is-Empty', value: 'is_empty' },
 ];
+
 export const booleanOptions: { option: string; value: string }[] = [
-  { option: '=', value: 'isTrue' },
-  { option: '≠', value: 'isFalse' },
-  { option: '∅', value: 'is_empty' },
+  { option: 'IsTrue', value: 'isTrue' },
+  { option: 'IsFalse', value: 'isFalse' },
+  { option: 'Is-Empty', value: 'is_empty' },
 ];
+
 export const textOptions: { option: string; value: string }[] = [
-  { option: '=', value: 'equals' },
-  { option: '≠', value: 'not_equals' },
-  { option: '∈', value: 'contains' },
-  { option: '∉', value: 'not_contains' },
-  { option: '∅', value: 'is_empty' },
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not-Equals', value: 'not_equals' },
+  { option: 'Contains', value: 'contains' },
+  { option: 'Not-Contains', value: 'not_contains' },
+  { option: 'Is-Empty', value: 'is_empty' },
 ];
 
 export const enumOptions: { option: string; value: string }[] = [
-  { option: '=', value: 'equals' },
-  { option: '≠', value: 'not_equals' },
-  { option: '⊂', value: 'in' },
-  { option: '∅', value: 'is_empty' },
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not-Equals', value: 'not_equals' },
+  { option: 'In', value: 'in' },
+  { option: 'Is-Empty', value: 'is_empty' },
 ];
 
 export const dateOptions: { option: string; value: string }[] = [
-  { option: '=', value: 'equals' },
-  { option: '←', value: 'before' },
-  { option: '→', value: 'after' },
-  { option: '↔', value: 'between' },
-  { option: '∅', value: 'is_empty' },
+  { option: 'Equals', value: 'equals' },
+  { option: 'Before', value: 'before' },
+  { option: 'After', value: 'after' },
+  { option: 'Between', value: 'between' },
+  { option: 'Is-Empty', value: 'is_empty' },
 ];
 
 export const projectFilterFields: FieldConfig[] = [
