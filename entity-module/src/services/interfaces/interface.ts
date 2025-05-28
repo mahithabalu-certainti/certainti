@@ -130,7 +130,7 @@ export interface IResourceCostService {
 }
 
 export interface IResourceSkillService {
-  getSkillSubTypes(skillTypeRid: string): Promise<{
+  getSkillSubTypes(skillTypeRids: string[] | string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;

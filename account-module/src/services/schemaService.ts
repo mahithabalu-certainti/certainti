@@ -46,6 +46,7 @@ class SchemaService {
     await this.createResourceSkillTable(schemaName,sequelize)
     await this.createResourceSkillTimelineTable(schemaName,sequelize)
     await this.createResourceSkillHistoryTable(schemaName,sequelize)
+    await this.createResourceFiscalTable(schemaName,sequelize)
 
   }
 
@@ -370,6 +371,52 @@ class SchemaService {
       CONSTRAINT resources_pkey PRIMARY KEY (rid),
       CONSTRAINT resources_resource_code_key UNIQUE (resource_code))
      `)
+   }
+
+   private async createResourceFiscalTable(schemaName: string, sequelize: any) {
+     await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_fiscal_seq START 1`);
+
+     await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".resource_fiscal
+(
+    rid uuid NOT NULL,
+    eid character varying(50) NULL,
+    account_rid uuid NOT NULL,
+    r_number character varying(20) DEFAULT ('RSF '::text || lpad((nextval('"${schemaName}".resource_fiscal_seq'::regclass))::text, 10, '0'::text)),
+    resource_rid uuid NOT NULL,
+    resource_type VARCHAR(50) CHECK (resource_type IN ('Full-Time','Sub Con','Non-Labor')),
+    fiscal_year integer,
+    country_rid uuid,
+    country_region_rid uuid,
+    cost_type VARCHAR(50) CHECK (cost_type IN ('Annual',
+            'Monthly',
+            'Bi-Weekly',
+            'Weekly',
+            'Daily',
+            'Hourly')),
+    annual_cost numeric(18,2),
+    monthly_cost numeric(18,2),
+    weekly_cost numeric(18,2),
+    bi_weekly_cost numeric(18,2),
+    daily_cost numeric(18,2),
+    hourly_cost numeric(18,2),
+    total_cost_for_year_project numeric(14,2),
+    total_cost_for_year_project_resource_level numeric(14,2),
+    total_cost_for_year_project_task_level numeric(14,2),
+    total_effort_for_year_project numeric(14,2),
+    total_effort_for_year_project_resource_level numeric(14,2),
+    total_effort_for_year_project_task_level numeric(14,2),
+    effective_date timestamp with time zone,
+    end_date timestamp with time zone,
+    created_datetime timestamp with time zone NOT NULL,
+    modified_datetime timestamp with time zone,
+    created_by uuid NOT NULL,
+    modified_by uuid,
+    estimated_rd_hours numeric(14,2),
+    CONSTRAINT resource_fiscal_pkey PRIMARY KEY (rid),
+    CONSTRAINT resource_fiscal_r_number_key UNIQUE (r_number)
+)
+      `)
    }
 
    private async createResourceHistoryTable(schemaName: string, sequelize: any) {

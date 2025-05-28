@@ -225,7 +225,7 @@ export class ResourceService {
       );
 
       const rawResult = resources.resources || [];
-      let exportData = rawResult.map((resource: any) => {        
+      let exportData = rawResult.map((resource: any) => {   
         return {
           "Account Name": resource.account_name || "-",
           "Resource Code":resource.resource_code || "-",
@@ -237,6 +237,7 @@ export class ResourceService {
           "Region": resource.region_name || "-",
           "Country": resource.country_name || "-",
           "Total Project Hours": resource.total_project_hours || "-",
+          "Estimated R&D Hours": resource.estimated_rd_hours || "-",
           "Status": resource.resource_status.toLowerCase() === "active" ? "Active" : "In-Active",
           "Comments": resource.comments || "-",
           "Resource ID": resource.r_number || "-"
@@ -417,14 +418,17 @@ export class ResourceService {
       "resource_type",
       "resource_status",
       "resource_role",
-      "resource_mobile",
-      "resource_email",
+      // "resource_mobile",
+      // "resource_email",
       "resource_designation",
       "resource_total_experience",
       "resource_country",
       "resource_region",
       "account_name",
       "total_project_hours",
+      "comments",
+      "resource_orgname",
+      "estimated_rd_hours",
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -500,7 +504,7 @@ export class ResourceService {
     whereClause: Record<string, any>,
     havingClause: Record<string, any>
   ): { whereClause: Record<string, any>; havingClause: Record<string, any> } {
-    const castToTextFields = ["resource_type", "resource_name", "resource_designation", "r_number", "resource_code","resource_status"];
+    const castToTextFields = ["resource_type", "resource_name", "resource_designation", "r_number", "resource_code","resource_status","resource_orgname","resource_role","comments"];
     const uuidFields = ["resource_country","resource_region"];
 
     const filterFields = [
@@ -512,6 +516,9 @@ export class ResourceService {
       { clientField: "resource_designation", dbField: "resource_designation" },
       { clientField: "resource_country", dbField: "resource_country" },
       { clientField: "resource_region", dbField: "resource_region" },
+      { clientField: "resource_role", dbField: "resource_role" },
+      { clientField: "resource_orgname", dbField: "resource_orgname" },
+      { clientField: "comments", dbField: "comments" },
     ];
 
     filterFields.forEach(({ clientField, dbField }) => {
@@ -537,31 +544,58 @@ export class ResourceService {
       whereClause['$AccountDetails.account_name$'] = this.getFieldFilter(filters.account_name, 'account_name');
     }
 
-   if (filters.total_project_hours) {
-
+   if (filters.total_project_hours || filters.estimated_rd_hours) {
     const totalProjectHoursExpr = Sequelize.literal(`
       COALESCE("ResourceFiscal"."total_effort_for_year_project", 0)
     `);
-          const filter = filters.total_project_hours;
-          if (filter.equals !== undefined) {
-            havingClause = Sequelize.where(totalProjectHoursExpr, { [Op.eq]: filter.equals });
-          } else if (filter.not_equals !== undefined) {
-            havingClause = Sequelize.where(totalProjectHoursExpr, { 
-              [Op.or]: [
-                { [Op.ne]: filter.not_equals },
-                { [Op.is]: null },
-              ]
-            });
-          } else if (filter.greater_than !== undefined) {
-            havingClause = Sequelize.where(totalProjectHoursExpr, { [Op.gt]: filter.greater_than });
-          } else if (filter.less_than !== undefined) {
-            havingClause = Sequelize.where(totalProjectHoursExpr, { [Op.lt]: filter.less_than });
-          } else if (filter.between && Array.isArray(filter.between) && filter.between.length === 2) {
-            havingClause = Sequelize.where(totalProjectHoursExpr, { [Op.between]: filter.between });
-          } else if (filter.is_empty === true) {
-            havingClause = Sequelize.where(totalProjectHoursExpr, { [Op.eq]: 0 });
-          }
+    const estimatedRdHoursExpr = Sequelize.literal(`
+      COALESCE("ResourceFiscal"."estimated_rd_hours", 0)
+    `);
+
+    if (filters.total_project_hours) {
+      const filter = filters.total_project_hours;
+      if (filter.equals !== undefined) {
+        havingClause = Sequelize.where(totalProjectHoursExpr, { [Op.eq]: filter.equals });
+      } else if (filter.not_equals !== undefined) {
+        havingClause = Sequelize.where(totalProjectHoursExpr, { 
+          [Op.or]: [
+            { [Op.ne]: filter.not_equals },
+            { [Op.is]: null },
+          ]
+        });
+      } else if (filter.greater_than !== undefined) {
+        havingClause = Sequelize.where(totalProjectHoursExpr, { [Op.gt]: filter.greater_than });
+      } else if (filter.less_than !== undefined) {
+        havingClause = Sequelize.where(totalProjectHoursExpr, { [Op.lt]: filter.less_than });
+      } else if (filter.between && Array.isArray(filter.between) && filter.between.length === 2) {
+        havingClause = Sequelize.where(totalProjectHoursExpr, { [Op.between]: filter.between });
+      } else if (filter.is_empty === true) {
+        havingClause = Sequelize.where(totalProjectHoursExpr, { [Op.eq]: 0 });
+      }
     }
+
+    if (filters.estimated_rd_hours) {
+      const filter = filters.estimated_rd_hours;
+      if (filter.equals !== undefined) {
+        havingClause = Sequelize.where(estimatedRdHoursExpr, { [Op.eq]: filter.equals });
+      } else if (filter.not_equals !== undefined) {
+        havingClause = Sequelize.where(estimatedRdHoursExpr, { 
+          [Op.or]: [
+            { [Op.ne]: filter.not_equals },
+            { [Op.is]: null },
+          ]
+        });
+      } else if (filter.greater_than !== undefined) {
+        havingClause = Sequelize.where(estimatedRdHoursExpr, { [Op.gt]: filter.greater_than });
+      } else if (filter.less_than !== undefined) {
+        havingClause = Sequelize.where(estimatedRdHoursExpr, { [Op.lt]: filter.less_than });
+      } else if (filter.between && Array.isArray(filter.between) && filter.between.length === 2) {
+        havingClause = Sequelize.where(estimatedRdHoursExpr, { [Op.between]: filter.between });
+      } else if (filter.is_empty === true) {
+        havingClause = Sequelize.where(estimatedRdHoursExpr, { [Op.eq]: 0 });
+      }
+    }
+  }
 
     return { whereClause, havingClause };
   }
