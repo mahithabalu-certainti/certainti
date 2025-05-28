@@ -1009,6 +1009,7 @@ export class ProjectService {
         project_client_group: projectData.project_client_group,
         project_group: projectData.project_group,
         project_classification_rid: projectData.project_classification_rid,
+        project_classification_other: projectData.project_classification_other,
         fiscal_year: projectData.fiscal_year,
         country: projectData.country || null,
         region: projectData.region || null,
@@ -1073,6 +1074,7 @@ export class ProjectService {
         project_client_group: projectData.project_client_group,
         project_group: projectData.project_group,
         project_classification_rid: projectData.project_classification_rid,
+        project_classification_other: projectData.project_classification_other,
 
         total_effort: projectData.total_effort || null,
         total_cost: projectData.total_cost || null,

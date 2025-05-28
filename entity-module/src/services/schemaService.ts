@@ -1372,7 +1372,8 @@ class SchemaService {
         ps.project_id, ps.modified_datetime, ps.assessment_status,
         COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other, 
         ps.project_number, ps.project_type, ps.project_client_group , ps.project_group,
-        ps.project_classification_rid, pc.classification_name ,
+        ps.project_classification_rid, 
+        COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
         ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_point_of_contact , ps.r_number,
         ps.program_name, ps.project_startdate , ps.project_enddate , ps.qualified_research_expenditure ,
         ps.is_rd_qualified , ps.qre, ps.total_cost , ps.total_effort , ps.total_fte , ps.total_fte_cost ,
@@ -1422,7 +1423,8 @@ class SchemaService {
         ps.project_id, ps.modified_datetime, ps.assessment_status,
         COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other,
         ps.project_type, ps.project_client_group , ps.project_group,
-        ps.project_classification_rid, pc.classification_name ,
+        ps.project_classification_rid, 
+        COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
         ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_point_of_contact , ps.r_number, ps.project_number,
         ps.program_name, ps.project_startdate , ps.project_enddate , ps.qualified_research_expenditure ,
         ps.is_rd_qualified , ps.qre, ps.total_cost , ps.total_effort , ps.total_fte , ps.total_fte_cost ,
@@ -1664,6 +1666,7 @@ class SchemaService {
       region_name: "st.state_name",
       industry_name_other: "COALESCE(ps.industry_name, ind.industry_name)",
       modified_datetime: "ps.modified_datetime",
+      classification_name: "COALESCE(ps.project_classification_other, pc.classification_name)"
     };
 
     const numberFields = [
@@ -2248,7 +2251,7 @@ class SchemaService {
     try {
       let classificationName = project.project_classification_other;
 
-      if (project && project.project_classification_rid) {
+      if (project && project.project_classification_rid && !project.project_classification_other) {
         const [rows] = await mainDdSequilze.query(
           `SELECT classification_name FROM project_classification WHERE rid = :rid`,
           {
@@ -2297,9 +2300,9 @@ class SchemaService {
 
         updatedProjects = project.map((res: any) => ({
           ...(typeof res.toJSON === "function" ? res.toJSON() : res),
-          classification_name:
+          classification_name: res.project_classification_other ? res.project_classification_other :
             classificationMap[res.project_classification_rid]
-              ?.classification_name || res.project_classification_other,
+              ?.classification_name,
         }));
       }
 

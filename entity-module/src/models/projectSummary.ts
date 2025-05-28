@@ -19,6 +19,7 @@ export interface ProjectSummaryAttributes {
   fiscal_year: number;
   project_type: "Fixed" | "Time & Material";
   project_classification_rid?: string | null;
+  project_classification_other?: string | null;
   project_client_group?: string | null;
   project_group?: string | null;
 
@@ -97,6 +98,7 @@ export class ProjectSummary
   public financial_consultant?: string | null;
   public project_number!: string;
   public assessment_status?: string | null;
+  public project_classification_other?: string | null;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
     ProjectSummary.init(
@@ -228,7 +230,11 @@ export class ProjectSummary
         assessment_status: {
           type: DataTypes.STRING(100),
           allowNull: true,
-        }
+        },
+        project_classification_other: {
+          type: DataTypes.STRING(300),
+          allowNull: true,
+        },
       },
       {
         sequelize,
