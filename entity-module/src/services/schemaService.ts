@@ -1405,6 +1405,7 @@ class SchemaService {
 
       let results: any[] = [];
       const replacements: any[] = [];
+      let countResult: any[] = [];
 
       const sortColumnMap: Record<string, string> = {
         industry_name: "COALESCE(ps.industry_name, ind.industry_name)",
@@ -1459,10 +1460,29 @@ class SchemaService {
         LIMIT ? OFFSET ?
       `;
 
+        const countQuery = `
+          SELECT COUNT(*) AS total_count
+          FROM project_summary AS ps
+          INNER JOIN account acc ON acc.rid = ps.account_rid 
+          LEFT JOIN industry ind ON ind.rid = ps.industry_rid
+          LEFT JOIN country cou ON cou.rid = ps.country 
+          LEFT JOIN state st ON st.rid = ps.region 
+          LEFT JOIN currency curr ON curr.rid = ps.currency 
+          LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
+          WHERE acc.created_by = '${userId}' AND acc.rid in (${accountRids}) ${
+          fullWhereClause ? "AND " + fullWhereClause : ""
+          }
+        `;
+
         replacements.push(limit, offset);
 
         results = await mainDbSequelize.query(fullQuery, {
           replacements,
+          type: "SELECT",
+        });
+
+        countResult = await mainDbSequelize.query(countQuery, {
+          replacements: whereReplacements,
           type: "SELECT",
         });
       } else {
@@ -1510,17 +1530,35 @@ class SchemaService {
         LIMIT ? OFFSET ?
       `;
 
+        const countQuery = `
+        SELECT COUNT(*) AS total_count
+        FROM project_summary AS ps
+        INNER JOIN account acc ON acc.rid = ps.account_rid 
+        LEFT JOIN industry ind ON ind.rid = ps.industry_rid
+        LEFT JOIN country cou ON cou.rid = ps.country 
+        LEFT JOIN state st ON st.rid = ps.region 
+        LEFT JOIN currency curr ON curr.rid = ps.currency 
+        LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
+        WHERE acc.created_by = '${userId}'
+        ${fullWhereClause ? "AND " + fullWhereClause : ""}
+      `;
+
         replacements.push(limit, offset);
 
         results = await mainDbSequelize.query(fullQuery, {
           replacements,
           type: "SELECT",
         });
+
+        countResult = await mainDbSequelize.query(countQuery, {
+          replacements: whereReplacements,
+          type: "SELECT",
+        });
       }
 
       return {
         finalResult: results,
-        totalCount: results.length,
+        totalCount: parseInt(countResult?.[0]?.total_count) || 0,
       };
     } catch (err) {
       throw new Error("Error fetching Accounts: " + (err as Error).message);

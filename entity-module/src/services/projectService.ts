@@ -605,6 +605,7 @@ export class ProjectService {
             : {}),
         },
         order: [[finalSortBy, finalSortOrder]],
+        distinct: true,
         offset,
         limit,
         attributes: [
