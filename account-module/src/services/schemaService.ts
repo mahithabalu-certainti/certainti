@@ -301,7 +301,8 @@ class SchemaService {
         sheet_name VARCHAR(100), 
         col_seq VARCHAR(100) NOT NULL,
         col_name VARCHAR(100) NOT NULL,
-        col_type VARCHAR(100) NOT NULL
+        col_type VARCHAR(100) NOT NULL,
+        required boolean
       );
     `);
   }
@@ -636,7 +637,7 @@ class SchemaService {
  async insertClientTemplateMetaDataDetails(
   account_number: string,
   entity: string,
-  tableSchema: Array<{ column_name: string; data_type: string }>,
+  tableSchema: Array<{ column_name: string; data_type: string,required:boolean }>,
   client_template_rid: string,
   account_rid: string,
 ) {
@@ -651,7 +652,8 @@ class SchemaService {
       :sheet_name, 
       :col_seq_${index}, 
       :col_name_${index}, 
-      :col_type_${index}
+      :col_type_${index},
+      :required_${index}
     )`)
     .join(", ");
 
@@ -667,13 +669,14 @@ class SchemaService {
     replacements[`col_seq_${index}`] = index + 1; // Sequence starts at 1
     replacements[`col_name_${index}`] = col.column_name;
     replacements[`col_type_${index}`] = col.data_type;
+    replacements[`required_${index}`] = col.required;
   });
 
   // Execute the query
   await sequelize.query(
     `
       INSERT INTO "${schemaName}"."clientfirm_document_template_metadata" (
-      client_template_rid, account_rid, sheet_name, col_seq, col_name, col_type
+      client_template_rid, account_rid, sheet_name, col_seq, col_name, col_type,required
       ) 
       VALUES ${values};
     `,
@@ -782,7 +785,7 @@ class SchemaService {
     await sequelize.query(
       `
         UPDATE "${schemaName}"."account_details"
-        SET
+        SET 
           max_ai_interactions = :max_ai_interactions,
           autosend_interaction = :autosend_interaction,
           interaction_cc_list = :interaction_cc_list,
@@ -1064,8 +1067,40 @@ class SchemaService {
     }
   }
 
-  async insertKeyContactInfo(accountData: any) {
+   async insertKeyContactInfo(accountData: any, roleNameFilter?: {
+  role?: { equals?: string; contains?: string; notEquals?: string,is_empty:boolean };
+  name?: { equals?: string; contains?: string; notEquals?: string,is_empty:boolean };
+  },limit?: number,
+  offset?: number,
+  sortBy?: string,
+  sortOrder?:string) {
   try {
+    // Helper function to check if role matches filter condition
+    function matchesRoleFilter(value: any = '',filter?: { equals?: string; contains?: string; notEquals?: string; is_empty?: boolean }): boolean {
+      const strValue = value == null ? '' : String(value).trim();
+
+      if (!filter) return true;
+
+      if (filter.is_empty !== undefined) {
+        const isEmpty = strValue === '';
+        return filter.is_empty ? isEmpty : !isEmpty;
+      }
+
+      if (filter.equals !== undefined) {
+        return strValue.toLowerCase() === filter.equals.toLowerCase();
+      }
+
+      if (filter.contains !== undefined) {
+        return strValue.toLowerCase().includes(filter.contains.toLowerCase());
+      }
+
+      if (filter.notEquals !== undefined) {
+        return strValue.toLowerCase() !== filter.notEquals.toLowerCase();
+      }
+
+      return true;
+}
+
     const sequelize = await initSequelize();
     const orgDbSequelize = await initOrgSequelize();
 
@@ -1168,10 +1203,61 @@ class SchemaService {
       accountKeyContactMap[contact.entity_rid].push(enriched);
     }
 
+     // Step 6.6: Query account_fiscal and build accountFiscalMap (unchanged)
+    let accountFiscalMap: Record<string, any[]> = {};
+    for (const [schema, accountRids] of Object.entries(schemaToAccountRids)) {
+      const schemaName = `platform_v2_${schema}`;
+      const fiscalRows = await orgDbSequelize.query(
+        `SELECT 
+          fiscal_year,
+          account_rid,
+           SUM(CAST(total_projects AS NUMERIC)) AS total_projects,
+          SUM(CAST(total_project_hours AS NUMERIC)) AS total_project_hours,
+          SUM(CAST(total_project_cost AS NUMERIC)) AS total_project_cost,
+          SUM(CAST(qualifying_project_hours_fed AS NUMERIC)) AS qualifying_project_hours_fed,
+          SUM(CAST(qualifying_project_qre_fed AS NUMERIC)) AS qualifying_project_qre_fed,
+          SUM(CAST(qualifying_project_rd_credits_fed AS NUMERIC)) AS qualifying_project_rd_credits_fed,
+          SUM(CAST(total_projects_rd_credits AS NUMERIC)) AS total_projects_rd_credits
+        FROM "${schemaName}".account_fiscal
+        WHERE account_rid IN (:accountRids)
+        GROUP BY account_rid, fiscal_year
+        ORDER BY fiscal_year`,
+        {
+          replacements: { accountRids },
+          type: "SELECT",
+        }
+      );
+
+      for (const fiscal of fiscalRows as any[]) {
+        if (!accountFiscalMap[fiscal.account_rid]) {
+          accountFiscalMap[fiscal.account_rid] = [];
+        }
+        accountFiscalMap[fiscal.account_rid].push(fiscal);
+      }
+    }
+
       // Step 7: Helper to enrich a single account
-      function enrichAccount(account: any) {
-      const keyContacts = accountKeyContactMap[account.rid] || [];
-  
+    function enrichAccount(account: any, isChild = false,roleNameFilter?: any) {
+      const rawKeyContacts = accountKeyContactMap[account.rid] || [];
+
+      let keyContacts = rawKeyContacts.map((kc: any) => ({
+        ...kc,
+        role_name: kc.role_name || '', // Ensure string, needed for is_empty
+        key_contact_name: kc.key_contact_name || '', // Ensure string, needed for is_empty
+      }));
+
+      if (roleNameFilter) {
+        const { role, name } = roleNameFilter;
+        const hasRoleFilter = role && Object.keys(role).length > 0;
+        const hasNameFilter = name && Object.keys(name).length > 0;
+        keyContacts = keyContacts.filter((kc: any) => {
+          const roleMatch = hasRoleFilter ? matchesRoleFilter(kc.role_name, role) : true;
+          const nameMatch = hasNameFilter ? matchesRoleFilter(kc.key_contact_name, name) : true;
+          return roleMatch && nameMatch;
+        });
+    }
+      //const keyContacts = accountKeyContactMap[account.rid] || [];
+      const fiscalProjects = isChild ? accountFiscalMap[account.rid] || [] : [];
       const hasTechnical = keyContacts.some(
         (e: any) =>
           e.role_name === "Technical Consultant" && e.is_primary_contact
@@ -1188,40 +1274,62 @@ class SchemaService {
         (e: any) =>
           e.role_name === "Client Finance Executive" && e.is_primary_contact
       );
-  
-        return {
+      
+      const enriched: any = {
         ...account,
-        key_contacts: keyContacts,
-          technical_consultant: hasTechnical
-            ? "Technical Consultant"
-            : "N/A",
-          financial_consultant: hasFinancial
-            ? "Financial Consultant"
-            : "N/A",
-          delivery_head: hasDeliveryHead
-            ? "Project Point of Contact"
-            : "N/A",
-          finance_executive: hasFinanceExecutive
-            ? "Project Point of Contact"
-            : "N/A",
+        key_contacts: keyContacts,        
+        technical_consultant: hasTechnical ? "Technical Consultant" : "-",
+        financial_consultant: hasFinancial ? "Financial Consultant" : "-",
+        delivery_head: hasDeliveryHead ? "Project Point of Contact" : "-",
+        finance_executive: hasFinanceExecutive ? "Project Point of Contact" : "-",
+        
       };
+      if (isChild) {
+        enriched.projects_by_fiscal_year = fiscalProjects;
+      }
+      return enriched;
     }
 
-      // Step 8: Enrich all parent and child accounts
-      const enrichedAccounts = accountData.map((account: any) => {
-        const enrichedParent = enrichAccount(account.dataValues);
-        const enrichedChildren = (account.dataValues.child_accounts || []).map((e: any) => enrichAccount(e.dataValues));
-    return {
-      ...enrichedParent,
-      child_accounts: enrichedChildren,
-    };
-      });
+    // Step 8: Enrich all parent and child accounts (unchanged)
+   let enrichedAccounts = accountData.map((account: any) => {
+  const enrichedParent = enrichAccount(account.dataValues, false, roleNameFilter);
 
-      return enrichedAccounts;
+  // Skip if no key_contacts left after filtering
+  if (roleNameFilter && enrichedParent.key_contacts.length === 0) {
+    return null;
+  }
+
+  const enrichedChildren = (account.dataValues.child_accounts || [])
+    .map((child: any) => enrichAccount(child.dataValues, true, roleNameFilter))
+    .filter((child: any) => child.key_contacts.length > 0);
+
+  enrichedParent.child_accounts = enrichedChildren;
+  return enrichedParent;}).filter(Boolean); // Remove nulls
+
+  if (
+    sortBy &&
+    ['technical_consultant', 'financial_consultant', 'delivery_head', 'finance_executive'].includes(sortBy)
+  ) {
+    const sortKey = sortBy;
+    const resolvedSortOrder = sortOrder === 'DESC' ? -1 : 1;
+
+    enrichedAccounts.sort((a: { [x: string]: any; }, b: { [x: string]: any; }) => {
+      const aVal = (a[sortKey] || '').toLowerCase();
+      const bVal = (b[sortKey] || '').toLowerCase();
+      return aVal.localeCompare(bVal) * resolvedSortOrder;
+    });
+  }
+    const total = enrichedAccounts.length;
+    const shouldPaginate = !!roleNameFilter && Object.keys(roleNameFilter).length > 0 ||
+  ['technical_consultant', 'financial_consultant', 'delivery_head', 'finance_executive'].includes(sortBy || '');
+    if (shouldPaginate && limit !== undefined && offset !== undefined) {
+      enrichedAccounts = enrichedAccounts.slice(offset, offset + limit);
+    }
+     return { data: enrichedAccounts, total };
   } catch (err) {
     throw err;
-    }
   }
 }
 
+}
 export default SchemaService;

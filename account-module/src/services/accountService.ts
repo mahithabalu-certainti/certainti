@@ -75,11 +75,20 @@ class AccountService {
       );
 
       const order: any[] = [];
+      const excludedSortFields = [
+        'country',
+        'currency',
+        'industry',
+        'technical_consultant',
+        'delivery_head',
+        'finance_executive',
+        'financial_consultant'
+      ];
 
-      if (finalSortBy !== "country" && finalSortBy !== "currency" && finalSortBy !== "industry") {
+      if (finalSortBy && !excludedSortFields.includes(finalSortBy)) {
         order.push([finalSortBy, finalSortOrder]);
       }
-
+  
       if (finalSortBy === "country") {
         order.push([
           { model: Country, as: "country" },
@@ -115,11 +124,12 @@ class AccountService {
         baseWhereClause.parent_account_rid = { [Op.is]: null } as any;
       }
 
-      // First, get accounts based on the filters
-      const parentAccounts = await repository.findAll({
+      // Check if filters contain key_contact filter
+      const hasKeyContactFilter = !!parsedFilters?.key_contact && Object.keys(parsedFilters.key_contact).length > 0 ||
+           ['technical_consultant', 'financial_consultant', 'delivery_head', 'finance_executive'].includes(finalSortBy || '');
+      // Build the query options dynamically
+      const queryOptions: any = {
         where: baseWhereClause,
-        limit,
-        offset,
         order,
         include: [
           {
@@ -140,18 +150,24 @@ class AccountService {
             attributes: ["rid", "industry_name"],
             required: false,
           }
-        ],
-      });
-
+        ]
+      };
+    // Only apply pagination if key_contact filter is NOT present
+    if (!hasKeyContactFilter) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+    const parentAccounts = await repository.findAll(queryOptions);
       // Then, for each account, fetch its child accounts separately
       const accountIds = parentAccounts.map((account: any) => account.rid);
-      
+    //  const { whereClauseChildAccount } = this.buildchildAccountWhereClause(parsedFilters);
       if(accountIds.length > 0) {
         const childAccounts = await repository.findAll({
           where: {
             parent_account_rid: {
               [Op.in]: accountIds,
             },
+        //    ...whereClauseChildAccount,
             ...(Object.keys(childClause).length > 0 ? childClause : {}),
           },
           include: [
@@ -178,12 +194,13 @@ class AccountService {
             }
           ]
         });
-    
+
         // Group child accounts by parent_account_rid
         const childAccountsByParent = childAccounts.reduce((acc: any, child: any) => {
           if (!acc[child.parent_account_rid]) {
             acc[child.parent_account_rid] = [];
           }
+     //     child.setDataValue("projects_by_fiscal_year", groupedProjectsObject[child.rid] || []);
           acc[child.parent_account_rid].push(child);
           return acc;
         }, {});
@@ -199,7 +216,7 @@ class AccountService {
         });
       }
 
-      const updatedAccount = await this.schemaService.insertKeyContactInfo(parentAccounts);
+      const updatedAccount = await this.schemaService.insertKeyContactInfo(parentAccounts,filters.key_contact,limit,offset,finalSortBy,finalSortOrder);
 
       // Get total count without pagination
       const totalCount = await repository.count({
@@ -229,7 +246,7 @@ class AccountService {
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
           account: updatedAccount,
-          count: totalCount,
+          count: !hasKeyContactFilter ? totalCount :updatedAccount.total,
         },
       };
     } catch (err) {
@@ -279,7 +296,7 @@ class AccountService {
   
         const order: any[] = [];
   
-        if (finalSortBy !== "country" && finalSortBy !== "currency" && finalSortBy !== "industry") {
+        if (finalSortBy !== "country" && finalSortBy !== "currency" && finalSortBy !== "industry" && finalSortBy !== "key_contact_name" && finalSortBy !== "key_contact_role") {
           order.push([finalSortBy, finalSortOrder]);
         }
   
@@ -410,37 +427,37 @@ class AccountService {
         let exportDetails: any[] = [];
         cleanedUsers.forEach((account: any) => {
           const baseRow = {
-            "Account Name": account?.account_name || "NA",
-            "Parent Account": account?.parent_account?.account_name || "NA",
-            "Account ID": account?.r_number || "NA",
-            "Industry": account?.industry?.industry_name || "NA",
-            "Country": account?.country?.country_name || "NA",
-            "Currency": account?.currency?.currency_code || "NA",
+            "Account Name": account?.account_name || "-",
+            "Parent Account": account?.parent_account?.account_name || "-",
+            "Account ID": account?.r_number || "-",
+            "Industry": account?.industry?.industry_name || "-",
+            "Country": account?.country?.country_name || "-",
+            "Currency": account?.currency?.currency_code || "-",
             "Annual Revenue": account?.annual_revenue 
             ? new Intl.NumberFormat('en-US', {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 2,
                 useGrouping: true
               }).format(Number(account.annual_revenue)) 
-            : "NA",
+            : "-",
             "Status": account?.status.toLowerCase() === 'active' ? 'Active' : 'In-Active',
           };
           exportDetails.push(baseRow);
           if (Array.isArray(account.child_accounts) && account.child_accounts.length > 0) {
             account.child_accounts.forEach((child: any) => {
               exportDetails.push({
-                "Account Name": child?.account_name || "NA",
-                "Parent Account": account?.account_name || "NA", // parent is current account
-                "Account ID": child?.r_number || "NA",
-                "Industry": child?.industry?.industry_name || "NA",
-                "Country": child?.country?.country_name || "NA",
-                "Currency": child?.currency?.currency_code || "NA",
+                "Account Name": child?.account_name || "-",
+                "Parent Account": account?.account_name || "-", // parent is current account
+                "Account ID": child?.r_number || "-",
+                "Industry": child?.industry?.industry_name || "-",
+                "Country": child?.country?.country_name || "-",
+                "Currency": child?.currency?.currency_code || "-",
                 "Annual Revenue": child?.annual_revenue 
                   ? new Intl.NumberFormat('en-US', {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 2,
                 useGrouping: true
-                 }).format(Number(child.annual_revenue)) : "NA",           
+                 }).format(Number(child.annual_revenue)) : "-",           
                 "Status": child?.status.toLowerCase() === 'active' ? 'Active' : 'In-Active',
               });
             });
@@ -1077,7 +1094,29 @@ async insertClientTemplateDetails(
     }
 
     if (filters.annual_revenue) {
-      whereClause.annual_revenue = this.getAnnualRevenueFilter(filters.annual_revenue);
+      whereClause.annual_revenue = this.getNumericFilter(filters.annual_revenue,'annual_revenue');
+    }
+
+    if (filters.total_projects) {
+      whereClause.total_projects = this.getNumericFilter(filters.total_projects,'total_projects');
+    }
+    if (filters.total_project_hours) {
+      whereClause.total_project_hours = this.getNumericFilter(filters.total_project_hours,'total_project_hours');
+    }
+    if (filters.total_project_cost) {
+      whereClause.total_project_cost = this.getNumericFilter(filters.total_project_cost,'total_project_cost');
+    }
+    if (filters.qualifying_project_hours_fed) {
+      whereClause.qualifying_project_hours_fed = this.getNumericFilter(filters.qualifying_project_hours_fed,'qualifying_project_hours_fed');
+    }
+    if (filters.qualifying_project_qre_fed) {
+      whereClause.qualifying_project_qre_fed = this.getNumericFilter(filters.qualifying_project_qre_fed,'qualifying_project_qre_fed');
+    }
+    if (filters.qualifying_project_rd_credits_fed) {
+      whereClause.qualifying_project_rd_credits_fed = this.getNumericFilter(filters.qualifying_project_rd_credits_fed,'qualifying_project_rd_credits_fed');
+    }
+    if (filters.total_projects_rd_credits) {
+      whereClause.total_projects_rd_credits = this.getNumericFilter(filters.total_projects_rd_credits,'total_projects_rd_credits');
     }
 
     // Handle multi-select filters
@@ -1107,6 +1146,19 @@ async insertClientTemplateDetails(
         );
       }
     }
+    if (fieldFilter.not_equals) {
+      if (isUuidField) {
+        // For UUID fields, use direct equality without LOWER function
+        return { [Op.ne]: fieldFilter.not_equals };
+      } else {
+        // For text fields, use case-insensitive comparisos
+        return Sequelize.where(
+          Sequelize.fn('LOWER', Sequelize.col(`Account.${dbField}`)),
+          '!=',
+          Sequelize.fn('LOWER', fieldFilter.not_equals)
+        );
+      }
+    }
     
     if (fieldFilter.contains) {
       return Sequelize.where(
@@ -1115,6 +1167,16 @@ async insertClientTemplateDetails(
         `%${fieldFilter.contains}%`
       );
     }
+    if (fieldFilter.is_empty !== undefined) {
+    if (fieldFilter.is_empty) {
+      return {
+        [Op.or]: [
+          Sequelize.where(Sequelize.col(`Account.${dbField}`), { [Op.is]: null }),
+          Sequelize.where(Sequelize.col(`Account.${dbField}`), '')
+        ]
+      };
+    }
+  }
     // Handle simple value (for dropdown selections like status)
     if (typeof fieldFilter === 'string') {
       return { [Op.iLike]: fieldFilter };
@@ -1122,20 +1184,26 @@ async insertClientTemplateDetails(
     return null;
   }
 
-  private getAnnualRevenueFilter(revenueFilter: any): any {
-  const { greater_than, less_than, between } = revenueFilter;
+  private getNumericFilter(revenueFilter: any,columnName:string): any {
+  const { greater_than, less_than, between,equals } = revenueFilter;
 
   // Handle empty strings and invalid values by casting to NULL first
-  const annualRevenueColumn = Sequelize.literal(`
+   const column = Sequelize.literal(`
     CAST(
-      NULLIF("annual_revenue", '') 
+      NULLIF("${columnName}", '') 
       AS DOUBLE PRECISION
     )
   `);
-
+if (equals) {
+    return Sequelize.where(
+      column,
+      Op.eq,
+      parseFloat(equals)
+    );
+  }
   if (greater_than) {
     return Sequelize.where(
-      annualRevenueColumn,
+      column,
       Op.gt,
       parseFloat(greater_than)
     );
@@ -1143,7 +1211,7 @@ async insertClientTemplateDetails(
 
   if (less_than) {
     return Sequelize.where(
-      annualRevenueColumn,
+      column,
       Op.lt,
       parseFloat(less_than)
     );
@@ -1153,7 +1221,7 @@ async insertClientTemplateDetails(
       parseFloat(String(val))
     );
     return Sequelize.where(
-      annualRevenueColumn,
+      column,
       Op.between,
       [min, max]
     );
@@ -1246,6 +1314,17 @@ async insertClientTemplateDetails(
       "country",
       "currency",
       "annual_revenue",
+      "technical_consultant",
+      "financial_consultant",
+      "delivery_head",
+      "finance_executive",
+      "total_projects",
+      "total_project_cost",
+      "total_project_hours",
+      "qualifying_project_hours_fed",
+      "qualifying_project_qre_fed",
+      "qualifying_project_rd_credits_fed",
+      "total_projects_rd_credits"
     ];
     if (!validSortColumns.includes(sortBy)) {
       sortBy = "created_datetime";

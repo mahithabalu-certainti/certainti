@@ -728,9 +728,16 @@ class UserManagementService {
       whereClause[field] = value;
     } else if (typeof value === 'object') {
       if (value.equals !== undefined) {
-        whereClause[field] = value.equals;
+        whereClause[field] = Sequelize.where(
+        Sequelize.fn('LOWER', Sequelize.col(field)),
+        value.equals.toLowerCase()
+      );
       } else if (value.not_equals !== undefined) {
-        whereClause[field] = { [Op.ne]: value.not_equals };
+        whereClause[field] = Sequelize.where(
+        Sequelize.fn('LOWER', Sequelize.col(field)),
+        '!=',
+        value.not_equals.toLowerCase()
+      );
       } else if (value.contains !== undefined) {
         whereClause[field] = { [Op.iLike]: `%${value.contains}%` };
       } else if (value.is_empty !== undefined) {
@@ -756,7 +763,7 @@ class UserManagementService {
     whereClause: Record<string, any>
   ): void {
     if (typeof value === 'string') {
-      const date = dayjs(value, 'MM-DD-YYYY').startOf('day').toDate();
+      const date = dayjs(value, 'YYYY-MM-DD').startOf('day').toDate();
       const nextDay = dayjs(date).add(1, 'day').toDate();
 
       whereClause[field] = {
@@ -765,7 +772,7 @@ class UserManagementService {
       };
     } else if (typeof value === 'object') {
       if (value.equals !== undefined) {
-        const date = dayjs(value.equals, 'MM-DD-YYYY').startOf('day').toDate();
+        const date = dayjs(value.equals, 'YYYY-MM-DD').startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
         const nextDay = dayjs(date).add(1, 'day').toDate();
 
         whereClause[field] = {
@@ -773,14 +780,14 @@ class UserManagementService {
           [Op.lt]: nextDay
         };
       } else if (value.before !== undefined) {
-        const beforeDate = dayjs(value.before, 'MM-DD-YYYY').startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+        const beforeDate = dayjs(value.before, 'YYYY-MM-DD').startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
         whereClause[field] = { [Op.lt]: beforeDate };
       } else if (value.after !== undefined) {
-        const afterDate = dayjs(value.after, 'MM-DD-YYYY').endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+        const afterDate = dayjs(value.after, 'YYYY-MM-DD').endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
         whereClause[field] = { [Op.gt]: afterDate };
       } else if (value.between?.from && value.between?.to) {
-        const fromDate = dayjs(value.between.from, 'MM-DD-YYYY').startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
-        const toDate = dayjs(value.between.to, 'MM-DD-YYYY').endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+        const fromDate = dayjs(value.between.from, 'YYYY-MM-DD').startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+        const toDate = dayjs(value.between.to, 'YYYY-MM-DD').endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
 
         whereClause[field] = {
           [Op.gte]: fromDate,
