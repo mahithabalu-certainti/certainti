@@ -155,7 +155,7 @@ export const FormData = (
   state: SelectOption[],
   industry: SelectOption[],
   classification: SelectOption[],
-  roles: SelectOption[],
+  // roles: SelectOption[],
   isPrimaryContactRequired: boolean,
   keyContacts: FieldType[],
   addNewKeyContact: () => void,
@@ -253,7 +253,7 @@ export const FormData = (
             ],
           }),
           createTextField('program_name', 'Program Name', {
-            placeholder: 'Enter a Program Name',
+            placeholder: 'Enter Program Name',
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_4,
@@ -278,7 +278,7 @@ export const FormData = (
           }),
           createSelectField('fiscal_year', 'Fiscal Year', {
             options: fiscalYears,
-            placeholder: '-Select-',
+            placeholder: 'Choose Fiscal Year',
             required: true,
             onChange: true,
           }),
@@ -306,7 +306,7 @@ export const FormData = (
           }),
           createTextField('classification_name', 'Classification-other', {
             required: true,
-            placeholder: 'Enter tClassification-other',
+            placeholder: 'Enter Classification-other',
             hide: !showClassifyOthersField,
             errorHandling: [
               {
@@ -355,7 +355,7 @@ export const FormData = (
             ],
           }),
           createTextField('project_group', 'Project Group', {
-            placeholder: 'Enter a Project  Group',
+            placeholder: 'Enter Project  Group',
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_4,
@@ -444,84 +444,13 @@ export const FormData = (
         ],
       },
       {
-        sectionName: 'Key Contacts List',
-        fillType: 'half',
-        fields: [
-          createTextField('key_contact_name', 'Key Contact Name', {
-            required: false,
-            placeholder: 'Enter Key Contact Name',
-            onChange: true,
-            errorHandling: [
-              {
-                regex: REGEX_PATTERNS.MIN_NAME_REGEX,
-                errorMessage:
-                  'Key Contact Name must be more than 1 characters long',
-              },
-              {
-                regex: REGEX_PATTERNS.MAX_NAME_REGEX,
-                errorMessage: 'Max length exceeded',
-              },
-              {
-                regex: REGEX_PATTERNS.NOT_ALLOW_SPACE_SYMBOLS_AT_START_END,
-                errorMessage:
-                  'Cannot begin or end with a space or special character',
-              },
-              {
-                regex: REGEX_PATTERNS.MANAGER_REGEX,
-                errorMessage:
-                  "Only letters, spaces, apostrophes (') and hyphens (-) are allowed",
-              },
-            ],
-          }),
-          createSelectField('key_contact_role', 'Key Contact Role', {
-            options: roles,
-            required: false,
-            placeholder: 'Choose Key Contact Role',
-            onChange: true,
-          }),
-          createTextField('key_contact_email', 'Key Contact Email', {
-            required: false,
-            placeholder: 'Enter Key Contact Email',
-            onChange: true,
-            errorHandling: [
-              {
-                regex: REGEX_PATTERNS.MAX_EMAIL_REGEX,
-                errorMessage: 'Max length exceeded',
-              },
-              {
-                regex: REGEX_PATTERNS.EMAIL,
-                errorMessage: 'Invalid email address',
-              },
-            ],
-          }),
-          createRadioField('is_primary_contact', 'Is Primary Contact?', {
-            radioOptions: YES_NO_OPTIONS,
-            required: isPrimaryContactRequired,
-            onChange: true,
-          }),
-          createRadioField(
-            'include_in_communication',
-            'Include in Communications?',
-            {
-              radioOptions: YES_NO_OPTIONS,
-              required: false,
-            }
-          ),
-          createSelectField('status', 'Key Contact Status', {
-            required: false,
-            options: STATUS_OPTIONS,
-            placeholder: 'Choose Key Contact Status',
-          }),
-        ],
-      },
-      {
         sectionName: 'Financial Information',
         fillType: 'half',
         fields: [
           createTextField('total_effort', 'Effort in Hrs', {
             regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
             regexErrorMessage:
-              'Enter a Positive Integer number allowed 16 digits',
+              'Effort in Hrs must be a positive integer with up to 16 digits',
             placeholder: 'Enter Total Effort',
           }),
           createTextField('total_cost', 'Total Cost', {
@@ -533,26 +462,26 @@ export const FormData = (
           createTextField('total_fte', 'Total FTE Count', {
             regex: REGEX_PATTERNS.EFFORTS_INTEGER_9,
             regexErrorMessage:
-              'Enter a Positive Integer number allowed 9 digits',
+              'Total FTE Count Count must be a positive integer with up to 9 digits',
             placeholder: 'Enter Total FTE',
           }),
           createTextField('total_sub_con', 'Total Sub Con Count', {
             regex: REGEX_PATTERNS.EFFORTS_INTEGER_9,
             regexErrorMessage:
-              'Enter a Positive Integer number allowed 9 digits',
+              'Total Sub Con Count must be a positive integer with up to 9 digits',
             placeholder: 'Enter Total Sub Con',
           }),
 
           createTextField('total_fte_effort', 'Total FTE Effort', {
             regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
             regexErrorMessage:
-              'Enter a Positive Integer number allowed 16 digits',
+              'Total FTE Effort must be a positive integer with up to 16 digits',
             placeholder: 'Enter Total FTE Effort',
           }),
           createTextField('total_sub_con_effort', 'Total Sub Con Effort', {
             regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
             regexErrorMessage:
-              'Enter a Positive Integer number allowed 16 digits',
+              'Total Sub Con Effort must be a positive integer with up to 16 digits',
             placeholder: 'Enter Total Sub Con Effort',
           }),
 
@@ -593,7 +522,7 @@ export const FormData = (
           ),
           createTextField('max_ai_interaction', 'Max Interaction follow up', {
             required: true,
-            placeholder: 'Enter  Max AI Interactions',
+            placeholder: 'Enter Max AI Interactions',
             regex: REGEX_PATTERNS.POSITIVE_INTEGER_REGEX,
             regexErrorMessage: 'Only positive numbers allowed, 2 digits only',
           }),
@@ -669,7 +598,7 @@ export const FormData = (
             required: false,
             regex: REGEX_PATTERNS.MAX_2000,
             regexErrorMessage: 'Maximum 2000 characters allowed',
-            placeholder: 'Enter a comments',
+            placeholder: 'Enter comments',
           }),
         ],
       },

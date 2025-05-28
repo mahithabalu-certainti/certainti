@@ -27,7 +27,7 @@ export const Projects: React.FC = () => {
   const [totalCount, setTotalCount] = useState<number>(0);
   const [tableParams, setTableParams] = useState<ProjectListParams>({
     page: page,
-    limit: 10,
+    limit: 100,
     sortBy: 'createdAt',
     sortOrder: 'DESC',
     fiscalYear: 0,
@@ -58,11 +58,7 @@ export const Projects: React.FC = () => {
   const navigate = useNavigate();
 
   const handleCreateProject = () => {
-    navigate(PROJECT_CREATE, {
-      state: {
-        accountID: 'bf4da492-2f71-42f7-8859-ae70a4047a56',
-      },
-    });
+    navigate(PROJECT_CREATE);
   };
 
   const projectFilterFields = getAllProjectFilterFields();

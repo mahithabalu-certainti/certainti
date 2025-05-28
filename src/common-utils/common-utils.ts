@@ -235,7 +235,7 @@ export const createDateField = (
   name,
   label,
   required: others.required,
-  placeholder: 'MM/DD/YYYY',
+  placeholder: 'YYYY-MM-DD',
   minDate: others.minDate,
   maxDate: others.maxDate,
   disabled: others.disabled,

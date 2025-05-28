@@ -477,7 +477,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         const today: Dayjs = dayjs();
         const isEndDateField = field.name === keyEnd;
         const parsedStartDate = startDateValue
-          ? dayjs(startDateValue, 'MM/DD/YYYY')
+          ? dayjs(startDateValue, 'YYYY/MM/DD')
           : undefined;
 
         // Get the selected fiscal year from form data
@@ -490,7 +490,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           if (isFinancialDateField && selectedFiscalYear) {
             const fiscalYearStart = dayjs(
               `01/01/${selectedFiscalYear}`,
-              'MM/DD/YYYY'
+              'YYYY/MM/DD'
             );
 
             if (isEndDateField && parsedStartDate) {
@@ -510,7 +510,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           if (isFinancialDateField && selectedFiscalYear) {
             const fiscalYearEnd = dayjs(
               `12/31/${selectedFiscalYear}`,
-              'MM/DD/YYYY'
+              'YYYY/MM/DD'
             );
 
             if (field?.maxDate) {
@@ -539,19 +539,19 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               }
               minDate={customMinDate}
               maxDate={customMaxDate}
-              value={dayjs(fieldValue, 'MM/DD/YYYY')}
+              value={dayjs(fieldValue, 'YYYY/MM/DD')}
               disabled={field.disabled}
-              format='MM/DD/YYYY'
+              format='YYYY/MM/DD'
               // onOpen={() => {
               //   if (!fieldValue && isFinancialDateField && selectedFiscalYear) {
               //     // Show calendar from Jan 1 of fiscal year
               //     const date = dayjs().month(dayjs().month()).year(Number(selectedFiscalYear));
-              //     handleChange(date.format('MM/DD/YYYY'));
+              //     handleChange(date.format('YYYY/MM/DD'));
               //   }
               // }}
               onChange={(newValue) => {
                 handleChange(
-                  newValue ? dayjs(newValue).format('MM/DD/YYYY') : null
+                  newValue ? dayjs(newValue).format('YYYY/MM/DD') : null
                 );
               }}
               shouldDisableDate={
@@ -600,7 +600,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                         color: 'black !important',
                         WebkitTextFillColor: 'black !important',
 
-                        '&[value="MM/DD/YYYY"]': {
+                        '&[value="YYYY/MM/DD"]': {
                           color: '#7D98B6 !important',
                           WebkitTextFillColor: '#7D98B6 !important',
                         },
@@ -624,7 +624,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   // onBlur: (event) => {
                   //   //For cache typed data
                   //   const value = event.target.value;
-                  //   if (value !== 'MM/DD/YYYY') {
+                  //   if (value !== 'YYYY/MM/DD') {
                   //     //For Avoid default data
                   //     handleChange(value);
                   //   }
@@ -874,15 +874,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 // Fiscal year bounds
                 const fiscalYearStart = dayjs(
                   `01/01/${selectedFiscalYear}`,
-                  'MM/DD/YYYY'
+                  'YYYY/MM/DD'
                 );
                 const fiscalYearEnd = dayjs(
                   `12/31/${selectedFiscalYear}`,
-                  'MM/DD/YYYY'
+                  'YYYY/MM/DD'
                 );
 
                 if (dateValue) {
-                  const currentDate = dayjs(dateValue, 'MM/DD/YYYY');
+                  const currentDate = dayjs(dateValue, 'YYYY/MM/DD');
 
                   // Check against fiscal year bounds
                   if (
@@ -904,7 +904,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     hasError = true;
                     return {
                       ...field,
-                      error: `${field.name === 'financial_start_date' ? 'Start' : 'End'} date cannot be after ${dayjs(field.maxDate).format('MM/DD/YYYY')}`,
+                      error: `${field.name === 'financial_start_date' ? 'Start' : 'End'} date cannot be after ${dayjs(field.maxDate).format('YYYY/MM/DD')}`,
                     };
                   }
                 }
@@ -917,8 +917,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 ] as string;
 
                 if (startDateValue) {
-                  const startDate = dayjs(startDateValue, 'MM/DD/YYYY');
-                  const endDate = dayjs(dateValue, 'MM/DD/YYYY');
+                  const startDate = dayjs(startDateValue, 'YYYY/MM/DD');
+                  const endDate = dayjs(dateValue, 'YYYY/MM/DD');
 
                   if (endDate.isSame(startDate, 'day')) {
                     hasError = true;
@@ -1017,7 +1017,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   error: `${field.name === 'resource_startdate' ? 'Effective Date' : field.name === 'skill_start_date' ? 'Start Date' : 'This date'} cannot be in the future`,
                 };
               }
-              if (dateValue && !isValidDate(dateValue, 'MM/DD/YYYY')) {
+              if (dateValue && !isValidDate(dateValue, 'YYYY/MM/DD')) {
                 hasError = true;
                 return {
                   ...field,

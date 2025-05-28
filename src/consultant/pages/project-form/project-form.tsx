@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { editIcon, projectCreateIcon } from '../../../assets';
-import { OnChange, useGetAllCountries } from '../../../common-service';
+import { Layout, OnChange, useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
@@ -47,13 +47,14 @@ const ProjectForm: React.FC = () => {
     'key_contact_role',
     'key_contact_email',
   ];
-  const formatDateToMMDDYYYY = (dateString?: string) => {
+
+  const formatDateToYYYYMMDD = (dateString?: string) => {
     if (!dateString) return '';
     const date = new Date(dateString);
+    const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
     const day = String(date.getDate()).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${month}/${day}/${year}`;
+    return `${year}/${month}/${day}`;
   };
 
   const getProjectData = useProjectDetail(accountID, projectID);
@@ -69,8 +70,8 @@ const ProjectForm: React.FC = () => {
         auto_access_rd: account?.auto_access_rd ? 'Yes' : 'No',
         created_on: account?.created_datetime,
         updated_on: account?.modified_datetime,
-        project_enddate: formatDateToMMDDYYYY(account?.project_enddate),
-        project_startdate: formatDateToMMDDYYYY(account?.project_startdate),
+        project_enddate: formatDateToYYYYMMDD(account?.project_enddate),
+        project_startdate: formatDateToYYYYMMDD(account?.project_startdate),
         region: account?.region,
         key_contact_name: account?.keyContact[0]?.key_contact_name,
         key_contact_role: account?.keyContact[0]?.key_contact_role,
@@ -297,14 +298,13 @@ const ProjectForm: React.FC = () => {
           <div className='w-[90%]'>
             {isEditView && (
               <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F]'>
-                {/* {projectData.project_name} */}
                 Edit Project
               </h5>
             )}
             <h4
               className={`${isEditView ? 'text-[14px]' : 'text-[16px]'} font-bold text-[#2D3E4F] ml-2 leading-4 w-[95%] overflow-ellipsis truncate`}
             >
-              {isEditView ? projectData.project_name : 'New Project'}
+              {isEditView ? projectData.project_name : 'Create Project'}
             </h4>
           </div>
         </div>
@@ -314,8 +314,8 @@ const ProjectForm: React.FC = () => {
             loading={createProject.isPending || updateProject.isPending}
             onClick={handleExternalSubmit}
             sx={{
-              height: '32px',
               width: '64px',
+              minWidth: '64px',
               fontSize: '13px',
               fontWeight: 400,
             }}
@@ -324,8 +324,8 @@ const ProjectForm: React.FC = () => {
             label='Cancel'
             onClick={goBack}
             sx={{
-              height: '32px',
               width: '75px',
+              minWidth: '75px',
               fontSize: '12px',
               fontWeight: 400,
             }}
@@ -339,7 +339,7 @@ const ProjectForm: React.FC = () => {
           memoizedState,
           memoizedIndustry,
           memoizedClassification,
-          memoizedRole,
+          // memoizedRole,
           isValueUpdateInKeyContact,
           keyContacts,
           addKeyContactInfo,
@@ -367,6 +367,7 @@ const ProjectForm: React.FC = () => {
         onChange={onChangeField}
         keyStart='project_startdate'
         keyEnd='project_enddate'
+        layout={Layout.TYPE_1}
         newContactLength={newContactLength}
       />
     </>

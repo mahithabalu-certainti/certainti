@@ -429,7 +429,7 @@ const ListTable = <T extends RowData>({
       {/* Pagination */}
       {(onPageChange || onRowsPerPageChange) && (
         <TablePagination
-          rowsPerPageOptions={[5, 10, 25, 50]}
+          rowsPerPageOptions={[25, 50, 100]}
           count={totalItems}
           rowsPerPage={rowsPerPage}
           page={currentPage}
