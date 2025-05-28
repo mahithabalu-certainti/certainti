@@ -3,8 +3,14 @@ import {
   Checkbox,
   MenuItem,
   Select,
-  Skeleton, Table, TableBody, TableCell, TableHead, TableRow,
-  TextField, Tooltip,
+  Skeleton,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  TextField,
+  Tooltip,
 } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -46,7 +52,7 @@ interface FormBuilderProps {
   keyStart?: string;
   keyEnd?: string;
   newContactLength?: number;
-  admin?: boolean
+  admin?: boolean;
 }
 
 export const FormBuilder: React.FC<FormBuilderProps> = ({
@@ -60,7 +66,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   keyStart,
   keyEnd,
   newContactLength,
-  admin = false
+  admin = false,
 }) => {
   const location = useLocation();
   const { state } = location;
@@ -127,7 +133,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   }, [data, values, state]);
 
   const getFields = (field: FormTypeFields) => {
-    const isError = field.error ? 'border-red-500 bg-[#FEF2F2]' : 'bg-[#FFFFFF]';
+    const isError = field.error
+      ? 'border-red-500 bg-[#FEF2F2]'
+      : 'bg-[#FFFFFF]';
     const fontSize = '0.875rem';
     const fieldValue = (constructFormData[field.name] as string) || '';
     const fieldDisabled = field.disabled ? ' bg-gray-100' : '';
@@ -307,11 +315,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   backgroundColor: '#f3f4f6',
                 },
                 '& .MuiOutlinedInput-notchedOutline': {
-                  border: field.error ? '1px solid #ef4444' : '1px solid #CBD6E2',
-                  borderRadius: '2px'
+                  border: field.error
+                    ? '1px solid #ef4444'
+                    : '1px solid #CBD6E2',
+                  borderRadius: '2px',
                 },
                 '&:hover .MuiOutlinedInput-notchedOutline': {
-                  border: field.error ? '1px solid #ef4444' : '1px solid #CBD6E2',
+                  border: field.error
+                    ? '1px solid #ef4444'
+                    : '1px solid #CBD6E2',
                 },
                 // '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                 //   borderColor: field.error ? '#ef4444' : 'black',
@@ -321,11 +333,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 },
               }}
             >
-              <MenuItem value="" sx={{
-                color: '#425A76',
-                fontSize: '13px',
-                fontWeight: '500',
-              }}>
+              <MenuItem
+                value=''
+                sx={{
+                  color: '#425A76',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                }}
+              >
                 {field.placeholder}
               </MenuItem>
               {field?.options?.map((option, i) => (
@@ -430,7 +445,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         );
       case 'radio':
         return (
-          <div className='flex gap-4 mt-1.5'>
+          <div className='flex items-center gap-4 !h-[32px]'>
             {field?.options?.map((option, i) => (
               <label
                 key={i}
@@ -517,7 +532,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
-              className={'placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium border border-[#CBD6E2]' + isError + fieldDisabled}
+              className={
+                'placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium border border-[#CBD6E2]' +
+                isError +
+                fieldDisabled
+              }
               minDate={customMinDate}
               maxDate={customMaxDate}
               value={dayjs(fieldValue, 'MM/DD/YYYY')}
@@ -590,7 +609,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                         border: '1px solid #CBD6E2', // match default
                       },
                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        border: '2px solid #60A5FA'
+                        border: '2px solid #60A5FA',
                       },
                       '&.Mui-disabled': {
                         '& input': {
@@ -620,7 +639,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
-              className={'placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium border border-[#CBD6E2]' + isError + fieldDisabled}
+              className={
+                'placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium border border-[#CBD6E2]' +
+                isError +
+                fieldDisabled
+              }
               value={dayjs(fieldValue, 'DD/MM')}
               disabled={field.disabled}
               format='MM/DD'
@@ -641,7 +664,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   size: 'small',
                   disabled: field.disabled,
                   sx: {
-
                     '& .MuiOutlinedInput-root': {
                       height: '32px',
                       borderRadius: '2px',
@@ -669,7 +691,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                         border: '1px solid #CBD6E2', // match default
                       },
                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        border: '2px solid #60A5FA'
+                        border: '2px solid #60A5FA',
                       },
                       '& .MuiIconButton-edgeEnd': {
                         display: 'none',
@@ -706,17 +728,24 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return (
           <button
             className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] rounded-[2px] color-[#2D3E4F] px-2 text-[12px] font-semibold'
-            type='button' onClick={field.onClick}>
+            type='button'
+            onClick={field.onClick}
+          >
             <span>
               <img src={keyContactAddIcon} />
             </span>
             {field.name}
           </button>
-        )
+        );
       case 'iconButton':
         return (
-          <img className='cursor-pointer' alt='remove' src={field.iconUrl || keyContactRemoveIcon} onClick={field.onClick} />
-        )
+          <img
+            className='cursor-pointer'
+            alt='remove'
+            src={field.iconUrl || keyContactRemoveIcon}
+            onClick={field.onClick}
+          />
+        );
       default:
         return null;
     }
@@ -1291,119 +1320,143 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       // className='px-10'
       >
         <Table>
-          <TableHead sx={{
-            '& .MuiTableCell-root': {
-              fontWeight: 700,
-              fontSize: '13px',
-              color: '#2A2A2A',
-              padding: '0px 8px',
-              height: '29px',
-              boxSizing: 'border-box',
-            },
-            '& .MuiTableCell-root:first-of-type': {
-              paddingLeft: '40px',
-            }
-          }}>
+          <TableHead
+            sx={{
+              '& .MuiTableCell-root': {
+                fontWeight: 700,
+                fontSize: '13px',
+                color: '#2A2A2A',
+                padding: '0px 8px',
+                height: '29px',
+                boxSizing: 'border-box',
+              },
+              '& .MuiTableCell-root:first-of-type': {
+                paddingLeft: '40px',
+              },
+            }}
+          >
             <TableRow sx={{ height: 29 }}>
               {section.fields.slice(0, newContactLength).map((field, j) => {
                 return (
-                  <TableCell sx={{
-                    minWidth: `${field.width}`,
-                    '&.MuiTableCell-root': {
-                      height: 29,
-                      padding: '0px 4px',
-                      lineHeight: 0,
-                    }
-                  }} key={`${field.name}_${j}`}>{field.label}</TableCell>
-                )
+                  <TableCell
+                    sx={{
+                      minWidth: `${field.width}`,
+                      '&.MuiTableCell-root': {
+                        height: 29,
+                        padding: '0px 4px',
+                        lineHeight: 0,
+                      },
+                    }}
+                    key={`${field.name}_${j}`}
+                  >
+                    {field.label}
+                  </TableCell>
+                );
               })}
             </TableRow>
           </TableHead>
-          <TableBody sx={{
-            '& .MuiTableCell-root': {
-              padding: '0px',
-              // boxSizing: 'border-box',
-              '& input': {
-                paddingLeft: '4px',
-                border: 'none',
-                outline: 'none',
-                boxShadow: 'none',
-                background: 'transparent'
+          <TableBody
+            sx={{
+              '& .MuiTableCell-root': {
+                padding: '0px',
+                // boxSizing: 'border-box',
+                '& input': {
+                  paddingLeft: '4px',
+                  border: 'none',
+                  outline: 'none',
+                  boxShadow: 'none',
+                  background: 'transparent',
+                },
+                '& radio': {
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                },
               },
-              '& radio': {
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }
-            },
-            '& .MuiTableRow-root > .MuiTableCell-root:first-of-type': {
-              paddingLeft: '40px',
-            },
-          }}>
+              '& .MuiTableRow-root > .MuiTableCell-root:first-of-type': {
+                paddingLeft: '40px',
+              },
+            }}
+          >
             {fieldRows.map((row, rowIndex) => (
               <TableRow key={rowIndex}>
                 {row.map((field, colIndex) => (
-                  <TableCell sx={{
-                    height: '32px !important',
-                    minWidth: `${field.width}`,
-                    paddingLeft: `${field.type}` === 'iconButton' || `${field.type}` === 'radio' ? '10px !important' : 'none',
-                    verticalAlign: `${field.type}` === 'iconButton' ? 'middle !important' : 'top',
-                    '& input': {
-                      border: 'none'
-                    },
-                    // '& .MuiOutlinedInput-notchedOutline': {
-                    //   border: 'none !important',
-                    // },
-                    // '&:hover .MuiOutlinedInput-notchedOutline': {
-                    //   border: 'none',
-                    // },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      border: '2px solid #60A5FA',
-                      outline: 'none'
-                    },
-                  }} key={colIndex} style={{ verticalAlign: 'top', height: '32px !important' }}>
-                    {field.type === 'text' ? <div className={`h-[32px] border border-[#CBD6E2] rounded-[2px] overflow-hidden focus-within:border-2 focus-within:border-blue-400 ${field.error ? 'border-red-500 bg-[#FEF2F2]' : ''}`}>
-                      <div className=" box-border flex items-center gap-[4px]">
-                        {field.error &&
-                          <Tooltip
-                            title={field.error}
-                            placement='bottom-end'
-                            slotProps={{
-                              tooltip: {
-                                sx: {
-                                  backgroundColor: '#FEF2F2',
-                                  color: 'rgba(0, 0, 0, 0.87)',
-                                  fontSize: '12px',
-                                  fontWeight: 400,
-                                  boxShadow: 2,
-                                  borderRadius: '4px',
-                                },
-                              },
-                              popper: {
-                                modifiers: [
-                                  {
-                                    name: 'offset',
-                                    options: {
-                                      offset: [30, -40],
-                                    },
+                  <TableCell
+                    sx={{
+                      height: '32px !important',
+                      minWidth: `${field.width}`,
+                      paddingLeft:
+                        `${field.type}` === 'iconButton' ||
+                        `${field.type}` === 'radio'
+                          ? '10px !important'
+                          : 'none',
+                      verticalAlign:
+                        `${field.type}` === 'iconButton'
+                          ? 'middle !important'
+                          : 'top',
+                      '& input': {
+                        border: 'none',
+                      },
+                      // '& .MuiOutlinedInput-notchedOutline': {
+                      //   border: 'none !important',
+                      // },
+                      // '&:hover .MuiOutlinedInput-notchedOutline': {
+                      //   border: 'none',
+                      // },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        border: '2px solid #60A5FA',
+                        outline: 'none',
+                      },
+                    }}
+                    key={colIndex}
+                    style={{ verticalAlign: 'top', height: '32px !important' }}
+                  >
+                    {field.type === 'text' ? (
+                      <div
+                        className={`h-[32px] border border-[#CBD6E2] rounded-[2px] overflow-hidden focus-within:border-2 focus-within:border-blue-400 ${field.error ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                      >
+                        <div className=' box-border flex items-center gap-[4px]'>
+                          {field.error && (
+                            <Tooltip
+                              title={field.error}
+                              placement='bottom-end'
+                              slotProps={{
+                                tooltip: {
+                                  sx: {
+                                    backgroundColor: '#FEF2F2',
+                                    color: 'rgba(0, 0, 0, 0.87)',
+                                    fontSize: '12px',
+                                    fontWeight: 400,
+                                    boxShadow: 2,
+                                    borderRadius: '4px',
                                   },
-                                ],
-                              },
-                            }}
-                          >
-
-                            <span className="pl-[8px] text-[13px] text-[#425A76]">
-                              <img src={errorInfoIcon} alt='error' />
-                            </span>
-                          </Tooltip>
-                        }
-                        {/* {showKeyContactError && <span className='absolute top-[5px]'>
+                                },
+                                popper: {
+                                  modifiers: [
+                                    {
+                                      name: 'offset',
+                                      options: {
+                                        offset: [30, -40],
+                                      },
+                                    },
+                                  ],
+                                },
+                              }}
+                            >
+                              <span className='pl-[8px] text-[13px] text-[#425A76]'>
+                                <img src={errorInfoIcon} alt='error' />
+                              </span>
+                            </Tooltip>
+                          )}
+                          {/* {showKeyContactError && <span className='absolute top-[5px]'>
                           {field.error}
                         </span>} */}
-                        {getFields(field)}
+                          {getFields(field)}
+                        </div>
                       </div>
-                    </div> :
-                      getFields(field)}
+                    ) : (
+                      getFields(field)
+                    )}
                   </TableCell>
                 ))}
               </TableRow>
@@ -1411,11 +1464,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           </TableBody>
         </Table>
       </div>
-    )
+    );
+  };
 
-  }
-
-  const loadDefaultSections = (section: FormType, isHalf: boolean, index: number) => {
+  const loadDefaultSections = (
+    section: FormType,
+    isHalf: boolean,
+    index: number
+  ) => {
     return (
       <div
         className={`grid md:grid-cols-3 gap-x-4 gap-y-[2px] ${layout === Layout.TYPE_1 ? 'px-10' : 'px-6'} ${!formData?.[index + 1]?.sectionName ? 'mb-1' : 'mb-4'} `}
@@ -1423,29 +1479,33 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         {section.fields.map((field, j) => {
           if (field.hide) return null;
           return (
-
-            <div key={j} className={`col-span-1 ${!isHalf ? 'md:col-span-3' : ''} flex flex-col`}>
+            <div
+              key={j}
+              className={`col-span-1 ${!isHalf ? 'md:col-span-3' : ''} flex flex-col`}
+            >
               <label
                 className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
                 htmlFor={field.name}
               >
                 {field.label}
-                {field.required && (
-                  <span className='text-red-500'> *</span>
-                )}
+                {field.required && <span className='text-red-500'> *</span>}
               </label>
               <div>
-                {
-                  field.type === 'website' ?
-                    <div className={`border border-[#CBD6E2] rounded-[2px] overflow-hidden focus-within:border-2 focus-within:border-blue-400 ${field.error ? 'border-red-500 bg-[#FEF2F2]' : ''}`}>
-                      <div className="h-[32px]  box-border flex items-center gap-[4px]">
-                        <span className="pl-[8px] text-[13px] text-[#425A76]">https://</span>
-                        <img src={verticalSeparatorIcon} alt-='separtor' />
-                        {getFields(field)}
-                      </div>
+                {field.type === 'website' ? (
+                  <div
+                    className={`border border-[#CBD6E2] rounded-[2px] overflow-hidden focus-within:border-2 focus-within:border-blue-400 ${field.error ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                  >
+                    <div className='h-[32px]  box-border flex items-center gap-[4px]'>
+                      <span className='pl-[8px] text-[13px] text-[#425A76]'>
+                        https://
+                      </span>
+                      <img src={verticalSeparatorIcon} alt-='separtor' />
+                      {getFields(field)}
                     </div>
-                    : getFields(field)
-                }
+                  </div>
+                ) : (
+                  getFields(field)
+                )}
 
                 {field.error && (
                   <span className='text-[12px] text-red-400 col-span-full'>
@@ -1454,13 +1514,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 )}
               </div>
             </div>
-
-
           );
         })}
       </div>
-    )
-  }
+    );
+  };
 
   const loadSectionsWithoutTitle = (section: FormType) => {
     return (
@@ -1470,18 +1528,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         {section.fields.map((field, j) => {
           if (field.hide) return null;
           return (
-
             <div key={j} className={`col-span-3 flex flex-col`}>
               <label
                 className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left`}
                 htmlFor={field.name}
               >
                 {field.label}
-                {field.required && (
-                  <span className='text-red-500'> *</span>
-                )}
+                {field.required && <span className='text-red-500'> *</span>}
               </label>
-              <div className={`${!field.label ? 'mt-1.5' : ""}`}>
+              <div className={`${!field.label ? 'mt-1.5' : ''}`}>
                 {getFields(field)}
                 {field.error && (
                   <span className='text-[12px] text-red-400 col-span-full'>
@@ -1493,8 +1548,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           );
         })}
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <form onSubmit={submitData} ref={formRef}>
@@ -1511,12 +1566,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               </h4>
             )}
             <>
-              {!section.sectionName ? loadSectionsWithoutTitle(section) :
-                section.sectionName === 'Key Contacts List' ? loadKeyContactSection(section) :
-                  loadDefaultSections(section, isHalf, i)
-              }
+              {!section.sectionName
+                ? loadSectionsWithoutTitle(section)
+                : section.sectionName === 'Key Contacts List'
+                  ? loadKeyContactSection(section)
+                  : loadDefaultSections(section, isHalf, i)}
             </>
-
           </div>
         );
       })}

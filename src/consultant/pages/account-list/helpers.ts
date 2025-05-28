@@ -60,18 +60,23 @@ export function convertAccounts(
     const { color, bgColor } = getNextColor();
 
     const convertedAccount: ConvertedAccount = {
-      accountName: account.account_name,
       accountId: account.rid,
-      parentAccount: parentAccountName,
-      accountNumber: account.r_number,
+      accountName: account.account_name,
       industry:
         account?.industry?.industry_name || account?.industry_name_other || '-',
       country: account.country?.country_name || '-',
-      currency: account.currency?.currency_code || '-',
-      status: account.status === 'active' ? 'Active' : 'In Active',
-      primaryContact: account.primary_contact_name || '-',
-      parentAccountID: account.parent_account_rid,
-      annualRevenue: account.annual_revenue,
+      parentAccount: parentAccountName,
+      totalProjects: account?.total_projects || '-',
+      totalProjectHours: account?.total_project_hours || '-',
+      totalProjectCost: account?.total_project_cost || '-',
+      estimatedHours: account?.qualifying_project_hours_fed || '-',
+      qre: account?.qualifying_project_qre_fed || '-',
+      estimatedCredits: account?.qualifying_project_rd_credits_fed || '-',
+      actualCredits: account?.total_projects_rd_credits || '-',
+      financeExecutive: account?.finance_executive || '-',
+      financeHead: account?.delivery_head || '-',
+      professionalConsultant: account?.technical_consultant || '-',
+      accountNumber: account.r_number,
       color,
       bgColor,
     };

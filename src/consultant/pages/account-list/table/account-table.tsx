@@ -324,9 +324,9 @@ const AccountTable: React.FC<Record<string, any>> = ({
                 )}
                 <TableCell
                   sx={{
-                    width: '100px',
-                    minWidth: '100px',
-                    maxWidth: '100px',
+                    width: '60px',
+                    minWidth: '60px',
+                    maxWidth: '60px',
                     borderRight: 'none',
                   }}
                 >

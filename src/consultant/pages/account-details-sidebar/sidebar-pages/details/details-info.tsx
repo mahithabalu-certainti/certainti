@@ -67,14 +67,18 @@ const DetailsSection: React.FC<{
       if (label && label.toLowerCase() === 'website') {
         return (
           <span className='font-medium text-[13px] text-[#425A76]'>
-            <a
-              href={value}
-              target='_blank'
-              rel='noopener noreferrer'
-              className='underline decoration-[#425A76]'
-            >
-              {value}
-            </a>
+            {value ? (
+              <a
+                href={value}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='underline decoration-[#425A76]'
+              >
+                {value}
+              </a>
+            ) : (
+              '-'
+            )}
           </span>
         );
       }
@@ -334,14 +338,14 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
     },
     {
       label: 'Is Parent Account',
-      value: accountById?.is_parent ? 'YES' : 'NO',
+      value: accountById?.is_parent ? 'Yes' : 'No',
     },
     {
       label: 'Parent Account',
       value: accountById?.parent_account?.toString() || '-',
     },
     { label: 'Status', value: accountById?.status?.toString() || '-' },
-    { label: 'Website', value: accountDetails?.website?.toString() || '-' },
+    { label: 'Website', value: accountDetails?.website?.toString() },
     {
       label: 'Delivery Manager',
       value: accountDetails?.project_manager?.toString() || '-',
