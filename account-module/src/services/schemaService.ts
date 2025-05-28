@@ -36,6 +36,17 @@ class SchemaService {
     await setupKeyContactsSequence(sequelize, schemaName);
     await this.createClientFirmDocumentTemplate(schemaName,sequelize)
     await this.createClientFirmDocumentTemplateMetadata(schemaName,sequelize)
+
+    await this.createResourcesTable(schemaName,sequelize);
+    await this.createResourceHistoryTable(schemaName,sequelize)
+    await this.createResourceTimelineTable(schemaName,sequelize)
+    await this.createResourceCostTable(schemaName,sequelize)
+    await this.createResourceCostTimelineTable(schemaName,sequelize)
+    await this.createResourceCostHistoryTable(schemaName,sequelize)
+    await this.createResourceSkillTable(schemaName,sequelize)
+    await this.createResourceSkillTimelineTable(schemaName,sequelize)
+    await this.createResourceSkillHistoryTable(schemaName,sequelize)
+
   }
 
   private async createAccountDetailsTable(schemaName: string, sequelize: any) {
@@ -43,6 +54,7 @@ class SchemaService {
       CREATE TABLE IF NOT EXISTS "${schemaName}"."account_details" (
         rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         account_rid UUID NOT NULL UNIQUE,
+        account_name VARCHAR(255) NOT NULL,
         tax_claim_level VARCHAR(50) NULL,
         max_ai_interactions INT CHECK (max_ai_interactions BETWEEN 3 AND 5) NOT NULL,
         autosend_interaction BOOLEAN NOT NULL,
@@ -54,7 +66,6 @@ class SchemaService {
         created_by VARCHAR(255),
         modified_by VARCHAR(255),
         website VARCHAR(50),
-        project_manager VARCHAR(50) NOT NULL,
         data_residency VARCHAR(255),
         data_storage VARCHAR(255) CHECK (data_storage IN ('separate_db', 'store_in_parent')),
         auto_access_rd BOOLEAN NOT NULL,
@@ -290,7 +301,8 @@ class SchemaService {
         sheet_name VARCHAR(100), 
         col_seq VARCHAR(100) NOT NULL,
         col_name VARCHAR(100) NOT NULL,
-        col_type VARCHAR(100) NOT NULL
+        col_type VARCHAR(100) NOT NULL,
+        required boolean
       );
     `);
   }
@@ -324,6 +336,251 @@ class SchemaService {
     `);
   }
 
+   private async createResourcesTable(schemaName: string, sequelize: any) {
+     await sequelize.query(`
+      CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resources_seq START 1;
+    `);
+     await sequelize.query(`
+        CREATE TABLE IF NOT EXISTS "${schemaName}".resources (
+      rid uuid NOT NULL DEFAULT gen_random_uuid(),
+      r_number character varying(20) DEFAULT ('RES ' || lpad((nextval('"${schemaName}".resources_seq'))::text, 10, '0')),
+      eid character varying(50),
+      account_rid uuid NOT NULL,
+      resource_code character varying(50) NOT NULL,
+      resource_type VARCHAR(50) CHECK (resource_type IN ('Full-Time','Sub Con','Non-Labor')),
+      resource_name character varying(200),
+      resource_firstname character varying(100),
+      resource_lastname character varying(100),
+      resource_orgname character varying(100),
+      resource_role character varying(100),
+      resource_country uuid,
+      resource_region uuid,
+      resource_city uuid,
+      resource_startdate timestamp with time zone,
+      resource_enddate timestamp with time zone,
+      resource_designation character varying(100),
+      resource_total_experience numeric(4,2),
+      resource_total_experience_organization numeric(4,2),
+      resource_status VARCHAR(50) CHECK (resource_status IN ('Active','Inactive')),
+      created_datetime timestamp with time zone NOT NULL,
+      modified_datetime timestamp with time zone NOT NULL,
+      created_by uuid,
+      modified_by uuid,
+      comments text,
+      CONSTRAINT resources_pkey PRIMARY KEY (rid),
+      CONSTRAINT resources_resource_code_key UNIQUE (resource_code))
+     `)
+   }
+
+   private async createResourceHistoryTable(schemaName: string, sequelize: any) {
+     await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_history_seq START 1`);
+
+     await sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "${schemaName}".resources_history
+      (
+          rid uuid NOT NULL DEFAULT gen_random_uuid(),
+          r_number varchar(20) DEFAULT (
+            'REH ' || lpad((nextval('"${schemaName}".resource_history_seq'::regclass))::text, 10, '0')
+          ),
+          resource_rid uuid NOT NULL,
+          attribute_name varchar(100) NOT NULL,
+          old_value varchar(1000),
+          new_value varchar(1000) NOT NULL,
+          modified_datetime timestamptz NOT NULL,
+          created_datetime timestamptz NOT NULL,
+          modified_by uuid NOT NULL,
+          CONSTRAINT resources_history_pkey PRIMARY KEY (rid)
+      )
+     `)
+   }
+
+  private async createResourceTimelineTable(schemaName: string, sequelize: any) {
+    await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_timeline_seq START 1`);
+
+     await sequelize.query(`
+     CREATE TABLE IF NOT EXISTS "${schemaName}".resources_timeline (
+        rid uuid NOT NULL DEFAULT gen_random_uuid(),
+        r_number varchar(20) DEFAULT ('RTL ' || lpad((nextval('"${schemaName}".resource_timeline_seq'::regclass))::text, 10, '0')),
+        account_rid uuid NOT NULL,
+        entity_rid uuid NOT NULL,
+        event_name varchar(100) NOT NULL,
+        event_type varchar(100) NOT NULL,
+        event_status varchar(100) NOT NULL,
+        event_datetime timestamptz NOT NULL,
+        modified_by uuid NOT NULL,
+        CONSTRAINT resources_timeline_pkey PRIMARY KEY (rid)
+      )
+    `)
+   }
+
+   
+   private async createResourceCostTable(schemaName: string, sequelize: any) {
+     await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_cost_seq START 1`);
+
+     await sequelize.query(`
+          CREATE TABLE IF NOT EXISTS "${schemaName}".resource_cost (
+          rid uuid NOT NULL,
+          r_number varchar(20) DEFAULT (
+            'RCO ' || lpad((nextval('"${schemaName}".resource_cost_seq'::regclass))::text, 10, '0')
+          ),
+          eid varchar(255),
+          account_rid uuid NOT NULL,
+          resource_type varchar(255) NOT NULL,
+          resource_rid uuid,
+          resource_code varchar(255) NOT NULL,
+          resource_number varchar(255) NOT NULL,
+          fiscal_year integer NOT NULL,
+          effective_date timestamptz,
+          end_date timestamptz,
+          annual_cost numeric(18,2),
+          monthly_cost numeric(18,2),
+          weekly_cost numeric(18,2),
+          bi_weekly_cost numeric(18,2),
+          daily_cost numeric(18,2),
+          hourly_cost numeric(18,2),
+          currency_rid uuid,
+          status varchar(255) DEFAULT 'active',
+          comments text,
+          created_datetime timestamptz,
+          modified_datetime timestamptz,
+          created_by uuid,
+          modified_by uuid,
+          CONSTRAINT resource_cost_pkey PRIMARY KEY (rid),
+          CONSTRAINT resource_cost_resource_rid_fkey FOREIGN KEY (resource_rid)
+              REFERENCES "${schemaName}".resources (rid)
+              ON UPDATE CASCADE
+              ON DELETE SET NULL
+      )
+    `)
+   }
+   
+  private async createResourceCostTimelineTable(schemaName: string, sequelize: any) {
+     await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_cost_timeline_seq START 1`);
+
+     await sequelize.query(`
+        CREATE TABLE IF NOT EXISTS "${schemaName}".resource_cost_timeline (
+        rid uuid NOT NULL,
+        r_number varchar(20) DEFAULT (
+          'RCT ' || lpad((nextval('"${schemaName}".resource_cost_timeline_seq'::regclass))::text, 10, '0')
+        ),
+        account_rid uuid NOT NULL,
+        event_name varchar(255) NOT NULL,
+        event_status varchar(255) NOT NULL,
+        event_type varchar(255) DEFAULT 'Ui Handler',
+        entity_rid uuid NOT NULL,
+        event_datetime timestamptz NOT NULL,
+        modified_datetime timestamptz,
+        modified_by varchar(255) NOT NULL,
+        CONSTRAINT resource_cost_timeline_pkey PRIMARY KEY (rid)
+    );
+
+    `)
+   }
+
+  
+  private async createResourceCostHistoryTable(schemaName: string, sequelize: any) {
+     await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_cost_history_seq START 1`);
+
+     await sequelize.query(`
+            CREATE TABLE IF NOT EXISTS "${schemaName}".resource_cost_history (
+          rid uuid NOT NULL,
+          r_number varchar(20) DEFAULT (
+            'RCH ' || lpad((nextval('"${schemaName}".resource_cost_history_seq'::regclass))::text, 10, '0')
+          ),
+          resource_cost_rid uuid NOT NULL,
+          attribute_name varchar(255) NOT NULL,
+          old_value varchar(255),
+          new_value varchar(255) NOT NULL,
+          modified_datetime timestamptz,
+          modified_by varchar(255) NOT NULL,
+          CONSTRAINT resource_cost_history_pkey PRIMARY KEY (rid)
+      );
+    `)
+   }
+
+   
+  private async createResourceSkillTable(schemaName: string, sequelize: any) {
+     await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_skill_seq START 1`);
+
+     await sequelize.query(`
+           CREATE TABLE IF NOT EXISTS "${schemaName}".resource_skill (
+    rid uuid NOT NULL,
+    r_number varchar(20) DEFAULT (
+      'RSK ' || lpad((nextval('"${schemaName}".resource_skill_seq'::regclass))::text, 10, '0')
+    ),
+    eid varchar(255),
+    account_rid uuid NOT NULL,
+    resource_type varchar(255) NOT NULL,
+    resource_rid uuid NOT NULL,
+    resource_number varchar(255) NOT NULL,
+    start_date timestamptz,
+    skill_description varchar(255),
+    skill_level varchar(255) DEFAULT 'Beginner',
+    skill_type_others varchar(255),
+    skill_subtype_others varchar(255),
+    resource_code varchar(255) NOT NULL,
+    status varchar(255) DEFAULT 'active',
+    skill_type_rid varchar(255) NOT NULL,
+    skill_subtype_rid varchar(255) NOT NULL,
+    skill_details text,
+    comments text,
+    created_datetime timestamptz,
+    modified_datetime timestamptz,
+    created_by varchar(255),
+    modified_by varchar(255),
+    CONSTRAINT resource_skill_pkey PRIMARY KEY (rid),
+    CONSTRAINT resource_skill_resource_rid_fkey FOREIGN KEY (resource_rid)
+        REFERENCES "${schemaName}".resources (rid)
+        ON UPDATE CASCADE
+        ON DELETE NO ACTION
+);
+
+    `)
+   }
+  private async createResourceSkillTimelineTable(schemaName: string, sequelize: any) {
+    await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_skill_timeline_seq START 1`);
+    
+    await sequelize.query(`
+          CREATE TABLE IF NOT EXISTS "${schemaName}".resource_skill_timeline (
+          rid uuid NOT NULL,
+          r_number varchar(20) DEFAULT (
+            'RST ' || lpad((nextval('"${schemaName}".resource_skill_timeline_seq'::regclass))::text, 10, '0')
+          ),
+          account_rid uuid NOT NULL,
+          event_name varchar(255) NOT NULL,
+          event_status varchar(255) NOT NULL,
+          event_type varchar(255) DEFAULT 'Ui Handler',
+          entity_rid uuid NOT NULL,
+          event_datetime timestamptz NOT NULL,
+          modified_datetime timestamptz,
+          modified_by varchar(255) NOT NULL,
+          CONSTRAINT resource_skill_timeline_pkey PRIMARY KEY (rid)
+        );
+
+    `)
+   }
+
+  private async createResourceSkillHistoryTable(schemaName: string, sequelize: any) {
+    await sequelize.query(`CREATE SEQUENCE IF NOT EXISTS "${schemaName}".resource_skill_history_seq START 1`);
+
+    await sequelize.query(`
+          CREATE TABLE IF NOT EXISTS "${schemaName}".resource_skill_history (
+          rid uuid NOT NULL,
+          r_number varchar(20) DEFAULT (
+            'RSH ' || lpad((nextval('"${schemaName}".resource_skill_history_seq'::regclass))::text, 10, '0')
+          ),
+          resource_skill_rid uuid NOT NULL,
+          attribute_name varchar(255) NOT NULL,
+          old_value varchar(255),
+          new_value varchar(255) NOT NULL,
+          modified_datetime timestamptz,
+          modified_by varchar(255) NOT NULL,
+          CONSTRAINT resource_skill_history_pkey PRIMARY KEY (rid)
+      );
+    `)
+   }
+
+
   async insertAccountDetails(
     account_number: string,
     accountData: IAccount,
@@ -335,26 +592,25 @@ class SchemaService {
     await sequelize.query(
       `
         INSERT INTO "${schemaName}"."account_details" (
-          account_rid, max_ai_interactions, 
+          account_rid, account_name, max_ai_interactions, 
           autosend_interaction, fiscal_start_date, fiscal_end_date, 
           interaction_cc_list, blended_rate_fte, blended_rate_subcon, 
           created_by, modified_by, website, 
-          project_manager, 
           data_residency, data_storage, auto_access_rd,business_details
         ) 
         VALUES (
-          :account_rid, :max_ai_interactions, 
+          :account_rid, :account_name, :max_ai_interactions, 
           :autosend_interaction, :fiscal_start_date, :fiscal_end_date, 
           :interaction_cc_list, :blended_rate_fte, :blended_rate_subcon, 
           :created_by, :modified_by, 
           :website, 
-          :project_manager, 
           :data_residency, :data_storage, :auto_access_rd,:business_details
         );
       `,
       {
         replacements: {
           account_rid: account_rid,
+          account_name: accountData.account_name,
           max_ai_interactions: accountData.max_ai_interactions,
           autosend_interaction: accountData.autosend_interaction,
           fiscal_start_date: accountData.fiscal_start_date,
@@ -369,7 +625,6 @@ class SchemaService {
           created_by: userId,
           modified_by: userId,
           website: accountData.website ?? null,
-          project_manager: accountData.project_manager,
           data_residency: accountData.data_residency ?? null,
           data_storage: accountData.data_storage ?? null,
           auto_access_rd: accountData.auto_access_rd,
@@ -382,7 +637,7 @@ class SchemaService {
  async insertClientTemplateMetaDataDetails(
   account_number: string,
   entity: string,
-  tableSchema: Array<{ column_name: string; data_type: string }>,
+  tableSchema: Array<{ column_name: string; data_type: string,required:boolean }>,
   client_template_rid: string,
   account_rid: string,
 ) {
@@ -397,7 +652,8 @@ class SchemaService {
       :sheet_name, 
       :col_seq_${index}, 
       :col_name_${index}, 
-      :col_type_${index}
+      :col_type_${index},
+      :required_${index}
     )`)
     .join(", ");
 
@@ -413,13 +669,14 @@ class SchemaService {
     replacements[`col_seq_${index}`] = index + 1; // Sequence starts at 1
     replacements[`col_name_${index}`] = col.column_name;
     replacements[`col_type_${index}`] = col.data_type;
+    replacements[`required_${index}`] = col.required;
   });
 
   // Execute the query
   await sequelize.query(
     `
       INSERT INTO "${schemaName}"."clientfirm_document_template_metadata" (
-      client_template_rid, account_rid, sheet_name, col_seq, col_name, col_type
+      client_template_rid, account_rid, sheet_name, col_seq, col_name, col_type,required
       ) 
       VALUES ${values};
     `,
@@ -537,7 +794,6 @@ class SchemaService {
           modified_by = :modified_by,
          
           website = :website,
-          project_manager = :project_manager,
           auto_access_rd = :auto_access_rd,
           modified_datetime = :modified_datetime,
           business_details = :business_details
@@ -557,7 +813,6 @@ class SchemaService {
             : null,
           modified_by: userId,
           website: accountData.website ?? null,
-          project_manager: accountData.project_manager,
           auto_access_rd: accountData.auto_access_rd,
           business_details: accountData.business_details,
           comments: accountData.comments ?? null,
@@ -812,8 +1067,40 @@ class SchemaService {
     }
   }
 
-  async insertKeyContactInfo(accountData: any) {
+   async insertKeyContactInfo(accountData: any, roleNameFilter?: {
+  role?: { equals?: string; contains?: string; notEquals?: string,is_empty:boolean };
+  name?: { equals?: string; contains?: string; notEquals?: string,is_empty:boolean };
+  },limit?: number,
+  offset?: number,
+  sortBy?: string,
+  sortOrder?:string) {
   try {
+    // Helper function to check if role matches filter condition
+    function matchesRoleFilter(value: any = '',filter?: { equals?: string; contains?: string; notEquals?: string; is_empty?: boolean }): boolean {
+      const strValue = value == null ? '' : String(value).trim();
+
+      if (!filter) return true;
+
+      if (filter.is_empty !== undefined) {
+        const isEmpty = strValue === '';
+        return filter.is_empty ? isEmpty : !isEmpty;
+      }
+
+      if (filter.equals !== undefined) {
+        return strValue.toLowerCase() === filter.equals.toLowerCase();
+      }
+
+      if (filter.contains !== undefined) {
+        return strValue.toLowerCase().includes(filter.contains.toLowerCase());
+      }
+
+      if (filter.notEquals !== undefined) {
+        return strValue.toLowerCase() !== filter.notEquals.toLowerCase();
+      }
+
+      return true;
+}
+
     const sequelize = await initSequelize();
     const orgDbSequelize = await initOrgSequelize();
 
@@ -916,10 +1203,61 @@ class SchemaService {
       accountKeyContactMap[contact.entity_rid].push(enriched);
     }
 
+     // Step 6.6: Query account_fiscal and build accountFiscalMap (unchanged)
+    let accountFiscalMap: Record<string, any[]> = {};
+    for (const [schema, accountRids] of Object.entries(schemaToAccountRids)) {
+      const schemaName = `platform_v2_${schema}`;
+      const fiscalRows = await orgDbSequelize.query(
+        `SELECT 
+          fiscal_year,
+          account_rid,
+           SUM(CAST(total_projects AS NUMERIC)) AS total_projects,
+          SUM(CAST(total_project_hours AS NUMERIC)) AS total_project_hours,
+          SUM(CAST(total_project_cost AS NUMERIC)) AS total_project_cost,
+          SUM(CAST(qualifying_project_hours_fed AS NUMERIC)) AS qualifying_project_hours_fed,
+          SUM(CAST(qualifying_project_qre_fed AS NUMERIC)) AS qualifying_project_qre_fed,
+          SUM(CAST(qualifying_project_rd_credits_fed AS NUMERIC)) AS qualifying_project_rd_credits_fed,
+          SUM(CAST(total_projects_rd_credits AS NUMERIC)) AS total_projects_rd_credits
+        FROM "${schemaName}".account_fiscal
+        WHERE account_rid IN (:accountRids)
+        GROUP BY account_rid, fiscal_year
+        ORDER BY fiscal_year`,
+        {
+          replacements: { accountRids },
+          type: "SELECT",
+        }
+      );
+
+      for (const fiscal of fiscalRows as any[]) {
+        if (!accountFiscalMap[fiscal.account_rid]) {
+          accountFiscalMap[fiscal.account_rid] = [];
+        }
+        accountFiscalMap[fiscal.account_rid].push(fiscal);
+      }
+    }
+
       // Step 7: Helper to enrich a single account
-      function enrichAccount(account: any) {
-      const keyContacts = accountKeyContactMap[account.rid] || [];
-  
+    function enrichAccount(account: any, isChild = false,roleNameFilter?: any) {
+      const rawKeyContacts = accountKeyContactMap[account.rid] || [];
+
+      let keyContacts = rawKeyContacts.map((kc: any) => ({
+        ...kc,
+        role_name: kc.role_name || '', // Ensure string, needed for is_empty
+        key_contact_name: kc.key_contact_name || '', // Ensure string, needed for is_empty
+      }));
+
+      if (roleNameFilter) {
+        const { role, name } = roleNameFilter;
+        const hasRoleFilter = role && Object.keys(role).length > 0;
+        const hasNameFilter = name && Object.keys(name).length > 0;
+        keyContacts = keyContacts.filter((kc: any) => {
+          const roleMatch = hasRoleFilter ? matchesRoleFilter(kc.role_name, role) : true;
+          const nameMatch = hasNameFilter ? matchesRoleFilter(kc.key_contact_name, name) : true;
+          return roleMatch && nameMatch;
+        });
+    }
+      //const keyContacts = accountKeyContactMap[account.rid] || [];
+      const fiscalProjects = isChild ? accountFiscalMap[account.rid] || [] : [];
       const hasTechnical = keyContacts.some(
         (e: any) =>
           e.role_name === "Technical Consultant" && e.is_primary_contact
@@ -936,40 +1274,62 @@ class SchemaService {
         (e: any) =>
           e.role_name === "Client Finance Executive" && e.is_primary_contact
       );
-  
-        return {
+      
+      const enriched: any = {
         ...account,
-        key_contacts: keyContacts,
-          technical_consultant: hasTechnical
-            ? "Technical Consultant"
-            : "N/A",
-          financial_consultant: hasFinancial
-            ? "Financial Consultant"
-            : "N/A",
-          delivery_head: hasDeliveryHead
-            ? "Project Point of Contact"
-            : "N/A",
-          finance_executive: hasFinanceExecutive
-            ? "Project Point of Contact"
-            : "N/A",
+        key_contacts: keyContacts,        
+        technical_consultant: hasTechnical ? "Technical Consultant" : "-",
+        financial_consultant: hasFinancial ? "Financial Consultant" : "-",
+        delivery_head: hasDeliveryHead ? "Project Point of Contact" : "-",
+        finance_executive: hasFinanceExecutive ? "Project Point of Contact" : "-",
+        
       };
+      if (isChild) {
+        enriched.projects_by_fiscal_year = fiscalProjects;
+      }
+      return enriched;
     }
 
-      // Step 8: Enrich all parent and child accounts
-      const enrichedAccounts = accountData.map((account: any) => {
-        const enrichedParent = enrichAccount(account.dataValues);
-        const enrichedChildren = (account.dataValues.child_accounts || []).map((e: any) => enrichAccount(e.dataValues));
-    return {
-      ...enrichedParent,
-      child_accounts: enrichedChildren,
-    };
-      });
+    // Step 8: Enrich all parent and child accounts (unchanged)
+   let enrichedAccounts = accountData.map((account: any) => {
+  const enrichedParent = enrichAccount(account.dataValues, false, roleNameFilter);
 
-      return enrichedAccounts;
+  // Skip if no key_contacts left after filtering
+  if (roleNameFilter && enrichedParent.key_contacts.length === 0) {
+    return null;
+  }
+
+  const enrichedChildren = (account.dataValues.child_accounts || [])
+    .map((child: any) => enrichAccount(child.dataValues, true, roleNameFilter))
+    .filter((child: any) => child.key_contacts.length > 0);
+
+  enrichedParent.child_accounts = enrichedChildren;
+  return enrichedParent;}).filter(Boolean); // Remove nulls
+
+  if (
+    sortBy &&
+    ['technical_consultant', 'financial_consultant', 'delivery_head', 'finance_executive'].includes(sortBy)
+  ) {
+    const sortKey = sortBy;
+    const resolvedSortOrder = sortOrder === 'DESC' ? -1 : 1;
+
+    enrichedAccounts.sort((a: { [x: string]: any; }, b: { [x: string]: any; }) => {
+      const aVal = (a[sortKey] || '').toLowerCase();
+      const bVal = (b[sortKey] || '').toLowerCase();
+      return aVal.localeCompare(bVal) * resolvedSortOrder;
+    });
+  }
+    const total = enrichedAccounts.length;
+    const shouldPaginate = !!roleNameFilter && Object.keys(roleNameFilter).length > 0 ||
+  ['technical_consultant', 'financial_consultant', 'delivery_head', 'finance_executive'].includes(sortBy || '');
+    if (shouldPaginate && limit !== undefined && offset !== undefined) {
+      enrichedAccounts = enrichedAccounts.slice(offset, offset + limit);
+    }
+     return { data: enrichedAccounts, total };
   } catch (err) {
     throw err;
-    }
   }
 }
 
+}
 export default SchemaService;

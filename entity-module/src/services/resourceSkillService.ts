@@ -191,7 +191,7 @@ class ResourceSkillService {
         const sequelizeInstance = await this.getOrgSequelize();
         ResourceSkill.initialize(sequelizeInstance, schemaName);
 
-        const startDate = start_date ? this.formatDateForDb(start_date.toString()) : undefined;
+        const startDate = this.formatDateForDb(start_date as string);
 
         // Use the model's create method to leverage default values
         createdResourceSkill = await ResourceSkill.create({
@@ -201,7 +201,7 @@ class ResourceSkillService {
           resource_rid,
           resource_number,
           resource_code,
-          start_date: startDate || undefined,
+          start_date: startDate || null,
           skill_description,
           skill_level: skill_level || "",
           skill_type_rid,
@@ -427,13 +427,13 @@ class ResourceSkillService {
 
       try {
 
-        const startDate = start_date ? this.formatDateForDb(start_date.toString()) : undefined;
-
+        const startDate = this.formatDateForDb(start_date as string);
+        console.log("startDate", startDate);
         const [affectedCounts, affectedRows] = await ResourceSkill.update(
           {
             rid,
             eid,
-            start_date: startDate || undefined,
+            start_date: startDate || null,
             skill_description,
             skill_level,
             skill_type_rid,
@@ -836,14 +836,14 @@ class ResourceSkillService {
         if (resourceInfo.resource_startdate) {
           const startDate = moment(resourceInfo.resource_startdate);
           if (startDate.isValid()) {
-            resourceInfo.dataValues.resource_startdate = startDate.format('MM/DD/YYYY') as any;
+            resourceInfo.dataValues.resource_startdate = startDate.format('yyyy-mm-dd') as any;
           }
         }
         
         if (resourceInfo.resource_enddate) {
           const endDate = moment(resourceInfo.resource_enddate);
           if (endDate.isValid()) {
-            resourceInfo.dataValues.resource_enddate = endDate.format('MM/DD/YYYY') as any;
+            resourceInfo.dataValues.resource_enddate = endDate.format('yyyy-mm-dd') as any;
           }
         }
       }
@@ -947,14 +947,14 @@ class ResourceSkillService {
 
   /**
    * Properly formats a date string for database storage
-   * @param dateString Date string in MM/DD/YYYY format
+   * @param dateString Date string in yyyy-mm-dd format
    * @returns Properly formatted date for database storage
    */
   private formatDateForDb(dateString?: string): Date | null {
     if (!dateString) return null;
 
     // Parse the date using moment to ensure consistent handling
-    const date = moment(dateString, "MM/DD/YYYY", true);
+    const date = moment(dateString, "yyyy-mm-dd", true);
     if (!date.isValid()) return null;
 
     // Set the time to noon to avoid timezone issues

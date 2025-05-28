@@ -39,7 +39,6 @@ const typeDefs = gql`
     industry_rid: String!
     industry_name_other: String
     website: String
-    project_manager: String!
     database_level: Boolean!
     annual_revenue: String
     data_storage: String!
