@@ -174,7 +174,9 @@ export interface accountByIdProps {
   };
   business_details: string;
   is_parent: boolean;
-  parent_account: string;
+  parent_account: {
+    account_name: string;
+  };
   status: string;
   annual_revenue: string;
   country: {

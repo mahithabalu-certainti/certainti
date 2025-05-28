@@ -71,7 +71,6 @@ const DetailsSection: React.FC<{
               <a
                 href={value}
                 target='_blank'
-                rel='noopener noreferrer'
                 className='underline decoration-[#425A76]'
               >
                 {value}
@@ -163,7 +162,7 @@ const KeyContactSection: React.FC<{
       </div>
       <TableContainer
         sx={{
-          'overflow-x': 'scroll',
+          'overflow-x': 'auto',
         }}
       >
         <Table>
@@ -237,7 +236,9 @@ const KeyContactSection: React.FC<{
                 <TableCell
                   sx={{
                     minWidth: '180px',
-                    textDecoration: 'underline',
+                    textDecoration: field.keyContactEmail
+                      ? 'underline'
+                      : 'none',
                     textDecorationColor: '#425A76',
                   }}
                 >
@@ -342,7 +343,7 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
     },
     {
       label: 'Parent Account',
-      value: accountById?.parent_account?.toString() || '-',
+      value: accountById?.parent_account?.account_name?.toString() || '-',
     },
     { label: 'Status', value: accountById?.status?.toString() || '-' },
     { label: 'Website', value: accountDetails?.website?.toString() },

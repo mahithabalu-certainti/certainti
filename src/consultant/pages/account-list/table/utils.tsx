@@ -135,9 +135,9 @@ export const renderRows = ({
               zIndex: 6,
               fontWeight: '400 !important',
               color: '#2D3E4F !important',
-              minWidth: '300px',
-              width: '300px',
-              maxWidth: '300px',
+              minWidth: '250px',
+              width: '250px',
+              maxWidth: '250px',
             }}
           >
             {hasChildren ? ( // Only show the icon if there are children
@@ -176,7 +176,7 @@ export const renderRows = ({
             )}
             <TruncateWithTooltip
               text={String(account.accountName)}
-              maxWidth={250}
+              maxWidth={200}
               className={`inline-flex items-center rounded-[4px] text-[14px] px-2 font-semibold h-[26px] cursor-pointer group-hover:underline`}
               style={{ backgroundColor: account.bgColor, color: account.color }}
             >
@@ -398,9 +398,9 @@ export const renderChildRows = ({
               fontWeight: '400 !important',
               color: '#2D3E4F !important',
               borderRight: '1px solid #CBD6E2',
-              width: '300px',
-              maxWidth: '300px',
-              minWidth: '300px',
+              width: '250px',
+              maxWidth: '250px',
+              minWidth: '250px',
               borderBottom: '1px solid #CBD6E2 !important',
             }}
           >
@@ -414,7 +414,7 @@ export const renderChildRows = ({
               </div>
               <TruncateWithTooltip
                 text={String(account.accountName)}
-                maxWidth={250}
+                maxWidth={200}
                 className={`text-[13px] font-semibold cursor-pointer underline text-[#1755E7]`}
               >
                 <span onClick={() => handleAccountNameClick(account)}>

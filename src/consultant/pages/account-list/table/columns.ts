@@ -16,7 +16,7 @@ export const accountColumns: AccountColumn[] = [
     id: 'account_name',
     sortId: 'account_name',
     label: 'Account Name',
-    width: '300px',
+    width: '250px',
     sortable: true,
     sx: {
       position: 'sticky',
