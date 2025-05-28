@@ -47,6 +47,7 @@ export interface ProjectAttributes {
   qualified_research_expenditure?: number | null;
   is_rd_qualified?: boolean | null;
   qre?: number | null;
+  assessment_status?: string | null;
 }
 
 interface ProjectCreationAttributes
@@ -101,6 +102,7 @@ export class Project
   public is_rd_qualified?: boolean | null;
   public qre?: number | null;
   public project_classification_other?: string | null | undefined;
+  public assessment_status?: string | null;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
     const model = Project.init(
@@ -243,6 +245,10 @@ export class Project
           type: DataTypes.STRING(2000),
           allowNull: true,
         },
+        assessment_status: {
+          type: DataTypes.STRING(100),
+          allowNull: true,
+        }
       },
       {
         sequelize,
