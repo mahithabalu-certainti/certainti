@@ -54,6 +54,7 @@ class SchemaService {
       CREATE TABLE IF NOT EXISTS "${schemaName}"."account_details" (
         rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         account_rid UUID NOT NULL UNIQUE,
+        account_name VARCHAR(255) NOT NULL,
         tax_claim_level VARCHAR(50) NULL,
         max_ai_interactions INT CHECK (max_ai_interactions BETWEEN 3 AND 5) NOT NULL,
         autosend_interaction BOOLEAN NOT NULL,
