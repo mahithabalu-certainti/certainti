@@ -324,9 +324,9 @@ const AccountTable: React.FC<Record<string, any>> = ({
                 )}
                 <TableCell
                   sx={{
-                    width: '100px',
-                    minWidth: '100px',
-                    maxWidth: '100px',
+                    width: '60px',
+                    minWidth: '60px',
+                    maxWidth: '60px',
                     borderRight: 'none',
                   }}
                 >
@@ -337,10 +337,10 @@ const AccountTable: React.FC<Record<string, any>> = ({
             <TableBody
               sx={{
                 '& .MuiTableCell-root': {
-                  fontWeight: 700,
+                  fontWeight: 500,
                   fontSize: '13px',
                   lineHeight: '21px',
-                  color: '#2D3E4F',
+                  color: '#425A76',
                   padding: '0px',
                   paddingLeft: '8px',
                   paddingRight: '8px',

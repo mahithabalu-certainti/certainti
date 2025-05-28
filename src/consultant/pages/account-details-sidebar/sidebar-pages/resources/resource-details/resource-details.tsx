@@ -23,7 +23,7 @@ interface AuditDetailsSectionProps {
     created_datetime: string;
     created_by: string;
     modified_datetime: string;
-    modified_by: string | null;  
+    modified_by: string | null;
   };
 }
 
@@ -52,19 +52,22 @@ interface AuditItem {
   row?: number;
 }
 
-const AuditDetailsSection: React.FC<AuditDetailsSectionProps> = ({ title, data }) => {
+const AuditDetailsSection: React.FC<AuditDetailsSectionProps> = ({
+  title,
+  data,
+}) => {
   // Define audit items with their columns
   const auditItems: AuditItem[] = [
     { label: 'Record ID', value: data.rid, column: 1 },
-    { 
-      label: 'Created On', 
-      value: formatDateToMMDDYYYYWithTime(data.created_datetime), 
-      column: 1 
+    {
+      label: 'Created On',
+      value: formatDateToMMDDYYYYWithTime(data.created_datetime),
+      column: 1,
     },
-    { 
-      label: 'Updated On', 
-      value: formatDateToMMDDYYYYWithTime(data.modified_datetime), 
-      column: 1 
+    {
+      label: 'Updated On',
+      value: formatDateToMMDDYYYYWithTime(data.modified_datetime),
+      column: 1,
     },
     { label: 'Resource ID', value: data.r_number, column: 2 },
     { label: 'Created By', value: data.created_by, column: 2 },
@@ -72,31 +75,29 @@ const AuditDetailsSection: React.FC<AuditDetailsSectionProps> = ({ title, data }
   ];
 
   // Group items by column
-  const columnOneItems = auditItems.filter(item => item.column === 1);
-  const columnTwoItems = auditItems.filter(item => item.column === 2);
-  
+  const columnOneItems = auditItems.filter((item) => item.column === 1);
+  const columnTwoItems = auditItems.filter((item) => item.column === 2);
+
   return (
-    <div className="mt-6">
-      <div className="text-[16px] text-[#2D3E4F] font-semibold">
-        {title}
-      </div>
-      
-      <div className="grid grid-cols-1 text-sm md:grid-cols-2 my-1.5 gap-x-6">
+    <div className='mt-3'>
+      <div className='text-[15px] text-[#2D3E4F] font-bold'>{title}</div>
+
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
         {/* First Column */}
-        <div>
+        <div className='text-sm my-[6px] grid gap-y-3'>
           {columnOneItems.map((item, index) => (
             <AuditItemRow key={`col1-${index}`} item={item} />
           ))}
         </div>
-        
+
         {/* Second Column */}
-        <div>
+        <div className='text-sm my-[6px] grid gap-y-3'>
           {/* First row - Resource Id */}
           <AuditItemRow item={columnTwoItems[0]} />
-          
+
           {/* Second row - Empty space for alignment */}
-          <div>&nbsp;</div>
-          
+          {/* <div>&nbsp;</div> */}
+
           {/* Remaining items */}
           {columnTwoItems.slice(1).map((item, index) => (
             <AuditItemRow key={`col2-${index + 1}`} item={item} />
@@ -110,21 +111,20 @@ const AuditDetailsSection: React.FC<AuditDetailsSectionProps> = ({ title, data }
 // Extracted reusable row component
 const AuditItemRow: React.FC<{ item: AuditItem }> = ({ item }) => {
   if (!item) return null;
-  
+
   return (
-    <div className="grid grid-cols-2 py-2">
-      <div className="text-right font-normal text-[14px] text-[#65686F] pr-4 min-w-[120px] break-words">
+    <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2 gap-y-3'>
+      <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
         {item.label}
       </div>
-      <div className="font-light text-[14px] pl-2 break-words">
-        <span className="font-light text-[14px] text-[#2D3E4F]">
-          {item.value || 'NA'}
+      <div className='font-medium text-[13px] break-all overflow-hidden'>
+        <span className='font-medium text-[13px] text-[#425A76]'>
+          {item.value || '-'}
         </span>
       </div>
     </div>
   );
 };
-
 
 const DetailsSection: React.FC<{
   title: string;
@@ -153,67 +153,65 @@ const DetailsSection: React.FC<{
       }
     }
     return (
-      <span className='font-light text-[14px] text-[#2D3E4F]'>
-        {value || 'NA'}
+      <span className='font-medium text-[13px] text-[#425A76]'>
+        {value || '-'}
       </span>
     );
   };
 
   return (
-    <div className={title === 'Basic Information' ? 'mt-0' : 'mt-6'}>
-      <div className='text-[16px] text-[#2D3E4F] font-semibold'>{title}</div>
-      <div className='text-sm my-1.5 grid gap-y-2'>
-      {title === 'Comments' ? (
-        // Full-width single column layout for Comments
-        data.map((item, index) => (
-          <div
-            key={`comment-row-${index}`}
-            className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-4 py-2'
-          >
-            <div className='text-right font-normal text-[14px] text-[#65686F] pr-2'>
-              {item.label}
-            </div>
-            <div className='font-light text-[14px] break-all overflow-hidden'>
-              {renderValue(item.value)}
-            </div>
-          </div>
-        ))
-      ) : (
-        leftColumn.map((leftItem, index) => {
-          const rightItem = rightColumn[index];
-
-          return (
-            <div
-              key={`row-${index}`}
-              className='grid grid-cols-1 md:grid-cols-2 gap-6'
-            >
-              {/* Left column */}
-              <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-4 py-2'>
-                <div className='text-right font-normal text-[14px] text-[#65686F] pr-2'>
-                  {leftItem.label}
+    <div className={title === 'Basic Information' ? 'mt-0' : 'mt-3'}>
+      <div className='text-[15px] text-[#2D3E4F] font-bold'>{title}</div>
+      <div className='text-sm my-[6px] grid gap-y-3'>
+        {title === 'Comments'
+          ? // Full-width single column layout for Comments
+            data.map((item, index) => (
+              <div
+                key={`comment-row-${index}`}
+                className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2'
+              >
+                <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
+                  {item.label}
                 </div>
-                <div className='font-light text-[14px] break-all overflow-hidden'>
-                  {renderValue(leftItem.value)}
+                <div className='font-medium text-[13px] break-all overflow-hidden'>
+                  {renderValue(item.value)}
                 </div>
               </div>
+            ))
+          : leftColumn.map((leftItem, index) => {
+              const rightItem = rightColumn[index];
 
-              {/* Right column */}
-              {rightItem ? (
-                <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-4 py-2'>
-                  <div className='text-right font-normal text-[14px] text-[#65686F] pr-2'>
-                    {rightItem.label}
+              return (
+                <div
+                  key={`row-${index}`}
+                  className='grid grid-cols-1 md:grid-cols-2 gap-6'
+                >
+                  {/* Left column */}
+                  <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2'>
+                    <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
+                      {leftItem.label}
+                    </div>
+                    <div className='font-medium text-[13px] break-all overflow-hidden'>
+                      {renderValue(leftItem.value)}
+                    </div>
                   </div>
-                  <div className='font-light text-[14px] break-all overflow-hidden'>
-                    {renderValue(rightItem.value)}
-                  </div>
+
+                  {/* Right column */}
+                  {rightItem ? (
+                    <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2'>
+                      <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
+                        {rightItem.label}
+                      </div>
+                      <div className='font-medium text-[13px] break-all overflow-hidden'>
+                        {renderValue(rightItem.value)}
+                      </div>
+                    </div>
+                  ) : (
+                    <div />
+                  )}
                 </div>
-              ) : (
-                <div />
-              )}
-            </div>
-          );
-        })  
-      )}
+              );
+            })}
       </div>
     </div>
   );
@@ -240,62 +238,62 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
       if (value && typeof value === 'object' && !Array.isArray(value)) {
         return {
           label: formatKey(key),
-          value: Object.values(value).join(', ') || 'NA', // or handle nested objects differently
+          value: Object.values(value).join(', ') || '-', // or handle nested objects differently
         };
       }
 
       if (key === 'resource_ref_id' && !Array.isArray(value)) {
         return {
           label: 'Resource Code',
-          value: value ?? 'NA', // or handle nested objects differently
+          value: value ?? '-', // or handle nested objects differently
         };
       }
 
       if (key === 'resource_startdate' && !Array.isArray(value)) {
         return {
           label: 'Effective Date',
-          value: formatDateToMMDDYYYY(value as string) || 'NA', // or handle nested objects differently
+          value: formatDateToMMDDYYYY(value as string) || '-', // or handle nested objects differently
         };
       }
 
       if (key === 'resource_enddate' && !Array.isArray(value)) {
         return {
           label: 'End Date',
-          value: formatDateToMMDDYYYY(value as string) || 'NA', // or handle nested objects differently
+          value: formatDateToMMDDYYYY(value as string) || '-', // or handle nested objects differently
         };
       }
 
       if (key === 'total_years_in_org' && !Array.isArray(value)) {
         return {
           label: 'Total Years in Organization',
-          value: value || 'NA', // or handle nested objects differently
+          value: value || '-', // or handle nested objects differently
         };
       }
 
       if (key === 'total_years_experience' && !Array.isArray(value)) {
         return {
           label: 'Total Years of Experience',
-          value: value || 'NA', // or handle nested objects differently
+          value: value || '-', // or handle nested objects differently
         };
       }
 
       if (key === 'resource_fullname' && !Array.isArray(value)) {
         return {
           label: 'Name',
-          value: value ?? 'NA', // or handle nested objects differently
+          value: value ?? '-', // or handle nested objects differently
         };
       }
 
       if (key === 'resource_orgname' && !Array.isArray(value)) {
         return {
           label: 'Resource Org Name',
-          value: value ?? 'NA', // or handle nested objects differently
+          value: value ?? '-', // or handle nested objects differently
         };
       }
 
       const displayValue =
         value === null || value === '' || value === undefined
-          ? 'NA'
+          ? '-'
           : customMappings?.[key]
             ? customMappings[key](value)
             : value;
@@ -349,7 +347,9 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   // Section data with custom formatting where needed
   const basicInfo = CreateSectionData({
     resource_code: resourceData.resource_code,
-    resource_fullname: resourceData?.resource_name ||  resourceData.resource_firstname + ' ' + resourceData.resource_lastname ,
+    resource_fullname:
+      resourceData?.resource_name ||
+      resourceData.resource_firstname + ' ' + resourceData.resource_lastname,
     resource_type: resourceData.resource_type,
     first_name: resourceData.resource_firstname,
     last_name: resourceData.resource_lastname,
@@ -382,8 +382,19 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
     comments: resourceData.comments,
   });
 
+  // const auditInfo = CreateSectionData(
+  //   {
+  //     rid: resourceData.rid,
+  //     r_number: resourceData.r_number,
+  //     created_datetime: resourceData.created_datetime,
+  //     created_by: resourceData.created_by,
+  //     modified_datetime: resourceData.modified_datetime,
+  //     modified_by: resourceData.modified_by,
+  //   }
+  // )
+
   return (
-    <div className='max-w-6xl p-6'>
+    <div className='max-w-6xl px-6 py-2'>
       <DetailsSection title='Basic Information' data={basicInfo} />
       <DetailsSection
         title='Location and Currency Information'

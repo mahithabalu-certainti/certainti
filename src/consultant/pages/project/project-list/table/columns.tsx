@@ -1,257 +1,215 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { TruncateWithTooltip } from '../../../../../components';
-import { ProjectColumn, ProjectList } from '../../../../types/project';
-const renderWithTooltip = (value: any) => {
-  const displayValue = (value ?? value === 0) ? String(value) : 'NA';
-  return (
-    <TruncateWithTooltip text={displayValue}>
-      {displayValue}
-    </TruncateWithTooltip>
-  );
-};
+import { ProjectTableColumn, ProjectList } from '../../../../types/project';
 
-const formatDate = (dateString: string) => {
-  if (!dateString) return 'NA';
-  const date = new Date(dateString);
-  const yyyy = date.getFullYear();
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const dd = String(date.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-};
-export const getProjectColumns = (
+export const getAllProjectListColumns = (
   onClick: (row: ProjectList) => void
-): ProjectColumn<ProjectList>[] => [
-  {
-    id: 'r_number',
-    header: 'Project ID',
-    sortable: true,
-    sort: 'r_number',
-    width: '160px',
-    render: (row: ProjectList) => (
-      <span
-        className='cursor-pointer hover:!text-blue-600 hover:underline'
-        onClick={() => onClick(row)}
-      >
-        {row.r_number || 'NA'}
-      </span>
-    ),
-  },
+): ProjectTableColumn<ProjectList>[] => [
   {
     id: 'project_code',
-    header: 'Project Code',
+    label: 'Project Code',
     sortable: true,
-    sort: 'project_code',
-    width: '180px',
-    render: (row) => renderWithTooltip(row.project_code),
+    sortId: 'project_code',
+    width: 160,
+    sticky: true,
+    sx: {
+      position: 'sticky',
+      left: 0,
+      background: '#fff',
+      zIndex: 10,
+      borderRight: '1px solid #CBD6E2 !important',
+      borderBottom: '1px solid #CBD6E2 !important',
+    },
+    render: (row: ProjectList) =>
+      onClick ? (
+        <span
+          onClick={() => onClick(row)}
+          className='cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
+        >
+          {row.project_code}
+        </span>
+      ) : (
+        row.project_code
+      ),
   },
   {
-    id: 'name',
-    header: 'Project Name',
+    id: 'project_name',
+    label: 'Project Name',
     sortable: true,
-    sort: 'name',
-    width: '130px',
-    render: (row) => renderWithTooltip(row.name),
+    sortId: 'project_name',
+    width: 160,
   },
   {
     id: 'fiscal_year',
-    header: 'Fiscal Year',
+    label: 'Fiscal Year',
     sortable: true,
-    sort: 'fiscal_year',
-    width: '130px',
-    render: (row) => renderWithTooltip(row.fiscal_year),
+    sortId: 'fiscal_year',
+    width: 130,
   },
   {
     id: 'account_name',
-    header: 'Account Name',
+    label: 'Account Name',
     sortable: true,
-    sort: 'account_name',
-    width: '150px',
-    render: (row) => renderWithTooltip(row.account_name),
+    sortId: 'account_name',
+    width: 150,
   },
   {
     id: 'industry_name',
-    header: 'Industry',
+    label: 'Industry',
     sortable: true,
-    sort: 'industry_name',
-    width: '150px',
-    render: (row) => renderWithTooltip(row.industry_name),
+    sortId: 'industry_name',
+    width: 160,
   },
   {
     id: 'program_name',
-    header: 'Program Name',
+    label: 'Program Name',
     sortable: true,
-    sort: 'program_name',
-    width: '130px',
-    render: (row) => renderWithTooltip(row.program_name),
+    sortId: 'program_name',
+    width: 180,
   },
   {
     id: 'project_startdate',
-    header: 'Start Date',
+    label: 'Start Date',
     sortable: true,
-    sort: 'project_startdate',
-    width: '180px',
-    render: (row) => renderWithTooltip(formatDate(row.project_startdate)),
+    sortId: 'project_startdate',
+    width: 140,
   },
   {
     id: 'project_enddate',
-    header: 'End Date',
+    label: 'End Date',
     sortable: true,
-    sort: 'project_enddate',
-    width: '180px',
-    render: (row) => renderWithTooltip(formatDate(row.project_enddate)),
+    sortId: 'project_enddate',
+    width: 140,
   },
   {
     id: 'qualified_research_expenditure',
-    header: 'Qualified Research Expenditure',
+    label: 'Qualified Research Expenditure',
     sortable: true,
-    sort: 'qualified_research_expenditure',
-    width: '200px',
-    render: (row) => renderWithTooltip(row.qualified_research_expenditure),
+    sortId: 'qualified_research_expenditure',
+    width: 250,
   },
   {
     id: 'is_rd_qualified',
-    header: 'Is RD Qualified ?',
+    label: 'Is RD Qualified ?',
     sortable: true,
-    sort: 'is_rd_qualified',
-    width: '130px',
-    render: (row) => renderWithTooltip(row.is_rd_qualified),
+    sortId: 'is_rd_qualified',
+    width: 160,
   },
   {
     id: 'qre',
-    header: 'QRE %',
+    label: 'QRE %',
     sortable: true,
-    sort: 'qre',
-    width: '130px',
-    render: (row) => renderWithTooltip(row.qre),
+    sortId: 'qre',
+    width: 130,
   },
   {
     id: 'total_cost',
-    header: 'Cost',
+    label: 'Cost',
     sortable: true,
-    sort: 'total_cost',
-    width: '130px',
-    render: (row) => renderWithTooltip(row.total_cost),
+    sortId: 'total_cost',
+    width: 130,
   },
   {
     id: 'total_effort',
-    header: 'Effort in hrs',
+    label: 'Effort in hrs',
     sortable: true,
-    sort: 'total_effort',
-    width: '130px',
-    render: (row) => renderWithTooltip(row.total_effort),
+    sortId: 'total_effort',
+    width: 130,
   },
   {
     id: 'total_fte',
-    header: 'No of FTE',
+    label: 'No of FTE',
     sortable: true,
-    sort: 'total_fte',
-    width: '130px',
-    render: (row) => renderWithTooltip(row.total_fte),
+    sortId: 'total_fte',
+    width: 130,
   },
   {
     id: 'total_fte_cost',
-    header: 'FTE Cost',
+    label: 'FTE Cost',
     sortable: true,
-    sort: 'total_fte_cost',
-    width: '150px',
-    render: (row) => renderWithTooltip(row.total_fte_cost),
+    sortId: 'total_fte_cost',
+    width: 140,
   },
   {
     id: 'total_sub_con',
-    header: 'No of Sub Con',
+    label: 'No of Sub Con',
     sortable: true,
-    sort: 'total_sub_con',
-    width: '180px',
-    render: (row) => renderWithTooltip(row.total_sub_con),
+    sortId: 'total_sub_con',
+    width: 140,
   },
   {
     id: 'total_sub_con_cost',
-    header: 'Sub Con Cost',
+    label: 'Sub Con Cost',
     sortable: true,
-    sort: 'total_sub_con_cost',
-    width: '200px',
-    render: (row) => renderWithTooltip(row.total_sub_con_cost),
+    sortId: 'total_sub_con_cost',
+    width: 140,
   },
   {
     id: 'total_non_labor_cost',
-    header: 'Non labor Cost',
+    label: 'Non labor Cost',
     sortable: true,
-    sort: 'total_non_labor_cost',
-    width: '180px',
-    render: (row) => renderWithTooltip(row.total_non_labor_cost),
+    sortId: 'total_non_labor_cost',
+    width: 140,
   },
   {
     id: 'comments',
-    header: 'Comments',
+    label: 'Comments',
     sortable: true,
-    sort: 'comments',
-    width: '200px',
-    render: (row) => renderWithTooltip(row.comments),
+    sortId: 'comments',
+    width: 200,
   },
   {
     id: 'country_name',
-    header: 'Country',
+    label: 'Country',
     sortable: true,
-    sort: 'country_name',
-    width: '130px',
-    render: (row) => renderWithTooltip(row.country_name),
+    sortId: 'country_name',
+    width: 160,
   },
   {
     id: 'region_name',
-    header: 'Region',
+    label: 'Region',
     sortable: true,
-    sort: 'region_name',
-    width: '130px',
-    render: (row) => renderWithTooltip(row.region_name),
+    sortId: 'region_name',
+    width: 160,
   },
   {
     id: 'currency_code',
-    header: 'Currency Code',
+    label: 'Currency Code',
     sortable: true,
-    sort: 'currency_code',
-    width: '130px',
-    render: (row) => renderWithTooltip(row.currency_code),
+    sortId: 'currency_code',
+    width: 130,
   },
   {
     id: 'project_status',
-    header: 'Status',
+    label: 'Status',
     sortable: true,
-    sort: 'project_status',
-    width: '130px',
-    render: (row) => (
-      <span
-        className={
-          row.project_status === 'Active'
-            ? '!text-[#199806]'
-            : '!text-[#f44336]'
-        }
-      >
-        {row.project_status || 'NA'}
-      </span>
-    ),
+    sortId: 'project_status',
+    width: 130,
   },
   {
     id: 'project_point_of_contact',
-    header: 'Project POC',
+    label: 'Project POC',
     sortable: true,
-    sort: 'project_point_of_contact',
-    width: '180px',
-    render: (row) => renderWithTooltip(row.project_point_of_contact),
+    sortId: 'project_point_of_contact',
+    width: 180,
   },
   {
     id: 'financial_consultant',
-    header: 'Financial Consultant',
+    label: 'Financial Consultant',
     sortable: true,
-    sort: 'financial_consultant',
-    width: '180px',
-    render: (row) => renderWithTooltip(row.financial_consultant),
+    sortId: 'financial_consultant',
+    width: 180,
   },
   {
     id: 'technical_consultant',
-    header: 'Technical Consultant',
+    label: 'Technical Consultant',
     sortable: true,
-    sort: 'technical_consultant',
-    width: '180px',
-    render: (row) => renderWithTooltip(row.technical_consultant),
+    sortId: 'technical_consultant',
+    width: 180,
+  },
+  {
+    id: 'r_number',
+    label: 'Project ID',
+    sortable: true,
+    sortId: 'r_number',
+    width: 140,
   },
 ];

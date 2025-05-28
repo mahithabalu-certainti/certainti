@@ -1,4 +1,4 @@
-export interface ProjectList {
+export type ProjectList = {
   rid: string;
   account_rid?: string;
   account_number: string;
@@ -38,7 +38,7 @@ export interface ProjectList {
   fiscal_year: string;
   name?: string;
   project_code?: string;
-}
+};
 
 export type Project = {
   id: string;
@@ -57,14 +57,16 @@ export type Project = {
   industry_name?: string;
 };
 
-export type ProjectColumn<T> = {
+export interface ProjectTableColumn<T> {
   id: string;
-  header: string;
+  sortId: string;
+  label: string;
   sortable?: boolean;
-  sort?: string;
-  width?: string;
+  width: string | number;
+  sticky?: boolean;
+  sx?: React.CSSProperties;
   render?: (row: T) => React.ReactNode;
-};
+}
 
 export interface ProjectListParams {
   page?: number;

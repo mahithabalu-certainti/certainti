@@ -6,18 +6,18 @@ export const transformProjectData = (data: any): any[] => {
       items: [
         {
           label: 'Project Number',
-          value: project?.r_number || 'NA',
+          value: project?.r_number || '-',
         },
-        { label: 'Country', value: project?.country_name || 'NA' },
+        { label: 'Country', value: project?.country_name || '-' },
       ],
     },
     {
       items: [
         {
           label: 'Project Code',
-          value: project?.project_code || 'NA',
+          value: project?.project_code || '-',
         },
-        { label: 'Currency', value: project?.currency_name || 'NA' },
+        { label: 'Currency', value: project?.currency_name || '-' },
       ],
     },
     {
@@ -26,7 +26,7 @@ export const transformProjectData = (data: any): any[] => {
           label: 'Program Name',
           value: project?.program_name,
         },
-        { label: 'Industry', value: project?.industry_rid_name || 'NA' },
+        { label: 'Industry', value: project?.industry_rid_name || '-' },
       ],
     },
     {

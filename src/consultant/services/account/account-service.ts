@@ -39,7 +39,7 @@ export const fetchAccountFields = async (
   const { data } = await accountServiceApi.get<AccountFieldsApiResponse>(
     AccountDetailUrl(acctounId)
   );
-  // await new Promise((resolve) => setTimeout(resolve, 2000));  
+  // await new Promise((resolve) => setTimeout(resolve, 2000));
   // return mockAccountDetails;
   return data;
 };
@@ -63,7 +63,7 @@ export const fetchAccounts = async (
     AccountListURL(params)
   );
   return {
-    accounts: response.data.data.account,
+    accounts: response.data.data.account.data,
     count: response.data.data.count,
   };
 };
@@ -87,23 +87,25 @@ export const fetchParentAccounts =
     return data;
   };
 
-  export const fetchIndustrys =
-  async (): Promise<IndustrysApiResponse> => {
-    const { data } =
-      await accountServiceApi.get<IndustrysApiResponse>(IndustryUrl);
-    return data;
-  };
+export const fetchIndustrys = async (): Promise<IndustrysApiResponse> => {
+  const { data } =
+    await accountServiceApi.get<IndustrysApiResponse>(IndustryUrl);
+  return data;
+};
 
 export const fetchCurrency = async (): Promise<CurrencyApiResponse> => {
   const { data } =
     await accountServiceApi.get<CurrencyApiResponse>(CurrencyUrl);
   return data;
 };
-export const fetchClassification = async (): Promise<ClassificationApiResponse> => {
-  const { data } =
-    await resourceServiceApi.get<ClassificationApiResponse>(ClassificationUrl);
-  return data;
-};
+export const fetchClassification =
+  async (): Promise<ClassificationApiResponse> => {
+    const { data } =
+      await resourceServiceApi.get<ClassificationApiResponse>(
+        ClassificationUrl
+      );
+    return data;
+  };
 
 export const fetchState = async (
   countryId: string
@@ -151,16 +153,18 @@ export const exportAccountList = async (params: AccountListURLParams = {}) => {
   document.body.removeChild(link);
 };
 
-export const fetchKeyContactRoles = async (): Promise<keyContactRolesApiResponse> => {
-  try {
-    const { data } =
-      await accountServiceApi.get<keyContactRolesApiResponse>(getKeyContactRolesUrl());
-    return data;
-  } catch (error) {
-    console.error('Error fetching key contact roles:', error);
-    throw error;
-  }
-};
+export const fetchKeyContactRoles =
+  async (): Promise<keyContactRolesApiResponse> => {
+    try {
+      const { data } = await accountServiceApi.get<keyContactRolesApiResponse>(
+        getKeyContactRolesUrl()
+      );
+      return data;
+    } catch (error) {
+      console.error('Error fetching key contact roles:', error);
+      throw error;
+    }
+  };
 
 export const useKeyContactRoles = () => {
   return useQuery<keyContactRolesApiResponse, Error>({

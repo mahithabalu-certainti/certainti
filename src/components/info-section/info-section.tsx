@@ -32,23 +32,10 @@ const InfoSection: React.FC<InfoSectionProps> = ({
             sx={{
               fontSize: '16px',
               color: lowerValue === 'active' ? '#199806' : '#f44336',
-              fontWeight: 500,
+              fontWeight: 700,
             }}
           >
             {value === 'Active' ? 'Active' : 'In-Active'}
-          </Typography>
-        );
-      }
-      if (lowerValue === 'yes' || lowerValue === 'no') {
-        return (
-          <Typography
-            component='span'
-            sx={{
-              color: lowerValue === 'yes' ? '#00A854' : '#F44336',
-              fontWeight: 500,
-            }}
-          >
-            {value}
           </Typography>
         );
       }
@@ -56,7 +43,8 @@ const InfoSection: React.FC<InfoSectionProps> = ({
     return value;
   };
 
-  const columnWidth = columns && columns.length > 0 ? `${100 / columns.length}%` : '100%';
+  const columnWidth =
+    columns && columns.length > 0 ? `${100 / columns.length}%` : '100%';
   const loadingColumns = ['20%', '20%', '20%', '20%', '20%'];
 
   if (error) {
@@ -99,17 +87,17 @@ const InfoSection: React.FC<InfoSectionProps> = ({
 
   return (
     <Box
-      className={`flex p-4 border-b-2 border-[#CBD6E2] bg-white min-h-[160px] ${className}`}
+      className={`flex p-4 border-b-2 border-[#CBD6E2] bg-white min-h-[112px] ${className}`}
       sx={{ gap: '0 16px' }}
     >
-      {columns.map((column, colIndex) => (
+      {columns?.map((column, colIndex) => (
         <Box
           key={colIndex}
           sx={{
             width: columnWidth,
             display: 'flex',
             flexDirection: 'column',
-            gap: '16px',
+            gap: '10px',
           }}
         >
           {column?.items?.map((item, itemIndex) => (
@@ -119,7 +107,7 @@ const InfoSection: React.FC<InfoSectionProps> = ({
                 sx={{
                   color: '#7D98B6',
                   fontSize: '13px',
-                  fontWeight: 400,
+                  fontWeight: 600,
                   display: 'block',
                   mb: 0.5,
                 }}
@@ -128,7 +116,7 @@ const InfoSection: React.FC<InfoSectionProps> = ({
               </Typography>
               <TruncateWithTooltip
                 text={String(item.value)}
-                className='font-medium text-[18px] text-[#2D3E4F]'
+                className='font-bold text-[16px] text-[#2D3E4F] '
               >
                 {renderValue(item.value)}
               </TruncateWithTooltip>

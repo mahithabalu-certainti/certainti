@@ -21,15 +21,14 @@ import {
   ExportModule,
   ResourceSkillList,
 } from '../../../../types/resource-skill';
-import { FilterState } from '../../components/filter/filterType';
-import { resetFilter } from '../../components/filter/utils';
 import { ResourceList } from '../../../../types/resource';
 import { ListTable } from '../../../../../components/table';
+import { clearFilters } from '../../components/filter/utils';
 
 const BUTTON_STYLES = {
-  height: '26px !important',
+  height: '24px !important',
   fontSize: '13px',
-  fontWeight: 400,
+  fontWeight: 600,
   borderRadius: '2px',
 };
 
@@ -66,10 +65,6 @@ const Resource: React.FC<ResourceProps> = ({
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
   );
-  const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
-    {}
-  );
-  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [resourceNumber, setResourceNumber] = useState<string | null>(null);
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const accountInActive =
@@ -112,11 +107,7 @@ const Resource: React.FC<ResourceProps> = ({
     setValue(newValue);
     setShowFilter(false);
     setAppliedFilters({});
-    resetFilter({
-      setAppliedFilters,
-      setFilterStates,
-      setSelectedFilters,
-    });
+    clearFilters(value || 'resource');
     // update the URL with the tab value
     searchParams.set('tab', newValue);
     navigate({ search: searchParams.toString() });
@@ -130,11 +121,8 @@ const Resource: React.FC<ResourceProps> = ({
     setValue('details');
     setShowFilter(false);
     setFilterVisibility(false);
-    resetFilter({
-      setAppliedFilters,
-      setFilterStates,
-      setSelectedFilters,
-    });
+    setAppliedFilters({});
+    clearFilters(value || 'resource');
   };
 
   useEffect(() => {
@@ -195,17 +183,17 @@ const Resource: React.FC<ResourceProps> = ({
 
   const headerButtons = [
     {
-      label: 'Download',
-      variant: 'outlined' as const,
-      onClick: () => console.log('Download'),
-      sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
-    },
-    {
       label: 'New',
       variant: 'outlined' as const,
       disabled: accountInActive,
       onClick: () => handleCreateResource(),
-      sx: { ...BUTTON_STYLES, width: '61px', minWidth: '61px' },
+      sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
+    },
+    {
+      label: 'Download',
+      variant: 'outlined' as const,
+      onClick: () => console.log('Download'),
+      sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
     },
   ];
 
@@ -228,11 +216,8 @@ const Resource: React.FC<ResourceProps> = ({
       }
     );
     setFilterVisibility(true);
-    resetFilter({
-      setAppliedFilters,
-      setFilterStates,
-      setSelectedFilters,
-    });
+    setAppliedFilters({});
+    clearFilters(value || 'resource');
   };
 
   const handleCreateResource = () => {
@@ -327,7 +312,7 @@ const Resource: React.FC<ResourceProps> = ({
   const resourceColumns = getResourceColumns(handleResourceClick);
 
   return (
-    <div className='w-full'>
+    <div className='w-full py-3 pl-3 pr-4'>
       <TabPanel
         value={value}
         appliedFilters={appliedFilters}
@@ -338,10 +323,6 @@ const Resource: React.FC<ResourceProps> = ({
         filterVisibility={filterVisibility}
         handleFilter={handleFilter}
         setCurrentPage={setCurrentPage}
-        filterStates={filterStates}
-        selectedFilters={selectedFilters}
-        setFilterStates={setFilterStates}
-        setSelectedFilters={setSelectedFilters}
       />
       <ResourceTableHeader
         value={value}

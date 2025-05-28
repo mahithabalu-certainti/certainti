@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import {
+  createButton,
   createDateField,
+  createImgButton,
   createRadioField,
   createSelectField,
   createTextAreaField,
@@ -10,13 +12,132 @@ import {
   STATUS_OPTIONS,
   YES_NO_OPTIONS,
 } from '../../../common-utils';
-import { FormType, SelectOption } from '../../types';
+import { FieldType, FormType, SelectOption } from '../../types';
 import { fiscalYears } from '../resource-form/form-data';
+import { closeIcon } from '../../../assets';
 const DATE_CONFIG = {
   FISCAL_YEARS_RANGE: 6,
   MIN_YEARS_BACK: 6,
 } as const;
 
+export const newKeyContactFields = (
+  roles: SelectOption[],
+  isPrimaryContactRequired: boolean
+) => [
+  createTextField('key_contact_name', 'Contact Name', {
+    required: false,
+    width: '190px',
+    regex: REGEX_PATTERNS.CONTACT_NAME,
+    regexErrorMessage:
+      "Only letters, spaces, apostrophes ('), commas (,), periods (.), and hyphens (-) are allowed",
+    placeholder: 'Enter Contact Name',
+    onChange: true,
+    errorHandling: [
+      {
+        regex: REGEX_PATTERNS.MIN_NAME_REGEX,
+        errorMessage: 'Key Contact Name must be more than 1 characters long',
+      },
+      {
+        regex: REGEX_PATTERNS.MAX_NAME_REGEX,
+        errorMessage: 'Max length exceeded',
+      },
+      {
+        regex: REGEX_PATTERNS.NOT_ALLOW_SPACE_SYMBOLS_AT_START_END,
+        errorMessage: 'Cannot begin or end with a space or special character',
+      },
+    ],
+  }),
+  createSelectField('key_contact_role', 'Role', {
+    options: roles,
+    width: '140px',
+    required: false,
+    placeholder: 'Choose Role',
+    onChange: true,
+  }),
+  createTextField('key_contact_email', 'Email', {
+    required: false,
+    width: '160px',
+    placeholder: 'Enter Email',
+    onChange: true,
+    errorHandling: [
+      {
+        regex: REGEX_PATTERNS.MAX_EMAIL_REGEX,
+        errorMessage: 'Max length exceeded',
+      },
+      {
+        regex: REGEX_PATTERNS.EMAIL,
+        errorMessage: 'Invalid email address',
+      },
+    ],
+  }),
+  createRadioField('is_primary_contact', 'Is Primary Contact?', {
+    radioOptions: YES_NO_OPTIONS,
+    width: '140px',
+    required: isPrimaryContactRequired,
+    onChange: true,
+  }),
+  createRadioField('include_in_communication', 'Include in Communications?', {
+    radioOptions: YES_NO_OPTIONS,
+    width: '190px',
+    required: false,
+  }),
+  createSelectField('key_contact_status', 'Status', {
+    required: false,
+    width: '140px',
+    options: STATUS_OPTIONS,
+    placeholder: 'Choose Status',
+  }),
+  createImgButton(closeIcon, {
+    width: '60px',
+  }),
+];
+
+const createDynamicField = (
+  contacts: FieldType,
+  index: number,
+  removeKeyContact: (index: number) => void
+) => {
+  const fieldsArr = [];
+  const groupIndex = Math.floor(index / 7);
+  const { name, label, ...rest } = contacts;
+  if (contacts.type === 'text') {
+    fieldsArr.push(
+      createTextField(name + '_' + groupIndex, label, {
+        ...rest,
+      })
+    );
+  }
+  if (contacts.type === 'select') {
+    fieldsArr.push(
+      createSelectField(name + '_' + groupIndex, label, {
+        ...rest,
+        options: rest.options || [],
+      })
+    );
+  }
+  if (contacts.type === 'radio') {
+    fieldsArr.push(
+      createRadioField(name + '_' + groupIndex, label, {
+        required: rest.required,
+        width: rest.width,
+        defaultValue: rest.defaultValue,
+        disabled: rest.disabled,
+        onChange: rest.onChange,
+        radioOptions: rest.options || [],
+      })
+    );
+  }
+  if (contacts.type === 'iconButton') {
+    fieldsArr.push(
+      createImgButton('', {
+        width: rest.width,
+        onClick: () => removeKeyContact(index),
+      })
+    );
+  }
+
+  return fieldsArr;
+};
 const getDateConstraints = (yearsBack: number) => {
   const currentDate = new Date();
   const minDate = new Date();
@@ -36,8 +157,12 @@ export const FormData = (
   classification: SelectOption[],
   roles: SelectOption[],
   isPrimaryContactRequired: boolean,
+  keyContacts: FieldType[],
+  addNewKeyContact: () => void,
+  removeKeyContact: (index: number) => void,
   disableFields?: boolean,
   showOthersField?: boolean,
+  showClassifyOthersField?: boolean,
   stateLoading?: boolean
 ): FormType[] => {
   return useMemo(
@@ -177,6 +302,33 @@ export const FormData = (
             options: classification,
             placeholder: 'Choose Classification',
             required: false,
+            onChange: true,
+          }),
+          createTextField('classification_name', 'Classification-other', {
+            required: true,
+            placeholder: 'Enter tClassification-other',
+            hide: !showClassifyOthersField,
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_3,
+                errorMessage:
+                  'projectClassification-other must be more than 2 characters long',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_255,
+                errorMessage: 'Max length exceeded',
+              },
+              {
+                regex: REGEX_PATTERNS.NOT_ALLOW_SPACE_SYMBOLS_AT_START_END,
+                errorMessage:
+                  'Cannot begin or end with a space or special character',
+              },
+              {
+                regex: REGEX_PATTERNS.PROJECT_NAME,
+                errorMessage:
+                  "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_).",
+              },
+            ],
           }),
           createTextField('project_client_group', 'Client Group', {
             placeholder: 'Enter Client Group',
@@ -274,10 +426,29 @@ export const FormData = (
         sectionName: 'Key Contacts List',
         fillType: 'half',
         fields: [
+          ...keyContacts
+            .map((contacts, index) => [
+              ...createDynamicField(contacts, index, removeKeyContact),
+            ])
+            .flat(),
+        ],
+      },
+      {
+        sectionName: '',
+        fillType: 'full',
+        fields: [
+          createButton('Add another key contact', '', {
+            iconUrl: '',
+            onClick: addNewKeyContact,
+          }),
+        ],
+      },
+      {
+        sectionName: 'Key Contacts List',
+        fillType: 'half',
+        fields: [
           createTextField('key_contact_name', 'Key Contact Name', {
             required: false,
-            // regex: REGEX_PATTERNS.CONTACT_NAME,
-            // regexErrorMessage: 'Invalid Name',
             placeholder: 'Enter Key Contact Name',
             onChange: true,
             errorHandling: [
@@ -509,8 +680,10 @@ export const FormData = (
       disableFields,
       currency,
       showOthersField,
+      showClassifyOthersField,
       stateLoading,
       isPrimaryContactRequired,
+      keyContacts,
     ]
   );
 };
