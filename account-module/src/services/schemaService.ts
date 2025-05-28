@@ -379,10 +379,10 @@ class SchemaService {
      await sequelize.query(`
       CREATE TABLE IF NOT EXISTS "${schemaName}".resource_fiscal
 (
-    rid uuid NOT NULL,
+    rid uuid NOT NULL DEFAULT gen_random_uuid(),
     eid character varying(50) NULL,
     account_rid uuid NOT NULL,
-    r_number character varying(20) DEFAULT ('RSF '::text || lpad((nextval('"${schemaName}".resource_fiscal_seq'::regclass))::text, 10, '0'::text)),
+    r_number character varying(20) DEFAULT ('RSF ' || lpad((nextval('"${schemaName}".resource_fiscal_seq'))::text, 10, '0')),
     resource_rid uuid NOT NULL,
     resource_type VARCHAR(50) CHECK (resource_type IN ('Full-Time','Sub Con','Non-Labor')),
     fiscal_year integer,
