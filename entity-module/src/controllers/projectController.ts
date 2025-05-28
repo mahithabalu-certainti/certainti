@@ -257,7 +257,7 @@ async function allProjectList(req: Request, res: Response): Promise<void> {
     }
 
     const pageNum: number = parseInt(value.page, 10) || 1;
-    const limitNum: number = parseInt(value.limit, 100) || 100;
+    const limitNum: number = parseInt(value.limit, 10) || 100;
 
     const project = await projectService.allProjectList(
       value.fiscalYear !== "" && value.fiscalYear !== null

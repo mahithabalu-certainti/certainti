@@ -1406,6 +1406,12 @@ class SchemaService {
       let results: any[] = [];
       const replacements: any[] = [];
 
+      const sortColumnMap: Record<string, string> = {
+        industry_name: "COALESCE(ps.industry_name, ind.industry_name)",
+      };
+
+      const sortCol = sortColumnMap[sort.sortCol] || `${sort.sortCol}`;
+
       if (accountMeta.length > 0) {
         const accountRids = accountMeta.map((acc) => `'${acc}'`).join(", ");
 
@@ -1446,10 +1452,10 @@ class SchemaService {
         LEFT JOIN state st ON st.rid = ps.region 
         LEFT JOIN currency curr ON curr.rid = ps.currency 
         left join project_classification pc on pc.rid = ps.project_classification_rid 
-        WHERE acc.created_by = '${userId}' AND acc.rid in (${accountRids}) and ind.industry_name != "Other" ${
+        WHERE acc.created_by = '${userId}' AND acc.rid in (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
         }
-        ORDER BY ${sort.sortCol} ${sort.sortOrder}
+        ORDER BY ${sortCol} ${sort.sortOrder}
         LIMIT ? OFFSET ?
       `;
 
@@ -1500,7 +1506,7 @@ class SchemaService {
         WHERE acc.created_by = '${userId}' ${
           fullWhereClause ? "AND " + fullWhereClause : ""
         }
-        ORDER BY ${sort.sortCol} ${sort.sortOrder}
+        ORDER BY ${sortCol} ${sort.sortOrder}
         LIMIT ? OFFSET ?
       `;
 
@@ -1523,7 +1529,13 @@ class SchemaService {
 
   async computeGlobalAccountFilter(globalFilters: Record<string, string[]>) {
     try {
-      return Object.values(globalFilters).flat();
+      const result = [];
+
+      for (const key of Object.keys(globalFilters)) {
+        result.push(key, ...globalFilters[key]);
+      }
+
+      return result;
     } catch (err) {
       throw new Error("Error computing global account filter");
     }
@@ -1724,6 +1736,7 @@ class SchemaService {
       r_number: "ps.r_number",
       comments: "ps.comments",
       region_name: "st.state_name",
+      industry_name: "COALESCE(ps.industry_name, ind.industry_name)",
       industry_name_other: "COALESCE(ps.industry_name, ind.industry_name)",
       modified_datetime: "ps.modified_datetime",
       classification_name: "COALESCE(ps.project_classification_other, pc.classification_name)"
@@ -2167,11 +2180,20 @@ class SchemaService {
           ])
         );
 
-        updatedProjects = project.map((res: any) => ({
-          ...(typeof res.toJSON === "function" ? res.toJSON() : res),
-          industry_name:
-            industryMap[res.industry_rid]?.industry_name !== "Other" ? industryMap[res.industry_rid]?.industry_name : res.industry_name,
-        }));
+        updatedProjects = project.map((res: any) => {
+          const jsonRes = typeof res.toJSON === "function" ? res.toJSON() : res;
+          const industryRid = res.industry_rid;
+        
+          const mappedIndustryName =
+            industryRid && industryMap[industryRid]?.industry_name !== "Other"
+              ? industryMap[industryRid]?.industry_name
+              : res.industry_name ?? null;
+        
+          return {
+            ...jsonRes,
+            industry_name: mappedIndustryName,
+          };
+        });
       }
 
       return updatedProjects;
@@ -2387,18 +2409,24 @@ class SchemaService {
       "financial_consultant",
       "project_point_of_contact",
       "classification_name",
+      "industry_name"
     ];
 
     let filteredProjects = [...project];
 
-    if (filters) {
+    const hasValidFilters = filterableClientFields.some((key) => {
+      const f = filters?.[key];
+      return f && Object.keys(f).some((k) => f[k] !== undefined && f[k] !== null && f[k] !== "");
+    });
+    
+    if (hasValidFilters && filters) {
       filteredProjects = filteredProjects.filter((project) => {
         return filterableClientFields.every((key) => {
           const filter = filters[key];
-          if (!filter) return true;
-
+          if (!filter || Object.keys(filter).length === 0) return true;
+    
           const value = project[key];
-
+    
           if (filter.equals !== undefined) {
             return value === filter.equals;
           }
@@ -2421,7 +2449,7 @@ class SchemaService {
           if (filter.is_empty === true) {
             return value === null || value === "";
           }
-
+    
           return true;
         });
       });

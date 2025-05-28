@@ -24,14 +24,15 @@ class Services implements IServiceContainer {
     resourceService: IResourceService = new ResourceService(),
     resourceCostServices: IResourceCostService = new ResourceCostService(),
     resourceSkillServices: IResourceSkillService = new ResourceSkillService(),
-    redisService: RedisService = new RedisService()
+    projectServices: IProjectService = new ProjectService()
+    // redisService: RedisService = new RedisService()
   ) {
     try {
       this.resourceCostServices = resourceCostServices;
       this.resourceService = resourceService;
       this.resourceCostServices = resourceCostServices;
       this.resourceSkillServices = resourceSkillServices;
-      this.projectServices = new ProjectService(redisService);
+      this.projectServices = projectServices;
     } catch (error) {
       console.log("Error initializing service : ", error);
       throw new Error("Service Initialization failed!");
