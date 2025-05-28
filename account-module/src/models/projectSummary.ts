@@ -47,6 +47,7 @@ interface ProjectSummaryAttributes {
   created_by: string;
   modified_by?: string | null;
   assessment_status?: string | null;
+  project_classification_other?: string | null;
 }
 
 type ProjectSummaryCreationAttributes = Optional<
@@ -98,6 +99,7 @@ export class ProjectSummary
   declare created_by: string;
   declare modified_by: string | null;
   declare assessment_status?: string | null;
+  declare project_classification_other?: string | null;
 
   static initialize(sequelize: Sequelize) {
     ProjectSummary.init(
@@ -264,6 +266,10 @@ export class ProjectSummary
         },
         assessment_status: {
           type: DataTypes.STRING(100),
+          allowNull: true,
+        },
+        project_classification_other: {
+          type: DataTypes.STRING(300),
           allowNull: true,
         }
       },
