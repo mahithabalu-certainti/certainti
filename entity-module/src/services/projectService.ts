@@ -644,6 +644,8 @@ export class ProjectService {
           "is_rd_qualified",
           "qre",
           "created_datetime",
+          "modified_datetime",
+          "assessment_status"
         ],
         include: [
           {
@@ -696,7 +698,7 @@ export class ProjectService {
   async allProjectList(
     fiscalYear: number = 0,
     page: number = 1,
-    limit: number = 10,
+    limit: number = 100,
     search: string,
     filters: Record<string, any> = {},
     sortBy: string = "created_datetime",
@@ -1025,7 +1027,7 @@ export class ProjectService {
         modified_by: projectData.modified_by || null,
         project_number: project.r_number || "",
         project_id: project.rid || "",
-        technical_consultant: technicalConsultant,
+        technical_point_of_contact: technicalConsultant,
         financial_consultant: financialConsultant,
         project_point_of_contact: projectPointOfContact,
       });
@@ -1087,7 +1089,7 @@ export class ProjectService {
         comments: projectData.comments || null,
 
         ...(technicalConsultant && {
-          technical_consultant: technicalConsultant,
+          technical_point_of_contact: technicalConsultant,
         }),
         ...(financialConsultant && {
           financial_consultant: financialConsultant,
@@ -1201,7 +1203,9 @@ export class ProjectService {
       "is_rd_qualified",
       "qre",
       "fiscal_year",
-      "comments"
+      "comments",
+      "modified_datetime",
+      "assessment_status"
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -1218,7 +1222,7 @@ export class ProjectService {
       "country_name",
       "region_name",
       "currency_name",
-      "technical_consultant",
+      "technical_point_of_contact",
       "financial_consultant",
       "project_point_of_contact",
       "classification_name",
@@ -1311,7 +1315,7 @@ export class ProjectService {
     
       const numberFields = ["total_effort", "total_cost", "fiscal_year", "total_fte", "total_fte_cost", "total_sub_con", 
         "total_sub_con_cost", "total_non_labor_cost", "qualified_research_expenditure", "qre"]; 
-      const dateFields = [ "project_startdate", "project_enddate"];
+      const dateFields = [ "project_startdate", "project_enddate", "modified_datetime"];
       const enumFields = [
         "project_status",
         "project_type",
@@ -1358,7 +1362,12 @@ export class ProjectService {
           return { [Op.eq]: fieldFilter.equals };
         }
         if (fieldFilter.not_equals !== undefined) {
-          return { [Op.ne]: fieldFilter.not_equals };
+          return { 
+            [Op.or]: [
+              { [Op.ne]: fieldFilter.not_equals },
+              { [Op.is]: null },
+            ]
+          };
         }
         if (fieldFilter.less_than !== undefined) {
           return { [Op.lt]: fieldFilter.less_than };
@@ -1421,7 +1430,12 @@ export class ProjectService {
           return { [Op.eq]: fieldFilter.equals };
         }
         if (fieldFilter.not_equals !== undefined) {
-          return { [Op.ne]: fieldFilter.not_equals };
+          return { 
+            [Op.or]: [
+              { [Op.ne]: fieldFilter.not_equals },
+              { [Op.is]: null },
+            ],
+          };
         }
         if (fieldFilter.in && Array.isArray(fieldFilter.in)) {
           return { [Op.in]: fieldFilter.in };
@@ -1448,13 +1462,23 @@ export class ProjectService {
         return { [Op.iLike]: fieldFilter.equals };
       }
       if (fieldFilter.not_equals) {
-        return { [Op.notILike]: fieldFilter.not_equals };
+        return { 
+          [Op.or]: [
+            { [Op.notILike]: fieldFilter.not_equals },
+            { [Op.is]: null },
+          ],
+        };
       }
       if (fieldFilter.contains) {
         return { [Op.iLike]: `%${fieldFilter.contains}%` };
       }
       if (fieldFilter.not_contains) {
-        return { [Op.notILike]: `%${fieldFilter.not_contains}%` };
+        return { 
+          [Op.or]: [
+            { [Op.notILike]: `%${fieldFilter.not_contains}%` },
+            { [Op.is]: null },
+          ]        
+         };
       }
       if (fieldFilter.is_empty === true) {
         return { [Op.or]: [null, ""] };
@@ -1498,10 +1522,12 @@ export class ProjectService {
       "project_number",
       "project_point_of_contact",
       "financial_consultant",
-      "technical_consultant",
+      "technical_point_of_contact",
       "project_client_group",
       "project_group",
-      "classification_name"
+      "classification_name",
+      "modified_datetime",
+      "assessment_status"
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -1567,6 +1593,8 @@ export class ProjectService {
       { clientField: "qualified_research_expenditure", dbField: "qualified_research_expenditure" },
       { clientField: "is_rd_qualified", dbField: "is_rd_qualified" },
       { clientField: "qre", dbField: "qre" },
+      { clientField: "modified_datetime", dbField: "modified_datetime" },
+      { clientField: "assessment_status", dbField: "assessment_status" },
     ];
 
     return projectFilterFields;
@@ -1579,7 +1607,7 @@ export class ProjectService {
       { clientField: "country_name", dbField: "country_name" },
       { clientField: "region_name", dbField: "region_name" },
       { clientField: "currency_name", dbField: "currency_name" },
-      { clientField: "technical_consultant", dbField: "technical_consultant" },
+      { clientField: "technical_point_of_contact", dbField: "technical_point_of_contact" },
       { clientField: "financial_consultant", dbField: "financial_consultant" },
       { clientField: "project_point_of_contact", dbField: "project_point_of_contact" },
       { clientField: "classification_name", dbField: "classification_name" },

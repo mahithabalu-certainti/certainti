@@ -1368,12 +1368,12 @@ class SchemaService {
         }
 
         const fullQuery = `
-        SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, 
-        ps.project_id,
+        SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, acc.rid as account_id,
+        ps.project_id, ps.modified_datetime, ps.assessment_status,
         COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other, 
         ps.project_number, ps.project_type, ps.project_client_group , ps.project_group,
         ps.project_classification_rid, pc.classification_name ,
-        ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_consultant , ps.r_number,
+        ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_point_of_contact , ps.r_number,
         ps.program_name, ps.project_startdate , ps.project_enddate , ps.qualified_research_expenditure ,
         ps.is_rd_qualified , ps.qre, ps.total_cost , ps.total_effort , ps.total_fte , ps.total_fte_cost ,
         ps.total_sub_con , ps.total_sub_con_cost, ps.total_non_labor_cost , ps."comments" , 
@@ -1418,12 +1418,12 @@ class SchemaService {
         }
 
         const fullQuery = `
-        SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, 
-        ps.project_id,
+        SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, acc.rid as account_id,
+        ps.project_id, ps.modified_datetime, ps.assessment_status,
         COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other,
         ps.project_type, ps.project_client_group , ps.project_group,
         ps.project_classification_rid, pc.classification_name ,
-        ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_consultant , ps.r_number, ps.project_number,
+        ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_point_of_contact , ps.r_number, ps.project_number,
         ps.program_name, ps.project_startdate , ps.project_enddate , ps.qualified_research_expenditure ,
         ps.is_rd_qualified , ps.qre, ps.total_cost , ps.total_effort , ps.total_fte , ps.total_fte_cost ,
         ps.total_sub_con , ps.total_sub_con_cost, ps.total_non_labor_cost , ps."comments" , 
@@ -1663,6 +1663,7 @@ class SchemaService {
       comments: "ps.comments",
       region_name: "st.state_name",
       industry_name_other: "COALESCE(ps.industry_name, ind.industry_name)",
+      modified_datetime: "ps.modified_datetime",
     };
 
     const numberFields = [
@@ -1677,7 +1678,7 @@ class SchemaService {
       "qualified_research_expenditure",
       "qre",
     ];
-    const dateFields = ["project_startdate", "project_enddate"];
+    const dateFields = ["project_startdate", "project_enddate", "ps.modified_datetime"];
     const enumFields = ["project_status", "project_type", "fiscal_year"];
     const booleanFields = ["is_rd_qualified"];
 
@@ -1705,7 +1706,7 @@ class SchemaService {
         "classification_name",
         "project_status",
         "project_point_of_contact",
-        "technical_consultant",
+        "technical_point_of_contact",
         "r_number",
         "project_number",
         "program_name",
@@ -1726,6 +1727,7 @@ class SchemaService {
         "currency_code",
         "region_name",
         "financial_consultant",
+        "modified_datetime"
       ];
 
       const searchFieldAliasMap: Record<string, string> = {
@@ -1842,35 +1844,36 @@ class SchemaService {
 
         // DATE fields
         if (isDateField) {
+          const updatedField = field === "modified_datetime" ? "ps.modified_datetime" : field;
           const normalize = (d: any) => new Date(d);
           if (condition.equals !== undefined) {
             const startOfDay = new Date(condition.equals);
             startOfDay.setHours(0, 0, 0, 0);
             const endOfDay = new Date(condition.equals);
             endOfDay.setHours(23, 59, 59, 999);
-            conditions.push(`${field} BETWEEN ? AND ?`);
+            conditions.push(`${updatedField} BETWEEN ? AND ?`);
             replacements.push(startOfDay, endOfDay);
           }
           if (condition.before !== undefined) {
-            conditions.push(`${field} < ?`);
+            conditions.push(`${updatedField} < ?`);
             replacements.push(normalize(condition.before));
           }
           if (condition.after !== undefined) {
-            conditions.push(`${field} > ?`);
+            conditions.push(`${updatedField} > ?`);
             replacements.push(normalize(condition.after));
           }
           if (
             Array.isArray(condition.between) &&
             condition.between.length === 2
           ) {
-            conditions.push(`${field} BETWEEN ? AND ?`);
+            conditions.push(`${updatedField} BETWEEN ? AND ?`);
             replacements.push(
               normalize(condition.between[0]),
               normalize(condition.between[1])
             );
           }
           if (condition.is_empty === true) {
-            conditions.push(`${field} IS NULL`);
+            conditions.push(`${updatedField} IS NULL`);
           }
           continue;
         }
@@ -2161,7 +2164,7 @@ class SchemaService {
         return {
           ...project,
           keyContact: [],
-          technical_consultant: technicalConsultant
+          technical_point_of_contact: technicalConsultant
             ? technicalConsultant.key_contact_name
             : null,
           financial_consultant: financialConsultant
@@ -2317,7 +2320,7 @@ class SchemaService {
       "country_name",
       "region_name",
       "currency_name",
-      "technical_consultant",
+      "technical_point_of_contact",
       "financial_consultant",
       "project_point_of_contact",
       "classification_name",
