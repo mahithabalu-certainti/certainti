@@ -228,7 +228,7 @@ class SchemaService {
         queryOrder = [
           [
             Sequelize.literal(`
-            CASE resource_type
+            CASE "Resources".resource_type
               WHEN 'Full-Time' THEN 1
               WHEN 'Non-Labor' THEN 2 
               WHEN 'Sub Con' THEN 3
@@ -502,7 +502,7 @@ class SchemaService {
         queryOrder = [
           [
             Sequelize.literal(`
-            CASE resource_type
+            CASE "Resources".resource_type
               WHEN 'Full-Time' THEN 1
               WHEN 'Non-Labor' THEN 2 
               WHEN 'Sub Con' THEN 3
@@ -1250,17 +1250,23 @@ class SchemaService {
 
         switch (sortField) {
           case "resource_country":
-            compareValueA = a.country_name || "";
-            compareValueB = b.country_name || "";
+            compareValueA = a.country_name || null;
+            compareValueB = b.country_name || null;
             break;
           case "resource_region":
-            compareValueA = a.region_name || "";
-            compareValueB = b.region_name || "";
+            compareValueA = a.region_name || null;
+            compareValueB = b.region_name || null;
             break;
           default:
             return 0;
         }
 
+        // Handle null/empty values
+        if (compareValueA === null && compareValueB === null) return 0;
+        if (compareValueA === null) return isAsc ? 1 : -1;
+        if (compareValueB === null) return isAsc ? -1 : 1;
+
+        // Compare non-null values
         if (isAsc) {
           return compareValueA.localeCompare(compareValueB);
         } else {
