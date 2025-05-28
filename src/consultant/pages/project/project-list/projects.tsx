@@ -27,7 +27,7 @@ export const Projects: React.FC = () => {
   const [totalCount, setTotalCount] = useState<number>(0);
   const [tableParams, setTableParams] = useState<ProjectListParams>({
     page: page,
-    limit: 10,
+    limit: 100,
     sortBy: 'createdAt',
     sortOrder: 'DESC',
     fiscalYear: 0,
