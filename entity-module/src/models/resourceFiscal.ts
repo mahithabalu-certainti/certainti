@@ -33,6 +33,7 @@ interface ResourceFiscalAttributes {
   total_effort_for_year_project?: number;
   total_effort_for_year_project_resource_level?: number;
   total_effort_for_year_project_task_level?: number;
+  estimated_rd_hours?: number;
   effective_date?: Date | null;
   end_date?: Date | null;
   created_datetime?: Date;
@@ -79,6 +80,7 @@ export class ResourceFiscal
   public total_effort_for_year_project?: number;
   public total_effort_for_year_project_resource_level?: number;
   public total_effort_for_year_project_task_level?: number;
+  public estimated_rd_hours?: number;
   public effective_date?: Date | null;
   public end_date?: Date | null;
   public created_datetime?: Date;
@@ -131,7 +133,6 @@ export class ResourceFiscal
         cost_type: {
           type: DataTypes.ENUM(
             "Annual",
-            "Semi-Annual",
             "Monthly",
             "Bi-Weekly",
             "Weekly",
@@ -141,17 +142,6 @@ export class ResourceFiscal
           allowNull: true,
         },
         annual_cost: {
-          type: DataTypes.DECIMAL(18, 2),
-          allowNull: true,
-          validate: {
-            isPositive(value: number) {
-              if (value !== null && value < 0) {
-                throw new Error("Compensation must be a positive number");
-              }
-            },
-          },
-        },
-        semiannual_cost: {
           type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
           validate: {
@@ -278,6 +268,17 @@ export class ResourceFiscal
           validate: {
             isPositive(value: number) {
               if (value !== null && value < 0) {
+                throw new Error("Compensation must be a positive number");
+              }
+            },
+          },
+        },
+        estimated_rd_hours: {
+          type: DataTypes.DECIMAL(14, 2),
+          allowNull: true,
+          validate: {
+            isPositive(value: number) {
+              if (value!== null && value < 0) {
                 throw new Error("Compensation must be a positive number");
               }
             },

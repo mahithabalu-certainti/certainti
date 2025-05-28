@@ -1003,18 +1003,18 @@ class ResourceSkillService {
     }
   }
 
-  async getSkillSubTypes(skillTypeRid: string): Promise<{
+  async getSkillSubTypes(skillTypeRids: string[] | string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { skillSubTypes: any[]};
+    data?: { skillSubTypes: any[] };
   }> {
     try {
       const mainDbSequelize = await this.getMainDbSequelize();
-
       const skillSubTypes = await mainDbSequelize.query(
         `SELECT
           rid,
+          skill_type_rid,
           skill_subtype_name,
           skill_subtype_description,
           status,
@@ -1023,13 +1023,13 @@ class ResourceSkillService {
           created_datetime,
           modified_datetime
         FROM skill_subtype
-        WHERE skill_type_rid = :skillTypeRid AND status = 'active'
+        WHERE skill_type_rid IN (:skillTypeRids) AND status = 'active'
         ORDER BY skill_subtype_name ASC`,
         {
-          replacements: { skillTypeRid },
+          replacements: { skillTypeRids },
           type: QueryTypes.SELECT
         }
-      )
+      );
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -1037,9 +1037,7 @@ class ResourceSkillService {
           skillSubTypes
         }
       };
-
-    }
-    catch (err) {
+    } catch (err) {
       return this.throwServiceError(err as Error);
     }
   }
