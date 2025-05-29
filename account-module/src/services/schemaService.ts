@@ -343,7 +343,7 @@ class SchemaService {
     `);
      await sequelize.query(`
         CREATE TABLE IF NOT EXISTS "${schemaName}".resources (
-      rid uuid NOT NULL DEFAULT gen_random_uuid(),
+      rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       r_number character varying(20) DEFAULT ('RES ' || lpad((nextval('"${schemaName}".resources_seq'))::text, 10, '0')),
       eid character varying(50),
       account_rid uuid NOT NULL,
@@ -379,7 +379,7 @@ class SchemaService {
      await sequelize.query(`
       CREATE TABLE IF NOT EXISTS "${schemaName}".resource_fiscal
 (
-    rid uuid NOT NULL DEFAULT gen_random_uuid(),
+    rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     eid character varying(50) NULL,
     account_rid uuid NOT NULL,
     r_number character varying(20) DEFAULT ('RSF ' || lpad((nextval('"${schemaName}".resource_fiscal_seq'))::text, 10, '0')),
@@ -425,7 +425,7 @@ class SchemaService {
      await sequelize.query(`
       CREATE TABLE IF NOT EXISTS "${schemaName}".resources_history
       (
-          rid uuid NOT NULL DEFAULT gen_random_uuid(),
+          rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           r_number varchar(20) DEFAULT (
             'REH ' || lpad((nextval('"${schemaName}".resource_history_seq'::regclass))::text, 10, '0')
           ),
@@ -446,7 +446,7 @@ class SchemaService {
 
      await sequelize.query(`
      CREATE TABLE IF NOT EXISTS "${schemaName}".resources_timeline (
-        rid uuid NOT NULL DEFAULT gen_random_uuid(),
+        rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         r_number varchar(20) DEFAULT ('RTL ' || lpad((nextval('"${schemaName}".resource_timeline_seq'::regclass))::text, 10, '0')),
         account_rid uuid NOT NULL,
         entity_rid uuid NOT NULL,
@@ -466,7 +466,7 @@ class SchemaService {
 
      await sequelize.query(`
           CREATE TABLE IF NOT EXISTS "${schemaName}".resource_cost (
-          rid uuid NOT NULL,
+          rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           r_number varchar(20) DEFAULT (
             'RCO ' || lpad((nextval('"${schemaName}".resource_cost_seq'::regclass))::text, 10, '0')
           ),
@@ -506,7 +506,7 @@ class SchemaService {
 
      await sequelize.query(`
         CREATE TABLE IF NOT EXISTS "${schemaName}".resource_cost_timeline (
-        rid uuid NOT NULL,
+        rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         r_number varchar(20) DEFAULT (
           'RCT ' || lpad((nextval('"${schemaName}".resource_cost_timeline_seq'::regclass))::text, 10, '0')
         ),
@@ -530,7 +530,7 @@ class SchemaService {
 
      await sequelize.query(`
             CREATE TABLE IF NOT EXISTS "${schemaName}".resource_cost_history (
-          rid uuid NOT NULL,
+          rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           r_number varchar(20) DEFAULT (
             'RCH ' || lpad((nextval('"${schemaName}".resource_cost_history_seq'::regclass))::text, 10, '0')
           ),
@@ -551,7 +551,7 @@ class SchemaService {
 
      await sequelize.query(`
            CREATE TABLE IF NOT EXISTS "${schemaName}".resource_skill (
-    rid uuid NOT NULL,
+    rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     r_number varchar(20) DEFAULT (
       'RSK ' || lpad((nextval('"${schemaName}".resource_skill_seq'::regclass))::text, 10, '0')
     ),
@@ -589,7 +589,7 @@ class SchemaService {
     
     await sequelize.query(`
           CREATE TABLE IF NOT EXISTS "${schemaName}".resource_skill_timeline (
-          rid uuid NOT NULL,
+          rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           r_number varchar(20) DEFAULT (
             'RST ' || lpad((nextval('"${schemaName}".resource_skill_timeline_seq'::regclass))::text, 10, '0')
           ),
@@ -612,7 +612,7 @@ class SchemaService {
 
     await sequelize.query(`
           CREATE TABLE IF NOT EXISTS "${schemaName}".resource_skill_history (
-          rid uuid NOT NULL,
+          rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           r_number varchar(20) DEFAULT (
             'RSH ' || lpad((nextval('"${schemaName}".resource_skill_history_seq'::regclass))::text, 10, '0')
           ),

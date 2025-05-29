@@ -286,7 +286,7 @@ async exportResoucreSkill(
   // Build the query to get data from the account-specific schema
   const query = `
     SELECT rs.*,
-    TO_CHAR(rs.start_date, 'yyyy-mm-dd') as start_date,
+    TO_CHAR(rs.start_date, 'YYYY-MM-DD') as start_date,
     r.resource_name, r.resource_role, r.resource_orgname, r.resource_designation, r.resource_total_experience as years_of_experience, ad.account_name
     FROM "${schemaName}"."resource_skill" rs
     INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
@@ -408,7 +408,7 @@ async executeQueries(
   // Build the query to get data from the account-specific schema
   const query = `
     SELECT rs.*,
-    TO_CHAR(rs.start_date, 'yyyy-mm-dd') as start_date,
+    TO_CHAR(rs.start_date, 'YYYY-MM-DD') as start_date,
     r.resource_name, r.resource_role, r.resource_orgname, r.resource_designation, r.resource_total_experience as years_of_experience, ad.account_name
     FROM "${schemaName}"."resource_skill" rs
     INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid

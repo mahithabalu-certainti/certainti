@@ -18,7 +18,7 @@ import {
   exportResourceCostSchema
 } from "../lib/joi/schemas/schema";
 
-const logger = configurations.getInstance().getLogger();
+// const logger = configurations.getInstance().getLogger();
 const services = configurations.getInstance().getServices();
 const resourceCostService = services.resourceCostServices;
 
