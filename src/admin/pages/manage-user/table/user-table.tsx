@@ -138,7 +138,7 @@ export const UserTable: React.FC<IUserTableProps> = ({
       loading={isLoading}
       error={isError ? 'Failed to load users' : undefined}
       // Pagination
-      rowsPerPageOptions={[5, 10, 25, 50, 100]}
+      rowsPerPageOptions={[25, 50, 100]}
       rowsPerPage={tableParams.limit}
       currentPage={(tableParams.page ?? 1) - 1}
       totalItems={totalItems}
