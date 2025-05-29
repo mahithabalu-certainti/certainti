@@ -215,7 +215,7 @@ async function cities(req: Request, res: Response): Promise<void> {
   const methodName = "cities";
   try {
     let stateIds: string[] = [];
-    const raw = req.query.countryIds;
+    const raw = req.query.stateIds;
     if (Array.isArray(raw)) {
       stateIds = raw as string[];
     } else if (typeof raw === 'string') {
