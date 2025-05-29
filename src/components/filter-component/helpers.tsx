@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // FilterControls.tsx
 import {
   Box,
@@ -14,7 +15,7 @@ import {
 import { FilterState } from '../../consultant/types/account-filter';
 import { useMemo } from 'react';
 import { DateValueOptions } from '../../consultant/types/account-filter';
-import { arrowIcon } from '../../assets';
+import { arrowIcon, checkedIcon } from '../../assets';
 
 export const SELECT_STYLES = {
   fontWeight: 600,
@@ -383,6 +384,7 @@ export const DateFilterControl: React.FC<{
     </Select>
     <TextField
       size='small'
+      autoComplete='off'
       fullWidth
       placeholder='MM-DD-YYYY'
       value={state.date?.value || ''}
@@ -404,7 +406,7 @@ export const DateFilterControl: React.FC<{
         '& .MuiInputBase-input': {
           fontSize: '12px',
           color: '#425A76',
-          height: '12px',
+          height: '11px',
           width: state.date?.option === 'between' ? '50%' : '153px',
         },
       }}
@@ -412,6 +414,7 @@ export const DateFilterControl: React.FC<{
     {state.date?.option === 'between' && (
       <TextField
         size='small'
+        autoComplete='off'
         fullWidth
         placeholder='MM-DD-YYYY'
         value={state.date?.toValue || ''}
@@ -433,7 +436,7 @@ export const DateFilterControl: React.FC<{
           '& .MuiInputBase-input': {
             fontSize: '12px',
             color: '#425A76',
-            height: '12px',
+            height: '11px',
           },
         }}
       />
@@ -444,67 +447,75 @@ export const DateFilterControl: React.FC<{
 export const NewTextFilterControl: React.FC<{
   fieldName: string;
   state: FilterState;
+  menuOption: { label: string; value: string }[];
   onOptionChange: (fieldName: string, event: SelectChangeEvent<string>) => void;
   onValueChange: (
     fieldName: string,
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => void;
-}> = ({ fieldName, state, onOptionChange, onValueChange }) => (
-  <div className='flex gap-2 items-center'>
-    <Select
-      size='small'
-      value={state.text?.option || 'contains'}
-      onChange={(e) => onOptionChange(fieldName, e)}
-      className='min-w-[110px] max-w-[110px] h-[28px]'
-      IconComponent={(props) => (
-        <img src={arrowIcon} alt='arrowIcon' {...props} />
+}> = ({ fieldName, state, menuOption, onOptionChange, onValueChange }) => {
+  const selectedOption = state.text?.option;
+  const hideInput = selectedOption === 'is_empty';
+  return (
+    <div className='flex gap-2 items-center'>
+      <Select
+        size='small'
+        value={state.text?.option || 'contains'}
+        onChange={(e) => onOptionChange(fieldName, e)}
+        className='min-w-[110px] max-w-[110px] h-[28px]'
+        IconComponent={(props) => (
+          <img src={arrowIcon} alt='arrowIcon' {...props} />
+        )}
+        sx={SELECT_STYLES}
+        MenuProps={MENU_PROPS}
+      >
+        {menuOption?.map((option) => (
+          <MenuItem
+            key={option.label}
+            value={option.value}
+            sx={{
+              fontSize: '12px',
+              color: '#425A76',
+              fontWeight: 600,
+              py: '1px',
+            }}
+          >
+            {option.label}
+          </MenuItem>
+        ))}
+      </Select>
+      {!hideInput && (
+        <TextField
+          size='small'
+          autoComplete='off'
+          value={state.text?.value || ''}
+          onChange={(e) => onValueChange(fieldName, e)}
+          placeholder='Type here'
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '2px',
+              '& fieldset': {
+                borderColor: '#CBD6E2',
+              },
+              '&:hover fieldset': {
+                borderColor: '#CBD6E2',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: '#CBD6E2',
+              },
+            },
+            '& .MuiInputBase-input': {
+              fontSize: '12px',
+              color: '#425A76',
+              height: '11px',
+              width: '153px',
+            },
+          }}
+        />
       )}
-      sx={SELECT_STYLES}
-      MenuProps={MENU_PROPS}
-    >
-      <MenuItem
-        value='equals'
-        sx={{ fontSize: '12px', color: '#425A76', fontWeight: 600, py: '1px' }}
-      >
-        Equals
-      </MenuItem>
-      <MenuItem
-        value='contains'
-        sx={{ fontSize: '12px', color: '#425A76', fontWeight: 600, py: '1px' }}
-      >
-        Contains
-      </MenuItem>
-      {/* <MenuItem value="starts_with" sx={{ fontSize: '14px', color: '#425A76', fontWeight: 600, py: '1px' }}>↦</MenuItem>
-      <MenuItem value="ends_with" sx={{ fontSize: '14px', color: '#425A76', fontWeight: 600, py: '1px' }}>⇥</MenuItem> */}
-    </Select>
-    <TextField
-      size='small'
-      value={state.text?.value || ''}
-      onChange={(e) => onValueChange(fieldName, e)}
-      placeholder='Type here'
-      sx={{
-        '& .MuiOutlinedInput-root': {
-          borderRadius: '2px',
-          '& fieldset': {
-            borderColor: '#CBD6E2',
-          },
-          '&:hover fieldset': {
-            borderColor: '#CBD6E2',
-          },
-          '&.Mui-focused fieldset': {
-            borderColor: '#CBD6E2',
-          },
-        },
-        '& .MuiInputBase-input': {
-          fontSize: '12px',
-          color: '#425A76',
-          height: '12px',
-          width: '153px',
-        },
-      }}
-    />
-  </div>
-);
+    </div>
+  );
+};
 
 export const NewMultiSelectFilterControl: React.FC<{
   fieldName: string;
@@ -583,16 +594,20 @@ export const NewMultiSelectFilterControl: React.FC<{
 export const NewNumberFilterControl: React.FC<{
   fieldName: string;
   state: FilterState;
+  menuOption: { label: string; value: string }[];
   onOptionChange: (fieldName: string, event: SelectChangeEvent<string>) => void;
   onValueChange: (
     fieldName: string,
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     index?: number
   ) => void;
-}> = ({ fieldName, state, onOptionChange, onValueChange }) => {
+}> = ({ fieldName, state, menuOption, onOptionChange, onValueChange }) => {
   const option = state.number?.option || 'greater_than';
   const value = state.number?.value;
   const hasError = state.number?.error ?? false;
+
+  const selectedOption = state.number?.option;
+  const hideInput = selectedOption === 'is_empty';
 
   return (
     <div className='flex gap-2 items-center w-full'>
@@ -607,61 +622,89 @@ export const NewNumberFilterControl: React.FC<{
         sx={SELECT_STYLES}
         MenuProps={MENU_PROPS}
       >
-        <MenuItem
-          value='greater_than'
-          sx={{
-            fontSize: '12px',
-            color: '#425A76',
-            fontWeight: 600,
-            py: '1px',
-          }}
-        >
-          Greater Than
-        </MenuItem>
-        <MenuItem
-          value='less_than'
-          sx={{
-            fontSize: '12px',
-            color: '#425A76',
-            fontWeight: 600,
-            py: '1px',
-          }}
-        >
-          Less Than
-        </MenuItem>
-        <MenuItem
-          value='between'
-          sx={{
-            fontSize: '12px',
-            color: '#425A76',
-            fontWeight: 600,
-            py: '1px',
-          }}
-        >
-          Between
-        </MenuItem>
+        {menuOption?.map((option) => (
+          <MenuItem
+            key={option.label}
+            value={option.value}
+            sx={{
+              fontSize: '12px',
+              color: '#425A76',
+              fontWeight: 600,
+              py: '1px',
+            }}
+          >
+            {option.label}
+          </MenuItem>
+        ))}
       </Select>
-
-      {option === 'between' ? (
-        <div className='flex gap-2 flex-1'>
-          {[0, 1].map((i) => (
+      {!hideInput && (
+        <>
+          {option === 'between' ? (
+            <div className='flex gap-2 flex-1'>
+              {[0, 1].map((i) => (
+                <TextField
+                  key={i}
+                  type='number'
+                  size='small'
+                  autoComplete='off'
+                  placeholder={i === 0 ? 'Min' : 'Max'}
+                  value={Array.isArray(value) ? value[i] : ''}
+                  onChange={(e) => onValueChange(fieldName, e, i)}
+                  error={
+                    hasError &&
+                    (!value ||
+                      (Array.isArray(value) && value[i]?.trim() === ''))
+                  }
+                  inputProps={{ min: 0 }}
+                  onKeyDown={(e) => {
+                    if (e.key === '-' || e.key === 'e') e.preventDefault();
+                  }}
+                  sx={{
+                    flex: 1,
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '2px',
+                      '& fieldset': {
+                        borderColor: '#CBD6E2',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#CBD6E2',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#CBD6E2',
+                      },
+                    },
+                    '& .MuiInputBase-input': {
+                      fontSize: '12px',
+                      color: '#425A76',
+                      height: '11px',
+                    },
+                    '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button':
+                      {
+                        '-webkit-appearance': 'none',
+                        margin: 0,
+                      },
+                    '& input[type=number]': {
+                      '-moz-appearance': 'textfield',
+                    },
+                  }}
+                />
+              ))}
+            </div>
+          ) : (
             <TextField
-              key={i}
               type='number'
               size='small'
-              placeholder={i === 0 ? 'Min' : 'Max'}
-              value={Array.isArray(value) ? value[i] : ''}
-              onChange={(e) => onValueChange(fieldName, e, i)}
-              error={
-                hasError &&
-                (!value || (Array.isArray(value) && value[i]?.trim() === ''))
-              }
+              autoComplete='off'
+              value={typeof value === 'string' ? value : ''}
+              onChange={(e) => onValueChange(fieldName, e)}
+              placeholder='Enter a number'
+              error={hasError && !value}
               inputProps={{ min: 0 }}
               onKeyDown={(e) => {
                 if (e.key === '-' || e.key === 'e') e.preventDefault();
               }}
+              className='flex-1'
               sx={{
-                flex: 1,
                 '& .MuiOutlinedInput-root': {
                   borderRadius: '2px',
                   '& fieldset': {
@@ -677,7 +720,7 @@ export const NewNumberFilterControl: React.FC<{
                 '& .MuiInputBase-input': {
                   fontSize: '12px',
                   color: '#425A76',
-                  height: '12px',
+                  height: '11px',
                 },
                 '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button':
                   {
@@ -689,49 +732,8 @@ export const NewNumberFilterControl: React.FC<{
                 },
               }}
             />
-          ))}
-        </div>
-      ) : (
-        <TextField
-          type='number'
-          size='small'
-          value={typeof value === 'string' ? value : ''}
-          onChange={(e) => onValueChange(fieldName, e)}
-          placeholder='Enter a number'
-          error={hasError && !value}
-          inputProps={{ min: 0 }}
-          onKeyDown={(e) => {
-            if (e.key === '-' || e.key === 'e') e.preventDefault();
-          }}
-          className='flex-1'
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: '2px',
-              '& fieldset': {
-                borderColor: '#CBD6E2',
-              },
-              '&:hover fieldset': {
-                borderColor: '#CBD6E2',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: '#CBD6E2',
-              },
-            },
-            '& .MuiInputBase-input': {
-              fontSize: '12px',
-              color: '#425A76',
-              height: '12px',
-            },
-            '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button':
-              {
-                '-webkit-appearance': 'none',
-                margin: 0,
-              },
-            '& input[type=number]': {
-              '-moz-appearance': 'textfield',
-            },
-          }}
-        />
+          )}
+        </>
       )}
     </div>
   );
@@ -753,7 +755,18 @@ export const NewStatusFilterControl: React.FC<{
         <img src={arrowIcon} alt='arrowIcon' {...props} />
       )}
       sx={SELECT_STYLES}
-      MenuProps={MENU_PROPS}
+      MenuProps={{
+        ...MENU_PROPS,
+        PaperProps: {
+          ...MENU_PROPS.PaperProps,
+          style: {
+            ...(MENU_PROPS.PaperProps?.style || {}),
+            width: 100,
+            maxWidth: 100,
+            maxHeight: 200,
+          },
+        },
+      }}
     >
       {options?.map((option) => (
         <MenuItem
@@ -805,3 +818,222 @@ export const NewBooleanFilterControl: React.FC<{
     </Select>
   </FormControl>
 );
+
+export const KeyContactFilterControl: React.FC<{
+  filterStates: Record<string, FilterState>;
+  menuOption: { label: string; value: string }[];
+  valueOptions: { label: string; value: string }[];
+  fieldName: string;
+  state: FilterState;
+  onOptionChange: (fieldName: string, event: SelectChangeEvent<string>) => void;
+  onChange: (fieldName: string, type: 'role' | 'name', value: string) => void;
+  disabled?: boolean;
+}> = ({
+  menuOption,
+  valueOptions,
+  fieldName,
+  state,
+  onOptionChange,
+  onChange,
+  disabled = false,
+}) => {
+  const keyContactState = state.keyContact || {
+    role: { option: 'contains', value: '' },
+    name: { option: 'contains', value: '' },
+  };
+
+  const isRoleEmpty = keyContactState.role.option === 'is_empty';
+  const isNameEmpty = keyContactState.name.option === 'is_empty';
+  const showRoleValue = !isRoleEmpty;
+  const showNameFields =
+    showRoleValue && (isRoleEmpty || !!keyContactState.role.value);
+  const showNameValue = showNameFields && !isNameEmpty;
+  const roleError = keyContactState.role?.error || false;
+  const nameError = keyContactState.name?.error || false;
+
+  const handleRoleOptionChange = (e: SelectChangeEvent<string>) => {
+    onOptionChange(fieldName, {
+      ...e,
+      target: {
+        ...e.target,
+        name: 'roleOption',
+      },
+    } as SelectChangeEvent<string>);
+  };
+
+  const handleRoleValueChange = (e: SelectChangeEvent<string>) => {
+    onChange(fieldName, 'role', e.target.value);
+  };
+
+  const handleNameOptionChange = (e: SelectChangeEvent<string>) => {
+    onOptionChange(fieldName, {
+      target: {
+        value: e.target.value,
+        name: 'nameOption',
+      },
+    } as SelectChangeEvent<string>);
+  };
+
+  const handleNameValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange(fieldName, 'name', e.target.value);
+  };
+
+  return (
+    <div className='flex gap-2 items-center flex-wrap'>
+      <Select
+        value={keyContactState.role.option}
+        onChange={handleRoleOptionChange}
+        className='min-w-[110px] max-w-[110px] h-[28px]'
+        IconComponent={(props) => (
+          <img src={arrowIcon} alt='arrowIcon' {...props} />
+        )}
+        sx={SELECT_STYLES}
+        MenuProps={MENU_PROPS}
+        disabled={disabled}
+      >
+        {menuOption.map((menu) => (
+          <MenuItem
+            key={menu.value}
+            value={menu.value}
+            sx={{
+              fontSize: '12px',
+              color: '#425A76',
+              fontWeight: 600,
+              py: '1px',
+            }}
+          >
+            {menu.label}
+          </MenuItem>
+        ))}
+      </Select>
+
+      {/* Role Value Select - only show if not is_empty */}
+      {showRoleValue && (
+        <Select
+          disabled={disabled}
+          value={keyContactState.role.value}
+          className='h-[28px] w-[181px] min-w-[181px] max-w-[181px]'
+          IconComponent={(props) => (
+            <img src={arrowIcon} alt='arrowIcon' {...props} />
+          )}
+          onChange={handleRoleValueChange}
+          sx={{
+            ...SELECT_STYLES,
+            ...(roleError && {
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#FF0000 !important',
+              },
+            }),
+          }}
+          MenuProps={{
+            ...MENU_PROPS,
+            PaperProps: {
+              ...MENU_PROPS.PaperProps,
+              style: {
+                ...(MENU_PROPS.PaperProps?.style || {}),
+                width: 100,
+                maxWidth: 100,
+                maxHeight: 200,
+              },
+            },
+          }}
+        >
+          {valueOptions.map((item) => (
+            <MenuItem
+              key={item.value}
+              value={item.value}
+              dense
+              sx={{
+                fontSize: '12px',
+                color: '#425A76',
+                fontWeight: 600,
+                py: '1px',
+              }}
+            >
+              {item.label}
+            </MenuItem>
+          ))}
+        </Select>
+      )}
+
+      {/* Name Fields - only show if role is not empty and has value */}
+      {showNameFields && (
+        <>
+          <div className='absolute left-[24px] rounded-[2px] mt-9 min-w-[173px] max-w-[173px] h-[28px] border border-[#CBD6E2]'>
+            <div className='flex items-center justify-between pl-3.5 pr-[7px] text-[12px] text-[#425A76] h-full font-semibold'>
+              <div className='flex items-center gap-1'>
+                <img src={checkedIcon} alt='checked' className='w-3' />
+                <span>Name</span>
+              </div>
+              <img src={arrowIcon} alt='arrowIcon' />
+            </div>
+          </div>
+          {/* Name Operator Select */}
+          <Select
+            value={keyContactState.name.option}
+            onChange={handleNameOptionChange}
+            className='min-w-[110px] max-w-[110px] h-[28px]'
+            IconComponent={(props) => (
+              <img src={arrowIcon} alt='arrowIcon' {...props} />
+            )}
+            sx={SELECT_STYLES}
+            MenuProps={MENU_PROPS}
+            disabled={disabled}
+          >
+            {menuOption.map((menu) => (
+              <MenuItem
+                key={menu.value}
+                value={menu.value}
+                sx={{
+                  fontSize: '12px',
+                  color: '#425A76',
+                  fontWeight: 600,
+                  py: '1px',
+                }}
+              >
+                {menu.label}
+              </MenuItem>
+            ))}
+          </Select>
+
+          {/* Name Text Input - only show if name operator is not is_empty */}
+          {showNameValue && (
+            <TextField
+              size='small'
+              autoComplete='off'
+              value={
+                keyContactState.name.value === 'true'
+                  ? ''
+                  : keyContactState.name.value
+              }
+              error={nameError && !keyContactState.name.value}
+              onChange={handleNameValueChange}
+              disabled={disabled}
+              placeholder='Type here'
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '2px',
+                  '& fieldset': {
+                    borderColor: '#CBD6E2',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#CBD6E2',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#CBD6E2',
+                  },
+                },
+                '& .MuiInputBase-input': {
+                  fontSize: '12px',
+                  color: '#425A76',
+                  height: '11px',
+                  width: '153px',
+                },
+              }}
+            />
+          )}
+        </>
+      )}
+    </div>
+  );
+};

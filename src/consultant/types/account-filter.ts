@@ -1,16 +1,48 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Define filter options for each field type
-export type TextFilterOption = 'contains' | 'equals' | 'not_equals';
-export type NumberFilterOption = 'greater_than' | 'less_than' | 'between';
+export type TextFilterOption =
+  | 'contains'
+  | 'equals'
+  | 'not_equals'
+  | 'is_empty';
+export type NumberFilterOption =
+  | 'greater_than'
+  | 'less_than'
+  | 'between'
+  | 'equals'
+  | 'not_equals'
+  | 'is_empty';
 export type StatusFilterOption = 'equals';
 export type BooleanFilterOption = 'equals';
 export type DateOptions = 'equals' | 'before' | 'after' | 'between';
+export type KeyContactFilterOption =
+  | 'equals'
+  | 'not_equals'
+  | 'contains'
+  | 'is_empty';
+
 export const DateValueOptions = [
   { value: 'equals', label: 'Equals' },
   { value: 'before', label: 'Before' },
   { value: 'after', label: 'After' },
   { value: 'between', label: 'Between' },
   // { value: 'is_empty', label: 'Is Empty' },
+];
+
+export const numberOperators: { label: string; value: string }[] = [
+  { label: 'Equals', value: 'equals' },
+  { label: 'Not Equals', value: 'not_equals' },
+  { label: 'Greater Than', value: 'greater_than' },
+  { label: 'Less Than', value: 'less_than' },
+  { label: 'Between', value: 'between' },
+  { label: 'Is Empty', value: 'is_empty' },
+];
+
+export const textfieldOperators: { label: string; value: string }[] = [
+  { label: 'Contains', value: 'contains' },
+  { label: 'Equals', value: 'equals' },
+  { label: 'Not Equals', value: 'not_equals' },
+  { label: 'Is Empty', value: 'is_empty' },
 ];
 
 // Define filter state types for each field type
@@ -44,6 +76,22 @@ interface DateFilterState {
   value: string;
   toValue?: string;
 }
+interface RoleFilter {
+  option: string;
+  value: string;
+  error?: boolean;
+}
+
+interface NameFilter {
+  option: string;
+  value: string;
+  error?: boolean;
+}
+
+interface KeyContactFilterState {
+  role: RoleFilter;
+  name: NameFilter;
+}
 
 // Union type for all possible filter states
 export type FilterState = {
@@ -53,6 +101,7 @@ export type FilterState = {
   boolean?: BooleanFilterState;
   multiSelect?: MultiSelectFilterState;
   date?: DateFilterState;
+  keyContact?: KeyContactFilterState;
 };
 
 // Define field configuration
@@ -66,8 +115,10 @@ export type FieldConfig = {
     | 'boolean'
     | 'multi-select'
     | 'date'
+    | 'keyContact'
     | 'enum';
   options?: string[] | { value: string; label: string }[];
+  operatorOption?: { label: string; value: string }[];
 };
 
 export interface FilterComponentProps {

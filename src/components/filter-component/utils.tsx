@@ -34,7 +34,12 @@ export const fields: FieldConfig[] = [
     options: ['CAD', 'USD', 'GBP', 'EUR', 'SEK', 'RON', 'AUD'],
   },
   { label: 'Annual Revenue', name: 'annual_revenue', type: 'number' },
-  { label: 'Status', name: 'status', type: 'status', options: ['Active', 'Inactive'] },
+  {
+    label: 'Status',
+    name: 'status',
+    type: 'status',
+    options: ['Active', 'Inactive'],
+  },
   { label: 'Primary Contact', name: 'primary_contact', type: 'text' },
   { label: 'is Parent Account', name: 'is_parent_account', type: 'boolean' },
 ];
@@ -53,8 +58,8 @@ export const getInitialStateForField = (
       return { boolean: { option: 'equals', value: true } };
     case 'multi-select':
       return { multiSelect: { values: [] } };
-      case 'date':
-        return { date: { option: 'equals', value: '' } };
+    case 'date':
+      return { date: { option: 'equals', value: '' } };
     default:
       return {};
   }
@@ -80,17 +85,60 @@ export const formatFilterForApi = (
             };
     }
     if (state.text) {
-      formattedFilters[fieldName] = { [state.text.option]: state.text.value.toLowerCase() };
+      const selectedOption = state.text?.option;
+      const value =
+        selectedOption === 'is_empty' ? true : state.text.value.toLowerCase();
+      if (value) {
+        formattedFilters[fieldName] = {
+          [state.text.option]: value,
+        };
+      }
     } else if (state.number) {
-      formattedFilters[fieldName] = {
-        [state.number.option]: state.number.value,
-      };
+      const selectedOption = state.number?.option;
+      const value = selectedOption === 'is_empty' ? true : state.number.value;
+      if (value) {
+        formattedFilters[fieldName] = {
+          [state.number.option]: value,
+        };
+      }
     } else if (state.status) {
-      formattedFilters[fieldName] = state.status.value.toLowerCase();
+      if (fieldName === 'industry') {
+        formattedFilters[fieldName] = { equals: state.status.value };
+      } else {
+        formattedFilters[fieldName] = state.status.value.toLowerCase();
+      }
     } else if (state.boolean) {
       formattedFilters[fieldName] = state.boolean.value === true ? 'yes' : 'no';
     } else if (state.multiSelect) {
       formattedFilters[fieldName] = state.multiSelect.values;
+    } else if (state.keyContact) {
+      const roleOption = state.keyContact.role?.option;
+      const nameOption = state.keyContact.name?.option;
+
+      formattedFilters[fieldName] = {};
+
+      // Handle role filter
+      if (roleOption === 'is_empty') {
+        formattedFilters[fieldName].role = { is_empty: true };
+      } else if (state.keyContact.role?.value) {
+        formattedFilters[fieldName].role = {
+          [roleOption]: state.keyContact.role.value.toLowerCase(),
+        };
+      }
+
+      // Handle name filter
+      if (nameOption === 'is_empty') {
+        formattedFilters[fieldName].name = { is_empty: true };
+      } else if (state.keyContact.name?.value) {
+        formattedFilters[fieldName].name = {
+          [nameOption]: state.keyContact.name.value.toLowerCase(),
+        };
+      }
+
+      // Remove if empty
+      if (Object.keys(formattedFilters[fieldName]).length === 0) {
+        delete formattedFilters[fieldName];
+      }
     }
   });
 
@@ -115,7 +163,7 @@ export const storeFilters = (filter: FilterState) => {
   try {
     localStorage.setItem(FILTER_KEY, JSON.stringify(filter));
   } catch {
-    console.error("Error storing filters in localStorage");
+    console.error('Error storing filters in localStorage');
   }
 };
 
@@ -123,6 +171,6 @@ export const clearFilters = () => {
   try {
     localStorage.removeItem(FILTER_KEY);
   } catch {
-    console.error("Error clearing filters from localStorage");
+    console.error('Error clearing filters from localStorage');
   }
 };

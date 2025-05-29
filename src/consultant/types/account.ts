@@ -249,6 +249,18 @@ export type GlobalAccountListResponse = {
   };
 };
 
+export interface ProjectsByYear {
+  fiscal_year: string;
+  account_rid: string;
+  total_projects: number | null;
+  total_project_hours: string;
+  total_project_cost: string;
+  qualifying_project_hours_fed: number | null;
+  qualifying_project_qre_fed: number | null;
+  qualifying_project_rd_credits_fed: number | null;
+  total_projects_rd_credits: string;
+}
+
 export interface AccountListURLParams {
   page?: number;
   limit?: number;
@@ -308,6 +320,7 @@ export type AccountList = {
   financial_consultant: string;
   delivery_head: string;
   finance_executive: string;
+  projects_by_fiscal_year?: ProjectsByYear[];
 };
 
 export interface ConvertedAccount {
@@ -334,6 +347,7 @@ export interface ConvertedAccount {
   financeExecutive: string;
   financeHead: string;
   professionalConsultant: string;
+  projectsByYear?: ProjectsByYear[];
 }
 
 export interface keyContactRoles {

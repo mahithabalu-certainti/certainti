@@ -202,6 +202,23 @@ export const FormData = (
               ifNotMatchValue: DATA_STORAGE_OPTIONS[1].value,
             },
           }),
+          createTextField('website', 'Website', {
+            type: 'website',
+            required: false,
+            regex: REGEX_PATTERNS.WEBSITE,
+            regexErrorMessage: 'Enter a valid website URL',
+            placeholder: 'Enter Website',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_WEBSITE,
+                errorMessage: 'Minimum 10 characters required',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_WEBSITE,
+                errorMessage: 'Max length exceeded',
+              },
+            ],
+          }),
           createTextField('industry_name_other', 'Industry-other', {
             required: true,
             placeholder: 'Enter Industry-other',
@@ -223,6 +240,11 @@ export const FormData = (
               },
             ],
           }),
+          createSelectField('status', 'Status', {
+            required: true,
+            options: STATUS_OPTIONS,
+            placeholder: 'Choose Status',
+          }),
           createSelectField('parent_account_rid', 'Parent Account', {
             options: parentAccount,
             placeholder: 'Choose Parent Account',
@@ -232,28 +254,6 @@ export const FormData = (
               key: 'is_parent',
               matchedValue: YesNo.Yes,
             },
-          }),
-          createSelectField('status', 'Status', {
-            required: true,
-            options: STATUS_OPTIONS,
-            placeholder: 'Choose Status',
-          }),
-          createTextField('website', 'Website', {
-            type: 'website',
-            required: false,
-            regex: REGEX_PATTERNS.WEBSITE,
-            regexErrorMessage: 'Enter a valid website URL',
-            placeholder: 'Enter Website',
-            errorHandling: [
-              {
-                regex: REGEX_PATTERNS.MIN_WEBSITE,
-                errorMessage: 'Minimum 10 characters required',
-              },
-              {
-                regex: REGEX_PATTERNS.MAX_WEBSITE,
-                errorMessage: 'Max length exceeded',
-              },
-            ],
           }),
           // createTextField('project_manager', 'Delivery Manager', {
           //   required: false,
@@ -384,6 +384,17 @@ export const FormData = (
             required: true,
             disabled: disableFields,
           }),
+          createRadioField('autosend_interaction', 'Auto Send Interaction', {
+            radioOptions: YES_NO_OPTIONS,
+            required: true,
+          }),
+          createTextField('blended_rate_fte', 'Blended Rate - FTE', {
+            required: false,
+            regex: REGEX_PATTERNS.BLENDED_NUMBER,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 3 digits and 2 decimal places',
+            placeholder: 'Enter Blended Rate - FTE',
+          }),
           createFiscalDateField('fiscal_end_date', 'Fiscal End', {
             disabled: disableFields,
             required: true,
@@ -393,9 +404,16 @@ export const FormData = (
                 'Fiscal End Date cannot be the same as the Fiscal Start Date',
             },
           }),
-          createRadioField('autosend_interaction', 'Auto Send Interaction', {
+          createRadioField('auto_access_rd', 'Auto Assessment', {
             radioOptions: YES_NO_OPTIONS,
             required: true,
+          }),
+          createTextField('blended_rate_subcon', 'Blended Rate - SubCon', {
+            required: false,
+            regex: REGEX_PATTERNS.BLENDED_NUMBER,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 3 digits and 2 decimal places',
+            placeholder: 'Enter Blended Rate - SubCon',
           }),
           createSelectField(
             'max_ai_interactions',
@@ -410,24 +428,6 @@ export const FormData = (
               placeholder: 'Choose Max interaction Follow up',
             }
           ),
-          createRadioField('auto_access_rd', 'Auto Assessment', {
-            radioOptions: YES_NO_OPTIONS,
-            required: true,
-          }),
-          createTextField('blended_rate_fte', 'Blended Rate - FTE', {
-            required: false,
-            regex: REGEX_PATTERNS.BLENDED_NUMBER,
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 3 digits and 2 decimal places',
-            placeholder: 'Enter Blended Rate - FTE',
-          }),
-          createTextField('blended_rate_subcon', 'Blended Rate - SubCon', {
-            required: false,
-            regex: REGEX_PATTERNS.BLENDED_NUMBER,
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 3 digits and 2 decimal places',
-            placeholder: 'Enter Blended Rate - SubCon',
-          }),
           createRadioField('data_storage', 'Data Residency', {
             required: true,
             radioOptions: dataResidency,
