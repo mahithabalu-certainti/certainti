@@ -7,7 +7,7 @@ export const AccountDeleteUrl = '/accounts/:id/delete';
 export const AccountUpdateUrl = '/api/accounts/update';
 export const ParentAccountUrl = '/api/accounts/global';
 export const IndustryUrl = '/api/accounts/industry';
-export const CurrencyUrl = '/api/accounts/currency'
+export const CurrencyUrl = '/api/accounts/currency';
 export const ClassificationUrl = '/api/project/projectclassification';
 
 export const AccountListURL = ({
@@ -43,8 +43,10 @@ export const GlobalAccountUrl = '/api/accounts/list/global';
 export const AccountDetailUrl = (accountId: string) =>
   `/api/accounts/list/${accountId}`;
 
-export const StateUrl = (countryId: string) =>
-  `/api/accounts/states/${countryId}`;
+export const StateUrl = (countryId: string | string[] | null) => {
+  const countryID = JSON.stringify(countryId ?? []);
+  return `/api/accounts/states/?countryIds=${countryID}`;
+};
 
 export const CityUrl = (stateId: string) => `/api/accounts/cities/${stateId}`;
 

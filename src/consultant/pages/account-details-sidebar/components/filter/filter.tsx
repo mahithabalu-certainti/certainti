@@ -56,6 +56,7 @@ const Filter: React.FC<FilterComponentProps> = ({
   handleCloseFilter,
   setCurrentPage,
   setCurrentSkillType,
+  setCurrentCountry,
   mode,
 }) => {
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
@@ -95,6 +96,14 @@ const Filter: React.FC<FilterComponentProps> = ({
           skill_subtype_rid: skillSubTypeValue,
         });
       }
+    }
+
+    if (setCurrentCountry) {
+      const country = Array.isArray(filterStates?.country?.enum?.value)
+        ? filterStates?.country?.enum?.value
+        : [filterStates?.country?.enum?.value];
+
+      setCurrentCountry(country as string[]);
     }
   }, [filterStates]);
 

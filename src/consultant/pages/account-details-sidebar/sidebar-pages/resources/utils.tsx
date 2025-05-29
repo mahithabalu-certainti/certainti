@@ -67,7 +67,7 @@ export const getSkillFilterFields = (
     { name: 'Skill ID', value: 'r_number', type: 'textCostAndSkill' },
   ];
 };
-export const resourceFilterFields: FieldConfig[] = [
+export const resourceFilterFields = (country: { option: string; value: string }[], region: { option: string; value: string }[]): FieldConfig[] => [
   { name: 'Resource Code', value: 'resource_code', type: 'text' },
   { name: 'Name', value: 'resource_name', type: 'text' },
   {
@@ -79,8 +79,8 @@ export const resourceFilterFields: FieldConfig[] = [
   { name: 'Org Name', value: 'resource_orgname', type: 'text' },
   { name: 'Designation', value: 'resource_designation', type: 'text' },
   { name: 'Role', value: 'resource_role', type: 'text' },
-  { name: 'Region', value: 'region', type: 'text' },
-  { name: 'Country', value: 'country', type: 'text' },
+  { name: 'Region', value: 'region', type: 'enum', options: region },
+  { name: 'Country', value: 'country', type: 'enum', options: country },
   { name: 'Total Project Hours', value: 'total_project_hours', type: 'number' },
   { name: 'Estimated R&D Hours', value: 'estimated_rd_hours', type: 'number' },
   {

@@ -206,6 +206,7 @@ export interface FilterComponentProps {
       skill_subtype_rid: string[] | undefined[];
     }>
   >;
+  setCurrentCountry?: Dispatch<SetStateAction<string[] | null>>;
   setCurrentPage: (page: number) => void;
   mode?: string;
 }

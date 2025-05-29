@@ -9,7 +9,7 @@ import {
   resourceFilterFields,
 } from '../sidebar-pages/resources/utils';
 import Filter from './filter/filter';
-import { useFetchCurrency } from '../../../services/account';
+import { useFetchCurrency, useFetchState } from '../../../services/account';
 import {
   useFetchResourceSkillSubType,
   useFetchResourceSkillType,
@@ -17,6 +17,7 @@ import {
 import { SkillSubtype, SkillType } from '../../../types/resource';
 import { clearFilters } from './filter/utils';
 import { projectFilterFields } from '../sidebar-pages/projects/utils';
+import { useGetAllCountries } from '../../../../common-service';
 // import { useGetAllCountries } from '../../../../common-service';
 // import { SelectOption } from '../../../types';
 interface TabProps {
@@ -43,6 +44,8 @@ const TabPanel: React.FC<TabProps> = ({
     skill_type_rid: [] as string[],
     skill_subtype_rid: [] as string[] | undefined[],
   });
+  const [currentCountry, setCurrentCountry] = useState<string[] | null>([]);
+  const [regionData, setRegionData] = useState<{ option: string; value: string }[]>([]);
 
   const [skillSubTypeData, setSkillSubTypeData] = useState<
     { option: string; value: string }[]
@@ -56,20 +59,30 @@ const TabPanel: React.FC<TabProps> = ({
     clearFilters(value || 'resource');
   };
   const currency = useFetchCurrency();
-  // const allCountries = useGetAllCountries();
-  console.log("currentSkillType", currentSkillType);
+  const allCountries = useGetAllCountries();
+  const Regions = useFetchState(currentCountry);
+
 
   const { data: skillType } = useFetchResourceSkillType();
   const { data: skillSubType } = useFetchResourceSkillSubType(
     currentSkillType.skill_type_rid
   );
-  // const memoizedContry: SelectOption[] = useMemo(
+  const memoizedCountry: { option: string; value: string }[] = useMemo(
+    () =>
+      allCountries.data?.data.country.map((country) => ({
+        option: country.country_name,
+        value: country.rid,
+      })) || [],
+    [allCountries.data?.data.country]
+  );
+
+  // const memoizedRegion: { option: string; value: string }[] = useMemo(
   //   () =>
-  //     allCountries.data?.data.country.map((country) => ({
-  //       label: country.country_name,
-  //       value: country.rid,
+  //     Regions.data?.data.states.map((role) => ({
+  //       option: role.state_name,
+  //       value: role.rid,
   //     })) || [],
-  //   [allCountries.data?.data.country]
+  //   [Regions.data?.data.states]
   // );
 
   const memoizedSkillType: { option: string; value: string }[] = useMemo(() => {
@@ -83,14 +96,26 @@ const TabPanel: React.FC<TabProps> = ({
   }, [skillType]);
 
   useEffect(() => {
-    const data = skillSubType as SkillSubtype[];
-    const finalData =
-      data?.map((skill: SkillSubtype) => ({
-        option: skill.skill_subtype_name,
-        value: skill.rid,
+    if (value === 'skill') {
+      const data = skillSubType as SkillSubtype[];
+      const finalData =
+        data?.map((skill: SkillSubtype) => ({
+          option: skill.skill_subtype_name,
+          value: skill.rid,
+        })) || [];
+      setSkillSubTypeData(finalData);
+    }
+
+    if (!value) {
+      const data = Regions.data?.data.states.map((role) => ({
+        option: role.state_name,
+        value: role.rid,
       })) || [];
-    setSkillSubTypeData(finalData);
-  }, [skillSubType]);
+
+      setRegionData(data);
+    }
+
+  }, [skillSubType, Regions, value]);
 
   const handleSortClose = () => {
     setSortAnchorEl(null);
@@ -142,7 +167,7 @@ const TabPanel: React.FC<TabProps> = ({
   );
 
   const getFilterFields = () => {
-    if (!value) return resourceFilterFields;
+    if (!value) return resourceFilterFields(memoizedCountry, regionData);
     if (value === 'projects') {
       return projectFilterFields;
     }
@@ -255,7 +280,7 @@ const TabPanel: React.FC<TabProps> = ({
                 )}
               </Box>
             )}
-            {value !== 'details' && (
+            {value !== 'details' && filterAnchorEl && (
               <Filter
                 value={value}
                 isOpen={isFilterOpen && showFilter}
@@ -265,6 +290,7 @@ const TabPanel: React.FC<TabProps> = ({
                 setAppliedFilters={setAppliedFilters}
                 handleCloseFilter={handleCloseFilter}
                 setCurrentSkillType={setCurrentSkillType}
+                setCurrentCountry={setCurrentCountry}
                 setCurrentPage={setCurrentPage}
                 mode={'date'}
               />
