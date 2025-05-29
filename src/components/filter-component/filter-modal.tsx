@@ -548,12 +548,6 @@ const FilterModal: React.FC<FilterModalProps> = ({
         );
       case 'date':
         return (
-          // <DateFilterControl
-          //   fieldName={fieldName}
-          //   state={state}
-          //   onOptionChange={handleFilterOptionChange}
-          //   onValueChange={handleFilterValueChange}
-          // />
           <NewDateFilterControl
             filterStates={filterStates}
             menuOption={fieldConfig.operatorOption || DateValueOptions}

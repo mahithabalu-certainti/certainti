@@ -125,6 +125,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       actionMenuItems={actionButtons}
       loading={isLoading}
       error={isError ? 'Failed to load projects' : undefined}
+      rowsPerPageOptions={[25, 50, 100]}
       rowsPerPage={tableParams.limit}
       currentPage={tableParams.page}
       totalItems={totalItems}

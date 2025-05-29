@@ -150,6 +150,7 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
           actionMenuItems={actionMenuItems}
           loading={isLoading}
           error={error ? 'Failed to load projects' : undefined}
+          rowsPerPageOptions={[25, 50, 100]}
           rowsPerPage={rowsPerPage}
           currentPage={currentPage}
           totalItems={totalItems}

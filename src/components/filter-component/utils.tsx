@@ -85,7 +85,7 @@ export const formatFilterForApi = (
         formattedFilters[fieldName] = {
           [option]:
             formatString(option) === 'Between'
-              ? [value.from?.toString(), value.to?.toString()]
+              ? { from: value.from?.toString(), to: value.to?.toString() }
               : boolOptions
                 ? true
                 : value.from?.toString(),
