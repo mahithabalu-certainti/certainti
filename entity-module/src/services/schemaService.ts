@@ -1773,7 +1773,9 @@ class SchemaService {
     const fieldAliasMap: Record<string, string> = {
       r_number: "ps.r_number",
       comments: "ps.comments",
-      region_name: "st.state_name",
+      region: "st.rid",
+      currency: "curr.rid",
+      country: "cou.rid",
       industry_name: "COALESCE(ps.industry_name, ind.industry_name)",
       industry_name_other: "COALESCE(ps.industry_name, ind.industry_name)",
       modified_datetime: "ps.modified_datetime",
@@ -1793,7 +1795,7 @@ class SchemaService {
       "qre",
     ];
     const dateFields = ["project_startdate", "project_enddate", "ps.modified_datetime"];
-    const enumFields = ["project_status", "project_type", "fiscal_year"];
+    const enumFields = ["project_status", "project_type", "fiscal_year", "st.rid", "curr.rid", "cou.rid"];
     const booleanFields = ["is_rd_qualified"];
 
     const { conditions, replacements } = this.buildWhereCondition(
@@ -1999,7 +2001,7 @@ class SchemaService {
             replacements.push(condition.equals);
           }
           if (condition.not_equals !== undefined) {
-            conditions.push(`${qualifiedField} != ?`);
+            conditions.push(`(${qualifiedField} != ? OR ${qualifiedField} IS NULL)`);
             replacements.push(condition.not_equals);
           }
           if (condition.in && Array.isArray(condition.in)) {
@@ -2440,15 +2442,17 @@ class SchemaService {
   ): any {
     const filterableClientFields = [
       "account_name",
-      "country_name",
-      "region_name",
-      "currency_name",
+      "country",
+      "region",
+      "currency",
       "technical_point_of_contact",
       "financial_consultant",
       "project_point_of_contact",
       "classification_name",
       "industry_name"
     ];
+
+    const enumFields = ["country", "currency", "region"]
 
     let filteredProjects = [...project];
 
@@ -2464,28 +2468,44 @@ class SchemaService {
           if (!filter || Object.keys(filter).length === 0) return true;
     
           const value = project[key];
-    
-          if (filter.equals !== undefined) {
-            return value === filter.equals;
-          }
-          if (filter.not_equals !== undefined) {
-            return value !== filter.not_equals;
-          }
-          if (filter.contains !== undefined) {
-            if (typeof value === "string") {
-              return value
-                .toLowerCase()
-                .includes(filter.contains.toLowerCase());
+          const isEnumField = enumFields.includes(key);
+
+          if(isEnumField){
+            if (filter.equals !== undefined) {
+              return value === filter.equals;
             }
-            return false;
-          }
-          if (filter.not_contains !== undefined && typeof value === "string") {
-            return !value
-              .toLowerCase()
-              .includes(filter.not_contains.toLowerCase());
-          }
-          if (filter.is_empty === true) {
-            return value === null || value === "";
+            if (filter.not_equals !== undefined) {
+              return value !== filter.not_equals;
+            }
+            if (filter.is_empty === true) {
+              return value === null || value === "";
+            }
+            if (filter.in !== undefined && Array.isArray(filter.in)) {
+              return filter.in.includes(value);
+            }
+          }else{
+            if (filter.equals !== undefined) {
+              return value === filter.equals;
+            }
+            if (filter.not_equals !== undefined) {
+              return value !== filter.not_equals;
+            }
+            if (filter.contains !== undefined) {
+              if (typeof value === "string") {
+                return value
+                  .toLowerCase()
+                  .includes(filter.contains.toLowerCase());
+              }
+              return false;
+            }
+            if (filter.not_contains !== undefined && typeof value === "string") {
+              return !value
+                .toLowerCase()
+                .includes(filter.not_contains.toLowerCase());
+            }
+            if (filter.is_empty === true) {
+              return value === null || value === "";
+            }
           }
     
           return true;
