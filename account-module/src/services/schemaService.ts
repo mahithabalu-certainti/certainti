@@ -343,7 +343,7 @@ class SchemaService {
     `);
      await sequelize.query(`
         CREATE TABLE IF NOT EXISTS "${schemaName}".resources (
-      rid uuid NOT NULL DEFAULT gen_random_uuid(),
+      rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       r_number character varying(20) DEFAULT ('RES ' || lpad((nextval('"${schemaName}".resources_seq'))::text, 10, '0')),
       eid character varying(50),
       account_rid uuid NOT NULL,
@@ -357,8 +357,8 @@ class SchemaService {
       resource_country uuid,
       resource_region uuid,
       resource_city uuid,
-      resource_startdate timestamp with time zone,
-      resource_enddate timestamp with time zone,
+      resource_startdate DATE,
+      resource_enddate DATE,
       resource_designation character varying(100),
       resource_total_experience numeric(4,2),
       resource_total_experience_organization numeric(4,2),
@@ -379,7 +379,7 @@ class SchemaService {
      await sequelize.query(`
       CREATE TABLE IF NOT EXISTS "${schemaName}".resource_fiscal
 (
-    rid uuid NOT NULL DEFAULT gen_random_uuid(),
+    rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     eid character varying(50) NULL,
     account_rid uuid NOT NULL,
     r_number character varying(20) DEFAULT ('RSF ' || lpad((nextval('"${schemaName}".resource_fiscal_seq'))::text, 10, '0')),
@@ -406,8 +406,8 @@ class SchemaService {
     total_effort_for_year_project numeric(14,2),
     total_effort_for_year_project_resource_level numeric(14,2),
     total_effort_for_year_project_task_level numeric(14,2),
-    effective_date timestamp with time zone,
-    end_date timestamp with time zone,
+    effective_date DATE,
+    end_date DATE,
     created_datetime timestamp with time zone NOT NULL,
     modified_datetime timestamp with time zone,
     created_by uuid NOT NULL,
@@ -425,7 +425,7 @@ class SchemaService {
      await sequelize.query(`
       CREATE TABLE IF NOT EXISTS "${schemaName}".resources_history
       (
-          rid uuid NOT NULL DEFAULT gen_random_uuid(),
+          rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           r_number varchar(20) DEFAULT (
             'REH ' || lpad((nextval('"${schemaName}".resource_history_seq'::regclass))::text, 10, '0')
           ),
@@ -446,7 +446,7 @@ class SchemaService {
 
      await sequelize.query(`
      CREATE TABLE IF NOT EXISTS "${schemaName}".resources_timeline (
-        rid uuid NOT NULL DEFAULT gen_random_uuid(),
+        rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         r_number varchar(20) DEFAULT ('RTL ' || lpad((nextval('"${schemaName}".resource_timeline_seq'::regclass))::text, 10, '0')),
         account_rid uuid NOT NULL,
         entity_rid uuid NOT NULL,
@@ -466,7 +466,7 @@ class SchemaService {
 
      await sequelize.query(`
           CREATE TABLE IF NOT EXISTS "${schemaName}".resource_cost (
-          rid uuid NOT NULL,
+          rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           r_number varchar(20) DEFAULT (
             'RCO ' || lpad((nextval('"${schemaName}".resource_cost_seq'::regclass))::text, 10, '0')
           ),
@@ -477,8 +477,8 @@ class SchemaService {
           resource_code varchar(255) NOT NULL,
           resource_number varchar(255) NOT NULL,
           fiscal_year integer NOT NULL,
-          effective_date timestamptz,
-          end_date timestamptz,
+          effective_date DATE,
+          end_date DATE,
           annual_cost numeric(18,2),
           monthly_cost numeric(18,2),
           weekly_cost numeric(18,2),
@@ -506,7 +506,7 @@ class SchemaService {
 
      await sequelize.query(`
         CREATE TABLE IF NOT EXISTS "${schemaName}".resource_cost_timeline (
-        rid uuid NOT NULL,
+        rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         r_number varchar(20) DEFAULT (
           'RCT ' || lpad((nextval('"${schemaName}".resource_cost_timeline_seq'::regclass))::text, 10, '0')
         ),
@@ -530,7 +530,7 @@ class SchemaService {
 
      await sequelize.query(`
             CREATE TABLE IF NOT EXISTS "${schemaName}".resource_cost_history (
-          rid uuid NOT NULL,
+          rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           r_number varchar(20) DEFAULT (
             'RCH ' || lpad((nextval('"${schemaName}".resource_cost_history_seq'::regclass))::text, 10, '0')
           ),
@@ -551,7 +551,7 @@ class SchemaService {
 
      await sequelize.query(`
            CREATE TABLE IF NOT EXISTS "${schemaName}".resource_skill (
-    rid uuid NOT NULL,
+    rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     r_number varchar(20) DEFAULT (
       'RSK ' || lpad((nextval('"${schemaName}".resource_skill_seq'::regclass))::text, 10, '0')
     ),
@@ -560,7 +560,7 @@ class SchemaService {
     resource_type varchar(255) NOT NULL,
     resource_rid uuid NOT NULL,
     resource_number varchar(255) NOT NULL,
-    start_date timestamptz,
+    start_date DATE,
     skill_description varchar(255),
     skill_level varchar(255) DEFAULT 'Beginner',
     skill_type_others varchar(255),
@@ -589,7 +589,7 @@ class SchemaService {
     
     await sequelize.query(`
           CREATE TABLE IF NOT EXISTS "${schemaName}".resource_skill_timeline (
-          rid uuid NOT NULL,
+          rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           r_number varchar(20) DEFAULT (
             'RST ' || lpad((nextval('"${schemaName}".resource_skill_timeline_seq'::regclass))::text, 10, '0')
           ),
@@ -612,7 +612,7 @@ class SchemaService {
 
     await sequelize.query(`
           CREATE TABLE IF NOT EXISTS "${schemaName}".resource_skill_history (
-          rid uuid NOT NULL,
+          rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           r_number varchar(20) DEFAULT (
             'RSH ' || lpad((nextval('"${schemaName}".resource_skill_history_seq'::regclass))::text, 10, '0')
           ),

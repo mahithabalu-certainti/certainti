@@ -64,8 +64,8 @@ export class ResourceService {
       await this.schemaService.createResourceTable(accountNumber);
 
       // Parse dates and set to UTC midnight to avoid timezone issues
-      const startDate = moment.utc(resourceData.effective_from_date, "yyyy-mm-dd").startOf('day');
-      const endDate = moment.utc(resourceData.effective_end_date, "yyyy-mm-dd").startOf('day');
+      const startDate = moment.utc(resourceData.effective_from_date, "YYYY-MM-DD").startOf('day');
+      const endDate = moment.utc(resourceData.effective_end_date, "YYYY-MM-DD").startOf('day');
 
       resourceData.created_by = userId;
       resourceData.modified_by = userId;
