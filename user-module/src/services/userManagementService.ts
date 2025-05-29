@@ -936,9 +936,9 @@ class UserManagementService {
       menu_id:string;
       is_modified: boolean;
       has_extended_permission:boolean;
-      is_enabled?: boolean;
-      read?: boolean;
-      edit?: boolean;
+      hasEditExtendedPermsission:boolean;
+      hasReadExtendedPermsission:boolean;
+      is_enabled?: boolean
     }>,
     requestedUserId : string,
     loggedInUsername : string,
@@ -961,7 +961,7 @@ class UserManagementService {
             model: Profile,
             as: "profile",
             required: true,
-            attributes: ["profile_name"],
+            attributes: ["rid",'profile_name'],
           },
         ],
       });
@@ -1002,8 +1002,8 @@ class UserManagementService {
               profileId,
               permission.rid,
               permission.field_id,
-              permission.read || false,
-              permission.edit || false,
+              permission.hasReadExtendedPermsission || false,
+              permission.hasEditExtendedPermsission || false,
               requestedUserId ,loggedInUsername,
             );
 

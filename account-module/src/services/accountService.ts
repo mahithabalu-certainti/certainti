@@ -1311,7 +1311,18 @@ if (equals) {
       whereClause.r_number = { [Op.iLike]: `%${filters.account_number.contains}%` };
     }
     if (filters.account_number.equals) {
-      whereClause.r_number = { [Op.iLike]: `${filters.account_number.equals}` };
+      whereClause.r_number = Sequelize.where(
+      Sequelize.fn('LOWER', Sequelize.col('Account.r_number')),
+      filters.account_number.equals.toLowerCase()
+  );
+    }
+    if (filters.account_number.not_equals) {
+     whereClause.r_number = Sequelize.where(
+      Sequelize.fn('LOWER', Sequelize.col('Account.r_number')),
+      '!=',
+      filters.account_number.not_equals.toLowerCase()
+  );
+      
     }
     return whereClause;
   }
