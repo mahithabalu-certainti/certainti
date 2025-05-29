@@ -46,7 +46,7 @@ const isValidDate = (value: string, helpers: Joi.CustomHelpers): any => {
   // Check if the date is valid
   if (isNaN(date.getTime())) {
     return helpers.error("date.invalidFormat", {
-      message: "Invalid date format. Please use yyyy-mm-dd.",
+      message: "Invalid date format. Please use YYYY-MM-DD.",
     });
   }
 
@@ -287,7 +287,7 @@ const createResourcesSchema = Joi.object({
     
       if (isNaN(inputDate.getTime())) {
         return helpers.error("date.invalidFormat", {
-          message: "Invalid date format. Please use yyyy-mm-dd."
+          message: "Invalid date format. Please use YYYY-MM-DD."
         });
       }
     
@@ -310,8 +310,8 @@ const createResourcesSchema = Joi.object({
     .allow(null)
     .messages({
       "string.base": "Effective from date must be a valid date",
-      "string.max": "Effective from date format should be yyyy-mm-dd",
-      "date.invalidFormat": "Invalid date format. Please use yyyy-mm-dd",
+      "string.max": "Effective from date format should be YYYY-MM-DD",
+      "date.invalidFormat": "Invalid date format. Please use YYYY-MM-DD",
       "date.min": "Effective from date cannot be before 1950-01-01",
       "date.max": "Effective from date cannot be in the future"
     }),
@@ -324,10 +324,10 @@ const createResourcesSchema = Joi.object({
     .optional()
     .messages({
       "string.pattern.base":
-        "effective_end_date must be in the format yyyy-mm-dd",
+        "effective_end_date must be in the format YYYY-MM-DD",
       "any.invalid": "Effective end date must be after the start date.",
       "date.invalidFormat":
-        "Invalid effective end date. Please use the format yyyy-mm-dd",
+        "Invalid effective end date. Please use the format YYYY-MM-DD",
     }),
   resource_designation: Joi.string()
     .pattern(/^[A-Za-z][A-Za-z\s\-'.]{1,62}[A-Za-z]$/)
@@ -481,7 +481,7 @@ const updateResourceSchema = Joi.object({
     
       if (isNaN(inputDate.getTime())) {
         return helpers.error("date.invalidFormat", {
-          message: "Invalid date format. Please use yyyy-mm-dd."
+          message: "Invalid date format. Please use YYYY-MM-DD."
         });
       }
     
@@ -504,8 +504,8 @@ const updateResourceSchema = Joi.object({
     .allow(null)
     .messages({
       "string.base": "Effective from date must be a valid date",
-      "string.max": "Effective from date format should be yyyy-mm-dd",
-      "date.invalidFormat": "Invalid date format. Please use yyyy-mm-dd",
+      "string.max": "Effective from date format should be YYYY-MM-DD",
+      "date.invalidFormat": "Invalid date format. Please use YYYY-MM-DD",
       "date.min": "Effective from date cannot be before 1950-01-01",
       "date.max": "Effective from date cannot be in the future"
     }),
@@ -518,10 +518,10 @@ const updateResourceSchema = Joi.object({
     .optional()
     .messages({
       "string.pattern.base":
-        "effective_end_date must be in the format yyyy-mm-dd",
+        "effective_end_date must be in the format YYYY-MM-DD",
       "any.invalid": "Effective end date must be after the start date.",
       "date.invalidFormat":
-        "Invalid effective end date. Please use the format yyyy-mm-dd",
+        "Invalid effective end date. Please use the format YYYY-MM-DD",
     }),
   resource_designation: Joi.string()
     .pattern(/^[A-Za-z][A-Za-z\s\-'.]{1,62}[A-Za-z]$/)
@@ -629,7 +629,7 @@ const createResourceSkillSchema = Joi.object({
     
       if (isNaN(inputDate.getTime())) {
         return helpers.error("date.invalidFormat", {
-          message: "Invalid date format. Please use yyyy-mm-dd."
+          message: "Invalid date format. Please use YYYY-MM-DD."
         });
       }
     
@@ -652,8 +652,8 @@ const createResourceSkillSchema = Joi.object({
     .allow(null)
     .messages({
       "string.base": "Start date must be a valid date",
-      "string.max": "Start date format should be yyyy-mm-dd",
-      "date.invalidFormat": "Invalid date format. Please use yyyy-mm-dd",
+      "string.max": "Start date format should be YYYY-MM-DD",
+      "date.invalidFormat": "Invalid date format. Please use YYYY-MM-DD",
       "date.min": "Start date cannot be before 1950-01-01",
       "date.max": "Start date cannot be in the future"
     }),
@@ -712,7 +712,7 @@ const updateResourceSkillSchema = Joi.object({
     
       if (isNaN(inputDate.getTime())) {
         return helpers.error("date.invalidFormat", {
-          message: "Invalid date format. Please use yyyy-mm-dd."
+          message: "Invalid date format. Please use YYYY-MM-DD."
         });
       }
     
@@ -735,8 +735,8 @@ const updateResourceSkillSchema = Joi.object({
     .allow(null)
     .messages({
       "string.base": "Start date must be a valid date",
-      "string.max": "Start date format should be yyyy-mm-dd",
-      "date.invalidFormat": "Invalid date format. Please use yyyy-mm-dd",
+      "string.max": "Start date format should be YYYY-MM-DD",
+      "date.invalidFormat": "Invalid date format. Please use YYYY-MM-DD",
       "date.min": "Start date cannot be before 1950-01-01",
       "date.max": "Start date cannot be in the future"
     }),
@@ -851,10 +851,10 @@ const updateResourceCostSchema = Joi.object({
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "effective_date must be in the format yyyy-mm-dd",
+      "string.pattern.base": "effective_date must be in the format YYYY-MM-DD",
       "any.invalid": "Date cannot be in the future.",
       "date.invalidFormat":
-        "Invalid effective date. Please use the format yyyy-mm-dd",
+        "Invalid effective date. Please use the format YYYY-MM-DD",
     }),
   end_date: Joi.string()
     .max(10)
@@ -863,9 +863,9 @@ const updateResourceCostSchema = Joi.object({
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "end_date must be in the format yyyy-mm-dd",
+      "string.pattern.base": "end_date must be in the format YYYY-MM-DD",
       "date.invalidFormat":
-        "Invalid end date. Please use the format yyyy-mm-dd",
+        "Invalid end date. Please use the format YYYY-MM-DD",
     }),
   annual_cost: costFieldValidator('annual_cost'),
   // semi_annual_cost: costFieldValidator('semi_annual_cost'),
@@ -981,10 +981,10 @@ const resourceCostSchema = Joi.object({
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "effective_date must be in the format yyyy-mm-dd",
+      "string.pattern.base": "effective_date must be in the format YYYY-MM-DD",
       "any.invalid": "Date cannot be in the future.",
       "date.invalidFormat":
-        "Invalid effective date. Please use the format yyyy-mm-dd",
+        "Invalid effective date. Please use the format YYYY-MM-DD",
     }),
   end_date: Joi.string()
     .max(10)
@@ -993,9 +993,9 @@ const resourceCostSchema = Joi.object({
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "end_date must be in the format yyyy-mm-dd",
+      "string.pattern.base": "end_date must be in the format YYYY-MM-DD",
       "date.invalidFormat":
-        "Invalid end date. Please use the format yyyy-mm-dd",
+        "Invalid end date. Please use the format YYYY-MM-DD",
     }),
   annual_cost: costFieldValidator('annual_cost'),
   // semi_annual_cost: costFieldValidator('semi_annual_cost'),

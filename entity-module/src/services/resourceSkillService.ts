@@ -428,7 +428,6 @@ class ResourceSkillService {
       try {
 
         const startDate = this.formatDateForDb(start_date as string);
-        console.log("startDate", startDate);
         const [affectedCounts, affectedRows] = await ResourceSkill.update(
           {
             rid,
@@ -836,14 +835,14 @@ class ResourceSkillService {
         if (resourceInfo.resource_startdate) {
           const startDate = moment(resourceInfo.resource_startdate);
           if (startDate.isValid()) {
-            resourceInfo.dataValues.resource_startdate = startDate.format('yyyy-mm-dd') as any;
+            resourceInfo.dataValues.resource_startdate = startDate.format('YYYY-MM-DD') as any;
           }
         }
         
         if (resourceInfo.resource_enddate) {
           const endDate = moment(resourceInfo.resource_enddate);
           if (endDate.isValid()) {
-            resourceInfo.dataValues.resource_enddate = endDate.format('yyyy-mm-dd') as any;
+            resourceInfo.dataValues.resource_enddate = endDate.format('YYYY-MM-DD') as any;
           }
         }
       }
@@ -952,14 +951,11 @@ class ResourceSkillService {
    */
   private formatDateForDb(dateString?: string): Date | null {
     if (!dateString) return null;
-
     // Parse the date using moment to ensure consistent handling
-    const date = moment(dateString, "yyyy-mm-dd", true);
+    const date = moment(dateString, "YYYY-MM-DD", true);
     if (!date.isValid()) return null;
-
     // Set the time to noon to avoid timezone issues
     date.hour(12).minute(0).second(0).millisecond(0);
-
     return date.toDate();
   }
 

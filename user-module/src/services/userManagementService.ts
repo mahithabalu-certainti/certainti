@@ -927,8 +927,6 @@ class UserManagementService {
  * @returns {Promise<Object>} - Response object with update status
  */
   async updateUserExtendedPermissions(
-    profileId: string,
-    profileName: string,
     privileges: Array<{
       rid: string;
       type: string;
@@ -955,12 +953,24 @@ class UserManagementService {
   }> {
     try {
       // Verify profile exists
-      const profile = await Profile.findByPk(profileId);
-      if (!profile) {
+       const roles = await User.findOne({
+        attributes: ["role_rid", "rid", "profile_rid"],
+        where: { rid: requestedUserId },
+        include: [
+          {
+            model: Profile,
+            as: "profile",
+            required: true,
+            attributes: ["profile_name"],
+          },
+        ],
+      });
+      const profileId = roles?.profile_rid;
+      if ( !profileId) {
         return {
           statusCode: constants.NOT_FOUND,
           message: constants.NOT_FOUND_MESSAGE,
-          errorMessage: `Profile with ID ${profileId} not found`
+          errorMessage: `User with ID ${requestedUserId} not having profile mapped`
         };
       }
   

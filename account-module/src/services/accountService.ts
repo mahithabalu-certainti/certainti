@@ -1172,7 +1172,7 @@ async insertClientTemplateDetails(
 
   private getFieldFilter(fieldFilter: any, dbField: string): any {
 
-    const isUuidField = dbField === 'rid';
+     const isUuidField = ['rid', 'industry_rid'].includes(dbField);
     if (fieldFilter.equals) {
       if (isUuidField) {
         // For UUID fields, use direct equality without LOWER function

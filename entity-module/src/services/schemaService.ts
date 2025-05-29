@@ -796,10 +796,10 @@ class SchemaService {
 
       // Parse dates and set to UTC midnight to avoid timezone issues
       const startDate = moment
-        .utc(resourceData.effective_from_date, "yyyy-mm-dd")
+        .utc(resourceData.effective_from_date, "YYYY-MM-DD")
         .startOf("day");
       const endDate = moment
-        .utc(resourceData.effective_end_date, "yyyy-mm-dd")
+        .utc(resourceData.effective_end_date, "YYYY-MM-DD")
         .startOf("day");
 
       const existingResourceData = await Resource.findOne({
@@ -1110,10 +1110,10 @@ class SchemaService {
         resource = {
           ...resource.toJSON(),
           resource_startdate: resource.resource_startdate
-            ? moment(resource.resource_startdate).format("yyyy-mm-dd")
+            ? moment(resource.resource_startdate).format("YYYY-MM-DD")
             : null,
           resource_enddate: resource.resource_enddate
-            ? moment(resource.resource_enddate).format("yyyy-mm-dd")
+            ? moment(resource.resource_enddate).format("YYYY-MM-DD")
             : null,
         };
       }

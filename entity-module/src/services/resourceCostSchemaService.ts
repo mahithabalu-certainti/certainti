@@ -352,8 +352,8 @@ class ResourceCostSchemaService {
       //Build the base query without sorting or pagination
       let query = `
         SELECT rc.*,rc.r_number as r_number, r.resource_name, r.resource_orgname, r.resource_designation, r.resource_role, ad.account_name,
-        TO_CHAR(rc.effective_date, 'yyyy-mm-dd') as effective_date,
-        TO_CHAR(rc.end_date, 'yyyy-mm-dd') as end_date
+        TO_CHAR(rc.effective_date, 'YYYY-MM-DD') as effective_date,
+        TO_CHAR(rc.end_date, 'YYYY-MM-DD') as end_date
         FROM "${schemaName}"."resource_cost" rc
         INNER JOIN "${schemaName}"."resources" r ON rc.resource_rid = r.rid
         INNER JOIN "${schemaName}"."account_details" ad ON r.account_rid = ad.account_rid
@@ -538,8 +538,8 @@ class ResourceCostSchemaService {
       //Build the base query without sorting or pagination
       let query = `
         SELECT rc.*,rc.r_number as r_number, r.resource_name, r.resource_orgname, r.resource_designation, r.resource_role, ad.account_name,
-        TO_CHAR(rc.effective_date, 'yyyy-mm-dd') as effective_date,
-        TO_CHAR(rc.end_date, 'yyyy-mm-dd') as end_date
+        TO_CHAR(rc.effective_date, 'YYYY-MM-DD') as effective_date,
+        TO_CHAR(rc.end_date, 'YYYY-MM-DD') as end_date
         FROM "${schemaName}"."resource_cost" rc
         INNER JOIN "${schemaName}"."resources" r ON rc.resource_rid = r.rid
         INNER JOIN "${schemaName}"."account_details" ad ON r.account_rid = ad.account_rid
