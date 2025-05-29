@@ -10,16 +10,23 @@ interface TableColumn<T> {
   sx?: React.CSSProperties;
   render?: (row: T) => React.ReactNode;
 }
-
+export const formatDateToYMD = (dateString: string): string => {
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return ''; // Handle invalid dates
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 export const getProjectColumns = (
   onClick: (row: ProjectList) => void
 ): TableColumn<ProjectList>[] => [
   {
-    id: 'project_code',
-    label: 'Project Code',
+    id: 'account_name',
+    label: 'Account Name',
     sortable: true,
-    sortId: 'project_code',
-    width: 160,
+    sortId: 'account_name',
+    width: 150,
     sticky: true,
     sx: {
       position: 'sticky',
@@ -35,18 +42,11 @@ export const getProjectColumns = (
           onClick={() => onClick(row)}
           className='cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
         >
-          {row.project_code}
+          {row.account_name}
         </span>
       ) : (
-        row.project_code
+        row.account_name
       ),
-  },
-  {
-    id: 'project_name',
-    label: 'Project Name',
-    sortable: true,
-    sortId: 'project_name',
-    width: 160,
   },
   {
     id: 'fiscal_year',
@@ -56,81 +56,66 @@ export const getProjectColumns = (
     width: 130,
   },
   {
-    id: 'account_name',
-    label: 'Account Name',
+    id: 'project_client_group',
+    label: 'Customer Group',
     sortable: true,
-    sortId: 'account_name',
-    width: 150,
-  },
-  {
-    id: 'industry_name',
-    label: 'Industry',
-    sortable: true,
-    sortId: 'industry_name',
+    sortId: 'project_client_group',
     width: 160,
   },
   {
-    id: 'program_name',
-    label: 'Program Name',
+    id: 'project_group',
+    label: 'Project Group',
     sortable: true,
-    sortId: 'program_name',
-    width: 180,
-  },
-  {
-    id: 'project_startdate',
-    label: 'Start Date',
-    sortable: true,
-    sortId: 'project_startdate',
-    width: 140,
-  },
-  {
-    id: 'project_enddate',
-    label: 'End Date',
-    sortable: true,
-    sortId: 'project_enddate',
-    width: 140,
-  },
-  {
-    id: 'qualified_research_expenditure',
-    label: 'Qualified Research Expenditure',
-    sortable: true,
-    sortId: 'qualified_research_expenditure',
-    width: 250,
-  },
-  {
-    id: 'is_rd_qualified',
-    label: 'Is RD Qualified ?',
-    sortable: true,
-    sortId: 'is_rd_qualified',
+    sortId: 'project_group',
     width: 160,
   },
   {
-    id: 'qre',
-    label: 'QRE %',
+    id: 'project_code',
+    label: 'Project Code',
     sortable: true,
-    sortId: 'qre',
-    width: 130,
+    sortId: 'project_code',
+    width: 160,
   },
   {
-    id: 'total_cost',
-    label: 'Cost',
+    id: 'project_name',
+    label: 'Project Name',
     sortable: true,
-    sortId: 'total_cost',
-    width: 130,
+    sortId: 'project_name',
+    width: 160,
+  },
+  {
+    id: 'project_type',
+    label: 'Project Type',
+    sortable: true,
+    sortId: 'project_type',
+    width: 160,
+  },
+  {
+    id: 'classification_name',
+    label: 'Project classification',
+    sortable: true,
+    sortId: 'classification_name',
+    width: 170,
   },
   {
     id: 'total_effort',
-    label: 'Effort in hrs',
+    label: 'Project Effort (Hours)',
     sortable: true,
     sortId: 'total_effort',
-    width: 130,
+    width: 170,
+    sx: {
+      textAlign: 'right',
+    },
   },
   {
-    id: 'total_fte',
-    label: 'No of FTE',
+    id: 'total_cost',
+    label: 'Project Cost',
     sortable: true,
-    sortId: 'total_fte',
+    sortId: 'total_cost',
     width: 130,
+    sx: {
+      textAlign: 'right',
+    },
   },
   {
     id: 'total_fte_cost',
@@ -138,27 +123,67 @@ export const getProjectColumns = (
     sortable: true,
     sortId: 'total_fte_cost',
     width: 140,
-  },
-  {
-    id: 'total_sub_con',
-    label: 'No of Sub Con',
-    sortable: true,
-    sortId: 'total_sub_con',
-    width: 140,
+    sx: {
+      textAlign: 'right',
+    },
   },
   {
     id: 'total_sub_con_cost',
-    label: 'Sub Con Cost',
+    label: 'SubCon Cost',
     sortable: true,
     sortId: 'total_sub_con_cost',
     width: 140,
+    sx: {
+      textAlign: 'right',
+    },
   },
   {
     id: 'total_non_labor_cost',
-    label: 'Non labor Cost',
+    label: 'Non-Labor Cost',
     sortable: true,
     sortId: 'total_non_labor_cost',
     width: 140,
+    sx: {
+      textAlign: 'right',
+    },
+  },
+  {
+    id: 'assessment_status',
+    label: 'Assessment Status',
+    sortable: true,
+    sortId: 'assessment_status',
+    width: 180,
+  },
+  {
+    id: 'qre',
+    label: 'QRE %',
+    sortable: true,
+    sortId: 'qre',
+    width: 130,
+    sx: {
+      textAlign: 'right',
+    },
+  },
+  {
+    id: 'qualified_research_expenditure',
+    label: 'QRE',
+    sortable: true,
+    sortId: 'qualified_research_expenditure',
+    width: 130,
+  },
+  {
+    id: 'project_point_of_contact',
+    label: 'Project Point of Contact',
+    sortable: true,
+    sortId: 'project_point_of_contact',
+    width: 200,
+  },
+  {
+    id: 'technical_point_of_contact',
+    label: 'Technical Point of Contact',
+    sortable: true,
+    sortId: 'technical_point_of_contact',
+    width: 210,
   },
   {
     id: 'comments',
@@ -168,53 +193,13 @@ export const getProjectColumns = (
     width: 200,
   },
   {
-    id: 'country_name',
-    label: 'Country',
+    id: 'modified_datetime',
+    label: 'Last Modified',
     sortable: true,
-    sortId: 'country_name',
-    width: 160,
-  },
-  {
-    id: 'region_name',
-    label: 'Region',
-    sortable: true,
-    sortId: 'region_name',
-    width: 160,
-  },
-  {
-    id: 'currency_code',
-    label: 'Currency Code',
-    sortable: true,
-    sortId: 'currency_code',
-    width: 130,
-  },
-  {
-    id: 'project_status',
-    label: 'Status',
-    sortable: true,
-    sortId: 'project_status',
-    width: 130,
-  },
-  {
-    id: 'project_point_of_contact',
-    label: 'Project POC',
-    sortable: true,
-    sortId: 'project_point_of_contact',
-    width: 180,
-  },
-  {
-    id: 'financial_consultant',
-    label: 'Financial Consultant',
-    sortable: true,
-    sortId: 'financial_consultant',
-    width: 180,
-  },
-  {
-    id: 'technical_consultant',
-    label: 'Technical Consultant',
-    sortable: true,
-    sortId: 'technical_consultant',
-    width: 180,
+    sortId: 'modified_datetime',
+    width: 140,
+    render: (row: ProjectList) =>
+      row.modified_datetime ? formatDateToYMD(row.modified_datetime) : '-',
   },
   {
     id: 'r_number',

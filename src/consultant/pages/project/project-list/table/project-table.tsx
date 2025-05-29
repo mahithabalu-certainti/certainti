@@ -82,16 +82,16 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     }));
   };
 
-  const handleProject = (project: ProjectList) => {
+  const handleAccountName = (project: ProjectList) => {
     const path = generatePath(PROJECT_DETAILS, {
-      projectid: project?.rid,
+      projectid: project?.project_id ?? null,
     });
     navigate(path, {
-      state: { accountID: project?.account_rid, projectID: project?.rid },
+      state: { accountID: project?.account_id, projectID: project?.project_id },
     });
   };
 
-  const projectColumns = getAllProjectListColumns(handleProject);
+  const projectColumns = getAllProjectListColumns(handleAccountName);
 
   const actionButtons: ActionItem<any>[] = [
     {

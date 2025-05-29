@@ -39,7 +39,6 @@ export const ProjectDetails = () => {
   }, [searchParams]);
 
   const { data, isLoading, isError } = useProjectDetail(accountID, projectID);
-
   // console.log('projectDetails outerr', data);
   useEffect(() => {
     if (data?.data) {
@@ -83,7 +82,13 @@ export const ProjectDetails = () => {
       case 'financial':
         return <div>Financial Highlights</div>;
       case 'projectDetails':
-        return <ProjectDetailsData projectDetails={projectData} />;
+        return (
+          <ProjectDetailsData
+            projectDetails={projectData}
+            isDetailsLoading={isLoading}
+            detailsError={isError}
+          />
+        );
       case 'projectResources':
         return <div>Project Resources</div>;
       case 'projectsTask':
@@ -109,7 +114,7 @@ export const ProjectDetails = () => {
 
   return (
     <div className='flex flex-col'>
-      <div className='flex h-[108px]'>
+      <div className='flex'>
         <PageHeader
           variant='sub'
           placeholder='Project Name'
