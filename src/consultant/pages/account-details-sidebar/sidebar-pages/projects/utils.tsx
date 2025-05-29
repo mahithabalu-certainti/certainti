@@ -1,3 +1,4 @@
+import { PROJECT_TYPE } from '../../../../../common-utils';
 import { fiscalYears } from '../../../resource-form/form-data';
 import { FieldConfig } from '../../components/filter/filterType';
 
@@ -6,6 +7,10 @@ export const statusOptions: { option: string; value: string }[] = [
   { option: 'In-Active', value: 'Inactive' },
 ];
 export const fiscalYearOption = fiscalYears.map((year) => ({
+  option: year.label,
+  value: year.value,
+}));
+export const projectTypeOption = PROJECT_TYPE.map((year) => ({
   option: year.label,
   value: year.value,
 }));
@@ -88,8 +93,9 @@ export const projectFilterFields: FieldConfig[] = [
   {
     name: 'Project Type',
     value: 'project_type',
-    type: 'text',
-    operatorOption: textOptions,
+    type: 'enum',
+    options: projectTypeOption,
+    operatorOption: enumOptions,
   },
   {
     name: 'Project Classification',

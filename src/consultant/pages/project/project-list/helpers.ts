@@ -6,6 +6,7 @@ import {
   numberOptions,
   textOptions,
   statusOptions,
+  projectTypeOption,
 } from '../../account-details-sidebar/sidebar-pages/projects/utils';
 
 export const getAllProjectFilterFields = (): FieldConfig[] => [
@@ -50,8 +51,9 @@ export const getAllProjectFilterFields = (): FieldConfig[] => [
   {
     name: 'Project Type',
     value: 'project_type',
-    type: 'text',
-    operatorOption: textOptions,
+    type: 'enum',
+    options: projectTypeOption,
+    operatorOption: enumOptions,
   },
   {
     name: 'Project Classification',
