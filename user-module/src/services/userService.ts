@@ -1481,8 +1481,8 @@ const rawResult = users || [];
       // For field permissions, merge read/edit and extended flags
       mergedPermissions.push({
         ...profilePerm,
-        read: profilePerm.read,
-        edit: profilePerm.edit,
+        read: userPerm?.read || false,
+        edit: userPerm?.edit || false,
         hasReadExtendedPermsission: profilePerm.read ? false : (userPerm?.read ?? false),
         hasEditExtendedPermsission: profilePerm.edit ? false : (userPerm?.edit ?? false),
       });
@@ -1490,7 +1490,7 @@ const rawResult = users || [];
       // For other types (menu, module, etc.)
       mergedPermissions.push({
         ...profilePerm,
-        is_enabled: profilePerm.is_enabled,
+        is_enabled: userPerm?.is_enabled || false,
         has_extended_permission: profilePerm.is_enabled ? false : (userPerm?.is_enabled === true),
       });
     }
