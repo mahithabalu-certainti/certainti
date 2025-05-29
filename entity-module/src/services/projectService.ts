@@ -681,7 +681,7 @@ export class ProjectService {
           mainDbInit
         );
 
-        projectData = this.schemaService.finalProjectSort(projectData, finalMetaDataSortBy, finalMetaDataSortOrder, filters);
+        projectData = await this.schemaService.finalProjectSort(projectData, finalMetaDataSortBy, finalMetaDataSortOrder, filters);
       }
 
       return {
