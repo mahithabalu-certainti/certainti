@@ -1,0 +1,81 @@
+name: Deploy Platform 2.0 Pre Production Frontend Application
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  ENVIRONMENT: prod
+
+jobs:
+  # JOB to build and deploy Frontend App
+  frontend-app:
+    name: Build and Deploy Frontend Application
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+      - name: Fetch secrets and create .env file
+        id: fetch-secrets
+        run: |
+          KEY_VAULT_NAME=${{ secrets.PROD_KEY_VAULT_NAME }}
+          ENV_FILE=".env.prod"
+
+          # Ensure Azure CLI is authenticated
+          az account show > /dev/null 2>&1
+          if [ $? -ne 0 ]; then
+            echo "Error: Azure CLI is not authenticated. Run 'az login' first."
+            exit 1
+          fi
+
+          # Fetch secrets from Azure Key Vault and write to .env file
+          echo "Fetching secrets from Azure Key Vault: $KEY_VAULT_NAME"
+
+          CLIENT_ID=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "b2c-tenant-web-client-id" --query value -o tsv)
+          AUTHORITY=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "b2c-tenant-authority-url" --query value -o tsv)
+          KNOWN_AUTHORITIES=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "b2c-tenant-known-authorities" --query value -o tsv)
+          PASSWORD_RESET_AUTHORITY=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "b2c-tenant-password-reset-authority-url" --query value -o tsv)
+          STATIC_WEB_APP_API_KEY=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "static-web-apps-api-key" --query value -o tsv)
+
+          if [ -z "$CLIENT_ID" ] || [ -z "$AUTHORITY" ] || [ -z "$KNOWN_AUTHORITIES" ]; then
+            echo "Error: One or more secrets could not be fetched!"
+            exit 1
+          fi
+
+          # Write to .env file
+          echo "VITE_CLIENT_ID=$CLIENT_ID" > $ENV_FILE
+          echo "VITE_AUTHORITY=$AUTHORITY" >> $ENV_FILE
+          echo "VITE_KNOWN_AUTHORITIES=$KNOWN_AUTHORITIES" >> $ENV_FILE
+          echo "VITE_RESET_PW_AUTHORITY=$PASSWORD_RESET_AUTHORITY" >> $ENV_FILE
+          echo "VITE_REDIRECT_URL=https://platform20.certainti.ai/#/" >> $ENV_FILE
+          echo "VITE_POST_LOGOUT_REDIRECT_URL=https://platform20.certainti.ai/" >> $ENV_FILE
+          echo "VITE_BASE_URL=https://prod-platform20-api-management.azure-api.net" >> $ENV_FILE
+          echo "VITE_USER_URL=/userService" >> $ENV_FILE
+          echo "VITE_ACCOUNT_URL=/accountService" >> $ENV_FILE
+          echo "VITE_RESOURCE_URL=/entityService" >> $ENV_FILE 
+          echo "VITE_ORGANIZATION=PF2.0" >> $ENV_FILE
+          echo "$ENV_FILE file created successfully!"
+          
+          echo "STATIC_WEB_APP_API_KEY=$STATIC_WEB_APP_API_KEY" >> $GITHUB_ENV
+      - name: Install dependencies
+        run: npm ci
+      - name: Build project
+        run: npm run build:${{ env.ENVIRONMENT }}
+      - name: Deploy to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ env.STATIC_WEB_APP_API_KEY }}
+          action: "upload"
+          app_location: "/"
+          api_location: ""
+          output_location: "dist"
+          app_build_command: "npm run build:${{ env.ENVIRONMENT }}"
