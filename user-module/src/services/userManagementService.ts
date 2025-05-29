@@ -935,10 +935,9 @@ class UserManagementService {
       module_id:string;
       menu_id:string;
       is_modified: boolean;
-      has_extended_permission:boolean;
-      hasEditExtendedPermsission:boolean;
-      hasReadExtendedPermsission:boolean;
-      is_enabled?: boolean
+      is_enabled?: boolean;
+      read?: boolean;
+      edit?: boolean;
     }>,
     requestedUserId : string,
     loggedInUsername : string,
@@ -961,7 +960,7 @@ class UserManagementService {
             model: Profile,
             as: "profile",
             required: true,
-            attributes: ["rid",'profile_name'],
+            attributes: ["profile_name"],
           },
         ],
       });
@@ -991,19 +990,19 @@ class UserManagementService {
       const updatePromises = modifiedPermissions.map(async (permission) => {
         switch (permission.type) {
           case 'menu':
-            return this.updateUserMenuAccessIfChanged(profileId,permission.rid,permission.menu_id, permission.has_extended_permission || false, requestedUserId ,loggedInUsername
+            return this.updateUserMenuAccessIfChanged(profileId,permission.rid,permission.menu_id, permission.is_enabled || false, requestedUserId ,loggedInUsername
             );
           case 'module':
-            return this.updateUserModuleAccessIfChanged(profileId,permission.rid,permission.module_id, permission.has_extended_permission || false, requestedUserId ,loggedInUsername);
+            return this.updateUserModuleAccessIfChanged(profileId,permission.rid,permission.module_id, permission.is_enabled || false, requestedUserId ,loggedInUsername);
           case 'permission':
-            return this.updateUserPermissionAccessIfChanged(profileId,permission.rid,permission.permission_id, permission.has_extended_permission || false, requestedUserId ,loggedInUsername);
+            return this.updateUserPermissionAccessIfChanged(profileId,permission.rid,permission.permission_id, permission.is_enabled || false, requestedUserId ,loggedInUsername);
           case 'field':
             return this.updateUserFieldAccessIfChanged(
               profileId,
               permission.rid,
               permission.field_id,
-              permission.hasReadExtendedPermsission || false,
-              permission.hasEditExtendedPermsission || false,
+              permission.read || false,
+              permission.edit || false,
               requestedUserId ,loggedInUsername,
             );
 
