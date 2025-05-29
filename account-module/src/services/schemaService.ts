@@ -635,7 +635,6 @@ class SchemaService {
       created_by uuid,
       modified_by uuid,
       comments text,
-      CONSTRAINT resources_pkey PRIMARY KEY (rid),
       CONSTRAINT resources_resource_code_key UNIQUE (resource_code))
      `);
   }
@@ -682,7 +681,6 @@ class SchemaService {
     created_by uuid NOT NULL,
     modified_by uuid,
     estimated_rd_hours numeric(14,2),
-    CONSTRAINT resource_fiscal_pkey PRIMARY KEY (rid),
     CONSTRAINT resource_fiscal_r_number_key UNIQUE (r_number)
 )
       `);
@@ -706,8 +704,7 @@ class SchemaService {
           new_value varchar(1000) NOT NULL,
           modified_datetime timestamptz NOT NULL,
           created_datetime timestamptz NOT NULL,
-          modified_by uuid NOT NULL,
-          CONSTRAINT resources_history_pkey PRIMARY KEY (rid)
+          modified_by uuid NOT NULL
       )
      `);
   }
@@ -730,8 +727,7 @@ class SchemaService {
         event_type varchar(100) NOT NULL,
         event_status varchar(100) NOT NULL,
         event_datetime timestamptz NOT NULL,
-        modified_by uuid NOT NULL,
-        CONSTRAINT resources_timeline_pkey PRIMARY KEY (rid)
+        modified_by uuid NOT NULL
       )
     `);
   }
@@ -769,7 +765,6 @@ class SchemaService {
           modified_datetime timestamptz,
           created_by uuid,
           modified_by uuid,
-          CONSTRAINT resource_cost_pkey PRIMARY KEY (rid),
           CONSTRAINT resource_cost_resource_rid_fkey FOREIGN KEY (resource_rid)
               REFERENCES "${schemaName}".resources (rid)
               ON UPDATE CASCADE
@@ -799,12 +794,10 @@ class SchemaService {
         entity_rid uuid NOT NULL,
         event_datetime timestamptz NOT NULL,
         modified_datetime timestamptz,
-        modified_by varchar(255) NOT NULL,
-        CONSTRAINT resource_cost_timeline_pkey PRIMARY KEY (rid)
-    );
-
-    `);
-  }
+        modified_by varchar(255) NOT NULL
+        );
+    `)
+   }
 
   private async createResourceCostHistoryTable(
     schemaName: string,
@@ -825,8 +818,7 @@ class SchemaService {
           old_value varchar(255),
           new_value varchar(255) NOT NULL,
           modified_datetime timestamptz,
-          modified_by varchar(255) NOT NULL,
-          CONSTRAINT resource_cost_history_pkey PRIMARY KEY (rid)
+          modified_by varchar(255) NOT NULL
       );
     `);
   }
@@ -862,7 +854,6 @@ class SchemaService {
     modified_datetime timestamptz,
     created_by varchar(255),
     modified_by varchar(255),
-    CONSTRAINT resource_skill_pkey PRIMARY KEY (rid),
     CONSTRAINT resource_skill_resource_rid_fkey FOREIGN KEY (resource_rid)
         REFERENCES "${schemaName}".resources (rid)
         ON UPDATE CASCADE
@@ -892,12 +883,10 @@ class SchemaService {
           entity_rid uuid NOT NULL,
           event_datetime timestamptz NOT NULL,
           modified_datetime timestamptz,
-          modified_by varchar(255) NOT NULL,
-          CONSTRAINT resource_skill_timeline_pkey PRIMARY KEY (rid)
+          modified_by varchar(255) NOT NULL
         );
-
-    `);
-  }
+    `)
+   }
 
   private async createResourceSkillHistoryTable(
     schemaName: string,
@@ -918,8 +907,7 @@ class SchemaService {
           old_value varchar(255),
           new_value varchar(255) NOT NULL,
           modified_datetime timestamptz,
-          modified_by varchar(255) NOT NULL,
-          CONSTRAINT resource_skill_history_pkey PRIMARY KEY (rid)
+          modified_by varchar(255) NOT NULL
       );
     `);
   }
