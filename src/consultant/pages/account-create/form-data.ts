@@ -456,15 +456,15 @@ export const FormData = (
             required: false,
             disabled: true,
           }),
-          createTextField('account_id', 'Account ID', {
-            required: false,
-            disabled: true,
-          }),
           createTextField('created_on', 'Created On', {
             required: false,
             disabled: true,
           }),
           createTextField('created_by', 'Created By', {
+            required: false,
+            disabled: true,
+          }),
+          createTextField('account_id', 'Account ID', {
             required: false,
             disabled: true,
           }),

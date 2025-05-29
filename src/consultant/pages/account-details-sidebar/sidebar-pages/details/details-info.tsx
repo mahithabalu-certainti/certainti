@@ -13,6 +13,7 @@ import {
   accountDetailsProps,
   KeyContactProps,
 } from '../../../account-details/utils';
+import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
 
 // interface ErrorProps {
 //     message?: string;
@@ -395,9 +396,15 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
   const auditInfo: DetailItem[] = [
     { label: 'Record ID', value: accountDetails?.account_rid },
     { label: 'Account ID', value: accountById?.r_number },
-    { label: 'Created On', value: accountDetails?.created_datetime },
+    {
+      label: 'Created On',
+      value: formatDateToYYYYMMDDWithTime(accountDetails?.created_datetime),
+    },
     { label: 'Created By', value: accountDetails?.created_by },
-    { label: 'Updated On', value: accountDetails?.modified_datetime },
+    {
+      label: 'Updated On',
+      value: formatDateToYYYYMMDDWithTime(accountDetails?.modified_datetime),
+    },
     { label: 'Updated By', value: accountDetails?.modified_by },
   ];
   const description: DetailItem[] = [
