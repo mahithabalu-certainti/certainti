@@ -508,27 +508,28 @@ export class ResourceService {
     const uuidFields = ["resource_country","resource_region"];
 
     const filterFields = [
-      { clientField: "resource_code", dbField: "resource_code" },
-      { clientField: "r_number", dbField: "r_number" },
-      { clientField: "resource_name", dbField: "resource_name" },
-      { clientField: "resource_type", dbField: "resource_type" },
-      { clientField: "resource_status", dbField: "resource_status" },
-      { clientField: "resource_designation", dbField: "resource_designation" },
-      { clientField: "resource_country", dbField: "resource_country" },
-      { clientField: "resource_region", dbField: "resource_region" },
-      { clientField: "resource_role", dbField: "resource_role" },
-      { clientField: "resource_orgname", dbField: "resource_orgname" },
-      { clientField: "comments", dbField: "comments" },
+      { clientField: "resource_code", dbField: "Resources.resource_code" },
+      { clientField: "r_number", dbField: "Resources.r_number" },
+      { clientField: "resource_name", dbField: "Resources.resource_name" },
+      { clientField: "resource_type", dbField: "Resources.resource_type" },
+      { clientField: "resource_status", dbField: "Resources.resource_status" },
+      { clientField: "resource_designation", dbField: "Resources.resource_designation" },
+      { clientField: "resource_country", dbField: "Resources.resource_country" },
+      { clientField: "resource_region", dbField: "Resources.resource_region" },
+      { clientField: "resource_role", dbField: "Resources.resource_role" },
+      { clientField: "resource_orgname", dbField: "Resources.resource_orgname" },
+      { clientField: "comments", dbField: "Resources.comments" },
     ];
 
     filterFields.forEach(({ clientField, dbField }) => {
       if (filters[clientField]) {
         const fieldFilter = filters[clientField];
+        const fieldName = dbField.split('.')[1];
 
-        if (uuidFields.includes(dbField)) {
+        if (uuidFields.includes(fieldName)) {
           whereClause[dbField] = this.getUuidFieldFilter(fieldFilter, dbField);
         }
-        else if (castToTextFields.includes(dbField)) {
+        else if (castToTextFields.includes(fieldName)) {
           whereClause[dbField] = Sequelize.where(
             Sequelize.cast(Sequelize.col(dbField), "TEXT"),
             this.getFieldFilter(fieldFilter, dbField)
