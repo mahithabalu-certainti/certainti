@@ -152,7 +152,7 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
           error={error ? 'Failed to load projects' : undefined}
           rowsPerPageOptions={[25, 50, 100]}
           rowsPerPage={rowsPerPage}
-          currentPage={currentPage}
+          currentPage={(currentPage ?? 1) - 1}
           totalItems={totalItems}
           onPageChange={setCurrentPage}
           onRowsPerPageChange={setRowsPerPage}

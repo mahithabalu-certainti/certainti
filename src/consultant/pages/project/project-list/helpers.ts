@@ -129,8 +129,7 @@ export const getAllProjectFilterFields = (): FieldConfig[] => [
   {
     name: 'last Modified',
     value: 'modified_datetime',
-    type: 'text',
-    operatorOption: textOptions,
+    type: 'date',
   },
   {
     name: 'Project ID',

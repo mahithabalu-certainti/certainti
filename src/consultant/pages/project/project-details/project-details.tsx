@@ -27,7 +27,7 @@ export const ProjectDetails = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const [projectDetails, setProjectDetails] = useState<any>([]);
-  const { accountID, projectID } = location.state || {};
+  // const { accountID, projectID } = location.state || {};
   const defaultTab = searchParams.get('list') || 'financial';
   const [activeKey, setActiveKey] = useState(defaultTab);
   const [projectData, setProjectData] = useState<NewProjectData | null>(null);
@@ -37,6 +37,22 @@ export const ProjectDetails = () => {
       setActiveKey(list);
     }
   }, [searchParams]);
+  const initialAccountID =
+    location.state?.accountID || localStorage.getItem('accountID');
+  const initialProjectID =
+    location.state?.projectID || localStorage.getItem('projectID');
+
+  const [accountID, setAccountID] = useState(initialAccountID);
+  const [projectID, setProjectID] = useState(initialProjectID);
+
+  useEffect(() => {
+    if (location.state?.accountID && location.state?.projectID) {
+      localStorage.setItem('accountID', location.state.accountID);
+      localStorage.setItem('projectID', location.state.projectID);
+      setAccountID(location.state.accountID);
+      setProjectID(location.state.projectID);
+    }
+  }, [location.state]);
 
   const { data, isLoading, isError } = useProjectDetail(accountID, projectID);
   // console.log('projectDetails outerr', data);
