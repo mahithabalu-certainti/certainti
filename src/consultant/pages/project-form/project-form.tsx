@@ -74,6 +74,7 @@ const ProjectForm: React.FC = () => {
         project_startdate: formatDateToYYYYMMDD(account?.project_startdate),
         created_on: formatDateToYYYYMMDDWithTime(account?.created_datetime),
         updated_on: formatDateToYYYYMMDDWithTime(account?.modified_datetime),
+
         region: account?.region,
         key_contact_name: account?.keyContact[0]?.key_contact_name,
         key_contact_role: account?.keyContact[0]?.key_contact_role,
