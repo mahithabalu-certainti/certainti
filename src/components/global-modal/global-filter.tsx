@@ -190,11 +190,11 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
     );
 
     if (selectedChildren?.length === parentAccount?.child_accounts?.length) {
-      return 'All child name selected';
+      return 'All child account selected';
     }
 
     // return selectedChildren?.map(child => child.account_name).join(', ');
-    return `${selectedChildren?.length} child name selected`;
+    return `${selectedChildren?.length} child account selected`;
   };
 
   const getAvailableAccounts = (currentIndex: number) => {
@@ -381,42 +381,45 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
                       sx={SELECT_STYLES}
                       MenuProps={MENU_PROPS}
                     >
-                      <MenuItem
-                        value=''
-                        sx={{
-                          fontSize: '13px',
-                          fontWeight: 700,
-                          color: '#2D3E4F',
-                          lineHeight: '20px',
-                          borderBottom: '1px solid #CBD6E2',
-                          '&.Mui-selected': {
-                            backgroundColor: 'transparent',
-                          },
-                        }}
-                      >
-                        <Checkbox
-                          size='small'
-                          checked={Boolean(
-                            filter.account &&
-                              filter.child.length ===
-                                accounts?.find(
-                                  (acc) => acc.rid === filter.account
-                                )?.child_accounts?.length
-                          )}
-                          onChange={(e) =>
-                            handleSelectAllChildren(index, e.target.checked)
-                          }
+                      {accounts?.find((acc) => acc.rid === filter.account)
+                        ?.child_accounts?.length && (
+                        <MenuItem
+                          value=''
                           sx={{
-                            color: '#CBD6E2',
-                            '&.Mui-checked': {
-                              color: '#1755E7',
+                            fontSize: '13px',
+                            fontWeight: 700,
+                            color: '#2D3E4F',
+                            lineHeight: '20px',
+                            borderBottom: '1px solid #CBD6E2',
+                            '&.Mui-selected': {
+                              backgroundColor: 'transparent',
                             },
-                            padding: '0px',
-                            mr: 1,
                           }}
-                        />
-                        <span className='pl-0.5'>Select All</span>
-                      </MenuItem>
+                        >
+                          <Checkbox
+                            size='small'
+                            checked={Boolean(
+                              filter.account &&
+                                filter.child.length ===
+                                  accounts?.find(
+                                    (acc) => acc.rid === filter.account
+                                  )?.child_accounts?.length
+                            )}
+                            onChange={(e) =>
+                              handleSelectAllChildren(index, e.target.checked)
+                            }
+                            sx={{
+                              color: '#CBD6E2',
+                              '&.Mui-checked': {
+                                color: '#1755E7',
+                              },
+                              padding: '0px',
+                              mr: 1,
+                            }}
+                          />
+                          <span className='pl-0.5'>Select All</span>
+                        </MenuItem>
+                      )}
                       {accounts?.find((acc) => acc.rid === filter.account)
                         ?.child_accounts?.length ? (
                         accounts

@@ -348,8 +348,13 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   const basicInfo = CreateSectionData({
     resource_code: resourceData.resource_code,
     resource_fullname:
-      resourceData?.resource_name ||
-      resourceData.resource_firstname + ' ' + resourceData.resource_lastname,
+      resourceData?.resource_name?.trim() ||
+      (
+        (resourceData?.resource_firstname?.trim() || '') +
+        ' ' +
+        (resourceData?.resource_lastname?.trim() || '')
+      ).trim() ||
+      ' - ',
     resource_type: resourceData.resource_type,
     first_name: resourceData.resource_firstname,
     last_name: resourceData.resource_lastname,

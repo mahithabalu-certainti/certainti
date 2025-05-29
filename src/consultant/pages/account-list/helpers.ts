@@ -1,31 +1,79 @@
-import { AccountList, ConvertedAccount } from '../../types';
-import { FieldConfig, StatusOptions } from '../../types/account-filter';
+import { AccountList, ConvertedAccount, SelectOption } from '../../types';
+import { FieldConfig } from '../../types/account-filter';
+
+const roleOptions: { label: string; value: string }[] = [
+  { label: 'Finance Executive', value: 'finance_executive' },
+  { label: 'Finance Lead', value: 'financial_consultant' },
+  { label: 'Professional Services Consultant', value: 'technical_consultant' },
+];
+
+export const keyOptions: { label: string; value: string }[] = [
+  { label: 'Equals', value: 'equals' },
+  { label: 'Not Equals', value: 'not_equals' },
+  { label: 'Contains', value: 'contains' },
+  { label: 'Is Empty', value: 'is_empty' },
+];
+
+const textfieldOptions: { label: string; value: string }[] = [
+  { label: 'Contains', value: 'contains' },
+  { label: 'Equals', value: 'equals' },
+  { label: 'Not Equals', value: 'not_equals' },
+];
 
 export const getAccountFilterFields = (
   countryOptions: string[],
-  currencyOptions: string[]
+  industryOptions: SelectOption[]
 ): FieldConfig[] => [
-  // { label: 'Parent Account', name: 'parent_account', type: 'text' },
-  { label: 'Account ID', name: 'account_number', type: 'text' },
-  { label: 'Account Name', name: 'account_name', type: 'text' },
-  // { label: 'Record ID', name: 'account_id', type: 'text' },
-  { label: 'Industry', name: 'industry', type: 'text' },
+  {
+    label: 'Account Name',
+    name: 'account_name',
+    type: 'text',
+    operatorOption: textfieldOptions,
+  },
+  {
+    label: 'Industry',
+    name: 'industry',
+    type: 'status',
+    options: industryOptions,
+  },
   {
     label: 'Country',
     name: 'country',
     type: 'multi-select',
     options: countryOptions,
   },
+  { label: 'Total Projects', name: 'total_projects', type: 'number' },
+  { label: 'Total Project Hours', name: 'total_project_hours', type: 'number' },
+  { label: 'Total Cost', name: 'total_project_cost', type: 'number' },
   {
-    label: 'Currency',
-    name: 'currency',
-    type: 'multi-select',
-    options: currencyOptions,
+    label: 'Estimated R&D Hours',
+    name: 'qualifying_project_hours_fed',
+    type: 'number',
   },
-  { label: 'Annual Revenue', name: 'annual_revenue', type: 'number' },
-  { label: 'Status', name: 'status', type: 'status', options: StatusOptions },
-  // { label: 'Primary Contact', name: 'primary_contact', type: 'text' },
-  { label: 'Is Parent Account', name: 'is_parent_account', type: 'boolean' },
+  { label: 'QRE', name: 'qualifying_project_qre_fed', type: 'number' },
+  {
+    label: 'Estimated R&D Credits',
+    name: 'qualifying_project_rd_credits_fed',
+    type: 'number',
+  },
+  {
+    label: 'Actual R&D Credits',
+    name: 'total_projects_rd_credits',
+    type: 'number',
+  },
+  {
+    label: 'Key Contacts',
+    name: 'key_contact',
+    type: 'keyContact',
+    operatorOption: keyOptions,
+    options: roleOptions,
+  },
+  {
+    label: 'Account ID',
+    name: 'account_number',
+    type: 'text',
+    operatorOption: textfieldOptions,
+  },
 ];
 
 const colors = [
@@ -77,6 +125,7 @@ export function convertAccounts(
       financeHead: account?.delivery_head || '-',
       professionalConsultant: account?.technical_consultant || '-',
       accountNumber: account.r_number,
+      projectsByYear: account.projects_by_fiscal_year || [],
       color,
       bgColor,
     };
