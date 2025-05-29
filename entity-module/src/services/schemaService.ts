@@ -313,8 +313,8 @@ class SchemaService {
           "resource_region",
           "resource_city",
           [Sequelize.col('AccountDetails.account_name'), 'account_name'],
-          [Sequelize.literal('COALESCE("ResourceFiscal"."total_effort_for_year_project",0)'), 'total_project_hours'],
-          [Sequelize.literal('COALESCE("ResourceFiscal"."estimated_rd_hours",0)'), 'estimated_rd_hours']
+          [Sequelize.literal('"ResourceFiscal"."total_effort_for_year_project"'), 'total_project_hours'],
+          [Sequelize.literal('"ResourceFiscal"."estimated_rd_hours"'), 'estimated_rd_hours']
         ],
         include: [
           {
@@ -585,8 +585,8 @@ class SchemaService {
           "resource_region",
           "resource_city",
           [Sequelize.col('AccountDetails.account_name'), 'account_name'],
-          [Sequelize.literal('COALESCE("ResourceFiscal"."total_effort_for_year_project",0)'), 'total_project_hours'],
-          [Sequelize.literal('COALESCE("ResourceFiscal"."estimated_rd_hours",0)'), 'estimated_rd_hours'],
+          [Sequelize.literal('"ResourceFiscal"."total_effort_for_year_project"'), 'total_project_hours'],
+          [Sequelize.literal('"ResourceFiscal"."estimated_rd_hours"'), 'estimated_rd_hours'],
         ],
         include: [
           {

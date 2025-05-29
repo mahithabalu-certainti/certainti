@@ -547,10 +547,10 @@ export class ResourceService {
 
    if (filters.total_project_hours || filters.estimated_rd_hours) {
     const totalProjectHoursExpr = Sequelize.literal(`
-      COALESCE("ResourceFiscal"."total_effort_for_year_project", 0)
+      "ResourceFiscal"."total_effort_for_year_project"
     `);
     const estimatedRdHoursExpr = Sequelize.literal(`
-      COALESCE("ResourceFiscal"."estimated_rd_hours", 0)
+      "ResourceFiscal"."estimated_rd_hours"
     `);
 
     if (filters.total_project_hours) {
@@ -571,7 +571,7 @@ export class ResourceService {
       } else if (filter.between && Array.isArray(filter.between) && filter.between.length === 2) {
         havingClause = Sequelize.where(totalProjectHoursExpr, { [Op.between]: filter.between });
       } else if (filter.is_empty === true) {
-        havingClause = Sequelize.where(totalProjectHoursExpr, { [Op.eq]: 0 });
+        havingClause = Sequelize.where(totalProjectHoursExpr, { [Op.is]: null });
       }
     }
 
@@ -593,7 +593,7 @@ export class ResourceService {
       } else if (filter.between && Array.isArray(filter.between) && filter.between.length === 2) {
         havingClause = Sequelize.where(estimatedRdHoursExpr, { [Op.between]: filter.between });
       } else if (filter.is_empty === true) {
-        havingClause = Sequelize.where(estimatedRdHoursExpr, { [Op.eq]: 0 });
+        havingClause = Sequelize.where(estimatedRdHoursExpr, { [Op.is]: null });
       }
     }
   }

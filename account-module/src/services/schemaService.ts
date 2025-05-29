@@ -885,7 +885,7 @@ class SchemaService {
           modified_datetime timestamptz,
           modified_by varchar(255) NOT NULL
         );
-    `)
+    `);
    }
 
   private async createResourceSkillHistoryTable(
