@@ -1114,269 +1114,266 @@ class SchemaService {
     }
   }
 
-   async insertKeyContactInfo(accountData: any, roleNameFilter?: {
-  role?: { equals?: string; contains?: string; notEquals?: string,is_empty:boolean };
-  name?: { equals?: string; contains?: string; notEquals?: string,is_empty:boolean };
-  },limit?: number,
+  async insertKeyContactInfo(
+  accountData: any,
+  roleNameFilter?: {
+    role?: { equals?: string; contains?: string; notEquals?: string; is_empty?: boolean };
+    name?: { equals?: string; contains?: string; notEquals?: string; is_empty?: boolean };
+  },
+  limit?: number,
   offset?: number,
   sortBy?: string,
-  sortOrder?:string) {
-  try {
-    // Helper function to check if role matches filter condition
-    function matchesRoleFilter(value: any = '',filter?: { equals?: string; contains?: string; notEquals?: string; is_empty?: boolean }): boolean {
+  sortOrder?: string,
+  type?:string
+) {
+  const sequelize = await initSequelize();
+  const orgDbSequelize = await initOrgSequelize();
+
+  // 1. Enhanced filter function with empty contact handling
+  const createFilter = (filter?: { equals?: string; contains?: string; notEquals?: string; is_empty?: boolean }) => {
+    if (!filter) return () => true;
+    
+    const { equals, contains, notEquals, is_empty } = filter;
+    const lowerEquals = equals?.toLowerCase();
+    const lowerContains = contains?.toLowerCase();
+    const lowerNotEquals = notEquals?.toLowerCase();
+
+    return (value: any = '') => {
       const strValue = value == null ? '' : String(value).trim();
-
-      if (!filter) return true;
-
-      if (filter.is_empty !== undefined) {
-        const isEmpty = strValue === '';
-        return filter.is_empty ? isEmpty : !isEmpty;
+      const lowerValue = strValue.toLowerCase();
+      
+      if (is_empty !== undefined) {
+        return is_empty ? strValue === '' : strValue !== '';
       }
-
-      if (filter.equals !== undefined) {
-        return strValue.toLowerCase() === filter.equals.toLowerCase();
-      }
-
-      if (filter.contains !== undefined) {
-        return strValue.toLowerCase().includes(filter.contains.toLowerCase());
-      }
-
-      if (filter.notEquals !== undefined) {
-        return strValue.toLowerCase() !== filter.notEquals.toLowerCase();
-      }
+      if (lowerEquals !== undefined) 
+        return lowerValue === lowerEquals;
+      if (lowerContains !== undefined) 
+        return lowerValue.includes(lowerContains);
+      if (lowerNotEquals !== undefined) 
+        return lowerValue !== lowerNotEquals;
 
       return true;
-}
+    };
+  };
 
-    const sequelize = await initSequelize();
-    const orgDbSequelize = await initOrgSequelize();
+  const roleFilter = roleNameFilter?.role ? createFilter(roleNameFilter.role) : null;
+  const nameFilter = roleNameFilter?.name ? createFilter(roleNameFilter.name) : null;
 
-    const allAccounts = accountData.flatMap((account: any) => [
-      account.dataValues,
-      ...(account.dataValues.child_accounts || []),
-    ]);
+  // 2. Account processing
+  const parentRidToRNumber = new Map<string, string>();
+  const allAccounts: any[] = [];
+  
+  accountData.forEach((account: { dataValues: any; }) => {
+    const parent = account.dataValues;
+    parentRidToRNumber.set(parent.rid, parent.r_number);
+    allAccounts.push(parent, ...(parent.child_accounts?.map((c: any) => c.dataValues) || []));
+  });
 
-    // Step 2: Build a map of parent rid to r_number
-    const parentRidToRNumber: Record<string, string> = {};
-    for (const parent of accountData) {
-      parentRidToRNumber[parent.dataValues.rid] = parent.dataValues.r_number;
-    }
 
-    // Step 3: Build schema to accountRids map
-    const schemaToAccountRids: Record<string, string[]> = {};
+  // 3. Schema mapping with Map
+  const schemaToAccountRids = new Map<string, string[]>();
+  
+  for (const acc of allAccounts) {
+    const schema = acc.storage_type === "store_in_parent"
+      ? parentRidToRNumber.get(acc.parent_account_rid)
+      : acc.r_number;
 
-    for (const acc of allAccounts) {
-      let schema: string | undefined;
-
-      if (acc.storage_type === "store_in_parent") {
-        const parentRNumber = parentRidToRNumber[acc.parent_account_rid];
-        if (!parentRNumber) {
-          console.warn(`Missing parent r_number for account ${acc.rid}`);
-          continue;
-        }
-        schema = parentRNumber;
-      } else {
-        schema = acc.r_number;
-      }
-
-      if (!schema) continue;
-
-      if (!schemaToAccountRids[schema]) {
-        schemaToAccountRids[schema] = [];
-      }
-
-      schemaToAccountRids[schema].push(acc.rid);
-    }
-
-    // Step 3: Query each schema's key_contact_details
-    let allKeyContacts: any[] = [];
-
-    for (const [schema, accountRids] of Object.entries(schemaToAccountRids)) {
-      const schemaName = `platform_v2_${schema}`;
-      const keyContacts = await orgDbSequelize.query(
-        `SELECT * FROM "${schemaName}".key_contact_details WHERE entity_rid IN (:accountRids) and entity_type = 'Account'`,
-        {
-          replacements: { accountRids },
-          type: "SELECT",
-        }
-      );
-      allKeyContacts = allKeyContacts.concat(keyContacts);
-    }
-
-    // Step 4: Get unique role RIDs
-    const keyContactRoleRids = [
-      ...new Set(
-        allKeyContacts.map((kc: any) => kc.key_contact_role).filter(Boolean)
-      ),
-    ];
-
-    // Step 5: Query key_contact_role table
-    let keyContactRoleMap: Record<string, string> = {};
-
-    if (keyContactRoleRids.length > 0) {
-      const roleRows = await sequelize.query(
-        `SELECT rid, role_name FROM key_contact_role WHERE rid IN (:ids)`,
-        {
-          replacements: { ids: keyContactRoleRids },
-          type: "SELECT",
-        }
-      );
-
-      keyContactRoleMap = Object.fromEntries(
-        roleRows.map((row: any) => [row.rid, row.role_name])
-      );
-    }
-
-      // Step 6: Create accountKeyContactMap
-    const accountKeyContactMap: Record<string, any[]> = {};
-
-    for (const kc of allKeyContacts) {
-      const contact = kc as {
-        account_rid: string;
-        key_contact_role: string;
-        is_primary_contact: boolean;
-        [key: string]: any;
-      };
-
-      const enriched = {
-        ...contact,
-        role_name: keyContactRoleMap[contact.key_contact_role] || null,
-      };
-
-      if (!accountKeyContactMap[contact.entity_rid]) {
-        accountKeyContactMap[contact.entity_rid] = [];
-      }
-
-      accountKeyContactMap[contact.entity_rid].push(enriched);
-    }
-
-     // Step 6.6: Query account_fiscal and build accountFiscalMap (unchanged)
-    let accountFiscalMap: Record<string, any[]> = {};
-    for (const [schema, accountRids] of Object.entries(schemaToAccountRids)) {
-      const schemaName = `platform_v2_${schema}`;
-      const fiscalRows = await orgDbSequelize.query(
-        `SELECT 
-          fiscal_year,
-          account_rid,
-           SUM(CAST(total_projects AS NUMERIC)) AS total_projects,
-          SUM(CAST(total_project_hours AS NUMERIC)) AS total_project_hours,
-          SUM(CAST(total_project_cost AS NUMERIC)) AS total_project_cost,
-          SUM(CAST(qualifying_project_hours_fed AS NUMERIC)) AS qualifying_project_hours_fed,
-          SUM(CAST(qualifying_project_qre_fed AS NUMERIC)) AS qualifying_project_qre_fed,
-          SUM(CAST(qualifying_project_rd_credits_fed AS NUMERIC)) AS qualifying_project_rd_credits_fed,
-          SUM(CAST(total_projects_rd_credits AS NUMERIC)) AS total_projects_rd_credits
-        FROM "${schemaName}".account_fiscal
-        WHERE account_rid IN (:accountRids)
-        GROUP BY account_rid, fiscal_year
-        ORDER BY fiscal_year`,
-        {
-          replacements: { accountRids },
-          type: "SELECT",
-        }
-      );
-
-      for (const fiscal of fiscalRows as any[]) {
-        if (!accountFiscalMap[fiscal.account_rid]) {
-          accountFiscalMap[fiscal.account_rid] = [];
-        }
-        accountFiscalMap[fiscal.account_rid].push(fiscal);
-      }
-    }
-
-      // Step 7: Helper to enrich a single account
-    function enrichAccount(account: any, isChild = false,roleNameFilter?: any) {
-      const rawKeyContacts = accountKeyContactMap[account.rid] || [];
-
-      let keyContacts = rawKeyContacts.map((kc: any) => ({
-        ...kc,
-        role_name: kc.role_name || '', // Ensure string, needed for is_empty
-        key_contact_name: kc.key_contact_name || '', // Ensure string, needed for is_empty
-      }));
-
-      if (roleNameFilter) {
-        const { role, name } = roleNameFilter;
-        const hasRoleFilter = role && Object.keys(role).length > 0;
-        const hasNameFilter = name && Object.keys(name).length > 0;
-        keyContacts = keyContacts.filter((kc: any) => {
-          const roleMatch = hasRoleFilter ? matchesRoleFilter(kc.role_name, role) : true;
-          const nameMatch = hasNameFilter ? matchesRoleFilter(kc.key_contact_name, name) : true;
-          return roleMatch && nameMatch;
-        });
-    }
-      //const keyContacts = accountKeyContactMap[account.rid] || [];
-      const fiscalProjects = isChild ? accountFiscalMap[account.rid] || [] : [];
-      const hasTechnical = keyContacts.some(
-        (e: any) =>
-          e.role_name === "Technical Consultant" && e.is_primary_contact
-      );
-      const hasFinancial = keyContacts.some(
-        (e: any) =>
-          e.role_name === "Financial Consultant" && e.is_primary_contact
-      );
-      const hasDeliveryHead = keyContacts.some(
-        (e: any) =>
-          e.role_name === "Client Project Delivery Head" && e.is_primary_contact
-      );
-      const hasFinanceExecutive = keyContacts.some(
-        (e: any) =>
-          e.role_name === "Client Finance Executive" && e.is_primary_contact
-      );
-      
-      const enriched: any = {
-        ...account,
-        key_contacts: keyContacts,        
-        technical_consultant: hasTechnical ? "Technical Consultant" : "-",
-        financial_consultant: hasFinancial ? "Financial Consultant" : "-",
-        delivery_head: hasDeliveryHead ? "Project Point of Contact" : "-",
-        finance_executive: hasFinanceExecutive ? "Project Point of Contact" : "-",
-        
-      };
-      if (isChild) {
-        enriched.projects_by_fiscal_year = fiscalProjects;
-      }
-      return enriched;
-    }
-
-    // Step 8: Enrich all parent and child accounts (unchanged)
-   let enrichedAccounts = accountData.map((account: any) => {
-  const enrichedParent = enrichAccount(account.dataValues, false, roleNameFilter);
-
-  // Skip if no key_contacts left after filtering
-  if (roleNameFilter && enrichedParent.key_contacts.length === 0) {
-    return null;
+    if (!schema) continue;
+    
+    const accountRids = schemaToAccountRids.get(schema) || [];
+    accountRids.push(acc.rid);
+    schemaToAccountRids.set(schema, accountRids);
   }
 
-  const enrichedChildren = (account.dataValues.child_accounts || [])
-    .map((child: any) => enrichAccount(child.dataValues, true, roleNameFilter))
-    .filter((child: any) => child.key_contacts.length > 0);
+  // 4. Parallelize database queries
+  const [keyContactsResults, fiscalResults] = await Promise.all([
+    // Key contacts query
+    (async () => {
+      const queries = Array.from(schemaToAccountRids).map(async ([schema, accountRids]) => {
+        try {
+          return await orgDbSequelize.query(
+            `SELECT * FROM "platform_v2_${schema}".key_contact_details 
+             WHERE entity_rid IN (:accountRids) AND entity_type = 'Account'`,
+            { replacements: { accountRids }, type: "SELECT" }
+          );
+        } catch (error) {
+          console.error(`Key contacts query failed for schema ${schema}:`, error);
+          return [];
+        }
+      });
+      return (await Promise.all(queries)).flat();
+    })(),
+    
+    // Fiscal data query
+    (async () => {
+      const queries = Array.from(schemaToAccountRids).map(async ([schema, accountRids]) => {
+        try {
+          return await orgDbSequelize.query(
+            `SELECT fiscal_year, account_rid,
+             SUM(total_projects::NUMERIC) AS total_projects,
+             SUM(total_project_hours::NUMERIC) AS total_project_hours,
+             SUM(total_project_cost::NUMERIC) AS total_project_cost,
+             SUM(qualifying_project_hours_fed::NUMERIC) AS qualifying_project_hours_fed,
+             SUM(qualifying_project_qre_fed::NUMERIC) AS qualifying_project_qre_fed,
+             SUM(qualifying_project_rd_credits_fed::NUMERIC) AS qualifying_project_rd_credits_fed,
+             SUM(total_projects_rd_credits::NUMERIC) AS total_projects_rd_credits
+             FROM "platform_v2_${schema}".account_fiscal
+             WHERE account_rid IN (:accountRids)
+             GROUP BY account_rid, fiscal_year`,
+            { replacements: { accountRids }, type: "SELECT" }
+          );
+        } catch (error) {
+          console.warn(`Fiscal data skipped for schema ${schema}:`, error);
+          return [];
+        }
+      });
+      return (await Promise.all(queries)).flat();
+    })()
+  ]);
 
-  enrichedParent.child_accounts = enrichedChildren;
-  return enrichedParent;}).filter(Boolean); // Remove nulls
+  // 5. Optimize role mapping
+  const roleRids = [...new Set(keyContactsResults.map((kc: any) => kc.key_contact_role).filter(Boolean))];
+  
+  const keyContactRoleMap = new Map<string, string>(
+    roleRids.length ? (await sequelize.query(
+      `SELECT rid, role_name FROM key_contact_role WHERE rid IN (:ids)`,
+      { replacements: { ids: roleRids }, type: "SELECT" }
+    )).map((r: any) => [r.rid, r.role_name]) : []
+  );
 
-  if (
-    sortBy &&
-    ['technical_consultant', 'financial_consultant', 'delivery_head', 'finance_executive'].includes(sortBy)
-  ) {
-    const sortKey = sortBy;
-    const resolvedSortOrder = sortOrder === 'DESC' ? -1 : 1;
+  // 6. Efficient contact mapping
+  const accountKeyContactMap = new Map<string, any[]>();
+  const accountFiscalMap = new Map<string, any[]>();
+  
+  keyContactsResults.forEach((kc: any) => {
+    const contacts = accountKeyContactMap.get(kc.entity_rid) || [];
+    contacts.push({
+      ...kc,
+      role_name: keyContactRoleMap.get(kc.key_contact_role) || null
+    });
+    accountKeyContactMap.set(kc.entity_rid, contacts);
+  });
+  
+  fiscalResults.forEach((f: any) => {
+    const fiscalData = accountFiscalMap.get(f.account_rid) || [];
+    fiscalData.push(f);
+    accountFiscalMap.set(f.account_rid, fiscalData);
+  });
 
-    enrichedAccounts.sort((a: { [x: string]: any; }, b: { [x: string]: any; }) => {
-      const aVal = (a[sortKey] || '').toLowerCase();
-      const bVal = (b[sortKey] || '').toLowerCase();
-      return aVal.localeCompare(bVal) * resolvedSortOrder;
+  // 7. Optimized account enrichment
+  const enrichAccount = (account: any, isChild: boolean) => {
+    const rawKeyContacts = accountKeyContactMap.get(account.rid) || [];
+    
+    // Prepare contacts with default values
+    const preparedKeyContacts = rawKeyContacts.map(kc => ({
+      ...kc,
+      role_name: kc.role_name || '',
+      key_contact_name: kc.key_contact_name || ''
+    }));
+    
+    // Apply filters only to parent accounts
+    let keyContacts = preparedKeyContacts;
+    if (roleNameFilter && !isChild) {
+      keyContacts = preparedKeyContacts.filter(kc => {
+        const rolePass = roleFilter ? roleFilter(kc.role_name) : true;
+        const namePass = nameFilter ? nameFilter(kc.key_contact_name) : true;
+        return rolePass && namePass;
+      });
+    }
+    
+    
+    const contactChecks = {
+      hasTechnical: keyContacts.some(kc => 
+        kc.role_name === "Technical Consultant" && kc.is_primary_contact),
+      hasFinancial: keyContacts.some(kc => 
+        kc.role_name === "Financial Consultant" && kc.is_primary_contact),
+      hasDeliveryHead: keyContacts.some(kc => 
+        kc.role_name === "Client Project Delivery Head" && kc.is_primary_contact),
+      hasFinanceExecutive: keyContacts.some(kc => 
+        kc.role_name === "Client Finance Executive" && kc.is_primary_contact),
+      hasFinanceLead: keyContacts.some(kc => 
+        kc.role_name === "Client Finance Lead" && kc.is_primary_contact)
+    };
+    
+    return {
+      ...account,
+      key_contacts: keyContacts,
+      technical_consultant: contactChecks.hasTechnical ? "Technical Consultant" : "-",
+      financial_consultant: contactChecks.hasFinancial ? "Financial Consultant" : "-",
+      delivery_head: contactChecks.hasDeliveryHead ? "Project Point of Contact" : "-",
+      finance_executive: contactChecks.hasFinanceExecutive ? "Project Point of Contact" : "-",
+      hasFinanceLead: contactChecks.hasFinanceLead ? "Finance Lead" : "-",
+      ...(isChild && { 
+        projects_by_fiscal_year: accountFiscalMap.get(account.rid) || [] 
+      })
+    };
+  };
+
+  // 8. Process accounts with early filtering
+    let enrichedAccounts = accountData
+    .map((account: any) => {
+      const parent = enrichAccount(account.dataValues, false);
+      const children = (account.dataValues.child_accounts || [])
+        .map((c: any) => enrichAccount(c.dataValues, true));
+      
+      parent.child_accounts = children;
+      
+      // Special handling for is_empty: true filter
+      if (roleNameFilter) {
+        const originalContacts = accountKeyContactMap.get(account.dataValues.rid) || [];
+        const hasNoContacts = originalContacts.length === 0;
+        
+        // Check if we have any is_empty:true filter
+        const hasEmptyRoleFilter = roleNameFilter.role?.is_empty === true;
+        const hasEmptyNameFilter = roleNameFilter.name?.is_empty === true;
+        const hasEmptyFilter = hasEmptyRoleFilter || hasEmptyNameFilter;
+        
+        // For is_empty:true, include accounts with no contacts
+        if (hasEmptyFilter && hasNoContacts) {
+          return parent;
+        }
+        
+        // Otherwise, only include if there are matching contacts
+        if (parent.key_contacts.length === 0) {
+          return null;
+        }
+      }
+      
+      return parent;
+    })
+    .filter(Boolean);
+
+  // 5. Apply sorting if needed
+  const SORTABLE_FIELDS = new Set([
+    'technical_consultant', 
+    'financial_consultant', 
+    'delivery_head', 
+    'finance_executive'
+  ]);
+  
+  if (sortBy && SORTABLE_FIELDS.has(sortBy)) {
+    const order = sortOrder === 'DESC' ? -1 : 1;
+    
+    enrichedAccounts.sort((a: { [x: string]: string; }, b: { [x: string]: string; }) => {
+      const valA = a[sortBy] || '';
+      const valB = b[sortBy] || '';
+      
+      if (valA === '-' && valB !== '-') return 1;
+      if (valB === '-' && valA !== '-') return -1;
+      if (valA === '-' && valB === '-') return 0;
+      
+      return order * valA.localeCompare(valB, undefined, { sensitivity: 'base' });
     });
   }
-    const total = enrichedAccounts.length;
-    const shouldPaginate = !!roleNameFilter && Object.keys(roleNameFilter).length > 0 ||
-  ['technical_consultant', 'financial_consultant', 'delivery_head', 'finance_executive'].includes(sortBy || '');
-    if (shouldPaginate && limit !== undefined && offset !== undefined) {
-      enrichedAccounts = enrichedAccounts.slice(offset, offset + limit);
-    }
-     return { data: enrichedAccounts, total };
-  } catch (err) {
-    throw err;
-  }
-}
 
+  // 6. Apply pagination
+  const total = enrichedAccounts.length;
+  const shouldPaginate = roleNameFilter || (sortBy && SORTABLE_FIELDS.has(sortBy));
+  
+  if (shouldPaginate && limit !== undefined && offset !== undefined && type != 'download') {
+    enrichedAccounts = enrichedAccounts.slice(offset, offset + limit);
+  }
+  return { data: enrichedAccounts, total };
+}
 }
 export default SchemaService;

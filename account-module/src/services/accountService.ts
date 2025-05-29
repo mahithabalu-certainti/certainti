@@ -216,7 +216,7 @@ class AccountService {
         });
       }
 
-      const updatedAccount = await this.schemaService.insertKeyContactInfo(parentAccounts,filters.key_contact,limit,offset,finalSortBy,finalSortOrder);
+      const updatedAccount = await this.schemaService.insertKeyContactInfo(parentAccounts,filters.key_contact,limit,offset,finalSortBy,finalSortOrder,'create');
 
       // Get total count without pagination
       const totalCount = await repository.count({
@@ -416,30 +416,38 @@ class AccountService {
             account.setDataValue('child_accounts', []);
           });
         }
-        const rawResult = parentAccounts || [];
-        const cleanedUsers = rawResult.map((user:any) => {
-          if (typeof user.get === 'function') {
-            return user.get({ plain: true }); 
-          } else {
-            return user.dataValues;
-          }
-        });
+        const updatedAccount = await this.schemaService.insertKeyContactInfo(parentAccounts,filters.key_contact,0,0,finalSortBy,finalSortOrder,'download');
+        const rawResult = updatedAccount.data || [];
+        const cleanedUsers = rawResult;
+        const formatNumberForExport = (value: any): string => {
+          if (value == null || value === '') return '-';
+          const num = Number(value);
+          if (isNaN(num)) return '-';
+          return new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2,
+            useGrouping: true
+          }).format(num);
+        };
         let exportDetails: any[] = [];
         cleanedUsers.forEach((account: any) => {
           const baseRow = {
             "Account Name": account?.account_name || "-",
             "Parent Account": account?.parent_account?.account_name || "-",
-            "Account ID": account?.r_number || "-",
             "Industry": account?.industry?.industry_name || "-",
             "Country": account?.country?.country_name || "-",
             "Currency": account?.currency?.currency_code || "-",
-            "Annual Revenue": account?.annual_revenue 
-            ? new Intl.NumberFormat('en-US', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 2,
-                useGrouping: true
-              }).format(Number(account.annual_revenue)) 
-            : "-",
+            "Total Projects":formatNumberForExport(account?.total_projects),
+            "Total Project Hours": formatNumberForExport(account?.total_project_hours),
+            "Total Cost": formatNumberForExport(account?.total_project_cost),
+            "Estimated R&D Hours": formatNumberForExport(account?.qualifying_project_hours_fed),
+            "QRE": formatNumberForExport(account?.qualifying_project_qre_fed),
+            "Estimated R&D Credits": formatNumberForExport(account?.qualifying_project_rd_credits_fed),
+            "Actual R&D Credits": formatNumberForExport(account?.total_projects_rd_credits),
+            "Finance Executive":account?.finance_executive || '-',
+            "Finance Lead":account?.finance_lead || '-',
+            "Professional Services Consultant":account?.delivery_head || '-',
+            "Account ID": account?.r_number || "-",
             "Status": account?.status.toLowerCase() === 'active' ? 'Active' : 'In-Active',
           };
           exportDetails.push(baseRow);
@@ -448,20 +456,51 @@ class AccountService {
               exportDetails.push({
                 "Account Name": child?.account_name || "-",
                 "Parent Account": account?.account_name || "-", // parent is current account
-                "Account ID": child?.r_number || "-",
                 "Industry": child?.industry?.industry_name || "-",
                 "Country": child?.country?.country_name || "-",
                 "Currency": child?.currency?.currency_code || "-",
-                "Annual Revenue": child?.annual_revenue 
-                  ? new Intl.NumberFormat('en-US', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 2,
-                useGrouping: true
-                 }).format(Number(child.annual_revenue)) : "-",           
-                "Status": child?.status.toLowerCase() === 'active' ? 'Active' : 'In-Active',
+                "Total Projects": formatNumberForExport(child?.total_projects),
+                "Total Project Hours": formatNumberForExport(child?.total_project_hours),
+                "Total Cost": formatNumberForExport(child?.total_project_cost),
+                "Estimated R&D Hours": formatNumberForExport(child?.qualifying_project_hours_fed),
+                "QRE": formatNumberForExport(child?.qualifying_project_qre_fed),
+                "Estimated R&D Credits": formatNumberForExport(child?.qualifying_project_rd_credits_fed),
+                "Actual R&D Credits": formatNumberForExport(child?.total_projects_rd_credits),
+                "Finance Executive":child?.finance_executive || '-',
+                "Finance Lead":child?.finance_lead || '-',
+                "Professional Services Consultant":child?.delivery_head || '-',
+                "Account ID": child?.r_number || "-",         
+                "Status": child?.status.toLowerCase() === 'active' ? 'Active' : 'In-Active'
               });
+                if(child?.projects_by_fiscal_year.length >0)
+                { 
+                   child.projects_by_fiscal_year.forEach((fiscalData: any) => {
+                  exportDetails.push({
+                      "Account Name": fiscalData?.fiscal_year || "-",
+                      "Parent Account": account?.account_name || "-", // parent is current account
+                      "Industry": child?.industry?.industry_name || "-",
+                      "Country": child?.country?.country_name || "-",
+                      "Currency": child?.currency?.currency_code || "-",
+                      "Total Projects": formatNumberForExport(fiscalData?.total_projects),
+                      "Total Project Hours": formatNumberForExport(fiscalData?.total_project_hours),
+                      "Total Cost": formatNumberForExport(fiscalData?.total_project_cost),
+                      "Estimated R&D Hours": formatNumberForExport(fiscalData?.qualifying_project_hours_fed),
+                      "QRE": formatNumberForExport(fiscalData?.qualifying_project_qre_fed),
+                      "Estimated R&D Credits": formatNumberForExport(fiscalData?.qualifying_project_rd_credits_fed),
+                      "Actual R&D Credits": formatNumberForExport(fiscalData?.total_projects_rd_credits),
+                      "Finance Executive":child?.finance_executive || '-',
+                      "Finance Lead":child?.finance_lead || '-',
+                      "Professional Services Consultant":child?.delivery_head || '-',
+                      "Account ID": child?.r_number || "-",         
+                      "Status": child?.status.toLowerCase() === 'active' ? 'Active' : 'In-Active'
+                     });  
+                  });
+                }
             });
+          
+         
           }
+          
         });
         return {
           statusCode: HttpStatus.SUCCESS,
