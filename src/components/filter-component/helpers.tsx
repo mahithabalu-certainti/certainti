@@ -14,8 +14,19 @@ import {
 } from '@mui/material';
 import { FilterState } from '../../consultant/types/account-filter';
 import { useMemo } from 'react';
-import { DateValueOptions } from '../../consultant/types/account-filter';
-import { arrowIcon, checkedIcon } from '../../assets';
+import { arrowIcon, calendarIcon, checkedIcon } from '../../assets';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import dayjs from 'dayjs';
+
+function formatString(str: string | undefined): string {
+  if (!str) return '';
+  return str
+    .split('_') // split on underscores
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1)) // capitalize each word
+    .join(' ');
+}
 
 export const SELECT_STYLES = {
   fontWeight: 600,
@@ -345,104 +356,331 @@ export const MultiSelectFilterControl: React.FC<{
   );
 };
 
-export const DateFilterControl: React.FC<{
+// export const DateFilterControl: React.FC<{
+//   fieldName: string;
+//   state: FilterState;
+//   onOptionChange: (fieldName: string, event: SelectChangeEvent<string>) => void;
+//   onValueChange: (
+//     fieldName: string,
+//     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+//     index?: number,
+//     targetKey?: 'value' | 'toValue'
+//   ) => void;
+// }> = ({ fieldName, state, onOptionChange, onValueChange }) => (
+//   <div className='flex gap-2 items-center'>
+//     <Select
+//       value={state.date?.option || 'equals'}
+//       onChange={(e) => onOptionChange(fieldName, e)}
+//       className='min-w-[110px] max-w-[110px] h-[28px]'
+//       IconComponent={(props) => (
+//         <img src={arrowIcon} alt='arrowIcon' {...props} />
+//       )}
+//       sx={SELECT_STYLES}
+//       MenuProps={MENU_PROPS}
+//     >
+//       {DateValueOptions.map((option) => (
+//         <MenuItem
+//           key={option.value}
+//           value={option.value}
+//           sx={{
+//             fontSize: '13px',
+//             color: '#425A76',
+//             fontWeight: 600,
+//             py: '1px',
+//           }}
+//         >
+//           {option.label}
+//         </MenuItem>
+//       ))}
+//     </Select>
+//     <TextField
+//       size='small'
+//       autoComplete='off'
+//       fullWidth
+//       placeholder='MM-DD-YYYY'
+//       value={state.date?.value || ''}
+//       onChange={(e) => onValueChange(fieldName, e, undefined, 'value')}
+//       sx={{
+//         flex: 1,
+//         '& .MuiOutlinedInput-root': {
+//           borderRadius: '2px',
+//           '& fieldset': {
+//             borderColor: '#CBD6E2',
+//           },
+//           '&:hover fieldset': {
+//             borderColor: '#CBD6E2',
+//           },
+//           '&.Mui-focused fieldset': {
+//             borderColor: '#CBD6E2',
+//           },
+//         },
+//         '& .MuiInputBase-input': {
+//           fontSize: '12px',
+//           color: '#425A76',
+//           height: '11px',
+//           width: state.date?.option === 'between' ? '50%' : '153px',
+//         },
+//       }}
+//     />
+//     {state.date?.option === 'between' && (
+//       <TextField
+//         size='small'
+//         autoComplete='off'
+//         fullWidth
+//         placeholder='MM-DD-YYYY'
+//         value={state.date?.toValue || ''}
+//         onChange={(e) => onValueChange(fieldName, e, undefined, 'toValue')}
+//         sx={{
+//           flex: 1,
+//           '& .MuiOutlinedInput-root': {
+//             borderRadius: '2px',
+//             '& fieldset': {
+//               borderColor: '#CBD6E2',
+//             },
+//             '&:hover fieldset': {
+//               borderColor: '#CBD6E2',
+//             },
+//             '&.Mui-focused fieldset': {
+//               borderColor: '#CBD6E2',
+//             },
+//           },
+//           '& .MuiInputBase-input': {
+//             fontSize: '12px',
+//             color: '#425A76',
+//             height: '11px',
+//           },
+//         }}
+//       />
+//     )}
+//   </div>
+// );
+
+export const NewDateFilterControl: React.FC<{
+  filterStates: Record<string, FilterState>;
+  menuOption: { label: string; value: string }[];
   fieldName: string;
   state: FilterState;
-  onOptionChange: (fieldName: string, event: SelectChangeEvent<string>) => void;
+  mode?: 'year' | 'date';
+  onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
   onValueChange: (
+    type: 'from' | 'to',
     fieldName: string,
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    index?: number,
-    targetKey?: 'value' | 'toValue'
+    dateValue: string,
+    mode?: 'year' | 'date'
   ) => void;
-}> = ({ fieldName, state, onOptionChange, onValueChange }) => (
-  <div className='flex gap-2 items-center'>
-    <Select
-      value={state.date?.option || 'equals'}
-      onChange={(e) => onOptionChange(fieldName, e)}
-      className='min-w-[110px] max-w-[110px] h-[28px]'
-      IconComponent={(props) => (
-        <img src={arrowIcon} alt='arrowIcon' {...props} />
-      )}
-      sx={SELECT_STYLES}
-      MenuProps={MENU_PROPS}
-    >
-      {DateValueOptions.map((option) => (
-        <MenuItem
-          key={option.value}
-          value={option.value}
-          sx={{
-            fontSize: '13px',
-            color: '#425A76',
-            fontWeight: 600,
-            py: '1px',
-          }}
-        >
-          {option.label}
-        </MenuItem>
-      ))}
-    </Select>
-    <TextField
-      size='small'
-      autoComplete='off'
-      fullWidth
-      placeholder='MM-DD-YYYY'
-      value={state.date?.value || ''}
-      onChange={(e) => onValueChange(fieldName, e, undefined, 'value')}
-      sx={{
-        flex: 1,
-        '& .MuiOutlinedInput-root': {
-          borderRadius: '2px',
-          '& fieldset': {
-            borderColor: '#CBD6E2',
-          },
-          '&:hover fieldset': {
-            borderColor: '#CBD6E2',
-          },
-          '&.Mui-focused fieldset': {
-            borderColor: '#CBD6E2',
-          },
-        },
-        '& .MuiInputBase-input': {
-          fontSize: '12px',
-          color: '#425A76',
-          height: '11px',
-          width: state.date?.option === 'between' ? '50%' : '153px',
-        },
-      }}
-    />
-    {state.date?.option === 'between' && (
-      <TextField
-        size='small'
-        autoComplete='off'
-        fullWidth
-        placeholder='MM-DD-YYYY'
-        value={state.date?.toValue || ''}
-        onChange={(e) => onValueChange(fieldName, e, undefined, 'toValue')}
-        sx={{
-          flex: 1,
-          '& .MuiOutlinedInput-root': {
-            borderRadius: '2px',
-            '& fieldset': {
-              borderColor: '#CBD6E2',
-            },
-            '&:hover fieldset': {
-              borderColor: '#CBD6E2',
-            },
-            '&.Mui-focused fieldset': {
-              borderColor: '#CBD6E2',
-            },
-          },
-          '& .MuiInputBase-input': {
-            fontSize: '12px',
-            color: '#425A76',
-            height: '11px',
-          },
-        }}
-      />
-    )}
-  </div>
-);
+}> = ({
+  filterStates,
+  menuOption,
+  fieldName,
+  state,
+  onOptionChange,
+  onValueChange,
+  mode = 'date',
+}) => {
+  const option = formatString(filterStates?.[fieldName]?.date?.option);
+  const isBetween = option === 'Between';
+  const today = new Date();
+  const sixYearsAgo = new Date();
+  sixYearsAgo.setFullYear(today.getFullYear() - 6);
+  const disableInput = option === 'Is Empty';
+
+  return (
+    <div className='flex gap-2 items-center'>
+      <Select
+        value={state.date?.option || 'equals'}
+        onChange={(e) => onOptionChange(fieldName, e)}
+        className='min-w-[110px] max-w-[110px] h-[28px]'
+        IconComponent={(props) => (
+          <img src={arrowIcon} alt='arrowIcon' {...props} />
+        )}
+        sx={SELECT_STYLES}
+        MenuProps={MENU_PROPS}
+      >
+        {menuOption &&
+          menuOption.map((menu) => (
+            <MenuItem
+              key={menu.label}
+              value={menu.value}
+              sx={{
+                fontSize: '12px',
+                color: '#425A76',
+                fontWeight: 600,
+                py: '1px',
+              }}
+            >
+              {menu.label}
+            </MenuItem>
+          ))}
+      </Select>
+      <div className='flex gap-2'>
+        {!disableInput &&
+          (mode === 'year' ? (
+            <FormControl fullWidth>
+              <Select
+                value={state.date?.value.from || ''}
+                onChange={(e) =>
+                  onValueChange('from', fieldName, e.target.value)
+                }
+                displayEmpty
+                inputProps={{ 'aria-label': 'Select Year' }}
+                IconComponent={(props) => (
+                  <img src={arrowIcon} alt='arrowIcon' {...props} />
+                )}
+                sx={SELECT_STYLES}
+                MenuProps={MENU_PROPS}
+                className='h-[28px]'
+              >
+                <MenuItem value='' disabled>
+                  Select Year
+                </MenuItem>
+                {Array.from({ length: 6 }).map((_, index) => {
+                  const year = new Date().getFullYear() - index;
+                  return (
+                    <MenuItem
+                      key={year}
+                      value={year.toString()}
+                      sx={{
+                        fontSize: '12px',
+                        color: '#425A76',
+                        fontWeight: 600,
+                        py: '1px',
+                      }}
+                    >
+                      {year}
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+            </FormControl>
+          ) : (
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                name='from'
+                maxDate={dayjs(today)}
+                minDate={dayjs(sixYearsAgo)}
+                value={dayjs(state.date?.value.from, 'YYYY/MM/DD')}
+                disabled={disableInput}
+                format='YYYY/MM/DD'
+                onChange={(newValue) => {
+                  onValueChange(
+                    'from',
+                    fieldName,
+                    dayjs(newValue).format('YYYY/MM/DD')
+                  );
+                }}
+                shouldDisableDate={(date) =>
+                  dayjs(date).isAfter(dayjs(), 'day')
+                }
+                slots={{
+                  openPickerIcon: () => (
+                    <img
+                      src={calendarIcon}
+                      alt='calendar'
+                      className='w-4 h-4'
+                    />
+                  ),
+                }}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    size: 'small',
+                    InputProps: {
+                      disabled: true,
+                      onPaste: (e: React.ClipboardEvent<HTMLInputElement>) => {
+                        e.preventDefault();
+                        return false;
+                      },
+                    },
+                    sx: {
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '2px',
+                        '&.Mui-disabled': {
+                          '& input': {
+                            color: '#425A76',
+                            WebkitTextFillColor: '#425A76',
+                          },
+                        },
+                        '& fieldset': {
+                          borderColor: '#CBD6E2 !important',
+                        },
+                        height: '28px',
+                      },
+                      '& .MuiInputBase-input': {
+                        fontSize: '12px',
+                        color: '#425A76',
+                        width: isBetween ? '50%' : '140px',
+                      },
+                    },
+                    placeholder: 'YYYY/MM/DD',
+                  },
+                }}
+              />
+            </LocalizationProvider>
+          ))}
+        {isBetween && (
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              name='to'
+              maxDate={dayjs(today)}
+              minDate={dayjs(sixYearsAgo)}
+              sx={{ mt: 1 }}
+              value={dayjs(state.date?.value.to, 'YYYY/MM/DD')}
+              disabled={disableInput}
+              format='YYYY/MM/DD'
+              onChange={(newValue) => {
+                onValueChange(
+                  'to',
+                  fieldName,
+                  dayjs(newValue).format('YYYY/MM/DD')
+                );
+              }}
+              shouldDisableDate={(date) => dayjs(date).isAfter(dayjs(), 'day')}
+              slots={{
+                openPickerIcon: () => (
+                  <img src={calendarIcon} alt='calendar' className='w-4 h-4' />
+                ),
+              }}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  size: 'small',
+                  InputProps: {
+                    disabled: true,
+                    onPaste: (e: React.ClipboardEvent<HTMLInputElement>) => {
+                      e.preventDefault();
+                      return false;
+                    },
+                  },
+                  sx: {
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '2px',
+                      '&.Mui-disabled': {
+                        '& input': {
+                          color: '#425A76',
+                          WebkitTextFillColor: '#425A76',
+                        },
+                      },
+                      '& fieldset': {
+                        borderColor: '#CBD6E2 !important',
+                      },
+                      height: '28px',
+                    },
+                    '& .MuiInputBase-input': {
+                      fontSize: '12px',
+                      color: '#425A76',
+                      width: isBetween ? '50%' : '140px',
+                    },
+                  },
+                  placeholder: 'YYYY/MM/DD',
+                },
+              }}
+            />
+          </LocalizationProvider>
+        )}
+      </div>
+    </div>
+  );
+};
 
 export const NewTextFilterControl: React.FC<{
   fieldName: string;

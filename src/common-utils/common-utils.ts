@@ -326,6 +326,7 @@ export const REGEX_PATTERNS = {
   MIN_5: /^.{5,}$/,
   MIN_4: /^.{4,}$/,
   POSITIVE_INTEGER_REGEX: /^(?:[1-9]|[1-9][0-9])$/,
+  MAX_AI_INTERACTIONS: /^(10|[1-9])$/,
   MIN_2: /^.{2,}$/,
   CITY_REGEX: /^[A-Za-z\s]{3,100}$/,
   NUMBERS_GREATER_THAN_ZERO: /^[1-9]\d*$/,

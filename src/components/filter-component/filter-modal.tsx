@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import {
   DateOptions,
+  DateValueOptions,
   FilterModalProps,
   FilterState,
   NumberFilterOption,
@@ -32,8 +33,8 @@ import {
   NewBooleanFilterControl,
   SELECT_STYLES,
   MENU_PROPS,
-  DateFilterControl,
   KeyContactFilterControl,
+  NewDateFilterControl,
 } from './helpers';
 import { useLocation } from 'react-router-dom';
 
@@ -373,6 +374,24 @@ const FilterModal: React.FC<FilterModalProps> = ({
     });
   };
 
+  const handleDateChange = (type: string, fieldName: string, value: string) => {
+    setFilterStates((prev: any) => {
+      return {
+        ...prev,
+        [fieldName]: {
+          ...prev[fieldName],
+          date: {
+            ...prev[fieldName].date,
+            value: {
+              ...prev[fieldName].date.value,
+              [type]: value,
+            },
+          },
+        },
+      };
+    });
+  };
+
   const handleApplyFilters = () => {
     setPage(1);
     const updatedStates = { ...filterStates };
@@ -381,15 +400,15 @@ const FilterModal: React.FC<FilterModalProps> = ({
     for (const key in updatedStates) {
       const state = updatedStates[key];
 
-      if (state.date) {
-        const isValueEmpty = !state.date.value?.trim();
-        const isToValueEmpty =
-          state.date.option === 'between' && !state.date.toValue?.trim();
+      // if (state.date) {
+      //   const isValueEmpty = !state.date.value?.trim();
+      //   const isToValueEmpty =
+      //     state.date.option === 'between' && !state.date.toValue?.trim();
 
-        if (isValueEmpty || isToValueEmpty) {
-          hasInvalid = true;
-        }
-      }
+      //   if (isValueEmpty || isToValueEmpty) {
+      //     hasInvalid = true;
+      //   }
+      // }
 
       if (state.text) {
         const { option, value } = state.text;
@@ -529,11 +548,21 @@ const FilterModal: React.FC<FilterModalProps> = ({
         );
       case 'date':
         return (
-          <DateFilterControl
+          // <DateFilterControl
+          //   fieldName={fieldName}
+          //   state={state}
+          //   onOptionChange={handleFilterOptionChange}
+          //   onValueChange={handleFilterValueChange}
+          // />
+          <NewDateFilterControl
+            filterStates={filterStates}
+            menuOption={fieldConfig.operatorOption || DateValueOptions}
             fieldName={fieldName}
             state={state}
             onOptionChange={handleFilterOptionChange}
-            onValueChange={handleFilterValueChange}
+            onValueChange={handleDateChange}
+            mode={'date'}
+            // onChange={handleBooleanChange}
           />
         );
       case 'keyContact':

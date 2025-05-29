@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // filterUtils.ts
-// import { FieldConfig, FilterState } from '../../../types/account-filter';
-
 import {
   FieldConfig,
   FilterState,
@@ -46,7 +44,7 @@ export const fields: FieldConfig[] = [
 
 export const getInitialStateForField = (
   fieldConfig: FieldConfig
-): FilterState => {
+): FilterState | any => {
   switch (fieldConfig.type) {
     case 'text':
       return { text: { option: 'contains', value: '' } };
@@ -59,11 +57,19 @@ export const getInitialStateForField = (
     case 'multi-select':
       return { multiSelect: { values: [] } };
     case 'date':
-      return { date: { option: 'equals', value: '' } };
+      return { date: { option: 'equals', value: { from: '', to: '' } } };
     default:
       return {};
   }
 };
+
+function formatString(str: string | undefined): string {
+  if (!str) return '';
+  return str
+    .split('_') // split on underscores
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1)) // capitalize each word
+    .join(' ');
+}
 
 export const formatFilterForApi = (
   filterStates: Record<string, FilterState>
@@ -72,17 +78,19 @@ export const formatFilterForApi = (
 
   Object.entries(filterStates).forEach(([fieldName, state]) => {
     if (state.date) {
-      formattedFilters[fieldName] =
-        state.date.option === 'between'
-          ? {
-              [state.date.option]: {
-                from: state.date.value?.toLowerCase() || undefined,
-                to: state.date.toValue?.toLowerCase() || undefined,
-              },
-            }
-          : {
-              [state.date.option]: state.date.value?.toLowerCase() || '',
-            };
+      const option = state.date.option;
+      const value = state.date.value;
+      const boolOptions = formatString(option) === 'Is Empty';
+      if (value?.from || value?.to || boolOptions) {
+        formattedFilters[fieldName] = {
+          [option]:
+            formatString(option) === 'Between'
+              ? [value.from?.toString(), value.to?.toString()]
+              : boolOptions
+                ? true
+                : value.from?.toString(),
+        };
+      }
     }
     if (state.text) {
       const selectedOption = state.text?.option;

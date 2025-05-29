@@ -14,7 +14,12 @@ export type NumberFilterOption =
   | 'is_empty';
 export type StatusFilterOption = 'equals';
 export type BooleanFilterOption = 'equals';
-export type DateOptions = 'equals' | 'before' | 'after' | 'between';
+export type DateOptions =
+  | 'Equals'
+  | 'Before'
+  | 'After'
+  | 'Between'
+  | 'Is Empty';
 export type KeyContactFilterOption =
   | 'equals'
   | 'not_equals'
@@ -26,7 +31,7 @@ export const DateValueOptions = [
   { value: 'before', label: 'Before' },
   { value: 'after', label: 'After' },
   { value: 'between', label: 'Between' },
-  // { value: 'is_empty', label: 'Is Empty' },
+  { value: 'is_empty', label: 'Is Empty' },
 ];
 
 export const numberOperators: { label: string; value: string }[] = [
@@ -71,10 +76,12 @@ interface MultiSelectFilterState {
   values: string[];
 }
 
-interface DateFilterState {
+export interface DateFilterState {
   option: DateOptions;
-  value: string;
-  toValue?: string;
+  value: {
+    from?: string;
+    to?: string;
+  };
 }
 interface RoleFilter {
   option: string;
