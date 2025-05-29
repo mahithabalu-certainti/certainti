@@ -153,6 +153,9 @@ export const getAllProjectListColumns = (
     sortable: true,
     sortId: 'qualified_research_expenditure',
     width: 130,
+    sx: {
+      textAlign: 'right',
+    },
   },
   {
     id: 'project_point_of_contact',

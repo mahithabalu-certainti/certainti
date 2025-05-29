@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { editIcon, projectCreateIcon } from '../../../assets';
@@ -26,6 +27,7 @@ import {
 } from '../account-create/utils';
 import { STATUS_OPTIONS } from '../../../common-utils';
 import { FormData, newKeyContactFields } from './form-data';
+import { formatDateToYYYYMMDDWithTime } from '../account-details-sidebar/sidebar-pages/resources/utils';
 
 const ProjectForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -68,10 +70,10 @@ const ProjectForm: React.FC = () => {
           ? 'Yes'
           : 'No',
         auto_access_rd: account?.auto_access_rd ? 'Yes' : 'No',
-        created_on: account?.created_datetime,
-        updated_on: account?.modified_datetime,
         project_enddate: formatDateToYYYYMMDD(account?.project_enddate),
         project_startdate: formatDateToYYYYMMDD(account?.project_startdate),
+        created_on: formatDateToYYYYMMDDWithTime(account?.created_datetime),
+        updated_on: formatDateToYYYYMMDDWithTime(account?.modified_datetime),
         region: account?.region,
         key_contact_name: account?.keyContact[0]?.key_contact_name,
         key_contact_role: account?.keyContact[0]?.key_contact_role,
@@ -332,44 +334,45 @@ const ProjectForm: React.FC = () => {
           />
         </div>
       </div>
-      <FormBuilder
-        data={FormData(
-          memoizedContry,
-          memoizedCurrency,
-          memoizedState,
-          memoizedIndustry,
-          memoizedClassification,
-          // memoizedRole,
-          isValueUpdateInKeyContact,
-          keyContacts,
-          addKeyContactInfo,
-          removeKeyContactInfo,
-          isEditView,
-          showOthersField,
-          showClassifyOthersField,
-          states.isLoading
-        )}
-        // loading={
-        //   allCountries.isLoading || currency.isLoading || state.isLoading
-        // }
-        loading={false}
-        values={
-          isEditView && projectData
-            ? { ...projectData }
-            : {
-                project_status: defaultActiveValue,
-                status: defaultActiveValue,
-                max_ai_interaction: 3,
-              }
-        }
-        outData={submitData}
-        formRef={formRef}
-        onChange={onChangeField}
-        keyStart='project_startdate'
-        keyEnd='project_enddate'
-        layout={Layout.TYPE_1}
-        newContactLength={newContactLength}
-      />
+      <div className={`${isEditView ? 'pb-10' : 'pb-4'}`}>
+        <FormBuilder
+          data={FormData(
+            memoizedContry,
+            memoizedCurrency,
+            memoizedState,
+            memoizedIndustry,
+            memoizedClassification,
+            // memoizedRole,
+            isValueUpdateInKeyContact,
+            keyContacts,
+            addKeyContactInfo,
+            removeKeyContactInfo,
+            isEditView,
+            showOthersField,
+            showClassifyOthersField,
+            states.isLoading
+          )}
+          // loading={
+          //   allCountries.isLoading || currency.isLoading || state.isLoading
+          // }
+          loading={false}
+          values={
+            isEditView && projectData
+              ? { ...projectData }
+              : {
+                  project_status: defaultActiveValue,
+                  status: defaultActiveValue,
+                }
+          }
+          outData={submitData}
+          formRef={formRef}
+          onChange={onChangeField}
+          keyStart='project_startdate'
+          keyEnd='project_enddate'
+          layout={Layout.TYPE_1}
+          newContactLength={newContactLength}
+        />
+      </div>
     </>
   );
 };

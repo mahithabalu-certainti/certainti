@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { PROJECT_CREATE } from '../../../../routes';
+// import { useNavigate } from 'react-router-dom';
+// import { PROJECT_CREATE } from '../../../../routes';
 import {
   accountSettingsIcon,
   actionIcon,
@@ -11,15 +11,15 @@ import {
   refreshIcon,
 } from '../../../../assets';
 import { ActionsDropdown } from '../../../../components';
-import TextButton from '../../../../components/button/text-button';
+// import TextButton from '../../../../components/button/text-button';
 import { getAllProjectFilterFields } from './helpers';
 import { ProjectTable } from './table/project-table';
 import { ProjectListParams } from '../../../types/project';
 import Filter from '../../account-details-sidebar/components/filter/filter';
 
-const BUTTON_STYLES = {
-  height: '32px',
-};
+// const BUTTON_STYLES = {
+//   height: '32px',
+// };
 
 export const Projects: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
@@ -55,11 +55,11 @@ export const Projects: React.FC = () => {
     },
   ];
 
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
-  const handleCreateProject = () => {
-    navigate(PROJECT_CREATE);
-  };
+  // const handleCreateProject = () => {
+  //   navigate(PROJECT_CREATE);
+  // };
 
   const projectFilterFields = getAllProjectFilterFields();
 
@@ -85,7 +85,7 @@ export const Projects: React.FC = () => {
         </div>
         <div className='flex gap-3 justify-center items-center'>
           <ActionsDropdown actions={menuItems} />
-          <TextButton
+          {/* <TextButton
             label='Create Project'
             onClick={handleCreateProject}
             sx={{
@@ -94,7 +94,7 @@ export const Projects: React.FC = () => {
               minWidth: '114px',
               maxWidth: '114px',
             }}
-          />
+          /> */}
           <div className='flex items-center justify-center border border-[#EAF0F5] w-[48px] h-[24px]'>
             <div className='flex items-center justify-center w-1/2'>
               <img src={refreshIcon} alt='refresh-icon' className='h-4' />

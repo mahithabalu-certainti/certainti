@@ -17,7 +17,7 @@ import { Theme } from '@emotion/react';
 import { NewProjectData } from '../../../../types/project';
 import {
   formatDateToMMDDYYYY,
-  formatDateToMMDDYYYYWithTime,
+  formatDateToYYYYMMDDWithTime,
 } from '../../../account-details-sidebar/sidebar-pages/resources/utils';
 import { KeyContactProps } from '../../../account-details/utils';
 interface DetailItem {
@@ -362,7 +362,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       ) {
         return {
           label: formatKey(key),
-          value: formatDateToMMDDYYYYWithTime(value), // custom formatter
+          value: formatDateToYYYYMMDDWithTime(value), // custom formatter
         };
       }
       if (

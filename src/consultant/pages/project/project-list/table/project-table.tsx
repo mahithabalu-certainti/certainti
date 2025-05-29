@@ -43,7 +43,10 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
 
   const { data, isLoading, isError } = useAllProjects(tableParams);
   const totalItems = data?.count || 0;
+  console.log(data, 'data');
 
+  // Update total count when data changes
+  // Update total count when data changes
   useEffect(() => {
     if (data) {
       setTotalCount(data?.count || 0);
@@ -127,7 +130,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       error={isError ? 'Failed to load projects' : undefined}
       rowsPerPageOptions={[25, 50, 100]}
       rowsPerPage={tableParams.limit}
-      currentPage={tableParams.page}
+      currentPage={(tableParams.page ?? 1) - 1}
       totalItems={totalItems}
       onPageChange={handlePageChange}
       onRowsPerPageChange={handleRowsPerPageChange}
