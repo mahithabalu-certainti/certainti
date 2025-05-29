@@ -303,7 +303,7 @@ export class ProjectService {
 
       if (existingRefId && existingRefId.rid !== projectData.project_id) {
         throw new Error(
-          `Duplicate Project Ref ID: '${projectData.project_code}' already exists.`
+          `Duplicate Project Code: '${projectData.project_code}' already exists.`
         );
       }
 
@@ -500,6 +500,8 @@ export class ProjectService {
         );
 
         projectData = this.insertAccount(projectData, accountData.account_name);
+
+        projectData = await this.schemaService.insertUserDetails(projectData);
       }
 
       return {
@@ -952,19 +954,17 @@ export class ProjectService {
               : "",
           new_value:
             newValue !== null && newValue !== undefined ? String(newValue) : "",
-          modified_by: newProjectData["modified_by"],
-          r_number: "",
-        }));
+          modified_by: newProjectData["modified_by"],        }));
 
       if (historyChanges.length === 0) return;
 
-      const latest = await ProjectHistoryModel.findAll();
+      // const latest = await ProjectHistoryModel.findAll();
 
-      historyChanges.forEach((change, i) => {
-        change.r_number = `PROH${(latest.length + i + 1)
-          .toString()
-          .padStart(4, "0")}`;
-      });
+      // historyChanges.forEach((change, i) => {
+      //   change.r_number = `${(latest.length + i + 1)
+      //     .toString()
+      //     .padStart(4, "0")}`;
+      // });
 
       await ProjectHistoryModel.bulkCreate(historyChanges);
     } catch (err) {

@@ -2437,7 +2437,7 @@ class SchemaService {
     sortBy: string,
     sortOrder: string,
     filters?: Record<string, any>
-  ) {
+  ): any {
     const filterableClientFields = [
       "account_name",
       "country_name",
@@ -2514,6 +2514,43 @@ class SchemaService {
     });
 
     return sortedList;
+  }
+
+  async insertUserDetails(projectData: any): Promise<any> {
+    try{  
+      const mainDbInit = await initMainDbSequelize();
+
+      const createdById = projectData.created_by;
+      const modifiedById = projectData.modified_by;
+
+      const getUserFullName = async (userId: string) => {
+        if (!userId) return null;
+
+        const [results] = await mainDbInit.query(
+          `SELECT first_name, middle_name, last_name FROM "user" WHERE rid = :userId`,
+          {
+            replacements: { userId },
+            type: "SELECT"
+          }
+        );
+
+        if (!results) return null;
+
+        const { first_name, middle_name, last_name } = results as any;
+        return [first_name, middle_name, last_name].filter(Boolean).join(" ");
+      };
+
+      const createdName = await getUserFullName(createdById);
+      const modifiedName = await getUserFullName(modifiedById);
+
+      return {
+        ...projectData,
+        created_name: createdName || null,
+        modified_name: modifiedName || null
+      };
+    }catch(err){
+      throw new Error("Error adding user details" + (err as Error).message);
+    }
   }
 }
 
