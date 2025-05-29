@@ -388,7 +388,8 @@ async function resourceSkillById(req: Request, res: Response): Promise<void> {
         skillTypeRids = raw
         .split(',')
         .map(rid => rid.trim().replace(/^"|"$/g, '')) // ✅ remove quotes
-        .filter(Boolean);      }
+        .filter(Boolean);      
+      }
     }
        const result = await resourceSkillService.getSkillSubTypes(skillTypeRids);
 

@@ -107,7 +107,7 @@ class GeoDataService {
    * - errorMessage (optional): The error message in case of a failure.
    * - data (optional): An object containing the list of states if the request is successful.
    */
-  async states(countryId?: string): Promise<{
+  async states(countryIds?: string[]): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -116,10 +116,10 @@ class GeoDataService {
     try {
       let states;
       
-      if (countryId) {
+      if (countryIds && countryIds.length > 0) {
         states = await States.findAll({
           where: {
-            country_rid: countryId
+            country_rid: countryIds // Sequelize will automatically handle the IN query for arrays
           },
           include: [
             {
@@ -127,7 +127,8 @@ class GeoDataService {
               as: "country",
               attributes: ["country_name"]
             }
-          ]
+          ],
+          order: [["state_name", "ASC"]]
         });
       } else {
         states = await States.findAll({
@@ -137,7 +138,8 @@ class GeoDataService {
               as: "country",
               attributes: ["country_name"]
             }
-          ]
+          ],
+          order: [["state_name", "ASC"]]
         });
       }
       
@@ -165,7 +167,7 @@ class GeoDataService {
    * - errorMessage (optional): The error message in case of a failure.
    * - data (optional): An object containing the list of cities if the request is successful.
    */
-  async cities(stateId?: string): Promise<{
+  async cities(stateIds?: string[]): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -174,10 +176,10 @@ class GeoDataService {
     try {
       let cities;
       
-      if (stateId) {
+      if (stateIds) {
         cities = await models.City.findAll({
           where: {
-            state_rid: stateId
+            state_rid: stateIds // Sequelize will automatically handle the IN query for arrays
           },
           include: [
             {
@@ -190,7 +192,8 @@ class GeoDataService {
               as: "country",
               attributes: ["country_name"]
             }
-          ]
+          ],
+          order: [["city_name", "ASC"]]
         });
       } else {
         cities = await models.City.findAll({
@@ -205,7 +208,8 @@ class GeoDataService {
               as: "country",
               attributes: ["country_name"]
             }
-          ]
+          ],
+          order: [["city_name", "ASC"]]
         });
       }
       

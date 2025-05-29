@@ -11,8 +11,8 @@ routes.get('/global', checkUserStatusMiddleware("NA"), controller.accountControl
 routes.get('/country', checkUserStatusMiddleware("NA"), controller.geoDataController.country);
 routes.get('/currency', checkUserStatusMiddleware("NA"), controller.geoDataController.currency);
 routes.get('/regions', checkUserStatusMiddleware("NA"), controller.geoDataController.regions);
-routes.get('/states/:countryId', checkUserStatusMiddleware("NA"), controller.geoDataController.states);
-routes.get('/cities/:stateId', checkUserStatusMiddleware("NA"), controller.geoDataController.cities);
+routes.get('/states', checkUserStatusMiddleware("NA"), controller.geoDataController.states);
+routes.get('/cities', checkUserStatusMiddleware("NA"), controller.geoDataController.cities);
 routes.get('/list/:id', checkUserStatusMiddleware("account_details_view"), controller.accountController.accountById);
 routes.post('/new', checkUserStatusMiddleware("accounts_create"), controller.accountController.createAccount);
 routes.put('/update', checkUserStatusMiddleware("accounts_edit_update"), controller.accountController.updateAccount);

@@ -100,13 +100,13 @@ export interface IGeoDataService {
       count: number;
     }>
   >;
-  states(countryId?: string): Promise<
+  states(countryIds?: string[]): Promise<
     GeoDataResponse<{
       states: any;
       count: number;
     }>
   >;
-  cities(stateId?: string): Promise<
+  cities(stateIds?: string[]): Promise<
     GeoDataResponse<{
       cities: any;
       count: number;
