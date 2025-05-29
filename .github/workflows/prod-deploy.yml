@@ -3,7 +3,7 @@ name: Deploy Platform 2.0 Pre-Production Backend Services
 on:
   push:
     branches:
-      - prod
+      - main
     paths:
       - user-module/**
       - account-module/**
