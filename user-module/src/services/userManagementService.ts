@@ -935,7 +935,6 @@ class UserManagementService {
       module_id:string;
       menu_id:string;
       is_modified: boolean;
-      has_extended_permission:boolean;
       is_enabled?: boolean;
       read?: boolean;
       edit?: boolean;
@@ -991,12 +990,12 @@ class UserManagementService {
       const updatePromises = modifiedPermissions.map(async (permission) => {
         switch (permission.type) {
           case 'menu':
-            return this.updateUserMenuAccessIfChanged(profileId,permission.rid,permission.menu_id, permission.has_extended_permission || false, requestedUserId ,loggedInUsername
+            return this.updateUserMenuAccessIfChanged(profileId,permission.rid,permission.menu_id, permission.is_enabled || false, requestedUserId ,loggedInUsername
             );
           case 'module':
-            return this.updateUserModuleAccessIfChanged(profileId,permission.rid,permission.module_id, permission.has_extended_permission || false, requestedUserId ,loggedInUsername);
+            return this.updateUserModuleAccessIfChanged(profileId,permission.rid,permission.module_id, permission.is_enabled || false, requestedUserId ,loggedInUsername);
           case 'permission':
-            return this.updateUserPermissionAccessIfChanged(profileId,permission.rid,permission.permission_id, permission.has_extended_permission || false, requestedUserId ,loggedInUsername);
+            return this.updateUserPermissionAccessIfChanged(profileId,permission.rid,permission.permission_id, permission.is_enabled || false, requestedUserId ,loggedInUsername);
           case 'field':
             return this.updateUserFieldAccessIfChanged(
               profileId,
