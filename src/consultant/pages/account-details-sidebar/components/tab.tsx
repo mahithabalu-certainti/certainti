@@ -1,7 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Box, Menu, MenuItem, Tab, Tabs } from '@mui/material';
 import React, { useEffect, useMemo, useState } from 'react';
 import { resourceFilterIcon } from '../../../../assets';
-import { Image } from '../../../../components';
 import ActionImportDropdown from '../sidebar-pages/imports/importdropdown';
 import {
   getCostFilterFields,
@@ -9,15 +9,17 @@ import {
   resourceFilterFields,
 } from '../sidebar-pages/resources/utils';
 import Filter from './filter/filter';
-import { FilterState } from './filter/filterType';
 import { useFetchCurrency } from '../../../services/account';
-import { resetFilter } from './filter/utils';
 import {
   useFetchResourceSkillSubType,
   useFetchResourceSkillType,
 } from '../../../services/resource-skill/resource-skill-service';
 import { SkillSubtype, SkillType } from '../../../types/resource';
 import { ResourceTabs } from '../sidebar-pages/resources/resources';
+import { clearFilters } from './filter/utils';
+import { projectFilterFields } from '../sidebar-pages/projects/utils';
+// import { useGetAllCountries } from '../../../../common-service';
+// import { SelectOption } from '../../../types';
 interface TabProps {
   resourceTab?: ResourceTabs[];
   filterVisibility: boolean;
@@ -25,14 +27,8 @@ interface TabProps {
   value: string;
   showFilter: boolean;
   setCurrentPage: (page: number) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   appliedFilters: Record<string, any>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setAppliedFilters: (filters: Record<string, any>) => void;
-  filterStates?: Record<string, FilterState>;
-  selectedFilters?: string[];
-  setFilterStates: (filterStates: Record<string, FilterState>) => void;
-  setSelectedFilters: (selectedFilters: string[]) => void;
 }
 const TabPanel: React.FC<TabProps> = ({
   resourceTab,
@@ -43,10 +39,6 @@ const TabPanel: React.FC<TabProps> = ({
   showFilter,
   filterVisibility,
   setCurrentPage,
-  filterStates,
-  selectedFilters,
-  setFilterStates,
-  setSelectedFilters,
 }) => {
   const [tabValue, setTabValue] = useState('');
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
@@ -69,17 +61,24 @@ const TabPanel: React.FC<TabProps> = ({
   const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
     setTabValue(newValue);
     setCurrentPage(0);
-    resetFilter({
-      setAppliedFilters,
-      setFilterStates,
-      setSelectedFilters,
-    });
+    setAppliedFilters({});
+    clearFilters(value || 'resource');
   };
   const currency = useFetchCurrency();
+  // const allCountries = useGetAllCountries();
+
   const { data: skillType } = useFetchResourceSkillType();
   const { data: skillSubType } = useFetchResourceSkillSubType(
     currentSkillType.skill_type_rid || (null as string | null)
   );
+  // const memoizedContry: SelectOption[] = useMemo(
+  //   () =>
+  //     allCountries.data?.data.country.map((country) => ({
+  //       label: country.country_name,
+  //       value: country.rid,
+  //     })) || [],
+  //   [allCountries.data?.data.country]
+  // );
 
   const memoizedSkillType: { option: string; value: string }[] = useMemo(() => {
     const data = skillType as SkillType[];
@@ -101,16 +100,6 @@ const TabPanel: React.FC<TabProps> = ({
     setSkillSubTypeData(finalData);
   }, [skillSubType]);
 
-  useEffect(() => {
-    if (filterStates?.skill_type_rid?.enum?.value) {
-      setCurrentSkillType({
-        skill_type_rid: filterStates?.skill_type_rid?.enum
-          ?.value as unknown as string,
-        skill_subtype_rid: filterStates?.skill_sub_type?.enum
-          ?.value as unknown as string,
-      });
-    }
-  }, [filterStates]);
   const handleSortClose = () => {
     setSortAnchorEl(null);
   };
@@ -162,6 +151,9 @@ const TabPanel: React.FC<TabProps> = ({
 
   const getFilterFields = () => {
     if (!value) return resourceFilterFields;
+    if (value === 'projects') {
+      return projectFilterFields;
+    }
     return value === 'cost'
       ? getCostFilterFields(memoizedCurrency)
       : getSkillFilterFields(memoizedSkillType, skillSubTypeData);
@@ -197,7 +189,7 @@ const TabPanel: React.FC<TabProps> = ({
             sx={{
               border: '1px solid #CBD6E27D',
               padding: '3px',
-              minHeight: '36px',
+              minHeight: '32px',
               '& .MuiTabs-indicator': {
                 display: 'none',
                 '& .MuiTabs-root': {
@@ -217,7 +209,7 @@ const TabPanel: React.FC<TabProps> = ({
                   sx={{
                     textTransform: 'none',
                     fontSize: '14px',
-                    fontWeight: 500,
+                    fontWeight: isActive ? '500' : '400',
                     color: '#2D3E4F',
                     backgroundColor: isActive ? '#0BBFB70D' : '',
                     margin: '0',
@@ -225,9 +217,9 @@ const TabPanel: React.FC<TabProps> = ({
                       ? '1px solid #0BBFB7'
                       : '1px solid transparent',
                     width: '120px',
-                    height: '28px',
+                    height: '24px',
                     borderRadius: '4px',
-                    minHeight: '28px',
+                    minHeight: '24px',
                     padding: '8px 16px',
                     '&:hover': {
                       color: isActive ? '#0BBFB7' : undefined,
@@ -247,14 +239,14 @@ const TabPanel: React.FC<TabProps> = ({
               <Box
                 component='button'
                 onClick={handleFilterModal}
-                className='h-[32px] w-[32px] flex items-center justify-center border border-[#CBD6E2] rounded-[2px] cursor-pointer'
+                className='w-[24px] h-[24px] flex items-center justify-center border border-[#CBD6E2] rounded-[2px] cursor-pointer'
                 aria-describedby={filterId}
               >
-                <Image src={resourceFilterIcon} />
+                <img src={resourceFilterIcon} className='p-1' />
                 {appliedFilters && Object.keys(appliedFilters).length > 0 && (
                   <div className='absolute -top-[8px] -right-1.5 w-4 h-4 flex items-center justify-center text-xs'>
                     <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
-                    <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
+                    <span className='w-3.5 h-3.5 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
                       {Object.keys(appliedFilters).length}
                     </span>
                   </div>
@@ -269,11 +261,8 @@ const TabPanel: React.FC<TabProps> = ({
                 filterId={filterId}
                 filterMenu={getFilterFields()}
                 setAppliedFilters={setAppliedFilters}
-                handleFilter={handleCloseFilter}
-                savedFilterStates={filterStates}
-                onFilterStatesChange={setFilterStates}
-                savedSelectedFilters={selectedFilters}
-                onSelectedFiltersChange={setSelectedFilters}
+                handleCloseFilter={handleCloseFilter}
+                setCurrentSkillType={setCurrentSkillType}
                 setCurrentPage={setCurrentPage}
                 mode={'date'}
               />
@@ -284,10 +273,10 @@ const TabPanel: React.FC<TabProps> = ({
             actions={menuActivity}
             label='Add Activity'
             sx={{
-              fontWeight: 400,
+              fontWeight: 600,
               fontSize: '13px',
               width: '143px',
-              height: '32px',
+              height: '24px',
             }}
           />
 

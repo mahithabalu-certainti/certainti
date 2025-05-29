@@ -13,6 +13,7 @@ export const DATA_STORAGE_OPTIONS: SelectOption[] = [
 ];
 
 export const othersIndustryId = '107e689d-35d8-49e5-a444-08db0c59167b';
+export const othersClassificationId = 'a6b7b3e5-1d4f-4e28-b15f-2fa49b91e5a8';
 
 export const transformFormData = (
   formData: Partial<AccountFormData>,

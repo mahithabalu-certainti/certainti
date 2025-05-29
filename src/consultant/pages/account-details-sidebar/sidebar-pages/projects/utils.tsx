@@ -1,15 +1,53 @@
-import { FieldConfig } from '../../account-details-sidebar/components/filter/filterType';
-import {
-  // dateOptions,
-  enumOptions,
-  fiscalYearOption,
-  numberOptions,
-  textOptions,
-  statusOptions,
-} from '../../account-details-sidebar/sidebar-pages/projects/utils';
+import { fiscalYears } from '../../../resource-form/form-data';
+import { FieldConfig } from '../../components/filter/filterType';
 
-export const getAllProjectFilterFields = (): FieldConfig[] => [
-  // Text fields
+export const statusOptions: { option: string; value: string }[] = [
+  { option: 'Active', value: 'Active' },
+  { option: 'In-Active', value: 'Inactive' },
+];
+export const fiscalYearOption = fiscalYears.map((year) => ({
+  option: year.label,
+  value: year.value,
+}));
+export const numberOptions: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not-Equals', value: 'not_equals' },
+  { option: 'Less-Than', value: 'less_than' },
+  { option: 'Greater-Than', value: 'greater_than' },
+  { option: 'Between', value: 'between' },
+  { option: 'Is-Empty', value: 'is_empty' },
+];
+
+export const booleanOptions: { option: string; value: string }[] = [
+  { option: 'IsTrue', value: 'isTrue' },
+  { option: 'IsFalse', value: 'isFalse' },
+  { option: 'Is-Empty', value: 'is_empty' },
+];
+
+export const textOptions: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not-Equals', value: 'not_equals' },
+  { option: 'Contains', value: 'contains' },
+  { option: 'Not-Contains', value: 'not_contains' },
+  { option: 'Is-Empty', value: 'is_empty' },
+];
+
+export const enumOptions: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not-Equals', value: 'not_equals' },
+  { option: 'In', value: 'in' },
+  { option: 'Is-Empty', value: 'is_empty' },
+];
+
+export const dateOptions: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Before', value: 'before' },
+  { option: 'After', value: 'after' },
+  { option: 'Between', value: 'between' },
+  { option: 'Is-Empty', value: 'is_empty' },
+];
+
+export const projectFilterFields: FieldConfig[] = [
   {
     name: 'Account Name',
     value: 'account_name',
@@ -138,6 +176,32 @@ export const getAllProjectFilterFields = (): FieldConfig[] => [
     type: 'text',
     operatorOption: textOptions,
   },
+  // Text fields
+  // {
+  //   name: 'Project Code',
+  //   value: 'project_code',
+  //   type: 'text',
+  //   operatorOption: textOptions,
+  // },
+  // {
+  //   name: 'Project Name',
+  //   value: 'project_name',
+  //   type: 'text',
+  //   operatorOption: textOptions,
+  // },
+  // {
+  //   name: 'Fiscal Year',
+  //   value: 'fiscal_year',
+  //   type: 'enum',
+  //   options: fiscalYearOption,
+  //   operatorOption: enumOptions,
+  // },
+  // {
+  //   name: 'Account Name',
+  //   value: 'account_name',
+  //   type: 'text',
+  //   operatorOption: textOptions,
+  // },
   // {
   //   name: 'Industry',
   //   value: 'industry',
@@ -150,7 +214,6 @@ export const getAllProjectFilterFields = (): FieldConfig[] => [
   //   type: 'text',
   //   operatorOption: textOptions,
   // },
-
   // // Date fields
   // {
   //   name: 'Start Date',
@@ -172,9 +235,9 @@ export const getAllProjectFilterFields = (): FieldConfig[] => [
   // },
   // {
   //   name: 'is RD Qualifiled ?',
-  //   value: 'qre',
-  //   type: 'number',
-  //   operatorOption: numberOptions,
+  //   value: 'is_rd_qualified',
+  //   type: 'select',
+  //   options: booleanOptions,
   // },
   // {
   //   name: 'QRE %',

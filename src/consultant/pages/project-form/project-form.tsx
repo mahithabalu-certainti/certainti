@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { editIcon, projectCreateIcon } from '../../../assets';
-import { OnChange, useGetAllCountries } from '../../../common-service';
+import { Layout, OnChange, useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
@@ -12,8 +12,7 @@ import {
   useFetchState,
   useKeyContactRoles,
 } from '../../services/account';
-import { SelectOption } from '../../types';
-import { FormData } from './form-data';
+import { FieldType, SelectOption } from '../../types';
 import { transformFormData } from './utils';
 import { NewProjectData } from '../../types/project';
 import {
@@ -21,8 +20,12 @@ import {
   useUpdateProject,
 } from '../../services/project/project-create-service';
 import { useProjectDetail } from '../../services/project';
-import { othersIndustryId } from '../account-create/utils';
+import {
+  othersClassificationId,
+  othersIndustryId,
+} from '../account-create/utils';
 import { STATUS_OPTIONS } from '../../../common-utils';
+import { FormData, newKeyContactFields } from './form-data';
 
 const ProjectForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -33,21 +36,25 @@ const ProjectForm: React.FC = () => {
     key_contact_email: '',
   });
   const [showOthersField, setShowOthersField] = useState(false);
+  const [showClassifyOthersField, setShowClassifyOthersField] = useState(false);
+  const [keyContacts, setKeyContacts] = useState<FieldType[]>([]);
+  const [newContactLength, setNewContactLength] = useState<number>(0);
   const { successToast } = useToast();
   const location = useLocation();
-  const { accountID, projectID } = location.state;
+  const { accountID, projectID } = location.state || {};
   const keyContactInfo = [
     'key_contact_name',
     'key_contact_role',
     'key_contact_email',
   ];
-  const formatDateToMMDDYYYY = (dateString?: string) => {
+
+  const formatDateToYYYYMMDD = (dateString?: string) => {
     if (!dateString) return '';
     const date = new Date(dateString);
+    const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
     const day = String(date.getDate()).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${month}/${day}/${year}`;
+    return `${year}/${month}/${day}`;
   };
 
   const getProjectData = useProjectDetail(accountID, projectID);
@@ -63,8 +70,8 @@ const ProjectForm: React.FC = () => {
         auto_access_rd: account?.auto_access_rd ? 'Yes' : 'No',
         created_on: account?.created_datetime,
         updated_on: account?.modified_datetime,
-        project_enddate: formatDateToMMDDYYYY(account?.project_enddate),
-        project_startdate: formatDateToMMDDYYYY(account?.project_startdate),
+        project_enddate: formatDateToYYYYMMDD(account?.project_enddate),
+        project_startdate: formatDateToYYYYMMDD(account?.project_startdate),
         region: account?.region,
         key_contact_name: account?.keyContact[0]?.key_contact_name,
         key_contact_role: account?.keyContact[0]?.key_contact_role,
@@ -100,7 +107,6 @@ const ProjectForm: React.FC = () => {
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
   const defaultActiveValue = STATUS_OPTIONS[0].value;
-  // console.log(isEditView);
   const commonSuccess = createProject.isSuccess || updateProject.isSuccess;
   useEffect(() => {
     if (commonSuccess) {
@@ -177,6 +183,47 @@ const ProjectForm: React.FC = () => {
       })) || [],
     [keyContactRoles.data?.data.keyContactRoles]
   );
+  useEffect(() => {
+    setNewContactLength(
+      newKeyContactFields(memoizedRole, isValueUpdateInKeyContact).length
+    );
+    setKeyContacts(
+      newKeyContactFields(memoizedRole, isValueUpdateInKeyContact) as []
+    );
+  }, [memoizedRole, isValueUpdateInKeyContact]);
+
+  const removeKeyContactInfo = (index: number) => {
+    // shallow copy keyContacts array
+    const contactsArr = [...keyContacts];
+    //Every time new contact is added it add newKeyContacts length fields
+    // and we need to remove same number of fields from the array for that
+    // we calculated the length
+    const lengthOfKeyContacts = newKeyContactFields(
+      memoizedRole,
+      isValueUpdateInKeyContact
+    ).length;
+    // Finds how many contacts is added like 1, 2, 3 etc
+    const totalContactGrp = Math.floor(
+      keyContacts.length / lengthOfKeyContacts
+    );
+    // Finds which contact is clicked
+    const clickedGroup =
+      totalContactGrp - 1 - Math.floor(index / lengthOfKeyContacts);
+    // Finds the index of the first contact in the clicked contact group
+    const groupStartIndex =
+      keyContacts.length - (clickedGroup + 1) * lengthOfKeyContacts;
+
+    // Remove the clicked contact group from the array with the added newKeyContacts length
+    contactsArr.splice(groupStartIndex, lengthOfKeyContacts);
+    setKeyContacts(contactsArr);
+  };
+  const addKeyContactInfo = () => {
+    const newKeyData = newKeyContactFields(
+      memoizedRole,
+      isValueUpdateInKeyContact
+    );
+    setKeyContacts([...keyContacts, ...newKeyData]);
+  };
 
   const submitData = (formValues: Partial<NewProjectData>) => {
     const projectData = transformFormData(
@@ -216,40 +263,49 @@ const ProjectForm: React.FC = () => {
       }));
     }
     if (data.fieldName === 'industry_rid') {
-      // console.log(data.fieldName);
       setShowOthersField(data.fieldValue === othersIndustryId);
+    }
+    if (data.fieldName === 'project_classification_rid') {
+      setShowClassifyOthersField(data.fieldValue === othersClassificationId);
     }
   };
   useEffect(() => {
-    if (projectData.country_rid) {
-      setCurrentCountry(projectData.country_rid);
+    if (account?.country) {
+      setCurrentCountry(account?.country);
     }
-  }, [projectData.country_rid]);
+  }, [account?.country]);
 
   useEffect(() => {
     if (account?.industry_rid === othersIndustryId) {
       setShowOthersField(true);
     }
   }, [account?.industry_rid]);
+  useEffect(() => {
+    if (account?.project_classification_rid === othersClassificationId) {
+      setShowClassifyOthersField(true);
+    }
+  }, [account?.project_classification_rid]);
 
   return (
     <>
-      <div className='flex justify-between items-center border-b-2 border-gray-200 px-10 py-6'>
-        <div className='flex items-center'>
+      <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200'>
+        <div className='flex items-center w-[80%] max-w-[80%]'>
           <img
             src={isEditView ? editIcon : projectCreateIcon}
             alt='projrct-icon'
-            className='h-[32px] w-[32px]  rounded'
+            className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
           />
-          <div>
+          <div className='w-[90%]'>
             {isEditView && (
-              <h5 className='font-semibold text-[11px] leading-[20px] ml-2 text-[#7D98B6]'>
-                {projectData.project_name}
+              <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F]'>
+                Edit Project
               </h5>
             )}
-            <div className='font-semibold text-[20px] ml-2 text-[#2D3E4F] leading-[20px]'>
-              {isEditView ? 'Edit Project' : 'New Project'}
-            </div>
+            <h4
+              className={`${isEditView ? 'text-[14px]' : 'text-[16px]'} font-bold text-[#2D3E4F] ml-2 leading-4 w-[95%] overflow-ellipsis truncate`}
+            >
+              {isEditView ? projectData.project_name : 'Create Project'}
+            </h4>
           </div>
         </div>
         <div className='flex gap-3'>
@@ -258,8 +314,8 @@ const ProjectForm: React.FC = () => {
             loading={createProject.isPending || updateProject.isPending}
             onClick={handleExternalSubmit}
             sx={{
-              height: '32px',
               width: '64px',
+              minWidth: '64px',
               fontSize: '13px',
               fontWeight: 400,
             }}
@@ -268,48 +324,52 @@ const ProjectForm: React.FC = () => {
             label='Cancel'
             onClick={goBack}
             sx={{
-              height: '32px',
               width: '75px',
+              minWidth: '75px',
               fontSize: '12px',
               fontWeight: 400,
             }}
           />
         </div>
       </div>
-      <div className='p-10'>
-        <FormBuilder
-          data={FormData(
-            memoizedContry,
-            memoizedCurrency,
-            memoizedState,
-            memoizedIndustry,
-            memoizedClassification,
-            memoizedRole,
-            isValueUpdateInKeyContact,
-            isEditView,
-            showOthersField,
-            states.isLoading
-          )}
-          // loading={
-          //   allCountries.isLoading || currency.isLoading || state.isLoading
-          // }
-          loading={false}
-          values={
-            isEditView && projectData
-              ? { ...projectData }
-              : {
-                  project_status: defaultActiveValue,
-                  status: defaultActiveValue,
-                  max_ai_interaction: 3,
-                }
-          }
-          outData={submitData}
-          formRef={formRef}
-          onChange={onChangeField}
-          keyStart='project_startdate'
-          keyEnd='project_enddate'
-        />
-      </div>
+      <FormBuilder
+        data={FormData(
+          memoizedContry,
+          memoizedCurrency,
+          memoizedState,
+          memoizedIndustry,
+          memoizedClassification,
+          // memoizedRole,
+          isValueUpdateInKeyContact,
+          keyContacts,
+          addKeyContactInfo,
+          removeKeyContactInfo,
+          isEditView,
+          showOthersField,
+          showClassifyOthersField,
+          states.isLoading
+        )}
+        // loading={
+        //   allCountries.isLoading || currency.isLoading || state.isLoading
+        // }
+        loading={false}
+        values={
+          isEditView && projectData
+            ? { ...projectData }
+            : {
+                project_status: defaultActiveValue,
+                status: defaultActiveValue,
+                max_ai_interaction: 3,
+              }
+        }
+        outData={submitData}
+        formRef={formRef}
+        onChange={onChangeField}
+        keyStart='project_startdate'
+        keyEnd='project_enddate'
+        layout={Layout.TYPE_1}
+        newContactLength={newContactLength}
+      />
     </>
   );
 };

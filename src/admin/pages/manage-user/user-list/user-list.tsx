@@ -21,9 +21,9 @@ import {
 } from '../../../../components/filter-component/utils';
 
 const BUTTON_STYLES = {
-  height: '32px',
+  height: '24px',
   fontSize: '13px',
-  fontWeight: 700,
+  fontWeight: 600,
 };
 
 const UserList: React.FC = () => {
@@ -213,7 +213,7 @@ const UserList: React.FC = () => {
           <div className='relative h-[32px]'>
             <button
               aria-describedby={filterId}
-              className={`w-[64px] h-[26px] text-[13px] mt-[3px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
+              className={`w-[64px] h-[24px] text-[13px] mt-[4px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
               ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) ? 'bg-[#F3F3F3]' : ''}`}
               onClick={handleFilterModal}
             >

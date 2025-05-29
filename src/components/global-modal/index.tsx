@@ -328,7 +328,7 @@ export const GlobalModal = ({
             sx={{
               width: '64px',
               minWidth: '64px',
-              backgroundColor: '#F16137',
+              // backgroundColor: '#F16137',
               borderRadius: '2px',
               fontSize: '13px',
               fontWeight: 400,

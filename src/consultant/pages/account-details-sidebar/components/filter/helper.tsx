@@ -52,7 +52,7 @@ export const TextFilterControl: React.FC<{
       <Select
         value={state.text?.option || 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
-        className='min-w-[65px] max-w-[65px] h-[28px]'
+        className='min-w-[110px] max-w-[10px] h-[28px]'
         IconComponent={(props) => (
           <img src={arrowIcon} alt='arrowIcon' {...props} />
         )}
@@ -65,7 +65,7 @@ export const TextFilterControl: React.FC<{
               key={menu.option}
               value={menu.value}
               sx={{
-                fontSize: '14px',
+                fontSize: '12px',
                 color: '#425A76',
                 fontWeight: 600,
                 py: '1px',
@@ -100,7 +100,7 @@ export const TextFilterControl: React.FC<{
               fontSize: '12px',
               color: '#425A76',
               height: '12px',
-              width: '168px',
+              width: '153px',
             },
           }}
         />
@@ -136,7 +136,7 @@ export const TextFilterControlForCostAndSKill: React.FC<{
       <Select
         value={state.textCostAndSkill?.option.toLowerCase() || 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
-        className='min-w-[65px] max-w-[65px] h-[28px]'
+        className='min-w-[110px] max-w-[110px] h-[28px]'
         IconComponent={(props) => (
           <img src={arrowIcon} alt='arrowIcon' {...props} />
         )}
@@ -149,7 +149,7 @@ export const TextFilterControlForCostAndSKill: React.FC<{
               key={menu.option}
               value={menu.value}
               sx={{
-                fontSize: '14px',
+                fontSize: '12px',
                 color: '#425A76',
                 fontWeight: 600,
                 py: '1px',
@@ -184,7 +184,7 @@ export const TextFilterControlForCostAndSKill: React.FC<{
               fontSize: '12px',
               color: '#425A76',
               height: '12px',
-              width: '170px',
+              width: '153px',
             },
           }}
         />
@@ -219,7 +219,7 @@ export const NumberFilterControl: React.FC<{
       <Select
         value={state.number?.option.toLowerCase() || 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
-        className='min-w-[65px] max-w-[65px] h-[28px]'
+        className='min-w-[110px] max-w-[110px] h-[28px]'
         IconComponent={(props) => (
           <img src={arrowIcon} alt='arrowIcon' {...props} />
         )}
@@ -232,7 +232,7 @@ export const NumberFilterControl: React.FC<{
               key={menu.option}
               value={menu.value}
               sx={{
-                fontSize: '14px',
+                fontSize: '12px',
                 color: '#425A76',
                 fontWeight: 600,
                 py: '1px',
@@ -273,7 +273,7 @@ export const NumberFilterControl: React.FC<{
                 fontSize: '12px',
                 color: '#425A76',
                 height: '12px',
-                width: isBetween ? '50%' : '168px',
+                width: isBetween ? '50%' : '153px',
               },
               '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button':
                 {
@@ -372,7 +372,7 @@ export const DateFilterControl: React.FC<{
       <Select
         value={state.date?.option || 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
-        className='min-w-[65px] max-w-[65px] h-[28px]'
+        className='min-w-[110px] max-w-[110px] h-[28px]'
         IconComponent={(props) => (
           <img src={arrowIcon} alt='arrowIcon' {...props} />
         )}
@@ -385,7 +385,7 @@ export const DateFilterControl: React.FC<{
               key={menu.option}
               value={menu.value}
               sx={{
-                fontSize: '14px',
+                fontSize: '12px',
                 color: '#425A76',
                 fontWeight: 600,
                 py: '1px',
@@ -594,7 +594,7 @@ export const CurrencySelectFilterControl: React.FC<{
       <Select
         value={state?.currencySelect?.option?.toLowerCase() ?? 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
-        className='min-w-[65px] max-w-[65px] h-[28px]'
+        className='min-w-[110px] max-w-[110px] h-[28px]'
         IconComponent={(props) => (
           <img src={arrowIcon} alt='arrowIcon' {...props} />
         )}
@@ -607,7 +607,7 @@ export const CurrencySelectFilterControl: React.FC<{
             key={menu.option}
             value={menu.value}
             sx={{
-              fontSize: '14px',
+              fontSize: '12px',
               color: '#425A76',
               fontWeight: 600,
               py: '1px',
@@ -642,7 +642,7 @@ export const CurrencySelectFilterControl: React.FC<{
                 return selectedOption ? selectedOption.option : '';
               }
             }}
-            className='h-[28px] w-[196px] min-w-[196px] max-w-[196px]'
+            className='h-[28px] w-[181px] min-w-[181px] max-w-[181px]'
             IconComponent={(props) => (
               <img src={arrowIcon} alt='arrowIcon' {...props} />
             )}
@@ -728,7 +728,7 @@ export const EnumFilterControl: React.FC<{
       <Select
         value={state?.enum?.option ?? 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
-        className='min-w-[65px] max-w-[65px] h-[28px]'
+        className='min-w-[110px] max-w-[110px] h-[28px]'
         IconComponent={(props) => (
           <img src={arrowIcon} alt='arrowIcon' {...props} />
         )}
@@ -742,7 +742,7 @@ export const EnumFilterControl: React.FC<{
             key={menu.option}
             value={menu.value}
             sx={{
-              fontSize: '14px',
+              fontSize: '12px',
               color: '#425A76',
               fontWeight: 600,
               py: '1px',
@@ -758,7 +758,7 @@ export const EnumFilterControl: React.FC<{
           disabled={disabled}
           value={state.enum?.value || []}
           name='value'
-          className='h-[28px] w-[196px] min-w-[196px] max-w-[196px]'
+          className='h-[28px] w-[181px] min-w-[181px] max-w-[181px]'
           IconComponent={(props) => (
             <img src={arrowIcon} alt='arrowIcon' {...props} />
           )}
@@ -922,7 +922,15 @@ export const formatFilterForApi = (
         };
       }
     } else if (state.select) {
-      formattedFilters[fieldKey] = state.select.value;
+      console.log('formattedFilters[fieldKey]', formattedFilters[fieldKey]);
+      if (fieldKey === 'is_rd_qualified') {
+        const selectedValue = state.select.value;
+        formattedFilters[fieldKey] = {
+          [selectedValue]: true,
+        };
+      } else {
+        formattedFilters[fieldKey] = state.select.value;
+      }
     }
   });
 
@@ -946,17 +954,8 @@ export const StatusFilterControl: React.FC<{
       )}
       sx={SELECT_STYLES}
       MenuProps={MENU_PROPS}
-      renderValue={(selected) => {
-        if (!selected) {
-          return <span style={{ color: '#aaa' }}>Select an option</span>;
-        }
-        return selected;
-      }}
     >
-      <MenuItem value='' disabled hidden>
-        Select
-      </MenuItem>
-      {menuOption.map((menu) => (
+      {menuOption?.map((menu) => (
         <MenuItem
           key={menu.option}
           value={menu.value}

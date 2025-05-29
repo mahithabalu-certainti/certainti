@@ -32,9 +32,8 @@ import { AccessRestricted } from '../../../../components/account-restricted';
 
 const HEADER_STYLES = {
   adminPermission:
-    'font-medium text-[#7D98B6] text-[11px] leading-5 tracking-normal',
-  manageUser:
-    'font-semibold text-[20px] text-[#2D3E4F] leading-5 tracking-normal',
+    'font-semibold text-[#7D98B6] text-[12px] leading-5 tracking-normal',
+  manageUser: 'font-bold text-[16px] text-[#2D3E4F] leading-5 tracking-normal',
 };
 
 export const CreateUser: React.FC = () => {
@@ -230,18 +229,18 @@ export const CreateUser: React.FC = () => {
 
   return (
     <>
-      <div className='flex flex-col p-4 gap-3'>
+      <div className='flex flex-col gap-3'>
         {/* Header Section */}
-        <div className='w-full min-h-[75px] h-[75px] px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
-          <div className='flex items-center gap-2'>
+        <div className='w-full min-h-[50px] h-[50px] border-box py-1 px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
+          <div className='flex items-center gap-3'>
             <img
               src={ManageUserIcon}
               alt='manage user'
-              className='h-8 w-8 rounded'
+              className='h-6 w-6 rounded'
             />
             <div className='flex flex-col mb-1'>
               <div className={HEADER_STYLES.adminPermission}>
-                Admin Permission
+                Admin Permissions
               </div>
               <div className={HEADER_STYLES.manageUser}>Manage User</div>
             </div>
@@ -249,6 +248,8 @@ export const CreateUser: React.FC = () => {
           <div className='flex gap-2 items-center'>
             <TextButton
               label='Back'
+              // variant='outlined'
+              // color='inherit'
               onClick={goBack}
               sx={{
                 width: '49px',
@@ -260,27 +261,38 @@ export const CreateUser: React.FC = () => {
             />
           </div>
         </div>
-
-        <div className='border border-[#CBD6E2] rounded-[4px]'>
-          <div className='flex justify-between items-center border-b border-[#CBD6E2] h-[50px] px-4'>
-            <div className='font-semibold text-base leading-[32px] tracking-[0%] align-middle text-[#2D3E4F]'>
-              {isEditView ? 'Edit User' : 'Create User'}
-            </div>
-            <div className='flex gap-2 m-2'>
-              <TextButton
-                label='Save'
-                loading={updateUser.isPending || createUser.isPending}
-                onClick={handleExternalSubmit}
-                sx={{
-                  width: '64px',
-                  minWidth: '64px',
-                  fontWeight: 400,
-                  fontSize: '13px',
-                }}
-              />
-              {isEditView && isUserDeleteEnable && (
+        <div className='p-4'>
+          <div className='border border-[#CBD6E2] rounded-[4px]'>
+            <div className='flex justify-between items-center bg-[#FCFCFC] border-b border-[#CBD6E2] h-[38px] pl-4 pr-1'>
+              <div className='font-semibold text-base leading-[32px] tracking-[0%] align-middle text-[#2D3E4F]'>
+                {isEditView ? 'Edit User' : 'Create User'}
+              </div>
+              <div className='flex gap-2'>
                 <TextButton
-                  label='Delete'
+                  label='Save'
+                  loading={updateUser.isPending || createUser.isPending}
+                  onClick={handleExternalSubmit}
+                  sx={{
+                    width: '64px',
+                    minWidth: '64px',
+                    fontWeight: 400,
+                    fontSize: '13px',
+                  }}
+                />
+                {isEditView && isUserDeleteEnable && (
+                  <TextButton
+                    label='Delete'
+                    sx={{
+                      width: '75px',
+                      minWidth: '75px',
+                      fontWeight: 400,
+                      fontSize: '13px',
+                    }}
+                  />
+                )}
+                <TextButton
+                  label='Cancel'
+                  onClick={goBack}
                   sx={{
                     width: '75px',
                     minWidth: '75px',
@@ -288,42 +300,33 @@ export const CreateUser: React.FC = () => {
                     fontSize: '13px',
                   }}
                 />
-              )}
-              <TextButton
-                label='Cancel'
-                onClick={goBack}
-                sx={{
-                  width: '75px',
-                  minWidth: '75px',
-                  fontWeight: 400,
-                  fontSize: '13px',
-                }}
-              />
+              </div>
             </div>
+            <FormBuilder
+              loading={
+                userDetails.isLoading ||
+                userProfiles.isLoading ||
+                allCountries.isLoading ||
+                userRoles.isLoading
+              }
+              data={FormData(
+                memoizedCountry,
+                memoizeProfiles,
+                memoizeRole,
+                memoizedState,
+                memoizeCity,
+                isEditView,
+                states.isLoading,
+                city.isLoading,
+                isEditView ? !isUserActivateEnable : false
+              )}
+              values={isEditView && userDatas ? { ...userDatas } : undefined}
+              outData={submitData}
+              formRef={formRef}
+              onChange={onChangeField}
+              admin={true}
+            />
           </div>
-          <FormBuilder
-            loading={
-              userDetails.isLoading ||
-              userProfiles.isLoading ||
-              allCountries.isLoading ||
-              userRoles.isLoading
-            }
-            data={FormData(
-              memoizedCountry,
-              memoizeProfiles,
-              memoizeRole,
-              memoizedState,
-              memoizeCity,
-              isEditView,
-              states.isLoading,
-              city.isLoading,
-              isEditView ? !isUserActivateEnable : false
-            )}
-            values={isEditView && userDatas ? { ...userDatas } : undefined}
-            outData={submitData}
-            formRef={formRef}
-            onChange={onChangeField}
-          />
         </div>
       </div>
     </>

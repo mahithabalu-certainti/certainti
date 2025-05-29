@@ -64,9 +64,9 @@ const TableSortHeader: React.FC<TableSortHeaderProps> = ({
           } transition-opacity duration-150`}
         >
           <img
-            src={arrowIcon}
-            alt={'arrowIcon'}
-            className='w-[10px] h-[10px] mr-[1px]'
+            src={orderBy === columnId ? sortIcon : arrowIcon}
+            alt={orderBy === columnId ? 'sort-icon' : 'arrowIcon'}
+            className={`w-[10px] h-[10px] mr-[1px] ${orderBy === columnId ? `w-[13px] h-[13px] ${order === 'desc' ? 'scale-y-[-1]' : ''}` : 'w-[10px] h-[10px]'}`}
           />
         </IconButton>
       </div>
@@ -109,7 +109,7 @@ const TableSortHeader: React.FC<TableSortHeaderProps> = ({
         >
           <img
             src={sortIcon}
-            alt={'sortIcon'}
+            alt={'Asc-sortIcon'}
             className='w-[16px] h-[16px] mr-[6px]'
           />
           Sort Ascending
@@ -126,7 +126,7 @@ const TableSortHeader: React.FC<TableSortHeaderProps> = ({
         >
           <img
             src={sortIcon}
-            alt={'sortIcon'}
+            alt={'Desc-sortIcon'}
             className='w-[16px] h-[16px] mr-[6px] scale-y-[-1]'
           />
           Sort Descending

@@ -1,4 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import {
+  CircularProgress,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material';
 import { SxProps } from '@mui/material';
 import React from 'react';
 import { leftArrowIcon } from '../../../../../assets';
@@ -9,9 +19,19 @@ import {
   formatDateToMMDDYYYY,
   formatDateToMMDDYYYYWithTime,
 } from '../../../account-details-sidebar/sidebar-pages/resources/utils';
+import { KeyContactProps } from '../../../account-details/utils';
 interface DetailItem {
   label: string;
   value: React.ReactNode;
+}
+interface trasnformedKeyContacts {
+  keyContactId?: string | undefined;
+  keyContactName?: string | undefined;
+  keyContactRole?: string | undefined;
+  keyContactEmail?: string | undefined;
+  isPrimaryContact?: boolean | undefined;
+  includeInCommnunications?: boolean | undefined;
+  keyContactStatus?: string | undefined;
 }
 interface ProjectOverviewProps {
   title: string;
@@ -27,6 +47,8 @@ interface ProjectOverviewProps {
   showBackArrow?: boolean;
   onBackClick?: () => void;
   projectDetails?: NewProjectData | null;
+  isDetailsLoading?: boolean;
+  detailsError?: boolean;
 }
 
 const formatKey = (key: string): string => {
@@ -47,9 +69,9 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   showBackArrow = false,
   onBackClick,
   projectDetails,
+  isDetailsLoading,
+  detailsError,
 }) => {
-  console.log('projectDetails', projectDetails);
-
   const DetailsSection: React.FC<{
     title: string;
     data: DetailItem[];
@@ -66,7 +88,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       }
     });
 
-    const renderValue = (value: React.ReactNode) => {
+    const renderValue = (value: React.ReactNode, label?: string) => {
       if (typeof value === 'string') {
         const status = value.toLowerCase();
         if (status === 'active') {
@@ -75,29 +97,50 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
         if (status === 'inactive') {
           return <span className='text-[#f44336]'>In-Active</span>;
         }
+        if (label && label.toLowerCase() === 'website') {
+          return (
+            <span className='font-medium text-[13px] text-[#425A76]'>
+              {value ? (
+                <a
+                  href={value}
+                  target='_blank'
+                  className='underline decoration-[#425A76]'
+                >
+                  {value}
+                </a>
+              ) : (
+                '-'
+              )}
+            </span>
+          );
+        }
       }
       return (
-        <span className='font-light text-[14px] text-[#2D3E4F]'>
-          {value || 'NA'}
+        <span className='font-medium text-[13px] text-[#425A76]'>
+          {value || '-'}
         </span>
       );
     };
 
     return (
-      <div className={title === 'Basic Information' ? 'mt-0' : 'mt-6'}>
-        <div className='text-[16px] text-[#2D3E4F] font-semibold'>{title}</div>
-        <div className='text-sm my-1.5 grid gap-y-2'>
+      <div
+        className={
+          title === 'Basic Information' ? 'px-6 pt-2 mt-0' : 'px-6 pt-2 mt-3'
+        }
+      >
+        <div className='text-[15px] text-[#2D3E4F] font-bold'>{title}</div>
+        <div className='text-sm my-[6px] grid gap-y-3'>
           {title === 'Comments'
             ? // Full-width single column layout for Comments
               data.map((item, index) => (
                 <div
                   key={`comment-row-${index}`}
-                  className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-4 py-2'
+                  className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2'
                 >
-                  <div className='text-right font-normal text-[14px] text-[#65686F] pr-2'>
+                  <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
                     {item.label}
                   </div>
-                  <div className='font-light text-[14px] break-all overflow-hidden'>
+                  <div className='font-medium text-[13px] break-all overflow-hidden'>
                     {renderValue(item.value)}
                   </div>
                 </div>
@@ -111,23 +154,23 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
                     className='grid grid-cols-1 md:grid-cols-2 gap-6'
                   >
                     {/* Left column */}
-                    <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-4 py-2'>
-                      <div className='text-right font-normal text-[14px] text-[#65686F] pr-2'>
+                    <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2'>
+                      <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
                         {leftItem.label}
                       </div>
-                      <div className='font-light text-[14px] break-all overflow-hidden'>
-                        {renderValue(leftItem.value)}
+                      <div className='font-medium text-[13px] break-all overflow-hidden'>
+                        {renderValue(leftItem.value, leftItem.label)}
                       </div>
                     </div>
 
                     {/* Right column */}
                     {rightItem ? (
-                      <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-4 py-2'>
-                        <div className='text-right font-normal text-[14px] text-[#65686F] pr-2'>
+                      <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2'>
+                        <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
                           {rightItem.label}
                         </div>
-                        <div className='font-light text-[14px] break-all overflow-hidden'>
-                          {renderValue(rightItem.value)}
+                        <div className='font-medium text-[13px] break-all overflow-hidden'>
+                          {renderValue(rightItem.value, rightItem.label)}
                         </div>
                       </div>
                     ) : (
@@ -140,6 +183,167 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       </div>
     );
   };
+
+  const KeyContactSection: React.FC<{
+    title: string;
+    data: trasnformedKeyContacts[];
+  }> = ({ title, data }) => {
+    return (
+      <div className=''>
+        <div className='flex items-center align-middle px-6 h-[30px] border-x-0 border border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#F5F9FF]'>
+          {title}
+        </div>
+        <TableContainer
+          sx={{
+            'overflow-x': 'auto',
+          }}
+        >
+          <Table>
+            <TableHead
+              sx={{
+                '& .MuiTableCell-root': {
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  color: '#2A2A2A',
+                  padding: '0px 8px',
+                  height: '29px',
+                  boxSizing: 'border-box',
+                  backgroundColor: ' #FCFCFC',
+                  borderBottom: '1px solid #CBD6E2',
+                },
+                '& .MuiTableCell-root:first-of-type': {
+                  paddingLeft: '24px',
+                },
+              }}
+            >
+              <TableRow sx={{ height: 29 }}>
+                <TableCell sx={{ minWidth: '140px' }}>ID</TableCell>
+                <TableCell sx={{ minWidth: '140px' }}>Name</TableCell>
+                <TableCell sx={{ minWidth: '140px' }}>Role</TableCell>
+                <TableCell sx={{ minWidth: '180px' }}>Email</TableCell>
+                <TableCell sx={{ minWidth: '140px' }}>
+                  Is Primary Contact?
+                </TableCell>
+                <TableCell sx={{ minWidth: '190px' }}>
+                  Include in Communications?
+                </TableCell>
+                <TableCell sx={{ minWidth: '140px', borderRight: 'none' }}>
+                  Status
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody
+              sx={{
+                '& .MuiTableCell-root': {
+                  padding: '0px 8px',
+                  borderBottom: '1px solid #CBD6E2',
+                  // borderTop: 'none',
+                  height: '30px',
+                  color: '#425A76',
+                  fontWeight: 500,
+                  fontSize: '13px',
+                  // borderRight: 'none',
+                },
+                '& .MuiTableRow-root > .MuiTableCell-root:first-of-type': {
+                  paddingLeft: '24px',
+                },
+              }}
+            >
+              {data.map((field) => (
+                <TableRow
+                  sx={{
+                    '& .MuiTableCell-root': {
+                      height: '30px !important',
+                    },
+                  }}
+                >
+                  <TableCell sx={{ minWidth: '140px' }}>
+                    {field.keyContactId || '-'}
+                  </TableCell>
+                  <TableCell sx={{ minWidth: '140px' }}>
+                    {field.keyContactName || '-'}
+                  </TableCell>
+                  <TableCell sx={{ minWidth: '140px' }}>
+                    {field.keyContactRole || '-'}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      minWidth: '180px',
+                      textDecoration: field.keyContactEmail
+                        ? 'underline'
+                        : 'none',
+                      textDecorationColor: '#425A76',
+                    }}
+                  >
+                    {field.keyContactEmail || '-'}
+                  </TableCell>
+                  <TableCell sx={{ minWidth: '140px' }}>
+                    {field.isPrimaryContact ? 'Yes' : 'No'}
+                  </TableCell>
+                  <TableCell sx={{ minWidth: '190px' }}>
+                    {field.includeInCommnunications ? 'Yes' : 'No'}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      minWidth: '140px',
+                      borderRight: 'none',
+                      color:
+                        field.keyContactStatus?.toLowerCase() === 'active'
+                          ? '#3EA72F !important'
+                          : '#f44336 !important',
+                    }}
+                  >
+                    {field.keyContactStatus?.toLowerCase() === 'active'
+                      ? 'Active'
+                      : 'In-Active'}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </div>
+    );
+  };
+  if (isDetailsLoading) {
+    return (
+      <div className='flex items-center justify-center h-64'>
+        <CircularProgress />
+        <Typography variant='body1' className='ml-4'>
+          Loading details...
+        </Typography>
+      </div>
+    );
+  }
+
+  if (detailsError) {
+    return (
+      <div className='flex flex-col items-center justify-center h-64 p-4'>
+        <Typography variant='h6' color='error' className='mb-2'>
+          Error loading details
+        </Typography>
+        <Typography
+          variant='body2'
+          color='textSecondary'
+          className='text-center'
+        >
+          {'Failed to fetch details. Please try again later.'}
+        </Typography>
+      </div>
+    );
+  }
+
+  if (!projectDetails) {
+    return (
+      <div className='flex flex-col items-center justify-center h-64 p-4'>
+        <Typography variant='h6' color='textSecondary'>
+          No details available
+        </Typography>
+      </div>
+    );
+  }
+  const isKeyContactAvailable =
+    projectDetails?.keyContact && projectDetails.keyContact.length > 0;
   const CreateSectionData = (
     dataObj: Partial<NewProjectData>,
     customMappings?: Record<string, (val: any) => React.ReactNode>
@@ -149,7 +353,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       if (value && typeof value === 'object' && !Array.isArray(value)) {
         return {
           label: formatKey(key),
-          value: Object.values(value).join(', ') || 'NA', // or handle nested objects differently
+          value: Object.values(value).join(', ') || '-', // or handle nested objects differently
         };
       }
       if (
@@ -172,7 +376,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       }
       const displayValue =
         value === null || value === '' || value === undefined
-          ? 'NA'
+          ? '-'
           : customMappings?.[key]
             ? customMappings[key](value)
             : value;
@@ -205,17 +409,17 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     region: projectDetails?.region_name,
     currency: projectDetails?.currency_name,
   });
-  const firstKeyContact = projectDetails?.keyContact?.[0];
-  const keyContacts = CreateSectionData({
-    key_contact_name: firstKeyContact?.key_contact_name ?? '',
-    key_contact_role: firstKeyContact?.role_name ?? '',
-    key_contact_email: firstKeyContact?.key_contact_email ?? '',
-    is_primary_contact: firstKeyContact?.is_primary_contact ? 'Yes' : 'No',
-    include_in_communication: firstKeyContact?.include_in_communication
-      ? 'Yes'
-      : 'No',
-    key_contact_status: firstKeyContact?.status ?? undefined,
-  });
+
+  const keyContactsList: trasnformedKeyContacts[] | undefined =
+    projectDetails?.keyContact?.map((contact: KeyContactProps) => ({
+      keyContactId: contact.r_number,
+      keyContactName: contact.key_contact_name,
+      keyContactRole: contact.role_name,
+      keyContactEmail: contact.key_contact_email,
+      isPrimaryContact: contact.is_primary_contact,
+      includeInCommnunications: contact.include_in_communication,
+      keyContactStatus: contact.status,
+    }));
   const fincialInfo = CreateSectionData({
     efforts_in_hrs: projectDetails?.total_effort,
     total_cost: projectDetails?.total_cost,
@@ -249,30 +453,19 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   });
   return (
     <>
-      <div className='border-t border-[1px] border-b-0 border-[#CBD6E2] rounded-tl-[2px] h-[50px] rounded-tr-[2px]'>
-        <div className='flex items-center justify-between h-full px-4'>
+      <div className='border-t border-[1px] border-b-0 border-[#CBD6E2] rounded-tl-[2px]  rounded-tr-[2px]'>
+        <div className='flex items-center  justify-between  gap-4 h-[35px] px-2  rounded-[2px]'>
           <div className='flex items-center gap-2'>
             {showBackArrow && (
               <div
-                className='cursor-pointer w-[24px] h-[24px] flex justify-center items-center -ml-2'
+                className='cursor-pointer  flex justify-center items-center -ml-2'
                 onClick={onBackClick}
               >
-                <img
-                  src={leftArrowIcon}
-                  className='h-[14px]'
-                  alt='leftArrowIcon'
-                />
+                <img src={leftArrowIcon} alt='leftArrowIcon' />
               </div>
-              //   <button
-              //     onClick={onBackClick}
-              //     className='mr-2'
-              //     aria-label='Go back'
-              //   >
-
-              //   </button>
             )}
             {titleIcon && (
-              <div className='w-[24px] h-[24px] flex items-center justify-center'>
+              <div className='text-[13px] text-[#2D3E4F] font-semibold'>
                 {titleIcon}
               </div>
             )}
@@ -300,7 +493,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
         </div>
       </div>
       <div>
-        <div className='max-w-6xl p-6  border-[1px]  border-[#CBD6E2]'>
+        <div className='max-w-6xl    border-[1px]  border-[#CBD6E2]'>
           <DetailsSection
             title='Basic Information'
             data={basicInfo as DetailItem[]}
@@ -309,23 +502,25 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
             title='Location and Currency Information'
             data={locationInfo as DetailItem[]}
           />
+          {isKeyContactAvailable && keyContactsList && (
+            <KeyContactSection
+              title='Key Contacts List'
+              data={keyContactsList}
+            />
+          )}
           <DetailsSection
-            title='Project Key Contacts - List'
-            data={keyContacts as DetailItem[]}
-          />
-          <DetailsSection
-            title='Project Key Contacts - List'
+            title='Financial Information'
             data={fincialInfo as DetailItem[]}
           />
           <DetailsSection
             title='Project Settings'
             data={settingInfo as DetailItem[]}
           />
+          <DetailsSection title='Comments' data={comments as DetailItem[]} />
           <DetailsSection
             title='Audit Information'
             data={auditInfo as DetailItem[]}
           />
-          <DetailsSection title='Comments' data={comments as DetailItem[]} />
         </div>
       </div>
     </>

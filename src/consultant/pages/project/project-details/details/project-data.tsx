@@ -9,18 +9,19 @@ const BUTTON_STYLES = {
   height: '26px !important',
   fontSize: '13px',
   fontWeight: 400,
-  color: '#F16137',
-  bgcolor: '#FFF8F6',
-  borderRadius: '2px',
 };
 
 interface ProjectsDataProps {
   projectDetails?: NewProjectData | null;
   activeKey?: string;
+  isDetailsLoading: boolean;
+  detailsError: boolean;
 }
 
 const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
   projectDetails,
+  isDetailsLoading,
+  detailsError,
 }) => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(0);
@@ -39,6 +40,12 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
       label: 'Edit',
       variant: 'outlined' as const,
       onClick: () => handleEdit(),
+      sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
+    },
+    {
+      label: 'Download',
+      variant: 'outlined' as const,
+      onClick: () => console.log('Download'),
       sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
     },
   ];
@@ -61,6 +68,8 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
           titleIcon={<img src={projectsBook} alt='project-header-icon' />}
           headerButtons={headerButtons}
           projectDetails={projectDetails}
+          isDetailsLoading={isDetailsLoading}
+          detailsError={detailsError}
         />
       )}
     </div>

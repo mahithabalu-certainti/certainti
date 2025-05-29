@@ -24,10 +24,7 @@ import { exportAccountList, useFetchCurrency } from '../../services/account';
 import { AccountList } from '../../types';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
-import {
-  ActionsDropdownItem,
-  checkPermission,
-} from '../../../common-utils';
+import { ActionsDropdownItem, checkPermission } from '../../../common-utils';
 import { AccessRestricted } from '../../../components/account-restricted';
 import {
   formatFilterForApi,
@@ -36,9 +33,9 @@ import {
 import { FilterState } from '../../types/account-filter';
 
 const BUTTON_STYLES = {
-  height: '32px',
+  height: '24px',
   fontSize: '13px',
-  fontWeight: 700,
+  fontWeight: 600,
 };
 
 export const Accounts: React.FC = () => {
@@ -161,17 +158,19 @@ export const Accounts: React.FC = () => {
         </div>
         <div className='flex gap-3 justify-center items-center'>
           <ActionsDropdown actions={menuItems} />
-          {isAccountCreateEnable && <TextButton
-            label='Create Account'
-            onClick={handleCreateAccount}
-            sx={{
-              ...BUTTON_STYLES,
-              width: '114px',
-              minWidth: '114px',
-              maxWidth: '114px',
-            }}
-          />}
-          <div className='flex items-center justify-center border border-[#EAF0F5] w-16 h-8'>
+          {isAccountCreateEnable && (
+            <TextButton
+              label='Create Account'
+              onClick={handleCreateAccount}
+              sx={{
+                ...BUTTON_STYLES,
+                width: '114px',
+                minWidth: '114px',
+                maxWidth: '114px',
+              }}
+            />
+          )}
+          <div className='flex items-center justify-center border border-[#EAF0F5] w-[48px] h-[24px]'>
             <div className='flex items-center justify-center w-1/2'>
               <img src={refreshIcon} alt='refresh-icon' className='h-4' />
             </div>
@@ -180,20 +179,10 @@ export const Accounts: React.FC = () => {
               <img src={downloadIcon} alt='download-icon' className='h-4' />
             </div>
           </div>
-          <div
-            className='flex border border-[#CBD6E2] w-8 h-8 rounded-[2px] justify-center items-center'
-            style={{
-              background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-            }}
-          >
+          <div className='flex border border-[#CBD6E2] w-[24px] h-[24px] justify-center items-center bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'>
             <img src={actionIcon} alt='menu-icon' className='h-4' />
           </div>
-          <div
-            className='flex border border-[#CBD6E2] w-8 h-8 rounded-[2px] justify-center items-center'
-            style={{
-              background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-            }}
-          >
+          <div className='flex border border-[#CBD6E2] w-[24px] h-[24px]  justify-center items-center bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'>
             <img src={accountSettingsIcon} alt='menu-icon' className='h-4' />
           </div>
         </div>
@@ -202,7 +191,7 @@ export const Accounts: React.FC = () => {
         <div className='relative'>
           <button
             aria-describedby={filterId}
-            className={`w-[64px] h-[26px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
+            className={`w-[64px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
               ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) ? 'bg-[#F3F3F3]' : ''}`}
             onClick={handleFilterModal}
           >

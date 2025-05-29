@@ -8,7 +8,7 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { accountDetailsIcon } from '../../../assets';
-import { PageHeader } from '../../../components';
+import { InfoSection, PageHeader, SideMenuPanel } from '../../../components';
 import { ACCOUNT } from '../../../routes';
 import { useAccountDetail } from '../../services/account-details/account-details-service';
 import {
@@ -24,8 +24,6 @@ import {
   Resources,
   Timesheet,
 } from '../account-details-sidebar';
-import { AccountInfo } from './account-info';
-import Sidebar from './sidebar';
 import { transformAccountData } from './utils';
 import { CircularProgress } from '@mui/material';
 import { useSelector } from 'react-redux';
@@ -68,7 +66,7 @@ export const AccountDetails = () => {
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
   const defaultTab = searchParams.get('list');
-  const [activeKey, setActiveKey] = useState(defaultTab);
+  const [activeKey, setActiveKey] = useState(defaultTab as string);
 
   const [tableParams, setTableParams] = useState<ExportModule>({
     sortBy: 'created_datetime',
@@ -125,6 +123,8 @@ export const AccountDetails = () => {
     }
   }, [searchParams]);
 
+  // getting user is inactive error, need to uncomment once details page UI is done
+
   const {
     data,
     isLoading,
@@ -179,7 +179,13 @@ export const AccountDetails = () => {
       case 'financial':
         return <FinancialSummary />;
       case 'details':
-        return <Details />;
+        return (
+          <Details
+            accountDetails={{ ...data?.data }}
+            isLoading={isLoading}
+            isError={isError}
+          />
+        );
       case 'resources':
         return (
           <Resources
@@ -210,17 +216,33 @@ export const AccountDetails = () => {
     }
   };
 
+  const disable = data?.data?.accountById?.is_parent;
+
+  const sideMenuItems = [
+    { name: 'Financial Highlights', key: 'financial', disabled: false },
+    { name: 'Details', key: 'details', disabled: false },
+    { name: 'Resources', key: 'resources', disabled: false },
+    { name: 'Projects', key: 'projects', disabled: disable },
+    { name: 'Cases', key: 'cases', disabled: false },
+    { name: 'Activities', key: 'activities', disabled: false },
+    { name: 'Notes', key: 'notes', disabled: false },
+    { name: 'Attachments', key: 'attachments', disabled: false },
+    { name: 'Checklist', key: 'checklist', disabled: false },
+    { name: 'Timesheet', key: 'timesheet', disabled: false },
+    { name: 'Imports', key: 'imports', disabled: false },
+  ];
+
   if (!accountIsEnable) return <AccessRestricted />;
 
   return (
     <div className='flex flex-col'>
-      <div className='flex h-[108px]'>
+      <div className='flex h-[60px]'>
         <PageHeader
           variant='sub'
           placeholder='Account Name'
           icon={accountDetailsIcon}
           iconBackgroundColor='#4B9BFF'
-          iconClasses='h-8 w-8 rounded'
+          iconClasses='h-6 w-6 rounded'
           title={data?.data?.accountById?.account_name || 'Account Title'}
           totalRecords={5}
           actionItems={menuItems}
@@ -236,20 +258,22 @@ export const AccountDetails = () => {
           onSettingsClick={handleSettingsClick}
         />
       </div>
-      <AccountInfo
+      <InfoSection
         columns={accountDetails}
         loading={isLoading}
         error={isError}
       />
       <div className='flex flex-row w-full'>
-        <div className='flex w-[261px] min-w-[261px] max-w-[261px]'>
-          <Sidebar
+        <div className='flex w-[200px] min-w-[200px] max-w-[200px]'>
+          <SideMenuPanel
+            menuItems={sideMenuItems}
             activeKey={activeKey}
             onSelect={setActiveKey}
-            disble={data?.data?.accountById?.is_parent}
+            headerTitle='Related List'
+            showBackIcon={true}
           />
         </div>
-        <div className='flex-1 p-4 overflow-hidden'>
+        <div className='flex-1 overflow-hidden'>
           {isLoading ? (
             <div className='flex items-center justify-center w-full h-full'>
               <CircularProgress />

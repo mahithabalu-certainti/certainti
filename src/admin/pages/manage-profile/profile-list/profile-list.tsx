@@ -11,17 +11,9 @@ import { FilterType } from '../../../types';
 import { exportProfileList } from '../../../service';
 
 const BUTTON_STYLES = {
-  height: '32px',
-  background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-  border: '1px solid #CBD6E2',
-  color: '#425A76',
-  borderRadius: '2px',
+  height: '24px',
   fontSize: '13px',
-  fontWeight: 700,
-  padding: '0px',
-  '&:hover': {
-    color: '#425A76 !important',
-  },
+  fontWeight: 600,
 };
 
 export const ProfileList: React.FC = () => {
@@ -105,7 +97,7 @@ export const ProfileList: React.FC = () => {
           <div className='relative h-[32px]'>
             <button
               aria-describedby={filterId}
-              className={`w-[64px] h-[26px] text-[13px] mt-[3px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
+              className={`w-[64px] h-[24px] text-[13px] mt-[5px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
               ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) ? 'bg-[#F3F3F3]' : ''}`}
               onClick={handleFilterModal}
             >

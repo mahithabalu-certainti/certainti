@@ -158,7 +158,7 @@ export const ManageUserDetails: React.FC = () => {
       </div>
       {/* User Details section  */}
       <div className='flex flex-col border border-[#CBD6E2] rounded-[4px]'>
-        <div className='flex items-center justify-between w-full border-b border-[#CBD6E2] p-4'>
+        <div className='flex items-center justify-between w-full border-b border-[#CBD6E2] p-2'>
           <div className='w-[50%]'>
             <div className='text-[11px] text-[#7D98B6]'>User</div>
             <div className='font-semibold text-[16px] text-[#2D3E4F] leading-5 tracking-normal truncate overflow-ellipsis'>

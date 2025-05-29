@@ -11,9 +11,11 @@ import adminTemplateIcon from './admin-template.svg';
 import administrationIcon from './administration.svg';
 import allAccountIcon from './all-account.svg';
 import arrowDownIcon from './arrow-down.svg';
+import fiscalYearArrowIcon from './fiscal-year-arrow-icon.svg';
 import arrowUpIcon from './arrow-up.svg';
 import arrowBackIcon from './arrowBackIcon.svg';
 import attachmentIcon from './attachment.svg';
+import burgerMenuIcon from './burgerMenuIcon.svg';
 import calendarIcon from './calendar.svg';
 import caseIcon from './case.svg';
 import checklistTemplateIcon from './checklist-template.svg';
@@ -21,11 +23,14 @@ import chevronDownIcon from './chevron-down.svg';
 import chevronLeftIcon from './chevron-left.svg';
 import closeCircleIcon from './close-circle.svg';
 import closeIcon from './close.svg';
+import keyContactRemoveIcon from './key-contact-remove-icon.svg';
+import keyContactAddIcon from './key-contact-add-icon.svg';
 import configureSettingIcon from './configure-setting.svg';
 import createresourceIcon from './create-resource.svg';
 import dashboardIcon from './dashboard.svg';
 import downloadIcon from './download.svg';
 import editIcon from './edit.svg';
+import errorInfoIcon from './error-info-icon.svg';
 import emailTemplateIcon from './email-template.svg';
 import filterIcon from './filter.svg';
 import filterArrowRightIcon from './filterArrowRightIcon.svg';
@@ -71,6 +76,9 @@ import addIcon from './addicon.svg';
 import userIcon from './user.svg';
 import eyeIcon from './eye-icon.svg';
 import backIcon from './chevron-double-left.svg';
+import verticalSeparatorIcon from './verticalSeparatorIcon.svg';
+import realatedListDetailsIcon from './related-list-details-icon.svg';
+import detailsKeyContactErrorIcon from './details-key-contact-error-icon.svg';
 import deleteIcon from './delete-icon.svg';
 import projectDetailsIcon from './project-details.svg';
 import childAccountIcon from './child-account.svg';
@@ -78,8 +86,6 @@ import arrowIcon from './arrow-icon.svg';
 import sortIcon from './sort-icon.svg';
 import newFilterIcon from './filter-icon.svg';
 import checkedIcon from './checked-icon.svg';
-import burgerMenuIcon from './burger-menu.svg';
-import fiscalYearArrowIcon from './fiscal-arrow-icon.svg';
 
 export {
   accountDetailsIcon,
@@ -97,6 +103,7 @@ export {
   allAccountIcon,
   arrowBackIcon,
   arrowDownIcon,
+  fiscalYearArrowIcon,
   arrowUpIcon,
   arrowIcon,
   attachmentIcon,
@@ -111,15 +118,18 @@ export {
   chevronLeftIcon,
   closeCircleIcon,
   closeIcon,
+  detailsKeyContactErrorIcon,
+  keyContactRemoveIcon,
+  keyContactAddIcon,
   configureSettingIcon,
   createresourceIcon,
   dashboardIcon,
   downloadIcon,
   eyeIcon,
   editIcon,
+  errorInfoIcon,
   emailTemplateIcon,
   filterArrowRightIcon,
-  fiscalYearArrowIcon,
   filterIcon,
   globeIcon,
   helpIcon,
@@ -151,8 +161,10 @@ export {
   projectsBook,
   refreshIcon,
   resourceFilterIcon,
+  verticalSeparatorIcon,
   resourceHeaderIcon,
   resourceProfileIcon,
+  realatedListDetailsIcon,
   searchBlackIcon,
   searchIcon,
   settingsIcon,

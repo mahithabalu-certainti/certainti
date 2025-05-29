@@ -101,7 +101,7 @@ export interface CreateSectionData {
   created_datetime: string; // ISO date string
   modified_datetime: string; // ISO date string
   created_by: string; // UUID format
-  modified_by?: string;
+  modified_by?: string | null;
   comments: string;
   resource_number?: string;
   record_id?: string;

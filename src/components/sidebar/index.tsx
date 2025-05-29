@@ -357,9 +357,8 @@ export const Sidebar: React.FC<SideBarProps> = ({
       open={mobileView ? sidebarExpand : true}
       // onClose={handleBackdropClick}
       classes={{
-        paper: `transform transition-all ease-in-out ${
-          sidebarExpand ? 'w-[200px] duration-400' : 'w-[65px] duration-300'
-        }`,
+        paper: `transform transition-all ease-in-out ${sidebarExpand ? 'w-[200px] duration-400' : 'w-[65px] duration-300'
+          }`,
       }}
       sx={{
         '& .MuiDrawer-paper': {
@@ -664,7 +663,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                               style={{
                                 filter:
                                   !sidebarExpand &&
-                                  matchCheck(subItem, trimmedPathname(2))
+                                    matchCheck(subItem, trimmedPathname(2))
                                     ? 'brightness(0) saturate(100%) invert(53%) sepia(89%) saturate(1295%) hue-rotate(340deg) brightness(99%) contrast(93%)'
                                     : 'none',
                               }}

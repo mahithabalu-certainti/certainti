@@ -23,8 +23,8 @@ import {
   useCreateAccount,
   useUpdateAccount,
 } from '../../services/account-create';
-import { AccountFormData, SelectOption, YesNo } from '../../types';
-import { FormData } from './form-data';
+import { AccountFormData, FieldType, SelectOption, YesNo } from '../../types';
+import { FormData, newKeyContactFields } from './form-data';
 import {
   DATA_STORAGE_OPTIONS,
   othersIndustryId,
@@ -51,6 +51,8 @@ export const AccountForm: React.FC = () => {
   const [isParentAccountRequired, setIsParentAccountRequired] = useState(false);
   const [showOthersField, setShowOthersField] = useState(false);
   const [dataResidency, setDataResidency] = useState(DATA_STORAGE_OPTIONS);
+  const [keyContacts, setKeyContacts] = useState<FieldType[]>([]);
+  const [newContactLength, setNewContactLength] = useState<number>(0);
   const { successToast } = useToast();
   const location = useLocation();
   const { accountid } = useParams();
@@ -226,6 +228,49 @@ export const AccountForm: React.FC = () => {
     [keyContactRoles.data?.data.keyContactRoles]
   );
 
+  useEffect(() => {
+    setNewContactLength(
+      newKeyContactFields(memoizedRole, isValueUpdateInKeyContact).length
+    );
+    setKeyContacts(
+      newKeyContactFields(memoizedRole, isValueUpdateInKeyContact) as []
+    );
+  }, [memoizedRole, isValueUpdateInKeyContact]);
+
+  const removeKeyContactInfo = (index: number) => {
+    // shallow copy keyContacts array
+    const contactsArr = [...keyContacts];
+    //Every time new contact is added it add newKeyContacts length fields
+    // and we need to remove same number of fields from the array for that
+    // we calculated the length
+    const lengthOfKeyContacts = newKeyContactFields(
+      memoizedRole,
+      isValueUpdateInKeyContact
+    ).length;
+    // Finds how many contacts is added like 1, 2, 3 etc
+    const totalContactGrp = Math.floor(
+      keyContacts.length / lengthOfKeyContacts
+    );
+    // Finds which contact is clicked
+    const clickedGroup =
+      totalContactGrp - 1 - Math.floor(index / lengthOfKeyContacts);
+    // Finds the index of the first contact in the clicked contact group
+    const groupStartIndex =
+      keyContacts.length - (clickedGroup + 1) * lengthOfKeyContacts;
+
+    // Remove the clicked contact group from the array with the added newKeyContacts length
+    contactsArr.splice(groupStartIndex, lengthOfKeyContacts);
+    setKeyContacts(contactsArr);
+  };
+
+  const addKeyContactInfo = () => {
+    const newKeyData = newKeyContactFields(
+      memoizedRole,
+      isValueUpdateInKeyContact
+    );
+    setKeyContacts([...keyContacts, ...newKeyData]);
+  };
+
   const submitData = (formValues: Partial<AccountFormData>) => {
     const transformData = transformFormData(
       formValues,
@@ -289,21 +334,21 @@ export const AccountForm: React.FC = () => {
 
   return (
     <>
-      <div className='flex items-center justify-between px-10 py-6 border-b-2 border-gray-200'>
+      <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
           <img
             src={isEditView ? editIcon : accountHomeIcon}
             alt='menu-icon'
-            className='h-8 w-8 bg-[#7D98B6] p-2.5 rounded'
+            className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
           />
           <div className='w-[90%]'>
             {isEditView && (
-              <h5 className='text-[20px] font-semibold ml-2 text-[#2D3E4F]'>
+              <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F]'>
                 Edit Account
               </h5>
             )}
             <h4
-              className={`${isEditView ? 'text-[14px]' : 'text-[20px]'} font-semibold text-[#2D3E4F] ml-2 leading-4 w-[95%] overflow-ellipsis truncate`}
+              className={`${isEditView ? 'text-[14px]' : 'text-[16px]'} font-bold text-[#2D3E4F] ml-2 leading-4 w-[95%] overflow-ellipsis truncate`}
             >
               {isEditView ? accountData.account_name : 'Create Account'}
             </h4>
@@ -344,6 +389,9 @@ export const AccountForm: React.FC = () => {
           memoizedRole,
           isValueUpdateInKeyContact,
           isParentAccountRequired,
+          keyContacts,
+          addKeyContactInfo,
+          removeKeyContactInfo,
           isEditView,
           states.isLoading,
           showOthersField
@@ -369,6 +417,7 @@ export const AccountForm: React.FC = () => {
         formRef={formRef}
         onChange={onChangeField}
         layout={Layout.TYPE_1}
+        newContactLength={newContactLength}
       />
     </>
   );

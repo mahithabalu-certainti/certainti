@@ -41,8 +41,11 @@ interface NavbarProps {
   handleSidebarToggle: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle,  showAdminSidebar,
-  switchSideBarMenus }) => {
+export const Navbar: React.FC<NavbarProps> = ({
+  handleSidebarToggle,
+  showAdminSidebar,
+  switchSideBarMenus,
+}) => {
   const msalSigninInstance = new PublicClientApplication(msalConfig);
   const msalResetInstance = new PublicClientApplication(
     msalResetPasswordConfig
@@ -60,13 +63,18 @@ export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle,  showAdminS
   const { logout } = useAuthHook();
   const navigate = useNavigate();
   const { name } = useSelector((state: RootState) => state.auth);
-  const { fiscalYear } = useSelector((state: RootState) => state.account);
+  const { fiscalYear, filters } = useSelector(
+    (state: RootState) => state.account
+  );
+
+  const isFilterApplied = filters.length > 0;
 
   // Permission Mangement
-  const { modules } = useSelector(
-    (state: RootState) => state.permission
-  );
-  const isAdminEnable = checkPermission(modules, [AllModules.USER_MANAGEMENT, AllModules.PROFILE_MANAGEMENT]);
+  const { modules } = useSelector((state: RootState) => state.permission);
+  const isAdminEnable = checkPermission(modules, [
+    AllModules.USER_MANAGEMENT,
+    AllModules.PROFILE_MANAGEMENT,
+  ]);
 
   const [globalAnchorEl, setGlobalAnchorEl] =
     useState<HTMLButtonElement | null>(null);
@@ -363,19 +371,27 @@ export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle,  showAdminS
             {!showAdminSidebar && (
               <>
                 <div className='relative'>
-                  <IconButton
-                    color='inherit'
+                  <button
                     aria-describedby={globalFilterId}
-                    disableRipple
                     onClick={handleGlobalFilterModal}
+                    className={`${isGlobalModalOpen || isFilterApplied ? 'bg-[#FFFFFF26]' : 'bg-transparent'} w-[85px] min-w-[85px] px-3 h-[25px] flex justify-center items-center gap-1.5 mr-2 cursor-pointer focus:outline-none rounded-[2px] hover:bg-[#FFFFFF33] hover:rounded-xs whitespace-nowrap`}
                   >
-                    <img
-                      src={globeIcon}
-                      alt='global'
-                      className='h-[16px] w-[16px]'
-                    />
-                    <span className='text-[13px] font-normal px-2'>Global</span>
-                  </IconButton>
+                    <div className='relative'>
+                      <img
+                        src={globeIcon}
+                        alt='global'
+                        className='h-[16px] w-[16px]'
+                      />
+                      {isFilterApplied && (
+                        <div className='absolute -top-[5px] -right-[5px] w-4 h-4 flex items-center justify-center text-xs'>
+                          <span className='w-[8px] h-[8px] bg-[#FF3C03] rounded-full flex items-center justify-center z-10'></span>
+                        </div>
+                      )}
+                    </div>
+                    <span className='text-[13px] font-normal text-white'>
+                      Global
+                    </span>
+                  </button>
                   <GlobalFilterModal
                     isOpen={isGlobalModalOpen}
                     filterAnchorEl={globalAnchorEl}
@@ -393,7 +409,7 @@ export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle,  showAdminS
               </>
             )}
             <IconButton size='large' color='inherit'>
-              <img src={phoneIcon} alt='phone' className='h-[18px] w-[18px]' />
+              <img src={phoneIcon} alt='phone' className='h-[20px] w-[20px]' />
             </IconButton>
             <IconButton
               size='large'
@@ -422,7 +438,7 @@ export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle,  showAdminS
                   <img
                     src={settingsIcon}
                     alt='settings'
-                     className='h-[20px] w-[20px]'
+                    className='h-[20px] w-[20px]'
                   />
                 </IconButton>
               </Tooltip>
