@@ -443,10 +443,10 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     auto_send_ai_interaction: projectDetails?.auto_send_ai_interaction
       ? 'Yes'
       : 'No',
-    max_ai_interaction: projectDetails?.max_ai_interaction,
+    blended_rate_FTE: projectDetails?.blended_rate_fte,
     auto_assessment: projectDetails?.auto_access_rd ? 'Yes' : 'No',
-    blended_rate_fte: projectDetails?.blended_rate_fte,
-    blended_rate_sub_con: projectDetails?.blended_rate_sub_con,
+    blended_rate_subCon: projectDetails?.blended_rate_sub_con,
+    max_ai_interaction_follow_up: projectDetails?.max_ai_interaction,
   });
   const comments = CreateSectionData({
     comments: projectDetails?.comments,
