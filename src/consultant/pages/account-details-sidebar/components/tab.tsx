@@ -40,8 +40,8 @@ const TabPanel: React.FC<TabProps> = ({
   const [tabValue, setTabValue] = useState(0);
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
   const [currentSkillType, setCurrentSkillType] = useState({
-    skill_type_rid: '',
-    skill_subtype_rid: '',
+    skill_type_rid: [] as string[],
+    skill_subtype_rid: [] as string[] | undefined[],
   });
 
   const [skillSubTypeData, setSkillSubTypeData] = useState<
@@ -57,10 +57,11 @@ const TabPanel: React.FC<TabProps> = ({
   };
   const currency = useFetchCurrency();
   // const allCountries = useGetAllCountries();
+  console.log("currentSkillType", currentSkillType);
 
   const { data: skillType } = useFetchResourceSkillType();
   const { data: skillSubType } = useFetchResourceSkillSubType(
-    currentSkillType.skill_type_rid || (null as string | null)
+    currentSkillType.skill_type_rid
   );
   // const memoizedContry: SelectOption[] = useMemo(
   //   () =>

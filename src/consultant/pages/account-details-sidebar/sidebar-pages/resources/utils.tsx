@@ -5,29 +5,40 @@ import {
   enumValueOptions,
   FieldConfig,
   FilterState,
+  fiscalYears,
   resourceTypeOptions,
   statusOptions,
 } from '../../components/filter/filterType';
 
 export const getCostFilterFields = (currencyOptions: { option: string; value: string }[]): FieldConfig[] => [
-  // { name: 'Resource Cost Number', value: 'resource_cost_number', type: 'textCostAndSkill' },
-  { name: 'Currency', value: 'currency', type: 'currencySelect', options: currencyOptions },
-  { name: 'Start Date', value: 'effective_date', type: 'date' },
+  { name: 'Resource code', value: 'resource_code', type: 'textCostAndSkill' },
+  { name: 'Fiscal Year', value: 'fiscal_year', type: 'enum', options: fiscalYears },
+  { name: 'Name', value: 'resource_name', type: 'textCostAndSkill' },
+  { name: 'Resource Type', value: 'resource_type', type: 'enum', options: resourceTypeOptions, },
+  { name: 'Effective From', value: 'effective_date', type: 'date' },
   { name: 'End Date', value: 'end_date', type: 'date' },
-  { name: 'Hourly', value: 'hourly', type: 'number' },
-  { name: 'Daily', value: 'daily', type: 'number' },
-  { name: 'Weekly', value: 'weekly', type: 'number' },
-  { name: 'Bi-Weekly', value: 'bi-weekly', type: 'number' },
-  { name: 'Monthly', value: 'monthly', type: 'number' },
-  // { name: 'Semi-Annual', value: 'semi_annual', type: 'number' },
+  { name: 'Currency', value: 'currency', type: 'currencySelect', options: currencyOptions },
   { name: 'Annual', value: 'annual', type: 'number' },
+  { name: 'Monthly', value: 'monthly', type: 'number' },
+  { name: 'Bi-Weekly', value: 'bi-weekly', type: 'number' },
+  { name: 'Weekly', value: 'weekly', type: 'number' },
+  { name: 'Daily', value: 'daily', type: 'number' },
+  { name: 'Hourly', value: 'hourly', type: 'number' },
+  { name: 'Org Name', value: 'resource_orgname', type: 'textCostAndSkill' },
+  { name: 'Designation', value: 'resource_designation', type: 'textCostAndSkill' },
+  { name: 'Role', value: 'resource_role', type: 'textCostAndSkill' },
+  { name: 'Comments', value: 'comments', type: 'textCostAndSkill' },
+  { name: 'Cost ID', value: 'r_number', type: 'textCostAndSkill' },
+  // { name: 'Semi-Annual', value: 'semi_annual', type: 'number' },
 ];
 export const getSkillFilterFields = (
   skillTypeOptions: any[],
   skillSubTypeOptions: any[]
 ): FieldConfig[] => {
   return [
-    // { name: 'Resource Type', value: 'resource_type', type: 'textCostAndSkill' },
+    { name: 'Resource code', value: 'resource_code', type: 'textCostAndSkill' },
+    { name: 'Name', value: 'resource_name', type: 'textCostAndSkill' },
+    { name: 'Resource Type', value: 'resource_type', type: 'enum', options: resourceTypeOptions },
     { name: 'Start Date', value: 'start_date', type: 'date' },
     {
       name: 'Skill Type',
@@ -48,6 +59,12 @@ export const getSkillFilterFields = (
       type: 'enum',
       options: enumValueOptions,
     },
+    { name: 'Skill Details', value: 'skill_details', type: 'textCostAndSkill' },
+    { name: 'Org Name', value: 'resource_orgname', type: 'textCostAndSkill' },
+    { name: 'Designation', value: 'resource_designation', type: 'textCostAndSkill' },
+    { name: 'Role', value: 'resource_role', type: 'textCostAndSkill' },
+    { name: 'Years of Experience', value: 'resource_total_experience', type: 'number' },
+    { name: 'Skill ID', value: 'r_number', type: 'textCostAndSkill' },
   ];
 };
 export const resourceFilterFields: FieldConfig[] = [
@@ -59,15 +76,21 @@ export const resourceFilterFields: FieldConfig[] = [
     type: 'enum',
     options: resourceTypeOptions,
   },
+  { name: 'Org Name', value: 'resource_orgname', type: 'text' },
   { name: 'Designation', value: 'resource_designation', type: 'text' },
-  { name: 'Country', value: 'country', type: 'text' },
+  { name: 'Role', value: 'resource_role', type: 'text' },
   { name: 'Region', value: 'region', type: 'text' },
+  { name: 'Country', value: 'country', type: 'text' },
+  { name: 'Total Project Hours', value: 'total_project_hours', type: 'number' },
+  { name: 'Estimated R&D Hours', value: 'estimated_rd_hours', type: 'number' },
   {
     name: 'Status',
     value: 'resource_status',
     type: 'enum',
     options: statusOptions,
   },
+  { name: 'Comments', value: 'comments', type: 'text' },
+  { name: 'Resource ID', value: 'r_number', type: 'text' },
 ];
 export const getInitialStateForField = (
   fieldConfig: FieldConfig
@@ -121,7 +144,7 @@ export const formatDateToMMDDYYYYWithTime = (dateString?: string | null): string
   const minutes = String(date.getMinutes()).padStart(2, '0');
   const seconds = String(date.getSeconds()).padStart(2, '0');
   const ampm = hours >= 12 ? 'PM' : 'AM';
-  
+
   hours = hours % 12;
   hours = hours || 12; // Convert "0" hours to "12"
 

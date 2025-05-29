@@ -9,16 +9,15 @@ import {
 } from '../../../common-utils';
 import { mockSkillLevelOptions } from '../../mockdata/resource-form';
 import { FormType, SelectOption } from '../../types';
-import {
-  RESOURCE_STATUS_OPTIONS,
-  RESOURCE_TYPE_OPTIONS,
-} from './utils.tsx';
+import { RESOURCE_STATUS_OPTIONS, RESOURCE_TYPE_OPTIONS } from './utils.tsx';
 
 // 1. Extract date constants
+const minYear = 2000;
+const currentYear = new Date().getFullYear();
 const DATE_CONFIG = {
   FISCAL_YEARS_RANGE: 6,
   MIN_YEARS_BACK: 6,
-  COST_FISCAL_YEARS_RANGE: 20,
+  COST_FISCAL_YEARS_RANGE: currentYear - minYear + 1,
 } as const;
 
 // 2. Extract fiscal years calculation
@@ -70,14 +69,14 @@ export const ResourceFormData = (
   disableFields?: boolean,
   disableCostAndSkill?: boolean,
   disableOrgname?: string,
-  currentSkillType?: string,
-  currentskillSubType?: string,
+  currentSkillType?: string[],
+  currentskillSubType?: string[],
   disableSkill?: boolean,
   disableCost?: boolean,
   createResource?: boolean,
-  isResourceFullNameEmpty?:boolean,
-  isAnyResourceNameFilled?:boolean,
-  currentResource?: { resource_firstname: string; resource_lastname: string; },
+  isResourceFullNameEmpty?: boolean,
+  isAnyResourceNameFilled?: boolean,
+  currentResource?: { resource_firstname: string; resource_lastname: string }
 ): FormType[] => {
   return useMemo(
     () => [
@@ -145,12 +144,15 @@ export const ResourceFormData = (
                 errorMessage:
                   'Only letters, spaces, apostrophes, and hyphens are allowed.',
               },
-
             ],
             placeholder: 'Enter Name',
             disabled: disableCostAndSkill || isAnyResourceNameFilled,
             onChange: true,
-            defaultValue: (currentResource?.resource_firstname || currentResource?.resource_lastname) ? `${currentResource?.resource_firstname} ${currentResource?.resource_lastname}` : '',
+            defaultValue:
+              currentResource?.resource_firstname ||
+              currentResource?.resource_lastname
+                ? `${currentResource?.resource_firstname} ${currentResource?.resource_lastname}`
+                : '',
           }),
           createTextField('resource_firstname', 'First Name', {
             required: false,
@@ -206,7 +208,8 @@ export const ResourceFormData = (
           }),
 
           createTextField('resource_orgname', 'Resource Org Name', {
-            required: disableOrgname && disableOrgname !== "Full-Time" ? true : false,
+            required:
+              disableOrgname && disableOrgname !== 'Full-Time' ? true : false,
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_3,
@@ -229,16 +232,17 @@ export const ResourceFormData = (
               },
             ],
             placeholder: 'Enter Resource Org Name',
-            disabled: disableOrgname && disableOrgname === "Full-Time" ? true : false,
+            disabled:
+              disableOrgname && disableOrgname === 'Full-Time' ? true : false,
             clearValue: {
               key: 'resource_type',
-              matchedValue: 'Full-Time' ,
+              matchedValue: 'Full-Time',
             },
             defaultValue: '',
           }),
           createTextField('resource_role', 'Role', {
             required: false,
-  
+
             placeholder: 'Enter Role',
             disabled: disableCostAndSkill,
             errorHandling: [
@@ -252,7 +256,8 @@ export const ResourceFormData = (
               },
               {
                 regex: RESOURCE_REGEX.ROLE,
-                errorMessage: 'Allows only letters, Apostrophe, spaces, hyphens, and Periods.',
+                errorMessage:
+                  'Allows only letters, Apostrophe, spaces, hyphens, and Periods.',
               },
               {
                 regex:
@@ -260,7 +265,7 @@ export const ResourceFormData = (
                 errorMessage:
                   'Cannot start or end with a space or special character',
               },
-            ]
+            ],
           }),
           createSelectField('resource_status', 'Status', {
             options: RESOURCE_STATUS_OPTIONS,
@@ -341,7 +346,7 @@ export const ResourceFormData = (
                 errorMessage: 'Maximum length exceeded.',
               },
             ],
-            group: 'compensation'
+            group: 'compensation',
           }),
           createTextField('monthly_cost', 'Monthly Compensation', {
             required: false,
@@ -355,7 +360,7 @@ export const ResourceFormData = (
                 errorMessage: 'Maximum length exceeded.',
               },
             ],
-            group: 'compensation'
+            group: 'compensation',
           }),
           createTextField('bi_weekly_cost', 'Bi-Weekly Compensation', {
             required: false,
@@ -369,7 +374,7 @@ export const ResourceFormData = (
                 errorMessage: 'Maximum length exceeded.',
               },
             ],
-            group: 'compensation'
+            group: 'compensation',
           }),
           createTextField('weekly_cost', 'Weekly Compensation', {
             required: false,
@@ -383,7 +388,7 @@ export const ResourceFormData = (
                 errorMessage: 'Maximum length exceeded.',
               },
             ],
-            group: 'compensation'
+            group: 'compensation',
           }),
           createTextField('daily_cost', 'Daily Compensation', {
             required: false,
@@ -397,7 +402,7 @@ export const ResourceFormData = (
                 errorMessage: 'Maximum length exceeded.',
               },
             ],
-            group: 'compensation'
+            group: 'compensation',
           }),
           createTextField('hourly_cost', 'Hourly Compensation', {
             required: false,
@@ -411,8 +416,8 @@ export const ResourceFormData = (
                 errorMessage: 'Maximum length exceeded.',
               },
             ],
-            group: 'compensation'
-          })
+            group: 'compensation',
+          }),
         ],
       },
       {
@@ -453,11 +458,12 @@ export const ResourceFormData = (
               },
               {
                 regex: REGEX_PATTERNS.SKILL_OTHERS_ALLOWED_CHARS_REGEX,
-                errorMessage: "Only letters, hyphens (-), apostrophes ('), periods (.), underscores (_), and spaces are allowed.",
+                errorMessage:
+                  "Only letters, hyphens (-), apostrophes ('), periods (.), underscores (_), and spaces are allowed.",
               },
             ],
             hide:
-              currentSkillType === 'f6044ae9-7b65-4cfc-8ad3-c18a8f7ee30a'
+              currentSkillType?.[0] === 'f6044ae9-7b65-4cfc-8ad3-c18a8f7ee30a'
                 ? false
                 : true,
           }),
@@ -488,11 +494,13 @@ export const ResourceFormData = (
               },
               {
                 regex: REGEX_PATTERNS.SKILL_OTHERS_ALLOWED_CHARS_REGEX,
-                errorMessage: "Only letters, hyphens (-), apostrophes ('), periods (.), underscores (_), and spaces are allowed.",
+                errorMessage:
+                  "Only letters, hyphens (-), apostrophes ('), periods (.), underscores (_), and spaces are allowed.",
               },
             ],
             hide:
-              currentskillSubType === 'b8894099-0385-4681-8237-21f89b0d1883'
+              currentskillSubType?.[0] ===
+              'b8894099-0385-4681-8237-21f89b0d1883'
                 ? false
                 : true,
           }),
@@ -503,8 +511,8 @@ export const ResourceFormData = (
               {
                 regex: REGEX_PATTERNS.MAX_2000,
                 errorMessage: 'Input must be between 1 and 2,000 characters.',
-              }
-          ],
+              },
+            ],
           }),
           createSelectField('skill_level', 'Skill Level', {
             options: mockSkillLevelOptions,
@@ -549,7 +557,8 @@ export const ResourceFormData = (
               },
               {
                 regex: RESOURCE_REGEX.ROLE,
-                errorMessage: 'Allows only letters, Apostrophe, spaces, hyphens, and Periods.',
+                errorMessage:
+                  'Allows only letters, Apostrophe, spaces, hyphens, and Periods.',
               },
               {
                 regex:
@@ -557,7 +566,7 @@ export const ResourceFormData = (
                 errorMessage:
                   'Cannot start or end with a space or special character',
               },
-            ]
+            ],
           }),
           createTextField(
             'total_years_experience',
