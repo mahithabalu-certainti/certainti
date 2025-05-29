@@ -8,6 +8,8 @@ import {
 import TextButton from '../../../../../components/button/text-button';
 import DetailsInfo from './details-info';
 import { accountDetailsProps } from '../../../account-details/utils';
+import { ACCOUNT } from '../../../../../routes';
+import { useNavigate } from 'react-router-dom';
 
 const BUTTON_STYLES = {
   height: '26px !important',
@@ -29,6 +31,7 @@ const Details: React.FC<DetailsProps> = ({
   isLoading,
   isError,
 }) => {
+  const navigate = useNavigate();
   const [tabValue, setTabValue] = useState(0);
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -36,6 +39,11 @@ const Details: React.FC<DetailsProps> = ({
   const isKeyContactAvailable =
     accountDetails?.accountDetails?.keyContacts &&
     accountDetails.accountDetails.keyContacts.length > 0;
+
+  const handleEdit = () => {
+    const accountId = accountDetails?.accountById?.rid || '';
+    navigate(ACCOUNT + '/edit/' + accountId);
+  };
 
   const menuActivity = [
     {
@@ -61,7 +69,7 @@ const Details: React.FC<DetailsProps> = ({
       label: 'Edit',
       variant: 'outlined' as const,
       disabled: false, //accountInActive,
-      onClick: () => console.log('edit clicked'),
+      onClick: handleEdit,
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
     },
     {

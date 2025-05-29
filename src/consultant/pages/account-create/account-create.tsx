@@ -265,6 +265,7 @@ export const AccountForm: React.FC = () => {
 
   const handleExternalSubmit = () => {
     formRef.current?.requestSubmit();
+    goBack();
   };
 
   const onChangeField = (data: OnChange) => {
