@@ -243,7 +243,10 @@ const updateUserExtendedPermissionsSchema = Joi.object({
       is_enabled: Joi.boolean().optional(),
       is_field_available: Joi.boolean().optional(),
       hasReadExtendedPermsission: Joi.boolean().optional(),
-      hasEditExtendedPermsission: Joi.boolean().optional()
+      hasEditExtendedPermsission: Joi.boolean().optional(),
+      read: Joi.boolean().optional(),
+      edit: Joi.boolean().optional()
+    
     })
   ).required().messages({
     "array.base": "Privileges must be an array",
