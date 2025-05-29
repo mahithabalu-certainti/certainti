@@ -113,7 +113,7 @@ export interface NewProjectData {
   industry_rid_name?: string;
   start_date?: string | null;
   end_date?: string | null;
-  clasification?: string | null;
+  classification?: string | null;
   project_classification_other?: string | null;
   classification_name?: string | null;
   client_group?: string | null;
@@ -141,6 +141,8 @@ export interface NewProjectData {
   project_code?: string;
   project_name?: string;
   project_id?: string;
+  created_name?: string;
+  modified_name?: string;
   industry: string;
   industry_rid: string | null;
   industry_name: string;

@@ -169,7 +169,7 @@ export const FormData = (
         fields: [
           createTextField('project_code', 'Project Code', {
             required: true,
-            placeholder: 'Enter project code',
+            placeholder: 'Enter Project Code',
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_5,
@@ -219,7 +219,7 @@ export const FormData = (
           }),
           createTextField('project_name', 'Name', {
             // required: true,
-            placeholder: 'Enter name',
+            placeholder: 'Enter Name',
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_4,
@@ -306,9 +306,9 @@ export const FormData = (
             onChange: true,
           }),
 
-          createTextField('industry_name', 'Industry-other', {
+          createTextField('industry_name', 'Industry-Other', {
             required: true,
-            placeholder: 'Enter Industry-other',
+            placeholder: 'Enter Industry-Other',
             hide: !showOthersField,
             errorHandling: [
               {
@@ -337,9 +337,9 @@ export const FormData = (
               },
             ],
           }),
-          createTextField('classification_name', 'Classification-other', {
+          createTextField('classification_name', 'Classification-Other', {
             required: true,
-            placeholder: 'Enter Classification-other',
+            placeholder: 'Enter Classification-Other',
             hide: !showClassifyOthersField,
             errorHandling: [
               {
@@ -496,9 +496,9 @@ export const FormData = (
               ],
             }
           ),
-          createTextField('max_ai_interaction', 'Max Interaction follow up', {
+          createTextField('max_ai_interaction', 'Max Interaction Follow Up', {
             required: true,
-            placeholder: 'Enter Max Interaction follow up',
+            placeholder: 'Enter Max Interaction Follow Up',
             regex: REGEX_PATTERNS.POSITIVE_INTEGER_REGEX,
             regexErrorMessage:
               ' Max Interaction follow up must be a positive integer between 1 and 10.',
@@ -527,7 +527,7 @@ export const FormData = (
             required: false,
             regex: REGEX_PATTERNS.MAX_2000,
             regexErrorMessage: 'Maximum 2000 characters allowed',
-            placeholder: 'Enter comments',
+            placeholder: 'Enter Comments',
           }),
         ],
       },
@@ -547,7 +547,7 @@ export const FormData = (
             disabled: disableFields,
             // hide:!disableFields,
           }),
-          createTextField('created_by', 'Created By', {
+          createTextField('created_name', 'Created By', {
             required: false,
             // placeholder: 'Enter Last Rd AI Assessed By',
             disabled: disableFields,
@@ -564,7 +564,7 @@ export const FormData = (
             disabled: disableFields,
             // hide:!disableFields,
           }),
-          createTextField('modified_by', 'Updated By', {
+          createTextField('modified_name', 'Updated By', {
             required: false,
             // placeholder: 'Enter Last Rd AI Assessed By',
             disabled: disableFields,

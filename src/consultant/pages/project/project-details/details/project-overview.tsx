@@ -16,7 +16,7 @@ import TextButton from '../../../../../components/button/text-button';
 import { Theme } from '@emotion/react';
 import { NewProjectData } from '../../../../types/project';
 import {
-  formatDateToMMDDYYYY,
+  formatDateToYYYYMMDD,
   formatDateToYYYYMMDDWithTime,
 } from '../../../account-details-sidebar/sidebar-pages/resources/utils';
 import { KeyContactProps } from '../../../account-details/utils';
@@ -371,7 +371,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       ) {
         return {
           label: formatKey(key),
-          value: formatDateToMMDDYYYY(value), // custom formatter
+          value: formatDateToYYYYMMDD(value), // custom formatter
         };
       }
       const displayValue =
@@ -398,7 +398,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     project_startdate: projectDetails?.project_startdate,
     project_enddate: projectDetails?.project_enddate,
     project_type: projectDetails?.project_type,
-    clasification: projectDetails?.project_classification_rid,
+    classification: projectDetails?.project_classification_rid,
     client_group: projectDetails?.project_client_group,
     description: projectDetails?.project_description,
     status: projectDetails?.project_status,
@@ -435,22 +435,41 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     record_id: projectDetails?.rid,
     project_id: projectDetails?.r_number,
     created_on: projectDetails?.created_datetime,
-    created_by: projectDetails?.created_by,
+    created_by: projectDetails?.created_name,
     updated_on: projectDetails?.modified_datetime,
-    Updated_By: projectDetails?.modified_by,
+    Updated_By: projectDetails?.modified_name,
   });
-  const settingInfo = CreateSectionData({
-    auto_send_ai_interaction: projectDetails?.auto_send_ai_interaction
-      ? 'Yes'
-      : 'No',
-    blended_rate_FTE: projectDetails?.blended_rate_fte,
-    auto_assessment: projectDetails?.auto_access_rd ? 'Yes' : 'No',
-    blended_rate_subCon: projectDetails?.blended_rate_sub_con,
-    max_ai_interaction_follow_up: projectDetails?.max_ai_interaction,
-  });
+  // const settingInfo = CreateSectionData({
+  //   auto_send_ai_interaction: projectDetails?.auto_send_ai_interaction
+  //     ? 'Yes'
+  //     : 'No',
+  //   blended_rate_FTE: projectDetails?.blended_rate_fte,
+  //   auto_assessment: projectDetails?.auto_access_rd ? 'Yes' : 'No',
+  //   blended_rate_subCon: projectDetails?.blended_rate_sub_con,
+  //   max_ai_interaction_follow_up: projectDetails?.max_ai_interaction,
+  // });
   const comments = CreateSectionData({
     comments: projectDetails?.comments,
   });
+
+  const settingInfo: DetailItem[] = [
+    {
+      label: 'Auto Send Interaction',
+      value: projectDetails?.auto_send_ai_interaction,
+    }, // need to Discuss
+    { label: 'Blended Rate - FTE', value: projectDetails?.blended_rate_fte },
+
+    { label: 'Auto Assessment', value: projectDetails?.auto_access_rd },
+
+    {
+      label: 'Blended Rate - SubCon',
+      value: projectDetails?.blended_rate_sub_con,
+    },
+    {
+      label: 'Max Interaction Follow up',
+      value: projectDetails?.max_ai_interaction,
+    },
+  ];
   return (
     <>
       <div className='border-t border-[1px] border-b-0 border-[#CBD6E2] rounded-tl-[2px]  rounded-tr-[2px]'>
