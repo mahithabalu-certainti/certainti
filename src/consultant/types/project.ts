@@ -172,6 +172,9 @@ export interface NewProjectData {
   auto_access_rd?: boolean;
   max_ai_interaction?: number | null;
   blended_rate_fte?: string | null;
+  blended_rate_FTE?: string | null;
+  max_ai_interaction_follow_up?: number | null;
+  blended_rate_subCon?: string | null;
   blended_rate_sub_con?: string | null;
   project_description?: string;
   comments?: string;
