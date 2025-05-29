@@ -152,8 +152,25 @@ async function regions(req: Request, res: Response): Promise<void> {
 async function states(req: Request, res: Response): Promise<void> {
   const methodName = "states";
   try {
-    const { countryId } = req.params;
-    const states = await services.geoDataServices.states(countryId);
+    let countryIds: string[] = [];
+    const raw = req.query.countryIds;
+    if (Array.isArray(raw)) {
+      countryIds = raw as string[];
+    } else if (typeof raw === 'string') {
+      if (raw.trim().startsWith('[')) {
+        try {
+          countryIds = JSON.parse(raw);
+        } catch {
+          countryIds = [];
+        }
+      } else {
+        countryIds = raw
+        .split(',')
+        .map(rid => rid.trim().replace(/^"|"$/g, '')) // ✅ remove quotes
+        .filter(Boolean);      
+      }
+    }
+    const states = await services.geoDataServices.states(countryIds);
     
     if (states.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -197,8 +214,25 @@ async function states(req: Request, res: Response): Promise<void> {
 async function cities(req: Request, res: Response): Promise<void> {
   const methodName = "cities";
   try {
-    const { stateId } = req.params;
-    const cities = await services.geoDataServices.cities(stateId);
+    let stateIds: string[] = [];
+    const raw = req.query.countryIds;
+    if (Array.isArray(raw)) {
+      stateIds = raw as string[];
+    } else if (typeof raw === 'string') {
+      if (raw.trim().startsWith('[')) {
+        try {
+          stateIds = JSON.parse(raw);
+        } catch {
+          stateIds = [];
+        }
+      } else {
+        stateIds = raw
+        .split(',')
+        .map(rid => rid.trim().replace(/^"|"$/g, '')) // ✅ remove quotes
+        .filter(Boolean);      
+      }
+    }
+    const cities = await services.geoDataServices.cities(stateIds);
     
     if (cities.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
