@@ -1281,7 +1281,12 @@ class SchemaService {
       });
     }
     
-    
+    const getPrimaryContactName = (roleName: string) => {
+    const contact = keyContacts.find(
+      kc => kc.role_name === roleName && kc.is_primary_contact
+    );
+    return contact?.key_contact_name || null;
+  };
     const contactChecks = {
       hasTechnical: keyContacts.some(kc => 
         kc.role_name === "Technical Consultant" && kc.is_primary_contact),
@@ -1298,11 +1303,11 @@ class SchemaService {
     return {
       ...account,
       key_contacts: keyContacts,
-      technical_consultant: contactChecks.hasTechnical ? "Technical Consultant" : "-",
-      financial_consultant: contactChecks.hasFinancial ? "Financial Consultant" : "-",
-      delivery_head: contactChecks.hasDeliveryHead ? "Project Point of Contact" : "-",
-      finance_executive: contactChecks.hasFinanceExecutive ? "Project Point of Contact" : "-",
-      hasFinanceLead: contactChecks.hasFinanceLead ? "Finance Lead" : "-",
+      technical_consultant: getPrimaryContactName("Technical Consultant") || "-",
+    financial_consultant: getPrimaryContactName("Financial Consultant") || "-",
+    delivery_head: getPrimaryContactName("Client Project Delivery Head") || "-",
+    finance_executive: getPrimaryContactName("Client Finance Executive") || "-",
+    finance_lead: getPrimaryContactName("Client Finance Lead") || "-",
       ...(isChild && { 
         projects_by_fiscal_year: accountFiscalMap.get(account.rid) || [] 
       })

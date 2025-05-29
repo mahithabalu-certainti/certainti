@@ -228,16 +228,6 @@ const updateUserExtendedPermissionsSchema = Joi.object({
     "string.empty": "User ID is required",
     "any.required": "User ID is required"
   }),
-  profile_id: Joi.string().required().messages({
-    "string.empty": "Profile ID is required",
-    "any.required": "Profile ID is required"
-  }),
-  profile_name: Joi.string().min(3).max(255).required().messages({
-    "string.empty": "Profile name is required",
-    "string.min": "Profile name must be at least 3 characters long",
-    "string.max": "Profile name cannot exceed 255 characters",
-    "any.required": "Profile name is required"
-  }),
   privileges: Joi.array().items(
     Joi.object({
       rid: Joi.string().required(),
