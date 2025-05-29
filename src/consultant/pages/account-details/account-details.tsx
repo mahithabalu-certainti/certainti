@@ -37,6 +37,7 @@ import {
 import { AllModules, AllPermissions } from '../../../common-service';
 import { AccessRestricted } from '../../../components/account-restricted';
 import { AccountState } from '../../../store/type';
+import { MenuItem } from '../../types';
 
 export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
@@ -218,18 +219,63 @@ export const AccountDetails = () => {
 
   const disable = data?.data?.accountById?.is_parent;
 
-  const sideMenuItems = [
-    { name: 'Financial Highlights', key: 'financial', disabled: false },
-    { name: 'Details', key: 'details', disabled: false },
-    { name: 'Resources', key: 'resources', disabled: false },
-    { name: 'Projects', key: 'projects', disabled: disable },
-    { name: 'Cases', key: 'cases', disabled: false },
-    { name: 'Activities', key: 'activities', disabled: false },
-    { name: 'Notes', key: 'notes', disabled: false },
-    { name: 'Attachments', key: 'attachments', disabled: false },
-    { name: 'Checklist', key: 'checklist', disabled: false },
-    { name: 'Timesheet', key: 'timesheet', disabled: false },
-    { name: 'Imports', key: 'imports', disabled: false },
+  const sideMenuItems: MenuItem[] = [
+    {
+      name: 'Financial Highlights',
+      key: 'financial',
+      id: AllModules.FINANCIAL_HIGHLIGHTS,
+      disabled: false,
+    },
+    {
+      name: 'Details',
+      key: 'details',
+      id: AllModules.DETAILS,
+      disabled: false,
+    },
+    {
+      name: 'Resources',
+      key: 'resources',
+      id: AllModules.RESOURCES,
+      disabled: false,
+    },
+    {
+      name: 'Projects',
+      key: 'projects',
+      id: AllModules.PROJECTS,
+      disabled: disable,
+    },
+    { name: 'Cases', key: 'cases', id: AllModules.CASES, disabled: false },
+    {
+      name: 'Activities',
+      key: 'activities',
+      id: AllModules.ACTIVITIES,
+      disabled: false,
+    },
+    { name: 'Notes', key: 'notes', id: AllModules.NOTES, disabled: false },
+    {
+      name: 'Attachments',
+      key: 'attachments',
+      id: AllModules.ATTACHMENTS,
+      disabled: false,
+    },
+    {
+      name: 'Checklist',
+      key: 'checklist',
+      id: AllModules.CHECKLISTS,
+      disabled: false,
+    },
+    {
+      name: 'Timesheet',
+      key: 'timesheet',
+      id: AllModules.TIMESHEETS,
+      disabled: false,
+    },
+    {
+      name: 'Imports',
+      key: 'imports',
+      id: AllModules.IMPORTS,
+      disabled: false,
+    },
   ];
 
   if (!accountIsEnable) return <AccessRestricted />;

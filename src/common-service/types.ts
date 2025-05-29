@@ -52,6 +52,7 @@ export enum AllModules {
   FINANCIAL_HIGHLIGHTS = 'financial_highlights',
   DETAILS = 'details',
   PROJECTS = 'projects',
+  INTRACTION = 'interaction',
   CASES = 'cases',
   ACTIVITIES = 'activities',
   NOTES = 'notes',

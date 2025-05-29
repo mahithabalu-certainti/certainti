@@ -8,19 +8,66 @@ import { useProjectDetail } from '../../../services/project';
 import { transformProjectData } from '../utils';
 import ProjectDetailsData from './details/project-data';
 import { NewProjectData } from '../../../types/project';
+import { MenuItem } from '../../../types';
+import { AllModules } from '../../../../common-service';
 
-const sideMenuItems = [
-  { name: 'Financial Highlights', key: 'financial' },
-  { name: 'Project Details', key: 'projectDetails' },
-  { name: 'Project Resources', key: 'projectResources' },
-  { name: 'Projects Task', key: 'projectsTask' },
-  { name: 'Interactions', key: 'interactions' },
-  { name: 'Technical Summary', key: 'technicalSummary' },
-  { name: 'Cases', key: 'cases' },
-  { name: 'Activities', key: 'activities' },
-  { name: 'Notes', key: 'notes' },
-  { name: 'Attachments', key: 'attachments' },
-  { name: 'Checklists', key: 'checklists' },
+const sideMenuItems: MenuItem[] = [
+  {
+    name: 'Financial Highlights',
+    key: 'financial',
+    id: AllModules.FINANCIAL_HIGHLIGHTS,
+    disabled: false,
+  },
+  {
+    name: 'Project Details',
+    key: 'projectDetails',
+    id: AllModules.PROJECTS,
+    disabled: false,
+  },
+  {
+    name: 'Project Resources',
+    key: 'projectResources',
+    id: AllModules.RESOURCES,
+    disabled: false,
+  },
+  {
+    name: 'Projects Task',
+    key: 'projectsTask',
+    id: AllModules.PROJECTS,
+    disabled: false,
+  },
+  {
+    name: 'Interactions',
+    key: 'interactions',
+    id: AllModules.INTRACTION,
+    disabled: false,
+  },
+  {
+    name: 'Technical Summary',
+    key: 'technicalSummary',
+    id: AllModules.PROJECTS,
+    disabled: false,
+  },
+  { name: 'Cases', key: 'cases', id: AllModules.CASES, disabled: false },
+  {
+    name: 'Activities',
+    key: 'activities',
+    id: AllModules.ACTIVITIES,
+    disabled: false,
+  },
+  { name: 'Notes', key: 'notes', id: AllModules.NOTES, disabled: false },
+  {
+    name: 'Attachments',
+    key: 'attachments',
+    id: AllModules.ATTACHMENTS,
+    disabled: false,
+  },
+  {
+    name: 'Checklists',
+    key: 'checklists',
+    id: AllModules.CHECKLISTS,
+    disabled: false,
+  },
 ];
 
 export const ProjectDetails = () => {
