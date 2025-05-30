@@ -34,7 +34,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
   setOrderBy,
   page,
   isAccountEditEnable,
-  isAccountDeleteEnable
+  isAccountDeleteEnable,
   // setPage
 }) => {
   const navigate = useNavigate();
@@ -233,6 +233,8 @@ const AccountTable: React.FC<Record<string, any>> = ({
       handleAccountNameClick,
       openChildRows,
       handleChildRowClick,
+      isAccountEditEnable,
+      isAccountDeleteEnable,
     });
 
   return (
@@ -340,16 +342,18 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     </TableCell>
                   )
                 )}
-                <TableCell
-                  sx={{
-                    width: '60px',
-                    minWidth: '60px',
-                    maxWidth: '60px',
-                    borderRight: 'none',
-                  }}
-                >
-                  Action
-                </TableCell>
+                {(isAccountEditEnable || isAccountDeleteEnable) && (
+                  <TableCell
+                    sx={{
+                      width: '60px',
+                      minWidth: '60px',
+                      maxWidth: '60px',
+                      borderRight: 'none',
+                    }}
+                  >
+                    Action
+                  </TableCell>
+                )}
               </TableRow>
             </TableHead>
             <TableBody
@@ -400,7 +404,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                   renderChildRows: childRowsRenderer,
                   handleAccountNameClick,
                   isAccountEditEnable,
-                  isAccountDeleteEnable
+                  isAccountDeleteEnable,
                 })
               )}
             </TableBody>

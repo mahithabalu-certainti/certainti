@@ -333,7 +333,6 @@ const Resource: React.FC<ResourceProps> = ({
   const handleBackClick = () => {
     setViewResourceList(!viewResourceList);
     setShowBackArrow(!showBackArrow);
-    setValue('');
     setShowFilter(false);
     // clear query params
     searchParams.delete('res_id');

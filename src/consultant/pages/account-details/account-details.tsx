@@ -185,6 +185,7 @@ export const AccountDetails = () => {
             accountDetails={{ ...data?.data }}
             isLoading={isLoading}
             isError={isError}
+            isAccountEditEnable={isAccountEditEnable}
           />
         );
       case 'resources':
