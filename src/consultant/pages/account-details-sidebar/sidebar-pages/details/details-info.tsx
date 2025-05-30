@@ -13,6 +13,7 @@ import {
   accountDetailsProps,
   KeyContactProps,
 } from '../../../account-details/utils';
+import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
 
 // interface ErrorProps {
 //     message?: string;
@@ -347,10 +348,10 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
     },
     { label: 'Status', value: accountById?.status?.toString() || '-' },
     { label: 'Website', value: accountDetails?.website?.toString() },
-    {
-      label: 'Delivery Manager',
-      value: accountDetails?.project_manager?.toString() || '-',
-    },
+    // {
+    //   label: 'Delivery Manager',
+    //   value: accountDetails?.project_manager?.toString() || '-',
+    // },
     {
       label: 'Annual Revenue',
       value: accountById?.annual_revenue?.toString() || '-',
@@ -374,30 +375,36 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
 
   const accountSettings: DetailItem[] = [
     { label: 'Fiscal Start', value: accountDetails?.fiscal_start_date },
-    { label: 'Fiscal End', value: accountDetails?.fiscal_end_date },
     {
       label: 'Auto Send Interaction',
       value: accountDetails?.autosend_interaction,
     }, // need to Discuss
-    {
-      label: 'Max Interaction Follow up',
-      value: accountDetails?.max_ai_interactions,
-    },
-    { label: 'Auto Assessment', value: accountDetails?.auto_access_rd }, // need to Discuss
+    { label: 'Fiscal End', value: accountDetails?.fiscal_end_date },
+    { label: 'Auto Assessment', value: accountDetails?.auto_access_rd },
     { label: 'Blended Rate - FTE', value: accountDetails?.blended_rate_fte },
+    { label: 'Data Residency', value: accountDetails?.data_residency },
     {
       label: 'Blended Rate - SubCon',
       value: accountDetails?.blended_rate_subcon,
     },
-    { label: 'Data Residency', value: accountDetails?.data_residency },
+    {
+      label: 'Max Interaction Follow up',
+      value: accountDetails?.max_ai_interactions,
+    },
   ];
 
   const auditInfo: DetailItem[] = [
     { label: 'Record ID', value: accountDetails?.account_rid },
     { label: 'Account ID', value: accountById?.r_number },
-    { label: 'Created On', value: accountDetails?.created_datetime },
+    {
+      label: 'Created On',
+      value: formatDateToYYYYMMDDWithTime(accountDetails?.created_datetime),
+    },
     { label: 'Created By', value: accountDetails?.created_by },
-    { label: 'Updated On', value: accountDetails?.modified_datetime },
+    {
+      label: 'Updated On',
+      value: formatDateToYYYYMMDDWithTime(accountDetails?.modified_datetime),
+    },
     { label: 'Updated By', value: accountDetails?.modified_by },
   ];
   const description: DetailItem[] = [

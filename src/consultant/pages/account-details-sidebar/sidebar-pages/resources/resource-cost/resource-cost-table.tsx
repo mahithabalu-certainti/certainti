@@ -109,6 +109,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
         actionMenuItems={actionMenuItems}
         loading={isLoading}
         error={error ? 'Failed to load resource cost data' : undefined}
+        rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={rowsPerPage}
         currentPage={currentPage}
         totalItems={costList?.count ?? 0}

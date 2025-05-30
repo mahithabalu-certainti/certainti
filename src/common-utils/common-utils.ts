@@ -292,7 +292,7 @@ export const REGEX_PATTERNS = {
   ALPHANUMERIC: /^[A-Za-z0-9-]+$/,
   LETTERS_SPACES: /^[A-Za-z\s]+$/,
   ACCOUNT_NAME: /^[A-Za-z0-9 &'.,-]+$/,
-  PROJECT_NAME: /^[A-Za-z0-9 &'.,-_]+$/,
+  PROJECT_NAME: /^[A-Za-z0-9 &'.,_-]+$/,
   CONTACT_NAME: /^[A-Za-z &'’.,\-\\–\\—]+$/,
   INDUSTRY: /^[A-Za-z &]{5,25}$/,
   LETTERS_5_TO_25: /^[A-Za-z\s]{5,25}$/,
@@ -339,7 +339,8 @@ export const REGEX_PATTERNS = {
   MIN_3: /^.{3,}$/,
   MIN_5: /^.{5,}$/,
   MIN_4: /^.{4,}$/,
-  POSITIVE_INTEGER_REGEX: /^(?:[1-9]|[1-9][0-9])$/,
+  POSITIVE_INTEGER_REGEX: /^(?:[1-9]|10)$/,
+  MAX_AI_INTERACTIONS: /^(10|[1-9])$/,
   MIN_2: /^.{2,}$/,
   CITY_REGEX: /^[A-Za-z\s]{3,100}$/,
   NUMBERS_GREATER_THAN_ZERO: /^[1-9]\d*$/,
@@ -503,3 +504,30 @@ export const PROJECT_TYPE: SelectOption[] = [
   { label: 'Fixed', value: 'Fixed' },
   { label: 'Time & Material', value: 'Time & Material' },
 ];
+
+export const formatDateToYYYYMMDDWithTime = (
+  dateString?: string | null
+): string => {
+  if (!dateString) return '';
+
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+
+  // Date parts
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+
+  // Time parts (12-hour format with AM/PM)
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+
+  hours = hours % 12;
+  hours = hours || 12; // Convert "0" hours to "12"
+
+  const formattedTime = `${String(hours).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
+
+  return `${year}/${month}/${day}, ${formattedTime}`;
+};

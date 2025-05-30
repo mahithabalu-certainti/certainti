@@ -103,6 +103,20 @@ const AccountTable: React.FC<Record<string, any>> = ({
     setOpenRows(newOpenRows);
   };
 
+  const [openChildRows, setOpenChildRows] = useState<Set<string>>(new Set());
+
+  // ... existing state and handlers
+
+  const handleChildRowClick = (accountId: string) => {
+    const newOpenChildRows = new Set(openChildRows);
+    if (newOpenChildRows.has(accountId)) {
+      newOpenChildRows.delete(accountId);
+    } else {
+      newOpenChildRows.add(accountId);
+    }
+    setOpenChildRows(newOpenChildRows);
+  };
+
   // Handle checkbox selection
   const handleSelectRow = (index: number) => {
     const newSelectedRows = new Set(selectedRows);
@@ -217,6 +231,8 @@ const AccountTable: React.FC<Record<string, any>> = ({
       handleDelete,
       openRows,
       handleAccountNameClick,
+      openChildRows,
+      handleChildRowClick,
     });
 
   return (

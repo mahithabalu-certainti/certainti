@@ -113,6 +113,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
         actionMenuItems={actionMenuItems}
         loading={isLoading}
         error={error ? 'Failed to load resource' : undefined}
+        rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={rowsPerPage}
         currentPage={currentPage}
         totalItems={skillList?.count ?? 0}

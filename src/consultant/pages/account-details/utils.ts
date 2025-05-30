@@ -168,6 +168,7 @@ interface InputAccountById {
 }
 
 export interface accountByIdProps {
+  rid: string;
   account_name: string;
   industry: {
     industry_name: string;

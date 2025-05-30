@@ -89,6 +89,7 @@ export interface ListTableProps<T extends RowData> {
   loading?: boolean;
   error?: string;
   // Pagination
+  rowsPerPageOptions?: number[];
   rowsPerPage?: number;
   currentPage?: number;
   totalItems?: number;

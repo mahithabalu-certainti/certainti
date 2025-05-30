@@ -33,7 +33,7 @@ const UserList: React.FC = () => {
   const [page, setPage] = useState<number>(1);
   const [tableParams, setTableParams] = useState<UserListParams>({
     page: page,
-    limit: 10,
+    limit: 100,
     sortBy: 'createdAt',
     sortOrder: 'DESC',
   });

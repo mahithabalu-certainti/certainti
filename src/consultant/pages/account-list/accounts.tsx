@@ -20,12 +20,15 @@ import {
   AllPermissions,
   useGetAllCountries,
 } from '../../../common-service';
-import { exportAccountList, useFetchCurrency } from '../../services/account';
-import { AccountList } from '../../types';
+import {
+  exportAccountList,
+  useFetchIndustrys,
+} from '../../services/account';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
 import { ActionsDropdownItem, checkPermission } from '../../../common-utils';
 import { AccessRestricted } from '../../../components/account-restricted';
+import { AccountList, SelectOption } from '../../types';
 import {
   formatFilterForApi,
   getStoredFilters,
@@ -113,7 +116,8 @@ export const Accounts: React.FC = () => {
   };
 
   const countriesList = useGetAllCountries();
-  const currencyList = useFetchCurrency();
+  // const currencyList = useFetchCurrency();
+  const industry = useFetchIndustrys();
 
   const allCountries = useMemo(() => {
     return (
@@ -121,15 +125,24 @@ export const Accounts: React.FC = () => {
     );
   }, [countriesList]);
 
-  const allCurrencies = useMemo(() => {
-    return (
-      currencyList.data?.data.currency.map((item) => item.currency_code) || []
-    );
-  }, [currencyList]);
+  // const allCurrencies = useMemo(() => {
+  //   return (
+  //     currencyList.data?.data.currency.map((item) => item.currency_code) || []
+  //   );
+  // }, [currencyList]);
+
+  const allIndustries: SelectOption[] = useMemo(
+    () =>
+      industry.data?.data.industries.map((industry) => ({
+        label: industry.industry_name,
+        value: industry.rid,
+      })) || [],
+    [industry.data?.data.industries]
+  );
 
   const accountFilterFields = getAccountFilterFields(
     allCountries,
-    allCurrencies
+    allIndustries
   );
 
   const [totalCount, setTotalCount] = useState<number>(0);
