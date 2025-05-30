@@ -1,4 +1,4 @@
-name: Deploy Platform 2.0 Pre Production Frontend Application
+name: Deploy Platform 2.0 Production Frontend Application
 
 on:
   push:
