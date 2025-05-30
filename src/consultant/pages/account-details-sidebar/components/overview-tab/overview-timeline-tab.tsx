@@ -87,11 +87,10 @@ const OverviewTimelineTab: React.FC<TabProps> = ({
             actions={menuActivity}
             label='Add Activity'
             sx={{
-              fontWeight: 400,
+              fontWeight: 600,
               fontSize: '13px',
               width: '143px',
-              height: '32px',
-              paddingLeft: '16px',
+              height: '24px',
             }}
           />
         </Box>

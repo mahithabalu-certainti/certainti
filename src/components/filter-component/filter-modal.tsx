@@ -11,6 +11,8 @@ import {
 import {
   DateOptions,
   DateValueOptions,
+  EnumSelectFilterOption,
+  enumSelectOperators,
   FilterModalProps,
   FilterState,
   NumberFilterOption,
@@ -35,6 +37,7 @@ import {
   MENU_PROPS,
   KeyContactFilterControl,
   NewDateFilterControl,
+  EnumSelectFilterControl,
 } from './helpers';
 import { useLocation } from 'react-router-dom';
 
@@ -176,6 +179,18 @@ const FilterModal: React.FC<FilterModalProps> = ({
                 number: {
                   ...currentState.number!,
                   option: event.target.value as NumberFilterOption,
+                },
+              },
+            };
+          case 'enumSelect':
+            return {
+              ...prev,
+              [fieldName]: {
+                ...currentState,
+                enumSelect: {
+                  ...currentState.enumSelect!,
+                  option: event.target.value as EnumSelectFilterOption,
+                  value: [],
                 },
               },
             };
@@ -392,6 +407,21 @@ const FilterModal: React.FC<FilterModalProps> = ({
     });
   };
 
+  const handleEnumSelectChange = (fieldName: string, value: string[]) => {
+    setFilterStates((prev: any) => {
+      return {
+        ...prev,
+        [fieldName]: {
+          ...prev[fieldName],
+          enumSelect: {
+            ...prev[fieldName].enumSelect,
+            value: value,
+          },
+        },
+      };
+    });
+  };
+
   const handleApplyFilters = () => {
     setPage(1);
     const updatedStates = { ...filterStates };
@@ -546,6 +576,20 @@ const FilterModal: React.FC<FilterModalProps> = ({
             onChange={handleBooleanChange}
           />
         );
+      case 'enumSelect':
+        return (
+          <EnumSelectFilterControl
+            filterStates={filterStates}
+            menuOption={fieldConfig.operatorOption || enumSelectOperators}
+            valueOptions={
+              (fieldConfig.options as { label: string; value: string }[]) || []
+            }
+            fieldName={fieldName}
+            state={state}
+            onOptionChange={handleFilterOptionChange}
+            onChange={handleEnumSelectChange}
+          />
+        );
       case 'date':
         return (
           <NewDateFilterControl
@@ -654,7 +698,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                   <div key={fieldName}>
                     <div className='flex items-center gap-2'>
                       <div className='flex-1 flex items-start gap-2 w-[480px] max-w-[480px]'>
-                        <div className='flex items-center gap-1'>
+                        <div className='flex flex-col items-center gap-1'>
                           <Select
                             size='small'
                             value={fieldName}
@@ -742,6 +786,25 @@ const FilterModal: React.FC<FilterModalProps> = ({
                               </MenuItem>
                             ))}
                           </Select>
+                          {fieldConfig.name === 'key_contact' &&
+                            filterStates?.key_contact?.keyContact?.role
+                              ?.value &&
+                            filterStates?.key_contact?.keyContact?.role
+                              ?.option !== 'is_empty' && (
+                              <div className='mt-1 rounded-[2px] min-w-[173px] max-w-[173px] h-[28px] border border-[#CBD6E2]'>
+                                <div className='flex items-center justify-between pl-3.5 pr-[7px] text-[12px] text-[#425A76] h-full font-semibold'>
+                                  <div className='flex items-center gap-1'>
+                                    <img
+                                      src={checkedIcon}
+                                      alt='checked'
+                                      className='w-3'
+                                    />
+                                    <span>Name</span>
+                                  </div>
+                                  <img src={arrowIcon} alt='arrowIcon' />
+                                </div>
+                              </div>
+                            )}
                         </div>
                         {renderFilterControl(fieldName)}
                       </div>

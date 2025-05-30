@@ -39,7 +39,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   isResourceCostEditEnable,
 }) => {
   const navigate = useNavigate();
-  const [rowsPerPage, setRowsPerPage] = useState<number>(25);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(100);
   const accountInActive =
     accountDetails?.data?.accountById?.status === 'inactive';
   const apiOrder = costOrder.toUpperCase() as 'ASC' | 'DESC';

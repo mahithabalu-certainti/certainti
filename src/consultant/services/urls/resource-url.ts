@@ -33,7 +33,7 @@ export const ExportResourcelUrl = ({
   sortBy,
   sortOrder,
   fiscalYear,
-  rNumber
+  rNumber,
 }: ExportModule): string => {
   const baseUrl = `entityService/api/resources/export/${rNumber}/`;
   const searchParams = new URLSearchParams();
@@ -46,4 +46,7 @@ export const ExportResourcelUrl = ({
 };
 
 export const SKILLTYPEURL = `${baseUrl}/api/resource_skill/skilltypes`;
-export const SkillSubTypeUrl = (skillType : string | null) => `${baseUrl}/api/resource_skill/skillsubtypes?skillTypeRid=${skillType}`;
+export const SkillSubTypeUrl = (skillType: string[] | null) => {
+  const skillTypeParam = JSON.stringify(skillType ?? []);
+  return `${baseUrl}/api/resource_skill/skillsubtypes?skillTypeRids=${skillTypeParam}`;
+};

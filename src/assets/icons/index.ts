@@ -87,6 +87,11 @@ import sortIcon from './sort-icon.svg';
 import newFilterIcon from './filter-icon.svg';
 import checkedIcon from './checked-icon.svg';
 
+import menuArrowRight from './menu-arrow-right.svg';
+import menuArrowRightHover from './menu-arrow-right-hover.svg';
+import moduleArrowright from './module-arrow-right.svg';
+import checkboxChecked from './checkboxChecked.svg';
+import checkboxUnchecked from './checkboxUnChecked.svg';
 export {
   accountDetailsIcon,
   accountHomeIcon,
@@ -159,6 +164,11 @@ export {
   projectDetailsIcon,
   projectCreateIcon,
   projectsBook,
+  menuArrowRight,
+  menuArrowRightHover,
+  moduleArrowright,
+  checkboxChecked,
+  checkboxUnchecked,
   refreshIcon,
   resourceFilterIcon,
   verticalSeparatorIcon,

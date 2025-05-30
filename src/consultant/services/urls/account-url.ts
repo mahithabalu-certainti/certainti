@@ -43,8 +43,10 @@ export const GlobalAccountUrl = '/api/accounts/list/global';
 export const AccountDetailUrl = (accountId: string) =>
   `/api/accounts/list/${accountId}`;
 
-export const StateUrl = (countryId: string) =>
-  `/api/accounts/states?countryIds=["${countryId}"]`;
+export const StateUrl = (countryId: string | string[] | null) => {
+  const countryID = JSON.stringify(countryId ?? []);
+  return `/api/accounts/states/?countryIds=${countryID}`;
+};
 
 export const CityUrl = (stateId: string) =>
   `/api/accounts/cities?stateIds=["${stateId}"]`;

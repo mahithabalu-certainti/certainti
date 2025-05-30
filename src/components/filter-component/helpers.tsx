@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import { FilterState } from '../../consultant/types/account-filter';
 import { useMemo } from 'react';
-import { arrowIcon, calendarIcon, checkedIcon } from '../../assets';
+import { arrowIcon, calendarIcon } from '../../assets';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -64,6 +64,7 @@ export const MENU_PROPS: Partial<MenuProps> = {
       borderTop: 'none',
       marginTop: '1px',
       boxShadow: 'none',
+      maxHeight: '200px',
     },
   },
   MenuListProps: {
@@ -816,15 +817,6 @@ export const KeyContactFilterControl: React.FC<{
       {/* Name Fields - only show if role is not empty and has value */}
       {showNameFields && (
         <>
-          <div className='absolute left-[24px] rounded-[2px] mt-9 min-w-[173px] max-w-[173px] h-[28px] border border-[#CBD6E2]'>
-            <div className='flex items-center justify-between pl-3.5 pr-[7px] text-[12px] text-[#425A76] h-full font-semibold'>
-              <div className='flex items-center gap-1'>
-                <img src={checkedIcon} alt='checked' className='w-3' />
-                <span>Name</span>
-              </div>
-              <img src={arrowIcon} alt='arrowIcon' />
-            </div>
-          </div>
           {/* Name Operator Select */}
           <Select
             value={keyContactState.name.option}
@@ -890,6 +882,136 @@ export const KeyContactFilterControl: React.FC<{
             />
           )}
         </>
+      )}
+    </div>
+  );
+};
+
+export const EnumSelectFilterControl: React.FC<{
+  filterStates: Record<string, FilterState>;
+  menuOption: { label: string; value: string }[];
+  valueOptions: { label: string; value: string }[];
+  fieldName: string;
+  state: FilterState;
+  onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
+  onChange: (fieldName: string, values: string[]) => void;
+}> = ({
+  filterStates,
+  menuOption,
+  valueOptions,
+  fieldName,
+  state,
+  onOptionChange,
+  onChange,
+}) => {
+  const option = formatString(filterStates?.[fieldName]?.enumSelect?.option);
+  const isMultiple = option === 'In';
+  const hideInput = option === 'Is Empty';
+  const selectedValues: string[] = state?.enumSelect?.value || [];
+
+  return (
+    <div className='flex gap-2 items-center'>
+      <Select
+        value={state?.enumSelect?.option?.toLowerCase() ?? 'equals'}
+        onChange={(e) => onOptionChange(fieldName, e)}
+        className='min-w-[110px] max-w-[110px] h-[28px]'
+        IconComponent={(props) => (
+          <img src={arrowIcon} alt='arrowIcon' {...props} />
+        )}
+        sx={SELECT_STYLES}
+        MenuProps={MENU_PROPS}
+        name='option'
+      >
+        {menuOption.map((menu) => (
+          <MenuItem
+            key={menu.label}
+            value={menu.value}
+            sx={{
+              fontSize: '12px',
+              color: '#425A76',
+              fontWeight: 600,
+              py: '1px',
+            }}
+          >
+            {menu.label}
+          </MenuItem>
+        ))}
+      </Select>
+      {!hideInput && (
+        <FormControl fullWidth>
+          <Select
+            multiple={isMultiple}
+            value={state.enumSelect?.value || []}
+            name='value'
+            onChange={(e) => onChange(fieldName, e.target.value as string[])}
+            renderValue={(selected) => {
+              if (isMultiple) {
+                if (!Array.isArray(selected)) return '';
+                return selected
+                  .map(
+                    (val) =>
+                      valueOptions.find((opt) => opt.value === val)?.label ||
+                      val
+                  )
+                  .join(', ');
+              } else {
+                const selectedValue = selected as unknown as string;
+                const selectedOption = valueOptions.find(
+                  (opt) => opt.value === selectedValue
+                );
+                return selectedOption ? selectedOption.label : '';
+              }
+            }}
+            className='h-[28px] w-[181px] min-w-[181px] max-w-[181px]'
+            IconComponent={(props) => (
+              <img src={arrowIcon} alt='arrowIcon' {...props} />
+            )}
+            sx={SELECT_STYLES}
+            MenuProps={{
+              ...MENU_PROPS,
+              PaperProps: {
+                ...MENU_PROPS.PaperProps,
+                style: {
+                  ...(MENU_PROPS.PaperProps?.style || {}),
+                  width: 100,
+                  maxWidth: 100,
+                  maxHeight: 200,
+                },
+              },
+            }}
+          >
+            {valueOptions.map((item) => (
+              <MenuItem
+                key={item.label}
+                value={item.value}
+                dense
+                sx={{
+                  fontSize: '12px',
+                  color: '#425A76',
+                  fontWeight: 600,
+                  py: '1px',
+                }}
+              >
+                {isMultiple && (
+                  <Checkbox
+                    disableRipple
+                    checked={selectedValues.includes(item.value)}
+                    size='small'
+                    sx={{
+                      color: '#CBD6E2',
+                      '&.Mui-checked': {
+                        color: '#1755E7',
+                      },
+                      padding: '0px',
+                      mr: 1,
+                    }}
+                  />
+                )}
+                {item.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
       )}
     </div>
   );

@@ -54,6 +54,9 @@ export const getProjectColumns = (
     sortable: true,
     sortId: 'fiscal_year',
     width: 130,
+    sx: {
+      textAlign: 'right',
+    },
   },
   {
     id: 'project_client_group',
@@ -200,7 +203,7 @@ export const getProjectColumns = (
     label: 'Last Modified',
     sortable: true,
     sortId: 'modified_datetime',
-    width: 140,
+    width: 130,
     render: (row: ProjectList) =>
       row.modified_datetime ? formatDateToYMD(row.modified_datetime) : '-',
   },

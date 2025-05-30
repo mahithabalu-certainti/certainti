@@ -145,7 +145,7 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
           hoverHighlight={false}
           stickyHeader={true}
           stickyColumnsCount={1}
-          actionWidth={100}
+          actionWidth={60}
           actionDisplayMode='dropdown'
           actionMenuItems={actionMenuItems}
           loading={isLoading}

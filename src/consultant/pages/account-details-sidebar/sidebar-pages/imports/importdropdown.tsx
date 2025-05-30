@@ -18,7 +18,7 @@ interface ImportDropdownItemProps {
 
 const StyledButton = styled(Button)(() => {
   return {
-    height: '24px !important',
+    height: '25px !important',
     color: '#425A76',
     border: '1px solid #CBD6E2',
     boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',

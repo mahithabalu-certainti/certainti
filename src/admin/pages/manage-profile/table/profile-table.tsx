@@ -14,12 +14,14 @@ interface IUserTableProps {
   appliedFilters: Record<string, any>;
   tableParams: UserListParams;
   setTableParams: React.Dispatch<React.SetStateAction<UserListParams>>;
+  onSelectionChange: (selectedIds: string[]) => void;
 }
 
 export const ProfileTable: React.FC<IUserTableProps> = ({
   appliedFilters,
   tableParams,
   setTableParams,
+  onSelectionChange,
 }) => {
   const navigate = useNavigate();
 
@@ -111,8 +113,8 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
       stickyHeader={false}
       stickyColumnsCount={2}
       selectable={true}
-      onSelectionChange={(selectedIds) => console.log('Selected:', selectedIds)}
-      actionWidth={100}
+      onSelectionChange={onSelectionChange}
+      actionWidth={60}
       actionDisplayMode='dropdown'
       actionMenuItems={actionButtons}
       loading={isLoading}

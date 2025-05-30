@@ -52,6 +52,7 @@ const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
       <StyledButton
         {...rest}
         onClick={handleClick}
+        disableRipple
         endIcon={
           <img
             src={arrowUpIcon}
@@ -77,7 +78,12 @@ const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
                 handleClose();
                 action.onClick();
               }}
-              sx={{ fontSize: '14px', fontWeight: 400, color: '#2D3E4F' }}
+              sx={{
+                fontSize: '13px',
+                fontWeight: 400,
+                color: '#2D3E4F',
+                py: '2px',
+              }}
             >
               {action.label}
             </MenuItem>

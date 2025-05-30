@@ -15,6 +15,7 @@ interface IUserTableProps {
   isUserEditEnable?: boolean;
   isUserViewEnable?: boolean;
   setTableParams: React.Dispatch<React.SetStateAction<UserListParams>>;
+  onSelectionChange: (selectedIds: string[]) => void;
 }
 
 export const UserTable: React.FC<IUserTableProps> = ({
@@ -23,6 +24,7 @@ export const UserTable: React.FC<IUserTableProps> = ({
   isUserEditEnable,
   isUserViewEnable,
   setTableParams,
+  onSelectionChange,
 }) => {
   const [users, setUsers] = useState<ManageUser[]>([]);
   const navigate = useNavigate();
@@ -135,7 +137,7 @@ export const UserTable: React.FC<IUserTableProps> = ({
       stickyColumnsCount={2}
       // Selection
       selectable={true}
-      onSelectionChange={(selectedIds) => console.log('Selected:', selectedIds)}
+      onSelectionChange={onSelectionChange}
       // Actions
       actionWidth={100}
       actionDisplayMode='icon'

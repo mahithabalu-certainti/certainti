@@ -5,9 +5,9 @@ import { ManageUserIcon, newFilterIcon } from '../../../../assets/icons';
 import { FilterModal } from '../../../../components';
 import ActionsDropdown from '../../../../components/actions-dropdown/actions-dropdown';
 import TextButton from '../../../../components/button/text-button';
-import { ADMIN_CREATE_USER } from '../../../../routes';
+import { ADMIN_CREATE_USER, ADMIN_MANAGE_USER } from '../../../../routes';
 import { UserTable } from '../table/user-table';
-import { getUserFilterfields } from './helpers';
+import { getUserFilterFields } from './helpers';
 import { exportUserList, useManageUserProfile } from '../../../service';
 import { UserListParams } from '../../../types/manage-user';
 import { useSelector } from 'react-redux';
@@ -19,6 +19,7 @@ import {
   formatFilterForApi,
   getStoredFilters,
 } from '../../../../components/filter-component/utils';
+import { useToast } from '../../../../hooks';
 
 const BUTTON_STYLES = {
   height: '24px',
@@ -29,7 +30,6 @@ const BUTTON_STYLES = {
 const UserList: React.FC = () => {
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
-  // const [searchTerm, setSearchTerm] = useState<string>('');
   const [page, setPage] = useState<number>(1);
   const [tableParams, setTableParams] = useState<UserListParams>({
     page: page,
@@ -83,23 +83,17 @@ const UserList: React.FC = () => {
     permission,
     AllPermissions.USER_ASSIGN_PERMISSION
   );
-
+  
   const userActionButtons = [
-    {
-      label: 'Suspend User',
-      width: '119px',
-      hide: !isUserSuspendEnable,
-    },
-    { label: 'Reinstate User', width: '120px', hide: false },
-    {
-      label: 'Reset Password',
-      width: '132px',
-      hide: !isUserResetPasswordEnable,
-    },
-    { label: 'Delete', width: '73px', hide: !isUserDeleteEnable },
+    { label: 'Suspend User', width: '104px', hide: !isUserSuspendEnable },
+    { label: 'Reinstate User', width: '116px', hide: false },
+    { label: 'Reset Password', width: '118px', hide: !isUserResetPasswordEnable },
+    { label: 'Delete', width: '58px', hide: !isUserDeleteEnable },
   ];
-  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
+  const [selectedUserId, setSelectedUserId] = useState<string[]>([]);
+  const { errorToast } = useToast();
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -111,11 +105,25 @@ const UserList: React.FC = () => {
   const isFilterOpen = Boolean(anchorEl);
   const filterId = isFilterOpen ? 'user-filter-popover' : undefined;
 
+  const handleSelectionChange = (selectedIds: string[]) => {
+    setSelectedUserId(selectedIds);
+  };
+
   const MENU_ITEMS = [
     {
-      label: 'Assign Permission to User',
-      onClick: () => console.log('user clicked'),
+      label: 'Assign Permissions to User',
       hide: !isUserAssignPermissionEnable,
+      onClick: () => {
+        if (selectedUserId.length === 1) {
+          navigate(
+            ADMIN_MANAGE_USER + '/extended-permission/' + selectedUserId[0]
+          );
+        } else if (selectedUserId.length > 1) {
+          errorToast('Please select only one user to assign permissions.');
+        } else {
+          errorToast('You must select a user to assign permissions.');
+        }
+      },
     },
     {
       label: 'View Permissions',
@@ -133,11 +141,14 @@ const UserList: React.FC = () => {
 
   const userProfiles = useMemo(() => {
     return (
-      profileList.data?.data.profiles.map((item) => item.profile_name) || []
+      profileList.data?.data.profiles.map((item) => ({
+        label: item.profile_name,
+        value: item.profile_name,
+      })) || []
     );
   }, [profileList]);
 
-  const userFilterfields = getUserFilterfields(userProfiles);
+  const userFilterfields = getUserFilterFields(userProfiles);
 
   useEffect(() => {
     const saved = getStoredFilters();
@@ -265,6 +276,7 @@ const UserList: React.FC = () => {
           setTableParams={setTableParams}
           isUserEditEnable={isUserEditEnable}
           isUserViewEnable={isUserViewEnable}
+          onSelectionChange={handleSelectionChange}
         />
       </div>
     </div>

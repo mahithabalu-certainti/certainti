@@ -25,6 +25,11 @@ export type KeyContactFilterOption =
   | 'not_equals'
   | 'contains'
   | 'is_empty';
+export type EnumSelectFilterOption =
+  | 'Equals'
+  | 'Not Equals'
+  | 'In'
+  | 'Is Empty';
 
 export const DateValueOptions = [
   { value: 'equals', label: 'Equals' },
@@ -47,6 +52,13 @@ export const textfieldOperators: { label: string; value: string }[] = [
   { label: 'Contains', value: 'contains' },
   { label: 'Equals', value: 'equals' },
   { label: 'Not Equals', value: 'not_equals' },
+  { label: 'Is Empty', value: 'is_empty' },
+];
+
+export const enumSelectOperators: { label: string; value: string }[] = [
+  { label: 'Equals', value: 'equals' },
+  { label: 'Not Equals', value: 'not_equals' },
+  { label: 'In', value: 'in' },
   { label: 'Is Empty', value: 'is_empty' },
 ];
 
@@ -100,6 +112,11 @@ interface KeyContactFilterState {
   name: NameFilter;
 }
 
+export interface EnumSelectFilterState {
+  option?: EnumSelectFilterOption;
+  value?: [];
+}
+
 // Union type for all possible filter states
 export type FilterState = {
   text?: TextFilterState;
@@ -109,6 +126,7 @@ export type FilterState = {
   multiSelect?: MultiSelectFilterState;
   date?: DateFilterState;
   keyContact?: KeyContactFilterState;
+  enumSelect?: EnumSelectFilterState;
 };
 
 // Define field configuration
@@ -123,6 +141,7 @@ export type FieldConfig = {
     | 'multi-select'
     | 'date'
     | 'keyContact'
+    | 'enumSelect'
     | 'enum';
   options?: string[] | { value: string; label: string }[];
   operatorOption?: { label: string; value: string }[];
@@ -151,3 +170,8 @@ export const StatusOptions = [
   { value: 'Active', label: 'Active' },
   { value: 'Inactive', label: 'In-Active' },
 ];
+
+export interface FilterSelectOption {
+  label: string;
+  value: string;
+}

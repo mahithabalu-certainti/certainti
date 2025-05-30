@@ -8,6 +8,7 @@ import {
   ProfileList,
   CreateProfile,
   UserList,
+  ExtendedPermission,
 } from './admin/pages';
 import { AppLayout, Toast } from './components';
 import {
@@ -55,6 +56,7 @@ import {
   RESOURCECOST_EDIT,
   RESOURCESKILL_CREATE,
   RESOURCESKILL_EDIT,
+  USER_EXTENDED_PERMISSION,
 } from './routes';
 import { RootState, useAppDispatch } from './store/store';
 import { mockCurrentUserRole } from './common-service';
@@ -105,7 +107,7 @@ export const App: React.FC<IApp> = ({ instance }) => {
             <Route path={PROJECT} element={<Projects />} />
             <Route path={PROJECT_DETAILS} element={<ProjectDetails />} />
             <Route path={PROJECT_CREATE} element={<ProjectForm />} />
-            <Route path={ PROJECT_EDIT} element={<ProjectForm />} />
+            <Route path={PROJECT_EDIT} element={<ProjectForm />} />
             <Route path={RESOURCE_CREATE} element={<ResourceForm />} />
             <Route path={RESOURCE_EDIT} element={<ResourceForm />} />
             <Route path={RESOURCECOST_CREATE} element={<ResourceForm />} />
@@ -129,6 +131,10 @@ export const App: React.FC<IApp> = ({ instance }) => {
             />
             <Route path={ADMIN_CREATE_USER} element={<CreateUser />} />
             <Route path={ADMIN_EDIT_USER} element={<CreateUser />} />
+            <Route
+              path={USER_EXTENDED_PERMISSION}
+              element={<ExtendedPermission />}
+            />
             <Route path={MANAGE_PROFILE} element={<ProfileList />} />
             <Route path={MANAGE_PROFILE_CREATE} element={<CreateProfile />} />
             <Route path={MANAGE_PROFILE_EDIT} element={<CreateProfile />} />

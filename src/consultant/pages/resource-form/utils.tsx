@@ -73,7 +73,7 @@ const formatDateToMMDDYYYY = (dateString?: string | null): string => {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = date.getFullYear();
 
-  return `${month}/${day}/${year}`;
+  return `${year}-${month}-${day}`;
 };
 
 // const capitalizeFirstLetter = (str?: string): string => {
@@ -101,11 +101,11 @@ export function transformPayloadforUpdateResource(
       rawData.resource_type || '',
 
     name:
-    fullName || rawData.resource_name ||'',
-      first_name:
-      rawData.resource_firstname  || '',
-      last_name:
-      rawData.resource_lastname  || '',
+      fullName || rawData.resource_name || '',
+    first_name:
+      rawData.resource_firstname || '',
+    last_name:
+      rawData.resource_lastname || '',
     org_name:
       rawData.resource_orgname || '',
     role: rawData.resource_role || existingResource?.resource_role,
