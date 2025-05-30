@@ -83,17 +83,17 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     }));
 
     // Validate on change
-    if (name === 'profileName') {
-      setErrors((prev) => ({
-        ...prev,
-        profileName: validateProfileName(value),
-      }));
-    } else if (name === 'description') {
-      setErrors((prev) => ({
-        ...prev,
-        description: validateDescription(value),
-      }));
-    }
+    // if (name === 'profileName') {
+    //   setErrors((prev) => ({
+    //     ...prev,
+    //     profileName: validateProfileName(value),
+    //   }));
+    // } else if (name === 'description') {
+    //   setErrors((prev) => ({
+    //     ...prev,
+    //     description: validateDescription(value),
+    //   }));
+    // }
   };
 
   const handleNext = () => {
@@ -118,8 +118,8 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
       <div className='w-full flex flex-col gap-2'>
         <div className='w-full flex flex-row gap-2'>
           <div className='w-1/2 flex flex-col gap-1'>
-            <label className='text-[13px] font-small text-[#2D3E4F]'>
-              Select an Existing Profile
+            <label className='text-[13px] font-[600] text-[#2D3E4F]'>
+              Existing Profile
             </label>
             <div className='relative w-full'>
               <select
@@ -130,7 +130,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                 required
               >
                 <option value='' className='text-gray-500'>
-                  -Select-
+                  Choose existing profile
                 </option>
                 {profileOptions.map((option) => (
                   <option
@@ -151,7 +151,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
             </div>
           </div>
           <div className='w-1/2 flex flex-col gap-1'>
-            <label className='text-[13px] font-small text-[#2D3E4F]'>
+            <label className='text-[13px] font-[600] text-[#2D3E4F]'>
               Profile Name
             </label>
             <input
@@ -171,7 +171,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
           </div>
         </div>
         <div className='flex flex-col gap-1'>
-          <label className='text-[13px] font-small text-[#2D3E4F]'>
+          <label className='text-[13px] font-[600] text-[#2D3E4F]'>
             Profile Description
           </label>
           <TextareaAutosize
@@ -189,9 +189,9 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
               {errors.description}
             </span>
           )}
-          <span className='text-[11px] text-gray-500'>
+          {/* <span className='text-[11px] text-gray-500'>
             {formData.description.length}/2000 characters
-          </span>
+          </span> */}
         </div>
       </div>
       <TextButton

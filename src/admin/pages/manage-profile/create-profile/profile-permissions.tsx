@@ -211,7 +211,7 @@ const PrivilegeAccordion: React.FC<{
       setConfirmationState({
         isOpen: true,
         message:
-          'Are you sure you want to disable this menu and all its modules, permissions, and fields?',
+          'Disabling this parent permission will also remove its associated child permissions. Are you sure you want to proceed?',
         onConfirm: () => {
           updatePrivilegesState(newMenuState);
         },
@@ -265,7 +265,7 @@ const PrivilegeAccordion: React.FC<{
       setConfirmationState({
         isOpen: true,
         message:
-          'Are you sure you want to disable this module and all its permissions and fields?',
+          'Disabling this parent permission will also remove its associated child permissions. Are you sure you want to proceed?',
         onConfirm: () => {
           setPrivileges((prev) => ({
             ...prev,
@@ -403,7 +403,7 @@ const PrivilegeAccordion: React.FC<{
         setConfirmationState({
           isOpen: true,
           message:
-            'Are you sure you want to disable this permission and all its fields?',
+            'Disabling this parent permission will also remove its associated child permissions. Are you sure you want to proceed?',
           onConfirm: () => {
             setPrivileges((prev) => {
               // If nothing has changed, return the previous state
@@ -642,13 +642,11 @@ const PrivilegeAccordion: React.FC<{
                             {/* Select all start */}
                             {!('has_extended_permission' in permission) && (
                               <div className='flex justify-between items-center px-16 py-2 bg-white border-t border-[#CBD6E2]'>
-                                <div className='w-[65%] text-[13px] text-[#425A76] font-semibold'>
-                                  Select All
-                                </div>
+                                <div className='w-[65%] text-[13px] text-[#425A76] font-semibold'></div>
                                 <div className='w-[35%] flex justify-start gap-4'>
-                                  <div className='flex items-center gap-2'>
+                                  <div className='flex items-center gap-6'>
                                     <span className='text-[13px] text-[#425A76]'>
-                                      Read
+                                      All
                                     </span>
                                     <CustomCheckbox
                                       checked={
@@ -681,9 +679,9 @@ const PrivilegeAccordion: React.FC<{
                                       }}
                                     />
                                   </div>
-                                  <div className='flex items-center gap-2'>
+                                  <div className='flex items-center gap-3'>
                                     <span className='text-[13px] text-[#425A76]'>
-                                      Edit
+                                      All
                                     </span>
                                     <CustomCheckbox
                                       checked={
@@ -782,13 +780,11 @@ const PrivilegeAccordion: React.FC<{
                             {/* Select all start */}
                             {!('has_extended_permission' in permission) && (
                               <div className='flex justify-between items-center px-8 py-2 bg-white border-t border-[#CBD6E2]'>
-                                <div className='w-[55%] text-[13px] text-[#425A76] font-semibold'>
-                                  Select All
-                                </div>
+                                <div className='w-[55%] text-[13px] text-[#425A76] font-semibold'></div>
                                 <div className='w-[45%] flex justify-start gap-4'>
-                                  <div className='flex items-center gap-2'>
+                                  <div className='flex items-center gap-6'>
                                     <span className='text-[13px] text-[#425A76]'>
-                                      Read
+                                      All
                                     </span>
                                     <CustomCheckbox
                                       checked={
@@ -819,9 +815,9 @@ const PrivilegeAccordion: React.FC<{
                                       }}
                                     />
                                   </div>
-                                  <div className='flex items-center gap-2'>
+                                  <div className='flex items-center gap-3'>
                                     <span className='text-[13px] text-[#425A76]'>
-                                      Edit
+                                      All
                                     </span>
                                     <CustomCheckbox
                                       checked={

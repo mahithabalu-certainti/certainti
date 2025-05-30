@@ -136,11 +136,11 @@ export const CreateProfile: React.FC = () => {
               label='Back'
               onClick={goBack}
               sx={{
-                width: '45px',
-                minWidth: '45px',
-                fontWeight: 700,
+                width: '64px',
+                minWidth: '64px',
+                fontWeight: 400,
                 fontSize: '13px',
-                height: '20px',
+                height: '32px',
               }}
             />
           </div>
