@@ -47,7 +47,7 @@ const TabPanel: React.FC<TabProps> = ({ setCurrentPage }) => {
 
   return (
     <Box className=' rounded-lg'>
-      <Box className='flex justify-between items-center mb-4'>
+      <Box className='flex justify-between items-center mb-2.5'>
         <Tabs
           value={tabValue}
           onChange={handleTabChange}

@@ -22,7 +22,7 @@ export interface ProfileTableColumn<T> {
   id: string;
   label: string;
   sort?: string;
-  width?: string;
+  width?: string | number;
   sortId: string;
   sortable?: boolean;
   sticky?: boolean;

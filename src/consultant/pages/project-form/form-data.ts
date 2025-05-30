@@ -207,7 +207,7 @@ export const FormData = (
                   'Project group must be more than 3 characters long',
               },
               {
-                regex: REGEX_PATTERNS.MAX_255,
+                regex: REGEX_PATTERNS.MAX_150,
                 errorMessage: 'Max length exceeded',
               },
               {
@@ -252,7 +252,7 @@ export const FormData = (
                   'Client Group must be more than 3 characters long',
               },
               {
-                regex: REGEX_PATTERNS.MAX_255,
+                regex: REGEX_PATTERNS.MAX_200,
                 errorMessage: 'Max length exceeded',
               },
               {
@@ -292,6 +292,7 @@ export const FormData = (
             placeholder: 'Choose Industry',
             required: false,
             onChange: true,
+            resetDependsFields: ['industry_name'],
           }),
 
           createSelectField('project_type', 'Project Type', {
@@ -304,6 +305,7 @@ export const FormData = (
             placeholder: 'Choose Classification',
             required: false,
             onChange: true,
+            resetDependsFields: ['classification_name'],
           }),
 
           createTextField('industry_name', 'Industry-Other', {
@@ -345,7 +347,7 @@ export const FormData = (
               {
                 regex: REGEX_PATTERNS.MIN_3,
                 errorMessage:
-                  'Classification-other must be more than 2 characters long',
+                  'Classification-Other must be more than 2 characters long',
               },
               {
                 regex: REGEX_PATTERNS.MAX_255,
@@ -374,7 +376,7 @@ export const FormData = (
             placeholder: 'Choose Country',
             required: false,
             onChange: true,
-            disabled: disableFields,
+            // disabled: disableFields,
             resetDependsFields: ['region'],
           }),
           createSelectField('region', 'Region', {
@@ -382,13 +384,13 @@ export const FormData = (
             placeholder: 'Choose Region',
             required: false,
             isLoading: stateLoading,
-            disabled: disableFields,
+            // disabled: disableFields,
           }),
           createSelectField('currency', 'Currency', {
             options: currency,
             required: false,
             placeholder: 'Choose Currency',
-            disabled: disableFields,
+            // disabled: disableFields,
           }),
         ],
       },
@@ -470,7 +472,7 @@ export const FormData = (
             regex: REGEX_PATTERNS.EFFORTS_INTEGER_9,
             regexErrorMessage:
               'Total Sub Con Count must be a positive integer with up to 9 digits',
-            placeholder: 'Enter Total Sub Count',
+            placeholder: 'Enter Total Sub Con Count',
           }),
         ],
       },

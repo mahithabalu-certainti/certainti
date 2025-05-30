@@ -60,7 +60,7 @@ const InfoSection: React.FC<InfoSectionProps> = ({
   if (loading) {
     return (
       <Box
-        className={`flex items-center p-4 border-b-2 border-[#CBD6E2] bg-white min-h-[160px] max-h-[160px] ${className}`}
+        className={`flex items-center px-4 py-2 border-b-2 border-[#CBD6E2] bg-white min-h-[110px] max-h-[110px] ${className}`}
         sx={{ gap: '0 16px' }}
       >
         {loadingColumns.map((width, colIndex) => (
@@ -70,13 +70,13 @@ const InfoSection: React.FC<InfoSectionProps> = ({
               width,
               display: 'flex',
               flexDirection: 'column',
-              gap: '28px',
+              gap: '8px',
             }}
           >
             {[1, 2].map((item) => (
               <Box key={item}>
-                <Skeleton variant='text' width='60%' height={20} />
-                <Skeleton variant='text' width='80%' height={20} />
+                <Skeleton variant='text' width='60%' height={18} />
+                <Skeleton variant='text' width='80%' height={18} />
               </Box>
             ))}
           </Box>
@@ -87,7 +87,7 @@ const InfoSection: React.FC<InfoSectionProps> = ({
 
   return (
     <Box
-      className={`flex p-4 border-b-2 border-[#CBD6E2] bg-white min-h-[112px] ${className}`}
+      className={`flex px-4 py-2 border-b-2 border-[#CBD6E2] bg-white min-h-[110px] max-h-[110px] ${className}`}
       sx={{ gap: '0 16px' }}
     >
       {columns?.map((column, colIndex) => (
@@ -97,7 +97,7 @@ const InfoSection: React.FC<InfoSectionProps> = ({
             width: columnWidth,
             display: 'flex',
             flexDirection: 'column',
-            gap: '10px',
+            gap: '2px',
           }}
         >
           {column?.items?.map((item, itemIndex) => (
@@ -109,7 +109,6 @@ const InfoSection: React.FC<InfoSectionProps> = ({
                   fontSize: '13px',
                   fontWeight: 600,
                   display: 'block',
-                  mb: 0.5,
                 }}
               >
                 {item.label}

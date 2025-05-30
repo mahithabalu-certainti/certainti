@@ -47,7 +47,9 @@ const TabPanel: React.FC<TabProps> = ({
     skill_subtype_rid: [] as string[] | undefined[],
   });
   const [currentCountry, setCurrentCountry] = useState<string[] | null>([]);
-  const [regionData, setRegionData] = useState<{ option: string; value: string }[]>([]);
+  const [regionData, setRegionData] = useState<
+    { option: string; value: string }[]
+  >([]);
 
   const [skillSubTypeData, setSkillSubTypeData] = useState<
     { option: string; value: string }[]
@@ -63,7 +65,6 @@ const TabPanel: React.FC<TabProps> = ({
   const currency = useFetchCurrency();
   const allCountries = useGetAllCountries();
   const Regions = useFetchState(currentCountry);
-
 
   const { data: skillType } = useFetchResourceSkillType();
   const { data: skillSubType } = useFetchResourceSkillSubType(
@@ -119,15 +120,16 @@ const TabPanel: React.FC<TabProps> = ({
       }));
       setRegionData(data);
     }
-  }, [Regions.data?.data.states])
+  }, [Regions.data?.data.states]);
 
   useEffect(() => {
     if (skillSubType) {
       const data = skillSubType as SkillSubtype[];
-      const finalData = data?.map((skill: SkillSubtype) => ({
-        option: skill.skill_subtype_name,
-        value: skill.rid,
-      })) || [];
+      const finalData =
+        data?.map((skill: SkillSubtype) => ({
+          option: skill.skill_subtype_name,
+          value: skill.rid,
+        })) || [];
       setSkillSubTypeData(finalData);
     }
   }, [skillSubType]);
@@ -297,7 +299,7 @@ const TabPanel: React.FC<TabProps> = ({
               <Box
                 component='button'
                 onClick={handleFilterModal}
-                className='w-[24px] h-[24px] flex items-center justify-center border border-[#CBD6E2] rounded-[2px] cursor-pointer'
+                className='w-[24px] h-[24px] max-h-[24px] flex items-center justify-center border border-[#CBD6E2] rounded-[2px] cursor-pointer'
                 aria-describedby={filterId}
               >
                 <img src={resourceFilterIcon} className='p-1' />

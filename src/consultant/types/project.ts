@@ -152,6 +152,7 @@ export interface NewProjectData {
   project_enddate?: string | null;
   project_type?: string;
   project_classification_rid?: string | null;
+  project_classification_name?: string;
   project_client_group?: string;
   project_group?: string;
   project_summary?: string;

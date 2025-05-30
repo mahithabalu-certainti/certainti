@@ -390,16 +390,19 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
 
   const basicInfo = CreateSectionData({
     project_code: projectDetails?.project_code,
+    fiscal_year: projectDetails?.fiscal_year,
     name: projectDetails?.project_name,
+    start_date: projectDetails?.project_startdate,
+    program_name: projectDetails?.program_name,
+    end_date: projectDetails?.project_enddate,
+    project_group: projectDetails?.project_group,
     industry:
       projectDetails?.industry_name || projectDetails?.industry_rid_name,
-    program_name: projectDetails?.program_name,
-    fiscal_year: projectDetails?.fiscal_year,
-    project_startdate: projectDetails?.project_startdate,
-    project_enddate: projectDetails?.project_enddate,
-    project_type: projectDetails?.project_type,
-    classification: projectDetails?.project_classification_rid,
     client_group: projectDetails?.project_client_group,
+    classification:
+      projectDetails?.project_classification_other ||
+      projectDetails?.classification_name,
+    project_type: projectDetails?.project_type,
     description: projectDetails?.project_description,
     status: projectDetails?.project_status,
   });
@@ -420,17 +423,29 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       includeInCommnunications: contact.include_in_communication,
       keyContactStatus: contact.status,
     }));
-  const fincialInfo = CreateSectionData({
-    efforts_in_hrs: projectDetails?.total_effort,
-    total_cost: projectDetails?.total_cost,
-    total_fte_count: projectDetails?.total_fte,
-    total_sub_con_count: projectDetails?.total_sub_con_count,
-    total_fte_effort: projectDetails?.total_fte_effort,
-    total_sub_con_effort: projectDetails?.total_sub_con_effort,
-    total_fte_cost: projectDetails?.total_fte_cost,
-    total_sub_con_cost: projectDetails?.total_sub_con_cost,
-    total_non_labor_cost: projectDetails?.total_non_labor_cost,
-  });
+  const financialInfo: DetailItem[] = [
+    { label: 'Total Effort in Hrs', value: projectDetails?.total_effort },
+    { label: 'Total Cost', value: projectDetails?.total_cost },
+    { label: 'Total FTE Effort', value: projectDetails?.total_fte_effort },
+    { label: 'Total FTE Cost', value: projectDetails?.total_fte_cost },
+
+    {
+      label: 'Total Sub Con Effort',
+      value: projectDetails?.total_sub_con_effort,
+    },
+    { label: 'Total Sub Con Cost', value: projectDetails?.total_sub_con_cost },
+    { label: 'Total FTE Count', value: projectDetails?.total_fte },
+
+    {
+      label: 'Total Non Labor Cost',
+      value: projectDetails?.total_non_labor_cost,
+    },
+    {
+      label: 'Total Sub Con Count',
+      value: projectDetails?.total_sub_con_count,
+    },
+  ];
+
   const auditInfo = CreateSectionData({
     record_id: projectDetails?.rid,
     project_id: projectDetails?.r_number,
@@ -512,7 +527,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
         </div>
       </div>
       <div>
-        <div className='max-w-6xl    border-[1px]  border-[#CBD6E2]'>
+        <div className='border-[1px]  border-[#CBD6E2]'>
           <DetailsSection
             title='Basic Information'
             data={basicInfo as DetailItem[]}
@@ -529,7 +544,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
           )}
           <DetailsSection
             title='Financial Information'
-            data={fincialInfo as DetailItem[]}
+            data={financialInfo as DetailItem[]}
           />
           <DetailsSection
             title='Project Settings'

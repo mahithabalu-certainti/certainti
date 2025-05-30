@@ -7,7 +7,6 @@ export interface ResourceSkillTableColumn<T> {
   width: string | number;
   sortId: string;
   sortable?: boolean;
-  align?: 'left' | 'center' | 'right';
   sticky?: boolean;
   sx?: React.CSSProperties;
   render?: (row: T) => React.ReactNode;
@@ -110,7 +109,9 @@ export const resourceSkillColumns: ResourceSkillTableColumn<ResourceSkillList>[]
       label: 'Years of Experience',
       width: 160,
       sortable: true,
-      align: 'right',
+      sx: {
+        textAlign: 'right',
+      },
     },
     {
       id: 'r_number',

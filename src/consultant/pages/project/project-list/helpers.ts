@@ -105,7 +105,7 @@ export const getAllProjectFilterFields = (): FieldConfig[] => [
     operatorOption: numberOptions,
   },
   {
-    name: 'Qualified Research Expenditure',
+    name: 'QRE',
     value: 'qualified_research_expenditure',
     type: 'number',
     operatorOption: numberOptions,
@@ -129,7 +129,7 @@ export const getAllProjectFilterFields = (): FieldConfig[] => [
     operatorOption: textOptions,
   },
   {
-    name: 'last Modified',
+    name: 'Last Modified',
     value: 'modified_datetime',
     type: 'date',
   },

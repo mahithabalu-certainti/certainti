@@ -7,7 +7,6 @@ export interface ResourceCostTableColumn<T> {
   width: string | number;
   sortId: string;
   sortable?: boolean;
-  align?: 'left' | 'center' | 'right';
   sticky?: boolean;
   sx?: React.CSSProperties;
   render?: (row: T) => React.ReactNode;
@@ -29,7 +28,7 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       label: 'Resource Code',
       width: 130,
       sortable: true,
-      align: 'left',
+
       sticky: true,
       sx: {
         position: 'sticky',
@@ -46,7 +45,9 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       label: 'Fiscal Year',
       width: 130,
       sortable: true,
-      align: 'right',
+      sx: {
+        textAlign: 'right',
+      },
     },
     {
       id: 'resource_name',
@@ -54,7 +55,6 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       label: 'Name',
       width: 160,
       sortable: false,
-      align: 'left',
     },
     {
       id: 'resource_type',
@@ -62,7 +62,6 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       label: 'Resource Type',
       width: 130,
       sortable: true,
-      align: 'left',
     },
     {
       id: 'effective_date',
@@ -70,7 +69,7 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       label: 'Effective From',
       width: 130,
       sortable: true,
-      align: 'left',
+
       render: (row: ResourceCostList) => (
         <span>{formatDateToYYYYMMDD(row.effective_date as string) || '-'}</span>
       ),
@@ -81,7 +80,7 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       label: 'End Date',
       width: 130,
       sortable: true,
-      align: 'left',
+
       render: (row: ResourceCostList) => (
         <span>{formatDateToYYYYMMDD(row.end_date as string) || '-'}</span>
       ),
@@ -92,7 +91,6 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       label: 'Currency',
       width: 130,
       sortable: true,
-      align: 'left',
     },
     {
       id: 'annual_cost',
@@ -100,7 +98,9 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       label: 'Annual Compensation',
       width: 180,
       sortable: true,
-      align: 'right',
+      sx: {
+        textAlign: 'right',
+      },
       render: (row: ResourceCostList) => (
         <span>{costDisplay(row.annual_cost)}</span>
       ),
@@ -111,7 +111,9 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       label: 'Monthly Compensation',
       width: 180,
       sortable: true,
-      align: 'right',
+      sx: {
+        textAlign: 'right',
+      },
       render: (row: ResourceCostList) => (
         <span>{costDisplay(row.monthly_cost)}</span>
       ),
@@ -122,7 +124,9 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       label: 'Weekly Compensation',
       width: 180,
       sortable: true,
-      align: 'right',
+      sx: {
+        textAlign: 'right',
+      },
       render: (row: ResourceCostList) => (
         <span>{costDisplay(row.weekly_cost)}</span>
       ),
@@ -133,7 +137,9 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       label: 'Bi-Weekly Compensation',
       width: 200,
       sortable: true,
-      align: 'right',
+      sx: {
+        textAlign: 'right',
+      },
       render: (row: ResourceCostList) => (
         <span>{costDisplay(row.bi_weekly_cost)}</span>
       ),
@@ -144,7 +150,9 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       label: 'Daily Compensation',
       width: 160,
       sortable: true,
-      align: 'right',
+      sx: {
+        textAlign: 'right',
+      },
       render: (row: ResourceCostList) => (
         <span>{costDisplay(row.daily_cost)}</span>
       ),
@@ -155,7 +163,9 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       label: 'Hourly Compensation',
       width: 180,
       sortable: true,
-      align: 'right',
+      sx: {
+        textAlign: 'right',
+      },
       render: (row: ResourceCostList) => (
         <span>{costDisplay(row.hourly_cost)}</span>
       ),
@@ -166,7 +176,6 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       label: 'Org Name',
       width: 130,
       sortable: true,
-      align: 'left',
     },
     {
       id: 'resource_designation',
@@ -174,7 +183,6 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       label: 'Designation',
       width: 130,
       sortable: true,
-      align: 'left',
     },
     {
       id: 'resource_role',
@@ -182,7 +190,6 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       label: 'Role',
       width: 130,
       sortable: true,
-      align: 'left',
     },
     {
       id: 'comments',
@@ -190,7 +197,6 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       label: 'Comments',
       width: 130,
       sortable: true,
-      align: 'left',
     },
     {
       id: 'r_number',
@@ -198,6 +204,5 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       label: 'Cost ID',
       width: 130,
       sortable: true,
-      align: 'left',
     },
   ];

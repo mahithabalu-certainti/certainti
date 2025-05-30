@@ -33,7 +33,7 @@ export const textOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Not-Equals', value: 'not_equals' },
   { option: 'Contains', value: 'contains' },
-  { option: 'Not-Contains', value: 'not_contains' },
+  // { option: 'Not-Contains', value: 'not_contains' },
   { option: 'Is-Empty', value: 'is_empty' },
 ];
 
@@ -147,7 +147,7 @@ export const projectFilterFields: FieldConfig[] = [
     operatorOption: numberOptions,
   },
   {
-    name: 'Qualified Research Expenditure',
+    name: 'QRE',
     value: 'qualified_research_expenditure',
     type: 'number',
     operatorOption: numberOptions,
@@ -171,7 +171,7 @@ export const projectFilterFields: FieldConfig[] = [
     operatorOption: textOptions,
   },
   {
-    name: 'last Modified',
+    name: 'Last Modified',
     value: 'modified_datetime',
     type: 'date',
   },
