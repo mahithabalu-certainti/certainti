@@ -56,6 +56,7 @@ export type ListTableColumn<T> = {
   width: string | number;
   sortId: string;
   sortable?: boolean;
+  align?: 'left' | 'center' | 'right';
   sticky?: boolean;
   sx?: React.CSSProperties;
   render?: (row: T) => React.ReactNode;
