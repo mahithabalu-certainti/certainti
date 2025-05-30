@@ -8,13 +8,8 @@ import TextButton from '../../../../components/button/text-button';
 import { ADMIN_CREATE_USER, ADMIN_MANAGE_USER } from '../../../../routes';
 import { UserTable } from '../table/user-table';
 import { getUserFilterfields } from './helpers';
-import {
-  exportUserList,
-  useManageUserProfile,
-} from '../../../service';
-import {
-  UserListParams,
-} from '../../../types/manage-user';
+import { exportUserList, useManageUserProfile } from '../../../service';
+import { UserListParams } from '../../../types/manage-user';
 import {
   formatFilterForApi,
   getStoredFilters,
@@ -65,8 +60,10 @@ const UserList: React.FC = () => {
       label: 'Assign Permissions to User',
       onClick: () => {
         if (selectedUserId.length === 1) {
-          navigate(ADMIN_MANAGE_USER + '/extended-permission/' + selectedUserId[0])
-        }else if (selectedUserId.length > 1) {
+          navigate(
+            ADMIN_MANAGE_USER + '/extended-permission/' + selectedUserId[0]
+          );
+        } else if (selectedUserId.length > 1) {
           errorToast('Please select only one user to assign permissions.');
         } else {
           errorToast('You must select a user to assign permissions.');

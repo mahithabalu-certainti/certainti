@@ -18,7 +18,7 @@ export interface createProfileData {
   profile_number: string;
   profile_name: string;
   source_profile_id: string;
-  privileges: Privilege[]; 
+  privileges: Privilege[];
 }
 export interface UpdateExtendedPermission {
   profile_id?: string;

@@ -116,7 +116,10 @@ export const App: React.FC<IApp> = ({ instance }) => {
             />
             <Route path={ADMIN_CREATE_USER} element={<CreateUser />} />
             <Route path={ADMIN_EDIT_USER} element={<CreateUser />} />
-            <Route path={USER_EXTENDED_PERMISSION} element={<ExtendedPermission />} />
+            <Route
+              path={USER_EXTENDED_PERMISSION}
+              element={<ExtendedPermission />}
+            />
             <Route path={MANAGE_PROFILE} element={<ProfileList />} />
             <Route path={MANAGE_PROFILE_CREATE} element={<CreateProfile />} />
             <Route path={MANAGE_PROFILE_EDIT} element={<CreateProfile />} />

@@ -16,7 +16,7 @@ export const profileColumns: ProfileTableColumn<ManageProfileList>[] = [
     label: 'Created On',
     sortable: true,
     sort: 'created_on',
-    render: (row: ManageProfileList) => getDateFormat(row.created_datetime), 
+    render: (row: ManageProfileList) => getDateFormat(row.created_datetime),
   },
   {
     id: 'created_by',

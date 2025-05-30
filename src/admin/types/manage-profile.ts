@@ -4,7 +4,6 @@ export type ManageProfile = {
   createdOn: string;
   createdBy: string;
 };
- 
 
 export type ManageProfileList = {
   rid: string;
@@ -32,12 +31,12 @@ export interface ProfileTableColumn<T> {
 }
 
 export interface ProfileDetail {
-  source_profile_id: string; 
+  source_profile_id: string;
   profile_name: string;
   profile_description: string;
   profile_type: string;
 }
- 
+
 export interface UserPermissionsResponse {
   rid: string;
   type: 'menu' | 'module' | 'permission' | 'field'; // adjust if there are other types
@@ -47,7 +46,7 @@ export interface UserPermissionsResponse {
   desc: string;
   is_enabled: boolean;
 }
- 
+
 export interface CommonProfileApiResponse {
   statusCode: number;
   statusCodeValue: string;
@@ -82,7 +81,7 @@ export interface Privilege {
   read?: boolean;
   edit?: boolean;
   has_extended_permission?: boolean;
-  hasReadExtendedPermsission?: boolean; 
+  hasReadExtendedPermsission?: boolean;
   hasEditExtendedPermsission?: boolean;
 }
 export interface ProfileHeaderData {
@@ -99,7 +98,7 @@ export interface ProfileHeaderResponse {
   data: ProfileHeaderData;
 }
 
-// create profile permision api response types 
+// create profile permision api response types
 interface ProfilePermissionResponse {
   profile_id: string;
   updated_permission_count: number;

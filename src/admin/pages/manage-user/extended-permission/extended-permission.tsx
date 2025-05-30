@@ -3,7 +3,6 @@ import { ManageUserIcon } from '../../../../assets/icons';
 import TextButton from '../../../../components/button/text-button';
 import {
   useExtendedPermissionToUser,
-  // useManageUserDetail,
   useUpdateExtendedPermission,
 } from '../../../service';
 import { ProfileHeaderDetail, ProfilePermissions } from '../../manage-profile';
@@ -26,7 +25,6 @@ export const ExtendedPermission: React.FC = () => {
   const { successToast } = useToast();
   const navigate = useNavigate();
   const { data, isPending } = useExtendedPermissionToUser(userid as string);
-  // const userDetails = useManageUserDetail(userid as string);
   const updateExtendedPermission = useUpdateExtendedPermission();
 
   const goBack = () => {
@@ -37,9 +35,7 @@ export const ExtendedPermission: React.FC = () => {
   };
   const handleSaveProfile = () => {
     const payload = {
-      // profile_id: userDetails.data?.data.users.profile_rid,
       user_id: data?.data.user_id,
-      // profile_name: userDetails.data?.data.users.profile.profile_name,
       privileges,
     };
     updateExtendedPermission.mutate(payload);
@@ -88,9 +84,7 @@ export const ExtendedPermission: React.FC = () => {
         <ProfileHeaderDetail
           extendedPermission
           onSave={handleSaveProfile}
-          loading={updateExtendedPermission.isPending
-            // || userDetails.isPending
-          }
+          loading={updateExtendedPermission.isPending}
         />
         <div className='pb-2'>
           {isPending ? (

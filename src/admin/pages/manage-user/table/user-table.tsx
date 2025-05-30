@@ -13,14 +13,14 @@ interface IUserTableProps {
   appliedFilters: Record<string, any>;
   tableParams: UserListParams;
   setTableParams: React.Dispatch<React.SetStateAction<UserListParams>>;
-  onSelectionChange: (selectedIds: string[]) => void; 
+  onSelectionChange: (selectedIds: string[]) => void;
 }
 
 export const UserTable: React.FC<IUserTableProps> = ({
   appliedFilters,
   tableParams,
   setTableParams,
-  onSelectionChange
+  onSelectionChange,
 }) => {
   const [users, setUsers] = useState<ManageUser[]>([]);
   const navigate = useNavigate();
@@ -34,7 +34,7 @@ export const UserTable: React.FC<IUserTableProps> = ({
   }, [appliedFilters]);
 
   const { data, isLoading, isError } = useManageUserList(tableParams);
-  const totalItems = data?.data?.count || 0; 
+  const totalItems = data?.data?.count || 0;
 
   const convertUserListData = (data: User[]): ManageUser[] => {
     if (!data) return [];
