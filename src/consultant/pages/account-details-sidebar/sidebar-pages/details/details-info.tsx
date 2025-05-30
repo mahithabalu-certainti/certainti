@@ -331,36 +331,32 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
       value: accountById?.account_name?.toString() || '-',
     },
     {
-      label: 'Industry',
-      value: accountById?.industry?.industry_name?.toString() || '-',
-    },
-    {
-      label: 'Business Details',
-      value: accountDetails?.business_details?.toString() || '-',
-    },
-    {
       label: 'Is Parent Account',
       value: accountById?.is_parent ? 'Yes' : 'No',
+    },
+    {
+      label: 'Industry',
+      value: accountById?.industry?.industry_name?.toString() || '-',
     },
     {
       label: 'Parent Account',
       value: accountById?.parent_account?.account_name?.toString() || '-',
     },
-    { label: 'Status', value: accountById?.status?.toString() || '-' },
-    { label: 'Website', value: accountDetails?.website?.toString() },
-    // {
-    //   label: 'Delivery Manager',
-    //   value: accountDetails?.project_manager?.toString() || '-',
-    // },
     {
       label: 'Annual Revenue',
       value: accountById?.annual_revenue?.toString() || '-',
     },
+    { label: 'Status', value: accountById?.status?.toString() || '-' },
+    {
+      label: 'Business Details',
+      value: accountDetails?.business_details?.toString() || '-',
+    },
+    { label: 'Website', value: accountDetails?.website?.toString() },
   ];
   const locationInfo: DetailItem[] = [
     { label: 'Country', value: accountById?.country?.country_name },
-    { label: 'Region', value: accountById?.region?.region_name }, // need to inform BE
     { label: 'Currency', value: accountById?.currency?.currency_code },
+    { label: 'Region', value: accountById?.region?.region_name },
   ];
   const keyContactsList: trasnformedKeyContacts[] | undefined =
     accountDetails?.keyContacts.map((contact: KeyContactProps) => ({

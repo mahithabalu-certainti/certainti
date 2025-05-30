@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { accountHomeIcon, editIcon } from '../../../assets';
 import { Layout, OnChange, useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
@@ -24,7 +24,6 @@ import {
   othersIndustryId,
   transformFormData,
 } from './utils';
-import { ACCOUNT } from '../../../routes';
 import {
   formatDateToYYYYMMDDWithTime,
   STATUS_OPTIONS,
@@ -92,6 +91,8 @@ export const AccountForm: React.FC = () => {
           ),
           created_by: account?.accountDetails?.created_by,
           updated_by: account?.accountDetails?.modified_by,
+          website:
+            account?.accountDetails?.website?.replace(/^https?:\/\//, '') || '',
         }),
     }),
     [account]
@@ -109,7 +110,6 @@ export const AccountForm: React.FC = () => {
   const states = useFetchState(currentCountry);
   const createAccount = useCreateAccount();
   const updateAccount = useUpdateAccount();
-  const navigate = useNavigate();
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
 
@@ -122,7 +122,7 @@ export const AccountForm: React.FC = () => {
           ? 'Account update successfully'
           : 'Account created successfully'
       );
-      navigate(ACCOUNT);
+      goBack();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
@@ -265,7 +265,6 @@ export const AccountForm: React.FC = () => {
 
   const handleExternalSubmit = () => {
     formRef.current?.requestSubmit();
-    goBack();
   };
 
   const onChangeField = (data: OnChange) => {

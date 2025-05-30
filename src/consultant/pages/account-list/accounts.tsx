@@ -87,7 +87,10 @@ export const Accounts: React.FC = () => {
 
   const allCountries = useMemo(() => {
     return (
-      countriesList.data?.data.country.map((item) => item.country_name) || []
+      countriesList.data?.data.country.map((item) => ({
+        label: item.country_name,
+        value: item.country_name,
+      })) || []
     );
   }, [countriesList]);
 
@@ -101,7 +104,7 @@ export const Accounts: React.FC = () => {
     () =>
       industry.data?.data.industries.map((industry) => ({
         label: industry.industry_name,
-        value: industry.rid,
+        value: industry.industry_name,
       })) || [],
     [industry.data?.data.industries]
   );
