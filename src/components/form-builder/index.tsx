@@ -539,9 +539,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               }
               minDate={customMinDate}
               maxDate={customMaxDate}
-              value={dayjs(fieldValue, 'YYYY/MM/DD')}
+              value={dayjs(fieldValue, 'YYYY-MM-DD')}
               disabled={field.disabled}
-              format='YYYY/MM/DD'
+              format='YYYY-MM-DD'
               // onOpen={() => {
               //   if (!fieldValue && isFinancialDateField && selectedFiscalYear) {
               //     // Show calendar from Jan 1 of fiscal year
@@ -551,7 +551,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               // }}
               onChange={(newValue) => {
                 handleChange(
-                  newValue ? dayjs(newValue).format('YYYY/MM/DD') : null
+                  newValue ? dayjs(newValue).format('YYYY-MM-DD') : null
                 );
               }}
               shouldDisableDate={
@@ -1019,7 +1019,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   error: `${field.name === 'resource_startdate' ? 'Effective Date' : field.name === 'skill_start_date' || field.name === 'project_startdate' ? 'Start Date' : 'This date'} cannot be in the future`,
                 };
               }
-              if (dateValue && !isValidDate(dateValue, 'YYYY/MM/DD')) {
+              if (dateValue && !isValidDate(dateValue, 'YYYY-MM-DD')) {
                 hasError = true;
                 return {
                   ...field,
@@ -1442,7 +1442,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       maxWidth: `${field.width}`,
                       paddingLeft:
                         `${field.type}` === 'iconButton' ||
-                        `${field.type}` === 'radio'
+                          `${field.type}` === 'radio'
                           ? '10px !important'
                           : 'none',
                       verticalAlign:
