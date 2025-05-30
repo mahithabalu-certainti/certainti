@@ -1551,7 +1551,7 @@ class SchemaService {
         });
 
         countResult = await mainDbSequelize.query(countQuery, {
-          replacements: whereReplacements,
+          replacements,
           type: "SELECT",
         });
       }
