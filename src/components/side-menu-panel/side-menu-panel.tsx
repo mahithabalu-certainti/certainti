@@ -35,8 +35,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
       };
     });
     setAccountMenus(updatedItems);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modules]);
+  }, [modules, menuItems]);
 
   useEffect(() => {
     if (!activeKey) {

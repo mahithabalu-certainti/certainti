@@ -134,7 +134,6 @@ const Resource: React.FC<ResourceProps> = ({
     sortBy: sortField,
     sortOrder: sortOrder,
     filters: appliedFilters,
-    value: value,
   });
 
   // Permission Mangement
@@ -192,9 +191,6 @@ const Resource: React.FC<ResourceProps> = ({
     // updated sub tabs(Details, Cost, Skill)
     const updatedTabs = tabs.map((tab) => ({ ...tab, hide: isHide(tab) }));
     setTabMenus(updatedTabs);
-    // assign default tab value
-    const activeTab = updatedTabs.find((tab) => !tab.hide)?.value;
-    setValue(activeTab as string);
   }, [permission]);
 
   useEffect(() => {
@@ -229,9 +225,12 @@ const Resource: React.FC<ResourceProps> = ({
     setViewResourceList(!viewResourceList);
     setShowBackArrow(!showBackArrow);
     setShowFilter(false);
-    setFilterVisibility(false);
+    // setFilterVisibility(false);
     setAppliedFilters({});
     clearFilters(value || 'resource');
+    // assign default tab value
+    const activeTab = tabMenus.find((tab) => !tab.hide)?.value;
+    setValue(activeTab as string);
   };
 
   useEffect(() => {

@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   useLocation,
   useParams,
@@ -30,10 +29,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
 import { ExportModule } from '../../types/resource-skill';
 import { exportData } from '../../services/resource-details/resource-details-service';
-import {
-  ActionsDropdownItem,
-  checkPermission,
-} from '../../../common-utils';
+import { ActionsDropdownItem, checkPermission } from '../../../common-utils';
 import { AllModules, AllPermissions } from '../../../common-service';
 import { AccessRestricted } from '../../../components/account-restricted';
 import { AccountState } from '../../../store/type';
@@ -220,64 +216,67 @@ export const AccountDetails = () => {
 
   const disable = data?.data?.accountById?.is_parent;
 
-  const sideMenuItems: MenuItem[] = [
-    {
-      name: 'Financial Highlights',
-      key: 'financial',
-      id: AllModules.FINANCIAL_HIGHLIGHTS,
-      disabled: false,
-    },
-    {
-      name: 'Details',
-      key: 'details',
-      id: AllModules.DETAILS,
-      disabled: false,
-    },
-    {
-      name: 'Resources',
-      key: 'resources',
-      id: AllModules.RESOURCES,
-      disabled: false,
-    },
-    {
-      name: 'Projects',
-      key: 'projects',
-      id: AllModules.PROJECTS,
-      disabled: disable,
-    },
-    { name: 'Cases', key: 'cases', id: AllModules.CASES, disabled: false },
-    {
-      name: 'Activities',
-      key: 'activities',
-      id: AllModules.ACTIVITIES,
-      disabled: false,
-    },
-    { name: 'Notes', key: 'notes', id: AllModules.NOTES, disabled: false },
-    {
-      name: 'Attachments',
-      key: 'attachments',
-      id: AllModules.ATTACHMENTS,
-      disabled: false,
-    },
-    {
-      name: 'Checklist',
-      key: 'checklist',
-      id: AllModules.CHECKLISTS,
-      disabled: false,
-    },
-    {
-      name: 'Timesheet',
-      key: 'timesheet',
-      id: AllModules.TIMESHEETS,
-      disabled: false,
-    },
-    {
-      name: 'Imports',
-      key: 'imports',
-      id: AllModules.IMPORTS,
-      disabled: false,
-    },
-  ];
+  const sideMenuItems = useMemo<MenuItem[]>(
+    () => [
+      {
+        name: 'Financial Highlights',
+        key: 'financial',
+        id: AllModules.FINANCIAL_HIGHLIGHTS,
+        disabled: false,
+      },
+      {
+        name: 'Details',
+        key: 'details',
+        id: AllModules.DETAILS,
+        disabled: false,
+      },
+      {
+        name: 'Resources',
+        key: 'resources',
+        id: AllModules.RESOURCES,
+        disabled: false,
+      },
+      {
+        name: 'Projects',
+        key: 'projects',
+        id: AllModules.PROJECTS,
+        disabled: disable,
+      },
+      { name: 'Cases', key: 'cases', id: AllModules.CASES, disabled: false },
+      {
+        name: 'Activities',
+        key: 'activities',
+        id: AllModules.ACTIVITIES,
+        disabled: false,
+      },
+      { name: 'Notes', key: 'notes', id: AllModules.NOTES, disabled: false },
+      {
+        name: 'Attachments',
+        key: 'attachments',
+        id: AllModules.ATTACHMENTS,
+        disabled: false,
+      },
+      {
+        name: 'Checklist',
+        key: 'checklist',
+        id: AllModules.CHECKLISTS,
+        disabled: false,
+      },
+      {
+        name: 'Timesheet',
+        key: 'timesheet',
+        id: AllModules.TIMESHEETS,
+        disabled: false,
+      },
+      {
+        name: 'Imports',
+        key: 'imports',
+        id: AllModules.IMPORTS,
+        disabled: false,
+      },
+    ],
+    [disable]
+  ); // Only recalculate when 'disable' changes
 
   if (!accountIsEnable) return <AccessRestricted />;
 

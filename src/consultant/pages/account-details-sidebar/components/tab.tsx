@@ -293,8 +293,8 @@ const TabPanel: React.FC<TabProps> = ({
         <Box className='flex items-center space-x-2'>
           {/* <ActionsDropdown actions={MENU_ITEMS} /> */}
 
-          <Box className='relative'>
-            {filterVisibility && (
+          {filterVisibility && value !== 'details' && (
+            <Box className='relative'>
               <Box
                 component='button'
                 onClick={handleFilterModal}
@@ -311,8 +311,6 @@ const TabPanel: React.FC<TabProps> = ({
                   </div>
                 )}
               </Box>
-            )}
-            {value !== 'details' && (
               <Filter
                 value={value}
                 isOpen={isFilterOpen && showFilter}
@@ -326,10 +324,10 @@ const TabPanel: React.FC<TabProps> = ({
                 setCurrentPage={setCurrentPage}
                 mode={'date'}
               />
-            )}
-          </Box>
+            </Box>
+          )}
           <ActionImportDropdown
-            variant={'filled'}
+            variant='filled'
             actions={menuActivity}
             label='Add Activity'
             sx={{
