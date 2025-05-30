@@ -54,6 +54,9 @@ export const getProjectColumns = (
     sortable: true,
     sortId: 'fiscal_year',
     width: 130,
+    sx: {
+      textAlign: 'right',
+    },
   },
   {
     id: 'project_client_group',
