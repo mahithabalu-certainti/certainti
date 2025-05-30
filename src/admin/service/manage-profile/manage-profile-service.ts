@@ -43,8 +43,8 @@ export const useManageProfileList = (params: UserListParams = {}) => {
   });
 };
 
-export const exportProfileList = async (params: UserListParams = {}) => {
-  const url = getProfileExportUrl(params);
+export const exportProfileList = async (profileId: string) => {
+  const url = getProfileExportUrl(profileId);
   const response = await userServiceApi.get(url);
   const base64Data = response.data?.data;
   generateFile(base64Data);

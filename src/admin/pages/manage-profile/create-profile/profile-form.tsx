@@ -81,19 +81,6 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
       ...prev,
       [name]: value,
     }));
-
-    // Validate on change
-    // if (name === 'profileName') {
-    //   setErrors((prev) => ({
-    //     ...prev,
-    //     profileName: validateProfileName(value),
-    //   }));
-    // } else if (name === 'description') {
-    //   setErrors((prev) => ({
-    //     ...prev,
-    //     description: validateDescription(value),
-    //   }));
-    // }
   };
 
   const handleNext = () => {
@@ -126,17 +113,17 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                 name='existingProfile'
                 value={formData.existingProfile}
                 onChange={handleChange}
-                className='custom-select-no-arrow w-full sm:text-sm px-1.5 py-[6px] border-1 border-gray-300 rounded-[2px] text-[#7D98B6] max-h-[100px]'
+                className='custom-select-no-arrow w-full sm:text-sm px-1.5 py-[6px] border-1 border-gray-300 rounded-[2px] text-[#425A76] max-h-[100px]'
                 required
               >
                 <option value='' className='text-gray-500'>
-                  Choose existing profile
+                  Choose Existing Profile
                 </option>
                 {profileOptions.map((option) => (
                   <option
                     key={option.value}
                     value={option.value}
-                    className='text-gray-500'
+                    className='text-[#425A76]'
                   >
                     {option.label}
                   </option>
@@ -160,7 +147,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
               value={formData.profileName}
               onChange={handleChange}
               placeholder='Type'
-              className={`custom-select-no-arrow w-full sm:text-sm px-1.5 py-[6px] border-1 ${errors.profileName ? 'border-red-500' : 'border-gray-300'} rounded-[2px] text-[#7D98B6]`}
+              className={`custom-select-no-arrow w-full sm:text-sm px-1.5 py-[6px] border-1 ${errors.profileName ? 'border-red-500' : 'border-gray-300'} rounded-[2px] text-[#425A76]`}
               required
             />
             {errors.profileName && (
@@ -180,8 +167,8 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
             name='description'
             value={formData.description}
             onChange={handleChange}
-            placeholder='Type description here'
-            className={`custom-select-no-arrow w-full sm:text-sm px-1.5 py-[6px] border-1 ${errors.description ? 'border-red-500' : 'border-gray-300'} rounded-[2px] text-[#7D98B6] resize-none`}
+            placeholder='Type Description Here'
+            className={`custom-select-no-arrow w-full sm:text-sm px-1.5 py-[6px] border-1 ${errors.description ? 'border-red-500' : 'border-gray-300'} rounded-[2px] text-[#425A76] resize-none`}
             required
           />
           {errors.description && (
@@ -189,9 +176,6 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
               {errors.description}
             </span>
           )}
-          {/* <span className='text-[11px] text-gray-500'>
-            {formData.description.length}/2000 characters
-          </span> */}
         </div>
       </div>
       <TextButton
@@ -200,12 +184,12 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
         loading={loading}
         onClick={handleNext}
         sx={{
-          width: '45px',
-          minWidth: '45px',
-          fontWeight: 700,
+          width: '64px',
+          minWidth: '64px',
+          fontWeight: 400,
           fontSize: '13px',
-          height: '20px',
-          marginBottom: '20px',
+          height: '32px',
+          marginBottom: errors.description === '' ? '0px' : '20px !important',
         }}
       />
     </form>

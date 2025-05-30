@@ -9,6 +9,7 @@ import { UserListParams } from '../../../types/manage-user';
 import { ProfileTable } from '../';
 import { FilterType } from '../../../types';
 import { exportProfileList } from '../../../service';
+import { useToast } from '../../../../hooks';
 
 const BUTTON_STYLES = {
   height: '24px',
@@ -29,9 +30,9 @@ export const ProfileList: React.FC = () => {
   });
   const navigate = useNavigate();
   const [isExporting, setIsExporting] = useState(false);
-
+  const [selectedProfileId, setSelectedProfileId] = useState<string[]>([]);
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
-
+  const { errorToast } = useToast();
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -43,10 +44,26 @@ export const ProfileList: React.FC = () => {
   const isFilterOpen = Boolean(anchorEl);
   const filterId = isFilterOpen ? 'profile-filter-popover' : undefined;
 
+  const handleSelectionChange = (selectedIds: string[]) => {
+    setSelectedProfileId(selectedIds);
+  };
+
   const handleExport = async () => {
+    if (selectedProfileId.length > 1) {
+      errorToast('Please select just one profile to proceed with export.');
+      return;
+    }
+
+    if (selectedProfileId.length === 0) {
+      errorToast('Please select a profile before exporting.');
+      return;
+    }
+
     setIsExporting(true);
+
+    const profileId = selectedProfileId[0];
     try {
-      await exportProfileList(tableParams);
+      await exportProfileList(profileId);
     } catch (error) {
       console.error('Export failed:', error);
     } finally {
@@ -142,6 +159,7 @@ export const ProfileList: React.FC = () => {
           appliedFilters={appliedFilters}
           tableParams={tableParams}
           setTableParams={setTableParams}
+          onSelectionChange={handleSelectionChange}
         />
       </div>
     </div>
