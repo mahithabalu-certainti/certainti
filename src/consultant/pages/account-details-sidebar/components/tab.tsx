@@ -95,31 +95,40 @@ const TabPanel: React.FC<TabProps> = ({
     );
   }, [skillType]);
 
-  useEffect(() => {
-    if (value === 'skill') {
-      const data = skillSubType as SkillSubtype[];
-      const finalData =
-        data?.map((skill: SkillSubtype) => ({
-          option: skill.skill_subtype_name,
-          value: skill.rid,
-        })) || [];
-      setSkillSubTypeData(finalData);
-    }
-
-    if (!value) {
-      const data = Regions.data?.data.states.map((role) => ({
-        option: role.state_name,
-        value: role.rid,
-      })) || [];
-
-      setRegionData(data);
-    }
-
-  }, [skillSubType, Regions, value]);
+  // useEffect(() => {
+  //   const data = skillSubType as SkillSubtype[];
+  //   const finalData =
+  //     data?.map((skill: SkillSubtype) => ({
+  //       option: skill.skill_subtype_name,
+  //       value: skill.rid,
+  //     })) || [];
+  //   setSkillSubTypeData(finalData);
+  // }, [skillSubType]);
 
   const handleSortClose = () => {
     setSortAnchorEl(null);
   };
+
+  useEffect(() => {
+    if (Regions.data?.data.states) {
+      const data = Regions.data.data.states.map((role) => ({
+        option: role.state_name,
+        value: role.rid,
+      }));
+      setRegionData(data);
+    }
+  }, [Regions.data?.data.states])
+
+  useEffect(() => {
+    if (skillSubType) {
+      const data = skillSubType as SkillSubtype[];
+      const finalData = data?.map((skill: SkillSubtype) => ({
+        option: skill.skill_subtype_name,
+        value: skill.rid,
+      })) || [];
+      setSkillSubTypeData(finalData);
+    }
+  }, [skillSubType]);
 
   const handleSortSelect = (sortOption: string) => {
     setSelectedSort(sortOption);
@@ -166,15 +175,30 @@ const TabPanel: React.FC<TabProps> = ({
     [currency.data?.data.currency]
   );
 
-  const getFilterFields = () => {
+  // const getFilterFields = () => {
+  //   if (!value) return resourceFilterFields(memoizedCountry, regionData);
+  //   if (value === 'projects') {
+  //     return projectFilterFields;
+  //   }
+  //   return value === 'cost'
+  //     ? getCostFilterFields(memoizedCurrency)
+  //     : getSkillFilterFields(memoizedSkillType, skillSubTypeData);
+  // };
+
+  const filterFields = useMemo(() => {
     if (!value) return resourceFilterFields(memoizedCountry, regionData);
-    if (value === 'projects') {
-      return projectFilterFields;
-    }
+    if (value === 'projects') return projectFilterFields;
     return value === 'cost'
       ? getCostFilterFields(memoizedCurrency)
       : getSkillFilterFields(memoizedSkillType, skillSubTypeData);
-  };
+  }, [
+    value,
+    memoizedCountry,
+    regionData,
+    memoizedCurrency,
+    memoizedSkillType,
+    skillSubTypeData,
+  ]);
 
   const [filterAnchorEl, setFilterAnchorEl] =
     useState<HTMLButtonElement | null>(null);
@@ -280,13 +304,13 @@ const TabPanel: React.FC<TabProps> = ({
                 )}
               </Box>
             )}
-            {value !== 'details' && filterAnchorEl && (
+            {value !== 'details' && (
               <Filter
                 value={value}
                 isOpen={isFilterOpen && showFilter}
                 filterAnchorEl={filterAnchorEl}
                 filterId={filterId}
-                filterMenu={getFilterFields()}
+                filterMenu={filterFields}
                 setAppliedFilters={setAppliedFilters}
                 handleCloseFilter={handleCloseFilter}
                 setCurrentSkillType={setCurrentSkillType}

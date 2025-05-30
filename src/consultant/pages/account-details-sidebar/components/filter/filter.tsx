@@ -90,7 +90,7 @@ const Filter: React.FC<FilterComponentProps> = ({
         [firstField.value]: getInitialStateForField(firstField),
       });
     }
-  }, [filterMenu, isOpen]);
+  }, [isOpen]);
 
   useEffect(() => {
     if (setCurrentSkillType) {
@@ -111,13 +111,13 @@ const Filter: React.FC<FilterComponentProps> = ({
     }
 
     if (setCurrentCountry) {
-      const country = Array.isArray(filterStates?.country?.enum?.value)
-        ? filterStates?.country?.enum?.value
-        : [filterStates?.country?.enum?.value];
+      const country = Array.isArray(filterStates?.resource_country?.enum?.value)
+        ? filterStates?.resource_country?.enum?.value
+        : [filterStates?.resource_country?.enum?.value];
 
       setCurrentCountry(country as string[]);
     }
-  }, [filterStates]);
+  }, [filterStates?.skill_type_rid?.enum?.value, filterStates?.resource_country?.enum?.value, filterStates?.skill_sub_type?.enum?.value]);
 
   const handleModalClose = () => {
     const saved = getStoredFilters(value || 'resource');

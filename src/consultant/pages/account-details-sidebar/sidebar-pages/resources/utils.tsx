@@ -79,8 +79,8 @@ export const resourceFilterFields = (country: { option: string; value: string }[
   { name: 'Org Name', value: 'resource_orgname', type: 'text' },
   { name: 'Designation', value: 'resource_designation', type: 'text' },
   { name: 'Role', value: 'resource_role', type: 'text' },
-  { name: 'Region', value: 'region', type: 'enum', options: region },
-  { name: 'Country', value: 'country', type: 'enum', options: country },
+  { name: 'Region', value: 'resource_region', type: 'enum', options: region },
+  { name: 'Country', value: 'resource_country', type: 'enum', options: country },
   { name: 'Total Project Hours', value: 'total_project_hours', type: 'number' },
   { name: 'Estimated R&D Hours', value: 'estimated_rd_hours', type: 'number' },
   {
