@@ -6,6 +6,7 @@ export interface ResourceTableColumn<T> {
   width: string | number;
   sortId: string;
   sortable?: boolean;
+  align?: 'left' | 'center' | 'right'; // Add align property for column aligning
   sticky?: boolean;
   sx?: React.CSSProperties;
   render?: (row: T) => React.ReactNode;
@@ -20,6 +21,7 @@ export const getResourceColumns = (
       label: 'Resource Code',
       width: 150,
       sortable: true,
+      align: 'left',
       sticky: true,
       sx: {
         position: 'sticky',
@@ -47,6 +49,7 @@ export const getResourceColumns = (
       label: 'Name',
       width: 200,
       sortable: true,
+      align: 'left',
     },
     {
       id: 'resource_type',
@@ -54,6 +57,7 @@ export const getResourceColumns = (
       label: 'Resource Type',
       width: 140,
       sortable: true,
+      align: 'left',
     },
     {
       id: 'resource_orgname',
@@ -61,6 +65,7 @@ export const getResourceColumns = (
       label: 'Org Name',
       width: 140,
       sortable: true,
+      align: 'left',
     },
     {
       id: 'resource_designation',
@@ -68,6 +73,7 @@ export const getResourceColumns = (
       label: 'Designation',
       width: 200,
       sortable: true,
+      align: 'left',
     },
     {
       id: 'resource_role',
@@ -75,6 +81,7 @@ export const getResourceColumns = (
       label: 'Role',
       width: 200,
       sortable: true,
+      align: 'left',
     },
     {
       id: 'region_name',
@@ -82,6 +89,7 @@ export const getResourceColumns = (
       label: 'Region',
       width: 150,
       sortable: true,
+      align: 'left',
     },
     {
       id: 'country_name',
@@ -89,6 +97,7 @@ export const getResourceColumns = (
       label: 'Country',
       width: 160,
       sortable: true,
+      align: 'left',
     },
     {
       id: 'total_project_hours',
@@ -96,6 +105,7 @@ export const getResourceColumns = (
       label: 'Total Project Hours',
       width: 160,
       sortable: true,
+      align: 'right',
     },
     {
       id: 'estimated_rd_hours',
@@ -103,6 +113,7 @@ export const getResourceColumns = (
       label: 'Estimated R&D Hours',
       width: 180,
       sortable: true,
+      align: 'right',
     },
     {
       id: 'resource_status',
@@ -110,6 +121,7 @@ export const getResourceColumns = (
       label: 'Status',
       width: 150,
       sortable: true,
+      align: 'left',
       render: (row: ResourceList) => (
         <span
           className={`${row.resource_status === 'Active' ? 'text-[#199806]' : 'text-[#f44336]'
@@ -125,6 +137,7 @@ export const getResourceColumns = (
       label: 'Comments',
       width: 160,
       sortable: true,
+      align: 'left',
     },
     {
       id: 'r_number',
@@ -132,5 +145,6 @@ export const getResourceColumns = (
       label: 'Resource ID',
       width: 150,
       sortable: true,
+      align: 'left',
     },
   ];

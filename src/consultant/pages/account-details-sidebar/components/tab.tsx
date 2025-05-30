@@ -18,6 +18,7 @@ import { SkillSubtype, SkillType } from '../../../types/resource';
 import { clearFilters } from './filter/utils';
 import { projectFilterFields } from '../sidebar-pages/projects/utils';
 import { useGetAllCountries } from '../../../../common-service';
+import { useLocation } from 'react-router-dom';
 // import { useGetAllCountries } from '../../../../common-service';
 // import { SelectOption } from '../../../types';
 interface TabProps {
@@ -38,6 +39,7 @@ const TabPanel: React.FC<TabProps> = ({
   filterVisibility,
   setCurrentPage,
 }) => {
+  const location = useLocation();
   const [tabValue, setTabValue] = useState(0);
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
   const [currentSkillType, setCurrentSkillType] = useState({
@@ -218,6 +220,11 @@ const TabPanel: React.FC<TabProps> = ({
       handleFilter();
     }
   };
+  // clear filter on route change or page changes
+  useEffect(() => {
+    setAppliedFilters({});
+    clearFilters(value || 'resource');
+  }, [location]);
 
   const isFilterOpen = Boolean(filterAnchorEl);
   const filterId = isFilterOpen ? `resource${value}-filter-popover` : undefined;
