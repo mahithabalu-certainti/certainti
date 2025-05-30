@@ -10,9 +10,19 @@ routes.get(
   controller.projectController.allProjectList
 );
 routes.get(
+  "/list/export",
+  checkUserStatusMiddleware("projects_projects_view_all"),
+  controller.projectController.exportAllProjectList
+);
+routes.get(
   "/list/:accountId",
   checkUserStatusMiddleware("account_projects_view_all"),
   controller.projectController.projectList
+);
+routes.get(
+  "/export/:accountId",
+  checkUserStatusMiddleware("NA"),
+  controller.projectController.exportProjectList
 );
 routes.get(
   "/list/:accountId/:projectId",
