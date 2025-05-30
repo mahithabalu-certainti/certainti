@@ -91,7 +91,7 @@ import menuArrowRight from './menu-arrow-right.svg';
 import menuArrowRightHover from './menu-arrow-right-hover.svg';
 import moduleArrowright from './module-arrow-right.svg';
 import checkboxChecked from './checkboxChecked.svg';
-import checkboxUnchecked from './checkboxUnchecked.svg';
+import checkboxUnchecked from './checkboxUnChecked.svg';
 export {
   accountDetailsIcon,
   accountHomeIcon,
