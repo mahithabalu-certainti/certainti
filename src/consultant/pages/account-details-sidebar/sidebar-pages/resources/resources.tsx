@@ -85,7 +85,7 @@ const Resource: React.FC<ResourceProps> = ({
     sortBy: sortField,
     sortOrder: sortOrder,
     filters: appliedFilters,
-    value: value,
+    // value: value,
   });
 
   useEffect(() => {
@@ -184,10 +184,10 @@ const Resource: React.FC<ResourceProps> = ({
 
   const headerButtons = [
     {
-      label: 'New',
+      label: value === 'details' ? 'Edit' : 'New',
       variant: 'outlined' as const,
       disabled: accountInActive,
-      onClick: () => handleCreateResource(),
+      onClick: value === 'details' ? () => handleEditResource() : () => handleCreateResource(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
     },
     {
@@ -197,6 +197,12 @@ const Resource: React.FC<ResourceProps> = ({
       sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
     },
   ];
+
+  const handleEditResource = () => {
+    const resourceId = searchParams.get('res_id');
+    const accNumber = accountDetails?.data?.accountById.r_number;
+    navigate(RESOURCE + '/edit/' + resourceId + `?account_id=${accountid}&acc_number=${accNumber}`);
+  }
 
   const handleBackClick = () => {
     setViewResourceList(!viewResourceList);
