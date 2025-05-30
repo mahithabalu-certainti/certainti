@@ -7,7 +7,7 @@ import ActionsDropdown from '../../../../components/actions-dropdown/actions-dro
 import TextButton from '../../../../components/button/text-button';
 import { ADMIN_CREATE_USER, ADMIN_MANAGE_USER } from '../../../../routes';
 import { UserTable } from '../table/user-table';
-import { getUserFilterfields } from './helpers';
+import { getUserFilterFields } from './helpers';
 import { exportUserList, useManageUserProfile } from '../../../service';
 import { UserListParams } from '../../../types/manage-user';
 import {
@@ -84,11 +84,14 @@ const UserList: React.FC = () => {
 
   const userProfiles = useMemo(() => {
     return (
-      profileList.data?.data.profiles.map((item) => item.profile_name) || []
+      profileList.data?.data.profiles.map((item) => ({
+        label: item.profile_name,
+        value: item.profile_name,
+      })) || []
     );
   }, [profileList]);
 
-  const userFilterfields = getUserFilterfields(userProfiles);
+  const userFilterfields = getUserFilterFields(userProfiles);
 
   useEffect(() => {
     const saved = getStoredFilters();

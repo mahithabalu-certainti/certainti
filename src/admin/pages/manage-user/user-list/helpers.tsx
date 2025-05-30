@@ -1,5 +1,6 @@
 import {
   FieldConfig,
+  FilterSelectOption,
   StatusOptions,
 } from '../../../../consultant/types/account-filter';
 
@@ -9,7 +10,15 @@ const textfieldOptions: { label: string; value: string }[] = [
   { label: 'Not Equals', value: 'not_equals' },
 ];
 
-export const getUserFilterfields = (userProfiles: string[]): FieldConfig[] => [
+export const profileOperator: { label: string; value: string }[] = [
+  { label: 'Equals', value: 'equals' },
+  { label: 'Not Equals', value: 'not_equals' },
+  { label: 'In', value: 'in' },
+];
+
+export const getUserFilterFields = (
+  userProfiles: FilterSelectOption[]
+): FieldConfig[] => [
   {
     label: 'Username',
     name: 'username',
@@ -25,8 +34,9 @@ export const getUserFilterfields = (userProfiles: string[]): FieldConfig[] => [
   {
     label: 'Profile',
     name: 'profile',
-    type: 'multi-select',
+    type: 'enumSelect',
     options: userProfiles,
+    operatorOption: profileOperator,
   },
   { label: 'Status', name: 'status', type: 'status', options: StatusOptions },
 ];
