@@ -11,7 +11,7 @@ routes.get(
 );
 routes.get(
   "/list/export",
-  checkUserStatusMiddleware("projects_projects_view_all"),
+  checkUserStatusMiddleware("projects_projects_download"),
   controller.projectController.exportAllProjectList
 );
 routes.get(
@@ -21,7 +21,7 @@ routes.get(
 );
 routes.get(
   "/export/:accountId",
-  checkUserStatusMiddleware("NA"),
+  checkUserStatusMiddleware("account_projects_download"),
   controller.projectController.exportProjectList
 );
 routes.get(
