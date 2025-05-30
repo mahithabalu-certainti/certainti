@@ -16,8 +16,8 @@ import { ACCOUNT_CREATE } from '../../../routes';
 import { getAccountFilterFields } from './helpers';
 import AccountTable from './table/account-table';
 import { useGetAllCountries } from '../../../common-service';
-import { exportAccountList, useFetchCurrency } from '../../services/account';
-import { AccountList } from '../../types';
+import { exportAccountList, useFetchIndustrys } from '../../services/account';
+import { AccountList, SelectOption } from '../../types';
 import {
   formatFilterForApi,
   getStoredFilters,
@@ -82,7 +82,8 @@ export const Accounts: React.FC = () => {
   };
 
   const countriesList = useGetAllCountries();
-  const currencyList = useFetchCurrency();
+  // const currencyList = useFetchCurrency();
+  const industry = useFetchIndustrys();
 
   const allCountries = useMemo(() => {
     return (
@@ -90,15 +91,24 @@ export const Accounts: React.FC = () => {
     );
   }, [countriesList]);
 
-  const allCurrencies = useMemo(() => {
-    return (
-      currencyList.data?.data.currency.map((item) => item.currency_code) || []
-    );
-  }, [currencyList]);
+  // const allCurrencies = useMemo(() => {
+  //   return (
+  //     currencyList.data?.data.currency.map((item) => item.currency_code) || []
+  //   );
+  // }, [currencyList]);
+
+  const allIndustries: SelectOption[] = useMemo(
+    () =>
+      industry.data?.data.industries.map((industry) => ({
+        label: industry.industry_name,
+        value: industry.rid,
+      })) || [],
+    [industry.data?.data.industries]
+  );
 
   const accountFilterFields = getAccountFilterFields(
     allCountries,
-    allCurrencies
+    allIndustries
   );
 
   const [totalCount, setTotalCount] = useState<number>(0);

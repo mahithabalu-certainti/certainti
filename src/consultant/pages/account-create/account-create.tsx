@@ -25,7 +25,10 @@ import {
   transformFormData,
 } from './utils';
 import { ACCOUNT } from '../../../routes';
-import { getDateTimeFormat, STATUS_OPTIONS } from '../../../common-utils';
+import {
+  formatDateToYYYYMMDDWithTime,
+  STATUS_OPTIONS,
+} from '../../../common-utils';
 
 export const AccountForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -81,8 +84,10 @@ export const AccountForm: React.FC = () => {
             : 'no',
           record_id: account?.accountDetails?.rid,
           account_id: account?.accountById?.r_number,
-          created_on: getDateTimeFormat(account?.accountById?.created_datetime),
-          updated_on: getDateTimeFormat(
+          created_on: formatDateToYYYYMMDDWithTime(
+            account?.accountById?.created_datetime
+          ),
+          updated_on: formatDateToYYYYMMDDWithTime(
             account?.accountById?.modified_datetime
           ),
           created_by: account?.accountDetails?.created_by,
@@ -260,6 +265,7 @@ export const AccountForm: React.FC = () => {
 
   const handleExternalSubmit = () => {
     formRef.current?.requestSubmit();
+    goBack();
   };
 
   const onChangeField = (data: OnChange) => {
@@ -344,47 +350,49 @@ export const AccountForm: React.FC = () => {
           />
         </div>
       </div>
-      <FormBuilder
-        data={FormData(
-          memoizedContry,
-          memoizedParentAccounts,
-          memoizedCurrency,
-          memoizedState,
-          dataResidency,
-          memoizedIndustry,
-          memoizedRole,
-          isValueUpdateInKeyContact,
-          isParentAccountRequired,
-          keyContacts,
-          addKeyContactInfo,
-          removeKeyContactInfo,
-          isEditView,
-          states.isLoading,
-          showOthersField
-        )}
-        loading={
-          allCountries.isLoading ||
-          parentAccount.isLoading ||
-          currency.isLoading ||
-          industry.isLoading ||
-          keyContactRoles.isLoading
-        }
-        values={
-          isEditView && accountData
-            ? { ...accountData }
-            : {
-                status: defaultActiveValue,
-                key_contact_status: defaultActiveValue,
-                autosend_interaction: YesNo.Yes,
-                auto_access_rd: YesNo.Yes,
-              } // Set default values in Create Account
-        }
-        outData={submitData}
-        formRef={formRef}
-        onChange={onChangeField}
-        layout={Layout.TYPE_1}
-        newContactLength={newContactLength}
-      />
+      <div className={`${isEditView ? 'pb-10' : 'pb-4'}`}>
+        <FormBuilder
+          data={FormData(
+            memoizedContry,
+            memoizedParentAccounts,
+            memoizedCurrency,
+            memoizedState,
+            dataResidency,
+            memoizedIndustry,
+            memoizedRole,
+            isValueUpdateInKeyContact,
+            isParentAccountRequired,
+            keyContacts,
+            addKeyContactInfo,
+            removeKeyContactInfo,
+            isEditView,
+            states.isLoading,
+            showOthersField
+          )}
+          loading={
+            allCountries.isLoading ||
+            parentAccount.isLoading ||
+            currency.isLoading ||
+            industry.isLoading ||
+            keyContactRoles.isLoading
+          }
+          values={
+            isEditView && accountData
+              ? { ...accountData }
+              : {
+                  status: defaultActiveValue,
+                  key_contact_status: defaultActiveValue,
+                  autosend_interaction: YesNo.Yes,
+                  auto_access_rd: YesNo.Yes,
+                } // Set default values in Create Account
+          }
+          outData={submitData}
+          formRef={formRef}
+          onChange={onChangeField}
+          layout={Layout.TYPE_1}
+          newContactLength={newContactLength}
+        />
+      </div>
     </>
   );
 };

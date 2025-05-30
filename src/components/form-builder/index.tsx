@@ -1014,7 +1014,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 hasError = true;
                 return {
                   ...field,
-                  error: `${field.name === 'resource_startdate' ? 'Effective Date' : field.name === 'skill_start_date' ? 'Start Date' : 'This date'} cannot be in the future`,
+                  error: `${field.name === 'resource_startdate' ? 'Effective Date' : field.name === 'skill_start_date' || field.name === 'project_startdate' ? 'Start Date' : 'This date'} cannot be in the future`,
                 };
               }
               if (dateValue && !isValidDate(dateValue, 'YYYY-MM-DD')) {
@@ -1038,13 +1038,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               hasError = true;
               return {
                 ...field,
-                error: `${field.name === 'resource_startdate' ? 'Effective Date' : 'This date'} cannot be in the future`,
+                error: `${field.name === 'resource_startdate' ? 'Effective Date' : field.name === 'project_startdate' ? 'Start Date' : 'This date'} cannot be in the future`,
               };
             }
             const currentDate = dayjs();
 
             if (
-              field.name === 'resource_enddate' &&
+              (field.name === 'resource_enddate' ||
+                field.name === 'project_enddate') &&
               dayjs(dateValue).isAfter(currentDate, 'day')
             ) {
               hasError = true;
@@ -1055,7 +1056,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
 
             // Check if date is before the minimum allowed date (1-1-1950)
-            const minAllowedDate = dayjs('1-1-1950', 'D-M-YYYY');
+            const minAllowedDate =
+              field.name === 'project_startdate'
+                ? dayjs('2000-01-01', 'YYYY-MM-DD')
+                : dayjs('1-1-1950', 'D-M-YYYY');
             if (dayjs(dateValue).isBefore(minAllowedDate, 'day')) {
               hasError = true;
               return {
@@ -1065,11 +1069,59 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     ? 'Effective Date cannot be before 01-01-1950'
                     : field.name === 'skill_start_date'
                       ? 'Start Date cannot be before 01-01-1950'
-                      : 'Date cannot be before 01-01-1950',
+                      : field.name === 'project_startdate'
+                        ? 'Start Date cannot be before 2000-01-01'
+                        : 'Date cannot be before 01-01-1950',
               };
             }
-
             // Check if both start and end dates are either provided or not provided
+            // Handle project dates validation
+            if (
+              field.name === 'project_startdate' ||
+              field.name === 'project_enddate'
+            ) {
+              const startDate = constructFormData[
+                'project_startdate'
+              ] as string;
+              const endDate = constructFormData['project_enddate'] as string;
+
+              if ((startDate && !endDate) || (!startDate && endDate)) {
+                hasError = true;
+                return {
+                  ...field,
+                  error: 'Both Start Date and End Date must be be provided',
+                };
+              }
+
+              if (startDate && endDate) {
+                const start = dayjs(startDate);
+                const end = dayjs(endDate);
+
+                if (start.isSame(end, 'day')) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error:
+                      field.name === 'project_startdate'
+                        ? 'Start Date cannot be the same as End Date'
+                        : 'End Date cannot be the same as Start Date',
+                  };
+                }
+
+                if (start.isAfter(end, 'day')) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error:
+                      field.name === 'project_startdate'
+                        ? 'Start Date cannot be after End Date'
+                        : 'End Date cannot be before Start Date',
+                  };
+                }
+              }
+            }
+
+            // Handle resource dates validation
             if (
               field.name === 'resource_startdate' ||
               field.name === 'resource_enddate'

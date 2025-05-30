@@ -73,7 +73,7 @@ export const accountColumns: AccountColumn[] = [
     id: 'qualifying_project_qre_fed',
     sortId: 'qualifying_project_qre_fed',
     label: 'QRE',
-    width: '100px',
+    width: '140px',
     sortable: true,
   },
   {
@@ -115,7 +115,7 @@ export const accountColumns: AccountColumn[] = [
     id: 'r_number',
     sortId: 'r_number',
     label: 'Account ID',
-    width: '180px',
+    width: '160px',
     sortable: true,
   },
 ];

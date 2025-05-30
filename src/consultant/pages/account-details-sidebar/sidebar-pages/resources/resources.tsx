@@ -372,6 +372,7 @@ const Resource: React.FC<ResourceProps> = ({
             actionMenuItems={actionMenuItems}
             loading={isLoading}
             error={error ? 'Failed to load resource data' : undefined}
+            rowsPerPageOptions={[25, 50, 100]}
             rowsPerPage={rowsPerPage}
             currentPage={currentPage}
             totalItems={ResourceList?.count || 0}

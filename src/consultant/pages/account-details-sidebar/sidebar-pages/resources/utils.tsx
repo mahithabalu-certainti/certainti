@@ -44,14 +44,14 @@ export const getSkillFilterFields = (
       name: 'Skill Type',
       value: 'skill_type_rid',
       type: 'enum',
-      options: skillTypeOptions
+      options: skillTypeOptions,
     },
     {
       name: 'Skill SubType',
       value: 'skill_subtype_rid',
       type: 'enum',
       options: skillSubTypeOptions,
-      dependsOn: 'skill_type_rid'  // This indicates it depends on skill_type
+      dependsOn: 'skill_type_rid', // This indicates it depends on skill_type
     },
     {
       name: 'Skill Level',
@@ -127,8 +127,22 @@ export const formatDateToMMDDYYYY = (dateString?: string | null): string => {
 
   return `${month}/${day}/${year}`;
 };
+export const formatDateToYYYYMMDD = (dateString?: string | null): string => {
+  if (!dateString) return '';
 
-export const formatDateToMMDDYYYYWithTime = (dateString?: string | null): string => {
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+
+  return `${year}/${month}/${day}`;
+};
+
+export const formatDateToMMDDYYYYWithTime = (
+  dateString?: string | null
+): string => {
   if (!dateString) return '';
 
   const date = new Date(dateString);
@@ -151,4 +165,31 @@ export const formatDateToMMDDYYYYWithTime = (dateString?: string | null): string
   const formattedTime = `${String(hours).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
 
   return `${month}/${day}/${year}, ${formattedTime}`;
+};
+
+export const formatDateToYYYYMMDDWithTime = (
+  dateString?: string | null
+): string => {
+  if (!dateString) return '';
+
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+
+  // Date parts
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+
+  // Time parts (12-hour format with AM/PM)
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+
+  hours = hours % 12;
+  hours = hours || 12; // Convert "0" hours to "12"
+
+  const formattedTime = `${String(hours).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
+
+  return `${year}/${month}/${day}, ${formattedTime}`;
 };

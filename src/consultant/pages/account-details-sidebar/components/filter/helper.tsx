@@ -441,14 +441,14 @@ export const DateFilterControl: React.FC<{
                 name='from'
                 maxDate={dayjs(today)}
                 minDate={dayjs(sixYearsAgo)}
-                value={dayjs(state.date?.value.from, 'MM/DD/YYYY')}
+                value={dayjs(state.date?.value.from, 'YYYY/MM/DD')}
                 disabled={disableInput}
-                format='MM/DD/YYYY'
+                format='YYYY/MM/DD'
                 onChange={(newValue) => {
                   onValueChange(
                     'from',
                     fieldName,
-                    dayjs(newValue).format('MM/DD/YYYY')
+                    dayjs(newValue).format('YYYY/MM/DD')
                   );
                 }}
                 shouldDisableDate={(date) =>
@@ -494,7 +494,7 @@ export const DateFilterControl: React.FC<{
                         width: isBetween ? '50%' : '140px',
                       },
                     },
-                    placeholder: 'MM/DD/YYYY',
+                    placeholder: 'YYYY/MM/DD',
                   },
                 }}
               />
@@ -507,14 +507,14 @@ export const DateFilterControl: React.FC<{
               maxDate={dayjs(today)}
               minDate={dayjs(sixYearsAgo)}
               sx={{ mt: 1 }}
-              value={dayjs(state.date?.value.to, 'MM/DD/YYYY')}
+              value={dayjs(state.date?.value.to, 'YYYY/MM/DD')}
               disabled={disableInput}
-              format='MM/DD/YYYY'
+              format='YYYY/MM/DD'
               onChange={(newValue) => {
                 onValueChange(
                   'to',
                   fieldName,
-                  dayjs(newValue).format('MM/DD/YYYY')
+                  dayjs(newValue).format('YYYY/MM/DD')
                 );
               }}
               shouldDisableDate={(date) => dayjs(date).isAfter(dayjs(), 'day')}
@@ -554,7 +554,7 @@ export const DateFilterControl: React.FC<{
                       width: isBetween ? '50%' : '140px',
                     },
                   },
-                  placeholder: 'MM/DD/YYYY',
+                  placeholder: 'YYYY/MM/DD',
                 },
               }}
             />

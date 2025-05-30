@@ -117,6 +117,7 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
       actionMenuItems={actionButtons}
       loading={isLoading}
       error={isError ? 'Failed to load profiles' : undefined}
+      rowsPerPageOptions={[25, 50, 100]}
       rowsPerPage={tableParams.limit}
       currentPage={(tableParams.page ?? 1) - 1}
       totalItems={totalItems}

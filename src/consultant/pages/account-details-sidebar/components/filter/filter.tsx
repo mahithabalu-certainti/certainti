@@ -81,6 +81,18 @@ const Filter: React.FC<FilterComponentProps> = ({
   }, [value]);
 
   useEffect(() => {
+    const saved = getStoredFilters(value || 'resource');
+    if (filterMenu.length > 0 && !saved) {
+      // Automatically select the first field if no saved filters exist
+      const firstField = filterMenu[0];
+      setSelectedFilters([firstField.value]);
+      setFilterStates({
+        [firstField.value]: getInitialStateForField(firstField),
+      });
+    }
+  }, [filterMenu, isOpen]);
+
+  useEffect(() => {
     if (setCurrentSkillType) {
       if (filterStates?.skill_type_rid?.enum?.value) {
         const skillTypeValue = Array.isArray(filterStates?.skill_type_rid?.enum?.value)
@@ -159,6 +171,7 @@ const Filter: React.FC<FilterComponentProps> = ({
       setFilterStates,
       setSelectedFilters,
     });
+    handleCloseFilter();
   };
 
   const handleFilterOptionChange = (
@@ -537,7 +550,7 @@ const Filter: React.FC<FilterComponentProps> = ({
             <h3 className='text-[13px] font-bold text-[#425A76] mb-2'>
               All filters
             </h3>
-            <div className='flex flex-col gap-3 mb-1 pt-1 -mr-6 min-h-[80px] overflow-y-auto max-h-[150px]'>
+            <div className='flex flex-col gap-3 mb-1 pt-1 -mr-6 min-h-[40px] overflow-y-auto max-h-[150px]'>
               {selectedFilters.map((fieldValue) => {
                 const fieldConfig = filterMenu.find(
                   (f) => f.value === fieldValue

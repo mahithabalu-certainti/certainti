@@ -10,9 +10,12 @@ import {
 } from '@mui/material';
 import {
   DateOptions,
+  DateValueOptions,
   FilterModalProps,
   FilterState,
   NumberFilterOption,
+  numberOperators,
+  textfieldOperators,
   TextFilterOption,
 } from '../../consultant/types/account-filter';
 import {
@@ -30,7 +33,8 @@ import {
   NewBooleanFilterControl,
   SELECT_STYLES,
   MENU_PROPS,
-  DateFilterControl,
+  KeyContactFilterControl,
+  NewDateFilterControl,
 } from './helpers';
 import { useLocation } from 'react-router-dom';
 
@@ -85,6 +89,18 @@ const FilterModal: React.FC<FilterModalProps> = ({
       );
     }
   }, []);
+
+  useEffect(() => {
+    const saved = getStoredFilters();
+    if (filterFields.length > 0 && !saved) {
+      // Automatically select the first field if no saved filters exist
+      const firstField = filterFields[0];
+      setSelectedFilters([firstField.name]);
+      setFilterStates({
+        [firstField.name]: getInitialStateForField(firstField),
+      });
+    }
+  }, [filterFields]);
 
   useEffect(() => {
     const handleRouteChange = () => {
@@ -174,6 +190,51 @@ const FilterModal: React.FC<FilterModalProps> = ({
                 },
               },
             };
+          case 'keyContact': {
+            const key = event.target.name; // 'roleOption' or 'nameOption'
+            const value = event.target.value;
+
+            const keyContact = currentState.keyContact || {
+              role: { option: 'contains', value: '' },
+              name: { option: 'contains', value: '' },
+            };
+
+            if (key === 'roleOption') {
+              return {
+                ...prev,
+                [fieldName]: {
+                  ...currentState,
+                  keyContact: {
+                    ...keyContact,
+                    role: {
+                      option: value,
+                      value:
+                        value === 'is_empty' ? 'true' : keyContact.role.value,
+                    },
+                  },
+                },
+              };
+            }
+
+            if (key === 'nameOption') {
+              return {
+                ...prev,
+                [fieldName]: {
+                  ...currentState,
+                  keyContact: {
+                    ...keyContact,
+                    name: {
+                      option: value,
+                      value:
+                        value === 'is_empty' ? 'true' : keyContact.name.value,
+                    },
+                  },
+                },
+              };
+            }
+
+            return prev;
+          }
           default:
             return prev;
         }
@@ -268,6 +329,69 @@ const FilterModal: React.FC<FilterModalProps> = ({
     }));
   };
 
+  const handleKeyContactSelectChange = (
+    fieldName: string,
+    type: 'role' | 'name',
+    value: string
+  ) => {
+    setFilterStates((prev: Record<string, FilterState>) => {
+      const currentState = prev[fieldName] || {};
+      const keyContact = currentState.keyContact || {
+        role: { option: 'contains', value: '' },
+        name: { option: 'contains', value: '' },
+      };
+
+      // If changing name option to 'is_empty', clear the name value
+      if (type === 'name' && value === 'is_empty') {
+        return {
+          ...prev,
+          [fieldName]: {
+            ...currentState,
+            keyContact: {
+              ...keyContact,
+              name: {
+                option: 'is_empty',
+                value: 'true',
+              },
+            },
+          },
+        };
+      }
+
+      return {
+        ...prev,
+        [fieldName]: {
+          ...currentState,
+          keyContact: {
+            ...keyContact,
+            [type]: {
+              ...keyContact[type],
+              value: value,
+            },
+          },
+        },
+      };
+    });
+  };
+
+  const handleDateChange = (type: string, fieldName: string, value: string) => {
+    setFilterStates((prev: any) => {
+      return {
+        ...prev,
+        [fieldName]: {
+          ...prev[fieldName],
+          date: {
+            ...prev[fieldName].date,
+            value: {
+              ...prev[fieldName].date.value,
+              [type]: value,
+            },
+          },
+        },
+      };
+    });
+  };
+
   const handleApplyFilters = () => {
     setPage(1);
     const updatedStates = { ...filterStates };
@@ -276,29 +400,36 @@ const FilterModal: React.FC<FilterModalProps> = ({
     for (const key in updatedStates) {
       const state = updatedStates[key];
 
-      if (state.date) {
-        const isValueEmpty = !state.date.value?.trim();
-        const isToValueEmpty =
-          state.date.option === 'between' && !state.date.toValue?.trim();
+      // if (state.date) {
+      //   const isValueEmpty = !state.date.value?.trim();
+      //   const isToValueEmpty =
+      //     state.date.option === 'between' && !state.date.toValue?.trim();
 
-        if (isValueEmpty || isToValueEmpty) {
-          hasInvalid = true;
-        }
-      }
+      //   if (isValueEmpty || isToValueEmpty) {
+      //     hasInvalid = true;
+      //   }
+      // }
 
       if (state.text) {
-        const isEmpty = !state.text.value.trim();
-        if (isEmpty) hasInvalid = true;
+        const { option, value } = state.text;
+        const isEmptyCheck = option === 'is_empty';
+
+        if (!isEmptyCheck) {
+          const isEmpty = !value.trim();
+          if (isEmpty) hasInvalid = true;
+        }
       }
 
       if (state.number) {
         const { option, value } = state.number;
         let hasError = false;
 
-        if (option === 'between') {
-          hasError = !Array.isArray(value) || value.some((v) => !v.trim());
-        } else {
-          hasError = !value || (typeof value === 'string' && !value.trim());
+        if (option !== 'is_empty') {
+          if (option === 'between') {
+            hasError = !Array.isArray(value) || value.some((v) => !v.trim());
+          } else {
+            hasError = !value || (typeof value === 'string' && !value.trim());
+          }
         }
 
         state.number.error = hasError;
@@ -321,6 +452,27 @@ const FilterModal: React.FC<FilterModalProps> = ({
           state.multiSelect.values.length === 0;
         if (isEmpty) hasInvalid = true;
       }
+
+      // Add validation for keyContact field
+      if (state.keyContact) {
+        const { role, name } = state.keyContact;
+
+        // Validate role
+        if (role.option !== 'is_empty' && !role.value?.trim()) {
+          hasInvalid = true;
+          state.keyContact.role.error = true;
+        } else {
+          state.keyContact.role.error = false;
+        }
+
+        // Validate name (only if name operator is not 'is_empty')
+        if (name.option !== 'is_empty' && !name.value?.trim()) {
+          hasInvalid = true;
+          state.keyContact.name.error = true;
+        } else {
+          state.keyContact.name.error = false;
+        }
+      }
     }
 
     if (hasInvalid) {
@@ -334,7 +486,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
 
   const handleResetFilters = () => {
     if (!Object.keys(filterStates).length) return null;
-
+    handleCloseFilter();
     setSelectedFilters([]);
     setFilterStates({});
     setAppliedFilters({});
@@ -353,6 +505,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
           <NewTextFilterControl
             fieldName={fieldName}
             state={state}
+            menuOption={fieldConfig.operatorOption || textfieldOperators}
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleFilterValueChange}
           />
@@ -371,6 +524,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
           <NewNumberFilterControl
             fieldName={fieldName}
             state={state}
+            menuOption={fieldConfig.operatorOption || numberOperators}
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleFilterValueChange}
           />
@@ -394,11 +548,31 @@ const FilterModal: React.FC<FilterModalProps> = ({
         );
       case 'date':
         return (
-          <DateFilterControl
+          <NewDateFilterControl
+            filterStates={filterStates}
+            menuOption={fieldConfig.operatorOption || DateValueOptions}
             fieldName={fieldName}
             state={state}
             onOptionChange={handleFilterOptionChange}
-            onValueChange={handleFilterValueChange}
+            onValueChange={handleDateChange}
+            mode={'date'}
+            // onChange={handleBooleanChange}
+          />
+        );
+      case 'keyContact':
+        return (
+          <KeyContactFilterControl
+            filterStates={filterStates}
+            menuOption={
+              fieldConfig.operatorOption as { label: string; value: string }[]
+            }
+            valueOptions={
+              fieldConfig.options as { label: string; value: string }[]
+            }
+            fieldName={fieldName}
+            state={state}
+            onOptionChange={handleFilterOptionChange}
+            onChange={handleKeyContactSelectChange}
           />
         );
       default:
@@ -471,7 +645,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
             <h3 className='text-[13px] font-bold text-[#425A76] mb-2'>
               All filters
             </h3>
-            <div className='flex flex-col gap-3 mb-1 pt-1 -mr-6 min-h-[80px] overflow-y-auto max-h-[150px]'>
+            <div className='flex flex-col gap-3 mb-1 pt-1 -mr-6 min-h-[40px] overflow-y-auto max-h-[150px]'>
               {selectedFilters.map((fieldName) => {
                 const fieldConfig = filterFields.find(
                   (f) => f.name === fieldName
@@ -479,7 +653,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                 return fieldConfig ? (
                   <div key={fieldName}>
                     <div className='flex items-center gap-2'>
-                      <div className='flex-1 flex items-center gap-2 w-[480px] max-w-[480px]'>
+                      <div className='flex-1 flex items-start gap-2 w-[480px] max-w-[480px]'>
                         <div className='flex items-center gap-1'>
                           <Select
                             size='small'
@@ -533,7 +707,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                                     alt='checked'
                                     className='w-3'
                                   />
-                                  <span className='pt-0.5'>
+                                  <span>
                                     {selectedField?.label || selected}
                                   </span>
                                 </div>

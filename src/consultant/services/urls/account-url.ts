@@ -48,7 +48,8 @@ export const StateUrl = (countryId: string | string[] | null) => {
   return `/api/accounts/states/?countryIds=${countryID}`;
 };
 
-export const CityUrl = (stateId: string) => `/api/accounts/cities/${stateId}`;
+export const CityUrl = (stateId: string) =>
+  `/api/accounts/cities?stateIds=["${stateId}"]`;
 
 export const uploadUrl = () => `/importService/api/upload-csv`;
 
