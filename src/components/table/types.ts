@@ -53,7 +53,7 @@ export interface ITablePaginationProps {
 export type ListTableColumn<T> = {
   id: string;
   label: string;
-  width: string | number;
+  width?: string | number;
   sortId: string;
   sortable?: boolean;
   align?: 'left' | 'center' | 'right';
