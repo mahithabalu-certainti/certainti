@@ -62,7 +62,7 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
     {
       id: 'effective_date',
       sortId: 'effective_date',
-      label: 'Effetive From',
+      label: 'Effective From',
       width: 130,
       sortable: true,
       render: (row: ResourceCostList) => (
