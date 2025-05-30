@@ -27,6 +27,6 @@ export const useResourceList = (
     queryFn: () => fetchResourceList(params),
     retry: 0,
     gcTime: 0,
-    enabled: !!params.accountNumber,
+    enabled: !!params.accountNumber && params.value === '',
   });
 };

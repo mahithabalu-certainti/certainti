@@ -33,7 +33,7 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   setSkillOrderBy,
 }) => {
   const navigate = useNavigate();
-  const [rowsPerPage, setRowsPerPage] = useState<number>(25);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(100);
   const accountInActive =
     accountDetails?.data?.accountById?.status === 'inactive';
   const apiOrder = skillOrder.toUpperCase() as 'ASC' | 'DESC';

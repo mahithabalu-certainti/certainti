@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import { FilterState } from '../../consultant/types/account-filter';
 import { useMemo } from 'react';
-import { arrowIcon, calendarIcon, checkedIcon } from '../../assets';
+import { arrowIcon, calendarIcon } from '../../assets';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -64,6 +64,7 @@ export const MENU_PROPS: Partial<MenuProps> = {
       borderTop: 'none',
       marginTop: '1px',
       boxShadow: 'none',
+      maxHeight: '200px',
     },
   },
   MenuListProps: {
@@ -816,15 +817,6 @@ export const KeyContactFilterControl: React.FC<{
       {/* Name Fields - only show if role is not empty and has value */}
       {showNameFields && (
         <>
-          <div className='absolute left-[24px] rounded-[2px] mt-9 min-w-[173px] max-w-[173px] h-[28px] border border-[#CBD6E2]'>
-            <div className='flex items-center justify-between pl-3.5 pr-[7px] text-[12px] text-[#425A76] h-full font-semibold'>
-              <div className='flex items-center gap-1'>
-                <img src={checkedIcon} alt='checked' className='w-3' />
-                <span>Name</span>
-              </div>
-              <img src={arrowIcon} alt='arrowIcon' />
-            </div>
-          </div>
           {/* Name Operator Select */}
           <Select
             value={keyContactState.name.option}

@@ -56,6 +56,7 @@ const Filter: React.FC<FilterComponentProps> = ({
   handleCloseFilter,
   setCurrentPage,
   setCurrentSkillType,
+  setCurrentCountry,
   mode,
 }) => {
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
@@ -89,20 +90,34 @@ const Filter: React.FC<FilterComponentProps> = ({
         [firstField.value]: getInitialStateForField(firstField),
       });
     }
-  }, [filterMenu, isOpen]);
+  }, [isOpen]);
 
   useEffect(() => {
     if (setCurrentSkillType) {
       if (filterStates?.skill_type_rid?.enum?.value) {
+        const skillTypeValue = Array.isArray(filterStates?.skill_type_rid?.enum?.value)
+          ? filterStates?.skill_type_rid?.enum?.value
+          : [filterStates?.skill_type_rid?.enum?.value];
+
+        const skillSubTypeValue = Array.isArray(filterStates?.skill_sub_type?.enum?.value)
+          ? filterStates?.skill_sub_type?.enum?.value
+          : [filterStates?.skill_sub_type?.enum?.value];
+
         setCurrentSkillType({
-          skill_type_rid: filterStates?.skill_type_rid?.enum
-            ?.value as unknown as string,
-          skill_subtype_rid: filterStates?.skill_sub_type?.enum
-            ?.value as unknown as string,
+          skill_type_rid: skillTypeValue,
+          skill_subtype_rid: skillSubTypeValue,
         });
       }
     }
-  }, [filterStates]);
+
+    if (setCurrentCountry) {
+      const country = Array.isArray(filterStates?.resource_country?.enum?.value)
+        ? filterStates?.resource_country?.enum?.value
+        : [filterStates?.resource_country?.enum?.value];
+
+      setCurrentCountry(country as string[]);
+    }
+  }, [filterStates?.skill_type_rid?.enum?.value, filterStates?.resource_country?.enum?.value, filterStates?.skill_sub_type?.enum?.value]);
 
   const handleModalClose = () => {
     const saved = getStoredFilters(value || 'resource');
@@ -454,7 +469,7 @@ const Filter: React.FC<FilterComponentProps> = ({
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleDateChange}
             mode={mode as 'date' | 'year'}
-            // onChange={handleBooleanChange}
+          // onChange={handleBooleanChange}
           />
         );
       case 'select':

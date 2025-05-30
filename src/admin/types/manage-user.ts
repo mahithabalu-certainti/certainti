@@ -1,4 +1,5 @@
 import { CommonApiResponse, UserRoles } from '../../common-service';
+import { Privilege } from './manage-profile';
 
 export type ManageUser = {
   id: string;
@@ -178,3 +179,18 @@ export interface UserRolesApiResponse extends CommonApiResponse {
 //   status: string;
 //   businessTeam: string; // mapped from business_teams.business_teams
 // };
+
+// User Permission Types
+interface UserPermissionData {
+  rid: string;
+  user_role: string;
+  user_id: string;
+  permissions: Privilege[];
+}
+
+export interface UserPermissionApiResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: UserPermissionData;
+}
