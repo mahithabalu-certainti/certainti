@@ -347,6 +347,7 @@ const ListTable = <T extends RowData>({
                             ...(column.sx || {}),
                             zIndex: column.sticky ? 6 : 'auto',
                             left: selectable ? '32px' : 0,
+                            textAlign: column.align || 'left',
                           }}
                           className={`${hoverHighlight &&
                             (isStatus
