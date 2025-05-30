@@ -325,7 +325,7 @@ const Resource: React.FC<ResourceProps> = ({
       label: 'Download',
       variant: 'outlined' as const,
       onClick: () => console.log('Download'),
-      sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
+      sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
       hide: handleDownloadButtonEnable(),
     },
   ];
