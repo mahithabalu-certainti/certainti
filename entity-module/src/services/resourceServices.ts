@@ -525,9 +525,8 @@ export class ResourceService {
       if (filters[clientField]) {
         const fieldFilter = filters[clientField];
         const fieldName = dbField.split('.')[1];
-
         if (uuidFields.includes(fieldName)) {
-          whereClause[dbField] = this.getUuidFieldFilter(fieldFilter, dbField);
+          whereClause[clientField] = this.getUuidFieldFilter(fieldFilter, dbField);
         }
         else if (castToTextFields.includes(fieldName)) {
           whereClause[dbField] = Sequelize.where(
