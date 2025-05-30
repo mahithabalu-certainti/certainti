@@ -3,7 +3,7 @@ import { CircularProgress, Typography } from '@mui/material';
 import React from 'react';
 import { useResourceDetail } from '../../../../../services/resource-details';
 import { CreateSectionData } from '../../../../../types';
-import { formatDateToMMDDYYYYWithTime, formatDateToYYYYMMDD } from '../utils';
+import { formatDateToYYYYMMDD, formatDateToYYYYMMDDWithTime } from '../utils';
 
 interface ResourceDetailsProps {
   resourceId: string;
@@ -61,12 +61,12 @@ const AuditDetailsSection: React.FC<AuditDetailsSectionProps> = ({
     { label: 'Record ID', value: data.rid, column: 1 },
     {
       label: 'Created On',
-      value: formatDateToMMDDYYYYWithTime(data.created_datetime),
+      value: formatDateToYYYYMMDDWithTime(data.created_datetime),
       column: 1,
     },
     {
       label: 'Updated On',
-      value: formatDateToMMDDYYYYWithTime(data.modified_datetime),
+      value: formatDateToYYYYMMDDWithTime(data.modified_datetime),
       column: 1,
     },
     { label: 'Resource ID', value: data.r_number, column: 2 },
@@ -357,10 +357,10 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
       ' - ',
     resource_type: resourceData.resource_type,
     first_name: resourceData.resource_firstname,
-    last_name: resourceData.resource_lastname,
-    resource_orgname: resourceData.resource_orgname,
-    role: resourceData.resource_role,
     status: resourceData.resource_status,
+    last_name: resourceData.resource_lastname,
+    role: resourceData.resource_role,
+    resource_orgname: resourceData.resource_orgname,
   });
 
   const locationInfo = CreateSectionData({

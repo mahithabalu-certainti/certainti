@@ -37,8 +37,8 @@ import {
 } from './utils.tsx';
 import { SkillSubtype, SkillType } from '../../types/resource.ts';
 import {
-  formatDateToMMDDYYYY,
-  formatDateToMMDDYYYYWithTime,
+  formatDateToYYYYMMDD,
+  formatDateToYYYYMMDDWithTime
 } from '../account-details-sidebar/sidebar-pages/resources/utils.tsx';
 
 const ResourceForm: React.FC = () => {
@@ -131,13 +131,9 @@ const ResourceForm: React.FC = () => {
         resourceDetailsData?.resource_total_experience_organization,
       Record_id: resourceDetailsData?.rid,
       Resource_id: resourceDetailsData?.r_number,
-      Created_On: formatDateToMMDDYYYYWithTime(
-        resourceDetailsData?.created_datetime
-      ),
+      Created_On: formatDateToYYYYMMDDWithTime(resourceDetailsData?.created_datetime),
       Created_By: resourceDetailsData?.created_by,
-      Updated_On: formatDateToMMDDYYYYWithTime(
-        resourceDetailsData?.modified_datetime
-      ),
+      Updated_On: formatDateToYYYYMMDDWithTime(resourceDetailsData?.modified_datetime),
       Updated_By: resourceDetailsData?.modified_by,
       resource_name:
         resourceDetailsData?.resource_firstname &&
@@ -202,7 +198,7 @@ const ResourceForm: React.FC = () => {
         skill_type: skillInfo?.skillTypeId || '',
         skill_sub_type: skillInfo?.skillSubTypeId || '',
         skill_start_date:
-          formatDateToMMDDYYYY(skillInfo?.startDate as string) || '',
+          formatDateToYYYYMMDD(skillInfo?.startDate as string) || '',
         skill_type_others: skillInfo?.skillTypeOthers || '',
         skill_subtype_others: skillInfo?.skillSubTypeOthers || '',
         years_of_experience: skillInfo?.yearsOfExperience || '',
