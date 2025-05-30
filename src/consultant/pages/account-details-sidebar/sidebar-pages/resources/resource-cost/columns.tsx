@@ -1,5 +1,5 @@
 import { ResourceCostList } from '../../../../../types/resource-cost';
-import { formatDateToMMDDYYYY } from '../utils';
+import { formatDateToYYYYMMDD } from '../utils';
 
 export interface ResourceCostTableColumn<T> {
   id: string;
@@ -66,7 +66,7 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       width: 130,
       sortable: true,
       render: (row: ResourceCostList) => (
-        <span>{formatDateToMMDDYYYY(row.effective_date as string) || '-'}</span>
+        <span>{formatDateToYYYYMMDD(row.effective_date as string) || '-'}</span>
       ),
     },
     {
@@ -76,7 +76,7 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       width: 130,
       sortable: true,
       render: (row: ResourceCostList) => (
-        <span>{formatDateToMMDDYYYY(row.end_date as string) || '-'}</span>
+        <span>{formatDateToYYYYMMDD(row.end_date as string) || '-'}</span>
       ),
     },
     {
