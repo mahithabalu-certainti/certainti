@@ -75,7 +75,7 @@ class SchemaService {
         account_rid UUID NOT NULL UNIQUE,
         account_name VARCHAR(255) NOT NULL,
         tax_claim_level VARCHAR(50) NULL,
-        max_ai_interactions INT CHECK (max_ai_interactions BETWEEN 3 AND 5) NOT NULL,
+        max_ai_interactions INT CHECK (max_ai_interactions BETWEEN 1 AND 10) NOT NULL,
         autosend_interaction BOOLEAN NOT NULL,
         fiscal_start_date VARCHAR(10) NOT NULL,
         fiscal_end_date VARCHAR(10) NOT NULL,
@@ -1407,13 +1407,13 @@ class SchemaService {
       role?: {
         equals?: string;
         contains?: string;
-        notEquals?: string;
+        not_equals?: string;
         is_empty?: boolean;
       };
       name?: {
         equals?: string;
         contains?: string;
-        notEquals?: string;
+        not_equals?: string;
         is_empty?: boolean;
       };
     },
@@ -1427,38 +1427,82 @@ class SchemaService {
     const orgDbSequelize = await initOrgSequelize();
 
     // 1. Enhanced filter function with empty contact handling
-    const createFilter = (filter?: {
-      equals?: string;
-      contains?: string;
-      notEquals?: string;
-      is_empty?: boolean;
-    }) => {
-      if (!filter) return () => true;
+  // 1. Enhanced filter function with proper condition handling
+const createFilter = (filter?: {
+  equals?: string;
+  contains?: string;
+  not_equals?: string;
+  is_empty?: boolean;
+}) => {
+  if (!filter) return () => true;
 
-      const { equals, contains, notEquals, is_empty } = filter;
-      const lowerEquals = equals?.toLowerCase();
-      const lowerContains = contains?.toLowerCase();
-      const lowerNotEquals = notEquals?.toLowerCase();
+  const { equals, contains, not_equals, is_empty } = filter;
+  const lowerEquals = equals?.toLowerCase();
+  const lowerContains = contains?.toLowerCase();
+  const lowerNotEquals = not_equals?.toLowerCase();
 
-      return (value: any = "") => {
-        const strValue = value == null ? "" : String(value).trim();
-        const lowerValue = strValue.toLowerCase();
+  return (value: any = "") => {
+    // Handle null/undefined values
+    if (value === null || value === undefined) value = "";
+    const strValue = String(value).trim();
+    const lowerValue = strValue.toLowerCase();
 
-        if (is_empty !== undefined) {
-          return is_empty ? strValue === "" : strValue !== "";
-        }
-        if (lowerEquals !== undefined) return lowerValue === lowerEquals;
-        if (lowerContains !== undefined)
-          return lowerValue.includes(lowerContains);
-        if (lowerNotEquals !== undefined) return lowerValue !== lowerNotEquals;
+    // Initialize conditions
+    let meetsIsEmpty = true;
+    let meetsEquals = true;
+    let meetsContains = true;
+    let meetsNotEquals = true;
 
-        return true;
-      };
-    };
+    // Check is_empty condition
+    if (is_empty !== undefined) {
+      meetsIsEmpty = is_empty ? strValue === "" : strValue !== "";
+    }
 
-    const roleFilter = roleNameFilter?.role
-      ? createFilter(roleNameFilter.role)
-      : null;
+    // Check other conditions only if they exist
+    if (lowerEquals !== undefined) {
+      meetsEquals = lowerValue === lowerEquals;
+    }
+    if (lowerContains !== undefined) {
+      meetsContains = lowerValue.includes(lowerContains);
+    }
+    if (lowerNotEquals !== undefined) {
+      meetsNotEquals = lowerValue !== lowerNotEquals;
+    }
+
+    return meetsIsEmpty && meetsEquals && meetsContains && meetsNotEquals;
+  };
+};
+
+    const ROLE_KEY_MAP: Record<string, string> = {
+    technical_consultant: "Technical Consultant",
+    professional_services_consultant: "Financial Consultant",
+    delivery_head: "Client Project Delivery Head",
+    finance_executive: "Client Finance Executive",
+    finance_lead: "Client Finance Lead"
+  };
+
+  // Preprocess role filter values
+  const processedRoleFilter = roleNameFilter?.role 
+    ? { ...roleNameFilter.role } 
+    : undefined;
+  
+  if (processedRoleFilter) {
+    const mapRoleValue = (val?: string) => 
+      val ? ROLE_KEY_MAP[val] || val : val;
+    
+    if (processedRoleFilter.equals) {
+      processedRoleFilter.equals = mapRoleValue(processedRoleFilter.equals);
+    }
+    if (processedRoleFilter.contains) {
+      processedRoleFilter.contains = mapRoleValue(processedRoleFilter.contains);
+    }
+    if (processedRoleFilter.not_equals) {
+      processedRoleFilter.not_equals = mapRoleValue(processedRoleFilter.not_equals);
+    }
+  }
+     const roleFilter = processedRoleFilter
+    ? createFilter(processedRoleFilter)
+    : null;
     const nameFilter = roleNameFilter?.name
       ? createFilter(roleNameFilter.name)
       : null;
@@ -1625,9 +1669,9 @@ class SchemaService {
     return {
       ...account,
       key_contacts: keyContacts,
-      technical_consultant: getPrimaryContactName("Technical Consultant") || "-",
-    financial_consultant: getPrimaryContactName("Financial Consultant") || "-",
-    delivery_head: getPrimaryContactName("Client Project Delivery Head") || "-",
+     // technical_consultant: getPrimaryContactName("Technical Consultant") || "-",
+    professional_services_consultant: getPrimaryContactName("Financial Consultant") || "-",
+   // delivery_head: getPrimaryContactName("Client Project Delivery Head") || "-",
     finance_executive: getPrimaryContactName("Client Finance Executive") || "-",
     finance_lead: getPrimaryContactName("Client Finance Lead") || "-",
       ...(isChild && { 
