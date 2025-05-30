@@ -617,17 +617,17 @@ export const ResourceFormData = (
             disabled: true,
             hide: disableCostAndSkill,
           }),
-          createTextField('Resource_id', 'Resource ID', {
-            required: false,
-            disabled: true,
-            hide: disableCostAndSkill,
-          }),
           createTextField('Created_On', 'Created On', {
             required: false,
             disabled: true,
             hide: disableCostAndSkill,
           }),
           createTextField('Created_By', 'Created By', {
+            required: false,
+            disabled: true,
+            hide: disableCostAndSkill,
+          }),
+          createTextField('Resource_id', 'Resource ID', {
             required: false,
             disabled: true,
             hide: disableCostAndSkill,

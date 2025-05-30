@@ -3,7 +3,7 @@ import { CircularProgress, Typography } from '@mui/material';
 import React from 'react';
 import { useResourceDetail } from '../../../../../services/resource-details';
 import { CreateSectionData } from '../../../../../types';
-import { formatDateToMMDDYYYY, formatDateToMMDDYYYYWithTime } from '../utils';
+import { formatDateToMMDDYYYYWithTime, formatDateToYYYYMMDD } from '../utils';
 
 interface ResourceDetailsProps {
   resourceId: string;
@@ -165,53 +165,53 @@ const DetailsSection: React.FC<{
       <div className='text-sm my-[6px] grid gap-y-3'>
         {title === 'Comments'
           ? // Full-width single column layout for Comments
-            data.map((item, index) => (
-              <div
-                key={`comment-row-${index}`}
-                className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2'
-              >
-                <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
-                  {item.label}
-                </div>
-                <div className='font-medium text-[13px] break-all overflow-hidden'>
-                  {renderValue(item.value)}
-                </div>
+          data.map((item, index) => (
+            <div
+              key={`comment-row-${index}`}
+              className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2'
+            >
+              <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
+                {item.label}
               </div>
-            ))
+              <div className='font-medium text-[13px] break-all overflow-hidden'>
+                {renderValue(item.value)}
+              </div>
+            </div>
+          ))
           : leftColumn.map((leftItem, index) => {
-              const rightItem = rightColumn[index];
+            const rightItem = rightColumn[index];
 
-              return (
-                <div
-                  key={`row-${index}`}
-                  className='grid grid-cols-1 md:grid-cols-2 gap-6'
-                >
-                  {/* Left column */}
+            return (
+              <div
+                key={`row-${index}`}
+                className='grid grid-cols-1 md:grid-cols-2 gap-6'
+              >
+                {/* Left column */}
+                <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2'>
+                  <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
+                    {leftItem.label}
+                  </div>
+                  <div className='font-medium text-[13px] break-all overflow-hidden'>
+                    {renderValue(leftItem.value)}
+                  </div>
+                </div>
+
+                {/* Right column */}
+                {rightItem ? (
                   <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2'>
                     <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
-                      {leftItem.label}
+                      {rightItem.label}
                     </div>
                     <div className='font-medium text-[13px] break-all overflow-hidden'>
-                      {renderValue(leftItem.value)}
+                      {renderValue(rightItem.value)}
                     </div>
                   </div>
-
-                  {/* Right column */}
-                  {rightItem ? (
-                    <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2'>
-                      <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
-                        {rightItem.label}
-                      </div>
-                      <div className='font-medium text-[13px] break-all overflow-hidden'>
-                        {renderValue(rightItem.value)}
-                      </div>
-                    </div>
-                  ) : (
-                    <div />
-                  )}
-                </div>
-              );
-            })}
+                ) : (
+                  <div />
+                )}
+              </div>
+            );
+          })}
       </div>
     </div>
   );
@@ -249,19 +249,19 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
         };
       }
 
-      if (key === 'resource_startdate' && !Array.isArray(value)) {
-        return {
-          label: 'Effective Date',
-          value: formatDateToMMDDYYYY(value as string) || '-', // or handle nested objects differently
-        };
-      }
+      // if (key === 'resource_startdate' && !Array.isArray(value)) {
+      //   return {
+      //     label: 'Effective Date',
+      //     value: value as string || '-', // or handle nested objects differently
+      //   };
+      // }
 
-      if (key === 'resource_enddate' && !Array.isArray(value)) {
-        return {
-          label: 'End Date',
-          value: formatDateToMMDDYYYY(value as string) || '-', // or handle nested objects differently
-        };
-      }
+      // if (key === 'resource_enddate' && !Array.isArray(value)) {
+      //   return {
+      //     label: 'End Date',
+      //     value: formatDateToMMDDYYYY(value as string) || '-', // or handle nested objects differently
+      //   };
+      // }
 
       if (key === 'total_years_in_org' && !Array.isArray(value)) {
         return {
@@ -371,16 +371,16 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   const employmentDetails = CreateSectionData(
     {
-      resource_startdate: resourceData.resource_startdate,
-      resource_enddate: resourceData.resource_enddate,
+      resource_startdate: formatDateToYYYYMMDD(resourceData.resource_startdate),
+      resource_enddate: formatDateToYYYYMMDD(resourceData.resource_enddate),
       total_years_experience: resourceData.resource_total_experience,
       designation: resourceData.resource_designation,
       total_years_in_org: resourceData.resource_total_experience_organization,
     },
-    {
-      resource_effective_from: formatDateToMMDDYYYY,
-      resource_end_date: formatDateToMMDDYYYY,
-    }
+    // {
+    //   resource_effective_from: formatDateToYYYYMMDD,
+    //   resource_end_date: formatDateToYYYYMMDD,
+    // }
   );
 
   const description = CreateSectionData({
