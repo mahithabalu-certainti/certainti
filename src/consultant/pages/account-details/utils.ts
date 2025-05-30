@@ -90,8 +90,8 @@ export const transformAccountData = (data: AccountData): DisplayColumn[] => {
       items: [
         { label: 'Account ID', value: account?.r_number || '-' },
         {
-          label: 'Country',
-          value: getValueOrDefault(account?.country?.country_name),
+          label: 'Account Name',
+          value: getValueOrDefault(account?.account_name),
         },
       ],
     },
@@ -102,20 +102,20 @@ export const transformAccountData = (data: AccountData): DisplayColumn[] => {
           value: getValueOrDefault(account?.parent_account?.account_name),
         },
         {
-          label: 'Currency',
-          value: getValueOrDefault(account?.currency?.currency_code),
+          label: 'Is Parent Account',
+          value: account?.is_parent ? 'Yes' : 'No',
         },
       ],
     },
     {
       items: [
         {
-          label: 'Account Name',
-          value: getValueOrDefault(account?.account_name),
+          label: 'Country',
+          value: getValueOrDefault(account?.country?.country_name),
         },
         {
-          label: 'Is Parent Account',
-          value: account?.is_parent ? 'Yes' : 'No',
+          label: 'Currency',
+          value: getValueOrDefault(account?.currency?.currency_code),
         },
       ],
     },

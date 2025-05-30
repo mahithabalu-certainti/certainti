@@ -43,9 +43,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
 
   const { data, isLoading, isError } = useAllProjects(tableParams);
   const totalItems = data?.count || 0;
-  console.log(data, 'data');
 
-  // Update total count when data changes
   // Update total count when data changes
   useEffect(() => {
     if (data) {

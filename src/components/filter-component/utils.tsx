@@ -136,22 +136,28 @@ export const formatFilterForApi = (
 
       formattedFilters[fieldName] = {};
 
-      // Handle role filter
       if (roleOption === 'is_empty') {
-        formattedFilters[fieldName].role = { is_empty: true };
-      } else if (state.keyContact.role?.value) {
-        formattedFilters[fieldName].role = {
-          [roleOption]: state.keyContact.role.value.toLowerCase(),
+        // If role is_empty, force both role and name to is_empty
+        formattedFilters[fieldName] = {
+          role: { is_empty: true },
+          name: { is_empty: true },
         };
-      }
+      } else {
+        // Handle role filter normally
+        if (state.keyContact.role?.value && roleOption) {
+          formattedFilters[fieldName].role = {
+            [roleOption]: state.keyContact.role.value.toLowerCase(),
+          };
+        }
 
-      // Handle name filter
-      if (nameOption === 'is_empty') {
-        formattedFilters[fieldName].name = { is_empty: true };
-      } else if (state.keyContact.name?.value) {
-        formattedFilters[fieldName].name = {
-          [nameOption]: state.keyContact.name.value.toLowerCase(),
-        };
+        // Handle name filter
+        if (nameOption === 'is_empty') {
+          formattedFilters[fieldName].name = { is_empty: true };
+        } else if (state.keyContact.name?.value && nameOption) {
+          formattedFilters[fieldName].name = {
+            [nameOption]: state.keyContact.name.value.toLowerCase(),
+          };
+        }
       }
 
       // Remove if empty
