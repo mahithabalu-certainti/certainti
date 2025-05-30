@@ -7,7 +7,7 @@ import { useAllProjects } from '../../../../services/project';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { generatePath, useNavigate } from 'react-router-dom';
-import { PROJECT, PROJECT_DETAILS } from '../../../../../routes';
+import { PROJECT_DETAILS } from '../../../../../routes';
 import { ActionItem } from '../../../../../components/table/types';
 import { deleteIcon, editIcon } from '../../../../../assets';
 
@@ -55,9 +55,13 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
 
   const getRowId = (row: ProjectList) => row.rid;
 
-  const handleEdit = (project: ProjectList) => {
-    navigate(PROJECT + '/edit/' + project.rid, {
-      state: { project },
+  const handleEdit = (account: any) => {
+    console.log('Edit row', account);
+    navigate(`/Project/edit/${account?.project_id}`, {
+      state: {
+        accountID: account?.account_id,
+        projectID: account?.project_id,
+      },
     });
   };
 
@@ -123,7 +127,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       stickyColumnsCount={2}
       selectable={true}
       onSelectionChange={(selectedIds) => console.log('Selected:', selectedIds)}
-      actionWidth={100}
+      actionWidth={60}
       actionDisplayMode='dropdown'
       actionMenuItems={actionButtons}
       loading={isLoading}
