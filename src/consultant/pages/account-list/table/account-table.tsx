@@ -101,6 +101,20 @@ const AccountTable: React.FC<Record<string, any>> = ({
     setOpenRows(newOpenRows);
   };
 
+  const [openChildRows, setOpenChildRows] = useState<Set<string>>(new Set());
+
+  // ... existing state and handlers
+
+  const handleChildRowClick = (accountId: string) => {
+    const newOpenChildRows = new Set(openChildRows);
+    if (newOpenChildRows.has(accountId)) {
+      newOpenChildRows.delete(accountId);
+    } else {
+      newOpenChildRows.add(accountId);
+    }
+    setOpenChildRows(newOpenChildRows);
+  };
+
   // Handle checkbox selection
   const handleSelectRow = (index: number) => {
     const newSelectedRows = new Set(selectedRows);
@@ -215,6 +229,8 @@ const AccountTable: React.FC<Record<string, any>> = ({
       handleDelete,
       openRows,
       handleAccountNameClick,
+      openChildRows,
+      handleChildRowClick,
     });
 
   return (
@@ -324,9 +340,9 @@ const AccountTable: React.FC<Record<string, any>> = ({
                 )}
                 <TableCell
                   sx={{
-                    width: '100px',
-                    minWidth: '100px',
-                    maxWidth: '100px',
+                    width: '60px',
+                    minWidth: '60px',
+                    maxWidth: '60px',
                     borderRight: 'none',
                   }}
                 >
@@ -337,10 +353,10 @@ const AccountTable: React.FC<Record<string, any>> = ({
             <TableBody
               sx={{
                 '& .MuiTableCell-root': {
-                  fontWeight: 700,
+                  fontWeight: 500,
                   fontSize: '13px',
                   lineHeight: '21px',
-                  color: '#2D3E4F',
+                  color: '#425A76',
                   padding: '0px',
                   paddingLeft: '8px',
                   paddingRight: '8px',

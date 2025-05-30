@@ -15,14 +15,14 @@ interface ActionsDropdownProps {
 
 const StyledButton = styled(Button)(() => {
   return {
-    height: '32px !important',
+    height: '24px !important',
     color: '#425A76',
     border: '1px solid #CBD6E2',
     boxShadow: '0px 1px 2px 0px rgba(42, 54, 71, 0.05)',
     background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
     textTransform: 'none',
     fontSize: '13px',
-    fontWeight: '700',
+    fontWeight: 600,
     width: '81px',
     minWidth: '81px',
     maxWidth: '81px',

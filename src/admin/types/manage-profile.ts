@@ -82,6 +82,8 @@ export interface Privilege {
   read?: boolean;
   edit?: boolean;
   has_extended_permission?: boolean;
+  hasReadExtendedPermsission?: boolean; 
+  hasEditExtendedPermsission?: boolean;
 }
 export interface ProfileHeaderData {
   profile_id: string;

@@ -13,7 +13,7 @@ export interface ResourceCostTableColumn<T> {
 }
 
 const costDisplay = (cost: string | number | null | undefined) => {
-  if (cost === null || cost === undefined) return 'NA';
+  if (cost === null || cost === undefined) return '-';
   const formattedCost = Number(cost).toLocaleString('en-US', {
     minimumFractionDigits: 2,
   });
@@ -52,9 +52,7 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       width: 130,
       sortable: true,
       render: (row: ResourceCostList) => (
-        <span>
-          {formatDateToMMDDYYYY(row.effective_date as string) || 'NA'}
-        </span>
+        <span>{formatDateToMMDDYYYY(row.effective_date as string) || '-'}</span>
       ),
     },
     {
@@ -64,7 +62,7 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       width: 130,
       sortable: true,
       render: (row: ResourceCostList) => (
-        <span>{formatDateToMMDDYYYY(row.end_date as string) || 'NA'}</span>
+        <span>{formatDateToMMDDYYYY(row.end_date as string) || '-'}</span>
       ),
     },
     {

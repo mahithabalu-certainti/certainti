@@ -32,10 +32,10 @@ export const AccountInfo: React.FC<AccountInfoProps> = ({
             sx={{
               fontSize: '16px',
               color: lowerValue === 'active' ? '#199806' : '#f44336',
-              fontWeight: 500,
+              fontWeight: 700,
             }}
           >
-            {value === 'Active'? 'Active' : 'In-Active'}
+            {value === 'Active' ? 'Active' : 'In-Active'}
           </Typography>
         );
       }
@@ -99,7 +99,7 @@ export const AccountInfo: React.FC<AccountInfoProps> = ({
 
   return (
     <Box
-      className={`flex p-5 border-b-2 border-[#CBD6E2] bg-white min-h-[160px] ${className} `}
+      className={`flex pl-8 pr-3 py-2 border-b border-[#CBD6E2] bg-white min-h-[112px] ${className} `}
       sx={{
         gap: '0 16px',
       }}
@@ -111,7 +111,7 @@ export const AccountInfo: React.FC<AccountInfoProps> = ({
             width: columnWidths[colIndex],
             display: 'flex',
             flexDirection: 'column',
-            gap: '16px',
+            gap: '10px',
           }}
         >
           {column?.items?.map((item, itemIndex) => (
@@ -121,7 +121,7 @@ export const AccountInfo: React.FC<AccountInfoProps> = ({
                 sx={{
                   color: '#7D98B6',
                   fontSize: '13px',
-                  fontWeight: 400,
+                  fontWeight: 600,
                   display: 'block',
                   mb: 0.5,
                 }}
@@ -145,7 +145,7 @@ export const AccountInfo: React.FC<AccountInfoProps> = ({
               </Typography> */}
               <TruncateWithTooltip
                 text={String(item.value)}
-                className='font-medium text-[18px] text-[#2D3E4F] '
+                className='font-bold text-[16px] text-[#2D3E4F] '
               >
                 {renderValue(item.value)}
               </TruncateWithTooltip>

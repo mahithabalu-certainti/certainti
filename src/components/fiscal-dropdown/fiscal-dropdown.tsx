@@ -102,9 +102,8 @@ const FiscalYearDropdown = ({
         <img
           src={arrowDownIcon}
           alt='dropdown arrow'
-          className={`transition-transform duration-300 ${
-            open ? 'rotate-180' : ''
-          }`}
+          className={`transition-transform duration-300 ${open ? 'rotate-180' : ''
+            }`}
           style={{ width: 15, height: 15, filter: 'brightness(0) invert(1)' }}
         />
       </button>

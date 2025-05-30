@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { projectHeaderIcon } from '../../../../../assets';
 import TabPanel from '../../components/tab';
-import ListTable from '../../components/table';
+// import ListTable from '../../components/table';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
 import ResourceTableHeader from '../resources/resource-table-header';
@@ -11,11 +11,12 @@ import { useAccountProjects } from '../../../../services/project';
 import { PROJECT_CREATE, PROJECT_DETAILS } from '../../../../../routes';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { ProjectList } from '../../../../types/project';
+import { ListTable } from '../../../../../components/table';
 
 const BUTTON_STYLES = {
-  height: '26px !important',
+  height: '24px !important',
   fontSize: '13px',
-  fontWeight: 400,
+  fontWeight: 600,
 };
 
 interface ProjectsProps {
@@ -30,7 +31,7 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
   const [sortField, setSortField] = useState<string>('created_datetime');
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [rowsPerPage, setRowsPerPage] = useState(100);
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
   );
@@ -45,8 +46,14 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
     fiscalYear: convertedFiscalYear,
     accountNumber: accountDetails?.data?.accountDetails?.account_rid || '',
   });
+  const totalItems = data?.count || 0;
   const handleFilter = () => {
     setShowFilter(!showFilter);
+  };
+  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+    setSortOrder(apiOrder);
+    setSortField(sortBy);
   };
   const handleEdit = (account: any) => {
     navigate(`/Project/edit/${account?.rid}`, {
@@ -56,7 +63,7 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
       },
     });
   };
-
+  const getRowId = (row: ProjectList) => row.rid;
   const actionMenuItems = [
     {
       label: 'Edit',
@@ -82,16 +89,16 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
 
   const headerButtons = [
     {
-      label: 'Download',
-      variant: 'outlined' as const,
-      onClick: () => console.log('Download'),
-      sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
-    },
-    {
       label: 'New',
       variant: 'outlined' as const,
       onClick: () => handleCreateProject(),
       sx: { ...BUTTON_STYLES, width: '61px', minWidth: '61px' },
+    },
+    {
+      label: 'Download',
+      variant: 'outlined' as const,
+      onClick: () => console.log('Download'),
+      sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
     },
   ];
 
@@ -114,7 +121,7 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
   const projectColumns = getProjectColumns(handleProject);
 
   return (
-    <div className='w-full'>
+    <div className='w-full py-3 pl-3 pr-4'>
       <TabPanel
         value={'projects'}
         appliedFilters={appliedFilters}
@@ -123,8 +130,6 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
         filterVisibility={true}
         handleFilter={handleFilter}
         setCurrentPage={setCurrentPage}
-        setFilterStates={() => {}}
-        setSelectedFilters={() => {}}
       />
       <ResourceTableHeader
         value={'projects'}
@@ -132,26 +137,30 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
         titleIcon={<img src={projectHeaderIcon} alt='project-header-icon' />}
         headerButtons={headerButtons}
       />
-      <ListTable
-        data={data?.projects as any}
-        columns={projectColumns}
-        actionMenuItems={actionMenuItems}
-        pagination={true}
-        rowsPerPage={rowsPerPage}
-        rowsPerPageOptions={[25, 30, 40, 50, 100]}
-        sortable={true}
-        isLoading={isLoading}
-        error={error}
-        rowIdentifier='rid'
-        setCurrentPage={setCurrentPage}
-        setSortOrder={setSortOrder}
-        setSortField={setSortField}
-        setRowsPerPage={setRowsPerPage}
-        sortField={sortField}
-        sortOrder={sortOrder}
-        currentPage={currentPage}
-        totalCount={data?.count || 0}
-      />
+      <div className='border border-[#CBD6E2]'>
+        <ListTable
+          data={data?.projects as any}
+          columns={projectColumns}
+          getRowId={getRowId}
+          hoverHighlight={false}
+          stickyHeader={true}
+          stickyColumnsCount={1}
+          actionWidth={100}
+          actionDisplayMode='dropdown'
+          actionMenuItems={actionMenuItems}
+          loading={isLoading}
+          error={error ? 'Failed to load projects' : undefined}
+          rowsPerPageOptions={[25, 50, 100]}
+          rowsPerPage={rowsPerPage}
+          currentPage={(currentPage ?? 1) - 1}
+          totalItems={totalItems}
+          onPageChange={setCurrentPage}
+          onRowsPerPageChange={setRowsPerPage}
+          sortBy={sortField}
+          sortOrder={sortOrder}
+          onSort={handleSort}
+        />
+      </div>
     </div>
   );
 };

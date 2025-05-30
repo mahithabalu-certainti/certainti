@@ -16,6 +16,7 @@ type MenuPrivilege = BasePrivilege & {
   type: "menu";
   menu_id: string;
   is_enabled: boolean;
+  has_extended_permission?: boolean;
 };
 
 type ModulePrivilege = BasePrivilege & {
@@ -23,6 +24,7 @@ type ModulePrivilege = BasePrivilege & {
   module_id: string;
   menu_id: string;
   is_enabled: boolean;
+  has_extended_permission?: boolean;
 };
 
 type PermissionPrivilege = BasePrivilege & {
@@ -31,6 +33,7 @@ type PermissionPrivilege = BasePrivilege & {
   module_id: string;
   is_field_available: boolean;
   is_enabled: boolean;
+  has_extended_permission?: boolean;
 };
 
 type FieldPrivilege = BasePrivilege & {
@@ -39,6 +42,8 @@ type FieldPrivilege = BasePrivilege & {
   permission_id: string;
   read: boolean;
   edit: boolean;
+  hasReadExtendedPermsission?: boolean; 
+  hasEditExtendedPermsission?: boolean;
 };
 
 // type Privilege = MenuPrivilege | ModulePrivilege | PermissionPrivilege | FieldPrivilege;
@@ -57,10 +62,10 @@ interface GroupedPrivileges {
 }
 
 // Remove the unused top-level isField function
-const CustomCheckbox: React.FC<{ checked: boolean; onChange: (e: React.MouseEvent) => void;}> = ({ checked, onChange }) => (
+const CustomCheckbox: React.FC<{ checked: boolean; onChange: (e: React.MouseEvent) => void; disabled?: boolean;}> = ({ checked, onChange, disabled }) => (
   <div 
-    className="cursor-pointer"
-    onClick={onChange}
+    className={`cursor-${disabled ? 'not-allowed' : 'pointer'} ${disabled ? 'opacity-50' : ''}`}
+    onClick={(e) => !disabled && onChange(e)}
   >
     <img 
       src={checked ? checkboxChecked : checkboxUnchecked} 
@@ -105,7 +110,8 @@ const PrivilegeAccordion: React.FC<{ groupedPrivilege: GroupedPrivileges; onPriv
       name: groupedPrivs.menu.name,
       desc: groupedPrivs.menu.desc,
       is_enabled: groupedPrivs.menu.is_enabled,
-      is_modified: true
+      is_modified: true,
+      has_extended_permission: groupedPrivs.menu.has_extended_permission,
     };
     result.push(menuPrivilege);
   
@@ -120,7 +126,8 @@ const PrivilegeAccordion: React.FC<{ groupedPrivilege: GroupedPrivileges; onPriv
         name: module.name,
         desc: module.desc,
         is_enabled: module.is_enabled,
-        is_modified: true
+        is_modified: true,
+        has_extended_permission:module.has_extended_permission,
       };
       result.push(modulePrivilege);
   
@@ -135,7 +142,8 @@ const PrivilegeAccordion: React.FC<{ groupedPrivilege: GroupedPrivileges; onPriv
           desc: perm.desc,
           is_enabled: perm.is_enabled,
           is_field_available: perm.is_field_available,
-          is_modified: true
+          is_modified: true,
+          has_extended_permission: perm.has_extended_permission,
         };
         result.push(permPrivilege);
   
@@ -150,7 +158,9 @@ const PrivilegeAccordion: React.FC<{ groupedPrivilege: GroupedPrivileges; onPriv
             desc: field.desc,
             read: field.read,
             edit: field.edit,
-            is_modified: true
+            is_modified: true,
+            hasReadExtendedPermsission: field.hasReadExtendedPermsission,
+            hasEditExtendedPermsission: field.hasEditExtendedPermsission,
           };
           result.push(fieldPrivilege);
         });
@@ -480,6 +490,7 @@ const handleModuleCheck = (moduleId: string) => (e: React.MouseEvent) => {
             <CustomCheckbox
               checked={privileges.menu.is_enabled}
               onChange={handleMenuCheck}
+              disabled={'has_extended_permission' in privileges.menu ? privileges.menu.is_enabled && !privileges.menu.has_extended_permission : undefined}
             />
           </div>
         </div>
@@ -501,6 +512,7 @@ const handleModuleCheck = (moduleId: string) => (e: React.MouseEvent) => {
                 <CustomCheckbox
                   checked={module.is_enabled}
                   onChange={handleModuleCheck(module.module_id!)}
+                  disabled={'has_extended_permission' in module ? module.is_enabled && !module.has_extended_permission : undefined}
                 />
               </div>
             </div>
@@ -522,6 +534,7 @@ const handleModuleCheck = (moduleId: string) => (e: React.MouseEvent) => {
                     <CustomCheckbox
                       checked={permission.is_enabled}
                       onChange={handlePermissionCheck(module.module_id!, permission.permission_id!)}
+                      disabled={'has_extended_permission' in permission ? permission.is_enabled && !permission.has_extended_permission : undefined}
                     />
                   </div>
                 </div>
@@ -533,51 +546,53 @@ const handleModuleCheck = (moduleId: string) => (e: React.MouseEvent) => {
                     {/* Left Column */}
                     <div className="border-r border-[#CBD6E2]">
                       {/* Select all start */}
-                      <div className="flex justify-between items-center px-16 py-2 bg-white border-t border-[#CBD6E2]">
-                        <div className="w-[65%] text-[13px] text-[#425A76] font-semibold">
-                          Select All
-                        </div>
-                        <div className="w-[35%] flex justify-start gap-4">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[13px] text-[#425A76]">Read</span>
-                            <CustomCheckbox
-                              checked={permission.fields?.slice(0, Math.ceil(permission.fields.length / 2))
-                                .every(field => field.read) ?? false}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                permission.fields?.slice(0, Math.ceil(permission.fields.length / 2))
-                                  .forEach(field => {
-                                    handleFieldChange(
-                                      module.module_id!,
-                                      permission.permission_id!,
-                                      field.field_id,
-                                      'read'
-                                    )(e);
-                                  });
-                              }}
-                            />
+                      {!('has_extended_permission' in permission) && (
+                          <div className="flex justify-between items-center px-16 py-2 bg-white border-t border-[#CBD6E2]">
+                            <div className="w-[65%] text-[13px] text-[#425A76] font-semibold">
+                              Select All
+                            </div>
+                            <div className="w-[35%] flex justify-start gap-4">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[13px] text-[#425A76]">Read</span>
+                                <CustomCheckbox
+                                  checked={permission.fields?.slice(0, Math.ceil(permission.fields.length / 2))
+                                    .every(field => field.read) ?? false}
+                                  onChange={(e) => {
+                                    e.stopPropagation();
+                                    permission.fields?.slice(0, Math.ceil(permission.fields.length / 2))
+                                      .forEach(field => {
+                                        handleFieldChange(
+                                          module.module_id!,
+                                          permission.permission_id!,
+                                          field.field_id,
+                                          'read'
+                                        )(e);
+                                      });
+                                  }}
+                                />
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[13px] text-[#425A76]">Edit</span>
+                                <CustomCheckbox
+                                  checked={permission.fields?.slice(0, Math.ceil(permission.fields.length / 2))
+                                    .every(field => field.edit) ?? false}
+                                  onChange={(e) => {
+                                    e.stopPropagation();
+                                    permission.fields?.slice(0, Math.ceil(permission.fields.length / 2))
+                                      .forEach(field => {
+                                        handleFieldChange(
+                                          module.module_id!,
+                                          permission.permission_id!,
+                                          field.field_id,
+                                          'edit'
+                                        )(e);
+                                      });
+                                  }}
+                                />
+                              </div>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[13px] text-[#425A76]">Edit</span>
-                            <CustomCheckbox
-                              checked={permission.fields?.slice(0, Math.ceil(permission.fields.length / 2))
-                                .every(field => field.edit) ?? false}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                permission.fields?.slice(0, Math.ceil(permission.fields.length / 2))
-                                  .forEach(field => {
-                                    handleFieldChange(
-                                      module.module_id!,
-                                      permission.permission_id!,
-                                      field.field_id,
-                                      'edit'
-                                    )(e);
-                                  });
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </div> 
+                        )}
                       {permission.fields?.slice(0, Math.ceil(permission.fields.length / 2)).map(field => (
                         <div 
                           key={field.rid}
@@ -597,6 +612,9 @@ const handleModuleCheck = (moduleId: string) => (e: React.MouseEvent) => {
                                   field.field_id,
                                   'read'
                                 )}
+                                disabled={ 
+                                  ('hasReadExtendedPermsission' in field ? field.read &&!field.hasReadExtendedPermsission : undefined)
+                                 }
                               />
                             </div>
                             <div className="flex items-center gap-2">
@@ -609,6 +627,9 @@ const handleModuleCheck = (moduleId: string) => (e: React.MouseEvent) => {
                                   field.field_id,
                                   'edit'
                                 )}
+                                disabled={ 
+                                  ('hasEditExtendedPermsission' in field ? field.edit && !field.hasEditExtendedPermsission : undefined)
+                                 }
                               />
                             </div>
                           </div>
@@ -618,51 +639,53 @@ const handleModuleCheck = (moduleId: string) => (e: React.MouseEvent) => {
                     {/* Right Column */}
                     <div>
                       {/* Select all start */}
-                      <div className="flex justify-between items-center px-8 py-2 bg-white border-t border-[#CBD6E2]">
-                        <div className="w-[55%] text-[13px] text-[#425A76] font-semibold">
-                          Select All
-                        </div>
-                        <div className="w-[45%] flex justify-start gap-4">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[13px] text-[#425A76]">Read</span>
-                            <CustomCheckbox
-                              checked={permission.fields?.slice(Math.ceil(permission.fields.length / 2))
-                                .every(field => field.read) ?? false}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                permission.fields?.slice(Math.ceil(permission.fields.length / 2))
-                                  .forEach(field => {
-                                    handleFieldChange(
-                                      module.module_id!,
-                                      permission.permission_id!,
-                                      field.field_id,
-                                      'read'
-                                    )(e);
-                                  });
-                              }}
-                            />
+                      {!('has_extended_permission' in permission) && (
+                          <div className="flex justify-between items-center px-8 py-2 bg-white border-t border-[#CBD6E2]">
+                            <div className="w-[55%] text-[13px] text-[#425A76] font-semibold">
+                              Select All
+                            </div>
+                            <div className="w-[45%] flex justify-start gap-4">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[13px] text-[#425A76]">Read</span>
+                                <CustomCheckbox
+                                  checked={permission.fields?.slice(Math.ceil(permission.fields.length / 2))
+                                    .every(field => field.read) ?? false}
+                                  onChange={(e) => {
+                                    e.stopPropagation();
+                                    permission.fields?.slice(Math.ceil(permission.fields.length / 2))
+                                      .forEach(field => {
+                                        handleFieldChange(
+                                          module.module_id!,
+                                          permission.permission_id!,
+                                          field.field_id,
+                                          'read'
+                                        )(e);
+                                      });
+                                  }}
+                                />
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[13px] text-[#425A76]">Edit</span>
+                                <CustomCheckbox
+                                  checked={permission.fields?.slice(Math.ceil(permission.fields.length / 2))
+                                    .every(field => field.edit) ?? false}
+                                  onChange={(e) => {
+                                    e.stopPropagation();
+                                    permission.fields?.slice(Math.ceil(permission.fields.length / 2))
+                                      .forEach(field => {
+                                        handleFieldChange(
+                                          module.module_id!,
+                                          permission.permission_id!,
+                                          field.field_id,
+                                          'edit'
+                                        )(e);
+                                      });
+                                  }}
+                                />
+                              </div>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[13px] text-[#425A76]">Edit</span>
-                            <CustomCheckbox
-                              checked={permission.fields?.slice(Math.ceil(permission.fields.length / 2))
-                                .every(field => field.edit) ?? false}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                permission.fields?.slice(Math.ceil(permission.fields.length / 2))
-                                  .forEach(field => {
-                                    handleFieldChange(
-                                      module.module_id!,
-                                      permission.permission_id!,
-                                      field.field_id,
-                                      'edit'
-                                    )(e);
-                                  });
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </div>
+                        )}
                       {/* Select all end */}
                       {permission.fields?.slice(Math.ceil(permission.fields.length / 2)).map(field => (
                         <div 
@@ -683,6 +706,9 @@ const handleModuleCheck = (moduleId: string) => (e: React.MouseEvent) => {
                                   field.field_id,
                                   'read'
                                 )}
+                                disabled={ 
+                                  ('hasReadExtendedPermsission' in field ? field.read &&!field.hasReadExtendedPermsission : undefined)
+                                 }
                               />
                             </div>
                             <div className="flex items-center gap-2">
@@ -695,6 +721,9 @@ const handleModuleCheck = (moduleId: string) => (e: React.MouseEvent) => {
                                   field.field_id,
                                   'edit'
                                 )}
+                                disabled={ 
+                                  ('hasEditExtendedPermsission' in field ? field.edit && !field.hasEditExtendedPermsission : undefined)
+                                 }
                               />
                             </div>
                           </div>
@@ -723,7 +752,6 @@ const handleModuleCheck = (moduleId: string) => (e: React.MouseEvent) => {
 
 export const ProfilePermissions: React.FC<ProfileModuleListProps> = ({ createProfilePermissionsData, onPrivilegesChange }) => { 
   const privileges = createProfilePermissionsData || [];
-    
   // const isField = (privilege: Privilege): privilege is FieldPrivilege => {
   //   return privilege.type === 'field' && 
   //          'field_id' in privilege && 

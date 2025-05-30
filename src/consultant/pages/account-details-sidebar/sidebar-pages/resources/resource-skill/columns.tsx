@@ -30,7 +30,7 @@ export const resourceSkillColumns: ResourceSkillTableColumn<ResourceSkillList>[]
         borderBottom: '1px solid #CBD6E2 !important',
       },
       render: (row: ResourceSkillList) => (
-        <span>{formatDateToMMDDYYYY(row.start_date as string) || 'NA'}</span>
+        <span>{formatDateToMMDDYYYY(row.start_date as string) || '-'}</span>
       ),
     },
     {

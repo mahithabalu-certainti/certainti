@@ -1,10 +1,13 @@
-export interface ProjectList {
+export type ProjectList = {
   rid: string;
+  account_id?: string;
+  project_id?: string;
   account_rid?: string;
   account_number: string;
   account_name: string;
   r_number: string;
   project_ref_id: string;
+  modified_datetime?: string;
   industry: string;
   project_startdate: string;
   project_enddate: string;
@@ -38,7 +41,7 @@ export interface ProjectList {
   fiscal_year: string;
   name?: string;
   project_code?: string;
-}
+};
 
 export type Project = {
   id: string;
@@ -57,14 +60,16 @@ export type Project = {
   industry_name?: string;
 };
 
-export type ProjectColumn<T> = {
+export interface ProjectTableColumn<T> {
   id: string;
-  header: string;
+  sortId: string;
+  label: string;
   sortable?: boolean;
-  sort?: string;
-  width?: string;
+  width: string | number;
+  sticky?: boolean;
+  sx?: React.CSSProperties;
   render?: (row: T) => React.ReactNode;
-};
+}
 
 export interface ProjectListParams {
   page?: number;
@@ -108,7 +113,9 @@ export interface NewProjectData {
   industry_rid_name?: string;
   start_date?: string | null;
   end_date?: string | null;
-  clasification?: string | null;
+  classification?: string | null;
+  project_classification_other?: string | null;
+  classification_name?: string | null;
   client_group?: string | null;
   account_rid?: string;
   description?: string | null;
@@ -134,6 +141,8 @@ export interface NewProjectData {
   project_code?: string;
   project_name?: string;
   project_id?: string;
+  created_name?: string;
+  modified_name?: string;
   industry: string;
   industry_rid: string | null;
   industry_name: string;
@@ -165,6 +174,9 @@ export interface NewProjectData {
   auto_access_rd?: boolean;
   max_ai_interaction?: number | null;
   blended_rate_fte?: string | null;
+  blended_rate_FTE?: string | null;
+  max_ai_interaction_follow_up?: number | null;
+  blended_rate_subCon?: string | null;
   blended_rate_sub_con?: string | null;
   project_description?: string;
   comments?: string;

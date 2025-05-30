@@ -20,7 +20,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
             {loading ? (
               <Skeleton variant='rounded' width='100%' />
             ) : (
-              (detail.value ?? 'NA')
+              (detail.value ?? '-')
             )}
           </div>
         )}
@@ -32,13 +32,13 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     if (str) {
       return str.charAt(0).toUpperCase() + str.slice(1);
     }
-    return 'NA';
+    return '-';
   };
 
   // Map your API data to the mock data structure
   const getValueOrDefault = (
     value?: string | number | null,
-    defaultValue = 'NA'
+    defaultValue = '-'
   ): string => {
     return value?.toString() || defaultValue;
   };
@@ -64,7 +64,12 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
       label: 'Role',
       value: getValueOrDefault(data?.business_teams?.business_teams),
     },
-    { label: 'Status', value: capitalizeFirstLetter(data?.status === 'inactive' ? 'In-Active' : data?.status) },
+    {
+      label: 'Status',
+      value: capitalizeFirstLetter(
+        data?.status === 'inactive' ? 'In-Active' : data?.status
+      ),
+    },
     { label: 'Address', value: '', full: true },
     { label: 'Street', value: getValueOrDefault(data?.street) },
     {
@@ -89,7 +94,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     },
     {
       label: 'Created On',
-      value: getDateTimeFormat(data?.created_datetime) || 'NA',
+      value: getDateTimeFormat(data?.created_datetime) || '-',
     },
     {
       label: 'Created By',
@@ -97,7 +102,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     },
     {
       label: 'Updated On',
-      value: getDateTimeFormat(data?.modified_datetime) || 'NA',
+      value: getDateTimeFormat(data?.modified_datetime) || '-',
     },
     { label: 'Updated By', value: capitalizeFirstLetter(data?.modified_by) },
   ];

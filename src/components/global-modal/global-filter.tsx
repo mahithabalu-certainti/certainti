@@ -139,13 +139,30 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
 
   const handleParentAccountChange = (index: number, value: string) => {
     const newFilters = [...selectedFilters];
-    newFilters[index] = { account: value, child: [] };
+    const selectedAccount = accounts?.find((acc) => acc.rid === value);
+    const allChildIds =
+      selectedAccount?.child_accounts?.map((child) => child.rid) || [];
+    newFilters[index] = { account: value, child: allChildIds };
     setSelectedFilters(newFilters);
   };
 
   const handleChildAccountChange = (index: number, value: string[]) => {
     const newFilters = [...selectedFilters];
     newFilters[index] = { ...newFilters[index], child: value };
+    setSelectedFilters(newFilters);
+  };
+
+  const handleSelectAllChildren = (index: number, checked: boolean) => {
+    const newFilters = [...selectedFilters];
+    const parentAccount = accounts?.find(
+      (acc) => acc.rid === newFilters[index].account
+    );
+    const allChildIds =
+      parentAccount?.child_accounts?.map((child) => child.rid) || [];
+    newFilters[index] = {
+      ...newFilters[index],
+      child: checked ? allChildIds : [],
+    };
     setSelectedFilters(newFilters);
   };
 
@@ -173,11 +190,11 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
     );
 
     if (selectedChildren?.length === parentAccount?.child_accounts?.length) {
-      return 'All child name selected';
+      return 'All child account selected';
     }
 
     // return selectedChildren?.map(child => child.account_name).join(', ');
-    return `${selectedChildren?.length} child name selected`;
+    return `${selectedChildren?.length} child account selected`;
   };
 
   const getAvailableAccounts = (currentIndex: number) => {
@@ -209,13 +226,15 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
       }}
       PaperProps={{
         sx: {
-          boxShadow: 'none',
+          boxShadow: '0px 4px 15px 11px #0000001A',
           bgcolor: 'transparent',
           mt: 0.5,
+          borderRadius: '8px',
+          border: '1px solid #CBD6E2',
         },
       }}
     >
-      <div className='h-auto min-h-[165px] w-[530px] min-w-[530px] max-w-[530px] flex flex-col gap-4 bg-white rounded-[8px] p-6 border border-[#CBD6E2]'>
+      <div className='h-auto min-h-[165px] w-[530px] min-w-[530px] max-w-[530px] flex flex-col gap-4 bg-white p-6'>
         <div className='flex justify-between items-center'>
           <h2 className='text-[16px] font-bold text-[#2D3E4F]'>Filters</h2>
           <div className='flex justify-end gap-4'>
@@ -362,20 +381,45 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
                       sx={SELECT_STYLES}
                       MenuProps={MENU_PROPS}
                     >
-                      <MenuItem
-                        value=''
-                        sx={{
-                          fontSize: '13px',
-                          fontWeight: 700,
-                          color: '#2D3E4F',
-                          lineHeight: '20px',
-                          '&.Mui-selected': {
-                            backgroundColor: 'transparent',
-                          },
-                        }}
-                      >
-                        <span className='pl-0.5'>All Child name</span>
-                      </MenuItem>
+                      {accounts?.find((acc) => acc.rid === filter.account)
+                        ?.child_accounts?.length && (
+                        <MenuItem
+                          value=''
+                          sx={{
+                            fontSize: '13px',
+                            fontWeight: 700,
+                            color: '#2D3E4F',
+                            lineHeight: '20px',
+                            borderBottom: '1px solid #CBD6E2',
+                            '&.Mui-selected': {
+                              backgroundColor: 'transparent',
+                            },
+                          }}
+                        >
+                          <Checkbox
+                            size='small'
+                            checked={Boolean(
+                              filter.account &&
+                                filter.child.length ===
+                                  accounts?.find(
+                                    (acc) => acc.rid === filter.account
+                                  )?.child_accounts?.length
+                            )}
+                            onChange={(e) =>
+                              handleSelectAllChildren(index, e.target.checked)
+                            }
+                            sx={{
+                              color: '#CBD6E2',
+                              '&.Mui-checked': {
+                                color: '#1755E7',
+                              },
+                              padding: '0px',
+                              mr: 1,
+                            }}
+                          />
+                          <span className='pl-0.5'>Select All</span>
+                        </MenuItem>
+                      )}
                       {accounts?.find((acc) => acc.rid === filter.account)
                         ?.child_accounts?.length ? (
                         accounts

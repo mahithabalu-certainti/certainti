@@ -38,6 +38,7 @@ const ListTable = <T extends RowData>({
   loading = false,
   error,
   // Pagination
+  rowsPerPageOptions = [5, 10, 25, 50, 100],
   rowsPerPage = 10,
   currentPage = 0,
   totalItems = 0,
@@ -334,7 +335,7 @@ const ListTable = <T extends RowData>({
                         cellValue !== undefined &&
                         cellValue !== ''
                           ? cellValue
-                          : 'NA';
+                          : '-';
 
                       return (
                         <TableCell
@@ -429,7 +430,7 @@ const ListTable = <T extends RowData>({
       {/* Pagination */}
       {(onPageChange || onRowsPerPageChange) && (
         <TablePagination
-          rowsPerPageOptions={[5, 10, 25, 50]}
+          rowsPerPageOptions={rowsPerPageOptions}
           count={totalItems}
           rowsPerPage={rowsPerPage}
           page={currentPage}
