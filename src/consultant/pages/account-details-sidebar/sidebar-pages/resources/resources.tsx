@@ -61,7 +61,7 @@ const Resource: React.FC<ResourceProps> = ({
   const [skillOrder, setSkillOrder] = useState<'asc' | 'desc'>('desc');
   const [skillOrderBy, setSkillOrderBy] =
     useState<keyof ResourceSkillList>('created_datetime');
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [rowsPerPage, setRowsPerPage] = useState(100);
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
   );
@@ -85,6 +85,7 @@ const Resource: React.FC<ResourceProps> = ({
     sortBy: sortField,
     sortOrder: sortOrder,
     filters: appliedFilters,
+    value: value,
   });
 
   useEffect(() => {

@@ -5,7 +5,7 @@ import { ManageUserIcon, newFilterIcon } from '../../../../assets/icons';
 import { FilterModal } from '../../../../components';
 import ActionsDropdown from '../../../../components/actions-dropdown/actions-dropdown';
 import TextButton from '../../../../components/button/text-button';
-import { ADMIN_CREATE_USER } from '../../../../routes';
+import { ADMIN_CREATE_USER, ADMIN_MANAGE_USER } from '../../../../routes';
 import { UserTable } from '../table/user-table';
 import { getUserFilterFields } from './helpers';
 import { exportUserList, useManageUserProfile } from '../../../service';
@@ -14,6 +14,7 @@ import {
   formatFilterForApi,
   getStoredFilters,
 } from '../../../../components/filter-component/utils';
+import { useToast } from '../../../../hooks';
 
 const BUTTON_STYLES = {
   height: '24px',
@@ -24,7 +25,6 @@ const BUTTON_STYLES = {
 const UserList: React.FC = () => {
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
-  // const [searchTerm, setSearchTerm] = useState<string>('');
   const [page, setPage] = useState<number>(1);
   const [tableParams, setTableParams] = useState<UserListParams>({
     page: page,
@@ -32,9 +32,9 @@ const UserList: React.FC = () => {
     sortBy: 'createdAt',
     sortOrder: 'DESC',
   });
-
+  const [selectedUserId, setSelectedUserId] = useState<string[]>([]);
+  const { errorToast } = useToast();
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
-
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -52,11 +52,23 @@ const UserList: React.FC = () => {
     { label: 'Reset Password', width: '118px' },
     { label: 'Delete', width: '58px' },
   ];
-
+  const handleSelectionChange = (selectedIds: string[]) => {
+    setSelectedUserId(selectedIds);
+  };
   const MENU_ITEMS = [
     {
-      label: 'Assign Permission to User',
-      onClick: () => console.log('user clicked'),
+      label: 'Assign Permissions to User',
+      onClick: () => {
+        if (selectedUserId.length === 1) {
+          navigate(
+            ADMIN_MANAGE_USER + '/extended-permission/' + selectedUserId[0]
+          );
+        } else if (selectedUserId.length > 1) {
+          errorToast('Please select only one user to assign permissions.');
+        } else {
+          errorToast('You must select a user to assign permissions.');
+        }
+      },
     },
     {
       label: 'View Permissions',
@@ -198,6 +210,7 @@ const UserList: React.FC = () => {
           appliedFilters={appliedFilters}
           tableParams={tableParams}
           setTableParams={setTableParams}
+          onSelectionChange={handleSelectionChange}
         />
       </div>
     </div>

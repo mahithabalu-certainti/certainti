@@ -107,6 +107,16 @@ export const statusOptions: { option: string; value: string }[] = [
   { option: 'Active', value: 'active' },
   { option: 'In-Active', value: 'inactive' },
 ];
+const minYear = 2000;
+const currentYear = new Date().getFullYear();
+const getFiscalYears = (range: number) => {
+  return Array.from({ length: range }, (_, i) => {
+    const year = currentYear - i;
+    return { option: `FY-${year}`, value: String(year) };
+  });
+};
+
+export const fiscalYears = getFiscalYears(currentYear - minYear + 1);
 
 export const resourceTypeOptions: { option: string; value: string }[] = [
   { option: 'Full-Time', value: 'Full-Time' },
@@ -191,8 +201,12 @@ export interface FilterComponentProps {
   setAppliedFilters: (filters: Record<string, any>) => void;
   handleCloseFilter: () => void;
   setCurrentSkillType?: Dispatch<
-    SetStateAction<{ skill_type_rid: string; skill_subtype_rid: string }>
+    SetStateAction<{
+      skill_type_rid: string[];
+      skill_subtype_rid: string[] | undefined[];
+    }>
   >;
+  setCurrentCountry?: Dispatch<SetStateAction<string[] | null>>;
   setCurrentPage: (page: number) => void;
   mode?: string;
 }

@@ -108,7 +108,7 @@ export const fetchClassification =
   };
 
 export const fetchState = async (
-  countryId: string
+  countryId: string | string[] | null
 ): Promise<StatesApiResponse> => {
   const { data } = await accountServiceApi.get<StatesApiResponse>(
     StateUrl(countryId)
