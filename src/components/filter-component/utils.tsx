@@ -54,6 +54,8 @@ export const getInitialStateForField = (
       return { status: { option: 'equals', value: 'Active' } };
     case 'boolean':
       return { boolean: { option: 'equals', value: true } };
+    case 'enumSelect':
+      return { enumSelect: { option: 'equals', value: [] } };
     case 'multi-select':
       return { multiSelect: { values: [] } };
     case 'date':
@@ -117,6 +119,15 @@ export const formatFilterForApi = (
       }
     } else if (state.boolean) {
       formattedFilters[fieldName] = state.boolean.value === true ? 'yes' : 'no';
+    } else if (state.enumSelect && state.enumSelect.option) {
+      const option = state.enumSelect.option;
+      const value =
+        formatString(option) === 'Is Empty' ? true : state.enumSelect.value;
+      if (value && (Array.isArray(value) ? value.length > 0 : true)) {
+        formattedFilters[fieldName] = {
+          [option]: value,
+        };
+      }
     } else if (state.multiSelect) {
       formattedFilters[fieldName] = state.multiSelect.values;
     } else if (state.keyContact) {

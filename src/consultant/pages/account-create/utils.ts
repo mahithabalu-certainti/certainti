@@ -50,7 +50,11 @@ export const transformFormData = (
       othersIndustryId === formData.industry_rid
         ? formData.industry_name_other
         : '', //clear others industry name if industry is not others
-    website: formData.website || null,
+    website: formData.website
+      ? formData.website.startsWith('https://')
+        ? formData.website
+        : `https://${formData.website}`
+      : null,
     project_manager: formData.project_manager,
     annual_revenue: formData.annual_revenue,
     data_storage: formData.data_storage,

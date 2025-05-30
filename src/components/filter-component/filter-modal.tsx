@@ -11,6 +11,8 @@ import {
 import {
   DateOptions,
   DateValueOptions,
+  EnumSelectFilterOption,
+  enumSelectOperators,
   FilterModalProps,
   FilterState,
   NumberFilterOption,
@@ -35,6 +37,7 @@ import {
   MENU_PROPS,
   KeyContactFilterControl,
   NewDateFilterControl,
+  EnumSelectFilterControl,
 } from './helpers';
 import { useLocation } from 'react-router-dom';
 
@@ -176,6 +179,18 @@ const FilterModal: React.FC<FilterModalProps> = ({
                 number: {
                   ...currentState.number!,
                   option: event.target.value as NumberFilterOption,
+                },
+              },
+            };
+          case 'enumSelect':
+            return {
+              ...prev,
+              [fieldName]: {
+                ...currentState,
+                enumSelect: {
+                  ...currentState.enumSelect!,
+                  option: event.target.value as EnumSelectFilterOption,
+                  value: [],
                 },
               },
             };
@@ -392,6 +407,21 @@ const FilterModal: React.FC<FilterModalProps> = ({
     });
   };
 
+  const handleEnumSelectChange = (fieldName: string, value: string[]) => {
+    setFilterStates((prev: any) => {
+      return {
+        ...prev,
+        [fieldName]: {
+          ...prev[fieldName],
+          enumSelect: {
+            ...prev[fieldName].enumSelect,
+            value: value,
+          },
+        },
+      };
+    });
+  };
+
   const handleApplyFilters = () => {
     setPage(1);
     const updatedStates = { ...filterStates };
@@ -544,6 +574,20 @@ const FilterModal: React.FC<FilterModalProps> = ({
             fieldName={fieldName}
             state={state}
             onChange={handleBooleanChange}
+          />
+        );
+      case 'enumSelect':
+        return (
+          <EnumSelectFilterControl
+            filterStates={filterStates}
+            menuOption={fieldConfig.operatorOption || enumSelectOperators}
+            valueOptions={
+              (fieldConfig.options as { label: string; value: string }[]) || []
+            }
+            fieldName={fieldName}
+            state={state}
+            onOptionChange={handleFilterOptionChange}
+            onChange={handleEnumSelectChange}
           />
         );
       case 'date':
