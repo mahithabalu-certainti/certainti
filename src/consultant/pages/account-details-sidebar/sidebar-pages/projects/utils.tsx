@@ -33,7 +33,7 @@ export const textOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
   { option: 'Not-Equals', value: 'not_equals' },
   { option: 'Contains', value: 'contains' },
-  { option: 'Not-Contains', value: 'not_contains' },
+  // { option: 'Not-Contains', value: 'not_contains' },
   { option: 'Is-Empty', value: 'is_empty' },
 ];
 

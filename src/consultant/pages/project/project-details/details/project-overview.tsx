@@ -527,7 +527,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
         </div>
       </div>
       <div>
-        <div className='max-w-6xl    border-[1px]  border-[#CBD6E2]'>
+        <div className='border-[1px]  border-[#CBD6E2]'>
           <DetailsSection
             title='Basic Information'
             data={basicInfo as DetailItem[]}

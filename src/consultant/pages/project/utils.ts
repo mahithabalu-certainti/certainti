@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 interface DisplayColumn {
   items: Array<{
     label: string;
@@ -11,33 +12,33 @@ export const transformProjectData = (data: any): DisplayColumn[] => {
     {
       items: [
         {
-          label: 'Project Number',
+          label: 'Project ID',
           value: project?.r_number || '-',
         },
-        { label: 'Country', value: project?.country_name || '-' },
+        {
+          label: 'Project Code',
+          value: project?.project_code || '-',
+        },
       ],
     },
     {
       items: [
         {
-          label: 'Project Code',
-          value: project?.project_code || '-',
+          label: 'Project Name',
+          value: project?.program_name || '-',
         },
+        { label: 'Account Name', value: project?.account_name },
+      ],
+    },
+    {
+      items: [
+        { label: 'Country', value: project?.country_name || '-' },
         { label: 'Currency', value: project?.currency_name || '-' },
       ],
     },
     {
       items: [
-        {
-          label: 'Program Name',
-          value: project?.program_name || '-',
-        },
         { label: 'Industry', value: project?.industry_rid_name || '-' },
-      ],
-    },
-    {
-      items: [
-        { label: 'Account Name', value: project?.account_name },
         {
           label: 'Status',
           value:
