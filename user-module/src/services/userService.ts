@@ -1078,6 +1078,7 @@ async getAllUserPermission(userId: string, profileId: string) {
   
     // Handle profile filters
     if (filters.profile) {
+       whereClause["$profile.profile_name$"] = this.getMultiValueFilter(filters.profile, 'profile.profile_name');
       if (Array.isArray(filters.profile)) {
         whereClause["$profile.profile_name$"] = {
           [Op.in]: filters.profile
@@ -1087,6 +1088,62 @@ async getAllUserPermission(userId: string, profileId: string) {
   
     return whereClause;
   }
+  private getMultiValueFilter(filter: any, fieldName: string): any {
+  if (!filter) return null;
+
+  const conditions: any[] = [];
+  const colName = fieldName.replace(/\$/g, '');
+
+  // Case-insensitive exact match
+  if (typeof filter.equals === 'string') {
+    conditions.push(
+      Sequelize.where(
+        Sequelize.fn('LOWER', Sequelize.col(colName)),
+        '=',
+        filter.equals.toLowerCase()
+      )
+    );
+  }
+
+  // Case-insensitive NOT EQUALS
+  if (typeof filter.not_equals === 'string') {
+    conditions.push(
+      Sequelize.where(
+        Sequelize.fn('LOWER', Sequelize.col(colName)),
+        '!=',
+        filter.not_equals.toLowerCase()
+      )
+    );
+  }
+
+  // Case-insensitive IN match
+  if (Array.isArray(filter.in) && filter.in.length > 0) {
+    conditions.push({
+      [Op.or]: filter.in.map((val: string) =>
+        Sequelize.where(
+          Sequelize.fn('LOWER', Sequelize.col(colName)),
+          '=',
+          val.toLowerCase()
+        )
+      ),
+    });
+  }
+
+  // Match null or empty string
+  if (filter.is_empty === true) {
+  conditions.push({
+    [Op.or]: [
+      Sequelize.where(Sequelize.col(colName), { [Op.is]: null }),
+      Sequelize.where(Sequelize.col(colName), '')
+    ]
+  });
+}
+
+  if (conditions.length === 0) return null;
+
+  return { [Op.and]: conditions };
+}
+
 
   /**
    * Retrieves the sorting parameters for database queries based on the provided `sortBy` and `sortOrder`.
@@ -1481,17 +1538,17 @@ const rawResult = users || [];
       // For field permissions, merge read/edit and extended flags
       mergedPermissions.push({
         ...profilePerm,
-        read: userPerm?.read || false,
-        edit: userPerm?.edit || false,
-        hasReadExtendedPermsission: profilePerm.read ? false : (userPerm?.read ?? false),
-        hasEditExtendedPermsission: profilePerm.edit ? false : (userPerm?.edit ?? false),
+        read: profilePerm.read ? true : (userPerm?.read === true),
+        edit: profilePerm.edit ? true : (userPerm?.edit === true),
+        hasReadExtendedPermsission: profilePerm.read ? false : true,
+        hasEditExtendedPermsission: profilePerm.edit ? false : true,
       });
     } else {
       // For other types (menu, module, etc.)
       mergedPermissions.push({
         ...profilePerm,
-        is_enabled: userPerm?.is_enabled || false,
-        has_extended_permission: profilePerm.is_enabled ? false : (userPerm?.is_enabled === true),
+        is_enabled: profilePerm.is_enabled ? true : (userPerm?.is_enabled === true),
+        has_extended_permission: profilePerm.is_enabled ? false : true,
       });
     }
 

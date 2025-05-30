@@ -1118,8 +1118,8 @@ async insertClientTemplateDetails(
       whereClause.rid = this.getFieldFilter(filters.account_id, "rid");
     }
 
-    if (filters.industry) {
-      whereClause.industry_rid = this.getFieldFilter(filters.industry, "industry_rid");
+     if (filters.industry) {
+      whereClause["$industry.industry_name$"] = this.getMultiValueFilter(filters.industry,"industry.industry_name");
     }
 
     if (filters.status) {
@@ -1160,11 +1160,11 @@ async insertClientTemplateDetails(
 
     // Handle multi-select filters
     if (filters.country) {
-      whereClause["$country.country_name$"] = this.getMultiValueFilter(filters.country);
+      whereClause["$country.country_name$"] = this.getMultiValueFilter(filters.country,"country.country_name");
     }
 
     if (filters.currency) {
-      whereClause["$currency.currency_code$"] = this.getMultiValueFilter(filters.currency);
+      whereClause["$currency.currency_code$"] = this.getMultiValueFilter(filters.currency,'currency.currency_code');
     }
 
     return whereClause;
@@ -1268,20 +1268,64 @@ if (equals) {
   return null;
 }
 
-  private getMultiValueFilter(filter: any): any {
-    if (!filter) return null;
-    
-    if (Array.isArray(filter) && filter.length > 0) {
-      return {
-        [Op.or]: filter.map((value: string) => ({ [Op.iLike]: `%${value}%` })),
-      };
-    }
-    // Handle single value case
-    if (typeof filter === 'string' && filter.trim() !== '') {
-      return { [Op.iLike]: `%${filter}%` };
-    }
-    return null;
+  private getMultiValueFilter(filter: any, fieldName: string): any {
+  if (!filter) return null;
+
+  const conditions: any[] = [];
+
+  // Case-insensitive exact match
+  if (typeof filter.equals === 'string') {
+    conditions.push(Sequelize.where(
+      Sequelize.fn('LOWER', Sequelize.col(fieldName)),
+      '=',
+      filter.equals.toLowerCase()
+    ));
   }
+ // Case-insensitive NOT EQUALS
+  if (typeof filter.not_equals === 'string') {
+    conditions.push(
+      Sequelize.where(
+        Sequelize.fn('LOWER', Sequelize.col(fieldName)),
+        '!=',
+        filter.not_equals.toLowerCase()
+      )
+    );
+  }
+  // Case-insensitive partial match
+  if (typeof filter.contains === 'string') {
+    conditions.push({
+      [fieldName]: { [Op.iLike]: `%${filter.contains}%` },
+    });
+  }
+
+  // Case-insensitive IN filter
+  if (Array.isArray(filter.in) && filter.in.length > 0) {
+    conditions.push({
+      [Op.or]: filter.in.map((val: string) =>
+        Sequelize.where(
+          Sequelize.fn('LOWER', Sequelize.col(fieldName)),
+          '=',
+          val.toLowerCase()
+        )
+      ),
+    });
+  }
+
+  // is_empty: match NULL or ''
+  if (filter.is_empty === true) {
+  conditions.push({
+    [Op.or]: [
+      Sequelize.where(Sequelize.col(fieldName), { [Op.is]: null }),
+      Sequelize.where(Sequelize.col(fieldName), '')
+    ]
+  });
+}
+
+  if (conditions.length === 0) return null;
+
+  return { [Op.and]: conditions };
+}
+
 
   private applyParentAccountFilter(
     filters: Record<string, any>,
