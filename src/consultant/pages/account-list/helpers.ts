@@ -1,5 +1,5 @@
-import { AccountList, ConvertedAccount, SelectOption } from '../../types';
-import { FieldConfig } from '../../types/account-filter';
+import { AccountList, ConvertedAccount } from '../../types';
+import { FieldConfig, FilterSelectOption } from '../../types/account-filter';
 
 const roleOptions: { label: string; value: string }[] = [
   { label: 'Finance Executive', value: 'finance_executive' },
@@ -20,9 +20,15 @@ const textfieldOptions: { label: string; value: string }[] = [
   { label: 'Not Equals', value: 'not_equals' },
 ];
 
+export const industryOperator: { label: string; value: string }[] = [
+  { label: 'Equals', value: 'equals' },
+  { label: 'Not Equals', value: 'not_equals' },
+  { label: 'In', value: 'in' },
+];
+
 export const getAccountFilterFields = (
-  countryOptions: string[],
-  industryOptions: SelectOption[]
+  countryOptions: FilterSelectOption[],
+  industryOptions: FilterSelectOption[]
 ): FieldConfig[] => [
   {
     label: 'Account Name',
@@ -33,13 +39,14 @@ export const getAccountFilterFields = (
   {
     label: 'Industry',
     name: 'industry',
-    type: 'status',
+    type: 'enumSelect',
     options: industryOptions,
+    operatorOption: industryOperator,
   },
   {
     label: 'Country',
     name: 'country',
-    type: 'multi-select',
+    type: 'enumSelect',
     options: countryOptions,
   },
   { label: 'Total Projects', name: 'total_projects', type: 'number' },

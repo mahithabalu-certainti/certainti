@@ -236,7 +236,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             placeholder={field.placeholder}
             autoComplete='off'
             className={
-              'outline-none focus:border-2 focus:border-blue-400 placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium w-full sm:text-sm px-2 h-[32px] border border-[#CBD6E2] rounded-xs ' +
+              'placeholder-custom-color outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ' +
               isError +
               fieldDisabled
             }
@@ -253,7 +253,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             placeholder={field.placeholder}
             autoComplete='off'
             className={
-              'focus:outline-none placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium w-full sm:text-sm px-2 h-[32px]' +
+              'focus:outline-none placeholder-custom-color w-full sm:text-sm px-1 h-[32px]' +
               // isError +
               fieldDisabled
             }
@@ -308,7 +308,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   },
                 },
                 '.MuiSelect-select': {
-                  padding: '6px 12px',
+                  padding: '6px 6px',
                   color: fieldValue === '' ? '#7D98B6' : 'black',
                 },
                 '&.Mui-disabled': {
@@ -365,7 +365,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           <textarea
             className={
               // caret-blue-400 -  change cursor border color when focus
-              'outline-none  placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium w-full sm:text-sm p-2 border border-[#CBD6E2] rounded-xs h-[95px] resize-none focus:border-2 focus:border-blue-400 ' +
+              'outline-none placeholder-custom-color w-full sm:text-sm py-2 px-3 border border-[#CBD6E2] rounded-xs h-[95px] resize-none focus:border-2 focus:border-blue-400 ' +
               isError +
               fieldDisabled
             }
@@ -594,6 +594,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                         fontWeight: 400,
                         fontSize: '13px',
                         lineHeight: '21px',
+                        pl: '11px',
                         '& ::placeholder': {
                           color: '#7D98B6 !important',
                         },
@@ -671,6 +672,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                         fontWeight: 400,
                         fontSize: '13px',
                         lineHeight: '21px',
+                        pl: '12px',
                         '& ::placeholder': {
                           color: '#7D98B6 !important',
                         },
@@ -1437,6 +1439,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     sx={{
                       height: '32px !important',
                       minWidth: `${field.width}`,
+                      maxWidth: `${field.width}`,
                       paddingLeft:
                         `${field.type}` === 'iconButton' ||
                         `${field.type}` === 'radio'
@@ -1548,7 +1551,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     className={`border border-[#CBD6E2] rounded-[2px] overflow-hidden focus-within:border-2 focus-within:border-blue-400 ${field.error ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
                   >
                     <div className='h-[32px]  box-border flex items-center gap-[4px]'>
-                      <span className='pl-[8px] text-[13px] text-[#425A76]'>
+                      <span className='pl-[10px] text-[13px] text-[#425A76]'>
                         https://
                       </span>
                       <img src={verticalSeparatorIcon} alt-='separtor' />
