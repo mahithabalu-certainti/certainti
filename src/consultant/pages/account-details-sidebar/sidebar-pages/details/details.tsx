@@ -83,7 +83,7 @@ const Details: React.FC<DetailsProps> = ({
   return (
     <div className='w-full'>
       {!isKeyContactAvailable && (
-        <Box className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] p-2 border-box'>
+        <Box className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
           <Box>
             <img src={detailsKeyContactErrorIcon} alt='key-contact' />
           </Box>
@@ -96,16 +96,20 @@ const Details: React.FC<DetailsProps> = ({
           </Box>
         </Box>
       )}
-      <Box className='p-2'>
+      <Box className='p-3'>
         <OverviewTimelineTab
           tabValue={tabValue}
           handleTabChange={handleTabChange}
           menuActivity={menuActivity}
         />
-        <Box className='flex items-center justify-between gap-4 h-[35px] px-2 border border-[#CBD6E2] rounded-[2px]'>
+        <Box className='flex items-center justify-between gap-4 h-[38px] py-1 px-2 border border-[#CBD6E2] rounded-[2px]'>
           <Box className='flex items-center gap-2'>
             <Box>
-              <img src={realatedListDetailsIcon} alt='details' />
+              <img
+                src={realatedListDetailsIcon}
+                alt='details'
+                className='w-6 h-6'
+              />
             </Box>
             <Box className='text-[13px] text-[#2D3E4F] font-semibold'>
               Details

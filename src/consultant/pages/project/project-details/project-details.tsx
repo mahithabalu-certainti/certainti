@@ -138,7 +138,7 @@ export const ProjectDetails = () => {
           iconBackgroundColor='#AF78FF'
           iconClasses='h-8 w-8 rounded p-[6px]'
           //   title={data?.data?.accountById?.account_name || 'Project Title'}
-          title={'Project Title'}
+          title={data?.data?.project?.project_name || 'Project Title'}
           totalRecords={5}
           actionItems={menuItems}
           primaryButton={{
