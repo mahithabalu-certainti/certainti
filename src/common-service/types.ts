@@ -124,6 +124,14 @@ export enum AllPermissions {
   PROFILE_EDIT = 'profile_edit_update',
   PROFILE_DELETE = 'profile_delete',
   PROFILE_VIEW_ALL = 'profile_view_all',
+  ACCOUNT_PROJECTS_OVERVIEW = 'account_projects_view_overview',
+  ACCOUNT_PROJECTS_TIMELINE = 'account_projects_view_timeline',
+  ACCOUNT_PROJECTS_VIEW_ALL = 'account_projects_view_all',
+  ACCOUNT_PROJECTS_CREATE = 'account_projects_create',
+  ACCOUNT_PROJECTS_DOWNLOAD = 'account_projects_download',
+  ACCOUNT_PROJECTS_EDIT = 'account_projects_edit_update',
+  ACCOUNT_PROJECTS_DELETE = 'account_projects_delete',
+  PROJECT_PROJECTS_DOWNLOAD = 'projects_projects_download',
 }
 
 export interface Country {

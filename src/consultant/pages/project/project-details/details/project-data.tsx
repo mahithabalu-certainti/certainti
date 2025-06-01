@@ -16,12 +16,14 @@ interface ProjectsDataProps {
   activeKey?: string;
   isDetailsLoading: boolean;
   detailsError: boolean;
+  projectDownloadIsEnable?: boolean;
 }
 
 const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
   projectDetails,
   isDetailsLoading,
   detailsError,
+  projectDownloadIsEnable
 }) => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(0);
@@ -47,6 +49,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
       variant: 'outlined' as const,
       onClick: () => console.log('Download'),
       sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
+      hide: !projectDownloadIsEnable,
     },
   ];
 

@@ -9,7 +9,11 @@ import { transformProjectData } from '../utils';
 import ProjectDetailsData from './details/project-data';
 import { NewProjectData } from '../../../types/project';
 import { MenuItem } from '../../../types';
-import { AllModules } from '../../../../common-service';
+import { AllModules, AllPermissions } from '../../../../common-service';
+import { AccessRestricted } from '../../../../components/account-restricted';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { checkPermission } from '../../../../common-utils';
 
 const sideMenuItems: MenuItem[] = [
   {
@@ -78,6 +82,15 @@ export const ProjectDetails = () => {
   const defaultTab = searchParams.get('list') || 'financial';
   const [activeKey, setActiveKey] = useState(defaultTab);
   const [projectData, setProjectData] = useState<NewProjectData | null>(null);
+
+  // Permission Mangement
+  const { modules, permission } = useSelector((state: RootState) => state.permission);
+  const projectIsEnable = checkPermission(modules, AllModules.PROJECTS);
+  const projectDownloadIsEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECT_PROJECTS_DOWNLOAD
+  );
+
   useEffect(() => {
     const list = searchParams.get('list');
     if (list) {
@@ -150,6 +163,7 @@ export const ProjectDetails = () => {
             projectDetails={projectData}
             isDetailsLoading={isLoading}
             detailsError={isError}
+            projectDownloadIsEnable={projectDownloadIsEnable}
           />
         );
       case 'projectResources':
@@ -174,6 +188,8 @@ export const ProjectDetails = () => {
         return <div className='p-6'>Page Not Found</div>;
     }
   };
+
+  if (!projectIsEnable) return <AccessRestricted />;
 
   return (
     <div className='flex flex-col'>

@@ -42,6 +42,7 @@ interface ProjectOverviewProps {
     onClick: () => void;
     sx?: SxProps<Theme>;
     disabled?: boolean;
+    hide?: boolean;
   }[];
   toggleViewMode?: () => void;
   showBackArrow?: boolean;
@@ -508,20 +509,23 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
 
           <div className='flex items-center gap-2'>
             <div className='flex gap-2'>
-              {headerButtons?.map((button, index) => (
-                <TextButton
-                  key={`header-button-${index}`}
-                  label={button.label}
-                  onClick={
-                    button.label.toLowerCase() === 'view'
-                      ? toggleViewMode
-                      : button.onClick
-                  }
-                  aria-label={button.label}
-                  sx={button.sx}
-                  disabled={button.disabled}
-                />
-              ))}
+              {headerButtons?.map((button, index) => {
+                if (button.hide) return null;
+                return (
+                  <TextButton
+                    key={`header-button-${index}`}
+                    label={button.label}
+                    onClick={
+                      button.label.toLowerCase() === 'view'
+                        ? toggleViewMode
+                        : button.onClick
+                    }
+                    aria-label={button.label}
+                    sx={button.sx}
+                    disabled={button.disabled}
+                  />
+                );
+              })}
             </div>
           </div>
         </div>
