@@ -86,6 +86,8 @@ export enum AllPermissions {
   ACCOUNT_CREATE = 'accounts_create',
   ACCOUNT_EDIT = 'accounts_edit_update',
   ACCOUNT_DELETE = 'accounts_delete',
+  ACCOUNT_VIEW_ALL = 'accounts_view_all',
+  ACCOUNT_DETAILS_VIEW = 'account_details_view',
   ACCOUNT_EXPORT = 'accounts_export',
   RESOURCES_DOWNLOAD = 'account_resources_download',
   RESOURCES_OVERVIEW = 'account_resources_view_overview',
@@ -116,6 +118,12 @@ export enum AllPermissions {
   USER_RESET_PASSWORD = 'user_reset_password',
   USER_DELETE = 'user_delete',
   USER_ASSIGN_PERMISSION = 'user_assign_permission',
+  PROFILE_VIEW = 'profile_view',
+  PROFILE_CREATE = 'profile_create',
+  PROFILE_EXPORT = 'profile_export',
+  PROFILE_EDIT = 'profile_edit_update',
+  PROFILE_DELETE = 'profile_delete',
+  PROFILE_VIEW_ALL = 'profile_view_all',
 }
 
 export interface Country {

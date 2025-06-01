@@ -20,10 +20,7 @@ import {
   AllPermissions,
   useGetAllCountries,
 } from '../../../common-service';
-import {
-  exportAccountList,
-  useFetchIndustrys,
-} from '../../services/account';
+import { exportAccountList, useFetchIndustrys } from '../../services/account';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
 import { ActionsDropdownItem, checkPermission } from '../../../common-utils';
@@ -75,6 +72,10 @@ export const Accounts: React.FC = () => {
     (state: RootState) => state.permission
   );
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
+  const isAccountViewAllEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_VIEW_ALL
+  );
   const isAccountCreateEnable = checkPermission(
     permission,
     AllPermissions.ACCOUNT_CREATE
@@ -150,7 +151,7 @@ export const Accounts: React.FC = () => {
 
   const [totalCount, setTotalCount] = useState<number>(0);
 
-  if (!accountIsEnable) return <AccessRestricted />;
+  if (!accountIsEnable || !isAccountViewAllEnable) return <AccessRestricted />;
 
   return (
     <div className='flex flex-col w-full h-full'>

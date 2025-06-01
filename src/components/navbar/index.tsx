@@ -24,7 +24,7 @@ import {
   // searchIcon,
   settingsIcon,
 } from '../../assets';
-import { AllModules } from '../../common-service';
+import { AllModules, AllPermissions } from '../../common-service';
 import { msalConfig, msalResetPasswordConfig } from '../../config/msalConfig';
 import { useAuthHook, useToast } from '../../hooks';
 import { RootState } from '../../store/store';
@@ -65,6 +65,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   const { name } = useSelector((state: RootState) => state.auth);
   const { fiscalYear, filters } = useSelector(
     (state: RootState) => state.account
+  );
+
+  // Permission Mangement
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const isViewProfileEnable = checkPermission(
+    permission,
+    AllPermissions.PROFILE_VIEW
   );
 
   const isFilterApplied = filters.length > 0;
@@ -201,9 +208,11 @@ export const Navbar: React.FC<NavbarProps> = ({
       open={isMenuOpen}
       onClose={handleMenuClose}
     >
-      <MenuItem sx={{ fontSize: '14px' }} onClick={goToProfile}>
-        View Profile Details
-      </MenuItem>
+      {isViewProfileEnable && (
+        <MenuItem sx={{ fontSize: '14px' }} onClick={goToProfile}>
+          View Profile Details
+        </MenuItem>
+      )}
       <MenuItem sx={{ fontSize: '14px' }} onClick={changePassword}>
         Change Password
       </MenuItem>

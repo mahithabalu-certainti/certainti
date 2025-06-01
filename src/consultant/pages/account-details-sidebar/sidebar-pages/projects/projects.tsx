@@ -12,6 +12,9 @@ import { PROJECT_CREATE, PROJECT_DETAILS } from '../../../../../routes';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { ProjectList } from '../../../../types/project';
 import { ListTable } from '../../../../../components/table';
+import { AccessRestricted } from '../../../../../components/account-restricted';
+import { checkPermission } from '../../../../../common-utils';
+import { AllModules } from '../../../../../common-service';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -47,6 +50,11 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
     accountNumber: accountDetails?.data?.accountDetails?.account_rid || '',
   });
   const totalItems = data?.count || 0;
+
+  // Permission Mangement
+  const { modules } = useSelector((state: RootState) => state.permission);
+  const projectIsEnable = checkPermission(modules, AllModules.PROJECTS);
+
   const handleFilter = () => {
     setShowFilter(!showFilter);
   };
@@ -119,6 +127,8 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
   };
 
   const projectColumns = getProjectColumns(handleProject);
+
+  if (!projectIsEnable) return <AccessRestricted />;
 
   return (
     <div className='w-full py-3 pl-3 pr-4'>

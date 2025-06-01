@@ -26,6 +26,7 @@ import { AllPermissions, Permissions } from '../../../../../common-service';
 import { checkPermission } from '../../../../../common-utils';
 import { ListTable } from '../../../../../components/table';
 import { clearFilters } from '../../components/filter/utils';
+import { AccessRestricted } from '../../../../../components/account-restricted';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -532,6 +533,7 @@ const Resource: React.FC<ResourceProps> = ({
           )}
         </>
       )}
+      {!isResourceViewAllEnable && <AccessRestricted />}
     </div>
   );
 };

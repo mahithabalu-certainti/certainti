@@ -10,6 +10,11 @@ import { ProfileTable } from '../';
 import { FilterType } from '../../../types';
 import { exportProfileList } from '../../../service';
 import { useToast } from '../../../../hooks';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { checkPermission } from '../../../../common-utils';
+import { AllModules, AllPermissions } from '../../../../common-service';
+import { AccessRestricted } from '../../../../components/account-restricted';
 
 const BUTTON_STYLES = {
   height: '24px',
@@ -36,6 +41,35 @@ export const ProfileList: React.FC = () => {
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
+
+  // Permission Mangement
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const isProfileEnable = checkPermission(
+    modules,
+    AllModules.PROFILE_MANAGEMENT
+  );
+  const isProfileCreateEnable = checkPermission(
+    permission,
+    AllPermissions.PROFILE_CREATE
+  );
+  const isProfileExportEnable = checkPermission(
+    permission,
+    AllPermissions.PROFILE_EXPORT
+  );
+  const isProfileEditEnable = checkPermission(
+    permission,
+    AllPermissions.PROFILE_EDIT
+  );
+  const isProfileDeleteEnable = checkPermission(
+    permission,
+    AllPermissions.PROFILE_DELETE
+  );
+  const isProfileViewAllEnable = checkPermission(
+    permission,
+    AllPermissions.PROFILE_VIEW_ALL
+  );
 
   const handleCloseFilter = () => {
     setAnchorEl(null);
@@ -71,6 +105,8 @@ export const ProfileList: React.FC = () => {
     }
   };
 
+  if (!isProfileEnable  || !isProfileViewAllEnable) return <AccessRestricted />;
+
   return (
     <div className='flex flex-col h-full w-full'>
       {/* Header Section */}
@@ -93,16 +129,18 @@ export const ProfileList: React.FC = () => {
           </div>
         </div>
         <div className='flex gap-3 justify-center items-center'>
-          <TextButton
-            label='Create Profile'
-            onClick={() => navigate(MANAGE_PROFILE_CREATE)}
-            sx={{
-              ...BUTTON_STYLES,
-              width: '119px',
-              minWidth: '119px',
-              maxWidth: '119px',
-            }}
-          />
+          {isProfileCreateEnable && (
+            <TextButton
+              label='Create Profile'
+              onClick={() => navigate(MANAGE_PROFILE_CREATE)}
+              sx={{
+                ...BUTTON_STYLES,
+                width: '119px',
+                minWidth: '119px',
+                maxWidth: '119px',
+              }}
+            />
+          )}
         </div>
       </div>
 
@@ -139,17 +177,19 @@ export const ProfileList: React.FC = () => {
               handleCloseFilter={handleCloseFilter}
             />
           </div>
-          <TextButton
-            label='Export'
-            sx={{
-              ...BUTTON_STYLES,
-              width: '74px',
-              minWidth: '74px',
-              maxWidth: '74px',
-            }}
-            onClick={handleExport}
-            loading={isExporting}
-          />
+          {isProfileExportEnable && (
+            <TextButton
+              label='Export'
+              sx={{
+                ...BUTTON_STYLES,
+                width: '74px',
+                minWidth: '74px',
+                maxWidth: '74px',
+              }}
+              onClick={handleExport}
+              loading={isExporting}
+            />
+          )}
         </div>
       </div>
 
@@ -160,6 +200,8 @@ export const ProfileList: React.FC = () => {
           tableParams={tableParams}
           setTableParams={setTableParams}
           onSelectionChange={handleSelectionChange}
+          isProfileEditEnable={isProfileEditEnable}
+          isProfileDeleteEnable={isProfileDeleteEnable}
         />
       </div>
     </div>

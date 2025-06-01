@@ -51,6 +51,10 @@ export const AccountDetails = () => {
 
   // Permission Mangement
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
+  const isAccountDetailsEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_DETAILS_VIEW
+  );
   const isAccountEditEnable = checkPermission(
     permission,
     AllPermissions.ACCOUNT_EDIT
@@ -278,7 +282,7 @@ export const AccountDetails = () => {
     [disable]
   ); // Only recalculate when 'disable' changes
 
-  if (!accountIsEnable) return <AccessRestricted />;
+  if (!accountIsEnable || !isAccountDetailsEnable) return <AccessRestricted />;
 
   return (
     <div className='flex flex-col'>
