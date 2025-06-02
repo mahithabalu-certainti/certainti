@@ -899,12 +899,6 @@ async insertClientTemplateDetails(
             required: false,
           },
           {
-            model: States,
-            as: "regions",
-            attributes: [["state_name", "region_name"]],
-            required: false,
-          },
-          {
             model: Industry,
             as: "industry",
             attributes: ["rid", "industry_name"],
