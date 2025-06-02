@@ -1171,6 +1171,7 @@ class SchemaService {
       });
       return users;
     } catch (err) {
+      console.log("Errr ", err);
       throw new Error("Error retrieving account details");
     }
   }

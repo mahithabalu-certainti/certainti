@@ -866,6 +866,7 @@ async insertClientTemplateDetails(
           {
             model: Account,
             as: "child_accounts",
+            required: false,
           },
           {
             model: Country,
@@ -895,6 +896,7 @@ async insertClientTemplateDetails(
             model: Account,
             as: "parent_account",
             attributes: ["account_name"],
+            required: false,
           },
           {
             model: Industry,
