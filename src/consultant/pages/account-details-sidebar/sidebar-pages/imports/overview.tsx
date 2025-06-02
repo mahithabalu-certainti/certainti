@@ -54,14 +54,18 @@ const Overview: React.FC<OverviewProps> = ({
     },
   ];
 
-  const fiscalYears = Array.from({ length: 6 }, (_, i) => {
-    const year = new Date().getFullYear() - i;
-    return {
-      value: year.toString(),
-      label: `FY-${year}`,
-      onClick: () => setFiscalYear(year.toString()),
-    };
-  });
+  const currentYear = new Date().getFullYear();
+
+  const fiscalYears = Array.from(
+    { length: currentYear - 2000 + 1 },
+    (_, index) => {
+      const year = 2000 + index;
+      return {
+        label: `FY-${year}`,
+        onClick: () => console.log(`${year} clicked`),
+      };
+    }
+  );
 
   const showError = (text: string) => {
     setMessage({ type: 'error', text });
@@ -257,10 +261,11 @@ const Overview: React.FC<OverviewProps> = ({
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onClick={openFileDialog}
-          className={`h-[116px] w-[502px] border-[2px] border-dashed rounded-[8px] flex flex-col items-center justify-center gap-2 bg-[#F4F6F9] ${accountInActive
-            ? 'border-gray-300 cursor-not-allowed opacity-50'
-            : 'border-[#0176D3] cursor-pointer'
-            }`}
+          className={`h-[116px] w-[502px] border-[2px] border-dashed rounded-[8px] flex flex-col items-center justify-center gap-2 bg-[#F4F6F9] ${
+            accountInActive
+              ? 'border-gray-300 cursor-not-allowed opacity-50'
+              : 'border-[#0176D3] cursor-pointer'
+          }`}
         >
           <img
             src={uploadIcon}
@@ -291,8 +296,9 @@ const Overview: React.FC<OverviewProps> = ({
 
         {message && (
           <div
-            className={`w-[502px] mt-2 text-sm ${message.type === 'error' ? 'text-red-600' : 'text-green-600'
-              }`}
+            className={`w-[502px] mt-2 text-sm ${
+              message.type === 'error' ? 'text-red-600' : 'text-green-600'
+            }`}
           >
             {message.text}
           </div>

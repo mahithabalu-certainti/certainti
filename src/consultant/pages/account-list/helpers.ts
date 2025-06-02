@@ -37,7 +37,7 @@ export const getAccountFilterFields = (
     operatorOption: textfieldOptions,
   },
   {
-    label: 'Industry',
+    label: 'Industrysssssssss',
     name: 'industry',
     type: 'enumSelect',
     options: industryOptions,
