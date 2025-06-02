@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { HttpStatus } from "../utils/constants";
 import {
   errorLog,
+  generateExcelBase64,
   handleErrorResponse,
   handleSuccessResponse,
   successLog,
@@ -9,6 +10,7 @@ import {
 } from "../utils/helpers";
 import {
   createProjectSchema,
+  exportListResourceSchema,
   listResourceSchema,
   updateProjectSchema,
 } from "../lib/joi/schemas/schema";
@@ -218,6 +220,68 @@ async function projectList(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function exportProjectList(req: Request, res: Response): Promise<void> {
+  const methodName = "Export Project List";
+  try {
+    const { accountId } = req.params;
+
+    const value = await validateRequest(req, exportListResourceSchema, res, "GET");
+
+    let parsedFilters: Record<string, any> = {};
+
+    if (!value) {
+      return;
+    }
+
+    try {
+      if (value.filters) {
+        parsedFilters = JSON.parse(value.filters);
+      }
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    const project = await projectService.exportProjectList(
+      accountId,
+      value.fiscalYear !== "" && value.fiscalYear !== null
+        ? value.fiscalYear
+        : 0,
+      value.search,
+      parsedFilters,
+      value.sortBy,
+      value.sortOrder
+    );
+
+    if (project.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, await generateExcelBase64(project?.data?.projects,"Projects"));
+      return;
+    } else {
+      errorLog(methodName, project.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        project.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 async function allProjectList(req: Request, res: Response): Promise<void> {
   const methodName = "All Project List";
   try {
@@ -299,6 +363,84 @@ async function allProjectList(req: Request, res: Response): Promise<void> {
     return;
   }
 }
+
+async function exportAllProjectList(req: Request, res: Response): Promise<void> {
+  const methodName = "Export All Project List";
+  try {
+    const value = await validateRequest(req, exportListResourceSchema, res, "GET");
+
+    const userId = req.headers["x-user-id"] as string;
+
+    if (!userId) {
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        "User ID is required in headers"
+      );
+      return;
+    }
+
+    let parsedFilters: Record<string, any> = {};
+    let parsedGlobalFilters: Record<string, string[]> = {}
+
+    if (!value) {
+      return;
+    }
+
+    try {
+      if (value.filters) {
+        parsedFilters = JSON.parse(value.filters);
+      }
+      if (value.globalFilters) {
+        parsedGlobalFilters = JSON.parse(value.globalFilters);
+      }
+    } catch (error) {
+      errorLog(
+        methodName,
+        "Invalid filters format. Must be a valid JSON object."
+      );
+    }
+
+    const project = await projectService.exportAllProjectList(
+      value.fiscalYear !== "" && value.fiscalYear !== null
+        ? value.fiscalYear
+        : 0,
+      value.search,
+      parsedFilters,
+      value.sortBy,
+      value.sortOrder,
+      parsedGlobalFilters,
+      userId
+    );
+
+    if (project.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, await generateExcelBase64(project?.data?.projects,"Projects"));
+      return;
+    } else {
+      errorLog(methodName, project.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        project.errorMessage
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 /**
  * Handles the request to fetch a list of Project Classification from the geoDataService.
  *
@@ -347,5 +489,7 @@ export default {
   projectById,
   projectList,
   allProjectList,
-  projectClassification
+  projectClassification,
+  exportProjectList,
+  exportAllProjectList
 };

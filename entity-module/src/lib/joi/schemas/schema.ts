@@ -1,3 +1,4 @@
+import Decimal from "decimal.js";
 import Joi from "joi";
 
 const uuidRegex =
@@ -589,6 +590,24 @@ const listResourceSchema = Joi.object({
     .allow(""),
 });
 
+const exportListResourceSchema = Joi.object({
+  fiscalYear: Joi.number().min(1000).max(9999).optional().allow(0).messages({
+    "number.base": "Fiscal year must be a number",
+    "number.min": "Fiscal year must be a 4-digit number",
+    "number.max": "Fiscal year must be a 4-digit number",
+    "any.required": "Fiscal year is required",
+  }),
+  search: Joi.string().max(255).optional(),
+  filters: Joi.string().default("{}"),
+  globalFilters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("created_datetime").optional().allow(""),
+  sortOrder: Joi.string()
+    .valid("ASC", "DESC")
+    .default("DESC")
+    .optional()
+    .allow(""),
+});
+
 const exportResourceSchema = Joi.object({
   fiscalYear: Joi.number().min(1000).max(9999).optional().allow(0).messages({
     "number.base": "Fiscal year must be a number",
@@ -1128,11 +1147,15 @@ const createProjectSchema = Joi.object({
     "string.pattern.base": "Total Cost must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
@@ -1147,11 +1170,15 @@ const createProjectSchema = Joi.object({
     "string.pattern.base": "Total NON Labor Cost must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
@@ -1198,11 +1225,15 @@ const createProjectSchema = Joi.object({
     "string.pattern.base": "Total FTE Cost must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
@@ -1215,11 +1246,15 @@ const createProjectSchema = Joi.object({
     "string.pattern.base": "Total SUB Con Cost must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
@@ -1368,11 +1403,15 @@ const updateProjectSchema = Joi.object({
     "string.pattern.base": "Total Cost must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
@@ -1423,11 +1462,15 @@ const updateProjectSchema = Joi.object({
     "string.pattern.base": "Total FTE Cost must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
@@ -1440,11 +1483,15 @@ const updateProjectSchema = Joi.object({
     "string.pattern.base": "Total SUB Con Cost must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
@@ -1457,11 +1504,15 @@ const updateProjectSchema = Joi.object({
     "string.pattern.base": "Total NON Labor Cost must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
@@ -1564,6 +1615,6 @@ export {
   exportResourceCostSchema,
   exportResourceSkillSchema,
   createProjectSchema,
-  updateProjectSchema
-
+  updateProjectSchema,
+  exportListResourceSchema
 };

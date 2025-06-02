@@ -177,13 +177,15 @@ export class ProjectService {
         country: projectData.country || null,
         region: projectData.region || null,
         currency: projectData.currency || null,
-        total_effort: projectData.total_effort || null,
+        total_effort: projectData.total_effort && parseInt(projectData.total_effort) || null,
+        
         total_cost: projectData.total_cost || null,
+
         total_fte: projectData.total_fte || 0,
         total_sub_con: projectData.total_sub_con || 0,
         total_non_labor_cost: projectData.total_non_labor_cost || null,
-        total_fte_effort: projectData.total_fte_effort || null,
-        total_sub_con_effort: projectData.total_sub_con_effort || null,
+        total_fte_effort: projectData.total_fte_effort && parseInt(projectData.total_fte_effort) || null,
+        total_sub_con_effort: projectData.total_sub_con_effort && parseInt(projectData.total_sub_con_effort) || null,
         total_fte_cost: projectData.total_fte_cost || null,
         total_sub_con_cost: projectData.total_sub_con_cost || null,
         auto_send_ai_interaction: projectData.auto_send_ai_interaction,
@@ -334,14 +336,14 @@ export class ProjectService {
         industry_rid: projectData.industry_rid,
         industry_name: projectData.industry_name,
         fiscal_year: projectData.fiscal_year,
-        total_effort: projectData.total_effort || null,
+        total_effort: projectData.total_effort && parseInt(projectData.total_effort) || null,
         total_cost: projectData.total_cost || null,
         total_fte: projectData.total_fte || 0,
         total_sub_con: projectData.total_sub_con || 0,
 
         total_non_labor_cost: projectData.total_non_labor_cost || null,
-        total_fte_effort: projectData.total_fte_effort || null,
-        total_sub_con_effort: projectData.total_sub_con_effort || null,
+        total_fte_effort: projectData.total_fte_effort && parseInt(projectData.total_fte_effort) || null,
+        total_sub_con_effort: projectData.total_sub_con_effort && parseInt(projectData.total_sub_con_effort) || null,
         total_fte_cost: projectData.total_fte_cost || null,
         total_sub_con_cost: projectData.total_sub_con_cost || null,
         auto_send_ai_interaction: projectData.auto_send_ai_interaction ?? false,
@@ -756,6 +758,283 @@ export class ProjectService {
         },
       };
     } catch (err) {
+      throw new Error("Error fetching project: " + (err as Error).message);
+    }
+  }
+
+  async exportAllProjectList(
+    fiscalYear: number = 0,
+    search: string,
+    filters: Record<string, any> = {},
+    sortBy: string = "created_datetime",
+    sortOrder: string = "ASC",
+    globalFilters: Record<string, string[]> = {},
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projects: any; count: number };
+  }> {
+    try {
+      const [finalSortBy, finalSortOrder] =
+        this.getSortParametersForAllProjects(sortBy, sortOrder);
+
+      const { accountDataSort } = this.processAccountDataSort(
+        sortBy,
+        sortOrder
+      );
+
+      const sort = {
+        sortCol: finalSortBy,
+        sortOrder: finalSortOrder,
+      };
+
+      const appliedAccountNumber =
+        await this.schemaService.computeGlobalAccountFilter(
+          globalFilters,
+        );
+
+      const { finalResult: allProjectList, totalCount } =
+        await this.schemaService.fetchAllProjectsForExport(
+          sort,
+          filters,
+          fiscalYear,
+          appliedAccountNumber,
+          userId,
+          search,
+        );
+
+      const rawResult = allProjectList || [];
+      let exportData = rawResult.map((project: any) => {   
+        return {
+          "Account Name": project.account_name || "-",
+          "Fiscal Year":project.fiscal_year || "-",
+          "Customer Group": project.project_client_group || "-",
+          "Project Group": project?.project_group || "-",
+          "Project Code": project.project_code || "-",
+          "Project Name": project.project_name || "-",
+          "Project Type": project.project_type || "-",
+          "Project classification": project.classification_name || "-",
+          "Project Effort (Hours)": project.total_effort || "-",
+          "Project Cost": project.total_cost || "-",
+          "FTE Cost": project.total_fte_cost || "-",
+          "SubCon Cost": project.total_sub_con || "-",
+          "Non-Labor Cost": project.total_non_labor_cost || "-",
+          "Assessment Status": project.assessment_status || "-",
+          "QRE %": project.qre || "-",
+          "QRE": project.qualified_research_expenditure || "-",
+          "Project Point of Contact": project.project_point_of_contact || "-",
+          "Technical Point of Contact": project.technical_point_of_contact || "-",
+          "Comments": project.comments || "-",
+          "Last Modified": project.modified_datetime || "-",
+          "Project ID": project.r_number || "-",
+        };
+      });
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          projects: exportData,
+          count: totalCount,
+        },
+      };
+    } catch (err) {
+      throw new Error("Error fetching project: " + (err as Error).message);
+    }
+  }
+
+  async exportProjectList(
+    accountId: string,
+    fiscalYear: number = 0,
+    search: string,
+    filters: Record<string, any> = {},
+    sortBy: string = "created_datetime",
+    sortOrder: string = "ASC"
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projects: any; totalCount: number };
+  }> {
+    try{
+
+      const accountData = await this.schemaService.fetchAccountById(accountId);
+
+      if (!accountData) {
+        throw new Error("Invalid account account ID.");
+      }
+
+      if (
+        accountData.parent_account_rid === null ||
+        accountData.parent_account_rid === ""
+      ) {
+        throw new Error("Invalid account ID");
+      }
+
+      let accountRNumber = accountData.r_number;
+
+      if (accountData.storage_type === "store_in_parent") {
+        accountRNumber = await this.schemaService.fetchParentAccount(
+          accountData.parent_account_rid
+        );
+      }
+
+      const isExists = await this.schemaService.checkIfSchemaAndTableExists(
+        accountRNumber
+      );
+
+      if (!isExists) {
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.SUCCESS_MESSAGE,
+          data: {
+            projects: [],
+            totalCount: 0,
+          },
+        };
+      }
+
+      const orgDbSequlize = await initOrgSequelize();
+      const schemaName = `platform_v2_${accountRNumber}`;
+      const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
+      const KeyContactModel = await KeyContact.initialize(
+        orgDbSequlize,
+        schemaName
+      );
+
+      const [finalSortBy, finalSortOrder] = this.getSortParameters(
+        sortBy,
+        sortOrder
+      );
+      const [finalMetaDataSortBy, finalMetaDataSortOrder] = this.getMetaDataSortParameters(
+        sortBy,
+        sortOrder
+      );
+
+      const { whereClause } = this.buildWhereClause(filters, search, false);
+
+      let { rows: projectData, count } = await ProjectModel.findAndCountAll({
+        where: {
+          account_rid: accountData.rid,
+          ...whereClause,
+          ...(fiscalYear && fiscalYear !== 0
+            ? { fiscal_year: fiscalYear }
+            : {}),
+        },
+        order: [[finalSortBy, finalSortOrder]],
+        distinct: true,
+        attributes: [
+          "rid",
+          "r_number",
+          "project_code",
+          "project_name",
+          "program_name",
+          "fiscal_year",
+          "industry_rid",
+          "industry_name",
+          "project_startdate",
+          "project_enddate",
+          "project_type",
+          "project_classification_rid",
+          "project_classification_other",
+          "project_client_group",
+          "project_group",
+          "project_status",
+          "account_rid",
+          "rid",
+          "total_cost",
+          "total_effort",
+          "total_fte",
+          "total_fte_cost",
+          "total_sub_con",
+          "total_sub_con_cost",
+          "total_non_labor_cost",
+          "comments",
+          "country",
+          "region",
+          "currency",
+          "industry_name",
+          "qualified_research_expenditure",
+          "is_rd_qualified",
+          "qre",
+          "created_datetime",
+          "modified_datetime",
+          "assessment_status"
+        ],
+        include: [
+          {
+            model: KeyContactModel,
+            as: "keyContact",
+          },
+        ],
+      });
+
+      if (projectData) {
+        const mainDbInit = await initMainDbSequelize();
+
+        projectData.forEach((val) => {
+          const dataValues = val.dataValues as any;
+          dataValues.account_name = accountData.account_name;
+        });
+        projectData = await this.schemaService.insertProjectListGeoData(
+          projectData,
+          mainDbInit
+        );
+        projectData = await this.schemaService.insertIndusty(
+          projectData,
+          mainDbInit
+        );
+
+        projectData = await this.schemaService.insertKeyRole(
+          projectData,
+          mainDbInit
+        );
+        projectData = await this.schemaService.insertProjectClassification(
+          projectData,
+          mainDbInit
+        );
+
+        projectData = await this.schemaService.finalProjectSort(projectData, finalMetaDataSortBy, finalMetaDataSortOrder, filters);
+      }
+
+      const rawResult = projectData || [];
+      let exportData = rawResult.map((project: any) => {   
+        return {
+          "Account Name": project.account_name || "-",
+          "Fiscal Year":project.fiscal_year || "-",
+          "Customer Group": project.project_client_group || "-",
+          "Project Group": project?.project_group || "-",
+          "Project Code": project.project_code || "-",
+          "Project Name": project.project_name || "-",
+          "Project Type": project.project_type || "-",
+          "Project classification": project.classification_name || "-",
+          "Project Effort (Hours)": project.total_effort || "-",
+          "Project Cost": project.total_cost || "-",
+          "FTE Cost": project.total_fte_cost || "-",
+          "SubCon Cost": project.total_sub_con || "-",
+          "Non-Labor Cost": project.total_non_labor_cost || "-",
+          "Assessment Status": project.assessment_status || "-",
+          "QRE %": project.qre || "-",
+          "QRE": project.qualified_research_expenditure || "-",
+          "Project Point of Contact": project.project_point_of_contact || "-",
+          "Technical Point of Contact": project.technical_point_of_contact || "-",
+          "Comments": project.comments || "-",
+          "Last Modified": project.modified_datetime || "-",
+          "Project ID": project.r_number || "-",
+        };
+      });
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          projects: exportData,
+          totalCount: count,
+        },
+      };
+    }catch(err){
       throw new Error("Error fetching project: " + (err as Error).message);
     }
   }

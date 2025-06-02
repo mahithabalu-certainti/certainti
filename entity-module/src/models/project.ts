@@ -23,13 +23,13 @@ export interface ProjectAttributes {
   country?: string | null;
   region?: string | null;
   currency?: string | null;
-  total_effort?: string | null;
+  total_effort?: number | null;
   total_cost?: string | null;
   total_fte?: number;
   total_sub_con?: number;
   total_non_labor_cost?: string | null;
-  total_fte_effort?: string | null;
-  total_sub_con_effort?: string | null;
+  total_fte_effort?: number | null;
+  total_sub_con_effort?: number | null;
   total_fte_cost?: string | null;
   total_sub_con_cost?: string | null;
   auto_send_ai_interaction: boolean;
@@ -77,13 +77,13 @@ export class Project
   public country?: string | null;
   public region?: string | null;
   public currency?: string | null;
-  public total_effort?: string | null;
+  public total_effort?: number | null;
   public total_cost?: string | null;
   public total_fte?: number;
   public total_sub_con?: number;
   public total_non_labor_cost?: string | null;
-  public total_fte_effort?: string | null;
-  public total_sub_con_effort?: string | null;
+  public total_fte_effort?: number | null;
+  public total_sub_con_effort?: number | null;
   public total_fte_cost?: string | null;
   public total_sub_con_cost?: string | null;
   public auto_send_ai_interaction!: boolean;
@@ -183,15 +183,15 @@ export class Project
           type: DataTypes.UUID,
           allowNull: true,
         },
-        total_effort: DataTypes.DOUBLE,
-        total_cost: DataTypes.DOUBLE,
+        total_effort: DataTypes.INTEGER,
+        total_cost: DataTypes.DECIMAL,
         total_fte: DataTypes.INTEGER,
         total_sub_con: DataTypes.INTEGER,
-        total_fte_effort: DataTypes.DOUBLE,
-        total_sub_con_effort: DataTypes.DOUBLE,
-        total_fte_cost: DataTypes.DOUBLE,
-        total_sub_con_cost: DataTypes.DOUBLE,
-        total_non_labor_cost: DataTypes.DOUBLE,
+        total_fte_effort: DataTypes.INTEGER,
+        total_sub_con_effort: DataTypes.INTEGER,
+        total_fte_cost: DataTypes.DECIMAL,
+        total_sub_con_cost: DataTypes.DECIMAL,
+        total_non_labor_cost: DataTypes.DECIMAL,
         auto_send_ai_interaction: {
           type: DataTypes.BOOLEAN,
           defaultValue: false,

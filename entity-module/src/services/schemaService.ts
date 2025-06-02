@@ -1565,6 +1565,176 @@ class SchemaService {
     }
   }
 
+  async fetchAllProjectsForExport(
+    sort: {
+      sortCol: string;
+      sortOrder: string;
+    },
+    whereClause: Record<string, any>,
+    fiscalYear: number,
+    accountMeta: string[],
+    userId: string,
+    search: string,
+  ) {
+    try {
+      const mainDbSequelize = await initMainDbSequelize();
+
+      let results: any[] = [];
+      const replacements: any[] = [];
+      let countResult: any[] = [];
+
+      const sortColumnMap: Record<string, string> = {
+        industry_name: "COALESCE(ps.industry_name, ind.industry_name)",
+      };
+
+      const sortCol = sortColumnMap[sort.sortCol] || `${sort.sortCol}`;
+
+      if (accountMeta.length > 0) {
+        const accountRids = accountMeta.map((acc) => `'${acc}'`).join(", ");
+
+        const { whereSQL: filterWhereSQL, replacements: whereReplacements } =
+          this.buildRawWhereClause(whereClause, search);
+
+        const whereConditions: string[] = [];
+        replacements.push(...whereReplacements);
+
+        if (fiscalYear && fiscalYear !== 0) {
+          whereConditions.push(`fiscal_year = ?`);
+          replacements.push(fiscalYear);
+        }
+
+        let fullWhereClause = filterWhereSQL;
+        if (whereConditions.length > 0) {
+          fullWhereClause += fullWhereClause
+            ? ` AND ${whereConditions.join(" AND ")}`
+            : `WHERE ${whereConditions.join(" AND ")}`;
+        }
+
+        const fullQuery = `
+        SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, acc.rid as account_id,
+        ps.project_id, ps.modified_datetime, ps.assessment_status,
+        COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other, 
+        ps.project_number, ps.project_type, ps.project_client_group , ps.project_group,
+        ps.project_classification_rid, 
+        COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
+        ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_point_of_contact , ps.r_number,
+        ps.program_name, ps.project_startdate , ps.project_enddate , ps.qualified_research_expenditure ,
+        ps.is_rd_qualified , ps.qre, ps.total_cost , ps.total_effort , ps.total_fte , ps.total_fte_cost ,
+        ps.total_sub_con , ps.total_sub_con_cost, ps.total_non_labor_cost , ps."comments" , 
+        cou.country_name , curr.currency_code , st.state_name as region_name
+        FROM project_summary AS ps
+        INNER JOIN account acc ON acc.rid = ps.account_rid 
+        LEFT JOIN industry ind ON ind.rid = ps.industry_rid
+        LEFT JOIN country cou ON cou.rid = ps.country 
+        LEFT JOIN state st ON st.rid = ps.region 
+        LEFT JOIN currency curr ON curr.rid = ps.currency 
+        left join project_classification pc on pc.rid = ps.project_classification_rid 
+        WHERE acc.created_by = '${userId}' AND acc.rid in (${accountRids}) ${
+          fullWhereClause ? "AND " + fullWhereClause : ""
+        }
+        ORDER BY ${sortCol} ${sort.sortOrder}
+      `;
+
+        const countQuery = `
+          SELECT COUNT(*) AS total_count
+          FROM project_summary AS ps
+          INNER JOIN account acc ON acc.rid = ps.account_rid 
+          LEFT JOIN industry ind ON ind.rid = ps.industry_rid
+          LEFT JOIN country cou ON cou.rid = ps.country 
+          LEFT JOIN state st ON st.rid = ps.region 
+          LEFT JOIN currency curr ON curr.rid = ps.currency 
+          LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
+          WHERE acc.created_by = '${userId}' AND acc.rid in (${accountRids}) ${
+          fullWhereClause ? "AND " + fullWhereClause : ""
+          }
+        `;
+
+        results = await mainDbSequelize.query(fullQuery, {
+          replacements,
+          type: "SELECT",
+        });
+
+        countResult = await mainDbSequelize.query(countQuery, {
+          replacements: whereReplacements,
+          type: "SELECT",
+        });
+      } else {
+        const { whereSQL: filterWhereSQL, replacements: whereReplacements } =
+          this.buildRawWhereClause(whereClause, search);
+
+        const whereConditions = [];
+        const replacements = [...whereReplacements];
+
+        if (fiscalYear && fiscalYear !== 0) {
+          whereConditions.push(`fiscal_year = ?`);
+          replacements.push(fiscalYear);
+        }
+
+        let fullWhereClause = filterWhereSQL;
+        if (whereConditions.length > 0) {
+          fullWhereClause += fullWhereClause
+            ? ` AND ${whereConditions.join(" AND ")}`
+            : `${whereConditions.join(" AND ")}`;
+        }
+
+        const fullQuery = `
+        SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, acc.rid as account_id,
+        ps.project_id, ps.modified_datetime, ps.assessment_status,
+        COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other,
+        ps.project_type, ps.project_client_group , ps.project_group,
+        ps.project_classification_rid, 
+        COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
+        ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_point_of_contact , ps.r_number, ps.project_number,
+        ps.program_name, ps.project_startdate , ps.project_enddate , ps.qualified_research_expenditure ,
+        ps.is_rd_qualified , ps.qre, ps.total_cost , ps.total_effort , ps.total_fte , ps.total_fte_cost ,
+        ps.total_sub_con , ps.total_sub_con_cost, ps.total_non_labor_cost , ps."comments" , 
+        cou.country_name , curr.currency_code , st.state_name as region_name
+        FROM project_summary AS ps
+        INNER JOIN account acc ON acc.rid = ps.account_rid 
+        LEFT JOIN industry ind ON ind.rid = ps.industry_rid
+        LEFT JOIN country cou ON cou.rid = ps.country 
+        LEFT JOIN state st ON st.rid = ps.region 
+        LEFT JOIN currency curr ON curr.rid = ps.currency 
+        left join project_classification pc on pc.rid = ps.project_classification_rid 
+        WHERE acc.created_by = '${userId}' ${
+          fullWhereClause ? "AND " + fullWhereClause : ""
+        }
+        ORDER BY ${sortCol} ${sort.sortOrder}
+      `;
+
+        const countQuery = `
+        SELECT COUNT(*) AS total_count
+        FROM project_summary AS ps
+        INNER JOIN account acc ON acc.rid = ps.account_rid 
+        LEFT JOIN industry ind ON ind.rid = ps.industry_rid
+        LEFT JOIN country cou ON cou.rid = ps.country 
+        LEFT JOIN state st ON st.rid = ps.region 
+        LEFT JOIN currency curr ON curr.rid = ps.currency 
+        LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
+        WHERE acc.created_by = '${userId}'
+        ${fullWhereClause ? "AND " + fullWhereClause : ""}
+      `;
+
+        results = await mainDbSequelize.query(fullQuery, {
+          replacements,
+          type: "SELECT",
+        });
+
+        countResult = await mainDbSequelize.query(countQuery, {
+          replacements,
+          type: "SELECT",
+        });
+      }
+
+      return {
+        finalResult: results,
+        totalCount: parseInt(countResult?.[0]?.total_count) || 0,
+      };
+    } catch (err) {
+      throw new Error("Error fetching Accounts: " + (err as Error).message);
+    }
+  }
+
   async computeGlobalAccountFilter(globalFilters: Record<string, string[]>) {
     try {
       const result = [];
