@@ -37,7 +37,7 @@ export const getAccountFilterFields = (
     operatorOption: textfieldOptions,
   },
   {
-    label: 'Industrysssssssss',
+    label: 'Industry',
     name: 'industry',
     type: 'enumSelect',
     options: industryOptions,
@@ -80,12 +80,6 @@ export const getAccountFilterFields = (
     name: 'account_number',
     type: 'text',
     operatorOption: textfieldOptions,
-  },
-  {
-    label: 'System Filter',
-    name: 'system_filter',
-    type: 'system',
-    options: [{ label: 'Recently created', value: 'createdAt' }],
   },
 ];
 
