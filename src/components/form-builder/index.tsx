@@ -1442,7 +1442,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       maxWidth: `${field.width}`,
                       paddingLeft:
                         `${field.type}` === 'iconButton' ||
-                          `${field.type}` === 'radio'
+                        `${field.type}` === 'radio'
                           ? '10px !important'
                           : 'none',
                       verticalAlign:

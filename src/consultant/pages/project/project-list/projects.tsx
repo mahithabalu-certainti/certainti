@@ -21,6 +21,7 @@ import { RootState } from '../../../../store/store';
 import { checkPermission } from '../../../../common-utils';
 import { AllModules } from '../../../../common-service';
 import { AccessRestricted } from '../../../../components/account-restricted';
+import { exportProjectData } from '../../../services/project';
 
 // const BUTTON_STYLES = {
 //   height: '32px',
@@ -54,6 +55,15 @@ export const Projects: React.FC = () => {
   const isFilterOpen = Boolean(anchorEl);
   const filterId = isFilterOpen ? 'all-project-filter-popover' : undefined;
 
+  const handleExport = () => {
+    const projectParams = {
+      sortBy: tableParams.sortBy,
+      sortOrder: tableParams.sortOrder,
+      filters: appliedFilters,
+      fiscalYear: tableParams.fiscalYear,
+    };
+    exportProjectData('projectall', projectParams);
+  };
   const menuItems = [
     {
       label: 'Manage user',
@@ -61,7 +71,7 @@ export const Projects: React.FC = () => {
     },
     {
       label: 'Export',
-      onClick: () => console.log('Export clicked'),
+      onClick: () => handleExport(),
     },
   ];
 

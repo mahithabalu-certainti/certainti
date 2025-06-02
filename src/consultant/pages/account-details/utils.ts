@@ -183,14 +183,18 @@ export interface accountByIdProps {
   country: {
     country_name: string;
   };
-  region: {
-    region_name: string;
+  region_details: {
+    state_name: string;
   };
   currency: {
     currency_code: string;
   };
   r_number: string;
   comments: string;
+  created_datetime: string;
+  modified_datetime: string;
+  created_by: string;
+  modified_by: string;
 }
 
 export interface accountByDetailsProps {
@@ -211,6 +215,7 @@ export interface accountByDetailsProps {
   project_manager: string;
   keyContacts: KeyContactProps[];
   business_details: string;
+  data_storage: string;
 }
 
 export interface KeyContactProps {

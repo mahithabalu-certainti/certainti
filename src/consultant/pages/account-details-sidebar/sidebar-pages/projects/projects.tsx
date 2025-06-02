@@ -10,7 +10,7 @@ import { getProjectColumns } from './columns';
 import { useAccountProjects } from '../../../../services/project';
 import { PROJECT_CREATE, PROJECT_DETAILS } from '../../../../../routes';
 import { generatePath, useNavigate } from 'react-router-dom';
-import { ProjectList } from '../../../../types/project';
+import { ProjectList, ProjectListParams } from '../../../../types/project';
 import { ListTable } from '../../../../../components/table';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { checkPermission } from '../../../../../common-utils';
@@ -26,6 +26,8 @@ const BUTTON_STYLES = {
 interface ProjectsProps {
   accountDetails?: Record<string, any>;
   activeKey?: string;
+  setProjectParams: React.Dispatch<React.SetStateAction<ProjectListParams>>;
+  setExportType?: (type: 'resource' | 'cost' | 'skill' | 'project') => void;
 }
 
 const projectTabs: ResourceTabs[] = [
@@ -41,7 +43,11 @@ const projectTabs: ResourceTabs[] = [
   },
 ];
 
-const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
+const Projects: React.FC<ProjectsProps> = ({
+  accountDetails,
+  setExportType,
+  setProjectParams,
+}) => {
   const navigate = useNavigate();
   const [projectsTabs, setProjectsTabs] = useState(projectTabs);
   const [showFilter, setShowFilter] = useState<boolean>(false);
@@ -106,6 +112,19 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
       }))
     );
   }, [permission]);
+
+  useEffect(() => {
+    if (setExportType) {
+      setExportType('project');
+    }
+    setProjectParams({
+      sortBy: sortField,
+      sortOrder: sortOrder,
+      filters: appliedFilters,
+      fiscalYear: convertedFiscalYear,
+      accountNumber: accountDetails?.data?.accountDetails?.account_rid || '',
+    });
+  }, [sortField, sortOrder, appliedFilters, convertedFiscalYear]);
 
   const handleFilter = () => {
     setShowFilter(!showFilter);
@@ -189,7 +208,7 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
   return (
     <div className='w-full py-3 pl-3 pr-4'>
       <TabPanel
-        value='Overview'
+        value='projects'
         appliedFilters={appliedFilters}
         setAppliedFilters={setAppliedFilters}
         showFilter={showFilter}
