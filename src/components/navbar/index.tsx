@@ -24,7 +24,7 @@ import {
   // searchIcon,
   settingsIcon,
 } from '../../assets';
-import { AllModules, AllPermissions } from '../../common-service';
+import { AllPermissions } from '../../common-service';
 import { msalConfig, msalResetPasswordConfig } from '../../config/msalConfig';
 import { useAuthHook, useToast } from '../../hooks';
 import { RootState } from '../../store/store';
@@ -66,6 +66,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   const { fiscalYear, filters } = useSelector(
     (state: RootState) => state.account
   );
+  const isAdminEnable = useSelector(
+    (state: RootState) => state.permission.isAdminEnable
+  );
 
   // Permission Mangement
   const { permission } = useSelector((state: RootState) => state.permission);
@@ -75,13 +78,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   );
 
   const isFilterApplied = filters.length > 0;
-
-  // Permission Mangement
-  const { modules } = useSelector((state: RootState) => state.permission);
-  const isAdminEnable = checkPermission(modules, [
-    AllModules.USER_MANAGEMENT,
-    AllModules.PROFILE_MANAGEMENT,
-  ]);
 
   const [globalAnchorEl, setGlobalAnchorEl] =
     useState<HTMLButtonElement | null>(null);

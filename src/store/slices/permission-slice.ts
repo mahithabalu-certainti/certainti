@@ -5,6 +5,7 @@ const initialState: PermissionState = {
   menus: [],
   modules: [],
   permission: [],
+  isAdminEnable: false,
 };
 
 export const permissionSlice = createSlice({
@@ -14,12 +15,13 @@ export const permissionSlice = createSlice({
     updatePermissions(
       state,
       {
-        payload: { menus, modules, permission },
+        payload: { menus, modules, permission, isAdminEnable },
       }: PayloadAction<PermissionState>
     ) {
       state.menus = menus;
       state.modules = modules;
       state.permission = permission;
+      state.isAdminEnable = isAdminEnable;
     },
   },
 });
