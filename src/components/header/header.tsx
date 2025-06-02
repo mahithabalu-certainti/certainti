@@ -9,6 +9,7 @@ import {
 } from '../../assets';
 import { ActionsDropdown } from '../actions-dropdown';
 import TextButton from '../button/text-button';
+import { ActionsDropdownItem } from '../../common-utils';
 
 const DEFAULT_BUTTON_STYLES = {
   height: '24px',
@@ -21,10 +22,7 @@ interface HeaderProps {
   totalRecords?: number;
   icon?: string;
   iconBackgroundColor?: string;
-  actionItems?: Array<{
-    label: string;
-    onClick: () => void;
-  }>;
+  actionItems?: ActionsDropdownItem[];
   primaryButton?: {
     label: string;
     onClick: () => void;

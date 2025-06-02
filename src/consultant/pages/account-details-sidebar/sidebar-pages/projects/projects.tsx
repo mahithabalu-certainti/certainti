@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { projectHeaderIcon } from '../../../../../assets';
 import TabPanel from '../../components/tab';
 // import ListTable from '../../components/table';
@@ -12,6 +12,10 @@ import { PROJECT_CREATE, PROJECT_DETAILS } from '../../../../../routes';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { ProjectList } from '../../../../types/project';
 import { ListTable } from '../../../../../components/table';
+import { AccessRestricted } from '../../../../../components/account-restricted';
+import { checkPermission } from '../../../../../common-utils';
+import { AllModules, AllPermissions } from '../../../../../common-service';
+import { ResourceTabs } from '../resources/resources';
 
 const BUTTON_STYLES = {
   height: '24px !important',
@@ -24,8 +28,22 @@ interface ProjectsProps {
   activeKey?: string;
 }
 
+const projectTabs: ResourceTabs[] = [
+  {
+    id: AllPermissions.ACCOUNT_PROJECTS_OVERVIEW,
+    name: 'Overview',
+    hide: false,
+  },
+  {
+    id: AllPermissions.ACCOUNT_PROJECTS_TIMELINE,
+    name: 'Timeline',
+    hide: false,
+  },
+];
+
 const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
   const navigate = useNavigate();
+  const [projectsTabs, setProjectsTabs] = useState(projectTabs);
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [currentPage, setCurrentPage] = useState(0);
@@ -47,6 +65,48 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
     accountNumber: accountDetails?.data?.accountDetails?.account_rid || '',
   });
   const totalItems = data?.count || 0;
+
+  // Permission Mangement
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const projectIsEnable = checkPermission(modules, AllModules.PROJECTS);
+  const projectViewAllIsEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_PROJECTS_VIEW_ALL
+  );
+  const projectCreateIsEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_PROJECTS_CREATE
+  );
+  const projectDownloadIsEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_PROJECTS_DOWNLOAD
+  );
+  const projectEditIsEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_PROJECTS_EDIT
+  );
+  const projectDeleteIsEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_PROJECTS_DELETE
+  );
+  const projectOverviewIsEnable = !projectsTabs[0].hide;
+  useEffect(() => {
+    const isHide = (tab: ResourceTabs) => {
+      return (
+        !permission?.find((item) => item.name === tab.id)?.is_enabled || false
+      );
+    };
+    // updated sub tabs(Overview, Timeline)
+    setProjectsTabs(
+      projectTabs.map((tab) => ({
+        ...tab,
+        hide: isHide(tab),
+      }))
+    );
+  }, [permission]);
+
   const handleFilter = () => {
     setShowFilter(!showFilter);
   };
@@ -68,10 +128,12 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
     {
       label: 'Edit',
       onClick: (row: any) => handleEdit(row),
+      hide: !projectEditIsEnable,
     },
     {
       label: 'Delete',
       onClick: (row: any) => console.log('Delete', row),
+      hide: !projectDeleteIsEnable,
     },
     {
       label: 'View Summary',
@@ -93,12 +155,14 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
       variant: 'outlined' as const,
       onClick: () => handleCreateProject(),
       sx: { ...BUTTON_STYLES, width: '61px', minWidth: '61px' },
+      hide: !projectCreateIsEnable,
     },
     {
       label: 'Download',
       variant: 'outlined' as const,
       onClick: () => console.log('Download'),
       sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
+      hide: !projectDownloadIsEnable,
     },
   ];
 
@@ -120,47 +184,59 @@ const Projects: React.FC<ProjectsProps> = ({ accountDetails }) => {
 
   const projectColumns = getProjectColumns(handleProject);
 
+  if (!projectIsEnable) return <AccessRestricted />;
+
   return (
     <div className='w-full py-3 pl-3 pr-4'>
       <TabPanel
-        value={'projects'}
+        value='Overview'
         appliedFilters={appliedFilters}
         setAppliedFilters={setAppliedFilters}
         showFilter={showFilter}
-        filterVisibility={true}
+        filterVisibility={projectOverviewIsEnable}
         handleFilter={handleFilter}
         setCurrentPage={setCurrentPage}
+        resourceTab={projectsTabs}
       />
-      <ResourceTableHeader
-        value={'projects'}
-        title='Projects'
-        titleIcon={<img src={projectHeaderIcon} alt='project-header-icon' />}
-        headerButtons={headerButtons}
-      />
-      <div className='border border-[#CBD6E2]'>
-        <ListTable
-          data={data?.projects as any}
-          columns={projectColumns}
-          getRowId={getRowId}
-          hoverHighlight={false}
-          stickyHeader={true}
-          stickyColumnsCount={1}
-          actionWidth={60}
-          actionDisplayMode='dropdown'
-          actionMenuItems={actionMenuItems}
-          loading={isLoading}
-          error={error ? 'Failed to load projects' : undefined}
-          rowsPerPageOptions={[25, 50, 100]}
-          rowsPerPage={rowsPerPage}
-          currentPage={(currentPage ?? 1) - 1}
-          totalItems={totalItems}
-          onPageChange={setCurrentPage}
-          onRowsPerPageChange={setRowsPerPage}
-          sortBy={sortField}
-          sortOrder={sortOrder}
-          onSort={handleSort}
-        />
-      </div>
+      {projectOverviewIsEnable &&
+        (projectViewAllIsEnable ? (
+          <>
+            <ResourceTableHeader
+              value={'projects'}
+              title='Projects'
+              titleIcon={
+                <img src={projectHeaderIcon} alt='project-header-icon' />
+              }
+              headerButtons={headerButtons}
+            />
+            <div className='border border-[#CBD6E2]'>
+              <ListTable
+                data={data?.projects as any}
+                columns={projectColumns}
+                getRowId={getRowId}
+                hoverHighlight={false}
+                stickyHeader={true}
+                stickyColumnsCount={1}
+                actionWidth={60}
+                actionDisplayMode='dropdown'
+                actionMenuItems={actionMenuItems}
+                loading={isLoading}
+                error={error ? 'Failed to load projects' : undefined}
+                rowsPerPageOptions={[25, 50, 100]}
+                rowsPerPage={rowsPerPage}
+                currentPage={(currentPage ?? 1) - 1}
+                totalItems={totalItems}
+                onPageChange={setCurrentPage}
+                onRowsPerPageChange={setRowsPerPage}
+                sortBy={sortField}
+                sortOrder={sortOrder}
+                onSort={handleSort}
+              />
+            </div>
+          </>
+        ) : (
+          <AccessRestricted />
+        ))}
     </div>
   );
 };

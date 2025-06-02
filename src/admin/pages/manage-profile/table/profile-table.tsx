@@ -13,6 +13,8 @@ import { deleteIcon, editIcon } from '../../../../assets';
 interface IUserTableProps {
   appliedFilters: Record<string, any>;
   tableParams: UserListParams;
+  isProfileEditEnable?: boolean;
+  isProfileDeleteEnable?: boolean;
   setTableParams: React.Dispatch<React.SetStateAction<UserListParams>>;
   onSelectionChange: (selectedIds: string[]) => void;
 }
@@ -20,6 +22,8 @@ interface IUserTableProps {
 export const ProfileTable: React.FC<IUserTableProps> = ({
   appliedFilters,
   tableParams,
+  isProfileEditEnable,
+  isProfileDeleteEnable,
   setTableParams,
   onSelectionChange,
 }) => {
@@ -95,11 +99,13 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
         filter:
           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
       },
+      hide: !isProfileEditEnable,
     },
     {
       label: 'Delete',
       onClick: (row: ManageProfileList) => handleDelete(row),
       icon: deleteIcon,
+      hide: !isProfileDeleteEnable,
     },
   ];
 

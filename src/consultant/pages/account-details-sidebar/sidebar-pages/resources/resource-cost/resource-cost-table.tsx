@@ -20,6 +20,8 @@ interface ResourceCostTableProps {
   setCostOrder: (costOrder: 'asc' | 'desc') => void;
   costorderBy: string;
   setCostorderBy: (field: keyof ResourceCostList) => void;
+  isResourceCostDeleteEnable?: boolean;
+  isResourceCostEditEnable?: boolean;
 }
 
 const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
@@ -33,17 +35,15 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   setCostOrder,
   costorderBy,
   setCostorderBy,
+  isResourceCostDeleteEnable,
+  isResourceCostEditEnable,
 }) => {
   const navigate = useNavigate();
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
   const accountInActive =
     accountDetails?.data?.accountById?.status === 'inactive';
   const apiOrder = costOrder.toUpperCase() as 'ASC' | 'DESC';
-  const {
-    data: costList,
-    isLoading,
-    error,
-  } = useResourceCost({
+  const { data: costList, isLoading, error } = useResourceCost({
     page: currentPage + 1,
     limit: rowsPerPage,
     sortBy: costorderBy,
@@ -81,11 +81,13 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       label: 'Edit',
       onClick: handleEdit,
       disabled: accountInActive,
+      hide: !isResourceCostEditEnable
     },
     {
       label: 'Delete',
       onClick: () => console.log('Delete'),
       disabled: accountInActive,
+      hide: !isResourceCostDeleteEnable,
     },
   ];
 

@@ -5,3 +5,5 @@ export enum Language {
 export interface ILanguageState {
   currentLanguage: Language;
 }
+
+export const defaultlang = Language.ENGLISH;

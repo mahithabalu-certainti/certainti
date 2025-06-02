@@ -15,4 +15,18 @@ export const theme = createTheme({
       main: '#fb2c36', // red orange
     },
   },
+  components: {
+    MuiTooltip: {
+      styleOverrides: {
+        tooltip: {
+          backgroundColor: 'white',
+          color: 'black',
+          boxShadow: '0px 0px 10px rgba(0, 0, 0, .4)',
+        },
+        arrow: {
+          color: 'white',
+        },
+      },
+    },
+  },
 });

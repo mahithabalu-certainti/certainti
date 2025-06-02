@@ -25,6 +25,8 @@ interface RenderRowsProps {
   handleDelete: (account: Account) => void;
   renderChildRows: (parentAccount: string | null) => React.ReactNode;
   handleAccountNameClick: (account: Account) => void;
+  isAccountEditEnable?: boolean;
+  isAccountDeleteEnable?: boolean;
 }
 
 interface RenderChildRowsProps {
@@ -38,6 +40,8 @@ interface RenderChildRowsProps {
   openRows: Set<string>;
   openChildRows: Set<string>;
   handleChildRowClick: (accountId: string) => void;
+  isAccountEditEnable?: boolean;
+  isAccountDeleteEnable?: boolean;
 }
 
 export const renderRows = ({
@@ -50,6 +54,8 @@ export const renderRows = ({
   handleDelete,
   renderChildRows,
   handleAccountNameClick,
+  isAccountEditEnable,
+  isAccountDeleteEnable,
 }: RenderRowsProps) => {
   const rows = accounts?.filter((account) => !account?.parentAccount);
   return rows?.map((account) => {
@@ -298,19 +304,27 @@ export const renderRows = ({
               {account.accountNumber || '-'}
             </TruncateWithTooltip>
           </TableCell>
-          <TableCell
-            sx={{
-              width: '60px',
-              minWidth: '60px',
-              maxWidth: '60px',
-              padding: '0px !important',
-            }}
-          >
-            <ActionButton
-              onEdit={() => handleEdit(account)}
-              onDelete={() => handleDelete(account)}
-            />
-          </TableCell>
+          {(isAccountEditEnable || isAccountDeleteEnable) && (
+            <TableCell
+              sx={{
+                width: '60px',
+                minWidth: '60px',
+                maxWidth: '60px',
+                padding: '0px !important',
+              }}
+            >
+              <ActionButton
+                onEdit={() => handleEdit(account)}
+                onDelete={() => handleDelete(account)}
+                editCustomOption={{
+                  hide: !isAccountEditEnable,
+                }}
+                deleteCustomOption={{
+                  hide: !isAccountDeleteEnable,
+                }}
+              />
+            </TableCell>
+          )}
         </TableRow>
         {openRows.has(account.accountName) &&
           renderChildRows(account.accountName)}
@@ -341,6 +355,8 @@ export const renderChildRows = ({
   // openRows,
   openChildRows,
   handleChildRowClick,
+  isAccountEditEnable,
+  isAccountDeleteEnable
 }: RenderChildRowsProps) => {
   return accounts
     ?.filter((account) => account.parentAccount === parentAccount)
@@ -590,6 +606,12 @@ export const renderChildRows = ({
               <ActionButton
                 onEdit={() => handleEdit(account)}
                 onDelete={() => handleDelete(account)}
+                editCustomOption={{
+                  hide: !isAccountEditEnable,
+                }}
+                deleteCustomOption={{
+                  hide: !isAccountDeleteEnable,
+                }}
               />
             </TableCell>
           </TableRow>

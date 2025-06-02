@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   useLocation,
   useParams,
@@ -28,9 +27,13 @@ import { transformAccountData } from './utils';
 import { CircularProgress } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
-import { AccountState } from '../../../store/slices/account-slice';
 import { ExportModule } from '../../types/resource-skill';
 import { exportData } from '../../services/resource-details/resource-details-service';
+import { ActionsDropdownItem, checkPermission } from '../../../common-utils';
+import { AllModules, AllPermissions } from '../../../common-service';
+import { AccessRestricted } from '../../../components/account-restricted';
+import { AccountState } from '../../../store/type';
+import { MenuItem } from '../../types';
 
 export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
@@ -39,13 +42,32 @@ export const AccountDetails = () => {
   const [accountDetails, setAccountDetails] = useState<any>(null);
   const [accountDetailsForEdit, setAccountDetailsForEdit] = useState<any>(null);
   const { accountid } = useParams();
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
   const { filters, fiscalYear } = useSelector<RootState, AccountState>(
     (state: RootState) => state.account
   );
+
+  // Permission Mangement
+  const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
+  const isAccountDetailsEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_DETAILS_VIEW
+  );
+  const isAccountEditEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_EDIT
+  );
+  const isAccountExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_EXPORT
+  );
+
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
-  const defaultTab = searchParams.get('list') || 'financial';
-  const [activeKey, setActiveKey] = useState(defaultTab);
+  const defaultTab = searchParams.get('list');
+  const [activeKey, setActiveKey] = useState(defaultTab as string);
 
   const [tableParams, setTableParams] = useState<ExportModule>({
     sortBy: 'created_datetime',
@@ -119,7 +141,7 @@ export const AccountDetails = () => {
     }
   }, [data]);
 
-  const menuItems = [
+  const menuItems: ActionsDropdownItem[] = [
     {
       label: 'Manage user',
       onClick: () => console.log('manage user clicked'),
@@ -127,6 +149,7 @@ export const AccountDetails = () => {
     {
       label: 'Export',
       onClick: () => handleExport(exportType),
+      hide: !isAccountExportEnable,
     },
   ];
 
@@ -162,6 +185,7 @@ export const AccountDetails = () => {
             accountDetails={{ ...data?.data }}
             isLoading={isLoading}
             isError={isError}
+            isAccountEditEnable={isAccountEditEnable}
           />
         );
       case 'resources':
@@ -170,6 +194,7 @@ export const AccountDetails = () => {
             accountDetails={{ ...data, activeKey: 'resources' }}
             setTableParams={setTableParams}
             setExportType={setExportType}
+            permission={permission}
           />
         );
       case 'attachments':
@@ -195,19 +220,69 @@ export const AccountDetails = () => {
 
   const disable = data?.data?.accountById?.is_parent;
 
-  const sideMenuItems = [
-    { name: 'Financial Highlights', key: 'financial', disabled: false },
-    { name: 'Details', key: 'details', disabled: false },
-    { name: 'Resources', key: 'resources', disabled: false },
-    { name: 'Projects', key: 'projects', disabled: disable },
-    { name: 'Cases', key: 'cases', disabled: false },
-    { name: 'Activities', key: 'activities', disabled: false },
-    { name: 'Notes', key: 'notes', disabled: false },
-    { name: 'Attachments', key: 'attachments', disabled: false },
-    { name: 'Checklist', key: 'checklist', disabled: false },
-    { name: 'Timesheet', key: 'timesheet', disabled: false },
-    { name: 'Imports', key: 'imports', disabled: false },
-  ];
+  const sideMenuItems = useMemo<MenuItem[]>(
+    () => [
+      {
+        name: 'Financial Highlights',
+        key: 'financial',
+        id: AllModules.FINANCIAL_HIGHLIGHTS,
+        disabled: false,
+      },
+      {
+        name: 'Details',
+        key: 'details',
+        id: AllModules.DETAILS,
+        disabled: false,
+      },
+      {
+        name: 'Resources',
+        key: 'resources',
+        id: AllModules.RESOURCES,
+        disabled: false,
+      },
+      {
+        name: 'Projects',
+        key: 'projects',
+        id: AllModules.PROJECTS,
+        disabled: disable,
+      },
+      { name: 'Cases', key: 'cases', id: AllModules.CASES, disabled: false },
+      {
+        name: 'Activities',
+        key: 'activities',
+        id: AllModules.ACTIVITIES,
+        disabled: false,
+      },
+      { name: 'Notes', key: 'notes', id: AllModules.NOTES, disabled: false },
+      {
+        name: 'Attachments',
+        key: 'attachments',
+        id: AllModules.ATTACHMENTS,
+        disabled: false,
+      },
+      {
+        name: 'Checklist',
+        key: 'checklist',
+        id: AllModules.CHECKLISTS,
+        disabled: false,
+      },
+      {
+        name: 'Timesheet',
+        key: 'timesheet',
+        id: AllModules.TIMESHEETS,
+        disabled: false,
+      },
+      {
+        name: 'Imports',
+        key: 'imports',
+        id: AllModules.IMPORTS,
+        disabled: false,
+      },
+    ],
+    [disable]
+  ); // Only recalculate when 'disable' changes
+
+  if (!accountIsEnable || !isAccountDetailsEnable) return <AccessRestricted />;
 
   return (
     <div className='flex flex-col'>
@@ -221,10 +296,14 @@ export const AccountDetails = () => {
           title={data?.data?.accountById?.account_name || 'Account Title'}
           totalRecords={5}
           actionItems={menuItems}
-          primaryButton={{
-            label: 'Edit',
-            onClick: handleEditAccount,
-          }}
+          primaryButton={
+            isAccountEditEnable
+              ? {
+                  label: 'Edit',
+                  onClick: handleEditAccount,
+                }
+              : undefined
+          }
           onActionsClick={handleActionsClick}
           onSettingsClick={handleSettingsClick}
         />

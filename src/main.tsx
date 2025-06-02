@@ -10,6 +10,8 @@ import { App } from './App.tsx';
 import { msalConfig } from './config/msalConfig.ts';
 import { theme } from './config/theme.ts';
 import { store } from './store/store.ts';
+import { PersistGate } from 'redux-persist/integration/react';
+import { persistor } from './store/store';
 
 import './config/i18n.ts';
 import './index.css';
@@ -20,6 +22,7 @@ const queryClient = new QueryClient();
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>
+    <PersistGate loading={null} persistor={persistor}>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <ThemeProvider theme={theme}>
@@ -27,6 +30,7 @@ createRoot(document.getElementById('root')!).render(
           </ThemeProvider>
         </BrowserRouter>
       </QueryClientProvider>
+      </PersistGate>
     </Provider>
   </StrictMode>
 );

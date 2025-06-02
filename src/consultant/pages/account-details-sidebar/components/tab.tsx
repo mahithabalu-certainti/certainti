@@ -15,6 +15,7 @@ import {
   useFetchResourceSkillType,
 } from '../../../services/resource-skill/resource-skill-service';
 import { SkillSubtype, SkillType } from '../../../types/resource';
+import { ResourceTabs } from '../sidebar-pages/resources/resources';
 import { clearFilters } from './filter/utils';
 import { projectFilterFields } from '../sidebar-pages/projects/utils';
 import { useGetAllCountries } from '../../../../common-service';
@@ -22,6 +23,7 @@ import { useLocation } from 'react-router-dom';
 // import { useGetAllCountries } from '../../../../common-service';
 // import { SelectOption } from '../../../types';
 interface TabProps {
+  resourceTab?: ResourceTabs[];
   filterVisibility: boolean;
   handleFilter: () => void;
   value: string;
@@ -31,6 +33,7 @@ interface TabProps {
   setAppliedFilters: (filters: Record<string, any>) => void;
 }
 const TabPanel: React.FC<TabProps> = ({
+  resourceTab,
   appliedFilters,
   handleFilter,
   setAppliedFilters,
@@ -39,8 +42,8 @@ const TabPanel: React.FC<TabProps> = ({
   filterVisibility,
   setCurrentPage,
 }) => {
+  const [tabValue, setTabValue] = useState('');
   const location = useLocation();
-  const [tabValue, setTabValue] = useState(0);
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
   const [currentSkillType, setCurrentSkillType] = useState({
     skill_type_rid: [] as string[],
@@ -56,7 +59,13 @@ const TabPanel: React.FC<TabProps> = ({
   >([]);
   const [, setSelectedSort] = useState('Accounts');
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+  useEffect(() => {
+    // assign default tab value
+    const activeTab = resourceTab?.find((tab) => !tab.hide)?.id;
+    setTabValue(activeTab as string);
+  }, [resourceTab]);
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
     setTabValue(newValue);
     setCurrentPage(0);
     setAppliedFilters({});
@@ -232,70 +241,60 @@ const TabPanel: React.FC<TabProps> = ({
   return (
     <Box className=' rounded-lg'>
       <Box className='flex justify-between items-center mb-2'>
-        <Tabs
-          value={tabValue}
-          onChange={handleTabChange}
-          sx={{
-            border: '1px solid #CBD6E27D',
-            padding: '3px',
-            minHeight: '32px',
-            '& .MuiTabs-indicator': {
-              display: 'none',
-              '& .MuiTabs-root': {
-                borderBottom: 'none',
-              },
-            },
-          }}
-        >
-          <Tab
-            label='Overview'
+        {tabValue && (
+          <Tabs
+            value={tabValue}
+            onChange={handleTabChange}
             sx={{
-              textTransform: 'none',
-              fontSize: '14px',
-              fontWeight: tabValue === 0 ? '500' : '400',
-              color: '#2D3E4F',
-              backgroundColor: tabValue === 0 ? '#0BBFB70D' : '',
-              margin: '0',
-              border:
-                tabValue === 0 ? '1px solid #0BBFB7' : '1px solid transparent',
-              width: '120px',
-              height: '24px',
-              borderRadius: '4px',
-              minHeight: '24px',
-              padding: '8px 16px',
-              '&:hover': {
-                color: tabValue !== 0 ? '#0BBFB7' : undefined,
+              border: '1px solid #CBD6E27D',
+              padding: '3px',
+              minHeight: '32px',
+              '& .MuiTabs-indicator': {
+                display: 'none',
+                '& .MuiTabs-root': {
+                  borderBottom: 'none',
+                },
               },
             }}
-          />
-          <Tab
-            label='Timeline'
-            sx={{
-              textTransform: 'none',
-              fontSize: '14px',
-              fontWeight: tabValue === 1 ? '500' : '400',
-              color: '#2D3E4F',
-              backgroundColor: tabValue === 1 ? '#0BBFB70D' : '',
-              margin: '0',
-              border:
-                tabValue === 1 ? '1px solid #0BBFB7' : '1px solid transparent',
-              width: '120px',
-              height: '24px',
-              borderRadius: '4px',
-              minHeight: '24px',
-              padding: '8px 16px',
-              '&:hover': {
-                color: tabValue !== 1 ? '#0BBFB7' : undefined,
-              },
-            }}
-          />
-        </Tabs>
+          >
+            {resourceTab?.map((it, i) => {
+              if (it.hide) return null;
+              const isActive = tabValue === it.id;
+              return (
+                <Tab
+                  key={i}
+                  label={it.name}
+                  value={it.id}
+                  sx={{
+                    textTransform: 'none',
+                    fontSize: '14px',
+                    fontWeight: isActive ? '500' : '400',
+                    color: '#2D3E4F',
+                    backgroundColor: isActive ? '#0BBFB70D' : '',
+                    margin: '0',
+                    border: isActive
+                      ? '1px solid #0BBFB7'
+                      : '1px solid transparent',
+                    width: '120px',
+                    height: '24px',
+                    borderRadius: '4px',
+                    minHeight: '24px',
+                    padding: '8px 16px',
+                    '&:hover': {
+                      color: isActive ? '#0BBFB7' : undefined,
+                    },
+                  }}
+                />
+              );
+            })}
+          </Tabs>
+        )}
 
         <Box className='flex items-center space-x-2'>
           {/* <ActionsDropdown actions={MENU_ITEMS} /> */}
 
-          <Box className='relative'>
-            {filterVisibility && (
+          {filterVisibility && value !== 'details' && (
+            <Box className='relative'>
               <Box
                 component='button'
                 onClick={handleFilterModal}
@@ -312,8 +311,6 @@ const TabPanel: React.FC<TabProps> = ({
                   </div>
                 )}
               </Box>
-            )}
-            {value !== 'details' && (
               <Filter
                 value={value}
                 isOpen={isFilterOpen && showFilter}
@@ -327,10 +324,10 @@ const TabPanel: React.FC<TabProps> = ({
                 setCurrentPage={setCurrentPage}
                 mode={'date'}
               />
-            )}
-          </Box>
+            </Box>
+          )}
           <ActionImportDropdown
-            variant={'filled'}
+            variant='filled'
             actions={menuActivity}
             label='Add Activity'
             sx={{

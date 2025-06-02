@@ -9,6 +9,7 @@ interface ActionItem {
   label: string;
   onClick: () => void;
   disabled?: boolean;
+  hide?: boolean;
 }
 
 interface ActionButtonProps {
@@ -69,7 +70,9 @@ export default function TableActionButton({ actions }: ActionButtonProps) {
           },
         }}
       >
-        {actions.map((item) => (
+        {actions.map((item) => {
+          if(item.hide) return null;
+          return(
           <MenuItem
             key={item.label}
             onClick={() => {
@@ -99,7 +102,7 @@ export default function TableActionButton({ actions }: ActionButtonProps) {
               {item.label}
             </ListItemText>
           </MenuItem>
-        ))}
+        )})}
       </Menu>
     </div>
   );

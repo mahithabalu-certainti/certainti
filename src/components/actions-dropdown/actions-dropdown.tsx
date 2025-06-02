@@ -2,11 +2,7 @@ import { Box, Button, Menu, MenuItem } from '@mui/material';
 import { styled, SxProps, Theme } from '@mui/material/styles';
 import React, { useState } from 'react';
 import { arrowUpIcon } from '../../assets';
-
-interface ActionsDropdownItem {
-  label: string;
-  onClick: () => void;
-}
+import { ActionsDropdownItem } from '../../common-utils';
 
 interface ActionsDropdownProps {
   actions: ActionsDropdownItem[];
@@ -46,6 +42,11 @@ const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
     setAnchorEl(null);
   };
 
+  // Check if all actions are hidden then hide action button
+  if (actions.every((action) => action.hide)) {
+    return null;
+  }
+
   return (
     <Box>
       <StyledButton
@@ -68,23 +69,26 @@ const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
         Actions
       </StyledButton>
       <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
-        {actions.map((action, index) => (
-          <MenuItem
-            key={index}
-            onClick={() => {
-              handleClose();
-              action.onClick();
-            }}
-            sx={{
-              fontSize: '13px',
-              fontWeight: 400,
-              color: '#2D3E4F',
-              py: '2px',
-            }}
-          >
-            {action.label}
-          </MenuItem>
-        ))}
+        {actions.map((action, index) => {
+          if (action.hide) return null;
+          return (
+            <MenuItem
+              key={index}
+              onClick={() => {
+                handleClose();
+                action.onClick();
+              }}
+              sx={{
+                fontSize: '13px',
+                fontWeight: 400,
+                color: '#2D3E4F',
+                py: '2px',
+              }}
+            >
+              {action.label}
+            </MenuItem>
+          );
+        })}
       </Menu>
     </Box>
   );

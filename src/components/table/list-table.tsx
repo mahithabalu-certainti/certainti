@@ -83,6 +83,8 @@ const ListTable = <T extends RowData>({
     ? data
     : data.slice(currentPage * rowsPerPage, (currentPage + 1) * rowsPerPage);
 
+  const isAvailableAction = actionMenuItems.some((it) => !it.hide);
+
   return (
     <>
       <TableContainer sx={tableStyle}>
@@ -190,7 +192,7 @@ const ListTable = <T extends RowData>({
                 )
               )}
 
-              {actionMenuItems?.length > 0 && (
+              {actionMenuItems?.length > 0 && isAvailableAction && (
                 <TableCell
                   sx={{
                     width: actionWidth,
@@ -366,60 +368,65 @@ const ListTable = <T extends RowData>({
                     })}
 
                     {/* Action buttons */}
-                    {actionMenuItems && actionMenuItems.length > 0 && (
-                      <TableCell
-                        sx={{
-                          padding: '0px !important',
-                          whiteSpace: 'nowrap',
-                          width: actionWidth,
-                          minWidth: actionWidth,
-                          maxWidth: actionWidth,
-                          height: '32px !important',
-                          minHeight: '32px !important',
-                          maxHeight: '32px !important',
-                        }}
-                      >
-                        {actionDisplayMode === 'icon' ? (
-                          <Box className='w-full inline-flex items-center justify-center gap-2'>
-                            {actionMenuItems.map((item, index) => (
-                              <Tooltip
-                                key={index}
-                                title={`Click to ${item.label.toLowerCase()}`}
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      backgroundColor: '#fff',
-                                      color: 'rgba(0, 0, 0, 0.87)',
-                                      boxShadow: 2,
-                                      borderRadius: '4px',
-                                    },
-                                  },
-                                }}
-                              >
-                                <IconButton
-                                  size='small'
-                                  onClick={() => item.onClick(row)}
-                                >
-                                  <img
-                                    src={item.icon?.toString()}
-                                    alt='actionIcon'
-                                    className='w-4 h-4'
-                                    style={item.iconStyle}
-                                  />
-                                </IconButton>
-                              </Tooltip>
-                            ))}
-                          </Box>
-                        ) : (
-                          <TableActionButton
-                            actions={actionMenuItems.map((item) => ({
-                              ...item,
-                              onClick: () => item.onClick(row),
-                            }))}
-                          />
-                        )}
-                      </TableCell>
-                    )}
+                    {actionMenuItems &&
+                      actionMenuItems.length > 0 &&
+                      isAvailableAction && (
+                        <TableCell
+                          sx={{
+                            padding: '0px !important',
+                            whiteSpace: 'nowrap',
+                            width: actionWidth,
+                            minWidth: actionWidth,
+                            maxWidth: actionWidth,
+                            height: '32px !important',
+                            minHeight: '32px !important',
+                            maxHeight: '32px !important',
+                          }}
+                        >
+                          {actionDisplayMode === 'icon' ? (
+                            <Box className='w-full inline-flex items-center justify-center gap-2'>
+                              {actionMenuItems.map((item, index) => {
+                                if (item.hide) return null;
+                                return (
+                                  <Tooltip
+                                    key={index}
+                                    title={`Click to ${item.label.toLowerCase()}`}
+                                    slotProps={{
+                                      tooltip: {
+                                        sx: {
+                                          backgroundColor: '#fff',
+                                          color: 'rgba(0, 0, 0, 0.87)',
+                                          boxShadow: 2,
+                                          borderRadius: '4px',
+                                        },
+                                      },
+                                    }}
+                                  >
+                                    <IconButton
+                                      size='small'
+                                      onClick={() => item.onClick(row)}
+                                    >
+                                      <img
+                                        src={item.icon?.toString()}
+                                        alt='actionIcon'
+                                        className='w-4 h-4'
+                                        style={item.iconStyle}
+                                      />
+                                    </IconButton>
+                                  </Tooltip>
+                                );
+                              })}
+                            </Box>
+                          ) : (
+                            <TableActionButton
+                              actions={actionMenuItems.map((item) => ({
+                                ...item,
+                                onClick: () => item.onClick(row),
+                              }))}
+                            />
+                          )}
+                        </TableCell>
+                      )}
                   </TableRow>
                 );
               })}

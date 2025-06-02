@@ -10,6 +10,11 @@ import { UserTable } from '../table/user-table';
 import { getUserFilterFields } from './helpers';
 import { exportUserList, useManageUserProfile } from '../../../service';
 import { UserListParams } from '../../../types/manage-user';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { checkPermission } from '../../../../common-utils';
+import { AllModules, AllPermissions } from '../../../../common-service';
+import { AccessRestricted } from '../../../../components/account-restricted';
 import {
   formatFilterForApi,
   getStoredFilters,
@@ -32,6 +37,60 @@ const UserList: React.FC = () => {
     sortBy: 'createdAt',
     sortOrder: 'DESC',
   });
+
+  // Permission Mangement
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const userIsEnable = checkPermission(modules, AllModules.USER_MANAGEMENT);
+  const isUserCreateEnable = checkPermission(
+    permission,
+    AllPermissions.USER_CREATE
+  );
+  const isUserEditEnable = checkPermission(
+    permission,
+    AllPermissions.USER_EDIT_UPDATE
+  );
+  const isUserDeleteEnable = checkPermission(
+    permission,
+    AllPermissions.USER_DELETE
+  );
+  const isUserViewEnable = checkPermission(
+    permission,
+    AllPermissions.USER_VIEW
+  );
+  const isUserViewAllEnable = checkPermission(
+    permission,
+    AllPermissions.USER_VIEW_ALL
+  );
+  const isUserSuspendEnable = checkPermission(
+    permission,
+    AllPermissions.USER_SUSPEND
+  );
+  const isUserResetPasswordEnable = checkPermission(
+    permission,
+    AllPermissions.USER_RESET_PASSWORD
+  );
+  const isUserExportEnable = checkPermission(
+    permission,
+    AllPermissions.USER_EXPORT
+  );
+  const isUserViewPermissionEnable = checkPermission(
+    permission,
+    AllPermissions.USER_VIEW_PERMISSION
+  );
+  const isUserAssignPermissionEnable = checkPermission(
+    permission,
+    AllPermissions.USER_ASSIGN_PERMISSION
+  );
+  
+  const userActionButtons = [
+    { label: 'Suspend User', width: '104px', hide: !isUserSuspendEnable },
+    { label: 'Reinstate User', width: '116px', hide: false },
+    { label: 'Reset Password', width: '118px', hide: !isUserResetPasswordEnable },
+    { label: 'Delete', width: '58px', hide: !isUserDeleteEnable },
+  ];
+
   const [selectedUserId, setSelectedUserId] = useState<string[]>([]);
   const { errorToast } = useToast();
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
@@ -46,18 +105,14 @@ const UserList: React.FC = () => {
   const isFilterOpen = Boolean(anchorEl);
   const filterId = isFilterOpen ? 'user-filter-popover' : undefined;
 
-  const userActionButtons = [
-    { label: 'Suspend User', width: '104px' },
-    { label: 'Reinstate User', width: '116px' },
-    { label: 'Reset Password', width: '118px' },
-    { label: 'Delete', width: '58px' },
-  ];
   const handleSelectionChange = (selectedIds: string[]) => {
     setSelectedUserId(selectedIds);
   };
+
   const MENU_ITEMS = [
     {
       label: 'Assign Permissions to User',
+      hide: !isUserAssignPermissionEnable,
       onClick: () => {
         if (selectedUserId.length === 1) {
           navigate(
@@ -73,10 +128,12 @@ const UserList: React.FC = () => {
     {
       label: 'View Permissions',
       onClick: () => console.log('View Permissions clicked'),
+      hide: !isUserViewPermissionEnable,
     },
     {
       label: 'Export',
       onClick: () => exportUserList(tableParams),
+      hide: !isUserExportEnable,
     },
   ];
 
@@ -119,6 +176,8 @@ const UserList: React.FC = () => {
     }
   };
 
+  if (!userIsEnable || !isUserViewAllEnable) return <AccessRestricted />;
+
   return (
     <div className='flex flex-col w-full h-full'>
       {/* Header Section */}
@@ -142,16 +201,18 @@ const UserList: React.FC = () => {
         </div>
         <div className='flex gap-3 justify-center items-center'>
           <ActionsDropdown actions={MENU_ITEMS} />
-          <TextButton
-            label='Create User'
-            onClick={() => navigate(ADMIN_CREATE_USER)}
-            sx={{
-              ...BUTTON_STYLES,
-              width: '91px',
-              minWidth: '91px',
-              maxWidth: '91px',
-            }}
-          />
+          {isUserCreateEnable && (
+            <TextButton
+              label='Create User'
+              onClick={() => navigate(ADMIN_CREATE_USER)}
+              sx={{
+                ...BUTTON_STYLES,
+                width: '91px',
+                minWidth: '91px',
+                maxWidth: '91px',
+              }}
+            />
+          )}
         </div>
       </div>
 
@@ -188,19 +249,22 @@ const UserList: React.FC = () => {
               handleCloseFilter={handleCloseFilter}
             />
           </div>
-          {userActionButtons.map((button) => (
-            <TextButton
-              key={button.label}
-              label={button.label}
-              onClick={() => handleAction(button.label)}
-              sx={{
-                ...BUTTON_STYLES,
-                width: button.width,
-                minWidth: button.width,
-                maxWidth: button.width,
-              }}
-            />
-          ))}
+          {userActionButtons.map((button) => {
+            if (button.hide) return null;
+            return (
+              <TextButton
+                key={button.label}
+                label={button.label}
+                onClick={() => handleAction(button.label)}
+                sx={{
+                  ...BUTTON_STYLES,
+                  width: button.width,
+                  minWidth: button.width,
+                  maxWidth: button.width,
+                }}
+              />
+            );
+          })}
         </div>
       </div>
 
@@ -210,6 +274,8 @@ const UserList: React.FC = () => {
           appliedFilters={appliedFilters}
           tableParams={tableParams}
           setTableParams={setTableParams}
+          isUserEditEnable={isUserEditEnable}
+          isUserViewEnable={isUserViewEnable}
           onSelectionChange={handleSelectionChange}
         />
       </div>

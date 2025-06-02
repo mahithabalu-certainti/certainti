@@ -1,11 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { AlertColor } from '@mui/material';
-
-interface ToastState {
-  open: boolean;
-  message: string;
-  severity: AlertColor;
-}
+import { ToastState } from '../type';
 
 const initialState: ToastState = {
   open: false,
@@ -13,7 +8,7 @@ const initialState: ToastState = {
   severity: 'info',
 };
 
-const toastSlice = createSlice({
+export const toastSlice = createSlice({
   name: 'toast',
   initialState,
   reducers: {
@@ -30,4 +25,3 @@ const toastSlice = createSlice({
 });
 
 export const { showToast, hideToast } = toastSlice.actions;
-export default toastSlice.reducer;
