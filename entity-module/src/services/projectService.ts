@@ -37,6 +37,10 @@ export class ProjectService {
 
       const accountData = await this.schemaService.fetchAccountById(account_id);
 
+      if(accountData.status !== "active"){
+        throw new Error("Project creation failed: The selected account is inactive. Please choose an active account.");
+      }
+
       if (!accountData) {
         throw new Error("Error creating project: Invalid account ID");
       }
@@ -256,6 +260,10 @@ export class ProjectService {
       const { account_id } = projectData;
 
       const accountData = await this.schemaService.fetchAccountById(account_id);
+
+      if(accountData.status !== "active"){
+        throw new Error("Project creation failed: The selected account is inactive. Please choose an active account.");
+      }
 
       if (!accountData) {
         throw new Error("Invalid account ID.");
@@ -1312,7 +1320,6 @@ export class ProjectService {
         project_point_of_contact: projectPointOfContact,
       });
     } catch (err) {
-      console.log("Error addiing porjct smmary", err);
       throw err;
     }
   }
@@ -1391,7 +1398,6 @@ export class ProjectService {
         }
       );
     } catch (err) {
-      console.log("Error addiing porjct smmary", err);
       throw err;
     }
   }
@@ -1836,7 +1842,7 @@ export class ProjectService {
     };
   }
 
-  private normalizeDate(input: string): any | null {
+  normalizeDate(input: string): any | null {
     let parsed = moment.utc(input, "YYYY-MM-DD", true);
     if (!parsed.isValid()) throw new Error("Invalid date");
 
@@ -1844,7 +1850,7 @@ export class ProjectService {
     return startOfDay;
   }
 
-  private getFilterFields(
+  getFilterFields(
     isAllProject: boolean
   ): { clientField: string; dbField: string }[] {
     const projectFilterFields = [
@@ -1898,39 +1904,6 @@ export class ProjectService {
     return filterFields;
   }
 
-  private getNumericForBlendedRate(rateString: string): string | null {
-    if (rateString) {
-      // Extract numeric value only (including decimals)
-      const numericValue = rateString.match(/[\d.]+/);
-      if (numericValue) {
-        // Convert to Decimal for precision
-        const decimalValue = new Decimal(numericValue[0]);
-        const formattedValue = decimalValue.isInteger()
-          ? `${decimalValue.toFixed(0)} $/Hour`
-          : `${decimalValue.toFixed(2)} $/Hour`;
-
-        return formattedValue;
-      }
-    }
-    return null;
-  }
-
-  private getNumericRate(rateString: string): string | null {
-    if (rateString) {
-      // Extract numeric value only (including decimals)
-      const numericValue = rateString.match(/[\d.]+/);
-      if (numericValue) {
-        // Convert to Decimal for precision
-        const decimalValue = new Decimal(numericValue[0]);
-
-        // Format based on whole number or decimal
-        return decimalValue.isInteger()
-          ? decimalValue.toFixed(0)
-          : decimalValue.toString();
-      }
-    }
-    return null;
-  }
   /**
    * Fetches a list of project classification from the database.
    *
@@ -1967,7 +1940,6 @@ export class ProjectService {
         },
       };
     } catch (err) {
-      console.log(err);
       return this.throwServiceError(err as Error);
     }
   }
@@ -1978,7 +1950,7 @@ export class ProjectService {
    * @param {Error} err - The caught error.
    * @returns {object} - Standardized error response object.
    */
-  private throwServiceError(err: Error): {
+  throwServiceError(err: Error): {
     statusCode: number;
     message: string;
     errorMessage: string;
