@@ -675,7 +675,9 @@ async getAllUserPermission(userId: string, profileId: string) {
     // Menus
     const menuAccess = await ProfileMenuAccess.findAll({
       where: { profile_id: profileId},
-      include: [{ model: Menu, as: "menu" }]
+      include: [{ model: Menu, as: "menu" }],
+      order: [[{ model: Menu, as: "menu" }, "menu_desc", "ASC"]],
+      
     });
     console.log(`After menuAccess retrieve: ${new Date(Date.now()).toISOString()}`);
 
@@ -698,7 +700,8 @@ async getAllUserPermission(userId: string, profileId: string) {
     // Modules
     const moduleAccess = await ProfileModuleAccess.findAll({
       where: { profile_id: profileId},
-      include: [{ model: MenuModule, as: "menu_module" }]
+      include: [{ model: MenuModule, as: "menu_module" }],
+       order: [[{ model: MenuModule, as: "menu_module" }, "module_name", "ASC"]],
     });
     console.log(`After module access retrieve: ${new Date(Date.now()).toISOString()}`);
 
@@ -722,7 +725,8 @@ async getAllUserPermission(userId: string, profileId: string) {
     const permissionAccess = await ProfilePermissionAccess.findAll({
       where: { profile_id: profileId},
       include: [{ model: ModulePermission, as: "module_permission" }],
-      indexHints: [{ type: IndexHints.USE, values: ['idx_profile_permission_access_profile_id'] }]
+      indexHints: [{ type: IndexHints.USE, values: ['idx_profile_permission_access_profile_id'] }],
+       order: [[{ model: ModulePermission, as: "module_permission" }, "permission_desc", "ASC"]]
     });
     console.log(`After permission access retrieve: ${new Date(Date.now()).toISOString()}`);
 
@@ -746,7 +750,8 @@ async getAllUserPermission(userId: string, profileId: string) {
     const fieldAccess = await ProfileFieldsAccess.findAll({
       where: { profile_id: profileId },
       include: [{ model: PermissionField, as: "permission_field" }],
-      indexHints: [{ type: IndexHints.USE, values: ['idx_profile_fields_access_profile_id'] }]
+      indexHints: [{ type: IndexHints.USE, values: ['idx_profile_fields_access_profile_id'] }],
+       order: [[{ model: PermissionField, as: "permission_field" }, "field_desc", "ASC"]],
     });
     console.log(`After fieldAccess retrieve: ${new Date(Date.now()).toISOString()}`);
 
