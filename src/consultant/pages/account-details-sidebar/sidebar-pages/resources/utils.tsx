@@ -10,11 +10,24 @@ import {
   statusOptions,
 } from '../../components/filter/filterType';
 
+const requiredFieldFilterOptionsForText: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not Equals', value: 'not_equals' },
+  { option: 'Contains', value: 'contains' },
+];
+
+const requiredFieldFilterOptionsForEnum: { option: string; value: string }[] = [
+
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not Equals', value: 'not_equals' },
+  { option: 'In', value: 'in' },
+]
+
 export const getCostFilterFields = (currencyOptions: { option: string; value: string }[]): FieldConfig[] => [
-  { name: 'Resource code', value: 'resource_code', type: 'textCostAndSkill' },
-  { name: 'Fiscal Year', value: 'fiscal_year', type: 'enum', options: fiscalYears },
-  { name: 'Name', value: 'resource_name', type: 'textCostAndSkill' },
-  { name: 'Resource Type', value: 'resource_type', type: 'enum', options: resourceTypeOptions, },
+  // { name: 'Resource code', value: 'resource_code', type: 'textCostAndSkill', required: true, filterOptions: requiredFieldFilterOptionsForText },
+  { name: 'Fiscal Year', value: 'fiscal_year', type: 'enum', options: fiscalYears, required: true, filterOptions: requiredFieldFilterOptionsForEnum },
+  // { name: 'Name', value: 'resource_name', type: 'textCostAndSkill' },
+  // { name: 'Resource Type', value: 'resource_type', type: 'enum', required: true, options: resourceTypeOptions, filterOptions: requiredFieldFilterOptionsForEnum },
   { name: 'Effective From', value: 'effective_date', type: 'date' },
   { name: 'End Date', value: 'end_date', type: 'date' },
   { name: 'Currency', value: 'currency', type: 'currencySelect', options: currencyOptions },
@@ -24,9 +37,9 @@ export const getCostFilterFields = (currencyOptions: { option: string; value: st
   { name: 'Weekly', value: 'weekly', type: 'number' },
   { name: 'Daily', value: 'daily', type: 'number' },
   { name: 'Hourly', value: 'hourly', type: 'number' },
-  { name: 'Org Name', value: 'resource_orgname', type: 'textCostAndSkill' },
-  { name: 'Designation', value: 'resource_designation', type: 'textCostAndSkill' },
-  { name: 'Role', value: 'resource_role', type: 'textCostAndSkill' },
+  // { name: 'Org Name', value: 'resource_orgname', type: 'textCostAndSkill' },
+  // { name: 'Designation', value: 'resource_designation', type: 'textCostAndSkill' },
+  // { name: 'Role', value: 'resource_role', type: 'textCostAndSkill' },
   { name: 'Comments', value: 'comments', type: 'textCostAndSkill' },
   { name: 'Cost ID', value: 'r_number', type: 'textCostAndSkill' },
   // { name: 'Semi-Annual', value: 'semi_annual', type: 'number' },
@@ -36,21 +49,25 @@ export const getSkillFilterFields = (
   skillSubTypeOptions: any[]
 ): FieldConfig[] => {
   return [
-    { name: 'Resource code', value: 'resource_code', type: 'textCostAndSkill' },
-    { name: 'Name', value: 'resource_name', type: 'textCostAndSkill' },
-    { name: 'Resource Type', value: 'resource_type', type: 'enum', options: resourceTypeOptions },
+    // { name: 'Resource code', value: 'resource_code', type: 'textCostAndSkill', required: true, filterOptions: requiredFieldFilterOptionsForText },
+    // { name: 'Name', value: 'resource_name', type: 'textCostAndSkill' },
+    // { name: 'Resource Type', value: 'resource_type', type: 'enum', required: true, options: resourceTypeOptions, filterOptions: requiredFieldFilterOptionsForEnum },
     { name: 'Start Date', value: 'start_date', type: 'date' },
     {
       name: 'Skill Type',
       value: 'skill_type_rid',
       type: 'enum',
+      required: true,
       options: skillTypeOptions,
+      filterOptions: requiredFieldFilterOptionsForEnum
     },
     {
       name: 'Skill SubType',
       value: 'skill_subtype_rid',
       type: 'enum',
+      required: true,
       options: skillSubTypeOptions,
+      filterOptions: requiredFieldFilterOptionsForEnum,
       dependsOn: 'skill_type_rid', // This indicates it depends on skill_type
     },
     {
@@ -59,27 +76,29 @@ export const getSkillFilterFields = (
       type: 'enum',
       options: enumValueOptions,
     },
-    { name: 'Skill Details', value: 'skill_details', type: 'textCostAndSkill' },
-    { name: 'Org Name', value: 'resource_orgname', type: 'textCostAndSkill' },
-    { name: 'Designation', value: 'resource_designation', type: 'textCostAndSkill' },
-    { name: 'Role', value: 'resource_role', type: 'textCostAndSkill' },
+    { name: 'Skill Details', value: 'skill_details', type: 'textCostAndSkill', required: true, filterOptions: requiredFieldFilterOptionsForText },
+    // { name: 'Org Name', value: 'resource_orgname', type: 'textCostAndSkill' },
+    // { name: 'Designation', value: 'resource_designation', type: 'textCostAndSkill' },
+    // { name: 'Role', value: 'resource_role', type: 'textCostAndSkill' },
     { name: 'Years of Experience', value: 'resource_total_experience', type: 'number' },
     { name: 'Skill ID', value: 'r_number', type: 'textCostAndSkill' },
   ];
 };
 export const resourceFilterFields = (country: { option: string; value: string }[], region: { option: string; value: string }[]): FieldConfig[] => [
-  { name: 'Resource Code', value: 'resource_code', type: 'text' },
+  { name: 'Resource Code', value: 'resource_code', type: 'text', required: true, filterOptions: requiredFieldFilterOptionsForText },
   { name: 'Name', value: 'resource_name', type: 'text' },
   {
     name: 'Resource Type',
     value: 'resource_type',
     type: 'enum',
+    required: true,
     options: resourceTypeOptions,
+    filterOptions: requiredFieldFilterOptionsForEnum
   },
   { name: 'Org Name', value: 'resource_orgname', type: 'text' },
   { name: 'Designation', value: 'resource_designation', type: 'text' },
   { name: 'Role', value: 'resource_role', type: 'text' },
-  { name: 'Region', value: 'resource_region', type: 'enum', options: region },
+  { name: 'Region', value: 'resource_region', type: 'enum', options: region, dependsOn: 'resource_country', },
   { name: 'Country', value: 'resource_country', type: 'enum', options: country },
   { name: 'Total Project Hours', value: 'total_project_hours', type: 'number' },
   { name: 'Estimated R&D Hours', value: 'estimated_rd_hours', type: 'number' },
@@ -87,7 +106,9 @@ export const resourceFilterFields = (country: { option: string; value: string }[
     name: 'Status',
     value: 'resource_status',
     type: 'enum',
+    required: true,
     options: statusOptions,
+    filterOptions: requiredFieldFilterOptionsForEnum
   },
   { name: 'Comments', value: 'comments', type: 'text' },
   { name: 'Resource ID', value: 'r_number', type: 'text' },
@@ -138,6 +159,19 @@ export const formatDateToYYYYMMDD = (dateString?: string | null): string => {
   const year = date.getFullYear();
 
   return `${year}/${month}/${day}`;
+};
+
+export const dateFormatToYYYYMMDD = (dateString?: string | null): string => {
+  if (!dateString) return '';
+
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+
+  return `${year}-${month}-${day}`;
 };
 
 export const formatDateToMMDDYYYYWithTime = (

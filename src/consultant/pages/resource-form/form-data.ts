@@ -106,10 +106,10 @@ export const ResourceFormData = (
                 errorMessage:
                   'Only letters, numbers, hyphens, and underscores are allowed.',
               },
-              {
-                regex: REGEX_PATTERNS.NO_TRAILING_SPECIAL_REGEX,
-                errorMessage: 'Cannot end with a hyphen or underscore.',
-              },
+              // {
+              //   regex: REGEX_PATTERNS.NO_TRAILING_SPECIAL_REGEX,
+              //   errorMessage: 'Cannot end with a hyphen or underscore.',
+              // },
             ],
             placeholder: 'Enter Resource Code',
             disabled: disableCostAndSkill,
@@ -129,6 +129,11 @@ export const ResourceFormData = (
               {
                 regex: REGEX_PATTERNS.MIN_2,
                 errorMessage: 'PLease enter more than 1 characters.',
+              },
+              {
+                regex: REGEX_PATTERNS.CONSECUTIVE_SPECIAL_CHARS,
+                errorMessage:
+                  'Consecutive spaces, hyphens, and apostrophes are not allowed.',
               },
               {
                 regex: REGEX_PATTERNS.MAX_64,
@@ -162,6 +167,11 @@ export const ResourceFormData = (
                 errorMessage: 'Please enter more than 1 characters.',
               },
               {
+                regex: REGEX_PATTERNS.CONSECUTIVE_SPECIAL_CHARS,
+                errorMessage:
+                  'Consecutive spaces, hyphens, and apostrophes are not allowed.',
+              },
+              {
                 regex: REGEX_PATTERNS.MAX_64,
                 errorMessage: 'Max length exceeded.',
               },
@@ -186,6 +196,11 @@ export const ResourceFormData = (
               {
                 regex: REGEX_PATTERNS.MIN_2,
                 errorMessage: 'Please enter more than 1 characters.',
+              },
+              {
+                regex: REGEX_PATTERNS.CONSECUTIVE_SPECIAL_CHARS,
+                errorMessage:
+                  'Consecutive spaces, hyphens, and apostrophes are not allowed.',
               },
               {
                 regex: REGEX_PATTERNS.MAX_64,
@@ -259,12 +274,12 @@ export const ResourceFormData = (
                 errorMessage:
                   'Allows only letters, Apostrophe, spaces, hyphens, and Periods.',
               },
-              {
-                regex:
-                  REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX,
-                errorMessage:
-                  'Cannot start or end with a space or special character',
-              },
+              // {
+              //   regex:
+              //     REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX,
+              //   errorMessage:
+              //     'Cannot start or end with a space or special character',
+              // },
             ],
           }),
           createSelectField('resource_status', 'Status', {

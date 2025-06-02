@@ -236,7 +236,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             placeholder={field.placeholder}
             autoComplete='off'
             className={
-              'placeholder-custom-color outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ' +
+              'placeholder-custom-color placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ' +
               isError +
               fieldDisabled
             }
@@ -253,7 +253,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             placeholder={field.placeholder}
             autoComplete='off'
             className={
-              'focus:outline-none placeholder-custom-color w-full sm:text-sm px-1 h-[32px]' +
+              'focus:outline-none placeholder-custom-color placeholder-[#7D98B6] w-full sm:text-sm px-1 h-[32px]' +
               // isError +
               fieldDisabled
             }
@@ -539,9 +539,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               }
               minDate={customMinDate}
               maxDate={customMaxDate}
-              value={dayjs(fieldValue, 'YYYY-MM-DD')}
+              value={dayjs(fieldValue, 'YYYY/MM/DD')}
               disabled={field.disabled}
-              format='YYYY-MM-DD'
+              format='YYYY/MM/DD'
               // onOpen={() => {
               //   if (!fieldValue && isFinancialDateField && selectedFiscalYear) {
               //     // Show calendar from Jan 1 of fiscal year
@@ -551,7 +551,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               // }}
               onChange={(newValue) => {
                 handleChange(
-                  newValue ? dayjs(newValue).format('YYYY-MM-DD') : null
+                  newValue ? dayjs(newValue).format('YYYY/MM/DD') : null
                 );
               }}
               shouldDisableDate={
@@ -875,11 +875,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               if (selectedFiscalYear) {
                 // Fiscal year bounds
                 const fiscalYearStart = dayjs(
-                  `01/01/${selectedFiscalYear}`,
+                  `${selectedFiscalYear}/01/01`,
                   'YYYY/MM/DD'
                 );
                 const fiscalYearEnd = dayjs(
-                  `12/31/${selectedFiscalYear}`,
+                  `${selectedFiscalYear}/12/31`,
                   'YYYY/MM/DD'
                 );
 
@@ -1019,7 +1019,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   error: `${field.name === 'resource_startdate' ? 'Effective Date' : field.name === 'skill_start_date' || field.name === 'project_startdate' ? 'Start Date' : 'This date'} cannot be in the future`,
                 };
               }
-              if (dateValue && !isValidDate(dateValue, 'YYYY-MM-DD')) {
+              if (dateValue && !isValidDate(dateValue, 'YYYY/MM/DD')) {
                 hasError = true;
                 return {
                   ...field,

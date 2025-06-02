@@ -14,6 +14,7 @@ import {
   dateOptions,
   EnumFilterOption,
   enumOptions,
+  FieldConfig,
   FilterComponentProps,
   FilterState,
   NumberFilterOption,
@@ -375,6 +376,24 @@ const Filter: React.FC<FilterComponentProps> = ({
     });
   };
 
+  const disableDependantFilterFields = (filterFieldName: string, field: FieldConfig, fieldState: FilterState) => {
+
+    const fieldValue = filterStates[filterFieldName]?.enum?.value;
+    const enabled = !!fieldValue && !!fieldValue[0]; // Only enable if skill type is selected
+    return (
+      <EnumFilterControl
+        filterStates={filterStates}
+        menuOption={enumOptions}
+        valueOptions={field.options as { option: string; value: string }[]}
+        fieldName={field.value}
+        state={fieldState}
+        onOptionChange={handleFilterOptionChange}
+        onChange={handleEnumSelectChange}
+        disabled={!enabled}
+      />
+    );
+  }
+
   const renderFilterControls = (fieldName: string) => {
     if (!selectedFilters.includes(fieldName)) return null;
 
@@ -382,23 +401,13 @@ const Filter: React.FC<FilterComponentProps> = ({
     if (!field) return null;
 
     const fieldState = filterStates[field.value] || {};
-    let enabled = false;
+    // let enabled = false;
     if (field.value === 'skill_subtype_rid') {
-      const skillTypeValue = filterStates['skill_type_rid']?.enum?.value;
-      enabled = !!skillTypeValue && !!skillTypeValue[0]; // Only enable if skill type is selected
+      return disableDependantFilterFields('skill_type_rid', field, fieldState);
+    }
 
-      return (
-        <EnumFilterControl
-          filterStates={filterStates}
-          menuOption={enumOptions}
-          valueOptions={field.options as { option: string; value: string }[]}
-          fieldName={field.value}
-          state={fieldState}
-          onOptionChange={handleFilterOptionChange}
-          onChange={handleEnumSelectChange}
-          disabled={!enabled}
-        />
-      );
+    if (field.value === 'resource_region') {
+      return disableDependantFilterFields('resource_country', field, fieldState);
     }
 
     switch (field.type) {
@@ -406,7 +415,10 @@ const Filter: React.FC<FilterComponentProps> = ({
         return (
           <TextFilterControl
             filterStates={filterStates}
-            menuOption={field.operatorOption || textOptions}
+            menuOption={field?.required
+              ? field?.filterOptions ?? textOptions
+              : field.operatorOption ?? textOptions}
+            // menuOption={field.operatorOption || textOptions}
             fieldName={field.value}
             state={fieldState}
             onOptionChange={handleFilterOptionChange}
@@ -417,7 +429,10 @@ const Filter: React.FC<FilterComponentProps> = ({
         return (
           <TextFilterControlForCostAndSKill
             filterStates={filterStates}
-            menuOption={textOptionForCostAndSkill}
+            menuOption={field?.required
+              ? field?.filterOptions ?? textOptionForCostAndSkill
+              : textOptionForCostAndSkill}
+            // menuOption={textOptionForCostAndSkill}
             fieldName={field.value}
             state={fieldState}
             onOptionChange={handleFilterOptionChange}
@@ -439,7 +454,9 @@ const Filter: React.FC<FilterComponentProps> = ({
         return (
           <EnumFilterControl
             filterStates={filterStates}
-            menuOption={field.operatorOption || enumOptions}
+            menuOption={field?.required
+              ? field?.filterOptions ?? enumOptions
+              : field.operatorOption ?? enumOptions}
             valueOptions={field.options as { option: string; value: string }[]}
             fieldName={field.value}
             state={fieldState}

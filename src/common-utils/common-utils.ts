@@ -374,6 +374,8 @@ export const REGEX_PATTERNS = {
   // NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX:
   //   /^(?!^[ &'.,-])(?!(.*[ &'.,-]$))/,
   SKILL_OTHERS_ALLOWED_CHARS_REGEX: /^[A-Za-z\-'._\s]+$/,
+  SKILL_OTHERS_NO_CONSECUTIVE_SPECIALS_REGEX: /^(?!.*[&\-.'", ]{2})/,
+  CONSECUTIVE_SPECIAL_CHARS: /^(?!.*[ '-_]{2}).+$/,
 };
 
 /**
@@ -493,12 +495,15 @@ export const checkPermission = (
   condition: AllPermissions | AllModules | AllModules[]
 ) => {
   if (Array.isArray(condition)) {
-    return condition.some((cond) => data?.find((item) => item?.name === cond)?.is_enabled);
+    return condition.some(
+      (cond) => data?.find((item) => item?.name === cond)?.is_enabled
+    );
   }
   return data?.find((item) => item?.name === condition)?.is_enabled;
 };
 
-export const DONT_HAVE_ACCESS = "Access Restricted. Contact administrator to gain access.";
+export const DONT_HAVE_ACCESS =
+  'Access Restricted. Contact administrator to gain access.';
 
 export const PROJECT_TYPE: SelectOption[] = [
   { label: 'Fixed', value: 'Fixed' },

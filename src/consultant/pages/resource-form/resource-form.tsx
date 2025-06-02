@@ -179,8 +179,8 @@ const ResourceForm: React.FC = () => {
     if (state?.cost && isSuccess && costSuccess && isEditView) {
       const costValues = {
         ...formValues,
-        financial_start_date: costInfo?.effective_date || '',
-        financial_end_date: costInfo?.end_date || '',
+        financial_start_date: formatDateToYYYYMMDD(costInfo?.effective_date) || '',
+        financial_end_date: formatDateToYYYYMMDD(costInfo?.end_date) || '',
         currency: costInfo?.currency_rid || null,
         annual_cost: costInfo?.annual_cost || '',
         monthly_cost: costInfo?.monthly_cost || '',

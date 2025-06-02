@@ -249,19 +249,19 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
         };
       }
 
-      // if (key === 'resource_startdate' && !Array.isArray(value)) {
-      //   return {
-      //     label: 'Effective Date',
-      //     value: value as string || '-', // or handle nested objects differently
-      //   };
-      // }
+      if (key === 'resource_startdate' && !Array.isArray(value)) {
+        return {
+          label: 'Effective Date',
+          value: formatDateToYYYYMMDD(value as string) || '-', // or handle nested objects differently
+        };
+      }
 
-      // if (key === 'resource_enddate' && !Array.isArray(value)) {
-      //   return {
-      //     label: 'End Date',
-      //     value: formatDateToMMDDYYYY(value as string) || '-', // or handle nested objects differently
-      //   };
-      // }
+      if (key === 'resource_enddate' && !Array.isArray(value)) {
+        return {
+          label: 'End Date',
+          value: formatDateToYYYYMMDD(value as string) || '-', // or handle nested objects differently
+        };
+      }
 
       if (key === 'total_years_in_org' && !Array.isArray(value)) {
         return {
@@ -371,8 +371,8 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   const employmentDetails = CreateSectionData(
     {
-      resource_startdate: formatDateToYYYYMMDD(resourceData.resource_startdate),
-      resource_enddate: formatDateToYYYYMMDD(resourceData.resource_enddate),
+      resource_startdate: resourceData.resource_startdate,
+      resource_enddate: resourceData.resource_enddate,
       total_years_experience: resourceData.resource_total_experience,
       designation: resourceData.resource_designation,
       total_years_in_org: resourceData.resource_total_experience_organization,
