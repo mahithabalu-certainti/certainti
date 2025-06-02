@@ -1599,7 +1599,7 @@ const rawResult = users || [];
     try {
     const workbook = new ExcelJS.Workbook();
     const headerSheet = workbook.addWorksheet('Headers')
-    const headers = ['Profile Name','Created By','Created On'];
+    const headers = ['Profile Name','Created On','Created By',];
     headerSheet.addRow(headers);
     const profile = await Profile.findByPk(profileId, {
           include: [
@@ -1616,11 +1616,13 @@ const rawResult = users || [];
       const createdByName = profile.creator
         ? `${profile.creator.first_name} ${profile.creator.last_name}`
         : '';
-
+      const createdDate = profile.created_datetime
+        ? new Date(profile.created_datetime).toISOString().slice(0, 10)
+        : "";
       headerSheet.addRow([
         profile.profile_name,
-        createdByName,
-        profile.created_datetime
+        createdDate,
+        createdByName
       ]);
     }
     const sheet = workbook.addWorksheet('Menu');
