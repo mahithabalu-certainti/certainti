@@ -16,6 +16,11 @@ import { getAllProjectFilterFields } from './helpers';
 import { ProjectTable } from './table/project-table';
 import { ProjectListParams } from '../../../types/project';
 import Filter from '../../account-details-sidebar/components/filter/filter';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { checkPermission } from '../../../../common-utils';
+import { AllModules } from '../../../../common-service';
+import { AccessRestricted } from '../../../../components/account-restricted';
 
 // const BUTTON_STYLES = {
 //   height: '32px',
@@ -32,6 +37,11 @@ export const Projects: React.FC = () => {
     sortOrder: 'DESC',
     fiscalYear: 0,
   });
+
+  // Permission Mangement
+  const { modules } = useSelector((state: RootState) => state.permission);
+  const projectIsEnable = checkPermission(modules, AllModules.PROJECTS);
+
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -62,6 +72,8 @@ export const Projects: React.FC = () => {
   // };
 
   const projectFilterFields = getAllProjectFilterFields();
+
+  if (!projectIsEnable) return <AccessRestricted />;
 
   return (
     <div className='flex flex-col w-full h-full'>

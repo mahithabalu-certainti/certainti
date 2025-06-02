@@ -15,8 +15,16 @@ import TextButton from '../../../components/button/text-button';
 import { ACCOUNT_CREATE } from '../../../routes';
 import { getAccountFilterFields } from './helpers';
 import AccountTable from './table/account-table';
-import { useGetAllCountries } from '../../../common-service';
+import {
+  AllModules,
+  AllPermissions,
+  useGetAllCountries,
+} from '../../../common-service';
 import { exportAccountList, useFetchIndustrys } from '../../services/account';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../store/store';
+import { ActionsDropdownItem, checkPermission } from '../../../common-utils';
+import { AccessRestricted } from '../../../components/account-restricted';
 import { AccountList, SelectOption } from '../../types';
 import {
   formatFilterForApi,
@@ -59,13 +67,40 @@ export const Accounts: React.FC = () => {
     }
   }, []);
 
-  const menuItems = [
+  // Permission Mangement
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
+  const isAccountViewAllEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_VIEW_ALL
+  );
+  const isAccountCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_CREATE
+  );
+  const isAccountEditEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_EDIT
+  );
+  const isAccountDeleteEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_DELETE
+  );
+  const isAccountExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_EXPORT
+  );
+
+  const menuItems: ActionsDropdownItem[] = [
     {
       label: 'Manage user',
       onClick: () => console.log('manage user clicked'),
     },
     {
       label: 'Export',
+      hide: !isAccountExportEnable,
       onClick: () =>
         exportAccountList({
           sortBy: orderBy,
@@ -116,6 +151,8 @@ export const Accounts: React.FC = () => {
 
   const [totalCount, setTotalCount] = useState<number>(0);
 
+  if (!accountIsEnable || !isAccountViewAllEnable) return <AccessRestricted />;
+
   return (
     <div className='flex flex-col w-full h-full'>
       <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
@@ -138,16 +175,18 @@ export const Accounts: React.FC = () => {
         </div>
         <div className='flex gap-3 justify-center items-center'>
           <ActionsDropdown actions={menuItems} />
-          <TextButton
-            label='Create Account'
-            onClick={handleCreateAccount}
-            sx={{
-              ...BUTTON_STYLES,
-              width: '114px',
-              minWidth: '114px',
-              maxWidth: '114px',
-            }}
-          />
+          {isAccountCreateEnable && (
+            <TextButton
+              label='Create Account'
+              onClick={handleCreateAccount}
+              sx={{
+                ...BUTTON_STYLES,
+                width: '114px',
+                minWidth: '114px',
+                maxWidth: '114px',
+              }}
+            />
+          )}
           <div className='flex items-center justify-center border border-[#EAF0F5] w-[48px] h-[24px]'>
             <div className='flex items-center justify-center w-1/2'>
               <img src={refreshIcon} alt='refresh-icon' className='h-4' />
@@ -205,6 +244,8 @@ export const Accounts: React.FC = () => {
           setOrderBy={setOrderBy}
           setPage={setPage}
           page={page}
+          isAccountEditEnable={isAccountEditEnable}
+          isAccountDeleteEnable={isAccountDeleteEnable}
         />
       </div>
     </div>

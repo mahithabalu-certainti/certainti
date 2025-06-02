@@ -5,7 +5,14 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 import { UserDetail } from '../admin/types/manage-user';
-import { AxiosErrorMsg, CheckError } from '../common-service';
+import {
+  AllModules,
+  AllPermissions,
+  AxiosErrorMsg,
+  CheckError,
+  Permissions,
+  PermissionsMenus,
+} from '../common-service';
 
 import {
   AllowedCountry,
@@ -15,6 +22,7 @@ import {
   SelectOption,
   YesNo,
 } from '../consultant/types';
+import { PermissionState } from '../store/type';
 
 export const createTextField = (
   name: string,
@@ -273,6 +281,12 @@ export const YES_NO_OPTIONS: SelectOption[] = [
   { label: 'No', value: YesNo.No },
 ];
 
+export interface ActionsDropdownItem {
+  label: string;
+  hide?: boolean;
+  onClick: () => void;
+}
+
 // Regex patterns
 export const REGEX_PATTERNS = {
   ALPHANUMERIC: /^[A-Za-z0-9-]+$/,
@@ -445,6 +459,47 @@ export const STATUS_OPTIONS: SelectOption[] = [
   { label: 'Active', value: 'active' },
   { label: 'In-Active', value: 'inactive' },
 ];
+
+export const reShapePermissionData = (all: Permissions[]): PermissionState => {
+  const [menus, modules, permission] = all.reduce<
+    [Permissions[], Permissions[], Permissions[]]
+  >(
+    (acc, item) => {
+      const [menus, mods, perms] = acc;
+
+      if (item.type === PermissionsMenus.MENU) {
+        menus.push(item);
+      } else if (item.type === PermissionsMenus.MODULE) {
+        mods.push(item);
+      } else if (item.type === PermissionsMenus.PERMISSION) {
+        perms.push(item);
+      } else if (item.type === PermissionsMenus.FIELD) {
+        const permIndex = perms.findIndex(
+          (p) => p.permission_id === item.permission_id
+        );
+        if (permIndex !== -1) {
+          perms[permIndex].fields = [...(perms[permIndex].fields || []), item];
+        }
+      }
+      return [menus, mods, perms];
+    },
+    [[], [], []]
+  );
+  return { menus, modules, permission };
+};
+
+export const checkPermission = (
+  data: Permissions[],
+  condition: AllPermissions | AllModules | AllModules[]
+) => {
+  if (Array.isArray(condition)) {
+    return condition.some((cond) => data?.find((item) => item?.name === cond)?.is_enabled);
+  }
+  return data?.find((item) => item?.name === condition)?.is_enabled;
+};
+
+export const DONT_HAVE_ACCESS = "Access Restricted. Contact administrator to gain access.";
+
 export const PROJECT_TYPE: SelectOption[] = [
   { label: 'Fixed', value: 'Fixed' },
   { label: 'Time & Material', value: 'Time & Material' },

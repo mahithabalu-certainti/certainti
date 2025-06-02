@@ -17,6 +17,11 @@ import { ProfilePermissions } from './profile-permissions';
 import { ProfileHeaderDetail } from './profile-header-details';
 import { CircularProgress } from '@mui/material';
 import { MANAGE_PROFILE } from '../../../../routes';
+import { AccessRestricted } from '../../../../components/account-restricted';
+import { useSelector } from 'react-redux';
+import { checkPermission } from '../../../../common-utils';
+import { RootState } from '../../../../store/store';
+import { AllModules, AllPermissions } from '../../../../common-service';
 
 const HEADER_STYLES = {
   adminPermission:
@@ -47,6 +52,23 @@ export const CreateProfile: React.FC = () => {
   const commonSuccess = createProfile.isSuccess;
   const ProfilePermissionSuccess = createProfilePermission.isSuccess;
   const editSuccess = updateProfilePermission.isSuccess;
+
+  // Permission Mangement
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const isProfileEnable = checkPermission(
+    modules,
+    AllModules.PROFILE_MANAGEMENT
+  );
+  const isProfileCreateEnable = checkPermission(
+    permission,
+    AllPermissions.PROFILE_CREATE
+  );
+  const isProfileEditEnable = checkPermission(
+    permission,
+    AllPermissions.PROFILE_EDIT
+  );
 
   useEffect(() => {
     if (commonSuccess) {
@@ -112,6 +134,12 @@ export const CreateProfile: React.FC = () => {
   const goBack = () => {
     window.history.back();
   };
+
+  if (
+    !isProfileEnable ||
+    (isEditView ? !isProfileEditEnable : !isProfileCreateEnable)
+  )
+    return <AccessRestricted />;
 
   return (
     <>

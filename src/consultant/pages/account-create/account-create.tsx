@@ -1,7 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { accountHomeIcon, editIcon } from '../../../assets';
-import { Layout, OnChange, useGetAllCountries } from '../../../common-service';
+import {
+  AllModules,
+  AllPermissions,
+  Layout,
+  OnChange,
+  useGetAllCountries,
+} from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
@@ -25,9 +31,13 @@ import {
   transformFormData,
 } from './utils';
 import {
+  checkPermission,
   formatDateToYYYYMMDDWithTime,
   STATUS_OPTIONS,
 } from '../../../common-utils';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../store/store';
+import { AccessRestricted } from '../../../components/account-restricted';
 
 export const AccountForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -45,6 +55,21 @@ export const AccountForm: React.FC = () => {
   const { successToast } = useToast();
   const location = useLocation();
   const { accountid } = useParams();
+
+  // Permission Mangement
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
+  const isAccountCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_CREATE
+  );
+  const isAccountEditEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_EDIT
+  );
+
   const keyContactInfo = [
     'key_contact_name',
     'key_contact_role',
@@ -302,6 +327,12 @@ export const AccountForm: React.FC = () => {
   const goBack = () => {
     window.history.back();
   };
+
+  if (
+    !accountIsEnable ||
+    (isEditView ? !isAccountEditEnable : !isAccountCreateEnable)
+  )
+    return <AccessRestricted />;
 
   return (
     <>

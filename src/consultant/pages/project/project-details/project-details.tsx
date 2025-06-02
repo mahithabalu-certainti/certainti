@@ -8,19 +8,70 @@ import { useProjectDetail } from '../../../services/project';
 import { transformProjectData } from '../utils';
 import ProjectDetailsData from './details/project-data';
 import { NewProjectData } from '../../../types/project';
+import { MenuItem } from '../../../types';
+import { AllModules, AllPermissions } from '../../../../common-service';
+import { AccessRestricted } from '../../../../components/account-restricted';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { checkPermission } from '../../../../common-utils';
 
-const sideMenuItems = [
-  { name: 'Financial Highlights', key: 'financial' },
-  { name: 'Project Details', key: 'projectDetails' },
-  { name: 'Project Resources', key: 'projectResources' },
-  { name: 'Projects Task', key: 'projectsTask' },
-  { name: 'Interactions', key: 'interactions' },
-  { name: 'Technical Summary', key: 'technicalSummary' },
-  { name: 'Cases', key: 'cases' },
-  { name: 'Activities', key: 'activities' },
-  { name: 'Notes', key: 'notes' },
-  { name: 'Attachments', key: 'attachments' },
-  { name: 'Checklists', key: 'checklists' },
+const sideMenuItems: MenuItem[] = [
+  {
+    name: 'Financial Highlights',
+    key: 'financial',
+    id: AllModules.FINANCIAL_HIGHLIGHTS,
+    disabled: false,
+  },
+  {
+    name: 'Project Details',
+    key: 'projectDetails',
+    id: AllModules.PROJECTS,
+    disabled: false,
+  },
+  {
+    name: 'Project Resources',
+    key: 'projectResources',
+    id: AllModules.RESOURCES,
+    disabled: false,
+  },
+  {
+    name: 'Projects Task',
+    key: 'projectsTask',
+    id: AllModules.PROJECTS,
+    disabled: false,
+  },
+  {
+    name: 'Interactions',
+    key: 'interactions',
+    id: AllModules.INTRACTION,
+    disabled: false,
+  },
+  {
+    name: 'Technical Summary',
+    key: 'technicalSummary',
+    id: AllModules.PROJECTS,
+    disabled: false,
+  },
+  { name: 'Cases', key: 'cases', id: AllModules.CASES, disabled: false },
+  {
+    name: 'Activities',
+    key: 'activities',
+    id: AllModules.ACTIVITIES,
+    disabled: false,
+  },
+  { name: 'Notes', key: 'notes', id: AllModules.NOTES, disabled: false },
+  {
+    name: 'Attachments',
+    key: 'attachments',
+    id: AllModules.ATTACHMENTS,
+    disabled: false,
+  },
+  {
+    name: 'Checklists',
+    key: 'checklists',
+    id: AllModules.CHECKLISTS,
+    disabled: false,
+  },
 ];
 
 export const ProjectDetails = () => {
@@ -31,6 +82,15 @@ export const ProjectDetails = () => {
   const defaultTab = searchParams.get('list') || 'financial';
   const [activeKey, setActiveKey] = useState(defaultTab);
   const [projectData, setProjectData] = useState<NewProjectData | null>(null);
+
+  // Permission Mangement
+  const { modules, permission } = useSelector((state: RootState) => state.permission);
+  const projectIsEnable = checkPermission(modules, AllModules.PROJECTS);
+  const projectDownloadIsEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECT_PROJECTS_DOWNLOAD
+  );
+
   useEffect(() => {
     const list = searchParams.get('list');
     if (list) {
@@ -103,6 +163,7 @@ export const ProjectDetails = () => {
             projectDetails={projectData}
             isDetailsLoading={isLoading}
             detailsError={isError}
+            projectDownloadIsEnable={projectDownloadIsEnable}
           />
         );
       case 'projectResources':
@@ -127,6 +188,8 @@ export const ProjectDetails = () => {
         return <div className='p-6'>Page Not Found</div>;
     }
   };
+
+  if (!projectIsEnable) return <AccessRestricted />;
 
   return (
     <div className='flex flex-col'>

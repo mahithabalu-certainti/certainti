@@ -67,6 +67,7 @@ export interface ActionItem<T extends RowData> {
   disabled?: boolean;
   icon?: string;
   iconStyle?: React.CSSProperties;
+  hide?: boolean;
 }
 
 export interface ListTableProps<T extends RowData> {

@@ -12,6 +12,8 @@ import { editIcon, eyeIcon } from '../../../../assets';
 interface IUserTableProps {
   appliedFilters: Record<string, any>;
   tableParams: UserListParams;
+  isUserEditEnable?: boolean;
+  isUserViewEnable?: boolean;
   setTableParams: React.Dispatch<React.SetStateAction<UserListParams>>;
   onSelectionChange: (selectedIds: string[]) => void;
 }
@@ -19,6 +21,8 @@ interface IUserTableProps {
 export const UserTable: React.FC<IUserTableProps> = ({
   appliedFilters,
   tableParams,
+  isUserEditEnable,
+  isUserViewEnable,
   setTableParams,
   onSelectionChange,
 }) => {
@@ -105,11 +109,13 @@ export const UserTable: React.FC<IUserTableProps> = ({
       label: 'View',
       onClick: (row: ManageUser) => handleView(row),
       icon: eyeIcon,
+      hide: !isUserViewEnable,
     },
     {
       label: 'Edit',
       onClick: (row: ManageUser) => handleEdit(row),
       icon: editIcon,
+      hide: !isUserEditEnable,
       iconStyle: {
         filter:
           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',

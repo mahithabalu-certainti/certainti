@@ -9,8 +9,9 @@ import { msalConfig } from '../../../config/msalConfig';
 import { useAuthHook, useToast } from '../../../hooks';
 import { useAppTranslation } from '../../../hooks/use-app-translation';
 import { useAppDispatch } from '../../../store/store';
-import { IAuthDetails } from '../../../store/type/auth-slice-type';
-import { setUserId } from '../../../store/slices/account-slice';
+import { IAuthDetails } from '../../../store/type';
+import { setUserId, updatePermissions } from '../../../store/slices';
+import { reShapePermissionData } from '../../../common-utils';
 
 const msalSigninInstance = new PublicClientApplication(msalConfig);
 
@@ -32,14 +33,15 @@ export const Login: React.FC = () => {
     try {
       setIsLoading(true);
       await msalSigninInstance.initialize();
-      
+
       // Add redirect handling
       const loginRequest = {
         scopes: ['openid', 'profile'],
         redirectUri: import.meta.env.VITE_REDIRECT_URL,
       };
-      
-      const { idToken, account } = await msalSigninInstance.loginPopup(loginRequest);
+
+      const { idToken, account } =
+        await msalSigninInstance.loginPopup(loginRequest);
       const userRole = await fetchCurrentUserRole(
         account?.localAccountId,
         idToken
@@ -55,6 +57,9 @@ export const Login: React.FC = () => {
       };
       login(authDetail as IAuthDetails);
       dispatch(setUserId(account?.localAccountId));
+      dispatch(
+        updatePermissions(reShapePermissionData(userRole.data.permissions))
+      );
       setIsLoading(false);
       navigate('/');
     } catch (error) {

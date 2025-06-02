@@ -24,12 +24,14 @@ interface DetailsProps {
   accountDetails?: accountDetailsProps; // need to change once api info is availableRecord<string, any>
   isLoading?: boolean;
   isError?: boolean; // ErrorProps | null | undefined;
+  isAccountEditEnable?: boolean;
 }
 
 const Details: React.FC<DetailsProps> = ({
   accountDetails,
   isLoading,
   isError,
+  isAccountEditEnable,
 }) => {
   const navigate = useNavigate();
   const [tabValue, setTabValue] = useState(0);
@@ -71,6 +73,7 @@ const Details: React.FC<DetailsProps> = ({
       disabled: false, //accountInActive,
       onClick: handleEdit,
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
+      hide: !isAccountEditEnable,
     },
     {
       label: 'Download',
@@ -116,17 +119,20 @@ const Details: React.FC<DetailsProps> = ({
             </Box>
           </Box>
           <Box className='flex items-center gap-2'>
-            {headerButtons?.map((button, index) => (
-              <TextButton
-                key={`header-button-${index}`}
-                label={button.label}
-                // variant={button.variant}
-                onClick={button.onClick}
-                aria-label={button.label}
-                sx={button.sx}
-                disabled={button.disabled}
-              />
-            ))}
+            {headerButtons?.map((button, index) => {
+              if (button.hide) return null;
+              return (
+                <TextButton
+                  key={`header-button-${index}`}
+                  label={button.label}
+                  // variant={button.variant}
+                  onClick={button.onClick}
+                  aria-label={button.label}
+                  sx={button.sx}
+                  disabled={button.disabled}
+                />
+              );
+            })}
           </Box>
         </Box>
         <Box className='border-t-0 border border-[#CBD6E2]'>

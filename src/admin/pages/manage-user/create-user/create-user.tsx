@@ -1,7 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ManageUserIcon } from '../../../../assets/icons';
-import { OnChange, useGetAllCountries } from '../../../../common-service';
+import {
+  AllModules,
+  AllPermissions,
+  OnChange,
+  useGetAllCountries,
+} from '../../../../common-service';
 import { FormBuilder } from '../../../../components';
 import TextButton from '../../../../components/button/text-button';
 import {
@@ -20,9 +25,14 @@ import {
 } from '../../../service/manage-user/manage-user-service';
 import { UserDetail, UserRole } from '../../../types/manage-user';
 import { FormData } from './form-data';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { checkPermission } from '../../../../common-utils';
+import { AccessRestricted } from '../../../../components/account-restricted';
 
 const HEADER_STYLES = {
-  adminPermission: 'font-semibold text-[#7D98B6] text-[12px] leading-5 tracking-normal',
+  adminPermission:
+    'font-semibold text-[#7D98B6] text-[12px] leading-5 tracking-normal',
   manageUser: 'font-bold text-[16px] text-[#2D3E4F] leading-5 tracking-normal',
 };
 
@@ -48,8 +58,29 @@ export const CreateUser: React.FC = () => {
   const updateUser = useUpdateUserDetails();
   const createUser = useCreateUserDetails();
 
-  const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
+  // Permission Mangement
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const userIsEnable = checkPermission(modules, AllModules.USER_MANAGEMENT);
+  const isUserCreateEnable = checkPermission(
+    permission,
+    AllPermissions.USER_CREATE
+  );
+  const isUserEditEnable = checkPermission(
+    permission,
+    AllPermissions.USER_EDIT_UPDATE
+  );
+  const isUserActivateEnable = checkPermission(
+    permission,
+    AllPermissions.USER_ACTIVATE
+  );
+  const isUserDeleteEnable = checkPermission(
+    permission,
+    AllPermissions.USER_DELETE
+  );
 
+  const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
   const commonSuccess = updateUser.isSuccess || createUser.isSuccess;
   useEffect(() => {
     if (commonSuccess) {
@@ -193,6 +224,9 @@ export const CreateUser: React.FC = () => {
     window.history.back();
   };
 
+  if (!userIsEnable || (isEditView ? !isUserEditEnable : !isUserCreateEnable))
+    return <AccessRestricted />;
+
   return (
     <>
       <div className='flex flex-col gap-3'>
@@ -227,7 +261,7 @@ export const CreateUser: React.FC = () => {
             />
           </div>
         </div>
-        <div className='p-4' >
+        <div className='p-4'>
           <div className='border border-[#CBD6E2] rounded-[4px]'>
             <div className='flex justify-between items-center bg-[#FCFCFC] border-b border-[#CBD6E2] h-[38px] pl-4 pr-1'>
               <div className='font-semibold text-base leading-[32px] tracking-[0%] align-middle text-[#2D3E4F]'>
@@ -238,13 +272,33 @@ export const CreateUser: React.FC = () => {
                   label='Save'
                   loading={updateUser.isPending || createUser.isPending}
                   onClick={handleExternalSubmit}
-                  sx={{ width: '64px', minWidth: '64px', fontWeight: 400, fontSize: '13px' }}
+                  sx={{
+                    width: '64px',
+                    minWidth: '64px',
+                    fontWeight: 400,
+                    fontSize: '13px',
+                  }}
                 />
-                {isEditView && <TextButton label='Delete' sx={{ width: '75px', minWidth: '75px', fontWeight: 400, fontSize: '13px' }} />}
+                {isEditView && isUserDeleteEnable && (
+                  <TextButton
+                    label='Delete'
+                    sx={{
+                      width: '75px',
+                      minWidth: '75px',
+                      fontWeight: 400,
+                      fontSize: '13px',
+                    }}
+                  />
+                )}
                 <TextButton
                   label='Cancel'
                   onClick={goBack}
-                  sx={{ width: '75px', minWidth: '75px', fontWeight: 400, fontSize: '13px' }}
+                  sx={{
+                    width: '75px',
+                    minWidth: '75px',
+                    fontWeight: 400,
+                    fontSize: '13px',
+                  }}
                 />
               </div>
             </div>
@@ -263,7 +317,8 @@ export const CreateUser: React.FC = () => {
                 memoizeCity,
                 isEditView,
                 states.isLoading,
-                city.isLoading
+                city.isLoading,
+                isEditView ? !isUserActivateEnable : false
               )}
               values={isEditView && userDatas ? { ...userDatas } : undefined}
               outData={submitData}

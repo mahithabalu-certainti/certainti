@@ -16,7 +16,8 @@ export const FormData = (
   city: SelectOption[],
   disableFields?: boolean,
   stateLoading?: boolean,
-  cityLoading?: boolean
+  cityLoading?: boolean,
+  disabledStatus?: boolean
 ): FormType[] => {
   return useMemo(
     () => [
@@ -111,6 +112,7 @@ export const FormData = (
             required: true,
             options: STATUS_OPTIONS,
             placeholder: 'Choose Status',
+            disabled: disabledStatus,
           }),
         ],
       },
@@ -183,6 +185,7 @@ export const FormData = (
       stateLoading,
       city,
       cityLoading,
+      disabledStatus
     ]
   );
 };
