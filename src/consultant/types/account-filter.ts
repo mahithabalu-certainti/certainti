@@ -88,6 +88,10 @@ interface MultiSelectFilterState {
   values: string[];
 }
 
+interface SystemFilterState {
+  values: string[];
+}
+
 export interface DateFilterState {
   option: DateOptions;
   value: {
@@ -127,6 +131,7 @@ export type FilterState = {
   date?: DateFilterState;
   keyContact?: KeyContactFilterState;
   enumSelect?: EnumSelectFilterState;
+  system?: SystemFilterState;
 };
 
 // Define field configuration
@@ -142,6 +147,7 @@ export type FieldConfig = {
     | 'date'
     | 'keyContact'
     | 'enumSelect'
+    | 'system'
     | 'enum';
   options?: string[] | { value: string; label: string }[];
   operatorOption?: { label: string; value: string }[];

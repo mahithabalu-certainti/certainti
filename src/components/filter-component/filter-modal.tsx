@@ -59,6 +59,9 @@ const FilterModal: React.FC<FilterModalProps> = ({
     {}
   );
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const [selectedSystemFilters, setSelectedSystemFilters] = useState<string[]>(
+    []
+  );
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -68,15 +71,26 @@ const FilterModal: React.FC<FilterModalProps> = ({
     setAnchorEl(null);
   };
 
+  const systemFilters = filterFields.filter((field) => field.type === 'system');
+  const regularFilters = filterFields.filter(
+    (field) => field.type !== 'system'
+  );
+
   const handleModalClose = () => {
     const saved = getStoredFilters();
     if (saved) {
       const selected = Object.keys(saved);
+      const savedFilters = saved as Record<string, FilterState>;
       setSelectedFilters(selected);
       setFilterStates(saved as Record<string, FilterState>);
+      const systemFilter = savedFilters['system_filter'];
+      if (systemFilter && systemFilter.system?.values) {
+        setSelectedSystemFilters(systemFilter.system.values);
+      }
     } else {
       setSelectedFilters([]);
       setFilterStates({});
+      setSelectedSystemFilters([]);
     }
     handleCloseFilter();
   };
@@ -85,8 +99,13 @@ const FilterModal: React.FC<FilterModalProps> = ({
     const saved = getStoredFilters();
     if (saved) {
       const selected = Object.keys(saved);
+      const savedFilters = saved as Record<string, FilterState>;
       setSelectedFilters(selected);
       setFilterStates(saved as Record<string, FilterState>);
+      const systemFilter = savedFilters['system_filter'];
+      if (systemFilter && systemFilter.system?.values) {
+        setSelectedSystemFilters(systemFilter.system.values);
+      }
       setAppliedFilters(
         formatFilterForApi(saved as Record<string, FilterState>)
       );
@@ -111,6 +130,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
       setSelectedFilters([]);
       setFilterStates({});
       setAppliedFilters({});
+      setSelectedSystemFilters([]);
     };
 
     const currentPathname = location.pathname;
@@ -337,6 +357,35 @@ const FilterModal: React.FC<FilterModalProps> = ({
     }));
   };
 
+  // Update the system filter toggle handler
+  const toggleSystemFilter = (fieldName: string, filterValue: string) => {
+    setSelectedSystemFilters((prevSelected) => {
+      const updatedSelected = prevSelected.includes(filterValue)
+        ? prevSelected.filter((val) => val !== filterValue) // remove
+        : [...prevSelected, filterValue]; // add
+
+      // Update main filter state
+      const updatedFilterStates = { ...filterStates };
+
+      if (updatedSelected.length === 0) {
+        // Remove the filter if no values selected
+        delete updatedFilterStates[fieldName];
+      } else {
+        // Otherwise, update it
+        updatedFilterStates[fieldName] = {
+          system: { values: updatedSelected },
+        };
+      }
+
+      setFilterStates(updatedFilterStates);
+      const formattedFilters = formatFilterForApi(updatedFilterStates);
+      setAppliedFilters(formattedFilters);
+      storeFilters(updatedFilterStates);
+
+      return updatedSelected;
+    });
+  };
+
   const handleBooleanChange = (fieldName: string, value: boolean) => {
     setFilterStates((prev) => ({
       ...prev,
@@ -520,6 +569,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
     setSelectedFilters([]);
     setFilterStates({});
     setAppliedFilters({});
+    setSelectedSystemFilters([]);
     clearFilters();
   };
 
@@ -667,22 +717,35 @@ const FilterModal: React.FC<FilterModalProps> = ({
           </div>
         </div>
 
-        {/* <div>
-          <h3 className='text-[13px] font-bold text-[#425A76] mb-2'>
-            System Define filters
-          </h3>
-          <div className='flex gap-2 flex-wrap'>
-            {systemFilters.map((label) => (
-              <span
-                key={label}
-                className='border border-[#CBD6E2] cursor-pointer rounded-full px-1 h-[24px] text-[12px] font-normal flex items-center gap-0.5 text-[#425A76]'
-              >
-                <img src={checkedIcon} alt='checked-icon' />
-                {label}
-              </span>
-            ))}
+        {systemFilters.length > 0 && (
+          <div>
+            <h3 className='text-[13px] font-bold text-[#425A76] mb-2'>
+              System Define filters
+            </h3>
+            <div className='flex gap-2 flex-wrap'>
+              {systemFilters[0]?.options?.map((field: any) => (
+                <button
+                  key={field.value}
+                  className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${
+                    selectedSystemFilters.includes(field.value)
+                      ? 'bg-[#E6F9EA] border-[#34C759] text-[#0F5132]'
+                      : 'border-[#CBD6E2] text-[#425A76] hover:bg-gray-50'
+                  }`}
+                  onClick={() =>
+                    toggleSystemFilter(systemFilters[0].name, field.value)
+                  }
+                >
+                  <img
+                    src={checkedIcon}
+                    alt='checked-icon'
+                    className='w-3 h-3'
+                  />
+                  {field.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div> */}
+        )}
 
         {selectedFilters.length > 0 && (
           <div className='flex-1'>
@@ -691,7 +754,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
             </h3>
             <div className='flex flex-col gap-3 mb-1 pt-1 -mr-6 min-h-[40px] overflow-y-auto max-h-[150px]'>
               {selectedFilters.map((fieldName) => {
-                const fieldConfig = filterFields.find(
+                const fieldConfig = regularFilters.find(
                   (f) => f.name === fieldName
                 );
                 return fieldConfig ? (
@@ -751,14 +814,14 @@ const FilterModal: React.FC<FilterModalProps> = ({
                                     alt='checked'
                                     className='w-3'
                                   />
-                                  <span>
+                                  <span className='max-w-[173px] text-ellipsis overflow-hidden'>
                                     {selectedField?.label || selected}
                                   </span>
                                 </div>
                               );
                             }}
                           >
-                            {filterFields.map((field) => (
+                            {regularFilters.map((field) => (
                               <MenuItem
                                 key={field.name}
                                 value={field.name}
@@ -780,7 +843,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                                 <img
                                   src={checkedIcon}
                                   alt='checked'
-                                  className='w-4'
+                                  className='w-4 h-4'
                                 />
                                 {field.label}
                               </MenuItem>
@@ -879,6 +942,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
         PaperProps={{
           style: {
             minWidth: 170,
+            maxWidth: 170,
             borderRadius: '8px',
             border: '1px solid #CBD6E2',
             boxShadow: 'none',
@@ -886,7 +950,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
           },
         }}
       >
-        {filterFields.filter((field) => !selectedFilters.includes(field.name))
+        {regularFilters.filter((field) => !selectedFilters.includes(field.name))
           .length === 0 ? (
           <MenuItem
             disabled
@@ -902,7 +966,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
             No fields available
           </MenuItem>
         ) : (
-          filterFields
+          regularFilters
             .filter((field) => !selectedFilters.includes(field.name))
             .map((field) => (
               <MenuItem
@@ -916,7 +980,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                   py: '1px',
                 }}
               >
-                <img src={checkedIcon} alt='checked' className='w-4 mr-1' />
+                <img src={checkedIcon} alt='checked' className='w-4 h-4 mr-1' />
                 {field.label}
               </MenuItem>
             ))

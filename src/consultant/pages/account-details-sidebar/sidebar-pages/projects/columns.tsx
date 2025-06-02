@@ -22,11 +22,16 @@ export const getProjectColumns = (
   onClick: (row: ProjectList) => void
 ): TableColumn<ProjectList>[] => [
   {
-    id: 'account_name',
-    label: 'Account Name',
+    // id: 'account_name',
+    // label: 'Account Name',
+    // sortable: true,
+    // sortId: 'account_name',
+    // width: 150,
+    id: 'project_code',
+    label: 'Project Code',
     sortable: true,
-    sortId: 'account_name',
-    width: 150,
+    sortId: 'project_code',
+    width: 160,
     sticky: true,
     sx: {
       position: 'sticky',
@@ -42,10 +47,10 @@ export const getProjectColumns = (
           onClick={() => onClick(row)}
           className='cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
         >
-          {row.account_name}
+          {row.project_code}
         </span>
       ) : (
-        row.account_name
+        row.project_code
       ),
   },
   {
@@ -72,13 +77,13 @@ export const getProjectColumns = (
     sortId: 'project_group',
     width: 160,
   },
-  {
-    id: 'project_code',
-    label: 'Project Code',
-    sortable: true,
-    sortId: 'project_code',
-    width: 160,
-  },
+  // {
+  //   id: 'project_code',
+  //   label: 'Project Code',
+  //   sortable: true,
+  //   sortId: 'project_code',
+  //   width: 160,
+  // },
   {
     id: 'project_name',
     label: 'Project Name',

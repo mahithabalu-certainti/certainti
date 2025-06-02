@@ -41,8 +41,8 @@ const BUTTON_STYLES = {
 export const Accounts: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>();
   // const [searchTerm, setSearchTerm] = useState<string>('');
-  const [order, setOrder] = useState<'asc' | 'desc'>('desc');
-  const [orderBy, setOrderBy] = useState<keyof AccountList>('createdAt');
+  const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+  const [orderBy, setOrderBy] = useState<keyof AccountList>('account_name');
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
   const [page, setPage] = useState<number>(1);
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
@@ -231,6 +231,10 @@ export const Accounts: React.FC = () => {
             setAppliedFilters={setAppliedFilters}
             setPage={setPage}
             handleCloseFilter={handleCloseFilter}
+            // systemFilter={true}
+            // systemFilterFields={[
+            //   { key: 'createdAt', label: 'Recently created' },
+            // ]}
           />
         </div>
       </div>

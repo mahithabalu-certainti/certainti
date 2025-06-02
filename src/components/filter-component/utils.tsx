@@ -130,6 +130,8 @@ export const formatFilterForApi = (
       }
     } else if (state.multiSelect) {
       formattedFilters[fieldName] = state.multiSelect.values;
+    } else if (state.system) {
+      formattedFilters[fieldName] = state.system.values;
     } else if (state.keyContact) {
       const roleOption = state.keyContact.role?.option;
       const nameOption = state.keyContact.name?.option;
