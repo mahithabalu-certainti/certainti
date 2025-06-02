@@ -6,6 +6,7 @@ import SchemaService from "./schemaService";
 import { models } from "../models";
 import { initOrgSequelize } from "../config/orgdbDataSource";
 import Decimal from "decimal.js";
+import { States } from "../models/stateModel";
 
 
 const { Account, Country, Currency,Industry } = models;
@@ -866,6 +867,7 @@ async insertClientTemplateDetails(
           {
             model: Account,
             as: "child_accounts",
+            required: false,
           },
           {
             model: Country,
@@ -889,6 +891,13 @@ async insertClientTemplateDetails(
             model: Account,
             as: "parent_account",
             attributes: ["account_name"],
+            required: false,
+          },
+          {
+            model: States,
+            as: "regions",
+            attributes: [["state_name", "region_name"]],
+            required: false,
           },
           {
             model: Industry,
