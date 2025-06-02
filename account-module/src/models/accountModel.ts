@@ -5,6 +5,7 @@ import { Currency } from "./currencyModel";
 import { Industry } from "./industryModel";
 import { R_NUMBER_PREFIX } from "../utils/constant";
 import { AccountFileDropConfig } from "./accountFileDropConfigModel";
+import { States } from "./stateModel";
 interface AccountAttributes {
   rid: string;
   eid?: string;
@@ -235,6 +236,11 @@ export class Account
     Account.belongsTo(Currency, {
       foreignKey: "currency_rid",
       as: "currency",
+    });
+
+    Account.belongsTo(States, {
+      foreignKey: "region",
+      as: "region_details",
     });
 
     Account.belongsTo(AccountFileDropConfig, {
