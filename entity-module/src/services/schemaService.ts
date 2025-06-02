@@ -1453,9 +1453,7 @@ class SchemaService {
         LEFT JOIN state st ON st.rid = ps.region 
         LEFT JOIN currency curr ON curr.rid = ps.currency 
         left join project_classification pc on pc.rid = ps.project_classification_rid 
-        WHERE acc.created_by = '${userId}' AND acc.rid in (${accountRids}) ${
-          fullWhereClause ? "AND " + fullWhereClause : ""
-        }
+        WHERE acc.rid IN (${accountRids}) ${fullWhereClause ? "AND " + fullWhereClause : ""}
         ORDER BY ${sortCol} ${sort.sortOrder}
         LIMIT ? OFFSET ?
       `;
@@ -1469,9 +1467,7 @@ class SchemaService {
           LEFT JOIN state st ON st.rid = ps.region 
           LEFT JOIN currency curr ON curr.rid = ps.currency 
           LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
-          WHERE acc.created_by = '${userId}' AND acc.rid in (${accountRids}) ${
-          fullWhereClause ? "AND " + fullWhereClause : ""
-          }
+          WHERE acc.rid IN (${accountRids}) ${fullWhereClause ? "AND " + fullWhereClause : ""}
         `;
 
         replacements.push(limit, offset);
@@ -1523,9 +1519,7 @@ class SchemaService {
         LEFT JOIN state st ON st.rid = ps.region 
         LEFT JOIN currency curr ON curr.rid = ps.currency 
         left join project_classification pc on pc.rid = ps.project_classification_rid 
-        WHERE acc.created_by = '${userId}' ${
-          fullWhereClause ? "AND " + fullWhereClause : ""
-        }
+        ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
         ORDER BY ${sortCol} ${sort.sortOrder}
         LIMIT ? OFFSET ?
       `;
@@ -1539,8 +1533,7 @@ class SchemaService {
         LEFT JOIN state st ON st.rid = ps.region 
         LEFT JOIN currency curr ON curr.rid = ps.currency 
         LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
-        WHERE acc.created_by = '${userId}'
-        ${fullWhereClause ? "AND " + fullWhereClause : ""}
+        ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
       `;
 
         replacements.push(limit, offset);
