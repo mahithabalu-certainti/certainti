@@ -648,10 +648,14 @@ export class ResourceService {
       };   
     }
     if (fieldFilter.contains) {
-      return { [Op.iLike]: `%${fieldFilter.contains}%` };
+      // Handle all special characters by escaping them for SQL LIKE pattern
+      const escapedValue = fieldFilter.contains.replace(/[-[\]{}()*+?.,\\^$|#\s_%]/g, '\\$&');
+      return { [Op.iLike]: `%${escapedValue}%` };
     }
     if (fieldFilter.not_contains) {
-      return { [Op.notILike]: `%${fieldFilter.not_contains}%` };
+      // Handle all special characters by escaping them for SQL LIKE pattern
+      const escapedValue = fieldFilter.not_contains.replace(/[-[\]{}()*+?.,\\^$|#\s_%]/g, '\\$&');
+      return { [Op.notILike]: `%${escapedValue}%` };
     }
 
     if (fieldFilter.is_empty === true) {
