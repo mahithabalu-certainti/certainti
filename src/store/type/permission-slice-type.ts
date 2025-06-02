@@ -4,4 +4,5 @@ export interface PermissionState {
   menus: Permissions[];
   modules: Permissions[];
   permission: Permissions[];
+  isAdminEnable?: boolean;
 }
