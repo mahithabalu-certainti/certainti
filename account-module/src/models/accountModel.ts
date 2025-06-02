@@ -240,7 +240,7 @@ export class Account
 
     Account.belongsTo(States, {
       foreignKey: "region",
-      as: "regions",
+      as: "region_details",
     });
 
     Account.belongsTo(AccountFileDropConfig, {

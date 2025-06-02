@@ -4,7 +4,6 @@ import { IAccount, IUpdateAccount,IKeyContactDetail } from "../utils/types";
 import { getTableSchemaByEntity} from  "../utils/helpers";
 import SchemaService from "./schemaService";
 import { models } from "../models";
-import { initOrgSequelize } from "../config/orgdbDataSource";
 import Decimal from "decimal.js";
 import { States } from "../models/stateModel";
 
@@ -873,6 +872,12 @@ async insertClientTemplateDetails(
             model: Country,
             as: "country",
             attributes: ["country_name"],
+            required: false,
+          },
+          {
+            model: States,
+            as: "region_details",
+            attributes: ["state_name"],
             required: false,
           },
           {
