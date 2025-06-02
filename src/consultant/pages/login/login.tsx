@@ -11,7 +11,8 @@ import { useAppTranslation } from '../../../hooks/use-app-translation';
 import { useAppDispatch } from '../../../store/store';
 import { IAuthDetails } from '../../../store/type';
 import { setUserId, updatePermissions } from '../../../store/slices';
-import { reShapePermissionData } from '../../../common-utils';
+import { checkPermission, reShapePermissionData } from '../../../common-utils';
+import { AllModules } from '../../../common-service';
 
 const msalSigninInstance = new PublicClientApplication(msalConfig);
 
@@ -46,6 +47,11 @@ export const Login: React.FC = () => {
         account?.localAccountId,
         idToken
       );
+      const reShapeData = reShapePermissionData(userRole.data.permissions);
+      const isAdminEnable = checkPermission(reShapeData.modules, [
+        AllModules.USER_MANAGEMENT,
+        AllModules.PROFILE_MANAGEMENT,
+      ]);
       const authDetail = {
         isAuthenticated: true,
         authToken: idToken,
@@ -57,9 +63,7 @@ export const Login: React.FC = () => {
       };
       login(authDetail as IAuthDetails);
       dispatch(setUserId(account?.localAccountId));
-      dispatch(
-        updatePermissions(reShapePermissionData(userRole.data.permissions))
-      );
+      dispatch(updatePermissions({...reShapeData, isAdminEnable}));
       setIsLoading(false);
       navigate('/');
     } catch (error) {
