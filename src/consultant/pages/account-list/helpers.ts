@@ -81,6 +81,12 @@ export const getAccountFilterFields = (
     type: 'text',
     operatorOption: textfieldOptions,
   },
+  {
+    label: 'System Filter',
+    name: 'system_filter',
+    type: 'system',
+    options: [{ label: 'Recently created', value: 'createdAt' }],
+  },
 ];
 
 const colors = [
