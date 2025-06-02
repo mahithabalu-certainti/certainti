@@ -433,10 +433,8 @@ class AccountService {
         cleanedUsers.forEach((account: any) => {
           const baseRow = {
             "Account Name": account?.account_name || "-",
-            "Parent Account": account?.parent_account?.account_name || "-",
             "Industry": account?.industry?.industry_name || "-",
             "Country": account?.country?.country_name || "-",
-            "Currency": account?.currency?.currency_code || "-",
             "Total Projects":formatNumberForExport(account?.total_projects),
             "Total Project Hours": formatNumberForExport(account?.total_project_hours),
             "Total Cost": formatNumberForExport(account?.total_project_cost),
@@ -447,18 +445,15 @@ class AccountService {
             "Finance Executive":account?.finance_executive || '-',
             "Finance Lead":account?.finance_lead || '-',
             "Professional Services Consultant":account?.delivery_head || '-',
-            "Account ID": account?.r_number || "-",
-            "Status": account?.status.toLowerCase() === 'active' ? 'Active' : 'In-Active',
+            "Account ID": account?.r_number || "-"
           };
           exportDetails.push(baseRow);
           if (Array.isArray(account.child_accounts) && account.child_accounts.length > 0) {
             account.child_accounts.forEach((child: any) => {
               exportDetails.push({
                 "Account Name": child?.account_name || "-",
-                "Parent Account": account?.account_name || "-", // parent is current account
                 "Industry": child?.industry?.industry_name || "-",
                 "Country": child?.country?.country_name || "-",
-                "Currency": child?.currency?.currency_code || "-",
                 "Total Projects": formatNumberForExport(child?.total_projects),
                 "Total Project Hours": formatNumberForExport(child?.total_project_hours),
                 "Total Cost": formatNumberForExport(child?.total_project_cost),
@@ -469,18 +464,15 @@ class AccountService {
                 "Finance Executive":child?.finance_executive || '-',
                 "Finance Lead":child?.finance_lead || '-',
                 "Professional Services Consultant":child?.delivery_head || '-',
-                "Account ID": child?.r_number || "-",         
-                "Status": child?.status.toLowerCase() === 'active' ? 'Active' : 'In-Active'
+                "Account ID": child?.r_number || "-"
               });
                 if(child?.projects_by_fiscal_year.length >0)
                 { 
                    child.projects_by_fiscal_year.forEach((fiscalData: any) => {
                   exportDetails.push({
                       "Account Name": fiscalData?.fiscal_year || "-",
-                      "Parent Account": account?.account_name || "-", // parent is current account
                       "Industry": child?.industry?.industry_name || "-",
                       "Country": child?.country?.country_name || "-",
-                      "Currency": child?.currency?.currency_code || "-",
                       "Total Projects": formatNumberForExport(fiscalData?.total_projects),
                       "Total Project Hours": formatNumberForExport(fiscalData?.total_project_hours),
                       "Total Cost": formatNumberForExport(fiscalData?.total_project_cost),
@@ -491,8 +483,7 @@ class AccountService {
                       "Finance Executive":child?.finance_executive || '-',
                       "Finance Lead":child?.finance_lead || '-',
                       "Professional Services Consultant":child?.delivery_head || '-',
-                      "Account ID": child?.r_number || "-",         
-                      "Status": child?.status.toLowerCase() === 'active' ? 'Active' : 'In-Active'
+                      "Account ID": child?.r_number || "-"        
                      });  
                   });
                 }
