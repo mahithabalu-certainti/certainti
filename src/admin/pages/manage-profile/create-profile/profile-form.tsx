@@ -116,7 +116,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
         <div className='w-full flex flex-row gap-2'>
           <div className='w-1/2 flex flex-col gap-1'>
             <label className='text-[13px] font-[600] text-[#2D3E4F]'>
-              Existing Profile *
+              Existing Profile <span className='text-red-500'> *</span>
             </label>
             <div className='relative w-full'>
               <select
@@ -158,7 +158,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
           </div>
           <div className='w-1/2 flex flex-col gap-1'>
             <label className='text-[13px] font-[600] text-[#2D3E4F]'>
-              Profile Name *
+              Profile Name <span className='text-red-500'> *</span>
             </label>
             <input
               type='text'
@@ -178,7 +178,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
         </div>
         <div className='flex flex-col gap-1'>
           <label className='text-[13px] font-[600] text-[#2D3E4F]'>
-            Profile Description *
+            Profile Description <span className='text-red-500'> *</span>
           </label>
           <TextareaAutosize
             minRows={3}
