@@ -159,10 +159,10 @@ const processQueue = (error: unknown, token: string | null = null) => {
         const errorMsg = errorHandling(error as AxiosErrorMsg);
         //If Account was In-active or API permission denied, then redirect to login page
         showToast(errorMsg, 'error');
-        setTimeout(() => {
-          localStorage.removeItem('auth');
-          window.location.href = LOGIN;
-        }, 3000);
+        // setTimeout(() => {
+        //   localStorage.removeItem('auth');
+        //   window.location.href = LOGIN;
+        // }, 3000);
         return Promise.reject(error);
       } else {
         //common error handling

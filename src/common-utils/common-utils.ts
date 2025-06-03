@@ -10,6 +10,7 @@ import {
   AllPermissions,
   AxiosErrorMsg,
   CheckError,
+  MenuOption,
   Permissions,
   PermissionsMenus,
 } from '../common-service';
@@ -490,15 +491,18 @@ export const reShapePermissionData = (all: Permissions[]): PermissionState => {
 
 export const checkPermission = (
   data: Permissions[],
-  condition: AllPermissions | AllModules | AllModules[]
+  condition: AllPermissions | MenuOption | AllModules | AllModules[]
 ) => {
   if (Array.isArray(condition)) {
-    return condition.some((cond) => data?.find((item) => item?.name === cond)?.is_enabled);
+    return condition.some(
+      (cond) => data?.find((item) => item?.name === cond)?.is_enabled
+    );
   }
   return data?.find((item) => item?.name === condition)?.is_enabled;
 };
 
-export const DONT_HAVE_ACCESS = "Access Restricted. Contact administrator to gain access.";
+export const DONT_HAVE_ACCESS =
+  'Access Restricted. Contact administrator to gain access.';
 
 export const PROJECT_TYPE: SelectOption[] = [
   { label: 'Fixed', value: 'Fixed' },

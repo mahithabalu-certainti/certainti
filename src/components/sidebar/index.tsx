@@ -13,26 +13,15 @@ import {
 import { useState, useEffect, Fragment, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  accountsIcon,
   adminChevronDownIcon,
   adminChevronUpIcon,
   administrationIcon,
   adminPermissionIcon,
   adminSubmenuActiveIcon,
   adminTemplateIcon,
-  attachmentIcon,
-  caseIcon,
   configureSettingIcon,
-  dashboardIcon,
-  helpIcon,
   logo,
   logoSmall,
-  // logoutIcon,
-  notesIcon,
-  projectsIcon,
-  settingsIcon,
-  surveyIcon,
-  timesheetIcon,
   checklistTemplateIcon,
   emailTemplateIcon,
   importTemplateIcon,
@@ -48,130 +37,28 @@ import {
 } from '../../assets';
 import {
   AdminNavItem,
-  INavItem,
   SideBarProps,
   SubItemTitle,
 } from '../../consultant/types';
 import { useAuthHook } from '../../hooks/use-auth';
 import {
-  ACCOUNT,
   ADMIN_MANAGE_USER,
-  NOT_FOUND,
   CHECKLIST_TEMPLATES,
   EMAIL_TEMPLATES,
   IMPORT_TEMPLATES,
   INTERACTION_TEMPLATES,
-  MAIN_ROUTE,
   MANAGE_GEO_BASED_RULE,
   MANAGE_PROFILE,
   MANAGE_SETTINGS,
   MANAGE_USER_ACCESS,
   MANAGE_USER_GROUP,
   TASK_TEMPLATES,
-  PROJECT,
   SURVEY_TEMPLATES,
 } from '../../routes';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { MenuOption } from '../../common-service';
-
-const accountNavItems: INavItem[] = [
-  {
-    id: MenuOption.DASHBOARD,
-    icon: dashboardIcon,
-    name: 'Dashboard',
-    link: MAIN_ROUTE,
-    type: 'link',
-    matchLink: MAIN_ROUTE,
-  },
-  {
-    id: MenuOption.ACCOUNTS,
-    icon: accountsIcon,
-    name: 'Accounts',
-    link: ACCOUNT,
-    type: 'link',
-    matchLink: ACCOUNT,
-  },
-  {
-    id: MenuOption.PROJECTS,
-    icon: projectsIcon,
-    name: 'Projects',
-    link: PROJECT,
-    type: 'link',
-    matchLink: PROJECT,
-  },
-  {
-    id: MenuOption.TIMESHEET,
-    icon: timesheetIcon,
-    name: 'Timeline',
-    link: NOT_FOUND,
-    type: 'link',
-    matchLink: '',
-  },
-  {
-    id: MenuOption.CASES,
-    icon: caseIcon,
-    name: 'Cases',
-    link: NOT_FOUND,
-    type: 'link',
-    matchLink: '',
-  },
-  {
-    id: MenuOption.SURVEY,
-    icon: surveyIcon,
-    name: 'Survey',
-    link: NOT_FOUND,
-    type: 'link',
-    matchLink: '',
-  },
-  {
-    id: MenuOption.NOTES,
-    icon: notesIcon,
-    name: 'Notes',
-    link: NOT_FOUND,
-    type: 'link',
-    matchLink: '',
-  },
-  {
-    id: MenuOption.ATTACHMENTS,
-    icon: attachmentIcon,
-    name: 'Attachments',
-    link: NOT_FOUND,
-    type: 'link',
-    matchLink: '',
-  },
-  {
-    id: '',
-    icon: '',
-    name: '',
-    link: '',
-    type: 'divider',
-    matchLink: '',
-  },
-  {
-    id: MenuOption.HELP,
-    icon: helpIcon,
-    name: 'Help',
-    link: NOT_FOUND,
-    type: 'link',
-    matchLink: '',
-  },
-  {
-    id: MenuOption.SETTINGS,
-    icon: settingsIcon,
-    name: 'Settings',
-    link: NOT_FOUND,
-    type: 'link',
-    matchLink: '',
-  },
-  // {
-  //   icon: logoutIcon,
-  //   name: 'Logout',
-  //   link: MAIN_ROUTE,
-  //   type: 'link',
-  //   matchLink: '',
-  // },
-];
+import { accountNavItems } from './accounts-menu';
 
 const sideNavAdminItems: AdminNavItem[] = [
   {
@@ -357,8 +244,9 @@ export const Sidebar: React.FC<SideBarProps> = ({
       open={mobileView ? sidebarExpand : true}
       // onClose={handleBackdropClick}
       classes={{
-        paper: `transform transition-all ease-in-out ${sidebarExpand ? 'w-[200px] duration-400' : 'w-[65px] duration-300'
-          }`,
+        paper: `transform transition-all ease-in-out ${
+          sidebarExpand ? 'w-[200px] duration-400' : 'w-[65px] duration-300'
+        }`,
       }}
       sx={{
         '& .MuiDrawer-paper': {
@@ -663,7 +551,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                               style={{
                                 filter:
                                   !sidebarExpand &&
-                                    matchCheck(subItem, trimmedPathname(2))
+                                  matchCheck(subItem, trimmedPathname(2))
                                     ? 'brightness(0) saturate(100%) invert(53%) sepia(89%) saturate(1295%) hue-rotate(340deg) brightness(99%) contrast(93%)'
                                     : 'none',
                               }}

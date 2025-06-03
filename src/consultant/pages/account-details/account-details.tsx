@@ -55,6 +55,10 @@ export const AccountDetails = () => {
     permission,
     AllPermissions.ACCOUNT_DETAILS_VIEW
   );
+  const isAccountDetailsDownloadEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_DETAILS_DOWNLOAD
+  );
   const isAccountEditEnable = checkPermission(
     permission,
     AllPermissions.ACCOUNT_EDIT
@@ -186,6 +190,7 @@ export const AccountDetails = () => {
             isLoading={isLoading}
             isError={isError}
             isAccountEditEnable={isAccountEditEnable}
+            isAccountDetailsDownloadEnable={isAccountDetailsDownloadEnable}
           />
         );
       case 'resources':

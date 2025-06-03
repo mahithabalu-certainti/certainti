@@ -19,7 +19,7 @@ import Filter from '../../account-details-sidebar/components/filter/filter';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { checkPermission } from '../../../../common-utils';
-import { AllModules } from '../../../../common-service';
+import { AllModules, AllPermissions } from '../../../../common-service';
 import { AccessRestricted } from '../../../../components/account-restricted';
 
 // const BUTTON_STYLES = {
@@ -39,8 +39,20 @@ export const Projects: React.FC = () => {
   });
 
   // Permission Mangement
-  const { modules } = useSelector((state: RootState) => state.permission);
+  const { modules, permission } = useSelector((state: RootState) => state.permission);
   const projectIsEnable = checkPermission(modules, AllModules.PROJECTS);
+  const isProjectExportEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECT_PROJECTS_EXPORT
+  );
+  const isProjectEditEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECT_PROJECTS_EDIT
+  );
+  const isProjectDeleteEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECT_PROJECTS_DELETE
+  );
 
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -62,6 +74,7 @@ export const Projects: React.FC = () => {
     {
       label: 'Export',
       onClick: () => console.log('Export clicked'),
+      hide: !isProjectExportEnable,
     },
   ];
 
@@ -163,6 +176,8 @@ export const Projects: React.FC = () => {
           tableParams={tableParams}
           setTableParams={setTableParams}
           setTotalCount={setTotalCount}
+          isProjectEditEnable={isProjectEditEnable}
+          isProjectDeleteEnable={isProjectDeleteEnable}
         />
       </div>
     </div>
