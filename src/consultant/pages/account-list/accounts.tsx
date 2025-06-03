@@ -23,9 +23,13 @@ import {
 import { exportAccountList, useFetchIndustrys } from '../../services/account';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
-import { ActionsDropdownItem, checkPermission } from '../../../common-utils';
+import {
+  ActionsDropdownItem,
+  checkPermission,
+  reshapeGlobalFilter,
+} from '../../../common-utils';
 import { AccessRestricted } from '../../../components/account-restricted';
-import { AccountList, SelectOption } from '../../types';
+import { AccountList, FilterEntry, SelectOption } from '../../types';
 import {
   formatFilterForApi,
   getStoredFilters,
@@ -47,6 +51,10 @@ export const Accounts: React.FC = () => {
   const [page, setPage] = useState<number>(1);
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
+  const { fiscalYear, filters } = useSelector<
+    RootState,
+    { filters: unknown; fiscalYear: string }
+  >((state: RootState) => state.account);
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -106,6 +114,8 @@ export const Accounts: React.FC = () => {
           sortBy: orderBy,
           sortOrder: apiOrder,
           filters: appliedFilters,
+          globalFilters: reshapeGlobalFilter(filters as FilterEntry[]),
+          fiscalYear,
         }),
     },
   ];
