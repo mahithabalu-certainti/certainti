@@ -91,7 +91,7 @@ export const getAccountFilterFields = (
     label: 'Sort Options',
     name: 'sort_options',
     type: 'system-sort',
-    options: [{ value: 'createdAt_desc', label: 'Recently created' }],
+    options: [{ value: 'createdAt_desc', label: 'Recently Created' }],
   },
 ];
 
