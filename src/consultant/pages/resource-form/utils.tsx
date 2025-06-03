@@ -9,6 +9,7 @@ import {
 } from '../../types/resource-cost';
 import { ResourceSkillPayload } from '../../types/resource-skill';
 import { skillLevel } from '../account-details-sidebar/sidebar-pages/resources/resource-skill/resource-skill-type';
+import { dateFormatToYYYYMMDD } from '../account-details-sidebar/sidebar-pages/resources/utils';
 
 // Constants for dropdown options
 export const RESOURCE_STATUS_OPTIONS: SelectOption[] = [
@@ -63,18 +64,18 @@ interface ResourceTransformationOptions {
 }
 
 // Helper functions
-const formatDateToMMDDYYYY = (dateString?: string | null): string => {
-  if (!dateString) return '';
+// const formatDateToMMDDYYYY = (dateString?: string | null): string => {
+//   if (!dateString) return '';
 
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return '';
+//   const date = new Date(dateString);
+//   if (isNaN(date.getTime())) return '';
 
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
+//   const day = String(date.getDate()).padStart(2, '0');
+//   const month = String(date.getMonth() + 1).padStart(2, '0');
+//   const year = date.getFullYear();
 
-  return `${year}-${month}-${day}`;
-};
+//   return `${month}/${day}/${year}`;
+// };
 
 // const capitalizeFirstLetter = (str?: string): string => {
 //   return str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '';
@@ -116,12 +117,12 @@ export function transformPayloadforUpdateResource(
     resource_city: rawData.city || existingResource?.city || '',
     comments: rawData.comments || existingResource?.comments || '',
     effective_from_date:
-      formatDateToMMDDYYYY(rawData.resource_startdate) ||
-      formatDateToMMDDYYYY(existingResource?.resource_startdate) ||
+      dateFormatToYYYYMMDD(rawData.resource_startdate) ||
+      dateFormatToYYYYMMDD(existingResource?.resource_startdate) ||
       '',
     effective_end_date:
-      formatDateToMMDDYYYY(rawData.resource_enddate) ||
-      formatDateToMMDDYYYY(existingResource?.resource_enddate) ||
+      dateFormatToYYYYMMDD(rawData.resource_enddate) ||
+      dateFormatToYYYYMMDD(existingResource?.resource_enddate) ||
       '',
     resource_designation: rawData.designation || existingResource?.designation || '',
     total_years_experience: safeParseNumber(
@@ -152,8 +153,8 @@ export const transformPayloadforCreateResource = (
     resource_country: formData.country,
     resource_region: formData.state,
     resource_city: formData.city,
-    effective_from_date: formatDateToMMDDYYYY(formData.resource_startdate),
-    effective_end_date: formatDateToMMDDYYYY(formData.resource_enddate),
+    effective_from_date: dateFormatToYYYYMMDD(formData.resource_startdate),
+    effective_end_date: dateFormatToYYYYMMDD(formData.resource_enddate),
     resource_designation: formData.designation,
     total_years_experience: formData.total_years_experience,
     total_years_in_org: formData.total_years_in_org,
@@ -171,9 +172,9 @@ export const transformCostData = (
     eid: '',
     account_rid: formData.account_rid,
     effective_date: formData.financial_start_date
-      ? formData.financial_start_date
+      ? dateFormatToYYYYMMDD(formData.financial_start_date)
       : '',
-    end_date: formData.financial_end_date ? formData.financial_end_date : '',
+    end_date: formData.financial_end_date ? dateFormatToYYYYMMDD(formData.financial_end_date) : '',
     annual_cost: formData.annual_cost || '',
     monthly_cost: formData.monthly_cost || '',
     weekly_cost: formData.weekly_cost || '',
@@ -216,7 +217,7 @@ export const transformSkillData = (
     resource_rid: formData.resource_rid,
     resource_code: formData.resource_code,
     resource_ref_id: formData.resource_ref_id,
-    start_date: formData.skill_start_date ? formData.skill_start_date : '',
+    start_date: formData.skill_start_date ? dateFormatToYYYYMMDD(formData.skill_start_date) : '',
     skill_level: formData.skill_level as skillLevel,
     skill_type_rid: formData.skill_type,
     skill_subtype_rid: formData.skill_sub_type,

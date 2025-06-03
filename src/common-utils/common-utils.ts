@@ -374,6 +374,8 @@ export const REGEX_PATTERNS = {
   // NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX:
   //   /^(?!^[ &'.,-])(?!(.*[ &'.,-]$))/,
   SKILL_OTHERS_ALLOWED_CHARS_REGEX: /^[A-Za-z\-'._\s]+$/,
+  SKILL_OTHERS_NO_CONSECUTIVE_SPECIALS_REGEX: /^(?!.*[&\-.'", ]{2})/,
+  CONSECUTIVE_SPECIAL_CHARS: /^(?!.*[ '-_]{2}).+$/,
 };
 
 /**

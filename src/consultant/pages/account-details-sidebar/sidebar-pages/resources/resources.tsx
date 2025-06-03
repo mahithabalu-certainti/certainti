@@ -79,7 +79,7 @@ const tabs: TabMenus[] = [
     id: AllPermissions.RESOURCE_COST_VIEW,
   },
   {
-    label: 'Resource Skill',
+    label: 'Resource Skills',
     value: 'skill',
     hide: false,
     id: AllPermissions.RESOURCE_SKILL_VIEW,
@@ -316,9 +316,10 @@ const Resource: React.FC<ResourceProps> = ({
 
   const headerButtons = [
     {
-      label: 'New',
+      label: value === 'details' ? 'Edit' : 'New',
       variant: 'outlined' as const,
-      onClick: () => handleCreateResource(),
+      disabled: accountInActive,
+      onClick: value === 'details' ? () => handleEditResource() : () => handleCreateResource(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
       hide: handleCreateButtonEnable(),
     },
@@ -330,6 +331,12 @@ const Resource: React.FC<ResourceProps> = ({
       hide: handleDownloadButtonEnable(),
     },
   ];
+
+  const handleEditResource = () => {
+    const resourceId = searchParams.get('res_id');
+    const accNumber = accountDetails?.data?.accountById.r_number;
+    navigate(RESOURCE + '/edit/' + resourceId + `?account_id=${accountid}&acc_number=${accNumber}`);
+  }
 
   const handleBackClick = () => {
     setViewResourceList(!viewResourceList);
@@ -348,9 +355,10 @@ const Resource: React.FC<ResourceProps> = ({
         replace: true,
       }
     );
+    setValue('');
     setFilterVisibility(true);
     setAppliedFilters({});
-    clearFilters(value || 'resource');
+    clearFilters('resource');
   };
 
   const handleCreateResource = () => {
@@ -477,7 +485,7 @@ const Resource: React.FC<ResourceProps> = ({
             showBackArrow={showBackArrow}
             onBackClick={handleBackClick}
           />
-          {!viewResourceList ? (
+          {!viewResourceList && value && (
             <ResourceSubComponents
               permission={permission}
               tabMenus={tabMenus}
@@ -501,7 +509,8 @@ const Resource: React.FC<ResourceProps> = ({
               skillOrderBy={skillOrderBy}
               setSkillOrderBy={setSkillOrderBy}
             />
-          ) : (
+          )}
+          {viewResourceList && !value && (
             <div className='border border-[#CBD6E2]'>
               <ListTable
                 data={ResourceList?.resource as any}
@@ -515,7 +524,7 @@ const Resource: React.FC<ResourceProps> = ({
                 stickyHeader={false}
                 stickyColumnsCount={1}
                 selectable={false}
-                actionWidth={150}
+                actionWidth={80}
                 actionDisplayMode='dropdown'
                 actionMenuItems={actionMenuItems}
                 loading={isLoading}

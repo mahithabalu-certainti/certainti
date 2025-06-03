@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { createresourceIcon, editIcon } from '../../../assets';
 import { Layout, OnChange, useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
@@ -59,12 +59,14 @@ const ResourceForm: React.FC = () => {
   // Hooks
   const { successToast } = useToast();
   const location = useLocation();
+  const { resourcesid } = useParams();
   const { state } = location;
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const resourceId = searchParams.get('res_id');
   const [resourceDetails, setResourceDetails] = useState<any>(null);
   const accountId = searchParams.get('account_id');
+  const accNumber = searchParams.get('acc_number');
   const [skillSubTypeData, setSkillSubTypeData] = useState<SelectOption[]>([]);
   const [isResourceFullNameEmpty, setIsResourceFullNameEmpty] =
     useState<boolean>(false);
@@ -113,9 +115,9 @@ const ResourceForm: React.FC = () => {
 
   // Data fetching
   const { data: resource, isSuccess } = useResourceDetail(
-    resourceId || location?.state?.resource?.rid || resourceRId,
+    resourcesid || resourceId || location?.state?.resource?.rid || resourceRId,
     location?.state?.accountDetails?.data?.accountById?.r_number ||
-    accountNumber
+    accountNumber || accNumber
   );
 
   useEffect(() => {
@@ -131,6 +133,8 @@ const ResourceForm: React.FC = () => {
         resourceDetailsData?.resource_total_experience_organization,
       Record_id: resourceDetailsData?.rid,
       Resource_id: resourceDetailsData?.r_number,
+      resource_startdate: formatDateToYYYYMMDD(resourceDetailsData?.resource_startdate),
+      resource_enddate: formatDateToYYYYMMDD(resourceDetailsData?.resource_enddate),
       Created_On: formatDateToYYYYMMDDWithTime(resourceDetailsData?.created_datetime),
       Created_By: resourceDetailsData?.created_by,
       Updated_On: formatDateToYYYYMMDDWithTime(resourceDetailsData?.modified_datetime),
@@ -177,8 +181,8 @@ const ResourceForm: React.FC = () => {
     if (state?.cost && isSuccess && costSuccess && isEditView) {
       const costValues = {
         ...formValues,
-        financial_start_date: costInfo?.effective_date || '',
-        financial_end_date: costInfo?.end_date || '',
+        financial_start_date: formatDateToYYYYMMDD(costInfo?.effective_date) || '',
+        financial_end_date: formatDateToYYYYMMDD(costInfo?.end_date) || '',
         currency: costInfo?.currency_rid || null,
         annual_cost: costInfo?.annual_cost || '',
         monthly_cost: costInfo?.monthly_cost || '',
@@ -341,7 +345,7 @@ const ResourceForm: React.FC = () => {
             : 'Resource skill details added successfully'
         );
       }
-      if (!state.skill && !state.cost) {
+      if (!state?.skill && !state?.cost) {
         successToast(
           isEditView
             ? 'Resource updated successfully'
@@ -350,7 +354,7 @@ const ResourceForm: React.FC = () => {
       }
       navigate(-1);
     }
-  }, [commonSuccess, isEditView, state.cost, state.skill]);
+  }, [commonSuccess, isEditView, state?.cost, state?.skill]);
 
   // Handlers
   const handleSubmit = (formValues: any) => {
@@ -396,8 +400,8 @@ const ResourceForm: React.FC = () => {
           formValues,
           resource?.data?.resourceDetails, // Adjusted to access the correct property
           {
-            resource_id: location?.state?.resource?.rid,
-            account_number: accountData?.r_number,
+            resource_id: location?.state?.resource?.rid || resourcesid,
+            account_number: accountData?.r_number || accNumber,
             text: 'sample',
           }
         );
@@ -533,7 +537,7 @@ const ResourceForm: React.FC = () => {
                 {state?.cost
                   ? `${resourceName} Cost`
                   : state?.skill
-                    ? `${resourceName} Skill`
+                    ? `${resourceName} Skills`
                     : resourceName}
               </h4>
             )}
@@ -542,7 +546,7 @@ const ResourceForm: React.FC = () => {
                 {state?.cost
                   ? 'Edit Resource Cost'
                   : state?.skill
-                    ? `Edit Resource Skill`
+                    ? `Edit Resource Skills`
                     : (resourceName ?? 'Edit Resource')}
               </h4>
             )}
@@ -611,8 +615,8 @@ const ResourceForm: React.FC = () => {
         formRef={formRef}
         onChange={onChangeField}
         layout={Layout.TYPE_1}
-        keyStart={state.cost ? 'financial_start_date' : 'resource_startdate'}
-        keyEnd={state.cost ? 'financial_end_date' : 'resource_enddate'}
+        keyStart={state?.cost ? 'financial_start_date' : 'resource_startdate'}
+        keyEnd={state?.cost ? 'financial_end_date' : 'resource_enddate'}
       />
     </div>
   );
