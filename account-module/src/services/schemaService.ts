@@ -359,8 +359,8 @@ class SchemaService {
         r_number VARCHAR(20) UNIQUE DEFAULT 'PRS ' || LPAD(nextval('"${schemaName}".project_resource_seq')::TEXT, 10, '0'),
   
         project_code VARCHAR(50) NOT NULL UNIQUE,
-        resource_effective_from_date DATE,
-        resource_end_date DATE,
+        start_date DATE,
+        end_date DATE,
         resource_code VARCHAR(100),
         resource_name VARCHAR(200),
         resource_type VARCHAR(100),
@@ -370,7 +370,7 @@ class SchemaService {
         total_cost_pro_res NUMERIC(13, 2),
         status VARCHAR(30),
         account_rid UUID,
-        currency VARCHAR(10),
+        currency_rid UUID,
         description TEXT,
         country_rid UUID,
   
