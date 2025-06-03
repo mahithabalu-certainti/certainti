@@ -370,7 +370,7 @@ class SchemaService {
         total_cost_pro_res NUMERIC(13, 2),
         status VARCHAR(30),
         account_rid UUID,
-        currency VARCHAR(10),
+        currency_rid UUID,
         description TEXT,
         country_rid UUID,
   
