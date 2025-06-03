@@ -1,4 +1,5 @@
 import { PROJECT_TYPE } from '../../../../../common-utils';
+import { FilterSelectOption } from '../../../../types/account-filter';
 import { fiscalYears } from '../../../resource-form/form-data';
 import { FieldConfig } from '../../components/filter/filterType';
 
@@ -52,7 +53,9 @@ export const dateOptions: { option: string; value: string }[] = [
   { option: 'Is-Empty', value: 'is_empty' },
 ];
 
-export const projectFilterFields: FieldConfig[] = [
+export const projectFilterFields = (
+  classificationOption: FilterSelectOption[]
+): FieldConfig[] => [
   // {
   //   name: 'Account Name',
   //   value: 'account_name',
@@ -100,8 +103,12 @@ export const projectFilterFields: FieldConfig[] = [
   {
     name: 'Project Classification',
     value: 'classification_name',
-    type: 'text',
-    operatorOption: textOptions,
+    type: 'enum',
+    options: classificationOption.map((item) => ({
+      option: item.label,
+      value: item.value,
+    })),
+    operatorOption: enumOptions,
   },
   {
     name: 'Project Effort (Hours)',

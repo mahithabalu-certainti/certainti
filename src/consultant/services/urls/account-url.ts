@@ -57,6 +57,8 @@ export const getAccountExportUrl = ({
   sortBy,
   sortOrder,
   filters,
+  globalFilters,
+  fiscalYear,
 }: AccountListURLParams): string => {
   const baseUrl = '/api/accounts/export';
   const searchParams = new URLSearchParams();
@@ -66,7 +68,10 @@ export const getAccountExportUrl = ({
   if (filters && Object.keys(filters).length > 0) {
     searchParams.set('filters', JSON.stringify(filters));
   }
-
+  if (globalFilters !== undefined) {
+    searchParams.set('globalFilters', JSON.stringify(globalFilters));
+  }
+  if (fiscalYear) searchParams.set('fiscalYear', fiscalYear);
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };

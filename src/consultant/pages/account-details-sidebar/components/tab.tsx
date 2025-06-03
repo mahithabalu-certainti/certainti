@@ -9,7 +9,11 @@ import {
   resourceFilterFields,
 } from '../sidebar-pages/resources/utils';
 import Filter from './filter/filter';
-import { useFetchCurrency, useFetchState } from '../../../services/account';
+import {
+  useFetchClassification,
+  useFetchCurrency,
+  useFetchState,
+} from '../../../services/account';
 import {
   useFetchResourceSkillSubType,
   useFetchResourceSkillType,
@@ -74,6 +78,7 @@ const TabPanel: React.FC<TabProps> = ({
   const currency = useFetchCurrency();
   const allCountries = useGetAllCountries();
   const Regions = useFetchState(currentCountry);
+  const Classification = useFetchClassification();
 
   const { data: skillType } = useFetchResourceSkillType();
   const { data: skillSubType } = useFetchResourceSkillSubType(
@@ -106,6 +111,14 @@ const TabPanel: React.FC<TabProps> = ({
       })) || []
     );
   }, [skillType]);
+  const memoizedClassification = useMemo(
+    () =>
+      Classification.data?.data.projectClassifications.map((data) => ({
+        option: data.classification_name,
+        value: data.classification_name,
+      })) || [],
+    [Classification.data?.data.projectClassifications]
+  );
 
   // useEffect(() => {
   //   const data = skillSubType as SkillSubtype[];
@@ -200,7 +213,13 @@ const TabPanel: React.FC<TabProps> = ({
 
   const filterFields = useMemo(() => {
     if (!value) return resourceFilterFields(memoizedCountry, regionData);
-    if (value === 'projects') return projectFilterFields;
+    if (value === 'projects')
+      return projectFilterFields(
+        memoizedClassification.map((item) => ({
+          label: item.option,
+          value: item.value,
+        }))
+      );
     return value === 'cost'
       ? getCostFilterFields(memoizedCurrency)
       : getSkillFilterFields(memoizedSkillType, skillSubTypeData);

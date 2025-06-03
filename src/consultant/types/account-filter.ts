@@ -148,6 +148,7 @@ export type FieldConfig = {
     | 'keyContact'
     | 'enumSelect'
     | 'system'
+    | 'system-sort'
     | 'enum';
   options?: string[] | { value: string; label: string }[];
   operatorOption?: { label: string; value: string }[];
@@ -170,6 +171,7 @@ export interface FilterModalProps {
   filterFields: FieldConfig[];
   setPage: (page: number) => void;
   handleCloseFilter: () => void;
+  handleSorting?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
 }
 
 export const StatusOptions = [

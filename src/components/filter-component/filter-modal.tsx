@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from 'react';
 import { arrowIcon, checkedIcon, closeIcon } from '../../assets';
@@ -41,8 +42,6 @@ import {
 } from './helpers';
 import { useLocation } from 'react-router-dom';
 
-// const systemFilters = ['Touched Records', 'Untouched Records', 'Record Action'];
-
 const FilterModal: React.FC<FilterModalProps> = ({
   isOpen,
   filterAnchorEl,
@@ -51,6 +50,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
   filterFields,
   setPage,
   handleCloseFilter,
+  handleSorting,
 }) => {
   const location = useLocation();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -62,6 +62,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
   const [selectedSystemFilters, setSelectedSystemFilters] = useState<string[]>(
     []
   );
+  const [currentSort, setCurrentSort] = useState<string | null>(null);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -71,9 +72,11 @@ const FilterModal: React.FC<FilterModalProps> = ({
     setAnchorEl(null);
   };
 
-  const systemFilters = filterFields.filter((field) => field.type === 'system');
+  const systemFilters = filterFields.filter(
+    (field) => field.type === 'system' || field.type === 'system-sort'
+  );
   const regularFilters = filterFields.filter(
-    (field) => field.type !== 'system'
+    (field) => field.type !== 'system' && field.type !== 'system-sort'
   );
 
   const handleModalClose = () => {
@@ -131,6 +134,8 @@ const FilterModal: React.FC<FilterModalProps> = ({
       setFilterStates({});
       setAppliedFilters({});
       setSelectedSystemFilters([]);
+      setCurrentSort(null);
+      handleSorting?.('', 'desc');
     };
 
     const currentPathname = location.pathname;
@@ -357,21 +362,17 @@ const FilterModal: React.FC<FilterModalProps> = ({
     }));
   };
 
-  // Update the system filter toggle handler
-  const toggleSystemFilter = (fieldName: string, filterValue: string) => {
+  const handleSystemFilter = (fieldName: string, filterValue: string) => {
     setSelectedSystemFilters((prevSelected) => {
       const updatedSelected = prevSelected.includes(filterValue)
         ? prevSelected.filter((val) => val !== filterValue) // remove
         : [...prevSelected, filterValue]; // add
 
-      // Update main filter state
       const updatedFilterStates = { ...filterStates };
 
       if (updatedSelected.length === 0) {
-        // Remove the filter if no values selected
         delete updatedFilterStates[fieldName];
       } else {
-        // Otherwise, update it
         updatedFilterStates[fieldName] = {
           system: { values: updatedSelected },
         };
@@ -384,6 +385,20 @@ const FilterModal: React.FC<FilterModalProps> = ({
 
       return updatedSelected;
     });
+  };
+
+  const handleSortingSelection = (sortValue: string) => {
+    if (currentSort === sortValue) {
+      setCurrentSort(null);
+      handleSorting?.('', 'desc');
+    } else {
+      setCurrentSort(sortValue);
+      const [field, direction] = sortValue.split('_') as [
+        string,
+        'asc' | 'desc',
+      ];
+      handleSorting?.(field, direction);
+    }
   };
 
   const handleBooleanChange = (fieldName: string, value: boolean) => {
@@ -570,6 +585,8 @@ const FilterModal: React.FC<FilterModalProps> = ({
     setFilterStates({});
     setAppliedFilters({});
     setSelectedSystemFilters([]);
+    setCurrentSort(null);
+    handleSorting?.('', 'desc');
     clearFilters();
   };
 
@@ -723,26 +740,66 @@ const FilterModal: React.FC<FilterModalProps> = ({
               System Define filters
             </h3>
             <div className='flex gap-2 flex-wrap'>
-              {systemFilters[0]?.options?.map((field: any) => (
-                <button
-                  key={field.value}
-                  className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${
-                    selectedSystemFilters.includes(field.value)
-                      ? 'bg-[#E6F9EA] border-[#34C759] text-[#0F5132]'
-                      : 'border-[#CBD6E2] text-[#425A76] hover:bg-gray-50'
-                  }`}
-                  onClick={() =>
-                    toggleSystemFilter(systemFilters[0].name, field.value)
-                  }
-                >
-                  <img
-                    src={checkedIcon}
-                    alt='checked-icon'
-                    className='w-3 h-3'
-                  />
-                  {field.label}
-                </button>
-              ))}
+              {/* Render system filters */}
+              {systemFilters
+                .filter((filter) => filter.type === 'system')
+                .flatMap((systemFilter) =>
+                  systemFilter.options?.map((field: any) => (
+                    <button
+                      key={field.value}
+                      className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${
+                        selectedSystemFilters.includes(field.value)
+                          ? 'bg-[#E6F9EA] border-[#34C759] text-[#0F5132]'
+                          : 'border-[#CBD6E2] text-[#425A76] hover:bg-gray-50'
+                      }`}
+                      onClick={() =>
+                        handleSystemFilter('system_filter', field.value)
+                      }
+                    >
+                      <img
+                        src={checkedIcon}
+                        alt='checked-icon'
+                        className='w-3 h-3 mt-[0.3px]'
+                        style={{
+                          filter: selectedSystemFilters.includes(field.value)
+                            ? 'invert(56%) sepia(96%) saturate(676%) hue-rotate(80deg) brightness(95%) contrast(101%)'
+                            : 'none',
+                        }}
+                      />
+                      {field.label}
+                    </button>
+                  ))
+                )}
+
+              {/* Render sort options */}
+              {systemFilters
+                .filter((filter) => filter.type === 'system-sort')
+                .flatMap((sortFilter) =>
+                  sortFilter.options?.map((field: any) => (
+                    <button
+                      key={field.value}
+                      className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${
+                        currentSort === field.value
+                          ? 'bg-[#E6F9EA] border-[#34C759] text-[#0F5132]'
+                          : 'border-[#CBD6E2] text-[#425A76] hover:bg-gray-50'
+                      }`}
+                      onClick={() => handleSortingSelection(field.value)}
+                    >
+                      <img
+                        src={checkedIcon}
+                        alt='checked-icon'
+                        className='w-3 h-3 mt-[0.3px]'
+                        style={{
+                          filter:
+                            currentSort === field.value
+                              ? 'invert(56%) sepia(96%) saturate(676%) hue-rotate(80deg) brightness(95%) contrast(101%)'
+                              : 'none',
+                        }}
+                      />
+                      {field.label}
+                    </button>
+                  ))
+                )}
             </div>
           </div>
         )}

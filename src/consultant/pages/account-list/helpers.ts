@@ -81,11 +81,17 @@ export const getAccountFilterFields = (
     type: 'text',
     operatorOption: textfieldOptions,
   },
+  // {
+  //   label: 'System Filter',
+  //   name: 'system_filter',
+  //   type: 'system',
+  //   options: [{ label: 'Touched Records', value: 'touched_records' }],
+  // },
   {
-    label: 'System Filter',
-    name: 'system_filter',
-    type: 'system',
-    options: [{ label: 'Recently created', value: 'createdAt' }],
+    label: 'Sort Options',
+    name: 'sort_options',
+    type: 'system-sort',
+    options: [{ value: 'createdAt_desc', label: 'Recently Created' }],
   },
 ];
 

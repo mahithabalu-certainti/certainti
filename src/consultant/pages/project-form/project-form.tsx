@@ -305,7 +305,7 @@ const ProjectForm: React.FC = () => {
               </h5>
             )}
             <h4
-              className={`${isEditView ? 'text-[14px]' : 'text-[16px]'} font-bold text-[#2D3E4F] ml-2 leading-4 w-[95%] overflow-ellipsis truncate`}
+              className={`${isEditView ? 'text-[14px]' : 'text-[16px]'} font-bold text-[#2D3E4F] ml-2  w-[95%] overflow-ellipsis truncate`}
             >
               {isEditView ? projectData.project_name : 'Create Project'}
             </h4>
