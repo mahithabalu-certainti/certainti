@@ -258,7 +258,7 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
             All Accounts
           </h3>
 
-          <div className='flex flex-col gap-2 min-h-[40px] overflow-y-auto max-h-[250px] -mr-6'>
+          <div className='flex flex-col gap-2 min-h-[40px] overflow-y-auto max-h-[100px] -mr-6'>
             {selectedFilters.map((filter, index) => (
               <div key={index} className='flex items-center gap-2'>
                 {loading ? (

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 // import { useNavigate } from 'react-router-dom';
 // import { PROJECT_CREATE } from '../../../../routes';
 import {
@@ -22,6 +22,7 @@ import { checkPermission } from '../../../../common-utils';
 import { AllModules, AllPermissions } from '../../../../common-service';
 import { AccessRestricted } from '../../../../components/account-restricted';
 import { exportProjectData } from '../../../services/project';
+import { useFetchClassification } from '../../../services/account';
 
 // const BUTTON_STYLES = {
 //   height: '32px',
@@ -94,7 +95,22 @@ export const Projects: React.FC = () => {
   //   navigate(PROJECT_CREATE);
   // };
 
-  const projectFilterFields = getAllProjectFilterFields();
+  const Classification = useFetchClassification();
+  const memoizedClassification = useMemo(
+    () =>
+      Classification.data?.data.projectClassifications.map((data) => ({
+        option: data.classification_name,
+        value: data.classification_name,
+      })) || [],
+    [Classification.data?.data.projectClassifications]
+  );
+
+  const projectFilterFields = getAllProjectFilterFields(
+    memoizedClassification.map((item) => ({
+      label: item.option,
+      value: item.value,
+    }))
+  );
 
   if (!projectIsEnable) return <AccessRestricted />;
 
