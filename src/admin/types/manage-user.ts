@@ -185,6 +185,7 @@ interface UserPermissionData {
   rid: string;
   user_role: string;
   user_id: string;
+  user_name: string;
   permissions: Privilege[];
 }
 
