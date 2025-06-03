@@ -154,13 +154,13 @@ const createProfileSchema = Joi.object({
     "string.empty": "Source Profile ID is required",
     "any.required": "Source Profile ID is required"
   }),
-  profile_name: Joi.string().min(3).max(255).required().messages({
+  profile_name: Joi.string().min(2).max(64).required().messages({
     "string.empty": "Profile name is required",
     "string.min": "Profile name must be at least 3 characters long",
     "string.max": "Profile name cannot exceed 255 characters",
     "any.required": "Profile name is required"
   }),
-  profile_description: Joi.string().max(500).allow('', null).optional(),
+  profile_description: Joi.string().max(2000).allow('', null).optional(),
   profile_type: Joi.string().valid('default', 'custom').required().messages({
       "string.empty": "Profile type is required",
       "any.required": "Profile type is required",
@@ -258,10 +258,10 @@ const editProfilePermissionsSchema = Joi.object({
     "string.empty": "Profile ID is required",
     "any.required": "Profile ID is required"
   }),
-  profile_name: Joi.string().min(3).max(255).required().messages({
+  profile_name: Joi.string().min(2).max(64).required().messages({
     "string.empty": "Profile name is required",
-    "string.min": "Profile name must be at least 3 characters long",
-    "string.max": "Profile name cannot exceed 255 characters",
+    "string.min": "Profile name must be at least 2 characters long",
+    "string.max": "Profile name cannot exceed 64 characters",
     "any.required": "Profile name is required"
   }),
   privileges: Joi.array().items(
