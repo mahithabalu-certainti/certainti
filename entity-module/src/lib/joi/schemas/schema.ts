@@ -1103,8 +1103,8 @@ const createProjectSchema = Joi.object({
   project_type: Joi.string().valid("Fixed", "Time & Material").required(),
   project_classification_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow(null),
   project_classification_other: Joi.string().optional().allow(null).allow(""),
-  project_client_group: Joi.string().max(200).optional().allow("").allow(null),
-  project_group: Joi.string().max(150).optional().allow("").allow(null),
+  project_client_group: Joi.string().max(255).optional().allow("").allow(null),
+  project_group: Joi.string().max(255).optional().allow("").allow(null),
   project_status: Joi.string().valid("Active", "Inactive").required(),
   fiscal_year: Joi.number().integer().min(1000).max(9999).required().messages({
     "number.base": "Fiscal year must be a number",
@@ -1368,8 +1368,8 @@ const updateProjectSchema = Joi.object({
   project_type: Joi.string().valid("Fixed", "Time & Material").required(),
   project_classification_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow(null),
   project_classification_other: Joi.string().optional().allow(null).allow(""),
-  project_client_group: Joi.string().max(200).optional().allow("").allow(null),
-  project_group: Joi.string().max(150).optional().allow("").allow(null),
+  project_client_group: Joi.string().max(255).optional().allow("").allow(null),
+  project_group: Joi.string().max(255).optional().allow("").allow(null),
   project_status: Joi.string().valid("Active", "Inactive").required(),
   fiscal_year: Joi.number().integer().min(1000).max(9999).required().messages({
     "number.base": "Fiscal year must be a number",

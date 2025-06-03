@@ -157,8 +157,8 @@ export class ProjectSummary
           type: DataTypes.UUID,
           allowNull: true,
         },
-        project_client_group: DataTypes.STRING(200),
-        project_group: DataTypes.STRING(150),
+        project_client_group: DataTypes.STRING(255),
+        project_group: DataTypes.STRING(255),
         fiscal_year: {
           type: DataTypes.INTEGER,
           allowNull: false,
