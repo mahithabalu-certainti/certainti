@@ -1480,7 +1480,7 @@ class SchemaService {
         ps.program_name, ps.project_startdate , ps.project_enddate , ps.qualified_research_expenditure ,
         ps.is_rd_qualified , ps.qre, ps.total_cost , ps.total_effort , ps.total_fte , ps.total_fte_cost ,
         ps.total_sub_con , ps.total_sub_con_cost, ps.total_non_labor_cost , ps."comments" , 
-        cou.country_name , curr.currency_code , st.state_name as region_name
+        cou.country_name , curr.currency_code , curr.currency_symbol , st.state_name as region_name
         FROM project_summary AS ps
         INNER JOIN account acc ON acc.rid = ps.account_rid 
         LEFT JOIN industry ind ON ind.rid = ps.industry_rid
@@ -1550,7 +1550,7 @@ class SchemaService {
         ps.program_name, ps.project_startdate , ps.project_enddate , ps.qualified_research_expenditure ,
         ps.is_rd_qualified , ps.qre, ps.total_cost , ps.total_effort , ps.total_fte , ps.total_fte_cost ,
         ps.total_sub_con , ps.total_sub_con_cost, ps.total_non_labor_cost , ps."comments" , 
-        cou.country_name , curr.currency_code , st.state_name as region_name
+        cou.country_name , curr.currency_code , curr.currency_symbol , st.state_name as region_name
         FROM project_summary AS ps
         INNER JOIN account acc ON acc.rid = ps.account_rid 
         LEFT JOIN industry ind ON ind.rid = ps.industry_rid
@@ -2425,7 +2425,7 @@ class SchemaService {
 
       if (currencyIds.length > 0) {
         currencies = await mainDdSequilze.query(
-          `SELECT rid, currency_code FROM currency WHERE rid IN (:ids)`,
+          `SELECT rid, currency_code, currency_symbol FROM currency WHERE rid IN (:ids)`,
           {
             replacements: { ids: currencyIds },
             type: "SELECT",
@@ -2456,6 +2456,7 @@ class SchemaService {
         country_name: countryMap[res.country]?.country_name || null,
         region_name: regionMap[res.region]?.state_name || null,
         currency_name: currencyMap[res.currency]?.currency_code || null,
+        currency_symbol: currencyMap[res.currency]?.currency_symbol || null,
       }));
 
       return updatedProjects;
