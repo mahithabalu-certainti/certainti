@@ -33,7 +33,7 @@ export const ExtendedPermission: React.FC = () => {
   const handlePrivilegesChange = (updatedPrivileges: Privilege[]) => {
     setPrivileges(updatedPrivileges);
   };
-  console.log('privileges-extended', privileges);
+ 
   const handleSaveProfile = () => {
     const payload = {
       user_id: data?.data.user_id,
@@ -59,7 +59,7 @@ export const ExtendedPermission: React.FC = () => {
             <img
               src={ManageUserIcon}
               alt='manage user'
-              className='h-8 w-8 rounded'
+              className='w-8 h-8 rounded'
             />
             <div className='flex flex-col mb-1'>
               <div className={HEADER_STYLES.adminPermission}>
@@ -68,7 +68,7 @@ export const ExtendedPermission: React.FC = () => {
               <div className={HEADER_STYLES.manageProfile}>Manage User</div>
             </div>
           </div>
-          <div className='flex gap-2 items-center'>
+          <div className='flex items-center gap-2'>
             <TextButton
               label='Back'
               onClick={goBack}
