@@ -79,7 +79,7 @@ const tabs: TabMenus[] = [
     id: AllPermissions.RESOURCE_COST_VIEW,
   },
   {
-    label: 'Resource Skill',
+    label: 'Resource Skills',
     value: 'skill',
     hide: false,
     id: AllPermissions.RESOURCE_SKILL_VIEW,
