@@ -443,7 +443,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     },
     {
       label: 'Total Sub Con Count',
-      value: projectDetails?.total_sub_con_count,
+      value: projectDetails?.total_sub_con,
     },
   ];
 
@@ -471,11 +471,14 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   const settingInfo: DetailItem[] = [
     {
       label: 'Auto Send Interaction',
-      value: projectDetails?.auto_send_ai_interaction,
+      value: projectDetails?.auto_send_ai_interaction ? 'Yes' : 'No',
     }, // need to Discuss
     { label: 'Blended Rate - FTE', value: projectDetails?.blended_rate_fte },
 
-    { label: 'Auto Assessment', value: projectDetails?.auto_access_rd },
+    {
+      label: 'Auto Assessment',
+      value: projectDetails?.auto_access_rd ? 'Yes' : 'No',
+    },
 
     {
       label: 'Blended Rate - SubCon',

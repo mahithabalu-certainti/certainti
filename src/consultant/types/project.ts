@@ -77,7 +77,7 @@ export interface ProjectListParams {
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
   filters?: object;
-  fiscalYear: number;
+  fiscalYear?: number | string;
   accountNumber?: string;
 }
 export enum Status {

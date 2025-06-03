@@ -31,14 +31,14 @@ export const SELECT_STYLES = {
   lineHeight: '30px',
   borderRadius: '2px',
   '& .MuiSelect-select': {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
     fontWeight: 600,
     fontSize: '12px',
     lineHeight: '30px',
     color: '#425A76',
     py: 0,
+    maxWidth: '100%',
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
   },
   '& .MuiOutlinedInput-notchedOutline': {
     borderColor: '#CBD6E2',

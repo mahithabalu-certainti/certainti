@@ -3,7 +3,10 @@ import { api } from '../../../api/api';
 import { ResourceDetailsApiResponse } from '../../types';
 import { ExportResourcelUrl, ResourceDetailURL } from '../urls';
 import { ExportModule } from '../../types/resource-skill';
-import { ExportResourceCostUrl, ExportResourceSkillUrl } from '../urls/resource-cost-skill-urls';
+import {
+  ExportResourceCostUrl,
+  ExportResourceSkillUrl,
+} from '../urls/resource-cost-skill-urls';
 
 export const fetchResourceDetail = async (
   resourceId: string,
@@ -28,7 +31,7 @@ export const useResourceDetail = (
   });
 };
 
-type ExportType = 'resource' | 'cost' | 'skill';
+type ExportType = 'resource' | 'cost' | 'skill' | 'project';
 export const exportData = async (
   type: ExportType,
   params: ExportModule = {}
@@ -83,4 +86,3 @@ export const exportData = async (
     console.error('Export failed:', error);
   }
 };
-

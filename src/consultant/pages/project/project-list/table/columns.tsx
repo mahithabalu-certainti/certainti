@@ -78,7 +78,7 @@ export const getAllProjectListColumns = (
   },
   {
     id: 'classification_name',
-    label: 'Project classification',
+    label: 'Project Classification',
     sortable: true,
     sortId: 'classification_name',
     width: 170,

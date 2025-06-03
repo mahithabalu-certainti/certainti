@@ -164,14 +164,13 @@ export const FormData = (
           //   placeholder: 'Enter Account ID',
           //   disabled: disableFields,
           // }),
-          createTextField('account_name', 'Account Name', {
+          createTextField('account_name', 'Name', {
             required: true,
-            placeholder: 'Enter Account Name',
+            placeholder: 'Enter Name',
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_ACCOUNT_NAME_REGEX,
-                errorMessage:
-                  'Account Name must be more than 6 characters long',
+                errorMessage: 'Name must be more than 6 characters long',
               },
               {
                 regex: REGEX_PATTERNS.MAX_ACCOUNT_NAME_REGEX,

@@ -10,7 +10,7 @@ const textfieldOptions: { label: string; value: string }[] = [
   { label: 'Not Equals', value: 'not_equals' },
 ];
 
-export const profileOperator: { label: string; value: string }[] = [
+export const enumOperator: { label: string; value: string }[] = [
   { label: 'Equals', value: 'equals' },
   { label: 'Not Equals', value: 'not_equals' },
   { label: 'In', value: 'in' },
@@ -36,7 +36,13 @@ export const getUserFilterFields = (
     name: 'profile',
     type: 'enumSelect',
     options: userProfiles,
-    operatorOption: profileOperator,
+    operatorOption: enumOperator,
   },
-  { label: 'Status', name: 'status', type: 'status', options: StatusOptions },
+  {
+    label: 'Status',
+    name: 'status',
+    type: 'enumSelect',
+    options: StatusOptions,
+    operatorOption: enumOperator,
+  },
 ];

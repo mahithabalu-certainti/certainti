@@ -53,9 +53,15 @@ export const dateOptions: { option: string; value: string }[] = [
 ];
 
 export const projectFilterFields: FieldConfig[] = [
+  // {
+  //   name: 'Account Name',
+  //   value: 'account_name',
+  //   type: 'text',
+  //   operatorOption: textOptions,
+  // },
   {
-    name: 'Account Name',
-    value: 'account_name',
+    name: 'Project Code',
+    value: 'project_code',
     type: 'text',
     operatorOption: textOptions,
   },
@@ -75,12 +81,6 @@ export const projectFilterFields: FieldConfig[] = [
   {
     name: 'Project Group',
     value: 'project_group',
-    type: 'text',
-    operatorOption: textOptions,
-  },
-  {
-    name: 'Project Code',
-    value: 'project_code',
     type: 'text',
     operatorOption: textOptions,
   },
