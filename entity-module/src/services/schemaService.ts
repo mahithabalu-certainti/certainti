@@ -2699,7 +2699,7 @@ class SchemaService {
           classification_name: res.project_classification_other
             ? res.project_classification_other
             : classificationMap[res.project_classification_rid]
-                ?.classification_name,
+                ?.classification_name || null,
           is_other_classification: res.project_classification_other !== null
         }));
       }
@@ -2764,15 +2764,23 @@ class SchemaService {
                 if(filter.not_equals == "Other"){
                   return !project.is_other_classification;
                 }else{
-                  return project.is_other_classification === true || project.classification_name === null;
+                  return project.is_other_classification === true || project.classification_name === null || (project.is_other_classification === false && project.classification_name !== filter.not_equals);
                 }
               }
               if (filter.is_empty === true) {
                 return value === null || value === "";
               }
               if (filter.in !== undefined && Array.isArray(filter.in)) {
-                if(filter.in.includes("Other")){
-                  return filter.in.includes(value) || project.project_classification_other !== null;
+                const containsOther = filter.in.includes("Other");
+                const hasOtherOnly = filter.in.length === 1 && containsOther;
+
+                if (hasOtherOnly) {
+                  return project.project_classification_other !== null && project.is_other_classification;
+                } else if (containsOther) {
+                  return (
+                    (filter.in.includes(value) && !project.is_other_classification) ||
+                    (project.project_classification_other !== null && project.is_other_classification)
+                  );
                 }else{
                   return filter.in.includes(value);
                 }
