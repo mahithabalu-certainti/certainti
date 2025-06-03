@@ -141,7 +141,7 @@ class AccountService {
           {
             model: Currency,
             as: "currency",
-            attributes: ["rid", "currency_code"],
+            attributes: ["rid", "currency_code", "currency_symbol"],
             required: false,
           },
           {
@@ -179,7 +179,7 @@ class AccountService {
             {
               model: Currency,
               as: "currency",
-              attributes: ["rid", "currency_code"]
+              attributes: ["rid", "currency_code", "currency_symbol"]
             },
             {
               model: Account,
