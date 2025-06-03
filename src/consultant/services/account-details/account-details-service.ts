@@ -25,12 +25,12 @@ export const fetchAccountDetail = async (accountId: string): Promise<any> => {
  * @param accountId - The ID of the user to fetch
  * @returns UseQueryResult with user details and query state
  */
-export const useAccountDetail = (accountId: string) => {
+export const useAccountDetail = (accountId: string, isAccountDetailsEnable?: boolean) => {
   return useQuery<any, Error>({
     queryKey: ['accountDetail', accountId], // Unique query key
     queryFn: () => fetchAccountDetail(accountId),
-    enabled: !!accountId, // Only fetch if userId exists
+    enabled: !!accountId && isAccountDetailsEnable, // Only fetch if userId exists
     gcTime: 0, // 5 minutes cache
-    retry: 2, // Retry up to 2 times on failure
+    retry: 0, // Retry up to 2 times on failure
   });
 };

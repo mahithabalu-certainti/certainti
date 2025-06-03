@@ -124,18 +124,6 @@ const Resource: React.FC<ResourceProps> = ({
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { accountid } = useParams();
-  const {
-    data: ResourceList,
-    isLoading,
-    error,
-  } = useResourceList({
-    page: currentPage + 1, // API expects 1-based index
-    limit: rowsPerPage,
-    accountNumber: accountDetails?.data?.accountById.r_number,
-    sortBy: sortField,
-    sortOrder: sortOrder,
-    filters: appliedFilters,
-  });
 
   // Permission Mangement
   const isResourceDownloadEnable = checkPermission(
@@ -174,6 +162,20 @@ const Resource: React.FC<ResourceProps> = ({
     permission || [],
     AllPermissions.RESOURCE_SKILL_CREATE
   );
+
+  const {
+    data: ResourceList,
+    isLoading,
+    error,
+  } = useResourceList({
+    page: currentPage + 1, // API expects 1-based index
+    limit: rowsPerPage,
+    accountNumber: accountDetails?.data?.accountById.r_number,
+    sortBy: sortField,
+    sortOrder: sortOrder,
+    filters: appliedFilters,
+  }, isResourceViewAllEnable);
+  
   const isResoureceOverviewHide = resourceTab[0].hide;
 
   useEffect(() => {

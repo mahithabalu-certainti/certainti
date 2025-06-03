@@ -153,7 +153,8 @@ export const AccountDetails = () => {
     isLoading,
     isError,
   }: { data: any; isLoading: boolean; isError: boolean } = useAccountDetail(
-    accountid as string
+    accountid as string,
+    isAccountDetailsEnable
   );
 
   useEffect(() => {
