@@ -32,19 +32,19 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
   });
   const validateExistingProfile = (value: string) => {
     if (!value.trim()) {
-      return 'Existing profile selection is required';
+      return 'Field is required';
     }
     return '';
   };
   const validateProfileName = (value: string) => {
     // Check for empty value
     if (!value.trim()) {
-      return 'Profile name is required';
+      return 'Field is required';
     }
 
     // Check length
     if (value.length < 2 || value.length > 64) {
-      return 'Profile name must be between 2 and 64 characters';
+      return 'The profile name must contain a minimum of 2 and a maximum of 64 characters.';
     }
 
     // Check for starting/ending spaces or special characters
@@ -67,7 +67,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
 
   const validateDescription = (value: string) => {
     if (!value.trim()) {
-      return 'Description is required';
+      return 'Field is required';
     }
 
     if (value.length > 2000) {
@@ -123,9 +123,9 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                 name='existingProfile'
                 value={formData.existingProfile}
                 onChange={handleChange}
-                className={`custom-select-no-arrow w-full sm:text-sm px-1.5 py-[6px] border-1 ${
+                className={`placeholder-custom-color custom-select-no-arrow w-full sm:text-sm px-1.5 py-[6px] border-1 ${
                   errors.existingProfile ? 'border-red-500' : 'border-gray-300'
-                } rounded-[2px] text-[#425A76] max-h-[100px]`}
+                } rounded-[2px] text-[black] max-h-[100px]`}
                 required
               >
                 <option value='' className='text-gray-500'>
@@ -166,7 +166,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
               value={formData.profileName}
               onChange={handleChange}
               placeholder='Enter profile name'
-              className={`font-[700] custom-select-no-arrow w-full sm:text-sm px-1.5 py-[6px] border-1 ${errors.profileName ? 'border-red-500' : 'border-gray-300'} rounded-[2px] text-[#0f0808]`}
+              className={`placeholder-custom-color font-[500] custom-select-no-arrow w-full sm:text-sm px-1.5 py-[6px] border-1 ${errors.profileName ? 'border-red-500' : 'border-gray-300'} rounded-[2px] text-[black]`}
               required
             />
             {errors.profileName && (
@@ -187,7 +187,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
             value={formData.description}
             onChange={handleChange}
             placeholder='Enter profile description'
-            className={`custom-select-no-arrow font-[700] w-full sm:text-sm px-1.5 py-[6px] border-1 ${errors.description ? 'border-red-500' : 'border-gray-300'} rounded-[2px] text-[#0f0808] resize-none`}
+            className={`custom-select-no-arrow placeholder-custom-color font-[500] w-full sm:text-sm px-1.5 py-[6px] border-1 ${errors.description ? 'border-red-500' : 'border-gray-300'} rounded-[2px] text-[black] resize-none`}
             required
           />
           {errors.description && (
