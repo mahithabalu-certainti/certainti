@@ -59,10 +59,10 @@ const Overview: React.FC<OverviewProps> = ({
   const fiscalYears = Array.from(
     { length: currentYear - 2000 + 1 },
     (_, index) => {
-      const year = 2000 + index;
+      const year = currentYear - index;
       return {
         label: `FY-${year}`,
-        onClick: () => console.log(`${year} clicked`),
+        onClick: () => setFiscalYear(year.toString()),
       };
     }
   );
