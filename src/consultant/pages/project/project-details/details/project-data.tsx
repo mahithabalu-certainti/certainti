@@ -23,13 +23,13 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
   projectDetails,
   isDetailsLoading,
   detailsError,
-  projectDownloadIsEnable
+  projectDownloadIsEnable,
 }) => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(0);
 
   const handleEdit = () => {
-    navigate(`/Project/edit/${projectDetails?.rid}`, {
+    navigate(`/project/edit/${projectDetails?.rid}`, {
       state: {
         accountID: projectDetails?.account_rid,
         projectID: projectDetails?.rid,
