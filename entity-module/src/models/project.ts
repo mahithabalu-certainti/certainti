@@ -161,8 +161,8 @@ export class Project
           type: DataTypes.STRING(300),
           allowNull: true,
         },
-        project_client_group: DataTypes.STRING(200),
-        project_group: DataTypes.STRING(150),
+        project_client_group: DataTypes.STRING(255),
+        project_group: DataTypes.STRING(255),
         project_status: {
           type: DataTypes.ENUM("Active", "Inactive"),
           allowNull: false,
