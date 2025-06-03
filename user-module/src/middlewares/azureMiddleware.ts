@@ -82,7 +82,7 @@ const checkUserStatusMiddleware = (permissionName?: string) => {
         if (!hasPermission) {
           res.status(constants.FORBIDDEN).json({
             error: constants.FORBIDDEN_MESSAGE,
-            message: "User API access denied. Please contact administrator."
+            message: "Access Restricted. Contact administrator to gain access"
           });
           return;
         }
