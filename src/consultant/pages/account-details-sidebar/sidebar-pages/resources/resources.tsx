@@ -355,9 +355,10 @@ const Resource: React.FC<ResourceProps> = ({
         replace: true,
       }
     );
+    setValue('');
     setFilterVisibility(true);
     setAppliedFilters({});
-    clearFilters(value || 'resource');
+    clearFilters('resource');
   };
 
   const handleCreateResource = () => {
