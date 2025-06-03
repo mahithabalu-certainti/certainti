@@ -436,7 +436,7 @@ export const ResourceFormData = (
         ],
       },
       {
-        sectionName: 'Skill Information',
+        sectionName: 'Skills Information',
         fillType: 'half',
         hide: !disableSkill,
         fields: [

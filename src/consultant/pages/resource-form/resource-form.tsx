@@ -133,6 +133,8 @@ const ResourceForm: React.FC = () => {
         resourceDetailsData?.resource_total_experience_organization,
       Record_id: resourceDetailsData?.rid,
       Resource_id: resourceDetailsData?.r_number,
+      resource_startdate: formatDateToYYYYMMDD(resourceDetailsData?.resource_startdate),
+      resource_enddate: formatDateToYYYYMMDD(resourceDetailsData?.resource_enddate),
       Created_On: formatDateToYYYYMMDDWithTime(resourceDetailsData?.created_datetime),
       Created_By: resourceDetailsData?.created_by,
       Updated_On: formatDateToYYYYMMDDWithTime(resourceDetailsData?.modified_datetime),
@@ -535,7 +537,7 @@ const ResourceForm: React.FC = () => {
                 {state?.cost
                   ? `${resourceName} Cost`
                   : state?.skill
-                    ? `${resourceName} Skill`
+                    ? `${resourceName} Skills`
                     : resourceName}
               </h4>
             )}
@@ -544,7 +546,7 @@ const ResourceForm: React.FC = () => {
                 {state?.cost
                   ? 'Edit Resource Cost'
                   : state?.skill
-                    ? `Edit Resource Skill`
+                    ? `Edit Resource Skills`
                     : (resourceName ?? 'Edit Resource')}
               </h4>
             )}

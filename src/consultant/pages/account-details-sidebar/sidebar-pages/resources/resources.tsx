@@ -485,7 +485,7 @@ const Resource: React.FC<ResourceProps> = ({
             showBackArrow={showBackArrow}
             onBackClick={handleBackClick}
           />
-          {!viewResourceList ? (
+          {!viewResourceList && value && (
             <ResourceSubComponents
               permission={permission}
               tabMenus={tabMenus}
@@ -509,7 +509,8 @@ const Resource: React.FC<ResourceProps> = ({
               skillOrderBy={skillOrderBy}
               setSkillOrderBy={setSkillOrderBy}
             />
-          ) : (
+          )}
+          {viewResourceList && !value && (
             <div className='border border-[#CBD6E2]'>
               <ListTable
                 data={ResourceList?.resource as any}
@@ -523,7 +524,7 @@ const Resource: React.FC<ResourceProps> = ({
                 stickyHeader={false}
                 stickyColumnsCount={1}
                 selectable={false}
-                actionWidth={150}
+                actionWidth={80}
                 actionDisplayMode='dropdown'
                 actionMenuItems={actionMenuItems}
                 loading={isLoading}

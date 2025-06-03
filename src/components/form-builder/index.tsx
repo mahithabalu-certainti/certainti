@@ -139,6 +139,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     const fontSize = '0.875rem';
     const fieldValue = (constructFormData[field.name] as string) || '';
     const fieldDisabled = field.disabled ? ' bg-gray-100' : '';
+    console.log("field", field);
+
 
     const handleChange = (value: FieldTypes, countryCode?: FieldTypes) => {
       const newData = {
@@ -782,6 +784,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     dateString: string,
     format: string = 'DD/MM/YYYY'
   ): boolean => {
+    console.log("field dateString", dateString, format);
+
     return dayjs(dateString, format, true).isValid();
   };
 
@@ -1442,7 +1446,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       maxWidth: `${field.width}`,
                       paddingLeft:
                         `${field.type}` === 'iconButton' ||
-                        `${field.type}` === 'radio'
+                          `${field.type}` === 'radio'
                           ? '10px !important'
                           : 'none',
                       verticalAlign:
