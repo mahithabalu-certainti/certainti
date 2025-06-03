@@ -331,7 +331,7 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
 
   const basicInfo: DetailItem[] = [
     {
-      label: 'Account Name',
+      label: 'Name',
       value: accountById?.account_name?.toString() || '-',
     },
     {
