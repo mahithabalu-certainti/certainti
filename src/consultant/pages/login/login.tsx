@@ -13,6 +13,8 @@ import { IAuthDetails } from '../../../store/type';
 import { setUserId, updatePermissions } from '../../../store/slices';
 import { checkPermission, reShapePermissionData } from '../../../common-utils';
 import { AllModules } from '../../../common-service';
+import { NOT_FOUND } from '../../../routes';
+import { accountNavItems } from '../../../components/sidebar/accounts-menu';
 
 const msalSigninInstance = new PublicClientApplication(msalConfig);
 
@@ -63,9 +65,13 @@ export const Login: React.FC = () => {
       };
       login(authDetail as IAuthDetails);
       dispatch(setUserId(account?.localAccountId));
-      dispatch(updatePermissions({...reShapeData, isAdminEnable}));
+      dispatch(updatePermissions({ ...reShapeData, isAdminEnable }));
       setIsLoading(false);
-      navigate('/');
+      const currentActiveRoute = accountNavItems.find(
+        (menu) =>
+          reShapeData.menus.find((item) => item.name === menu.id)?.is_enabled
+      );
+      navigate(currentActiveRoute?.link || NOT_FOUND);
     } catch (error) {
       setIsLoading(false);
       const err = error as Error;

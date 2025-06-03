@@ -80,6 +80,17 @@ export enum AllModules {
   TIMESHEETS = 'timesheets',
   IMPORTS = 'imports',
   RESOURCES = 'resources',
+  PROJECT_FINANCIAL_HIGHLIGHTS = 'project_financial_highlights',
+  PROJECT_DETAILS = 'project_details',
+  PROJECT_RESOURCES = 'project_resources',
+  PROJECT_TASK = 'project_task',
+  PROJECT_INTERACTIONS = 'project_interactions',
+  PROJECT_TECHNICAL_SUMMARY = 'project_technical_summary',
+  PROJECT_CASES = 'project_cases',
+  PROJECT_ACTIVITIES = 'project_activities',
+  PROJECT_NOTES = 'project_notes',
+  PROJECT_ATTACHMENTS = 'project_attachments',
+  PROJECT_CHECKLISTS = 'project_checklists'
 }
 
 export enum AllPermissions {
@@ -88,6 +99,9 @@ export enum AllPermissions {
   ACCOUNT_DELETE = 'accounts_delete',
   ACCOUNT_VIEW_ALL = 'accounts_view_all',
   ACCOUNT_DETAILS_VIEW = 'account_details_view',
+  ACCOUNT_DETAILS_DOWNLOAD = 'account_details_download',
+  ACCOUNT_DETAILS_OVERVIEW = 'account_details_overview',
+  ACCOUNT_DETAILS_TIMELINE = 'account_details_timeline',
   ACCOUNT_EXPORT = 'accounts_export',
   RESOURCES_DOWNLOAD = 'account_resources_download',
   RESOURCES_OVERVIEW = 'account_resources_view_overview',
@@ -132,6 +146,11 @@ export enum AllPermissions {
   ACCOUNT_PROJECTS_EDIT = 'account_projects_edit_update',
   ACCOUNT_PROJECTS_DELETE = 'account_projects_delete',
   PROJECT_PROJECTS_DOWNLOAD = 'projects_projects_download',
+  PROJECT_PROJECTS_EXPORT = 'projects_projects_export',
+  PROJECT_PROJECTS_EDIT = 'projects_projects_edit',
+  PROJECT_PROJECTS_DELETE = 'projects_projects_delete',
+  PROJECT_DETAILS_OVERVIEW = 'project_details_overview',
+  PROJECT_DETAILS_TIMELINE = 'project_details_timeline',
 }
 
 export interface Country {

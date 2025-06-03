@@ -1,3 +1,4 @@
+import { FilterSelectOption } from '../../../types/account-filter';
 import { FieldConfig } from '../../account-details-sidebar/components/filter/filterType';
 import {
   // dateOptions,
@@ -9,7 +10,9 @@ import {
   projectTypeOption,
 } from '../../account-details-sidebar/sidebar-pages/projects/utils';
 
-export const getAllProjectFilterFields = (): FieldConfig[] => [
+export const getAllProjectFilterFields = (
+  classificationOption: FilterSelectOption[]
+): FieldConfig[] => [
   // Text fields
   {
     name: 'Account Name',
@@ -58,8 +61,12 @@ export const getAllProjectFilterFields = (): FieldConfig[] => [
   {
     name: 'Project Classification',
     value: 'classification_name',
-    type: 'text',
-    operatorOption: textOptions,
+    type: 'enum',
+    options: classificationOption.map((item) => ({
+      option: item.label,
+      value: item.value,
+    })),
+    operatorOption: enumOptions,
   },
   {
     name: 'Project Effort (Hours)',

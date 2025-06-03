@@ -19,57 +19,67 @@ const sideMenuItems: MenuItem[] = [
   {
     name: 'Financial Highlights',
     key: 'financial',
-    id: AllModules.FINANCIAL_HIGHLIGHTS,
+    id: AllModules.PROJECT_FINANCIAL_HIGHLIGHTS,
     disabled: false,
   },
   {
     name: 'Project Details',
     key: 'projectDetails',
-    id: AllModules.PROJECTS,
+    id: AllModules.PROJECT_DETAILS,
     disabled: false,
   },
   {
     name: 'Project Resources',
     key: 'projectResources',
-    id: AllModules.RESOURCES,
+    id: AllModules.PROJECT_RESOURCES,
     disabled: false,
   },
   {
     name: 'Projects Task',
     key: 'projectsTask',
-    id: AllModules.PROJECTS,
+    id: AllModules.PROJECT_TASK,
     disabled: false,
   },
   {
     name: 'Interactions',
     key: 'interactions',
-    id: AllModules.INTRACTION,
+    id: AllModules.PROJECT_INTERACTIONS,
     disabled: false,
   },
   {
     name: 'Technical Summary',
     key: 'technicalSummary',
-    id: AllModules.PROJECTS,
+    id: AllModules.PROJECT_TECHNICAL_SUMMARY,
     disabled: false,
   },
-  { name: 'Cases', key: 'cases', id: AllModules.CASES, disabled: false },
+  {
+    name: 'Cases',
+    key: 'cases',
+    id: AllModules.PROJECT_CASES,
+    disabled: false,
+  },
   {
     name: 'Activities',
     key: 'activities',
-    id: AllModules.ACTIVITIES,
+    id: AllModules.PROJECT_ACTIVITIES,
     disabled: false,
   },
-  { name: 'Notes', key: 'notes', id: AllModules.NOTES, disabled: false },
+  {
+    name: 'Notes',
+    key: 'notes',
+    id: AllModules.PROJECT_NOTES,
+    disabled: false,
+  },
   {
     name: 'Attachments',
     key: 'attachments',
-    id: AllModules.ATTACHMENTS,
+    id: AllModules.PROJECT_ATTACHMENTS,
     disabled: false,
   },
   {
     name: 'Checklists',
     key: 'checklists',
-    id: AllModules.CHECKLISTS,
+    id: AllModules.PROJECT_CHECKLISTS,
     disabled: false,
   },
 ];
@@ -79,7 +89,7 @@ export const ProjectDetails = () => {
   const location = useLocation();
   const [projectDetails, setProjectDetails] = useState<any>([]);
   // const { accountID, projectID } = location.state || {};
-  const defaultTab = searchParams.get('list') || 'financial';
+  const defaultTab = searchParams.get('list');
   const [activeKey, setActiveKey] = useState(defaultTab);
   const [projectData, setProjectData] = useState<NewProjectData | null>(null);
   const navigate = useNavigate();
@@ -91,6 +101,14 @@ export const ProjectDetails = () => {
   const projectDownloadIsEnable = checkPermission(
     permission,
     AllPermissions.PROJECT_PROJECTS_DOWNLOAD
+  );
+  const projectExportIsEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECT_PROJECTS_EXPORT
+  );
+  const projectEditIsEnable = checkPermission(
+    permission,
+    AllPermissions.PROJECT_PROJECTS_EDIT
   );
 
   useEffect(() => {
@@ -132,6 +150,7 @@ export const ProjectDetails = () => {
     {
       label: 'Export',
       onClick: () => console.log('export clicked'),
+      hide: !projectExportIsEnable,
     },
   ];
 
@@ -171,6 +190,8 @@ export const ProjectDetails = () => {
             isDetailsLoading={isLoading}
             detailsError={isError}
             projectDownloadIsEnable={projectDownloadIsEnable}
+            projectEditIsEnable={projectEditIsEnable}
+            permission={permission}
           />
         );
       case 'projectResources':
@@ -211,10 +232,14 @@ export const ProjectDetails = () => {
           title={data?.data?.project?.project_name || 'Project Title'}
           totalRecords={5}
           actionItems={menuItems}
-          primaryButton={{
-            label: 'Edit',
-            onClick: handleEditAccount,
-          }}
+          primaryButton={
+            projectEditIsEnable
+              ? {
+                  label: 'Edit',
+                  onClick: handleEditAccount,
+                }
+              : undefined
+          }
           onActionsClick={handleActionsClick}
           onSettingsClick={handleSettingsClick}
         />
@@ -228,7 +253,7 @@ export const ProjectDetails = () => {
         <div className='flex w-[200px] min-w-[200px] max-w-[200px]'>
           <SideMenuPanel
             menuItems={sideMenuItems}
-            activeKey={activeKey}
+            activeKey={activeKey as string}
             onSelect={setActiveKey}
             headerTitle='Related List'
             showBackIcon={true}

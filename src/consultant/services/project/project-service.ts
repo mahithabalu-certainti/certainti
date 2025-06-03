@@ -26,13 +26,13 @@ export const fetchProjects = async (
 
 export const useAccountProjects = (
   params: ProjectListParams,
-  options?: UseQueryOptions<{ projects: ProjectList[]; count: number }, Error>
+  projectOverviewIsEnable?: boolean
 ): UseQueryResult<{ projects: ProjectList[]; count: number }, Error> => {
   return useQuery<{ projects: ProjectList[]; count: number }, Error>({
     queryKey: ['accountProjects', params],
     queryFn: () => fetchProjects(params),
     retry: 0,
-    ...options,
+    enabled: projectOverviewIsEnable,
   });
 };
 

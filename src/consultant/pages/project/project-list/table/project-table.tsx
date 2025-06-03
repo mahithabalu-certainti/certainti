@@ -10,10 +10,14 @@ import { generatePath, useNavigate } from 'react-router-dom';
 import { PROJECT_DETAILS } from '../../../../../routes';
 import { ActionItem } from '../../../../../components/table/types';
 import { deleteIcon, editIcon } from '../../../../../assets';
+import { reshapeGlobalFilter } from '../../../../../common-utils';
+import { FilterState } from '../../../../types';
 
 interface IProjectTableProps {
   appliedFilters: Record<string, any>;
   tableParams: ProjectListParams;
+  isProjectEditEnable?: boolean;
+  isProjectDeleteEnable?: boolean;
   setTableParams: React.Dispatch<React.SetStateAction<ProjectListParams>>;
   setTotalCount: React.Dispatch<React.SetStateAction<number>>;
 }
@@ -21,11 +25,13 @@ interface IProjectTableProps {
 export const ProjectTable: React.FC<IProjectTableProps> = ({
   appliedFilters,
   tableParams,
+  isProjectEditEnable,
+  isProjectDeleteEnable,
   setTableParams,
   setTotalCount,
 }) => {
   const navigate = useNavigate();
-  const { fiscalYear } = useSelector<
+  const { fiscalYear, filters } = useSelector<
     RootState,
     { filters: unknown; fiscalYear: string }
   >((state: RootState) => state.account);
@@ -38,8 +44,9 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       page: 1,
       filters: appliedFilters,
       fiscalYear: convertedFiscalYear,
+      globalFilters: reshapeGlobalFilter(filters as FilterState),
     }));
-  }, [appliedFilters, fiscalYear]);
+  }, [appliedFilters, fiscalYear, filters]);
 
   const { data, isLoading, isError } = useAllProjects(tableParams);
   const totalItems = data?.count || 0;
@@ -107,11 +114,13 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
         filter:
           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
       },
+      hide: !isProjectEditEnable,
     },
     {
       label: 'Delete',
       onClick: (row: any) => console.log('Delete row', row),
       icon: deleteIcon,
+      hide: !isProjectDeleteEnable,
     },
   ];
 
