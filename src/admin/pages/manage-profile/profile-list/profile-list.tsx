@@ -58,6 +58,10 @@ export const ProfileList: React.FC = () => {
     permission,
     AllPermissions.PROFILE_EXPORT
   );
+  const isProfileViewEnable = checkPermission(
+    permission,
+    AllPermissions.PROFILE_VIEW
+  );
   const isProfileEditEnable = checkPermission(
     permission,
     AllPermissions.PROFILE_EDIT
@@ -105,7 +109,7 @@ export const ProfileList: React.FC = () => {
     }
   };
 
-  if (!isProfileEnable  || !isProfileViewAllEnable) return <AccessRestricted />;
+  if (!isProfileEnable || !isProfileViewAllEnable) return <AccessRestricted />;
 
   return (
     <div className='flex flex-col h-full w-full'>
@@ -200,6 +204,7 @@ export const ProfileList: React.FC = () => {
           tableParams={tableParams}
           setTableParams={setTableParams}
           onSelectionChange={handleSelectionChange}
+          isProfileViewEnable={isProfileViewEnable}
           isProfileEditEnable={isProfileEditEnable}
           isProfileDeleteEnable={isProfileDeleteEnable}
         />

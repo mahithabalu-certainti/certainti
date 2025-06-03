@@ -1,16 +1,13 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { ManageUserIcon } from '../../../../assets/icons';
+import { profileIcon } from '../../../../assets/icons';
 import TextButton from '../../../../components/button/text-button';
-import {
-  useExtendedPermissionToUser,
-  useUpdateExtendedPermission,
-} from '../../../service';
+import { useGetProfileDetails } from '../../../service';
 import { ProfileHeaderDetail, ProfilePermissions } from '../../manage-profile';
 import { Skeleton } from '@mui/material';
 import { Privilege } from '../../../types';
 import { useEffect, useState } from 'react';
 import { useToast } from '../../../../hooks';
-import { ADMIN_MANAGE_USER } from '../../../../routes';
+import { MANAGE_PROFILE } from '../../../../routes';
 
 const HEADER_STYLES = {
   adminPermission:
@@ -19,13 +16,14 @@ const HEADER_STYLES = {
     'font-semibold text-[20px] text-[#2D3E4F] leading-5 tracking-normal',
 };
 
-export const ExtendedPermission: React.FC = () => {
-  const [privileges, setPrivileges] = useState<Privilege[]>([]);
-  const { userid } = useParams();
+export const ViewProfile: React.FC = () => {
+  const [, setPrivileges] = useState<Privilege[]>([]);
+  const { profileId } = useParams();
   const { successToast } = useToast();
   const navigate = useNavigate();
-  const { data, isPending } = useExtendedPermissionToUser(userid as string);
-  const updateExtendedPermission = useUpdateExtendedPermission();
+  const { data, isPending, isSuccess } = useGetProfileDetails(
+    profileId as string
+  );
 
   const goBack = () => {
     window.history.back();
@@ -33,22 +31,18 @@ export const ExtendedPermission: React.FC = () => {
   const handlePrivilegesChange = (updatedPrivileges: Privilege[]) => {
     setPrivileges(updatedPrivileges);
   };
-  console.log('privileges-extended', privileges);
-  const handleSaveProfile = () => {
-    const payload = {
-      user_id: data?.data.user_id,
-      privileges,
-    };
-    updateExtendedPermission.mutate(payload);
+  const handleEditProfile = () => {
+    navigate(MANAGE_PROFILE + '/edit/' + data?.data.profile_id, {
+      state: { user: data },
+    });
   };
 
   useEffect(() => {
-    if (updateExtendedPermission.isSuccess) {
-      successToast('User permissions updated successfully.');
-      navigate(ADMIN_MANAGE_USER);
+    if (isSuccess) {
+      successToast('Profile fetched successfully');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [updateExtendedPermission.isSuccess]);
+  }, [isSuccess]);
 
   return (
     <>
@@ -57,15 +51,15 @@ export const ExtendedPermission: React.FC = () => {
         <div className='w-full min-h-[50px] h-[50px] px-4 flex items-center justify-between border-b-1 border-[#CBD6E2]'>
           <div className='flex items-center gap-2'>
             <img
-              src={ManageUserIcon}
-              alt='manage user'
+              src={profileIcon}
+              alt='create profile'
               className='h-8 w-8 rounded'
             />
             <div className='flex flex-col mb-1'>
               <div className={HEADER_STYLES.adminPermission}>
                 Admin Permission
               </div>
-              <div className={HEADER_STYLES.manageProfile}>Manage User</div>
+              <div className={HEADER_STYLES.manageProfile}>Manage Profile</div>
             </div>
           </div>
           <div className='flex gap-2 items-center'>
@@ -73,20 +67,20 @@ export const ExtendedPermission: React.FC = () => {
               label='Back'
               onClick={goBack}
               sx={{
-                width: '45px',
-                minWidth: '45px',
-                fontWeight: 700,
+                width: '64px',
+                minWidth: '64px',
+                fontWeight: 400,
                 fontSize: '13px',
-                height: '20px',
+                height: '32px',
               }}
             />
           </div>
         </div>
         <ProfileHeaderDetail
-          extendedPermission
-          userName={data?.data.user_name}
-          onSave={handleSaveProfile}
-          loading={updateExtendedPermission.isPending}
+          viewProfile
+          viewProfileId={data?.data.profile_id}
+          onSave={handleEditProfile}
+          loading={isPending}
         />
         <div className='pb-2'>
           {isPending ? (
@@ -102,8 +96,9 @@ export const ExtendedPermission: React.FC = () => {
             </div>
           ) : (
             <ProfilePermissions
-              createProfilePermissionsData={data?.data.permissions}
+              createProfilePermissionsData={data?.data.privileges}
               onPrivilegesChange={handlePrivilegesChange}
+              viewProfileDisabled
             />
           )}
         </div>

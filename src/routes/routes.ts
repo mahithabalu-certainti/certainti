@@ -26,7 +26,7 @@ export const USER_EXTENDED_PERMISSION = `${ADMIN_MANAGE_USER}/extended-permissio
 export const MANAGE_PROFILE = `${ADMIN}/manage-profile`;
 export const MANAGE_PROFILE_CREATE = `${MANAGE_PROFILE}/create`;
 export const MANAGE_PROFILE_EDIT = `${MANAGE_PROFILE}/edit/:profileId`;
-
+export const MANAGE_PROFILE_VIEW = `${MANAGE_PROFILE}/view/:profileId`;
 /** ACCOUNT ROUTES */
 export const ACCOUNT = '/account';
 export const ACCOUNT_CREATE = `${ACCOUNT}/create`;

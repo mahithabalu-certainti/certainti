@@ -42,6 +42,7 @@ import {
   MANAGE_PROFILE,
   MANAGE_PROFILE_CREATE,
   MANAGE_PROFILE_EDIT,
+  MANAGE_PROFILE_VIEW,
   NOT_MATCH,
   PROFILE,
   PROJECT,
@@ -59,6 +60,7 @@ import {
   USER_EXTENDED_PERMISSION,
 } from './routes';
 import { RootState } from './store/store';
+import { ViewProfile } from './admin/pages/manage-profile/view-profile';
 
 /**
  * App component serves as the root component of the application.
@@ -123,6 +125,7 @@ export const App: React.FC<IApp> = ({ instance }) => {
             <Route path={MANAGE_PROFILE} element={<ProfileList />} />
             <Route path={MANAGE_PROFILE_CREATE} element={<CreateProfile />} />
             <Route path={MANAGE_PROFILE_EDIT} element={<CreateProfile />} />
+            <Route path={MANAGE_PROFILE_VIEW} element={<ViewProfile />} />
           </Route>
           {/* Page not found */}
           <Route path={NOT_MATCH} element={<NotFound />} />

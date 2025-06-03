@@ -78,10 +78,10 @@ export const CreateProfile: React.FC = () => {
   }, [commonSuccess]);
   useEffect(() => {
     if (ProfilePermissionSuccess) {
-      successToast('Profile permission created successfully');
+      successToast('Profile permissions created successfully.');
       navigate(MANAGE_PROFILE);
     } else if (editSuccess) {
-      successToast('Profile permission updated successfully');
+      successToast('Profile permissions updated successfully.');
       navigate(MANAGE_PROFILE);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

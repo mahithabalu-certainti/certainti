@@ -13,6 +13,7 @@ import { deleteIcon, editIcon } from '../../../../assets';
 interface IUserTableProps {
   appliedFilters: Record<string, any>;
   tableParams: UserListParams;
+  isProfileViewEnable?: boolean;
   isProfileEditEnable?: boolean;
   isProfileDeleteEnable?: boolean;
   setTableParams: React.Dispatch<React.SetStateAction<UserListParams>>;
@@ -22,6 +23,7 @@ interface IUserTableProps {
 export const ProfileTable: React.FC<IUserTableProps> = ({
   appliedFilters,
   tableParams,
+  isProfileViewEnable,
   isProfileEditEnable,
   isProfileDeleteEnable,
   setTableParams,
@@ -58,7 +60,12 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
       state: { user: data },
     });
   };
-
+  const handleView = (row: ManageProfileList) => {
+    const data = convertUserListData(row);
+    navigate(MANAGE_PROFILE + '/view/' + data.id, {
+      state: { user: data },
+    });
+  };
   const handleDelete = (row: ManageProfileList) => {
     // navigate(`/admin/manage-user/${row.id}`, {
     //   state: { user: row },
@@ -91,6 +98,11 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
   };
 
   const actionButtons: ActionItem<ManageProfileList>[] = [
+    {
+      label: 'View',
+      onClick: (row: ManageProfileList) => handleView(row),
+      hide: !isProfileViewEnable,
+    },
     {
       label: 'Edit',
       onClick: (row: ManageProfileList) => handleEdit(row),
