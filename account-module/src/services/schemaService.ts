@@ -1426,54 +1426,6 @@ class SchemaService {
   ) {
     const sequelize = await initSequelize();
     const orgDbSequelize = await initOrgSequelize();
-
-    // 1. Enhanced filter function with empty contact handling
-  // 1. Enhanced filter function with proper condition handling
-const createFilter = (filter?: {
-  equals?: string;
-  contains?: string;
-  not_equals?: string;
-  is_empty?: boolean;
-}) => {
-  if (!filter) return () => true;
-
-  const { equals, contains, not_equals, is_empty } = filter;
-  const lowerEquals = equals?.toLowerCase();
-  const lowerContains = contains?.toLowerCase();
-  const lowerNotEquals = not_equals?.toLowerCase();
-
-  return (value: any = "") => {
-    // Handle null/undefined values
-    if (value === null || value === undefined) value = "";
-    const strValue = String(value).trim();
-    const lowerValue = strValue.toLowerCase();
-
-    // Initialize conditions
-    let meetsIsEmpty = true;
-    let meetsEquals = true;
-    let meetsContains = true;
-    let meetsNotEquals = true;
-
-    // Check is_empty condition
-    if (is_empty !== undefined) {
-      meetsIsEmpty = is_empty ? strValue === "" : strValue !== "";
-    }
-
-    // Check other conditions only if they exist
-    if (lowerEquals !== undefined) {
-      meetsEquals = lowerValue === lowerEquals;
-    }
-    if (lowerContains !== undefined) {
-      meetsContains = lowerValue.includes(lowerContains);
-    }
-    if (lowerNotEquals !== undefined) {
-      meetsNotEquals = lowerValue !== lowerNotEquals;
-    }
-
-    return meetsIsEmpty && meetsEquals && meetsContains && meetsNotEquals;
-  };
-};
-
     const ROLE_KEY_MAP: Record<string, string> = {
     technical_consultant: "Technical Consultant",
     professional_services_consultant: "Financial Consultant",
@@ -1481,33 +1433,7 @@ const createFilter = (filter?: {
     finance_executive: "Client Finance Executive",
     finance_lead: "Client Finance Lead"
   };
-
-  // Preprocess role filter values
-  const processedRoleFilter = roleNameFilter?.role 
-    ? { ...roleNameFilter.role } 
-    : undefined;
-  
-  if (processedRoleFilter) {
-    const mapRoleValue = (val?: string) => 
-      val ? ROLE_KEY_MAP[val] || val : val;
     
-    if (processedRoleFilter.equals) {
-      processedRoleFilter.equals = mapRoleValue(processedRoleFilter.equals);
-    }
-    if (processedRoleFilter.contains) {
-      processedRoleFilter.contains = mapRoleValue(processedRoleFilter.contains);
-    }
-    if (processedRoleFilter.not_equals) {
-      processedRoleFilter.not_equals = mapRoleValue(processedRoleFilter.not_equals);
-    }
-  }
-     const roleFilter = processedRoleFilter
-    ? createFilter(processedRoleFilter)
-    : null;
-    const nameFilter = roleNameFilter?.name
-      ? createFilter(roleNameFilter.name)
-      : null;
-
     // 2. Account processing
     const parentRidToRNumber = new Map<string, string>();
     const allAccounts: any[] = [];
@@ -1626,11 +1552,23 @@ const createFilter = (filter?: {
       fiscalData.push(f);
       accountFiscalMap.set(f.account_rid, fiscalData);
     });
+    const getPrimaryContact = (keyContacts: any[]) => {
+      const contact = keyContacts.find(kc => kc.is_primary_contact);
+      if (!contact) return { roleKey: null, name: null };
 
-  // 7. Optimized account enrichment
-  const enrichAccount = (account: any, isChild: boolean) => {
+      const roleKey = Object.entries(ROLE_KEY_MAP).find(
+        ([_, value]) => value === contact.role_name
+      )?.[0] || null;
+
+      return {
+        roleKey,
+        name: contact.key_contact_name || null
+      };
+    };
+    // 7. Optimized account enrichment
+    const enrichAccount = (account: any, isChild: boolean) => {
     const rawKeyContacts = accountKeyContactMap.get(account.rid) || [];
-    
+    const { roleKey, name } = getPrimaryContact(rawKeyContacts);
     // Prepare contacts with default values
     const preparedKeyContacts = rawKeyContacts.map(kc => ({
       ...kc,
@@ -1640,41 +1578,22 @@ const createFilter = (filter?: {
     
     // Apply filters only to parent accounts
     let keyContacts = preparedKeyContacts;
-    if (roleNameFilter && !isChild) {
-      keyContacts = preparedKeyContacts.filter(kc => {
-        const rolePass = roleFilter ? roleFilter(kc.role_name) : true;
-        const namePass = nameFilter ? nameFilter(kc.key_contact_name) : true;
-        return rolePass && namePass;
-      });
-    }
-    
     const getPrimaryContactName = (roleName: string) => {
     const contact = keyContacts.find(
       kc => kc.role_name === roleName && kc.is_primary_contact
     );
     return contact?.key_contact_name || null;
   };
-    const contactChecks = {
-      hasTechnical: keyContacts.some(kc => 
-        kc.role_name === "Technical Consultant" && kc.is_primary_contact),
-      hasFinancial: keyContacts.some(kc => 
-        kc.role_name === "Financial Consultant" && kc.is_primary_contact),
-      hasDeliveryHead: keyContacts.some(kc => 
-        kc.role_name === "Client Project Delivery Head" && kc.is_primary_contact),
-      hasFinanceExecutive: keyContacts.some(kc => 
-        kc.role_name === "Client Finance Executive" && kc.is_primary_contact),
-      hasFinanceLead: keyContacts.some(kc => 
-        kc.role_name === "Client Finance Lead" && kc.is_primary_contact)
-    };
-    
+
     return {
       ...account,
       key_contacts: keyContacts,
-     // technical_consultant: getPrimaryContactName("Technical Consultant") || "-",
-    professional_services_consultant: getPrimaryContactName("Financial Consultant") || "-",
-   // delivery_head: getPrimaryContactName("Client Project Delivery Head") || "-",
-    finance_executive: getPrimaryContactName("Client Finance Executive") || "-",
-    finance_lead: getPrimaryContactName("Client Finance Lead") || "-",
+      primary_contact_role: roleKey || "",
+      primary_contact_name: name || "",    // technical_consultant: getPrimaryContactName("Technical Consultant") || "-",
+      professional_services_consultant: getPrimaryContactName("Financial Consultant") || "-",
+      // delivery_head: getPrimaryContactName("Client Project Delivery Head") || "-",
+      finance_executive: getPrimaryContactName("Client Finance Executive") || "-",
+      finance_lead: getPrimaryContactName("Client Finance Lead") || "-",
       ...(isChild && { 
         projects_by_fiscal_year: accountFiscalMap.get(account.rid) || [] 
       })
@@ -1692,30 +1611,83 @@ const createFilter = (filter?: {
         parent.child_accounts = children;
 
         // Special handling for is_empty: true filter
-        if (roleNameFilter) {
-          const originalContacts =
-            accountKeyContactMap.get(account.dataValues.rid) || [];
-          const hasNoContacts = originalContacts.length === 0;
-
-          // Check if we have any is_empty:true filter
-          const hasEmptyRoleFilter = roleNameFilter.role?.is_empty === true;
-          const hasEmptyNameFilter = roleNameFilter.name?.is_empty === true;
-          const hasEmptyFilter = hasEmptyRoleFilter || hasEmptyNameFilter;
-
-          // For is_empty:true, include accounts with no contacts
-          if (hasEmptyFilter && hasNoContacts) {
-            return parent;
-          }
-
-          // Otherwise, only include if there are matching contacts
-          if (parent.key_contacts.length === 0) {
-            return null;
-          }
-        }
-
         return parent;
       })
       .filter(Boolean);
+  // 8. Optimized filtering logic
+    const applyFilter = (
+    value: string | null,
+    filter?: {
+      equals?: string;
+      contains?: string;
+      not_equals?: string;
+      is_empty?: boolean;
+      in?: string[];
+    }
+  ): boolean => {
+      if (!filter) return true;
+  
+      // Handle is_empty first
+      const isEmpty = !value; // null, undefined, or empty string
+      if (filter.is_empty !== undefined) {
+        if (filter.is_empty !== isEmpty) return false;
+      }
+  
+      // Handle empty values
+      if (isEmpty) {
+        if (filter.in) {
+          return filter.in.includes(""); // Check if empty string is in the array
+        }
+        if (filter.not_equals) return true; // Empty passes not_equals for non-empty values
+        return false; // Other filters fail for empty values
+      }
+  
+      // Convert to lowercase for case-insensitive comparison
+      const valueLower = value.toString().toLowerCase();
+      
+      // Apply filters to non-empty values
+      if (filter.equals) {
+        const equalsLower = filter.equals.toString().toLowerCase();
+        if (valueLower !== equalsLower) return false;
+      }
+      
+      if (filter.contains) {
+        const containsLower = filter.contains.toString().toLowerCase();
+        if (!valueLower.includes(containsLower)) return false;
+      }
+      
+      if (filter.not_equals) {
+        const notEqualsLower = filter.not_equals.toString().toLowerCase();
+        if (valueLower === notEqualsLower) return false;
+      }
+      
+      if (filter.in) {
+        // Convert all array values to lowercase for case-insensitive matching
+        const inLower = filter.in.map(item => item.toString().toLowerCase());
+        if (!inLower.includes(valueLower)) return false;
+      }
+  
+      return true;
+};
+
+    // Apply filters with correct structure
+    if (roleNameFilter?.role || roleNameFilter?.name) {
+      enrichedAccounts = enrichedAccounts.filter((account: any) => {
+        // Use primary_contact_role and primary_contact_name for filtering
+        const rolePass = applyFilter(
+          account.primary_contact_role,
+          roleNameFilter.role
+        );
+        
+        const namePass = applyFilter(
+          account.primary_contact_name,
+          roleNameFilter.name
+        );
+        console.log(rolePass)
+         console.log(namePass)
+        return rolePass && namePass;
+      });
+    }
 
     // 5. Apply sorting if needed
     const SORTABLE_FIELDS = new Set([

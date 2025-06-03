@@ -1471,11 +1471,11 @@ const rawResult = users || [];
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { rid: string; user_role: string; user_id: string; permissions: any[] } | null;
+    data?: { rid: string; user_role: string; user_id: string;user_name:string, permissions: any[] } | null;
   }> {
     try {
       const roles = await User.findOne({
-        attributes: ["role_rid", "rid", "profile_rid"],
+        attributes: ["role_rid", "rid", "profile_rid","first_name"],
         where: { rid: userId },
         include: [
           {
@@ -1507,6 +1507,7 @@ const rawResult = users || [];
           rid: roles.role_rid || "",
           user_role: roles.business_teams?.business_teams,
           user_id: roles.rid,
+          user_name:roles.first_name,
           permissions
         },
       };
