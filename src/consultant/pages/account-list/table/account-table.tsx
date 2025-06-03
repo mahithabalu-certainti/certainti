@@ -260,7 +260,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
             <TableHead
               sx={{
                 '& .MuiTableCell-root': {
-                  fontWeight: 500,
+                  fontWeight: 600,
                   fontSize: '13px',
                   lineHeight: '21px',
                   color: '#2A2A2A',

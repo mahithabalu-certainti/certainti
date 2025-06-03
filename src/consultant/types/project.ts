@@ -70,7 +70,9 @@ export interface ProjectTableColumn<T> {
   sx?: React.CSSProperties;
   render?: (row: T) => React.ReactNode;
 }
-
+export interface globalFilters {
+  [key: string]: string[];
+}
 export interface ProjectListParams {
   page?: number;
   limit?: number;
@@ -79,6 +81,7 @@ export interface ProjectListParams {
   filters?: object;
   fiscalYear?: number | string;
   accountNumber?: string;
+  globalFilters?: globalFilters;
 }
 export enum Status {
   Active = 'active',
