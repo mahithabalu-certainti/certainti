@@ -11,7 +11,7 @@ routes.get(
 );
 routes.get(
   "/list/export",
-  checkUserStatusMiddleware("projects_projects_download"),
+  checkUserStatusMiddleware("projects_projects_export"),
   controller.projectController.exportAllProjectList
 );
 routes.get(
