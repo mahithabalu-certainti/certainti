@@ -190,6 +190,8 @@ export type FieldConfig = {
   options?: { option: string; value: string }[];
   required?: boolean;
   dependsOn?: string;
+  minDate?: Date;
+  maxDate?: Date;
   filterOptions?: { option: string; value: string }[];
   operatorOption?: { option: string; value: string }[];
 };

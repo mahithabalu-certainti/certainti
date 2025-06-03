@@ -491,10 +491,12 @@ const Filter: React.FC<FilterComponentProps> = ({
             menuOption={field.operatorOption || dateOptions}
             fieldName={field.value}
             state={fieldState}
+            minDate={field.minDate}
+            maxDate={field.maxDate}
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleDateChange}
             mode={mode as 'date' | 'year'}
-            // onChange={handleBooleanChange}
+          // onChange={handleBooleanChange}
           />
         );
       case 'select':

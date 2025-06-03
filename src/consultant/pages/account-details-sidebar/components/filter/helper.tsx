@@ -339,6 +339,8 @@ export const DateFilterControl: React.FC<{
   fieldName: string;
   state: FilterState;
   mode?: 'year' | 'date';
+  minDate?: Date;
+  maxDate?: Date;
   onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
   onValueChange: (
     type: 'from' | 'to',
@@ -354,6 +356,8 @@ export const DateFilterControl: React.FC<{
   onOptionChange,
   onValueChange,
   mode = 'date',
+  minDate,
+  maxDate
 }) => {
     const option = formatString(filterStates?.[fieldName]?.date?.option);
     const isBetween = option === 'Between';
@@ -439,8 +443,8 @@ export const DateFilterControl: React.FC<{
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <DatePicker
                   name='from'
-                  maxDate={dayjs(today)}
-                  minDate={dayjs(sixYearsAgo)}
+                  maxDate={maxDate ? dayjs(maxDate) : dayjs(today)}
+                  minDate={minDate ? dayjs(minDate) : dayjs(sixYearsAgo)}
                   value={dayjs(state.date?.value.from, 'YYYY/MM/DD')}
                   disabled={disableInput}
                   format='YYYY/MM/DD'

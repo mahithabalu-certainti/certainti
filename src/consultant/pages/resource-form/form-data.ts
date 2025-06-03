@@ -41,7 +41,7 @@ const getSkillStartDateOptions = (range: number) => {
 const getDateConstraints = (yearsBack: number) => {
   const currentDate = new Date();
   const minDate = new Date();
-  minDate.setFullYear(currentDate.getFullYear() - yearsBack);
+  minDate.setFullYear(currentDate.getFullYear() - yearsBack + 1);
   const previousDate = new Date(currentDate);
   previousDate.setDate(currentDate.getDate() - 1);
   return { currentDate, minDate, previousDate };
@@ -51,8 +51,8 @@ export const fiscalYears = getFiscalYears(DATE_CONFIG.COST_FISCAL_YEARS_RANGE);
 export const skillStartDateYears = getSkillStartDateOptions(
   DATE_CONFIG.FISCAL_YEARS_RANGE
 );
-const { currentDate, previousDate } = getDateConstraints(
-  DATE_CONFIG.MIN_YEARS_BACK
+const { currentDate, previousDate, minDate } = getDateConstraints(
+  DATE_CONFIG.COST_FISCAL_YEARS_RANGE
 );
 
 export const ResourceFormData = (
@@ -338,14 +338,14 @@ export const ResourceFormData = (
             required: false,
             isLoading: currencyLoading,
           }),
-          createDateField('financial_start_date', 'Start Date', {
+          createDateField('financial_start_date', 'Effective From', {
             required: false,
-            // minDate: new Date(minDate.getTime()),
+            minDate: minDate,
             maxDate: previousDate,
           }),
           createDateField('financial_end_date', 'End Date', {
             required: false,
-            // minDate: new Date(minDate.getTime()),
+            minDate: minDate,
             maxDate: currentDate,
             startDateLabel: 'financial_start_date',
           }),

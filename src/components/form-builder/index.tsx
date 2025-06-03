@@ -490,7 +490,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         const customMinDate: Dayjs | undefined = (() => {
           if (isFinancialDateField && selectedFiscalYear) {
             const fiscalYearStart = dayjs(
-              `01/01/${selectedFiscalYear}`,
+              `${selectedFiscalYear}/01/01`,
               'YYYY/MM/DD'
             );
 
@@ -510,7 +510,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         const customMaxDate: Dayjs | undefined = (() => {
           if (isFinancialDateField && selectedFiscalYear) {
             const fiscalYearEnd = dayjs(
-              `12/31/${selectedFiscalYear}`,
+              `${selectedFiscalYear}/12/31`,
               'YYYY/MM/DD'
             );
 
