@@ -1,7 +1,7 @@
 import { Detail } from '../../admin/types/admin-user-detail';
 import { UserDetail } from '../../common-service';
 import { Skeleton } from '@mui/material';
-import { getDateTimeFormat } from '../../common-utils';
+import { formatDateToYYYYMMDDWithTime } from '../../common-utils';
 
 export const UserDetailComponent = ({ data, loading }: UserDetail) => {
   const renderRows = (data: Detail[]) => {
@@ -94,7 +94,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     },
     {
       label: 'Created On',
-      value: getDateTimeFormat(data?.created_datetime) || '-',
+      value: formatDateToYYYYMMDDWithTime(data?.created_datetime) || '-',
     },
     {
       label: 'Created By',
@@ -102,7 +102,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     },
     {
       label: 'Updated On',
-      value: getDateTimeFormat(data?.modified_datetime) || '-',
+      value: formatDateToYYYYMMDDWithTime(data?.modified_datetime) || '-',
     },
     { label: 'Updated By', value: capitalizeFirstLetter(data?.modified_by) },
   ];

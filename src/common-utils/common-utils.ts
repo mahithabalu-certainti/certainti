@@ -336,7 +336,7 @@ export const REGEX_PATTERNS = {
   MAX_150: /^.{0,150}$/,
   MAX_200: /^.{0,200}$/,
   MAX_1000: /^.{0,1000}$/,
-  MAX_2000: /^.{0,2000}$/,
+  MAX_2000: /^[\s\S]{0,2000}$/,
   MIN_3: /^.{3,}$/,
   MIN_5: /^.{5,}$/,
   MIN_4: /^.{4,}$/,
@@ -454,7 +454,7 @@ export const getDateTimeFormat = (date?: string) => {
 
 export const getDateFormat = (date?: string) => {
   if (!date) return '';
-  return dayjs(date).format('MM-DD-YYYY');
+  return dayjs(date).format('YYYY-MM-DD');
 };
 export const STATUS_OPTIONS: SelectOption[] = [
   { label: 'Active', value: 'active' },

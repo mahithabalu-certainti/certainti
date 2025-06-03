@@ -129,9 +129,12 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
           title === 'Basic Information' ? 'px-6 pt-2 mt-0' : 'px-6 pt-2 mt-3'
         }
       >
-        <div className='text-[15px] text-[#2D3E4F] font-bold'>{title}</div>
+        {title !== 'description' && (
+          <div className='text-[15px] text-[#2D3E4F] font-bold'>{title}</div>
+        )}
+
         <div className='text-sm my-[6px] grid gap-y-3'>
-          {title === 'Comments'
+          {title === 'Comments' || title === 'description'
             ? // Full-width single column layout for Comments
               data.map((item, index) => (
                 <div
@@ -404,7 +407,6 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       projectDetails?.project_classification_other ||
       projectDetails?.classification_name,
     project_type: projectDetails?.project_type,
-    description: projectDetails?.project_description,
     status: projectDetails?.project_status,
   });
 
@@ -443,7 +445,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     },
     {
       label: 'Total Sub Con Count',
-      value: projectDetails?.total_sub_con_count,
+      value: projectDetails?.total_sub_con,
     },
   ];
 
@@ -467,15 +469,21 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   const comments = CreateSectionData({
     comments: projectDetails?.comments,
   });
+  const description = CreateSectionData({
+    description: projectDetails?.project_description,
+  });
 
   const settingInfo: DetailItem[] = [
     {
       label: 'Auto Send Interaction',
-      value: projectDetails?.auto_send_ai_interaction,
+      value: projectDetails?.auto_send_ai_interaction ? 'Yes' : 'No',
     }, // need to Discuss
     { label: 'Blended Rate - FTE', value: projectDetails?.blended_rate_fte },
 
-    { label: 'Auto Assessment', value: projectDetails?.auto_access_rd },
+    {
+      label: 'Auto Assessment',
+      value: projectDetails?.auto_access_rd ? 'Yes' : 'No',
+    },
 
     {
       label: 'Blended Rate - SubCon',
@@ -535,6 +543,10 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
           <DetailsSection
             title='Basic Information'
             data={basicInfo as DetailItem[]}
+          />
+          <DetailsSection
+            title='description'
+            data={description as DetailItem[]}
           />
           <DetailsSection
             title='Location and Currency Information'

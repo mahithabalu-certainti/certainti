@@ -94,7 +94,17 @@ const ActionImportDropdown: React.FC<ImportDropdownItemProps> = ({
         />
       </StyledButton>
 
-      <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+        PaperProps={{
+          style: {
+            maxHeight: '200px',
+            minHeight: '200px',
+          },
+        }}
+      >
         {actions.map((action, index) => (
           <MenuItem
             key={index}

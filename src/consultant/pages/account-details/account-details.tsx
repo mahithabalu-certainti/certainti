@@ -34,6 +34,8 @@ import { AllModules, AllPermissions } from '../../../common-service';
 import { AccessRestricted } from '../../../components/account-restricted';
 import { AccountState } from '../../../store/type';
 import { MenuItem } from '../../types';
+import { exportProjectData } from '../../services/project';
+import { ProjectListParams } from '../../types/project';
 
 export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
@@ -80,11 +82,23 @@ export const AccountDetails = () => {
     rNumber: accountDetailsForEdit?.account_by_id?.r_number || '',
     resourceRid: '',
   });
-  const [exportType, setExportType] = useState<'resource' | 'cost' | 'skill'>(
-    'resource'
-  );
-  const handleExport = (exportType: 'resource' | 'cost' | 'skill') => {
-    if (searchParams.get('list') !== 'resources') {
+  const [projectParams, setProjectParams] = useState<ProjectListParams>({
+    sortBy: 'created_datetime',
+    sortOrder: 'DESC',
+    filters: {},
+    fiscalYear: String(convertedFiscalYear),
+    accountNumber: accountDetailsForEdit?.account_by_id?.r_number || '',
+  });
+  const [exportType, setExportType] = useState<
+    'resource' | 'cost' | 'skill' | 'project'
+  >('resource');
+  const handleExport = (
+    exportType: 'resource' | 'cost' | 'skill' | 'project'
+  ) => {
+    if (
+      searchParams.get('list') !== 'resources' &&
+      searchParams.get('list') !== 'projects'
+    ) {
       return;
     }
 
@@ -103,7 +117,11 @@ export const AccountDetails = () => {
       ...(exportType === 'cost' && { fiscalYear }),
     };
 
-    exportData(exportType, exportPayload);
+    if (exportType === 'project') {
+      exportProjectData(exportType, projectParams);
+    } else {
+      exportData(exportType, exportPayload);
+    }
   };
 
   useEffect(() => {
@@ -205,7 +223,13 @@ export const AccountDetails = () => {
       case 'attachments':
         return <Attachments />;
       case 'projects':
-        return <Projects accountDetails={{ ...data, activeKey: 'Projects' }} />;
+        return (
+          <Projects
+            accountDetails={{ ...data, activeKey: 'Projects' }}
+            setExportType={setExportType}
+            setProjectParams={setProjectParams}
+          />
+        );
       case 'cases':
         return <Cases />;
       case 'activities':

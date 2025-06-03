@@ -207,7 +207,7 @@ export const FormData = (
                   'Project group must be more than 3 characters long',
               },
               {
-                regex: REGEX_PATTERNS.MAX_150,
+                regex: REGEX_PATTERNS.MAX_255,
                 errorMessage: 'Max length exceeded',
               },
               {
@@ -252,7 +252,7 @@ export const FormData = (
                   'Client Group must be more than 3 characters long',
               },
               {
-                regex: REGEX_PATTERNS.MAX_200,
+                regex: REGEX_PATTERNS.MAX_255,
                 errorMessage: 'Max length exceeded',
               },
               {
@@ -329,15 +329,10 @@ export const FormData = (
               },
             ],
           }),
-          createTextField('project_description', 'Description', {
-            required: false,
-            placeholder: 'Enter Description',
-            errorHandling: [
-              {
-                regex: REGEX_PATTERNS.MAX_2000,
-                errorMessage: 'Max length exceeded',
-              },
-            ],
+          createSelectField('project_status', 'Status', {
+            required: true,
+            options: STATUS_OPTIONS,
+            placeholder: 'Choose Status',
           }),
           createTextField('classification_name', 'Classification-Other', {
             required: true,
@@ -360,10 +355,17 @@ export const FormData = (
               },
             ],
           }),
-          createSelectField('project_status', 'Status', {
-            required: true,
-            options: STATUS_OPTIONS,
-            placeholder: 'Choose Status',
+        ],
+      },
+      {
+        sectionName: '',
+        fillType: 'full',
+        fields: [
+          createTextAreaField('project_description', 'Description', {
+            required: false,
+            regex: REGEX_PATTERNS.MAX_2000,
+            regexErrorMessage: 'Maximum 2000 characters allowed',
+            placeholder: 'Enter Description',
           }),
         ],
       },
@@ -419,22 +421,22 @@ export const FormData = (
         sectionName: 'Financial Information',
         fillType: 'half',
         fields: [
-          createTextField('total_effort', 'Total Effort in Hrs', {
+          createTextField('total_effort', 'Total Effort In Hrs', {
             regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
             regexErrorMessage:
-              'Effort in Hrs must be a positive integer with up to 16 digits',
-            placeholder: 'Enter Total Effort in Hrs',
+              'Effort In Hrs must be a positive integer with up to 16 digits',
+            placeholder: 'Enter Total Effort In Hrs',
           }),
           createTextField('total_cost', 'Total Cost', {
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
-              'Only positive numbers allowed, up to 3 digits and 2 decimal places',
+              'Total Cost must be a positive integer with up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Cost',
           }),
           createTextField('total_non_labor_cost', 'Total Non Labor Cost', {
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
-              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              'Total Non Labor Cost must be a positive integer with up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Non Labor Cost',
           }),
 
@@ -465,7 +467,7 @@ export const FormData = (
           createTextField('total_sub_con_cost', 'Total Sub Con Cost', {
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
-              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+              'Total Sub Con Cost must be a positive integer up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Sub Con Cost',
           }),
           createTextField('total_sub_con', 'Total Sub Con Count', {

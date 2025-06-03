@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
 import { projectDetailsIcon } from '../../../../assets';
 import { CircularProgress } from '@mui/material';
@@ -92,7 +92,7 @@ export const ProjectDetails = () => {
   const defaultTab = searchParams.get('list');
   const [activeKey, setActiveKey] = useState(defaultTab);
   const [projectData, setProjectData] = useState<NewProjectData | null>(null);
-
+  const navigate = useNavigate();
   // Permission Mangement
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
@@ -155,7 +155,12 @@ export const ProjectDetails = () => {
   ];
 
   const handleEditAccount = () => {
-    console.log('Edit clicked');
+    navigate(`/project/edit/${projectData?.rid}`, {
+      state: {
+        accountID: projectData?.account_rid,
+        projectID: projectData?.rid,
+      },
+    });
   };
 
   const handleActionsClick = () => {

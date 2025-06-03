@@ -14,6 +14,7 @@ import {
   KeyContactProps,
 } from '../../../account-details/utils';
 import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
+import { DATA_STORAGE_OPTIONS } from '../../../account-create/utils';
 
 // interface ErrorProps {
 //     message?: string;
@@ -285,7 +286,10 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
   const isKeyContactAvailable =
     accountDetails?.keyContacts && accountDetails.keyContacts.length > 0;
 
-  // const resourceData = resourceDetails?.data?.projectResourceDetails;
+  const dataResidency =
+    DATA_STORAGE_OPTIONS.find(
+      (option) => option.value === accountDetails?.data_storage
+    )?.label || '-';
 
   if (isDetailsLoading) {
     return (
@@ -327,7 +331,7 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
 
   const basicInfo: DetailItem[] = [
     {
-      label: 'Account Name',
+      label: 'Name',
       value: accountById?.account_name?.toString() || '-',
     },
     {
@@ -356,7 +360,7 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
   const locationInfo: DetailItem[] = [
     { label: 'Country', value: accountById?.country?.country_name },
     { label: 'Currency', value: accountById?.currency?.currency_code },
-    { label: 'Region', value: accountById?.region?.region_name },
+    { label: 'Region', value: accountById?.region_details?.state_name },
   ];
   const keyContactsList: trasnformedKeyContacts[] | undefined =
     accountDetails?.keyContacts.map((contact: KeyContactProps) => ({
@@ -373,12 +377,15 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
     { label: 'Fiscal Start', value: accountDetails?.fiscal_start_date },
     {
       label: 'Auto Send Interaction',
-      value: accountDetails?.autosend_interaction,
+      value: accountDetails?.autosend_interaction ? 'Yes' : 'No',
     }, // need to Discuss
     { label: 'Fiscal End', value: accountDetails?.fiscal_end_date },
-    { label: 'Auto Assessment', value: accountDetails?.auto_access_rd },
+    {
+      label: 'Auto Assessment',
+      value: accountDetails?.auto_access_rd ? 'Yes' : 'No',
+    },
     { label: 'Blended Rate - FTE', value: accountDetails?.blended_rate_fte },
-    { label: 'Data Residency', value: accountDetails?.data_residency },
+    { label: 'Data Residency', value: dataResidency },
     {
       label: 'Blended Rate - SubCon',
       value: accountDetails?.blended_rate_subcon,
@@ -394,14 +401,14 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
     { label: 'Account ID', value: accountById?.r_number },
     {
       label: 'Created On',
-      value: formatDateToYYYYMMDDWithTime(accountDetails?.created_datetime),
+      value: formatDateToYYYYMMDDWithTime(accountById?.created_datetime),
     },
-    { label: 'Created By', value: accountDetails?.created_by },
+    { label: 'Created By', value: accountById?.created_by },
     {
       label: 'Updated On',
-      value: formatDateToYYYYMMDDWithTime(accountDetails?.modified_datetime),
+      value: formatDateToYYYYMMDDWithTime(accountById?.modified_datetime),
     },
-    { label: 'Updated By', value: accountDetails?.modified_by },
+    { label: 'Updated By', value: accountById?.modified_by },
   ];
   const description: DetailItem[] = [
     { label: 'Comments', value: accountById?.comments },

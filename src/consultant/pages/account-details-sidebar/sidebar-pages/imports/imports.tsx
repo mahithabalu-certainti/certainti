@@ -1,10 +1,10 @@
-import { useState } from "react";
-import ActionImportDropdown from "./importdropdown";
-import Overview from "./overview";
-import Timeline from "./TimeLine";
+import { useState } from 'react';
+import ActionImportDropdown from './importdropdown';
+import Overview from './overview';
+import Timeline from './TimeLine';
 interface ImportProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  accountDetails?: Record<string,any>;
+  accountDetails?: Record<string, any>;
   activeKey?: string;
 }
 
@@ -122,7 +122,9 @@ const Import: React.FC<ImportProps> = ({ accountDetails }) => {
           <Overview
             accountNo={accountDetails?.data?.accountById.r_number}
             accountId={accountDetails?.data?.accountDetails?.account_rid}
-            accountInActive={accountDetails?.data?.accountById?.status === "inactive"}
+            accountInActive={
+              accountDetails?.data?.accountById?.status === 'inactive'
+            }
           />
         )}
         {isActive === 'TimeLine' && <Timeline />}

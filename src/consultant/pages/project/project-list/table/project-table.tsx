@@ -127,6 +127,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       columns={projectColumns}
       getRowId={getRowId}
       hoverHighlight={false}
+      tableStyle={{ overflowY: 'hidden' }}
       stickyHeader={true}
       stickyColumnsCount={2}
       selectable={true}

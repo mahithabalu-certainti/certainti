@@ -74,7 +74,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
   }, [permission]);
 
   const handleEdit = () => {
-    navigate(`/Project/edit/${projectDetails?.rid}`, {
+    navigate(`/project/edit/${projectDetails?.rid}`, {
       state: {
         accountID: projectDetails?.account_rid,
         projectID: projectDetails?.rid,

@@ -95,11 +95,15 @@ const Filter: React.FC<FilterComponentProps> = ({
   useEffect(() => {
     if (setCurrentSkillType) {
       if (filterStates?.skill_type_rid?.enum?.value) {
-        const skillTypeValue = Array.isArray(filterStates?.skill_type_rid?.enum?.value)
+        const skillTypeValue = Array.isArray(
+          filterStates?.skill_type_rid?.enum?.value
+        )
           ? filterStates?.skill_type_rid?.enum?.value
           : [filterStates?.skill_type_rid?.enum?.value];
 
-        const skillSubTypeValue = Array.isArray(filterStates?.skill_sub_type?.enum?.value)
+        const skillSubTypeValue = Array.isArray(
+          filterStates?.skill_sub_type?.enum?.value
+        )
           ? filterStates?.skill_sub_type?.enum?.value
           : [filterStates?.skill_sub_type?.enum?.value];
 
@@ -117,7 +121,11 @@ const Filter: React.FC<FilterComponentProps> = ({
 
       setCurrentCountry(country as string[]);
     }
-  }, [filterStates?.skill_type_rid?.enum?.value, filterStates?.resource_country?.enum?.value, filterStates?.skill_sub_type?.enum?.value]);
+  }, [
+    filterStates?.skill_type_rid?.enum?.value,
+    filterStates?.resource_country?.enum?.value,
+    filterStates?.skill_sub_type?.enum?.value,
+  ]);
 
   const handleModalClose = () => {
     const saved = getStoredFilters(value || 'resource');
@@ -469,7 +477,7 @@ const Filter: React.FC<FilterComponentProps> = ({
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleDateChange}
             mode={mode as 'date' | 'year'}
-          // onChange={handleBooleanChange}
+            // onChange={handleBooleanChange}
           />
         );
       case 'select':
@@ -589,7 +597,18 @@ const Filter: React.FC<FilterComponentProps> = ({
                               }
                             }}
                             sx={SELECT_STYLES}
-                            MenuProps={MENU_PROPS}
+                            MenuProps={{
+                              ...MENU_PROPS,
+                              PaperProps: {
+                                ...MENU_PROPS.PaperProps,
+                                style: {
+                                  ...(MENU_PROPS.PaperProps?.style || {}),
+                                  width: 100,
+                                  maxWidth: 100,
+                                  maxHeight: 200,
+                                },
+                              },
+                            }}
                             renderValue={(selected) => {
                               const selectedField = filterMenu.find(
                                 (f) => f.value === selected
@@ -601,7 +620,7 @@ const Filter: React.FC<FilterComponentProps> = ({
                                     alt='checked'
                                     className='w-3'
                                   />
-                                  <span className='pt-0.5'>
+                                  <span className='max-w-[173px] text-ellipsis overflow-hidden'>
                                     {selectedField?.name || selected}
                                   </span>
                                 </div>
@@ -630,7 +649,7 @@ const Filter: React.FC<FilterComponentProps> = ({
                                 <img
                                   src={checkedIcon}
                                   alt='checked'
-                                  className='w-4'
+                                  className='w-4 h-4'
                                 />
                                 {field.name}
                               </MenuItem>
@@ -704,6 +723,7 @@ const Filter: React.FC<FilterComponentProps> = ({
         PaperProps={{
           style: {
             minWidth: 170,
+            maxWidth: 170,
             borderRadius: '8px',
             border: '1px solid #CBD6E2',
             boxShadow: 'none',
@@ -741,7 +761,7 @@ const Filter: React.FC<FilterComponentProps> = ({
                   py: '1px',
                 }}
               >
-                <img src={checkedIcon} alt='checked' className='w-4 mr-1' />
+                <img src={checkedIcon} alt='checked' className='w-4 h-4 mr-1' />
                 {field.name}
               </MenuItem>
             ))
