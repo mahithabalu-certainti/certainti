@@ -116,6 +116,19 @@ export const Accounts: React.FC = () => {
     navigate(ACCOUNT_CREATE);
   };
 
+  const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const defaultSortField = 'account_name';
+    const defaultSortOrder = 'asc';
+
+    if (!sortBy) {
+      setOrder(defaultSortOrder);
+      setOrderBy(defaultSortField as keyof AccountList);
+    } else {
+      setOrder(sortOrder);
+      setOrderBy(sortBy as keyof AccountList);
+    }
+  };
+
   const countriesList = useGetAllCountries();
   // const currencyList = useFetchCurrency();
   const industry = useFetchIndustrys();
@@ -231,10 +244,7 @@ export const Accounts: React.FC = () => {
             setAppliedFilters={setAppliedFilters}
             setPage={setPage}
             handleCloseFilter={handleCloseFilter}
-            // systemFilter={true}
-            // systemFilterFields={[
-            //   { key: 'createdAt', label: 'Recently created' },
-            // ]}
+            handleSorting={handleSorting}
           />
         </div>
       </div>

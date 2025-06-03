@@ -10,6 +10,8 @@ import { generatePath, useNavigate } from 'react-router-dom';
 import { PROJECT_DETAILS } from '../../../../../routes';
 import { ActionItem } from '../../../../../components/table/types';
 import { deleteIcon, editIcon } from '../../../../../assets';
+import { reshapeGlobalFilter } from '../../../../../common-utils';
+import { FilterState } from '../../../../types';
 
 interface IProjectTableProps {
   appliedFilters: Record<string, any>;
@@ -29,7 +31,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   setTotalCount,
 }) => {
   const navigate = useNavigate();
-  const { fiscalYear } = useSelector<
+  const { fiscalYear, filters } = useSelector<
     RootState,
     { filters: unknown; fiscalYear: string }
   >((state: RootState) => state.account);
@@ -42,8 +44,9 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       page: 1,
       filters: appliedFilters,
       fiscalYear: convertedFiscalYear,
+      globalFilters: reshapeGlobalFilter(filters as FilterState),
     }));
-  }, [appliedFilters, fiscalYear]);
+  }, [appliedFilters, fiscalYear, filters]);
 
   const { data, isLoading, isError } = useAllProjects(tableParams);
   const totalItems = data?.count || 0;
