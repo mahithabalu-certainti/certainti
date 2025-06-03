@@ -1,20 +1,35 @@
 import { Box, Menu, MenuItem, Tab, Tabs } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ActionImportDropdown from '../../../account-details-sidebar/sidebar-pages/imports/importdropdown';
+import { DetailsTabs } from './project-data';
 
 interface TabProps {
-  value: string;
+  detailsTab: DetailsTabs[];
+  tabValue: string;
   setCurrentPage: (page: number) => void;
+  handleTabChange: (_event: React.SyntheticEvent, newValue: string) => void;
 }
-const TabPanel: React.FC<TabProps> = ({ setCurrentPage }) => {
-  const [tabValue, setTabValue] = useState(0);
+const TabPanel: React.FC<TabProps> = ({
+  detailsTab,
+  tabValue,
+  setCurrentPage,
+  handleTabChange,
+}) => {
+  const [currentValue, setCurrentValue] = useState(tabValue);
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
 
   const [, setSelectedSort] = useState('Accounts');
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
+  useEffect(() => {
+    // assign default tab value
+    const activeTab = detailsTab?.find((tab) => !tab.hide)?.id;
+    setCurrentValue(activeTab as string);
+  }, [detailsTab]);
+
+  const tabChange = (_event: React.SyntheticEvent, newValue: string) => {
+    handleTabChange(_event, newValue);
     setCurrentPage(0);
+    setCurrentValue(newValue);
   };
 
   const handleSortClose = () => {
@@ -48,64 +63,54 @@ const TabPanel: React.FC<TabProps> = ({ setCurrentPage }) => {
   return (
     <Box className=' rounded-lg'>
       <Box className='flex justify-between items-center mb-2.5'>
-        <Tabs
-          value={tabValue}
-          onChange={handleTabChange}
-          sx={{
-            border: '1px solid #CBD6E27D',
-            padding: '3px',
-            minHeight: '36px',
-            '& .MuiTabs-indicator': {
-              display: 'none',
-              '& .MuiTabs-root': {
-                borderBottom: 'none',
-              },
-            },
-          }}
-        >
-          <Tab
-            label='Overview'
+        {currentValue && (
+          <Tabs
+            value={currentValue}
+            onChange={tabChange}
             sx={{
-              textTransform: 'none',
-              fontSize: '14px',
-              fontWeight: 500,
-              color: '#2D3E4F',
-              backgroundColor: tabValue === 0 ? '#0BBFB70D' : '',
-              margin: '0',
-              border:
-                tabValue === 0 ? '1px solid #0BBFB7' : '1px solid transparent',
-              width: '120px',
-              height: '28px',
-              borderRadius: '4px',
-              minHeight: '28px',
-              padding: '8px 16px',
-              '&:hover': {
-                color: tabValue !== 0 ? '#0BBFB7' : undefined,
+              border: '1px solid #CBD6E27D',
+              padding: '3px',
+              minHeight: '36px',
+              '& .MuiTabs-indicator': {
+                display: 'none',
+                '& .MuiTabs-root': {
+                  borderBottom: 'none',
+                },
               },
             }}
-          />
-          <Tab
-            label='Timeline'
-            sx={{
-              textTransform: 'none',
-              fontSize: '14px',
-              fontWeight: 500,
-              color: '#2D3E4F',
-              backgroundColor: tabValue === 1 ? '#0BBFB70D' : '',
-              margin: '0',
-              border:
-                tabValue === 1 ? '1px solid #0BBFB7' : '1px solid transparent',
-              width: '120px',
-              height: '28px',
-              borderRadius: '4px',
-              minHeight: '28px',
-              padding: '8px 16px',
-              '&:hover': {
-                color: tabValue !== 1 ? '#0BBFB7' : undefined,
-              },
-            }}
-          />
-        </Tabs>
+          >
+            {detailsTab.map((tab, index) => {
+              const isActive = currentValue === tab.id;
+              if (tab.hide) return null;
+              return (
+                <Tab
+                  key={index}
+                  label={tab.name}
+                  value={tab.id}
+                  sx={{
+                    textTransform: 'none',
+                    fontSize: '14px',
+                    fontWeight: isActive ? '500' : '400',
+                    color: '#2D3E4F',
+                    backgroundColor: isActive ? '#0BBFB70D' : '',
+                    margin: '0',
+                    border: isActive
+                      ? '1px solid #0BBFB7'
+                      : '1px solid transparent',
+                    width: '120px',
+                    height: '28px',
+                    borderRadius: '4px',
+                    minHeight: '28px',
+                    padding: '8px 16px',
+                    '&:hover': {
+                      color: !isActive ? '#0BBFB7' : undefined,
+                    },
+                  }}
+                />
+              );
+            })}
+          </Tabs>
+        )}
 
         <Box className='flex items-center space-x-2'>
           <ActionImportDropdown

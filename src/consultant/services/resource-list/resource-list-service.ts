@@ -20,13 +20,13 @@ export const fetchResourceList = async (
 };
 
 export const useResourceList = (
-  params: ResourceListURLParams
+  params: ResourceListURLParams, isResourceViewAllEnable?: boolean
 ): UseQueryResult<{ resource: ResourceList[]; count: number }, Error> => {
   return useQuery<{ resource: ResourceList[]; count: number }, Error>({
     queryKey: ['resourceList', params],
     queryFn: () => fetchResourceList(params),
     retry: 0,
     gcTime: 0,
-    enabled: !!params.accountNumber,
+    enabled: !!params.accountNumber && isResourceViewAllEnable,
   });
 };

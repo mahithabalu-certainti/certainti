@@ -1,86 +1,89 @@
 import { Box, Tab, Tabs } from '@mui/material';
 import ActionImportDropdown from '../../sidebar-pages/imports/importdropdown';
+import { DetailsTabs } from '../../sidebar-pages/details/details';
+import { useEffect, useState } from 'react';
 
 interface TabProps {
-  tabValue: number;
+  tabValue: string;
+  detailsTab: DetailsTabs[];
   setTabValue?: (value: React.SetStateAction<number>) => void;
   menuActivity: {
     label: string;
     onClick: () => void;
   }[];
-  handleTabChange: (_event: React.SyntheticEvent, newValue: number) => void;
+  handleTabChange: (_event: React.SyntheticEvent, newValue: string) => void;
 }
 
 const OverviewTimelineTab: React.FC<TabProps> = ({
+  menuActivity,
+  detailsTab,
   tabValue,
   handleTabChange,
-  menuActivity,
 }) => {
-  const tabChange = (_event: React.SyntheticEvent, newValue: number) => {
+  const [currentValue, setCurrentValue] = useState(tabValue);
+
+  useEffect(() => {
+    // assign default tab value
+    const activeTab = detailsTab?.find((tab) => !tab.hide)?.id;
+    setCurrentValue(activeTab as string);
+  }, [detailsTab]);
+
+  const tabChange = (_event: React.SyntheticEvent, newValue: string) => {
     handleTabChange(_event, newValue);
+    setCurrentValue(newValue);
   };
 
   return (
     <div className='w-full'>
       <Box className='flex justify-between items-center mb-2'>
-        <Tabs
-          value={tabValue}
-          onChange={tabChange}
-          sx={{
-            border: '1px solid #CBD6E27D',
-            padding: '3px',
-            minHeight: '34px',
-            '& .MuiTabs-indicator': {
-              display: 'none',
-              '& .MuiTabs-root': {
-                borderBottom: 'none',
-              },
-            },
-          }}
-        >
-          <Tab
-            label='Overview'
+        {currentValue && (
+          <Tabs
+            value={currentValue}
+            onChange={tabChange}
             sx={{
-              textTransform: 'none',
-              fontSize: '14px',
-              fontWeight: tabValue === 0 ? '500' : '400',
-              color: '#2D3E4F',
-              backgroundColor: tabValue === 0 ? '#0BBFB70D' : '',
-              margin: '0',
-              border:
-                tabValue === 0 ? '1px solid #0BBFB7' : '1px solid transparent',
-              width: '120px',
-              height: '28px',
-              borderRadius: '4px',
-              minHeight: '28px',
-              padding: '8px 16px',
-              '&:hover': {
-                color: tabValue !== 0 ? '#0BBFB7' : undefined,
+              border: '1px solid #CBD6E27D',
+              padding: '3px',
+              minHeight: '34px',
+              '& .MuiTabs-indicator': {
+                display: 'none',
+                '& .MuiTabs-root': {
+                  borderBottom: 'none',
+                },
               },
             }}
-          />
-          <Tab
-            label='Timeline'
-            sx={{
-              textTransform: 'none',
-              fontSize: '14px',
-              fontWeight: tabValue === 1 ? '500' : '400',
-              color: '#2D3E4F',
-              backgroundColor: tabValue === 1 ? '#0BBFB70D' : '',
-              margin: '0',
-              border:
-                tabValue === 1 ? '1px solid #0BBFB7' : '1px solid transparent',
-              width: '120px',
-              height: '28px',
-              borderRadius: '4px',
-              minHeight: '28px',
-              padding: '8px 16px',
-              '&:hover': {
-                color: tabValue !== 1 ? '#0BBFB7' : undefined,
-              },
-            }}
-          />
-        </Tabs>
+          >
+            {detailsTab.map((tab, index) => {
+              const isActive = currentValue === tab.id;
+              if(tab.hide) return null;
+              return (
+                <Tab
+                  key={index}
+                  label={tab.name}
+                  value={tab.id}
+                  sx={{
+                    textTransform: 'none',
+                    fontSize: '14px',
+                    fontWeight: isActive ? '500' : '400',
+                    color: '#2D3E4F',
+                    backgroundColor: isActive ? '#0BBFB70D' : '',
+                    margin: '0',
+                    border: isActive
+                      ? '1px solid #0BBFB7'
+                      : '1px solid transparent',
+                    width: '120px',
+                    height: '28px',
+                    borderRadius: '4px',
+                    minHeight: '28px',
+                    padding: '8px 16px',
+                    '&:hover': {
+                      color: !isActive ? '#0BBFB7' : undefined,
+                    },
+                  }}
+                />
+              );
+            })}
+          </Tabs>
+        )}
         <Box className='flex items-center space-x-2'>
           <ActionImportDropdown
             variant={'filled'}

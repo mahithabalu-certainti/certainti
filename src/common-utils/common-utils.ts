@@ -10,6 +10,7 @@ import {
   AllPermissions,
   AxiosErrorMsg,
   CheckError,
+  MenuOption,
   Permissions,
   PermissionsMenus,
 } from '../common-service';
@@ -492,7 +493,7 @@ export const reShapePermissionData = (all: Permissions[]): PermissionState => {
 
 export const checkPermission = (
   data: Permissions[],
-  condition: AllPermissions | AllModules | AllModules[]
+  condition: AllPermissions | MenuOption | AllModules | AllModules[]
 ) => {
   if (Array.isArray(condition)) {
     return condition.some(

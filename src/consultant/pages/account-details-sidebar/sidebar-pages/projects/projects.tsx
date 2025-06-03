@@ -61,17 +61,6 @@ const Projects: React.FC<ProjectsProps> = ({
   );
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
-  const { data, isLoading, error } = useAccountProjects({
-    page: currentPage + 1,
-    limit: rowsPerPage,
-    sortBy: sortField,
-    sortOrder: sortOrder,
-    filters: appliedFilters,
-    fiscalYear: convertedFiscalYear,
-    accountNumber: accountDetails?.data?.accountDetails?.account_rid || '',
-  });
-  const totalItems = data?.count || 0;
-
   // Permission Mangement
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
@@ -81,6 +70,7 @@ const Projects: React.FC<ProjectsProps> = ({
     permission,
     AllPermissions.ACCOUNT_PROJECTS_VIEW_ALL
   );
+
   const projectCreateIsEnable = checkPermission(
     permission,
     AllPermissions.ACCOUNT_PROJECTS_CREATE
@@ -98,6 +88,21 @@ const Projects: React.FC<ProjectsProps> = ({
     AllPermissions.ACCOUNT_PROJECTS_DELETE
   );
   const projectOverviewIsEnable = !projectsTabs[0].hide;
+
+  const { data, isLoading, error } = useAccountProjects(
+    {
+      page: currentPage + 1,
+      limit: rowsPerPage,
+      sortBy: sortField,
+      sortOrder: sortOrder,
+      filters: appliedFilters,
+      fiscalYear: convertedFiscalYear,
+      accountNumber: accountDetails?.data?.accountDetails?.account_rid || '',
+    },
+    projectOverviewIsEnable && projectViewAllIsEnable
+  );
+  const totalItems = data?.count || 0;
+
   useEffect(() => {
     const isHide = (tab: ResourceTabs) => {
       return (
@@ -217,45 +222,44 @@ const Projects: React.FC<ProjectsProps> = ({
         setCurrentPage={setCurrentPage}
         resourceTab={projectsTabs}
       />
-      {projectOverviewIsEnable &&
-        (projectViewAllIsEnable ? (
-          <>
-            <ResourceTableHeader
-              value={'projects'}
-              title='Projects'
-              titleIcon={
-                <img src={projectHeaderIcon} alt='project-header-icon' />
-              }
-              headerButtons={headerButtons}
+      {projectOverviewIsEnable && projectViewAllIsEnable ? (
+        <>
+          <ResourceTableHeader
+            value={'projects'}
+            title='Projects'
+            titleIcon={
+              <img src={projectHeaderIcon} alt='project-header-icon' />
+            }
+            headerButtons={headerButtons}
+          />
+          <div className='border border-[#CBD6E2]'>
+            <ListTable
+              data={data?.projects as any}
+              columns={projectColumns}
+              getRowId={getRowId}
+              hoverHighlight={false}
+              stickyHeader={true}
+              stickyColumnsCount={1}
+              actionWidth={60}
+              actionDisplayMode='dropdown'
+              actionMenuItems={actionMenuItems}
+              loading={isLoading}
+              error={error ? 'Failed to load projects' : undefined}
+              rowsPerPageOptions={[25, 50, 100]}
+              rowsPerPage={rowsPerPage}
+              currentPage={(currentPage ?? 1) - 1}
+              totalItems={totalItems}
+              onPageChange={setCurrentPage}
+              onRowsPerPageChange={setRowsPerPage}
+              sortBy={sortField}
+              sortOrder={sortOrder}
+              onSort={handleSort}
             />
-            <div className='border border-[#CBD6E2]'>
-              <ListTable
-                data={data?.projects as any}
-                columns={projectColumns}
-                getRowId={getRowId}
-                hoverHighlight={false}
-                stickyHeader={true}
-                stickyColumnsCount={1}
-                actionWidth={60}
-                actionDisplayMode='dropdown'
-                actionMenuItems={actionMenuItems}
-                loading={isLoading}
-                error={error ? 'Failed to load projects' : undefined}
-                rowsPerPageOptions={[25, 50, 100]}
-                rowsPerPage={rowsPerPage}
-                currentPage={(currentPage ?? 1) - 1}
-                totalItems={totalItems}
-                onPageChange={setCurrentPage}
-                onRowsPerPageChange={setRowsPerPage}
-                sortBy={sortField}
-                sortOrder={sortOrder}
-                onSort={handleSort}
-              />
-            </div>
-          </>
-        ) : (
-          <AccessRestricted />
-        ))}
+          </div>
+        </>
+      ) : (
+        <AccessRestricted />
+      )}
     </div>
   );
 };

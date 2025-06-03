@@ -14,6 +14,8 @@ import { deleteIcon, editIcon } from '../../../../../assets';
 interface IProjectTableProps {
   appliedFilters: Record<string, any>;
   tableParams: ProjectListParams;
+  isProjectEditEnable?: boolean;
+  isProjectDeleteEnable?: boolean;
   setTableParams: React.Dispatch<React.SetStateAction<ProjectListParams>>;
   setTotalCount: React.Dispatch<React.SetStateAction<number>>;
 }
@@ -21,6 +23,8 @@ interface IProjectTableProps {
 export const ProjectTable: React.FC<IProjectTableProps> = ({
   appliedFilters,
   tableParams,
+  isProjectEditEnable,
+  isProjectDeleteEnable,
   setTableParams,
   setTotalCount,
 }) => {
@@ -107,11 +111,13 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
         filter:
           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
       },
+      hide: !isProjectEditEnable,
     },
     {
       label: 'Delete',
       onClick: (row: any) => console.log('Delete row', row),
       icon: deleteIcon,
+      hide: !isProjectDeleteEnable,
     },
   ];
 
