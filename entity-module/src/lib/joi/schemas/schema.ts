@@ -251,18 +251,18 @@ const createResourcesSchema = Joi.object({
       "string.empty": "Organization name cannot be an empty string",
       "any.allowOnly": "Organization name cannot be null or empty"
     }),
-  role: Joi.string()
-    .pattern(/^[A-Za-z][A-Za-z\s\-'.]{1,98}[A-Za-z]$/)
+    role: Joi.string()
+    .pattern(/^[A-Za-z\s\-'.]{3,64}$/)
     .min(3)
-    .max(100)
+    .max(64)
     .optional()
     .allow("")
     .allow(null)
     .messages({
-      "string.pattern.base": "Role must contain only letters, hyphens, apostrophes, periods and spaces",
+      "string.pattern.base": "Role must contain only letters, hyphens (-), apostrophes ('), periods (.) and spaces",
       "string.min": "Role must be at least 3 characters long",
-      "string.max": "Role must not exceed 100 characters"
-    }),
+      "string.max": "Role must not exceed 64 characters"
+    }),  
   resource_country: Joi.string()
     .guid({ version: ["uuidv4"] })
     .optional()
@@ -331,17 +331,17 @@ const createResourcesSchema = Joi.object({
         "Invalid effective end date. Please use the format YYYY-MM-DD",
     }),
   resource_designation: Joi.string()
-    .pattern(/^[A-Za-z][A-Za-z\s\-'.]{1,62}[A-Za-z]$/)
-    .min(3)
-    .max(64)
-    .optional()
-    .allow("")
-    .allow(null)
-    .messages({
-      "string.pattern.base": "Resource designation must contain only letters, hyphens, apostrophes, periods and spaces",
-      "string.min": "Resource designation must be at least 3 characters long",
-      "string.max": "Resource designation must not exceed 64 characters"
-    }),
+  .pattern(/^[A-Za-z\s\-'.]{3,64}$/)
+  .min(3)
+  .max(64)
+  .optional()
+  .allow("")
+  .allow(null)
+  .messages({
+    "string.pattern.base": "Resource Designation must contain only letters, hyphens (-), apostrophes ('), periods (.) and spaces",
+    "string.min": "Resource Designation must be at least 3 characters long",
+    "string.max": "Resource Designation must not exceed 64 characters"
+  }),
   total_years_experience: Joi.number()
     .precision(2)
     .min(0)
@@ -445,17 +445,17 @@ const updateResourceSchema = Joi.object({
       "string.empty": "Organization name cannot be an empty string",
       "any.allowOnly": "Organization name cannot be null or empty"
     }),
-  role: Joi.string()
-    .pattern(/^[A-Za-z][A-Za-z\s\-'.]{1,98}[A-Za-z]$/)
+    role: Joi.string()
+    .pattern(/^[A-Za-z\s\-'.]{3,64}$/)
     .min(3)
-    .max(100)
+    .max(64)
     .optional()
     .allow("")
     .allow(null)
     .messages({
-      "string.pattern.base": "Role must contain only letters, hyphens, apostrophes, periods and spaces",
+      "string.pattern.base": "Role must contain only letters, hyphens (-), apostrophes ('), periods (.) and spaces",
       "string.min": "Role must be at least 3 characters long",
-      "string.max": "Role must not exceed 100 characters"
+      "string.max": "Role must not exceed 64 characters"
     }),
   resource_country: Joi.string()
     .guid({ version: ["uuidv4"] })
@@ -525,17 +525,17 @@ const updateResourceSchema = Joi.object({
         "Invalid effective end date. Please use the format YYYY-MM-DD",
     }),
   resource_designation: Joi.string()
-    .pattern(/^[A-Za-z][A-Za-z\s\-'.]{1,62}[A-Za-z]$/)
-    .min(3)
-    .max(64)
-    .optional()
-    .allow("")
-    .allow(null)
-    .messages({
-      "string.pattern.base": "Resource designation must contain only letters, hyphens, apostrophes, periods and spaces",
-      "string.min": "Resource designation must be at least 3 characters long",
-      "string.max": "Resource designation must not exceed 64 characters"
-    }),
+  .pattern(/^[A-Za-z\s\-'.]{3,64}$/)
+  .min(3)
+  .max(64)
+  .optional()
+  .allow("")
+  .allow(null)
+  .messages({
+    "string.pattern.base": "Resource Designation must contain only letters, hyphens (-), apostrophes ('), periods (.) and spaces",
+    "string.min": "Resource Designation must be at least 3 characters long",
+    "string.max": "Resource Designation must not exceed 64 characters"
+  }),
   total_years_experience: Joi.number()
     .precision(2)
     .min(0)
