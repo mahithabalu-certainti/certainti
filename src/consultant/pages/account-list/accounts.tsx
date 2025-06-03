@@ -50,6 +50,7 @@ export const Accounts: React.FC = () => {
   const apiOrder = order.toUpperCase() as 'ASC' | 'DESC';
   const [page, setPage] = useState<number>(1);
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+  const [sortFilterCount, setSortFilterCount] = useState<number>(0);
 
   const { fiscalYear, filters } = useSelector<
     RootState,
@@ -131,9 +132,11 @@ export const Accounts: React.FC = () => {
     const defaultSortOrder = 'asc';
 
     if (!sortBy) {
+      setSortFilterCount(0);
       setOrder(defaultSortOrder);
       setOrderBy(defaultSortField as keyof AccountList);
     } else {
+      setSortFilterCount(1);
       setOrder(sortOrder);
       setOrderBy(sortBy as keyof AccountList);
     }
@@ -232,19 +235,21 @@ export const Accounts: React.FC = () => {
           <button
             aria-describedby={filterId}
             className={`w-[64px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
-              ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) ? 'bg-[#F3F3F3]' : ''}`}
+              ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) || sortFilterCount > 0 ? 'bg-[#F3F3F3]' : ''}`}
             onClick={handleFilterModal}
           >
             <img src={newFilterIcon} alt='filter-icon' />
             Filter
-            {appliedFilters && Object.keys(appliedFilters).length > 0 && (
+            {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
+            sortFilterCount > 0 ? (
               <div className='absolute -top-[5px] -right-2 w-4 h-4 flex items-center justify-center text-xs'>
                 <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
                 <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
-                  {Object.keys(appliedFilters).length}
+                  {(appliedFilters ? Object.keys(appliedFilters).length : 0) +
+                    sortFilterCount}
                 </span>
               </div>
-            )}
+            ) : null}
           </button>
           <FilterModal
             isOpen={isFilterOpen}
