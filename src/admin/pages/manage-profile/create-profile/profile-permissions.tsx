@@ -641,86 +641,85 @@ const PrivilegeAccordion: React.FC<{
                           {/* Left Column */}
                           <div className='border-r border-[#CBD6E2]'>
                             {/* Select all start */}
-                            {!('has_extended_permission' in permission) ||
-                              (viewProfileDisabled && (
-                                <div className='flex justify-between items-center px-16 py-2 bg-white border-t border-[#CBD6E2]'>
-                                  <div className='w-[65%] text-[13px] text-[#425A76] font-semibold'></div>
-                                  <div className='w-[35%] flex justify-start gap-4'>
-                                    <div className='flex items-center gap-6'>
-                                      <span className='text-[13px] text-[#425A76]'>
-                                        All
-                                      </span>
-                                      <CustomCheckbox
-                                        checked={
-                                          permission.fields
-                                            ?.slice(
-                                              0,
-                                              Math.ceil(
-                                                permission.fields.length / 2
-                                              )
+                            {!('has_extended_permission' in permission) && (
+                              <div className='flex justify-between items-center px-16 py-2 bg-white border-t border-[#CBD6E2]'>
+                                <div className='w-[65%] text-[13px] text-[#425A76] font-semibold'></div>
+                                <div className='w-[35%] flex justify-start gap-4'>
+                                  <div className='flex items-center gap-6'>
+                                    <span className='text-[13px] text-[#425A76]'>
+                                      All
+                                    </span>
+                                    <CustomCheckbox
+                                      checked={
+                                        permission.fields
+                                          ?.slice(
+                                            0,
+                                            Math.ceil(
+                                              permission.fields.length / 2
                                             )
-                                            .every((field) => field.read) ??
-                                          false
-                                        }
-                                        onChange={(e) => {
-                                          e.stopPropagation();
-                                          permission.fields
-                                            ?.slice(
-                                              0,
-                                              Math.ceil(
-                                                permission.fields.length / 2
-                                              )
+                                          )
+                                          .every((field) => field.read) ?? false
+                                      }
+                                      onChange={(e) => {
+                                        e.stopPropagation();
+                                        permission.fields
+                                          ?.slice(
+                                            0,
+                                            Math.ceil(
+                                              permission.fields.length / 2
                                             )
-                                            .forEach((field) => {
-                                              handleFieldChange(
-                                                module.module_id!,
-                                                permission.permission_id!,
-                                                field.field_id,
-                                                'read'
-                                              )(e);
-                                            });
-                                        }}
-                                      />
-                                    </div>
-                                    <div className='flex items-center gap-3'>
-                                      <span className='text-[13px] text-[#425A76]'>
-                                        All
-                                      </span>
-                                      <CustomCheckbox
-                                        checked={
-                                          permission.fields
-                                            ?.slice(
-                                              0,
-                                              Math.ceil(
-                                                permission.fields.length / 2
-                                              )
+                                          )
+                                          .forEach((field) => {
+                                            handleFieldChange(
+                                              module.module_id!,
+                                              permission.permission_id!,
+                                              field.field_id,
+                                              'read'
+                                            )(e);
+                                          });
+                                      }}
+                                      disabled={viewProfileDisabled}
+                                    />
+                                  </div>
+                                  <div className='flex items-center gap-3'>
+                                    <span className='text-[13px] text-[#425A76]'>
+                                      All
+                                    </span>
+                                    <CustomCheckbox
+                                      checked={
+                                        permission.fields
+                                          ?.slice(
+                                            0,
+                                            Math.ceil(
+                                              permission.fields.length / 2
                                             )
-                                            .every((field) => field.edit) ??
-                                          false
-                                        }
-                                        onChange={(e) => {
-                                          e.stopPropagation();
-                                          permission.fields
-                                            ?.slice(
-                                              0,
-                                              Math.ceil(
-                                                permission.fields.length / 2
-                                              )
+                                          )
+                                          .every((field) => field.edit) ?? false
+                                      }
+                                      onChange={(e) => {
+                                        e.stopPropagation();
+                                        permission.fields
+                                          ?.slice(
+                                            0,
+                                            Math.ceil(
+                                              permission.fields.length / 2
                                             )
-                                            .forEach((field) => {
-                                              handleFieldChange(
-                                                module.module_id!,
-                                                permission.permission_id!,
-                                                field.field_id,
-                                                'edit'
-                                              )(e);
-                                            });
-                                        }}
-                                      />
-                                    </div>
+                                          )
+                                          .forEach((field) => {
+                                            handleFieldChange(
+                                              module.module_id!,
+                                              permission.permission_id!,
+                                              field.field_id,
+                                              'edit'
+                                            )(e);
+                                          });
+                                      }}
+                                      disabled={viewProfileDisabled}
+                                    />
                                   </div>
                                 </div>
-                              ))}
+                              </div>
+                            )}
                             {permission.fields
                               ?.slice(
                                 0,
@@ -782,82 +781,81 @@ const PrivilegeAccordion: React.FC<{
                           {/* Right Column */}
                           <div>
                             {/* Select all start */}
-                            {!('has_extended_permission' in permission) ||
-                              (viewProfileDisabled && (
-                                <div className='flex justify-between items-center px-8 py-2 bg-white border-t border-[#CBD6E2]'>
-                                  <div className='w-[55%] text-[13px] text-[#425A76] font-semibold'></div>
-                                  <div className='w-[45%] flex justify-start gap-4'>
-                                    <div className='flex items-center gap-6'>
-                                      <span className='text-[13px] text-[#425A76]'>
-                                        All
-                                      </span>
-                                      <CustomCheckbox
-                                        checked={
-                                          permission.fields
-                                            ?.slice(
-                                              Math.ceil(
-                                                permission.fields.length / 2
-                                              )
+                            {!('has_extended_permission' in permission) && (
+                              <div className='flex justify-between items-center px-8 py-2 bg-white border-t border-[#CBD6E2]'>
+                                <div className='w-[55%] text-[13px] text-[#425A76] font-semibold'></div>
+                                <div className='w-[45%] flex justify-start gap-4'>
+                                  <div className='flex items-center gap-6'>
+                                    <span className='text-[13px] text-[#425A76]'>
+                                      All
+                                    </span>
+                                    <CustomCheckbox
+                                      checked={
+                                        permission.fields
+                                          ?.slice(
+                                            Math.ceil(
+                                              permission.fields.length / 2
                                             )
-                                            .every((field) => field.read) ??
-                                          false
-                                        }
-                                        onChange={(e) => {
-                                          e.stopPropagation();
-                                          permission.fields
-                                            ?.slice(
-                                              Math.ceil(
-                                                permission.fields.length / 2
-                                              )
+                                          )
+                                          .every((field) => field.read) ?? false
+                                      }
+                                      onChange={(e) => {
+                                        e.stopPropagation();
+                                        permission.fields
+                                          ?.slice(
+                                            Math.ceil(
+                                              permission.fields.length / 2
                                             )
-                                            .forEach((field) => {
-                                              handleFieldChange(
-                                                module.module_id!,
-                                                permission.permission_id!,
-                                                field.field_id,
-                                                'read'
-                                              )(e);
-                                            });
-                                        }}
-                                      />
-                                    </div>
-                                    <div className='flex items-center gap-3'>
-                                      <span className='text-[13px] text-[#425A76]'>
-                                        All
-                                      </span>
-                                      <CustomCheckbox
-                                        checked={
-                                          permission.fields
-                                            ?.slice(
-                                              Math.ceil(
-                                                permission.fields.length / 2
-                                              )
+                                          )
+                                          .forEach((field) => {
+                                            handleFieldChange(
+                                              module.module_id!,
+                                              permission.permission_id!,
+                                              field.field_id,
+                                              'read'
+                                            )(e);
+                                          });
+                                      }}
+                                      disabled={viewProfileDisabled}
+                                    />
+                                  </div>
+                                  <div className='flex items-center gap-3'>
+                                    <span className='text-[13px] text-[#425A76]'>
+                                      All
+                                    </span>
+                                    <CustomCheckbox
+                                      checked={
+                                        permission.fields
+                                          ?.slice(
+                                            Math.ceil(
+                                              permission.fields.length / 2
                                             )
-                                            .every((field) => field.edit) ??
-                                          false
-                                        }
-                                        onChange={(e) => {
-                                          e.stopPropagation();
-                                          permission.fields
-                                            ?.slice(
-                                              Math.ceil(
-                                                permission.fields.length / 2
-                                              )
+                                          )
+                                          .every((field) => field.edit) ?? false
+                                      }
+                                      onChange={(e) => {
+                                        e.stopPropagation();
+                                        permission.fields
+                                          ?.slice(
+                                            Math.ceil(
+                                              permission.fields.length / 2
                                             )
-                                            .forEach((field) => {
-                                              handleFieldChange(
-                                                module.module_id!,
-                                                permission.permission_id!,
-                                                field.field_id,
-                                                'edit'
-                                              )(e);
-                                            });
-                                        }}
-                                      />
-                                    </div>
+                                          )
+                                          .forEach((field) => {
+                                            handleFieldChange(
+                                              module.module_id!,
+                                              permission.permission_id!,
+                                              field.field_id,
+                                              'edit'
+                                            )(e);
+                                          });
+                                      }}
+                                      disabled={viewProfileDisabled}
+                                    />
                                   </div>
                                 </div>
-                              ))}
+                              </div>
+                            )}
                             {/* Select all end */}
                             {permission.fields
                               ?.slice(Math.ceil(permission.fields.length / 2))
