@@ -2221,7 +2221,14 @@ class SchemaService {
         if (isDateField) {
           const updatedField =
             field === "modified_datetime" ? "ps.modified_datetime" : field;
-          const normalize = (d: any) => new Date(d);
+          const normalize = (d: any) => {
+            let parsed = moment.utc(d, "YYYY-MM-DD", true);
+            if (!parsed.isValid()) throw new Error("Invalid date");
+
+            const startOfDay = parsed.startOf("day").toDate();
+            return startOfDay;
+          }
+
           if (condition.equals !== undefined) {
             const startOfDay = new Date(condition.equals);
             startOfDay.setHours(0, 0, 0, 0);

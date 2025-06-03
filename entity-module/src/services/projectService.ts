@@ -1843,7 +1843,7 @@ export class ProjectService {
   }
 
   normalizeDate(input: string): any | null {
-    let parsed = moment.utc(input, "YYYY/MM/DD", true);
+    let parsed = moment.utc(input, "YYYY-MM-DD", true);
     if (!parsed.isValid()) throw new Error("Invalid date");
 
     const startOfDay = parsed.startOf("day").toDate();
