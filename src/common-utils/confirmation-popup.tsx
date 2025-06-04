@@ -19,7 +19,7 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
   return (
     <div
       className='fixed inset-0 flex items-center justify-center'
-      style={{ backgroundColor: 'rgba(0, 0, 0, 0.8)' }}
+      style={{ backgroundColor: 'rgb(30 28 28 / 50%)', zIndex: 99999 }}
     >
       <div className='bg-white rounded-lg p-6 max-w-md w-full mx-4'>
         <h3 className='text-[16px] font-bold text-[#2D3E4F] text-center text-sm mb-6'>
