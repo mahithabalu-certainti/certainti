@@ -306,18 +306,18 @@ async function industries(req: Request, res: Response): Promise<void> {
 async function colorCodes(req: Request, res: Response): Promise<void> {
   const methodName = "colors";
   try {
-    const industries = await services.geoDataServices.colorCodes();
-    if (industries.statusCode === HttpStatus.SUCCESS) {
+    const colorCodes = await services.geoDataServices.colorCodes();
+    if (colorCodes.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-      handleSuccessResponse(res, industries.data);
+      handleSuccessResponse(res, colorCodes.data);
       return;
     } else {
-      errorLog(methodName, industries.errorMessage);
+      errorLog(methodName, colorCodes.errorMessage);
       handleErrorResponse(
         res,
         HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
-        industries.message
+        colorCodes.message
       );
       return;
     }
