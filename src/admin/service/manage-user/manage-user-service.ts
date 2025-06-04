@@ -249,8 +249,11 @@ export const extendedPermissionToUser = async (
 
 export const useExtendedPermissionToUser = (userId: string) => {
   return useQuery<UserPermissionApiResponse, Error>({
-    queryKey: ['extendedPermission'], // Unique query key
+    queryKey: ['extendedPermission', userId], // Unique query key
     queryFn: () => extendedPermissionToUser(userId),
+    enabled: !!userId, // Only fetch if userId exists
+    staleTime: 0, // No cache
+    gcTime: 0, // Immediately remove from cache
     retry: 0,
   });
 };

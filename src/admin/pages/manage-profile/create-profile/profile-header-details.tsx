@@ -5,10 +5,13 @@ import { ProfileHeaderData } from '../../../types';
 
 interface ProfileHeaderProps {
   extendedPermission?: boolean;
+  userName?: string;
   profileHeaderData?: ProfileHeaderData;
   onSave?: () => void;
   loading?: boolean;
   isEditView?: boolean;
+  viewProfileId?: string;
+  viewProfile?: boolean;
 }
 export const ProfileHeaderDetail: React.FC<ProfileHeaderProps> = ({
   profileHeaderData,
@@ -16,9 +19,11 @@ export const ProfileHeaderDetail: React.FC<ProfileHeaderProps> = ({
   loading,
   isEditView,
   extendedPermission,
+  userName,
+  viewProfileId,
+  viewProfile,
 }) => {
   const userProfiles = useManageUserProfile();
-
   const editProfileName =
     userProfiles.data?.data.profiles.find(
       (profile) => profile.rid === profileHeaderData?.profile_id
@@ -27,6 +32,11 @@ export const ProfileHeaderDetail: React.FC<ProfileHeaderProps> = ({
   const sourceProfileName =
     userProfiles.data?.data.profiles.find(
       (profile) => profile.rid === profileHeaderData?.source_profile_id
+    )?.profile_name || '';
+
+  const viewProfileName =
+    userProfiles.data?.data.profiles.find(
+      (profile) => profile.rid === viewProfileId
     )?.profile_name || '';
 
   const goBack = () => {
@@ -41,60 +51,68 @@ export const ProfileHeaderDetail: React.FC<ProfileHeaderProps> = ({
           >
             <div className='px-4 font-semibold text-[14px] leading-[32px] tracking-[0%] align-middle text-[#2D3E4F]'>
               {extendedPermission
-                ? 'Assign permission to user'
+                ? 'Assign permission to ' + userName + ''
                 : isEditView
                   ? 'Edit Profile'
-                  : 'Create Profile'}
+                  : viewProfile
+                    ? 'View Profile'
+                    : 'Create Profile'}
             </div>
-            <div className='flex gap-2 m-2'>
-              <TextButton
-                label='Save'
-                loading={loading}
-                onClick={onSave}
-                sx={{
-                  width: '64px',
-                  minWidth: '64px',
-                  fontWeight: 400,
-                  fontSize: '13px',
-                  height: '32px',
-                }}
-              />
-              <TextButton
-                label='Cancel'
-                color='inherit'
-                onClick={goBack}
-                sx={{
-                  width: '56px',
-                  minWidth: '56px',
-                  fontWeight: 400,
-                  fontSize: '12px',
-                  height: '32px',
-                }}
-              />
-            </div>
+            {!viewProfile && (
+              <div className='flex gap-2 m-2'>
+                <TextButton
+                  label='Save'
+                  loading={loading}
+                  onClick={onSave}
+                  sx={{
+                    width: '64px',
+                    minWidth: '64px',
+                    fontWeight: 400,
+                    fontSize: '13px',
+                    height: '32px',
+                  }}
+                />
+                <TextButton
+                  label='Cancel'
+                  color='inherit'
+                  onClick={goBack}
+                  sx={{
+                    width: '56px',
+                    minWidth: '56px',
+                    fontWeight: 400,
+                    fontSize: '12px',
+                    height: '32px',
+                  }}
+                />
+              </div>
+            )}
           </div>
           {!extendedPermission && (
             <div className='flex items-center p-4'>
-              {!isEditView && (
-                <div className='flex gap-2 items-center'>
-                  <div className='text-[14px] font-semibold text-[#65686F]'>
-                    Exiting profile
+              {!isEditView && !viewProfile && (
+                <>
+                  <div className='flex gap-2 items-center'>
+                    <div className='text-[14px] font-bold text-[#65686F]'>
+                      Exiting profile:
+                    </div>
+                    <div className='text-[13px] font-normal text-[#2D3E4F] pl-0 pr-5'>
+                      {sourceProfileName || 'Exiting profile'}
+                    </div>
                   </div>
-                  <div className='text-[13px] font-normal text-[#2D3E4F] px-4'>
-                    {sourceProfileName}
-                  </div>
-                </div>
+                </>
               )}
               <div className='flex gap-2 items-center'>
                 <div
-                  className={`text-[14px] font-semibold text-[#65686F] ${isEditView ? 'pl-0' : 'pl-8'}`}
+                  className={`text-[14px] font-bold text-[#65686F] ${isEditView || viewProfile ? 'pl-0' : 'pl-8'}`}
                 >
-                  Profile Name
+                  Profile Name:
                 </div>
-                <div className='text-[13px] font-normal text-[#2D3E4F] px-4'>
+                <div className='text-[13px] font-normal text-[#2D3E4F] pl-0 pr-4'>
                   {isEditView
                     ? editProfileName
-                    : profileHeaderData?.profile_name}
+                    : viewProfile
+                      ? viewProfileName
+                      : profileHeaderData?.profile_name}
                 </div>
               </div>
             </div>

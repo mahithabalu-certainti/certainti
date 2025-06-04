@@ -16,6 +16,7 @@ import { arrowIcon, calendarIcon } from '../../../../../assets';
 import { FilterState } from './filterType';
 import {
   MENU_PROPS,
+  OPERATOR_STYLE,
   SELECT_STYLES,
 } from '../../../../../components/filter-component/helpers';
 
@@ -56,7 +57,7 @@ export const TextFilterControl: React.FC<{
           IconComponent={(props) => (
             <img src={arrowIcon} alt='arrowIcon' {...props} />
           )}
-          sx={SELECT_STYLES}
+          sx={{ ...SELECT_STYLES, ...OPERATOR_STYLE }}
           MenuProps={MENU_PROPS}
         >
           {menuOption &&
@@ -140,7 +141,7 @@ export const TextFilterControlForCostAndSKill: React.FC<{
           IconComponent={(props) => (
             <img src={arrowIcon} alt='arrowIcon' {...props} />
           )}
-          sx={SELECT_STYLES}
+          sx={{ ...SELECT_STYLES, ...OPERATOR_STYLE }}
           MenuProps={MENU_PROPS}
         >
           {menuOption &&
@@ -223,7 +224,7 @@ export const NumberFilterControl: React.FC<{
           IconComponent={(props) => (
             <img src={arrowIcon} alt='arrowIcon' {...props} />
           )}
-          sx={SELECT_STYLES}
+          sx={{ ...SELECT_STYLES, ...OPERATOR_STYLE }}
           MenuProps={MENU_PROPS}
         >
           {menuOption &&
@@ -380,7 +381,7 @@ export const DateFilterControl: React.FC<{
           IconComponent={(props) => (
             <img src={arrowIcon} alt='arrowIcon' {...props} />
           )}
-          sx={SELECT_STYLES}
+          sx={{ ...SELECT_STYLES, ...OPERATOR_STYLE }}
           MenuProps={MENU_PROPS}
         >
           {menuOption &&
@@ -602,7 +603,7 @@ export const CurrencySelectFilterControl: React.FC<{
           IconComponent={(props) => (
             <img src={arrowIcon} alt='arrowIcon' {...props} />
           )}
-          sx={SELECT_STYLES}
+          sx={{ ...SELECT_STYLES, ...OPERATOR_STYLE }}
           MenuProps={MENU_PROPS}
           name='option'
         >
@@ -727,7 +728,7 @@ export const EnumFilterControl: React.FC<{
     const isMultiple = option === 'In';
     const hideInput = option === 'Is Empty';
     const selectedValues: string[] = state?.enum?.value || [];
-    console.log("disabled", disabled);
+    console.log('disabled', disabled);
 
     return (
       <div className='flex gap-2 items-center'>
@@ -738,7 +739,7 @@ export const EnumFilterControl: React.FC<{
           IconComponent={(props) => (
             <img src={arrowIcon} alt='arrowIcon' {...props} />
           )}
-          sx={SELECT_STYLES}
+          sx={{ ...SELECT_STYLES, ...OPERATOR_STYLE }}
           MenuProps={MENU_PROPS}
           disabled={disabled}
           name='option'
