@@ -753,7 +753,7 @@ export const renderChildRows = ({
                     {project.total_project_cost
                       ? costDisplay(
                           project.total_project_cost,
-                          project.currency
+                          account.currency
                         )
                       : '-'}
                   </TableCell>
@@ -778,7 +778,7 @@ export const renderChildRows = ({
                     {project.qualifying_project_qre_fed
                       ? costDisplay(
                           project.qualifying_project_qre_fed,
-                          project.currency
+                          account.currency
                         )
                       : '-'}
                   </TableCell>
@@ -793,7 +793,7 @@ export const renderChildRows = ({
                     {project.qualifying_project_rd_credits_fed
                       ? costDisplay(
                           project.qualifying_project_rd_credits_fed,
-                          project.currency
+                          account.currency
                         )
                       : '-'}
                   </TableCell>
@@ -808,7 +808,7 @@ export const renderChildRows = ({
                     {project.total_projects_rd_credits
                       ? costDisplay(
                           project.total_projects_rd_credits,
-                          project.currency
+                          account.currency
                         )
                       : '-'}
                   </TableCell>
