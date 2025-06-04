@@ -306,7 +306,7 @@ export const AccountDetails = () => {
         name: 'Imports',
         key: 'imports',
         id: AllModules.IMPORTS,
-        disabled: false,
+        disabled: disable,
       },
     ],
     [disable]

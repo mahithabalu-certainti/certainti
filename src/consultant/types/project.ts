@@ -93,7 +93,8 @@ export type ProjectListResponse = {
   statusMessage: string;
   data: {
     projects: ProjectList[];
-    count: number;
+    count?: number;
+    totalCount?: number;
   };
 };
 export interface KeyContacts {

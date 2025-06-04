@@ -20,7 +20,7 @@ export const fetchProjects = async (
 
   return {
     projects: response.data.data.projects,
-    count: response.data.data.count,
+    count: response.data.data.count ?? response.data.data.totalCount ?? 0,
   };
 };
 

@@ -224,7 +224,8 @@ type Country = {
 };
 
 type Currency = {
-  currency_code: string;
+  currency_code?: string;
+  currency_symbol?: string;
 };
 
 export type AccountListResponse = {
@@ -259,6 +260,7 @@ export interface ProjectsByYear {
   qualifying_project_qre_fed: number | null;
   qualifying_project_rd_credits_fed: number | null;
   total_projects_rd_credits: string;
+  currency: string;
 }
 
 export interface AccountListURLParams {
@@ -330,6 +332,7 @@ export interface ConvertedAccount {
   accountNumber: string;
   industry: string;
   country: string;
+  currency: string;
   // currency: string;
   // status: 'Active' | 'In Active';
   // primaryContact: string;

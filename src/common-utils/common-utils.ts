@@ -535,5 +535,23 @@ export const formatDateToYYYYMMDDWithTime = (
 
   const formattedTime = `${String(hours).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
 
-  return `${year}/${month}/${day}, ${formattedTime}`;
+  return `${year}-${month}-${day}, ${formattedTime}`;
+};
+
+export const costDisplay = (
+  cost: string | number | null | undefined,
+  symbol: string = '$'
+) => {
+  console.log(cost);
+  if (cost === null || cost === undefined) return '-';
+
+  const numberCost = Number(cost);
+  const hasDecimal = !Number.isInteger(numberCost);
+
+  const formattedCost = numberCost.toLocaleString('en-US', {
+    minimumFractionDigits: hasDecimal ? 2 : 0,
+    maximumFractionDigits: hasDecimal ? 2 : 0,
+  });
+
+  return symbol ? `${symbol} ${formattedCost}` : formattedCost;
 };

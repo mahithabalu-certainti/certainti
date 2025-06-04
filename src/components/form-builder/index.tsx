@@ -140,7 +140,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     const fieldValue = (constructFormData[field.name] as string) || '';
     const fieldDisabled = field.disabled ? ' bg-gray-100' : '';
 
-
     const handleChange = (value: FieldTypes, countryCode?: FieldTypes) => {
       const newData = {
         ...constructFormData,
@@ -478,7 +477,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         const today: Dayjs = dayjs();
         const isEndDateField = field.name === keyEnd;
         const parsedStartDate = startDateValue
-          ? dayjs(startDateValue, 'YYYY/MM/DD')
+          ? dayjs(startDateValue, 'YYYY-MM-DD')
           : undefined;
 
         // Get the selected fiscal year from form data
@@ -491,7 +490,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           if (isFinancialDateField && selectedFiscalYear) {
             const fiscalYearStart = dayjs(
               `${selectedFiscalYear}/01/01`,
-              'YYYY/MM/DD'
+              'YYYY-MM-DD'
             );
 
             if (isEndDateField && parsedStartDate) {
@@ -540,19 +539,19 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               }
               minDate={customMinDate}
               maxDate={customMaxDate}
-              value={dayjs(fieldValue, 'YYYY/MM/DD')}
+              value={dayjs(fieldValue, 'YYYY-MM-DD')}
               disabled={field.disabled}
-              format='YYYY/MM/DD'
+              format='YYYY-MM-DD'
               // onOpen={() => {
               //   if (!fieldValue && isFinancialDateField && selectedFiscalYear) {
               //     // Show calendar from Jan 1 of fiscal year
               //     const date = dayjs().month(dayjs().month()).year(Number(selectedFiscalYear));
-              //     handleChange(date.format('YYYY/MM/DD'));
+              //     handleChange(date.format('YYYY-MM-DD'));
               //   }
               // }}
               onChange={(newValue) => {
                 handleChange(
-                  newValue ? dayjs(newValue).format('YYYY/MM/DD') : null
+                  newValue ? dayjs(newValue).format('YYYY-MM-DD') : null
                 );
               }}
               shouldDisableDate={
@@ -602,7 +601,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                         color: 'black !important',
                         WebkitTextFillColor: 'black !important',
 
-                        '&[value="YYYY/MM/DD"]': {
+                        '&[value="YYYY-MM-DD"]': {
                           color: '#7D98B6 !important',
                           WebkitTextFillColor: '#7D98B6 !important',
                         },
@@ -626,7 +625,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   // onBlur: (event) => {
                   //   //For cache typed data
                   //   const value = event.target.value;
-                  //   if (value !== 'YYYY/MM/DD') {
+                  //   if (value !== 'YYYY-MM-DD') {
                   //     //For Avoid default data
                   //     handleChange(value);
                   //   }
@@ -781,7 +780,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
   const isValidDate = (
     dateString: string,
-    format: string = 'DD/MM/YYYY'
+    format: string = 'YYYY-MM-DD'
   ): boolean => {
     return dayjs(dateString, format, true).isValid();
   };
@@ -877,15 +876,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 // Fiscal year bounds
                 const fiscalYearStart = dayjs(
                   `${selectedFiscalYear}/01/01`,
-                  'YYYY/MM/DD'
+                  'YYYY-MM-DD'
                 );
                 const fiscalYearEnd = dayjs(
                   `${selectedFiscalYear}/12/31`,
-                  'YYYY/MM/DD'
+                  'YYYY-MM-DD'
                 );
 
                 if (dateValue) {
-                  const currentDate = dayjs(dateValue, 'YYYY/MM/DD');
+                  const currentDate = dayjs(dateValue, 'YYYY-MM-DD');
 
                   // Check against fiscal year bounds
                   if (
@@ -907,7 +906,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     hasError = true;
                     return {
                       ...field,
-                      error: `${field.name === 'financial_start_date' ? 'Start' : 'End'} date cannot be after ${dayjs(field.maxDate).format('YYYY/MM/DD')}`,
+                      error: `${field.name === 'financial_start_date' ? 'Start' : 'End'} date cannot be after ${dayjs(field.maxDate).format('YYYY-MM-DD')}`,
                     };
                   }
                 }
@@ -920,8 +919,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 ] as string;
 
                 if (startDateValue) {
-                  const startDate = dayjs(startDateValue, 'YYYY/MM/DD');
-                  const endDate = dayjs(dateValue, 'YYYY/MM/DD');
+                  const startDate = dayjs(startDateValue, 'YYYY-MM-DD');
+                  const endDate = dayjs(dateValue, 'YYYY-MM-DD');
 
                   if (endDate.isSame(startDate, 'day')) {
                     hasError = true;
@@ -1020,7 +1019,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   error: `${field.name === 'resource_startdate' ? 'Effective Date' : field.name === 'skill_start_date' || field.name === 'project_startdate' ? 'Start Date' : 'This date'} cannot be in the future`,
                 };
               }
-              if (dateValue && !isValidDate(dateValue, 'YYYY/MM/DD')) {
+              if (dateValue && !isValidDate(dateValue, 'YYYY-MM-DD')) {
                 hasError = true;
                 return {
                   ...field,
@@ -1443,7 +1442,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       maxWidth: `${field.width}`,
                       paddingLeft:
                         `${field.type}` === 'iconButton' ||
-                          `${field.type}` === 'radio'
+                        `${field.type}` === 'radio'
                           ? '10px !important'
                           : 'none',
                       verticalAlign:

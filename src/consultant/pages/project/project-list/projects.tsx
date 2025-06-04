@@ -38,10 +38,13 @@ export const Projects: React.FC = () => {
     sortBy: 'createdAt',
     sortOrder: 'DESC',
     fiscalYear: 0,
+    globalFilters: {},
   });
 
   // Permission Mangement
-  const { modules, permission } = useSelector((state: RootState) => state.permission);
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
   const projectIsEnable = checkPermission(modules, AllModules.PROJECTS);
   const isProjectExportEnable = checkPermission(
     permission,
@@ -74,6 +77,7 @@ export const Projects: React.FC = () => {
       sortOrder: tableParams.sortOrder,
       filters: appliedFilters,
       fiscalYear: tableParams.fiscalYear,
+      globalFilters: tableParams.globalFilters,
     };
     exportProjectData('projectall', projectParams);
   };

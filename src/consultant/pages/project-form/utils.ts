@@ -31,8 +31,8 @@ export const transformFormData = (
     industry_name:
       othersIndustryId === formData.industry_rid ? formData.industry_name : '',
     program_name: formData.program_name || '',
-    project_startdate: formatSlashDateToDash(formData.project_startdate),
-    project_enddate: formatSlashDateToDash(formData.project_enddate),
+    project_startdate: formData.project_startdate,
+    project_enddate: formData.project_enddate,
     project_type: formData.project_type,
     project_classification_rid: formData.project_classification_rid || null,
     project_classification_other: formData.classification_name || null,

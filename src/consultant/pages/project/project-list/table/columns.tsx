@@ -1,3 +1,4 @@
+import { costDisplay } from '../../../../../common-utils';
 import { ProjectTableColumn, ProjectList } from '../../../../types/project';
 import { formatDateToYMD } from '../../../account-details-sidebar/sidebar-pages/projects/columns';
 
@@ -102,6 +103,8 @@ export const getAllProjectListColumns = (
     sx: {
       textAlign: 'right',
     },
+    render: (row: ProjectList) =>
+      row.total_cost ? costDisplay(row.total_cost) : '-',
   },
   {
     id: 'total_fte_cost',
@@ -112,6 +115,8 @@ export const getAllProjectListColumns = (
     sx: {
       textAlign: 'right',
     },
+    render: (row: ProjectList) =>
+      row.total_fte_cost ? costDisplay(row.total_fte_cost) : '-',
   },
   {
     id: 'total_sub_con_cost',
@@ -122,6 +127,8 @@ export const getAllProjectListColumns = (
     sx: {
       textAlign: 'right',
     },
+    render: (row: ProjectList) =>
+      row.total_sub_con_cost ? costDisplay(row.total_sub_con_cost) : '-',
   },
   {
     id: 'total_non_labor_cost',
@@ -132,6 +139,8 @@ export const getAllProjectListColumns = (
     sx: {
       textAlign: 'right',
     },
+    render: (row: ProjectList) =>
+      row.total_non_labor_cost ? costDisplay(row.total_non_labor_cost) : '-',
   },
   {
     id: 'assessment_status',
@@ -149,6 +158,7 @@ export const getAllProjectListColumns = (
     sx: {
       textAlign: 'right',
     },
+    render: (row: ProjectList) => (row.qre ? costDisplay(row.qre) : '-'),
   },
   {
     id: 'qualified_research_expenditure',
@@ -159,6 +169,10 @@ export const getAllProjectListColumns = (
     sx: {
       textAlign: 'right',
     },
+    render: (row: ProjectList) =>
+      row.qualified_research_expenditure
+        ? costDisplay(row.qualified_research_expenditure)
+        : '-',
   },
   {
     id: 'project_point_of_contact',
