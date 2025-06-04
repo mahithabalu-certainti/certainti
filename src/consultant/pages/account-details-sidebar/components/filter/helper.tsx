@@ -509,8 +509,8 @@ export const DateFilterControl: React.FC<{
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DatePicker
                 name='to'
-                maxDate={dayjs(today)}
-                minDate={dayjs(sixYearsAgo)}
+                maxDate={maxDate ? dayjs(maxDate) : dayjs(today)}
+                minDate={minDate ? dayjs(minDate) : dayjs(sixYearsAgo)}
                 sx={{ mt: 1 }}
                 value={dayjs(state.date?.value.to, 'YYYY/MM/DD')}
                 disabled={disableInput}
