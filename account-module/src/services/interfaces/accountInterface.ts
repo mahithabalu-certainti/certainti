@@ -1,4 +1,4 @@
-import { IAccount, IUpdateAccount } from "../../utils/types";
+import { IAccount, IColorCodeType, IUpdateAccount } from "../../utils/types";
 
 export interface IAccountService {
   accountList(
@@ -118,7 +118,7 @@ export interface IGeoDataService {
     count: number;
   }>
   >;
-  colorCodes(): Promise<
+  colorCodes(status: IColorCodeType): Promise<
   GeoDataResponse<{
     colors: any;
     count: number;

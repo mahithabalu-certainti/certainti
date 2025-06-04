@@ -313,4 +313,8 @@ const exportAccountSchema = Joi.object({
   )
 });
 
-export { accountSchema, updateAccountSchema, listAccountSchema, exportAccountSchema };
+const colorCodesSchema = Joi.object({
+  status: Joi.string().valid("Active", "Inactive", "All").default("All"),
+})
+
+export { accountSchema, updateAccountSchema, listAccountSchema, exportAccountSchema, colorCodesSchema };

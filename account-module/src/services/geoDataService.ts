@@ -6,6 +6,7 @@ import { HttpStatus } from "../utils/constant";
 import { models } from "../models";
 import { Industry } from "../models/industryModel";
 import { ColorCodes } from "../models/colorCodes";
+import { IColorCodeType } from "../utils/types";
 class GeoDataService {
   /**
    * Fetches a list of countries from the database.
@@ -262,14 +263,22 @@ class GeoDataService {
     }
   }
 
-  async colorCodes(): Promise<{
+  async colorCodes(status: IColorCodeType): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
     data?: { colors: any; count: number };
   }> {
     try {
-      const colorCodes = await ColorCodes.findAll();
+      const whereClause: any = {};
+
+      if (status !== 'All') {
+        whereClause.status = status;
+      }
+
+      const colorCodes = await ColorCodes.findAll({
+        where: whereClause
+      });
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
