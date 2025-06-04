@@ -1060,24 +1060,14 @@ async getAllUserPermission(userId: string, profileId: string) {
     });
   
     // Special handling for status field
-    if (filters.status) {
-      const statusFilter = filters.status;
-      
-      // If status is a string, use it directly
-      if (typeof statusFilter === 'string') {
-        whereClause['status'] = statusFilter;
-      } 
-      // If status has an equals property, use that value directly
-      else if (statusFilter.equals && typeof statusFilter.equals === 'string') {
-        whereClause['status'] = statusFilter.equals;
-      }
-      // For backward compatibility, check other properties but use direct equality
-      else if (statusFilter.startsWith && typeof statusFilter.startsWith === 'string') {
-        whereClause['status'] = statusFilter.startsWith;
-      } else if (statusFilter.endWith && typeof statusFilter.endWith === 'string') {
-        whereClause['status'] = statusFilter.endWith;
-      } else if (statusFilter.contains && typeof statusFilter.contains === 'string') {
-        whereClause['status'] = statusFilter.contains;
+   
+
+      if (filters.status) {
+       whereClause["$status$"] = this.getMultiValueFilter(filters.status, 'status');
+      if (Array.isArray(filters.profile)) {
+        whereClause["$status$"] = {
+          [Op.in]: filters.status
+        };
       }
     }
   
