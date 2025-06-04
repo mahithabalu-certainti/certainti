@@ -125,10 +125,15 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                 onChange={handleChange}
                 className={`placeholder-custom-color custom-select-no-arrow w-full sm:text-sm px-1.5 py-[6px] border-1 ${
                   errors.existingProfile ? 'border-red-500' : 'border-gray-300'
-                } rounded-[2px] text-[black] max-h-[100px]`}
+                } rounded-[2px] ${
+                  formData.existingProfile ? 'text-[black]' : 'text-[#7D98B6]'
+                } max-h-[100px]`}
                 required
               >
-                <option value='' className='text-gray-500'>
+                <option
+                  value=''
+                  className='text-gray-500 placeholder-custom-color'
+                >
                   Choose Existing Profile
                 </option>
                 {profileOptions.map((option) => (
@@ -165,7 +170,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
               name='profileName'
               value={formData.profileName}
               onChange={handleChange}
-              placeholder='Enter profile name'
+              placeholder='Enter Profile Name'
               className={`placeholder-custom-color font-[500] custom-select-no-arrow w-full sm:text-sm px-1.5 py-[6px] border-1 ${errors.profileName ? 'border-red-500' : 'border-gray-300'} rounded-[2px] text-[black]`}
               required
             />
@@ -186,7 +191,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
             name='description'
             value={formData.description}
             onChange={handleChange}
-            placeholder='Enter profile description'
+            placeholder='Enter Profile Description'
             className={`custom-select-no-arrow placeholder-custom-color font-[500] w-full sm:text-sm px-1.5 py-[6px] border-1 ${errors.description ? 'border-red-500' : 'border-gray-300'} rounded-[2px] text-[black] resize-none`}
             required
           />
