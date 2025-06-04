@@ -1463,7 +1463,6 @@ class SchemaService {
         }
 
         let fullWhereClause = filterWhereSQL;
-        console.log("whereConditions", whereConditions, fullWhereClause, replacements);
         if (whereConditions.length > 0) {
           fullWhereClause += fullWhereClause
           ? ` AND ${whereConditions.join(" AND ")}`
@@ -1640,7 +1639,7 @@ class SchemaService {
         if (whereConditions.length > 0) {
           fullWhereClause += fullWhereClause
             ? ` AND ${whereConditions.join(" AND ")}`
-            : `WHERE ${whereConditions.join(" AND ")}`;
+            : `${whereConditions.join(" AND ")}`;
         }
 
         const fullQuery = `
@@ -1662,7 +1661,7 @@ class SchemaService {
         LEFT JOIN state st ON st.rid = ps.region 
         LEFT JOIN currency curr ON curr.rid = ps.currency 
         left join project_classification pc on pc.rid = ps.project_classification_rid 
-        WHERE acc.created_by = '${userId}' AND acc.rid in (${accountRids}) ${
+        WHERE acc.rid IN (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
         }
         ORDER BY ${sortCol} ${sort.sortOrder}
@@ -1677,7 +1676,7 @@ class SchemaService {
           LEFT JOIN state st ON st.rid = ps.region 
           LEFT JOIN currency curr ON curr.rid = ps.currency 
           LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
-          WHERE acc.created_by = '${userId}' AND acc.rid in (${accountRids}) ${
+          WHERE acc.rid in (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
         }
         `;
@@ -1688,7 +1687,7 @@ class SchemaService {
         });
 
         countResult = await mainDbSequelize.query(countQuery, {
-          replacements: whereReplacements,
+          replacements,
           type: "SELECT",
         });
       } else {
@@ -1729,9 +1728,7 @@ class SchemaService {
         LEFT JOIN state st ON st.rid = ps.region 
         LEFT JOIN currency curr ON curr.rid = ps.currency 
         left join project_classification pc on pc.rid = ps.project_classification_rid 
-        WHERE acc.created_by = '${userId}' ${
-          fullWhereClause ? "AND " + fullWhereClause : ""
-        }
+        ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
         ORDER BY ${sortCol} ${sort.sortOrder}
       `;
 
@@ -1744,8 +1741,7 @@ class SchemaService {
         LEFT JOIN state st ON st.rid = ps.region 
         LEFT JOIN currency curr ON curr.rid = ps.currency 
         LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
-        WHERE acc.created_by = '${userId}'
-        ${fullWhereClause ? "AND " + fullWhereClause : ""}
+        ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
       `;
 
         results = await mainDbSequelize.query(fullQuery, {
