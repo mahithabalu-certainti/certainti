@@ -8,6 +8,7 @@ import { initMainDbSequelize } from "../config/mainDataSource";
 import { HttpStatus } from "../utils/constants";
 import { ResourceFiscal } from "../models/resourceFiscal";
 import moment from "moment";
+import currency from "currency.js";
 
 class ResourceCostSchemaService {
   private sequelizeInstance: Sequelize | null = null;
@@ -351,7 +352,7 @@ class ResourceCostSchemaService {
 
       //Build the base query without sorting or pagination
       let query = `
-        SELECT rc.*,rc.r_number as r_number, r.resource_name, r.resource_orgname, r.resource_designation, r.resource_role, ad.account_name,
+        SELECT rc.*,rc.r_number as r_number, r.resource_name, r.resource_orgname, r.resource_designation, r.resource_role, ad.account_name, ad.account_rid,
         TO_CHAR(rc.effective_date, 'YYYY-MM-DD') as effective_date,
         TO_CHAR(rc.end_date, 'YYYY-MM-DD') as end_date
         FROM "${schemaName}"."resource_cost" rc
@@ -394,6 +395,9 @@ class ResourceCostSchemaService {
       });
 
       const mainDbSequelize = await initMainDbSequelize();
+
+      // For each result where currency_rid is empty/null, fetch and assign currency_rid from account
+      await Promise.all(results.map(result => this.assignCurrencyRid(result, mainDbSequelize)));
 
       // If sorting by currency_code, we need to fetch currency info first
       if (sortBy === "currency") {
@@ -452,6 +456,9 @@ class ResourceCostSchemaService {
           replacements,
           type: "SELECT",
         });
+
+        // For each result where currency_rid is empty/null, fetch and assign currency_rid from account
+        await Promise.all(results.map(result => this.assignCurrencyRid(result, mainDbSequelize)));
       }
 
       // Apply pagination if sorting was done in memory
@@ -537,7 +544,7 @@ class ResourceCostSchemaService {
 
       //Build the base query without sorting or pagination
       let query = `
-        SELECT rc.*,rc.r_number as r_number, r.resource_name, r.resource_orgname, r.resource_designation, r.resource_role, ad.account_name,
+        SELECT rc.*,rc.r_number as r_number, r.resource_name, r.resource_orgname, r.resource_designation, r.resource_role, ad.account_name, ad.account_rid,
         TO_CHAR(rc.effective_date, 'YYYY-MM-DD') as effective_date,
         TO_CHAR(rc.end_date, 'YYYY-MM-DD') as end_date
         FROM "${schemaName}"."resource_cost" rc
@@ -560,6 +567,8 @@ class ResourceCostSchemaService {
       });
 
       const mainDbSequelize = await initMainDbSequelize();
+
+      await Promise.all(results.map(result => this.assignCurrencyRid(result, mainDbSequelize)));
 
       // If sorting by currency_code, we need to fetch currency info first
       if (sortBy === "currency") {
@@ -620,6 +629,8 @@ class ResourceCostSchemaService {
         });
       }
 
+      await Promise.all(results.map(result => this.assignCurrencyRid(result, mainDbSequelize)));
+
       const resourceCost = results;
 
       // Extract all unique currency_rid values
@@ -657,7 +668,20 @@ class ResourceCostSchemaService {
           }
         });
       }
-      
+
+      const formatNumberForExport = (value: any, currency_symbol: string): string => {
+        if (value == null || value === '') return '-';
+        const num = Number(value);
+        if (isNaN(num)) return '-';
+        // Use currency.js to format the number with the provided currency symbol
+        return currency(num, {
+          symbol: currency_symbol? currency_symbol : '$',
+          precision: 2,
+          pattern: '! #',
+          separator: ',',
+          decimal: '.'
+        }).format();
+      };
       const rawResult = resourceCost || [];
       let exportData = rawResult.map((resource: any) => {
         return {
@@ -668,37 +692,13 @@ class ResourceCostSchemaService {
           "Resource Type": resource.resource_type || "-",
           "Effective From": resource.effective_date || "-",
           "End Date": resource.end_date || "-",
-          "Currency": resource.currency_code || "-",
-          "Annual Compensation": resource.annual_cost ? new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-            maximumSignificantDigits: 16
-          }).format(Number(resource.annual_cost)) : "-",
-          "Monthly Compensation": resource.monthly_cost ? new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-            maximumSignificantDigits: 16
-          }).format(Number(resource.monthly_cost)) : "-",
-          "Bi-Weekly Compensation": resource.bi_weekly_cost ? new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-            maximumSignificantDigits: 16
-          }).format(Number(resource.bi_weekly_cost)) : "-",
-          "Weekly Compensation": resource.weekly_cost ? new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-            maximumSignificantDigits: 16
-          }).format(Number(resource.weekly_cost)) : "-",
-          "Daily Compensation": resource.daily_cost ? new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-            maximumSignificantDigits: 16
-          }).format(Number(resource.daily_cost)) : "-",
-          "Hourly Compensation": resource.hourly_cost ? new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-            maximumSignificantDigits: 16
-          }).format(Number(resource.hourly_cost)) : "-",
+          "Currency": resource.currency_code || "USD",
+          "Annual Compensation": formatNumberForExport(resource.annual_cost , resource.currency_symbol) || "-",
+          "Monthly Compensation": formatNumberForExport(resource.monthly_cost, resource.currency_symbol) || "-",
+          "Bi-Weekly Compensation": formatNumberForExport(resource.bi_weekly_cost, resource.currency_symbol) || "-",
+          "Weekly Compensation": formatNumberForExport(resource.weekly_cost, resource.currency_symbol) || "-",
+          "Daily Compensation": formatNumberForExport(resource.daily_cost, resource.currency_symbol) || "-",
+          "Hourly Compensation": formatNumberForExport(resource.hourly_cost, resource.currency_symbol) || "-",
           "Org Name": resource.resource_orgname || "-",
           "Designation": resource.resource_designation || "-",
           "Role": resource.resource_role || "-",
@@ -1171,6 +1171,41 @@ class ResourceCostSchemaService {
 
     return condition;
   }
+
+  async getCurrencyRidByAccountRidRaw(accountRid: string): Promise<string | null> {
+    const query = `SELECT a.currency_rid FROM public.account a WHERE a.rid = :accountRid`;
+    try {
+      const mainDb = await initMainDbSequelize();
+      const result = await mainDb.query(query, {
+        replacements: { accountRid },
+        type: 'SELECT'
+      });
+      return result?(result[0] as any).currency_rid : null;
+    } catch (err) {
+      console.error('Error getting currency symbol:', err);
+      return null;
+    }
+  }
+
+  async assignCurrencyRid(result: any, mainDbSequelize: any) {
+    if (!result.currency_rid) {
+      const currencyRid = await this.getCurrencyRidByAccountRidRaw(result.account_rid);
+      if (currencyRid) {
+        result.currency_rid = currencyRid;
+      } else {
+        try {
+          const usdCurrencyId = await mainDbSequelize.query(
+            `SELECT c.rid FROM public.currency c WHERE c.currency_code = 'USD'`,
+            { type: 'SELECT' }
+          );
+          result.currency_rid = usdCurrencyId[0]?.rid;
+        } catch (err) {
+          console.error('Error getting USD currency rid:', err);
+        }
+      }
+    }
+  }
+  
 }
 
 export default new ResourceCostSchemaService();
