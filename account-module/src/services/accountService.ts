@@ -6,6 +6,7 @@ import SchemaService from "./schemaService";
 import { models } from "../models";
 import Decimal from "decimal.js";
 import { States } from "../models/stateModel";
+import currency from "currency.js";
 
 
 const { Account, Country, Currency,Industry } = models;
@@ -350,7 +351,7 @@ class AccountService {
             {
               model: Currency,
               as: "currency",
-              attributes: ["rid", "currency_code"],
+              attributes: ["rid", "currency_code", "currency_symbol"],
               required: false,
             },
             {
@@ -382,7 +383,7 @@ class AccountService {
               {
                 model: Currency,
                 as: "currency",
-                attributes: ["rid", "currency_code"]
+                attributes: ["rid", "currency_code", "currency_symbol"]
               },
               {
                 model: Industry,
@@ -419,15 +420,19 @@ class AccountService {
         const updatedAccount = await this.schemaService.insertKeyContactInfo(parentAccounts,filters.key_contact,0,0,finalSortBy,finalSortOrder,'download');
         const rawResult = updatedAccount.data || [];
         const cleanedUsers = rawResult;
-        const formatNumberForExport = (value: any): string => {
+        const formatNumberForExport = (value: any, currency_symbol: string): string => {
           if (value == null || value === '') return '-';
           const num = Number(value);
           if (isNaN(num)) return '-';
-          return new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2,
-            useGrouping: true
-          }).format(num);
+          
+          // Use currency.js to format the number with the provided currency symbol
+          return currency(num, {
+            symbol: currency_symbol? currency_symbol : '$',
+            precision: 2,
+            pattern: '! #',
+            separator: ',',
+            decimal: '.'
+          }).format();
         };
         let exportDetails: any[] = [];
         cleanedUsers.forEach((account: any) => {
@@ -435,13 +440,13 @@ class AccountService {
             "Account Name": account?.account_name || "-",
             "Industry": account?.industry?.industry_name || "-",
             "Country": account?.country?.country_name || "-",
-            "Total Projects":formatNumberForExport(account?.total_projects),
-            "Total Project Hours": formatNumberForExport(account?.total_project_hours),
-            "Total Cost": formatNumberForExport(account?.total_project_cost),
-            "Estimated R&D Hours": formatNumberForExport(account?.qualifying_project_hours_fed),
-            "QRE": formatNumberForExport(account?.qualifying_project_qre_fed),
-            "Estimated R&D Credits": formatNumberForExport(account?.qualifying_project_rd_credits_fed),
-            "Actual R&D Credits": formatNumberForExport(account?.total_projects_rd_credits),
+            "Total Projects": account?.total_projects || '-',
+            "Total Project Hours": account?.total_project_hours || "-",
+            "Total Cost": formatNumberForExport(account?.total_project_cost, account?.currency?.currency_symbol) ||  "-",
+            "Estimated R&D Hours": account?.qualifying_project_hours_fed || "-",
+            "QRE": formatNumberForExport(account?.qualifying_project_qre_fed, account?.currency?.currency_symbol) || "-",
+            "Estimated R&D Credits": formatNumberForExport(account?.qualifying_project_rd_credits_fed, account?.currency?.currency_symbol) || "-",
+            "Actual R&D Credits": formatNumberForExport(account?.total_projects_rd_credits, account?.currency?.currency_symbol) || "-",
             "Finance Executive":account?.finance_executive || '-',
             "Finance Lead":account?.finance_lead || '-',
             "Professional Services Consultant":account?.delivery_head || '-',
@@ -454,13 +459,13 @@ class AccountService {
                 "Account Name": child?.account_name || "-",
                 "Industry": child?.industry?.industry_name || "-",
                 "Country": child?.country?.country_name || "-",
-                "Total Projects": formatNumberForExport(child?.total_projects),
-                "Total Project Hours": formatNumberForExport(child?.total_project_hours),
-                "Total Cost": formatNumberForExport(child?.total_project_cost),
-                "Estimated R&D Hours": formatNumberForExport(child?.qualifying_project_hours_fed),
-                "QRE": formatNumberForExport(child?.qualifying_project_qre_fed),
-                "Estimated R&D Credits": formatNumberForExport(child?.qualifying_project_rd_credits_fed),
-                "Actual R&D Credits": formatNumberForExport(child?.total_projects_rd_credits),
+                "Total Projects": child?.total_projects || '-',
+                "Total Project Hours": child?.total_project_hours || "-",
+                "Total Cost": formatNumberForExport(child?.total_project_cost, account?.currency?.currency_symbol) || "-",
+                "Estimated R&D Hours": child?.qualifying_project_hours_fed || "-",
+                "QRE": formatNumberForExport(child?.qualifying_project_qre_fed, account?.currency?.currency_symbol) || "-",
+                "Estimated R&D Credits": formatNumberForExport(child?.qualifying_project_rd_credits_fed, account?.currency?.currency_symbol) || "-",
+                "Actual R&D Credits": formatNumberForExport(child?.total_projects_rd_credits, account?.currency?.currency_symbol) || "-",
                 "Finance Executive":child?.finance_executive || '-',
                 "Finance Lead":child?.finance_lead || '-',
                 "Professional Services Consultant":child?.delivery_head || '-',
@@ -473,13 +478,13 @@ class AccountService {
                       "Account Name": fiscalData?.fiscal_year || "-",
                       "Industry": child?.industry?.industry_name || "-",
                       "Country": child?.country?.country_name || "-",
-                      "Total Projects": formatNumberForExport(fiscalData?.total_projects),
-                      "Total Project Hours": formatNumberForExport(fiscalData?.total_project_hours),
-                      "Total Cost": formatNumberForExport(fiscalData?.total_project_cost),
-                      "Estimated R&D Hours": formatNumberForExport(fiscalData?.qualifying_project_hours_fed),
-                      "QRE": formatNumberForExport(fiscalData?.qualifying_project_qre_fed),
-                      "Estimated R&D Credits": formatNumberForExport(fiscalData?.qualifying_project_rd_credits_fed),
-                      "Actual R&D Credits": formatNumberForExport(fiscalData?.total_projects_rd_credits),
+                      "Total Projects": fiscalData?.total_projects || '-',
+                      "Total Project Hours": fiscalData?.total_project_hours || "-",
+                      "Total Cost": formatNumberForExport(fiscalData?.total_project_cost, account?.currency?.currency_symbol) || "-",
+                      "Estimated R&D Hours": fiscalData?.qualifying_project_hours_fed || "-",
+                      "QRE": formatNumberForExport(fiscalData?.qualifying_project_qre_fed, account?.currency?.currency_symbol) || "-",
+                      "Estimated R&D Credits": formatNumberForExport(fiscalData?.qualifying_project_rd_credits_fed, account?.currency?.currency_symbol) || "-",
+                      "Actual R&D Credits": formatNumberForExport(fiscalData?.total_projects_rd_credits, account?.currency?.currency_symbol) || "-",
                       "Finance Executive":child?.finance_executive || '-',
                       "Finance Lead":child?.finance_lead || '-',
                       "Professional Services Consultant":child?.delivery_head || '-',
