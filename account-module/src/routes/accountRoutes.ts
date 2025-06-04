@@ -13,6 +13,7 @@ routes.get('/currency', checkUserStatusMiddleware("NA"), controller.geoDataContr
 routes.get('/regions', checkUserStatusMiddleware("NA"), controller.geoDataController.regions);
 routes.get('/states', checkUserStatusMiddleware("NA"), controller.geoDataController.states);
 routes.get('/cities', checkUserStatusMiddleware("NA"), controller.geoDataController.cities);
+routes.get('/colors', checkUserStatusMiddleware("NA"), controller.geoDataController.colorCodes);
 routes.get('/list/:id', checkUserStatusMiddleware("account_details_view"), controller.accountController.accountById);
 routes.post('/new', checkUserStatusMiddleware("accounts_create"), controller.accountController.createAccount);
 routes.put('/update', checkUserStatusMiddleware("accounts_edit_update"), controller.accountController.updateAccount);

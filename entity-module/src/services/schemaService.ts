@@ -1463,10 +1463,11 @@ class SchemaService {
         }
 
         let fullWhereClause = filterWhereSQL;
+        console.log("whereConditions", whereConditions, fullWhereClause, replacements);
         if (whereConditions.length > 0) {
           fullWhereClause += fullWhereClause
-            ? ` AND ${whereConditions.join(" AND ")}`
-            : `WHERE ${whereConditions.join(" AND ")}`;
+          ? ` AND ${whereConditions.join(" AND ")}`
+          : `${whereConditions.join(" AND ")}`;
         }
 
         const fullQuery = `
@@ -1517,7 +1518,7 @@ class SchemaService {
         });
 
         countResult = await mainDbSequelize.query(countQuery, {
-          replacements: whereReplacements,
+          replacements,
           type: "SELECT",
         });
       } else {

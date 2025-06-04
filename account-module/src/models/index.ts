@@ -9,11 +9,13 @@ import { City } from "./cityModel";
 import { AccountFileDropConfig } from "./accountFileDropConfigModel";
 import { Industry, setupIndustrySequence} from "./industryModel";
 import { ProjectSummary, setupProjectSummarySequence } from "./projectSummary";
+import { ColorCodes } from "./colorCodes";
 
 export const models: {
   Account: typeof Account;
   Currency: typeof Currency;
   Country: typeof Country;
+  ColorCodes: typeof ColorCodes;
   DatabaseConnection: typeof DatabaseConnection;
   Region: typeof Region;
   States: typeof States;
@@ -25,6 +27,7 @@ export const models: {
   Account: Account,
   Currency: Currency,
   Country: Country,
+  ColorCodes: ColorCodes,
   DatabaseConnection: DatabaseConnection,
   Region: Region,
   States: States,
@@ -41,6 +44,7 @@ export async function initModels() {
     Country.initialize(sequelize);
     Region.initialize(sequelize);
     States.initialize(sequelize);
+    ColorCodes.initialize(sequelize);
     City.initialize(sequelize);
     Industry.initialize(sequelize);
     DatabaseConnection.initialize(sequelize);
