@@ -698,6 +698,7 @@ class UserManagementService {
     if (filters) {
       const filterProcessors: Record<string, Function> = {
         'profile_name': (value: any) => this.processTextFilter('profile_name', value, whereClause),
+          'profile_description': (value: any) => this.processTextFilter('profile_description', value, whereClause),
         'created_datetime': (value: any) => this.processDateFilter('created_datetime', value, whereClause),
         'created_by': (value: any) => this.processRelationFilter('created_by', value, whereClause, includeClause)
       };
