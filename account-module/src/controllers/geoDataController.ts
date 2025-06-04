@@ -7,7 +7,9 @@ import {
   handleErrorResponse,
   handleSuccessResponse,
   successLog,
+  validateRequest,
 } from "../utils/helpers";
+import { colorCodesSchema } from "../lib/joi/schemas/schema";
 
 const services = configurations.getInstance().getServices();
 
@@ -306,7 +308,14 @@ async function industries(req: Request, res: Response): Promise<void> {
 async function colorCodes(req: Request, res: Response): Promise<void> {
   const methodName = "colors";
   try {
-    const colorCodes = await services.geoDataServices.colorCodes();
+
+    const value = await validateRequest(req, colorCodesSchema, res, "GET");
+
+    if (!value) {
+      return;
+    }
+
+    const colorCodes = await services.geoDataServices.colorCodes(value.status);
     if (colorCodes.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
       handleSuccessResponse(res, colorCodes.data);

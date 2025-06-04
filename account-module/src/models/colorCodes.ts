@@ -4,6 +4,7 @@ interface ColorCodesAttributes {
   rid: string;
   color_number: string;
   color_code: string;
+  status: string;
   created_datetime?: Date;
   modified_datetime?: Date;
 }
@@ -18,6 +19,7 @@ export class ColorCodes
   rid!: string;
   color_number!: string;
   color_code!: string;
+  status!: string;
   created_datetime?: Date;
   modified_datetime?: Date;
 
@@ -36,6 +38,10 @@ export class ColorCodes
         },
         color_code: {
           type: DataTypes.STRING,
+          allowNull: true,
+        },
+        status: {
+          type: DataTypes.ENUM("Active", "Inactive"),
           allowNull: true,
         },
         created_datetime: {

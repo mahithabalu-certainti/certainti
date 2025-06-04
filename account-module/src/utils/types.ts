@@ -101,3 +101,5 @@ export interface IUpdateKeyContactDetail {
   include_in_communication: boolean;
   status: "active" | "inactive";
 }
+
+export type IColorCodeType = 'Active' | 'Inactive' | 'All';
