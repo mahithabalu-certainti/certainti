@@ -303,6 +303,37 @@ async function industries(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function colorCodes(req: Request, res: Response): Promise<void> {
+  const methodName = "colors";
+  try {
+    const colorCodes = await services.geoDataServices.colorCodes();
+    if (colorCodes.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, colorCodes.data);
+      return;
+    } else {
+      errorLog(methodName, colorCodes.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        colorCodes.message
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 // Update the export to include the cities function
 export default {
   country,
@@ -310,5 +341,6 @@ export default {
   regions,
   states,
   cities,
-  industries
+  industries,
+  colorCodes
 };

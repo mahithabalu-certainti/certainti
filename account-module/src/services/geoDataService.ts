@@ -5,6 +5,7 @@ import { States } from "../models/stateModel";
 import { HttpStatus } from "../utils/constant";
 import { models } from "../models";
 import { Industry } from "../models/industryModel";
+import { ColorCodes } from "../models/colorCodes";
 class GeoDataService {
   /**
    * Fetches a list of countries from the database.
@@ -261,6 +262,26 @@ class GeoDataService {
     }
   }
 
+  async colorCodes(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { colors: any; count: number };
+  }> {
+    try {
+      const colorCodes = await ColorCodes.findAll();
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          colors: colorCodes,
+          count: colorCodes.length,
+        },
+      };
+    } catch (err) {
+      return this.throwServiceError(err as Error);
+    }
+  }
 
   /**
    * Handles the error thrown during service execution and returns a standardized error response.

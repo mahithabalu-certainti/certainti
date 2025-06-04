@@ -37,12 +37,12 @@ export class ProjectService {
 
       const accountData = await this.schemaService.fetchAccountById(account_id);
 
-      if(accountData.status !== "active"){
-        throw new Error("Project creation failed: The selected account is inactive. Please choose an active account.");
-      }
-
       if (!accountData) {
         throw new Error("Error creating project: Invalid account ID");
+      }
+
+      if(accountData.status !== "active"){
+        throw new Error("Project creation failed: The selected account is inactive. Please choose an active account.");
       }
 
       let accountNumber = accountData.r_number;

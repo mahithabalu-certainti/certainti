@@ -117,5 +117,11 @@ export interface IGeoDataService {
     industries: any;
     count: number;
   }>
+  >;
+  colorCodes(): Promise<
+  GeoDataResponse<{
+    colors: any;
+    count: number;
+  }>
   >
 }
