@@ -26,6 +26,7 @@
     "@types/jest": "^29.5.14",
     "apollo-server-express": "^3.13.0",
     "cors": "^2.8.5",
+    "currency.js": "^2.0.4",
     "decimal": "^0.0.2",
     "decimal.js": "^10.5.0",
     "dotenv": "^16.4.7",
