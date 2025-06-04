@@ -1698,7 +1698,7 @@ class UserManagementService {
           modified_by: loggedInUsername
         },
         {
-          where: { rid: accessId }
+          where: { rid: currentAccess.rid  }
         }
       );
 

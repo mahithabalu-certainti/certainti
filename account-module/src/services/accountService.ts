@@ -42,12 +42,12 @@ class AccountService {
    * @returns {Promise<{ statusCode: number, message: string, data?: { account: any } }>}
    * - An object containing the status code, message, and retrieved account data.
    */
-  async accountList(
+async accountList(
     page: number = 1,
     limit: number = 10,
     search: string,
     filters: Record<string, any> = {},
-    sortBy: string = "created_datetime",
+    sortBy: string = "created_datetime", 
     sortOrder: string = "ASC",
     globalFilters: Record<string, string[]> = {},
     fiscalYear: number | "FY-All"
@@ -59,6 +59,13 @@ class AccountService {
   }> {
     try {
       const repository = this.getAccountRepository();
+      
+      // Get USD currency_rid
+      const usdCurrency = await Currency.findOne({
+        where: {
+          currency_code: 'USD'
+        }
+      });
       
       // Parse filters if it's a string
       const parsedFilters = typeof filters === 'string' ? 
@@ -159,102 +166,117 @@ class AccountService {
       queryOptions.offset = offset;
     }
     const parentAccounts = await repository.findAll(queryOptions);
-      // Then, for each account, fetch its child accounts separately
-      const accountIds = parentAccounts.map((account: any) => account.rid);
+
+    // Set USD currency for accounts with no currency
+    parentAccounts.forEach((account: any) => {
+      if (!account.currency_rid || account.currency_rid === '') {
+        account.currency_rid = usdCurrency?.rid;
+        account.setDataValue('currency', usdCurrency);
+      }      
+    });
+
+    // Then, for each account, fetch its child accounts separately
+    const accountIds = parentAccounts.map((account: any) => account.rid);
     //  const { whereClauseChildAccount } = this.buildchildAccountWhereClause(parsedFilters);
-      if(accountIds.length > 0) {
-        const childAccounts = await repository.findAll({
-          where: {
-            parent_account_rid: {
-              [Op.in]: accountIds,
-            },
-        //    ...whereClauseChildAccount,
-            ...(Object.keys(childClause).length > 0 ? childClause : {}),
+    if(accountIds.length > 0) {
+      const childAccounts = await repository.findAll({
+        where: {
+          parent_account_rid: {
+            [Op.in]: accountIds,
           },
-          include: [
-            {
-              model: Country,
-              as: "country",
-              attributes: ["rid", "country_name"]
-            },
-            {
-              model: Currency,
-              as: "currency",
-              attributes: ["rid", "currency_code", "currency_symbol"]
-            },
-            {
-              model: Account,
-              as: "parent_account",
-              attributes: ["rid", "account_name"],
-            },
-            {
-              model: Industry,
-              as: "industry",
-              attributes: ["rid", "industry_name"],
-              required: false,
-            }
-          ]
-        });
-
-        // Group child accounts by parent_account_rid
-        const childAccountsByParent = childAccounts.reduce((acc: any, child: any) => {
-          if (!acc[child.parent_account_rid]) {
-            acc[child.parent_account_rid] = [];
-          }
-     //     child.setDataValue("projects_by_fiscal_year", groupedProjectsObject[child.rid] || []);
-          acc[child.parent_account_rid].push(child);
-          return acc;
-        }, {});
-
-        // Attach child accounts to their respective parent accounts
-        parentAccounts.forEach((account: any) => {
-          account.setDataValue('child_accounts', childAccountsByParent[account.rid] || []);
-        });
-      } else {
-        // If no parent accounts found, set empty child_accounts array
-        parentAccounts.forEach((account: any) => {
-          account.setDataValue('child_accounts', []);
-        });
-      }
-
-      const updatedAccount = await this.schemaService.insertKeyContactInfo(parentAccounts,filters.key_contact,limit,offset,finalSortBy,finalSortOrder,'create');
-
-      // Get total count without pagination
-      const totalCount = await repository.count({
-        where: baseWhereClause,
-        distinct: true,
+      //    ...whereClauseChildAccount,
+          ...(Object.keys(childClause).length > 0 ? childClause : {}),
+        },
         include: [
           {
             model: Country,
             as: "country",
-            attributes: []
+            attributes: ["rid", "country_name"]
           },
           {
             model: Currency,
             as: "currency",
-            attributes: []
+            attributes: ["rid", "currency_code", "currency_symbol"]
+          },
+          {
+            model: Account,
+            as: "parent_account",
+            attributes: ["rid", "account_name"],
           },
           {
             model: Industry,
             as: "industry",
-            attributes: []
+            attributes: ["rid", "industry_name"],
+            required: false,
           }
         ]
       });
 
-      return {
-        statusCode: HttpStatus.SUCCESS,
-        message: HttpStatus.SUCCESS_MESSAGE,
-        data: {
-          account: updatedAccount,
-          count: !hasKeyContactFilter ? totalCount :updatedAccount.total,
-        },
-      };
-    } catch (err) {
-      return this.throwServiceError(err as Error);
-    }
-  }
+      // Set USD currency for child accounts with no currency
+      childAccounts.forEach((account: any) => {
+        if (!account.currency_rid || account.currency_rid === '') {
+          account.currency_rid = usdCurrency?.rid;
+          account.setDataValue('currency', usdCurrency);
+        }        
+      });
 
+      // Group child accounts by parent_account_rid
+      const childAccountsByParent = childAccounts.reduce((acc: any, child: any) => {
+        if (!acc[child.parent_account_rid]) {
+          acc[child.parent_account_rid] = [];
+        }
+        acc[child.parent_account_rid].push(child);
+        return acc;
+      }, {});
+
+      // Attach child accounts to their respective parent accounts
+      parentAccounts.forEach((account: any) => {
+        account.setDataValue('child_accounts', childAccountsByParent[account.rid] || []);
+      });
+    } else {
+      // If no parent accounts found, set empty child_accounts array
+      parentAccounts.forEach((account: any) => {
+        account.setDataValue('child_accounts', []);
+      });
+    }
+
+    const updatedAccount = await this.schemaService.insertKeyContactInfo(parentAccounts,filters.key_contact,limit,offset,finalSortBy,finalSortOrder,'create');
+
+    // Get total count without pagination
+    const totalCount = await repository.count({
+      where: baseWhereClause,
+      distinct: true,
+      include: [
+        {
+          model: Country,
+          as: "country",
+          attributes: []
+        },
+        {
+          model: Currency,
+          as: "currency",
+          attributes: []
+        },
+        {
+          model: Industry,
+          as: "industry",
+          attributes: []
+        }
+      ]
+    });
+
+    return {
+      statusCode: HttpStatus.SUCCESS,
+      message: HttpStatus.SUCCESS_MESSAGE,
+      data: {
+        account: updatedAccount,
+        count: !hasKeyContactFilter ? totalCount :updatedAccount.total,
+      },
+    };
+  } catch (err) {
+    return this.throwServiceError(err as Error);
+  }
+}
        /**
    * Retrieves the all  account details with filters and search for exporting as excel.
    *
@@ -424,7 +446,6 @@ class AccountService {
           if (value == null || value === '') return '-';
           const num = Number(value);
           if (isNaN(num)) return '-';
-          
           // Use currency.js to format the number with the provided currency symbol
           return currency(num, {
             symbol: currency_symbol? currency_symbol : '$',
@@ -436,17 +457,19 @@ class AccountService {
         };
         let exportDetails: any[] = [];
         cleanedUsers.forEach((account: any) => {
+          const currency_symbol = account?.currency?.currency_symbol;
+
           const baseRow = {
             "Account Name": account?.account_name || "-",
             "Industry": account?.industry?.industry_name || "-",
             "Country": account?.country?.country_name || "-",
             "Total Projects": account?.total_projects || '-',
             "Total Project Hours": account?.total_project_hours || "-",
-            "Total Cost": formatNumberForExport(account?.total_project_cost, account?.currency?.currency_symbol) ||  "-",
+            "Total Cost": formatNumberForExport(account?.total_project_cost, currency_symbol) ||  "-",
             "Estimated R&D Hours": account?.qualifying_project_hours_fed || "-",
-            "QRE": formatNumberForExport(account?.qualifying_project_qre_fed, account?.currency?.currency_symbol) || "-",
-            "Estimated R&D Credits": formatNumberForExport(account?.qualifying_project_rd_credits_fed, account?.currency?.currency_symbol) || "-",
-            "Actual R&D Credits": formatNumberForExport(account?.total_projects_rd_credits, account?.currency?.currency_symbol) || "-",
+            "QRE": formatNumberForExport(account?.qualifying_project_qre_fed, currency_symbol) || "-",
+            "Estimated R&D Credits": formatNumberForExport(account?.qualifying_project_rd_credits_fed, currency_symbol) || "-",
+            "Actual R&D Credits": formatNumberForExport(account?.total_projects_rd_credits, currency_symbol) || "-",
             "Finance Executive":account?.finance_executive || '-',
             "Finance Lead":account?.finance_lead || '-',
             "Professional Services Consultant":account?.delivery_head || '-',
@@ -455,17 +478,19 @@ class AccountService {
           exportDetails.push(baseRow);
           if (Array.isArray(account.child_accounts) && account.child_accounts.length > 0) {
             account.child_accounts.forEach((child: any) => {
+              const child_currency_symbol = child?.currency?.currency_symbol;
+
               exportDetails.push({
                 "Account Name": child?.account_name || "-",
                 "Industry": child?.industry?.industry_name || "-",
                 "Country": child?.country?.country_name || "-",
                 "Total Projects": child?.total_projects || '-',
                 "Total Project Hours": child?.total_project_hours || "-",
-                "Total Cost": formatNumberForExport(child?.total_project_cost, account?.currency?.currency_symbol) || "-",
+                "Total Cost": formatNumberForExport(child?.total_project_cost, child_currency_symbol) || "-",
                 "Estimated R&D Hours": child?.qualifying_project_hours_fed || "-",
-                "QRE": formatNumberForExport(child?.qualifying_project_qre_fed, account?.currency?.currency_symbol) || "-",
-                "Estimated R&D Credits": formatNumberForExport(child?.qualifying_project_rd_credits_fed, account?.currency?.currency_symbol) || "-",
-                "Actual R&D Credits": formatNumberForExport(child?.total_projects_rd_credits, account?.currency?.currency_symbol) || "-",
+                "QRE": formatNumberForExport(child?.qualifying_project_qre_fed, child_currency_symbol) || "-",
+                "Estimated R&D Credits": formatNumberForExport(child?.qualifying_project_rd_credits_fed, child_currency_symbol) || "-",
+                "Actual R&D Credits": formatNumberForExport(child?.total_projects_rd_credits, child_currency_symbol) || "-",
                 "Finance Executive":child?.finance_executive || '-',
                 "Finance Lead":child?.finance_lead || '-',
                 "Professional Services Consultant":child?.delivery_head || '-',
@@ -480,11 +505,11 @@ class AccountService {
                       "Country": child?.country?.country_name || "-",
                       "Total Projects": fiscalData?.total_projects || '-',
                       "Total Project Hours": fiscalData?.total_project_hours || "-",
-                      "Total Cost": formatNumberForExport(fiscalData?.total_project_cost, account?.currency?.currency_symbol) || "-",
+                      "Total Cost": formatNumberForExport(fiscalData?.total_project_cost, child_currency_symbol) || "-",
                       "Estimated R&D Hours": fiscalData?.qualifying_project_hours_fed || "-",
-                      "QRE": formatNumberForExport(fiscalData?.qualifying_project_qre_fed, account?.currency?.currency_symbol) || "-",
-                      "Estimated R&D Credits": formatNumberForExport(fiscalData?.qualifying_project_rd_credits_fed, account?.currency?.currency_symbol) || "-",
-                      "Actual R&D Credits": formatNumberForExport(fiscalData?.total_projects_rd_credits, account?.currency?.currency_symbol) || "-",
+                      "QRE": formatNumberForExport(fiscalData?.qualifying_project_qre_fed, child_currency_symbol) || "-",
+                      "Estimated R&D Credits": formatNumberForExport(fiscalData?.qualifying_project_rd_credits_fed, child_currency_symbol) || "-",
+                      "Actual R&D Credits": formatNumberForExport(fiscalData?.total_projects_rd_credits, child_currency_symbol) || "-",
                       "Finance Executive":child?.finance_executive || '-',
                       "Finance Lead":child?.finance_lead || '-',
                       "Professional Services Consultant":child?.delivery_head || '-',
