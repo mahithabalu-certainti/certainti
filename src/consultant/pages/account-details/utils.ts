@@ -7,6 +7,7 @@ export interface AccountData {
     is_parent: boolean;
     country: {
       country_name: string;
+      country_code: string;
     };
     currency: {
       currency_code: string;
@@ -117,7 +118,7 @@ export const transformAccountData = (data: AccountData): DisplayColumn[] => {
       items: [
         {
           label: 'Country / Currency',
-          value: `${getValueOrDefault(account?.country?.country_name)} / ${getValueOrDefault(account?.currency?.currency_code)}`,
+          value: `${getValueOrDefault(account?.country?.country_code)} / ${getValueOrDefault(account?.currency?.currency_code)}`,
         },
       ],
     },

@@ -187,7 +187,10 @@ export const renderRows = ({
               text={String(account.accountName)}
               maxWidth={200}
               className={`inline-flex items-center rounded-[4px] text-[14px] px-2 font-semibold h-[26px] cursor-pointer group-hover:underline`}
-              style={{ backgroundColor: account.bgColor, color: account.color }}
+              style={{
+                background: `linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), ${account.bgColor}`,
+                color: account.color,
+              }}
             >
               <span onClick={() => handleAccountNameClick(account)}>
                 {account.accountName || '-'}

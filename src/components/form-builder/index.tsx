@@ -281,10 +281,20 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
       // Handle primary contact logic
       if (field.name.startsWith('is_primary_contact_') && value === 'yes') {
-        // Set all other primary contact fields to 'no'
+        const currentIndex = parseInt(field.name.split('_').pop() || '0', 10);
+        const currentRoleKey = `key_contact_role_${currentIndex}`;
+        const selectedRole = constructFormData[currentRoleKey];
+
+        // Loop through all is_primary_contact_X and key_contact_role_X
         Object.keys(newData).forEach((key) => {
           if (key.startsWith('is_primary_contact_') && key !== field.name) {
-            newData[key] = 'no';
+            const otherIndex = parseInt(key.split('_').pop() || '0', 10);
+            const otherRoleKey = `key_contact_role_${otherIndex}`;
+            const otherRole = constructFormData[otherRoleKey];
+
+            if (otherRole === selectedRole && selectedRole !== '') {
+              newData[key] = 'no'; // Force is_primary_contact to 'no' for same-role others
+            }
           }
         });
       }

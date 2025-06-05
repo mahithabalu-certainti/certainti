@@ -541,7 +541,6 @@ export const costDisplay = (
   cost: string | number | null | undefined,
   symbol: string = '$'
 ) => {
-  console.log(cost);
   if (cost === null || cost === undefined) return '-';
 
   const numberCost = Number(cost);
