@@ -353,8 +353,7 @@ export const ResourceFormData = (
             required: false,
             placeholder: 'Enter Effort in Hrs',
             regex: REGEX_PATTERNS.EFFORT_IN_HOURS_REGEX,
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            regexErrorMessage: 'Only positive numbers allowed, up to 16 digits',
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MAX_EFFORT_IN_HOURS,
