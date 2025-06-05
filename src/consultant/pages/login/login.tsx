@@ -36,15 +36,13 @@ export const Login: React.FC = () => {
     try {
       setIsLoading(true);
       await msalSigninInstance.initialize();
-
-      // Add redirect handling
-      const loginRequest = {
-        scopes: ['openid', 'profile'],
-        redirectUri: import.meta.env.VITE_REDIRECT_URL,
-      };
-
-      const { idToken, account } =
-        await msalSigninInstance.loginPopup(loginRequest);
+      const { idToken, account } = await msalSigninInstance.loginPopup();
+      console.log(
+        'idToken, account',
+        idToken,
+        account,
+        import.meta.env.VITE_REDIRECT_URL
+      );
       const userRole = await fetchCurrentUserRole(
         account?.localAccountId,
         idToken
@@ -62,6 +60,7 @@ export const Login: React.FC = () => {
         name: account?.name,
         role: userRole.data.user_role,
         userId: userRole.data.user_id,
+        exp: account?.idTokenClaims?.exp,
       };
       login(authDetail as IAuthDetails);
       dispatch(setUserId(account?.localAccountId));
