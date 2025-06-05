@@ -46,7 +46,7 @@ jobs:
           PASSWORD_RESET_AUTHORITY=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "b2c-tenant-password-reset-authority-url" --query value -o tsv)
           STATIC_WEB_APP_API_KEY=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "static-web-apps-api-key" --query value -o tsv)
 
-          if [ -z "$CLIENT_ID" ] || [ -z "$AUTHORITY" ] || [ -z "$KNOWN_AUTHORITIES" ]; then
+          if [ -z "$CLIENT_ID" ] || [ -z "$AUTHORITY" ] || [ -z "$KNOWN_AUTHORITIES" ] || [ -z "$PASSWORD_RESET_AUTHORITY" ]; then
             echo "Error: One or more secrets could not be fetched!"
             exit 1
           fi
