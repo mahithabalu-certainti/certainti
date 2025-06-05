@@ -338,8 +338,8 @@ export interface ConvertedAccount {
   // primaryContact: string;
   // parentAccountID: string | null;
   // annualRevenue: string;
-  color: string;
-  bgColor: string;
+  color?: string;
+  bgColor?: string;
   totalProjects: string | number;
   totalProjectHours: string | number;
   totalProjectCost: string | number;

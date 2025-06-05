@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Autocomplete,
   Checkbox,
@@ -65,7 +66,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   outData,
   keyStart,
   keyEnd,
-  newContactLength,
   admin = false,
 }) => {
   const location = useLocation();
@@ -87,6 +87,55 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       );
       if (resourceOrgNameField) {
         resourceOrgNameField.disabled = true;
+      }
+    }
+  }, [constructFormData, formData]);
+
+  useEffect(() => {
+    const keyContactSection = formData?.find(
+      (section) => section.sectionName === 'Key Contacts List'
+    );
+
+    if (!keyContactSection) return;
+
+    const fieldsPerRow = 8;
+    const rowCount = Math.ceil(keyContactSection.fields.length / fieldsPerRow);
+
+    for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+      const baseIndex = rowIndex * fieldsPerRow;
+
+      const nameField = keyContactSection.fields[baseIndex]; // key_contact_name_X
+      const emailField = keyContactSection.fields[baseIndex + 2]; // key_contact_email_X
+      const roleField = keyContactSection.fields[baseIndex + 1]; // key_contact_role_X
+      const primaryField = keyContactSection.fields[baseIndex + 4]; // is_primary_contact_X
+      if (!nameField || !emailField || !roleField || !primaryField) continue;
+
+      const hasValues =
+        (constructFormData[nameField.name]?.toString().trim() || '') !== '' ||
+        (constructFormData[emailField.name]?.toString().trim() || '') !== '' ||
+        (constructFormData[roleField.name]?.toString().trim() || '') !== '';
+
+      // Update the required status if needed
+      if (primaryField.required !== hasValues) {
+        setFormData((prevFormData) => {
+          return prevFormData?.map((section) => {
+            if (section.sectionName === 'Key Contacts List') {
+              return {
+                ...section,
+                fields: section.fields.map((field) => {
+                  if (field.name === primaryField.name) {
+                    return {
+                      ...field,
+                      required: hasValues,
+                    };
+                  }
+                  return field;
+                }),
+              };
+            }
+            return section;
+          });
+        });
       }
     }
   }, [constructFormData, formData]);
@@ -132,6 +181,66 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, values, state]);
 
+  const handleRemoveKeyContactRow = (rowIndexToRemove: number) => {
+    const fieldsPerRow = 8;
+
+    setFormData((prevFormData) => {
+      if (!prevFormData) return prevFormData;
+
+      const keyContactSection = prevFormData.find(
+        (section) => section.sectionName === 'Key Contacts List'
+      );
+      if (!keyContactSection) return prevFormData;
+
+      const startIndex = rowIndexToRemove * fieldsPerRow;
+      const newFields = [...keyContactSection.fields];
+      newFields.splice(startIndex, fieldsPerRow);
+
+      const reindexedFields = newFields.map((field, idx) => {
+        const newRowIndex = Math.floor(idx / fieldsPerRow);
+        const baseName = field.name.replace(/_\d+$/, '');
+
+        return {
+          ...field,
+          name: `${baseName}_${newRowIndex}`,
+        };
+      });
+
+      return prevFormData.map((section) => {
+        if (section.sectionName === 'Key Contacts List') {
+          return {
+            ...section,
+            fields: reindexedFields,
+          };
+        }
+        return section;
+      });
+    });
+
+    setConstructFormData((prevData) => {
+      if (!prevData) return prevData;
+
+      const newData: Record<string, any> = {};
+
+      Object.entries(prevData).forEach(([key, value]) => {
+        const match = key.match(/_(\d+)$/);
+        if (match) {
+          const idx = Number(match[1]);
+          if (idx < rowIndexToRemove) {
+            newData[key] = value;
+          } else if (idx > rowIndexToRemove) {
+            const baseKey = key.replace(/_\d+$/, '');
+            newData[`${baseKey}_${idx - 1}`] = value;
+          }
+        } else {
+          newData[key] = value;
+        }
+      });
+
+      return newData;
+    });
+  };
+
   const getFields = (field: FormTypeFields) => {
     const isError = field.error
       ? 'border-red-500 bg-[#FEF2F2]'
@@ -168,6 +277,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           newData[field.defaultSelect.key] =
             field.defaultSelect.ifNotMatchValue;
         }
+      }
+
+      // Handle primary contact logic
+      if (field.name.startsWith('is_primary_contact_') && value === 'yes') {
+        // Set all other primary contact fields to 'no'
+        Object.keys(newData).forEach((key) => {
+          if (key.startsWith('is_primary_contact_') && key !== field.name) {
+            newData[key] = 'no';
+          }
+        });
       }
 
       if (field.onChange && onChange) {
@@ -734,19 +853,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             onClick={field.onClick}
           >
             <span>
-              <img src={keyContactAddIcon} />
+              <img src={keyContactAddIcon} alt='add-btn' className='w-5 h-5' />
             </span>
             {field.name}
           </button>
-        );
-      case 'iconButton':
-        return (
-          <img
-            className='cursor-pointer'
-            alt='remove'
-            src={field.iconUrl || keyContactRemoveIcon}
-            onClick={field.onClick}
-          />
         );
       default:
         return null;
@@ -1357,23 +1467,23 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     );
   }
 
-  // converts Keycontact data to render in a row method array of array[7]
   const chunkFields = (arr: FormTypeFields[], chunkSize: number = 0) => {
     const chunks = [];
     for (let i = 0; i < arr.length; i += chunkSize) {
-      //this will push from 0 to chunksize normally 7, its a static data we are using from formData.ts file
       chunks.push(arr.slice(i, i + chunkSize));
     }
     return chunks;
   };
 
   const loadKeyContactSection = (section: FormType) => {
-    const fieldRows = chunkFields(section.fields, newContactLength);
+    const visibleFields = section.fields.filter(
+      (field) => !field.name.startsWith('key_contact_rid_')
+    );
+    const headerFields = visibleFields.slice(0, 7);
+    const fieldRows = chunkFields(visibleFields, 7);
     return (
-      <div
-      // className='px-10'
-      >
-        <Table>
+      <div className='px-10'>
+        <Table className='border-l border-[#CBD6E2]'>
           <TableHead
             sx={{
               '& .MuiTableCell-root': {
@@ -1384,13 +1494,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 height: '29px',
                 boxSizing: 'border-box',
               },
-              '& .MuiTableCell-root:first-of-type': {
-                paddingLeft: '40px',
-              },
             }}
           >
             <TableRow sx={{ height: 29 }}>
-              {section.fields.slice(0, newContactLength).map((field, j) => {
+              {headerFields.map((field, j) => {
                 return (
                   <TableCell
                     sx={{
@@ -1413,9 +1520,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             sx={{
               '& .MuiTableCell-root': {
                 padding: '0px',
-                // boxSizing: 'border-box',
                 '& input': {
-                  paddingLeft: '4px',
                   border: 'none',
                   outline: 'none',
                   boxShadow: 'none',
@@ -1427,93 +1532,120 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   justifyContent: 'center',
                 },
               },
-              '& .MuiTableRow-root > .MuiTableCell-root:first-of-type': {
-                paddingLeft: '40px',
-              },
             }}
           >
             {fieldRows.map((row, rowIndex) => (
               <TableRow key={rowIndex}>
-                {row.map((field, colIndex) => (
-                  <TableCell
-                    sx={{
-                      height: '32px !important',
-                      minWidth: `${field.width}`,
-                      maxWidth: `${field.width}`,
-                      paddingLeft:
-                        `${field.type}` === 'iconButton' ||
-                        `${field.type}` === 'radio'
-                          ? '10px !important'
-                          : 'none',
-                      verticalAlign:
-                        `${field.type}` === 'iconButton'
-                          ? 'middle !important'
-                          : 'top',
-                      '& input': {
-                        border: 'none',
-                      },
-                      // '& .MuiOutlinedInput-notchedOutline': {
-                      //   border: 'none !important',
-                      // },
-                      // '&:hover .MuiOutlinedInput-notchedOutline': {
-                      //   border: 'none',
-                      // },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        border: '2px solid #60A5FA',
-                        outline: 'none',
-                      },
-                    }}
-                    key={colIndex}
-                    style={{ verticalAlign: 'top', height: '32px !important' }}
-                  >
-                    {field.type === 'text' ? (
-                      <div
-                        className={`h-[32px] border border-[#CBD6E2] rounded-[2px] overflow-hidden focus-within:border-2 focus-within:border-blue-400 ${field.error ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
-                      >
-                        <div className=' box-border flex items-center gap-[4px]'>
-                          {field.error && (
-                            <Tooltip
-                              title={field.error}
-                              placement='bottom-end'
-                              slotProps={{
-                                tooltip: {
-                                  sx: {
-                                    backgroundColor: '#FEF2F2',
-                                    color: 'rgba(0, 0, 0, 0.87)',
-                                    fontSize: '12px',
-                                    fontWeight: 400,
-                                    boxShadow: 2,
-                                    borderRadius: '4px',
-                                  },
-                                },
-                                popper: {
-                                  modifiers: [
-                                    {
-                                      name: 'offset',
-                                      options: {
-                                        offset: [30, -40],
-                                      },
+                {row.map((field, colIndex) => {
+                  const isLastColumn = colIndex === row.length - 1;
+                  const isRequired = field.required;
+                  const isPrimary = field.name.startsWith(
+                    'is_primary_contact_'
+                  );
+                  return (
+                    <TableCell
+                      sx={{
+                        position: 'relative',
+                        height: '32px !important',
+                        minWidth: `${field.width}`,
+                        maxWidth: `${field.width}`,
+                        paddingLeft:
+                          `${field.type}` === 'iconButton' ||
+                          `${field.type}` === 'radio'
+                            ? '10px !important'
+                            : 'none',
+                        verticalAlign:
+                          `${field.type}` === 'iconButton'
+                            ? 'middle !important'
+                            : 'top',
+                        '& input': {
+                          border: 'none',
+                        },
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          border: 'none !important',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          border: 'none !important',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          border: '2px solid #60A5FA',
+                        },
+                      }}
+                      key={colIndex}
+                      style={{
+                        verticalAlign: 'top',
+                        height: '32px !important',
+                        backgroundColor:
+                          field.error && isPrimary ? '#FEF2F2' : 'transparent',
+                      }}
+                    >
+                      {field.type === 'iconButton' && isLastColumn ? (
+                        <Tooltip title={'Remove contact'} arrow placement='top'>
+                          <button
+                            type='button'
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              field.onClick?.(e);
+                              handleRemoveKeyContactRow(rowIndex);
+                            }}
+                            style={{
+                              cursor: 'pointer',
+                              background: 'transparent',
+                              border: 'none',
+                              padding: 0,
+                            }}
+                            aria-label='Remove contact'
+                          >
+                            <img
+                              src={field.iconUrl || keyContactRemoveIcon}
+                              alt='Remove'
+                              style={{ width: 20, height: 20 }}
+                            />
+                          </button>
+                        </Tooltip>
+                      ) : field.type === 'text' ? (
+                        <div
+                          className={` ${field.error ? 'border border-red-500 bg-[#FEF2F2]' : ''}`}
+                        >
+                          <div className=' box-border flex items-center'>
+                            {field.error && (
+                              <Tooltip
+                                title={field.error}
+                                arrow
+                                placement='top'
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      backgroundColor: '#FEF2F2',
                                     },
-                                  ],
-                                },
-                              }}
-                            >
-                              <span className='pl-[8px] text-[13px] text-[#425A76]'>
-                                <img src={errorInfoIcon} alt='error' />
-                              </span>
-                            </Tooltip>
-                          )}
-                          {/* {showKeyContactError && <span className='absolute top-[5px]'>
-                          {field.error}
-                        </span>} */}
-                          {getFields(field)}
+                                  },
+                                }}
+                              >
+                                <span className='pl-[8px] mt-0.5 -mr-1.5 text-[13px] text-[#425A76] cursor-pointer'>
+                                  <img
+                                    src={errorInfoIcon}
+                                    alt='error'
+                                    className='w-3.5 h-3.5'
+                                  />
+                                </span>
+                              </Tooltip>
+                            )}
+                            {getFields(field)}
+                          </div>
                         </div>
-                      </div>
-                    ) : (
-                      getFields(field)
-                    )}
-                  </TableCell>
-                ))}
+                      ) : (
+                        <>
+                          {getFields(field)}
+                          {isPrimary && isRequired && (
+                            <span className='absolute top-1 right-4 text-red-500 text-[16px]'>
+                              *
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </TableCell>
+                  );
+                })}
               </TableRow>
             ))}
           </TableBody>

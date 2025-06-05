@@ -203,22 +203,21 @@ export const createButton = (
 });
 
 export const createImgButton = (
+  name: string,
   iconUrl: string,
   others?: {
     width?: string;
-    onClick?: (index: number) => void;
+    onClick?: (e?: React.MouseEvent<HTMLElement>) => void;
   }
 ): FieldType => ({
   type: 'iconButton',
   iconUrl: iconUrl,
-  name: '',
+  name: name,
   label: '',
   required: false,
   width: others?.width,
-  onClick: (index?: number) => {
-    if (others?.onClick && index !== undefined) {
-      others.onClick(index);
-    }
+  onClick: (e?: React.MouseEvent<HTMLElement>) => {
+    others?.onClick?.(e);
   },
 });
 

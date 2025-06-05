@@ -96,11 +96,31 @@ export const getAccountFilterFields = (
 ];
 
 const colors = [
-  { color: '#3348F7', bgColor: '#EBEDFF' },
-  { color: '#F16137', bgColor: '#FDE7E1' },
-  { color: '#E54787', bgColor: '#FBE3ED' },
-  { color: '#2E5AAC', bgColor: '#EBF1F8' },
-  { color: '#B62EB9', bgColor: '#F6E2F6' },
+  { color: '#000000', bgColor: '#E0FFFF' },
+  { color: '#000000', bgColor: '#FFF5E5' },
+  { color: '#000000', bgColor: '#FFFFE0' },
+  { color: '#000000', bgColor: '#E0F7FF' },
+  { color: '#000000', bgColor: '#F5F5F5' },
+  { color: '#000000', bgColor: '#FFECE9' },
+  { color: '#000000', bgColor: '#FFFFCC' },
+  { color: '#000000', bgColor: '#FAE6FA' },
+  { color: '#000000', bgColor: '#E6FFFA' },
+  { color: '#000000', bgColor: '#FFF5ED' },
+  { color: '#000000', bgColor: '#F8F1E7' },
+  { color: '#000000', bgColor: '#E5FBE5' },
+  { color: '#000000', bgColor: '#FFF8DC' },
+  { color: '#000000', bgColor: '#E6F9FB' },
+  { color: '#000000', bgColor: '#F2F0FF' },
+  { color: '#000000', bgColor: '#F9F8E6' },
+  { color: '#000000', bgColor: '#E6FFFA' },
+  { color: '#000000', bgColor: '#FDF1F3' },
+  { color: '#000000', bgColor: '#FFEDE7' },
+  { color: '#000000', bgColor: '#E5FFF9' },
+  { color: '#000000', bgColor: '#F6F6F6' },
+  { color: '#000000', bgColor: '#FFEDEE' },
+  { color: '#000000', bgColor: '#E5FBE5' },
+  { color: '#000000', bgColor: '#F8F1F8' },
+  { color: '#000000', bgColor: '#F2FBE6' },
 ];
 
 export function convertAccounts(
@@ -108,23 +128,22 @@ export function convertAccounts(
 ): ConvertedAccount[] {
   const result: ConvertedAccount[] = [];
 
-  // Shuffle the color palette to randomize the order
-  const shuffledColors = [...colors].sort(() => Math.random() - 0.5);
   let colorIndex = 0;
 
-  // Helper function to get the next unique color
   function getNextColor() {
-    const color = shuffledColors[colorIndex % shuffledColors.length];
+    const color = colors[colorIndex % colors.length];
     colorIndex++;
     return color;
   }
 
-  // Helper function to process each account
   function processAccount(
     account: AccountList,
-    parentAccountName: string | null = null
+    parentAccountName: string | null = null,
+    isTopLevel: boolean = false
   ): void {
-    const { color, bgColor } = getNextColor();
+    const colorProps = isTopLevel
+      ? getNextColor()
+      : { color: undefined, bgColor: undefined };
 
     const convertedAccount: ConvertedAccount = {
       accountId: account.rid,
@@ -146,22 +165,20 @@ export function convertAccounts(
       accountNumber: account.r_number,
       projectsByYear: account.projects_by_fiscal_year || [],
       currency: account?.currency?.currency_symbol || '',
-      color,
-      bgColor,
+      ...colorProps,
     };
+
     result.push(convertedAccount);
 
-    // Process child accounts if they exist
     if (account.child_accounts && account.child_accounts.length > 0) {
       account.child_accounts.forEach((child) => {
-        processAccount(child, account.account_name);
+        processAccount(child, account.account_name, false);
       });
     }
   }
 
-  // Process each top-level account
   inputAccounts.forEach((account) => {
-    processAccount(account);
+    processAccount(account, null, true); // mark top-level
   });
 
   return result;

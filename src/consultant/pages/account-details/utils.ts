@@ -26,6 +26,7 @@ interface DisplayColumn {
   items: Array<{
     label: string;
     value: string;
+    className?: string;
   }>;
 }
 
@@ -84,13 +85,22 @@ const getValueOrDefault = (
 
 export const transformAccountData = (data: AccountData): DisplayColumn[] => {
   const account = data?.accountById;
+  const status = account?.status?.toLowerCase();
 
   return [
     {
       items: [
-        { label: 'Account ID', value: account?.r_number || '-' },
         {
-          label: 'Account Name',
+          label: 'Account ID',
+          value: account?.r_number || '-',
+          className: `${status === 'active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
+        },
+      ],
+    },
+    {
+      items: [
+        {
+          label: 'Name',
           value: getValueOrDefault(account?.account_name),
         },
       ],
@@ -101,21 +111,13 @@ export const transformAccountData = (data: AccountData): DisplayColumn[] => {
           label: 'Parent Name',
           value: getValueOrDefault(account?.parent_account?.account_name),
         },
-        {
-          label: 'Is Parent Account',
-          value: account?.is_parent ? 'Yes' : 'No',
-        },
       ],
     },
     {
       items: [
         {
-          label: 'Country',
-          value: getValueOrDefault(account?.country?.country_name),
-        },
-        {
-          label: 'Currency',
-          value: getValueOrDefault(account?.currency?.currency_code),
+          label: 'Country / Currency',
+          value: `${getValueOrDefault(account?.country?.country_name)} / ${getValueOrDefault(account?.currency?.currency_code)}`,
         },
       ],
     },
@@ -124,11 +126,6 @@ export const transformAccountData = (data: AccountData): DisplayColumn[] => {
         {
           label: 'Industry',
           value: getValueOrDefault(account?.industry?.industry_name),
-        },
-        {
-          label: 'Status',
-          value:
-            account?.status.charAt(0).toUpperCase() + account?.status.slice(1),
         },
       ],
     },
