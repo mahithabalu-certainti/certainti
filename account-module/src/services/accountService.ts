@@ -8,7 +8,6 @@ import Decimal from "decimal.js";
 import { States } from "../models/stateModel";
 import currency from "currency.js";
 
-
 const { Account, Country, Currency,Industry } = models;
 
 class AccountService {
@@ -61,11 +60,7 @@ async accountList(
       const repository = this.getAccountRepository();
       
       // Get USD currency_rid
-      const usdCurrency = await Currency.findOne({
-        where: {
-          currency_code: 'USD'
-        }
-      });
+      const usdCurrency = await this.getUSDCurrency();
       
       // Parse filters if it's a string
       const parsedFilters = typeof filters === 'string' ? 
@@ -938,11 +933,7 @@ async insertClientTemplateDetails(
       });
 
       // Get USD currency_rid
-      const usdCurrency = await Currency.findOne({
-        where: {
-          currency_code: 'USD'
-        }
-      });
+      const usdCurrency = await this.getUSDCurrency();
 
       // If currency_rid is null or empty, assign USD currency
       if (!accountById?.currency_rid || accountById.currency_rid === '') {
@@ -1498,6 +1489,15 @@ if (equals) {
       errorMessage: err.message,
     };
   }
+
+  /**
+   * Gets the USD currency record from the database
+   * @returns USD currency record
+   */
+  private async getUSDCurrency() {
+    return Currency.findOne({ where: { currency_code: 'USD' } });
+  }
+    
 }
 
 export default AccountService;
