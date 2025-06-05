@@ -1,12 +1,12 @@
-name: Deploy Platform 2.0 Dev Frontend Application
+name: Deploy Platform 2.0 Uat Frontend Application
 
 on:
   push:
     branches:
-      - develop
+      - uat
 
 env:
-  ENVIRONMENT: dev
+  ENVIRONMENT: uat
 
 jobs:
   # JOB to build and deploy Frontend App
@@ -27,8 +27,8 @@ jobs:
       - name: Fetch secrets and create .env file
         id: fetch-secrets
         run: |
-          KEY_VAULT_NAME=${{ secrets.DEV_KEY_VAULT_NAME }}
-          ENV_FILE=".env.dev"
+          KEY_VAULT_NAME=${{ secrets.UAT_KEY_VAULT_NAME }}
+          ENV_FILE=".env.uat"
 
           # Ensure Azure CLI is authenticated
           az account show > /dev/null 2>&1
@@ -56,9 +56,9 @@ jobs:
           echo "VITE_AUTHORITY=$AUTHORITY" >> $ENV_FILE
           echo "VITE_KNOWN_AUTHORITIES=$KNOWN_AUTHORITIES" >> $ENV_FILE
           echo "VITE_RESET_PW_AUTHORITY=$PASSWORD_RESET_AUTHORITY" >> $ENV_FILE
-          echo "VITE_REDIRECT_URL=https://platform20-dev.certainti.ai/" >> $ENV_FILE
-          echo "VITE_POST_LOGOUT_REDIRECT_URL=https://platform20-dev.certainti.ai/" >> $ENV_FILE
-          echo "VITE_BASE_URL=https://dev-platform20-api-management.azure-api.net" >> $ENV_FILE
+          echo "VITE_REDIRECT_URL=https://platform20-uat.certainti.ai/" >> $ENV_FILE
+          echo "VITE_POST_LOGOUT_REDIRECT_URL=https://platform20-uat.certainti.ai/" >> $ENV_FILE
+          echo "VITE_BASE_URL=https://uat-platform20-api-management.azure-api.net" >> $ENV_FILE
           echo "VITE_USER_URL=/userService" >> $ENV_FILE
           echo "VITE_ACCOUNT_URL=/accountService" >> $ENV_FILE
           echo "VITE_RESOURCE_URL=/entityService" >> $ENV_FILE 
