@@ -349,6 +349,10 @@ export class ProjectService {
         total_fte: projectData.total_fte || 0,
         total_sub_con: projectData.total_sub_con || 0,
 
+        country: projectData.country || null,
+        currency: projectData.currency || null,
+        region: projectData.region || null,
+
         total_non_labor_cost: projectData.total_non_labor_cost || null,
         total_fte_effort: projectData.total_fte_effort && parseInt(projectData.total_fte_effort) || null,
         total_sub_con_effort: projectData.total_sub_con_effort && parseInt(projectData.total_sub_con_effort) || null,
@@ -823,7 +827,7 @@ export class ProjectService {
           "Project Code": project.project_code || "-",
           "Project Name": project.project_name || "-",
           "Project Type": project.project_type || "-",
-          "Project classification": project.classification_name || "-",
+          "Project Classification": project.classification_name || "-",
           "Project Effort (Hours)": project.total_effort || "-",
           "Project Cost": project.total_cost || "-",
           "FTE Cost": project.total_fte_cost || "-",
@@ -1010,14 +1014,13 @@ export class ProjectService {
       const rawResult = projectData || [];
       let exportData = rawResult.map((project: any) => {   
         return {
-          "Account Name": project.account_name || "-",
+          "Project Code": project.project_code || "-",
           "Fiscal Year":project.fiscal_year || "-",
           "Customer Group": project.project_client_group || "-",
           "Project Group": project?.project_group || "-",
-          "Project Code": project.project_code || "-",
           "Project Name": project.project_name || "-",
           "Project Type": project.project_type || "-",
-          "Project classification": project.classification_name || "-",
+          "Project Classification": project.classification_name || "-",
           "Project Effort (Hours)": project.total_effort || "-",
           "Project Cost": project.total_cost || "-",
           "FTE Cost": project.total_fte_cost || "-",
