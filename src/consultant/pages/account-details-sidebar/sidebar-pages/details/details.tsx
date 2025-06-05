@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { AllPermissions } from '../../../../../common-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
+import { checkPermission } from '../../../../../common-utils';
 
 const BUTTON_STYLES = {
   height: '26px !important',
@@ -62,6 +63,10 @@ const Details: React.FC<DetailsProps> = ({
   const [tabValue, setTabValue] = useState('');
 
   const { permission } = useSelector((state: RootState) => state?.permission);
+  const isAccountDetailActivityEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_DETAILS_ADD_ACTIVITY
+  );
 
   const isOverViewEnable = !detailsTab[0].hide;
 
@@ -151,6 +156,7 @@ const Details: React.FC<DetailsProps> = ({
           handleTabChange={handleTabChange}
           menuActivity={menuActivity}
           detailsTab={detailsTab}
+          isAccountDetailActivityEnable={isAccountDetailActivityEnable}
         />
         {isOverViewEnable && (
           <>
