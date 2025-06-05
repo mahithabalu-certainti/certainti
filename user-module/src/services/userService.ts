@@ -1767,7 +1767,7 @@ if (fieldData.length > 0) {
 function getPermissionKey(permission: any): string {
   switch (permission.type) {
     case 'field':
-      return `field::${permission.permission_id}`;
+      return `field::${permission.field_id}`;
     case 'module':
       return `module::${permission.module_id}`;
     case 'menu':
