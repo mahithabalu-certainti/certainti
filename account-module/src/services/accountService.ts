@@ -795,7 +795,7 @@ async insertClientTemplateDetails(
 
       if (default_parent_id && data_storage === "store_in_parent") {
         await this.schemaService.updateAccountDetails(
-          default_parent_id,
+          account_rid,
           accountData,
           parent_account?.r_number,
           userId
