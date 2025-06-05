@@ -120,19 +120,6 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       ),
     },
     {
-      id: 'weekly_cost',
-      sortId: 'weekly_cost',
-      label: 'Weekly Compensation',
-      width: 180,
-      sortable: true,
-      sx: {
-        textAlign: 'right',
-      },
-      render: (row: ResourceCostList) => (
-        <span>{costDisplay(row.weekly_cost, row.currency_symbol)}</span>
-      ),
-    },
-    {
       id: 'bi_weekly_cost',
       sortId: 'bi_weekly_cost',
       label: 'Bi-Weekly Compensation',
@@ -143,6 +130,19 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       },
       render: (row: ResourceCostList) => (
         <span>{costDisplay(row.bi_weekly_cost, row.currency_symbol)}</span>
+      ),
+    },
+    {
+      id: 'weekly_cost',
+      sortId: 'weekly_cost',
+      label: 'Weekly Compensation',
+      width: 180,
+      sortable: true,
+      sx: {
+        textAlign: 'right',
+      },
+      render: (row: ResourceCostList) => (
+        <span>{costDisplay(row.weekly_cost, row.currency_symbol)}</span>
       ),
     },
     {
