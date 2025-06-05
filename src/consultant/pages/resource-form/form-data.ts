@@ -349,9 +349,9 @@ export const ResourceFormData = (
             maxDate: currentDate,
             startDateLabel: 'financial_start_date',
           }),
-          createTextField('effort_in_hrs', 'Effort in Hrs', {
+          createTextField('effort_in_hrs', 'Effort In Hrs', {
             required: false,
-            placeholder: 'Enter Effort in Hrs',
+            placeholder: 'Enter Effort In Hrs',
             regex: REGEX_PATTERNS.EFFORT_IN_HOURS_REGEX,
             regexErrorMessage: 'Only positive numbers allowed, up to 16 digits',
             errorHandling: [
