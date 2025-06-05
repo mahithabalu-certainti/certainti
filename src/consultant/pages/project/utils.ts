@@ -24,8 +24,8 @@ export const transformProjectData = (data: any): DisplayColumn[] => {
     {
       items: [
         {
-          label: 'Project Name',
-          value: project?.program_name || '-',
+          label: 'Name',
+          value: project?.project_name || '-',
         },
         { label: 'Account Name', value: project?.account_name },
       ],
@@ -38,7 +38,10 @@ export const transformProjectData = (data: any): DisplayColumn[] => {
     },
     {
       items: [
-        { label: 'Industry', value: project?.industry_rid_name || '-' },
+        {
+          label: 'Industry',
+          value: project?.industry_name || project?.industry_rid_name || '-',
+        },
         {
           label: 'Status',
           value:

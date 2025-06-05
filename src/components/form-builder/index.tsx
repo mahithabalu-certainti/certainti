@@ -1178,12 +1178,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 ...field,
                 error:
                   field.name === 'resource_startdate'
-                    ? 'Effective Date cannot be before 01-01-1950'
+                    ? 'Effective Date cannot be before 1950-01-01'
                     : field.name === 'skill_start_date'
-                      ? 'Start Date cannot be before 01-01-1950'
+                      ? 'Start Date cannot be before 1950-01-01'
                       : field.name === 'project_startdate'
                         ? 'Start Date cannot be before 2000-01-01'
-                        : 'Date cannot be before 01-01-1950',
+                        : field.name === 'project_enddate'
+                          ? 'End Date cannot be before 2000-01-01'
+                          : 'Date cannot be before 1950-01-01',
               };
             }
             // Check if both start and end dates are either provided or not provided

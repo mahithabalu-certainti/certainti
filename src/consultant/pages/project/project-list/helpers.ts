@@ -46,7 +46,7 @@ export const getAllProjectFilterFields = (
     operatorOption: textOptions,
   },
   {
-    name: 'Project Name',
+    name: 'Name',
     value: 'project_name',
     type: 'text',
     operatorOption: textOptions,

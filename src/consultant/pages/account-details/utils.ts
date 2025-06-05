@@ -185,6 +185,7 @@ export interface accountByIdProps {
   };
   currency: {
     currency_code: string;
+    currency_symbol: string;
   };
   r_number: string;
   comments: string;

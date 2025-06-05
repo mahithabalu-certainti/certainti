@@ -130,7 +130,7 @@ export const Projects: React.FC = () => {
             />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-bold text-[16px] text-[#2D3E4F]'>
-                All Projects
+                Projects
               </div>
               <div className='font-semibold text-[#7D98B6] text-[12px] -mt-1'>
                 {`All Projects • ${totalCount} items`}

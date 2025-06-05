@@ -1,6 +1,8 @@
-import { costDisplay } from '../../../../../common-utils';
+import {
+  costDisplay,
+  formatDateToYYYYMMDDWithTime,
+} from '../../../../../common-utils';
 import { ProjectTableColumn, ProjectList } from '../../../../types/project';
-import { formatDateToYMD } from '../../../account-details-sidebar/sidebar-pages/projects/columns';
 
 export const getAllProjectListColumns = (
   onClick: (row: ProjectList) => void
@@ -65,7 +67,7 @@ export const getAllProjectListColumns = (
   },
   {
     id: 'project_name',
-    label: 'Project Name',
+    label: 'Name',
     sortable: true,
     sortId: 'project_name',
     width: 160,
@@ -104,7 +106,7 @@ export const getAllProjectListColumns = (
       textAlign: 'right',
     },
     render: (row: ProjectList) =>
-      row.total_cost ? costDisplay(row.total_cost) : '-',
+      row.total_cost ? costDisplay(row.total_cost, row.currency_symbol) : '-',
   },
   {
     id: 'total_fte_cost',
@@ -116,7 +118,9 @@ export const getAllProjectListColumns = (
       textAlign: 'right',
     },
     render: (row: ProjectList) =>
-      row.total_fte_cost ? costDisplay(row.total_fte_cost) : '-',
+      row.total_fte_cost
+        ? costDisplay(row.total_fte_cost, row.currency_symbol)
+        : '-',
   },
   {
     id: 'total_sub_con_cost',
@@ -128,7 +132,9 @@ export const getAllProjectListColumns = (
       textAlign: 'right',
     },
     render: (row: ProjectList) =>
-      row.total_sub_con_cost ? costDisplay(row.total_sub_con_cost) : '-',
+      row.total_sub_con_cost
+        ? costDisplay(row.total_sub_con_cost, row.currency_symbol)
+        : '-',
   },
   {
     id: 'total_non_labor_cost',
@@ -140,7 +146,9 @@ export const getAllProjectListColumns = (
       textAlign: 'right',
     },
     render: (row: ProjectList) =>
-      row.total_non_labor_cost ? costDisplay(row.total_non_labor_cost) : '-',
+      row.total_non_labor_cost
+        ? costDisplay(row.total_non_labor_cost, row.currency_symbol)
+        : '-',
   },
   {
     id: 'assessment_status',
@@ -158,7 +166,8 @@ export const getAllProjectListColumns = (
     sx: {
       textAlign: 'right',
     },
-    render: (row: ProjectList) => (row.qre ? costDisplay(row.qre) : '-'),
+    render: (row: ProjectList) =>
+      row.qre ? costDisplay(row.qre, row.currency_symbol) : '-',
   },
   {
     id: 'qualified_research_expenditure',
@@ -171,7 +180,7 @@ export const getAllProjectListColumns = (
     },
     render: (row: ProjectList) =>
       row.qualified_research_expenditure
-        ? costDisplay(row.qualified_research_expenditure)
+        ? costDisplay(row.qualified_research_expenditure, row.currency_symbol)
         : '-',
   },
   {
@@ -200,9 +209,11 @@ export const getAllProjectListColumns = (
     label: 'Last Modified',
     sortable: true,
     sortId: 'modified_datetime',
-    width: 130,
+    width: 190,
     render: (row: ProjectList) =>
-      row.modified_datetime ? formatDateToYMD(row.modified_datetime) : '-',
+      row.modified_datetime
+        ? formatDateToYYYYMMDDWithTime(row.modified_datetime)
+        : '-',
   },
   {
     id: 'r_number',

@@ -224,7 +224,7 @@ export const ProjectDetails = () => {
       <div className='flex'>
         <PageHeader
           variant='sub'
-          placeholder='Project Name'
+          placeholder='Name'
           icon={projectDetailsIcon}
           iconBackgroundColor='#AF78FF'
           iconClasses='h-8 w-8 rounded p-[6px]'
