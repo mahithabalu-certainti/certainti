@@ -9,6 +9,7 @@ export type ProjectList = {
   project_ref_id: string;
   modified_datetime?: string;
   industry: string;
+  currency_symbol: string;
   project_startdate: string;
   project_enddate: string;
   project_type: string;
@@ -93,7 +94,8 @@ export type ProjectListResponse = {
   statusMessage: string;
   data: {
     projects: ProjectList[];
-    count: number;
+    count?: number;
+    totalCount?: number;
   };
 };
 export interface KeyContacts {
@@ -124,6 +126,7 @@ export interface NewProjectData {
   description?: string | null;
   status?: string;
   currency_name?: string;
+  currency_symbol?: string;
   region_name?: string;
   country_name?: string;
   record_id?: string;

@@ -226,7 +226,7 @@ const ListTable = <T extends RowData>({
             {/* Loading state */}
             {loading && (
               <TableSkeleton
-                rowsPerPage={rowsPerPage}
+                rowsPerPage={rowsPerPage > 15 ? 15 : rowsPerPage}
                 columnsCount={columns.length}
                 selectable={selectable}
                 hasActions={actionMenuItems?.length > 0}

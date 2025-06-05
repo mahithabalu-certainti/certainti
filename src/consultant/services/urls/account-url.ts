@@ -8,6 +8,7 @@ export const AccountUpdateUrl = '/api/accounts/update';
 export const ParentAccountUrl = '/api/accounts/global';
 export const IndustryUrl = '/api/accounts/industry';
 export const CurrencyUrl = '/api/accounts/currency';
+export const ColorCodeUrl = '/api/accounts/colors?status=Active';
 export const ClassificationUrl = '/api/project/projectclassification';
 
 export const AccountListURL = ({

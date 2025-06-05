@@ -165,53 +165,53 @@ const DetailsSection: React.FC<{
       <div className='text-sm my-[6px] grid gap-y-3'>
         {title === 'Comments'
           ? // Full-width single column layout for Comments
-          data.map((item, index) => (
-            <div
-              key={`comment-row-${index}`}
-              className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2'
-            >
-              <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
-                {item.label}
-              </div>
-              <div className='font-medium text-[13px] break-all overflow-hidden'>
-                {renderValue(item.value)}
-              </div>
-            </div>
-          ))
-          : leftColumn.map((leftItem, index) => {
-            const rightItem = rightColumn[index];
-
-            return (
+            data.map((item, index) => (
               <div
-                key={`row-${index}`}
-                className='grid grid-cols-1 md:grid-cols-2 gap-6'
+                key={`comment-row-${index}`}
+                className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2'
               >
-                {/* Left column */}
-                <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2'>
-                  <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
-                    {leftItem.label}
-                  </div>
-                  <div className='font-medium text-[13px] break-all overflow-hidden'>
-                    {renderValue(leftItem.value)}
-                  </div>
+                <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
+                  {item.label}
                 </div>
+                <div className='font-medium text-[13px] break-all overflow-hidden'>
+                  {renderValue(item.value)}
+                </div>
+              </div>
+            ))
+          : leftColumn.map((leftItem, index) => {
+              const rightItem = rightColumn[index];
 
-                {/* Right column */}
-                {rightItem ? (
+              return (
+                <div
+                  key={`row-${index}`}
+                  className='grid grid-cols-1 md:grid-cols-2 gap-6'
+                >
+                  {/* Left column */}
                   <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2'>
                     <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
-                      {rightItem.label}
+                      {leftItem.label}
                     </div>
                     <div className='font-medium text-[13px] break-all overflow-hidden'>
-                      {renderValue(rightItem.value)}
+                      {renderValue(leftItem.value)}
                     </div>
                   </div>
-                ) : (
-                  <div />
-                )}
-              </div>
-            );
-          })}
+
+                  {/* Right column */}
+                  {rightItem ? (
+                    <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2'>
+                      <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
+                        {rightItem.label}
+                      </div>
+                      <div className='font-medium text-[13px] break-all overflow-hidden'>
+                        {renderValue(rightItem.value)}
+                      </div>
+                    </div>
+                  ) : (
+                    <div />
+                  )}
+                </div>
+              );
+            })}
       </div>
     </div>
   );
@@ -376,7 +376,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
       total_years_experience: resourceData.resource_total_experience,
       designation: resourceData.resource_designation,
       total_years_in_org: resourceData.resource_total_experience_organization,
-    },
+    }
     // {
     //   resource_effective_from: formatDateToYYYYMMDD,
     //   resource_end_date: formatDateToYYYYMMDD,

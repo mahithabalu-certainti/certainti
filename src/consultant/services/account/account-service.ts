@@ -11,6 +11,7 @@ import {
   AccountListURLParams,
   CitysApiResponse,
   ClassificationApiResponse,
+  ColorCodeApiResponse,
   CurrencyApiResponse,
   GlobalAccountListResponse,
   IndustrysApiResponse,
@@ -23,6 +24,7 @@ import {
   AccountListURL,
   CityUrl,
   ClassificationUrl,
+  ColorCodeUrl,
   CurrencyUrl,
   getAccountExportUrl,
   getKeyContactRolesUrl,
@@ -98,6 +100,13 @@ export const fetchCurrency = async (): Promise<CurrencyApiResponse> => {
     await accountServiceApi.get<CurrencyApiResponse>(CurrencyUrl);
   return data;
 };
+
+export const fetchColorCodes = async (): Promise<ColorCodeApiResponse> => {
+  const { data } =
+    await accountServiceApi.get<ColorCodeApiResponse>(ColorCodeUrl);
+  return data;
+};
+
 export const fetchClassification =
   async (): Promise<ClassificationApiResponse> => {
     const { data } =

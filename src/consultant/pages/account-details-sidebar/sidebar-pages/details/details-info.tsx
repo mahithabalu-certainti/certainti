@@ -13,7 +13,10 @@ import {
   accountDetailsProps,
   KeyContactProps,
 } from '../../../account-details/utils';
-import { formatDateToYYYYMMDDWithTime } from '../../../../../common-utils';
+import {
+  costDisplay,
+  formatDateToYYYYMMDDWithTime,
+} from '../../../../../common-utils';
 import { DATA_STORAGE_OPTIONS } from '../../../account-create/utils';
 
 // interface ErrorProps {
@@ -348,7 +351,11 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
     },
     {
       label: 'Annual Revenue',
-      value: accountById?.annual_revenue?.toString() || '-',
+      value:
+        costDisplay(
+          accountById?.annual_revenue?.toString(),
+          accountById?.currency?.currency_symbol
+        ) || '-',
     },
     { label: 'Status', value: accountById?.status?.toString() || '-' },
     {

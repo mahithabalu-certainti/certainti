@@ -4,6 +4,7 @@ import { arrowDownIcon, childAccountIcon } from '../../../../assets';
 import { Account, ConvertedAccount } from '../../../types';
 import ActionButton from './action-button';
 import { TruncateWithTooltip } from '../../../../components';
+import { costDisplay } from '../../../../common-utils';
 
 // const formatNumberWithCommas = (num: number | string): string => {
 //   if (num) {
@@ -186,7 +187,10 @@ export const renderRows = ({
               text={String(account.accountName)}
               maxWidth={200}
               className={`inline-flex items-center rounded-[4px] text-[14px] px-2 font-semibold h-[26px] cursor-pointer group-hover:underline`}
-              style={{ backgroundColor: account.bgColor, color: account.color }}
+              style={{
+                background: `linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), ${account.bgColor}`,
+                color: account.color,
+              }}
             >
               <span onClick={() => handleAccountNameClick(account)}>
                 {account.accountName || '-'}
@@ -236,7 +240,9 @@ export const renderRows = ({
               textAlign: 'right',
             }}
           >
-            {account.totalProjectCost}
+            {account.totalProjectCost
+              ? costDisplay(account.totalProjectCost, account.currency)
+              : '-'}
           </TableCell>
           <TableCell
             sx={{
@@ -256,7 +262,7 @@ export const renderRows = ({
               textAlign: 'right',
             }}
           >
-            {account.qre}
+            {account.qre ? costDisplay(account.qre, account.currency) : '-'}
           </TableCell>
           <TableCell
             sx={{
@@ -266,7 +272,9 @@ export const renderRows = ({
               textAlign: 'right',
             }}
           >
-            {account.estimatedCredits}
+            {account.estimatedCredits
+              ? costDisplay(account.estimatedCredits, account.currency)
+              : '-'}
           </TableCell>
           <TableCell
             sx={{
@@ -276,7 +284,9 @@ export const renderRows = ({
               textAlign: 'right',
             }}
           >
-            {account.actualCredits}
+            {account.actualCredits
+              ? costDisplay(account.actualCredits, account.currency)
+              : '-'}
           </TableCell>
           <TableCell
             sx={{ width: '200px', maxWidth: '200px', minWidth: '200px' }}
@@ -356,8 +366,9 @@ export const renderChildRows = ({
   openChildRows,
   handleChildRowClick,
   isAccountEditEnable,
-  isAccountDeleteEnable
+  isAccountDeleteEnable,
 }: RenderChildRowsProps) => {
+  console.log(accounts, 'accounts');
   return accounts
     ?.filter((account) => account.parentAccount === parentAccount)
     ?.map((account) => {
@@ -528,7 +539,9 @@ export const renderChildRows = ({
                 textAlign: 'right',
               }}
             >
-              {account.totalProjectCost}
+              {account.totalProjectCost
+                ? costDisplay(account.totalProjectCost, account.currency)
+                : '-'}
             </TableCell>
             <TableCell
               sx={{
@@ -548,7 +561,7 @@ export const renderChildRows = ({
                 textAlign: 'right',
               }}
             >
-              {account.qre}
+              {account.qre ? costDisplay(account.qre, account.currency) : '-'}
             </TableCell>
             <TableCell
               sx={{
@@ -558,7 +571,9 @@ export const renderChildRows = ({
                 textAlign: 'right',
               }}
             >
-              {account.estimatedCredits}
+              {account.estimatedCredits
+                ? costDisplay(account.estimatedCredits, account.currency)
+                : '-'}
             </TableCell>
             <TableCell
               sx={{
@@ -568,7 +583,9 @@ export const renderChildRows = ({
                 textAlign: 'right',
               }}
             >
-              {account.actualCredits}
+              {account.actualCredits
+                ? costDisplay(account.actualCredits, account.currency)
+                : '-'}
             </TableCell>
             <TableCell
               sx={{ width: '200px', maxWidth: '200px', minWidth: '200px' }}
@@ -736,7 +753,12 @@ export const renderChildRows = ({
                       textAlign: 'right',
                     }}
                   >
-                    {project.total_project_cost || '-'}
+                    {project.total_project_cost
+                      ? costDisplay(
+                          project.total_project_cost,
+                          account.currency
+                        )
+                      : '-'}
                   </TableCell>
                   <TableCell
                     sx={{
@@ -756,7 +778,12 @@ export const renderChildRows = ({
                       textAlign: 'right',
                     }}
                   >
-                    {project.qualifying_project_qre_fed || '-'}
+                    {project.qualifying_project_qre_fed
+                      ? costDisplay(
+                          project.qualifying_project_qre_fed,
+                          account.currency
+                        )
+                      : '-'}
                   </TableCell>
                   <TableCell
                     sx={{
@@ -766,7 +793,12 @@ export const renderChildRows = ({
                       textAlign: 'right',
                     }}
                   >
-                    {project.qualifying_project_rd_credits_fed}
+                    {project.qualifying_project_rd_credits_fed
+                      ? costDisplay(
+                          project.qualifying_project_rd_credits_fed,
+                          account.currency
+                        )
+                      : '-'}
                   </TableCell>
                   <TableCell
                     sx={{
@@ -776,7 +808,12 @@ export const renderChildRows = ({
                       textAlign: 'right',
                     }}
                   >
-                    {project.total_projects_rd_credits || '-'}
+                    {project.total_projects_rd_credits
+                      ? costDisplay(
+                          project.total_projects_rd_credits,
+                          account.currency
+                        )
+                      : '-'}
                   </TableCell>
                   <TableCell
                     sx={{

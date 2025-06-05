@@ -38,10 +38,13 @@ export const Projects: React.FC = () => {
     sortBy: 'createdAt',
     sortOrder: 'DESC',
     fiscalYear: 0,
+    globalFilters: {},
   });
 
   // Permission Mangement
-  const { modules, permission } = useSelector((state: RootState) => state.permission);
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
   const projectIsEnable = checkPermission(modules, AllModules.PROJECTS);
   const isProjectExportEnable = checkPermission(
     permission,
@@ -74,6 +77,7 @@ export const Projects: React.FC = () => {
       sortOrder: tableParams.sortOrder,
       filters: appliedFilters,
       fiscalYear: tableParams.fiscalYear,
+      globalFilters: tableParams.globalFilters,
     };
     exportProjectData('projectall', projectParams);
   };
@@ -126,7 +130,7 @@ export const Projects: React.FC = () => {
             />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-bold text-[16px] text-[#2D3E4F]'>
-                All Projects
+                Projects
               </div>
               <div className='font-semibold text-[#7D98B6] text-[12px] -mt-1'>
                 {`All Projects • ${totalCount} items`}

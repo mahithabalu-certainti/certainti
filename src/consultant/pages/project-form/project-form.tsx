@@ -50,15 +50,6 @@ const ProjectForm: React.FC = () => {
     'key_contact_email',
   ];
 
-  const formatDateToYYYYMMDD = (dateString?: string) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}/${month}/${day}`;
-  };
-
   const getProjectData = useProjectDetail(accountID, projectID);
   const account = getProjectData.data?.data?.project;
   // need to change this
@@ -70,8 +61,8 @@ const ProjectForm: React.FC = () => {
           ? 'Yes'
           : 'No',
         auto_access_rd: account?.auto_access_rd ? 'Yes' : 'No',
-        project_enddate: formatDateToYYYYMMDD(account?.project_enddate),
-        project_startdate: formatDateToYYYYMMDD(account?.project_startdate),
+        project_enddate: account?.project_enddate,
+        project_startdate: account?.project_startdate,
         created_on: formatDateToYYYYMMDDWithTime(account?.created_datetime),
         updated_on: formatDateToYYYYMMDDWithTime(account?.modified_datetime),
 

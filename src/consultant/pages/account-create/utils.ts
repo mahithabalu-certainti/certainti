@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { capitalize } from '@mui/material';
 import {
   AccountFormData,
+  KeyContacts,
   KeyContactsUpdate,
   NewAccountData,
   SelectOption,
@@ -15,12 +17,73 @@ export const DATA_STORAGE_OPTIONS: SelectOption[] = [
 export const othersIndustryId = '107e689d-35d8-49e5-a444-08db0c59167b';
 export const othersClassificationId = 'a6b7b3e5-1d4f-4e28-b15f-2fa49b91e5a8';
 
+export const transformKeyContactsFromAPI = (keyContacts: KeyContacts[]) => {
+  const formData = {} as any;
+
+  keyContacts.forEach((contact: any, index: number) => {
+    formData[`key_contact_name_${index}`] = contact.key_contact_name || '';
+    formData[`key_contact_role_${index}`] = contact.key_contact_role || '';
+    formData[`key_contact_email_${index}`] = contact.key_contact_email || '';
+    formData[`key_contact_rid_${index}`] = contact.rid || '';
+    formData[`is_primary_contact_${index}`] = contact.is_primary_contact
+      ? 'yes'
+      : 'no';
+    formData[`include_in_communication_${index}`] =
+      contact.include_in_communication ? 'yes' : 'no';
+    formData[`key_contact_status_${index}`] =
+      contact.status?.toLowerCase() || '';
+  });
+  return formData;
+};
+
+export const keyContactsTransformPayload = (
+  formData: Partial<Record<string, any>>,
+  isEdit: boolean = false
+) => {
+  const keyContacts: KeyContacts[] = [];
+
+  const indices = Array.from(
+    new Set(
+      Object.keys(formData)
+        .map((key) => {
+          const match = key.match(/^key_contact_name_(\d+)$/);
+          return match ? Number(match[1]) : null;
+        })
+        .filter((index): index is number => index !== null)
+    )
+  );
+
+  for (const index of indices) {
+    const name = formData[`key_contact_name_${index}`];
+    const email = formData[`key_contact_email_${index}`];
+    const role = formData[`key_contact_role_${index}`];
+    const rid = formData[`key_contact_rid_${index}`];
+
+    if (name || email || role) {
+      keyContacts.push({
+        key_contact_name: name || '',
+        key_contact_email: email || '',
+        key_contact_role: role || '',
+        is_primary_contact: formData[`is_primary_contact_${index}`] === 'yes',
+        include_in_communication:
+          formData[`include_in_communication_${index}`] === 'yes',
+        status: formData[`key_contact_status_${index}`]
+          ? (capitalize(formData[`key_contact_status_${index}`]) as Status)
+          : ('Active' as Status),
+        action_type:
+          isEdit && rid ? KeyContactsUpdate.Edit : KeyContactsUpdate.Add,
+        ...(isEdit && rid && { rid: rid }),
+      });
+    }
+  }
+
+  return keyContacts;
+};
+
 export const transformFormData = (
   formData: Partial<AccountFormData>,
   isEdit: boolean,
-  account_rid?: string,
-  isValueUpdateInKeyContact?: boolean,
-  key_rid?: string
+  account_rid?: string
 ): Partial<NewAccountData> => {
   const data: Partial<NewAccountData> = {
     account_id: account_rid,
@@ -50,35 +113,12 @@ export const transformFormData = (
       othersIndustryId === formData.industry_rid
         ? formData.industry_name_other
         : '', //clear others industry name if industry is not others
-    website: formData.website
-      ? formData.website.startsWith('https://')
-        ? formData.website
-        : `https://${formData.website}`
-      : null,
+    website: formData.website || null,
     project_manager: formData.project_manager,
     annual_revenue: formData.annual_revenue,
     data_storage: formData.data_storage,
     business_details: formData.business_details,
-    key_contacts: isValueUpdateInKeyContact
-      ? [
-          {
-            key_contact_name: formData.key_contact_name as string,
-            key_contact_email: formData.key_contact_email as string,
-            key_contact_role: formData.key_contact_role as string,
-            is_primary_contact: formData?.is_primary_contact === 'yes',
-            include_in_communication:
-              formData?.include_in_communication === 'yes',
-            status: formData?.key_contact_status
-              ? (capitalize(formData.key_contact_status) as Status)
-              : ('Active' as Status),
-            ...(isEdit && { rid: key_rid }),
-            action_type:
-              isEdit && key_rid
-                ? KeyContactsUpdate.Edit
-                : KeyContactsUpdate.Add,
-          },
-        ]
-      : [],
+    key_contacts: keyContactsTransformPayload(formData, isEdit) || [],
   };
   if (isEdit) {
     data.account_rid = account_rid;

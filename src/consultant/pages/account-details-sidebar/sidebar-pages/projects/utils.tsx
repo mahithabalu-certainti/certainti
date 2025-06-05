@@ -88,7 +88,7 @@ export const projectFilterFields = (
     operatorOption: textOptions,
   },
   {
-    name: 'Project Name',
+    name: 'Name',
     value: 'project_name',
     type: 'text',
     operatorOption: textOptions,
