@@ -20,6 +20,7 @@ import {
   formatDateToYYYYMMDDWithTime,
 } from '../../../account-details-sidebar/sidebar-pages/resources/utils';
 import { KeyContactProps } from '../../../account-details/utils';
+import { costDisplay } from '../../../../../common-utils';
 interface DetailItem {
   label: string;
   value: React.ReactNode;
@@ -428,20 +429,41 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     }));
   const financialInfo: DetailItem[] = [
     { label: 'Total Effort in Hrs', value: projectDetails?.total_effort },
-    { label: 'Total Cost', value: projectDetails?.total_cost },
+    {
+      label: 'Total Cost',
+      value: costDisplay(
+        projectDetails?.total_cost,
+        projectDetails?.currency_symbol
+      ),
+    },
     { label: 'Total FTE Effort', value: projectDetails?.total_fte_effort },
-    { label: 'Total FTE Cost', value: projectDetails?.total_fte_cost },
+    {
+      label: 'Total FTE Cost',
+      value: costDisplay(
+        projectDetails?.total_fte_cost,
+        projectDetails?.currency_symbol
+      ),
+    },
 
     {
       label: 'Total Sub Con Effort',
       value: projectDetails?.total_sub_con_effort,
     },
-    { label: 'Total Sub Con Cost', value: projectDetails?.total_sub_con_cost },
+    {
+      label: 'Total Sub Con Cost',
+      value: costDisplay(
+        projectDetails?.total_sub_con_cost,
+        projectDetails?.currency_symbol
+      ),
+    },
     { label: 'Total FTE Count', value: projectDetails?.total_fte },
 
     {
       label: 'Total Non Labor Cost',
-      value: projectDetails?.total_non_labor_cost,
+      value: costDisplay(
+        projectDetails?.total_non_labor_cost,
+        projectDetails?.currency_symbol
+      ),
     },
     {
       label: 'Total Sub Con Count',

@@ -1,3 +1,4 @@
+import { costDisplay } from '../../../../../../common-utils';
 import { ResourceCostList } from '../../../../../types/resource-cost';
 import { formatDateToYYYYMMDD } from '../utils';
 
@@ -12,13 +13,13 @@ export interface ResourceCostTableColumn<T> {
   render?: (row: T) => React.ReactNode;
 }
 
-const costDisplay = (cost: string | number | null | undefined) => {
-  if (cost === null || cost === undefined) return '-';
-  const formattedCost = Number(cost).toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-  });
-  return <>{formattedCost}</>;
-};
+// const costDisplay = (cost: string | number | null | undefined) => {
+//   if (cost === null || cost === undefined) return '-';
+//   const formattedCost = Number(cost).toLocaleString('en-US', {
+//     minimumFractionDigits: 2,
+//   });
+//   return <>{formattedCost}</>;
+// };
 
 export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
   [
@@ -102,7 +103,7 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
         textAlign: 'right',
       },
       render: (row: ResourceCostList) => (
-        <span>{costDisplay(row.annual_cost)}</span>
+        <span>{costDisplay(row.annual_cost, row.currency_symbol)}</span>
       ),
     },
     {
@@ -115,20 +116,7 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
         textAlign: 'right',
       },
       render: (row: ResourceCostList) => (
-        <span>{costDisplay(row.monthly_cost)}</span>
-      ),
-    },
-    {
-      id: 'bi_weekly_cost',
-      sortId: 'bi_weekly_cost',
-      label: 'Bi-Weekly Compensation',
-      width: 200,
-      sortable: true,
-      sx: {
-        textAlign: 'right',
-      },
-      render: (row: ResourceCostList) => (
-        <span>{costDisplay(row.bi_weekly_cost)}</span>
+        <span>{costDisplay(row.monthly_cost, row.currency_symbol)}</span>
       ),
     },
     {
@@ -141,7 +129,20 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
         textAlign: 'right',
       },
       render: (row: ResourceCostList) => (
-        <span>{costDisplay(row.weekly_cost)}</span>
+        <span>{costDisplay(row.weekly_cost, row.currency_symbol)}</span>
+      ),
+    },
+    {
+      id: 'bi_weekly_cost',
+      sortId: 'bi_weekly_cost',
+      label: 'Bi-Weekly Compensation',
+      width: 200,
+      sortable: true,
+      sx: {
+        textAlign: 'right',
+      },
+      render: (row: ResourceCostList) => (
+        <span>{costDisplay(row.bi_weekly_cost, row.currency_symbol)}</span>
       ),
     },
     {
@@ -154,7 +155,7 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
         textAlign: 'right',
       },
       render: (row: ResourceCostList) => (
-        <span>{costDisplay(row.daily_cost)}</span>
+        <span>{costDisplay(row.daily_cost, row.currency_symbol)}</span>
       ),
     },
     {
@@ -167,7 +168,7 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
         textAlign: 'right',
       },
       render: (row: ResourceCostList) => (
-        <span>{costDisplay(row.hourly_cost)}</span>
+        <span>{costDisplay(row.hourly_cost, row.currency_symbol)}</span>
       ),
     },
     {

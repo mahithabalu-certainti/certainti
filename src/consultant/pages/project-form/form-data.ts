@@ -83,7 +83,7 @@ export const newKeyContactFields = (
     options: STATUS_OPTIONS,
     placeholder: 'Choose Status',
   }),
-  createImgButton(closeIcon, {
+  createImgButton('button', closeIcon, {
     width: '60px',
   }),
 ];
@@ -125,7 +125,7 @@ const createDynamicField = (
   }
   if (contacts.type === 'iconButton') {
     fieldsArr.push(
-      createImgButton('', {
+      createImgButton(name + '_' + groupIndex, '', {
         width: rest.width,
         onClick: () => removeKeyContact(index),
       })

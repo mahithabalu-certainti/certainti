@@ -268,7 +268,7 @@ export const AccountDetails = () => {
         name: 'Resources',
         key: 'resources',
         id: AllModules.RESOURCES,
-        disabled: false,
+        disabled: disable,
       },
       {
         name: 'Projects',
@@ -276,37 +276,37 @@ export const AccountDetails = () => {
         id: AllModules.PROJECTS,
         disabled: disable,
       },
-      { name: 'Cases', key: 'cases', id: AllModules.CASES, disabled: false },
+      { name: 'Cases', key: 'cases', id: AllModules.CASES, disabled: disable },
       {
         name: 'Activities',
         key: 'activities',
         id: AllModules.ACTIVITIES,
-        disabled: false,
+        disabled: disable,
       },
-      { name: 'Notes', key: 'notes', id: AllModules.NOTES, disabled: false },
+      { name: 'Notes', key: 'notes', id: AllModules.NOTES, disabled: disable },
       {
         name: 'Attachments',
         key: 'attachments',
         id: AllModules.ATTACHMENTS,
-        disabled: false,
+        disabled: disable,
       },
       {
         name: 'Checklist',
         key: 'checklist',
         id: AllModules.CHECKLISTS,
-        disabled: false,
+        disabled: disable,
       },
       {
         name: 'Timesheet',
         key: 'timesheet',
         id: AllModules.TIMESHEETS,
-        disabled: false,
+        disabled: disable,
       },
       {
         name: 'Imports',
         key: 'imports',
         id: AllModules.IMPORTS,
-        disabled: false,
+        disabled: disable,
       },
     ],
     [disable]
@@ -315,7 +315,7 @@ export const AccountDetails = () => {
   if (!accountIsEnable || !isAccountDetailsEnable) return <AccessRestricted />;
 
   return (
-    <div className='flex flex-col'>
+    <div className='flex flex-col h-full'>
       <div className='flex h-[60px]'>
         <PageHeader
           variant='sub'
@@ -342,9 +342,10 @@ export const AccountDetails = () => {
         columns={accountDetails}
         loading={isLoading}
         error={isError}
+        singleLineView={true}
       />
-      <div className='flex flex-row w-full'>
-        <div className='flex w-[200px] min-w-[200px] max-w-[200px]'>
+      <div className='flex flex-1 flex-row w-full'>
+        <div className='flex-1 w-[200px] min-w-[200px] max-w-[200px]'>
           <SideMenuPanel
             menuItems={sideMenuItems}
             activeKey={activeKey}

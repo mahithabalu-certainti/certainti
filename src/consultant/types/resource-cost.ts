@@ -44,7 +44,7 @@ export type ResourceCostList = {
   r_number?: string;
   created_by?: string | null;
   modified_by?: string | null;
-  
+  currency_symbol?: string;
 };
 
 export interface NewCostData {

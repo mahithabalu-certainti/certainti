@@ -44,7 +44,7 @@ export const newKeyContactFields = (
   }),
   createSelectField('key_contact_role', 'Role', {
     options: roles,
-    width: '140px',
+    width: '160px',
     required: false,
     placeholder: 'Choose Role',
     onChange: true,
@@ -65,6 +65,11 @@ export const newKeyContactFields = (
       },
     ],
   }),
+  createTextField('key_contact_rid', 'Key Contact ID', {
+    required: false,
+    hide: true,
+    placeholder: '',
+  }),
   createRadioField('is_primary_contact', 'Is Primary Contact?', {
     radioOptions: YES_NO_OPTIONS,
     width: '140px',
@@ -73,7 +78,7 @@ export const newKeyContactFields = (
   }),
   createRadioField('include_in_communication', 'Include in Communications?', {
     radioOptions: YES_NO_OPTIONS,
-    width: '190px',
+    width: '140px',
     required: false,
   }),
   createSelectField('key_contact_status', 'Status', {
@@ -82,7 +87,7 @@ export const newKeyContactFields = (
     options: STATUS_OPTIONS,
     placeholder: 'Choose Status',
   }),
-  createImgButton(closeIcon, {
+  createImgButton('button', closeIcon, {
     width: '60px',
   }),
 ];
@@ -93,18 +98,19 @@ const createDynamicField = (
   removeKeyContact: (index: number) => void
 ) => {
   const fieldsArr = [];
-  const groupIndex = Math.floor(index / 7);
+  const groupIndex = Math.floor(index / 8);
   const { name, label, ...rest } = contacts;
+  const dynamicName = `${name}_${groupIndex}`;
   if (contacts.type === 'text') {
     fieldsArr.push(
-      createTextField(name + '_' + groupIndex, label, {
+      createTextField(dynamicName, label, {
         ...rest,
       })
     );
   }
   if (contacts.type === 'select') {
     fieldsArr.push(
-      createSelectField(name + '_' + groupIndex, label, {
+      createSelectField(dynamicName, label, {
         ...rest,
         options: rest.options || [],
       })
@@ -112,7 +118,7 @@ const createDynamicField = (
   }
   if (contacts.type === 'radio') {
     fieldsArr.push(
-      createRadioField(name + '_' + groupIndex, label, {
+      createRadioField(dynamicName, label, {
         required: rest.required,
         width: rest.width,
         defaultValue: rest.defaultValue,
@@ -124,7 +130,7 @@ const createDynamicField = (
   }
   if (contacts.type === 'iconButton') {
     fieldsArr.push(
-      createImgButton('', {
+      createImgButton(dynamicName, '', {
         width: rest.width,
         onClick: () => removeKeyContact(index),
       })
@@ -142,7 +148,6 @@ export const FormData = (
   dataResidency: SelectOption[],
   industrys: SelectOption[],
   roles: SelectOption[],
-  isPrimaryContactRequired: boolean,
   isParentAccountRequired: boolean,
   keyContacts: FieldType[],
   addNewKeyContact: () => void,
@@ -157,13 +162,6 @@ export const FormData = (
         sectionName: 'Basic Information',
         fillType: 'half',
         fields: [
-          // createTextField('rid', 'Account ID', {
-          //   required: true,
-          //   regex: REGEX_PATTERNS.ALPHANUMERIC,
-          //   regexErrorMessage: 'Please Enter valid Account ID',
-          //   placeholder: 'Enter Account ID',
-          //   disabled: disableFields,
-          // }),
           createTextField('account_name', 'Name', {
             required: true,
             placeholder: 'Enter Name',
@@ -202,7 +200,7 @@ export const FormData = (
             },
           }),
           createTextField('website', 'Website', {
-            type: 'website',
+            type: 'text',
             required: false,
             regex: REGEX_PATTERNS.WEBSITE,
             regexErrorMessage: 'Enter a valid website URL',
@@ -338,31 +336,6 @@ export const FormData = (
               ...createDynamicField(contacts, index, removeKeyContact),
             ])
             .flat(),
-          //
-          // createTextField('finance_poc_name', 'Finance Contact Name', {
-          //   required: true,
-          //   regex: REGEX_PATTERNS.LETTERS_3_TO_25,
-          //   regexErrorMessage: 'Letters Only and between 3 to 25 characters',
-          //   placeholder: 'Enter Finance point of contact',
-          // }),
-          // createTextField('finance_poc_email', 'Finance POC Email', {
-          //   required: true,
-          //   regex: REGEX_PATTERNS.EMAIL,
-          //   regexErrorMessage: 'Enter a valid email address',
-          //   placeholder: 'Enter Finance POC Email',
-          // }),
-          // createPhoneInputField(
-          //   'primary_contact_number',
-          //   'Primary Contact Phone',
-          //   {
-          //     required: true,
-          //     placeholder: 'Enter Primary Contact Phone',
-          //   }
-          // ),
-          // createPhoneInputField('finanace_poc_number', 'Finance POC Phone', {
-          //   required: true,
-          //   placeholder: 'Enter Finance POC Phone',
-          // }),
         ],
       },
       {
@@ -482,11 +455,11 @@ export const FormData = (
       stateLoading,
       currency,
       roles,
-      isPrimaryContactRequired,
       dataResidency,
       showOthersField,
       keyContacts,
       addNewKeyContact,
+      removeKeyContact,
     ]
   );
 };

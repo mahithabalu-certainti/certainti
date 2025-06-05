@@ -40,6 +40,7 @@ export const ProjectExportListURL = ({
   filters,
   fiscalYear,
   accountNumber,
+  globalFilters,
 }: ProjectListParams): string => {
   const baseUrl = accountNumber
     ? `/api/project/export${accountNumber ? `/${accountNumber}` : ''}`
@@ -52,7 +53,9 @@ export const ProjectExportListURL = ({
   }
   if (sortBy !== undefined) searchParams.set('sortBy', sortBy);
   if (sortOrder !== undefined) searchParams.set('sortOrder', sortOrder);
-
+  if (globalFilters !== undefined) {
+    searchParams.set('globalFilters', JSON.stringify(globalFilters));
+  }
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };

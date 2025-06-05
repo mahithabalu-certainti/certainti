@@ -203,22 +203,21 @@ export const createButton = (
 });
 
 export const createImgButton = (
+  name: string,
   iconUrl: string,
   others?: {
     width?: string;
-    onClick?: (index: number) => void;
+    onClick?: (e?: React.MouseEvent<HTMLElement>) => void;
   }
 ): FieldType => ({
   type: 'iconButton',
   iconUrl: iconUrl,
-  name: '',
+  name: name,
   label: '',
   required: false,
   width: others?.width,
-  onClick: (index?: number) => {
-    if (others?.onClick && index !== undefined) {
-      others.onClick(index);
-    }
+  onClick: (e?: React.MouseEvent<HTMLElement>) => {
+    others?.onClick?.(e);
   },
 });
 
@@ -535,5 +534,22 @@ export const formatDateToYYYYMMDDWithTime = (
 
   const formattedTime = `${String(hours).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
 
-  return `${year}/${month}/${day}, ${formattedTime}`;
+  return `${year}-${month}-${day}, ${formattedTime}`;
+};
+
+export const costDisplay = (
+  cost: string | number | null | undefined,
+  symbol: string = '$'
+) => {
+  if (cost === null || cost === undefined) return '-';
+
+  const numberCost = Number(cost);
+  const hasDecimal = !Number.isInteger(numberCost);
+
+  const formattedCost = numberCost.toLocaleString('en-US', {
+    minimumFractionDigits: hasDecimal ? 2 : 0,
+    maximumFractionDigits: hasDecimal ? 2 : 0,
+  });
+
+  return symbol ? `${symbol} ${formattedCost}` : formattedCost;
 };

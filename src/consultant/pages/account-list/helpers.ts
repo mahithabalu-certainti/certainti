@@ -95,36 +95,28 @@ export const getAccountFilterFields = (
   },
 ];
 
-const colors = [
-  { color: '#3348F7', bgColor: '#EBEDFF' },
-  { color: '#F16137', bgColor: '#FDE7E1' },
-  { color: '#E54787', bgColor: '#FBE3ED' },
-  { color: '#2E5AAC', bgColor: '#EBF1F8' },
-  { color: '#B62EB9', bgColor: '#F6E2F6' },
-];
-
 export function convertAccounts(
-  inputAccounts: AccountList[]
+  inputAccounts: AccountList[],
+  colorCodes: { color: string; bgColor: string }[] = []
 ): ConvertedAccount[] {
   const result: ConvertedAccount[] = [];
 
-  // Shuffle the color palette to randomize the order
-  const shuffledColors = [...colors].sort(() => Math.random() - 0.5);
   let colorIndex = 0;
 
-  // Helper function to get the next unique color
   function getNextColor() {
-    const color = shuffledColors[colorIndex % shuffledColors.length];
+    const color = colorCodes[colorIndex % colorCodes.length];
     colorIndex++;
     return color;
   }
 
-  // Helper function to process each account
   function processAccount(
     account: AccountList,
-    parentAccountName: string | null = null
+    parentAccountName: string | null = null,
+    isTopLevel: boolean = false
   ): void {
-    const { color, bgColor } = getNextColor();
+    const colorProps = isTopLevel
+      ? getNextColor()
+      : { color: undefined, bgColor: undefined };
 
     const convertedAccount: ConvertedAccount = {
       accountId: account.rid,
@@ -135,32 +127,31 @@ export function convertAccounts(
       parentAccount: parentAccountName,
       totalProjects: account?.total_projects || '-',
       totalProjectHours: account?.total_project_hours || '-',
-      totalProjectCost: account?.total_project_cost || '-',
+      totalProjectCost: account?.total_project_cost,
       estimatedHours: account?.qualifying_project_hours_fed || '-',
-      qre: account?.qualifying_project_qre_fed || '-',
-      estimatedCredits: account?.qualifying_project_rd_credits_fed || '-',
-      actualCredits: account?.total_projects_rd_credits || '-',
+      qre: account?.qualifying_project_qre_fed,
+      estimatedCredits: account?.qualifying_project_rd_credits_fed,
+      actualCredits: account?.total_projects_rd_credits,
       financeExecutive: account?.finance_executive || '-',
       financeHead: account?.delivery_head || '-',
       professionalConsultant: account?.technical_consultant || '-',
       accountNumber: account.r_number,
       projectsByYear: account.projects_by_fiscal_year || [],
-      color,
-      bgColor,
+      currency: account?.currency?.currency_symbol || '',
+      ...colorProps,
     };
+
     result.push(convertedAccount);
 
-    // Process child accounts if they exist
     if (account.child_accounts && account.child_accounts.length > 0) {
       account.child_accounts.forEach((child) => {
-        processAccount(child, account.account_name);
+        processAccount(child, account.account_name, false);
       });
     }
   }
 
-  // Process each top-level account
   inputAccounts.forEach((account) => {
-    processAccount(account);
+    processAccount(account, null, true); // mark top-level
   });
 
   return result;
