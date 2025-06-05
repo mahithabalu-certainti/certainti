@@ -177,7 +177,7 @@ export const Accounts: React.FC = () => {
 
   const [totalCount, setTotalCount] = useState<number>(0);
 
-  if (!accountIsEnable || isAccountViewAllEnable) return <AccessRestricted />;
+  if (!accountIsEnable || !isAccountViewAllEnable) return <AccessRestricted />;
 
   return (
     <div className='flex flex-col w-full h-full'>
