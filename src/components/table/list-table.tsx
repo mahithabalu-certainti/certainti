@@ -91,6 +91,7 @@ const ListTable = <T extends RowData>({
         <MuiTable
           stickyHeader={stickyHeader}
           sx={{
+            height: '100%',
             borderCollapse: 'separate !important',
             borderSpacing: 0,
             '& .MuiTableCell-root': {
@@ -429,23 +430,36 @@ const ListTable = <T extends RowData>({
                   </TableRow>
                 );
               })}
+            {!loading && !error && data.length > 0 && (
+              <TableRow sx={{ height: '10px !important' }}>
+                <TableCell
+                  colSpan={
+                    columns.length +
+                    (selectable ? 1 : 0) +
+                    (actionMenuItems?.length > 0 ? 1 : 0)
+                  }
+                  sx={{ height: '10px !important' }}
+                ></TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </MuiTable>
       </TableContainer>
 
       {/* Pagination */}
-      {(onPageChange || onRowsPerPageChange) && (
-        <TablePagination
-          rowsPerPageOptions={rowsPerPageOptions}
-          count={totalItems}
-          rowsPerPage={rowsPerPage}
-          page={currentPage}
-          onPageChange={(newPage) => onPageChange?.(newPage)}
-          onRowsPerPageChange={(newPageSize) =>
-            onRowsPerPageChange?.(newPageSize)
-          }
-        />
-      )}
+      {(onPageChange || onRowsPerPageChange) &&
+        (loading || error || data.length > 0) && (
+          <TablePagination
+            rowsPerPageOptions={rowsPerPageOptions}
+            count={totalItems}
+            rowsPerPage={rowsPerPage}
+            page={currentPage}
+            onPageChange={(newPage) => onPageChange?.(newPage)}
+            onRowsPerPageChange={(newPageSize) =>
+              onRowsPerPageChange?.(newPageSize)
+            }
+          />
+        )}
     </>
   );
 };
