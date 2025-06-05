@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   menuArrowRight,
   menuArrowRightHover,
@@ -193,15 +193,15 @@ const PrivilegeAccordion: React.FC<{
     return getFlattenedPrivileges(privileges);
   }, [privileges]);
   // Update the useEffect to use the memoized value and add proper dependency tracking
-  React.useEffect(() => {
-    // Only call onPrivilegesChange if privileges have actually changed
-    const hasChanges =
-      JSON.stringify(flattenedPrivileges) !==
-      JSON.stringify(getFlattenedPrivileges(groupedPrivilege));
-    if (hasChanges) {
+  const previousFlattened = useRef<string | null>(null);
+
+  useEffect(() => {
+    const current = JSON.stringify(flattenedPrivileges);
+    if (previousFlattened.current !== current) {
+      previousFlattened.current = current;
       onPrivilegesChange(flattenedPrivileges);
     }
-  }, [flattenedPrivileges, groupedPrivilege, onPrivilegesChange]);
+  }, [flattenedPrivileges, onPrivilegesChange]);
 
   // Update all handlers to include is_modified flag
   const handleMenuCheck = (e: React.MouseEvent) => {
@@ -209,6 +209,16 @@ const PrivilegeAccordion: React.FC<{
     const newMenuState = !privileges.menu.is_enabled;
 
     if (!newMenuState) {
+      // Expand all children before showing popup
+      setIsMenuExpanded(true);
+      setExpandedModules(privileges.modules.map((mod) => mod.module.module_id));
+      const allPermissionIds = privileges.modules.flatMap((mod) =>
+        mod.permissions
+          .filter((p) => p.is_field_available)
+          .map((p) => p.permission_id)
+      );
+      setExpandedPermissions(allPermissionIds);
+
       setConfirmationState({
         isOpen: true,
         message:
@@ -252,6 +262,87 @@ const PrivilegeAccordion: React.FC<{
     }));
   };
 
+  // const handleModuleCheck = (moduleId: string) => (e: React.MouseEvent) => {
+  //   e.stopPropagation();
+  //   const currentModule = privileges.modules.find(
+  //     (mod) => mod.module.module_id === moduleId
+  //   );
+  //   const newState = !currentModule?.module.is_enabled;
+
+  //   {
+  //     /*  popup-confirmation */
+  //   }
+  //   if (!newState) {
+  //     setConfirmationState({
+  //       isOpen: true,
+  //       message:
+  //         'Disabling this parent permission will also remove its associated child permissions. Are you sure you want to proceed?',
+  //       onConfirm: () => {
+  //         setPrivileges((prev) => ({
+  //           ...prev,
+  //           modules: prev.modules.map((mod) => {
+  //             if (mod.module.module_id === moduleId) {
+  //               const newState = !mod.module.is_enabled;
+  //               return {
+  //                 ...mod,
+  //                 module: {
+  //                   ...mod.module,
+  //                   is_enabled: newState,
+  //                   is_modified: true, // This module was changed
+  //                 },
+  //                 permissions: mod.permissions.map((perm) => ({
+  //                   ...perm,
+  //                   is_enabled: newState,
+  //                   is_modified: true, // These permissions were affected
+  //                   fields: perm.fields?.map((field) => ({
+  //                     ...field,
+  //                     read: newState ? field.read : false,
+  //                     edit: newState ? field.edit : false,
+  //                     is_modified: true, // These fields were affected
+  //                   })),
+  //                 })),
+  //               };
+  //             }
+  //             return mod;
+  //           }),
+  //         }));
+  //         setConfirmationState((prev) => ({ ...prev, isOpen: false }));
+  //       },
+  //     });
+  //     return;
+  //   }
+  //   {
+  //     /*  popup-confirmation End */
+  //   }
+  //   setPrivileges((prev) => ({
+  //     ...prev,
+  //     modules: prev.modules.map((mod) => {
+  //       if (mod.module.module_id === moduleId) {
+  //         const newState = !mod.module.is_enabled;
+  //         return {
+  //           ...mod,
+  //           module: {
+  //             ...mod.module,
+  //             is_enabled: newState,
+  //             is_modified: true, // This module was changed
+  //           },
+  //           permissions: mod.permissions.map((perm) => ({
+  //             ...perm,
+  //             is_enabled: newState,
+  //             is_modified: true, // These permissions were affected
+  //             fields: perm.fields?.map((field) => ({
+  //               ...field,
+  //               read: newState ? field.read : false,
+  //               edit: newState ? field.edit : false,
+  //               is_modified: true, // These fields were affected
+  //             })),
+  //           })),
+  //         };
+  //       }
+  //       return mod;
+  //     }),
+  //   }));
+  // };
   const handleModuleCheck = (moduleId: string) => (e: React.MouseEvent) => {
     e.stopPropagation();
     const currentModule = privileges.modules.find(
@@ -259,10 +350,21 @@ const PrivilegeAccordion: React.FC<{
     );
     const newState = !currentModule?.module.is_enabled;
 
-    {
-      /*  popup-confirmation */
-    }
     if (!newState) {
+      // Expand current module and its permissions
+      setExpandedModules((prev) =>
+        prev.includes(moduleId) ? prev : [...prev, moduleId]
+      );
+
+      const permissionIds =
+        currentModule?.permissions
+          .filter((p) => p.is_field_available)
+          .map((p) => p.permission_id) || [];
+
+      setExpandedPermissions((prev) => [
+        ...new Set([...prev, ...permissionIds]),
+      ]);
+
       setConfirmationState({
         isOpen: true,
         message:
@@ -272,23 +374,22 @@ const PrivilegeAccordion: React.FC<{
             ...prev,
             modules: prev.modules.map((mod) => {
               if (mod.module.module_id === moduleId) {
-                const newState = !mod.module.is_enabled;
                 return {
                   ...mod,
                   module: {
                     ...mod.module,
-                    is_enabled: newState,
-                    is_modified: true, // This module was changed
+                    is_enabled: false,
+                    is_modified: true,
                   },
                   permissions: mod.permissions.map((perm) => ({
                     ...perm,
-                    is_enabled: newState,
-                    is_modified: true, // These permissions were affected
+                    is_enabled: false,
+                    is_modified: true,
                     fields: perm.fields?.map((field) => ({
                       ...field,
-                      read: newState ? field.read : false,
-                      edit: newState ? field.edit : false,
-                      is_modified: true, // These fields were affected
+                      read: false,
+                      edit: false,
+                      is_modified: true,
                     })),
                   })),
                 };
@@ -301,30 +402,28 @@ const PrivilegeAccordion: React.FC<{
       });
       return;
     }
-    {
-      /*  popup-confirmation End */
-    }
+
+    // Normal enable case
     setPrivileges((prev) => ({
       ...prev,
       modules: prev.modules.map((mod) => {
         if (mod.module.module_id === moduleId) {
-          const newState = !mod.module.is_enabled;
           return {
             ...mod,
             module: {
               ...mod.module,
-              is_enabled: newState,
-              is_modified: true, // This module was changed
+              is_enabled: true,
+              is_modified: true,
             },
             permissions: mod.permissions.map((perm) => ({
               ...perm,
-              is_enabled: newState,
-              is_modified: true, // These permissions were affected
+              is_enabled: true,
+              is_modified: true,
               fields: perm.fields?.map((field) => ({
                 ...field,
-                read: newState ? field.read : false,
-                edit: newState ? field.edit : false,
-                is_modified: true, // These fields were affected
+                read: field.read,
+                edit: field.edit,
+                is_modified: true,
               })),
             })),
           };
@@ -401,6 +500,10 @@ const PrivilegeAccordion: React.FC<{
       const newPermissionState = !currentPermission?.is_enabled;
 
       if (!newPermissionState && currentPermission?.is_field_available) {
+        // Expand permission to show its fields
+        setExpandedPermissions((prev) =>
+          prev.includes(permissionId) ? prev : [...prev, permissionId]
+        );
         setConfirmationState({
           isOpen: true,
           message:
@@ -940,12 +1043,10 @@ export const ProfilePermissions: React.FC<ProfileModuleListProps> = ({
   viewProfileDisabled,
 }) => {
   const privileges = createProfilePermissionsData || [];
-  // const isField = (privilege: Privilege): privilege is FieldPrivilege => {
-  //   return privilege.type === 'field' &&
-  //          'field_id' in privilege &&
-  //          'read' in privilege &&
-  //          'edit' in privilege;
-  // };
+
+  const [allModifiedPrivileges, setAllModifiedPrivileges] = useState<
+    Privilege[]
+  >([]);
 
   const groupPrivileges = (privileges: Privilege[]): GroupedPrivileges[] => {
     const menuPrivileges = privileges.filter(
@@ -973,7 +1074,7 @@ export const ProfilePermissions: React.FC<ProfileModuleListProps> = ({
               fields: privileges.filter(
                 (f): f is FieldPrivilege =>
                   f.type === 'field' &&
-                  'permission_id' in f &&
+                  // 'permission_id' in f &&
                   f.permission_id === permission.permission_id
               ),
             }));
@@ -989,6 +1090,14 @@ export const ProfilePermissions: React.FC<ProfileModuleListProps> = ({
 
   const groupedPrivileges = groupPrivileges(privileges);
 
+  const handlePrivilegesChange = (modified: Privilege[]) => {
+    const updatedMap = new Map(allModifiedPrivileges.map((p) => [p.rid, p]));
+    modified.forEach((p) => updatedMap.set(p.rid, p));
+    const merged = Array.from(updatedMap.values());
+
+    setAllModifiedPrivileges(merged); // ✅ update state
+    onPrivilegesChange(merged); // ✅ immediately use the correct value
+  };
   return (
     <div className='px-4'>
       <div className='border border-[#CBD6E2] rounded-[4px]'>
@@ -1006,7 +1115,7 @@ export const ProfilePermissions: React.FC<ProfileModuleListProps> = ({
             <PrivilegeAccordion
               key={groupedPrivilege.menu.rid}
               groupedPrivilege={groupedPrivilege}
-              onPrivilegesChange={onPrivilegesChange}
+              onPrivilegesChange={handlePrivilegesChange}
               viewProfileDisabled={viewProfileDisabled}
             />
           ))}
