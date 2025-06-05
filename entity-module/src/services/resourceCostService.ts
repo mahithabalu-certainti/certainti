@@ -12,6 +12,7 @@ import { initMainDbSequelize } from "../config/mainDataSource";
 import { Op, Sequelize } from "sequelize";
 import moment from "moment";
 import Decimal from "decimal.js";
+import { isNull, isNullOrUndefined } from "util";
 
 class ResourceCostService {
   private schemaService: SchemaService;
@@ -258,6 +259,7 @@ async createResourceCost(
         bi_weekly_cost,
         daily_cost,
         hourly_cost,
+        effort_in_hrs,
         currency_rid,
         accountNumber,
         resource_number,
@@ -311,7 +313,8 @@ async createResourceCost(
           weekly_cost,
           bi_weekly_cost,
           daily_cost,
-          hourly_cost
+          hourly_cost,
+          effort_in_hrs,
         };
 
         const costValues = Object.entries(costFields).reduce((acc, [key, value]) => {
@@ -376,6 +379,7 @@ async createResourceCost(
             throw new Error("Compensation already exists for this duration.");
           }
         }
+
         createdResourceCost = await ResourceCost.create({
           eid,
           account_rid,
@@ -514,6 +518,7 @@ async createResourceCost(
         bi_weekly_cost,
         daily_cost,
         hourly_cost,
+        effort_in_hrs,
         currency_rid,
         accountNumber,
         rid,
@@ -576,7 +581,8 @@ async createResourceCost(
           weekly_cost,
           bi_weekly_cost,
           daily_cost,
-          hourly_cost
+          hourly_cost,
+          effort_in_hrs,
         };
 
         const costValues = Object.entries(costFields).reduce((acc, [key, value]) => {
@@ -800,6 +806,7 @@ async createResourceCost(
         "bi_weekly_cost",
         "daily_cost",
         "hourly_cost",
+        "effort_in_hrs",
         "currency_rid",
         "fiscal_year",
         "comments",
@@ -912,6 +919,7 @@ async createResourceCost(
       if (resourceCostById) {
         const costData = resourceCostById.toJSON();
         const sequelize = await this.getMainDbSequelize();
+        await resourceCostSchemaService.assignCurrencyRid(costData,sequelize);
         // Query the currency table in the main database
         const [currencyResult] = await sequelize.query(
           `SELECT currency_name,currency_code,currency_symbol FROM public.currency WHERE rid = :currency_rid`,

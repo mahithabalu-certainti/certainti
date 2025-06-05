@@ -62,6 +62,7 @@ export interface IResourceCost {
   bi_weekly_cost?: number | "";
   daily_cost?: number | "";
   hourly_cost?: number | "";
+  effort_in_hrs?: number | "";
   fiscal_year: number;
   created_datetime?: string | null;
   modified_datetime?: string | null;
@@ -89,6 +90,7 @@ export interface IUpdateResourceCost {
   bi_weekly_cost?: number | "";
   daily_cost?: number | "";
   hourly_cost?: number | "";
+  effort_in_hrs?: number | "";
   comments?: string;
   modified_datetime?: string | null;
   modified_by?: string | null;

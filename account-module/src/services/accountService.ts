@@ -913,7 +913,7 @@ async insertClientTemplateDetails(
           {
             model: Currency,
             as: "currency",
-            attributes: ["currency_code"],
+            attributes: ["currency_code", "currency_symbol"],
             required: false,
           },
           {
@@ -936,6 +936,22 @@ async insertClientTemplateDetails(
           }
         ],
       });
+
+      // Get USD currency_rid
+      const usdCurrency = await Currency.findOne({
+        where: {
+          currency_code: 'USD'
+        }
+      });
+
+      // If currency_rid is null or empty, assign USD currency
+      if (!accountById?.currency_rid || accountById.currency_rid === '') {
+        if (accountById) {
+          accountById.currency_rid = usdCurrency?.rid;
+          (accountById as any).currency_code = usdCurrency?.currency_code;
+          (accountById as any).currency_symbol = usdCurrency?.currency_symbol;
+        }
+      }
 
       let acconuntNumber = accountById?.r_number || "";
       if(accountById?.storage_type === "store_in_parent"){

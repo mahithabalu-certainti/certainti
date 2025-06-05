@@ -627,9 +627,9 @@ class ResourceCostSchemaService {
           replacements,
           type: "SELECT",
         });
-      }
 
-      await Promise.all(results.map(result => this.assignCurrencyRid(result, mainDbSequelize)));
+        await Promise.all(results.map(result => this.assignCurrencyRid(result, mainDbSequelize)));
+      }
 
       const resourceCost = results;
 
@@ -699,6 +699,7 @@ class ResourceCostSchemaService {
           "Weekly Compensation": formatNumberForExport(resource.weekly_cost, resource.currency_symbol) || "-",
           "Daily Compensation": formatNumberForExport(resource.daily_cost, resource.currency_symbol) || "-",
           "Hourly Compensation": formatNumberForExport(resource.hourly_cost, resource.currency_symbol) || "-",
+          "Effort In Hours": resource.effort_in_hrs || "-",
           "Org Name": resource.resource_orgname || "-",
           "Designation": resource.resource_designation || "-",
           "Role": resource.resource_role || "-",
@@ -803,6 +804,7 @@ class ResourceCostSchemaService {
       "bi_weekly_cost",
       "daily_cost",
       "hourly_cost",
+      "effort_in_hrs",
       "currency",
       "account_name",
       "resource_name",
@@ -841,6 +843,7 @@ class ResourceCostSchemaService {
       "hourly",
       "bi_weekly",
       "fiscal_year",
+      "effort_in_hrs",
       // "semi_annual",
     ];
     const dateFields = ["effective_date", "end_date"];
@@ -927,6 +930,9 @@ class ResourceCostSchemaService {
     let condition = "";
     if(key === "fiscal_year") {
       key = "fiscal_year";
+    }
+    else if(key === "effort_in_hrs") {
+      key = "effort_in_hrs";
     }
     else {
       key = `${key}_cost`;
