@@ -177,7 +177,7 @@ export const Accounts: React.FC = () => {
 
   const [totalCount, setTotalCount] = useState<number>(0);
 
-  if (!accountIsEnable) return <AccessRestricted />;
+  if (!accountIsEnable || isAccountViewAllEnable) return <AccessRestricted />;
 
   return (
     <div className='flex flex-col w-full h-full'>
@@ -231,60 +231,53 @@ export const Accounts: React.FC = () => {
         </div>
       </div>
 
-      {isAccountViewAllEnable ? (
-        <>
-          <div className='flex items-center justify-end h-[34px] min-h-[34px] px-4'>
-            <div className='relative'>
-              <button
-                aria-describedby={filterId}
-                className={`w-[64px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
+      <div className='flex items-center justify-end h-[34px] min-h-[34px] px-4'>
+        <div className='relative'>
+          <button
+            aria-describedby={filterId}
+            className={`w-[64px] h-[24px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
               ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) || sortFilterCount > 0 ? 'bg-[#F3F3F3]' : ''}`}
-                onClick={handleFilterModal}
-              >
-                <img src={newFilterIcon} alt='filter-icon' />
-                Filter
-                {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
-                sortFilterCount > 0 ? (
-                  <div className='absolute -top-[5px] -right-2 w-4 h-4 flex items-center justify-center text-xs'>
-                    <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
-                    <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
-                      {(appliedFilters
-                        ? Object.keys(appliedFilters).length
-                        : 0) + sortFilterCount}
-                    </span>
-                  </div>
-                ) : null}
-              </button>
-              <FilterModal
-                isOpen={isFilterOpen}
-                filterAnchorEl={anchorEl}
-                filterId={filterId}
-                filterFields={accountFilterFields}
-                setAppliedFilters={setAppliedFilters}
-                setPage={setPage}
-                handleCloseFilter={handleCloseFilter}
-                handleSorting={handleSorting}
-              />
-            </div>
-          </div>
-          <div className='flex-1'>
-            <AccountTable
-              appliedFilters={appliedFilters}
-              setTotalCount={setTotalCount}
-              order={order}
-              setOrder={setOrder}
-              orderBy={orderBy}
-              setOrderBy={setOrderBy}
-              setPage={setPage}
-              page={page}
-              isAccountEditEnable={isAccountEditEnable}
-              isAccountDeleteEnable={isAccountDeleteEnable}
-            />
-          </div>
-        </>
-      ) : (
-        <AccessRestricted />
-      )}
+            onClick={handleFilterModal}
+          >
+            <img src={newFilterIcon} alt='filter-icon' />
+            Filter
+            {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
+            sortFilterCount > 0 ? (
+              <div className='absolute -top-[5px] -right-2 w-4 h-4 flex items-center justify-center text-xs'>
+                <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
+                <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
+                  {(appliedFilters ? Object.keys(appliedFilters).length : 0) +
+                    sortFilterCount}
+                </span>
+              </div>
+            ) : null}
+          </button>
+          <FilterModal
+            isOpen={isFilterOpen}
+            filterAnchorEl={anchorEl}
+            filterId={filterId}
+            filterFields={accountFilterFields}
+            setAppliedFilters={setAppliedFilters}
+            setPage={setPage}
+            handleCloseFilter={handleCloseFilter}
+            handleSorting={handleSorting}
+          />
+        </div>
+      </div>
+      <div className='flex-1'>
+        <AccountTable
+          appliedFilters={appliedFilters}
+          setTotalCount={setTotalCount}
+          order={order}
+          setOrder={setOrder}
+          orderBy={orderBy}
+          setOrderBy={setOrderBy}
+          setPage={setPage}
+          page={page}
+          isAccountEditEnable={isAccountEditEnable}
+          isAccountDeleteEnable={isAccountDeleteEnable}
+        />
+      </div>
     </div>
   );
 };
