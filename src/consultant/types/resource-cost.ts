@@ -26,6 +26,7 @@ export type ResourceCostList = {
   resource_rid?: string;
   resource_ref_id?: string;
   effective_date?: string;
+  effort_in_hrs?: string;
   end_date?: string;
   annual_cost?: string | null;
   semi_annual_cost?: string | null;
@@ -44,7 +45,6 @@ export type ResourceCostList = {
   r_number?: string;
   created_by?: string | null;
   modified_by?: string | null;
-  
 };
 
 export interface NewCostData {
@@ -89,6 +89,7 @@ export type ResourceCostSkillFormData = {
   currency?: string;
   financial_start_date?: string;
   financial_end_date?: string;
+  effort_in_hrs?: string;
   annual_cost?: string;
   monthly_cost?: string;
   weekly_cost?: string;
@@ -126,6 +127,7 @@ export type ResourceCostPayload = {
   resource_code?: string;
   effective_date?: string;
   end_date?: string;
+  effort_in_hrs?: string;
   annual_cost?: string;
   monthly_cost?: string;
   weekly_cost?: string;

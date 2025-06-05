@@ -349,6 +349,19 @@ export const ResourceFormData = (
             maxDate: currentDate,
             startDateLabel: 'financial_start_date',
           }),
+          createTextField('effort_in_hrs', 'Effort in Hrs', {
+            required: false,
+            placeholder: 'Enter Effort in Hrs',
+            regex: REGEX_PATTERNS.EFFORT_IN_HOURS_REGEX,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_EFFORT_IN_HOURS,
+                errorMessage: 'Maximum length exceeded.',
+              },
+            ],
+          }),
           createTextField('annual_cost', 'Annual Compensation', {
             required: false,
             placeholder: 'Enter Annual Compensation',
@@ -440,7 +453,7 @@ export const ResourceFormData = (
         fillType: 'half',
         hide: !disableSkill,
         fields: [
-          createDateField('skill_start_date', 'Start Date', {
+          createDateField('skill_start_date', 'Effective From', {
             required: false,
             minDate: new Date('1950-01-01'),
             maxDate: currentDate,
@@ -541,7 +554,7 @@ export const ResourceFormData = (
         fillType: 'half',
         hide: disableCostAndSkill,
         fields: [
-          createDateField('resource_startdate', 'Effective Date', {
+          createDateField('resource_startdate', 'Effective From', {
             required: false,
             disabled: disableCostAndSkill,
             minDate: new Date('1950-01-01'),

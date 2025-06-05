@@ -52,7 +52,7 @@ export const getSkillFilterFields = (
     // { name: 'Resource code', value: 'resource_code', type: 'textCostAndSkill', required: true, filterOptions: requiredFieldFilterOptionsForText },
     // { name: 'Name', value: 'resource_name', type: 'textCostAndSkill' },
     // { name: 'Resource Type', value: 'resource_type', type: 'enum', required: true, options: resourceTypeOptions, filterOptions: requiredFieldFilterOptionsForEnum },
-    { name: 'Start Date', value: 'start_date', type: 'date', minDate: new Date('1950-01-01'), maxDate: new Date() },
+    { name: 'Effective From', value: 'start_date', type: 'date', minDate: new Date('1950-01-01'), maxDate: new Date() },
     {
       name: 'Skill Type',
       value: 'skill_type_rid',
