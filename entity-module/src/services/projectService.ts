@@ -497,6 +497,10 @@ export class ProjectService {
 
       if (projectData) {
 
+        const mainDbInit = await initMainDbSequelize();
+
+        await this.assignCurrencyRid(projectData, mainDbInit);
+
         projectData = await this.schemaService.insertProjectGeoData(
           projectData,
           mainDbSequlize
