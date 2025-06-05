@@ -51,7 +51,9 @@ export const ProfileHeaderDetail: React.FC<ProfileHeaderProps> = ({
           >
             <div className='px-4 font-semibold text-[14px] leading-[32px] tracking-[0%] align-middle text-[#2D3E4F]'>
               {extendedPermission
-                ? 'Assign permission to ' + userName + ''
+                ? userName
+                  ? `Assign permission to ${userName}`
+                  : 'Assign permission'
                 : isEditView
                   ? 'Edit Profile'
                   : viewProfile
