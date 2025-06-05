@@ -9,7 +9,6 @@ import {
 } from '../../types/resource-cost';
 import { ResourceSkillPayload } from '../../types/resource-skill';
 import { skillLevel } from '../account-details-sidebar/sidebar-pages/resources/resource-skill/resource-skill-type';
-import { dateFormatToYYYYMMDD } from '../account-details-sidebar/sidebar-pages/resources/utils';
 
 // Constants for dropdown options
 export const RESOURCE_STATUS_OPTIONS: SelectOption[] = [
@@ -117,12 +116,12 @@ export function transformPayloadforUpdateResource(
     resource_city: rawData.city || existingResource?.city || '',
     comments: rawData.comments || existingResource?.comments || '',
     effective_from_date:
-      dateFormatToYYYYMMDD(rawData.resource_startdate) ||
-      dateFormatToYYYYMMDD(existingResource?.resource_startdate) ||
+      rawData.resource_startdate ||
+      existingResource?.resource_startdate ||
       '',
     effective_end_date:
-      dateFormatToYYYYMMDD(rawData.resource_enddate) ||
-      dateFormatToYYYYMMDD(existingResource?.resource_enddate) ||
+      rawData.resource_enddate ||
+      existingResource?.resource_enddate ||
       '',
     resource_designation: rawData.designation || existingResource?.designation || '',
     total_years_experience: safeParseNumber(
@@ -153,8 +152,8 @@ export const transformPayloadforCreateResource = (
     resource_country: formData.country,
     resource_region: formData.state,
     resource_city: formData.city,
-    effective_from_date: dateFormatToYYYYMMDD(formData.resource_startdate),
-    effective_end_date: dateFormatToYYYYMMDD(formData.resource_enddate),
+    effective_from_date: formData.resource_startdate,
+    effective_end_date: formData.resource_enddate,
     resource_designation: formData.designation,
     total_years_experience: formData.total_years_experience,
     total_years_in_org: formData.total_years_in_org,
@@ -172,9 +171,10 @@ export const transformCostData = (
     eid: '',
     account_rid: formData.account_rid,
     effective_date: formData.financial_start_date
-      ? dateFormatToYYYYMMDD(formData.financial_start_date)
+      ? formData.financial_start_date
       : '',
-    end_date: formData.financial_end_date ? dateFormatToYYYYMMDD(formData.financial_end_date) : '',
+    end_date: formData.financial_end_date ? formData.financial_end_date : '',
+    effort_in_hrs: formData.effort_in_hrs || '',
     annual_cost: formData.annual_cost || '',
     monthly_cost: formData.monthly_cost || '',
     weekly_cost: formData.weekly_cost || '',
@@ -217,7 +217,7 @@ export const transformSkillData = (
     resource_rid: formData.resource_rid,
     resource_code: formData.resource_code,
     resource_ref_id: formData.resource_ref_id,
-    start_date: formData.skill_start_date ? dateFormatToYYYYMMDD(formData.skill_start_date) : '',
+    start_date: formData.skill_start_date ? formData.skill_start_date : '',
     skill_level: formData.skill_level as skillLevel,
     skill_type_rid: formData.skill_type,
     skill_subtype_rid: formData.skill_sub_type,

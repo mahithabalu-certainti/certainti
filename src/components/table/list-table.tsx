@@ -335,8 +335,8 @@ const ListTable = <T extends RowData>({
                         : row[column.id];
                       const displayValue =
                         cellValue !== null &&
-                        cellValue !== undefined &&
-                        cellValue !== ''
+                          cellValue !== undefined &&
+                          cellValue !== ''
                           ? cellValue
                           : '-';
 
@@ -351,15 +351,14 @@ const ListTable = <T extends RowData>({
                             zIndex: column.sticky ? 6 : 'auto',
                             left: selectable ? '32px' : 0,
                           }}
-                          className={`${
-                            hoverHighlight &&
+                          className={`${hoverHighlight &&
                             (isStatus
                               ? `${statusValue === 'Active' ? 'group-hover:!text-[#199806]' : 'group-hover:!text-[#f44336]'} group-hover:underline`
                               : 'group-hover:!text-blue-600 group-hover:underline')
-                          } cursor-context-menu`}
+                            } cursor-context-menu`}
                         >
                           <TruncateWithTooltip
-                            text={String(displayValue)}
+                            text={displayValue as string}
                             maxWidth={Number(column.width)}
                           >
                             {displayValue as React.ReactNode}
