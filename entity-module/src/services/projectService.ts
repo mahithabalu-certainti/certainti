@@ -13,6 +13,7 @@ import { RedisService } from "./redisService";
 import Decimal from "decimal.js";
 import { KeyContact, setupKeyContactsSequence } from "../models/keyContactDetails";
 import { ProjectSummary, setupProjectSummarySequence } from "../models/projectSummary";
+import currency from "currency.js";
 
 export class ProjectService {
   private schemaService: SchemaService;
@@ -670,9 +671,13 @@ export class ProjectService {
         ],
       });
 
+      
+
       if (projectData) {
         const mainDbInit = await initMainDbSequelize();
 
+        await Promise.all(projectData.map(result => this.assignCurrencyRid(result, mainDbInit)));
+      
         projectData.forEach((val) => {
           const dataValues = val.dataValues as any;
           dataValues.account_name = accountData.account_name;
@@ -817,6 +822,20 @@ export class ProjectService {
           search,
         );
 
+        const formatNumberForExport = (value: any, currency_symbol: string): string => {
+          if (value == null || value === '') return '-';
+          const num = Number(value);
+          if (isNaN(num)) return '-';
+          // Use currency.js to format the number with the provided currency symbol
+          return currency(num, {
+            symbol: currency_symbol? currency_symbol : '$',
+            precision: 2,
+            pattern: '! #',
+            separator: ',',
+            decimal: '.'
+          }).format();
+        };  
+
       const rawResult = allProjectList || [];
       let exportData = rawResult.map((project: any) => {   
         return {
@@ -829,13 +848,13 @@ export class ProjectService {
           "Project Type": project.project_type || "-",
           "Project Classification": project.classification_name || "-",
           "Project Effort (Hours)": project.total_effort || "-",
-          "Project Cost": project.total_cost || "-",
-          "FTE Cost": project.total_fte_cost || "-",
-          "SubCon Cost": project.total_sub_con || "-",
-          "Non-Labor Cost": project.total_non_labor_cost || "-",
+          "Project Cost": formatNumberForExport(project.total_cost, project.currency_symbol) || "-",
+          "FTE Cost": formatNumberForExport(project.total_fte_cost, project.currency_symbol) || "-",
+          "SubCon Cost": formatNumberForExport(project.total_sub_con, project.currency_symbol) || "-",
+          "Non-Labor Cost": formatNumberForExport(project.total_non_labor_cost, project.currency_symbol) || "-",
           "Assessment Status": project.assessment_status || "-",
           "QRE %": project.qre || "-",
-          "QRE": project.qualified_research_expenditure || "-",
+          "QRE": formatNumberForExport(project.qualified_research_expenditure, project.currency_symbol) || "-",
           "Project Point of Contact": project.project_point_of_contact || "-",
           "Technical Point of Contact": project.technical_point_of_contact || "-",
           "Comments": project.comments || "-",
@@ -986,6 +1005,8 @@ export class ProjectService {
       if (projectData) {
         const mainDbInit = await initMainDbSequelize();
 
+        await Promise.all(projectData.map(result => this.assignCurrencyRid(result, mainDbInit)));
+
         projectData.forEach((val) => {
           const dataValues = val.dataValues as any;
           dataValues.account_name = accountData.account_name;
@@ -1011,6 +1032,20 @@ export class ProjectService {
         projectData = await this.schemaService.finalProjectSort(projectData, finalMetaDataSortBy, finalMetaDataSortOrder, filters);
       }
 
+      const formatNumberForExport = (value: any, currency_symbol: string): string => {
+        if (value == null || value === '') return '-';
+        const num = Number(value);
+        if (isNaN(num)) return '-';
+        // Use currency.js to format the number with the provided currency symbol
+        return currency(num, {
+          symbol: currency_symbol? currency_symbol : '$',
+          precision: 2,
+          pattern: '! #',
+          separator: ',',
+          decimal: '.'
+        }).format();
+      };
+
       const rawResult = projectData || [];
       let exportData = rawResult.map((project: any) => {   
         return {
@@ -1022,13 +1057,13 @@ export class ProjectService {
           "Project Type": project.project_type || "-",
           "Project Classification": project.classification_name || "-",
           "Project Effort (Hours)": project.total_effort || "-",
-          "Project Cost": project.total_cost || "-",
-          "FTE Cost": project.total_fte_cost || "-",
-          "SubCon Cost": project.total_sub_con || "-",
-          "Non-Labor Cost": project.total_non_labor_cost || "-",
+          "Project Cost": formatNumberForExport(project.total_cost, project.currency_symbol) || "-",
+          "FTE Cost": formatNumberForExport(project.total_fte_cost, project.currency_symbol) || "-",
+          "SubCon Cost": formatNumberForExport(project.total_sub_con, project.currency_symbol) || "-",
+          "Non-Labor Cost": formatNumberForExport(project.total_non_labor_cost, project.currency_symbol) || "-",
           "Assessment Status": project.assessment_status || "-",
           "QRE %": project.qre || "-",
-          "QRE": project.qualified_research_expenditure || "-",
+          "QRE": formatNumberForExport(project.qualified_research_expenditure, project.currency_symbol) || "-",
           "Project Point of Contact": project.project_point_of_contact || "-",
           "Technical Point of Contact": project.technical_point_of_contact || "-",
           "Comments": project.comments || "-",
@@ -1963,5 +1998,39 @@ export class ProjectService {
       message: HttpStatus.FAILED_MESSAGE,
       errorMessage: err.message,
     };
+  }
+
+  async getCurrencyDetailsByAccountRidRaw(accountRid: string): Promise<string | null> {
+    const query = `SELECT a.currency_rid FROM public.account a WHERE a.rid = :accountRid`;
+    try {
+      const mainDb = await initMainDbSequelize();
+      const result = await mainDb.query(query, {
+        replacements: { accountRid },
+        type: 'SELECT'
+      });
+      return result?(result[0] as any).currency_rid : null;
+    } catch (err) {
+      console.error('Error getting currency symbol:', err);
+      return null;
+    }
+  }
+
+  async assignCurrencyRid(result: any, mainDbSequelize: any) {
+    if (!result.currency_rid) {
+      const currencyRid = await this.getCurrencyDetailsByAccountRidRaw(result.account_rid);
+      if (currencyRid) {
+        result.currency = currencyRid;
+      } else {
+        try {
+          const usdCurrencyId = await mainDbSequelize.query(
+            `SELECT c.* FROM public.currency c WHERE c.currency_code = 'USD'`,
+            { type: 'SELECT' }
+          );
+          result.currency = usdCurrencyId[0]?.rid;
+        } catch (err) {
+          console.error('Error getting USD currency rid:', err);
+        }
+      }
+    }
   }
 }

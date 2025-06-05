@@ -1480,13 +1480,15 @@ class SchemaService {
         ps.program_name, ps.project_startdate , ps.project_enddate , ps.qualified_research_expenditure ,
         ps.is_rd_qualified , ps.qre, ps.total_cost , ps.total_effort , ps.total_fte , ps.total_fte_cost ,
         ps.total_sub_con , ps.total_sub_con_cost, ps.total_non_labor_cost , ps."comments" , 
-        cou.country_name , curr.currency_code , curr.currency_symbol , st.state_name as region_name
+        cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name
         FROM project_summary AS ps
         INNER JOIN account acc ON acc.rid = ps.account_rid 
         LEFT JOIN industry ind ON ind.rid = ps.industry_rid
         LEFT JOIN country cou ON cou.rid = ps.country 
         LEFT JOIN state st ON st.rid = ps.region 
         LEFT JOIN currency curr ON curr.rid = ps.currency 
+        LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
+        LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD'
         left join project_classification pc on pc.rid = ps.project_classification_rid 
         WHERE acc.rid IN (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
@@ -1550,13 +1552,15 @@ class SchemaService {
         ps.program_name, ps.project_startdate , ps.project_enddate , ps.qualified_research_expenditure ,
         ps.is_rd_qualified , ps.qre, ps.total_cost , ps.total_effort , ps.total_fte , ps.total_fte_cost ,
         ps.total_sub_con , ps.total_sub_con_cost, ps.total_non_labor_cost , ps."comments" , 
-        cou.country_name , curr.currency_code , curr.currency_symbol , st.state_name as region_name
+        cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name
         FROM project_summary AS ps
         INNER JOIN account acc ON acc.rid = ps.account_rid 
         LEFT JOIN industry ind ON ind.rid = ps.industry_rid
         LEFT JOIN country cou ON cou.rid = ps.country 
         LEFT JOIN state st ON st.rid = ps.region 
-        LEFT JOIN currency curr ON curr.rid = ps.currency 
+        LEFT JOIN currency curr ON curr.rid = ps.currency
+        LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
+        LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD' 
         left join project_classification pc on pc.rid = ps.project_classification_rid 
         ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
         ORDER BY ${sortCol} ${sort.sortOrder}
@@ -1653,13 +1657,15 @@ class SchemaService {
         ps.program_name, ps.project_startdate , ps.project_enddate , ps.qualified_research_expenditure ,
         ps.is_rd_qualified , ps.qre, ps.total_cost , ps.total_effort , ps.total_fte , ps.total_fte_cost ,
         ps.total_sub_con , ps.total_sub_con_cost, ps.total_non_labor_cost , ps."comments" , 
-        cou.country_name , curr.currency_code , st.state_name as region_name
+        cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name
         FROM project_summary AS ps
         INNER JOIN account acc ON acc.rid = ps.account_rid 
         LEFT JOIN industry ind ON ind.rid = ps.industry_rid
         LEFT JOIN country cou ON cou.rid = ps.country 
         LEFT JOIN state st ON st.rid = ps.region 
-        LEFT JOIN currency curr ON curr.rid = ps.currency 
+        LEFT JOIN currency curr ON curr.rid = ps.currency
+        LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
+        LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD' 
         left join project_classification pc on pc.rid = ps.project_classification_rid 
         WHERE acc.rid IN (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
@@ -1720,13 +1726,15 @@ class SchemaService {
         ps.program_name, ps.project_startdate , ps.project_enddate , ps.qualified_research_expenditure ,
         ps.is_rd_qualified , ps.qre, ps.total_cost , ps.total_effort , ps.total_fte , ps.total_fte_cost ,
         ps.total_sub_con , ps.total_sub_con_cost, ps.total_non_labor_cost , ps."comments" , 
-        cou.country_name , curr.currency_code , st.state_name as region_name
+        cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name
         FROM project_summary AS ps
         INNER JOIN account acc ON acc.rid = ps.account_rid 
         LEFT JOIN industry ind ON ind.rid = ps.industry_rid
         LEFT JOIN country cou ON cou.rid = ps.country 
         LEFT JOIN state st ON st.rid = ps.region 
-        LEFT JOIN currency curr ON curr.rid = ps.currency 
+        LEFT JOIN currency curr ON curr.rid = ps.currency
+        LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
+        LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD' 
         left join project_classification pc on pc.rid = ps.project_classification_rid 
         ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
         ORDER BY ${sortCol} ${sort.sortOrder}

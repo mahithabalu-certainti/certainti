@@ -8,7 +8,6 @@ import Decimal from "decimal.js";
 import { States } from "../models/stateModel";
 import currency from "currency.js";
 
-
 const { Account, Country, Currency,Industry } = models;
 
 class AccountService {
@@ -61,11 +60,7 @@ async accountList(
       const repository = this.getAccountRepository();
       
       // Get USD currency_rid
-      const usdCurrency = await Currency.findOne({
-        where: {
-          currency_code: 'USD'
-        }
-      });
+      const usdCurrency = await this.getUSDCurrency();
       
       // Parse filters if it's a string
       const parsedFilters = typeof filters === 'string' ? 
@@ -913,7 +908,7 @@ async insertClientTemplateDetails(
           {
             model: Currency,
             as: "currency",
-            attributes: ["currency_code"],
+            attributes: ["currency_code", "currency_symbol"],
             required: false,
           },
           {
@@ -936,6 +931,18 @@ async insertClientTemplateDetails(
           }
         ],
       });
+
+      // Get USD currency_rid
+      const usdCurrency = await this.getUSDCurrency();
+
+      // If currency_rid is null or empty, assign USD currency
+      if (!accountById?.currency_rid || accountById.currency_rid === '') {
+        if (accountById) {
+          accountById.currency_rid = usdCurrency?.rid;
+          (accountById as any).currency_code = usdCurrency?.currency_code;
+          (accountById as any).currency_symbol = usdCurrency?.currency_symbol;
+        }
+      }
 
       let acconuntNumber = accountById?.r_number || "";
       if(accountById?.storage_type === "store_in_parent"){
@@ -1482,6 +1489,15 @@ if (equals) {
       errorMessage: err.message,
     };
   }
+
+  /**
+   * Gets the USD currency record from the database
+   * @returns USD currency record
+   */
+  private async getUSDCurrency() {
+    return Currency.findOne({ where: { currency_code: 'USD' } });
+  }
+    
 }
 
 export default AccountService;
