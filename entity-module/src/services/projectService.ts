@@ -862,7 +862,9 @@ export class ProjectService {
           "Project Point of Contact": project.project_point_of_contact || "-",
           "Technical Point of Contact": project.technical_point_of_contact || "-",
           "Comments": project.comments || "-",
-          "Last Modified": project.modified_datetime || "-",
+          "Last Modified": project.modified_datetime
+          ? moment(project.modified_datetime).format('YYYY-MM-DD')
+          : '-',
           "Project ID": project.r_number || "-",
         };
       });
@@ -1071,7 +1073,9 @@ export class ProjectService {
           "Project Point of Contact": project.project_point_of_contact || "-",
           "Technical Point of Contact": project.technical_point_of_contact || "-",
           "Comments": project.comments || "-",
-          "Last Modified": project.modified_datetime || "-",
+          "Last Modified": project.modified_datetime
+          ? moment(project.modified_datetime).format('YYYY-MM-DD')
+          : '-',
           "Project ID": project.r_number || "-",
         };
       });
