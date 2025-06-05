@@ -17,6 +17,13 @@ export interface CurrencyApiResponse extends CommonApiResponse {
     currency: Currencys[];
   };
 }
+
+export interface ColorCodeApiResponse extends CommonApiResponse {
+  data: {
+    colors: ColorItems[];
+  };
+}
+
 export interface ClassificationApiResponse extends CommonApiResponse {
   data: {
     projectClassifications: Classification[];
@@ -71,6 +78,12 @@ export interface Classification {
 export interface GloablAcconunts {
   rid: string;
   account_name: string;
+}
+export interface ColorItems {
+  rid: string;
+  color_number: number;
+  color_code: string;
+  status: 'Active' | 'Inactive';
 }
 
 export interface Industries {

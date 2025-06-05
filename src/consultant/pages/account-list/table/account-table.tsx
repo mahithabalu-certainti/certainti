@@ -10,14 +10,14 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { reshapeGlobalFilter } from '../../../../common-utils';
 import { TableSkeleton, TableSortHeader } from '../../../../components/table';
 import { ACCOUNT, ACCOUNT_DETAILS } from '../../../../routes';
 import { RootState } from '../../../../store/store';
-import { useAccounts } from '../../../services/account';
+import { useAccounts, useFetchColorCodes } from '../../../services/account';
 import { FilterState } from '../../../types';
 import { Account, ConvertedAccount } from '../../../types/account';
 import { convertAccounts } from '../helpers';
@@ -60,9 +60,23 @@ const AccountTable: React.FC<Record<string, any>> = ({
     fiscalYear,
   });
 
+  const colorCodes = useFetchColorCodes();
+
+  const colorCodesList = useMemo(() => {
+    return (
+      colorCodes.data?.data.colors.map((item) => ({
+        color: '#000000',
+        bgColor: item.color_code,
+      })) || []
+    );
+  }, [colorCodes]);
+
   useEffect(() => {
     if (!loading && accountList) {
-      const convertedData = convertAccounts(accountList.accounts || []);
+      const convertedData = convertAccounts(
+        accountList.accounts || [],
+        colorCodesList
+      );
       setAccounts(convertedData);
       setTotalCount(accountList.count || 0);
       setIsDataLoaded(true);
@@ -370,7 +384,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                 },
               }}
             >
-              {loading && !isDataLoaded ? (
+              {loading && !isDataLoaded && colorCodes.isLoading ? (
                 <TableSkeleton
                   rowsPerPage={15}
                   columnsCount={accountColumns.length}
@@ -379,7 +393,10 @@ const AccountTable: React.FC<Record<string, any>> = ({
                   borderHide={true}
                   stickyColumnsCount={2}
                 />
-              ) : !loading && isDataLoaded && accounts?.length === 0 ? (
+              ) : !loading &&
+                isDataLoaded &&
+                !colorCodes.isLoading &&
+                accounts?.length === 0 ? (
                 <TableRow
                   sx={{
                     height: '32px',

@@ -3,6 +3,7 @@ import {
   AccountFieldsApiResponse,
   CitysApiResponse,
   ClassificationApiResponse,
+  ColorCodeApiResponse,
   CurrencyApiResponse,
   IndustrysApiResponse,
   ParentAccountApiResponse,
@@ -12,6 +13,7 @@ import {
   fetchAccountFields,
   fetchCity,
   fetchClassification,
+  fetchColorCodes,
   fetchCurrency,
   fetchIndustrys,
   fetchParentAccounts,
@@ -76,5 +78,13 @@ export const useFetchCity = (stateId: string) => {
     queryFn: () => fetchCity(stateId),
     retry: 0,
     enabled: !!stateId, // Only fetch if countryId exists
+  });
+};
+
+export const useFetchColorCodes = () => {
+  return useQuery<ColorCodeApiResponse, Error>({
+    queryKey: ['colorCodes'],
+    queryFn: fetchColorCodes,
+    retry: 0,
   });
 };

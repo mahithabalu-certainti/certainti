@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Grid, Skeleton, Typography } from '@mui/material';
+import { Box, Skeleton, Typography } from '@mui/material';
 import { TruncateWithTooltip } from '../truncate-with-tooltip';
 
 interface InfoSectionColumn {
@@ -96,75 +96,38 @@ const InfoSection: React.FC<InfoSectionProps> = ({
       className={`flex flex-col gap-3 px-4 py-2 border-b-2 border-[#CBD6E2] bg-white max-h-[80px] ${className}`}
     >
       {[...Array(rowCount)].map((_, rowIndex) => (
-        <>
-          {singleLineView ? (
-            <Grid
-              container
-              key={rowIndex}
-              alignItems='center'
-              columnSpacing={2} // optional spacing
-            >
-              {columns.map((column, colIndex) => {
-                const item = column.items[rowIndex];
-                return (
-                  <Grid item key={colIndex} lg={2.4}>
-                    <div className='flex gap-4'>
-                      <Typography
-                        variant='caption'
-                        sx={{
-                          color: '#7D98B6',
-                          fontSize: '13px',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {item.label}
-                      </Typography>
-                      <TruncateWithTooltip
-                        text={String(item.value)}
-                        className={`font-medium text-[14px] text-[#2D3E4F] ${item.className}`}
-                      >
-                        {renderValue(item.value)}
-                      </TruncateWithTooltip>
-                    </div>
-                  </Grid>
-                );
-              })}
-            </Grid>
-          ) : (
-            <Box
-              key={rowIndex}
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: `repeat(${totalColumns * 2}, 1fr)`,
-                alignItems: 'center',
-              }}
-            >
-              {columns.map((column, colIndex) => {
-                const item = column.items[rowIndex];
-                return (
-                  <React.Fragment key={colIndex}>
-                    <Typography
-                      variant='caption'
-                      sx={{
-                        color: '#7D98B6',
-                        fontSize: '13px',
-                        fontWeight: 600,
-                      }}
-                    >
-                      {item.label}
-                    </Typography>
-                    <TruncateWithTooltip
-                      text={String(item.value)}
-                      className={`font-medium text-[14px] text-[#2D3E4F] ${item.className}`}
-                    >
-                      {renderValue(item.value)}
-                    </TruncateWithTooltip>
-                  </React.Fragment>
-                );
-              })}
-            </Box>
-          )}
-        </>
+        <Box
+          key={rowIndex}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${totalColumns * 2}, ${singleLineView ? 'auto' : '1fr'})`,
+            alignItems: 'center',
+          }}
+        >
+          {columns.map((column, colIndex) => {
+            const item = column.items[rowIndex];
+            return (
+              <React.Fragment key={colIndex}>
+                <Typography
+                  variant='caption'
+                  sx={{
+                    color: '#7D98B6',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                  }}
+                >
+                  {item.label}
+                </Typography>
+                <TruncateWithTooltip
+                  text={String(item.value)}
+                  className={`font-medium text-[14px] text-[#2D3E4F] ${item.className}`}
+                >
+                  {renderValue(item.value)}
+                </TruncateWithTooltip>
+              </React.Fragment>
+            );
+          })}
+        </Box>
       ))}
     </Box>
   );

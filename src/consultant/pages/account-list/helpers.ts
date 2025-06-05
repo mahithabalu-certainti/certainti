@@ -95,43 +95,16 @@ export const getAccountFilterFields = (
   },
 ];
 
-const colors = [
-  { color: '#000000', bgColor: '#E0FFFF' },
-  { color: '#000000', bgColor: '#FFF5E5' },
-  { color: '#000000', bgColor: '#FFFFE0' },
-  { color: '#000000', bgColor: '#E0F7FF' },
-  { color: '#000000', bgColor: '#F5F5F5' },
-  { color: '#000000', bgColor: '#FFECE9' },
-  { color: '#000000', bgColor: '#FFFFCC' },
-  { color: '#000000', bgColor: '#FAE6FA' },
-  { color: '#000000', bgColor: '#E6FFFA' },
-  { color: '#000000', bgColor: '#FFF5ED' },
-  { color: '#000000', bgColor: '#F8F1E7' },
-  { color: '#000000', bgColor: '#E5FBE5' },
-  { color: '#000000', bgColor: '#FFF8DC' },
-  { color: '#000000', bgColor: '#E6F9FB' },
-  { color: '#000000', bgColor: '#F2F0FF' },
-  { color: '#000000', bgColor: '#F9F8E6' },
-  { color: '#000000', bgColor: '#E6FFFA' },
-  { color: '#000000', bgColor: '#FDF1F3' },
-  { color: '#000000', bgColor: '#FFEDE7' },
-  { color: '#000000', bgColor: '#E5FFF9' },
-  { color: '#000000', bgColor: '#F6F6F6' },
-  { color: '#000000', bgColor: '#FFEDEE' },
-  { color: '#000000', bgColor: '#E5FBE5' },
-  { color: '#000000', bgColor: '#F8F1F8' },
-  { color: '#000000', bgColor: '#F2FBE6' },
-];
-
 export function convertAccounts(
-  inputAccounts: AccountList[]
+  inputAccounts: AccountList[],
+  colorCodes: { color: string; bgColor: string }[] = []
 ): ConvertedAccount[] {
   const result: ConvertedAccount[] = [];
 
   let colorIndex = 0;
 
   function getNextColor() {
-    const color = colors[colorIndex % colors.length];
+    const color = colorCodes[colorIndex % colorCodes.length];
     colorIndex++;
     return color;
   }
