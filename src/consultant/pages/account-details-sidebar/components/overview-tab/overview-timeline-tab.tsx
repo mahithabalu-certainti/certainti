@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 interface TabProps {
   tabValue: string;
   detailsTab: DetailsTabs[];
+  isAccountDetailActivityEnable?: boolean;
   setTabValue?: (value: React.SetStateAction<number>) => void;
   menuActivity: {
     label: string;
@@ -18,6 +19,7 @@ const OverviewTimelineTab: React.FC<TabProps> = ({
   menuActivity,
   detailsTab,
   tabValue,
+  isAccountDetailActivityEnable,
   handleTabChange,
 }) => {
   const [currentValue, setCurrentValue] = useState(tabValue);
@@ -54,7 +56,7 @@ const OverviewTimelineTab: React.FC<TabProps> = ({
           >
             {detailsTab.map((tab, index) => {
               const isActive = currentValue === tab.id;
-              if(tab.hide) return null;
+              if (tab.hide) return null;
               return (
                 <Tab
                   key={index}
@@ -84,19 +86,21 @@ const OverviewTimelineTab: React.FC<TabProps> = ({
             })}
           </Tabs>
         )}
-        <Box className='flex items-center space-x-2'>
-          <ActionImportDropdown
-            variant={'filled'}
-            actions={menuActivity}
-            label='Add Activity'
-            sx={{
-              fontWeight: 600,
-              fontSize: '13px',
-              width: '143px',
-              height: '24px',
-            }}
-          />
-        </Box>
+        {isAccountDetailActivityEnable && (
+          <Box className='flex items-center space-x-2'>
+            <ActionImportDropdown
+              variant={'filled'}
+              actions={menuActivity}
+              label='Add Activity'
+              sx={{
+                fontWeight: 600,
+                fontSize: '13px',
+                width: '143px',
+                height: '24px',
+              }}
+            />
+          </Box>
+        )}
       </Box>
     </div>
   );

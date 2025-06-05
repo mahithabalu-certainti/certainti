@@ -102,6 +102,7 @@ export enum AllPermissions {
   ACCOUNT_DETAILS_DOWNLOAD = 'account_details_download',
   ACCOUNT_DETAILS_OVERVIEW = 'account_details_overview',
   ACCOUNT_DETAILS_TIMELINE = 'account_details_timeline',
+  ACCOUNT_DETAILS_ADD_ACTIVITY = 'account_details_add_activity',
   ACCOUNT_EXPORT = 'accounts_export',
   RESOURCES_DOWNLOAD = 'account_resources_download',
   RESOURCES_OVERVIEW = 'account_resources_view_overview',
