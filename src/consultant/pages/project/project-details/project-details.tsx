@@ -220,7 +220,7 @@ export const ProjectDetails = () => {
   if (!projectIsEnable) return <AccessRestricted />;
 
   return (
-    <div className='flex flex-col'>
+    <div className='flex flex-col h-full'>
       <div className='flex'>
         <PageHeader
           variant='sub'
@@ -249,8 +249,8 @@ export const ProjectDetails = () => {
         loading={isLoading}
         error={isError}
       />
-      <div className='flex flex-row w-full'>
-        <div className='flex w-[200px] min-w-[200px] max-w-[200px]'>
+      <div className='flex flex-1 flex-row w-full'>
+        <div className='flex-1 w-[200px] min-w-[200px] max-w-[200px]'>
           <SideMenuPanel
             menuItems={sideMenuItems}
             activeKey={activeKey as string}

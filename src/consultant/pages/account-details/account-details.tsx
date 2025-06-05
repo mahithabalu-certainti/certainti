@@ -315,7 +315,7 @@ export const AccountDetails = () => {
   if (!accountIsEnable || !isAccountDetailsEnable) return <AccessRestricted />;
 
   return (
-    <div className='flex flex-col'>
+    <div className='flex flex-col h-full'>
       <div className='flex h-[60px]'>
         <PageHeader
           variant='sub'
@@ -344,8 +344,8 @@ export const AccountDetails = () => {
         error={isError}
         singleLineView={true}
       />
-      <div className='flex flex-row w-full'>
-        <div className='flex w-[200px] min-w-[200px] max-w-[200px]'>
+      <div className='flex flex-1 flex-row w-full'>
+        <div className='flex-1 w-[200px] min-w-[200px] max-w-[200px]'>
           <SideMenuPanel
             menuItems={sideMenuItems}
             activeKey={activeKey}
