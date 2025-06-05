@@ -894,20 +894,20 @@ const updateResourceCostSchema = Joi.object({
   daily_cost: costFieldValidator('daily_cost'),
   hourly_cost: costFieldValidator('hourly_cost'),
   effort_in_hrs: Joi.string()
-  .pattern(/^\d{1,16}$/)
+  .pattern(/^\d{1,16}(\.\d{1,2})?$/)
   .messages({
     "string.pattern.base":
-      "Effort in hours must be a whole number with up to 16 digits",
+      "Effort in hours must be a number with up to 16 digits and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseInt(value);
+    const num = parseFloat(value);
     if (isNaN(num) || num <= 0) {
       return helpers.error("any.invalid");
     }
     return value; // return string (not number) to match original type
   })
   .messages({
-    "any.invalid": "Effort in hours must be a valid positive whole number",
+    "any.invalid": "Effort in hours must be a valid positive number",
   })
   .optional()
   .allow(null)
@@ -1043,20 +1043,20 @@ const resourceCostSchema = Joi.object({
   daily_cost: costFieldValidator('daily_cost'),
   hourly_cost: costFieldValidator('hourly_cost'),
   effort_in_hrs: Joi.string()
-  .pattern(/^\d{1,16}$/)
+  .pattern(/^\d{1,16}(\.\d{1,2})?$/)
   .messages({
     "string.pattern.base":
-      "Effort in hours must be a whole number with up to 16 digits",
+      "Effort in hours must be a number with up to 16 digits and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseInt(value);
+    const num = parseFloat(value);
     if (isNaN(num) || num <= 0) {
       return helpers.error("any.invalid");
     }
     return value; // return string (not number) to match original type
   })
   .messages({
-    "any.invalid": "Effort in hours must be a valid positive whole number",
+    "any.invalid": "Effort in hours must be a valid positive number",
   })
   .optional()
   .allow(null)
