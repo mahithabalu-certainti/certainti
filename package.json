@@ -10,7 +10,7 @@
     "build:dev": "tsc -b && vite build --mode dev",
     "build:preprod": "tsc -b && vite build --mode preprod",
     "build:prod": "tsc -b && vite build --mode prod",
-    "preview": "vite preview",
+    "preview": "vite preview --port 3000",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "format": "prettier --write \"src/**/*\" --ignore-path .prettierignore",
@@ -20,8 +20,8 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@azure/msal-browser": "^4.2.1",
-    "@azure/msal-react": "^3.0.4",
+    "@azure/msal-browser": "^4.4.0",
+    "@azure/msal-react": "^3.0.5",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/material": "^6.4.5",
