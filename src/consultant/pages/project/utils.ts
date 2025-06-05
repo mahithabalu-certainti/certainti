@@ -25,13 +25,18 @@ export const transformProjectData = (data: any): DisplayColumn[] => {
     },
     {
       items: [
+        // {
+        //   label: 'Project ID',
+        //   value: project?.r_number || '-',
+        //   className: `${status === 'active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
+        // },
         {
-          label: 'Name',
-          value: project?.project_name || '-',
+          label: 'Project Code',
+          value: project?.project_code || '-',
         },
-        // { label: 'Account Name', value: project?.account_name },
       ],
     },
+
     {
       items: [
         // {
