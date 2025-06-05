@@ -248,6 +248,7 @@ export const ProjectDetails = () => {
         columns={projectDetails}
         loading={isLoading}
         error={isError}
+        singleLineView={true}
       />
       <div className='flex flex-row w-full'>
         <div className='flex w-[200px] min-w-[200px] max-w-[200px]'>
