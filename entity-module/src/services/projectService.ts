@@ -859,7 +859,7 @@ export class ProjectService {
           "Technical Point of Contact": project.technical_point_of_contact || "-",
           "Comments": project.comments || "-",
           "Last Modified": project.modified_datetime
-          ? moment(project.modified_datetime).format('YYYY/MM/DD')
+          ? moment(project.modified_datetime).format('YYYY-MM-DD')
           : '-',
           "Project ID": project.r_number || "-",
         };
@@ -1070,7 +1070,7 @@ export class ProjectService {
           "Technical Point of Contact": project.technical_point_of_contact || "-",
           "Comments": project.comments || "-",
           "Last Modified": project.modified_datetime
-          ? moment(project.modified_datetime).format('YYYY/MM/DD')
+          ? moment(project.modified_datetime).format('YYYY-MM-DD')
           : '-',
           "Project ID": project.r_number || "-",
         };
