@@ -896,7 +896,7 @@ async insertClientTemplateDetails(
           {
             model: Country,
             as: "country",
-            attributes: ["country_name"],
+            attributes: ["country_name","country_code"],
             required: false,
           },
           {
@@ -939,8 +939,7 @@ async insertClientTemplateDetails(
       if (!accountById?.currency_rid || accountById.currency_rid === '') {
         if (accountById) {
           accountById.currency_rid = usdCurrency?.rid;
-          (accountById as any).currency_code = usdCurrency?.currency_code;
-          (accountById as any).currency_symbol = usdCurrency?.currency_symbol;
+          (accountById as any).setDataValue('currency', usdCurrency);
         }
       }
 

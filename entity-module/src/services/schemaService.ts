@@ -1358,7 +1358,7 @@ class SchemaService {
 
       if (countryId) {
         const result = await mainDdSequilze.query(
-          `SELECT rid, country_name FROM country WHERE rid = :id`,
+          `SELECT rid, country_name, country_code FROM country WHERE rid = :id`,
           {
             replacements: { id: countryId },
             type: "SELECT",
@@ -1382,7 +1382,7 @@ class SchemaService {
 
       if (currencyId) {
         const result = await mainDdSequilze.query(
-          `SELECT rid, currency_name, currency_code FROM currency WHERE rid = :id`,
+          `SELECT rid, currency_name, currency_code, currency_symbol FROM currency WHERE rid = :id`,
           {
             replacements: { id: currencyId },
             type: "SELECT",
@@ -1395,8 +1395,10 @@ class SchemaService {
       project.dataValues = {
         ...project.dataValues,
         country_name: countryRow?.country_name || null,
+        country_code: countryRow?.country_code || null,
         region_name: regionRow?.state_name || null,
         currency_name: currencyRow?.currency_code || null,
+        currency_symbol: currencyRow?.currency_symbol || null,
       };
 
       return project;
