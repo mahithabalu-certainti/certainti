@@ -167,15 +167,18 @@ const Resource: React.FC<ResourceProps> = ({
     data: ResourceList,
     isLoading,
     error,
-  } = useResourceList({
-    page: currentPage + 1, // API expects 1-based index
-    limit: rowsPerPage,
-    accountNumber: accountDetails?.data?.accountById.r_number,
-    sortBy: sortField,
-    sortOrder: sortOrder,
-    filters: appliedFilters,
-  }, isResourceViewAllEnable);
-  
+  } = useResourceList(
+    {
+      page: currentPage + 1, // API expects 1-based index
+      limit: rowsPerPage,
+      accountNumber: accountDetails?.data?.accountById.r_number,
+      sortBy: sortField,
+      sortOrder: sortOrder,
+      filters: appliedFilters,
+    },
+    isResourceViewAllEnable
+  );
+
   const isResoureceOverviewHide = resourceTab[0].hide;
 
   useEffect(() => {
@@ -321,7 +324,10 @@ const Resource: React.FC<ResourceProps> = ({
       label: value === 'details' ? 'Edit' : 'New',
       variant: 'outlined' as const,
       disabled: accountInActive,
-      onClick: value === 'details' ? () => handleEditResource() : () => handleCreateResource(),
+      onClick:
+        value === 'details'
+          ? () => handleEditResource()
+          : () => handleCreateResource(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
       hide: handleCreateButtonEnable(),
     },
@@ -337,8 +343,13 @@ const Resource: React.FC<ResourceProps> = ({
   const handleEditResource = () => {
     const resourceId = searchParams.get('res_id');
     const accNumber = accountDetails?.data?.accountById.r_number;
-    navigate(RESOURCE + '/edit/' + resourceId + `?account_id=${accountid}&acc_number=${accNumber}`);
-  }
+    navigate(
+      RESOURCE +
+        '/edit/' +
+        resourceId +
+        `?account_id=${accountid}&acc_number=${accNumber}`
+    );
+  };
 
   const handleBackClick = () => {
     setViewResourceList(!viewResourceList);
@@ -536,6 +547,7 @@ const Resource: React.FC<ResourceProps> = ({
                 totalItems={ResourceList?.count || 0}
                 onPageChange={handlePageChange}
                 onRowsPerPageChange={handleRowsPerPageChange}
+                rowsPerPageOptions={[25, 50, 100]}
                 sortBy={sortField}
                 sortOrder={sortOrder}
                 onSort={handleSortRequest}
