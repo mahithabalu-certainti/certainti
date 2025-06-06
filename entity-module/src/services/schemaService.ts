@@ -493,7 +493,8 @@ class SchemaService {
     order: any[],
     whereClause: Record<string, string> = {},
     havingClause: Record<string, string> = {},
-    geoDataSort: string[][]
+    geoDataSort: string[][],
+    accountId: string
   ) {
     try {
       const schemaName = `platform_v2_${accountNumber}`;
@@ -569,6 +570,7 @@ class SchemaService {
       const resources = await Resource.findAll({
         where: {
           ...whereClause,
+          account_rid: accountId,
         },
         having: havingClause,
         group: [
@@ -643,6 +645,7 @@ class SchemaService {
       const results = await Resource.findAll({
         where: {
           ...whereClause,
+          account_rid: accountId,
         },
         having: havingClause,
         group: [

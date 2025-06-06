@@ -695,7 +695,8 @@ class ResourceSkillService {
         resourceRid,
         limit,
         offset,
-        search
+        search,
+        accountId
       );
     } catch (err) {
       console.log("Error ", err);
@@ -768,7 +769,8 @@ class ResourceSkillService {
         finalSortBy,
         finalSortOrder,
         resourceRid,
-        search
+        search,
+        accountId
       );
     } catch (err) {
       console.log("Error ", err);

@@ -128,7 +128,8 @@ class ResourceCostService {
         resourceRid,
         limit,
         offset,
-        search
+        search,
+        accountId
       );
     } catch (err) {
       console.log("Error ", err);
@@ -213,7 +214,8 @@ class ResourceCostService {
         finalSortBy,
         finalSortOrder,
         resourceRid,
-        search
+        search,
+        accountId
       );
     } catch (err) {
       console.log("Error ", err);

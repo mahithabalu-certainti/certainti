@@ -278,7 +278,8 @@ async exportResoucreSkill(
   finalSortBy: string,
   finalSortOrder: string,
   resource_rid: string,
-  search: string
+  search: string,
+  account_rid: string
 ) {
   const sequelize = await this.getDbConnection(schemaName);
   const mainDbSequelize = await initMainDbSequelize();
@@ -291,7 +292,7 @@ async exportResoucreSkill(
     FROM "${schemaName}"."resource_skill" rs
     INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
     INNER JOIN "${schemaName}"."account_details" ad ON r.account_rid = ad.account_rid
-    WHERE 1=1 AND rs.resource_rid = :resource_rid
+    WHERE 1=1 AND rs.account_rid = :account_rid AND rs.resource_rid = :resource_rid
     ${filterConditions}
     ${searchCondition}
     ${finalSortBy === 'resource_name' || finalSortBy === 'resource_orgname' || finalSortBy === 'resource_designation' || finalSortBy === 'resource_role' || finalSortBy === 'resource_total_experience' ?
@@ -300,6 +301,7 @@ async exportResoucreSkill(
 
   const replacements = {
     searchTerm: search ? `%${search}%` : null,
+    account_rid,
     resource_rid,
   };
 
@@ -401,7 +403,8 @@ async executeQueries(
   resource_rid: string,
   limit: number,
   offset: number,
-  search: string
+  search: string,
+  account_rid: string
 ) {
   const sequelize = await this.getDbConnection(schemaName);
 
@@ -413,7 +416,7 @@ async executeQueries(
     FROM "${schemaName}"."resource_skill" rs
     INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
     INNER JOIN "${schemaName}"."account_details" ad ON r.account_rid = ad.account_rid
-    WHERE 1=1 AND rs.resource_rid = :resource_rid
+    WHERE 1=1 AND rs.account_rid = :account_rid AND rs.resource_rid = :resource_rid
     ${filterConditions}
     ${searchCondition}
     ${finalSortBy === 'resource_name' || finalSortBy === 'resource_orgname' || finalSortBy === 'resource_designation' || finalSortBy === 'resource_role' || finalSortBy === 'resource_total_experience' ?
@@ -427,7 +430,7 @@ async executeQueries(
     FROM "${schemaName}"."resource_skill" rs
     INNER JOIN "${schemaName}"."resources" r ON rs.resource_rid = r.rid
     INNER JOIN "${schemaName}"."account_details" ad ON r.account_rid = ad.account_rid
-    WHERE 1=1 AND rs.resource_rid = :resource_rid
+    WHERE 1=1 AND rs.account_rid = :account_rid AND rs.resource_rid = :resource_rid
     ${filterConditions}
     ${searchCondition}
   `;
@@ -436,6 +439,7 @@ async executeQueries(
     limit,
     offset,
     searchTerm: search ? `%${search}%` : null,
+    account_rid,
     resource_rid,
   };
 
