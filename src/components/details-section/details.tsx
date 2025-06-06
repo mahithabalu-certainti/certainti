@@ -92,7 +92,7 @@ const DetailsSection: React.FC<{
   return (
     <div className={styleName}>
       {title && (
-        <div className='flex items-center align-middle px-6  h-[30px] border border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#F5F9FF]'>
+        <div className='flex items-center align-middle px-6  h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#F5F9FF]'>
           {title}
         </div>
       )}

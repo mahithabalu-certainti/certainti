@@ -8,6 +8,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
   TableRow,
   TextField,
@@ -106,14 +107,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
       const nameField = keyContactSection.fields[baseIndex]; // key_contact_name_X
       const emailField = keyContactSection.fields[baseIndex + 2]; // key_contact_email_X
-      const roleField = keyContactSection.fields[baseIndex + 1]; // key_contact_role_X
       const primaryField = keyContactSection.fields[baseIndex + 4]; // is_primary_contact_X
-      if (!nameField || !emailField || !roleField || !primaryField) continue;
+      if (!nameField || !emailField || !primaryField) continue;
 
       const hasValues =
         (constructFormData[nameField.name]?.toString().trim() || '') !== '' ||
-        (constructFormData[emailField.name]?.toString().trim() || '') !== '' ||
-        (constructFormData[roleField.name]?.toString().trim() || '') !== '';
+        (constructFormData[emailField.name]?.toString().trim() || '') !== '';
 
       // Update the required status if needed
       if (primaryField.required !== hasValues) {
@@ -391,7 +390,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             value={fieldValue || field.defaultValue}
           />
         );
-      case 'select':
+      case 'select': {
+        const fieldValue =
+          (constructFormData[field.name] || field.defaultValue) ?? '';
         return (
           <div className='w-full'>
             <Select
@@ -489,6 +490,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             </Select>
           </div>
         );
+      }
       case 'textarea':
         return (
           <textarea
@@ -572,7 +574,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             ))}
           </div>
         );
-      case 'radio':
+      case 'radio': {
+        const fieldValue =
+          (constructFormData[field.name] || field.defaultValue) ?? '';
         return (
           <div className='flex items-center gap-4 !h-[32px]'>
             {field?.options?.map((option, i) => (
@@ -584,7 +588,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   type='radio'
                   name={field.name}
                   value={option.value}
-                  checked={constructFormData[field.name] === option.value}
+                  checked={fieldValue === option.value}
                   disabled={field.disabled}
                   onChange={(e) => {
                     handleChange(e.target.value);
@@ -598,6 +602,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             ))}
           </div>
         );
+      }
       case 'date': {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const startDateValue: string | undefined | any = keyStart
@@ -1497,131 +1502,146 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     const fieldRows = chunkFields(visibleFields, 7);
     return (
       <div className='px-10'>
-        <Table className='border-l border-[#CBD6E2]'>
-          <TableHead
-            sx={{
-              '& .MuiTableCell-root': {
-                fontWeight: 700,
-                fontSize: '13px',
-                color: '#2A2A2A',
-                padding: '0px 8px',
-                height: '29px',
-                boxSizing: 'border-box',
-              },
-            }}
-          >
-            <TableRow sx={{ height: 29 }}>
-              {headerFields.map((field, j) => {
-                return (
-                  <TableCell
-                    sx={{
-                      minWidth: `${field.width}`,
-                      '&.MuiTableCell-root': {
-                        height: 29,
-                        padding: '0px 4px',
-                        lineHeight: 0,
-                      },
-                    }}
-                    key={`${field.name}_${j}`}
-                  >
-                    {field.label}
-                  </TableCell>
-                );
-              })}
-            </TableRow>
-          </TableHead>
-          <TableBody
-            sx={{
-              '& .MuiTableCell-root': {
-                padding: '0px',
-                '& input': {
-                  border: 'none',
-                  outline: 'none',
-                  boxShadow: 'none',
-                  background: 'transparent',
+        <TableContainer sx={{ overflowX: 'auto' }}>
+          <Table className='border-l border-[#CBD6E2]'>
+            <TableHead
+              sx={{
+                '& .MuiTableCell-root': {
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  color: '#2A2A2A',
+                  padding: '0px 8px',
+                  height: '29px',
+                  boxSizing: 'border-box',
                 },
-                '& radio': {
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                },
-              },
-            }}
-          >
-            {fieldRows.map((row, rowIndex) => (
-              <TableRow key={rowIndex}>
-                {row.map((field, colIndex) => {
-                  const isLastColumn = colIndex === row.length - 1;
-                  const isRequired = field.required;
-                  const isPrimary = field.name.startsWith(
-                    'is_primary_contact_'
-                  );
+              }}
+            >
+              <TableRow sx={{ height: 29 }}>
+                {headerFields.map((field, j) => {
                   return (
                     <TableCell
                       sx={{
-                        position: 'relative',
-                        height: '32px !important',
+                        width: `${field.width}`,
                         minWidth: `${field.width}`,
                         maxWidth: `${field.width}`,
-                        paddingLeft:
-                          `${field.type}` === 'iconButton' ||
-                          `${field.type}` === 'radio'
-                            ? '10px !important'
-                            : 'none',
-                        verticalAlign:
-                          `${field.type}` === 'iconButton'
-                            ? 'middle !important'
-                            : 'top',
-                        '& input': {
-                          border: 'none',
-                        },
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          border: 'none !important',
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          border: 'none !important',
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          border: '2px solid #60A5FA',
-                        },
                       }}
-                      key={colIndex}
-                      style={{
-                        verticalAlign: 'top',
-                        height: '32px !important',
-                        backgroundColor:
-                          field.error && isPrimary ? '#FEF2F2' : 'transparent',
-                      }}
+                      key={`${field.name}_${j}`}
                     >
-                      {field.type === 'iconButton' && isLastColumn ? (
-                        <Tooltip title={'Remove contact'} arrow placement='top'>
-                          <button
-                            type='button'
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              field.onClick?.(e);
-                              handleRemoveKeyContactRow(rowIndex);
-                            }}
-                            style={{
-                              cursor: 'pointer',
-                              background: 'transparent',
-                              border: 'none',
-                              padding: 0,
-                            }}
-                            aria-label='Remove contact'
+                      {field.label}
+                    </TableCell>
+                  );
+                })}
+              </TableRow>
+            </TableHead>
+            <TableBody
+              sx={{
+                '& .MuiTableCell-root': {
+                  padding: '0px',
+                  '& input': {
+                    border: 'none',
+                    outline: 'none',
+                    boxShadow: 'none',
+                    background: 'transparent',
+                  },
+                  '& radio': {
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  },
+                },
+              }}
+            >
+              {fieldRows.map((row, rowIndex) => (
+                <TableRow key={rowIndex}>
+                  {row.map((field, colIndex) => {
+                    const isLastColumn = colIndex === row.length - 1;
+                    const isRequired = field.required;
+                    const isPrimary = field.name.startsWith(
+                      'is_primary_contact_'
+                    );
+                    return (
+                      <TableCell
+                        sx={{
+                          position: 'relative',
+                          height: '32px !important',
+                          width: `${field.width}`,
+                          minWidth: `${field.width}`,
+                          maxWidth: `${field.width}`,
+                          paddingLeft:
+                            `${field.type}` === 'iconButton' ||
+                            `${field.type}` === 'radio'
+                              ? '10px !important'
+                              : 'none',
+                          verticalAlign:
+                            `${field.type}` === 'iconButton'
+                              ? 'middle !important'
+                              : 'top',
+                          '& input': {
+                            border: field.error
+                              ? '1px solid #fb2c36 !important'
+                              : 'none',
+                            '&:focus': {
+                              border: field.error
+                                ? '1px solid #fb2c36'
+                                : '1px solid #60A5FA',
+                            },
+                          },
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            border: 'none !important',
+                          },
+                          '& .MuiOutlinedInput-root': {
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                              border: '1px solid #60A5FA !important',
+                            },
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            border: 'none',
+                          },
+                        }}
+                        key={colIndex}
+                        style={{
+                          verticalAlign: 'top',
+                          height: '32px !important',
+                          backgroundColor:
+                            field.error && isPrimary
+                              ? '#FEF2F2'
+                              : 'transparent',
+                        }}
+                      >
+                        {field.type === 'iconButton' && isLastColumn ? (
+                          <Tooltip
+                            title={'Remove contact'}
+                            arrow
+                            placement='top'
                           >
-                            <img
-                              src={field.iconUrl || keyContactRemoveIcon}
-                              alt='Remove'
-                              style={{ width: 20, height: 20 }}
-                            />
-                          </button>
-                        </Tooltip>
-                      ) : field.type === 'text' ? (
-                        <div
-                          className={` ${field.error ? 'border border-red-500 bg-[#FEF2F2]' : ''}`}
-                        >
-                          <div className=' box-border flex items-center'>
+                            <button
+                              type='button'
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                field.onClick?.(e);
+                                handleRemoveKeyContactRow(rowIndex);
+                              }}
+                              style={{
+                                cursor: 'pointer',
+                                background: 'transparent',
+                                border: 'none',
+                                padding: 0,
+                                marginTop: '6px',
+                              }}
+                              aria-label='Remove contact'
+                            >
+                              <img
+                                src={field.iconUrl || keyContactRemoveIcon}
+                                alt='Remove'
+                                style={{ width: 20, height: 20 }}
+                              />
+                            </button>
+                          </Tooltip>
+                        ) : field.type === 'text' ? (
+                          <div
+                            className={`!h-[32px] !max-h-[32px] box-border relative ${field.error ? 'bg-[#FEF2F2]' : ''}`}
+                          >
+                            {getFields(field)}
                             {field.error && (
                               <Tooltip
                                 title={field.error}
@@ -1631,11 +1651,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                                   tooltip: {
                                     sx: {
                                       backgroundColor: '#FEF2F2',
+                                      mr: 1,
                                     },
                                   },
                                 }}
                               >
-                                <span className='pl-[8px] mt-0.5 -mr-1.5 text-[13px] text-[#425A76] cursor-pointer'>
+                                <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
                                   <img
                                     src={errorInfoIcon}
                                     alt='error'
@@ -1644,26 +1665,25 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                                 </span>
                               </Tooltip>
                             )}
-                            {getFields(field)}
                           </div>
-                        </div>
-                      ) : (
-                        <>
-                          {getFields(field)}
-                          {isPrimary && isRequired && (
-                            <span className='absolute top-1 right-4 text-red-500 text-[16px]'>
-                              *
-                            </span>
-                          )}
-                        </>
-                      )}
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                        ) : (
+                          <>
+                            {getFields(field)}
+                            {isPrimary && isRequired && (
+                              <span className='absolute top-1 right-4 text-red-500 text-[16px]'>
+                                *
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </div>
     );
   };

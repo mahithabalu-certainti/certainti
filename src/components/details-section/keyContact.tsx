@@ -23,21 +23,29 @@ const KeyContactSection: React.FC<{ title: string; data: KeyContact[] }> = ({
   data,
 }) => (
   <div>
-    <div className='flex items-center align-middle px-6 h-[30px] border border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#F5F9FF]'>
+    <div className='flex items-center align-middle px-6 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#F5F9FF]'>
       {title}
     </div>
     <TableContainer sx={{ overflowX: 'auto' }}>
       <Table>
-        <TableHead>
+        <TableHead
+          sx={{
+            '& .MuiTableCell-root': {
+              color: '#2a2a2a',
+              fontSize: '13px',
+              fontWeight: 700,
+            },
+          }}
+        >
           <TableRow>
             {[
-              { label: 'ID', fixedWidth: 180 },
-              { label: 'Name', fixedWidth: 220 },
-              { label: 'Role', fixedWidth: 230 },
-              { label: 'Email', fixedWidth: 230 },
+              { label: 'Key Contact ID', fixedWidth: 170 },
+              { label: 'Key Contact Name', fixedWidth: 200 },
+              { label: 'Key Contact Role', fixedWidth: 200 },
+              { label: 'Key Contact Email', fixedWidth: 200 },
               { label: 'Is Primary Contact?', fixedWidth: 160 },
               { label: 'Include in Communications?', fixedWidth: 200 },
-              { label: 'Status', fixedWidth: 80 },
+              { label: 'Key Contact Status', fixedWidth: 160 },
             ].map((col, i) => (
               <TableCell
                 key={i}
@@ -46,7 +54,9 @@ const KeyContactSection: React.FC<{ title: string; data: KeyContact[] }> = ({
                   fontSize: '13px',
                   padding: '0px 8px',
                   px: i === 0 ? 3.2 : 1,
-                  width: col.fixedWidth ? `${col.fixedWidth}px` : 'auto',
+                  width: col.fixedWidth || 160,
+                  minWidth: col.fixedWidth || 160,
+                  maxWidth: col.fixedWidth || 160,
                 }}
               >
                 {col.label}
@@ -54,7 +64,15 @@ const KeyContactSection: React.FC<{ title: string; data: KeyContact[] }> = ({
             ))}
           </TableRow>
         </TableHead>
-        <TableBody>
+        <TableBody
+          sx={{
+            '& .MuiTableCell-root': {
+              color: '#425A76',
+              fontSize: '13px',
+              fontWeight: 500,
+            },
+          }}
+        >
           {data.map((field, i) => (
             <TableRow key={i} sx={{ height: '28px' }}>
               <TableCell
@@ -62,18 +80,32 @@ const KeyContactSection: React.FC<{ title: string; data: KeyContact[] }> = ({
                   height: '28px',
                   py: 0,
                   px: 3.2,
-                  width: '180px',
+                  width: '170px',
+                  minWidth: '170px',
+                  maxWidth: '170px',
                 }}
               >
                 {field.keyContactId || '-'}
               </TableCell>
               <TableCell
-                sx={{ height: '28px', padding: '0px 8px', width: '220px' }}
+                sx={{
+                  height: '28px',
+                  padding: '0px 8px',
+                  width: '200px',
+                  minWidth: '200px',
+                  maxWidth: '200px',
+                }}
               >
                 {field.keyContactName || '-'}
               </TableCell>
               <TableCell
-                sx={{ height: '28px', padding: '0px 8px', width: '230px' }}
+                sx={{
+                  height: '28px',
+                  padding: '0px 8px',
+                  width: '200px',
+                  minWidth: '200px',
+                  maxWidth: '200px',
+                }}
               >
                 {field.keyContactRole || '-'}
               </TableCell>
@@ -83,18 +115,32 @@ const KeyContactSection: React.FC<{ title: string; data: KeyContact[] }> = ({
                   padding: '0px 8px',
                   textDecoration: field.keyContactEmail ? 'underline' : 'none',
                   textDecorationColor: '#425A76',
-                  width: '230px',
+                  width: '200px',
+                  minWidth: '200px',
+                  maxWidth: '200px',
                 }}
               >
                 {field.keyContactEmail || '-'}
               </TableCell>
               <TableCell
-                sx={{ height: '28px', padding: '0px 8px', width: '160px' }}
+                sx={{
+                  height: '28px',
+                  padding: '0px 8px',
+                  width: '160px',
+                  minWidth: '160px',
+                  maxWidth: '160px',
+                }}
               >
                 {field.isPrimaryContact ? 'Yes' : 'No'}
               </TableCell>
               <TableCell
-                sx={{ height: '28px', padding: '0px 8px', width: '200px' }}
+                sx={{
+                  height: '28px',
+                  padding: '0px 8px',
+                  width: '200px',
+                  minWidth: '200px',
+                  maxWidth: '200px',
+                }}
               >
                 {field.includeInCommnunications ? 'Yes' : 'No'}
               </TableCell>
@@ -102,11 +148,13 @@ const KeyContactSection: React.FC<{ title: string; data: KeyContact[] }> = ({
                 sx={{
                   height: '28px',
                   padding: '0px 8px',
-                  width: '80px',
+                  width: '160px',
+                  minWidth: '160px',
+                  maxWidth: '160px',
                   color:
                     field.keyContactStatus?.toLowerCase() === 'active'
-                      ? '#3EA72F'
-                      : '#f44336',
+                      ? '#3EA72F !important'
+                      : '#f44336 !important',
                 }}
               >
                 {field.keyContactStatus?.toLowerCase() === 'active'

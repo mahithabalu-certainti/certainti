@@ -155,6 +155,7 @@ export const createRadioField = (
   disabled: options.disabled,
   onChange: options.onChange,
   defaultSelect: options.defaultSelect,
+  defaultValue: options.defaultValue,
 });
 
 export const createSelectField = (
@@ -170,6 +171,7 @@ export const createSelectField = (
     onChange?: boolean;
     isLoading?: boolean;
     resetDependsFields?: string[];
+    defaultValue?: string;
   }
 ): FieldType => ({
   type: 'select',
@@ -183,6 +185,7 @@ export const createSelectField = (
   clearValue: others.clearValue,
   onChange: others.onChange,
   isLoading: others.isLoading,
+  defaultValue: others.defaultValue,
   resetDependsFields: others.resetDependsFields,
 });
 
@@ -303,7 +306,7 @@ export const REGEX_PATTERNS = {
   LETTERS_SPACES: /^[A-Za-z\s]+$/,
   ACCOUNT_NAME: /^[A-Za-z0-9 &'.,-]+$/,
   PROJECT_NAME: /^[A-Za-z0-9 &'.,_-]+$/,
-  CONTACT_NAME: /^[A-Za-z &'’.,\-\\–\\—]+$/,
+  CONTACT_NAME: /^[A-Za-z\s'-]+$/,
   INDUSTRY: /^[A-Za-z &]{5,25}$/,
   LETTERS_5_TO_25: /^[A-Za-z\s]{5,25}$/,
   LETTERS_3_TO_25: /^(?!.*\s{2,-'})[A-Za-z\s]{3,25}$/,
@@ -388,6 +391,8 @@ export const REGEX_PATTERNS = {
   CONSECUTIVE_SPECIAL_CHARS: /^(?!.*[ '\\-]{2})/,
   EFFORT_IN_HOURS_REGEX: /^(0|([1-9]\d{0,15}))(\.\d{1,2})?$/,
   MAX_EFFORT_IN_HOURS: /^.{1,18}$/,
+  KEY_CONTACT_NO_CONSECUTIVE: /^(?!.*[-'\s]{2,})/,
+  KEY_CONTACT_NO_TRAILING: /^[A-Za-z].*[A-Za-z]$/,
 };
 
 /**
