@@ -62,7 +62,7 @@ export const keyContactsTransformPayload = (
     const role = formData[`key_contact_role_${index}`];
     const rid = formData[`key_contact_rid_${index}`];
 
-    if (name || email || role) {
+    if (name || email) {
       if (rid) retainedRids.add(rid);
 
       keyContacts.push({
