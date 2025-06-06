@@ -996,14 +996,16 @@ async insertClientTemplateDetails(
     }
   }
 
-  async getKeyContactRoles(): Promise<{
+  async getKeyContactRoles(
+    entity_type: string,
+  ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
     data?: { keyContactRoles: any };
   }> {
     try {
-      const keyContactRoles = await this.schemaService.fetchKeyContactRoles();
+      const keyContactRoles = await this.schemaService.fetchKeyContactRoles(entity_type);
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,

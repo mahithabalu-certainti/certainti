@@ -95,11 +95,11 @@ class SchemaService {
     `);
   }
 
-  async fetchKeyContactRoles(): Promise<any[]> {
+  async fetchKeyContactRoles(entity_type: string): Promise<any[]> {
     const sequelize = await initSequelize();
     const result = await sequelize.query(`
       SELECT *
-      FROM "public".key_contact_role
+      FROM "public".key_contact_role where entity_type = '${entity_type}' AND LOWER(role_status) = 'active'
       ORDER BY role_name ASC;
     `);
     return result[0];
