@@ -413,7 +413,8 @@ async function ListGlobalAccounts(req: Request, res: Response): Promise<void> {
   async function getKeyContactRoles(req: Request, res: Response): Promise<void> {
     const methodName = "get key contact roles";
     try {
-      const account = await accountServices.getKeyContactRoles();
+      const entity_type = req.query.entity_type as string;
+      const account = await accountServices.getKeyContactRoles(entity_type);
 
       if (account.statusCode === HttpStatus.SUCCESS) {
         successLog(methodName);

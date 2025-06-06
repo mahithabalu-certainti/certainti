@@ -66,7 +66,9 @@ export interface IAccountService {
     data?: { gloablAcconunt: any; count: number };
   }>;
 
-  getKeyContactRoles(): Promise<{
+  getKeyContactRoles(
+    entity_type: string
+  ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
