@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import {
   createDateField,
+  createEmptyField,
   createSelectField,
   createTextAreaField,
   createTextField,
@@ -337,7 +338,12 @@ export const ResourceFormData = (
             required: false,
             isLoading: currencyLoading,
           }),
-          {},
+          createEmptyField('', '', {
+            name: 'emptyData',
+            label: '',
+            type: '',
+            required: false,
+          }),
           createDateField('financial_start_date', 'Effective From', {
             required: false,
             minDate: minDate,
@@ -349,7 +355,12 @@ export const ResourceFormData = (
             maxDate: currentDate,
             startDateLabel: 'financial_start_date',
           }),
-          {},
+          createEmptyField('', '', {
+            name: 'emptyData',
+            label: '',
+            type: '',
+            required: false,
+          }),
           createTextField('annual_cost', 'Annual Compensation', {
             required: false,
             placeholder: 'Enter Annual Compensation',
@@ -558,7 +569,12 @@ export const ResourceFormData = (
               message: 'End Date must be after Effective Date',
             },
           }),
-          {},
+          createEmptyField('', '', {
+            name: 'emptyData',
+            label: '',
+            type: '',
+            required: false,
+          }),
           createTextField('designation', 'Designation', {
             required: false,
             placeholder: 'Enter Designation',

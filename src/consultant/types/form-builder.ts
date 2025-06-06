@@ -2,7 +2,7 @@ export interface FormType {
   sectionName: string;
   fillType: 'half' | 'full' | 'quarter';
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  fields: (FormTypeFields | {})[];
+  fields: FormTypeFields[];
 
   hide?: boolean;
 }
@@ -68,6 +68,7 @@ export type InputType =
   | 'phone'
   | 'fiscalDate'
   | 'button'
+  | 'emptyFeild'
   | 'website'
   | 'iconButton';
 

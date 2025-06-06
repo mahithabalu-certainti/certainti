@@ -201,6 +201,16 @@ export const createButton = (
   iconUrl: others.iconUrl,
   onClick: others.onClick,
 });
+export const createEmptyField = (
+  name: string,
+  label: string,
+  options?: { name?: string; label?: string; type?: string; required?: boolean }
+): FieldType => ({
+  type: 'emptyFeild',
+  name: options?.name || name,
+  label: options?.label || label,
+  required: options?.required ?? false,
+});
 
 export const createImgButton = (
   name: string,

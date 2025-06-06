@@ -3,6 +3,7 @@ import { FieldType, FormType, SelectOption, YesNo } from '../../types';
 import { DATA_STORAGE_OPTIONS } from './utils';
 import {
   createButton,
+  createEmptyField,
   createFiscalDateField,
   createImgButton,
   createRadioField,
@@ -365,7 +366,12 @@ export const FormData = (
                 'Fiscal End Date cannot be the same as the Fiscal Start Date',
             },
           }),
-          {},
+          createEmptyField('', '', {
+            name: 'emptyData',
+            label: '',
+            type: '',
+            required: false,
+          }),
           createTextField('blended_rate_fte', 'Blended Rate - FTE', {
             required: false,
             regex: REGEX_PATTERNS.BLENDED_NUMBER,
@@ -380,7 +386,12 @@ export const FormData = (
               'Only positive numbers allowed, up to 3 digits and 2 decimal places',
             placeholder: 'Enter Blended Rate - SubCon',
           }),
-          {},
+          createEmptyField('', '', {
+            name: 'emptyData',
+            label: '',
+            type: '',
+            required: false,
+          }),
           createRadioField('auto_access_rd', 'Auto Assessment', {
             radioOptions: YES_NO_OPTIONS,
             required: true,

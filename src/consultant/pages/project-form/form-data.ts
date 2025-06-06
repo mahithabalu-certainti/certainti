@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import {
   createButton,
   createDateField,
+  createEmptyField,
   createImgButton,
   createRadioField,
   createSelectField,
@@ -430,7 +431,12 @@ export const FormData = (
               'Total Sub Con Count must be a positive integer with up to 9 digits',
             placeholder: 'Enter Total Sub Con Count',
           }),
-          {},
+          createEmptyField('', '', {
+            name: 'emptyData',
+            label: '',
+            type: '',
+            required: false,
+          }),
           createTextField('total_fte_effort', 'Total FTE Effort', {
             regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
             regexErrorMessage:
@@ -493,7 +499,12 @@ export const FormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 3 digits and 2 decimal places',
           }),
-          {},
+          createEmptyField('', '', {
+            name: 'emptyData',
+            label: '',
+            type: '',
+            required: false,
+          }),
           createRadioField('auto_access_rd', 'Auto Assessment', {
             required: false,
             radioOptions: [

@@ -868,6 +868,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             {field.name}
           </button>
         );
+      case 'emptyFeild':
+        return <></>;
       default:
         return null;
     }
