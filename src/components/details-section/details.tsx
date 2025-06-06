@@ -21,35 +21,6 @@ const DetailsSection: React.FC<{
     else rightColumn.push(item);
   });
 
-  //   const renderValue = (value: React.ReactNode, label?: string) => {
-  //     if (typeof value === 'string') {
-  //       const status = value.toLowerCase();
-  //       if (status === 'active')
-  //         return <span className='text-[#199806]'>Active</span>;
-  //       if (status === 'inactive')
-  //         return <span className='text-[#f44336]'>In-Active</span>;
-  //       if (value === 'empty') return <span></span>;
-  //       if (label?.toLowerCase() === 'website') {
-  //         return (
-  //           <span className='font-medium text-[13px] text-[#425A76]'>
-  //             <a
-  //               href={value}
-  //               target='_blank'
-  //               rel='noreferrer'
-  //               className='underline decoration-[#425A76]'
-  //             >
-  //               {value}
-  //             </a>
-  //           </span>
-  //         );
-  //       }
-  //     }
-  //     return (
-  //       <span className='font-medium text-[13px] text-[#425A76]'>
-  //         {value || '-'}
-  //       </span>
-  //     );
-  //   };
   const renderValue = (value: React.ReactNode, label?: string) => {
     if (typeof value === 'string') {
       const status = value.toLowerCase();
@@ -118,7 +89,7 @@ const DetailsSection: React.FC<{
               return (
                 <div
                   key={index}
-                  className='grid grid-cols-1 md:grid-cols-3 gap-6'
+                  className='grid grid-cols-1 gap-6 md:grid-cols-3'
                 >
                   {[leftItem, midItem, rightItem].map(
                     (item, idx) =>

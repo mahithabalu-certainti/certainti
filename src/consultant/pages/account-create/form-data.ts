@@ -85,7 +85,7 @@ export const newKeyContactFields = (
     required: isPrimaryContactRequired,
     onChange: true,
   }),
-  createRadioField('include_in_communication', 'Include in Communications?', {
+  createRadioField('include_in_communication', 'Include In Communications?', {
     radioOptions: YES_NO_OPTIONS,
     width: '160px',
     required: false,
