@@ -921,7 +921,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                                     />
                                     <span>Name</span>
                                   </div>
-                                  <img src={arrowIcon} alt='arrowIcon' />
+                                  {/* <img src={arrowIcon} alt='arrowIcon' /> */}
                                 </div>
                               </div>
                             )}

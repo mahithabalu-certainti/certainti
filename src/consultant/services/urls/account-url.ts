@@ -77,6 +77,6 @@ export const getAccountExportUrl = ({
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };
 
-export const getKeyContactRolesUrl = (): string => {
-  return `/api/accounts/keycontactroles`;
+export const getKeyContactRolesUrl = (entityType: string): string => {
+  return `/api/accounts/keycontactroles?entity_type=${entityType}`;
 };
