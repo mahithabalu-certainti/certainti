@@ -175,7 +175,7 @@ const Resource: React.FC<ResourceProps> = ({
     sortOrder: sortOrder,
     filters: appliedFilters,
   }, isResourceViewAllEnable);
-  
+
   const isResoureceOverviewHide = resourceTab[0].hide;
 
   useEffect(() => {
@@ -531,6 +531,7 @@ const Resource: React.FC<ResourceProps> = ({
                 actionMenuItems={actionMenuItems}
                 loading={isLoading}
                 error={error ? 'Failed to load resource data' : undefined}
+                rowsPerPageOptions={[25, 50, 100]}
                 rowsPerPage={rowsPerPage}
                 currentPage={currentPage}
                 totalItems={ResourceList?.count || 0}
