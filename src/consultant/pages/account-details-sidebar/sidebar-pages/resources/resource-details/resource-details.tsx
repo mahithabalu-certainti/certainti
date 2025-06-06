@@ -245,8 +245,12 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   ];
 
   return (
-    <div className='max-w-6xl px-6 py-2'>
-      <DetailsSection title='Basic Information' data={basicInfo} />
+    <div className=''>
+      <DetailsSection
+        title='Basic Information'
+        data={basicInfo}
+        customStyle='pt-2 mt-0'
+      />
       <DetailsSection
         title='Location and Currency Information'
         data={locationInfo}

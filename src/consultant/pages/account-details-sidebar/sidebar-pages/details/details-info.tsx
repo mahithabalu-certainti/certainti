@@ -190,18 +190,18 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
       <DetailsSection
         title='Basic Information'
         data={basicInfo}
-        customStyle='px-6 pt-2 mt-0'
+        customStyle='pt-2 mt-0'
       />
       <DetailsSection
         title=''
         data={businessInfo}
         fullColumn={true}
-        customStyle='px-6 pt-2 mt-0'
+        customStyle='mt-0'
       />
       <DetailsSection
         title='Location and Currency Information'
         data={locationInfo}
-        customStyle='px-6 pt-2 mt-2 mb-4'
+        customStyle=' pt-2 mt-2 mb-4'
       />
       {isKeyContactAvailable && keyContactsList && (
         <KeyContactSection title='Key Contacts List' data={keyContactsList} />

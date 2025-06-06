@@ -328,6 +328,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
           <DetailsSection
             title='Basic Information'
             data={basicInfo as DetailItem[]}
+            customStyle='pt-2 mt-0'
           />
           <DetailsSection title='' data={description as DetailItem[]} />
           <DetailsSection

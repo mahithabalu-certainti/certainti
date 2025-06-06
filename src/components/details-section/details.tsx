@@ -88,11 +88,15 @@ const DetailsSection: React.FC<{
     );
   };
 
-  const styleName = customStyle ? customStyle : 'px-6 pt-2 mt-3  ';
+  const styleName = customStyle ? customStyle : ' pt-2 mt-3  ';
   return (
     <div className={styleName}>
-      <div className='text-[15px] text-[#2D3E4F] font-bold'>{title}</div>
-      <div className='text-sm my-[6px] grid gap-y-3'>
+      {title && (
+        <div className='flex items-center align-middle px-6  h-[30px] border border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#F5F9FF]'>
+          {title}
+        </div>
+      )}
+      <div className='text-sm my-[6px] px-6 grid gap-y-3'>
         {fullColumn
           ? data.map((item, index) => (
               <div
