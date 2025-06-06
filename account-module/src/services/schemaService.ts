@@ -1084,7 +1084,7 @@ class SchemaService {
           {
             this.deleteKeyContactDetails(
               account_rid,
-              contact.key_contact_id,
+              contact.rid,
               schemaName
             );
           }
@@ -1241,7 +1241,7 @@ class SchemaService {
     const sequelize = await initOrgSequelize();
     await sequelize.query(
       `DELETE FROM "${schemaName}"."key_contact_details" 
-       WHERE r_number = :key_contact_id AND entity_rid = :account_rid and entity_type = 'Account'`,
+       WHERE rid = :key_contact_id AND entity_rid = :account_rid and entity_type = 'Account'`,
       {
         replacements: {
           key_contact_id,
