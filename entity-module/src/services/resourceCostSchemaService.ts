@@ -345,7 +345,8 @@ class ResourceCostSchemaService {
     resource_rid: string,
     limit: number,
     offset: number,
-    search: string
+    search: string,
+    account_rid: string
   ) {
     try {
       const sequelize = await this.getDbConnection(schemaName);
@@ -358,7 +359,7 @@ class ResourceCostSchemaService {
         FROM "${schemaName}"."resource_cost" rc
         INNER JOIN "${schemaName}"."resources" r ON rc.resource_rid = r.rid
         INNER JOIN "${schemaName}"."account_details" ad ON r.account_rid = ad.account_rid
-        WHERE 1=1 AND rc.resource_rid = :resource_rid
+        WHERE 1=1 AND rc.account_rid = :account_rid AND rc.resource_rid = :resource_rid
         ${filterConditions}
         ${searchCondition}
       `;
@@ -369,7 +370,7 @@ class ResourceCostSchemaService {
         FROM "${schemaName}"."resource_cost" rc
         INNER JOIN "${schemaName}"."resources" r ON rc.resource_rid = r.rid
         INNER JOIN "${schemaName}"."account_details" ad ON r.account_rid = ad.account_rid
-        WHERE 1=1 AND rc.resource_rid = :resource_rid
+        WHERE 1=1 AND rc.account_rid = :account_rid AND rc.resource_rid = :resource_rid
         ${filterConditions}
         ${searchCondition}
       `;
@@ -378,6 +379,7 @@ class ResourceCostSchemaService {
         limit,
         offset,
         searchTerm: search ? `%${search}%` : null,
+        account_rid,
         resource_rid,
       };
 
@@ -537,7 +539,8 @@ class ResourceCostSchemaService {
     sortBy: string,
     sortOrder: string,
     resource_rid: string,
-    search: string
+    search: string,
+    account_rid: string
   ) {
     try {
       const sequelize = await this.getDbConnection(schemaName);
@@ -550,13 +553,14 @@ class ResourceCostSchemaService {
         FROM "${schemaName}"."resource_cost" rc
         INNER JOIN "${schemaName}"."resources" r ON rc.resource_rid = r.rid
         INNER JOIN "${schemaName}"."account_details" ad ON r.account_rid = ad.account_rid
-        WHERE 1=1 AND rc.resource_rid = :resource_rid
+        WHERE 1=1 AND rc.account_rid = :account_rid AND rc.resource_rid = :resource_rid
         ${filterConditions}
         ${searchCondition}
       `;
 
       const replacements = {
         searchTerm: search ? `%${search}%` : null,
+        account_rid,
         resource_rid,
       };
 
