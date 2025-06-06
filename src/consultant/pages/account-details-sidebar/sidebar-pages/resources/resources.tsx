@@ -548,7 +548,6 @@ const Resource: React.FC<ResourceProps> = ({
                 totalItems={ResourceList?.count || 0}
                 onPageChange={handlePageChange}
                 onRowsPerPageChange={handleRowsPerPageChange}
-                rowsPerPageOptions={[25, 50, 100]}
                 sortBy={sortField}
                 sortOrder={sortOrder}
                 onSort={handleSortRequest}
