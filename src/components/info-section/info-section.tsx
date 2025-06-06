@@ -1,0 +1,136 @@
+import React from 'react';
+import { Box, Skeleton, Typography } from '@mui/material';
+import { TruncateWithTooltip } from '../truncate-with-tooltip';
+
+interface InfoSectionColumn {
+  items: {
+    label: string;
+    value: string | React.ReactNode;
+    className?: string;
+  }[];
+}
+
+interface InfoSectionProps {
+  columns: InfoSectionColumn[];
+  className?: string;
+  loading?: boolean;
+  error?: boolean;
+  singleLineView?: boolean;
+}
+
+const InfoSection: React.FC<InfoSectionProps> = ({
+  columns,
+  className = '',
+  loading = false,
+  singleLineView = false,
+  error,
+}) => {
+  const renderValue = (value: string | React.ReactNode) => {
+    if (typeof value === 'string') {
+      const lowerValue = value.toLowerCase();
+      if (lowerValue === 'active' || lowerValue === 'inactive') {
+        return (
+          <Typography
+            component='span'
+            sx={{
+              fontSize: '14px',
+              color: lowerValue === 'active' ? '#199806' : '#f44336',
+              fontWeight: 500,
+            }}
+          >
+            {value === 'Active' ? 'Active' : 'In-Active'}
+          </Typography>
+        );
+      }
+    }
+    return value;
+  };
+
+  const loadingRows = singleLineView ? 1 : 2;
+  const totalColumns = Array.isArray(columns) ? columns.length : 3;
+
+  if (error) {
+    return (
+      <Box
+        className={`flex items-center justify-center p-4 border-b-2 border-[#CBD6E2] bg-white max-h-[80px] text-red-500 ${className}`}
+      >
+        Failed to load details
+      </Box>
+    );
+  }
+
+  if (loading) {
+    return (
+      <Box
+        className={`flex flex-col gap-3 px-4 py-2 border-b-2 border-[#CBD6E2] bg-white max-h-[80px] ${className}`}
+      >
+        {[...Array(loadingRows)].map((_, rowIndex) => (
+          <Box
+            key={rowIndex}
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: `repeat(${totalColumns * 2}, ${singleLineView ? 'auto' : '1fr'})`,
+              alignItems: 'center',
+              mt: singleLineView ? 0 : 0.5,
+            }}
+          >
+            {[...Array(totalColumns)].map((__, colIndex) => (
+              <React.Fragment key={colIndex}>
+                <Skeleton variant='text' width='40%' height={18} />
+                <Skeleton variant='text' width='80%' height={18} />
+              </React.Fragment>
+            ))}
+          </Box>
+        ))}
+      </Box>
+    );
+  }
+
+  const rowCount =
+    Array.isArray(columns) && columns[0]?.items?.length
+      ? columns[0].items.length
+      : 0;
+
+  return (
+    <Box
+      className={`flex flex-col gap-3 px-4 py-2 border-b-2 border-[#CBD6E2] bg-white max-h-[80px] ${className}`}
+    >
+      {[...Array(rowCount)].map((_, rowIndex) => (
+        <Box
+          key={rowIndex}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${totalColumns * 2}, ${singleLineView ? 'auto' : '1fr'})`,
+            alignItems: 'center',
+          }}
+        >
+          {columns.map((column, colIndex) => {
+            const item = column.items[rowIndex];
+            return (
+              <React.Fragment key={colIndex}>
+                <Typography
+                  variant='caption'
+                  sx={{
+                    color: '#7D98B6',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                  }}
+                >
+                  {item.label}
+                </Typography>
+                <TruncateWithTooltip
+                  text={String(item.value)}
+                  className={`font-medium text-[14px] text-[#2D3E4F] ${item.className}`}
+                >
+                  {renderValue(item.value)}
+                </TruncateWithTooltip>
+              </React.Fragment>
+            );
+          })}
+        </Box>
+      ))}
+    </Box>
+  );
+};
+
+export default InfoSection;

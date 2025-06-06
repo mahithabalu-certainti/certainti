@@ -1,0 +1,48 @@
+
+import { ResourceDetailsApiResponse } from "../types";
+
+export const mockResourceDetails: ResourceDetailsApiResponse = {
+  statusCode: 200,
+  statusCodeValue: 'Success',
+  statusMessage: '',
+  data: {
+    resourceDetails: {
+      rid: '4e15cef8-3efb-4e98-8ec7-e16f27ae8d63',
+      r_number: 'ACC0001',
+      account_id: '431cfe96-3a5a-4044-8022-086adee1a292',
+      account_number: 'ACC0001',
+      eid: null,
+      resource_type: 'FullTime',
+      resource_firstname: '',
+      resource_lastname: 'miller',
+      resource_orgname: 'Some Organization',
+      resource_role: 'Developer',
+      fiscal_year: 2025,
+      country: '50aead83-b41d-43d4-a8b7-c9ee7641e6c2',
+      resource_startdate: '2025-04-09T18:30:00.000Z',
+      resource_enddate: '2025-04-10T18:30:00.000Z',
+      designation: 'Senior Developer',
+      resource_status: 'Active',
+      created_datetime: '2025-04-10T07:08:11.091Z',
+      modified_datetime: '2025-04-10T07:08:11.092Z',
+      created_by: 'f15143ee-4796-4abd-a984-fa559a624f18',
+      modified_by: null,
+      // Added missing required properties
+      resource_designation: 'Senior Developer',
+      resource_country: '50aead83-b41d-43d4-a8b7-c9ee7641e6c2',
+      // Other optional fields
+      resource_code: '',
+      resource_region: '',
+      resource_city: '',
+      resource_name: '',
+      resource_org_name: '',
+      country_name: '',
+      region_name: '',
+      city_name: '',
+      city: '',
+      resource_total_experience: 0,
+      resource_total_experience_organization: 0,
+      comments: ''
+    },
+  },
+};

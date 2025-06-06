@@ -1,0 +1,17 @@
+{
+  "login": {
+    "welcome": "Hey, Welcome!",
+    "welcomeNote": "We are very happy to see you!",
+    "button": "Login",
+    "loading": "Logging in...",
+    "enterpriseAssist": "Enterprise Assist",
+    "enablingAIExcellence": "Enabling AI Excellence",
+    "poweredBy": "Powered By",
+    "signInError": "Failed to login. Please try again later.",
+    "thinkR&D": "Think R&D 365"
+  },
+  "notFound": {
+    "title": "Not Found",
+    "message": "Sorry, this page does not exist!"
+  }
+}

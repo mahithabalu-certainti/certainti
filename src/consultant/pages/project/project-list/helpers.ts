@@ -1,0 +1,291 @@
+import { FilterSelectOption } from '../../../types/account-filter';
+import { FieldConfig } from '../../account-details-sidebar/components/filter/filterType';
+import {
+  // dateOptions,
+  enumOptions,
+  fiscalYearOption,
+  numberOptions,
+  textOptions,
+  statusOptions,
+  projectTypeOption,
+} from '../../account-details-sidebar/sidebar-pages/projects/utils';
+
+export const getAllProjectFilterFields = (
+  classificationOption: FilterSelectOption[]
+): FieldConfig[] => [
+  // Text fields
+  {
+    name: 'Account Name',
+    value: 'account_name',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Fiscal Year',
+    value: 'fiscal_year',
+    type: 'enum',
+    options: fiscalYearOption,
+    operatorOption: enumOptions,
+  },
+  {
+    name: 'Customer Group',
+    value: 'project_client_group',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Project Group',
+    value: 'project_group',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Project Code',
+    value: 'project_code',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Name',
+    value: 'project_name',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Project Type',
+    value: 'project_type',
+    type: 'enum',
+    options: projectTypeOption,
+    operatorOption: enumOptions,
+  },
+  {
+    name: 'Project Classification',
+    value: 'classification_name',
+    type: 'enum',
+    options: classificationOption.map((item) => ({
+      option: item.label,
+      value: item.value,
+    })),
+    operatorOption: enumOptions,
+  },
+  {
+    name: 'Project Effort (Hours)',
+    value: 'total_effort',
+    type: 'number',
+    operatorOption: numberOptions,
+  },
+  {
+    name: 'Project Cost',
+    value: 'total_cost',
+    type: 'number',
+    operatorOption: numberOptions,
+  },
+  {
+    name: 'FTE Cost',
+    value: 'total_fte_cost',
+    type: 'number',
+    operatorOption: numberOptions,
+  },
+  {
+    name: 'SubCon Cost',
+    value: 'total_sub_con_cost',
+    type: 'number',
+    operatorOption: numberOptions,
+  },
+  {
+    name: 'Non-Labor Cost',
+    value: 'total_non_labor_cost',
+    type: 'number',
+    operatorOption: numberOptions,
+  },
+  {
+    name: 'Assessment Status',
+    value: 'assessment_status',
+    type: 'enum',
+    options: statusOptions,
+    operatorOption: enumOptions,
+  },
+  {
+    name: 'QRE %',
+    value: 'qre',
+    type: 'number',
+    operatorOption: numberOptions,
+  },
+  {
+    name: 'QRE',
+    value: 'qualified_research_expenditure',
+    type: 'number',
+    operatorOption: numberOptions,
+  },
+  {
+    name: 'Project Point of Contact',
+    value: 'project_point_of_contact',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Technical Point of Contact',
+    value: 'technical_point_of_contact',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Comments',
+    value: 'comments',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Last Modified',
+    value: 'modified_datetime',
+    type: 'date',
+  },
+  {
+    name: 'Project ID',
+    value: 'r_number',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  // {
+  //   name: 'Industry',
+  //   value: 'industry',
+  //   type: 'text',
+  //   operatorOption: textOptions,
+  // },
+  // {
+  //   name: 'Program Name',
+  //   value: 'program_name',
+  //   type: 'text',
+  //   operatorOption: textOptions,
+  // },
+
+  // // Date fields
+  // {
+  //   name: 'Start Date',
+  //   value: 'project_startdate',
+  //   type: 'date',
+  //   operatorOption: dateOptions,
+  // },
+  // {
+  //   name: 'End Date',
+  //   value: 'project_enddate',
+  //   type: 'date',
+  //   operatorOption: dateOptions,
+  // },
+  // {
+  //   name: 'Qualified Research Expenditure',
+  //   value: 'qualified_research_expenditure',
+  //   type: 'number',
+  //   operatorOption: numberOptions,
+  // },
+  // {
+  //   name: 'is RD Qualifiled ?',
+  //   value: 'qre',
+  //   type: 'number',
+  //   operatorOption: numberOptions,
+  // },
+  // {
+  //   name: 'QRE %',
+  //   value: 'qre',
+  //   type: 'number',
+  //   operatorOption: numberOptions,
+  // },
+  // // Number fields
+  // {
+  //   name: 'Cost',
+  //   value: 'total_cost',
+  //   type: 'number',
+  //   operatorOption: numberOptions,
+  // },
+  // {
+  //   name: 'Effort in HRS',
+  //   value: 'total_effort',
+  //   type: 'number',
+  //   operatorOption: numberOptions,
+  // },
+  // {
+  //   name: 'No of FTE',
+  //   value: 'total_fte',
+  //   type: 'number',
+  //   operatorOption: numberOptions,
+  // },
+  // {
+  //   name: 'FTE Cost',
+  //   value: 'total_fte_cost',
+  //   type: 'number',
+  //   operatorOption: numberOptions,
+  // },
+  // {
+  //   name: 'No of Sub Con',
+  //   value: 'total_sub_con',
+  //   type: 'number',
+  //   operatorOption: numberOptions,
+  // },
+  // {
+  //   name: 'Sub-Con Cost',
+  //   value: 'total_sub_con_cost',
+  //   type: 'number',
+  //   operatorOption: numberOptions,
+  // },
+  // {
+  //   name: 'Non-Labor Cost',
+  //   value: 'total_non_labor_cost',
+  //   type: 'number',
+  //   operatorOption: numberOptions,
+  // },
+  // {
+  //   name: 'Comments',
+  //   value: 'comments',
+  //   type: 'text',
+  //   operatorOption: textOptions,
+  // },
+  // {
+  //   name: 'Country',
+  //   value: 'country',
+  //   type: 'text',
+  //   operatorOption: textOptions,
+  // },
+  // {
+  //   name: 'Currency',
+  //   value: 'currency',
+  //   type: 'text',
+  //   operatorOption: textOptions,
+  // },
+  // {
+  //   name: 'Region',
+  //   value: 'region',
+  //   type: 'text',
+  //   operatorOption: textOptions,
+  // },
+  // {
+  //   name: 'Status',
+  //   value: 'project_status',
+  //   type: 'enum',
+  //   options: statusOptions,
+  //   operatorOption: enumOptions,
+  // },
+  // {
+  //   name: 'Project POC',
+  //   value: 'comments',
+  //   type: 'text',
+  //   operatorOption: textOptions,
+  // },
+  // {
+  //   name: 'Financial Consultant',
+  //   value: 'financial_consultant',
+  //   type: 'text',
+  //   operatorOption: textOptions,
+  // },
+  // {
+  //   name: 'Techanical Consultant  ',
+  //   value: 'technical_consultant',
+  //   type: 'text',
+  //   operatorOption: textOptions,
+  // },
+  // {
+  //   name: 'Project ID',
+  //   value: 'r_number',
+  //   type: 'text',
+  //   operatorOption: textOptions,
+  // },
+];

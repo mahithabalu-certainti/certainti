@@ -1,0 +1,26 @@
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-ellipsis:hover::after {
+  content: attr(title);
+  position: absolute;
+  background-color: #000;
+  color: #fff;
+  padding: 5px;
+  border-radius: 3px;
+  white-space: normal;
+  z-index: 1;
+}
+
+.border-right {
+  border-right: 1px solid rgba(224, 224, 224, 1);
+}
+
+.MuiTableCell-root {
+  border-right: 1px solid rgba(224, 224, 224, 1);
+  border-bottom: 1px solid rgba(224, 224, 224, 1);
+  font-weight: 300;
+}
