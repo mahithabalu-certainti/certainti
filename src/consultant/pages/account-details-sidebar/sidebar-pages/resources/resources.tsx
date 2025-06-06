@@ -345,9 +345,9 @@ const Resource: React.FC<ResourceProps> = ({
     const accNumber = accountDetails?.data?.accountById.r_number;
     navigate(
       RESOURCE +
-        '/edit/' +
-        resourceId +
-        `?account_id=${accountid}&acc_number=${accNumber}`
+      '/edit/' +
+      resourceId +
+      `?account_id=${accountid}&acc_number=${accNumber}`
     );
   };
 
@@ -542,6 +542,7 @@ const Resource: React.FC<ResourceProps> = ({
                 actionMenuItems={actionMenuItems}
                 loading={isLoading}
                 error={error ? 'Failed to load resource data' : undefined}
+                rowsPerPageOptions={[25, 50, 100]}
                 rowsPerPage={rowsPerPage}
                 currentPage={currentPage}
                 totalItems={ResourceList?.count || 0}
