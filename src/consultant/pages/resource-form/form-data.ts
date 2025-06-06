@@ -123,6 +123,39 @@ export const ResourceFormData = (
             onChange: true,
             resetDependsFields: ['resource_orgname'],
           }),
+          createTextField('resource_orgname', 'Resource Org Name', {
+            required:
+              disableOrgname && disableOrgname !== 'Full-Time' ? true : false,
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_3,
+                errorMessage: 'Please enter more than 2 characters.',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_100,
+                errorMessage: 'Max length exceeded.',
+              },
+              {
+                regex: REGEX_PATTERNS.ALLOWED_CHARS_EXTENDED_NAME_REGEX,
+                errorMessage:
+                  "Only letters, numbers, spaces, ampersands (&), hyphens (-), periods (.), apostrophes (') and commas (,) are allowed.",
+              },
+              {
+                regex:
+                  REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX,
+                errorMessage:
+                  'Cannot start or end with a space or special character',
+              },
+            ],
+            placeholder: 'Enter Resource Org Name',
+            disabled:
+              disableOrgname && disableOrgname === 'Full-Time' ? true : false,
+            clearValue: {
+              key: 'resource_type',
+              matchedValue: 'Full-Time',
+            },
+            defaultValue: '',
+          }),
           createTextField('resource_name', 'Name', {
             required: false,
             errorHandling: [
@@ -221,40 +254,6 @@ export const ResourceFormData = (
             disabled: disableCostAndSkill || isResourceFullNameEmpty,
             onChange: true,
           }),
-
-          createTextField('resource_orgname', 'Resource Org Name', {
-            required:
-              disableOrgname && disableOrgname !== 'Full-Time' ? true : false,
-            errorHandling: [
-              {
-                regex: REGEX_PATTERNS.MIN_3,
-                errorMessage: 'Please enter more than 2 characters.',
-              },
-              {
-                regex: REGEX_PATTERNS.MAX_100,
-                errorMessage: 'Max length exceeded.',
-              },
-              {
-                regex: REGEX_PATTERNS.ALLOWED_CHARS_EXTENDED_NAME_REGEX,
-                errorMessage:
-                  "Only letters, numbers, spaces, ampersands (&), hyphens (-), periods (.), apostrophes (') and commas (,) are allowed.",
-              },
-              {
-                regex:
-                  REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX,
-                errorMessage:
-                  'Cannot start or end with a space or special character',
-              },
-            ],
-            placeholder: 'Enter Resource Org Name',
-            disabled:
-              disableOrgname && disableOrgname === 'Full-Time' ? true : false,
-            clearValue: {
-              key: 'resource_type',
-              matchedValue: 'Full-Time',
-            },
-            defaultValue: '',
-          }),
           createTextField('resource_role', 'Role', {
             required: false,
 
@@ -338,6 +337,7 @@ export const ResourceFormData = (
             required: false,
             isLoading: currencyLoading,
           }),
+          {},
           createDateField('financial_start_date', 'Effective From', {
             required: false,
             minDate: minDate,
@@ -349,6 +349,7 @@ export const ResourceFormData = (
             maxDate: currentDate,
             startDateLabel: 'financial_start_date',
           }),
+          {},
           createTextField('annual_cost', 'Annual Compensation', {
             required: false,
             placeholder: 'Enter Annual Compensation',
@@ -519,6 +520,11 @@ export const ResourceFormData = (
                 ? false
                 : true,
           }),
+          createSelectField('skill_level', 'Skill Level', {
+            options: mockSkillLevelOptions,
+            placeholder: 'Choose Skill Level',
+            required: false,
+          }),
           createTextField('skill_details', 'Skill Details', {
             required: true,
             placeholder: 'Enter Skill Details',
@@ -528,11 +534,6 @@ export const ResourceFormData = (
                 errorMessage: 'Input must be between 1 and 2,000 characters.',
               },
             ],
-          }),
-          createSelectField('skill_level', 'Skill Level', {
-            options: mockSkillLevelOptions,
-            placeholder: 'Choose Skill Level',
-            required: false,
           }),
         ],
       },
@@ -557,6 +558,7 @@ export const ResourceFormData = (
               message: 'End Date must be after Effective Date',
             },
           }),
+          {},
           createTextField('designation', 'Designation', {
             required: false,
             placeholder: 'Enter Designation',

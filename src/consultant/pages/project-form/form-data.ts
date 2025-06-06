@@ -198,25 +198,6 @@ export const FormData = (
             required: true,
             onChange: true,
           }),
-          createTextField('project_group', 'Project Group', {
-            placeholder: 'Enter Project  Group',
-            errorHandling: [
-              {
-                regex: REGEX_PATTERNS.MIN_4,
-                errorMessage:
-                  'Project group must be more than 3 characters long',
-              },
-              {
-                regex: REGEX_PATTERNS.MAX_255,
-                errorMessage: 'Max length exceeded',
-              },
-              {
-                regex: REGEX_PATTERNS.PROJECT_NAME,
-                errorMessage:
-                  "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_)",
-              },
-            ],
-          }),
           createTextField('project_name', 'Name', {
             // required: true,
             placeholder: 'Enter Name',
@@ -236,6 +217,11 @@ export const FormData = (
               },
             ],
           }),
+          createSelectField('project_type', 'Project Type', {
+            required: true,
+            options: PROJECT_TYPE,
+            placeholder: 'Choose Project Type',
+          }),
           createDateField('project_startdate', 'Start Date', {
             required: false,
             minDate: new Date('2000-01-01'),
@@ -243,6 +229,58 @@ export const FormData = (
             disableFutureDates: true,
           }),
 
+          createDateField('project_enddate', 'End Date', {
+            required: false,
+            minDate: new Date(minDate.getTime()),
+            maxDate: currentDate,
+          }),
+          createSelectField('project_classification_rid', 'Classification', {
+            options: classification,
+            placeholder: 'Choose Classification',
+            required: false,
+            onChange: true,
+            resetDependsFields: ['classification_name'],
+          }),
+          createTextField('classification_name', 'Classification-Other', {
+            required: true,
+            placeholder: 'Enter Classification-Other',
+            hide: !showClassifyOthersField,
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_3,
+                errorMessage:
+                  'Classification-Other must be more than 2 characters long',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_255,
+                errorMessage: 'Max length exceeded',
+              },
+              {
+                regex: REGEX_PATTERNS.PROJECT_NAME,
+                errorMessage:
+                  "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_)",
+              },
+            ],
+          }),
+          createTextField('project_group', 'Project Group', {
+            placeholder: 'Enter Project  Group',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_4,
+                errorMessage:
+                  'Project group must be more than 3 characters long',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_255,
+                errorMessage: 'Max length exceeded',
+              },
+              {
+                regex: REGEX_PATTERNS.PROJECT_NAME,
+                errorMessage:
+                  "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_)",
+              },
+            ],
+          }),
           createTextField('project_client_group', 'Client Group', {
             placeholder: 'Enter Client Group',
             errorHandling: [
@@ -281,12 +319,6 @@ export const FormData = (
               },
             ],
           }),
-          createDateField('project_enddate', 'End Date', {
-            required: false,
-            minDate: new Date(minDate.getTime()),
-            maxDate: currentDate,
-          }),
-
           createSelectField('industry_rid', 'Industry', {
             options: industry,
             placeholder: 'Choose Industry',
@@ -294,20 +326,6 @@ export const FormData = (
             onChange: true,
             resetDependsFields: ['industry_name'],
           }),
-
-          createSelectField('project_type', 'Project Type', {
-            required: true,
-            options: PROJECT_TYPE,
-            placeholder: 'Choose Project Type',
-          }),
-          createSelectField('project_classification_rid', 'Classification', {
-            options: classification,
-            placeholder: 'Choose Classification',
-            required: false,
-            onChange: true,
-            resetDependsFields: ['classification_name'],
-          }),
-
           createTextField('industry_name', 'Industry-Other', {
             required: true,
             placeholder: 'Enter Industry-Other',
@@ -333,27 +351,6 @@ export const FormData = (
             required: true,
             options: STATUS_OPTIONS,
             placeholder: 'Choose Status',
-          }),
-          createTextField('classification_name', 'Classification-Other', {
-            required: true,
-            placeholder: 'Enter Classification-Other',
-            hide: !showClassifyOthersField,
-            errorHandling: [
-              {
-                regex: REGEX_PATTERNS.MIN_3,
-                errorMessage:
-                  'Classification-Other must be more than 2 characters long',
-              },
-              {
-                regex: REGEX_PATTERNS.MAX_255,
-                errorMessage: 'Max length exceeded',
-              },
-              {
-                regex: REGEX_PATTERNS.PROJECT_NAME,
-                errorMessage:
-                  "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes ('), commas (,) and underscore(_)",
-              },
-            ],
           }),
         ],
       },
@@ -421,42 +418,24 @@ export const FormData = (
         sectionName: 'Financial Information',
         fillType: 'half',
         fields: [
-          createTextField('total_effort', 'Total Effort In Hrs', {
-            regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
-            regexErrorMessage:
-              'Effort In Hrs must be a positive integer with up to 16 digits',
-            placeholder: 'Enter Total Effort In Hrs',
-          }),
-          createTextField('total_cost', 'Total Cost', {
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-            regexErrorMessage:
-              'Total Cost must be a positive integer with up to 16 digits and 2 decimal places',
-            placeholder: 'Enter Total Cost',
-          }),
-          createTextField('total_non_labor_cost', 'Total Non Labor Cost', {
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-            regexErrorMessage:
-              'Total Non Labor Cost must be a positive integer with up to 16 digits and 2 decimal places',
-            placeholder: 'Enter Total Non Labor Cost',
-          }),
-
-          createTextField('total_fte_effort', 'Total FTE Effort', {
-            regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
-            regexErrorMessage:
-              'Total FTE Effort must be a positive integer with up to 16 digits',
-            placeholder: 'Enter Total FTE Effort',
-          }),
-          createTextField('total_fte_cost', 'Total FTE Cost', {
-            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-            placeholder: 'Enter Total FTE Cost',
-          }),
           createTextField('total_fte', 'Total FTE Count', {
             regex: REGEX_PATTERNS.EFFORTS_INTEGER_9,
             regexErrorMessage:
               'Total FTE Count Count must be a positive integer with up to 9 digits',
             placeholder: 'Enter Total FTE Count',
+          }),
+          createTextField('total_sub_con', 'Total Sub Con Count', {
+            regex: REGEX_PATTERNS.EFFORTS_INTEGER_9,
+            regexErrorMessage:
+              'Total Sub Con Count must be a positive integer with up to 9 digits',
+            placeholder: 'Enter Total Sub Con Count',
+          }),
+          {},
+          createTextField('total_fte_effort', 'Total FTE Effort', {
+            regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
+            regexErrorMessage:
+              'Total FTE Effort must be a positive integer with up to 16 digits',
+            placeholder: 'Enter Total FTE Effort',
           }),
           createTextField('total_sub_con_effort', 'Total Sub Con Effort', {
             regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
@@ -464,17 +443,35 @@ export const FormData = (
               'Total Sub Con Effort must be a positive integer with up to 16 digits',
             placeholder: 'Enter Total Sub Con Effort',
           }),
+          createTextField('total_effort', 'Total Effort In Hrs', {
+            regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
+            regexErrorMessage:
+              'Effort In Hrs must be a positive integer with up to 16 digits',
+            placeholder: 'Enter Total Effort In Hrs',
+          }),
+          createTextField('total_fte_cost', 'Total FTE Cost', {
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            placeholder: 'Enter Total FTE Cost',
+          }),
           createTextField('total_sub_con_cost', 'Total Sub Con Cost', {
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
               'Total Sub Con Cost must be a positive integer up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Sub Con Cost',
           }),
-          createTextField('total_sub_con', 'Total Sub Con Count', {
-            regex: REGEX_PATTERNS.EFFORTS_INTEGER_9,
+          createTextField('total_non_labor_cost', 'Total Non Labor Cost', {
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
-              'Total Sub Con Count must be a positive integer with up to 9 digits',
-            placeholder: 'Enter Total Sub Con Count',
+              'Total Non Labor Cost must be a positive integer with up to 16 digits and 2 decimal places',
+            placeholder: 'Enter Total Non Labor Cost',
+          }),
+          createTextField('total_cost', 'Total Cost', {
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
+            regexErrorMessage:
+              'Total Cost must be a positive integer with up to 16 digits and 2 decimal places',
+            placeholder: 'Enter Total Cost',
           }),
         ],
       },
@@ -488,6 +485,21 @@ export const FormData = (
             regex: REGEX_PATTERNS.BLENDED_NUMBER,
             regexErrorMessage:
               'Only positive numbers allowed, up to 3 digits and 2 decimal places',
+          }),
+          createTextField('blended_rate_sub_con', 'Blended Rate - SubCon', {
+            required: false,
+            placeholder: 'Enter Blended Rate - SubCon',
+            regex: REGEX_PATTERNS.BLENDED_NUMBER,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 3 digits and 2 decimal places',
+          }),
+          {},
+          createRadioField('auto_access_rd', 'Auto Assessment', {
+            required: false,
+            radioOptions: [
+              { label: 'Yes', value: 'Yes' },
+              { label: 'No', value: 'No' },
+            ],
           }),
           createRadioField(
             'auto_send_ai_interaction',
@@ -506,20 +518,6 @@ export const FormData = (
             regex: REGEX_PATTERNS.POSITIVE_INTEGER_REGEX,
             regexErrorMessage:
               ' Max Interaction follow up must be a positive integer between 1 and 10.',
-          }),
-          createTextField('blended_rate_sub_con', 'Blended Rate - SubCon', {
-            required: false,
-            placeholder: 'Enter Blended Rate - SubCon',
-            regex: REGEX_PATTERNS.BLENDED_NUMBER,
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 3 digits and 2 decimal places',
-          }),
-          createRadioField('auto_access_rd', 'Auto Assessment', {
-            required: false,
-            radioOptions: [
-              { label: 'Yes', value: 'Yes' },
-              { label: 'No', value: 'No' },
-            ],
           }),
         ],
       },

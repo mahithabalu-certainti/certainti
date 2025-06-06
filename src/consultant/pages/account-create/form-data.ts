@@ -181,12 +181,6 @@ export const FormData = (
               },
             ],
           }),
-          createSelectField('industry_rid', 'Industry', {
-            options: industrys,
-            placeholder: 'Choose Industry',
-            required: true,
-            onChange: true,
-          }),
           createRadioField('is_parent', 'Is Parent Account', {
             radioOptions: YES_NO_OPTIONS,
             disabled: disableFields,
@@ -199,22 +193,21 @@ export const FormData = (
               ifNotMatchValue: DATA_STORAGE_OPTIONS[1].value,
             },
           }),
-          createTextField('website', 'Website', {
-            type: 'text',
-            required: false,
-            regex: REGEX_PATTERNS.WEBSITE,
-            regexErrorMessage: 'Enter a valid website URL',
-            placeholder: 'Enter Website',
-            errorHandling: [
-              {
-                regex: REGEX_PATTERNS.MIN_WEBSITE,
-                errorMessage: 'Minimum 10 characters required',
-              },
-              {
-                regex: REGEX_PATTERNS.MAX_WEBSITE,
-                errorMessage: 'Max length exceeded',
-              },
-            ],
+          createSelectField('parent_account_rid', 'Parent Account', {
+            options: parentAccount,
+            placeholder: 'Choose Parent Account',
+            required: isParentAccountRequired,
+            disabled: !isParentAccountRequired || disableFields,
+            clearValue: {
+              key: 'is_parent',
+              matchedValue: YesNo.Yes,
+            },
+          }),
+          createSelectField('industry_rid', 'Industry', {
+            options: industrys,
+            placeholder: 'Choose Industry',
+            required: true,
+            onChange: true,
           }),
           createTextField('industry_name_other', 'Industry-other', {
             required: true,
@@ -237,20 +230,40 @@ export const FormData = (
               },
             ],
           }),
+          createTextField('website', 'Website', {
+            type: 'text',
+            required: false,
+            regex: REGEX_PATTERNS.WEBSITE,
+            regexErrorMessage: 'Enter a valid website URL',
+            placeholder: 'Enter Website',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_WEBSITE,
+                errorMessage: 'Minimum 10 characters required',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_WEBSITE,
+                errorMessage: 'Max length exceeded',
+              },
+            ],
+          }),
+          createTextField('annual_revenue', 'Annual Revenue', {
+            required: false,
+            regex: REGEX_PATTERNS.ANNUAL_REVENUE,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 12 digits and 2 decimal places',
+            placeholder: 'Enter Annual Revenue',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_ANNUAL_REVENUE,
+                errorMessage: 'Maximum length exceeded.',
+              },
+            ],
+          }),
           createSelectField('status', 'Status', {
             required: true,
             options: STATUS_OPTIONS,
             placeholder: 'Choose Status',
-          }),
-          createSelectField('parent_account_rid', 'Parent Account', {
-            options: parentAccount,
-            placeholder: 'Choose Parent Account',
-            required: isParentAccountRequired,
-            disabled: !isParentAccountRequired || disableFields,
-            clearValue: {
-              key: 'is_parent',
-              matchedValue: YesNo.Yes,
-            },
           }),
           // createTextField('project_manager', 'Delivery Manager', {
           //   required: false,
@@ -275,19 +288,6 @@ export const FormData = (
           //     },
           //   ],
           // }),
-          createTextField('annual_revenue', 'Annual Revenue', {
-            required: false,
-            regex: REGEX_PATTERNS.ANNUAL_REVENUE,
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 12 digits and 2 decimal places',
-            placeholder: 'Enter Annual Revenue',
-            errorHandling: [
-              {
-                regex: REGEX_PATTERNS.MAX_ANNUAL_REVENUE,
-                errorMessage: 'Maximum length exceeded.',
-              },
-            ],
-          }),
         ],
       },
       {
@@ -356,17 +356,6 @@ export const FormData = (
             required: true,
             disabled: disableFields,
           }),
-          createTextField('blended_rate_fte', 'Blended Rate - FTE', {
-            required: false,
-            regex: REGEX_PATTERNS.BLENDED_NUMBER,
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 3 digits and 2 decimal places',
-            placeholder: 'Enter Blended Rate - FTE',
-          }),
-          createRadioField('autosend_interaction', 'Auto Send Interaction', {
-            radioOptions: YES_NO_OPTIONS,
-            required: true,
-          }),
           createFiscalDateField('fiscal_end_date', 'Fiscal End', {
             disabled: disableFields,
             required: true,
@@ -376,6 +365,14 @@ export const FormData = (
                 'Fiscal End Date cannot be the same as the Fiscal Start Date',
             },
           }),
+          {},
+          createTextField('blended_rate_fte', 'Blended Rate - FTE', {
+            required: false,
+            regex: REGEX_PATTERNS.BLENDED_NUMBER,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 3 digits and 2 decimal places',
+            placeholder: 'Enter Blended Rate - FTE',
+          }),
           createTextField('blended_rate_subcon', 'Blended Rate - SubCon', {
             required: false,
             regex: REGEX_PATTERNS.BLENDED_NUMBER,
@@ -383,7 +380,12 @@ export const FormData = (
               'Only positive numbers allowed, up to 3 digits and 2 decimal places',
             placeholder: 'Enter Blended Rate - SubCon',
           }),
+          {},
           createRadioField('auto_access_rd', 'Auto Assessment', {
+            radioOptions: YES_NO_OPTIONS,
+            required: true,
+          }),
+          createRadioField('autosend_interaction', 'Auto Send Interaction', {
             radioOptions: YES_NO_OPTIONS,
             required: true,
           }),

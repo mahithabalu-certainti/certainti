@@ -1,7 +1,9 @@
 export interface FormType {
   sectionName: string;
   fillType: 'half' | 'full' | 'quarter';
-  fields: FormTypeFields[];
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  fields: (FormTypeFields | {})[];
+
   hide?: boolean;
 }
 
