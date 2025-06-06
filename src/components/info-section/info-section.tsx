@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Skeleton, Typography } from '@mui/material';
+import { Box, Grid, Skeleton, Typography } from '@mui/material';
 import { TruncateWithTooltip } from '../truncate-with-tooltip';
 
 interface InfoSectionColumn {
@@ -91,43 +91,54 @@ const InfoSection: React.FC<InfoSectionProps> = ({
       ? columns[0].items.length
       : 0;
 
+  // Calculate grid size based on number of columns
+  const getGridSize = (totalColumns: number) => {
+    if (totalColumns <= 6) {
+      return 12 / totalColumns;
+    }
+    return 2;
+  };
+
   return (
     <Box
       className={`flex flex-col gap-3 px-4 py-2 border-b-2 border-[#CBD6E2] bg-white max-h-[80px] ${className}`}
     >
       {[...Array(rowCount)].map((_, rowIndex) => (
-        <Box
-          key={rowIndex}
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: `repeat(${totalColumns * 2}, ${singleLineView ? 'auto' : '1fr'})`,
-            alignItems: 'center',
-          }}
-        >
-          {columns.map((column, colIndex) => {
-            const item = column.items[rowIndex];
-            return (
-              <React.Fragment key={colIndex}>
-                <Typography
-                  variant='caption'
-                  sx={{
-                    color: '#7D98B6',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                  }}
+        <React.Fragment key={rowIndex}>
+          <Grid container spacing={2}>
+            {columns.map((column, colIndex) => {
+              const item = column.items[rowIndex];
+              return (
+                <Grid
+                  item
+                  xs={12}
+                  sm={6}
+                  md={getGridSize(columns.length)}
+                  key={colIndex}
+                  sx={{ display: 'flex', gap: 1 }}
                 >
-                  {item.label}
-                </Typography>
-                <TruncateWithTooltip
-                  text={String(item.value)}
-                  className={`font-medium text-[14px] text-[#2D3E4F] ${item.className}`}
-                >
-                  {renderValue(item.value)}
-                </TruncateWithTooltip>
-              </React.Fragment>
-            );
-          })}
-        </Box>
+                  <Typography
+                    variant='caption'
+                    sx={{
+                      color: '#7D98B6',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      minWidth: 'fit-content',
+                    }}
+                  >
+                    {item.label}
+                  </Typography>
+                  <TruncateWithTooltip
+                    text={String(item.value)}
+                    className={`font-medium text-[14px] text-[#2D3E4F] ${item.className}`}
+                  >
+                    {renderValue(item.value)}
+                  </TruncateWithTooltip>
+                </Grid>
+              );
+            })}
+          </Grid>
+        </React.Fragment>
       ))}
     </Box>
   );

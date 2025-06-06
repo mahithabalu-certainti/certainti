@@ -760,7 +760,17 @@ export const KeyContactFilterControl: React.FC<{
         IconComponent={(props) => (
           <img src={arrowIcon} alt='arrowIcon' {...props} />
         )}
-        sx={{ ...SELECT_STYLES, ...OPERATOR_STYLE }}
+        sx={{
+          ...SELECT_STYLES,
+          '& .MuiSelect-select': {
+            display: 'flex',
+            fontWeight: 600,
+            fontSize: '12px',
+            lineHeight: '30px',
+            color: '#425A76',
+            py: 0,
+          },
+        }}
         MenuProps={MENU_PROPS}
         disabled={disabled}
       >
@@ -840,7 +850,17 @@ export const KeyContactFilterControl: React.FC<{
             IconComponent={(props) => (
               <img src={arrowIcon} alt='arrowIcon' {...props} />
             )}
-            sx={SELECT_STYLES}
+            sx={{
+              ...SELECT_STYLES,
+              '& .MuiSelect-select': {
+                display: 'flex',
+                fontWeight: 600,
+                fontSize: '12px',
+                lineHeight: '30px',
+                color: '#425A76',
+                py: 0,
+              },
+            }}
             MenuProps={MENU_PROPS}
             disabled={disabled}
           >
