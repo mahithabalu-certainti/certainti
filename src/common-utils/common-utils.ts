@@ -376,6 +376,8 @@ export const REGEX_PATTERNS = {
   SKILL_OTHERS_ALLOWED_CHARS_REGEX: /^[A-Za-z\-'._\s]+$/,
   SKILL_OTHERS_NO_CONSECUTIVE_SPECIALS_REGEX: /^(?!.*[&\-.'", ]{2})/,
   CONSECUTIVE_SPECIAL_CHARS: /^(?!.*[ '\\-]{2})/,
+  EFFORT_IN_HOURS_REGEX: /^(0|([1-9]\d{0,15}))(\.\d{1,2})?$/,
+  MAX_EFFORT_IN_HOURS: /^.{1,18}$/,
 };
 
 /**

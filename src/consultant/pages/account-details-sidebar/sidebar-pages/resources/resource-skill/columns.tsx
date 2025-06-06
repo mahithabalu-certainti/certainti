@@ -1,5 +1,5 @@
 import { ResourceSkillList } from '../../../../../types/resource-skill';
-import { formatDateToYYYYMMDD } from '../utils';
+import { dateFormatToYYYYMMDD } from '../utils';
 
 export interface ResourceSkillTableColumn<T> {
   id: string;
@@ -47,11 +47,11 @@ export const resourceSkillColumns: ResourceSkillTableColumn<ResourceSkillList>[]
     {
       id: 'start_date',
       sortId: 'start_date',
-      label: 'Start Date',
+      label: 'Effective From',
       width: 130,
       sortable: true,
       render: (row: ResourceSkillList) => (
-        <span>{formatDateToYYYYMMDD(row.start_date as string) || '-'}</span>
+        <span>{dateFormatToYYYYMMDD(row.start_date as string) || '-'}</span>
       ),
     },
     {

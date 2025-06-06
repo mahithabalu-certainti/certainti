@@ -91,6 +91,7 @@ const ListTable = <T extends RowData>({
         <MuiTable
           stickyHeader={stickyHeader}
           sx={{
+            height: '100%',
             borderCollapse: 'separate !important',
             borderSpacing: 0,
             '& .MuiTableCell-root': {
@@ -334,8 +335,8 @@ const ListTable = <T extends RowData>({
                         : row[column.id];
                       const displayValue =
                         cellValue !== null &&
-                        cellValue !== undefined &&
-                        cellValue !== ''
+                          cellValue !== undefined &&
+                          cellValue !== ''
                           ? cellValue
                           : '-';
 
@@ -350,15 +351,14 @@ const ListTable = <T extends RowData>({
                             zIndex: column.sticky ? 6 : 'auto',
                             left: selectable ? '32px' : 0,
                           }}
-                          className={`${
-                            hoverHighlight &&
+                          className={`${hoverHighlight &&
                             (isStatus
                               ? `${statusValue === 'Active' ? 'group-hover:!text-[#199806]' : 'group-hover:!text-[#f44336]'} group-hover:underline`
                               : 'group-hover:!text-blue-600 group-hover:underline')
-                          } cursor-context-menu`}
+                            } cursor-context-menu`}
                         >
                           <TruncateWithTooltip
-                            text={String(displayValue)}
+                            text={displayValue as string}
                             maxWidth={Number(column.width)}
                           >
                             {displayValue as React.ReactNode}
@@ -430,23 +430,36 @@ const ListTable = <T extends RowData>({
                   </TableRow>
                 );
               })}
+            {!loading && !error && data.length > 0 && (
+              <TableRow sx={{ height: '10px !important' }}>
+                <TableCell
+                  colSpan={
+                    columns.length +
+                    (selectable ? 1 : 0) +
+                    (actionMenuItems?.length > 0 ? 1 : 0)
+                  }
+                  sx={{ height: '10px !important' }}
+                ></TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </MuiTable>
       </TableContainer>
 
       {/* Pagination */}
-      {(onPageChange || onRowsPerPageChange) && (
-        <TablePagination
-          rowsPerPageOptions={rowsPerPageOptions}
-          count={totalItems}
-          rowsPerPage={rowsPerPage}
-          page={currentPage}
-          onPageChange={(newPage) => onPageChange?.(newPage)}
-          onRowsPerPageChange={(newPageSize) =>
-            onRowsPerPageChange?.(newPageSize)
-          }
-        />
-      )}
+      {(onPageChange || onRowsPerPageChange) &&
+        (loading || error || data.length > 0) && (
+          <TablePagination
+            rowsPerPageOptions={rowsPerPageOptions}
+            count={totalItems}
+            rowsPerPage={rowsPerPage}
+            page={currentPage}
+            onPageChange={(newPage) => onPageChange?.(newPage)}
+            onRowsPerPageChange={(newPageSize) =>
+              onRowsPerPageChange?.(newPageSize)
+            }
+          />
+        )}
     </>
   );
 };
