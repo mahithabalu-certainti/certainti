@@ -31,15 +31,16 @@ export const transformKeyContactsFromAPI = (keyContacts: KeyContacts[]) => {
     formData[`include_in_communication_${index}`] =
       contact.include_in_communication ? 'yes' : 'no';
     formData[`key_contact_status_${index}`] =
-      contact.status?.toLowerCase() || '';
+      contact.status?.toLowerCase() || 'active';
   });
   return formData;
 };
 
 export const keyContactsTransformPayload = (
   formData: Partial<Record<string, any>>,
-  isEdit: boolean = false
-) => {
+  isEdit: boolean = false,
+  keyContactsList: KeyContacts[] = []
+): KeyContacts[] => {
   const keyContacts: KeyContacts[] = [];
 
   const indices = Array.from(
@@ -53,6 +54,8 @@ export const keyContactsTransformPayload = (
     )
   );
 
+  const retainedRids = new Set<string>();
+
   for (const index of indices) {
     const name = formData[`key_contact_name_${index}`];
     const email = formData[`key_contact_email_${index}`];
@@ -60,10 +63,12 @@ export const keyContactsTransformPayload = (
     const rid = formData[`key_contact_rid_${index}`];
 
     if (name || email || role) {
+      if (rid) retainedRids.add(rid);
+
       keyContacts.push({
         key_contact_name: name || '',
         key_contact_email: email || '',
-        key_contact_role: role || '',
+        key_contact_role: role || null,
         is_primary_contact: formData[`is_primary_contact_${index}`] === 'yes',
         include_in_communication:
           formData[`include_in_communication_${index}`] === 'yes',
@@ -72,8 +77,26 @@ export const keyContactsTransformPayload = (
           : ('Active' as Status),
         action_type:
           isEdit && rid ? KeyContactsUpdate.Edit : KeyContactsUpdate.Add,
-        ...(isEdit && rid && { rid: rid }),
+        ...(isEdit && rid && { rid }),
       });
+    }
+  }
+
+  // For edit mode: find and mark deleted contacts
+  if (isEdit) {
+    for (const contact of keyContactsList) {
+      if (contact.rid && !retainedRids.has(contact.rid)) {
+        keyContacts.push({
+          rid: contact.rid,
+          include_in_communication: contact.include_in_communication,
+          status: contact.status,
+          is_primary_contact: contact.is_primary_contact,
+          key_contact_name: contact.key_contact_name,
+          key_contact_email: contact.key_contact_email,
+          key_contact_role: contact.key_contact_role,
+          action_type: KeyContactsUpdate.Delete,
+        });
+      }
     }
   }
 
@@ -83,7 +106,8 @@ export const keyContactsTransformPayload = (
 export const transformFormData = (
   formData: Partial<AccountFormData>,
   isEdit: boolean,
-  account_rid?: string
+  account_rid?: string,
+  keyContactsList?: KeyContacts[]
 ): Partial<NewAccountData> => {
   const data: Partial<NewAccountData> = {
     account_id: account_rid,
@@ -118,7 +142,8 @@ export const transformFormData = (
     annual_revenue: formData.annual_revenue,
     data_storage: formData.data_storage,
     business_details: formData.business_details,
-    key_contacts: keyContactsTransformPayload(formData, isEdit) || [],
+    key_contacts:
+      keyContactsTransformPayload(formData, isEdit, keyContactsList) || [],
   };
   if (isEdit) {
     data.account_rid = account_rid;

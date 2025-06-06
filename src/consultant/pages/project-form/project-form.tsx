@@ -90,7 +90,7 @@ const ProjectForm: React.FC = () => {
   const currency = useFetchCurrency();
   const industry = useFetchIndustrys();
   const Classification = useFetchClassification();
-  const keyContactRoles = useKeyContactRoles();
+  const keyContactRoles = useKeyContactRoles('Project');
   const states = useFetchState(currentCountry);
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();

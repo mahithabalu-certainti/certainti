@@ -94,8 +94,7 @@ export const AccountForm: React.FC = () => {
           ),
           created_by: account?.accountDetails?.created_by,
           updated_by: account?.accountDetails?.modified_by,
-          website:
-            account?.accountDetails?.website?.replace(/^https?:\/\//, '') || '',
+          website: account?.accountDetails?.website || '',
         }),
     }),
     [account]
@@ -104,7 +103,7 @@ export const AccountForm: React.FC = () => {
 
   const allCountries = useGetAllCountries();
   const industry = useFetchIndustrys();
-  const keyContactRoles = useKeyContactRoles();
+  const keyContactRoles = useKeyContactRoles('Account');
   const parentAccount = useFetchParentAccounts();
   const currency = useFetchCurrency();
   const states = useFetchState(currentCountry);
@@ -212,7 +211,7 @@ export const AccountForm: React.FC = () => {
     setKeyContacts(fields);
     setTimeout(() => {
       setIsKeyContactsReady(true);
-    }, 3000);
+    }, 5000);
   }, [
     memoizedRole,
     account?.accountDetails?.keyContacts,
@@ -244,7 +243,8 @@ export const AccountForm: React.FC = () => {
     const transformData = transformFormData(
       formValues,
       isEditView,
-      accountData?.rid
+      accountData?.rid,
+      account?.accountDetails?.keyContacts
     );
     if (isEditView) {
       updateAccount.mutate(transformData);

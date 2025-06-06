@@ -162,23 +162,25 @@ export const exportAccountList = async (params: AccountListURLParams = {}) => {
   document.body.removeChild(link);
 };
 
-export const fetchKeyContactRoles =
-  async (): Promise<keyContactRolesApiResponse> => {
-    try {
-      const { data } = await accountServiceApi.get<keyContactRolesApiResponse>(
-        getKeyContactRolesUrl()
-      );
-      return data;
-    } catch (error) {
-      console.error('Error fetching key contact roles:', error);
-      throw error;
-    }
-  };
+export const fetchKeyContactRoles = async (
+  entityType: string
+): Promise<keyContactRolesApiResponse> => {
+  try {
+    const { data } = await accountServiceApi.get<keyContactRolesApiResponse>(
+      getKeyContactRolesUrl(entityType)
+    );
+    return data;
+  } catch (error) {
+    console.error('Error fetching key contact roles:', error);
+    throw error;
+  }
+};
 
-export const useKeyContactRoles = () => {
+export const useKeyContactRoles = (entityType: string) => {
   return useQuery<keyContactRolesApiResponse, Error>({
     queryKey: ['keyContactRoles'], // Unique query key
-    queryFn: () => fetchKeyContactRoles(),
+    queryFn: () => fetchKeyContactRoles(entityType),
     retry: 0,
+    enabled: !!entityType,
   });
 };
