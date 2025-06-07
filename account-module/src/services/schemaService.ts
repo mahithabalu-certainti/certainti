@@ -1303,36 +1303,21 @@ class SchemaService {
     const keyContactDetails = keyContacts;
     const sequelize = await initOrgSequelize();
     try {
-      const [latest]: any = await sequelize.query(
-        `SELECT r_number FROM "${schemaName}"."key_contact_details" 
-         ORDER BY r_number DESC LIMIT 1;`,
-        {
-          type: "SELECT",
-        }
-      );
-
-      let nextRNumber = "0000000001";
-      if (latest?.r_number?.startsWith("KEY")) {
-        const currentNum = parseInt(latest.r_number.split(" ")[1] || "0");
-        nextRNumber = (currentNum + 1).toString().padStart(10, "0");
-      }
-      const finalRNumber = `KEY ${nextRNumber}`;
-
+      
       await sequelize.query(
         `INSERT INTO "${schemaName}"."key_contact_details" (
-          r_number, entity_rid, key_contact_name, 
+         entity_rid, key_contact_name, 
           key_contact_email, key_contact_role, status, 
           is_primary_contact, include_in_communication, 
           created_by, modified_by, entity_type
         ) VALUES (
-          :r_number, :account_rid, :key_contact_name, 
+          :account_rid, :key_contact_name, 
           :key_contact_email, :key_contact_role_rid, :status, 
           :is_primary_contact, :include_in_communication, 
           :created_by, :modified_by, 'Account'
         );`,
         {
           replacements: {
-            r_number: finalRNumber,
             account_rid,
             key_contact_name: keyContactDetails.key_contact_name,
             key_contact_email: keyContactDetails.key_contact_email,
@@ -1354,12 +1339,15 @@ class SchemaService {
 
   async createKeyContact(schemaName: string, sequelize: any) {
     try {
+       await sequelize.query(
+      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".key_contact_details_seq START 1`
+      );
       await sequelize.query(`
         CREATE TABLE IF NOT EXISTS "${schemaName}"."key_contact_details" (
           rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           entity_rid UUID NOT NULL,
           entity_type VARCHAR(500) NOT NULL,
-          r_number VARCHAR(14),
+          r_number VARCHAR(20) DEFAULT 'KEY ' || LPAD(nextval('"${schemaName}".key_contact_details_seq')::text, 10, '0'),        
           key_contact_name VARCHAR(128),
           key_contact_email VARCHAR(125),
           key_contact_role UUID,
@@ -1404,26 +1392,14 @@ class SchemaService {
 
   async insertKeyContactInfo(
     accountData: any,
-    roleNameFilter?: {
-      role?: {
-        equals?: string;
-        contains?: string;
-        not_equals?: string;
-        is_empty?: boolean;
-      };
-      name?: {
-        equals?: string;
-        contains?: string;
-        not_equals?: string;
-        is_empty?: boolean;
-      };
-    },
+    filters?: any,
     limit?: number,
     offset?: number,
     sortBy?: string,
     sortOrder?: string,
     type?: string
   ) {
+    try {
     const sequelize = await initSequelize();
     const orgDbSequelize = await initOrgSequelize();
     const ROLE_KEY_MAP: Record<string, string> = {
@@ -1604,7 +1580,7 @@ class SchemaService {
     let enrichedAccounts = accountData
       .map((account: any) => {
         const parent = enrichAccount(account.dataValues, false);
-        const children = (account.dataValues.child_accounts || []).map(
+        const children = (account.dataValues?.child_accounts || []).map(
           (c: any) => enrichAccount(c.dataValues, true)
         );
 
@@ -1615,80 +1591,59 @@ class SchemaService {
       })
       .filter(Boolean);
   // 8. Optimized filtering logic
-    const applyFilter = (
-    value: string | null,
-    filter?: {
-      equals?: string;
-      contains?: string;
-      not_equals?: string;
-      is_empty?: boolean;
-      in?: string[];
-    }
-  ): boolean => {
-      if (!filter) return true;
-  
-      // Handle is_empty first
-      const isEmpty = !value; // null, undefined, or empty string
-      if (filter.is_empty !== undefined) {
-        if (filter.is_empty !== isEmpty) return false;
-      }
-  
-      // Handle empty values
-      if (isEmpty) {
-        if (filter.in) {
-          return filter.in.includes(""); // Check if empty string is in the array
+    if (filters?.finance_lead || filters?.finance_executive || filters?.professional_services_consultant) {
+      const filterKeys = Object.keys(filters).filter(key => 
+        ['finance_lead', 'finance_executive', 'professional_services_consultant'].includes(key)
+      );
+      for (const filterKey of filterKeys) {
+        const filterValue = (filters as any)[filterKey];
+        if (typeof filterValue === 'string') {
+          if (filterValue === '-' || filterValue.toLowerCase() === 'empty') {
+        // Filter for empty values
+            enrichedAccounts = enrichedAccounts.filter((account: any) => {
+            const contactName = account[filterKey] || '';
+            return contactName.trim() === '';
+          });
+        } else {
+        // Filter for contains match
+          enrichedAccounts = enrichedAccounts.filter((account: any) => {
+          const contactName = (account[filterKey] || '').toLowerCase();
+          return contactName.includes(filterValue.toLowerCase());
+          });
         }
-        if (filter.not_equals) return true; // Empty passes not_equals for non-empty values
-        return false; // Other filters fail for empty values
-      }
-  
-      // Convert to lowercase for case-insensitive comparison
-      const valueLower = value.toString().toLowerCase();
-      
-      // Apply filters to non-empty values
-      if (filter.equals) {
-        const equalsLower = filter.equals.toString().toLowerCase();
-        if (valueLower !== equalsLower) return false;
-      }
-      
-      if (filter.contains) {
-        const containsLower = filter.contains.toString().toLowerCase();
-        if (!valueLower.includes(containsLower)) return false;
-      }
-      
-      if (filter.not_equals) {
-        const notEqualsLower = filter.not_equals.toString().toLowerCase();
-        if (valueLower === notEqualsLower) return false;
-      }
-      
-      if (filter.in) {
-        // Convert all array values to lowercase for case-insensitive matching
-        const inLower = filter.in.map(item => item.toString().toLowerCase());
-        if (!inLower.includes(valueLower)) return false;
-      }
-  
-      return true;
-};
-
-    // Apply filters with correct structure
-    if (roleNameFilter?.role || roleNameFilter?.name) {
+    }
+    // Handle object filters (like {equals: "fjhffh"}, {not_equals: "Mani"})
+    else if (typeof filterValue === 'object' && filterValue !== null) {
+      const filterType = Object.keys(filterValue)[0];
+      const filterVal = filterValue[filterType];
       enrichedAccounts = enrichedAccounts.filter((account: any) => {
-        // Use primary_contact_role and primary_contact_name for filtering
-        const rolePass = applyFilter(
-          account.primary_contact_role,
-          roleNameFilter.role
-        );
+        const contactName = account[filterKey] || '';
         
-        const namePass = applyFilter(
-          account.primary_contact_name,
-          roleNameFilter.name
-        );
-        console.log(rolePass)
-         console.log(namePass)
-        return rolePass && namePass;
+        switch (filterType) {
+          case 'equals':
+            return contactName === filterVal;
+            
+          case 'not_equals':
+            if (filterVal === '') {
+              return contactName !== '';
+            }
+            return contactName !== filterVal;
+            
+          case 'contains':
+            return contactName.toLowerCase().includes(String(filterVal).toLowerCase());
+            
+          case 'is_empty':
+            return (filterVal === true) 
+              ? contactName.trim() === '' 
+              : contactName.trim() !== '';
+            
+          default:
+            return true;
+        }
       });
     }
-
+  }
+}
     // 5. Apply sorting if needed
     const SORTABLE_FIELDS = new Set([
       "technical_consultant",
@@ -1719,7 +1674,7 @@ class SchemaService {
     // 6. Apply pagination
     const total = enrichedAccounts.length;
     const shouldPaginate =
-      roleNameFilter || (sortBy && SORTABLE_FIELDS.has(sortBy));
+      (filters?.finance_lead || filters?.finance_executive || filters?.professional_services_consultant) || (sortBy && SORTABLE_FIELDS.has(sortBy));
 
     if (
       shouldPaginate &&
@@ -1731,5 +1686,10 @@ class SchemaService {
     }
     return { data: enrichedAccounts, total };
   }
+  catch(err)
+  {
+      throw new Error("Error updating key contacts.");
+  }
+}
 }
 export default SchemaService;

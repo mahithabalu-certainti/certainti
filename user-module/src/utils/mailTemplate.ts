@@ -11,13 +11,13 @@ function mailTemplate(
 ): { message: IEmailMessage } {
   const emailMessage = {
     message: {
-      subject: "Welcome to Platform2.0! Your Account is Ready",
+      subject: "Welcome to Think R&D 365! Your Account is Ready",
       body: {
         contentType: "HTML",
         content: `
           <p>Hello ${user.first_name},</p>
           
-          <p>We are excited to welcome you to <strong>Platform2.0</strong>, your gateway to AI-driven solutions.</p>
+          <p>We are excited to welcome you to <strong>Think R&D 365</strong>, your gateway to AI-driven solutions.</p>
           
           <p>Your account has been created successfully. Please find your login details below:</p>
           
@@ -47,7 +47,7 @@ function mailTemplate(
           <p>If you encounter any issues while accessing your account, please reach out to our support team:</p>
           <p>Email: <a href="mailto:${process.env.SUPPORT_EMAIL}" style="color: #0073e6;">${process.env.SUPPORT_EMAIL}</a></p>
   
-          <p>Thank you,<br><strong>Platform2.0 Team</strong><br>Powered by Certainiti.ai</p>
+          <p>Thank you,<br><strong>Think R&D 365 Team</strong><br>Powered by Certainiti.ai</p>
         `,
       },
       toRecipients: [

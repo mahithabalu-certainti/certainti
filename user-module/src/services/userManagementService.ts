@@ -670,6 +670,7 @@ class UserManagementService {
   private getSortParameters(sortBy: string, sortOrder: string): [string, string] {
     const validSortColumns = [
       "profile_name",
+      "profile_description",
       "created_datetime",
       "created_by",
     ];

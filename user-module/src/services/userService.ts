@@ -1590,7 +1590,7 @@ const rawResult = users || [];
     try {
     const workbook = new ExcelJS.Workbook();
     const headerSheet = workbook.addWorksheet('Headers')
-    const headers = ['Profile Name','Created On','Created By',];
+    const headers = ['Profile Name','Profile Description','Created On','Created By',];
     headerSheet.addRow(headers);
     const profile = await Profile.findByPk(profileId, {
           include: [
@@ -1612,6 +1612,7 @@ const rawResult = users || [];
         : "";
       headerSheet.addRow([
         profile.profile_name,
+        profile.profile_description,
         createdDate,
         createdByName
       ]);
