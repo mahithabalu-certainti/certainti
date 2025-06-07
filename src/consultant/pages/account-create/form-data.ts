@@ -120,15 +120,10 @@ const createDynamicField = (
     );
   }
   if (contacts.type === 'select') {
-    const shouldResetDepends = dynamicName === `key_contact_role_${groupIndex}`;
-
     fieldsArr.push(
       createSelectField(dynamicName, label, {
         ...rest,
         options: rest.options || [],
-        ...(shouldResetDepends && {
-          resetDependsFields: [`is_primary_contact_${groupIndex}`],
-        }),
       })
     );
   }
