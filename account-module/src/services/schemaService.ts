@@ -1339,15 +1339,12 @@ class SchemaService {
 
   async createKeyContact(schemaName: string, sequelize: any) {
     try {
-       await sequelize.query(
-      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".key_contact_details_seq START 1`
-      );
       await sequelize.query(`
         CREATE TABLE IF NOT EXISTS "${schemaName}"."key_contact_details" (
           rid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           entity_rid UUID NOT NULL,
           entity_type VARCHAR(500) NOT NULL,
-          r_number VARCHAR(20) DEFAULT 'KEY ' || LPAD(nextval('"${schemaName}".key_contact_details_seq')::text, 10, '0'),        
+         r_number VARCHAR(30),
           key_contact_name VARCHAR(128),
           key_contact_email VARCHAR(125),
           key_contact_role UUID,
