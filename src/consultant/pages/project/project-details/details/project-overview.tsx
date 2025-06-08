@@ -104,8 +104,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       </div>
     );
   }
-  const isKeyContactAvailable =
-    projectDetails?.keyContact && projectDetails.keyContact.length > 0;
+
   const CreateSectionData = (
     dataObj: Partial<NewProjectData>,
     customMappings?: Record<string, (val: any) => React.ReactNode>
@@ -335,12 +334,12 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
             title='Location and Currency Information'
             data={locationInfo as DetailItem[]}
           />
-          {isKeyContactAvailable && keyContactsList && (
-            <KeyContactSection
-              title='Key Contacts List'
-              data={keyContactsList}
-            />
-          )}
+          {/* {isKeyContactAvailable && keyContactsList && ( */}
+          <KeyContactSection
+            title='Key Contacts List'
+            data={keyContactsList || []}
+          />
+          {/* )} */}
           <DetailsSection
             title='Financial Information'
             data={financialInfo as DetailItem[]}

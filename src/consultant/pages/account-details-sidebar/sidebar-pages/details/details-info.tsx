@@ -45,9 +45,6 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
 }) => {
   const accountById = detailsInfo?.accountById;
   const accountDetails = detailsInfo?.accountDetails;
-  const isKeyContactAvailable =
-    accountDetails?.keyContacts && accountDetails.keyContacts.length > 0;
-
   const dataResidency =
     DATA_STORAGE_OPTIONS.find(
       (option) => option.value === accountDetails?.data_storage
@@ -203,9 +200,12 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
         data={locationInfo}
         customStyle=' pt-2 mt-2 mb-4'
       />
-      {isKeyContactAvailable && keyContactsList && (
-        <KeyContactSection title='Key Contacts List' data={keyContactsList} />
-      )}
+      {/* {isKeyContactAvailable && keyContactsList && ( */}
+      <KeyContactSection
+        title='Key Contacts List'
+        data={keyContactsList || []}
+      />
+      {/* )} */}
 
       <DetailsSection title='Account Settings' data={accountSettings} />
       <DetailsSection title='Comments' data={description} fullColumn={true} />
