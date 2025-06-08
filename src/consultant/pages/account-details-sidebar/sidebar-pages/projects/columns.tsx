@@ -57,30 +57,6 @@ export const getProjectColumns = (
         row.project_code
       ),
   },
-  {
-    id: 'fiscal_year',
-    label: 'Fiscal Year',
-    sortable: true,
-    sortId: 'fiscal_year',
-    width: 130,
-    sx: {
-      textAlign: 'right',
-    },
-  },
-  {
-    id: 'project_client_group',
-    label: 'Customer Group',
-    sortable: true,
-    sortId: 'project_client_group',
-    width: 160,
-  },
-  {
-    id: 'project_group',
-    label: 'Project Group',
-    sortable: true,
-    sortId: 'project_group',
-    width: 160,
-  },
   // {
   //   id: 'project_code',
   //   label: 'Project Code',
@@ -103,11 +79,35 @@ export const getProjectColumns = (
     width: 160,
   },
   {
+    id: 'fiscal_year',
+    label: 'Fiscal Year',
+    sortable: true,
+    sortId: 'fiscal_year',
+    width: 130,
+    sx: {
+      textAlign: 'right',
+    },
+  },
+  {
     id: 'classification_name',
     label: 'Project Classification',
     sortable: true,
     sortId: 'classification_name',
     width: 170,
+  },
+  {
+    id: 'project_client_group',
+    label: 'Customer Group',
+    sortable: true,
+    sortId: 'project_client_group',
+    width: 160,
+  },
+  {
+    id: 'project_group',
+    label: 'Project Group',
+    sortable: true,
+    sortId: 'project_group',
+    width: 160,
   },
   {
     id: 'total_effort',
