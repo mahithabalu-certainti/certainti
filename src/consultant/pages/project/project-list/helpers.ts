@@ -8,37 +8,14 @@ import {
   textOptions,
   statusOptions,
   projectTypeOption,
+  fiscalOptions,
 } from '../../account-details-sidebar/sidebar-pages/projects/utils';
 
 export const getAllProjectFilterFields = (
   classificationOption: FilterSelectOption[]
 ): FieldConfig[] => [
   // Text fields
-  {
-    name: 'Account Name',
-    value: 'account_name',
-    type: 'text',
-    operatorOption: textOptions,
-  },
-  {
-    name: 'Fiscal Year',
-    value: 'fiscal_year',
-    type: 'enum',
-    options: fiscalYearOption,
-    operatorOption: enumOptions,
-  },
-  {
-    name: 'Customer Group',
-    value: 'project_client_group',
-    type: 'text',
-    operatorOption: textOptions,
-  },
-  {
-    name: 'Project Group',
-    value: 'project_group',
-    type: 'text',
-    operatorOption: textOptions,
-  },
+
   {
     name: 'Project Code',
     value: 'project_code',
@@ -59,6 +36,19 @@ export const getAllProjectFilterFields = (
     operatorOption: enumOptions,
   },
   {
+    name: 'Account Name',
+    value: 'account_name',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Fiscal Year',
+    value: 'fiscal_year',
+    type: 'enum',
+    options: fiscalYearOption,
+    operatorOption: fiscalOptions,
+  },
+  {
     name: 'Project Classification',
     value: 'classification_name',
     type: 'enum',
@@ -67,6 +57,18 @@ export const getAllProjectFilterFields = (
       value: item.value,
     })),
     operatorOption: enumOptions,
+  },
+  {
+    name: 'Customer Group',
+    value: 'project_client_group',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Project Group',
+    value: 'project_group',
+    type: 'text',
+    operatorOption: textOptions,
   },
   {
     name: 'Project Effort (Hours)',

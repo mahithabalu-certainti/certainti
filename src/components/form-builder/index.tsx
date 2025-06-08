@@ -115,19 +115,35 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       const roleField = keyContactSection.fields[baseIndex + 1];
       const emailField = keyContactSection.fields[baseIndex + 2];
       const primaryField = keyContactSection.fields[baseIndex + 4];
+      const includeInCommField = keyContactSection.fields[baseIndex + 5];
 
-      if (!nameField || !emailField || !roleField || !primaryField) continue;
+      if (
+        !nameField ||
+        !emailField ||
+        !roleField ||
+        !primaryField ||
+        !includeInCommField
+      )
+        continue;
 
       const hasNameOrEmail =
         (constructFormData[nameField.name]?.toString().trim() || '') !== '' ||
         (constructFormData[emailField.name]?.toString().trim() || '') !== '';
 
       const isPrimary = constructFormData[primaryField.name] === 'yes';
+
       const shouldUpdateRole = roleField.required !== hasNameOrEmail;
       const shouldUpdatePrimary = primaryField.required !== hasNameOrEmail;
       const shouldUpdateEmail = emailField.required !== isPrimary;
+      const shouldUpdateIncludeInComm =
+        includeInCommField.disabled !== isPrimary;
 
-      if (shouldUpdateRole || shouldUpdatePrimary || shouldUpdateEmail) {
+      if (
+        shouldUpdateRole ||
+        shouldUpdatePrimary ||
+        shouldUpdateEmail ||
+        shouldUpdateIncludeInComm
+      ) {
         setFormData((prevFormData) =>
           prevFormData?.map((section) => {
             if (section.sectionName === 'Key Contacts List') {
@@ -142,6 +158,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   }
                   if (field.name === emailField.name && shouldUpdateEmail) {
                     return { ...field, required: isPrimary };
+                  }
+                  if (
+                    field.name === includeInCommField.name &&
+                    shouldUpdateIncludeInComm
+                  ) {
+                    return {
+                      ...field,
+                      disabled: isPrimary,
+                      value: isPrimary ? 'yes' : field.value,
+                    };
                   }
                   return field;
                 }),

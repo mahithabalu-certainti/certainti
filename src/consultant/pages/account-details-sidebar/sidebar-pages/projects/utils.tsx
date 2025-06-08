@@ -37,6 +37,11 @@ export const textOptions: { option: string; value: string }[] = [
   // { option: 'Not-Contains', value: 'not_contains' },
   { option: 'Is-Empty', value: 'is_empty' },
 ];
+export const fiscalOptions: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not-Equals', value: 'not_equals' },
+  { option: 'In', value: 'in' },
+];
 
 export const enumOptions: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
@@ -69,25 +74,6 @@ export const projectFilterFields = (
     operatorOption: textOptions,
   },
   {
-    name: 'Fiscal Year',
-    value: 'fiscal_year',
-    type: 'enum',
-    options: fiscalYearOption,
-    operatorOption: enumOptions,
-  },
-  {
-    name: 'Customer Group',
-    value: 'project_client_group',
-    type: 'text',
-    operatorOption: textOptions,
-  },
-  {
-    name: 'Project Group',
-    value: 'project_group',
-    type: 'text',
-    operatorOption: textOptions,
-  },
-  {
     name: 'Name',
     value: 'project_name',
     type: 'text',
@@ -101,6 +87,13 @@ export const projectFilterFields = (
     operatorOption: enumOptions,
   },
   {
+    name: 'Fiscal Year',
+    value: 'fiscal_year',
+    type: 'enum',
+    options: fiscalYearOption,
+    operatorOption: fiscalOptions,
+  },
+  {
     name: 'Project Classification',
     value: 'classification_name',
     type: 'enum',
@@ -109,6 +102,18 @@ export const projectFilterFields = (
       value: item.value,
     })),
     operatorOption: enumOptions,
+  },
+  {
+    name: 'Customer Group',
+    value: 'project_client_group',
+    type: 'text',
+    operatorOption: textOptions,
+  },
+  {
+    name: 'Project Group',
+    value: 'project_group',
+    type: 'text',
+    operatorOption: textOptions,
   },
   {
     name: 'Project Effort (Hours)',
