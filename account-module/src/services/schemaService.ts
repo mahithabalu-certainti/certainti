@@ -1401,7 +1401,7 @@ class SchemaService {
     const orgDbSequelize = await initOrgSequelize();
     const ROLE_KEY_MAP: Record<string, string> = {
     technical_consultant: "Technical Consultant",
-    professional_services_consultant: "Financial Consultant",
+    professional_services_consultant: "Professional Services Consultant",
     delivery_head: "Client Project Delivery Head",
     finance_executive: "Client Finance Executive",
     finance_lead: "Client Finance Lead"
