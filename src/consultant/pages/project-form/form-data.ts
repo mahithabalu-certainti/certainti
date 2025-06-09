@@ -13,7 +13,7 @@ import {
   STATUS_OPTIONS,
   YES_NO_OPTIONS,
 } from '../../../common-utils';
-import { FieldType, FormType, SelectOption, YesNo } from '../../types';
+import { FieldType, FormType, SelectOption } from '../../types';
 import { fiscalYears } from '../resource-form/form-data';
 import { closeIcon } from '../../../assets';
 const DATE_CONFIG = {
@@ -94,7 +94,7 @@ export const newKeyContactFields = (
     radioOptions: YES_NO_OPTIONS,
     width: '160px',
     required: false,
-    defaultValue: YesNo.No,
+    // defaultValue: YesNo.No,
   }),
   createSelectField('key_contact_status', 'Status', {
     required: false,

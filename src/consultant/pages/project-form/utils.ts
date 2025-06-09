@@ -28,7 +28,11 @@ export const transformKeyContactsFromAPI = (keyContacts: KeyContacts[]) => {
       ? 'yes'
       : 'no';
     formData[`include_in_communication_${index}`] =
-      contact.include_in_communication ? 'yes' : 'no';
+      contact.include_in_communication === true
+        ? 'yes'
+        : contact.include_in_communication === false
+          ? 'no'
+          : null;
     formData[`key_contact_status_${index}`] =
       contact.status?.toLowerCase() || 'active';
   });
@@ -70,7 +74,11 @@ export const keyContactsTransformPayload = (
         key_contact_role: role || null,
         is_primary_contact: formData[`is_primary_contact_${index}`] === 'yes',
         include_in_communication:
-          formData[`include_in_communication_${index}`] === 'yes',
+          formData[`include_in_communication_${index}`] === 'yes'
+            ? true
+            : formData[`include_in_communication_${index}`] === 'no'
+              ? false
+              : null,
         status: formData[`key_contact_status_${index}`]
           ? (capitalize(formData[`key_contact_status_${index}`]) as Status)
           : ('Active' as Status),
@@ -116,8 +124,8 @@ export const transformFormData = (
     industry_name:
       othersIndustryId === formData.industry_rid ? formData.industry_name : '',
     program_name: formData.program_name || '',
-    project_startdate: formData.project_startdate,
-    project_enddate: formData.project_enddate,
+    project_startdate: formData.project_startdate || null,
+    project_enddate: formData.project_enddate || null,
     project_type: formData.project_type,
     project_classification_rid: formData.project_classification_rid || null,
     project_classification_other: formData.classification_name || null,

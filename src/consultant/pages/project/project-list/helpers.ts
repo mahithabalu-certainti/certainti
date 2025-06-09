@@ -9,6 +9,7 @@ import {
   statusOptions,
   projectTypeOption,
   fiscalOptions,
+  nonMadatoryOptions,
 } from '../../account-details-sidebar/sidebar-pages/projects/utils';
 
 export const getAllProjectFilterFields = (
@@ -26,14 +27,14 @@ export const getAllProjectFilterFields = (
     name: 'Name',
     value: 'project_name',
     type: 'text',
-    operatorOption: textOptions,
+    operatorOption: nonMadatoryOptions,
   },
   {
     name: 'Project Type',
     value: 'project_type',
     type: 'enum',
     options: projectTypeOption,
-    operatorOption: enumOptions,
+    operatorOption: fiscalOptions,
   },
   {
     name: 'Account Name',
@@ -62,13 +63,13 @@ export const getAllProjectFilterFields = (
     name: 'Customer Group',
     value: 'project_client_group',
     type: 'text',
-    operatorOption: textOptions,
+    operatorOption: nonMadatoryOptions,
   },
   {
     name: 'Project Group',
     value: 'project_group',
     type: 'text',
-    operatorOption: textOptions,
+    operatorOption: nonMadatoryOptions,
   },
   {
     name: 'Project Effort (Hours)',
@@ -123,19 +124,19 @@ export const getAllProjectFilterFields = (
     name: 'Project Point of Contact',
     value: 'project_point_of_contact',
     type: 'text',
-    operatorOption: textOptions,
+    operatorOption: nonMadatoryOptions,
   },
   {
     name: 'Technical Point of Contact',
     value: 'technical_point_of_contact',
     type: 'text',
-    operatorOption: textOptions,
+    operatorOption: nonMadatoryOptions,
   },
   {
     name: 'Comments',
     value: 'comments',
     type: 'text',
-    operatorOption: textOptions,
+    operatorOption: nonMadatoryOptions,
   },
   {
     name: 'Last Modified',

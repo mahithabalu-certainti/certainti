@@ -35,6 +35,12 @@ export const textOptions: { option: string; value: string }[] = [
   { option: 'Not-Equals', value: 'not_equals' },
   { option: 'Contains', value: 'contains' },
   // { option: 'Not-Contains', value: 'not_contains' },
+  // { option: 'Is-Empty', value: 'is_empty' },
+];
+export const nonMadatoryOptions: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not-Equals', value: 'not_equals' },
+  { option: 'Contains', value: 'contains' },
   { option: 'Is-Empty', value: 'is_empty' },
 ];
 export const fiscalOptions: { option: string; value: string }[] = [
@@ -77,14 +83,14 @@ export const projectFilterFields = (
     name: 'Name',
     value: 'project_name',
     type: 'text',
-    operatorOption: textOptions,
+    operatorOption: nonMadatoryOptions,
   },
   {
     name: 'Project Type',
     value: 'project_type',
     type: 'enum',
     options: projectTypeOption,
-    operatorOption: enumOptions,
+    operatorOption: fiscalOptions,
   },
   {
     name: 'Fiscal Year',
@@ -107,13 +113,13 @@ export const projectFilterFields = (
     name: 'Customer Group',
     value: 'project_client_group',
     type: 'text',
-    operatorOption: textOptions,
+    operatorOption: nonMadatoryOptions,
   },
   {
     name: 'Project Group',
     value: 'project_group',
     type: 'text',
-    operatorOption: textOptions,
+    operatorOption: nonMadatoryOptions,
   },
   {
     name: 'Project Effort (Hours)',
@@ -168,19 +174,19 @@ export const projectFilterFields = (
     name: 'Project Point of Contact',
     value: 'project_point_of_contact',
     type: 'text',
-    operatorOption: textOptions,
+    operatorOption: nonMadatoryOptions,
   },
   {
     name: 'Technical Point of Contact',
     value: 'technical_point_of_contact',
     type: 'text',
-    operatorOption: textOptions,
+    operatorOption: nonMadatoryOptions,
   },
   {
     name: 'Comments',
     value: 'comments',
     type: 'text',
-    operatorOption: textOptions,
+    operatorOption: nonMadatoryOptions,
   },
   {
     name: 'Last Modified',
