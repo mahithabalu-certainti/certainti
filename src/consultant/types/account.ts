@@ -335,6 +335,8 @@ export type AccountList = {
   financial_consultant: string;
   delivery_head: string;
   finance_executive: string;
+  professional_services_consultant: string;
+  finance_lead: string;
   projects_by_fiscal_year?: ProjectsByYear[];
 };
 

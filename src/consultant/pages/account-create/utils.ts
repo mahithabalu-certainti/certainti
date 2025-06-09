@@ -28,8 +28,14 @@ export const transformKeyContactsFromAPI = (keyContacts: KeyContacts[]) => {
     formData[`is_primary_contact_${index}`] = contact.is_primary_contact
       ? 'yes'
       : 'no';
-    formData[`include_in_communication_${index}`] =
-      contact.include_in_communication ? 'yes' : 'no';
+    formData[`include_in_communication_${index}`] = formData[
+      `include_in_communication_${index}`
+    ] =
+      contact.include_in_communication === true
+        ? 'yes'
+        : contact.include_in_communication === false
+          ? 'no'
+          : null;
     formData[`key_contact_status_${index}`] =
       contact.status?.toLowerCase() || 'active';
   });
@@ -71,7 +77,11 @@ export const keyContactsTransformPayload = (
         key_contact_role: role || null,
         is_primary_contact: formData[`is_primary_contact_${index}`] === 'yes',
         include_in_communication:
-          formData[`include_in_communication_${index}`] === 'yes',
+          formData[`include_in_communication_${index}`] === 'yes'
+            ? true
+            : formData[`include_in_communication_${index}`] === 'no'
+              ? false
+              : null,
         status: formData[`key_contact_status_${index}`]
           ? (capitalize(formData[`key_contact_status_${index}`]) as Status)
           : ('Active' as Status),
