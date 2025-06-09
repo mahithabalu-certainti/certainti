@@ -1663,23 +1663,27 @@ class SchemaService {
     ]);
 
     if (sortBy && SORTABLE_FIELDS.has(sortBy)) {
-      const order = sortOrder === "DESC" ? -1 : 1;
-
       enrichedAccounts.sort(
         (a: { [x: string]: string }, b: { [x: string]: string }) => {
           const valA = a[sortBy] || "";
           const valB = b[sortBy] || "";
 
-          if (valA === "-" && valB !== "-") return 1;
-          if (valB === "-" && valA !== "-") return -1;
-          if (valA === "-" && valB === "-") return 0;
-
-          return (
-            order * valA.localeCompare(valB, undefined, { sensitivity: "base" })
-          );
+        if (valA === "-" && valB !== "-") {
+          return sortOrder === "DESC" ? -1 : 1;
         }
-      );
+        if (valB === "-" && valA !== "-") {
+          return sortOrder === "DESC" ? 1 : -1;
+        }
+        if (valA === "-" && valB === "-") {
+          return 0; // Both empty → equal
+        }
+      // For non-empty values: sort alphabetically
+      return sortOrder === "DESC"
+        ? valB.localeCompare(valA, undefined, { sensitivity: "base" }) // Z → A
+        : valA.localeCompare(valB, undefined, { sensitivity: "base" }); // A → Z
     }
+  );
+}
 
     // 6. Apply pagination
     const total = enrichedAccounts.length;

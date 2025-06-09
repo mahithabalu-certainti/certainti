@@ -144,7 +144,7 @@ const accountSchema = Joi.object({
         }),
         key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional(),
-        include_in_communication: Joi.boolean().valid(true, false).optional(),
+        include_in_communication: Joi.boolean().allow(null).optional(),
         status: Joi.string().valid('Active', 'Inactive').required(),
         action_type: Joi.string().valid('add', 'edit','delete').required()
       })
@@ -273,7 +273,7 @@ const updateAccountSchema = Joi.object({
         }),
         key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional(),
-        include_in_communication: Joi.boolean().valid(true, false).optional(),
+        include_in_communication: Joi.boolean().allow(null).optional(),
         status: Joi.string().valid('Active', 'Inactive').required(),
         action_type: Joi.string().valid('add', 'edit','delete').required()
       })
