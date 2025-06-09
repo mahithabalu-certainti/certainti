@@ -1481,7 +1481,7 @@ export class ProjectService {
 
       const technicalContact = enrichedKeyContacts.find(
         (e: any) =>
-          e.role_name === "Technical Consultant" && e.is_primary_contact
+          e.role_name === "Client Project Technical Point of Contact" && e.is_primary_contact
       );
       const financialContact = enrichedKeyContacts.find(
         (e: any) =>
@@ -1489,7 +1489,7 @@ export class ProjectService {
       );
       const pointOfContact = enrichedKeyContacts.find(
         (e: any) =>
-          e.role_name === "Project Point of Contact" && e.is_primary_contact
+          e.role_name === "Client Project Point of Contact" && e.is_primary_contact
       );
       
       technicalConsultant = technicalContact ? technicalContact.key_contact_name : null;
@@ -2024,7 +2024,7 @@ export class ProjectService {
   }
 
   async assignCurrencyRid(result: any, mainDbSequelize: any) {
-    if (!result.currency_rid) {
+    if (!result.currency) {
       const currencyRid = await this.getCurrencyDetailsByAccountRidRaw(result.account_rid);
       if (currencyRid) {
         result.currency = currencyRid;
