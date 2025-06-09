@@ -26,6 +26,7 @@ interface HeaderProps {
   primaryButton?: {
     label: string;
     onClick: () => void;
+    disabled?: boolean;
     navigateTo?: string;
     variant?: 'create' | 'edit'; // To distinguish between create/edit button styles if needed
   };
@@ -126,6 +127,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
             <TextButton
               label={primaryButton.label}
               onClick={primaryButton.onClick}
+              disabled={primaryButton.disabled}
               sx={{
                 ...DEFAULT_BUTTON_STYLES,
                 ...customStyles.button,
