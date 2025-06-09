@@ -1564,7 +1564,6 @@ class SchemaService {
       primary_contact_role: roleKey || "",
       primary_contact_name: name || "",    // technical_consultant: getPrimaryContactName("Technical Consultant") || "-",
       professional_services_consultant: getPrimaryContactName("Professional Services Consultant") || "-",
-      // delivery_head: getPrimaryContactName("Client Project Delivery Head") || "-",
       finance_executive: getPrimaryContactName("Client Finance Executive") || "-",
       finance_lead: getPrimaryContactName("Client Finance Lead") || "-",
       ...(isChild && { 
@@ -1658,10 +1657,8 @@ class SchemaService {
 }
     // 5. Apply sorting if needed
     const SORTABLE_FIELDS = new Set([
-      "technical_consultant",
       "professional_services_consultant",
-      "financial_consultant",
-      "delivery_head",
+      "financial_lead",
       "finance_executive",
     ]);
 

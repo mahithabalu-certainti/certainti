@@ -103,7 +103,7 @@ const accountSchema = Joi.object({
   business_details: Joi.string().min(1).max(2000).required().label("Business Details"),
   website: Joi.string()
     .min(10)
-    .max(50)
+    .max(255)
     .allow(null)
     .optional()
     .pattern(/^(https?:\/\/|www\.)[a-zA-Z0-9.-]+(:[0-9]+)?(\/[a-zA-Z0-9.-]*)*\/?$/)
