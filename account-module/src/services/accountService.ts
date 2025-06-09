@@ -82,14 +82,28 @@ async accountList(
         'country',
         'currency',
         'industry',
-        'technical_consultant',
-        'delivery_head',
+        'professional_services_consultant',
         'finance_executive',
-        'financial_consultant'
+        'finance_lead'
       ];
-
+      const numericFields = [
+        "total_projects",
+        "total_project_cost",
+        "total_project_hours",
+        "qualifying_project_hours_fed",
+        "qualifying_project_qre_fed",
+        "qualifying_project_rd_credits_fed",
+        "total_projects_rd_credits"
+      ];
       if (finalSortBy && !excludedSortFields.includes(finalSortBy)) {
+        if (numericFields.includes(finalSortBy)) {
+        order.push([
+          Sequelize.cast(Sequelize.col(finalSortBy), 'DECIMAL'),
+          finalSortOrder
+        ]);
+      } else {
         order.push([finalSortBy, finalSortOrder]);
+      }
       }
   
       if (finalSortBy === "country") {
@@ -128,8 +142,8 @@ async accountList(
       }
 
       // Check if filters contain key_contact filter
-      const hasKeyContactFilter = !!parsedFilters?.key_contact && Object.keys(parsedFilters.key_contact).length > 0 ||
-           ['technical_consultant', 'financial_consultant', 'delivery_head', 'finance_executive'].includes(finalSortBy || '');
+      const hasKeyContactFilter = !!(parsedFilters?.finance_executive || parsedFilters?.professional_services_consultant || parsedFilters?.finance_lead)  ||
+           ['professional_services_consultant', 'financial_lead', 'finance_executive'].includes(finalSortBy || '');
       // Build the query options dynamically
       const queryOptions: any = {
         where: baseWhereClause,
@@ -235,7 +249,7 @@ async accountList(
       });
     }
 
-    const updatedAccount = await this.schemaService.insertKeyContactInfo(parentAccounts,filters.key_contact,limit,offset,finalSortBy,finalSortOrder,'create');
+    const updatedAccount = await this.schemaService.insertKeyContactInfo(parentAccounts,filters,limit,offset,finalSortBy,finalSortOrder,'create');
 
     // Get total count without pagination
     const totalCount = await repository.count({
@@ -265,7 +279,7 @@ async accountList(
       message: HttpStatus.SUCCESS_MESSAGE,
       data: {
         account: updatedAccount,
-        count: !hasKeyContactFilter ? totalCount :updatedAccount.total,
+        count: !hasKeyContactFilter ? totalCount :updatedAccount?.total,
       },
     };
   } catch (err) {
@@ -311,12 +325,35 @@ async accountList(
           sortBy,
           sortOrder
         );
-  
-        const order: any[] = [];
-  
-        if (finalSortBy !== "country" && finalSortBy !== "currency" && finalSortBy !== "industry" && finalSortBy !== "key_contact_name" && finalSortBy !== "key_contact_role") {
-          order.push([finalSortBy, finalSortOrder]);
-        }
+
+      const order: any[] = [];
+      const excludedSortFields = [
+        'country',
+        'currency',
+        'industry',
+        'finance_lead',
+        'finance_executive',
+        'professional_services_consultant'
+      ];
+      const numericFields = [
+        "total_projects",
+        "total_project_cost",
+        "total_project_hours",
+        "qualifying_project_hours_fed",
+        "qualifying_project_qre_fed",
+        "qualifying_project_rd_credits_fed",
+        "total_projects_rd_credits"
+      ];
+      if (finalSortBy && !excludedSortFields.includes(finalSortBy)) {
+        if (numericFields.includes(finalSortBy)) {
+        order.push([
+          Sequelize.cast(Sequelize.col(finalSortBy), 'DECIMAL'),
+          finalSortOrder
+        ]);
+      } else {
+        order.push([finalSortBy, finalSortOrder]);
+      }
+      }
   
         if (finalSortBy === "country") {
           order.push([
@@ -434,9 +471,36 @@ async accountList(
             account.setDataValue('child_accounts', []);
           });
         }
-        const updatedAccount = await this.schemaService.insertKeyContactInfo(parentAccounts,filters.key_contact,0,0,finalSortBy,finalSortOrder,'download');
-        const rawResult = updatedAccount.data || [];
+        const updatedAccount = await this.schemaService.insertKeyContactInfo(parentAccounts,filters,0,0,finalSortBy,finalSortOrder,'download');
+        const rawResult = updatedAccount?.data || [];
         const cleanedUsers = rawResult;
+        const emptyRow = {
+          "Account Name": "",
+          "Industry": "",
+          "Country": "",
+          "Total Projects": "",
+          "Total Project Hours": "",
+          "Total Cost": "",
+          "Estimated R&D Hours": "",
+          "QRE": "",
+          "Estimated R&D Credits": "",
+          "Actual R&D Credits": "",
+          "Finance Executive": "",
+          "Finance Lead": "",
+          "Professional Services Consultant": "",
+          "Account ID": ""
+        };
+
+    // If no data found, return the empty row
+    if (cleanedUsers.length === 0) {
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          account: [emptyRow]
+        },
+      };
+    }
         const formatNumberForExport = (value: any, currency_symbol: string): string => {
           if (value == null || value === '') return '-';
           const num = Number(value);
@@ -467,7 +531,7 @@ async accountList(
             "Actual R&D Credits": formatNumberForExport(account?.total_projects_rd_credits, currency_symbol) || "-",
             "Finance Executive":account?.finance_executive || '-',
             "Finance Lead":account?.finance_lead || '-',
-            "Professional Services Consultant":account?.delivery_head || '-',
+            "Professional Services Consultant":account?.professional_services_consultant || '-',
             "Account ID": account?.r_number || "-"
           };
           exportDetails.push(baseRow);
@@ -488,7 +552,7 @@ async accountList(
                 "Actual R&D Credits": formatNumberForExport(child?.total_projects_rd_credits, child_currency_symbol) || "-",
                 "Finance Executive":child?.finance_executive || '-',
                 "Finance Lead":child?.finance_lead || '-',
-                "Professional Services Consultant":child?.delivery_head || '-',
+                "Professional Services Consultant":child?.professional_services_consultant || '-',
                 "Account ID": child?.r_number || "-"
               });
                 if(child?.projects_by_fiscal_year.length >0)
@@ -507,7 +571,7 @@ async accountList(
                       "Actual R&D Credits": formatNumberForExport(fiscalData?.total_projects_rd_credits, child_currency_symbol) || "-",
                       "Finance Executive":child?.finance_executive || '-',
                       "Finance Lead":child?.finance_lead || '-',
-                      "Professional Services Consultant":child?.delivery_head || '-',
+                      "Professional Services Consultant":child?.professional_services_consultant || '-',
                       "Account ID": child?.r_number || "-"        
                      });  
                   });
@@ -996,14 +1060,16 @@ async insertClientTemplateDetails(
     }
   }
 
-  async getKeyContactRoles(): Promise<{
+  async getKeyContactRoles(
+    entity_type: string,
+  ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
     data?: { keyContactRoles: any };
   }> {
     try {
-      const keyContactRoles = await this.schemaService.fetchKeyContactRoles();
+      const keyContactRoles = await this.schemaService.fetchKeyContactRoles(entity_type);
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -1258,8 +1324,15 @@ async insertClientTemplateDetails(
     return null;
   }
 
-  private getNumericFilter(revenueFilter: any,columnName:string): any {
-  const { greater_than, less_than, between,equals } = revenueFilter;
+ private getNumericFilter(revenueFilter: any, columnName: string): any {
+  const { 
+    greater_than, 
+    less_than, 
+    between, 
+    equals, 
+    not_equals, 
+    is_empty 
+  } = revenueFilter;
 
   // Handle empty strings and invalid values by casting to NULL first
    const column = Sequelize.literal(`
@@ -1268,14 +1341,35 @@ async insertClientTemplateDetails(
       AS DOUBLE PRECISION
     )
   `);
-if (equals) {
+
+  if (is_empty !== undefined) {
+    return {
+      [Op.or]: [
+        { [columnName]: null },
+        { [columnName]: '' },
+        Sequelize.where(column, Op.is, null)
+      ]
+    };
+  }
+
+  if (equals !== undefined) {
     return Sequelize.where(
       column,
       Op.eq,
       parseFloat(equals)
     );
   }
-  if (greater_than) {
+
+  if (not_equals !== undefined) {
+    return {
+      [Op.or]: [
+        Sequelize.where(column, Op.ne, parseFloat(not_equals)),
+        Sequelize.where(column, Op.is, null)
+      ]
+    };
+  }
+
+  if (greater_than !== undefined) {
     return Sequelize.where(
       column,
       Op.gt,
@@ -1283,7 +1377,7 @@ if (equals) {
     );
   }
 
-  if (less_than) {
+  if (less_than !== undefined) {
     return Sequelize.where(
       column,
       Op.lt,
@@ -1291,9 +1385,7 @@ if (equals) {
     );
   }
   if (between && Array.isArray(between) && between.length === 2) {
-    const [min, max] = between.map((val: string | number) =>
-      parseFloat(String(val))
-    );
+    const [min, max] = between.map(val => parseFloat(String(val)));
     return Sequelize.where(
       column,
       Op.between,
@@ -1443,9 +1535,8 @@ if (equals) {
       "country",
       "currency",
       "annual_revenue",
-      "technical_consultant",
-      "financial_consultant",
-      "delivery_head",
+      "professional_services_consultant",
+      "finance_lead",
       "finance_executive",
       "total_projects",
       "total_project_cost",

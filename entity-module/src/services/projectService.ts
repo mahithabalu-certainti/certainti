@@ -843,14 +843,14 @@ export class ProjectService {
       const rawResult = allProjectList || [];
       let exportData = rawResult.map((project: any) => {   
         return {
+          "Project Code": project.project_code || "-",
+          "Name": project.project_name || "-",
+          "Project Type": project.project_type || "-",
           "Account Name": project.account_name || "-",
           "Fiscal Year":project.fiscal_year || "-",
+          "Project Classification": project.classification_name || "-",
           "Customer Group": project.project_client_group || "-",
           "Project Group": project?.project_group || "-",
-          "Project Code": project.project_code || "-",
-          "Project Name": project.project_name || "-",
-          "Project Type": project.project_type || "-",
-          "Project Classification": project.classification_name || "-",
           "Project Effort (Hours)": project.total_effort || "-",
           "Project Cost": formatNumberForExport(project.total_cost, project.currency_symbol) || "-",
           "FTE Cost": formatNumberForExport(project.total_fte_cost, project.currency_symbol) || "-",
@@ -1056,12 +1056,12 @@ export class ProjectService {
       let exportData = rawResult.map((project: any) => {   
         return {
           "Project Code": project.project_code || "-",
+          "Name": project.project_name || "-",
+          "Project Type": project.project_type || "-",
           "Fiscal Year":project.fiscal_year || "-",
+          "Project Classification": project.classification_name || "-",
           "Customer Group": project.project_client_group || "-",
           "Project Group": project?.project_group || "-",
-          "Project Name": project.project_name || "-",
-          "Project Type": project.project_type || "-",
-          "Project Classification": project.classification_name || "-",
           "Project Effort (Hours)": project.total_effort || "-",
           "Project Cost": formatNumberForExport(project.total_cost, project.currency_symbol) || "-",
           "FTE Cost": formatNumberForExport(project.total_fte_cost, project.currency_symbol) || "-",
@@ -1481,7 +1481,7 @@ export class ProjectService {
 
       const technicalContact = enrichedKeyContacts.find(
         (e: any) =>
-          e.role_name === "Technical Consultant" && e.is_primary_contact
+          e.role_name === "Client Project Technical Point of Contact" && e.is_primary_contact
       );
       const financialContact = enrichedKeyContacts.find(
         (e: any) =>
@@ -1489,7 +1489,7 @@ export class ProjectService {
       );
       const pointOfContact = enrichedKeyContacts.find(
         (e: any) =>
-          e.role_name === "Project Point of Contact" && e.is_primary_contact
+          e.role_name === "Client Project Point of Contact" && e.is_primary_contact
       );
       
       technicalConsultant = technicalContact ? technicalContact.key_contact_name : null;
@@ -2024,7 +2024,7 @@ export class ProjectService {
   }
 
   async assignCurrencyRid(result: any, mainDbSequelize: any) {
-    if (!result.currency_rid) {
+    if (!result.currency) {
       const currencyRid = await this.getCurrencyDetailsByAccountRidRaw(result.account_rid);
       if (currencyRid) {
         result.currency = currencyRid;

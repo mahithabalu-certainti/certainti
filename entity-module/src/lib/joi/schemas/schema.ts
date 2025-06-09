@@ -1360,7 +1360,7 @@ const createProjectSchema = Joi.object({
       }),
       key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow(null),
       is_primary_contact: Joi.boolean().valid(true, false).optional().allow(null),
-      include_in_communication: Joi.boolean().valid(true, false).optional().allow(null),
+      include_in_communication: Joi.boolean().optional().allow(null),
       status: Joi.string().valid("Active", "Inactive").optional().allow(null),
       action_type: Joi.string().valid('add').required()
     })
@@ -1629,7 +1629,7 @@ const updateProjectSchema = Joi.object({
         }),
         key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional().allow(null),
-        include_in_communication: Joi.boolean().valid(true, false).optional().allow(null),
+        include_in_communication: Joi.boolean().optional().allow(null),
         status: Joi.string().valid("Active", "Inactive").optional().allow(null)
       })
     )
