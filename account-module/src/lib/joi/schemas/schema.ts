@@ -106,7 +106,7 @@ const accountSchema = Joi.object({
     .max(255)
     .allow(null)
     .optional()
-    .pattern(/^(https?:\/\/|www\.)[a-zA-Z0-9.-]+(:[0-9]+)?(\/[a-zA-Z0-9.-]*)*\/?$/)
+    .pattern(/^(https?:\/\/|www\.)[a-zA-Z0-9.-]+(:[0-9]+)?(\/[a-zA-Z0-9.-]*)*\/?$/i)
     .messages({
       "string.pattern.base": `Website URL must begin with 'http' ,'www.' or 'https://'`,
       "string.max": "The website must not exceed 255 characters."
@@ -232,7 +232,7 @@ const updateAccountSchema = Joi.object({
     .max(255)
     .allow(null)
     .optional()
-   .pattern(/^(https?:\/\/|www\.)[a-zA-Z0-9.-]+(:[0-9]+)?(\/[a-zA-Z0-9.-]*)*\/?$/)
+    .pattern(/^(https?:\/\/|www\.)[a-zA-Z0-9.-]+(:[0-9]+)?(\/[a-zA-Z0-9.-]*)*\/?$/i)
     .messages({
       "string.pattern.base": `Website URL must begin with 'http','www.' or 'https://'`,
       "string.max": "The website must not exceed 255 characters."
