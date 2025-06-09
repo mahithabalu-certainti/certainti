@@ -9,6 +9,7 @@ import {
   createTextAreaField,
   createTextField,
   PROJECT_TYPE,
+  PROJECT_YES_NO_OPTIONS,
   REGEX_PATTERNS,
   STATUS_OPTIONS,
   YES_NO_OPTIONS,
@@ -28,32 +29,44 @@ export const newKeyContactFields = (
   createTextField('key_contact_name', 'Contact Name', {
     required: false,
     width: '190px',
-    regex: REGEX_PATTERNS.CONTACT_NAME,
-    regexErrorMessage:
-      "Only letters, spaces, apostrophes ('), commas (,), periods (.), and hyphens (-) are allowed",
     placeholder: 'Enter Contact Name',
     onChange: true,
     errorHandling: [
       {
-        regex: REGEX_PATTERNS.MIN_NAME_REGEX,
-        errorMessage: 'Key Contact Name must be more than 1 characters long',
+        regex: REGEX_PATTERNS.MIN_2,
+        errorMessage: 'Key Contact Name must be at least 2 characters long',
       },
       {
         regex: REGEX_PATTERNS.MAX_NAME_REGEX,
-        errorMessage: 'Max length exceeded',
+        errorMessage: 'Key Contact Name must not exceed 128 characters',
+      },
+      {
+        regex: REGEX_PATTERNS.CONTACT_NAME,
+        errorMessage:
+          "Key Contact Name can only contain letters, spaces, apostrophes ('), and hyphens (-)",
+      },
+      {
+        regex: REGEX_PATTERNS.KEY_CONTACT_NO_CONSECUTIVE,
+        errorMessage:
+          'Key Contact Name must not contain consecutive special characters',
+      },
+      {
+        regex: REGEX_PATTERNS.KEY_CONTACT_NO_TRAILING,
+        errorMessage:
+          'Key Contact Name cannot begin or end with a space or special character',
       },
     ],
   }),
   createSelectField('key_contact_role', 'Role', {
     options: roles,
-    width: '140px',
+    width: '180px',
     required: false,
     placeholder: 'Choose Role',
     onChange: true,
   }),
   createTextField('key_contact_email', 'Email', {
     required: false,
-    width: '160px',
+    width: '180px',
     placeholder: 'Enter Email',
     onChange: true,
     errorHandling: [
@@ -67,25 +80,32 @@ export const newKeyContactFields = (
       },
     ],
   }),
+  createTextField('key_contact_rid', 'Key Contact ID', {
+    required: false,
+    hide: true,
+    placeholder: '',
+  }),
   createRadioField('is_primary_contact', 'Is Primary Contact?', {
     radioOptions: YES_NO_OPTIONS,
     width: '140px',
     required: isPrimaryContactRequired,
     onChange: true,
   }),
-  createRadioField('include_in_communication', 'Include in Communications?', {
+  createRadioField('include_in_communication', 'Include In Communications?', {
     radioOptions: YES_NO_OPTIONS,
-    width: '190px',
+    width: '160px',
     required: false,
+    // defaultValue: YesNo.No,
   }),
   createSelectField('key_contact_status', 'Status', {
     required: false,
     width: '140px',
     options: STATUS_OPTIONS,
     placeholder: 'Choose Status',
+    defaultValue: STATUS_OPTIONS[0].value,
   }),
   createImgButton('button', closeIcon, {
-    width: '60px',
+    width: '30px',
   }),
 ];
 
@@ -95,26 +115,28 @@ const createDynamicField = (
   removeKeyContact: (index: number) => void
 ) => {
   const fieldsArr = [];
-  const groupIndex = Math.floor(index / 7);
+  const groupIndex = Math.floor(index / 8);
   const { name, label, ...rest } = contacts;
+  const dynamicName = `${name}_${groupIndex}`;
   if (contacts.type === 'text') {
     fieldsArr.push(
-      createTextField(name + '_' + groupIndex, label, {
+      createTextField(dynamicName, label, {
         ...rest,
       })
     );
   }
   if (contacts.type === 'select') {
     fieldsArr.push(
-      createSelectField(name + '_' + groupIndex, label, {
+      createSelectField(dynamicName, label, {
         ...rest,
         options: rest.options || [],
       })
     );
   }
+
   if (contacts.type === 'radio') {
     fieldsArr.push(
-      createRadioField(name + '_' + groupIndex, label, {
+      createRadioField(dynamicName, label, {
         required: rest.required,
         width: rest.width,
         defaultValue: rest.defaultValue,
@@ -126,7 +148,7 @@ const createDynamicField = (
   }
   if (contacts.type === 'iconButton') {
     fieldsArr.push(
-      createImgButton(name + '_' + groupIndex, '', {
+      createImgButton(dynamicName, '', {
         width: rest.width,
         onClick: () => removeKeyContact(index),
       })
@@ -135,6 +157,7 @@ const createDynamicField = (
 
   return fieldsArr;
 };
+
 const getDateConstraints = (yearsBack: number) => {
   const currentDate = new Date();
   const minDate = new Date();
@@ -153,7 +176,6 @@ export const FormData = (
   industry: SelectOption[],
   classification: SelectOption[],
   // roles: SelectOption[],
-  isPrimaryContactRequired: boolean,
   keyContacts: FieldType[],
   addNewKeyContact: () => void,
   removeKeyContact: (index: number) => void,
@@ -507,20 +529,14 @@ export const FormData = (
           }),
           createRadioField('auto_access_rd', 'Auto Assessment', {
             required: false,
-            radioOptions: [
-              { label: 'Yes', value: 'Yes' },
-              { label: 'No', value: 'No' },
-            ],
+            radioOptions: PROJECT_YES_NO_OPTIONS,
           }),
           createRadioField(
             'auto_send_ai_interaction',
             'Auto Send Interaction',
             {
               required: true,
-              radioOptions: [
-                { label: 'Yes', value: 'Yes' },
-                { label: 'No', value: 'No' },
-              ],
+              radioOptions: PROJECT_YES_NO_OPTIONS,
             }
           ),
           createTextField('max_ai_interaction', 'Max Interaction Follow Up', {
@@ -594,7 +610,6 @@ export const FormData = (
       showOthersField,
       showClassifyOthersField,
       stateLoading,
-      isPrimaryContactRequired,
       keyContacts,
     ]
   );

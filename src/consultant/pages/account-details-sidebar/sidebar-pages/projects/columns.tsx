@@ -1,9 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  costDisplay,
-  formatDateToYYYYMMDDWithTime,
-} from '../../../../../common-utils';
+import { costDisplay } from '../../../../../common-utils';
 import { ProjectList } from '../../../../types/project';
+import { formatDateToYYYYMMDD } from '../resources/utils';
 interface TableColumn<T> {
   id: string;
   sortId: string;
@@ -57,30 +55,6 @@ export const getProjectColumns = (
         row.project_code
       ),
   },
-  {
-    id: 'fiscal_year',
-    label: 'Fiscal Year',
-    sortable: true,
-    sortId: 'fiscal_year',
-    width: 130,
-    sx: {
-      textAlign: 'right',
-    },
-  },
-  {
-    id: 'project_client_group',
-    label: 'Customer Group',
-    sortable: true,
-    sortId: 'project_client_group',
-    width: 160,
-  },
-  {
-    id: 'project_group',
-    label: 'Project Group',
-    sortable: true,
-    sortId: 'project_group',
-    width: 160,
-  },
   // {
   //   id: 'project_code',
   //   label: 'Project Code',
@@ -103,11 +77,35 @@ export const getProjectColumns = (
     width: 160,
   },
   {
+    id: 'fiscal_year',
+    label: 'Fiscal Year',
+    sortable: true,
+    sortId: 'fiscal_year',
+    width: 130,
+    sx: {
+      textAlign: 'right',
+    },
+  },
+  {
     id: 'classification_name',
     label: 'Project Classification',
     sortable: true,
     sortId: 'classification_name',
     width: 170,
+  },
+  {
+    id: 'project_client_group',
+    label: 'Customer Group',
+    sortable: true,
+    sortId: 'project_client_group',
+    width: 160,
+  },
+  {
+    id: 'project_group',
+    label: 'Project Group',
+    sortable: true,
+    sortId: 'project_group',
+    width: 160,
   },
   {
     id: 'total_effort',
@@ -232,11 +230,9 @@ export const getProjectColumns = (
     label: 'Last Modified',
     sortable: true,
     sortId: 'modified_datetime',
-    width: 190,
+    width: 140,
     render: (row: ProjectList) =>
-      row.modified_datetime
-        ? formatDateToYYYYMMDDWithTime(row.modified_datetime)
-        : '-',
+      row.modified_datetime ? formatDateToYYYYMMDD(row.modified_datetime) : '-',
   },
   {
     id: 'r_number',

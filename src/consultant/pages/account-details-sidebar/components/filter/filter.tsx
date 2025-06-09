@@ -44,7 +44,7 @@ import {
   MENU_PROPS,
   SELECT_STYLES,
 } from '../../../../../components/filter-component/helpers';
-
+import { useLocation } from 'react-router-dom';
 // const systemFilters = ['Touched Records', 'Untouched Records', 'Record Action'];
 
 const Filter: React.FC<FilterComponentProps> = ({
@@ -60,6 +60,7 @@ const Filter: React.FC<FilterComponentProps> = ({
   setCurrentCountry,
   mode,
 }) => {
+  const location = useLocation();
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
     {}
@@ -152,6 +153,18 @@ const Filter: React.FC<FilterComponentProps> = ({
       );
     }
   }, []);
+
+  useEffect(() => {
+    const currentPathname = location.pathname;
+
+    const unListen = () => {
+      if (window.location.pathname !== currentPathname) {
+        localStorage.removeItem(`allProjects`);
+      }
+    };
+
+    return unListen;
+  }, [location.pathname]);
 
   const handleFilterSelect = (field: string) => {
     const fieldConfig = filterMenu.find((f) => f.value === field);
@@ -384,8 +397,11 @@ const Filter: React.FC<FilterComponentProps> = ({
     });
   };
 
-  const disableDependantFilterFields = (filterFieldName: string, field: FieldConfig, fieldState: FilterState) => {
-
+  const disableDependantFilterFields = (
+    filterFieldName: string,
+    field: FieldConfig,
+    fieldState: FilterState
+  ) => {
     const fieldValue = filterStates[filterFieldName]?.enum?.value;
     const enabled = !!fieldValue && !!fieldValue[0]; // Only enable if skill type is selected
     return (
@@ -400,7 +416,7 @@ const Filter: React.FC<FilterComponentProps> = ({
         disabled={!enabled}
       />
     );
-  }
+  };
 
   const renderFilterControls = (fieldName: string) => {
     if (!selectedFilters.includes(fieldName)) return null;
@@ -415,7 +431,11 @@ const Filter: React.FC<FilterComponentProps> = ({
     }
 
     if (field.value === 'resource_region') {
-      return disableDependantFilterFields('resource_country', field, fieldState);
+      return disableDependantFilterFields(
+        'resource_country',
+        field,
+        fieldState
+      );
     }
 
     switch (field.type) {
@@ -423,9 +443,11 @@ const Filter: React.FC<FilterComponentProps> = ({
         return (
           <TextFilterControl
             filterStates={filterStates}
-            menuOption={field?.required
-              ? field?.filterOptions ?? textOptions
-              : field.operatorOption ?? textOptions}
+            menuOption={
+              field?.required
+                ? (field?.filterOptions ?? textOptions)
+                : (field.operatorOption ?? textOptions)
+            }
             // menuOption={field.operatorOption || textOptions}
             fieldName={field.value}
             state={fieldState}
@@ -437,9 +459,11 @@ const Filter: React.FC<FilterComponentProps> = ({
         return (
           <TextFilterControlForCostAndSKill
             filterStates={filterStates}
-            menuOption={field?.required
-              ? field?.filterOptions ?? textOptionForCostAndSkill
-              : textOptionForCostAndSkill}
+            menuOption={
+              field?.required
+                ? (field?.filterOptions ?? textOptionForCostAndSkill)
+                : textOptionForCostAndSkill
+            }
             // menuOption={textOptionForCostAndSkill}
             fieldName={field.value}
             state={fieldState}
@@ -462,9 +486,11 @@ const Filter: React.FC<FilterComponentProps> = ({
         return (
           <EnumFilterControl
             filterStates={filterStates}
-            menuOption={field?.required
-              ? field?.filterOptions ?? enumOptions
-              : field.operatorOption ?? enumOptions}
+            menuOption={
+              field?.required
+                ? (field?.filterOptions ?? enumOptions)
+                : (field.operatorOption ?? enumOptions)
+            }
             valueOptions={field.options as { option: string; value: string }[]}
             fieldName={field.value}
             state={fieldState}
@@ -496,7 +522,7 @@ const Filter: React.FC<FilterComponentProps> = ({
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleDateChange}
             mode={mode as 'date' | 'year'}
-          // onChange={handleBooleanChange}
+            // onChange={handleBooleanChange}
           />
         );
       case 'select':

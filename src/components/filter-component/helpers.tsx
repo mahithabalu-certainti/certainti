@@ -80,6 +80,7 @@ export const MENU_PROPS: Partial<MenuProps> = {
       marginTop: '1px',
       boxShadow: 'none',
       maxHeight: '200px',
+      cursor: 'pointer',
     },
   },
   MenuListProps: {
@@ -768,6 +769,7 @@ export const KeyContactFilterControl: React.FC<{
             fontSize: '12px',
             lineHeight: '30px',
             color: '#425A76',
+            cursor: 'pointer',
             py: 0,
           },
         }}

@@ -140,6 +140,11 @@ export enum YesNo {
   No = 'no',
 }
 
+export enum enumValue {
+  Yes = 'Yes',
+  No = 'No',
+}
+
 export enum KeyContactsUpdate {
   Edit = 'edit',
   Delete = 'delete',
@@ -335,6 +340,8 @@ export type AccountList = {
   financial_consultant: string;
   delivery_head: string;
   finance_executive: string;
+  professional_services_consultant: string;
+  finance_lead: string;
   projects_by_fiscal_year?: ProjectsByYear[];
 };
 

@@ -73,96 +73,110 @@ const KeyContactSection: React.FC<{ title: string; data: KeyContact[] }> = ({
             },
           }}
         >
-          {data.map((field, i) => (
-            <TableRow key={i} sx={{ height: '28px' }}>
-              <TableCell
-                sx={{
-                  height: '28px',
-                  py: 0,
-                  px: 3.2,
-                  width: '170px',
-                  minWidth: '170px',
-                  maxWidth: '170px',
-                }}
-              >
-                {field.keyContactId || '-'}
-              </TableCell>
-              <TableCell
-                sx={{
-                  height: '28px',
-                  padding: '0px 8px',
-                  width: '200px',
-                  minWidth: '200px',
-                  maxWidth: '200px',
-                }}
-              >
-                {field.keyContactName || '-'}
-              </TableCell>
-              <TableCell
-                sx={{
-                  height: '28px',
-                  padding: '0px 8px',
-                  width: '200px',
-                  minWidth: '200px',
-                  maxWidth: '200px',
-                }}
-              >
-                {field.keyContactRole || '-'}
-              </TableCell>
-              <TableCell
-                sx={{
-                  height: '28px',
-                  padding: '0px 8px',
-                  textDecoration: field.keyContactEmail ? 'underline' : 'none',
-                  textDecorationColor: '#425A76',
-                  width: '200px',
-                  minWidth: '200px',
-                  maxWidth: '200px',
-                }}
-              >
-                {field.keyContactEmail || '-'}
-              </TableCell>
-              <TableCell
-                sx={{
-                  height: '28px',
-                  padding: '0px 8px',
-                  width: '160px',
-                  minWidth: '160px',
-                  maxWidth: '160px',
-                }}
-              >
-                {field.isPrimaryContact ? 'Yes' : 'No'}
-              </TableCell>
-              <TableCell
-                sx={{
-                  height: '28px',
-                  padding: '0px 8px',
-                  width: '200px',
-                  minWidth: '200px',
-                  maxWidth: '200px',
-                }}
-              >
-                {field.includeInCommnunications ? 'Yes' : 'No'}
-              </TableCell>
-              <TableCell
-                sx={{
-                  height: '28px',
-                  padding: '0px 8px',
-                  width: '160px',
-                  minWidth: '160px',
-                  maxWidth: '160px',
-                  color:
-                    field.keyContactStatus?.toLowerCase() === 'active'
-                      ? '#3EA72F !important'
-                      : '#f44336 !important',
-                }}
-              >
-                {field.keyContactStatus?.toLowerCase() === 'active'
-                  ? 'Active'
-                  : 'In-Active'}
+          {data.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={8} sx={{ textAlign: 'center', py: 1 }}>
+                Key contact information is not available
               </TableCell>
             </TableRow>
-          ))}
+          ) : (
+            data.map((field, i) => (
+              <TableRow key={i} sx={{ height: '28px' }}>
+                <TableCell
+                  sx={{
+                    height: '28px',
+                    py: 0,
+                    px: 3.2,
+                    width: '170px',
+                    minWidth: '170px',
+                    maxWidth: '170px',
+                  }}
+                >
+                  {field.keyContactId || '-'}
+                </TableCell>
+                <TableCell
+                  sx={{
+                    height: '28px',
+                    padding: '0px 8px',
+                    width: '200px',
+                    minWidth: '200px',
+                    maxWidth: '200px',
+                  }}
+                >
+                  {field.keyContactName || '-'}
+                </TableCell>
+                <TableCell
+                  sx={{
+                    height: '28px',
+                    padding: '0px 8px',
+                    width: '200px',
+                    minWidth: '200px',
+                    maxWidth: '200px',
+                  }}
+                >
+                  {field.keyContactRole || '-'}
+                </TableCell>
+                <TableCell
+                  sx={{
+                    height: '28px',
+                    padding: '0px 8px',
+                    textDecoration: field.keyContactEmail
+                      ? 'underline'
+                      : 'none',
+                    textDecorationColor: '#425A76',
+                    width: '200px',
+                    minWidth: '200px',
+                    maxWidth: '200px',
+                  }}
+                >
+                  {field.keyContactEmail || '-'}
+                </TableCell>
+                <TableCell
+                  sx={{
+                    height: '28px',
+                    padding: '0px 8px',
+                    width: '160px',
+                    minWidth: '160px',
+                    maxWidth: '160px',
+                  }}
+                >
+                  {field.isPrimaryContact ? 'Yes' : 'No'}
+                </TableCell>
+                <TableCell
+                  sx={{
+                    height: '28px',
+                    padding: '0px 8px',
+                    width: '200px',
+                    minWidth: '200px',
+                    maxWidth: '200px',
+                  }}
+                >
+                  {field.includeInCommnunications === true
+                    ? 'Yes'
+                    : field.includeInCommnunications === false
+                      ? 'No'
+                      : '-'}
+                </TableCell>
+                <TableCell
+                  sx={{
+                    height: '28px',
+                    padding: '0px 8px',
+                    width: '160px',
+                    minWidth: '160px',
+                    maxWidth: '160px',
+                    color:
+                      field.keyContactStatus?.toLowerCase() === 'active'
+                        ? '#3EA72F !important'
+                        : '#f44336 !important',
+                  }}
+                >
+                  {field.keyContactStatus?.toLowerCase() === 'active'
+                    ? 'Active'
+                    : 'In-Active'}
+                </TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
     </TableContainer>

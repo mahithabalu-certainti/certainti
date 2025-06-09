@@ -1,18 +1,16 @@
-import {
-  costDisplay,
-  formatDateToYYYYMMDDWithTime,
-} from '../../../../../common-utils';
+import { costDisplay } from '../../../../../common-utils';
 import { ProjectTableColumn, ProjectList } from '../../../../types/project';
+import { formatDateToYYYYMMDD } from '../../../account-details-sidebar/sidebar-pages/resources/utils';
 
 export const getAllProjectListColumns = (
   onClick: (row: ProjectList) => void
 ): ProjectTableColumn<ProjectList>[] => [
   {
-    id: 'account_name',
-    label: 'Account Name',
+    id: 'project_code',
+    label: 'Project Code',
     sortable: true,
-    sortId: 'account_name',
-    width: 150,
+    sortId: 'project_code',
+    width: 160,
     sticky: true,
     sx: {
       position: 'sticky',
@@ -28,42 +26,11 @@ export const getAllProjectListColumns = (
           onClick={() => onClick(row)}
           className='cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
         >
-          {row.account_name}
+          {row.project_code}
         </span>
       ) : (
-        row.account_name
+        row.project_code
       ),
-  },
-  {
-    id: 'fiscal_year',
-    label: 'Fiscal Year',
-    sortable: true,
-    sortId: 'fiscal_year',
-    width: 130,
-    sx: {
-      textAlign: 'right',
-    },
-  },
-  {
-    id: 'project_client_group',
-    label: 'Customer Group',
-    sortable: true,
-    sortId: 'project_client_group',
-    width: 160,
-  },
-  {
-    id: 'project_group',
-    label: 'Project Group',
-    sortable: true,
-    sortId: 'project_group',
-    width: 160,
-  },
-  {
-    id: 'project_code',
-    label: 'Project Code',
-    sortable: true,
-    sortId: 'project_code',
-    width: 160,
   },
   {
     id: 'project_name',
@@ -80,11 +47,42 @@ export const getAllProjectListColumns = (
     width: 160,
   },
   {
+    id: 'account_name',
+    label: 'Account Name',
+    sortable: true,
+    sortId: 'account_name',
+    width: 150,
+  },
+  {
+    id: 'fiscal_year',
+    label: 'Fiscal Year',
+    sortable: true,
+    sortId: 'fiscal_year',
+    width: 130,
+    sx: {
+      textAlign: 'right',
+    },
+  },
+  {
     id: 'classification_name',
     label: 'Project Classification',
     sortable: true,
     sortId: 'classification_name',
     width: 170,
+  },
+  {
+    id: 'project_client_group',
+    label: 'Customer Group',
+    sortable: true,
+    sortId: 'project_client_group',
+    width: 160,
+  },
+  {
+    id: 'project_group',
+    label: 'Project Group',
+    sortable: true,
+    sortId: 'project_group',
+    width: 160,
   },
   {
     id: 'total_effort',
@@ -209,11 +207,9 @@ export const getAllProjectListColumns = (
     label: 'Last Modified',
     sortable: true,
     sortId: 'modified_datetime',
-    width: 190,
+    width: 140,
     render: (row: ProjectList) =>
-      row.modified_datetime
-        ? formatDateToYYYYMMDDWithTime(row.modified_datetime)
-        : '-',
+      row.modified_datetime ? formatDateToYYYYMMDD(row.modified_datetime) : '-',
   },
   {
     id: 'r_number',

@@ -1,11 +1,11 @@
 import { AccountList, ConvertedAccount } from '../../types';
 import { FieldConfig, FilterSelectOption } from '../../types/account-filter';
 
-const roleOptions: { label: string; value: string }[] = [
-  { label: 'Finance Executive', value: 'finance_executive' },
-  { label: 'Finance Lead', value: 'financial_consultant' },
-  { label: 'Professional Services Consultant', value: 'technical_consultant' },
-];
+// const roleOptions: { label: string; value: string }[] = [
+//   { label: 'Finance Executive', value: 'finance_executive' },
+//   { label: 'Finance Lead', value: 'financial_consultant' },
+//   { label: 'Professional Services Consultant', value: 'technical_consultant' },
+// ];
 
 export const keyOptions: { label: string; value: string }[] = [
   { label: 'Equals', value: 'equals' },
@@ -68,12 +68,30 @@ export const getAccountFilterFields = (
     name: 'total_projects_rd_credits',
     type: 'number',
   },
+  // {
+  //   label: 'Key Contacts',
+  //   name: 'key_contact',
+  //   type: 'keyContact',
+  //   operatorOption: keyOptions,
+  //   options: roleOptions,
+  // },
   {
-    label: 'Key Contacts',
-    name: 'key_contact',
-    type: 'keyContact',
+    label: 'Finance Executive',
+    name: 'finance_executive',
+    type: 'text',
     operatorOption: keyOptions,
-    options: roleOptions,
+  },
+  {
+    label: 'Finance Lead',
+    name: 'finance_lead',
+    type: 'text',
+    operatorOption: keyOptions,
+  },
+  {
+    label: 'Professional Services Consultant',
+    name: 'professional_services_consultant',
+    type: 'text',
+    operatorOption: keyOptions,
   },
   {
     label: 'Account ID',
@@ -133,8 +151,8 @@ export function convertAccounts(
       estimatedCredits: account?.qualifying_project_rd_credits_fed,
       actualCredits: account?.total_projects_rd_credits,
       financeExecutive: account?.finance_executive || '-',
-      financeHead: account?.delivery_head || '-',
-      professionalConsultant: account?.technical_consultant || '-',
+      financeHead: account?.finance_lead || '-',
+      professionalConsultant: account?.professional_services_consultant || '-',
       accountNumber: account.r_number,
       projectsByYear: account.projects_by_fiscal_year || [],
       currency: account?.currency?.currency_symbol || '',

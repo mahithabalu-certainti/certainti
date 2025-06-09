@@ -14,6 +14,7 @@ import { AccessRestricted } from '../../../../components/account-restricted';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { checkPermission } from '../../../../common-utils';
+import { useAccountDetail } from '../../../services/account-details/account-details-service';
 
 const sideMenuItems: MenuItem[] = [
   {
@@ -111,6 +112,11 @@ export const ProjectDetails = () => {
     AllPermissions.PROJECT_PROJECTS_EDIT
   );
 
+  const isAccountDetailsEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_DETAILS_VIEW
+  );
+
   useEffect(() => {
     const list = searchParams.get('list');
     if (list) {
@@ -133,6 +139,15 @@ export const ProjectDetails = () => {
       setProjectID(location.state.projectID);
     }
   }, [location.state]);
+
+  const {
+    data: accountDetails
+  }: { data: any } = useAccountDetail(
+    accountID as string,
+    isAccountDetailsEnable
+  );
+
+  const accountInActive = accountDetails?.data?.accountById?.status === 'inactive';
 
   const { data, isLoading, isError } = useProjectDetail(accountID, projectID);
   // console.log('projectDetails outerr', data);
@@ -186,6 +201,7 @@ export const ProjectDetails = () => {
       case 'projectDetails':
         return (
           <ProjectDetailsData
+            accountInActive={accountInActive}
             projectDetails={projectData}
             isDetailsLoading={isLoading}
             detailsError={isError}
@@ -235,9 +251,10 @@ export const ProjectDetails = () => {
           primaryButton={
             projectEditIsEnable
               ? {
-                  label: 'Edit',
-                  onClick: handleEditAccount,
-                }
+                label: 'Edit',
+                onClick: handleEditAccount,
+                disabled: accountInActive,
+              }
               : undefined
           }
           onActionsClick={handleActionsClick}

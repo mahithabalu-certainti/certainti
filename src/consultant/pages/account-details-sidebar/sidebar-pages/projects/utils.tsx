@@ -35,7 +35,18 @@ export const textOptions: { option: string; value: string }[] = [
   { option: 'Not-Equals', value: 'not_equals' },
   { option: 'Contains', value: 'contains' },
   // { option: 'Not-Contains', value: 'not_contains' },
+  // { option: 'Is-Empty', value: 'is_empty' },
+];
+export const nonMadatoryOptions: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not-Equals', value: 'not_equals' },
+  { option: 'Contains', value: 'contains' },
   { option: 'Is-Empty', value: 'is_empty' },
+];
+export const fiscalOptions: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not-Equals', value: 'not_equals' },
+  { option: 'In', value: 'in' },
 ];
 
 export const enumOptions: { option: string; value: string }[] = [
@@ -69,36 +80,24 @@ export const projectFilterFields = (
     operatorOption: textOptions,
   },
   {
-    name: 'Fiscal Year',
-    value: 'fiscal_year',
-    type: 'enum',
-    options: fiscalYearOption,
-    operatorOption: enumOptions,
-  },
-  {
-    name: 'Customer Group',
-    value: 'project_client_group',
-    type: 'text',
-    operatorOption: textOptions,
-  },
-  {
-    name: 'Project Group',
-    value: 'project_group',
-    type: 'text',
-    operatorOption: textOptions,
-  },
-  {
     name: 'Name',
     value: 'project_name',
     type: 'text',
-    operatorOption: textOptions,
+    operatorOption: nonMadatoryOptions,
   },
   {
     name: 'Project Type',
     value: 'project_type',
     type: 'enum',
     options: projectTypeOption,
-    operatorOption: enumOptions,
+    operatorOption: fiscalOptions,
+  },
+  {
+    name: 'Fiscal Year',
+    value: 'fiscal_year',
+    type: 'enum',
+    options: fiscalYearOption,
+    operatorOption: fiscalOptions,
   },
   {
     name: 'Project Classification',
@@ -109,6 +108,18 @@ export const projectFilterFields = (
       value: item.value,
     })),
     operatorOption: enumOptions,
+  },
+  {
+    name: 'Customer Group',
+    value: 'project_client_group',
+    type: 'text',
+    operatorOption: nonMadatoryOptions,
+  },
+  {
+    name: 'Project Group',
+    value: 'project_group',
+    type: 'text',
+    operatorOption: nonMadatoryOptions,
   },
   {
     name: 'Project Effort (Hours)',
@@ -163,19 +174,19 @@ export const projectFilterFields = (
     name: 'Project Point of Contact',
     value: 'project_point_of_contact',
     type: 'text',
-    operatorOption: textOptions,
+    operatorOption: nonMadatoryOptions,
   },
   {
     name: 'Technical Point of Contact',
     value: 'technical_point_of_contact',
     type: 'text',
-    operatorOption: textOptions,
+    operatorOption: nonMadatoryOptions,
   },
   {
     name: 'Comments',
     value: 'comments',
     type: 'text',
-    operatorOption: textOptions,
+    operatorOption: nonMadatoryOptions,
   },
   {
     name: 'Last Modified',

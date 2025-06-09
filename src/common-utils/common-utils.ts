@@ -17,6 +17,7 @@ import {
 
 import {
   AllowedCountry,
+  enumValue,
   ErrorHandling,
   FieldType,
   InputType,
@@ -293,6 +294,10 @@ export const YES_NO_OPTIONS: SelectOption[] = [
   { label: 'Yes', value: YesNo.Yes },
   { label: 'No', value: YesNo.No },
 ];
+export const PROJECT_YES_NO_OPTIONS: SelectOption[] = [
+  { label: 'Yes', value: enumValue.Yes },
+  { label: 'No', value: enumValue.No },
+];
 
 export interface ActionsDropdownItem {
   label: string;
@@ -318,7 +323,7 @@ export const REGEX_PATTERNS = {
     /^(?=.{6,254}$)[a-zA-Z0-9]+(?:[._+-][a-zA-Z0-9]+)*@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63}$/,
   PHONE: /^([0-9]{10})$/,
   WEBSITE:
-    /^(https?:\/\/|www\.)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(:[0-9]+)?(\/[a-zA-Z0-9\-.:/]*)?$/,
+    /([Hh][Tt][Tt][Pp][Ss]?:\/\/|[Ww][Ww][Ww]\.)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(:[0-9]+)?(\/[a-zA-Z0-9\-.:]*)?/,
   MAX_WEBSITE: /^.{0,255}$/,
   MIN_WEBSITE: /^.{10,}$/,
   DATA_RESIDENCY: /^[A-Za-z0-9\s-]+$/,

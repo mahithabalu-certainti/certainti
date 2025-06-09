@@ -13,8 +13,8 @@ import {
   useFetchState,
   useKeyContactRoles,
 } from '../../services/account';
-import { FieldType, SelectOption } from '../../types';
-import { transformFormData } from './utils';
+import { enumValue, FieldType, SelectOption } from '../../types';
+import { transformFormData, transformKeyContactsFromAPI } from './utils';
 import { NewProjectData } from '../../types/project';
 import {
   useCreateProject,
@@ -28,27 +28,18 @@ import {
 import { STATUS_OPTIONS } from '../../../common-utils';
 import { FormData, newKeyContactFields } from './form-data';
 import { formatDateToYYYYMMDDWithTime } from '../account-details-sidebar/sidebar-pages/resources/utils';
+import SkeletonForm from '../../../components/form-builder/skeleton-form';
 
 const ProjectForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [currentCountry, setCurrentCountry] = useState('');
-  const [primaryKeyContactInfo, setPrimaryKeyContactInfo] = useState({
-    key_contact_name: '',
-    key_contact_role: '',
-    key_contact_email: '',
-  });
+  const [isKeyContactsReady, setIsKeyContactsReady] = useState<boolean>(false);
   const [showOthersField, setShowOthersField] = useState(false);
   const [showClassifyOthersField, setShowClassifyOthersField] = useState(false);
   const [keyContacts, setKeyContacts] = useState<FieldType[]>([]);
-  const [newContactLength, setNewContactLength] = useState<number>(0);
   const { successToast } = useToast();
   const location = useLocation();
   const { accountID, projectID } = location.state || {};
-  const keyContactInfo = [
-    'key_contact_name',
-    'key_contact_role',
-    'key_contact_email',
-  ];
 
   const getProjectData = useProjectDetail(accountID, projectID);
   const account = getProjectData.data?.data?.project;
@@ -65,20 +56,9 @@ const ProjectForm: React.FC = () => {
         project_startdate: account?.project_startdate,
         created_on: formatDateToYYYYMMDDWithTime(account?.created_datetime),
         updated_on: formatDateToYYYYMMDDWithTime(account?.modified_datetime),
-
+        ...transformKeyContactsFromAPI(account?.keyContact || []),
         region: account?.region,
-        key_contact_name: account?.keyContact[0]?.key_contact_name,
-        key_contact_role: account?.keyContact[0]?.key_contact_role,
-        key_contact_email: account?.keyContact[0]?.key_contact_email,
-        key_contact_status: account?.keyContact[0]?.status,
         project_status: account?.project_status.toLowerCase(),
-        is_primary_contact: account?.keyContact[0]?.is_primary_contact
-          ? 'yes'
-          : 'no',
-        include_in_communication: account?.keyContact[0]
-          ?.include_in_communication
-          ? 'yes'
-          : 'no',
       }),
     }),
     [account]
@@ -95,10 +75,6 @@ const ProjectForm: React.FC = () => {
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
 
-  const isValueUpdateInKeyContact = Object.values(primaryKeyContactInfo).some(
-    (val) => val.trim() !== ''
-  );
-
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
   const defaultActiveValue = STATUS_OPTIONS[0].value;
   const commonSuccess = createProject.isSuccess || updateProject.isSuccess;
@@ -106,25 +82,13 @@ const ProjectForm: React.FC = () => {
     if (commonSuccess) {
       successToast(
         isEditView
-          ? 'Project update successfully'
+          ? 'Project updated successfully'
           : 'Project created successfully'
       );
       goBack();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
-
-  useEffect(() => {
-    setPrimaryKeyContactInfo({
-      key_contact_email: account?.key_contact_email || '',
-      key_contact_name: account?.key_contact_name || '',
-      key_contact_role: account?.key_contact_role || '',
-    });
-  }, [
-    account?.key_contact_email,
-    account?.key_contact_name,
-    account?.key_contact_role,
-  ]);
 
   const memoizedContry: SelectOption[] = useMemo(
     () =>
@@ -178,47 +142,46 @@ const ProjectForm: React.FC = () => {
     [keyContactRoles.data?.data.keyContactRoles]
   );
   useEffect(() => {
-    setNewContactLength(
-      newKeyContactFields(memoizedRole, isValueUpdateInKeyContact).length
-    );
-    setKeyContacts(
-      newKeyContactFields(memoizedRole, isValueUpdateInKeyContact) as []
-    );
-  }, [memoizedRole, isValueUpdateInKeyContact]);
+    if (isKeyContactsReady) return; // Do not reinitialize
 
-  const removeKeyContactInfo = (index: number) => {
-    // shallow copy keyContacts array
+    const existingContacts = account?.keyContact || [];
+    const newKeyData = newKeyContactFields(memoizedRole, false);
+
+    let fields: FieldType[] = [];
+
+    if (isEditView && existingContacts.length) {
+      existingContacts.forEach(() => {
+        fields = [...fields, ...newKeyData];
+      });
+    } else {
+      fields = [...newKeyData];
+    }
+
+    setKeyContacts(fields);
+    setTimeout(() => {
+      setIsKeyContactsReady(true);
+    }, 5000);
+  }, [memoizedRole, account?.keyContact, isEditView, isKeyContactsReady]);
+
+  const removeKeyContactInfo = (fieldIndex: number) => {
     const contactsArr = [...keyContacts];
-    //Every time new contact is added it add newKeyContacts length fields
-    // and we need to remove same number of fields from the array for that
-    // we calculated the length
-    const lengthOfKeyContacts = newKeyContactFields(
-      memoizedRole,
-      isValueUpdateInKeyContact
-    ).length;
-    // Finds how many contacts is added like 1, 2, 3 etc
-    const totalContactGrp = Math.floor(
-      keyContacts.length / lengthOfKeyContacts
-    );
-    // Finds which contact is clicked
-    const clickedGroup =
-      totalContactGrp - 1 - Math.floor(index / lengthOfKeyContacts);
-    // Finds the index of the first contact in the clicked contact group
-    const groupStartIndex =
-      keyContacts.length - (clickedGroup + 1) * lengthOfKeyContacts;
+    const groupSize = 8;
+    const groupIndex = Math.floor(fieldIndex / groupSize);
+    const startIndex = groupIndex * groupSize;
+    if (contactsArr.length <= groupSize) {
+      const newEmptyContact = newKeyContactFields(memoizedRole, false);
+      contactsArr.splice(0, groupSize, ...newEmptyContact);
+    } else {
+      contactsArr.splice(startIndex, groupSize);
+    }
 
-    // Remove the clicked contact group from the array with the added newKeyContacts length
-    contactsArr.splice(groupStartIndex, lengthOfKeyContacts);
     setKeyContacts(contactsArr);
   };
-  const addKeyContactInfo = () => {
-    const newKeyData = newKeyContactFields(
-      memoizedRole,
-      isValueUpdateInKeyContact
-    );
-    setKeyContacts([...keyContacts, ...newKeyData]);
-  };
 
+  const addKeyContactInfo = () => {
+    const newKeyData = newKeyContactFields(memoizedRole, false);
+    setKeyContacts((prev) => [...prev, ...newKeyData]);
+  };
   const submitData = (formValues: Partial<NewProjectData>) => {
     const projectData = transformFormData(
       {
@@ -227,8 +190,7 @@ const ProjectForm: React.FC = () => {
         project_id: projectID,
       },
       isEditView,
-      isValueUpdateInKeyContact,
-      account?.keyContact?.[0]?.rid
+      account?.keyContact
     );
 
     if (isEditView) {
@@ -249,12 +211,6 @@ const ProjectForm: React.FC = () => {
   const onChangeField = (data: OnChange) => {
     if (data.fieldName === 'country') {
       setCurrentCountry(data.fieldValue as string);
-    }
-    if (keyContactInfo.includes(data.fieldName)) {
-      setPrimaryKeyContactInfo((prev) => ({
-        ...prev,
-        [data.fieldName]: data.fieldValue,
-      }));
     }
     if (data.fieldName === 'industry_rid') {
       setShowOthersField(data.fieldValue === othersIndustryId);
@@ -279,6 +235,30 @@ const ProjectForm: React.FC = () => {
       setShowClassifyOthersField(true);
     }
   }, [account?.project_classification_rid]);
+
+  const formConfig = FormData(
+    memoizedContry,
+    memoizedCurrency,
+    memoizedState,
+    memoizedIndustry,
+    memoizedClassification,
+    // memoizedRole,
+    keyContacts,
+    addKeyContactInfo,
+    removeKeyContactInfo,
+    isEditView,
+    showOthersField,
+    showClassifyOthersField,
+    states.isLoading
+  );
+
+  const formLoading =
+    allCountries.isLoading ||
+    currency.isLoading ||
+    industry.isLoading ||
+    Classification.isLoading ||
+    keyContactRoles.isLoading ||
+    !isKeyContactsReady;
 
   return (
     <>
@@ -327,43 +307,30 @@ const ProjectForm: React.FC = () => {
         </div>
       </div>
       <div className={`${isEditView ? 'pb-10' : 'pb-4'}`}>
-        <FormBuilder
-          data={FormData(
-            memoizedContry,
-            memoizedCurrency,
-            memoizedState,
-            memoizedIndustry,
-            memoizedClassification,
-            // memoizedRole,
-            isValueUpdateInKeyContact,
-            keyContacts,
-            addKeyContactInfo,
-            removeKeyContactInfo,
-            isEditView,
-            showOthersField,
-            showClassifyOthersField,
-            states.isLoading
-          )}
-          // loading={
-          //   allCountries.isLoading || currency.isLoading || state.isLoading
-          // }
-          loading={false}
-          values={
-            isEditView && projectData
-              ? { ...projectData }
-              : {
-                  project_status: defaultActiveValue,
-                  status: defaultActiveValue,
-                }
-          }
-          outData={submitData}
-          formRef={formRef}
-          onChange={onChangeField}
-          keyStart='project_startdate'
-          keyEnd='project_enddate'
-          layout={Layout.TYPE_1}
-          newContactLength={newContactLength}
-        />
+        {formLoading ? (
+          <SkeletonForm />
+        ) : (
+          <FormBuilder
+            data={formConfig}
+            loading={false}
+            values={
+              isEditView && projectData
+                ? { ...projectData }
+                : {
+                    project_status: defaultActiveValue,
+                    status: defaultActiveValue,
+                    auto_send_ai_interaction: enumValue.Yes,
+                    auto_access_rd: enumValue.Yes,
+                  }
+            }
+            outData={submitData}
+            formRef={formRef}
+            onChange={onChangeField}
+            keyStart='project_startdate'
+            keyEnd='project_enddate'
+            layout={Layout.TYPE_1}
+          />
+        )}
       </div>
     </>
   );
