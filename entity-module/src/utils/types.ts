@@ -170,8 +170,8 @@ export interface ICreateProject {
   project_cc_list?: string | null;
   total_effort?: string | null;
   total_cost?: string | null;
-  total_fte?: number;
-  total_sub_con?: number;
+  total_fte?: number | null;
+  total_sub_con?: number | null;
   total_non_labor_cost?: string | null;
   total_fte_effort?: string | null;
   total_sub_con_effort?: string | null;
@@ -225,8 +225,8 @@ export interface IUpdateProject {
   project_cc_list?: string | null;
   total_effort?: string | null;
   total_cost?: string | null;
-  total_fte?: number;
-  total_sub_con?: number;
+  total_fte?: number | null;
+  total_sub_con?: number | null;
   total_non_labor_cost?: string | null;
   total_fte_effort?: string | null;
   total_sub_con_effort?: string | null;

@@ -29,8 +29,8 @@ export interface ProjectSummaryAttributes {
 
   total_effort?: string | null;
   total_cost?: string | null;
-  total_fte?: number;
-  total_sub_con?: number;
+  total_fte?: number | null;
+  total_sub_con?: number | null;
   total_non_labor_cost?: string | null;
   total_fte_cost?: string | null;
   total_sub_con_cost?: string | null;
@@ -80,8 +80,8 @@ export class ProjectSummary
   public currency?: string | null;
   public total_effort?: string | null;
   public total_cost?: string | null;
-  public total_fte?: number;
-  public total_sub_con?: number;
+  public total_fte?: number | null;
+  public total_sub_con?: number | null;
   public total_non_labor_cost?: string | null;
   public total_fte_cost?: string | null;
   public total_sub_con_cost?: string | null;

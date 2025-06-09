@@ -157,10 +157,18 @@ export class ProjectService {
       if (isRefIdExist) {
         throw new Error("Project code must be unique.");
       }
+      
+      const startDate = projectData?.project_startdate 
+        ? moment.utc(projectData.project_startdate, "YYYY-MM-DD", true).isValid() 
+        ? moment.utc(projectData.project_startdate, "YYYY-MM-DD") 
+        : null
+        : null;
 
-      const startDate = projectData.project_startdate !== null ? moment.utc(projectData.project_startdate, "YYYY-MM-DD") : null;
-      const endDate = projectData.project_enddate !== null ? moment.utc(projectData.project_enddate, "YYYY-MM-DD") : null;
-
+      const endDate = projectData?.project_enddate 
+        ? moment.utc(projectData.project_enddate, "YYYY-MM-DD", true).isValid() 
+        ? moment.utc(projectData.project_enddate, "YYYY-MM-DD") 
+        : null
+        : null;
       const projectCreationData = {
         project_code: projectData.project_code,
         industry_rid: projectData.industry_rid,
@@ -186,8 +194,8 @@ export class ProjectService {
         
         total_cost: projectData.total_cost || null,
 
-        total_fte: projectData.total_fte || 0,
-        total_sub_con: projectData.total_sub_con || 0,
+        total_fte: projectData.total_fte || null,
+        total_sub_con: projectData.total_sub_con || null,
         total_non_labor_cost: projectData.total_non_labor_cost || null,
         total_fte_effort: projectData.total_fte_effort && parseInt(projectData.total_fte_effort) || null,
         total_sub_con_effort: projectData.total_sub_con_effort && parseInt(projectData.total_sub_con_effort) || null,
@@ -347,8 +355,8 @@ export class ProjectService {
         fiscal_year: projectData.fiscal_year,
         total_effort: projectData.total_effort && parseInt(projectData.total_effort) || null,
         total_cost: projectData.total_cost || null,
-        total_fte: projectData.total_fte || 0,
-        total_sub_con: projectData.total_sub_con || 0,
+        total_fte: projectData.total_fte || null,
+        total_sub_con: projectData.total_sub_con || null,
 
         country: projectData.country || null,
         currency: projectData.currency || null,
@@ -1152,8 +1160,8 @@ export class ProjectService {
         project_startdate: projectData.project_startdate || null,
         project_enddate: projectData.project_enddate || null,
 
-        total_fte_prj: projectData.total_fte || 0,
-        total_subcon_prj: projectData.total_sub_con || 0,
+        total_fte_prj: projectData.total_fte || null,
+        total_subcon_prj: projectData.total_sub_con || null,
 
         blended_rate_fte: projectData.blended_rate_fte || null,
         blended_rate_subcon: projectData.blended_rate_sub_con || null,
@@ -1202,10 +1210,10 @@ export class ProjectService {
         project_startdate: projectData.project_startdate || null,
         project_enddate: projectData.project_enddate || null,
 
-        total_fte: projectData.total_fte || 0,
-        total_sub_con: projectData.total_sub_con || 0,
+        total_fte: projectData.total_fte || null,
+        total_sub_con: projectData.total_sub_con || null,
 
-        total_cost: projectData.total_cost || 0,
+        total_cost: projectData.total_cost || null,
         blended_rate_fte: projectData.blended_rate_fte || null,
         blended_rate_sub_con: projectData.blended_rate_sub_con || null,
         interaction_cc_list: projectData.project_cc_list || null,
@@ -1213,11 +1221,11 @@ export class ProjectService {
         modified_datetime: new Date(),
         project_status: projectData.project_status as "Active" | "Inactive",
 
-        total_fte_prj: projectData.total_fte || 0,
-        total_subcon_prj: projectData.total_sub_con || 0,
+        total_fte_prj: projectData.total_fte || null,
+        total_subcon_prj: projectData.total_sub_con || null,
 
-        total_cost_prj: projectData.total_cost || 0,
-        total_cost_fte_prj: projectData.total_fte_cost || 0,
+        total_cost_prj: projectData.total_cost || null,
+        total_cost_fte_prj: projectData.total_fte_cost || null,
         total_cost_subcon_prj: projectData.total_sub_con_cost,
         total_cost_nonlabor_prj: projectData.total_non_labor_cost,
 
@@ -1349,8 +1357,8 @@ export class ProjectService {
         currency: projectData.currency || null,
         total_effort: projectData.total_effort || null,
         total_cost: projectData.total_cost || null,
-        total_fte: projectData.total_fte || 0,
-        total_sub_con: projectData.total_sub_con || 0,
+        total_fte: projectData.total_fte || null,
+        total_sub_con: projectData.total_sub_con || null,
         total_non_labor_cost: projectData.total_non_labor_cost || null,
         total_fte_cost: projectData.total_fte_cost || null,
         total_sub_con_cost: projectData.total_sub_con_cost || null,
@@ -1411,8 +1419,8 @@ export class ProjectService {
         total_effort: projectData.total_effort || null,
         total_cost: projectData.total_cost || null,
 
-        total_fte: projectData.total_fte || 0,
-        total_sub_con: projectData.total_sub_con || 0,
+        total_fte: projectData.total_fte || null,
+        total_sub_con: projectData.total_sub_con || null,
 
         total_fte_cost: projectData.total_fte_cost || null,
         total_sub_con_cost: projectData.total_sub_con_cost || null,

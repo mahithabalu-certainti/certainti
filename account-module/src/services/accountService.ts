@@ -662,9 +662,7 @@ async accountList(
         account_name,
         comments: comments || "",
         // r_number: "fnfdfn",
-        region: parent_account
-          ? parent_account.region
-          : account_country_region_rid,
+        region: account_country_region_rid,
         is_parent: parent_account_rid ? false : true,
         parent_account_rid: parent_account_rid || null,
         storage_type: data_storage,
