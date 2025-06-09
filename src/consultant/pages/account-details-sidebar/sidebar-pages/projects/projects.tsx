@@ -61,6 +61,8 @@ const Projects: React.FC<ProjectsProps> = ({
   );
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
+  const accountInActive = accountDetails?.data?.accountById?.status === 'inactive';
+
   // Permission Mangement
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
@@ -151,11 +153,13 @@ const Projects: React.FC<ProjectsProps> = ({
   const actionMenuItems = [
     {
       label: 'Edit',
+      disabled: accountInActive,
       onClick: (row: any) => handleEdit(row),
       hide: !projectEditIsEnable,
     },
     {
       label: 'Delete',
+      disabled: accountInActive,
       onClick: (row: any) => console.log('Delete', row),
       hide: !projectDeleteIsEnable,
     },
@@ -177,6 +181,7 @@ const Projects: React.FC<ProjectsProps> = ({
     {
       label: 'New',
       variant: 'outlined' as const,
+      disabled: accountInActive,
       onClick: () => handleCreateProject(),
       sx: { ...BUTTON_STYLES, width: '61px', minWidth: '61px' },
       hide: !projectCreateIsEnable,
