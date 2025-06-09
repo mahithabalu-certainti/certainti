@@ -1563,7 +1563,7 @@ class SchemaService {
       key_contacts: keyContacts,
       primary_contact_role: roleKey || "",
       primary_contact_name: name || "",    // technical_consultant: getPrimaryContactName("Technical Consultant") || "-",
-      professional_services_consultant: getPrimaryContactName("Financial Consultant") || "-",
+      professional_services_consultant: getPrimaryContactName("Professional Services Consultant") || "-",
       // delivery_head: getPrimaryContactName("Client Project Delivery Head") || "-",
       finance_executive: getPrimaryContactName("Client Finance Executive") || "-",
       finance_lead: getPrimaryContactName("Client Finance Lead") || "-",
@@ -1609,7 +1609,6 @@ class SchemaService {
           });
         }
     }
-    // Handle object filters (like {equals: "fjhffh"}, {not_equals: "Mani"})
     else if (typeof filterValue === 'object' && filterValue !== null) {
       const filterType = Object.keys(filterValue)[0];
       const filterVal = filterValue[filterType];
@@ -1618,14 +1617,30 @@ class SchemaService {
         
         switch (filterType) {
           case 'equals':
-            return contactName === filterVal;
+            return contactName.toLowerCase() === String(filterVal).toLowerCase();
             
-          case 'not_equals':
-            if (filterVal === '') {
-              return contactName !== '';
-            }
-            return contactName !== filterVal;
-            
+         case 'not_equals':
+          const roleName = ROLE_KEY_MAP[filterKey];
+          if (!roleName) {
+              // Role mapping not found → exclude the account (filter key is invalid for this account)
+          return false;
+          }
+          // Step 2: Find the primary contact for this specific role
+          const primaryContact = (account.key_contacts || []).find(
+            (kc: any) => 
+              kc.is_primary_contact && 
+              kc.role_name === roleName
+          );
+
+          // Step 3: If no primary contact exists for this role, exclude the account
+          if (!primaryContact) {
+            return false;
+          }
+
+          // Step 4: Check if the primary contact's name does NOT match the filter value
+          const contactNamenot = primaryContact.key_contact_name?.toLowerCase() || '';
+          const filterValueNormalized = String(filterVal).toLowerCase();
+          return contactNamenot !== filterValueNormalized;   
           case 'contains':
             return contactName.toLowerCase().includes(String(filterVal).toLowerCase());
             
@@ -1644,6 +1659,7 @@ class SchemaService {
     // 5. Apply sorting if needed
     const SORTABLE_FIELDS = new Set([
       "technical_consultant",
+      "professional_services_consultant",
       "financial_consultant",
       "delivery_head",
       "finance_executive",
