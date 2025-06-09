@@ -1710,7 +1710,6 @@ class SchemaService {
   }
   catch(err)
   {
-    console.log(err)
       throw new Error("Error updating key contacts.");
   }
 }
