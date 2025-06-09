@@ -151,7 +151,11 @@ const KeyContactSection: React.FC<{ title: string; data: KeyContact[] }> = ({
                     maxWidth: '200px',
                   }}
                 >
-                  {field.includeInCommnunications ? 'Yes' : 'No'}
+                  {field.includeInCommnunications === true
+                    ? 'Yes'
+                    : field.includeInCommnunications === false
+                      ? 'No'
+                      : '-'}
                 </TableCell>
                 <TableCell
                   sx={{

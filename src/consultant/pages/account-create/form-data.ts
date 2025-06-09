@@ -89,7 +89,7 @@ export const newKeyContactFields = (
     radioOptions: YES_NO_OPTIONS,
     width: '160px',
     required: false,
-    defaultValue: YesNo.No,
+    // defaultValue: YesNo.No,
   }),
   createSelectField('key_contact_status', 'Status', {
     required: false,

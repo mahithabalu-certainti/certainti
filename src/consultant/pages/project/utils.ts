@@ -50,10 +50,7 @@ export const transformProjectData = (data: any): DisplayColumn[] => {
       items: [
         {
           label: 'Country / Currency',
-          value:
-            project?.country_code && project?.currency_name
-              ? `${project.country_code} / ${project.currency_name}`
-              : '-',
+          value: `${project?.country_code || '-'} / ${project?.currency_name || '-'}`,
         },
       ],
     },

@@ -1,8 +1,6 @@
-import {
-  costDisplay,
-  formatDateToYYYYMMDDWithTime,
-} from '../../../../../common-utils';
+import { costDisplay } from '../../../../../common-utils';
 import { ProjectTableColumn, ProjectList } from '../../../../types/project';
+import { formatDateToYYYYMMDD } from '../../../account-details-sidebar/sidebar-pages/resources/utils';
 
 export const getAllProjectListColumns = (
   onClick: (row: ProjectList) => void
@@ -211,9 +209,7 @@ export const getAllProjectListColumns = (
     sortId: 'modified_datetime',
     width: 190,
     render: (row: ProjectList) =>
-      row.modified_datetime
-        ? formatDateToYYYYMMDDWithTime(row.modified_datetime)
-        : '-',
+      row.modified_datetime ? formatDateToYYYYMMDD(row.modified_datetime) : '-',
   },
   {
     id: 'r_number',
