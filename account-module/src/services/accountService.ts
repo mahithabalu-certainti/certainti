@@ -82,10 +82,9 @@ async accountList(
         'country',
         'currency',
         'industry',
-        'technical_consultant',
-        'delivery_head',
+        'professional_services_consultant',
         'finance_executive',
-        'financial_consultant'
+        'finance_lead'
       ];
       const numericFields = [
         "total_projects",
@@ -144,7 +143,7 @@ async accountList(
 
       // Check if filters contain key_contact filter
       const hasKeyContactFilter = !!(parsedFilters?.finance_executive || parsedFilters?.professional_services_consultant || parsedFilters?.finance_lead)  ||
-           ['technical_consultant', 'financial_consultant', 'delivery_head', 'finance_executive'].includes(finalSortBy || '');
+           ['professional_services_consultant', 'financial_lead', 'finance_executive'].includes(finalSortBy || '');
       // Build the query options dynamically
       const queryOptions: any = {
         where: baseWhereClause,
@@ -332,10 +331,9 @@ async accountList(
         'country',
         'currency',
         'industry',
-        'technical_consultant',
-        'delivery_head',
+        'finance_lead',
         'finance_executive',
-        'financial_consultant'
+        'professional_services_consultant'
       ];
       const numericFields = [
         "total_projects",
@@ -533,7 +531,7 @@ async accountList(
             "Actual R&D Credits": formatNumberForExport(account?.total_projects_rd_credits, currency_symbol) || "-",
             "Finance Executive":account?.finance_executive || '-',
             "Finance Lead":account?.finance_lead || '-',
-            "Professional Services Consultant":account?.delivery_head || '-',
+            "Professional Services Consultant":account?.professional_services_consultant || '-',
             "Account ID": account?.r_number || "-"
           };
           exportDetails.push(baseRow);
@@ -554,7 +552,7 @@ async accountList(
                 "Actual R&D Credits": formatNumberForExport(child?.total_projects_rd_credits, child_currency_symbol) || "-",
                 "Finance Executive":child?.finance_executive || '-',
                 "Finance Lead":child?.finance_lead || '-',
-                "Professional Services Consultant":child?.delivery_head || '-',
+                "Professional Services Consultant":child?.professional_services_consultant || '-',
                 "Account ID": child?.r_number || "-"
               });
                 if(child?.projects_by_fiscal_year.length >0)
@@ -573,7 +571,7 @@ async accountList(
                       "Actual R&D Credits": formatNumberForExport(fiscalData?.total_projects_rd_credits, child_currency_symbol) || "-",
                       "Finance Executive":child?.finance_executive || '-',
                       "Finance Lead":child?.finance_lead || '-',
-                      "Professional Services Consultant":child?.delivery_head || '-',
+                      "Professional Services Consultant":child?.professional_services_consultant || '-',
                       "Account ID": child?.r_number || "-"        
                      });  
                   });
@@ -1537,9 +1535,8 @@ async insertClientTemplateDetails(
       "country",
       "currency",
       "annual_revenue",
-      "technical_consultant",
-      "financial_consultant",
-      "delivery_head",
+      "professional_services_consultant",
+      "finance_lead",
       "finance_executive",
       "total_projects",
       "total_project_cost",
