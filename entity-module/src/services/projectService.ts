@@ -304,10 +304,17 @@ export class ProjectService {
       const orgDbSequlize = await initOrgSequelize();
       const schemaName = `platform_v2_${accountNumber}`;
       const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
+      const startDate = projectData?.project_startdate 
+        ? moment.utc(projectData.project_startdate, "YYYY-MM-DD", true).isValid() 
+        ? moment.utc(projectData.project_startdate, "YYYY-MM-DD") 
+        : null
+        : null;
 
-      const startDate = projectData.project_startdate !== null ? moment.utc(projectData.project_startdate, "YYYY-MM-DD") : null;
-      const endDate = projectData.project_enddate !== null ? moment.utc(projectData.project_enddate, "YYYY-MM-DD") : null;
-
+      const endDate = projectData?.project_enddate 
+        ? moment.utc(projectData.project_enddate, "YYYY-MM-DD", true).isValid() 
+        ? moment.utc(projectData.project_enddate, "YYYY-MM-DD") 
+        : null
+        : null;
       const existingData = await ProjectModel.findOne({
         where: {
           rid: projectData.project_id,
@@ -1207,8 +1214,8 @@ export class ProjectService {
         fiscal_year: projectData.fiscal_year,
         max_ai_interaction: projectData.max_ai_interaction || 0,
         auto_send_ai_interaction: projectData.auto_send_ai_interaction ?? false,
-        project_startdate: projectData.project_startdate || null,
-        project_enddate: projectData.project_enddate || null,
+        project_startdate: projectData?.project_startdate || null,
+        project_enddate: projectData?.project_enddate || null,
 
         total_fte: projectData.total_fte || null,
         total_sub_con: projectData.total_sub_con || null,

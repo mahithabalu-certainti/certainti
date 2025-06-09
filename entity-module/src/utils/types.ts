@@ -104,7 +104,7 @@ export interface IResourceSkill {
    resource_type: string;
    resource_rid: string;
    resource_code: string,
-   start_date?: string | null;
+   effective_from?: string | null;
    skill_description?: string;
    skill_level?: string;
    skill_type_rid: string;
@@ -123,7 +123,7 @@ export interface IResourceSkill {
 export interface IUpdateResourceSkill {
   rid: string;
   eid?: string;
-  start_date?: string | null;
+  effective_from?: string | null;
   skill_description?: string;
   skill_level?: string;
   status?: string;

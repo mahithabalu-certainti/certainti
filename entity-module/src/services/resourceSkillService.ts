@@ -58,7 +58,7 @@ class ResourceSkillService {
         resource_type,
         resource_rid,
         resource_code,
-        start_date,
+        effective_from,
         skill_description,
         skill_level,
         created_by,
@@ -191,7 +191,7 @@ class ResourceSkillService {
         const sequelizeInstance = await this.getOrgSequelize();
         ResourceSkill.initialize(sequelizeInstance, schemaName);
 
-        const startDate = this.formatDateForDb(start_date as string);
+        const startDate = this.formatDateForDb(effective_from as string);
 
         // Use the model's create method to leverage default values
         createdResourceSkill = await ResourceSkill.create({
@@ -329,7 +329,7 @@ class ResourceSkillService {
       const {
         rid,
         eid,
-        start_date,
+        effective_from,
         skill_description,
         skill_level,
         skill_type_rid,
@@ -427,7 +427,7 @@ class ResourceSkillService {
 
       try {
 
-        const startDate = this.formatDateForDb(start_date as string);
+        const startDate = this.formatDateForDb(effective_from as string);
         const [affectedCounts, affectedRows] = await ResourceSkill.update(
           {
             rid,
