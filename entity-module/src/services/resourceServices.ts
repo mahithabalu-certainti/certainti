@@ -64,8 +64,8 @@ export class ResourceService {
       await this.schemaService.createResourceTable(accountNumber);
 
       // Parse dates and set to UTC midnight to avoid timezone issues
-      const startDate = moment.utc(resourceData.effective_from_date, "MM/DD/YYYY").startOf('day');
-      const endDate = moment.utc(resourceData.effective_end_date, "MM/DD/YYYY").startOf('day');
+      const startDate = moment.utc(resourceData.effective_from_date, "YYYY-MM-DD").startOf('day');
+      const endDate = moment.utc(resourceData.effective_end_date, "YYYY-MM-DD").startOf('day');
 
       resourceData.created_by = userId;
       resourceData.modified_by = userId;
@@ -117,7 +117,7 @@ export class ResourceService {
     data?: { resources: any; count: number };
   }> {
     try {
-      const { accountNumber: accountRNumber } =
+      const { accountNumber: accountRNumber, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
 
       const isExists = await this.schemaService.checkIfSchemaExists(
@@ -137,7 +137,7 @@ export class ResourceService {
         sortOrder
       );
 
-      const { whereClause } = this.buildWhereClause(filters, search);
+      const { whereClause, havingClause } = this.buildWhereClause(filters, search);
       const { geoDataSort } = this.processGeoDataSort(
         sortBy,
         sortOrder
@@ -149,7 +149,9 @@ export class ResourceService {
         limit,
         [[finalSortBy, finalSortOrder]],
         whereClause,
-        geoDataSort
+        havingClause,
+        geoDataSort,
+        accountId
       );
 
       return {
@@ -190,7 +192,7 @@ export class ResourceService {
     data?: { resources: any };
   }> {
     try {
-      const { accountNumber: accountRNumber } =
+      const { accountNumber: accountRNumber, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
 
       const isExists = await this.schemaService.checkIfSchemaExists(
@@ -208,7 +210,7 @@ export class ResourceService {
         sortOrder
       );
 
-      const { whereClause } = this.buildWhereClause(filters, search);
+      const { whereClause, havingClause } = this.buildWhereClause(filters, search);
       const { geoDataSort } = this.processGeoDataSort(
         sortBy,
         sortOrder
@@ -218,19 +220,28 @@ export class ResourceService {
         accountRNumber,
         [[finalSortBy, finalSortOrder]],
         whereClause,
-        geoDataSort
+        havingClause,
+        geoDataSort,
+        accountId,
       );
 
       const rawResult = resources.resources || [];
-      let exportData = rawResult.map((resource: any) => {        
+      let exportData = rawResult.map((resource: any) => {   
         return {
-          "Resource Code":resource.resource_code || "NA",
-          "Name":resource.resource_name || "NA",
-          "Resource Type": resource?.resource_type || "NA",
-          "Designation": resource.resource_designation || "NA",
-          "Country": resource.country_name || "NA",
-          "Region": resource.region_name || "NA",
+          "Account Name": resource.account_name || "-",
+          "Resource Code":resource.resource_code || "-",
+          "Name":resource.resource_name || "-",
+          "Resource Type": resource?.resource_type || "-",
+          "Org Name": resource.resource_orgname || "-",
+          "Designation": resource.resource_designation || "-",
+          "Role": resource.resource_role || "-",
+          "Region": resource.region_name || "-",
+          "Country": resource.country_name || "-",
+          "Total Project Hours": resource.total_project_hours || "-",
+          "Estimated R&D Hours": resource.estimated_rd_hours || "-",
           "Status": resource.resource_status.toLowerCase() === "active" ? "Active" : "In-Active",
+          "Comments": resource.comments || "-",
+          "Resource ID": resource.r_number || "-"
         };
       });
       return {
@@ -408,12 +419,17 @@ export class ResourceService {
       "resource_type",
       "resource_status",
       "resource_role",
-      "resource_mobile",
-      "resource_email",
+      // "resource_mobile",
+      // "resource_email",
       "resource_designation",
       "resource_total_experience",
       "resource_country",
       "resource_region",
+      "account_name",
+      "total_project_hours",
+      "comments",
+      "resource_orgname",
+      "estimated_rd_hours",
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -436,16 +452,20 @@ export class ResourceService {
     search: string
   ): {
     whereClause: Record<string, any>;
+    havingClause: Record<string, any>;
   } {
     let whereClause: Record<string, any> = {};
+    let havingClause: Record<string, any> = {};
 
     if (search) {
       whereClause = this.buildSearchCondition(search, whereClause);
     }
 
-    whereClause = this.applyFilters(filters, whereClause);
+    const result = this.applyFilters(filters, whereClause, havingClause);
+    whereClause = result.whereClause;
+    havingClause = result.havingClause;
 
-    return { whereClause };
+    return { whereClause, havingClause };
   }
 
   /**
@@ -482,30 +502,34 @@ export class ResourceService {
 
   private applyFilters(
     filters: Record<string, any>,
-    whereClause: Record<string, any>
-  ): Record<string, any> {
-    const castToTextFields = ["resource_type", "resource_name", "resource_designation", "r_number", "resource_code","resource_status"];
+    whereClause: Record<string, any>,
+    havingClause: Record<string, any>
+  ): { whereClause: Record<string, any>; havingClause: Record<string, any> } {
+    const castToTextFields = ["resource_type", "resource_name", "resource_designation", "r_number", "resource_code","resource_status","resource_orgname","resource_role","comments"];
     const uuidFields = ["resource_country","resource_region"];
 
     const filterFields = [
-      { clientField: "resource_code", dbField: "resource_code" },
-      { clientField: "r_number", dbField: "r_number" },
-      { clientField: "resource_name", dbField: "resource_name" },
-      { clientField: "resource_type", dbField: "resource_type" },
-      { clientField: "resource_status", dbField: "resource_status" },
-      { clientField: "resource_designation", dbField: "resource_designation" },
-      { clientField: "resource_country", dbField: "resource_country" },
-      { clientField: "resource_region", dbField: "resource_region" },
+      { clientField: "resource_code", dbField: "Resources.resource_code" },
+      { clientField: "r_number", dbField: "Resources.r_number" },
+      { clientField: "resource_name", dbField: "Resources.resource_name" },
+      { clientField: "resource_type", dbField: "Resources.resource_type" },
+      { clientField: "resource_status", dbField: "Resources.resource_status" },
+      { clientField: "resource_designation", dbField: "Resources.resource_designation" },
+      { clientField: "resource_country", dbField: "Resources.resource_country" },
+      { clientField: "resource_region", dbField: "Resources.resource_region" },
+      { clientField: "resource_role", dbField: "Resources.resource_role" },
+      { clientField: "resource_orgname", dbField: "Resources.resource_orgname" },
+      { clientField: "comments", dbField: "Resources.comments" },
     ];
 
     filterFields.forEach(({ clientField, dbField }) => {
       if (filters[clientField]) {
         const fieldFilter = filters[clientField];
-
-        if (uuidFields.includes(dbField)) {
-          whereClause[dbField] = this.getUuidFieldFilter(fieldFilter, dbField);
+        const fieldName = dbField.split('.')[1];
+        if (uuidFields.includes(fieldName)) {
+          whereClause[clientField] = this.getUuidFieldFilter(fieldFilter, dbField);
         }
-        else if (castToTextFields.includes(dbField)) {
+        else if (castToTextFields.includes(fieldName)) {
           whereClause[dbField] = Sequelize.where(
             Sequelize.cast(Sequelize.col(dbField), "TEXT"),
             this.getFieldFilter(fieldFilter, dbField)
@@ -517,7 +541,64 @@ export class ResourceService {
       }
     });
 
-    return whereClause;
+    if (filters.account_name) {
+      whereClause['$AccountDetails.account_name$'] = this.getFieldFilter(filters.account_name, 'account_name');
+    }
+
+   if (filters.total_project_hours || filters.estimated_rd_hours) {
+    const totalProjectHoursExpr = Sequelize.literal(`
+      "ResourceFiscal"."total_effort_for_year_project"
+    `);
+    const estimatedRdHoursExpr = Sequelize.literal(`
+      "ResourceFiscal"."estimated_rd_hours"
+    `);
+
+    if (filters.total_project_hours) {
+      const filter = filters.total_project_hours;
+      if (filter.equals !== undefined) {
+        havingClause = Sequelize.where(totalProjectHoursExpr, { [Op.eq]: filter.equals });
+      } else if (filter.not_equals !== undefined) {
+        havingClause = Sequelize.where(totalProjectHoursExpr, { 
+          [Op.or]: [
+            { [Op.ne]: filter.not_equals },
+            { [Op.is]: null },
+          ]
+        });
+      } else if (filter.greater_than !== undefined) {
+        havingClause = Sequelize.where(totalProjectHoursExpr, { [Op.gt]: filter.greater_than });
+      } else if (filter.less_than !== undefined) {
+        havingClause = Sequelize.where(totalProjectHoursExpr, { [Op.lt]: filter.less_than });
+      } else if (filter.between && Array.isArray(filter.between) && filter.between.length === 2) {
+        havingClause = Sequelize.where(totalProjectHoursExpr, { [Op.between]: filter.between });
+      } else if (filter.is_empty === true) {
+        havingClause = Sequelize.where(totalProjectHoursExpr, { [Op.is]: null });
+      }
+    }
+
+    if (filters.estimated_rd_hours) {
+      const filter = filters.estimated_rd_hours;
+      if (filter.equals !== undefined) {
+        havingClause = Sequelize.where(estimatedRdHoursExpr, { [Op.eq]: filter.equals });
+      } else if (filter.not_equals !== undefined) {
+        havingClause = Sequelize.where(estimatedRdHoursExpr, { 
+          [Op.or]: [
+            { [Op.ne]: filter.not_equals },
+            { [Op.is]: null },
+          ]
+        });
+      } else if (filter.greater_than !== undefined) {
+        havingClause = Sequelize.where(estimatedRdHoursExpr, { [Op.gt]: filter.greater_than });
+      } else if (filter.less_than !== undefined) {
+        havingClause = Sequelize.where(estimatedRdHoursExpr, { [Op.lt]: filter.less_than });
+      } else if (filter.between && Array.isArray(filter.between) && filter.between.length === 2) {
+        havingClause = Sequelize.where(estimatedRdHoursExpr, { [Op.between]: filter.between });
+      } else if (filter.is_empty === true) {
+        havingClause = Sequelize.where(estimatedRdHoursExpr, { [Op.is]: null });
+      }
+    }
+  }
+
+    return { whereClause, havingClause };
   }
 
   private getUuidFieldFilter(fieldFilter: any, dbField: string): any {
@@ -525,7 +606,12 @@ export class ResourceService {
       return fieldFilter.equals;
     }
     if (fieldFilter.not_equals) {
-      return { [Op.ne]: fieldFilter.not_equals };
+      return { 
+        [Op.or]: [
+          { [Op.ne]: fieldFilter.not_equals },
+          { [Op.is]: null },
+        ]
+      };
     }
     if (fieldFilter.is_empty === true) {
       return { [Op.is]: null };
@@ -555,14 +641,22 @@ export class ResourceService {
       return { [Op.iLike]: fieldFilter.equals };
     }
     if (fieldFilter.not_equals) {
-      return { [Op.notILike]: fieldFilter.not_equals };
+      return { 
+        [Op.or]: [
+          { [Op.notILike]: fieldFilter.not_equals },
+          { [Op.is]: null },
+        ]
+      };   
     }
-
     if (fieldFilter.contains) {
-      return { [Op.iLike]: `%${fieldFilter.contains}%` };
+      // Handle all special characters by escaping them for SQL LIKE pattern
+      const escapedValue = fieldFilter.contains.replace(/[-[\]{}()*+?.,\\^$|#\s_%]/g, '\\$&');
+      return { [Op.iLike]: `%${escapedValue}%` };
     }
     if (fieldFilter.not_contains) {
-      return { [Op.notILike]: `%${fieldFilter.not_contains}%` };
+      // Handle all special characters by escaping them for SQL LIKE pattern
+      const escapedValue = fieldFilter.not_contains.replace(/[-[\]{}()*+?.,\\^$|#\s_%]/g, '\\$&');
+      return { [Op.notILike]: `%${escapedValue}%` };
     }
 
     if (fieldFilter.is_empty === true) {

@@ -19,6 +19,7 @@ export interface ProjectSummaryAttributes {
   fiscal_year: number;
   project_type: "Fixed" | "Time & Material";
   project_classification_rid?: string | null;
+  project_classification_other?: string | null;
   project_client_group?: string | null;
   project_group?: string | null;
 
@@ -41,7 +42,8 @@ export interface ProjectSummaryAttributes {
 
   project_point_of_contact?: string | null;
   financial_consultant?: string | null;
-  technical_consultant?: string | null;
+  technical_point_of_contact?: string | null;
+  assessment_status?: string | null;
 
   created_datetime?: Date;
   modified_datetime?: Date;
@@ -92,9 +94,11 @@ export class ProjectSummary
   public is_rd_qualified?: boolean | null;
   public qre?: number | null;
   public project_point_of_contact?: string | null;
-  public technical_consultant?: string | null;
+  public technical_point_of_contact?: string | null;
   public financial_consultant?: string | null;
   public project_number!: string;
+  public assessment_status?: string | null;
+  public project_classification_other?: string | null;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
     ProjectSummary.init(
@@ -153,8 +157,8 @@ export class ProjectSummary
           type: DataTypes.UUID,
           allowNull: true,
         },
-        project_client_group: DataTypes.STRING(200),
-        project_group: DataTypes.STRING(150),
+        project_client_group: DataTypes.STRING(255),
+        project_group: DataTypes.STRING(255),
         fiscal_year: {
           type: DataTypes.INTEGER,
           allowNull: false,
@@ -194,7 +198,7 @@ export class ProjectSummary
           type: DataTypes.STRING(100),
           allowNull: true,
         },
-        technical_consultant: {
+        technical_point_of_contact: {
           type: DataTypes.STRING(100),
           allowNull: true,
         },
@@ -221,6 +225,14 @@ export class ProjectSummary
         },
         comments: {
           type: DataTypes.STRING(2000),
+          allowNull: true,
+        },
+        assessment_status: {
+          type: DataTypes.STRING(100),
+          allowNull: true,
+        },
+        project_classification_other: {
+          type: DataTypes.STRING(300),
           allowNull: true,
         },
       },

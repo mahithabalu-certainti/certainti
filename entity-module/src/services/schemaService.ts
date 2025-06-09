@@ -9,17 +9,39 @@ import {
 } from "../utils/types";
 
 import { DataTypes, Op, Sequelize } from "sequelize";
-import { ResourceFiscal,setupResourceFiscalSeq } from "../models/resourceFiscal";
+import {
+  ResourceFiscal,
+  setupResourceFiscalSeq,
+} from "../models/resourceFiscal";
 import { initMainDbSequelize } from "../config/mainDataSource";
-import { ResourcesHistory, setupResourceHistorySeq } from "../models/resourceHistory";
-import { ResourcesTimeline, setupResourceTimelineSeq } from "../models/resourceTimeline";
+import {
+  ResourcesHistory,
+  setupResourceHistorySeq,
+} from "../models/resourceHistory";
+import {
+  ResourcesTimeline,
+  setupResourceTimelineSeq,
+} from "../models/resourceTimeline";
 import { ResourceCost, setupResourceCostSeq } from "../models/resourceCost";
-import { ResourceCostTimeline, setupResourceCostTimelineSeq} from "../models/resourceCostTimeline";
-import { ResourceCostHistory, setupResourceCostHistorySeq } from "../models/resourceCostHistory";
+import {
+  ResourceCostTimeline,
+  setupResourceCostTimelineSeq,
+} from "../models/resourceCostTimeline";
+import {
+  ResourceCostHistory,
+  setupResourceCostHistorySeq,
+} from "../models/resourceCostHistory";
 import { ResourceSkill, setupResourceSkillSeq } from "../models/resourceSkill";
-import { ResourceSkillTimeline, setupResourceSkillTimelineSeq } from "../models/resourceSkillTimeline";
-import { ResourceSkillHistory, setupResourceSkillHistorySeq } from "../models/resourceSkillHistory";
+import {
+  ResourceSkillTimeline,
+  setupResourceSkillTimelineSeq,
+} from "../models/resourceSkillTimeline";
+import {
+  ResourceSkillHistory,
+  setupResourceSkillHistorySeq,
+} from "../models/resourceSkillHistory";
 import { KeyContact } from "../models/keyContactDetails";
+import AccountDetails from "../models/accountDetails";
 
 // import { Skill } from "../models/skill";
 class SchemaService {
@@ -132,7 +154,7 @@ class SchemaService {
       const ResourceSkillHistoryModel = await ResourceSkillHistory.initialize(
         sequelize,
         schemaName
-      )
+      );
 
       await Resource.sync({ force: false });
       await ResourcesHistoryModel.sync({ force: false });
@@ -176,7 +198,9 @@ class SchemaService {
     limit: number,
     order: any[],
     whereClause: Record<string, string> = {},
-    geoDataSort: string[][]
+    havingClause: Record<string, string> = {},
+    geoDataSort: string[][],
+    accountId: string
   ) {
     try {
       const schemaName = `platform_v2_${accountNumber}`;
@@ -191,6 +215,11 @@ class SchemaService {
       let queryOrder = order;
       const isResourceTypeSort =
         order?.length && order[0][0] === "resource_type";
+      const isAccountNameSort = order?.length && order[0][0] === "account_name";
+      const isTotalProjectHoursSort =
+        order?.length && order[0][0] === "total_project_hours";
+      const isEstimatedRDSort =
+        order?.length && order[0][0] === "estimated_rd_hours";
 
       if (isResourceTypeSort) {
         const direction =
@@ -198,7 +227,7 @@ class SchemaService {
         queryOrder = [
           [
             Sequelize.literal(`
-            CASE resource_type
+            CASE "Resources".resource_type
               WHEN 'Full-Time' THEN 1
               WHEN 'Non-Labor' THEN 2 
               WHEN 'Sub Con' THEN 3
@@ -208,13 +237,72 @@ class SchemaService {
             direction,
           ],
         ];
+      } else if (isAccountNameSort) {
+        const direction =
+          order[0][1]?.toUpperCase() === "DESC" ? "DESC" : "ASC";
+        queryOrder = [
+          [Sequelize.col("AccountDetails.account_name"), direction],
+        ];
+      } else if (isTotalProjectHoursSort) {
+        const direction =
+          order[0][1]?.toUpperCase() === "DESC" ? "DESC" : "ASC";
+        queryOrder = [[Sequelize.literal("total_project_hours"), direction]];
+      } else if (isEstimatedRDSort) {
+        const direction =
+          order[0][1]?.toUpperCase() === "DESC" ? "DESC" : "ASC";
+        queryOrder = [[Sequelize.literal("estimated_rd_hours"), direction]];
       }
+
+      const AccountDetailsModel = AccountDetails.initialize(
+        sequelize,
+        schemaName
+      );
+      const ResourceFiscalModel = ResourceFiscal.initialize(
+        sequelize,
+        schemaName
+      );
+
+      Resource.belongsTo(AccountDetailsModel, {
+        foreignKey: "account_rid",
+        as: "AccountDetails",
+        targetKey: "account_rid",
+      });
+
+      Resource.hasMany(ResourceFiscalModel, {
+        foreignKey: "resource_rid",
+        sourceKey: "rid",
+        as: "ResourceFiscal",
+      });
 
       // First get all resources without pagination
       const resources = await Resource.findAll({
         where: {
           ...whereClause,
+          account_rid: accountId,
         },
+        having: havingClause,
+        group: [
+          "Resources.rid",
+          "Resources.r_number",
+          "Resources.resource_code",
+          "Resources.resource_name",
+          "Resources.resource_firstname",
+          "Resources.resource_lastname",
+          "Resources.resource_orgname",
+          "Resources.comments",
+          "Resources.resource_type",
+          "Resources.resource_status",
+          "Resources.resource_role",
+          "Resources.resource_designation",
+          "Resources.resource_total_experience",
+          "Resources.resource_country",
+          "Resources.resource_region",
+          "Resources.resource_city",
+          "AccountDetails.rid",
+          "AccountDetails.account_rid",
+          "AccountDetails.account_name",
+          "ResourceFiscal.rid",
+        ],
         order: queryOrder,
         subQuery: false,
         attributes: [
@@ -228,10 +316,37 @@ class SchemaService {
           "resource_status",
           "resource_role",
           "resource_designation",
+          "resource_orgname",
+          "comments",
           "resource_total_experience",
           "resource_country",
           "resource_region",
           "resource_city",
+          [Sequelize.col("AccountDetails.account_name"), "account_name"],
+          [
+            Sequelize.literal(
+              '"ResourceFiscal"."total_effort_for_year_project"'
+            ),
+            "total_project_hours",
+          ],
+          [
+            Sequelize.literal('"ResourceFiscal"."estimated_rd_hours"'),
+            "estimated_rd_hours",
+          ],
+        ],
+        include: [
+          {
+            model: ResourceFiscalModel,
+            as: "ResourceFiscal",
+            attributes: [],
+            required: false,
+          },
+          {
+            model: AccountDetailsModel,
+            as: "AccountDetails",
+            attributes: [],
+            required: false,
+          },
         ],
       });
 
@@ -377,7 +492,9 @@ class SchemaService {
     accountNumber: string,
     order: any[],
     whereClause: Record<string, string> = {},
-    geoDataSort: string[][]
+    havingClause: Record<string, string> = {},
+    geoDataSort: string[][],
+    accountId: string
   ) {
     try {
       const schemaName = `platform_v2_${accountNumber}`;
@@ -387,11 +504,98 @@ class SchemaService {
 
       const Resource = Resources.initialize(sequelize, schemaName);
       await Resource.sync({ force: false });
+
+      let queryOrder = order;
+      const isResourceTypeSort =
+        order?.length && order[0][0] === "resource_type";
+      const isAccountNameSort = order?.length && order[0][0] === "account_name";
+      const isTotalProjectHoursSort =
+        order?.length && order[0][0] === "total_project_hours";
+      const isEstimatedRDSort =
+        order?.length && order[0][0] === "estimated_rd_hours";
+
+      if (isResourceTypeSort) {
+        const direction =
+          order[0][1]?.toUpperCase() === "DESC" ? "DESC" : "ASC";
+        queryOrder = [
+          [
+            Sequelize.literal(`
+            CASE "Resources".resource_type
+              WHEN 'Full-Time' THEN 1
+              WHEN 'Non-Labor' THEN 2 
+              WHEN 'Sub Con' THEN 3
+              ELSE 4
+            END
+          `),
+            direction,
+          ],
+        ];
+      } else if (isAccountNameSort) {
+        const direction =
+          order[0][1]?.toUpperCase() === "DESC" ? "DESC" : "ASC";
+        queryOrder = [
+          [Sequelize.col("AccountDetails.account_name"), direction],
+        ];
+      } else if (isTotalProjectHoursSort) {
+        const direction =
+          order[0][1]?.toUpperCase() === "DESC" ? "DESC" : "ASC";
+        queryOrder = [[Sequelize.literal("total_project_hours"), direction]];
+      } else if (isEstimatedRDSort) {
+        const direction =
+          order[0][1]?.toUpperCase() === "DESC" ? "DESC" : "ASC";
+        queryOrder = [[Sequelize.literal("estimated_rd_hours"), direction]];
+      }
+
+      const AccountDetailsModel = AccountDetails.initialize(
+        sequelize,
+        schemaName
+      );
+      const ResourceFiscalModel = ResourceFiscal.initialize(
+        sequelize,
+        schemaName
+      );
+
+      Resource.belongsTo(AccountDetailsModel, {
+        foreignKey: "account_rid",
+        as: "AccountDetails",
+        targetKey: "account_rid",
+      });
+
+      Resource.hasMany(ResourceFiscalModel, {
+        foreignKey: "resource_rid",
+        sourceKey: "rid",
+        as: "ResourceFiscal",
+      });
+
       const resources = await Resource.findAll({
         where: {
           ...whereClause,
+          account_rid: accountId,
         },
-        order,
+        having: havingClause,
+        group: [
+          "Resources.rid",
+          "Resources.r_number",
+          "Resources.resource_code",
+          "Resources.resource_name",
+          "Resources.resource_firstname",
+          "Resources.resource_lastname",
+          "Resources.resource_orgname",
+          "Resources.comments",
+          "Resources.resource_type",
+          "Resources.resource_status",
+          "Resources.resource_role",
+          "Resources.resource_designation",
+          "Resources.resource_total_experience",
+          "Resources.resource_country",
+          "Resources.resource_region",
+          "Resources.resource_city",
+          "AccountDetails.rid",
+          "AccountDetails.account_rid",
+          "AccountDetails.account_name",
+          "ResourceFiscal.rid",
+        ],
+        order: queryOrder,
         subQuery: false,
         attributes: [
           "rid",
@@ -404,18 +608,86 @@ class SchemaService {
           "resource_status",
           "resource_role",
           "resource_designation",
+          "resource_orgname",
+          "comments",
           "resource_total_experience",
           "resource_country",
           "resource_region",
           "resource_city",
+          [Sequelize.col("AccountDetails.account_name"), "account_name"],
+          [
+            Sequelize.literal(
+              '"ResourceFiscal"."total_effort_for_year_project"'
+            ),
+            "total_project_hours",
+          ],
+          [
+            Sequelize.literal('"ResourceFiscal"."estimated_rd_hours"'),
+            "estimated_rd_hours",
+          ],
+        ],
+        include: [
+          {
+            model: ResourceFiscalModel,
+            as: "ResourceFiscal",
+            attributes: [],
+            required: false,
+          },
+          {
+            model: AccountDetailsModel,
+            as: "AccountDetails",
+            attributes: [],
+            required: false,
+          },
         ],
       });
 
-      const totalCount = await Resource.count({
+      const results = await Resource.findAll({
         where: {
           ...whereClause,
+          account_rid: accountId,
         },
+        having: havingClause,
+        group: [
+          "Resources.rid",
+          "Resources.r_number",
+          "Resources.resource_code",
+          "Resources.resource_name",
+          "Resources.resource_firstname",
+          "Resources.resource_lastname",
+          "Resources.resource_orgname",
+          "Resources.comments",
+          "Resources.resource_type",
+          "Resources.resource_status",
+          "Resources.resource_role",
+          "Resources.resource_designation",
+          "Resources.resource_total_experience",
+          "Resources.resource_country",
+          "Resources.resource_region",
+          "Resources.resource_city",
+          "AccountDetails.rid",
+          "AccountDetails.account_rid",
+          "AccountDetails.account_name",
+          "ResourceFiscal.rid",
+        ],
+        raw: true,
+        include: [
+          {
+            model: ResourceFiscalModel,
+            as: "ResourceFiscal",
+            attributes: [],
+            required: false,
+          },
+          {
+            model: AccountDetailsModel,
+            as: "AccountDetails",
+            attributes: [],
+            required: false,
+          },
+        ],
       });
+
+      const totalCount = results.length;
 
       if (resources) {
         finalResources = await this.insertGeoData(resources, mainDdSequilze);
@@ -562,10 +834,10 @@ class SchemaService {
 
       // Parse dates and set to UTC midnight to avoid timezone issues
       const startDate = moment
-        .utc(resourceData.effective_from_date, "MM/DD/YYYY")
+        .utc(resourceData.effective_from_date, "YYYY-MM-DD")
         .startOf("day");
       const endDate = moment
-        .utc(resourceData.effective_end_date, "MM/DD/YYYY")
+        .utc(resourceData.effective_end_date, "YYYY-MM-DD")
         .startOf("day");
 
       const existingResourceData = await Resource.findOne({
@@ -872,14 +1144,14 @@ class SchemaService {
           country?.country_name || null;
         (resource as any).dataValues.region_name = state?.state_name || null;
         (resource as any).dataValues.city_name = city?.city_name || null;
-        //Added to format date as MM/DD/YYYY
+        //Added to format date as yyyy-mm-dd
         resource = {
           ...resource.toJSON(),
           resource_startdate: resource.resource_startdate
-            ? moment(resource.resource_startdate).format("MM/DD/YYYY")
+            ? moment(resource.resource_startdate).format("YYYY-MM-DD")
             : null,
           resource_enddate: resource.resource_enddate
-            ? moment(resource.resource_enddate).format("MM/DD/YYYY")
+            ? moment(resource.resource_enddate).format("YYYY-MM-DD")
             : null,
         };
       }
@@ -1016,17 +1288,23 @@ class SchemaService {
 
         switch (sortField) {
           case "resource_country":
-            compareValueA = a.country_name || "";
-            compareValueB = b.country_name || "";
+            compareValueA = a.country_name || null;
+            compareValueB = b.country_name || null;
             break;
           case "resource_region":
-            compareValueA = a.region_name || "";
-            compareValueB = b.region_name || "";
+            compareValueA = a.region_name || null;
+            compareValueB = b.region_name || null;
             break;
           default:
             return 0;
         }
 
+        // Handle null/empty values
+        if (compareValueA === null && compareValueB === null) return 0;
+        if (compareValueA === null) return isAsc ? 1 : -1;
+        if (compareValueB === null) return isAsc ? -1 : 1;
+
+        // Compare non-null values
         if (isAsc) {
           return compareValueA.localeCompare(compareValueB);
         } else {
@@ -1083,7 +1361,7 @@ class SchemaService {
 
       if (countryId) {
         const result = await mainDdSequilze.query(
-          `SELECT rid, country_name FROM country WHERE rid = :id`,
+          `SELECT rid, country_name, country_code FROM country WHERE rid = :id`,
           {
             replacements: { id: countryId },
             type: "SELECT",
@@ -1107,7 +1385,7 @@ class SchemaService {
 
       if (currencyId) {
         const result = await mainDdSequilze.query(
-          `SELECT rid, currency_name, currency_code FROM currency WHERE rid = :id`,
+          `SELECT rid, currency_name, currency_code, currency_symbol FROM currency WHERE rid = :id`,
           {
             replacements: { id: currencyId },
             type: "SELECT",
@@ -1120,8 +1398,10 @@ class SchemaService {
       project.dataValues = {
         ...project.dataValues,
         country_name: countryRow?.country_name || null,
+        country_code: countryRow?.country_code || null,
         region_name: regionRow?.state_name || null,
         currency_name: currencyRow?.currency_code || null,
+        currency_symbol: currencyRow?.currency_symbol || null,
       };
 
       return project;
@@ -1165,6 +1445,13 @@ class SchemaService {
 
       let results: any[] = [];
       const replacements: any[] = [];
+      let countResult: any[] = [];
+
+      const sortColumnMap: Record<string, string> = {
+        industry_name: "COALESCE(ps.industry_name, ind.industry_name)",
+      };
+
+      const sortCol = sortColumnMap[sort.sortCol] || `${sort.sortCol}`;
 
       if (accountMeta.length > 0) {
         const accountRids = accountMeta.map((acc) => `'${acc}'`).join(", ");
@@ -1183,37 +1470,60 @@ class SchemaService {
         let fullWhereClause = filterWhereSQL;
         if (whereConditions.length > 0) {
           fullWhereClause += fullWhereClause
-            ? ` AND ${whereConditions.join(" AND ")}`
-            : `WHERE ${whereConditions.join(" AND ")}`;
+          ? ` AND ${whereConditions.join(" AND ")}`
+          : `${whereConditions.join(" AND ")}`;
         }
 
         const fullQuery = `
-        SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, 
-        COALESCE(ind.industry_name, ps.industry_name) AS industry_name, 
+        SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, acc.rid as account_id,
+        ps.project_id, ps.modified_datetime, ps.assessment_status,
+        COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other, 
         ps.project_number, ps.project_type, ps.project_client_group , ps.project_group,
-        ps.project_classification_rid, pc.classification_name ,
-        ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_consultant , ps.r_number,
+        ps.project_classification_rid, 
+        COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
+        ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_point_of_contact , ps.r_number,
         ps.program_name, ps.project_startdate , ps.project_enddate , ps.qualified_research_expenditure ,
         ps.is_rd_qualified , ps.qre, ps.total_cost , ps.total_effort , ps.total_fte , ps.total_fte_cost ,
         ps.total_sub_con , ps.total_sub_con_cost, ps.total_non_labor_cost , ps."comments" , 
-        cou.country_name , curr.currency_code , st.state_name as region_name
+        cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name
         FROM project_summary AS ps
         INNER JOIN account acc ON acc.rid = ps.account_rid 
         LEFT JOIN industry ind ON ind.rid = ps.industry_rid
         LEFT JOIN country cou ON cou.rid = ps.country 
         LEFT JOIN state st ON st.rid = ps.region 
         LEFT JOIN currency curr ON curr.rid = ps.currency 
+        LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
+        LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD'
         left join project_classification pc on pc.rid = ps.project_classification_rid 
-        WHERE acc.created_by = '${userId}' AND acc.rid in (${accountRids}) ${
+        WHERE acc.rid IN (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
         }
-        ORDER BY ${sort.sortCol} ${sort.sortOrder}
+        ORDER BY ${sortCol} ${sort.sortOrder}
         LIMIT ? OFFSET ?
       `;
+
+        const countQuery = `
+          SELECT COUNT(*) AS total_count
+          FROM project_summary AS ps
+          INNER JOIN account acc ON acc.rid = ps.account_rid 
+          LEFT JOIN industry ind ON ind.rid = ps.industry_rid
+          LEFT JOIN country cou ON cou.rid = ps.country 
+          LEFT JOIN state st ON st.rid = ps.region 
+          LEFT JOIN currency curr ON curr.rid = ps.currency 
+          LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
+          WHERE acc.rid IN (${accountRids}) ${
+          fullWhereClause ? "AND " + fullWhereClause : ""
+        }
+        `;
 
         replacements.push(limit, offset);
 
         results = await mainDbSequelize.query(fullQuery, {
+          replacements,
+          type: "SELECT",
+        });
+
+        countResult = await mainDbSequelize.query(countQuery, {
           replacements,
           type: "SELECT",
         });
@@ -1237,27 +1547,41 @@ class SchemaService {
         }
 
         const fullQuery = `
-        SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, 
-        COALESCE(ind.industry_name, ps.industry_name) AS industry_name,
+        SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, acc.rid as account_id,
+        ps.project_id, ps.modified_datetime, ps.assessment_status,
+        COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other,
         ps.project_type, ps.project_client_group , ps.project_group,
-        ps.project_classification_rid, pc.classification_name ,
-        ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_consultant , ps.r_number, ps.project_number,
+        ps.project_classification_rid, 
+        COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
+        ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_point_of_contact , ps.r_number, ps.project_number,
         ps.program_name, ps.project_startdate , ps.project_enddate , ps.qualified_research_expenditure ,
         ps.is_rd_qualified , ps.qre, ps.total_cost , ps.total_effort , ps.total_fte , ps.total_fte_cost ,
         ps.total_sub_con , ps.total_sub_con_cost, ps.total_non_labor_cost , ps."comments" , 
-        cou.country_name , curr.currency_code , st.state_name as region_name
+        cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name
+        FROM project_summary AS ps
+        INNER JOIN account acc ON acc.rid = ps.account_rid 
+        LEFT JOIN industry ind ON ind.rid = ps.industry_rid
+        LEFT JOIN country cou ON cou.rid = ps.country 
+        LEFT JOIN state st ON st.rid = ps.region 
+        LEFT JOIN currency curr ON curr.rid = ps.currency
+        LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
+        LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD' 
+        left join project_classification pc on pc.rid = ps.project_classification_rid 
+        ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
+        ORDER BY ${sortCol} ${sort.sortOrder}
+        LIMIT ? OFFSET ?
+      `;
+
+        const countQuery = `
+        SELECT COUNT(*) AS total_count
         FROM project_summary AS ps
         INNER JOIN account acc ON acc.rid = ps.account_rid 
         LEFT JOIN industry ind ON ind.rid = ps.industry_rid
         LEFT JOIN country cou ON cou.rid = ps.country 
         LEFT JOIN state st ON st.rid = ps.region 
         LEFT JOIN currency curr ON curr.rid = ps.currency 
-        left join project_classification pc on pc.rid = ps.project_classification_rid 
-        WHERE acc.created_by = '${userId}' ${
-          fullWhereClause ? "AND " + fullWhereClause : ""
-        }
-        ORDER BY ${sort.sortCol} ${sort.sortOrder}
-        LIMIT ? OFFSET ?
+        LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
+        ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
       `;
 
         replacements.push(limit, offset);
@@ -1266,11 +1590,187 @@ class SchemaService {
           replacements,
           type: "SELECT",
         });
+
+        countResult = await mainDbSequelize.query(countQuery, {
+          replacements,
+          type: "SELECT",
+        });
       }
 
       return {
         finalResult: results,
-        totalCount: results.length,
+        totalCount: parseInt(countResult?.[0]?.total_count) || 0,
+      };
+    } catch (err) {
+      throw new Error("Error fetching Accounts: " + (err as Error).message);
+    }
+  }
+
+  async fetchAllProjectsForExport(
+    sort: {
+      sortCol: string;
+      sortOrder: string;
+    },
+    whereClause: Record<string, any>,
+    fiscalYear: number,
+    accountMeta: string[],
+    userId: string,
+    search: string
+  ) {
+    try {
+      const mainDbSequelize = await initMainDbSequelize();
+
+      let results: any[] = [];
+      const replacements: any[] = [];
+      let countResult: any[] = [];
+
+      const sortColumnMap: Record<string, string> = {
+        industry_name: "COALESCE(ps.industry_name, ind.industry_name)",
+      };
+
+      const sortCol = sortColumnMap[sort.sortCol] || `${sort.sortCol}`;
+
+      if (accountMeta.length > 0) {
+        const accountRids = accountMeta.map((acc) => `'${acc}'`).join(", ");
+
+        const { whereSQL: filterWhereSQL, replacements: whereReplacements } =
+          this.buildRawWhereClause(whereClause, search);
+
+        const whereConditions: string[] = [];
+        replacements.push(...whereReplacements);
+
+        if (fiscalYear && fiscalYear !== 0) {
+          whereConditions.push(`fiscal_year = ?`);
+          replacements.push(fiscalYear);
+        }
+
+        let fullWhereClause = filterWhereSQL;
+        if (whereConditions.length > 0) {
+          fullWhereClause += fullWhereClause
+            ? ` AND ${whereConditions.join(" AND ")}`
+            : `${whereConditions.join(" AND ")}`;
+        }
+
+        const fullQuery = `
+        SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, acc.rid as account_id,
+        ps.project_id, ps.modified_datetime, ps.assessment_status,
+        COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other, 
+        ps.project_number, ps.project_type, ps.project_client_group , ps.project_group,
+        ps.project_classification_rid, 
+        COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
+        ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_point_of_contact , ps.r_number,
+        ps.program_name, ps.project_startdate , ps.project_enddate , ps.qualified_research_expenditure ,
+        ps.is_rd_qualified , ps.qre, ps.total_cost , ps.total_effort , ps.total_fte , ps.total_fte_cost ,
+        ps.total_sub_con , ps.total_sub_con_cost, ps.total_non_labor_cost , ps."comments" , 
+        cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name
+        FROM project_summary AS ps
+        INNER JOIN account acc ON acc.rid = ps.account_rid 
+        LEFT JOIN industry ind ON ind.rid = ps.industry_rid
+        LEFT JOIN country cou ON cou.rid = ps.country 
+        LEFT JOIN state st ON st.rid = ps.region 
+        LEFT JOIN currency curr ON curr.rid = ps.currency
+        LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
+        LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD' 
+        left join project_classification pc on pc.rid = ps.project_classification_rid 
+        WHERE acc.rid IN (${accountRids}) ${
+          fullWhereClause ? "AND " + fullWhereClause : ""
+        }
+        ORDER BY ${sortCol} ${sort.sortOrder}
+      `;
+
+        const countQuery = `
+          SELECT COUNT(*) AS total_count
+          FROM project_summary AS ps
+          INNER JOIN account acc ON acc.rid = ps.account_rid 
+          LEFT JOIN industry ind ON ind.rid = ps.industry_rid
+          LEFT JOIN country cou ON cou.rid = ps.country 
+          LEFT JOIN state st ON st.rid = ps.region 
+          LEFT JOIN currency curr ON curr.rid = ps.currency 
+          LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
+          WHERE acc.rid in (${accountRids}) ${
+          fullWhereClause ? "AND " + fullWhereClause : ""
+        }
+        `;
+
+        results = await mainDbSequelize.query(fullQuery, {
+          replacements,
+          type: "SELECT",
+        });
+
+        countResult = await mainDbSequelize.query(countQuery, {
+          replacements,
+          type: "SELECT",
+        });
+      } else {
+        const { whereSQL: filterWhereSQL, replacements: whereReplacements } =
+          this.buildRawWhereClause(whereClause, search);
+
+        const whereConditions = [];
+        const replacements = [...whereReplacements];
+
+        if (fiscalYear && fiscalYear !== 0) {
+          whereConditions.push(`fiscal_year = ?`);
+          replacements.push(fiscalYear);
+        }
+
+        let fullWhereClause = filterWhereSQL;
+        if (whereConditions.length > 0) {
+          fullWhereClause += fullWhereClause
+            ? ` AND ${whereConditions.join(" AND ")}`
+            : `${whereConditions.join(" AND ")}`;
+        }
+
+        const fullQuery = `
+        SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, acc.rid as account_id,
+        ps.project_id, ps.modified_datetime, ps.assessment_status,
+        COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other,
+        ps.project_type, ps.project_client_group , ps.project_group,
+        ps.project_classification_rid, 
+        COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
+        ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_point_of_contact , ps.r_number, ps.project_number,
+        ps.program_name, ps.project_startdate , ps.project_enddate , ps.qualified_research_expenditure ,
+        ps.is_rd_qualified , ps.qre, ps.total_cost , ps.total_effort , ps.total_fte , ps.total_fte_cost ,
+        ps.total_sub_con , ps.total_sub_con_cost, ps.total_non_labor_cost , ps."comments" , 
+        cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name
+        FROM project_summary AS ps
+        INNER JOIN account acc ON acc.rid = ps.account_rid 
+        LEFT JOIN industry ind ON ind.rid = ps.industry_rid
+        LEFT JOIN country cou ON cou.rid = ps.country 
+        LEFT JOIN state st ON st.rid = ps.region 
+        LEFT JOIN currency curr ON curr.rid = ps.currency
+        LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
+        LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD' 
+        left join project_classification pc on pc.rid = ps.project_classification_rid 
+        ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
+        ORDER BY ${sortCol} ${sort.sortOrder}
+      `;
+
+        const countQuery = `
+        SELECT COUNT(*) AS total_count
+        FROM project_summary AS ps
+        INNER JOIN account acc ON acc.rid = ps.account_rid 
+        LEFT JOIN industry ind ON ind.rid = ps.industry_rid
+        LEFT JOIN country cou ON cou.rid = ps.country 
+        LEFT JOIN state st ON st.rid = ps.region 
+        LEFT JOIN currency curr ON curr.rid = ps.currency 
+        LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
+        ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
+      `;
+
+        results = await mainDbSequelize.query(fullQuery, {
+          replacements,
+          type: "SELECT",
+        });
+
+        countResult = await mainDbSequelize.query(countQuery, {
+          replacements,
+          type: "SELECT",
+        });
+      }
+
+      return {
+        finalResult: results,
+        totalCount: parseInt(countResult?.[0]?.total_count) || 0,
       };
     } catch (err) {
       throw new Error("Error fetching Accounts: " + (err as Error).message);
@@ -1279,7 +1779,13 @@ class SchemaService {
 
   async computeGlobalAccountFilter(globalFilters: Record<string, string[]>) {
     try {
-      return Object.values(globalFilters).flat();
+      const result = [];
+
+      for (const key of Object.keys(globalFilters)) {
+        result.push(key, ...globalFilters[key]);
+      }
+
+      return result;
     } catch (err) {
       throw new Error("Error computing global account filter");
     }
@@ -1476,64 +1982,136 @@ class SchemaService {
   }
 
   buildRawWhereClause(where: Record<string, any>, search: string) {
-    const conditions: string[] = [];
-    const replacements: any[] = [];
+    const fieldAliasMap: Record<string, string> = {
+      r_number: "ps.r_number",
+      comments: "ps.comments",
+      region: "st.rid",
+      currency: "curr.rid",
+      country: "cou.rid",
+      industry_name: "COALESCE(ps.industry_name, ind.industry_name)",
+      industry_name_other: "COALESCE(ps.industry_name, ind.industry_name)",
+      modified_datetime: "ps.modified_datetime",
+      classification_name:
+        "COALESCE(ps.project_classification_other, pc.classification_name)",
+    };
 
-    for (const [field, condition] of Object.entries(where)) {
-      if (typeof condition === "object" && condition !== null) {
-        if ("equals" in condition) {
-          conditions.push(`${field} = ?`);
-          replacements.push(condition.equals);
-        } else if ("contains" in condition) {
-          conditions.push(`${field} ILIKE ?`);
-          replacements.push(`%${condition.contains}%`);
-        } else if ("not_contains" in condition) {
-          conditions.push(`${field} NOT ILIKE ?`);
-          replacements.push(`%${condition.not_contains}%`);
-        } else if ("greater_than" in condition) {
-          conditions.push(`${field} > ?`);
-          replacements.push(condition.greater_than);
-        } else if ("lesser_than" in condition) {
-          conditions.push(`${field} < ?`);
-          replacements.push(condition.lesser_than);
-        } else if (
-          "between" in condition &&
-          Array.isArray(condition.between) &&
-          condition.between.length === 2
-        ) {
-          conditions.push(`${field} BETWEEN ? AND ?`);
-          replacements.push(condition.between[0], condition.between[1]);
-        } else {
-          console.warn(`Unsupported filter on field "${field}"`);
-        }
-      } else {
-        conditions.push(`${field} = ?`);
-        replacements.push(condition);
-      }
-    }
+    const numberFields = [
+      "total_effort",
+      "total_cost",
+      "fiscal_year",
+      "total_fte",
+      "total_fte_cost",
+      "total_sub_con",
+      "total_sub_con_cost",
+      "total_non_labor_cost",
+      "qualified_research_expenditure",
+      "qre",
+    ];
+    const dateFields = [
+      "project_startdate",
+      "project_enddate",
+      "ps.modified_datetime",
+    ];
+    const enumFields = [
+      "project_status",
+      "project_type",
+      "fiscal_year",
+      "st.rid",
+      "curr.rid",
+      "cou.rid",
+    ];
+    const booleanFields = ["is_rd_qualified"];
+
+    const { conditions, replacements } = this.buildWhereCondition(
+      where,
+      dateFields,
+      enumFields,
+      booleanFields,
+      numberFields,
+      fieldAliasMap
+    );
 
     if (search) {
-      const numericSearch = !isNaN(parseInt(search));
-      const baseSearchFields = ["industry_name", "r_number"];
+      const numericSearch = !isNaN(parseFloat(search));
+
       const allProjectFields = [
         "project_code",
         "project_name",
-        "project_description",
-        "spoc_name",
-        "spoc_email",
-        // "project_status",
+        "fiscal_year",
+        "account_name",
+        "industry_name_other",
+        "project_type",
+        "project_client_group",
+        "project_group",
+        "classification_name",
+        "project_status",
+        "project_point_of_contact",
+        "technical_point_of_contact",
+        "r_number",
+        "project_number",
+        "program_name",
+        "project_startdate",
+        "project_enddate",
+        "qualified_research_expenditure",
+        "is_rd_qualified",
+        "qre",
+        "total_cost",
+        "total_effort",
+        "total_fte",
+        "total_fte_cost",
+        "total_sub_con",
+        "total_sub_con_cost",
+        "total_non_labor_cost",
+        "comments",
+        "country_name",
+        "currency_code",
+        "region_name",
+        "financial_consultant",
+        "modified_datetime",
       ];
 
-      const searchFields = [...baseSearchFields, ...allProjectFields];
+      const searchFieldAliasMap: Record<string, string> = {
+        r_number: "ps.r_number",
+        comments: "ps.comments",
+        region_name: "st.state_name",
+        industry_name_other: "COALESCE(ind.industry_name, ps.industry_name)",
+        project_status: "CAST(ps.project_status AS TEXT)",
+        project_type: "CAST(ps.project_type AS TEXT)",
+        fiscal_year: "CAST(ps.fiscal_year AS TEXT)",
+        is_rd_qualified: "CAST(ps.is_rd_qualified AS TEXT)",
+        project_startdate: "CAST(ps.project_startdate AS TEXT)",
+        project_enddate: "CAST(ps.project_enddate AS TEXT)",
+        total_cost: "CAST(ps.total_cost AS TEXT)",
+        total_effort: "CAST(ps.total_effort AS TEXT)",
+        total_fte: "CAST(ps.total_fte AS TEXT)",
+        total_fte_cost: "CAST(ps.total_fte_cost AS TEXT)",
+        total_sub_con: "CAST(ps.total_sub_con AS TEXT)",
+        total_sub_con_cost: "CAST(ps.total_sub_con_cost AS TEXT)",
+        total_non_labor_cost: "CAST(ps.total_non_labor_cost AS TEXT)",
+        qualified_research_expenditure:
+          "CAST(ps.qualified_research_expenditure AS TEXT)",
+        qre: "CAST(ps.qre AS TEXT)",
+      };
 
-      const searchConditions: string[] = searchFields.map(
-        (field) => `${field} ILIKE ?`
-      );
-      replacements.push(...searchFields.map(() => `%${search}%`));
+      const searchConditions: string[] = [];
+
+      for (const field of allProjectFields) {
+        const qualifiedField = searchFieldAliasMap[field] || field;
+        searchConditions.push(`${qualifiedField} ILIKE ?`);
+        replacements.push(`%${search}%`);
+      }
 
       if (numericSearch) {
-        searchConditions.push("total_cost = ?", "total_effort = ?");
-        replacements.push(parseInt(search), parseInt(search));
+        searchConditions.push(
+          "ps.total_cost = ?",
+          "ps.total_effort = ?",
+          "ps.fiscal_year = ?"
+        );
+        replacements.push(
+          parseFloat(search),
+          parseFloat(search),
+          parseFloat(search)
+        );
       }
 
       conditions.push(`(${searchConditions.join(" OR ")})`);
@@ -1541,6 +2119,237 @@ class SchemaService {
 
     const whereSQL = conditions.length > 0 ? `${conditions.join(" AND ")}` : "";
     return { whereSQL, replacements };
+  }
+
+  buildWhereCondition(
+    where: Record<string, any>,
+    dateFields: string[],
+    enumFields: string[],
+    booleanFields: string[],
+    numberFields: string[],
+    fieldAliasMap: Record<string, string>
+  ) {
+    const conditions: string[] = [];
+    const replacements: any[] = [];
+
+    for (const [field, condition] of Object.entries(where)) {
+      const qualifiedField = fieldAliasMap[field] || field;
+
+      const isNumberField = numberFields.includes(qualifiedField);
+      const isDateField = dateFields.includes(qualifiedField);
+      const isEnumField = enumFields.includes(qualifiedField);
+      const isBooleanField = booleanFields.includes(qualifiedField);
+
+      // Skip empty string values for typed fields to avoid SQL type errors
+      if (
+        (condition?.equals === "" || condition === "") &&
+        (isNumberField || isDateField || isBooleanField)
+      ) {
+        continue;
+      }
+
+      if (typeof condition === "object" && condition !== null) {
+        if (field === "classification_name") {
+          const conditionsToJoin: string[] = [];
+
+          if (condition.equals !== undefined) {
+            conditionsToJoin.push(`ps.project_classification_other = ?`);
+            replacements.push(condition.equals);
+            conditionsToJoin.push(`pc.classification_name = ?`);
+            replacements.push(condition.equals);
+          }
+
+          if (condition.not_equals !== undefined) {
+            if(condition.not_equals === "Other"){
+              conditions.push(`pc.classification_name != ?`);
+              replacements.push(condition.not_equals);
+            }else{
+              conditions.push(`(ps.project_classification_other != ? OR ps.project_classification_other = '' OR ps.project_classification_other IS NULL) AND pc.classification_name = 'Other'`);
+              replacements.push(condition.not_equals);
+            }
+          }
+
+          if (condition.in && Array.isArray(condition.in)) {
+            const placeholders = condition.in.map(() => "?").join(", ");
+            conditionsToJoin.push(
+              `ps.project_classification_other IN (${placeholders})`
+            );
+            replacements.push(...condition.in);
+            conditionsToJoin.push(
+              `pc.classification_name IN (${placeholders})`
+            );
+            replacements.push(...condition.in);
+          }
+
+          if (condition.is_empty === true) {
+            conditionsToJoin.push(
+              `COALESCE(ps.project_classification_other, pc.classification_name) IS NULL OR COALESCE(ps.project_classification_other, pc.classification_name) = ''`
+            );
+          }
+
+          if (conditionsToJoin.length > 0) {
+            conditions.push(`(${conditionsToJoin.join(" OR ")})`);
+          }
+
+          continue;
+        }
+
+        // NUMBER fields
+        if (isNumberField) {
+          if (condition.equals !== undefined) {
+            conditions.push(`${qualifiedField} = ?`);
+            replacements.push(condition.equals);
+          }
+          if (condition.not_equals !== undefined) {
+            conditions.push(
+              `(${qualifiedField} != ? OR ${qualifiedField} IS NULL)`
+            );
+            replacements.push(condition.not_equals);
+          }
+          if (condition.greater_than !== undefined) {
+            conditions.push(`${qualifiedField} > ?`);
+            replacements.push(condition.greater_than);
+          }
+          if (condition.less_than !== undefined) {
+            conditions.push(`${qualifiedField} < ?`);
+            replacements.push(condition.less_than);
+          }
+          if (
+            Array.isArray(condition.between) &&
+            condition.between.length === 2
+          ) {
+            conditions.push(`${qualifiedField} BETWEEN ? AND ?`);
+            replacements.push(condition.between[0], condition.between[1]);
+          }
+          if (condition.is_empty === true) {
+            conditions.push(`${qualifiedField} IS NULL`);
+          }
+          continue;
+        }
+
+        // DATE fields
+        if (isDateField) {
+          const updatedField =
+            field === "modified_datetime" ? "ps.modified_datetime" : field;
+          const normalize = (d: any) => {
+            let parsed = moment.utc(d, "YYYY-MM-DD", true);
+            if (!parsed.isValid()) throw new Error("Invalid date");
+
+            const startOfDay = parsed.startOf("day").toDate();
+            return startOfDay;
+          }
+
+          if (condition.equals !== undefined) {
+            const startOfDay = new Date(condition.equals);
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(condition.equals);
+            endOfDay.setHours(23, 59, 59, 999);
+            conditions.push(`${updatedField} BETWEEN ? AND ?`);
+            replacements.push(startOfDay, endOfDay);
+          }
+          if (condition.before !== undefined) {
+            conditions.push(`${updatedField} < ?`);
+            replacements.push(normalize(condition.before));
+          }
+          if (condition.after !== undefined) {
+            conditions.push(`${updatedField} > ?`);
+            replacements.push(normalize(condition.after));
+          }
+          if (
+            Array.isArray(condition.between) &&
+            condition.between.length === 2
+          ) {
+            conditions.push(`${updatedField} BETWEEN ? AND ?`);
+            replacements.push(
+              normalize(condition.between[0]),
+              normalize(condition.between[1])
+            );
+          }
+          if (condition.is_empty === true) {
+            conditions.push(`${updatedField} IS NULL`);
+          }
+          continue;
+        }
+
+        // ENUM fields
+        if (isEnumField) {
+          if (condition.equals !== undefined) {
+            conditions.push(`${qualifiedField} = ?`);
+            replacements.push(condition.equals);
+          }
+          if (condition.not_equals !== undefined) {
+            conditions.push(
+              `(${qualifiedField} != ? OR ${qualifiedField} IS NULL)`
+            );
+            replacements.push(condition.not_equals);
+          }
+          if (condition.in && Array.isArray(condition.in)) {
+            const placeholders = condition.in.map(() => "?").join(", ");
+            conditions.push(`${qualifiedField} IN (${placeholders})`);
+            replacements.push(...condition.in);
+          }
+          if (condition.is_empty === true) {
+            conditions.push(`${qualifiedField} IS NULL`);
+          }
+          continue;
+        }
+
+        // BOOLEAN fields
+        if (isBooleanField) {
+          if (condition.isTrue === true) {
+            conditions.push(`${qualifiedField} = ?`);
+            replacements.push(true);
+          }
+          if (condition.isFalse === true) {
+            conditions.push(`${qualifiedField} = ?`);
+            replacements.push(false);
+          }
+          if (condition.is_empty === true) {
+            conditions.push(`${qualifiedField} IS NULL`);
+          }
+          continue;
+        }
+
+        // STRING fields (default)
+        if (condition.equals !== undefined) {
+          conditions.push(`${qualifiedField} ILIKE ?`);
+          replacements.push(condition.equals);
+        }
+        if (condition.not_equals !== undefined) {
+          conditions.push(
+            `(${qualifiedField} NOT ILIKE ? OR ${qualifiedField} IS NULL)`
+          );
+          replacements.push(condition.not_equals);
+        }
+        if (condition.contains !== undefined) {
+          conditions.push(`${qualifiedField} ILIKE ?`);
+          replacements.push(`%${condition.contains}%`);
+        }
+        if (condition.not_contains !== undefined) {
+          conditions.push(
+            `(${qualifiedField} NOT ILIKE ? OR ${qualifiedField} IS NULL)`
+          );
+          replacements.push(`%${condition.not_contains}%`);
+        }
+        if (condition.is_empty === true) {
+          conditions.push(
+            `(${qualifiedField} IS NULL OR ${qualifiedField} = '')`
+          );
+        }
+        if (condition.value !== undefined) {
+          conditions.push(`${qualifiedField} = ?`);
+          replacements.push(condition.value);
+        }
+      } else {
+        // Primitive direct equality
+        conditions.push(`${field} = ?`);
+        replacements.push(condition);
+      }
+    }
+    return {
+      conditions,
+      replacements,
+    };
   }
 
   private sortProjectByAccount(
@@ -1626,7 +2435,7 @@ class SchemaService {
 
       if (currencyIds.length > 0) {
         currencies = await mainDdSequilze.query(
-          `SELECT rid, currency_code FROM currency WHERE rid IN (:ids)`,
+          `SELECT rid, currency_code, currency_symbol FROM currency WHERE rid IN (:ids)`,
           {
             replacements: { ids: currencyIds },
             type: "SELECT",
@@ -1657,6 +2466,7 @@ class SchemaService {
         country_name: countryMap[res.country]?.country_name || null,
         region_name: regionMap[res.region]?.state_name || null,
         currency_name: currencyMap[res.currency]?.currency_code || null,
+        currency_symbol: currencyMap[res.currency]?.currency_symbol || null,
       }));
 
       return updatedProjects;
@@ -1690,11 +2500,20 @@ class SchemaService {
           ])
         );
 
-        updatedProjects = project.map((res: any) => ({
-          ...(typeof res.toJSON === "function" ? res.toJSON() : res),
-          industry_name:
-            industryMap[res.industry_rid]?.industry_name || res.industry_name,
-        }));
+        updatedProjects = project.map((res: any) => {
+          const jsonRes = typeof res.toJSON === "function" ? res.toJSON() : res;
+          const industryRid = res.industry_rid;
+
+          const mappedIndustryName =
+            industryRid && industryMap[industryRid]?.industry_name !== "Other"
+              ? industryMap[industryRid]?.industry_name
+              : res.industry_name ?? null;
+
+          return {
+            ...jsonRes,
+            industry_name: mappedIndustryName,
+          };
+        });
       }
 
       return updatedProjects;
@@ -1750,15 +2569,15 @@ class SchemaService {
         return {
           ...project,
           keyContact: [],
-          technical_consultant: technicalConsultant
+          technical_point_of_contact: technicalConsultant
             ? technicalConsultant.key_contact_name
-            : "N/A",
+            : null,
           financial_consultant: financialConsultant
             ? financialConsultant.key_contact_name
-            : "N/A",
+            : null,
           project_point_of_contact: pointOfContact
             ? pointOfContact.key_contact_name
-            : "N/A",
+            : null,
         };
       });
 
@@ -1770,7 +2589,7 @@ class SchemaService {
 
   async insertIndustyName(project: any, mainDdSequilze: Sequelize) {
     try {
-      if (project.industry_rid) {
+      if (project.industry_rid && !project.industry_name) {
         const industryResult: any = await mainDdSequilze.query(
           `SELECT industry_name FROM industry WHERE rid = :id`,
           {
@@ -1780,9 +2599,8 @@ class SchemaService {
         );
 
         const industry = industryResult[0];
-        project.dataValues.industry_rid_name = industry?.industry_name || null;
-      } else {
-        project.dataValues.industry_rid_name = null;
+        project.dataValues.industry_name =
+          industry?.industry_name || project.industry_name;
       }
 
       return project;
@@ -1834,9 +2652,13 @@ class SchemaService {
 
   async projectClassificationData(project: any, mainDdSequilze: any) {
     try {
-      let classificationName = null;
+      let classificationName = project.project_classification_other;
 
-      if (project && project.project_classification_rid) {
+      if (
+        project &&
+        project.project_classification_rid &&
+        !project.project_classification_other
+      ) {
         const [rows] = await mainDdSequilze.query(
           `SELECT classification_name FROM project_classification WHERE rid = :rid`,
           {
@@ -1878,16 +2700,18 @@ class SchemaService {
         );
 
         const classificationMap = Object.fromEntries(
-          (Array.isArray(classificationRows) ? classificationRows : []).map((c: any) => [
-            c.rid,
-            c,
-          ])
+          (Array.isArray(classificationRows) ? classificationRows : []).map(
+            (c: any) => [c.rid, c]
+          )
         );
 
         updatedProjects = project.map((res: any) => ({
           ...(typeof res.toJSON === "function" ? res.toJSON() : res),
-          classification_name:
-          classificationMap[res.project_classification_rid]?.classification_name || null,
+          classification_name: res.project_classification_other
+            ? res.project_classification_other
+            : classificationMap[res.project_classification_rid]
+                ?.classification_name || null,
+          is_other_classification: res.project_classification_other !== null
         }));
       }
 
@@ -1897,28 +2721,186 @@ class SchemaService {
     }
   }
 
-  finalProjectSort(project: any[], sortBy: string, sortOrder: string){
-    if (sortBy && sortBy !== "created_datetime") {
-      const sortedList = [...project].sort((a, b) => {
-        const valA = a[sortBy];
-        const valB = b[sortBy];
-  
-        if (valA == null) return sortOrder === 'ASC' ? 1 : -1;
-        if (valB == null) return sortOrder === 'ASC' ? -1 : 1;
-  
-        if (typeof valA === 'string' && typeof valB === 'string') {
-          return sortOrder === 'ASC'
-            ? valA.localeCompare(valB)
-            : valB.localeCompare(valA);
-        }
-  
-        return sortOrder === 'ASC' ? valA - valB : valB - valA;
+  finalProjectSort(
+    project: any[],
+    sortBy: string,
+    sortOrder: string,
+    filters?: Record<string, any>
+  ): any {
+    const filterableClientFields = [
+      "account_name",
+      "country",
+      "region",
+      "currency",
+      "technical_point_of_contact",
+      "financial_consultant",
+      "project_point_of_contact",
+      "classification_name",
+      "industry_name",
+    ];
+
+    const enumFields = ["country", "currency", "region", "classification_name"];
+
+    let filteredProjects = [...project];
+
+    const hasValidFilters = filterableClientFields.some((key) => {
+      const f = filters?.[key];
+      return (
+        f &&
+        Object.keys(f).some(
+          (k) => f[k] !== undefined && f[k] !== null && f[k] !== ""
+        )
+      );
+    });
+
+    if (hasValidFilters && filters) {
+      filteredProjects = filteredProjects.filter((project) => {
+        return filterableClientFields.every((key) => {
+          const filter = filters[key];
+          if (!filter || Object.keys(filter).length === 0) return true;
+
+          const value = project[key];
+          const isEnumField = enumFields.includes(key);
+
+          if (isEnumField) {
+            if(key === "classification_name"){
+              if (filter.equals !== undefined) {
+                if(filter.equals == "Other"){
+                  return project.is_other_classification === true;
+                }else{
+                  return !project.is_other_classification && project.classification_name === filter.equals;
+                }
+              }
+              if (filter.not_equals !== undefined) {
+                if(filter.not_equals == "Other"){
+                  return !project.is_other_classification;
+                }else{
+                  return project.is_other_classification === true || project.classification_name === null || (project.is_other_classification === false && project.classification_name !== filter.not_equals);
+                }
+              }
+              if (filter.is_empty === true) {
+                return value === null || value === "";
+              }
+              if (filter.in !== undefined && Array.isArray(filter.in)) {
+                const containsOther = filter.in.includes("Other");
+                const hasOtherOnly = filter.in.length === 1 && containsOther;
+
+                if (hasOtherOnly) {
+                  return project.project_classification_other !== null && project.is_other_classification;
+                } else if (containsOther) {
+                  return (
+                    (filter.in.includes(value) && !project.is_other_classification) ||
+                    (project.project_classification_other !== null && project.is_other_classification)
+                  );
+                }else{
+                  return filter.in.includes(value);
+                }
+              }
+            }else{
+              if (filter.equals !== undefined) {
+                return value === filter.equals;
+              }
+              if (filter.not_equals !== undefined) {
+                return value !== filter.not_equals;
+              }
+              if (filter.is_empty === true) {
+                return value === null || value === "";
+              }
+              if (filter.in !== undefined && Array.isArray(filter.in)) {
+                return filter.in.includes(value);
+              }
+            }
+          } else {
+            if (filter.equals !== undefined) {
+              return value === filter.equals;
+            }
+            if (filter.not_equals !== undefined) {
+              return value !== filter.not_equals;
+            }
+            if (filter.contains !== undefined) {
+              if (typeof value === "string") {
+                return value
+                  .toLowerCase()
+                  .includes(filter.contains.toLowerCase());
+              }
+              return false;
+            }
+            if (
+              filter.not_contains !== undefined &&
+              typeof value === "string"
+            ) {
+              return !value
+                .toLowerCase()
+                .includes(filter.not_contains.toLowerCase());
+            }
+            if (filter.is_empty === true) {
+              return value === null || value === "";
+            }
+          }
+
+          return true;
+        });
       });
-  
-      return sortedList;
     }
-  
-    return project;
+
+    if (!sortBy || sortBy === "created_datetime") {
+      return filteredProjects;
+    }
+
+    const sortedList = filteredProjects.sort((a, b) => {
+      const valA = a[sortBy];
+      const valB = b[sortBy];
+
+      if (valA == null) return sortOrder === "ASC" ? 1 : -1;
+      if (valB == null) return sortOrder === "ASC" ? -1 : 1;
+
+      if (typeof valA === "string" && typeof valB === "string") {
+        return sortOrder === "ASC"
+          ? valA.localeCompare(valB)
+          : valB.localeCompare(valA);
+      }
+
+      return sortOrder === "ASC" ? valA - valB : valB - valA;
+    });
+
+    return sortedList;
+  }
+
+  async insertUserDetails(projectData: any): Promise<any> {
+    try {
+      const mainDbInit = await initMainDbSequelize();
+
+      const createdById = projectData.created_by;
+      const modifiedById = projectData.modified_by;
+
+      const getUserFullName = async (userId: string) => {
+        if (!userId) return null;
+
+        const [results] = await mainDbInit.query(
+          `SELECT first_name, middle_name, last_name FROM "user" WHERE rid = :userId`,
+          {
+            replacements: { userId },
+            type: "SELECT",
+          }
+        );
+
+        if (!results) return null;
+
+        const { first_name, middle_name, last_name } = results as any;
+        return [first_name, middle_name, last_name].filter(Boolean).join(" ");
+      };
+
+      const createdName = await getUserFullName(createdById);
+      const modifiedName = await getUserFullName(modifiedById);
+
+      return {
+        ...projectData,
+        created_name: createdName || null,
+        modified_name: modifiedName || null,
+      };
+    } catch (err) {
+      throw new Error("Error adding user details" + (err as Error).message);
+    }
   }
 }
 

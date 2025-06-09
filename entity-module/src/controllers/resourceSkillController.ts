@@ -373,7 +373,25 @@ async function resourceSkillById(req: Request, res: Response): Promise<void> {
   async function getSkillSubTypes (req: Request, res: Response): Promise<void> {
     const methodName = "getSkillSubTypes";
     try {
-       const result = await resourceSkillService.getSkillSubTypes(req.query.skillTypeRid as string);
+      let skillTypeRids: string[] = [];
+    const raw = req.query.skillTypeRids;
+    if (Array.isArray(raw)) {
+      skillTypeRids = raw as string[];
+    } else if (typeof raw === 'string') {
+      if (raw.trim().startsWith('[')) {
+        try {
+          skillTypeRids = JSON.parse(raw);
+        } catch {
+          skillTypeRids = [];
+        }
+      } else {
+        skillTypeRids = raw
+        .split(',')
+        .map(rid => rid.trim().replace(/^"|"$/g, '')) // ✅ remove quotes
+        .filter(Boolean);      
+      }
+    }
+       const result = await resourceSkillService.getSkillSubTypes(skillTypeRids);
 
        if (result.statusCode === HttpStatus.SUCCESS) {
          successLog(methodName);

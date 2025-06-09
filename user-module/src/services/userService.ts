@@ -675,7 +675,9 @@ async getAllUserPermission(userId: string, profileId: string) {
     // Menus
     const menuAccess = await ProfileMenuAccess.findAll({
       where: { profile_id: profileId},
-      include: [{ model: Menu, as: "menu" }]
+      include: [{ model: Menu, as: "menu" }],
+      order: [[{ model: Menu, as: "menu" }, "menu_desc", "ASC"]],
+      
     });
     console.log(`After menuAccess retrieve: ${new Date(Date.now()).toISOString()}`);
 
@@ -698,7 +700,8 @@ async getAllUserPermission(userId: string, profileId: string) {
     // Modules
     const moduleAccess = await ProfileModuleAccess.findAll({
       where: { profile_id: profileId},
-      include: [{ model: MenuModule, as: "menu_module" }]
+      include: [{ model: MenuModule, as: "menu_module" }],
+       order: [[{ model: MenuModule, as: "menu_module" }, "module_name", "ASC"]],
     });
     console.log(`After module access retrieve: ${new Date(Date.now()).toISOString()}`);
 
@@ -722,7 +725,8 @@ async getAllUserPermission(userId: string, profileId: string) {
     const permissionAccess = await ProfilePermissionAccess.findAll({
       where: { profile_id: profileId},
       include: [{ model: ModulePermission, as: "module_permission" }],
-      indexHints: [{ type: IndexHints.USE, values: ['idx_profile_permission_access_profile_id'] }]
+      indexHints: [{ type: IndexHints.USE, values: ['idx_profile_permission_access_profile_id'] }],
+       order: [[{ model: ModulePermission, as: "module_permission" }, "permission_desc", "ASC"]]
     });
     console.log(`After permission access retrieve: ${new Date(Date.now()).toISOString()}`);
 
@@ -746,7 +750,8 @@ async getAllUserPermission(userId: string, profileId: string) {
     const fieldAccess = await ProfileFieldsAccess.findAll({
       where: { profile_id: profileId },
       include: [{ model: PermissionField, as: "permission_field" }],
-      indexHints: [{ type: IndexHints.USE, values: ['idx_profile_fields_access_profile_id'] }]
+      indexHints: [{ type: IndexHints.USE, values: ['idx_profile_fields_access_profile_id'] }],
+       order: [[{ model: PermissionField, as: "permission_field" }, "field_desc", "ASC"]],
     });
     console.log(`After fieldAccess retrieve: ${new Date(Date.now()).toISOString()}`);
 
@@ -1039,36 +1044,36 @@ async getAllUserPermission(userId: string, profileId: string) {
             Sequelize.fn('LOWER', Sequelize.col(dbField)),
             Sequelize.fn('LOWER', fieldFilter.equals)
           );
-        } else if (typeof fieldFilter === 'string') {
+        } 
+        else if (fieldFilter.not_equals) {
+          const value = fieldFilter.not_equals.toLowerCase();
+          whereClause[dbField] = Sequelize.where(
+            Sequelize.fn('LOWER', Sequelize.col(dbField)),
+            '!=',
+            value
+        );
+      }
+        else if (typeof fieldFilter === 'string') {
           whereClause[dbField] = { [Op.eq]: fieldFilter };
         }
       }
     });
   
     // Special handling for status field
-    if (filters.status) {
-      const statusFilter = filters.status;
-      
-      // If status is a string, use it directly
-      if (typeof statusFilter === 'string') {
-        whereClause['status'] = statusFilter;
-      } 
-      // If status has an equals property, use that value directly
-      else if (statusFilter.equals && typeof statusFilter.equals === 'string') {
-        whereClause['status'] = statusFilter.equals;
-      }
-      // For backward compatibility, check other properties but use direct equality
-      else if (statusFilter.startsWith && typeof statusFilter.startsWith === 'string') {
-        whereClause['status'] = statusFilter.startsWith;
-      } else if (statusFilter.endWith && typeof statusFilter.endWith === 'string') {
-        whereClause['status'] = statusFilter.endWith;
-      } else if (statusFilter.contains && typeof statusFilter.contains === 'string') {
-        whereClause['status'] = statusFilter.contains;
+   
+
+      if (filters.status) {
+       whereClause["$status$"] = this.getMultiValueFilter(filters.status, 'status');
+      if (Array.isArray(filters.profile)) {
+        whereClause["$status$"] = {
+          [Op.in]: filters.status
+        };
       }
     }
   
     // Handle profile filters
     if (filters.profile) {
+       whereClause["$profile.profile_name$"] = this.getMultiValueFilter(filters.profile, 'profile.profile_name');
       if (Array.isArray(filters.profile)) {
         whereClause["$profile.profile_name$"] = {
           [Op.in]: filters.profile
@@ -1078,6 +1083,62 @@ async getAllUserPermission(userId: string, profileId: string) {
   
     return whereClause;
   }
+  private getMultiValueFilter(filter: any, fieldName: string): any {
+  if (!filter) return null;
+
+  const conditions: any[] = [];
+  const colName = fieldName.replace(/\$/g, '');
+
+  // Case-insensitive exact match
+  if (typeof filter.equals === 'string') {
+    conditions.push(
+      Sequelize.where(
+        Sequelize.fn('LOWER', Sequelize.col(colName)),
+        '=',
+        filter.equals.toLowerCase()
+      )
+    );
+  }
+
+  // Case-insensitive NOT EQUALS
+  if (typeof filter.not_equals === 'string') {
+    conditions.push(
+      Sequelize.where(
+        Sequelize.fn('LOWER', Sequelize.col(colName)),
+        '!=',
+        filter.not_equals.toLowerCase()
+      )
+    );
+  }
+
+  // Case-insensitive IN match
+  if (Array.isArray(filter.in) && filter.in.length > 0) {
+    conditions.push({
+      [Op.or]: filter.in.map((val: string) =>
+        Sequelize.where(
+          Sequelize.fn('LOWER', Sequelize.col(colName)),
+          '=',
+          val.toLowerCase()
+        )
+      ),
+    });
+  }
+
+  // Match null or empty string
+  if (filter.is_empty === true) {
+  conditions.push({
+    [Op.or]: [
+      Sequelize.where(Sequelize.col(colName), { [Op.is]: null }),
+      Sequelize.where(Sequelize.col(colName), '')
+    ]
+  });
+}
+
+  if (conditions.length === 0) return null;
+
+  return { [Op.and]: conditions };
+}
+
 
   /**
    * Retrieves the sorting parameters for database queries based on the provided `sortBy` and `sortOrder`.
@@ -1229,10 +1290,10 @@ const rawResult = users || [];
        users = cleanedUsers.map((user: any) => {
         const { profile, business_teams, ...basicUserInfo } = user;
         return {
-          "Username": basicUserInfo.first_name || "NA",
-          "Email": basicUserInfo.email || "NA", 
-          "Profile": profile?.profile_name || "NA",
-          "Status": basicUserInfo.status ? (basicUserInfo.status.toLowerCase() === 'active' ? "Active" : "In-Active") : "NA",
+          "Username": basicUserInfo.first_name || "-",
+          "Email": basicUserInfo.email || "-", 
+          "Profile": profile?.profile_name || "-",
+          "Status": basicUserInfo.status ? (basicUserInfo.status.toLowerCase() === 'active' ? "Active" : "In-Active") : "-",
         };
       });
 
@@ -1400,11 +1461,11 @@ const rawResult = users || [];
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { rid: string; user_role: string; user_id: string; permissions: any[] } | null;
+    data?: { rid: string; user_role: string; user_id: string;user_name:string, permissions: any[] } | null;
   }> {
     try {
       const roles = await User.findOne({
-        attributes: ["role_rid", "rid", "profile_rid"],
+        attributes: ["role_rid", "rid", "profile_rid","first_name"],
         where: { rid: userId },
         include: [
           {
@@ -1436,6 +1497,7 @@ const rawResult = users || [];
           rid: roles.role_rid || "",
           user_role: roles.business_teams?.business_teams,
           user_id: roles.rid,
+          user_name:roles.first_name,
           permissions
         },
       };
@@ -1472,17 +1534,17 @@ const rawResult = users || [];
       // For field permissions, merge read/edit and extended flags
       mergedPermissions.push({
         ...profilePerm,
-        read: profilePerm.read,
-        edit: profilePerm.edit,
-        hasReadExtendedPermsission: profilePerm.read ? false : (userPerm?.read ?? false),
-        hasEditExtendedPermsission: profilePerm.edit ? false : (userPerm?.edit ?? false),
+        read: profilePerm.read ? true : (userPerm?.read === true),
+        edit: profilePerm.edit ? true : (userPerm?.edit === true),
+        hasReadExtendedPermsission: profilePerm.read ? false : true,
+        hasEditExtendedPermsission: profilePerm.edit ? false : true,
       });
     } else {
       // For other types (menu, module, etc.)
       mergedPermissions.push({
         ...profilePerm,
-        is_enabled: profilePerm.is_enabled,
-        has_extended_permission: profilePerm.is_enabled ? false : (userPerm?.is_enabled === true),
+        is_enabled: profilePerm.is_enabled ? true : (userPerm?.is_enabled === true),
+        has_extended_permission: profilePerm.is_enabled ? false : true,
       });
     }
 
@@ -1528,7 +1590,7 @@ const rawResult = users || [];
     try {
     const workbook = new ExcelJS.Workbook();
     const headerSheet = workbook.addWorksheet('Headers')
-    const headers = ['Profile Name','Created By','Created On'];
+    const headers = ['Profile Name','Profile Description','Created On','Created By',];
     headerSheet.addRow(headers);
     const profile = await Profile.findByPk(profileId, {
           include: [
@@ -1545,11 +1607,14 @@ const rawResult = users || [];
       const createdByName = profile.creator
         ? `${profile.creator.first_name} ${profile.creator.last_name}`
         : '';
-
+      const createdDate = profile.created_datetime
+        ? new Date(profile.created_datetime).toISOString().slice(0, 10)
+        : "";
       headerSheet.addRow([
         profile.profile_name,
-        createdByName,
-        profile.created_datetime
+        profile.profile_description,
+        createdDate,
+        createdByName
       ]);
     }
     const sheet = workbook.addWorksheet('Menu');
@@ -1703,7 +1768,7 @@ if (fieldData.length > 0) {
 function getPermissionKey(permission: any): string {
   switch (permission.type) {
     case 'field':
-      return `field::${permission.permission_id}`;
+      return `field::${permission.field_id}`;
     case 'module':
       return `module::${permission.module_id}`;
     case 'menu':

@@ -1,11 +1,12 @@
 import { Op, Sequelize,UniqueConstraintError  } from "sequelize";
 import { HttpStatus } from "../utils/constant";
 import { IAccount, IUpdateAccount,IKeyContactDetail } from "../utils/types";
+import { getTableSchemaByEntity} from  "../utils/helpers";
 import SchemaService from "./schemaService";
 import { models } from "../models";
-import { initOrgSequelize } from "../config/orgdbDataSource";
 import Decimal from "decimal.js";
-
+import { States } from "../models/stateModel";
+import currency from "currency.js";
 
 const { Account, Country, Currency,Industry } = models;
 
@@ -40,12 +41,12 @@ class AccountService {
    * @returns {Promise<{ statusCode: number, message: string, data?: { account: any } }>}
    * - An object containing the status code, message, and retrieved account data.
    */
-  async accountList(
+async accountList(
     page: number = 1,
     limit: number = 10,
     search: string,
     filters: Record<string, any> = {},
-    sortBy: string = "created_datetime",
+    sortBy: string = "created_datetime", 
     sortOrder: string = "ASC",
     globalFilters: Record<string, string[]> = {},
     fiscalYear: number | "FY-All"
@@ -57,6 +58,9 @@ class AccountService {
   }> {
     try {
       const repository = this.getAccountRepository();
+      
+      // Get USD currency_rid
+      const usdCurrency = await this.getUSDCurrency();
       
       // Parse filters if it's a string
       const parsedFilters = typeof filters === 'string' ? 
@@ -74,11 +78,34 @@ class AccountService {
       );
 
       const order: any[] = [];
-
-      if (finalSortBy !== "country" && finalSortBy !== "currency" && finalSortBy !== "industry") {
+      const excludedSortFields = [
+        'country',
+        'currency',
+        'industry',
+        'professional_services_consultant',
+        'finance_executive',
+        'finance_lead'
+      ];
+      const numericFields = [
+        "total_projects",
+        "total_project_cost",
+        "total_project_hours",
+        "qualifying_project_hours_fed",
+        "qualifying_project_qre_fed",
+        "qualifying_project_rd_credits_fed",
+        "total_projects_rd_credits"
+      ];
+      if (finalSortBy && !excludedSortFields.includes(finalSortBy)) {
+        if (numericFields.includes(finalSortBy)) {
+        order.push([
+          Sequelize.cast(Sequelize.col(finalSortBy), 'DECIMAL'),
+          finalSortOrder
+        ]);
+      } else {
         order.push([finalSortBy, finalSortOrder]);
       }
-
+      }
+  
       if (finalSortBy === "country") {
         order.push([
           { model: Country, as: "country" },
@@ -114,11 +141,12 @@ class AccountService {
         baseWhereClause.parent_account_rid = { [Op.is]: null } as any;
       }
 
-      // First, get accounts based on the filters
-      const parentAccounts = await repository.findAll({
+      // Check if filters contain key_contact filter
+      const hasKeyContactFilter = !!(parsedFilters?.finance_executive || parsedFilters?.professional_services_consultant || parsedFilters?.finance_lead)  ||
+           ['professional_services_consultant', 'financial_lead', 'finance_executive'].includes(finalSortBy || '');
+      // Build the query options dynamically
+      const queryOptions: any = {
         where: baseWhereClause,
-        limit,
-        offset,
         order,
         include: [
           {
@@ -130,7 +158,7 @@ class AccountService {
           {
             model: Currency,
             as: "currency",
-            attributes: ["rid", "currency_code"],
+            attributes: ["rid", "currency_code", "currency_symbol"],
             required: false,
           },
           {
@@ -139,103 +167,125 @@ class AccountService {
             attributes: ["rid", "industry_name"],
             required: false,
           }
-        ],
-      });
+        ]
+      };
+    // Only apply pagination if key_contact filter is NOT present
+    if (!hasKeyContactFilter) {
+      queryOptions.limit = limit;
+      queryOptions.offset = offset;
+    }
+    const parentAccounts = await repository.findAll(queryOptions);
 
-      // Then, for each account, fetch its child accounts separately
-      const accountIds = parentAccounts.map((account: any) => account.rid);
-      
-      if(accountIds.length > 0) {
-        const childAccounts = await repository.findAll({
-          where: {
-            parent_account_rid: {
-              [Op.in]: accountIds,
-            },
-            ...(Object.keys(childClause).length > 0 ? childClause : {}),
+    // Set USD currency for accounts with no currency
+    parentAccounts.forEach((account: any) => {
+      if (!account.currency_rid || account.currency_rid === '') {
+        account.currency_rid = usdCurrency?.rid;
+        account.setDataValue('currency', usdCurrency);
+      }      
+    });
+
+    // Then, for each account, fetch its child accounts separately
+    const accountIds = parentAccounts.map((account: any) => account.rid);
+    //  const { whereClauseChildAccount } = this.buildchildAccountWhereClause(parsedFilters);
+    if(accountIds.length > 0) {
+      const childAccounts = await repository.findAll({
+        where: {
+          parent_account_rid: {
+            [Op.in]: accountIds,
           },
-          include: [
-            {
-              model: Country,
-              as: "country",
-              attributes: ["rid", "country_name"]
-            },
-            {
-              model: Currency,
-              as: "currency",
-              attributes: ["rid", "currency_code"]
-            },
-            {
-              model: Account,
-              as: "parent_account",
-              attributes: ["rid", "account_name"],
-            },
-            {
-              model: Industry,
-              as: "industry",
-              attributes: ["rid", "industry_name"],
-              required: false,
-            }
-          ]
-        });
-    
-        // Group child accounts by parent_account_rid
-        const childAccountsByParent = childAccounts.reduce((acc: any, child: any) => {
-          if (!acc[child.parent_account_rid]) {
-            acc[child.parent_account_rid] = [];
-          }
-          acc[child.parent_account_rid].push(child);
-          return acc;
-        }, {});
-
-        // Attach child accounts to their respective parent accounts
-        parentAccounts.forEach((account: any) => {
-          account.setDataValue('child_accounts', childAccountsByParent[account.rid] || []);
-        });
-      } else {
-        // If no parent accounts found, set empty child_accounts array
-        parentAccounts.forEach((account: any) => {
-          account.setDataValue('child_accounts', []);
-        });
-      }
-
-      const updatedAccount = await this.schemaService.insertKeyContactInfo(parentAccounts);
-
-      // Get total count without pagination
-      const totalCount = await repository.count({
-        where: baseWhereClause,
-        distinct: true,
+      //    ...whereClauseChildAccount,
+          ...(Object.keys(childClause).length > 0 ? childClause : {}),
+        },
         include: [
           {
             model: Country,
             as: "country",
-            attributes: []
+            attributes: ["rid", "country_name"]
           },
           {
             model: Currency,
             as: "currency",
-            attributes: []
+            attributes: ["rid", "currency_code", "currency_symbol"]
+          },
+          {
+            model: Account,
+            as: "parent_account",
+            attributes: ["rid", "account_name"],
           },
           {
             model: Industry,
             as: "industry",
-            attributes: []
+            attributes: ["rid", "industry_name"],
+            required: false,
           }
         ]
       });
 
-      return {
-        statusCode: HttpStatus.SUCCESS,
-        message: HttpStatus.SUCCESS_MESSAGE,
-        data: {
-          account: updatedAccount,
-          count: totalCount,
-        },
-      };
-    } catch (err) {
-      return this.throwServiceError(err as Error);
-    }
-  }
+      // Set USD currency for child accounts with no currency
+      childAccounts.forEach((account: any) => {
+        if (!account.currency_rid || account.currency_rid === '') {
+          account.currency_rid = usdCurrency?.rid;
+          account.setDataValue('currency', usdCurrency);
+        }        
+      });
 
+      // Group child accounts by parent_account_rid
+      const childAccountsByParent = childAccounts.reduce((acc: any, child: any) => {
+        if (!acc[child.parent_account_rid]) {
+          acc[child.parent_account_rid] = [];
+        }
+        acc[child.parent_account_rid].push(child);
+        return acc;
+      }, {});
+
+      // Attach child accounts to their respective parent accounts
+      parentAccounts.forEach((account: any) => {
+        account.setDataValue('child_accounts', childAccountsByParent[account.rid] || []);
+      });
+    } else {
+      // If no parent accounts found, set empty child_accounts array
+      parentAccounts.forEach((account: any) => {
+        account.setDataValue('child_accounts', []);
+      });
+    }
+
+    const updatedAccount = await this.schemaService.insertKeyContactInfo(parentAccounts,filters,limit,offset,finalSortBy,finalSortOrder,'create');
+
+    // Get total count without pagination
+    const totalCount = await repository.count({
+      where: baseWhereClause,
+      distinct: true,
+      include: [
+        {
+          model: Country,
+          as: "country",
+          attributes: []
+        },
+        {
+          model: Currency,
+          as: "currency",
+          attributes: []
+        },
+        {
+          model: Industry,
+          as: "industry",
+          attributes: []
+        }
+      ]
+    });
+
+    return {
+      statusCode: HttpStatus.SUCCESS,
+      message: HttpStatus.SUCCESS_MESSAGE,
+      data: {
+        account: updatedAccount,
+        count: !hasKeyContactFilter ? totalCount :updatedAccount?.total,
+      },
+    };
+  } catch (err) {
+    return this.throwServiceError(err as Error);
+  }
+}
        /**
    * Retrieves the all  account details with filters and search for exporting as excel.
    *
@@ -275,12 +325,35 @@ class AccountService {
           sortBy,
           sortOrder
         );
-  
-        const order: any[] = [];
-  
-        if (finalSortBy !== "country" && finalSortBy !== "currency" && finalSortBy !== "industry") {
-          order.push([finalSortBy, finalSortOrder]);
-        }
+
+      const order: any[] = [];
+      const excludedSortFields = [
+        'country',
+        'currency',
+        'industry',
+        'finance_lead',
+        'finance_executive',
+        'professional_services_consultant'
+      ];
+      const numericFields = [
+        "total_projects",
+        "total_project_cost",
+        "total_project_hours",
+        "qualifying_project_hours_fed",
+        "qualifying_project_qre_fed",
+        "qualifying_project_rd_credits_fed",
+        "total_projects_rd_credits"
+      ];
+      if (finalSortBy && !excludedSortFields.includes(finalSortBy)) {
+        if (numericFields.includes(finalSortBy)) {
+        order.push([
+          Sequelize.cast(Sequelize.col(finalSortBy), 'DECIMAL'),
+          finalSortOrder
+        ]);
+      } else {
+        order.push([finalSortBy, finalSortOrder]);
+      }
+      }
   
         if (finalSortBy === "country") {
           order.push([
@@ -332,7 +405,7 @@ class AccountService {
             {
               model: Currency,
               as: "currency",
-              attributes: ["rid", "currency_code"],
+              attributes: ["rid", "currency_code", "currency_symbol"],
               required: false,
             },
             {
@@ -364,7 +437,7 @@ class AccountService {
               {
                 model: Currency,
                 as: "currency",
-                attributes: ["rid", "currency_code"]
+                attributes: ["rid", "currency_code", "currency_symbol"]
               },
               {
                 model: Industry,
@@ -398,49 +471,116 @@ class AccountService {
             account.setDataValue('child_accounts', []);
           });
         }
-        const rawResult = parentAccounts || [];
-        const cleanedUsers = rawResult.map((user:any) => {
-          if (typeof user.get === 'function') {
-            return user.get({ plain: true }); 
-          } else {
-            return user.dataValues;
-          }
-        });
+        const updatedAccount = await this.schemaService.insertKeyContactInfo(parentAccounts,filters,0,0,finalSortBy,finalSortOrder,'download');
+        const rawResult = updatedAccount?.data || [];
+        const cleanedUsers = rawResult;
+        const emptyRow = {
+          "Account Name": "",
+          "Industry": "",
+          "Country": "",
+          "Total Projects": "",
+          "Total Project Hours": "",
+          "Total Cost": "",
+          "Estimated R&D Hours": "",
+          "QRE": "",
+          "Estimated R&D Credits": "",
+          "Actual R&D Credits": "",
+          "Finance Executive": "",
+          "Finance Lead": "",
+          "Professional Services Consultant": "",
+          "Account ID": ""
+        };
+
+    // If no data found, return the empty row
+    if (cleanedUsers.length === 0) {
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          account: [emptyRow]
+        },
+      };
+    }
+        const formatNumberForExport = (value: any, currency_symbol: string): string => {
+          if (value == null || value === '') return '-';
+          const num = Number(value);
+          if (isNaN(num)) return '-';
+          // Use currency.js to format the number with the provided currency symbol
+          return currency(num, {
+            symbol: currency_symbol? currency_symbol : '$',
+            precision: 2,
+            pattern: '! #',
+            separator: ',',
+            decimal: '.'
+          }).format();
+        };
         let exportDetails: any[] = [];
         cleanedUsers.forEach((account: any) => {
+          const currency_symbol = account?.currency?.currency_symbol;
+
           const baseRow = {
-            "Account Name": account?.account_name || "NA",
-            "Parent Account": account?.parent_account?.account_name || "NA",
-            "Account ID": account?.r_number || "NA",
-            "Industry": account?.industry?.industry_name || "NA",
-            "Country": account?.country?.country_name || "NA",
-            "Currency": account?.currency?.currency_code || "NA",
-            "Annual Revenue": account?.annual_revenue ? new Intl.NumberFormat('en-US', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-              useGrouping: true
-            }).format(Number(account.annual_revenue)) : "NA",
-            "Status": account?.status.toLowerCase() === 'active' ? 'Active' : 'In-Active',
+            "Account Name": account?.account_name || "-",
+            "Industry": account?.industry?.industry_name || "-",
+            "Country": account?.country?.country_name || "-",
+            "Total Projects": account?.total_projects || '-',
+            "Total Project Hours": account?.total_project_hours || "-",
+            "Total Cost": formatNumberForExport(account?.total_project_cost, currency_symbol) ||  "-",
+            "Estimated R&D Hours": account?.qualifying_project_hours_fed || "-",
+            "QRE": formatNumberForExport(account?.qualifying_project_qre_fed, currency_symbol) || "-",
+            "Estimated R&D Credits": formatNumberForExport(account?.qualifying_project_rd_credits_fed, currency_symbol) || "-",
+            "Actual R&D Credits": formatNumberForExport(account?.total_projects_rd_credits, currency_symbol) || "-",
+            "Finance Executive":account?.finance_executive || '-',
+            "Finance Lead":account?.finance_lead || '-',
+            "Professional Services Consultant":account?.professional_services_consultant || '-',
+            "Account ID": account?.r_number || "-"
           };
           exportDetails.push(baseRow);
           if (Array.isArray(account.child_accounts) && account.child_accounts.length > 0) {
             account.child_accounts.forEach((child: any) => {
+              const child_currency_symbol = child?.currency?.currency_symbol;
+
               exportDetails.push({
-                "Account Name": child?.account_name || "NA",
-                "Parent Account": account?.account_name || "NA", // parent is current account
-                "Account ID": child?.r_number || "NA",
-                "Industry": child?.industry?.industry_name || "NA",
-                "Country": child?.country?.country_name || "NA",
-                "Currency": child?.currency?.currency_code || "NA",
-                "Annual Revenue": account?.annual_revenue ? new Intl.NumberFormat('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                  useGrouping: true
-                }).format(Number(account.annual_revenue)) : "NA",                
-                "Status": child?.status.toLowerCase() === 'active' ? 'Active' : 'In-Active',
+                "Account Name": child?.account_name || "-",
+                "Industry": child?.industry?.industry_name || "-",
+                "Country": child?.country?.country_name || "-",
+                "Total Projects": child?.total_projects || '-',
+                "Total Project Hours": child?.total_project_hours || "-",
+                "Total Cost": formatNumberForExport(child?.total_project_cost, child_currency_symbol) || "-",
+                "Estimated R&D Hours": child?.qualifying_project_hours_fed || "-",
+                "QRE": formatNumberForExport(child?.qualifying_project_qre_fed, child_currency_symbol) || "-",
+                "Estimated R&D Credits": formatNumberForExport(child?.qualifying_project_rd_credits_fed, child_currency_symbol) || "-",
+                "Actual R&D Credits": formatNumberForExport(child?.total_projects_rd_credits, child_currency_symbol) || "-",
+                "Finance Executive":child?.finance_executive || '-',
+                "Finance Lead":child?.finance_lead || '-',
+                "Professional Services Consultant":child?.professional_services_consultant || '-',
+                "Account ID": child?.r_number || "-"
               });
+                if(child?.projects_by_fiscal_year.length >0)
+                { 
+                   child.projects_by_fiscal_year.forEach((fiscalData: any) => {
+                  exportDetails.push({
+                      "Account Name": fiscalData?.fiscal_year || "-",
+                      "Industry": child?.industry?.industry_name || "-",
+                      "Country": child?.country?.country_name || "-",
+                      "Total Projects": fiscalData?.total_projects || '-',
+                      "Total Project Hours": fiscalData?.total_project_hours || "-",
+                      "Total Cost": formatNumberForExport(fiscalData?.total_project_cost, child_currency_symbol) || "-",
+                      "Estimated R&D Hours": fiscalData?.qualifying_project_hours_fed || "-",
+                      "QRE": formatNumberForExport(fiscalData?.qualifying_project_qre_fed, child_currency_symbol) || "-",
+                      "Estimated R&D Credits": formatNumberForExport(fiscalData?.qualifying_project_rd_credits_fed, child_currency_symbol) || "-",
+                      "Actual R&D Credits": formatNumberForExport(fiscalData?.total_projects_rd_credits, child_currency_symbol) || "-",
+                      "Finance Executive":child?.finance_executive || '-',
+                      "Finance Lead":child?.finance_lead || '-',
+                      "Professional Services Consultant":child?.professional_services_consultant || '-',
+                      "Account ID": child?.r_number || "-"        
+                     });  
+                  });
+                }
             });
+          
+         
           }
+          
         });
         return {
           statusCode: HttpStatus.SUCCESS,
@@ -545,6 +685,10 @@ class AccountService {
           account.rid,
           userId
         );
+         await this.insertClientTemplateDetails(
+          parent_account?.r_number || '',
+          account.rid
+        );
         await this.schemaService.manageKeyContacts(
           key_contacts,
           account.rid,
@@ -560,6 +704,10 @@ class AccountService {
           accountData,
           account.rid,
           userId
+        );
+         await this.insertClientTemplateDetails(
+          account.r_number || '',
+          account.rid
         );
         await this.schemaService.manageKeyContacts(
           key_contacts,
@@ -585,6 +733,39 @@ class AccountService {
       }
     }
   }
+async insertClientTemplateDetails(
+  account_number: string,
+  account_rid: string,
+) {
+  const entityTypes = ['resource','resource_cost','resource_skill','project','project_resource'];
+  
+  // Loop through each entity type
+  for (const entity of entityTypes) {
+    try {
+      // Step 1: Insert client template details for the current entity
+      const templateDetailsRid = await this.schemaService.insertClientTemplateDetails(
+        account_number,
+        entity,
+        entity,
+        account_rid
+      );
+
+      const tableSchema = getTableSchemaByEntity(entity);
+      // Step 2: Insert metadata using the rid from the previous step
+      await this.schemaService.insertClientTemplateMetaDataDetails(
+        account_number,
+        entity,
+        tableSchema,
+        templateDetailsRid,
+        account_rid
+      );
+    } catch (error) {
+      console.error(`Error processing entity "${entity}":`, error);
+      throw error; // Propagate the error if needed
+    }
+  }
+}
+
 
   async updateAccount(accountData: IUpdateAccount, userId: string): Promise<{
     statusCode: number;
@@ -678,7 +859,7 @@ class AccountService {
 
       if (default_parent_id && data_storage === "store_in_parent") {
         await this.schemaService.updateAccountDetails(
-          default_parent_id,
+          account_rid,
           accountData,
           parent_account?.r_number,
           userId
@@ -774,17 +955,24 @@ class AccountService {
           {
             model: Account,
             as: "child_accounts",
+            required: false,
           },
           {
             model: Country,
             as: "country",
-            attributes: ["country_name"],
+            attributes: ["country_name","country_code"],
+            required: false,
+          },
+          {
+            model: States,
+            as: "region_details",
+            attributes: ["state_name"],
             required: false,
           },
           {
             model: Currency,
             as: "currency",
-            attributes: ["currency_code"],
+            attributes: ["currency_code", "currency_symbol"],
             required: false,
           },
           {
@@ -797,6 +985,7 @@ class AccountService {
             model: Account,
             as: "parent_account",
             attributes: ["account_name"],
+            required: false,
           },
           {
             model: Industry,
@@ -806,6 +995,17 @@ class AccountService {
           }
         ],
       });
+
+      // Get USD currency_rid
+      const usdCurrency = await this.getUSDCurrency();
+
+      // If currency_rid is null or empty, assign USD currency
+      if (!accountById?.currency_rid || accountById.currency_rid === '') {
+        if (accountById) {
+          accountById.currency_rid = usdCurrency?.rid;
+          (accountById as any).setDataValue('currency', usdCurrency);
+        }
+      }
 
       let acconuntNumber = accountById?.r_number || "";
       if(accountById?.storage_type === "store_in_parent"){
@@ -860,14 +1060,16 @@ class AccountService {
     }
   }
 
-  async getKeyContactRoles(): Promise<{
+  async getKeyContactRoles(
+    entity_type: string,
+  ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
     data?: { keyContactRoles: any };
   }> {
     try {
-      const keyContactRoles = await this.schemaService.fetchKeyContactRoles();
+      const keyContactRoles = await this.schemaService.fetchKeyContactRoles(entity_type);
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -1017,8 +1219,8 @@ class AccountService {
       whereClause.rid = this.getFieldFilter(filters.account_id, "rid");
     }
 
-    if (filters.industry) {
-      whereClause.industry_rid = this.getFieldFilter(filters.industry, "industry_rid");
+     if (filters.industry) {
+      whereClause["$industry.industry_name$"] = this.getMultiValueFilter(filters.industry,"industry.industry_name");
     }
 
     if (filters.status) {
@@ -1032,16 +1234,38 @@ class AccountService {
     }
 
     if (filters.annual_revenue) {
-      whereClause.annual_revenue = this.getAnnualRevenueFilter(filters.annual_revenue);
+      whereClause.annual_revenue = this.getNumericFilter(filters.annual_revenue,'annual_revenue');
+    }
+
+    if (filters.total_projects) {
+      whereClause.total_projects = this.getNumericFilter(filters.total_projects,'total_projects');
+    }
+    if (filters.total_project_hours) {
+      whereClause.total_project_hours = this.getNumericFilter(filters.total_project_hours,'total_project_hours');
+    }
+    if (filters.total_project_cost) {
+      whereClause.total_project_cost = this.getNumericFilter(filters.total_project_cost,'total_project_cost');
+    }
+    if (filters.qualifying_project_hours_fed) {
+      whereClause.qualifying_project_hours_fed = this.getNumericFilter(filters.qualifying_project_hours_fed,'qualifying_project_hours_fed');
+    }
+    if (filters.qualifying_project_qre_fed) {
+      whereClause.qualifying_project_qre_fed = this.getNumericFilter(filters.qualifying_project_qre_fed,'qualifying_project_qre_fed');
+    }
+    if (filters.qualifying_project_rd_credits_fed) {
+      whereClause.qualifying_project_rd_credits_fed = this.getNumericFilter(filters.qualifying_project_rd_credits_fed,'qualifying_project_rd_credits_fed');
+    }
+    if (filters.total_projects_rd_credits) {
+      whereClause.total_projects_rd_credits = this.getNumericFilter(filters.total_projects_rd_credits,'total_projects_rd_credits');
     }
 
     // Handle multi-select filters
     if (filters.country) {
-      whereClause["$country.country_name$"] = this.getMultiValueFilter(filters.country);
+      whereClause["$country.country_name$"] = this.getMultiValueFilter(filters.country,"country.country_name");
     }
 
     if (filters.currency) {
-      whereClause["$currency.currency_code$"] = this.getMultiValueFilter(filters.currency);
+      whereClause["$currency.currency_code$"] = this.getMultiValueFilter(filters.currency,'currency.currency_code');
     }
 
     return whereClause;
@@ -1049,7 +1273,7 @@ class AccountService {
 
   private getFieldFilter(fieldFilter: any, dbField: string): any {
 
-    const isUuidField = dbField === 'rid';
+     const isUuidField = ['rid', 'industry_rid'].includes(dbField);
     if (fieldFilter.equals) {
       if (isUuidField) {
         // For UUID fields, use direct equality without LOWER function
@@ -1062,6 +1286,19 @@ class AccountService {
         );
       }
     }
+    if (fieldFilter.not_equals) {
+      if (isUuidField) {
+        // For UUID fields, use direct equality without LOWER function
+        return { [Op.ne]: fieldFilter.not_equals };
+      } else {
+        // For text fields, use case-insensitive comparisos
+        return Sequelize.where(
+          Sequelize.fn('LOWER', Sequelize.col(`Account.${dbField}`)),
+          '!=',
+          Sequelize.fn('LOWER', fieldFilter.not_equals)
+        );
+      }
+    }
     
     if (fieldFilter.contains) {
       return Sequelize.where(
@@ -1070,6 +1307,16 @@ class AccountService {
         `%${fieldFilter.contains}%`
       );
     }
+    if (fieldFilter.is_empty !== undefined) {
+    if (fieldFilter.is_empty) {
+      return {
+        [Op.or]: [
+          Sequelize.where(Sequelize.col(`Account.${dbField}`), { [Op.is]: null }),
+          Sequelize.where(Sequelize.col(`Account.${dbField}`), '')
+        ]
+      };
+    }
+  }
     // Handle simple value (for dropdown selections like status)
     if (typeof fieldFilter === 'string') {
       return { [Op.iLike]: fieldFilter };
@@ -1077,38 +1324,135 @@ class AccountService {
     return null;
   }
 
-  private getAnnualRevenueFilter(revenueFilter: any): any {
-    if (revenueFilter.greater_than) {
-      return { [Op.gt]: parseFloat(revenueFilter.greater_than) };
-    }
-    if (revenueFilter.less_than) {
-      return { [Op.lt]: parseFloat(revenueFilter.less_than) };
-    }
-    if (
-      revenueFilter.between &&
-      Array.isArray(revenueFilter.between) &&
-      revenueFilter.between.length === 2
-    ) {
-      const [min, max] = revenueFilter.between.map((val: string | number) => parseFloat(String(val)));
-      return { [Op.between]: [min, max] };
-    }
-    return null;
+ private getNumericFilter(revenueFilter: any, columnName: string): any {
+  const { 
+    greater_than, 
+    less_than, 
+    between, 
+    equals, 
+    not_equals, 
+    is_empty 
+  } = revenueFilter;
+
+  // Handle empty strings and invalid values by casting to NULL first
+   const column = Sequelize.literal(`
+    CAST(
+      NULLIF("${columnName}", '') 
+      AS DOUBLE PRECISION
+    )
+  `);
+
+  if (is_empty !== undefined) {
+    return {
+      [Op.or]: [
+        { [columnName]: null },
+        { [columnName]: '' },
+        Sequelize.where(column, Op.is, null)
+      ]
+    };
   }
 
-  private getMultiValueFilter(filter: any): any {
-    if (!filter) return null;
-    
-    if (Array.isArray(filter) && filter.length > 0) {
-      return {
-        [Op.or]: filter.map((value: string) => ({ [Op.iLike]: `%${value}%` })),
-      };
-    }
-    // Handle single value case
-    if (typeof filter === 'string' && filter.trim() !== '') {
-      return { [Op.iLike]: `%${filter}%` };
-    }
-    return null;
+  if (equals !== undefined) {
+    return Sequelize.where(
+      column,
+      Op.eq,
+      parseFloat(equals)
+    );
   }
+
+  if (not_equals !== undefined) {
+    return {
+      [Op.or]: [
+        Sequelize.where(column, Op.ne, parseFloat(not_equals)),
+        Sequelize.where(column, Op.is, null)
+      ]
+    };
+  }
+
+  if (greater_than !== undefined) {
+    return Sequelize.where(
+      column,
+      Op.gt,
+      parseFloat(greater_than)
+    );
+  }
+
+  if (less_than !== undefined) {
+    return Sequelize.where(
+      column,
+      Op.lt,
+      parseFloat(less_than)
+    );
+  }
+  if (between && Array.isArray(between) && between.length === 2) {
+    const [min, max] = between.map(val => parseFloat(String(val)));
+    return Sequelize.where(
+      column,
+      Op.between,
+      [min, max]
+    );
+  }
+  return null;
+}
+
+  private getMultiValueFilter(filter: any, fieldName: string): any {
+  if (!filter) return null;
+
+  const conditions: any[] = [];
+
+  // Case-insensitive exact match
+  if (typeof filter.equals === 'string') {
+    conditions.push(Sequelize.where(
+      Sequelize.fn('LOWER', Sequelize.col(fieldName)),
+      '=',
+      filter.equals.toLowerCase()
+    ));
+  }
+ // Case-insensitive NOT EQUALS
+  if (typeof filter.not_equals === 'string') {
+    conditions.push(
+      Sequelize.where(
+        Sequelize.fn('LOWER', Sequelize.col(fieldName)),
+        '!=',
+        filter.not_equals.toLowerCase()
+      )
+    );
+  }
+  // Case-insensitive partial match
+  if (typeof filter.contains === 'string') {
+    conditions.push({
+      [fieldName]: { [Op.iLike]: `%${filter.contains}%` },
+    });
+  }
+
+  // Case-insensitive IN filter
+  if (Array.isArray(filter.in) && filter.in.length > 0) {
+    conditions.push({
+      [Op.or]: filter.in.map((val: string) =>
+        Sequelize.where(
+          Sequelize.fn('LOWER', Sequelize.col(fieldName)),
+          '=',
+          val.toLowerCase()
+        )
+      ),
+    });
+  }
+
+  // is_empty: match NULL or ''
+  if (filter.is_empty === true) {
+  conditions.push({
+    [Op.or]: [
+      Sequelize.where(Sequelize.col(fieldName), { [Op.is]: null }),
+      Sequelize.where(Sequelize.col(fieldName), '')
+    ]
+  });
+}
+
+  if (conditions.length === 0) return null;
+
+  return { [Op.and]: conditions };
+}
+
 
   private applyParentAccountFilter(
     filters: Record<string, any>,
@@ -1138,7 +1482,18 @@ class AccountService {
       whereClause.r_number = { [Op.iLike]: `%${filters.account_number.contains}%` };
     }
     if (filters.account_number.equals) {
-      whereClause.r_number = { [Op.iLike]: `${filters.account_number.equals}` };
+      whereClause.r_number = Sequelize.where(
+      Sequelize.fn('LOWER', Sequelize.col('Account.r_number')),
+      filters.account_number.equals.toLowerCase()
+  );
+    }
+    if (filters.account_number.not_equals) {
+     whereClause.r_number = Sequelize.where(
+      Sequelize.fn('LOWER', Sequelize.col('Account.r_number')),
+      '!=',
+      filters.account_number.not_equals.toLowerCase()
+  );
+      
     }
     return whereClause;
   }
@@ -1180,6 +1535,16 @@ class AccountService {
       "country",
       "currency",
       "annual_revenue",
+      "professional_services_consultant",
+      "finance_lead",
+      "finance_executive",
+      "total_projects",
+      "total_project_cost",
+      "total_project_hours",
+      "qualifying_project_hours_fed",
+      "qualifying_project_qre_fed",
+      "qualifying_project_rd_credits_fed",
+      "total_projects_rd_credits"
     ];
     if (!validSortColumns.includes(sortBy)) {
       sortBy = "created_datetime";
@@ -1214,6 +1579,15 @@ class AccountService {
       errorMessage: err.message,
     };
   }
+
+  /**
+   * Gets the USD currency record from the database
+   * @returns USD currency record
+   */
+  private async getUSDCurrency() {
+    return Currency.findOne({ where: { currency_code: 'USD' } });
+  }
+    
 }
 
 export default AccountService;

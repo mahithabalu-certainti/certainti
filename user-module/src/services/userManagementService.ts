@@ -670,6 +670,7 @@ class UserManagementService {
   private getSortParameters(sortBy: string, sortOrder: string): [string, string] {
     const validSortColumns = [
       "profile_name",
+      "profile_description",
       "created_datetime",
       "created_by",
     ];
@@ -698,6 +699,7 @@ class UserManagementService {
     if (filters) {
       const filterProcessors: Record<string, Function> = {
         'profile_name': (value: any) => this.processTextFilter('profile_name', value, whereClause),
+          'profile_description': (value: any) => this.processTextFilter('profile_description', value, whereClause),
         'created_datetime': (value: any) => this.processDateFilter('created_datetime', value, whereClause),
         'created_by': (value: any) => this.processRelationFilter('created_by', value, whereClause, includeClause)
       };
@@ -728,9 +730,16 @@ class UserManagementService {
       whereClause[field] = value;
     } else if (typeof value === 'object') {
       if (value.equals !== undefined) {
-        whereClause[field] = value.equals;
+        whereClause[field] = Sequelize.where(
+        Sequelize.fn('LOWER', Sequelize.col(field)),
+        value.equals.toLowerCase()
+      );
       } else if (value.not_equals !== undefined) {
-        whereClause[field] = { [Op.ne]: value.not_equals };
+        whereClause[field] = Sequelize.where(
+        Sequelize.fn('LOWER', Sequelize.col(field)),
+        '!=',
+        value.not_equals.toLowerCase()
+      );
       } else if (value.contains !== undefined) {
         whereClause[field] = { [Op.iLike]: `%${value.contains}%` };
       } else if (value.is_empty !== undefined) {
@@ -756,7 +765,7 @@ class UserManagementService {
     whereClause: Record<string, any>
   ): void {
     if (typeof value === 'string') {
-      const date = dayjs(value, 'MM-DD-YYYY').startOf('day').toDate();
+      const date = dayjs(value, 'YYYY-MM-DD').startOf('day').toDate();
       const nextDay = dayjs(date).add(1, 'day').toDate();
 
       whereClause[field] = {
@@ -765,7 +774,7 @@ class UserManagementService {
       };
     } else if (typeof value === 'object') {
       if (value.equals !== undefined) {
-        const date = dayjs(value.equals, 'MM-DD-YYYY').startOf('day').toDate();
+        const date = dayjs(value.equals, 'YYYY-MM-DD').startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
         const nextDay = dayjs(date).add(1, 'day').toDate();
 
         whereClause[field] = {
@@ -773,14 +782,14 @@ class UserManagementService {
           [Op.lt]: nextDay
         };
       } else if (value.before !== undefined) {
-        const beforeDate = dayjs(value.before, 'MM-DD-YYYY').startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+        const beforeDate = dayjs(value.before, 'YYYY-MM-DD').startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
         whereClause[field] = { [Op.lt]: beforeDate };
       } else if (value.after !== undefined) {
-        const afterDate = dayjs(value.after, 'MM-DD-YYYY').endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+        const afterDate = dayjs(value.after, 'YYYY-MM-DD').endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
         whereClause[field] = { [Op.gt]: afterDate };
       } else if (value.between?.from && value.between?.to) {
-        const fromDate = dayjs(value.between.from, 'MM-DD-YYYY').startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
-        const toDate = dayjs(value.between.to, 'MM-DD-YYYY').endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+        const fromDate = dayjs(value.between.from, 'YYYY-MM-DD').startOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
+        const toDate = dayjs(value.between.to, 'YYYY-MM-DD').endOf('day').format('YYYY-MM-DDTHH:mm:ss[Z]');
 
         whereClause[field] = {
           [Op.gte]: fromDate,
@@ -897,7 +906,7 @@ class UserManagementService {
     data?: { profiles: any[]; count: number };
   }> {
     try {
-      const profiles = await Profile.findAll();
+      const profiles = await Profile.findAll({  order: [["created_datetime", "DESC"]],});
 
       return {
         statusCode: constants.SUCCESS,
@@ -920,8 +929,6 @@ class UserManagementService {
  * @returns {Promise<Object>} - Response object with update status
  */
   async updateUserExtendedPermissions(
-    profileId: string,
-    profileName: string,
     privileges: Array<{
       rid: string;
       type: string;
@@ -930,7 +937,6 @@ class UserManagementService {
       module_id:string;
       menu_id:string;
       is_modified: boolean;
-      has_extended_permission:boolean;
       is_enabled?: boolean;
       read?: boolean;
       edit?: boolean;
@@ -948,12 +954,24 @@ class UserManagementService {
   }> {
     try {
       // Verify profile exists
-      const profile = await Profile.findByPk(profileId);
-      if (!profile) {
+       const roles = await User.findOne({
+        attributes: ["role_rid", "rid", "profile_rid"],
+        where: { rid: requestedUserId },
+        include: [
+          {
+            model: Profile,
+            as: "profile",
+            required: true,
+            attributes: ["profile_name"],
+          },
+        ],
+      });
+      const profileId = roles?.profile_rid;
+      if ( !profileId) {
         return {
           statusCode: constants.NOT_FOUND,
           message: constants.NOT_FOUND_MESSAGE,
-          errorMessage: `Profile with ID ${profileId} not found`
+          errorMessage: `User with ID ${requestedUserId} not having profile mapped`
         };
       }
   
@@ -974,12 +992,12 @@ class UserManagementService {
       const updatePromises = modifiedPermissions.map(async (permission) => {
         switch (permission.type) {
           case 'menu':
-            return this.updateUserMenuAccessIfChanged(profileId,permission.rid,permission.menu_id, permission.has_extended_permission || false, requestedUserId ,loggedInUsername
+            return this.updateUserMenuAccessIfChanged(profileId,permission.rid,permission.menu_id, permission.is_enabled || false, requestedUserId ,loggedInUsername
             );
           case 'module':
-            return this.updateUserModuleAccessIfChanged(profileId,permission.rid,permission.module_id, permission.has_extended_permission || false, requestedUserId ,loggedInUsername);
+            return this.updateUserModuleAccessIfChanged(profileId,permission.rid,permission.module_id, permission.is_enabled || false, requestedUserId ,loggedInUsername);
           case 'permission':
-            return this.updateUserPermissionAccessIfChanged(profileId,permission.rid,permission.permission_id, permission.has_extended_permission || false, requestedUserId ,loggedInUsername);
+            return this.updateUserPermissionAccessIfChanged(profileId,permission.rid,permission.permission_id, permission.is_enabled || false, requestedUserId ,loggedInUsername);
           case 'field':
             return this.updateUserFieldAccessIfChanged(
               profileId,
@@ -1682,7 +1700,7 @@ class UserManagementService {
           modified_by: loggedInUsername
         },
         {
-          where: { rid: accessId }
+          where: { rid: currentAccess.rid  }
         }
       );
 

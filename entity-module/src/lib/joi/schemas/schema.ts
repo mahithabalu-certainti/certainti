@@ -1,3 +1,4 @@
+import Decimal from "decimal.js";
 import Joi from "joi";
 
 const uuidRegex =
@@ -8,7 +9,7 @@ const isNotFutureDate = (value: string, helpers: Joi.CustomHelpers): any => {
   if (!value) return value;
 
   // Parse the date in MM/DD/YYYY format
-  const [month, day, year] = value.split("/").map(Number);
+  const [year, month, day] = value.split("-").map(Number);
 
   // Create date objects with time set to noon UTC
   const inputDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
@@ -37,8 +38,8 @@ const isNotFutureDate = (value: string, helpers: Joi.CustomHelpers): any => {
 const isValidDate = (value: string, helpers: Joi.CustomHelpers): any => {
   if (!value) return value;
 
-  // Parse the date in MM/DD/YYYY format
-  const [month, day, year] = value.split("/").map(Number);
+  // Parse the date in yyyy-mm-dd format
+  const [year, month, day] = value.split("-").map(Number);
 
   // Create a date object with time set to noon UTC
   const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
@@ -46,7 +47,7 @@ const isValidDate = (value: string, helpers: Joi.CustomHelpers): any => {
   // Check if the date is valid
   if (isNaN(date.getTime())) {
     return helpers.error("date.invalidFormat", {
-      message: "Invalid date format. Please use MM/DD/YYYY.",
+      message: "Invalid date format. Please use YYYY-MM-DD.",
     });
   }
 
@@ -64,10 +65,57 @@ const isEndDateAfterStartDate = (
     return value;
   }
 
+  // Parse dates in yyyy-mm-dd format
+  const [ endYear, endMonth, endDay ] = value.split("-").map(Number);
+  const [startYear,startMonth, startDay] = context.effective_from_date
+    .split("-")
+    .map(Number);
+
+  // Create date objects with time set to noon UTC to avoid timezone issues
+  const endDate = new Date(Date.UTC(endYear, endMonth - 1, endDay, 12, 0, 0));
+  const startDate = new Date(
+    Date.UTC(startYear, startMonth - 1, startDay, 12, 0, 0)
+  );
+
+  // Check if the end date is valid
+  if (isNaN(endDate.getTime())) {
+    return helpers.error("date.invalidFormat", {
+      message: "Invalid effective end date.",
+    });
+  }
+
+  // Check if the start date is valid
+  if (isNaN(startDate.getTime())) {
+    return helpers.error("date.invalidFormat", {
+      message: "Invalid effective start date.",
+    });
+  }
+
+  // Compare dates
+  if (endDate <= startDate) {
+    return helpers.error("any.invalid", {
+      message: "Effective end date must be after the start date.",
+    });
+  }
+
+  return value;
+};
+
+const isEndDateAfterStartDateForProject = (
+  value: string,
+  helpers: Joi.CustomHelpers
+): any => {
+  const context = helpers.state?.ancestors[0];
+
+  // If either value or effective_from_date is missing, return the value as-is
+  if (!context?.project_startdate || !value) {
+    return value;
+  }
+
   // Parse dates in MM/DD/YYYY format
-  const [endMonth, endDay, endYear] = value.split("/").map(Number);
-  const [startMonth, startDay, startYear] = context.effective_from_date
-    .split("/")
+  const [endYear, endMonth, endDay] = value.split("-").map(Number);
+  const [startYear, startMonth, startDay] = context.project_startdate
+    .split("-")
     .map(Number);
 
   // Create date objects with time set to noon UTC to avoid timezone issues
@@ -203,18 +251,18 @@ const createResourcesSchema = Joi.object({
       "string.empty": "Organization name cannot be an empty string",
       "any.allowOnly": "Organization name cannot be null or empty"
     }),
-  role: Joi.string()
-    .pattern(/^[A-Za-z][A-Za-z\s\-'.]{1,98}[A-Za-z]$/)
+    role: Joi.string()
+    .pattern(/^[A-Za-z\s\-'.]{3,64}$/)
     .min(3)
-    .max(100)
+    .max(64)
     .optional()
     .allow("")
     .allow(null)
     .messages({
-      "string.pattern.base": "Role must contain only letters, hyphens, apostrophes, periods and spaces",
+      "string.pattern.base": "Role must contain only letters, hyphens (-), apostrophes ('), periods (.) and spaces",
       "string.min": "Role must be at least 3 characters long",
-      "string.max": "Role must not exceed 100 characters"
-    }),
+      "string.max": "Role must not exceed 64 characters"
+    }),  
   resource_country: Joi.string()
     .guid({ version: ["uuidv4"] })
     .optional()
@@ -232,7 +280,7 @@ const createResourcesSchema = Joi.object({
     .custom((value, helpers) => {
       if (!value) return value;
     
-      const [month, day, year] = value.split("/").map(Number);
+      const [year,month, day] = value.split("-").map(Number);
       const inputDate = new Date(Date.UTC(year, month - 1, day));
       const minDate = new Date(Date.UTC(1950, 0, 1));
       const today = new Date();
@@ -240,13 +288,13 @@ const createResourcesSchema = Joi.object({
     
       if (isNaN(inputDate.getTime())) {
         return helpers.error("date.invalidFormat", {
-          message: "Invalid date format. Please use MM/DD/YYYY."
+          message: "Invalid date format. Please use YYYY-MM-DD."
         });
       }
     
       if (inputDate < minDate) {
         return helpers.error("date.min", {
-          message: "Effective From date cannot be before 01/01/1950"
+          message: "Effective From date cannot be before 1950-01-01"
         });
       }
     
@@ -263,9 +311,9 @@ const createResourcesSchema = Joi.object({
     .allow(null)
     .messages({
       "string.base": "Effective from date must be a valid date",
-      "string.max": "Effective from date format should be MM/DD/YYYY",
-      "date.invalidFormat": "Invalid date format. Please use MM/DD/YYYY",
-      "date.min": "Effective from date cannot be before 01/01/1950",
+      "string.max": "Effective from date format should be YYYY-MM-DD",
+      "date.invalidFormat": "Invalid date format. Please use YYYY-MM-DD",
+      "date.min": "Effective from date cannot be before 1950-01-01",
       "date.max": "Effective from date cannot be in the future"
     }),
   effective_end_date: Joi.string()
@@ -277,23 +325,23 @@ const createResourcesSchema = Joi.object({
     .optional()
     .messages({
       "string.pattern.base":
-        "effective_end_date must be in the format MM/DD/YYYY",
+        "effective_end_date must be in the format YYYY-MM-DD",
       "any.invalid": "Effective end date must be after the start date.",
       "date.invalidFormat":
-        "Invalid effective end date. Please use the format MM/DD/YYYY",
+        "Invalid effective end date. Please use the format YYYY-MM-DD",
     }),
   resource_designation: Joi.string()
-    .pattern(/^[A-Za-z][A-Za-z\s\-'.]{1,62}[A-Za-z]$/)
-    .min(3)
-    .max(64)
-    .optional()
-    .allow("")
-    .allow(null)
-    .messages({
-      "string.pattern.base": "Resource designation must contain only letters, hyphens, apostrophes, periods and spaces",
-      "string.min": "Resource designation must be at least 3 characters long",
-      "string.max": "Resource designation must not exceed 64 characters"
-    }),
+  .pattern(/^[A-Za-z\s\-'.]{3,64}$/)
+  .min(3)
+  .max(64)
+  .optional()
+  .allow("")
+  .allow(null)
+  .messages({
+    "string.pattern.base": "Resource Designation must contain only letters, hyphens (-), apostrophes ('), periods (.) and spaces",
+    "string.min": "Resource Designation must be at least 3 characters long",
+    "string.max": "Resource Designation must not exceed 64 characters"
+  }),
   total_years_experience: Joi.number()
     .precision(2)
     .min(0)
@@ -397,17 +445,17 @@ const updateResourceSchema = Joi.object({
       "string.empty": "Organization name cannot be an empty string",
       "any.allowOnly": "Organization name cannot be null or empty"
     }),
-  role: Joi.string()
-    .pattern(/^[A-Za-z][A-Za-z\s\-'.]{1,98}[A-Za-z]$/)
+    role: Joi.string()
+    .pattern(/^[A-Za-z\s\-'.]{3,64}$/)
     .min(3)
-    .max(100)
+    .max(64)
     .optional()
     .allow("")
     .allow(null)
     .messages({
-      "string.pattern.base": "Role must contain only letters, hyphens, apostrophes, periods and spaces",
+      "string.pattern.base": "Role must contain only letters, hyphens (-), apostrophes ('), periods (.) and spaces",
       "string.min": "Role must be at least 3 characters long",
-      "string.max": "Role must not exceed 100 characters"
+      "string.max": "Role must not exceed 64 characters"
     }),
   resource_country: Joi.string()
     .guid({ version: ["uuidv4"] })
@@ -421,12 +469,12 @@ const updateResourceSchema = Joi.object({
     .guid({ version: ["uuidv4"] })
     .optional()
     .allow("", null),
-  effective_from_date: Joi.string()
+    effective_from_date: Joi.string()
     .max(10)
     .custom((value, helpers) => {
       if (!value) return value;
     
-      const [month, day, year] = value.split("/").map(Number);
+      const [year,month, day] = value.split("-").map(Number);
       const inputDate = new Date(Date.UTC(year, month - 1, day));
       const minDate = new Date(Date.UTC(1950, 0, 1));
       const today = new Date();
@@ -434,13 +482,13 @@ const updateResourceSchema = Joi.object({
     
       if (isNaN(inputDate.getTime())) {
         return helpers.error("date.invalidFormat", {
-          message: "Invalid date format. Please use MM/DD/YYYY."
+          message: "Invalid date format. Please use YYYY-MM-DD."
         });
       }
     
       if (inputDate < minDate) {
         return helpers.error("date.min", {
-          message: "Effective From date cannot be before 01/01/1950"
+          message: "Effective From date cannot be before 1950-01-01"
         });
       }
     
@@ -457,9 +505,9 @@ const updateResourceSchema = Joi.object({
     .allow(null)
     .messages({
       "string.base": "Effective from date must be a valid date",
-      "string.max": "Effective from date format should be MM/DD/YYYY",
-      "date.invalidFormat": "Invalid date format. Please use MM/DD/YYYY",
-      "date.min": "Effective from date cannot be before 01/01/1950",
+      "string.max": "Effective from date format should be YYYY-MM-DD",
+      "date.invalidFormat": "Invalid date format. Please use YYYY-MM-DD",
+      "date.min": "Effective from date cannot be before 1950-01-01",
       "date.max": "Effective from date cannot be in the future"
     }),
   effective_end_date: Joi.string()
@@ -471,23 +519,23 @@ const updateResourceSchema = Joi.object({
     .optional()
     .messages({
       "string.pattern.base":
-        "effective_end_date must be in the format MM/DD/YYYY",
+        "effective_end_date must be in the format YYYY-MM-DD",
       "any.invalid": "Effective end date must be after the start date.",
       "date.invalidFormat":
-        "Invalid effective end date. Please use the format MM/DD/YYYY",
+        "Invalid effective end date. Please use the format YYYY-MM-DD",
     }),
   resource_designation: Joi.string()
-    .pattern(/^[A-Za-z][A-Za-z\s\-'.]{1,62}[A-Za-z]$/)
-    .min(3)
-    .max(64)
-    .optional()
-    .allow("")
-    .allow(null)
-    .messages({
-      "string.pattern.base": "Resource designation must contain only letters, hyphens, apostrophes, periods and spaces",
-      "string.min": "Resource designation must be at least 3 characters long",
-      "string.max": "Resource designation must not exceed 64 characters"
-    }),
+  .pattern(/^[A-Za-z\s\-'.]{3,64}$/)
+  .min(3)
+  .max(64)
+  .optional()
+  .allow("")
+  .allow(null)
+  .messages({
+    "string.pattern.base": "Resource Designation must contain only letters, hyphens (-), apostrophes ('), periods (.) and spaces",
+    "string.min": "Resource Designation must be at least 3 characters long",
+    "string.max": "Resource Designation must not exceed 64 characters"
+  }),
   total_years_experience: Joi.number()
     .precision(2)
     .min(0)
@@ -524,7 +572,25 @@ const listResourceSchema = Joi.object({
     .default("1"),
   limit: Joi.string()
     .pattern(/^[0-9]+$/)
-    .default("10"),
+    .default("100"),
+  fiscalYear: Joi.number().min(1000).max(9999).optional().allow(0).messages({
+    "number.base": "Fiscal year must be a number",
+    "number.min": "Fiscal year must be a 4-digit number",
+    "number.max": "Fiscal year must be a 4-digit number",
+    "any.required": "Fiscal year is required",
+  }),
+  search: Joi.string().max(255).optional(),
+  filters: Joi.string().default("{}"),
+  globalFilters: Joi.string().default("{}"),
+  sortBy: Joi.string().default("created_datetime").optional().allow(""),
+  sortOrder: Joi.string()
+    .valid("ASC", "DESC")
+    .default("DESC")
+    .optional()
+    .allow(""),
+});
+
+const exportListResourceSchema = Joi.object({
   fiscalYear: Joi.number().min(1000).max(9999).optional().allow(0).messages({
     "number.base": "Fiscal year must be a number",
     "number.min": "Fiscal year must be a 4-digit number",
@@ -574,7 +640,7 @@ const createResourceSkillSchema = Joi.object({
     .custom((value, helpers) => {
       if (!value) return value;
     
-      const [month, day, year] = value.split("/").map(Number);
+      const [ year, month, day ] = value.split("-").map(Number);
       const inputDate = new Date(Date.UTC(year, month - 1, day));
       const minDate = new Date(Date.UTC(1950, 0, 1));
       const today = new Date();
@@ -582,13 +648,13 @@ const createResourceSkillSchema = Joi.object({
     
       if (isNaN(inputDate.getTime())) {
         return helpers.error("date.invalidFormat", {
-          message: "Invalid date format. Please use MM/DD/YYYY."
+          message: "Invalid date format. Please use YYYY-MM-DD."
         });
       }
     
       if (inputDate < minDate) {
         return helpers.error("date.min", {
-          message: "Start date cannot be before 01/01/1950"
+          message: "Start date cannot be before 1950-01-01"
         });
       }
     
@@ -605,9 +671,9 @@ const createResourceSkillSchema = Joi.object({
     .allow(null)
     .messages({
       "string.base": "Start date must be a valid date",
-      "string.max": "Start date format should be MM/DD/YYYY",
-      "date.invalidFormat": "Invalid date format. Please use MM/DD/YYYY",
-      "date.min": "Start date cannot be before 01/01/1950",
+      "string.max": "Start date format should be YYYY-MM-DD",
+      "date.invalidFormat": "Invalid date format. Please use YYYY-MM-DD",
+      "date.min": "Start date cannot be before 1950-01-01",
       "date.max": "Start date cannot be in the future"
     }),
   skill_description: Joi.string().max(255).optional().allow(null).allow(""),
@@ -657,7 +723,7 @@ const updateResourceSkillSchema = Joi.object({
     .custom((value, helpers) => {
       if (!value) return value;
     
-      const [month, day, year] = value.split("/").map(Number);
+      const [year,month,day] = value.split("-").map(Number);
       const inputDate = new Date(Date.UTC(year, month - 1, day));
       const minDate = new Date(Date.UTC(1950, 0, 1));
       const today = new Date();
@@ -665,13 +731,13 @@ const updateResourceSkillSchema = Joi.object({
     
       if (isNaN(inputDate.getTime())) {
         return helpers.error("date.invalidFormat", {
-          message: "Invalid date format. Please use MM/DD/YYYY."
+          message: "Invalid date format. Please use YYYY-MM-DD."
         });
       }
     
       if (inputDate < minDate) {
         return helpers.error("date.min", {
-          message: "Start date cannot be before 01/01/1950"
+          message: "Start date cannot be before 1950-01-01"
         });
       }
     
@@ -688,9 +754,9 @@ const updateResourceSkillSchema = Joi.object({
     .allow(null)
     .messages({
       "string.base": "Start date must be a valid date",
-      "string.max": "Start date format should be MM/DD/YYYY",
-      "date.invalidFormat": "Invalid date format. Please use MM/DD/YYYY",
-      "date.min": "Start date cannot be before 01/01/1950",
+      "string.max": "Start date format should be YYYY-MM-DD",
+      "date.invalidFormat": "Invalid date format. Please use YYYY-MM-DD",
+      "date.min": "Start date cannot be before 1950-01-01",
       "date.max": "Start date cannot be in the future"
     }),
   skill_description: Joi.string().max(255).optional().allow(null).allow(""),
@@ -804,10 +870,10 @@ const updateResourceCostSchema = Joi.object({
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "effective_date must be in the format MM/DD/YYYY",
+      "string.pattern.base": "effective_date must be in the format YYYY-MM-DD",
       "any.invalid": "Date cannot be in the future.",
       "date.invalidFormat":
-        "Invalid effective date. Please use the format MM/DD/YYYY",
+        "Invalid effective date. Please use the format YYYY-MM-DD",
     }),
   end_date: Joi.string()
     .max(10)
@@ -816,9 +882,9 @@ const updateResourceCostSchema = Joi.object({
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "end_date must be in the format MM/DD/YYYY",
+      "string.pattern.base": "end_date must be in the format YYYY-MM-DD",
       "date.invalidFormat":
-        "Invalid end date. Please use the format MM/DD/YYYY",
+        "Invalid end date. Please use the format YYYY-MM-DD",
     }),
   annual_cost: costFieldValidator('annual_cost'),
   // semi_annual_cost: costFieldValidator('semi_annual_cost'),
@@ -827,6 +893,25 @@ const updateResourceCostSchema = Joi.object({
   weekly_cost: costFieldValidator('weekly_cost'),
   daily_cost: costFieldValidator('daily_cost'),
   hourly_cost: costFieldValidator('hourly_cost'),
+  effort_in_hrs: Joi.string()
+  .pattern(/^\d{1,16}(\.\d{1,2})?$/)
+  .messages({
+    "string.pattern.base":
+      "Effort in hours must be a number with up to 16 digits and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    const num = parseFloat(value);
+    if (isNaN(num) || num <= 0) {
+      return helpers.error("any.invalid");
+    }
+    return value; // return string (not number) to match original type
+  })
+  .messages({
+    "any.invalid": "Effort in hours must be a valid positive number",
+  })
+  .optional()
+  .allow(null)
+  .allow(""),
   status: Joi.string().max(255).default("active").optional(),
   fiscal_year: Joi.number()
    .integer()
@@ -934,10 +1019,10 @@ const resourceCostSchema = Joi.object({
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "effective_date must be in the format MM/DD/YYYY",
+      "string.pattern.base": "effective_date must be in the format YYYY-MM-DD",
       "any.invalid": "Date cannot be in the future.",
       "date.invalidFormat":
-        "Invalid effective date. Please use the format MM/DD/YYYY",
+        "Invalid effective date. Please use the format YYYY-MM-DD",
     }),
   end_date: Joi.string()
     .max(10)
@@ -946,9 +1031,9 @@ const resourceCostSchema = Joi.object({
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "end_date must be in the format MM/DD/YYYY",
+      "string.pattern.base": "end_date must be in the format YYYY-MM-DD",
       "date.invalidFormat":
-        "Invalid end date. Please use the format MM/DD/YYYY",
+        "Invalid end date. Please use the format YYYY-MM-DD",
     }),
   annual_cost: costFieldValidator('annual_cost'),
   // semi_annual_cost: costFieldValidator('semi_annual_cost'),
@@ -957,6 +1042,25 @@ const resourceCostSchema = Joi.object({
   weekly_cost: costFieldValidator('weekly_cost'),
   daily_cost: costFieldValidator('daily_cost'),
   hourly_cost: costFieldValidator('hourly_cost'),
+  effort_in_hrs: Joi.string()
+  .pattern(/^\d{1,16}(\.\d{1,2})?$/)
+  .messages({
+    "string.pattern.base":
+      "Effort in hours must be a number with up to 16 digits and up to 2 decimal places",
+  })
+  .custom((value, helpers) => {
+    const num = parseFloat(value);
+    if (isNaN(num) || num <= 0) {
+      return helpers.error("any.invalid");
+    }
+    return value; // return string (not number) to match original type
+  })
+  .messages({
+    "any.invalid": "Effort in hours must be a valid positive number",
+  })
+  .optional()
+  .allow(null)
+  .allow(""),
   fiscal_year: Joi.number()
     .integer()
     .min(1000)
@@ -1017,7 +1121,7 @@ const createProjectSchema = Joi.object({
     .optional()
     .messages({
       "string.pattern.base":
-        "project start date must be in the format DD/MM/YYYY",
+        "project start date must be in the format YYYY-MM-DD",
       "any.invalid": "Date cannot be in the future.",
       "date.invalidFormat": "Invalid project start date.",
     }),
@@ -1026,18 +1130,19 @@ const createProjectSchema = Joi.object({
     .optional()
     .allow("")
     .allow(null)
-    .custom(isEndDateAfterStartDate, "End Date Validation")
+    .custom(isEndDateAfterStartDateForProject, "End Date Validation")
     .optional()
     .messages({
       "string.pattern.base":
-        "Project end date must be in the format DD/MM/YYYY",
+        "Project end date must be in the format YYYY-MM-DD",
       "any.invalid": "Project end date must be after the start date.",
       "date.invalidFormat": "Invalid Project end date.",
     }),
   project_type: Joi.string().valid("Fixed", "Time & Material").required(),
   project_classification_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow(null),
-  project_client_group: Joi.string().max(200).optional().allow("").allow(null),
-  project_group: Joi.string().max(150).optional().allow("").allow(null),
+  project_classification_other: Joi.string().optional().allow(null).allow(""),
+  project_client_group: Joi.string().max(255).optional().allow("").allow(null),
+  project_group: Joi.string().max(255).optional().allow("").allow(null),
   project_status: Joi.string().valid("Active", "Inactive").required(),
   fiscal_year: Joi.number().integer().min(1000).max(9999).required().messages({
     "number.base": "Fiscal year must be a number",
@@ -1057,46 +1162,6 @@ const createProjectSchema = Joi.object({
     .guid({ version: ["uuidv4"] })
     .optional()
     .allow("", null),
-  // project_manager: Joi.string().min(3).max(100).required(),
-  // project_lead: Joi.string().min(3).max(100).required(),
-  // spoc_name: Joi.string().min(3).max(100).required(),
-  // spoc_email: Joi.string().email().max(255).optional().allow("").allow(null),
-  // spoc_mobile: Joi.string().max(15).optional().allow("").allow(null),
-  // project_tpc_name: Joi.string()
-  //   .min(3)
-  //   .max(100)
-  //   .optional()
-  //   .allow("")
-  //   .allow(null),
-  // project_tpc_email: Joi.string()
-  //   .email()
-  //   .max(255)
-  //   .optional()
-  //   .allow("")
-  //   .allow(null),
-  // project_tpc_mobile: Joi.string().max(15).optional().allow("").allow(null),
-  // project_cc_list: Joi.string()
-  //   .allow("")
-  //   .allow(null)
-  //   .optional()
-  //   .custom((value, helpers) => {
-  //     if (!value) return value;
-
-  //     const emails = value.split(",").map((e: string) => e.trim());
-  //     const invalidEmails = emails.filter(
-  //       (email: string) => Joi.string().email().validate(email).error
-  //     );
-
-  //     if (invalidEmails.length > 0) {
-  //       return helpers.message({
-  //         custom: `Invalid email(s) in Project CC List: ${invalidEmails.join(
-  //           ", "
-  //         )}`,
-  //       });
-  //     }
-
-  //     return value;
-  //   }, "Comma-separated email validator"),
   total_effort: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
@@ -1120,11 +1185,15 @@ const createProjectSchema = Joi.object({
     "string.pattern.base": "Total Cost must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
@@ -1139,11 +1208,15 @@ const createProjectSchema = Joi.object({
     "string.pattern.base": "Total NON Labor Cost must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
@@ -1190,11 +1263,15 @@ const createProjectSchema = Joi.object({
     "string.pattern.base": "Total FTE Cost must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
@@ -1207,33 +1284,21 @@ const createProjectSchema = Joi.object({
     "string.pattern.base": "Total SUB Con Cost must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
   })
   .optional()
   .allow(null),
-  // last_rd_ai_assess_on: Joi.string()
-  // .max(10)
-  // .custom(isValidDate, "Effective date validation")
-  // .optional()
-  // .allow(null)
-  // .allow("")
-  // .messages({
-  //   "string.pattern.base": "Last rd ai assess date must be in the format MM/DD/YYYY",
-  //   "any.invalid": "Date cannot be in the future.",
-  //   "date.invalidFormat":
-  //     "Last rd ai assess date. Please use the format MM/DD/YYYY",
-  // }),
-  // last_rd_ai_assess_by: Joi.string()
-  //   .guid({ version: ["uuidv4"] })
-  //   .optional()
-  //   .allow("", null),
   auto_send_ai_interaction: Joi.boolean().required(),
   auto_access_rd: Joi.boolean().optional().allow(null).default(false),
   max_ai_interaction: Joi.number().greater(0).required(),
@@ -1295,7 +1360,7 @@ const createProjectSchema = Joi.object({
       }),
       key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow(null),
       is_primary_contact: Joi.boolean().valid(true, false).optional().allow(null),
-      include_in_communication: Joi.boolean().valid(true, false).optional().allow(null),
+      include_in_communication: Joi.boolean().optional().allow(null),
       status: Joi.string().valid("Active", "Inactive").optional().allow(null),
       action_type: Joi.string().valid('add').required()
     })
@@ -1321,7 +1386,7 @@ const updateProjectSchema = Joi.object({
     .allow(null)
     .custom(isNotFutureDate, "Future Date Validation")
     .messages({
-      "string.pattern.base": "project start date must be in the format DD/MM/YYYY",
+      "string.pattern.base": "project start date must be in the format YYYY-MM-DD",
       "any.invalid": "Date cannot be in the future.",
       "date.invalidFormat": "Invalid project start date.",
     }),
@@ -1331,17 +1396,18 @@ const updateProjectSchema = Joi.object({
     .optional()
     .allow("")
     .allow(null)
-    .custom(isEndDateAfterStartDate, "End Date Validation")
+    .custom(isEndDateAfterStartDateForProject, "End Date Validation")
     .messages({
-      "string.pattern.base": "Project end date must be in the format DD/MM/YYYY",
+      "string.pattern.base": "Project end date must be in the format YYYY-MM-DD",
       "any.invalid": "Project end date must be after the start date.",
       "date.invalidFormat": "Invalid Project end date.",
     }),
 
   project_type: Joi.string().valid("Fixed", "Time & Material").required(),
   project_classification_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow(null),
-  project_client_group: Joi.string().max(200).optional().allow("").allow(null),
-  project_group: Joi.string().max(150).optional().allow("").allow(null),
+  project_classification_other: Joi.string().optional().allow(null).allow(""),
+  project_client_group: Joi.string().max(255).optional().allow("").allow(null),
+  project_group: Joi.string().max(255).optional().allow("").allow(null),
   project_status: Joi.string().valid("Active", "Inactive").required(),
   fiscal_year: Joi.number().integer().min(1000).max(9999).required().messages({
     "number.base": "Fiscal year must be a number",
@@ -1375,11 +1441,15 @@ const updateProjectSchema = Joi.object({
     "string.pattern.base": "Total Cost must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
@@ -1430,11 +1500,15 @@ const updateProjectSchema = Joi.object({
     "string.pattern.base": "Total FTE Cost must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
@@ -1447,11 +1521,15 @@ const updateProjectSchema = Joi.object({
     "string.pattern.base": "Total SUB Con Cost must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
@@ -1464,30 +1542,21 @@ const updateProjectSchema = Joi.object({
     "string.pattern.base": "Total NON Labor Cost must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
   })
   .optional()
   .allow(null),
-
-  // last_rd_ai_assess_on: Joi.string()
-  // .max(10)
-  // .custom(isValidDate, "Effective date validation")
-  // .optional()
-  // .allow(null)
-  // .allow("")
-  // .messages({
-  //   "string.pattern.base": "Last rd ai assess date must be in the format MM/DD/YYYY",
-  //   "any.invalid": "Date cannot be in the future.",
-  //   "date.invalidFormat":
-  //     "Last rd ai assess date. Please use the format MM/DD/YYYY",
-  // }),
   last_rd_ai_assess_by: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("", null),
   auto_send_ai_interaction: Joi.boolean().optional().allow(null).default(false),
   auto_access_rd: Joi.boolean().optional().allow(null).default(false),
@@ -1560,7 +1629,7 @@ const updateProjectSchema = Joi.object({
         }),
         key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional().allow(null),
-        include_in_communication: Joi.boolean().valid(true, false).optional().allow(null),
+        include_in_communication: Joi.boolean().optional().allow(null),
         status: Joi.string().valid("Active", "Inactive").optional().allow(null)
       })
     )
@@ -1584,6 +1653,6 @@ export {
   exportResourceCostSchema,
   exportResourceSkillSchema,
   createProjectSchema,
-  updateProjectSchema
-
+  updateProjectSchema,
+  exportListResourceSchema
 };

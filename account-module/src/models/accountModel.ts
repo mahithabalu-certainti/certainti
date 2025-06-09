@@ -5,6 +5,7 @@ import { Currency } from "./currencyModel";
 import { Industry } from "./industryModel";
 import { R_NUMBER_PREFIX } from "../utils/constant";
 import { AccountFileDropConfig } from "./accountFileDropConfigModel";
+import { States } from "./stateModel";
 interface AccountAttributes {
   rid: string;
   eid?: string;
@@ -29,6 +30,14 @@ interface AccountAttributes {
   modified_datetime?: Date;
   created_by?: string;
   modified_by?: string;
+  total_projects?:string;
+  total_project_cost?:number;
+  total_project_hours?:number;
+  qualifying_project_hours_fed?:number;
+  qualifying_project_qre_fed?:number;
+  qualifying_project_rd_credits_fed?:number;
+  total_projects_rd_credits?:number;
+
 }
 
 interface AccountCreationAttributes
@@ -61,6 +70,13 @@ export class Account
   public modified_datetime?: Date;
   public created_by?: string;
   public modified_by?: string;
+  public total_projects?:string;
+  public total_project_cost?:number;
+  public total_project_hours?:number;
+  public qualifying_project_hours_fed?:number;
+  public qualifying_project_qre_fed?:number;
+  public qualifying_project_rd_credits_fed?:number;
+  public total_projects_rd_credits?:number;
 
   static initialize(sequelize: Sequelize) {
     Account.init(
@@ -152,6 +168,14 @@ export class Account
             key: "rid"
           }
         },
+        total_projects: DataTypes.DOUBLE,
+        total_project_cost: DataTypes.DECIMAL(13, 2),
+        total_projects_rd_credits: DataTypes.DECIMAL(13, 2),
+        total_project_hours: DataTypes.DECIMAL(13, 2),
+        qualifying_project_hours_fed: DataTypes.DECIMAL(13, 2),
+        qualifying_project_qre_fed: DataTypes.DECIMAL(13, 2),
+        qualifying_project_rd_credits_fed: DataTypes.DECIMAL(13, 2),
+  
         created_datetime: {
           type: DataTypes.DATE,
           allowNull: false,
@@ -212,6 +236,11 @@ export class Account
     Account.belongsTo(Currency, {
       foreignKey: "currency_rid",
       as: "currency",
+    });
+
+    Account.belongsTo(States, {
+      foreignKey: "region",
+      as: "region_details",
     });
 
     Account.belongsTo(AccountFileDropConfig, {

@@ -8,6 +8,7 @@ import { initMainDbSequelize } from "../config/mainDataSource";
 import { HttpStatus } from "../utils/constants";
 import { ResourceFiscal } from "../models/resourceFiscal";
 import moment from "moment";
+import currency from "currency.js";
 
 class ResourceCostSchemaService {
   private sequelizeInstance: Sequelize | null = null;
@@ -344,19 +345,21 @@ class ResourceCostSchemaService {
     resource_rid: string,
     limit: number,
     offset: number,
-    search: string
+    search: string,
+    account_rid: string
   ) {
     try {
       const sequelize = await this.getDbConnection(schemaName);
 
       //Build the base query without sorting or pagination
       let query = `
-        SELECT rc.*,rc.r_number as r_number, r.resource_name,
-        TO_CHAR(rc.effective_date, 'MM/DD/YYYY') as effective_date,
-        TO_CHAR(rc.end_date, 'MM/DD/YYYY') as end_date
+        SELECT rc.*,rc.r_number as r_number, r.resource_name, r.resource_orgname, r.resource_designation, r.resource_role, ad.account_name, ad.account_rid,
+        TO_CHAR(rc.effective_date, 'YYYY-MM-DD') as effective_date,
+        TO_CHAR(rc.end_date, 'YYYY-MM-DD') as end_date
         FROM "${schemaName}"."resource_cost" rc
         INNER JOIN "${schemaName}"."resources" r ON rc.resource_rid = r.rid
-        WHERE 1=1 AND rc.resource_rid = :resource_rid
+        INNER JOIN "${schemaName}"."account_details" ad ON r.account_rid = ad.account_rid
+        WHERE 1=1 AND rc.account_rid = :account_rid AND rc.resource_rid = :resource_rid
         ${filterConditions}
         ${searchCondition}
       `;
@@ -366,7 +369,8 @@ class ResourceCostSchemaService {
         SELECT COUNT(*) as total
         FROM "${schemaName}"."resource_cost" rc
         INNER JOIN "${schemaName}"."resources" r ON rc.resource_rid = r.rid
-        WHERE 1=1 AND rc.resource_rid = :resource_rid
+        INNER JOIN "${schemaName}"."account_details" ad ON r.account_rid = ad.account_rid
+        WHERE 1=1 AND rc.account_rid = :account_rid AND rc.resource_rid = :resource_rid
         ${filterConditions}
         ${searchCondition}
       `;
@@ -375,6 +379,7 @@ class ResourceCostSchemaService {
         limit,
         offset,
         searchTerm: search ? `%${search}%` : null,
+        account_rid,
         resource_rid,
       };
 
@@ -392,6 +397,9 @@ class ResourceCostSchemaService {
       });
 
       const mainDbSequelize = await initMainDbSequelize();
+
+      // For each result where currency_rid is empty/null, fetch and assign currency_rid from account
+      await Promise.all(results.map(result => this.assignCurrencyRid(result, mainDbSequelize)));
 
       // If sorting by currency_code, we need to fetch currency info first
       if (sortBy === "currency") {
@@ -437,12 +445,22 @@ class ResourceCostSchemaService {
           });
         }
       } else {
-        // For other sort fields, add sorting to the original query
+        if(sortBy === "account_name"){
+          query += ` ORDER BY ad."${sortBy}" ${sortOrder} LIMIT :limit OFFSET :offset`;
+        }
+        else if(sortBy === "resource_name" || sortBy === "resource_orgname" || sortBy === "resource_designation" || sortBy === "resource_role"){
+          query += ` ORDER BY r."${sortBy}" ${sortOrder} LIMIT :limit OFFSET :offset`;
+        }
+        else{
         query += ` ORDER BY rc."${sortBy}" ${sortOrder} LIMIT :limit OFFSET :offset`;
+        }
         results = await sequelize.query(query, {
           replacements,
           type: "SELECT",
         });
+
+        // For each result where currency_rid is empty/null, fetch and assign currency_rid from account
+        await Promise.all(results.map(result => this.assignCurrencyRid(result, mainDbSequelize)));
       }
 
       // Apply pagination if sorting was done in memory
@@ -521,25 +539,28 @@ class ResourceCostSchemaService {
     sortBy: string,
     sortOrder: string,
     resource_rid: string,
-    search: string
+    search: string,
+    account_rid: string
   ) {
     try {
       const sequelize = await this.getDbConnection(schemaName);
 
       //Build the base query without sorting or pagination
       let query = `
-        SELECT rc.*,rc.r_number as r_number, r.resource_name,
-        TO_CHAR(rc.effective_date, 'MM/DD/YYYY') as effective_date,
-        TO_CHAR(rc.end_date, 'MM/DD/YYYY') as end_date
+        SELECT rc.*,rc.r_number as r_number, r.resource_name, r.resource_orgname, r.resource_designation, r.resource_role, ad.account_name, ad.account_rid,
+        TO_CHAR(rc.effective_date, 'YYYY-MM-DD') as effective_date,
+        TO_CHAR(rc.end_date, 'YYYY-MM-DD') as end_date
         FROM "${schemaName}"."resource_cost" rc
         INNER JOIN "${schemaName}"."resources" r ON rc.resource_rid = r.rid
-        WHERE 1=1 AND rc.resource_rid = :resource_rid
+        INNER JOIN "${schemaName}"."account_details" ad ON r.account_rid = ad.account_rid
+        WHERE 1=1 AND rc.account_rid = :account_rid AND rc.resource_rid = :resource_rid
         ${filterConditions}
         ${searchCondition}
       `;
 
       const replacements = {
         searchTerm: search ? `%${search}%` : null,
+        account_rid,
         resource_rid,
       };
 
@@ -550,6 +571,8 @@ class ResourceCostSchemaService {
       });
 
       const mainDbSequelize = await initMainDbSequelize();
+
+      await Promise.all(results.map(result => this.assignCurrencyRid(result, mainDbSequelize)));
 
       // If sorting by currency_code, we need to fetch currency info first
       if (sortBy === "currency") {
@@ -595,12 +618,21 @@ class ResourceCostSchemaService {
           });
         }
       } else {
-        // For other sort fields, add sorting to the original query
-        query += ` ORDER BY rc."${sortBy}" ${sortOrder}`;
+        if(sortBy === "account_name"){
+          query += ` ORDER BY ad."${sortBy}" ${sortOrder}`;
+        }
+        else if(sortBy === "resource_name" || sortBy === "resource_orgname" || sortBy === "resource_designation" || sortBy === "resource_role"){
+          query += ` ORDER BY r."${sortBy}" ${sortOrder}`;
+        }
+        else{
+          query += ` ORDER BY rc."${sortBy}" ${sortOrder}`;
+        }
         results = await sequelize.query(query, {
           replacements,
           type: "SELECT",
         });
+
+        await Promise.all(results.map(result => this.assignCurrencyRid(result, mainDbSequelize)));
       }
 
       const resourceCost = results;
@@ -640,49 +672,44 @@ class ResourceCostSchemaService {
           }
         });
       }
-      
+
+      const formatNumberForExport = (value: any, currency_symbol: string): string => {
+        if (value == null || value === '') return '-';
+        const num = Number(value);
+        if (isNaN(num)) return '-';
+        // Use currency.js to format the number with the provided currency symbol
+        return currency(num, {
+          symbol: currency_symbol? currency_symbol : '$',
+          precision: 2,
+          pattern: '! #',
+          separator: ',',
+          decimal: '.'
+        }).format();
+      };
       const rawResult = resourceCost || [];
       let exportData = rawResult.map((resource: any) => {
         return {
-          "Name": resource.resource_name || "NA",
-          "Currency": resource.currency_code || "NA",
-          "Start Date": resource.effective_date ? moment(resource.effective_date).format(
-            "MM/DD/YYYY"
-          ) : "NA" as any,
-          "End Date": resource.end_date ? moment(resource.end_date).format(
-            "MM/DD/YYYY"
-          ) : "NA" as any,
-          "Hourly": resource.hourly_cost ? new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-            maximumSignificantDigits: 16
-          }).format(Number(resource.hourly_cost)) : "NA",
-          "Daily": resource.daily_cost ? new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-            maximumSignificantDigits: 16
-          }).format(Number(resource.daily_cost)) : "NA",
-          "Bi-Weekly": resource.bi_weekly_cost ? new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-            maximumSignificantDigits: 16
-          }).format(Number(resource.bi_weekly_cost)) : "NA",
-          "Weekly": resource.weekly_cost ? new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-            maximumSignificantDigits: 16
-          }).format(Number(resource.weekly_cost)) : "NA",
-          "Monthly": resource.monthly_cost ? new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-            maximumSignificantDigits: 16
-          }).format(Number(resource.monthly_cost)) : "NA",
+          "Account Name": resource.account_name || "-",
+          "Resource Code": resource.resource_code || "-",
+          "Fiscal Year": resource.fiscal_year || "-",
+          "Name": resource.resource_name || "-",
+          "Resource Type": resource.resource_type || "-",
+          "Effective From": resource.effective_date || "-",
+          "End Date": resource.end_date || "-",
+          "Currency": resource.currency_code || "USD",
+          "Annual Compensation": formatNumberForExport(resource.annual_cost , resource.currency_symbol) || "-",
+          "Monthly Compensation": formatNumberForExport(resource.monthly_cost, resource.currency_symbol) || "-",
+          "Bi-Weekly Compensation": formatNumberForExport(resource.bi_weekly_cost, resource.currency_symbol) || "-",
+          "Weekly Compensation": formatNumberForExport(resource.weekly_cost, resource.currency_symbol) || "-",
+          "Daily Compensation": formatNumberForExport(resource.daily_cost, resource.currency_symbol) || "-",
+          "Hourly Compensation": formatNumberForExport(resource.hourly_cost, resource.currency_symbol) || "-",
+          "Effort In Hours": resource.effort_in_hrs || "-",
+          "Org Name": resource.resource_orgname || "-",
+          "Designation": resource.resource_designation || "-",
+          "Role": resource.resource_role || "-",
+          "Comments": resource.comments || "-",
+          "Cost ID": resource.r_number || "-",
           // "Semi Annual": resource.semi_annual_cost,
-          "Annual": resource.annual_cost ? new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-            maximumSignificantDigits: 16
-          }).format(Number(resource.annual_cost)) : "NA",
         };
       });
 
@@ -781,7 +808,17 @@ class ResourceCostSchemaService {
       "bi_weekly_cost",
       "daily_cost",
       "hourly_cost",
+      "effort_in_hrs",
       "currency",
+      "account_name",
+      "resource_name",
+      "fiscal_year",
+      "resource_type",
+      "resource_code",
+      "resource_orgname",
+      "resource_role",
+      "resource_designation",
+      "comments",
     ];
     if (!validSortColumns.includes(sortBy)) {
       sortBy = "created_datetime";
@@ -801,7 +838,7 @@ class ResourceCostSchemaService {
     let filterConditions = "";
 
     // Define field types for proper filter handling
-    const alphanumericFields = ["status"];
+    const alphanumericFields = ["status","resource_code"];
     const numericFields = [
       "annual",
       "monthly",
@@ -809,6 +846,8 @@ class ResourceCostSchemaService {
       "daily",
       "hourly",
       "bi_weekly",
+      "fiscal_year",
+      "effort_in_hrs",
       // "semi_annual",
     ];
     const dateFields = ["effective_date", "end_date"];
@@ -854,7 +893,7 @@ class ResourceCostSchemaService {
     if (value.equals) {
       condition += ` AND LOWER(rc."${key}") = LOWER('${value.equals}')`;
     } else if (value.not_equals) {
-      condition += ` AND LOWER(rc."${key}") != LOWER('${value.not_equals}')`;
+      condition += ` AND LOWER(rc."${key}") != LOWER('${value.not_equals}') OR rc."${key}" IS NULL`;
     } else if (value.contains) {
       condition += ` AND LOWER(rc."${key}") LIKE LOWER('%${value.contains}%')`;
     } else if (value.not_contains) {
@@ -893,11 +932,19 @@ class ResourceCostSchemaService {
   processNumericFilter(key: string, value: any): string {
     // Your existing implementation
     let condition = "";
-    key = `${key}_cost`;
+    if(key === "fiscal_year") {
+      key = "fiscal_year";
+    }
+    else if(key === "effort_in_hrs") {
+      key = "effort_in_hrs";
+    }
+    else {
+      key = `${key}_cost`;
+    }
     if (value.equals !== undefined) {
       condition += ` AND rc."${key}" = ${value.equals}`;
     } else if (value.not_equals !== undefined) {
-      condition += ` AND rc."${key}" != ${value.not_equals}`;
+      condition += ` AND rc."${key}" != ${value.not_equals} OR rc."${key}" IS NULL`;
     } else if (value.greater_than !== undefined) {
       condition += ` AND rc."${key}" > ${value.greater_than}`;
     } else if (value.less_than !== undefined) {
@@ -938,7 +985,7 @@ class ResourceCostSchemaService {
     if (value.equals) {
       condition += ` AND rc."${key}"::date = '${value.equals}'::date`;
     } else if (value.not_equals) {
-      condition += ` AND rc."${key}"::date != '${value.not_equals}'::date`;
+      condition += ` AND rc."${key}"::date != '${value.not_equals}'::date OR rc."${key}" IS NULL`;
     } else if (value.before) {
       condition += ` AND rc."${key}" < '${value.before}'`;
     } else if (value.after) {
@@ -981,63 +1028,74 @@ class ResourceCostSchemaService {
   }
 
   processDefaultFilter(key: string, value: any): string {
+    let tableAlias = "rc";
+
+  // Set alias based on key
+  const aliasMapR = ["resource_name", "resource_orgname", "resource_designation", "resource_role"];
+  const aliasMapAD = ["account_name"];
+
+  if (aliasMapR.includes(key)) {
+    tableAlias = "r";
+  } else if (aliasMapAD.includes(key)) {
+    tableAlias = "ad";
+  }
     let condition = "";
     const isUuidField = key.toLowerCase().includes("rid");
 
     if (value.equals !== undefined) {
       if (typeof value.equals === "string") {
         if (isUuidField) {
-          condition += ` AND rc."${key}" = '${value.equals}'`;
+          condition += ` AND ${tableAlias}."${key}" = '${value.equals}'`;
         } else {
-          condition += ` AND LOWER(rc."${key}") = LOWER('${value.equals}')`;
+          condition += ` AND LOWER(${tableAlias}."${key}") = LOWER('${value.equals}')`;
         }
       } else {
-        condition += ` AND rc."${key}" = ${value.equals}`;
+        condition += ` AND ${tableAlias}."${key}" = ${value.equals}`;
       }
     } else if (value.not_equals !== undefined) {
       if (typeof value.not_equals === "string") {
         if (isUuidField) {
-          condition += ` AND rc."${key}" != '${value.not_equals}'`;
+          condition += ` AND ${tableAlias}."${key}" != '${value.not_equals}' OR ${tableAlias}."${key}" IS NULL`;
         } else {
-          condition += ` AND LOWER(rc."${key}") != LOWER('${value.not_equals}')`;
+          condition += ` AND LOWER(${tableAlias}."${key}") != LOWER('${value.not_equals}') OR ${tableAlias}."${key}" IS NULL`;
         }
       } else {
-        condition += ` AND rc."${key}" != ${value.not_equals}`;
+        condition += ` AND ${tableAlias}."${key}" != ${value.not_equals} OR ${tableAlias}."${key}" IS NULL`;
       }
     } else if (value.contains !== undefined) {
-      condition += ` AND LOWER(rc."${key}") LIKE LOWER('%${value.contains}%')`;
+      condition += ` AND LOWER(${tableAlias}."${key}") LIKE LOWER('%${value.contains}%')`;
     } else if (value.not_contains !== undefined) {
-      condition += ` AND LOWER(rc."${key}") NOT LIKE LOWER('%${value.not_contains}%')`;
+      condition += ` AND LOWER(${tableAlias}."${key}") NOT LIKE LOWER('%${value.not_contains}%')`;
     } else if (value.is_empty !== undefined) {
       if (value.is_empty) {
         if (isUuidField) {
-          condition += ` AND rc."${key}" IS NULL`;
+          condition += ` AND ${tableAlias}."${key}" IS NULL`;
         } else {
-          condition += ` AND (rc."${key}" IS NULL OR rc."${key}" = '')`;
+          condition += ` AND (${tableAlias}."${key}" IS NULL OR ${tableAlias}."${key}" = '')`;
         }
       }
     } else if (value.is_not_empty !== undefined) {
       if (value.is_not_empty) {
         if (isUuidField) {
-          condition += ` AND rc."${key}" IS NOT NULL`;
+          condition += ` AND ${tableAlias}."${key}" IS NOT NULL`;
         } else {
-          condition += ` AND rc."${key}" IS NOT NULL AND rc."${key}" != ''`;
+          condition += ` AND ${tableAlias}."${key}" IS NOT NULL AND ${tableAlias}."${key}" != ''`;
         }
       }
     } else if (value.in && Array.isArray(value.in) && value.in.length > 0) {
       if (typeof value.in[0] === "string") {
         if (isUuidField) {
           const values = value.in.map((item: string) => `'${item}'`).join(",");
-          condition += ` AND rc."${key}" IN (${values})`;
+          condition += ` AND ${tableAlias}."${key}" IN (${values})`;
         } else {
           const values = value.in
             .map((item: string) => `LOWER('${item}')`)
             .join(",");
-          condition += ` AND LOWER(rc."${key}") IN (${values})`;
+          condition += ` AND LOWER(${tableAlias}."${key}") IN (${values})`;
         }
       } else {
         const values = value.in.join(",");
-        condition += ` AND rc."${key}" IN (${values})`;
+        condition += ` AND ${tableAlias}."${key}" IN (${values})`;
       }
     } else if (
       value.not_in &&
@@ -1049,16 +1107,16 @@ class ResourceCostSchemaService {
           const values = value.not_in
             .map((item: string) => `'${item}'`)
             .join(",");
-          condition += ` AND rc."${key}" NOT IN (${values})`;
+          condition += ` AND ${tableAlias}."${key}" NOT IN (${values})`;
         } else {
           const values = value.not_in
             .map((item: string) => `LOWER('${item}')`)
             .join(",");
-          condition += ` AND LOWER(rc."${key}") NOT IN (${values})`;
+          condition += ` AND LOWER(${tableAlias}."${key}") NOT IN (${values})`;
         }
       } else {
         const values = value.not_in.join(",");
-        condition += ` AND rc."${key}" NOT IN (${values})`;
+        condition += ` AND ${tableAlias}."${key}" NOT IN (${values})`;
       }
     }
 
@@ -1081,7 +1139,7 @@ class ResourceCostSchemaService {
       if (resourceCostNumber.equals) {
         condition += ` AND LOWER(rc."r_number") = LOWER('${resourceCostNumber.equals}')`;
       } else if (resourceCostNumber.not_equals) {
-        condition += ` AND LOWER(rc."r_number") != LOWER('${resourceCostNumber.not_equals}')`;
+        condition += ` AND LOWER(rc."r_number") != LOWER('${resourceCostNumber.not_equals}') OR rc."r_number" IS NULL`;
       } else if (resourceCostNumber.contains) {
         condition += ` AND LOWER(rc."r_number") LIKE LOWER('%${resourceCostNumber.contains}%')`;
       } else if (resourceCostNumber.not_contains) {
@@ -1123,6 +1181,41 @@ class ResourceCostSchemaService {
 
     return condition;
   }
+
+  async getCurrencyRidByAccountRidRaw(accountRid: string): Promise<string | null> {
+    const query = `SELECT a.currency_rid FROM public.account a WHERE a.rid = :accountRid`;
+    try {
+      const mainDb = await initMainDbSequelize();
+      const result = await mainDb.query(query, {
+        replacements: { accountRid },
+        type: 'SELECT'
+      });
+      return result?(result[0] as any).currency_rid : null;
+    } catch (err) {
+      console.error('Error getting currency symbol:', err);
+      return null;
+    }
+  }
+
+  async assignCurrencyRid(result: any, mainDbSequelize: any) {
+    if (!result.currency_rid) {
+      const currencyRid = await this.getCurrencyRidByAccountRidRaw(result.account_rid);
+      if (currencyRid) {
+        result.currency_rid = currencyRid;
+      } else {
+        try {
+          const usdCurrencyId = await mainDbSequelize.query(
+            `SELECT c.rid FROM public.currency c WHERE c.currency_code = 'USD'`,
+            { type: 'SELECT' }
+          );
+          result.currency_rid = usdCurrencyId[0]?.rid;
+        } catch (err) {
+          console.error('Error getting USD currency rid:', err);
+        }
+      }
+    }
+  }
+  
 }
 
 export default new ResourceCostSchemaService();

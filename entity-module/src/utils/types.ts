@@ -62,6 +62,7 @@ export interface IResourceCost {
   bi_weekly_cost?: number | "";
   daily_cost?: number | "";
   hourly_cost?: number | "";
+  effort_in_hrs?: number | "";
   fiscal_year: number;
   created_datetime?: string | null;
   modified_datetime?: string | null;
@@ -89,6 +90,7 @@ export interface IUpdateResourceCost {
   bi_weekly_cost?: number | "";
   daily_cost?: number | "";
   hourly_cost?: number | "";
+  effort_in_hrs?: number | "";
   comments?: string;
   modified_datetime?: string | null;
   modified_by?: string | null;
@@ -102,7 +104,7 @@ export interface IResourceSkill {
    resource_type: string;
    resource_rid: string;
    resource_code: string,
-   start_date?: Date | null;
+   start_date?: string | null;
    skill_description?: string;
    skill_level?: string;
    skill_type_rid: string;
@@ -121,7 +123,7 @@ export interface IResourceSkill {
 export interface IUpdateResourceSkill {
   rid: string;
   eid?: string;
-  start_date?: Date | null;
+  start_date?: string | null;
   skill_description?: string;
   skill_level?: string;
   status?: string;
@@ -148,6 +150,7 @@ export interface ICreateProject {
   project_enddate?: Date | null;
   project_type: "Fixed" | "Time & Material";
   project_classification_rid?: string | null;
+  project_classification_other?: string | null;
   project_client_group?: string | null;
   project_group?: string | null;
   project_summary?: string | null;
@@ -202,6 +205,7 @@ export interface IUpdateProject {
   project_enddate?: Date | null;
   project_type: "Fixed" | "Time & Material";
   project_classification_rid?: string | null;
+  project_classification_other?: string | null;
   project_client_group?: string | null;
   project_group?: string | null;
   project_summary?: string | null;

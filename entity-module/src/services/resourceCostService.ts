@@ -12,6 +12,7 @@ import { initMainDbSequelize } from "../config/mainDataSource";
 import { Op, Sequelize } from "sequelize";
 import moment from "moment";
 import Decimal from "decimal.js";
+import { isNull, isNullOrUndefined } from "util";
 
 class ResourceCostService {
   private schemaService: SchemaService;
@@ -127,7 +128,8 @@ class ResourceCostService {
         resourceRid,
         limit,
         offset,
-        search
+        search,
+        accountId
       );
     } catch (err) {
       console.log("Error ", err);
@@ -212,7 +214,8 @@ class ResourceCostService {
         finalSortBy,
         finalSortOrder,
         resourceRid,
-        search
+        search,
+        accountId
       );
     } catch (err) {
       console.log("Error ", err);
@@ -258,6 +261,7 @@ async createResourceCost(
         bi_weekly_cost,
         daily_cost,
         hourly_cost,
+        effort_in_hrs,
         currency_rid,
         accountNumber,
         resource_number,
@@ -311,7 +315,8 @@ async createResourceCost(
           weekly_cost,
           bi_weekly_cost,
           daily_cost,
-          hourly_cost
+          hourly_cost,
+          effort_in_hrs,
         };
 
         const costValues = Object.entries(costFields).reduce((acc, [key, value]) => {
@@ -376,6 +381,7 @@ async createResourceCost(
             throw new Error("Compensation already exists for this duration.");
           }
         }
+
         createdResourceCost = await ResourceCost.create({
           eid,
           account_rid,
@@ -514,6 +520,7 @@ async createResourceCost(
         bi_weekly_cost,
         daily_cost,
         hourly_cost,
+        effort_in_hrs,
         currency_rid,
         accountNumber,
         rid,
@@ -576,7 +583,8 @@ async createResourceCost(
           weekly_cost,
           bi_weekly_cost,
           daily_cost,
-          hourly_cost
+          hourly_cost,
+          effort_in_hrs,
         };
 
         const costValues = Object.entries(costFields).reduce((acc, [key, value]) => {
@@ -800,6 +808,7 @@ async createResourceCost(
         "bi_weekly_cost",
         "daily_cost",
         "hourly_cost",
+        "effort_in_hrs",
         "currency_rid",
         "fiscal_year",
         "comments",
@@ -912,6 +921,7 @@ async createResourceCost(
       if (resourceCostById) {
         const costData = resourceCostById.toJSON();
         const sequelize = await this.getMainDbSequelize();
+        await resourceCostSchemaService.assignCurrencyRid(costData,sequelize);
         // Query the currency table in the main database
         const [currencyResult] = await sequelize.query(
           `SELECT currency_name,currency_code,currency_symbol FROM public.currency WHERE rid = :currency_rid`,
@@ -965,15 +975,15 @@ async createResourceCost(
         costData.created_by = userNames.created_by_name;
         costData.modified_by = userNames.modified_by_name;
 
-        // Format dates to MM/DD/YYYY
+        // Format dates to yyyy-mm-dd format
         if (costData.effective_date) {
           costData.effective_date = moment(costData.effective_date).format(
-            "MM/DD/YYYY"
+            "YYYY-MM-DD"
           ) as any;
         }
         if (costData.end_date) {
           costData.end_date = moment(costData.end_date).format(
-            "MM/DD/YYYY"
+            "YYYY-MM-DD"
           ) as any;
         }
 
@@ -982,10 +992,10 @@ async createResourceCost(
         if (resourceInfo) {
           resourceInfo.resource_startdate = moment(
             resourceInfo.resource_startdate
-          ).format("MM/DD/YYYY") as any;
+          ).format("YYYY-MM-DD") as any;
           resourceInfo.resource_enddate = moment(
             resourceInfo.resource_enddate
-          ).format("MM/DD/YYYY") as any;
+          ).format("YYYY-MM-DD") as any;
         }
 
         //Create a new response object with simplified cost data
@@ -1111,7 +1121,7 @@ async createResourceCost(
     if (!dateString) return null;
 
     // Parse the date using moment to ensure consistent handling
-    const date = moment(dateString, "MM/DD/YYYY", true);
+    const date = moment(dateString, "YYYY-MM-DD", true);
     if (!date.isValid()) return null;
 
     // Set the time to noon to avoid timezone issues

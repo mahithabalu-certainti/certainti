@@ -41,11 +41,13 @@ interface ProjectSummaryAttributes {
   qre?: number | null;
   project_point_of_contact?: string | null;
   financial_consultant?: string | null;
-  technical_consultant?: string | null;
+  technical_point_of_contact?: string | null;
   created_datetime?: Date;
   modified_datetime?: Date;
   created_by: string;
   modified_by?: string | null;
+  assessment_status?: string | null;
+  project_classification_other?: string | null;
 }
 
 type ProjectSummaryCreationAttributes = Optional<
@@ -91,11 +93,13 @@ export class ProjectSummary
   declare qre: number | null;
   declare project_point_of_contact: string | null;
   declare financial_consultant: string | null;
-  declare technical_consultant: string | null;
+  declare technical_point_of_contact: string | null;
   declare created_datetime: Date;
   declare modified_datetime: Date;
   declare created_by: string;
   declare modified_by: string | null;
+  declare assessment_status?: string | null;
+  declare project_classification_other?: string | null;
 
   static initialize(sequelize: Sequelize) {
     ProjectSummary.init(
@@ -238,7 +242,7 @@ export class ProjectSummary
           type: DataTypes.STRING(100),
           allowNull: true,
         },
-        technical_consultant: {
+        technical_point_of_contact: {
           type: DataTypes.STRING(100),
           allowNull: true,
         },
@@ -260,6 +264,14 @@ export class ProjectSummary
           type: DataTypes.UUID,
           allowNull: true,
         },
+        assessment_status: {
+          type: DataTypes.STRING(100),
+          allowNull: true,
+        },
+        project_classification_other: {
+          type: DataTypes.STRING(300),
+          allowNull: true,
+        }
       },
       {
         sequelize,

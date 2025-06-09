@@ -16,6 +16,7 @@ interface AccountDetailsAttributes {
   created_by?: string;
   modified_by?: string;
   website?: string;
+  project_manager: string;
   database_level: boolean;
   data_residency?: string;
   data_storage?: string;
@@ -48,6 +49,7 @@ class AccountDetails
   public industry_rid!: string;
   public industry_name_other?: string;
   public website?: string;
+  public project_manager!: string;
   public database_level!: boolean;
   public data_residency?: string;
   public data_storage?: string;
@@ -55,13 +57,7 @@ class AccountDetails
   public created_datetime?: Date;
   public modified_datetime?: Date;
 
-}
-
-const sequelize = new Sequelize("database", "username", "password", {
-  host: "localhost",
-  dialect: "mysql", // Change to your dialect, e.g., 'postgres'
-});
-
+static initialize(sequelize: Sequelize, schema: string){
 AccountDetails.init(
   {
     rid: {
@@ -130,6 +126,13 @@ AccountDetails.init(
       type: DataTypes.STRING(255),
       allowNull: true,
     },
+    project_manager: {
+      type: DataTypes.STRING(128),
+      allowNull: false,
+      validate: {
+        isEmail: true,
+      },
+    },
     database_level: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
@@ -151,11 +154,15 @@ AccountDetails.init(
     },
   },
   {
-    sequelize,
+    sequelize: sequelize,
     modelName: "AccountDetails",
     tableName: "account_details",
+    schema: schema,
     timestamps: false,
   }
 );
+return AccountDetails;
+}
+}
 
 export default AccountDetails;

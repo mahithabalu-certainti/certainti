@@ -13,12 +13,13 @@ import { RedisService } from "./redisService";
 import Decimal from "decimal.js";
 import { KeyContact, setupKeyContactsSequence } from "../models/keyContactDetails";
 import { ProjectSummary, setupProjectSummarySequence } from "../models/projectSummary";
+import currency from "currency.js";
 
 export class ProjectService {
   private schemaService: SchemaService;
   // private redisService: RedisService;
 
-  constructor(redisService: RedisService) {
+  constructor() {
     this.schemaService = new SchemaService();
     // this.redisService = redisService;
   }
@@ -39,6 +40,10 @@ export class ProjectService {
 
       if (!accountData) {
         throw new Error("Error creating project: Invalid account ID");
+      }
+
+      if(accountData.status !== "active"){
+        throw new Error("Project creation failed: The selected account is inactive. Please choose an active account.");
       }
 
       let accountNumber = accountData.r_number;
@@ -82,7 +87,6 @@ export class ProjectService {
         },
       };
     } catch (err) {
-      console.log("Error creatng projec", err);
       return this.throwServiceError(err as Error);
     }
   }
@@ -154,8 +158,8 @@ export class ProjectService {
         throw new Error("Project code must be unique.");
       }
 
-      const startDate = projectData.project_startdate !== null ? moment(projectData.project_startdate, "MM/DD/YYYY") : null;
-      const endDate = projectData.project_enddate !== null ? moment(projectData.project_enddate, "MM/DD/YYYY") : null;
+      const startDate = projectData.project_startdate !== null ? moment.utc(projectData.project_startdate, "YYYY-MM-DD") : null;
+      const endDate = projectData.project_enddate !== null ? moment.utc(projectData.project_enddate, "YYYY-MM-DD") : null;
 
       const projectCreationData = {
         project_code: projectData.project_code,
@@ -170,6 +174,7 @@ export class ProjectService {
         project_type: projectData.project_type,
         project_classification_rid:
           projectData.project_classification_rid || null,
+        project_classification_other: projectData.project_classification_other || null, 
         project_client_group: projectData.project_client_group || null,
         project_group: projectData.project_group || null,
         project_status: projectData.project_status,
@@ -177,13 +182,15 @@ export class ProjectService {
         country: projectData.country || null,
         region: projectData.region || null,
         currency: projectData.currency || null,
-        total_effort: projectData.total_effort || null,
+        total_effort: projectData.total_effort && parseInt(projectData.total_effort) || null,
+        
         total_cost: projectData.total_cost || null,
+
         total_fte: projectData.total_fte || 0,
         total_sub_con: projectData.total_sub_con || 0,
         total_non_labor_cost: projectData.total_non_labor_cost || null,
-        total_fte_effort: projectData.total_fte_effort || null,
-        total_sub_con_effort: projectData.total_sub_con_effort || null,
+        total_fte_effort: projectData.total_fte_effort && parseInt(projectData.total_fte_effort) || null,
+        total_sub_con_effort: projectData.total_sub_con_effort && parseInt(projectData.total_sub_con_effort) || null,
         total_fte_cost: projectData.total_fte_cost || null,
         total_sub_con_cost: projectData.total_sub_con_cost || null,
         auto_send_ai_interaction: projectData.auto_send_ai_interaction,
@@ -237,7 +244,6 @@ export class ProjectService {
 
       return project;
     } catch (err) {
-      console.log(err);
       throw new Error("Error creating project: " + (err as Error).message);
     }
   }
@@ -255,6 +261,10 @@ export class ProjectService {
       const { account_id } = projectData;
 
       const accountData = await this.schemaService.fetchAccountById(account_id);
+
+      if(accountData.status !== "active"){
+        throw new Error("Project creation failed: The selected account is inactive. Please choose an active account.");
+      }
 
       if (!accountData) {
         throw new Error("Invalid account ID.");
@@ -287,8 +297,8 @@ export class ProjectService {
       const schemaName = `platform_v2_${accountNumber}`;
       const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
 
-      const startDate = projectData.project_startdate !== null ? moment(projectData.project_startdate, "MM/DD/YYYY") : null;
-      const endDate = projectData.project_enddate !== null ? moment(projectData.project_enddate, "MM/DD/YYYY") : null;
+      const startDate = projectData.project_startdate !== null ? moment.utc(projectData.project_startdate, "YYYY-MM-DD") : null;
+      const endDate = projectData.project_enddate !== null ? moment.utc(projectData.project_enddate, "YYYY-MM-DD") : null;
 
       const existingData = await ProjectModel.findOne({
         where: {
@@ -304,7 +314,7 @@ export class ProjectService {
 
       if (existingRefId && existingRefId.rid !== projectData.project_id) {
         throw new Error(
-          `Duplicate Project Ref ID: '${projectData.project_code}' already exists.`
+          `Duplicate Project Code: '${projectData.project_code}' already exists.`
         );
       }
 
@@ -328,20 +338,25 @@ export class ProjectService {
         project_type: projectData.project_type as "Fixed" | "Time & Material",
         project_classification_rid:
           projectData.project_classification_rid || null,
+        project_classification_other: projectData.project_classification_other || null, 
         project_client_group: projectData.project_client_group || null,
         project_group: projectData.project_group || null,
         project_summary: projectData.project_summary || null,
         industry_rid: projectData.industry_rid,
         industry_name: projectData.industry_name,
         fiscal_year: projectData.fiscal_year,
-        total_effort: projectData.total_effort || null,
+        total_effort: projectData.total_effort && parseInt(projectData.total_effort) || null,
         total_cost: projectData.total_cost || null,
         total_fte: projectData.total_fte || 0,
         total_sub_con: projectData.total_sub_con || 0,
 
+        country: projectData.country || null,
+        currency: projectData.currency || null,
+        region: projectData.region || null,
+
         total_non_labor_cost: projectData.total_non_labor_cost || null,
-        total_fte_effort: projectData.total_fte_effort || null,
-        total_sub_con_effort: projectData.total_sub_con_effort || null,
+        total_fte_effort: projectData.total_fte_effort && parseInt(projectData.total_fte_effort) || null,
+        total_sub_con_effort: projectData.total_sub_con_effort && parseInt(projectData.total_sub_con_effort) || null,
         total_fte_cost: projectData.total_fte_cost || null,
         total_sub_con_cost: projectData.total_sub_con_cost || null,
         auto_send_ai_interaction: projectData.auto_send_ai_interaction ?? false,
@@ -482,6 +497,10 @@ export class ProjectService {
 
       if (projectData) {
 
+        const mainDbInit = await initMainDbSequelize();
+
+        await this.assignCurrencyRid(projectData, mainDbInit);
+
         projectData = await this.schemaService.insertProjectGeoData(
           projectData,
           mainDbSequlize
@@ -500,6 +519,8 @@ export class ProjectService {
         );
 
         projectData = this.insertAccount(projectData, accountData.account_name);
+
+        projectData = await this.schemaService.insertUserDetails(projectData);
       }
 
       return {
@@ -605,6 +626,7 @@ export class ProjectService {
             : {}),
         },
         order: [[finalSortBy, finalSortOrder]],
+        distinct: true,
         offset,
         limit,
         attributes: [
@@ -620,6 +642,7 @@ export class ProjectService {
           "project_enddate",
           "project_type",
           "project_classification_rid",
+          "project_classification_other",
           "project_client_group",
           "project_group",
           "project_status",
@@ -641,6 +664,8 @@ export class ProjectService {
           "is_rd_qualified",
           "qre",
           "created_datetime",
+          "modified_datetime",
+          "assessment_status"
         ],
         include: [
           {
@@ -650,9 +675,13 @@ export class ProjectService {
         ],
       });
 
+      
+
       if (projectData) {
         const mainDbInit = await initMainDbSequelize();
 
+        await Promise.all(projectData.map(result => this.assignCurrencyRid(result, mainDbInit)));
+      
         projectData.forEach((val) => {
           const dataValues = val.dataValues as any;
           dataValues.account_name = accountData.account_name;
@@ -665,6 +694,7 @@ export class ProjectService {
           projectData,
           mainDbInit
         );
+
         projectData = await this.schemaService.insertKeyRole(
           projectData,
           mainDbInit
@@ -674,7 +704,7 @@ export class ProjectService {
           mainDbInit
         );
 
-        projectData = this.schemaService.finalProjectSort(projectData, finalMetaDataSortBy, finalMetaDataSortOrder);
+        projectData = await this.schemaService.finalProjectSort(projectData, finalMetaDataSortBy, finalMetaDataSortOrder, filters);
       }
 
       return {
@@ -693,7 +723,7 @@ export class ProjectService {
   async allProjectList(
     fiscalYear: number = 0,
     page: number = 1,
-    limit: number = 10,
+    limit: number = 100,
     search: string,
     filters: Record<string, any> = {},
     sortBy: string = "created_datetime",
@@ -749,6 +779,316 @@ export class ProjectService {
         },
       };
     } catch (err) {
+      throw new Error("Error fetching project: " + (err as Error).message);
+    }
+  }
+
+  async exportAllProjectList(
+    fiscalYear: number = 0,
+    search: string,
+    filters: Record<string, any> = {},
+    sortBy: string = "created_datetime",
+    sortOrder: string = "ASC",
+    globalFilters: Record<string, string[]> = {},
+    userId: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projects: any; count: number };
+  }> {
+    try {
+      const [finalSortBy, finalSortOrder] =
+        this.getSortParametersForAllProjects(sortBy, sortOrder);
+
+      const { accountDataSort } = this.processAccountDataSort(
+        sortBy,
+        sortOrder
+      );
+
+      const sort = {
+        sortCol: finalSortBy,
+        sortOrder: finalSortOrder,
+      };
+
+      const appliedAccountNumber =
+        await this.schemaService.computeGlobalAccountFilter(
+          globalFilters,
+        );
+
+      const { finalResult: allProjectList, totalCount } =
+        await this.schemaService.fetchAllProjectsForExport(
+          sort,
+          filters,
+          fiscalYear,
+          appliedAccountNumber,
+          userId,
+          search,
+        );
+
+        const formatNumberForExport = (value: any, currency_symbol: string): string => {
+          if (value == null || value === '') return '-';
+          const num = Number(value);
+          if (isNaN(num)) return '-';
+          // Use currency.js to format the number with the provided currency symbol
+          return currency(num, {
+            symbol: currency_symbol? currency_symbol : '$',
+            precision: 2,
+            pattern: '! #',
+            separator: ',',
+            decimal: '.'
+          }).format();
+        };  
+
+      const rawResult = allProjectList || [];
+      let exportData = rawResult.map((project: any) => {   
+        return {
+          "Project Code": project.project_code || "-",
+          "Name": project.project_name || "-",
+          "Project Type": project.project_type || "-",
+          "Account Name": project.account_name || "-",
+          "Fiscal Year":project.fiscal_year || "-",
+          "Project Classification": project.classification_name || "-",
+          "Customer Group": project.project_client_group || "-",
+          "Project Group": project?.project_group || "-",
+          "Project Effort (Hours)": project.total_effort || "-",
+          "Project Cost": formatNumberForExport(project.total_cost, project.currency_symbol) || "-",
+          "FTE Cost": formatNumberForExport(project.total_fte_cost, project.currency_symbol) || "-",
+          "SubCon Cost": formatNumberForExport(project.total_sub_con, project.currency_symbol) || "-",
+          "Non-Labor Cost": formatNumberForExport(project.total_non_labor_cost, project.currency_symbol) || "-",
+          "Assessment Status": project.assessment_status || "-",
+          "QRE %": project.qre || "-",
+          "QRE": formatNumberForExport(project.qualified_research_expenditure, project.currency_symbol) || "-",
+          "Project Point of Contact": project.project_point_of_contact || "-",
+          "Technical Point of Contact": project.technical_point_of_contact || "-",
+          "Comments": project.comments || "-",
+          "Last Modified": project.modified_datetime
+          ? moment(project.modified_datetime).format('YYYY-MM-DD')
+          : '-',
+          "Project ID": project.r_number || "-",
+        };
+      });
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          projects: exportData,
+          count: totalCount,
+        },
+      };
+    } catch (err) {
+      throw new Error("Error fetching project: " + (err as Error).message);
+    }
+  }
+
+  async exportProjectList(
+    accountId: string,
+    fiscalYear: number = 0,
+    search: string,
+    filters: Record<string, any> = {},
+    sortBy: string = "created_datetime",
+    sortOrder: string = "ASC"
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projects: any; totalCount: number };
+  }> {
+    try{
+
+      const accountData = await this.schemaService.fetchAccountById(accountId);
+
+      if (!accountData) {
+        throw new Error("Invalid account account ID.");
+      }
+
+      if (
+        accountData.parent_account_rid === null ||
+        accountData.parent_account_rid === ""
+      ) {
+        throw new Error("Invalid account ID");
+      }
+
+      let accountRNumber = accountData.r_number;
+
+      if (accountData.storage_type === "store_in_parent") {
+        accountRNumber = await this.schemaService.fetchParentAccount(
+          accountData.parent_account_rid
+        );
+      }
+
+      const isExists = await this.schemaService.checkIfSchemaAndTableExists(
+        accountRNumber
+      );
+
+      if (!isExists) {
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.SUCCESS_MESSAGE,
+          data: {
+            projects: [],
+            totalCount: 0,
+          },
+        };
+      }
+
+      const orgDbSequlize = await initOrgSequelize();
+      const schemaName = `platform_v2_${accountRNumber}`;
+      const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
+      const KeyContactModel = await KeyContact.initialize(
+        orgDbSequlize,
+        schemaName
+      );
+
+      const [finalSortBy, finalSortOrder] = this.getSortParameters(
+        sortBy,
+        sortOrder
+      );
+      const [finalMetaDataSortBy, finalMetaDataSortOrder] = this.getMetaDataSortParameters(
+        sortBy,
+        sortOrder
+      );
+
+      const { whereClause } = this.buildWhereClause(filters, search, false);
+
+      let { rows: projectData, count } = await ProjectModel.findAndCountAll({
+        where: {
+          account_rid: accountData.rid,
+          ...whereClause,
+          ...(fiscalYear && fiscalYear !== 0
+            ? { fiscal_year: fiscalYear }
+            : {}),
+        },
+        order: [[finalSortBy, finalSortOrder]],
+        distinct: true,
+        attributes: [
+          "rid",
+          "r_number",
+          "project_code",
+          "project_name",
+          "program_name",
+          "fiscal_year",
+          "industry_rid",
+          "industry_name",
+          "project_startdate",
+          "project_enddate",
+          "project_type",
+          "project_classification_rid",
+          "project_classification_other",
+          "project_client_group",
+          "project_group",
+          "project_status",
+          "account_rid",
+          "rid",
+          "total_cost",
+          "total_effort",
+          "total_fte",
+          "total_fte_cost",
+          "total_sub_con",
+          "total_sub_con_cost",
+          "total_non_labor_cost",
+          "comments",
+          "country",
+          "region",
+          "currency",
+          "industry_name",
+          "qualified_research_expenditure",
+          "is_rd_qualified",
+          "qre",
+          "created_datetime",
+          "modified_datetime",
+          "assessment_status"
+        ],
+        include: [
+          {
+            model: KeyContactModel,
+            as: "keyContact",
+          },
+        ],
+      });
+
+      if (projectData) {
+        const mainDbInit = await initMainDbSequelize();
+
+        await Promise.all(projectData.map(result => this.assignCurrencyRid(result, mainDbInit)));
+
+        projectData.forEach((val) => {
+          const dataValues = val.dataValues as any;
+          dataValues.account_name = accountData.account_name;
+        });
+        projectData = await this.schemaService.insertProjectListGeoData(
+          projectData,
+          mainDbInit
+        );
+        projectData = await this.schemaService.insertIndusty(
+          projectData,
+          mainDbInit
+        );
+
+        projectData = await this.schemaService.insertKeyRole(
+          projectData,
+          mainDbInit
+        );
+        projectData = await this.schemaService.insertProjectClassification(
+          projectData,
+          mainDbInit
+        );
+
+        projectData = await this.schemaService.finalProjectSort(projectData, finalMetaDataSortBy, finalMetaDataSortOrder, filters);
+      }
+
+      const formatNumberForExport = (value: any, currency_symbol: string): string => {
+        if (value == null || value === '') return '-';
+        const num = Number(value);
+        if (isNaN(num)) return '-';
+        // Use currency.js to format the number with the provided currency symbol
+        return currency(num, {
+          symbol: currency_symbol? currency_symbol : '$',
+          precision: 2,
+          pattern: '! #',
+          separator: ',',
+          decimal: '.'
+        }).format();
+      };
+
+      const rawResult = projectData || [];
+      let exportData = rawResult.map((project: any) => {   
+        return {
+          "Project Code": project.project_code || "-",
+          "Name": project.project_name || "-",
+          "Project Type": project.project_type || "-",
+          "Fiscal Year":project.fiscal_year || "-",
+          "Project Classification": project.classification_name || "-",
+          "Customer Group": project.project_client_group || "-",
+          "Project Group": project?.project_group || "-",
+          "Project Effort (Hours)": project.total_effort || "-",
+          "Project Cost": formatNumberForExport(project.total_cost, project.currency_symbol) || "-",
+          "FTE Cost": formatNumberForExport(project.total_fte_cost, project.currency_symbol) || "-",
+          "SubCon Cost": formatNumberForExport(project.total_sub_con, project.currency_symbol) || "-",
+          "Non-Labor Cost": formatNumberForExport(project.total_non_labor_cost, project.currency_symbol) || "-",
+          "Assessment Status": project.assessment_status || "-",
+          "QRE %": project.qre || "-",
+          "QRE": formatNumberForExport(project.qualified_research_expenditure, project.currency_symbol) || "-",
+          "Project Point of Contact": project.project_point_of_contact || "-",
+          "Technical Point of Contact": project.technical_point_of_contact || "-",
+          "Comments": project.comments || "-",
+          "Last Modified": project.modified_datetime
+          ? moment(project.modified_datetime).format('YYYY-MM-DD')
+          : '-',
+          "Project ID": project.r_number || "-",
+        };
+      });
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          projects: exportData,
+          totalCount: count,
+        },
+      };
+    }catch(err){
       throw new Error("Error fetching project: " + (err as Error).message);
     }
   }
@@ -947,19 +1287,17 @@ export class ProjectService {
               : "",
           new_value:
             newValue !== null && newValue !== undefined ? String(newValue) : "",
-          modified_by: newProjectData["modified_by"],
-          r_number: "",
-        }));
+          modified_by: newProjectData["modified_by"],        }));
 
       if (historyChanges.length === 0) return;
 
-      const latest = await ProjectHistoryModel.findAll();
+      // const latest = await ProjectHistoryModel.findAll();
 
-      historyChanges.forEach((change, i) => {
-        change.r_number = `PROH${(latest.length + i + 1)
-          .toString()
-          .padStart(4, "0")}`;
-      });
+      // historyChanges.forEach((change, i) => {
+      //   change.r_number = `${(latest.length + i + 1)
+      //     .toString()
+      //     .padStart(4, "0")}`;
+      // });
 
       await ProjectHistoryModel.bulkCreate(historyChanges);
     } catch (err) {
@@ -1004,6 +1342,7 @@ export class ProjectService {
         project_client_group: projectData.project_client_group,
         project_group: projectData.project_group,
         project_classification_rid: projectData.project_classification_rid,
+        project_classification_other: projectData.project_classification_other,
         fiscal_year: projectData.fiscal_year,
         country: projectData.country || null,
         region: projectData.region || null,
@@ -1022,12 +1361,11 @@ export class ProjectService {
         modified_by: projectData.modified_by || null,
         project_number: project.r_number || "",
         project_id: project.rid || "",
-        technical_consultant: technicalConsultant,
+        technical_point_of_contact: technicalConsultant,
         financial_consultant: financialConsultant,
         project_point_of_contact: projectPointOfContact,
       });
     } catch (err) {
-      console.log("Error addiing porjct smmary", err);
       throw err;
     }
   }
@@ -1068,6 +1406,7 @@ export class ProjectService {
         project_client_group: projectData.project_client_group,
         project_group: projectData.project_group,
         project_classification_rid: projectData.project_classification_rid,
+        project_classification_other: projectData.project_classification_other,
 
         total_effort: projectData.total_effort || null,
         total_cost: projectData.total_cost || null,
@@ -1084,7 +1423,7 @@ export class ProjectService {
         comments: projectData.comments || null,
 
         ...(technicalConsultant && {
-          technical_consultant: technicalConsultant,
+          technical_point_of_contact: technicalConsultant,
         }),
         ...(financialConsultant && {
           financial_consultant: financialConsultant,
@@ -1105,15 +1444,14 @@ export class ProjectService {
         }
       );
     } catch (err) {
-      console.log("Error addiing porjct smmary", err);
       throw err;
     }
   }
 
   async calculateKeyContactDetails(keyContacts: any[], mainDbSequlize: any) {
-    let technicalConsultant = "N/A";
-    let financialConsultant = "N/A";
-    let projectPointOfContact = "N/A";
+    let technicalConsultant = "-";
+    let financialConsultant = "-";
+    let projectPointOfContact = "-";
 
     if (keyContacts) {
       const keyContactIds = [
@@ -1143,7 +1481,7 @@ export class ProjectService {
 
       const technicalContact = enrichedKeyContacts.find(
         (e: any) =>
-          e.role_name === "Technical Consultant" && e.is_primary_contact
+          e.role_name === "Client Project Technical Point of Contact" && e.is_primary_contact
       );
       const financialContact = enrichedKeyContacts.find(
         (e: any) =>
@@ -1151,17 +1489,17 @@ export class ProjectService {
       );
       const pointOfContact = enrichedKeyContacts.find(
         (e: any) =>
-          e.role_name === "Project Point of Contact" && e.is_primary_contact
+          e.role_name === "Client Project Point of Contact" && e.is_primary_contact
       );
       
-      technicalConsultant = technicalContact ? technicalContact.key_contact_name : "N/A";
-      financialConsultant = financialContact ? financialContact.key_contact_name : "N/A";
-      projectPointOfContact = pointOfContact ? pointOfContact.key_contact_name : "N/A";
+      technicalConsultant = technicalContact ? technicalContact.key_contact_name : null;
+      financialConsultant = financialContact ? financialContact.key_contact_name : null;
+      projectPointOfContact = pointOfContact ? pointOfContact.key_contact_name : null;
     } else {
       return {
-        technicalConsultant: "",
-        financialConsultant: "",
-        projectPointOfContact: "",
+        technicalConsultant: null,
+        financialConsultant: null,
+        projectPointOfContact: null,
       };
     }
 
@@ -1198,7 +1536,9 @@ export class ProjectService {
       "is_rd_qualified",
       "qre",
       "fiscal_year",
-      "comments"
+      "comments",
+      "modified_datetime",
+      "assessment_status"
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -1215,7 +1555,7 @@ export class ProjectService {
       "country_name",
       "region_name",
       "currency_name",
-      "technical_consultant",
+      "technical_point_of_contact",
       "financial_consultant",
       "project_point_of_contact",
       "classification_name",
@@ -1290,139 +1630,198 @@ export class ProjectService {
       : finalSearchCondition;
   }
 
-  private applyFilters(
-    filters: Record<string, any>,
-    whereClause: Record<string, any>,
-    isAllProject: boolean
-  ): Record<string, any> {
-    const castToTextFields = [
-      "rid",
-      "project_type",
-      "project_status",
-      "project_startdate",
-      "project_enddate",
-      "total_effort",
-      "total_cost",
-      "fiscal_year"
-    ];
-  
-    const numberFields = ["total_effort", "total_cost", "fiscal_year"]; 
-    const dateFields = [ "project_startdate", "project_enddate"];
-  
-    const filterFields = this.getFilterFields(isAllProject);
-  
-    filterFields.forEach(({ clientField, dbField }) => {
-      if (filters[clientField]) {
-        const fieldFilter = filters[clientField];
-        const isNumber = numberFields.includes(dbField);
-        const isDate = dateFields.includes(dbField);
-        const isTextCastNeeded = castToTextFields.includes(dbField) && !isNumber && !isDate;
+    private applyFilters(
+      filters: Record<string, any>,
+      whereClause: Record<string, any>,
+      isAllProject: boolean
+    ): Record<string, any> {
+      const castToTextFields = [
+        "rid",
+        "project_type",
+        "project_status",
+        "project_startdate",
+        "project_enddate",
+        "total_effort",
+        "total_cost",
+        "fiscal_year"
+      ];
+    
+      const numberFields = ["total_effort", "total_cost", "fiscal_year", "total_fte", "total_fte_cost", "total_sub_con", 
+        "total_sub_con_cost", "total_non_labor_cost", "qualified_research_expenditure", "qre"]; 
+      const dateFields = [ "project_startdate", "project_enddate", "modified_datetime"];
+      const enumFields = [
+        "project_status",
+        "project_type",
+        "fiscal_year",
+      ];
+      const booleanFields = [ "is_rd_qualified" ];
+    
+      const filterFields = this.getFilterFields(isAllProject);
+    
+      filterFields.forEach(({ clientField, dbField }) => {
+        if (filters[clientField]) {
+          const fieldFilter = filters[clientField];
+          const isNumber = numberFields.includes(dbField);
+          const isDate = dateFields.includes(dbField);
+          const isEnum = enumFields.includes(dbField);
+          const isBoolean = booleanFields.includes(dbField);
+          const isTextCastNeeded = castToTextFields.includes(dbField) && !isNumber && !isDate && !isBoolean;
 
-        if (isTextCastNeeded) {
-          whereClause[dbField] = Sequelize.where(
-            Sequelize.cast(Sequelize.col(dbField), "TEXT"),
-            this.getFieldFilter(fieldFilter, dbField, isNumber, isDate)
-          );
-        } else {
-          whereClause[dbField] = this.getFieldFilter(fieldFilter, dbField, isNumber, isDate);
+
+          if (isTextCastNeeded) {
+            whereClause[dbField] = Sequelize.where(
+              Sequelize.cast(Sequelize.col(dbField), "TEXT"),
+              this.getFieldFilter(fieldFilter, dbField, isNumber, isDate, isEnum, isBoolean)
+            );
+          } else {
+            whereClause[dbField] = this.getFieldFilter(fieldFilter, dbField, isNumber, isDate, isEnum, isBoolean);
+          }
         }
-      }
-    });
-  
-    return whereClause;
-  }
-  
-  private getFieldFilter(
-    fieldFilter: any,
-    dbField: string,
-    isNumberField: boolean,
-    isDateField: boolean
-  ): any {
-    if (isNumberField) {
-      if (fieldFilter.equals !== undefined) {
-        return { [Op.eq]: fieldFilter.equals };
-      }
-      if (fieldFilter.not_equals !== undefined) {
-        return { [Op.ne]: fieldFilter.not_equals };
-      }
-      if (fieldFilter.less_than !== undefined) {
-        return { [Op.lt]: fieldFilter.less_than };
-      }
-      if (fieldFilter.greater_than !== undefined) {
-        return { [Op.gt]: fieldFilter.greater_than };
-      }
-      if (
-        fieldFilter.between &&
-        Array.isArray(fieldFilter.between) &&
-        fieldFilter.between.length === 2
-      ) {
-        return {
-          [Op.between]: [fieldFilter.between[0], fieldFilter.between[1]],
-        };
-      }
-      if (fieldFilter.isEmpty === true) {
-        return { [Op.or]: [null] };
-      }
+      });
+    
+      return whereClause;
     }
-  
-    if (isDateField) {
-      if (fieldFilter.equals !== undefined) {
+    
+    private getFieldFilter(
+      fieldFilter: any,
+      dbField: string,
+      isNumberField: boolean,
+      isDateField: boolean,
+      isEnumField: boolean,
+      isBooleanField: boolean
+    ): any {
+      if (isNumberField) {
         if (fieldFilter.equals !== undefined) {
-          const startOfDay = new Date(fieldFilter.equals);
-          startOfDay.setHours(0, 0, 0, 0);
-          const endOfDay = new Date(fieldFilter.equals);
-          endOfDay.setHours(23, 59, 59, 999);
-      
-          return {
-            [Op.between]: [startOfDay, endOfDay],
+          return { [Op.eq]: fieldFilter.equals };
+        }
+        if (fieldFilter.not_equals !== undefined) {
+          return { 
+            [Op.or]: [
+              { [Op.ne]: fieldFilter.not_equals },
+              { [Op.is]: null },
+            ]
           };
         }
+        if (fieldFilter.less_than !== undefined) {
+          return { [Op.lt]: fieldFilter.less_than };
+        }
+        if (fieldFilter.greater_than !== undefined) {
+          return { [Op.gt]: fieldFilter.greater_than };
+        }
+        if (
+          fieldFilter.between &&
+          Array.isArray(fieldFilter.between) &&
+          fieldFilter.between.length === 2
+        ) {
+          return {
+            [Op.between]: [fieldFilter.between[0], fieldFilter.between[1]],
+          };
+        }
+        if (fieldFilter.is_empty === true) {
+          return { [Op.or]: [null] };
+        }
       }
-      if (fieldFilter.before !== undefined) {
-        return { [Op.lt]: this.normalizeDate(fieldFilter.before) };
+    
+      if (isDateField) {
+        if (fieldFilter.equals !== undefined) {
+          if (fieldFilter.equals !== undefined) {
+            const dateStr = fieldFilter.equals;
+
+            const startOfDay = moment.utc(dateStr, "YYYY-MM-DD").startOf("day").toDate();
+            const endOfDay = moment.utc(dateStr, "YYYY-MM-DD").endOf("day").toDate();
+
+            return {
+              [Op.between]: [startOfDay, endOfDay],
+            };
+          }
+        }
+        if (fieldFilter.before !== undefined) {
+          return { [Op.lt]: this.normalizeDate(fieldFilter.before) };
+        }
+        if (fieldFilter.after !== undefined) {
+          return { [Op.gt]: this.normalizeDate(fieldFilter.after) };
+        }
+        if (
+          fieldFilter.between &&
+          Array.isArray(fieldFilter.between) &&
+          fieldFilter.between.length === 2
+        ) {
+          return {
+            [Op.between]: [
+              this.normalizeDate(fieldFilter.between[0]),
+              this.normalizeDate(fieldFilter.between[1]),
+            ],
+          };
+        }
+        if (fieldFilter.is_empty === true) {
+          return { [Op.or]: [null] };
+        }
       }
-      if (fieldFilter.after !== undefined) {
-        return { [Op.gt]: this.normalizeDate(fieldFilter.after) };
+
+      if (isEnumField) {
+        if (fieldFilter.equals !== undefined) {
+          return { [Op.eq]: fieldFilter.equals };
+        }
+        if (fieldFilter.not_equals !== undefined) {
+          return { 
+            [Op.or]: [
+              { [Op.ne]: fieldFilter.not_equals },
+              { [Op.is]: null },
+            ],
+          };
+        }
+        if (fieldFilter.in && Array.isArray(fieldFilter.in)) {
+          return { [Op.in]: fieldFilter.in };
+        }
+        if (fieldFilter.is_empty === true) {
+          return { [Op.or]: [null] };
+        }
       }
-      if (
-        fieldFilter.between &&
-        Array.isArray(fieldFilter.between) &&
-        fieldFilter.between.length === 2
-      ) {
-        return {
-          [Op.between]: [
-            this.normalizeDate(fieldFilter.between[0]),
-            this.normalizeDate(fieldFilter.between[1]),
+
+      if (isBooleanField) {
+        if (fieldFilter.isTrue === true) {
+          return { [Op.eq]: true };
+        }
+        if (fieldFilter.isFalse === true) {
+          return { [Op.eq]: false };
+        }
+        if (fieldFilter.is_empty === true) {
+          return { [Op.or]: [null] };
+        }
+      }
+    
+      // String (default)
+      if (fieldFilter.equals) {
+        return { [Op.iLike]: fieldFilter.equals };
+      }
+      if (fieldFilter.not_equals) {
+        return { 
+          [Op.or]: [
+            { [Op.notILike]: fieldFilter.not_equals },
+            { [Op.is]: null },
           ],
         };
       }
-      if (fieldFilter.isEmpty === true) {
-        return { [Op.or]: [null] };
+      if (fieldFilter.contains) {
+        return { [Op.iLike]: `%${fieldFilter.contains}%` };
       }
+      if (fieldFilter.not_contains) {
+        return { 
+          [Op.or]: [
+            { [Op.notILike]: `%${fieldFilter.not_contains}%` },
+            { [Op.is]: null },
+          ]        
+         };
+      }
+      if (fieldFilter.is_empty === true) {
+        return { [Op.or]: [null, ""] };
+      }
+      if (fieldFilter.value) {
+        return fieldFilter.value;
+      }
+    
+      return undefined;
     }
-  
-    // String (default)
-    if (fieldFilter.equals) {
-      return { [Op.iLike]: fieldFilter.equals };
-    }
-    if (fieldFilter.not_equals) {
-      return { [Op.notILike]: fieldFilter.not_equals };
-    }
-    if (fieldFilter.contains) {
-      return { [Op.iLike]: `%${fieldFilter.contains}%` };
-    }
-    if (fieldFilter.not_contains) {
-      return { [Op.notILike]: `%${fieldFilter.not_contains}%` };
-    }
-    if (fieldFilter.isEmpty === true) {
-      return { [Op.or]: [null, ""] };
-    }
-    if (fieldFilter.value) {
-      return fieldFilter.value;
-    }
-  
-    return undefined;
-  }
 
   getSortParametersForAllProjects(
     sortBy: string,
@@ -1456,10 +1855,13 @@ export class ProjectService {
       "project_number",
       "project_point_of_contact",
       "financial_consultant",
-      "technical_consultant",
+      "technical_point_of_contact",
       "project_client_group",
       "project_group",
-      "classification_name"
+      "classification_name",
+      "modified_datetime",
+      "assessment_status",
+      "project_type"
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -1486,16 +1888,15 @@ export class ProjectService {
     };
   }
 
-  private normalizeDate(input: string): string | null {
-    let parsed = moment(input, "MM/DD/YYYY", true);
-    if (parsed.isValid()) {
-      return parsed.format("YYYY-MM-DD");
-    }
+  normalizeDate(input: string): any | null {
+    let parsed = moment.utc(input, "YYYY-MM-DD", true);
+    if (!parsed.isValid()) throw new Error("Invalid date");
 
-    throw new Error("Invalid Date format");
+    const startOfDay = parsed.startOf("day").toDate();
+    return startOfDay;
   }
 
-  private getFilterFields(
+  getFilterFields(
     isAllProject: boolean
   ): { clientField: string; dbField: string }[] {
     const projectFilterFields = [
@@ -1503,7 +1904,6 @@ export class ProjectService {
       { clientField: "r_number", dbField: "r_number" },
       { clientField: "project_code", dbField: "project_code" },
       { clientField: "program_name", dbField: "program_name" },
-      { clientField: "industry_name", dbField: "industry_name" },
       { clientField: "project_name", dbField: "project_name" },
       { clientField: "project_description", dbField: "project_description" },
       { clientField: "fiscal_year", dbField: "fiscal_year" },
@@ -1513,45 +1913,43 @@ export class ProjectService {
       { clientField: "project_status", dbField: "project_status" },
       { clientField: "project_startdate", dbField: "project_startdate" },
       { clientField: "project_enddate", dbField: "project_enddate" },
+      { clientField: "project_client_group", dbField: "project_client_group" },
+      { clientField: "project_group", dbField: "project_group" },
+      { clientField: "project_status", dbField: "project_status" },
       { clientField: "created_datetime", dbField: "created_datetime" },
       { clientField: "created_by", dbField: "created_by" },
+      { clientField: "total_fte_cost", dbField: "total_fte_cost" },
+      { clientField: "total_fte", dbField: "total_fte" },
+      { clientField: "total_sub_con", dbField: "total_sub_con" },
+      { clientField: "total_sub_con_cost", dbField: "total_sub_con_cost" },
+      { clientField: "total_non_labor_cost", dbField: "total_non_labor_cost" },
+      { clientField: "comments", dbField: "comments" },
+      { clientField: "qualified_research_expenditure", dbField: "qualified_research_expenditure" },
+      { clientField: "is_rd_qualified", dbField: "is_rd_qualified" },
+      { clientField: "qre", dbField: "qre" },
+      { clientField: "modified_datetime", dbField: "modified_datetime" },
+      { clientField: "assessment_status", dbField: "assessment_status" },
     ];
 
     return projectFilterFields;
   }
-  private getNumericForBlendedRate(rateString: string): string | null {
-    if (rateString) {
-      // Extract numeric value only (including decimals)
-      const numericValue = rateString.match(/[\d.]+/);
-      if (numericValue) {
-        // Convert to Decimal for precision
-        const decimalValue = new Decimal(numericValue[0]);
-        const formattedValue = decimalValue.isInteger()
-          ? `${decimalValue.toFixed(0)} $/Hour`
-          : `${decimalValue.toFixed(2)} $/Hour`;
 
-        return formattedValue;
-      }
-    }
-    return null;
+  buildMetaDataWhereClause(filters: Record<string, any>){
+
+    const filterFields = [
+      { clientField: "account_name", dbField: "account_name" },
+      { clientField: "country_name", dbField: "country_name" },
+      { clientField: "region_name", dbField: "region_name" },
+      { clientField: "currency_name", dbField: "currency_name" },
+      { clientField: "technical_point_of_contact", dbField: "technical_point_of_contact" },
+      { clientField: "financial_consultant", dbField: "financial_consultant" },
+      { clientField: "project_point_of_contact", dbField: "project_point_of_contact" },
+      { clientField: "classification_name", dbField: "classification_name" },
+    ]
+  
+    return filterFields;
   }
 
-  private getNumericRate(rateString: string): string | null {
-    if (rateString) {
-      // Extract numeric value only (including decimals)
-      const numericValue = rateString.match(/[\d.]+/);
-      if (numericValue) {
-        // Convert to Decimal for precision
-        const decimalValue = new Decimal(numericValue[0]);
-
-        // Format based on whole number or decimal
-        return decimalValue.isInteger()
-          ? decimalValue.toFixed(0)
-          : decimalValue.toString();
-      }
-    }
-    return null;
-  }
   /**
    * Fetches a list of project classification from the database.
    *
@@ -1588,7 +1986,6 @@ export class ProjectService {
         },
       };
     } catch (err) {
-      console.log(err);
       return this.throwServiceError(err as Error);
     }
   }
@@ -1599,7 +1996,7 @@ export class ProjectService {
    * @param {Error} err - The caught error.
    * @returns {object} - Standardized error response object.
    */
-  private throwServiceError(err: Error): {
+  throwServiceError(err: Error): {
     statusCode: number;
     message: string;
     errorMessage: string;
@@ -1609,5 +2006,39 @@ export class ProjectService {
       message: HttpStatus.FAILED_MESSAGE,
       errorMessage: err.message,
     };
+  }
+
+  async getCurrencyDetailsByAccountRidRaw(accountRid: string): Promise<string | null> {
+    const query = `SELECT a.currency_rid FROM public.account a WHERE a.rid = :accountRid`;
+    try {
+      const mainDb = await initMainDbSequelize();
+      const result = await mainDb.query(query, {
+        replacements: { accountRid },
+        type: 'SELECT'
+      });
+      return result?(result[0] as any).currency_rid : null;
+    } catch (err) {
+      console.error('Error getting currency symbol:', err);
+      return null;
+    }
+  }
+
+  async assignCurrencyRid(result: any, mainDbSequelize: any) {
+    if (!result.currency) {
+      const currencyRid = await this.getCurrencyDetailsByAccountRidRaw(result.account_rid);
+      if (currencyRid) {
+        result.currency = currencyRid;
+      } else {
+        try {
+          const usdCurrencyId = await mainDbSequelize.query(
+            `SELECT c.* FROM public.currency c WHERE c.currency_code = 'USD'`,
+            { type: 'SELECT' }
+          );
+          result.currency = usdCurrencyId[0]?.rid;
+        } catch (err) {
+          console.error('Error getting USD currency rid:', err);
+        }
+      }
+    }
   }
 }

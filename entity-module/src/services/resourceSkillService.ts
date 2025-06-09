@@ -191,7 +191,7 @@ class ResourceSkillService {
         const sequelizeInstance = await this.getOrgSequelize();
         ResourceSkill.initialize(sequelizeInstance, schemaName);
 
-        const startDate = start_date ? this.formatDateForDb(start_date.toString()) : undefined;
+        const startDate = this.formatDateForDb(start_date as string);
 
         // Use the model's create method to leverage default values
         createdResourceSkill = await ResourceSkill.create({
@@ -201,7 +201,7 @@ class ResourceSkillService {
           resource_rid,
           resource_number,
           resource_code,
-          start_date: startDate || undefined,
+          start_date: startDate || null,
           skill_description,
           skill_level: skill_level || "",
           skill_type_rid,
@@ -427,13 +427,12 @@ class ResourceSkillService {
 
       try {
 
-        const startDate = start_date ? this.formatDateForDb(start_date.toString()) : undefined;
-
+        const startDate = this.formatDateForDb(start_date as string);
         const [affectedCounts, affectedRows] = await ResourceSkill.update(
           {
             rid,
             eid,
-            start_date: startDate || undefined,
+            start_date: startDate || null,
             skill_description,
             skill_level,
             skill_type_rid,
@@ -696,7 +695,8 @@ class ResourceSkillService {
         resourceRid,
         limit,
         offset,
-        search
+        search,
+        accountId
       );
     } catch (err) {
       console.log("Error ", err);
@@ -769,7 +769,8 @@ class ResourceSkillService {
         finalSortBy,
         finalSortOrder,
         resourceRid,
-        search
+        search,
+        accountId
       );
     } catch (err) {
       console.log("Error ", err);
@@ -836,14 +837,14 @@ class ResourceSkillService {
         if (resourceInfo.resource_startdate) {
           const startDate = moment(resourceInfo.resource_startdate);
           if (startDate.isValid()) {
-            resourceInfo.dataValues.resource_startdate = startDate.format('MM/DD/YYYY') as any;
+            resourceInfo.dataValues.resource_startdate = startDate.format('YYYY-MM-DD') as any;
           }
         }
         
         if (resourceInfo.resource_enddate) {
           const endDate = moment(resourceInfo.resource_enddate);
           if (endDate.isValid()) {
-            resourceInfo.dataValues.resource_enddate = endDate.format('MM/DD/YYYY') as any;
+            resourceInfo.dataValues.resource_enddate = endDate.format('YYYY-MM-DD') as any;
           }
         }
       }
@@ -947,19 +948,16 @@ class ResourceSkillService {
 
   /**
    * Properly formats a date string for database storage
-   * @param dateString Date string in MM/DD/YYYY format
+   * @param dateString Date string in yyyy-mm-dd format
    * @returns Properly formatted date for database storage
    */
   private formatDateForDb(dateString?: string): Date | null {
     if (!dateString) return null;
-
     // Parse the date using moment to ensure consistent handling
-    const date = moment(dateString, "MM/DD/YYYY", true);
+    const date = moment(dateString, "YYYY-MM-DD", true);
     if (!date.isValid()) return null;
-
     // Set the time to noon to avoid timezone issues
     date.hour(12).minute(0).second(0).millisecond(0);
-
     return date.toDate();
   }
 
@@ -1003,18 +1001,18 @@ class ResourceSkillService {
     }
   }
 
-  async getSkillSubTypes(skillTypeRid: string): Promise<{
+  async getSkillSubTypes(skillTypeRids: string[] | string): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { skillSubTypes: any[]};
+    data?: { skillSubTypes: any[] };
   }> {
     try {
       const mainDbSequelize = await this.getMainDbSequelize();
-
       const skillSubTypes = await mainDbSequelize.query(
         `SELECT
           rid,
+          skill_type_rid,
           skill_subtype_name,
           skill_subtype_description,
           status,
@@ -1023,13 +1021,13 @@ class ResourceSkillService {
           created_datetime,
           modified_datetime
         FROM skill_subtype
-        WHERE skill_type_rid = :skillTypeRid AND status = 'active'
+        WHERE skill_type_rid IN (:skillTypeRids) AND status = 'active'
         ORDER BY skill_subtype_name ASC`,
         {
-          replacements: { skillTypeRid },
+          replacements: { skillTypeRids },
           type: QueryTypes.SELECT
         }
-      )
+      );
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -1037,9 +1035,7 @@ class ResourceSkillService {
           skillSubTypes
         }
       };
-
-    }
-    catch (err) {
+    } catch (err) {
       return this.throwServiceError(err as Error);
     }
   }

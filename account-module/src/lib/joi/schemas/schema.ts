@@ -55,7 +55,7 @@ const accountSchema = Joi.object({
       "string.pattern.base": "Invalid UUID format for region RID",
       "any.required": "Account country region RID is required",
     }),
-  max_ai_interactions: Joi.number().integer().min(3).max(5).required().label("Max interaction Follow up"),
+  max_ai_interactions: Joi.number().integer().min(1).max(10).required().label("Max interaction Follow up"),
   autosend_interaction: Joi.boolean().required().label("Auto Send Interaction"),
   auto_access_rd: Joi.boolean().required().label("Auto Assessment"),
   fiscal_start_date: Joi.string()
@@ -63,14 +63,14 @@ const accountSchema = Joi.object({
     .required()
     .messages({
       "string.pattern.base":
-        "Fiscal Start Date must be in the format DD/MM",
+        "Fiscal Start Date must be in the format MM/DD",
     }),
 
   fiscal_end_date: Joi.string()
     .pattern(/^\d{2}\/\d{2}$/)
     .required()
     .messages({
-      "string.pattern.base": "Fiscal End Date must be in the format DD/MM",
+      "string.pattern.base": "Fiscal End Date must be in the format MM/DD",
     }),
   interaction_cc_list: Joi.string().allow(null).label("Interaction CC List"),
   blended_rate_fte: Joi.string().optional().pattern(/^\d{1,3}(\.\d{1,2})?$/)
@@ -103,7 +103,7 @@ const accountSchema = Joi.object({
   business_details: Joi.string().min(1).max(2000).required().label("Business Details"),
   website: Joi.string()
     .min(10)
-    .max(50)
+    .max(255)
     .allow(null)
     .optional()
     .pattern(/^(https?:\/\/|www\.)[a-zA-Z0-9.-]+(:[0-9]+)?(\/[a-zA-Z0-9.-]*)*\/?$/)
@@ -111,7 +111,6 @@ const accountSchema = Joi.object({
       "string.pattern.base": `Website URL must begin with 'http' ,'www.' or 'https://'`,
       "string.max": "The website must not exceed 255 characters."
     }),
-  project_manager: Joi.string().pattern(/^(?!.*(['-])\1)[A-Za-z][A-Za-z' -]{0,126}[A-Za-z]$/).min(2).max(128).optional().allow("").allow(null).label("Project Manager"),
   created_datetime: Joi.date().iso().allow(null),
   modified_datetime: Joi.date().iso().allow(null),
   annual_revenue: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional()
@@ -145,7 +144,7 @@ const accountSchema = Joi.object({
         }),
         key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional(),
-        include_in_communication: Joi.boolean().valid(true, false).optional(),
+        include_in_communication: Joi.boolean().allow(null).optional(),
         status: Joi.string().valid('Active', 'Inactive').required(),
         action_type: Joi.string().valid('add', 'edit','delete').required()
       })
@@ -183,7 +182,7 @@ const updateAccountSchema = Joi.object({
       "string.pattern.base": "Invalid UUID format for region RID",
       "any.required": "Account country region RID is required",
     }).label("Region"),
-  max_ai_interactions: Joi.number().integer().min(3).max(5).required().label("Max interaction Follow up"),
+  max_ai_interactions: Joi.number().integer().min(1).max(10).required().label("Max interaction Follow up"),
   autosend_interaction: Joi.boolean().required().label("Auto Send Interaction"),
   auto_access_rd: Joi.boolean().required().label("Auto Assessment"),
   fiscal_start_date: Joi.string()
@@ -191,14 +190,14 @@ const updateAccountSchema = Joi.object({
     .required()
     .messages({
       "string.pattern.base":
-        "Fiscal Start Date must be in the format DD/MM",
+        "Fiscal Start Date must be in the format MM/DD",
     }),
 
   fiscal_end_date: Joi.string()
     .pattern(/^\d{2}\/\d{2}$/)
     .required()
     .messages({
-      "string.pattern.base": "Fiscal End Date must be in the format DD/MM",
+      "string.pattern.base": "Fiscal End Date must be in the format MM/DD",
     }),
   interaction_cc_list: Joi.string().allow(null).label("Interaction cc list"),
   blended_rate_fte: Joi.string().optional().pattern(/^\d{1,3}(\.\d{1,2})?$/)
@@ -238,14 +237,6 @@ const updateAccountSchema = Joi.object({
       "string.pattern.base": `Website URL must begin with 'http','www.' or 'https://'`,
       "string.max": "The website must not exceed 255 characters."
     }),
-  project_manager: Joi.string().pattern(/^(?!.*(['-])\1)[A-Za-z][A-Za-z' -]{0,126}[A-Za-z]$/).min(2).max(128).optional().allow("").allow(null)
-  .messages({
-    "string.base": "Delivary Manager must be a text value.",
-    "string.min": "Delivary Manager must be at least 2 characters long.",
-    "string.max": "Delivary Manager cannot exceed 128 characters.",
-    "string.pattern.base":
-      " Delivary Manager is not valid",
-  }),
   annual_revenue: Joi.string().pattern(/^\d+(\.\d{0,2})?$/).optional()
     .messages({
       "string.pattern.base":"Annual Revenue must be a valid  number maximum up to (9999999999999999.99)",
@@ -282,7 +273,7 @@ const updateAccountSchema = Joi.object({
         }),
         key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional(),
-        include_in_communication: Joi.boolean().valid(true, false).optional(),
+        include_in_communication: Joi.boolean().allow(null).optional(),
         status: Joi.string().valid('Active', 'Inactive').required(),
         action_type: Joi.string().valid('add', 'edit','delete').required()
       })
@@ -322,4 +313,8 @@ const exportAccountSchema = Joi.object({
   )
 });
 
-export { accountSchema, updateAccountSchema, listAccountSchema, exportAccountSchema };
+const colorCodesSchema = Joi.object({
+  status: Joi.string().valid("Active", "Inactive", "All").default("All"),
+})
+
+export { accountSchema, updateAccountSchema, listAccountSchema, exportAccountSchema, colorCodesSchema };

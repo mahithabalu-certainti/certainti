@@ -7,7 +7,9 @@ import {
   handleErrorResponse,
   handleSuccessResponse,
   successLog,
+  validateRequest,
 } from "../utils/helpers";
+import { colorCodesSchema } from "../lib/joi/schemas/schema";
 
 const services = configurations.getInstance().getServices();
 
@@ -152,8 +154,25 @@ async function regions(req: Request, res: Response): Promise<void> {
 async function states(req: Request, res: Response): Promise<void> {
   const methodName = "states";
   try {
-    const { countryId } = req.params;
-    const states = await services.geoDataServices.states(countryId);
+    let countryIds: string[] = [];
+    const raw = req.query.countryIds;
+    if (Array.isArray(raw)) {
+      countryIds = raw as string[];
+    } else if (typeof raw === 'string') {
+      if (raw.trim().startsWith('[')) {
+        try {
+          countryIds = JSON.parse(raw);
+        } catch {
+          countryIds = [];
+        }
+      } else {
+        countryIds = raw
+        .split(',')
+        .map(rid => rid.trim().replace(/^"|"$/g, '')) // ✅ remove quotes
+        .filter(Boolean);      
+      }
+    }
+    const states = await services.geoDataServices.states(countryIds);
     
     if (states.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -197,8 +216,25 @@ async function states(req: Request, res: Response): Promise<void> {
 async function cities(req: Request, res: Response): Promise<void> {
   const methodName = "cities";
   try {
-    const { stateId } = req.params;
-    const cities = await services.geoDataServices.cities(stateId);
+    let stateIds: string[] = [];
+    const raw = req.query.stateIds;
+    if (Array.isArray(raw)) {
+      stateIds = raw as string[];
+    } else if (typeof raw === 'string') {
+      if (raw.trim().startsWith('[')) {
+        try {
+          stateIds = JSON.parse(raw);
+        } catch {
+          stateIds = [];
+        }
+      } else {
+        stateIds = raw
+        .split(',')
+        .map(rid => rid.trim().replace(/^"|"$/g, '')) // ✅ remove quotes
+        .filter(Boolean);      
+      }
+    }
+    const cities = await services.geoDataServices.cities(stateIds);
     
     if (cities.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -269,6 +305,44 @@ async function industries(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function colorCodes(req: Request, res: Response): Promise<void> {
+  const methodName = "colors";
+  try {
+
+    const value = await validateRequest(req, colorCodesSchema, res, "GET");
+
+    if (!value) {
+      return;
+    }
+
+    const colorCodes = await services.geoDataServices.colorCodes(value.status);
+    if (colorCodes.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, colorCodes.data);
+      return;
+    } else {
+      errorLog(methodName, colorCodes.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        colorCodes.message
+      );
+      return;
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+    return;
+  }
+}
+
 // Update the export to include the cities function
 export default {
   country,
@@ -276,5 +350,6 @@ export default {
   regions,
   states,
   cities,
-  industries
+  industries,
+  colorCodes
 };

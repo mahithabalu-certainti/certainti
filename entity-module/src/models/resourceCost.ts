@@ -22,6 +22,7 @@ interface ResourceCostAttributes {
   bi_weekly_cost?: number;
   daily_cost?: number;
   hourly_cost?: number;
+  effort_in_hrs?: number;
   currency_rid?: string;
   fiscal_year: number;
   status?: string;
@@ -59,6 +60,7 @@ export class ResourceCost
   bi_weekly_cost?: number;
   daily_cost?: number;
   hourly_cost?: number;
+  effort_in_hrs?: number;
   currency_rid?: string;
   status?: string;
   comments?: string;
@@ -179,6 +181,10 @@ export class ResourceCost
           allowNull: true,
         },
         hourly_cost: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+        },
+        effort_in_hrs: {
           type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },

@@ -1,4 +1,4 @@
-import { IAccount, IUpdateAccount } from "../../utils/types";
+import { IAccount, IColorCodeType, IUpdateAccount } from "../../utils/types";
 
 export interface IAccountService {
   accountList(
@@ -66,7 +66,9 @@ export interface IAccountService {
     data?: { gloablAcconunt: any; count: number };
   }>;
 
-  getKeyContactRoles(): Promise<{
+  getKeyContactRoles(
+    entity_type: string
+  ): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -100,13 +102,13 @@ export interface IGeoDataService {
       count: number;
     }>
   >;
-  states(countryId?: string): Promise<
+  states(countryIds?: string[]): Promise<
     GeoDataResponse<{
       states: any;
       count: number;
     }>
   >;
-  cities(stateId?: string): Promise<
+  cities(stateIds?: string[]): Promise<
     GeoDataResponse<{
       cities: any;
       count: number;
@@ -115,6 +117,12 @@ export interface IGeoDataService {
   industries(): Promise<
   GeoDataResponse<{
     industries: any;
+    count: number;
+  }>
+  >;
+  colorCodes(status: IColorCodeType): Promise<
+  GeoDataResponse<{
+    colors: any;
     count: number;
   }>
   >
