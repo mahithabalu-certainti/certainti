@@ -1611,26 +1611,26 @@ class SchemaService {
     else if (typeof filterValue === 'object' && filterValue !== null) {
       const filterType = Object.keys(filterValue)[0];
       const filterVal = filterValue[filterType];
+       const roleName = ROLE_KEY_MAP[filterKey];
       enrichedAccounts = enrichedAccounts.filter((account: any) => {
         const contactName = account[filterKey] || '';
-        
-        switch (filterType) {
-          case 'equals':
-            return contactName.toLowerCase() === String(filterVal).toLowerCase();
-            
-         case 'not_equals':
-          const roleName = ROLE_KEY_MAP[filterKey];
-          if (!roleName) {
-              // Role mapping not found → exclude the account (filter key is invalid for this account)
-          return false;
-          }
-          // Step 2: Find the primary contact for this specific role
+         // Step 2: Find the primary contact for this specific role
           const primaryContact = (account.key_contacts || []).find(
             (kc: any) => 
               kc.is_primary_contact && 
               kc.role_name === roleName
           );
 
+        switch (filterType) {
+          case 'equals':
+            return contactName.toLowerCase() === String(filterVal).toLowerCase();
+            
+         case 'not_equals': 
+          if (!roleName) {
+              // Role mapping not found → exclude the account (filter key is invalid for this account)
+          return false;
+          }
+        
           // Step 3: If no primary contact exists for this role, exclude the account
           if (!primaryContact) {
             return false;
@@ -1643,11 +1643,19 @@ class SchemaService {
           case 'contains':
             return contactName.toLowerCase().includes(String(filterVal).toLowerCase());
             
-          case 'is_empty':
-            return (filterVal === true) 
-              ? contactName.trim() === '' 
-              : contactName.trim() !== '';
-            
+         case 'is_empty':
+         
+          if (!roleName) {
+            return false; // Invalid role → exclude account
+          }
+      
+
+          if (filterVal === true) {
+            // Filter for empty: either no contact or empty name
+            return !primaryContact || 
+                  !primaryContact.key_contact_name || 
+                  primaryContact.key_contact_name.trim() === '';
+          }
           default:
             return true;
         }
@@ -1702,6 +1710,7 @@ class SchemaService {
   }
   catch(err)
   {
+    console.log(err)
       throw new Error("Error updating key contacts.");
   }
 }
