@@ -844,7 +844,7 @@ export class ProjectService {
       let exportData = rawResult.map((project: any) => {   
         return {
           "Project Code": project.project_code || "-",
-          "Project Name": project.project_name || "-",
+          "Name": project.project_name || "-",
           "Project Type": project.project_type || "-",
           "Account Name": project.account_name || "-",
           "Fiscal Year":project.fiscal_year || "-",
@@ -1056,7 +1056,7 @@ export class ProjectService {
       let exportData = rawResult.map((project: any) => {   
         return {
           "Project Code": project.project_code || "-",
-          "Project Name": project.project_name || "-",
+          "Name": project.project_name || "-",
           "Project Type": project.project_type || "-",
           "Fiscal Year":project.fiscal_year || "-",
           "Project Classification": project.classification_name || "-",
