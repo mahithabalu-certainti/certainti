@@ -13,7 +13,7 @@ import {
   useFetchState,
   useKeyContactRoles,
 } from '../../services/account';
-import { FieldType, SelectOption } from '../../types';
+import { enumValue, FieldType, SelectOption } from '../../types';
 import { transformFormData, transformKeyContactsFromAPI } from './utils';
 import { NewProjectData } from '../../types/project';
 import {
@@ -319,6 +319,8 @@ const ProjectForm: React.FC = () => {
                 : {
                     project_status: defaultActiveValue,
                     status: defaultActiveValue,
+                    auto_send_ai_interaction: enumValue.Yes,
+                    auto_access_rd: enumValue.Yes,
                   }
             }
             outData={submitData}
