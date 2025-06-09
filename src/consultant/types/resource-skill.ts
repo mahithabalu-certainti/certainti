@@ -87,6 +87,7 @@ export type ResourceSkillPayload = {
   resource_ref_id?: string;
   resource_desc?: string;
   start_date?: string;
+  effective_from?: string;
   skill_description?: string;
   skill_level?: skillLevel;
   years_of_experience?: number | null;
@@ -106,9 +107,7 @@ export type ResourceSkillPayload = {
 export type ExportModule = {
   sortBy?: string;
   sortOrder?: string;
-  fiscalYear?: string  ;
+  fiscalYear?: string;
   rNumber?: string;
-  resourceRid?:string;
+  resourceRid?: string;
 };
-
-

@@ -9,6 +9,7 @@ import {
   createTextAreaField,
   createTextField,
   PROJECT_TYPE,
+  PROJECT_YES_NO_OPTIONS,
   REGEX_PATTERNS,
   STATUS_OPTIONS,
   YES_NO_OPTIONS,
@@ -528,20 +529,14 @@ export const FormData = (
           }),
           createRadioField('auto_access_rd', 'Auto Assessment', {
             required: false,
-            radioOptions: [
-              { label: 'Yes', value: 'Yes' },
-              { label: 'No', value: 'No' },
-            ],
+            radioOptions: PROJECT_YES_NO_OPTIONS,
           }),
           createRadioField(
             'auto_send_ai_interaction',
             'Auto Send Interaction',
             {
               required: true,
-              radioOptions: [
-                { label: 'Yes', value: 'Yes' },
-                { label: 'No', value: 'No' },
-              ],
+              radioOptions: PROJECT_YES_NO_OPTIONS,
             }
           ),
           createTextField('max_ai_interaction', 'Max Interaction Follow Up', {

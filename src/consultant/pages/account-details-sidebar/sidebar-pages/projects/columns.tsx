@@ -230,7 +230,7 @@ export const getProjectColumns = (
     label: 'Last Modified',
     sortable: true,
     sortId: 'modified_datetime',
-    width: 190,
+    width: 140,
     render: (row: ProjectList) =>
       row.modified_datetime ? formatDateToYYYYMMDD(row.modified_datetime) : '-',
   },

@@ -17,6 +17,7 @@ import {
 
 import {
   AllowedCountry,
+  enumValue,
   ErrorHandling,
   FieldType,
   InputType,
@@ -292,6 +293,10 @@ export const createFiscalDateField = (
 export const YES_NO_OPTIONS: SelectOption[] = [
   { label: 'Yes', value: YesNo.Yes },
   { label: 'No', value: YesNo.No },
+];
+export const PROJECT_YES_NO_OPTIONS: SelectOption[] = [
+  { label: 'Yes', value: enumValue.Yes },
+  { label: 'No', value: enumValue.No },
 ];
 
 export interface ActionsDropdownItem {

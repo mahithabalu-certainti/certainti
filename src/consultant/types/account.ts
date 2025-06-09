@@ -140,6 +140,11 @@ export enum YesNo {
   No = 'no',
 }
 
+export enum enumValue {
+  Yes = 'Yes',
+  No = 'No',
+}
+
 export enum KeyContactsUpdate {
   Edit = 'edit',
   Delete = 'delete',
