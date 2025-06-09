@@ -6,9 +6,8 @@ export const profileColumns: ProfileTableColumn<ManageProfileList>[] = [
     id: 'profile_name',
     sortId: 'profile_name',
     label: 'Profile Name',
-    width: 400,
+    width: 300,
     sortable: true,
-    sticky: true,
     sx: {
       position: 'sticky',
       left: '32px',
@@ -19,10 +18,17 @@ export const profileColumns: ProfileTableColumn<ManageProfileList>[] = [
     },
   },
   {
+    id: 'profile_description',
+    sortId: 'profile_description',
+    label: 'Profile Description',
+    width: 500,
+    sortable: true,
+  },
+  {
     id: 'created_datetime',
     sortId: 'created_on',
     label: 'Created On',
-    width: 300,
+    width: 160,
     sortable: true,
     render: (row: ManageProfileList) => getDateFormat(row.created_datetime),
   },
@@ -30,7 +36,7 @@ export const profileColumns: ProfileTableColumn<ManageProfileList>[] = [
     id: 'created_by',
     sortId: 'created_by',
     label: 'Created By',
-    width: 300,
+    width: 250,
     sortable: true,
   },
 ];

@@ -38,6 +38,7 @@ const ListTable = <T extends RowData>({
   loading = false,
   error,
   // Pagination
+  rowsPerPageOptions = [5, 10, 25, 50, 100],
   rowsPerPage = 10,
   currentPage = 0,
   totalItems = 0,
@@ -82,12 +83,15 @@ const ListTable = <T extends RowData>({
     ? data
     : data.slice(currentPage * rowsPerPage, (currentPage + 1) * rowsPerPage);
 
+  const isAvailableAction = actionMenuItems.some((it) => !it.hide);
+
   return (
     <>
       <TableContainer sx={tableStyle}>
         <MuiTable
           stickyHeader={stickyHeader}
           sx={{
+            height: '100%',
             borderCollapse: 'separate !important',
             borderSpacing: 0,
             '& .MuiTableCell-root': {
@@ -189,7 +193,7 @@ const ListTable = <T extends RowData>({
                 )
               )}
 
-              {actionMenuItems?.length > 0 && (
+              {actionMenuItems?.length > 0 && isAvailableAction && (
                 <TableCell
                   sx={{
                     width: actionWidth,
@@ -223,7 +227,7 @@ const ListTable = <T extends RowData>({
             {/* Loading state */}
             {loading && (
               <TableSkeleton
-                rowsPerPage={rowsPerPage}
+                rowsPerPage={rowsPerPage > 15 ? 15 : rowsPerPage}
                 columnsCount={columns.length}
                 selectable={selectable}
                 hasActions={actionMenuItems?.length > 0}
@@ -331,10 +335,10 @@ const ListTable = <T extends RowData>({
                         : row[column.id];
                       const displayValue =
                         cellValue !== null &&
-                        cellValue !== undefined &&
-                        cellValue !== ''
+                          cellValue !== undefined &&
+                          cellValue !== ''
                           ? cellValue
-                          : 'NA';
+                          : '-';
 
                       return (
                         <TableCell
@@ -347,15 +351,14 @@ const ListTable = <T extends RowData>({
                             zIndex: column.sticky ? 6 : 'auto',
                             left: selectable ? '32px' : 0,
                           }}
-                          className={`${
-                            hoverHighlight &&
+                          className={`${hoverHighlight &&
                             (isStatus
                               ? `${statusValue === 'Active' ? 'group-hover:!text-[#199806]' : 'group-hover:!text-[#f44336]'} group-hover:underline`
                               : 'group-hover:!text-blue-600 group-hover:underline')
-                          } cursor-context-menu`}
+                            } cursor-context-menu`}
                         >
                           <TruncateWithTooltip
-                            text={String(displayValue)}
+                            text={displayValue as string}
                             maxWidth={Number(column.width)}
                           >
                             {displayValue as React.ReactNode}
@@ -365,80 +368,98 @@ const ListTable = <T extends RowData>({
                     })}
 
                     {/* Action buttons */}
-                    {actionMenuItems && actionMenuItems.length > 0 && (
-                      <TableCell
-                        sx={{
-                          padding: '0px !important',
-                          whiteSpace: 'nowrap',
-                          width: actionWidth,
-                          minWidth: actionWidth,
-                          maxWidth: actionWidth,
-                          height: '32px !important',
-                          minHeight: '32px !important',
-                          maxHeight: '32px !important',
-                        }}
-                      >
-                        {actionDisplayMode === 'icon' ? (
-                          <Box className='w-full inline-flex items-center justify-center gap-2'>
-                            {actionMenuItems.map((item, index) => (
-                              <Tooltip
-                                key={index}
-                                title={`Click to ${item.label.toLowerCase()}`}
-                                slotProps={{
-                                  tooltip: {
-                                    sx: {
-                                      backgroundColor: '#fff',
-                                      color: 'rgba(0, 0, 0, 0.87)',
-                                      boxShadow: 2,
-                                      borderRadius: '4px',
-                                    },
-                                  },
-                                }}
-                              >
-                                <IconButton
-                                  size='small'
-                                  onClick={() => item.onClick(row)}
-                                >
-                                  <img
-                                    src={item.icon?.toString()}
-                                    alt='actionIcon'
-                                    className='w-4 h-4'
-                                    style={item.iconStyle}
-                                  />
-                                </IconButton>
-                              </Tooltip>
-                            ))}
-                          </Box>
-                        ) : (
-                          <TableActionButton
-                            actions={actionMenuItems.map((item) => ({
-                              ...item,
-                              onClick: () => item.onClick(row),
-                            }))}
-                          />
-                        )}
-                      </TableCell>
-                    )}
+                    {actionMenuItems &&
+                      actionMenuItems.length > 0 &&
+                      isAvailableAction && (
+                        <TableCell
+                          sx={{
+                            padding: '0px !important',
+                            whiteSpace: 'nowrap',
+                            width: actionWidth,
+                            minWidth: actionWidth,
+                            maxWidth: actionWidth,
+                            height: '32px !important',
+                            minHeight: '32px !important',
+                            maxHeight: '32px !important',
+                          }}
+                        >
+                          {actionDisplayMode === 'icon' ? (
+                            <Box className='w-full inline-flex items-center justify-center gap-2'>
+                              {actionMenuItems.map((item, index) => {
+                                if (item.hide) return null;
+                                return (
+                                  <Tooltip
+                                    key={index}
+                                    title={`Click to ${item.label.toLowerCase()}`}
+                                    slotProps={{
+                                      tooltip: {
+                                        sx: {
+                                          backgroundColor: '#fff',
+                                          color: 'rgba(0, 0, 0, 0.87)',
+                                          boxShadow: 2,
+                                          borderRadius: '4px',
+                                        },
+                                      },
+                                    }}
+                                  >
+                                    <IconButton
+                                      size='small'
+                                      onClick={() => item.onClick(row)}
+                                    >
+                                      <img
+                                        src={item.icon?.toString()}
+                                        alt='actionIcon'
+                                        className='w-4 h-4'
+                                        style={item.iconStyle}
+                                      />
+                                    </IconButton>
+                                  </Tooltip>
+                                );
+                              })}
+                            </Box>
+                          ) : (
+                            <TableActionButton
+                              actions={actionMenuItems.map((item) => ({
+                                ...item,
+                                onClick: () => item.onClick(row),
+                              }))}
+                            />
+                          )}
+                        </TableCell>
+                      )}
                   </TableRow>
                 );
               })}
+            {!loading && !error && data.length > 0 && (
+              <TableRow sx={{ height: '10px !important' }}>
+                <TableCell
+                  colSpan={
+                    columns.length +
+                    (selectable ? 1 : 0) +
+                    (actionMenuItems?.length > 0 ? 1 : 0)
+                  }
+                  sx={{ height: '10px !important' }}
+                ></TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </MuiTable>
       </TableContainer>
 
       {/* Pagination */}
-      {(onPageChange || onRowsPerPageChange) && (
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25, 50]}
-          count={totalItems}
-          rowsPerPage={rowsPerPage}
-          page={currentPage}
-          onPageChange={(newPage) => onPageChange?.(newPage)}
-          onRowsPerPageChange={(newPageSize) =>
-            onRowsPerPageChange?.(newPageSize)
-          }
-        />
-      )}
+      {(onPageChange || onRowsPerPageChange) &&
+        (loading || error || data.length > 0) && (
+          <TablePagination
+            rowsPerPageOptions={rowsPerPageOptions}
+            count={totalItems}
+            rowsPerPage={rowsPerPage}
+            page={currentPage}
+            onPageChange={(newPage) => onPageChange?.(newPage)}
+            onRowsPerPageChange={(newPageSize) =>
+              onRowsPerPageChange?.(newPageSize)
+            }
+          />
+        )}
     </>
   );
 };

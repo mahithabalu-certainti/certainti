@@ -1,6 +1,9 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { userServiceApi } from '../../../api/api';
-import { CommonApiResponse } from '../../../common-service';
+import {
+  CommonApiResponse,
+  UpdateExtendedPermission,
+} from '../../../common-service';
 import {
   ManageUserApiResponse,
   ManageUserDetailApiResponse,
@@ -8,6 +11,7 @@ import {
   UserListParams,
   UserProfileApiResponse,
   UserRolesApiResponse,
+  UserPermissionApiResponse,
 } from '../../types/manage-user';
 import { getUserExportUrl, getUserListUrl } from '../urls';
 import { generateFile } from '../helpers';
@@ -216,5 +220,73 @@ export const useManageUserRole = () => {
     queryKey: ['userRoles'], // Unique query key
     queryFn: () => fetchUserRoles(),
     retry: 0,
+  });
+};
+
+/**
+ * Assign permission to user
+ * @returns Promise with user details
+ */
+export const extendedPermissionToUser = async (
+  userId: string
+): Promise<UserPermissionApiResponse> => {
+  try {
+    const { data } = await userServiceApi.get<UserPermissionApiResponse>(
+      getUserExtendedPermissionUrl(userId)
+    );
+    return data;
+  } catch (error) {
+    console.error('Error fetching user details:', error);
+    throw error;
+  }
+};
+
+/**
+ * React Query hook for extended permission to user by userId
+ * @param userId - The ID of the user to fetch
+ * @returns UseQueryResult for profile details
+ */
+
+export const useExtendedPermissionToUser = (userId: string) => {
+  return useQuery<UserPermissionApiResponse, Error>({
+    queryKey: ['extendedPermission', userId], // Unique query key
+    queryFn: () => extendedPermissionToUser(userId),
+    enabled: !!userId, // Only fetch if userId exists
+    staleTime: 0, // No cache
+    gcTime: 0, // Immediately remove from cache
+    retry: 0,
+  });
+};
+
+export const getUserExtendedPermissionUrl = (userId: string): string => {
+  return `/api/user/${userId}/permission/extended`;
+};
+
+export const getExtendedPermissionUrl = (): string => {
+  return `/api/user/permission/extended/edit`;
+};
+
+export const updateExtendedPermission = async (
+  body: Partial<UserDetail>
+): Promise<CommonApiResponse> => {
+  try {
+    const { data } = await userServiceApi.put<CommonApiResponse>(
+      getExtendedPermissionUrl(),
+      body
+    );
+    return data;
+  } catch (error) {
+    console.error('Error fetching user details:', error);
+    throw error;
+  }
+};
+
+export const useUpdateExtendedPermission = () => {
+  return useMutation<
+    CommonApiResponse,
+    Error,
+    Partial<UpdateExtendedPermission>
+  >({
+    mutationFn: (body) => updateExtendedPermission(body),
   });
 };

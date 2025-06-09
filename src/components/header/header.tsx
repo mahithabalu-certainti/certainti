@@ -9,9 +9,10 @@ import {
 } from '../../assets';
 import { ActionsDropdown } from '../actions-dropdown';
 import TextButton from '../button/text-button';
+import { ActionsDropdownItem } from '../../common-utils';
 
 const DEFAULT_BUTTON_STYLES = {
-  height: '32px',
+  height: '24px',
 };
 
 interface HeaderProps {
@@ -21,13 +22,11 @@ interface HeaderProps {
   totalRecords?: number;
   icon?: string;
   iconBackgroundColor?: string;
-  actionItems?: Array<{
-    label: string;
-    onClick: () => void;
-  }>;
+  actionItems?: ActionsDropdownItem[];
   primaryButton?: {
     label: string;
     onClick: () => void;
+    disabled?: boolean;
     navigateTo?: string;
     variant?: 'create' | 'edit'; // To distinguish between create/edit button styles if needed
   };
@@ -74,7 +73,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
 }) => {
   return (
     <div
-      className='flex w-full border-b-2 border-[#CBD6E2] p-4'
+      className='flex w-full border-b-1 h-[60px] border-box border-[#CBD6E2] px-4 py-2'
       style={customStyles.header}
     >
       <div className='flex justify-between w-full'>
@@ -88,7 +87,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
             />
             <div className='flex flex-col w-[90%]'>
               {variant === 'sub' && placeholder ? (
-                <div className='font-semibold text-[#7D98B6] text-[11px]'>
+                <div className='font-semibold text-[#7D98B6] text-[12px]'>
                   {placeholder}
                 </div>
               ) : (
@@ -105,7 +104,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
                   )}
                 </>
               )}
-              <div className='font-semibold text-[20px] -mt-1 text-[#2D3E4F] overflow-ellipsis truncate'>
+              <div className='font-bold text-[16px] -mt-1 text-[#2D3E4F] overflow-ellipsis truncate'>
                 {title}
               </div>
             </div>
@@ -128,6 +127,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
             <TextButton
               label={primaryButton.label}
               onClick={primaryButton.onClick}
+              disabled={primaryButton.disabled}
               sx={{
                 ...DEFAULT_BUTTON_STYLES,
                 ...customStyles.button,
@@ -140,10 +140,10 @@ export const PageHeader: React.FC<HeaderProps> = ({
           )}
 
           {(showRefresh || showDownload) && (
-            <div className='flex items-center justify-center border border-[#EAF0F5] w-16 h-8'>
+            <div className='flex items-center justify-center border border-[#EAF0F5] w-[48px] h-[24px]'>
               {showRefresh && (
                 <button
-                  className='flex items-center justify-center w-1/2'
+                  className='flex border border-[#CBD6E2] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center'
                   onClick={onRefreshClick}
                 >
                   <img src={refreshIcon} alt='refresh-icon' className='h-4' />
@@ -166,7 +166,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
           {showActions && (
             <button
               onClick={onActionsClick}
-              className='flex border border-[#CBD6E2] w-8 h-8 rounded-[2px] justify-center items-center cursor-pointer'
+              className='flex border border-[#CBD6E2] w-[24px] h-[24px] rounded-[2px] justify-center items-center cursor-pointer'
               style={{
                 background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
               }}
@@ -178,7 +178,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
           {showSettings && (
             <button
               onClick={onSettingsClick}
-              className='flex border border-[#CBD6E2] w-8 h-8 rounded-[2px] justify-center items-center cursor-pointer'
+              className='flex border border-[#CBD6E2] w-[24px] h-[24px] rounded-[2px] justify-center items-center cursor-pointer'
               style={{
                 background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
               }}

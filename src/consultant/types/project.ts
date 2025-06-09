@@ -1,11 +1,15 @@
-export interface ProjectList {
+export type ProjectList = {
   rid: string;
+  account_id?: string;
+  project_id?: string;
   account_rid?: string;
   account_number: string;
   account_name: string;
   r_number: string;
   project_ref_id: string;
+  modified_datetime?: string;
   industry: string;
+  currency_symbol: string;
   project_startdate: string;
   project_enddate: string;
   project_type: string;
@@ -38,7 +42,7 @@ export interface ProjectList {
   fiscal_year: string;
   name?: string;
   project_code?: string;
-}
+};
 
 export type Project = {
   id: string;
@@ -57,23 +61,28 @@ export type Project = {
   industry_name?: string;
 };
 
-export type ProjectColumn<T> = {
+export interface ProjectTableColumn<T> {
   id: string;
-  header: string;
+  sortId: string;
+  label: string;
   sortable?: boolean;
-  sort?: string;
-  width?: string;
+  width: string | number;
+  sticky?: boolean;
+  sx?: React.CSSProperties;
   render?: (row: T) => React.ReactNode;
-};
-
+}
+export interface globalFilters {
+  [key: string]: string[];
+}
 export interface ProjectListParams {
   page?: number;
   limit?: number;
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
   filters?: object;
-  fiscalYear: number;
+  fiscalYear?: number | string;
   accountNumber?: string;
+  globalFilters?: globalFilters;
 }
 export enum Status {
   Active = 'active',
@@ -85,7 +94,8 @@ export type ProjectListResponse = {
   statusMessage: string;
   data: {
     projects: ProjectList[];
-    count: number;
+    count?: number;
+    totalCount?: number;
   };
 };
 export interface KeyContacts {
@@ -108,12 +118,15 @@ export interface NewProjectData {
   industry_rid_name?: string;
   start_date?: string | null;
   end_date?: string | null;
-  clasification?: string | null;
+  classification?: string | null;
+  project_classification_other?: string | null;
+  classification_name?: string | null;
   client_group?: string | null;
   account_rid?: string;
   description?: string | null;
   status?: string;
   currency_name?: string;
+  currency_symbol?: string;
   region_name?: string;
   country_name?: string;
   record_id?: string;
@@ -134,6 +147,8 @@ export interface NewProjectData {
   project_code?: string;
   project_name?: string;
   project_id?: string;
+  created_name?: string;
+  modified_name?: string;
   industry: string;
   industry_rid: string | null;
   industry_name: string;
@@ -143,6 +158,7 @@ export interface NewProjectData {
   project_enddate?: string | null;
   project_type?: string;
   project_classification_rid?: string | null;
+  project_classification_name?: string;
   project_client_group?: string;
   project_group?: string;
   project_summary?: string;
@@ -165,6 +181,9 @@ export interface NewProjectData {
   auto_access_rd?: boolean;
   max_ai_interaction?: number | null;
   blended_rate_fte?: string | null;
+  blended_rate_FTE?: string | null;
+  max_ai_interaction_follow_up?: number | null;
+  blended_rate_subCon?: string | null;
   blended_rate_sub_con?: string | null;
   project_description?: string;
   comments?: string;

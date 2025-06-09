@@ -3,7 +3,7 @@
 * {
   font-family: 'Mulish', 'Lexend', sans-serif;
   scrollbar-width: thin;
-  scrollbar-color: #888 #fff; 
+  scrollbar-color: #888 #fff;
 }
 
 .placeholder-custom-color::placeholder {

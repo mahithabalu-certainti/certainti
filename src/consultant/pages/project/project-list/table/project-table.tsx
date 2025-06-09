@@ -1,17 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect } from 'react';
-import { Project, ProjectListParams } from '../../../../types/project';
-import { Table } from '../../../../../components/table';
-import { getProjectColumns } from './columns';
+import { ProjectList, ProjectListParams } from '../../../../types/project';
+import { ListTable } from '../../../../../components/table';
+import { getAllProjectListColumns } from './columns';
 import { useAllProjects } from '../../../../services/project';
 import { RootState } from '../../../../../store/store';
 import { useSelector } from 'react-redux';
 import { generatePath, useNavigate } from 'react-router-dom';
-import { PROJECT, PROJECT_DETAILS } from '../../../../../routes';
+import { PROJECT_DETAILS } from '../../../../../routes';
+import { ActionItem } from '../../../../../components/table/types';
+import { deleteIcon, editIcon } from '../../../../../assets';
+import { reshapeGlobalFilter } from '../../../../../common-utils';
+import { FilterState } from '../../../../types';
 
 interface IProjectTableProps {
   appliedFilters: Record<string, any>;
   tableParams: ProjectListParams;
+  isProjectEditEnable?: boolean;
+  isProjectDeleteEnable?: boolean;
   setTableParams: React.Dispatch<React.SetStateAction<ProjectListParams>>;
   setTotalCount: React.Dispatch<React.SetStateAction<number>>;
 }
@@ -19,11 +25,13 @@ interface IProjectTableProps {
 export const ProjectTable: React.FC<IProjectTableProps> = ({
   appliedFilters,
   tableParams,
+  isProjectEditEnable,
+  isProjectDeleteEnable,
   setTableParams,
   setTotalCount,
 }) => {
   const navigate = useNavigate();
-  const { fiscalYear } = useSelector<
+  const { fiscalYear, filters } = useSelector<
     RootState,
     { filters: unknown; fiscalYear: string }
   >((state: RootState) => state.account);
@@ -36,31 +44,38 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       page: 1,
       filters: appliedFilters,
       fiscalYear: convertedFiscalYear,
+      globalFilters: reshapeGlobalFilter(filters as FilterState),
     }));
-  }, [appliedFilters, fiscalYear]);
+  }, [appliedFilters, fiscalYear, filters]);
 
   const { data, isLoading, isError } = useAllProjects(tableParams);
   const totalItems = data?.count || 0;
 
+  // Update total count when data changes
   useEffect(() => {
     if (data) {
       setTotalCount(data?.count || 0);
     }
   }, [data]);
 
-  const getRowId = (row: Project) => row.id;
+  const getRowId = (row: ProjectList) => row.rid;
 
-  const handleEdit = (project: Project) => {
-    navigate(PROJECT + '/edit/' + project.id, {
-      state: { project },
+  const handleEdit = (account: any) => {
+    console.log('Edit row', account);
+    navigate(`/Project/edit/${account?.project_id}`, {
+      state: {
+        accountID: account?.account_id,
+        projectID: account?.project_id,
+      },
     });
   };
 
-  const handleSort = (sortBy: string, sortOrder: 'ASC' | 'DESC') => {
+  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
     setTableParams((prev) => ({
       ...prev,
       sortBy,
-      sortOrder,
+      sortOrder: apiOrder,
     }));
   };
 
@@ -79,37 +94,58 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     }));
   };
 
-  const handleProject = (project: any) => {
+  const handleAccountName = (project: ProjectList) => {
     const path = generatePath(PROJECT_DETAILS, {
-      projectid: project.id,
+      projectid: project?.project_id ?? null,
     });
     navigate(path, {
-      state: { accountId: project.accountNumber },
+      state: { accountID: project?.account_id, projectID: project?.project_id },
     });
   };
 
-  const projectColumns = getProjectColumns(handleProject);
+  const projectColumns = getAllProjectListColumns(handleAccountName);
+
+  const actionButtons: ActionItem<any>[] = [
+    {
+      label: 'Edit',
+      onClick: (row: any) => handleEdit(row),
+      icon: editIcon,
+      iconStyle: {
+        filter:
+          'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
+      },
+      hide: !isProjectEditEnable,
+    },
+    {
+      label: 'Delete',
+      onClick: (row: any) => console.log('Delete row', row),
+      icon: deleteIcon,
+      hide: !isProjectDeleteEnable,
+    },
+  ];
 
   return (
-    <Table
-      data={data?.projects || ([] as any)}
-      columns={projectColumns as any}
+    <ListTable
+      data={data?.projects as any}
+      columns={projectColumns}
       getRowId={getRowId}
-      // Selection
+      hoverHighlight={false}
+      tableStyle={{ overflowY: 'hidden' }}
+      stickyHeader={true}
+      stickyColumnsCount={2}
       selectable={true}
       onSelectionChange={(selectedIds) => console.log('Selected:', selectedIds)}
-      // Actions
-      onEdit={handleEdit}
-      // State
+      actionWidth={60}
+      actionDisplayMode='dropdown'
+      actionMenuItems={actionButtons}
       loading={isLoading}
       error={isError ? 'Failed to load projects' : undefined}
-      // Pagination
+      rowsPerPageOptions={[25, 50, 100]}
       rowsPerPage={tableParams.limit}
       currentPage={(tableParams.page ?? 1) - 1}
       totalItems={totalItems}
       onPageChange={handlePageChange}
       onRowsPerPageChange={handleRowsPerPageChange}
-      // Sorting
       sortBy={tableParams.sortBy}
       sortOrder={tableParams.sortOrder}
       onSort={handleSort}

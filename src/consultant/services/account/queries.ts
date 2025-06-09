@@ -3,6 +3,7 @@ import {
   AccountFieldsApiResponse,
   CitysApiResponse,
   ClassificationApiResponse,
+  ColorCodeApiResponse,
   CurrencyApiResponse,
   IndustrysApiResponse,
   ParentAccountApiResponse,
@@ -12,6 +13,7 @@ import {
   fetchAccountFields,
   fetchCity,
   fetchClassification,
+  fetchColorCodes,
   fetchCurrency,
   fetchIndustrys,
   fetchParentAccounts,
@@ -61,12 +63,12 @@ export const useFetchClassification = () => {
   });
 };
 
-export const useFetchState = (countryId: string) => {
+export const useFetchState = (countryId: string | string[] | null) => {
   return useQuery<StatesApiResponse, Error>({
     queryKey: ['states', countryId], // Add countryId to query key
     queryFn: () => fetchState(countryId),
     retry: 0,
-    enabled: !!countryId, // Only fetch if countryId exists
+    enabled: !!countryId && countryId.length > 0, // Only fetch if countryId exists
   });
 };
 
@@ -76,5 +78,13 @@ export const useFetchCity = (stateId: string) => {
     queryFn: () => fetchCity(stateId),
     retry: 0,
     enabled: !!stateId, // Only fetch if countryId exists
+  });
+};
+
+export const useFetchColorCodes = () => {
+  return useQuery<ColorCodeApiResponse, Error>({
+    queryKey: ['colorCodes'],
+    queryFn: fetchColorCodes,
+    retry: 0,
   });
 };

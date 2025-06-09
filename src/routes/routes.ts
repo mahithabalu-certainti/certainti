@@ -21,11 +21,12 @@ export const ADMIN_MANAGE_USER = `${ADMIN}/manage-user`;
 export const ADMIN_MANAGE_USER_DETAILS = `${ADMIN_MANAGE_USER}/:userid`;
 export const ADMIN_CREATE_USER = `${ADMIN_MANAGE_USER}/create`;
 export const ADMIN_EDIT_USER = `${ADMIN_MANAGE_USER}/edit/:userid`;
+export const USER_EXTENDED_PERMISSION = `${ADMIN_MANAGE_USER}/extended-permission/:userid`;
 /** PROFILE ROUTES */
 export const MANAGE_PROFILE = `${ADMIN}/manage-profile`;
 export const MANAGE_PROFILE_CREATE = `${MANAGE_PROFILE}/create`;
 export const MANAGE_PROFILE_EDIT = `${MANAGE_PROFILE}/edit/:profileId`;
-
+export const MANAGE_PROFILE_VIEW = `${MANAGE_PROFILE}/view/:profileId`;
 /** ACCOUNT ROUTES */
 export const ACCOUNT = '/account';
 export const ACCOUNT_CREATE = `${ACCOUNT}/create`;

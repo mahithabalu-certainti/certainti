@@ -9,8 +9,12 @@ import { msalConfig } from '../../../config/msalConfig';
 import { useAuthHook, useToast } from '../../../hooks';
 import { useAppTranslation } from '../../../hooks/use-app-translation';
 import { useAppDispatch } from '../../../store/store';
-import { IAuthDetails } from '../../../store/type/auth-slice-type';
-import { setUserId } from '../../../store/slices/account-slice';
+import { IAuthDetails } from '../../../store/type';
+import { setUserId, updatePermissions } from '../../../store/slices';
+import { checkPermission, reShapePermissionData } from '../../../common-utils';
+import { AllModules } from '../../../common-service';
+import { NOT_FOUND } from '../../../routes';
+import { accountNavItems } from '../../../components/sidebar/accounts-menu';
 
 const msalSigninInstance = new PublicClientApplication(msalConfig);
 
@@ -32,18 +36,22 @@ export const Login: React.FC = () => {
     try {
       setIsLoading(true);
       await msalSigninInstance.initialize();
-      
-      // Add redirect handling
-      const loginRequest = {
-        scopes: ['openid', 'profile'],
-        redirectUri: import.meta.env.VITE_REDIRECT_URL,
-      };
-      
-      const { idToken, account } = await msalSigninInstance.loginPopup(loginRequest);
+      const { idToken, account } = await msalSigninInstance.loginPopup();
+      console.log(
+        'idToken, account',
+        idToken,
+        account,
+        import.meta.env.VITE_REDIRECT_URL
+      );
       const userRole = await fetchCurrentUserRole(
         account?.localAccountId,
         idToken
       );
+      const reShapeData = reShapePermissionData(userRole.data.permissions);
+      const isAdminEnable = checkPermission(reShapeData.modules, [
+        AllModules.USER_MANAGEMENT,
+        AllModules.PROFILE_MANAGEMENT,
+      ]);
       const authDetail = {
         isAuthenticated: true,
         authToken: idToken,
@@ -52,11 +60,17 @@ export const Login: React.FC = () => {
         name: account?.name,
         role: userRole.data.user_role,
         userId: userRole.data.user_id,
+        exp: account?.idTokenClaims?.exp,
       };
       login(authDetail as IAuthDetails);
       dispatch(setUserId(account?.localAccountId));
+      dispatch(updatePermissions({ ...reShapeData, isAdminEnable }));
       setIsLoading(false);
-      navigate('/');
+      const currentActiveRoute = accountNavItems.find(
+        (menu) =>
+          reShapeData.menus.find((item) => item.name === menu.id)?.is_enabled
+      );
+      navigate(currentActiveRoute?.link || NOT_FOUND);
     } catch (error) {
       setIsLoading(false);
       const err = error as Error;

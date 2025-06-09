@@ -1,22 +1,22 @@
-import { Account, AccountColumn, Column } from '../../../types/account';
+import { AccountColumn } from '../../../types/account';
 
-export const columns: Column<Account>[] = [
-  { id: 'accountName', label: 'Account Name', sortable: false },
-  { id: 'accountId', label: 'Account ID', sortable: false },
-  { id: 'parentAccount', label: 'Parent Account', sortable: false },
-  { id: 'accountNumber', label: 'Account Number', sortable: false },
-  { id: 'industry', label: 'Industry', sortable: true },
-  { id: 'country', label: 'Country', sortable: true },
-  { id: 'currency', label: 'Currency', sortable: true },
-  { id: 'status', label: 'Status', sortable: false },
-];
+// export const columns: Column<Account>[] = [
+//   { id: 'accountName', label: 'Account Name', sortable: false },
+//   { id: 'accountId', label: 'Account ID', sortable: false },
+//   { id: 'parentAccount', label: 'Parent Account', sortable: false },
+//   { id: 'accountNumber', label: 'Account Number', sortable: false },
+//   { id: 'industry', label: 'Industry', sortable: true },
+//   { id: 'country', label: 'Country', sortable: true },
+//   { id: 'currency', label: 'Currency', sortable: true },
+//   { id: 'status', label: 'Status', sortable: false },
+// ];
 
 export const accountColumns: AccountColumn[] = [
   {
     id: 'account_name',
     sortId: 'account_name',
     label: 'Account Name',
-    width: '300px',
+    width: '250px',
     sortable: true,
     sx: {
       position: 'sticky',
@@ -25,48 +25,97 @@ export const accountColumns: AccountColumn[] = [
       zIndex: 10,
       borderRight: '1px solid #CBD6E2',
       borderBottom: '1px solid #CBD6E2 !important',
-    }
-  },
-  {
-    id: 'r_number',
-    sortId: 'r_number',
-    label: 'Account ID',
-    width: '180px',
-    sortable: true
+    },
   },
   {
     id: 'industry',
     sortId: 'industry',
     label: 'Industry',
     width: '200px',
-    sortable: true
+    sortable: true,
   },
   {
     id: 'country',
     sortId: 'country',
     label: 'Country',
     width: '150px',
-    sortable: true
+    sortable: true,
   },
   {
-    id: 'currency',
-    sortId: 'currency',
-    label: 'Currency',
-    width: '100px',
-    sortable: true
+    id: 'total_projects',
+    sortId: 'total_projects',
+    label: 'Total Projects',
+    width: '150px',
+    sortable: true,
   },
   {
-    id: 'annual_revenue',
-    sortId: 'annual_revenue',
-    label: 'Annual Revenue',
+    id: 'total_project_hours',
+    sortId: 'total_project_hours',
+    label: 'Total Project Hours',
+    width: '180px',
+    sortable: true,
+  },
+  {
+    id: 'total_project_cost',
+    sortId: 'total_project_cost',
+    label: 'Total Cost',
+    width: '150px',
+    sortable: true,
+  },
+  {
+    id: 'qualifying_project_hours_fed',
+    sortId: 'qualifying_project_hours_fed',
+    label: 'Estimated R&D Hours',
+    width: '200px',
+    sortable: true,
+  },
+  {
+    id: 'qualifying_project_qre_fed',
+    sortId: 'qualifying_project_qre_fed',
+    label: 'QRE',
+    width: '140px',
+    sortable: true,
+  },
+  {
+    id: 'qualifying_project_rd_credits_fed',
+    sortId: 'qualifying_project_rd_credits_fed',
+    label: 'Estimated R&D Credits',
+    width: '200px',
+    sortable: true,
+  },
+  {
+    id: 'total_projects_rd_credits',
+    sortId: 'total_projects_rd_credits',
+    label: 'Actual R&D Credits',
+    width: '180px',
+    sortable: true,
+  },
+  {
+    id: 'finance_executive',
+    sortId: 'finance_executive',
+    label: 'Finance Executive',
+    width: '200px',
+    sortable: true,
+  },
+  {
+    id: 'finance_lead',
+    sortId: 'finance_lead',
+    label: 'Finance Lead',
     width: '160px',
-    sortable: true
+    sortable: true,
   },
   {
-    id: 'status',
-    sortId: 'status',
-    label: 'Status',
-    width: '100px',
-    sortable: true
+    id: 'professional_services_consultant',
+    sortId: 'professional_services_consultant',
+    label: 'Professional Services Consultant',
+    width: '250px',
+    sortable: true,
+  },
+  {
+    id: 'r_number',
+    sortId: 'r_number',
+    label: 'Account ID',
+    width: '160px',
+    sortable: true,
   },
 ];

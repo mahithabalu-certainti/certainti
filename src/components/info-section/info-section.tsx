@@ -1,11 +1,12 @@
 import React from 'react';
-import { Box, Skeleton, Typography } from '@mui/material';
+import { Box, Grid, Skeleton, Typography } from '@mui/material';
 import { TruncateWithTooltip } from '../truncate-with-tooltip';
 
 interface InfoSectionColumn {
   items: {
     label: string;
     value: string | React.ReactNode;
+    className?: string;
   }[];
 }
 
@@ -14,12 +15,14 @@ interface InfoSectionProps {
   className?: string;
   loading?: boolean;
   error?: boolean;
+  singleLineView?: boolean;
 }
 
 const InfoSection: React.FC<InfoSectionProps> = ({
   columns,
   className = '',
   loading = false,
+  singleLineView = false,
   error,
 }) => {
   const renderValue = (value: string | React.ReactNode) => {
@@ -30,7 +33,7 @@ const InfoSection: React.FC<InfoSectionProps> = ({
           <Typography
             component='span'
             sx={{
-              fontSize: '16px',
+              fontSize: '14px',
               color: lowerValue === 'active' ? '#199806' : '#f44336',
               fontWeight: 500,
             }}
@@ -39,32 +42,19 @@ const InfoSection: React.FC<InfoSectionProps> = ({
           </Typography>
         );
       }
-      if (lowerValue === 'yes' || lowerValue === 'no') {
-        return (
-          <Typography
-            component='span'
-            sx={{
-              color: lowerValue === 'yes' ? '#00A854' : '#F44336',
-              fontWeight: 500,
-            }}
-          >
-            {value}
-          </Typography>
-        );
-      }
     }
     return value;
   };
 
-  const columnWidth = columns && columns.length > 0 ? `${100 / columns.length}%` : '100%';
-  const loadingColumns = ['20%', '20%', '20%', '20%', '20%'];
+  const loadingRows = singleLineView ? 1 : 2;
+  const totalColumns = Array.isArray(columns) ? columns.length : 3;
 
   if (error) {
     return (
       <Box
-        className={`flex items-center justify-center p-4 border-b-2 border-[#CBD6E2] bg-white min-h-[160px] text-red-500 ${className}`}
+        className={`flex items-center justify-center p-4 border-b-2 border-[#CBD6E2] bg-white max-h-[80px] text-red-500 ${className}`}
       >
-        Failed to Load details
+        Failed to load details
       </Box>
     );
   }
@@ -72,24 +62,23 @@ const InfoSection: React.FC<InfoSectionProps> = ({
   if (loading) {
     return (
       <Box
-        className={`flex items-center p-4 border-b-2 border-[#CBD6E2] bg-white min-h-[160px] max-h-[160px] ${className}`}
-        sx={{ gap: '0 16px' }}
+        className={`flex flex-col gap-3 px-4 py-2 border-b-2 border-[#CBD6E2] bg-white max-h-[80px] ${className}`}
       >
-        {loadingColumns.map((width, colIndex) => (
+        {[...Array(loadingRows)].map((_, rowIndex) => (
           <Box
-            key={colIndex}
+            key={rowIndex}
             sx={{
-              width,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '28px',
+              display: 'grid',
+              gridTemplateColumns: `repeat(${totalColumns * 2}, ${singleLineView ? 'auto' : '1fr'})`,
+              alignItems: 'center',
+              mt: singleLineView ? 0 : 0.5,
             }}
           >
-            {[1, 2].map((item) => (
-              <Box key={item}>
-                <Skeleton variant='text' width='60%' height={20} />
-                <Skeleton variant='text' width='80%' height={20} />
-              </Box>
+            {[...Array(totalColumns)].map((__, colIndex) => (
+              <React.Fragment key={colIndex}>
+                <Skeleton variant='text' width='40%' height={18} />
+                <Skeleton variant='text' width='80%' height={18} />
+              </React.Fragment>
             ))}
           </Box>
         ))}
@@ -97,44 +86,59 @@ const InfoSection: React.FC<InfoSectionProps> = ({
     );
   }
 
+  const rowCount =
+    Array.isArray(columns) && columns[0]?.items?.length
+      ? columns[0].items.length
+      : 0;
+
+  // Calculate grid size based on number of columns
+  const getGridSize = (totalColumns: number) => {
+    if (totalColumns <= 6) {
+      return 12 / totalColumns;
+    }
+    return 2;
+  };
+
   return (
     <Box
-      className={`flex p-4 border-b-2 border-[#CBD6E2] bg-white min-h-[160px] ${className}`}
-      sx={{ gap: '0 16px' }}
+      className={`flex flex-col gap-3 px-4 py-2 border-b-2 border-[#CBD6E2] bg-white max-h-[80px] ${className}`}
     >
-      {columns.map((column, colIndex) => (
-        <Box
-          key={colIndex}
-          sx={{
-            width: columnWidth,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-          }}
-        >
-          {column?.items?.map((item, itemIndex) => (
-            <Box key={itemIndex}>
-              <Typography
-                variant='caption'
-                sx={{
-                  color: '#7D98B6',
-                  fontSize: '13px',
-                  fontWeight: 400,
-                  display: 'block',
-                  mb: 0.5,
-                }}
-              >
-                {item.label}
-              </Typography>
-              <TruncateWithTooltip
-                text={String(item.value)}
-                className='font-medium text-[18px] text-[#2D3E4F]'
-              >
-                {renderValue(item.value)}
-              </TruncateWithTooltip>
-            </Box>
-          ))}
-        </Box>
+      {[...Array(rowCount)].map((_, rowIndex) => (
+        <React.Fragment key={rowIndex}>
+          <Grid container spacing={2}>
+            {columns.map((column, colIndex) => {
+              const item = column.items[rowIndex];
+              return (
+                <Grid
+                  item
+                  xs={12}
+                  sm={6}
+                  md={getGridSize(columns.length)}
+                  key={colIndex}
+                  sx={{ display: 'flex', gap: 1 }}
+                >
+                  <Typography
+                    variant='caption'
+                    sx={{
+                      color: '#7D98B6',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      minWidth: 'fit-content',
+                    }}
+                  >
+                    {item.label}
+                  </Typography>
+                  <TruncateWithTooltip
+                    text={String(item.value)}
+                    className={`font-medium text-[14px] text-[#2D3E4F] ${item.className}`}
+                  >
+                    {renderValue(item.value)}
+                  </TruncateWithTooltip>
+                </Grid>
+              );
+            })}
+          </Grid>
+        </React.Fragment>
       ))}
     </Box>
   );

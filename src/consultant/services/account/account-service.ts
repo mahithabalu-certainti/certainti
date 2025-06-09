@@ -11,6 +11,7 @@ import {
   AccountListURLParams,
   CitysApiResponse,
   ClassificationApiResponse,
+  ColorCodeApiResponse,
   CurrencyApiResponse,
   GlobalAccountListResponse,
   IndustrysApiResponse,
@@ -23,6 +24,7 @@ import {
   AccountListURL,
   CityUrl,
   ClassificationUrl,
+  ColorCodeUrl,
   CurrencyUrl,
   getAccountExportUrl,
   getKeyContactRolesUrl,
@@ -39,7 +41,7 @@ export const fetchAccountFields = async (
   const { data } = await accountServiceApi.get<AccountFieldsApiResponse>(
     AccountDetailUrl(acctounId)
   );
-  // await new Promise((resolve) => setTimeout(resolve, 2000));  
+  // await new Promise((resolve) => setTimeout(resolve, 2000));
   // return mockAccountDetails;
   return data;
 };
@@ -63,7 +65,7 @@ export const fetchAccounts = async (
     AccountListURL(params)
   );
   return {
-    accounts: response.data.data.account,
+    accounts: response.data.data.account.data,
     count: response.data.data.count,
   };
 };
@@ -87,26 +89,35 @@ export const fetchParentAccounts =
     return data;
   };
 
-  export const fetchIndustrys =
-  async (): Promise<IndustrysApiResponse> => {
-    const { data } =
-      await accountServiceApi.get<IndustrysApiResponse>(IndustryUrl);
-    return data;
-  };
+export const fetchIndustrys = async (): Promise<IndustrysApiResponse> => {
+  const { data } =
+    await accountServiceApi.get<IndustrysApiResponse>(IndustryUrl);
+  return data;
+};
 
 export const fetchCurrency = async (): Promise<CurrencyApiResponse> => {
   const { data } =
     await accountServiceApi.get<CurrencyApiResponse>(CurrencyUrl);
   return data;
 };
-export const fetchClassification = async (): Promise<ClassificationApiResponse> => {
+
+export const fetchColorCodes = async (): Promise<ColorCodeApiResponse> => {
   const { data } =
-    await resourceServiceApi.get<ClassificationApiResponse>(ClassificationUrl);
+    await accountServiceApi.get<ColorCodeApiResponse>(ColorCodeUrl);
   return data;
 };
 
+export const fetchClassification =
+  async (): Promise<ClassificationApiResponse> => {
+    const { data } =
+      await resourceServiceApi.get<ClassificationApiResponse>(
+        ClassificationUrl
+      );
+    return data;
+  };
+
 export const fetchState = async (
-  countryId: string
+  countryId: string | string[] | null
 ): Promise<StatesApiResponse> => {
   const { data } = await accountServiceApi.get<StatesApiResponse>(
     StateUrl(countryId)
@@ -151,10 +162,13 @@ export const exportAccountList = async (params: AccountListURLParams = {}) => {
   document.body.removeChild(link);
 };
 
-export const fetchKeyContactRoles = async (): Promise<keyContactRolesApiResponse> => {
+export const fetchKeyContactRoles = async (
+  entityType: string
+): Promise<keyContactRolesApiResponse> => {
   try {
-    const { data } =
-      await accountServiceApi.get<keyContactRolesApiResponse>(getKeyContactRolesUrl());
+    const { data } = await accountServiceApi.get<keyContactRolesApiResponse>(
+      getKeyContactRolesUrl(entityType)
+    );
     return data;
   } catch (error) {
     console.error('Error fetching key contact roles:', error);
@@ -162,10 +176,11 @@ export const fetchKeyContactRoles = async (): Promise<keyContactRolesApiResponse
   }
 };
 
-export const useKeyContactRoles = () => {
+export const useKeyContactRoles = (entityType: string) => {
   return useQuery<keyContactRolesApiResponse, Error>({
     queryKey: ['keyContactRoles'], // Unique query key
-    queryFn: () => fetchKeyContactRoles(),
+    queryFn: () => fetchKeyContactRoles(entityType),
     retry: 0,
+    enabled: !!entityType,
   });
 };

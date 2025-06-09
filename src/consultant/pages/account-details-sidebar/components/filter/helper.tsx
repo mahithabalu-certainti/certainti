@@ -16,6 +16,7 @@ import { arrowIcon, calendarIcon } from '../../../../../assets';
 import { FilterState } from './filterType';
 import {
   MENU_PROPS,
+  OPERATOR_STYLE,
   SELECT_STYLES,
 } from '../../../../../components/filter-component/helpers';
 
@@ -52,11 +53,11 @@ export const TextFilterControl: React.FC<{
       <Select
         value={state.text?.option || 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
-        className='min-w-[65px] max-w-[65px] h-[28px]'
+        className='min-w-[110px] max-w-[10px] h-[28px]'
         IconComponent={(props) => (
           <img src={arrowIcon} alt='arrowIcon' {...props} />
         )}
-        sx={SELECT_STYLES}
+        sx={{ ...SELECT_STYLES, ...OPERATOR_STYLE }}
         MenuProps={MENU_PROPS}
       >
         {menuOption &&
@@ -65,7 +66,7 @@ export const TextFilterControl: React.FC<{
               key={menu.option}
               value={menu.value}
               sx={{
-                fontSize: '14px',
+                fontSize: '12px',
                 color: '#425A76',
                 fontWeight: 600,
                 py: '1px',
@@ -100,7 +101,7 @@ export const TextFilterControl: React.FC<{
               fontSize: '12px',
               color: '#425A76',
               height: '12px',
-              width: '168px',
+              width: '153px',
             },
           }}
         />
@@ -136,11 +137,11 @@ export const TextFilterControlForCostAndSKill: React.FC<{
       <Select
         value={state.textCostAndSkill?.option.toLowerCase() || 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
-        className='min-w-[65px] max-w-[65px] h-[28px]'
+        className='min-w-[110px] max-w-[110px] h-[28px]'
         IconComponent={(props) => (
           <img src={arrowIcon} alt='arrowIcon' {...props} />
         )}
-        sx={SELECT_STYLES}
+        sx={{ ...SELECT_STYLES, ...OPERATOR_STYLE }}
         MenuProps={MENU_PROPS}
       >
         {menuOption &&
@@ -149,7 +150,7 @@ export const TextFilterControlForCostAndSKill: React.FC<{
               key={menu.option}
               value={menu.value}
               sx={{
-                fontSize: '14px',
+                fontSize: '12px',
                 color: '#425A76',
                 fontWeight: 600,
                 py: '1px',
@@ -184,7 +185,7 @@ export const TextFilterControlForCostAndSKill: React.FC<{
               fontSize: '12px',
               color: '#425A76',
               height: '12px',
-              width: '170px',
+              width: '153px',
             },
           }}
         />
@@ -219,11 +220,11 @@ export const NumberFilterControl: React.FC<{
       <Select
         value={state.number?.option.toLowerCase() || 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
-        className='min-w-[65px] max-w-[65px] h-[28px]'
+        className='min-w-[110px] max-w-[110px] h-[28px]'
         IconComponent={(props) => (
           <img src={arrowIcon} alt='arrowIcon' {...props} />
         )}
-        sx={SELECT_STYLES}
+        sx={{ ...SELECT_STYLES, ...OPERATOR_STYLE }}
         MenuProps={MENU_PROPS}
       >
         {menuOption &&
@@ -232,7 +233,7 @@ export const NumberFilterControl: React.FC<{
               key={menu.option}
               value={menu.value}
               sx={{
-                fontSize: '14px',
+                fontSize: '12px',
                 color: '#425A76',
                 fontWeight: 600,
                 py: '1px',
@@ -273,7 +274,7 @@ export const NumberFilterControl: React.FC<{
                 fontSize: '12px',
                 color: '#425A76',
                 height: '12px',
-                width: isBetween ? '50%' : '168px',
+                width: isBetween ? '50%' : '153px',
               },
               '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button':
                 {
@@ -339,6 +340,8 @@ export const DateFilterControl: React.FC<{
   fieldName: string;
   state: FilterState;
   mode?: 'year' | 'date';
+  minDate?: Date;
+  maxDate?: Date;
   onOptionChange: (fieldName: string, event: SelectChangeEvent<any>) => void;
   onValueChange: (
     type: 'from' | 'to',
@@ -354,6 +357,8 @@ export const DateFilterControl: React.FC<{
   onOptionChange,
   onValueChange,
   mode = 'date',
+  minDate,
+  maxDate,
 }) => {
   const option = formatString(filterStates?.[fieldName]?.date?.option);
   const isBetween = option === 'Between';
@@ -372,11 +377,11 @@ export const DateFilterControl: React.FC<{
       <Select
         value={state.date?.option || 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
-        className='min-w-[65px] max-w-[65px] h-[28px]'
+        className='min-w-[110px] max-w-[110px] h-[28px]'
         IconComponent={(props) => (
           <img src={arrowIcon} alt='arrowIcon' {...props} />
         )}
-        sx={SELECT_STYLES}
+        sx={{ ...SELECT_STYLES, ...OPERATOR_STYLE }}
         MenuProps={MENU_PROPS}
       >
         {menuOption &&
@@ -385,7 +390,7 @@ export const DateFilterControl: React.FC<{
               key={menu.option}
               value={menu.value}
               sx={{
-                fontSize: '14px',
+                fontSize: '12px',
                 color: '#425A76',
                 fontWeight: 600,
                 py: '1px',
@@ -439,16 +444,16 @@ export const DateFilterControl: React.FC<{
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DatePicker
                 name='from'
-                maxDate={dayjs(today)}
-                minDate={dayjs(sixYearsAgo)}
-                value={dayjs(state.date?.value.from, 'MM/DD/YYYY')}
+                maxDate={maxDate ? dayjs(maxDate) : dayjs(today)}
+                minDate={minDate ? dayjs(minDate) : dayjs(sixYearsAgo)}
+                value={dayjs(state.date?.value.from, 'YYYY-MM-DD')}
                 disabled={disableInput}
-                format='MM/DD/YYYY'
+                format='YYYY-MM-DD'
                 onChange={(newValue) => {
                   onValueChange(
                     'from',
                     fieldName,
-                    dayjs(newValue).format('MM/DD/YYYY')
+                    dayjs(newValue).format('YYYY-MM-DD')
                   );
                 }}
                 shouldDisableDate={(date) =>
@@ -494,7 +499,7 @@ export const DateFilterControl: React.FC<{
                         width: isBetween ? '50%' : '140px',
                       },
                     },
-                    placeholder: 'MM/DD/YYYY',
+                    placeholder: 'YYYY-MM-DD',
                   },
                 }}
               />
@@ -504,17 +509,17 @@ export const DateFilterControl: React.FC<{
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
               name='to'
-              maxDate={dayjs(today)}
-              minDate={dayjs(sixYearsAgo)}
+              maxDate={maxDate ? dayjs(maxDate) : dayjs(today)}
+              minDate={minDate ? dayjs(minDate) : dayjs(sixYearsAgo)}
               sx={{ mt: 1 }}
-              value={dayjs(state.date?.value.to, 'MM/DD/YYYY')}
+              value={dayjs(state.date?.value.to, 'YYYY-MM-DD')}
               disabled={disableInput}
-              format='MM/DD/YYYY'
+              format='YYYY-MM-DD'
               onChange={(newValue) => {
                 onValueChange(
                   'to',
                   fieldName,
-                  dayjs(newValue).format('MM/DD/YYYY')
+                  dayjs(newValue).format('YYYY-MM-DD')
                 );
               }}
               shouldDisableDate={(date) => dayjs(date).isAfter(dayjs(), 'day')}
@@ -554,7 +559,7 @@ export const DateFilterControl: React.FC<{
                       width: isBetween ? '50%' : '140px',
                     },
                   },
-                  placeholder: 'MM/DD/YYYY',
+                  placeholder: 'YYYY-MM-DD',
                 },
               }}
             />
@@ -594,11 +599,11 @@ export const CurrencySelectFilterControl: React.FC<{
       <Select
         value={state?.currencySelect?.option?.toLowerCase() ?? 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
-        className='min-w-[65px] max-w-[65px] h-[28px]'
+        className='min-w-[110px] max-w-[110px] h-[28px]'
         IconComponent={(props) => (
           <img src={arrowIcon} alt='arrowIcon' {...props} />
         )}
-        sx={SELECT_STYLES}
+        sx={{ ...SELECT_STYLES, ...OPERATOR_STYLE }}
         MenuProps={MENU_PROPS}
         name='option'
       >
@@ -607,7 +612,7 @@ export const CurrencySelectFilterControl: React.FC<{
             key={menu.option}
             value={menu.value}
             sx={{
-              fontSize: '14px',
+              fontSize: '12px',
               color: '#425A76',
               fontWeight: 600,
               py: '1px',
@@ -642,7 +647,7 @@ export const CurrencySelectFilterControl: React.FC<{
                 return selectedOption ? selectedOption.option : '';
               }
             }}
-            className='h-[28px] w-[196px] min-w-[196px] max-w-[196px]'
+            className='h-[28px] w-[181px] min-w-[181px] max-w-[181px]'
             IconComponent={(props) => (
               <img src={arrowIcon} alt='arrowIcon' {...props} />
             )}
@@ -723,16 +728,18 @@ export const EnumFilterControl: React.FC<{
   const isMultiple = option === 'In';
   const hideInput = option === 'Is Empty';
   const selectedValues: string[] = state?.enum?.value || [];
+  console.log('disabled', disabled);
+
   return (
     <div className='flex gap-2 items-center'>
       <Select
         value={state?.enum?.option ?? 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
-        className='min-w-[65px] max-w-[65px] h-[28px]'
+        className='min-w-[110px] max-w-[110px] h-[28px]'
         IconComponent={(props) => (
           <img src={arrowIcon} alt='arrowIcon' {...props} />
         )}
-        sx={SELECT_STYLES}
+        sx={{ ...SELECT_STYLES, ...OPERATOR_STYLE }}
         MenuProps={MENU_PROPS}
         disabled={disabled}
         name='option'
@@ -742,7 +749,7 @@ export const EnumFilterControl: React.FC<{
             key={menu.option}
             value={menu.value}
             sx={{
-              fontSize: '14px',
+              fontSize: '12px',
               color: '#425A76',
               fontWeight: 600,
               py: '1px',
@@ -758,7 +765,7 @@ export const EnumFilterControl: React.FC<{
           disabled={disabled}
           value={state.enum?.value || []}
           name='value'
-          className='h-[28px] w-[196px] min-w-[196px] max-w-[196px]'
+          className='h-[28px] w-[181px] min-w-[181px] max-w-[181px]'
           IconComponent={(props) => (
             <img src={arrowIcon} alt='arrowIcon' {...props} />
           )}
@@ -922,7 +929,15 @@ export const formatFilterForApi = (
         };
       }
     } else if (state.select) {
-      formattedFilters[fieldKey] = state.select.value;
+      console.log('formattedFilters[fieldKey]', formattedFilters[fieldKey]);
+      if (fieldKey === 'is_rd_qualified') {
+        const selectedValue = state.select.value;
+        formattedFilters[fieldKey] = {
+          [selectedValue]: true,
+        };
+      } else {
+        formattedFilters[fieldKey] = state.select.value;
+      }
     }
   });
 
@@ -946,17 +961,8 @@ export const StatusFilterControl: React.FC<{
       )}
       sx={SELECT_STYLES}
       MenuProps={MENU_PROPS}
-      renderValue={(selected) => {
-        if (!selected) {
-          return <span style={{ color: '#aaa' }}>Select an option</span>;
-        }
-        return selected;
-      }}
     >
-      <MenuItem value='' disabled hidden>
-        Select
-      </MenuItem>
-      {menuOption.map((menu) => (
+      {menuOption?.map((menu) => (
         <MenuItem
           key={menu.option}
           value={menu.value}

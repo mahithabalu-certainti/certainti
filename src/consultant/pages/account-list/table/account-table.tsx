@@ -10,14 +10,14 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { reshapeGlobalFilter } from '../../../../common-utils';
 import { TableSkeleton, TableSortHeader } from '../../../../components/table';
 import { ACCOUNT, ACCOUNT_DETAILS } from '../../../../routes';
 import { RootState } from '../../../../store/store';
-import { useAccounts } from '../../../services/account';
+import { useAccounts, useFetchColorCodes } from '../../../services/account';
 import { FilterState } from '../../../types';
 import { Account, ConvertedAccount } from '../../../types/account';
 import { convertAccounts } from '../helpers';
@@ -33,6 +33,8 @@ const AccountTable: React.FC<Record<string, any>> = ({
   orderBy,
   setOrderBy,
   page,
+  isAccountEditEnable,
+  isAccountDeleteEnable,
   // setPage
 }) => {
   const navigate = useNavigate();
@@ -58,9 +60,23 @@ const AccountTable: React.FC<Record<string, any>> = ({
     fiscalYear,
   });
 
+  const colorCodes = useFetchColorCodes();
+
+  const colorCodesList = useMemo(() => {
+    return (
+      colorCodes.data?.data.colors.map((item) => ({
+        color: '#000000',
+        bgColor: item.color_code,
+      })) || []
+    );
+  }, [colorCodes]);
+
   useEffect(() => {
     if (!loading && accountList) {
-      const convertedData = convertAccounts(accountList.accounts || []);
+      const convertedData = convertAccounts(
+        accountList.accounts || [],
+        colorCodesList
+      );
       setAccounts(convertedData);
       setTotalCount(accountList.count || 0);
       setIsDataLoaded(true);
@@ -99,6 +115,20 @@ const AccountTable: React.FC<Record<string, any>> = ({
       newOpenRows.add(accountName);
     }
     setOpenRows(newOpenRows);
+  };
+
+  const [openChildRows, setOpenChildRows] = useState<Set<string>>(new Set());
+
+  // ... existing state and handlers
+
+  const handleChildRowClick = (accountId: string) => {
+    const newOpenChildRows = new Set(openChildRows);
+    if (newOpenChildRows.has(accountId)) {
+      newOpenChildRows.delete(accountId);
+    } else {
+      newOpenChildRows.add(accountId);
+    }
+    setOpenChildRows(newOpenChildRows);
   };
 
   // Handle checkbox selection
@@ -215,6 +245,10 @@ const AccountTable: React.FC<Record<string, any>> = ({
       handleDelete,
       openRows,
       handleAccountNameClick,
+      openChildRows,
+      handleChildRowClick,
+      isAccountEditEnable,
+      isAccountDeleteEnable,
     });
 
   return (
@@ -240,7 +274,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
             <TableHead
               sx={{
                 '& .MuiTableCell-root': {
-                  fontWeight: 700,
+                  fontWeight: 600,
                   fontSize: '13px',
                   lineHeight: '21px',
                   color: '#2A2A2A',
@@ -322,25 +356,27 @@ const AccountTable: React.FC<Record<string, any>> = ({
                     </TableCell>
                   )
                 )}
-                <TableCell
-                  sx={{
-                    width: '100px',
-                    minWidth: '100px',
-                    maxWidth: '100px',
-                    borderRight: 'none',
-                  }}
-                >
-                  Action
-                </TableCell>
+                {(isAccountEditEnable || isAccountDeleteEnable) && (
+                  <TableCell
+                    sx={{
+                      width: '60px',
+                      minWidth: '60px',
+                      maxWidth: '60px',
+                      borderRight: 'none',
+                    }}
+                  >
+                    Action
+                  </TableCell>
+                )}
               </TableRow>
             </TableHead>
             <TableBody
               sx={{
                 '& .MuiTableCell-root': {
-                  fontWeight: 700,
+                  fontWeight: 500,
                   fontSize: '13px',
                   lineHeight: '21px',
-                  color: '#2D3E4F',
+                  color: '#425A76',
                   padding: '0px',
                   paddingLeft: '8px',
                   paddingRight: '8px',
@@ -348,7 +384,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                 },
               }}
             >
-              {loading && !isDataLoaded ? (
+              {loading && !isDataLoaded && colorCodes.isLoading ? (
                 <TableSkeleton
                   rowsPerPage={15}
                   columnsCount={accountColumns.length}
@@ -357,7 +393,10 @@ const AccountTable: React.FC<Record<string, any>> = ({
                   borderHide={true}
                   stickyColumnsCount={2}
                 />
-              ) : !loading && isDataLoaded && accounts?.length === 0 ? (
+              ) : !loading &&
+                isDataLoaded &&
+                !colorCodes.isLoading &&
+                accounts?.length === 0 ? (
                 <TableRow
                   sx={{
                     height: '32px',
@@ -381,6 +420,8 @@ const AccountTable: React.FC<Record<string, any>> = ({
                   handleDelete,
                   renderChildRows: childRowsRenderer,
                   handleAccountNameClick,
+                  isAccountEditEnable,
+                  isAccountDeleteEnable,
                 })
               )}
             </TableBody>

@@ -9,19 +9,17 @@ import { UserListParams } from '../../../types/manage-user';
 import { ProfileTable } from '../';
 import { FilterType } from '../../../types';
 import { exportProfileList } from '../../../service';
+import { useToast } from '../../../../hooks';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { checkPermission } from '../../../../common-utils';
+import { AllModules, AllPermissions } from '../../../../common-service';
+import { AccessRestricted } from '../../../../components/account-restricted';
 
 const BUTTON_STYLES = {
-  height: '32px',
-  background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-  border: '1px solid #CBD6E2',
-  color: '#425A76',
-  borderRadius: '2px',
+  height: '24px',
   fontSize: '13px',
-  fontWeight: 700,
-  padding: '0px',
-  '&:hover': {
-    color: '#425A76 !important',
-  },
+  fontWeight: 600,
 };
 
 export const ProfileList: React.FC = () => {
@@ -31,18 +29,51 @@ export const ProfileList: React.FC = () => {
   const [page, setPage] = useState<number>(1);
   const [tableParams, setTableParams] = useState<UserListParams>({
     page: page,
-    limit: 10,
+    limit: 100,
     sortBy: 'createdAt',
     sortOrder: 'DESC',
   });
   const navigate = useNavigate();
   const [isExporting, setIsExporting] = useState(false);
-
+  const [selectedProfileId, setSelectedProfileId] = useState<string[]>([]);
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
-
+  const { errorToast } = useToast();
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
+
+  // Permission Mangement
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const isProfileEnable = checkPermission(
+    modules,
+    AllModules.PROFILE_MANAGEMENT
+  );
+  const isProfileCreateEnable = checkPermission(
+    permission,
+    AllPermissions.PROFILE_CREATE
+  );
+  const isProfileExportEnable = checkPermission(
+    permission,
+    AllPermissions.PROFILE_EXPORT
+  );
+  const isProfileViewEnable = checkPermission(
+    permission,
+    AllPermissions.PROFILE_VIEW
+  );
+  const isProfileEditEnable = checkPermission(
+    permission,
+    AllPermissions.PROFILE_EDIT
+  );
+  const isProfileDeleteEnable = checkPermission(
+    permission,
+    AllPermissions.PROFILE_DELETE
+  );
+  const isProfileViewAllEnable = checkPermission(
+    permission,
+    AllPermissions.PROFILE_VIEW_ALL
+  );
 
   const handleCloseFilter = () => {
     setAnchorEl(null);
@@ -51,16 +82,34 @@ export const ProfileList: React.FC = () => {
   const isFilterOpen = Boolean(anchorEl);
   const filterId = isFilterOpen ? 'profile-filter-popover' : undefined;
 
+  const handleSelectionChange = (selectedIds: string[]) => {
+    setSelectedProfileId(selectedIds);
+  };
+
   const handleExport = async () => {
+    if (selectedProfileId.length > 1) {
+      errorToast('Please select just one profile to proceed with export.');
+      return;
+    }
+
+    if (selectedProfileId.length === 0) {
+      errorToast('Please select a profile before exporting.');
+      return;
+    }
+
     setIsExporting(true);
+
+    const profileId = selectedProfileId[0];
     try {
-      await exportProfileList(tableParams);
+      await exportProfileList(profileId);
     } catch (error) {
       console.error('Export failed:', error);
     } finally {
       setIsExporting(false);
     }
   };
+
+  if (!isProfileEnable || !isProfileViewAllEnable) return <AccessRestricted />;
 
   return (
     <div className='flex flex-col h-full w-full'>
@@ -84,16 +133,18 @@ export const ProfileList: React.FC = () => {
           </div>
         </div>
         <div className='flex gap-3 justify-center items-center'>
-          <TextButton
-            label='Create Profile'
-            onClick={() => navigate(MANAGE_PROFILE_CREATE)}
-            sx={{
-              ...BUTTON_STYLES,
-              width: '119px',
-              minWidth: '119px',
-              maxWidth: '119px',
-            }}
-          />
+          {isProfileCreateEnable && (
+            <TextButton
+              label='Create Profile'
+              onClick={() => navigate(MANAGE_PROFILE_CREATE)}
+              sx={{
+                ...BUTTON_STYLES,
+                width: '119px',
+                minWidth: '119px',
+                maxWidth: '119px',
+              }}
+            />
+          )}
         </div>
       </div>
 
@@ -105,7 +156,7 @@ export const ProfileList: React.FC = () => {
           <div className='relative h-[32px]'>
             <button
               aria-describedby={filterId}
-              className={`w-[64px] h-[26px] text-[13px] mt-[3px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
+              className={`w-[64px] h-[24px] text-[13px] mt-[5px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
               ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) ? 'bg-[#F3F3F3]' : ''}`}
               onClick={handleFilterModal}
             >
@@ -130,17 +181,19 @@ export const ProfileList: React.FC = () => {
               handleCloseFilter={handleCloseFilter}
             />
           </div>
-          <TextButton
-            label='Export'
-            sx={{
-              ...BUTTON_STYLES,
-              width: '74px',
-              minWidth: '74px',
-              maxWidth: '74px',
-            }}
-            onClick={handleExport}
-            loading={isExporting}
-          />
+          {isProfileExportEnable && (
+            <TextButton
+              label='Export'
+              sx={{
+                ...BUTTON_STYLES,
+                width: '74px',
+                minWidth: '74px',
+                maxWidth: '74px',
+              }}
+              onClick={handleExport}
+              loading={isExporting}
+            />
+          )}
         </div>
       </div>
 
@@ -150,6 +203,10 @@ export const ProfileList: React.FC = () => {
           appliedFilters={appliedFilters}
           tableParams={tableParams}
           setTableParams={setTableParams}
+          onSelectionChange={handleSelectionChange}
+          isProfileViewEnable={isProfileViewEnable}
+          isProfileEditEnable={isProfileEditEnable}
+          isProfileDeleteEnable={isProfileDeleteEnable}
         />
       </div>
     </div>

@@ -1,6 +1,6 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
-import { IAuthDetails } from '../type/auth-slice-type';
+import { IAuthDetails } from '../type';
 
 const initialState: IAuthDetails = {
   isAuthenticated: false,
@@ -12,7 +12,7 @@ const initialState: IAuthDetails = {
   role: null,
 };
 
-const authSlice = createSlice({
+export const authSlice = createSlice({
   name: 'authDetails',
   initialState,
   reducers: {
@@ -32,4 +32,3 @@ const authSlice = createSlice({
 });
 
 export const { setAuthDetail, clearAuthDetail } = authSlice.actions;
-export default authSlice.reducer;

@@ -1,7 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { accountHomeIcon, editIcon } from '../../../assets';
-import { Layout, OnChange, useGetAllCountries } from '../../../common-service';
+import {
+  AllModules,
+  AllPermissions,
+  Layout,
+  OnChange,
+  useGetAllCountries,
+} from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
 import { useToast } from '../../../hooks';
@@ -17,35 +23,49 @@ import {
   useCreateAccount,
   useUpdateAccount,
 } from '../../services/account-create';
-import { AccountFormData, SelectOption, YesNo } from '../../types';
-import { FormData } from './form-data';
+import { AccountFormData, FieldType, SelectOption, YesNo } from '../../types';
+import { FormData, newKeyContactFields } from './form-data';
 import {
   DATA_STORAGE_OPTIONS,
   othersIndustryId,
   transformFormData,
+  transformKeyContactsFromAPI,
 } from './utils';
-import { ACCOUNT } from '../../../routes';
-import { getDateTimeFormat, STATUS_OPTIONS } from '../../../common-utils';
+import {
+  checkPermission,
+  formatDateToYYYYMMDDWithTime,
+  STATUS_OPTIONS,
+} from '../../../common-utils';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../store/store';
+import { AccessRestricted } from '../../../components/account-restricted';
+import SkeletonForm from '../../../components/form-builder/skeleton-form';
 
 export const AccountForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [currentCountry, setCurrentCountry] = useState('');
-  const [primaryKeyContactInfo, setPrimaryKeyContactInfo] = useState({
-    key_contact_name: '',
-    key_contact_role: '',
-    key_contact_email: '',
-  });
   const [isParentAccountRequired, setIsParentAccountRequired] = useState(false);
   const [showOthersField, setShowOthersField] = useState(false);
+  const [isKeyContactsReady, setIsKeyContactsReady] = useState<boolean>(false);
   const [dataResidency, setDataResidency] = useState(DATA_STORAGE_OPTIONS);
+  const [keyContacts, setKeyContacts] = useState<FieldType[]>([]);
   const { successToast } = useToast();
   const location = useLocation();
   const { accountid } = useParams();
-  const keyContactInfo = [
-    'key_contact_name',
-    'key_contact_role',
-    'key_contact_email',
-  ];
+
+  // Permission Mangement
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
+  const isAccountCreateEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_CREATE
+  );
+  const isAccountEditEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_EDIT
+  );
 
   const getAccount = useFetchAccountFields(accountid as string);
   const account = getAccount.data?.data;
@@ -61,48 +81,34 @@ export const AccountForm: React.FC = () => {
             ? 'yes'
             : 'no',
           auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
-          key_contact_name:
-            account?.accountDetails?.keyContacts?.[0]?.key_contact_name,
-          key_contact_role:
-            account?.accountDetails?.keyContacts?.[0]?.key_contact_role,
-          key_contact_email:
-            account?.accountDetails?.keyContacts?.[0]?.key_contact_email,
-          key_contact_status:
-            account?.accountDetails?.keyContacts?.[0]?.status.toLowerCase(),
-          is_primary_contact: account?.accountDetails?.keyContacts?.[0]
-            ?.is_primary_contact
-            ? 'yes'
-            : 'no',
-          include_in_communication: account?.accountDetails?.keyContacts?.[0]
-            ?.include_in_communication
-            ? 'yes'
-            : 'no',
+          ...transformKeyContactsFromAPI(
+            account?.accountDetails?.keyContacts || []
+          ),
           record_id: account?.accountDetails?.rid,
           account_id: account?.accountById?.r_number,
-          created_on: getDateTimeFormat(account?.accountById?.created_datetime),
-          updated_on: getDateTimeFormat(
+          created_on: formatDateToYYYYMMDDWithTime(
+            account?.accountById?.created_datetime
+          ),
+          updated_on: formatDateToYYYYMMDDWithTime(
             account?.accountById?.modified_datetime
           ),
           created_by: account?.accountDetails?.created_by,
           updated_by: account?.accountDetails?.modified_by,
+          website: account?.accountDetails?.website || '',
         }),
     }),
     [account]
   );
   const defaultActiveValue = STATUS_OPTIONS[0].value;
-  const isValueUpdateInKeyContact = Object.values(primaryKeyContactInfo).some(
-    (val) => val.trim() !== ''
-  );
 
   const allCountries = useGetAllCountries();
   const industry = useFetchIndustrys();
-  const keyContactRoles = useKeyContactRoles();
+  const keyContactRoles = useKeyContactRoles('Account');
   const parentAccount = useFetchParentAccounts();
   const currency = useFetchCurrency();
   const states = useFetchState(currentCountry);
   const createAccount = useCreateAccount();
   const updateAccount = useUpdateAccount();
-  const navigate = useNavigate();
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
 
@@ -112,10 +118,10 @@ export const AccountForm: React.FC = () => {
     if (commonSuccess) {
       successToast(
         isEditView
-          ? 'Account update successfully'
+          ? 'Account updated successfully'
           : 'Account created successfully'
       );
-      navigate(ACCOUNT);
+      goBack();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
@@ -125,18 +131,6 @@ export const AccountForm: React.FC = () => {
       setCurrentCountry(accountData.country_rid);
     }
   }, [accountData.country_rid]);
-
-  useEffect(() => {
-    setPrimaryKeyContactInfo({
-      key_contact_email: accountData.key_contact_email || '',
-      key_contact_name: accountData.key_contact_name || '',
-      key_contact_role: accountData.key_contact_role || '',
-    });
-  }, [
-    accountData.key_contact_email,
-    accountData.key_contact_name,
-    accountData.key_contact_role,
-  ]);
 
   useEffect(() => {
     if (accountData.industry_rid === othersIndustryId) {
@@ -198,13 +192,59 @@ export const AccountForm: React.FC = () => {
     [keyContactRoles.data?.data.keyContactRoles]
   );
 
+  useEffect(() => {
+    if (isKeyContactsReady) return; // Do not reinitialize
+
+    const existingContacts = account?.accountDetails?.keyContacts || [];
+    const newKeyData = newKeyContactFields(memoizedRole, false);
+
+    let fields: FieldType[] = [];
+
+    if (isEditView && existingContacts.length) {
+      existingContacts.forEach(() => {
+        fields = [...fields, ...newKeyData];
+      });
+    } else {
+      fields = [...newKeyData];
+    }
+
+    setKeyContacts(fields);
+    setTimeout(() => {
+      setIsKeyContactsReady(true);
+    }, 5000);
+  }, [
+    memoizedRole,
+    account?.accountDetails?.keyContacts,
+    isEditView,
+    isKeyContactsReady,
+  ]);
+
+  const removeKeyContactInfo = (fieldIndex: number) => {
+    const contactsArr = [...keyContacts];
+    const groupSize = 8;
+    const groupIndex = Math.floor(fieldIndex / groupSize);
+    const startIndex = groupIndex * groupSize;
+    if (contactsArr.length <= groupSize) {
+      const newEmptyContact = newKeyContactFields(memoizedRole, false);
+      contactsArr.splice(0, groupSize, ...newEmptyContact);
+    } else {
+      contactsArr.splice(startIndex, groupSize);
+    }
+
+    setKeyContacts(contactsArr);
+  };
+
+  const addKeyContactInfo = () => {
+    const newKeyData = newKeyContactFields(memoizedRole, false);
+    setKeyContacts((prev) => [...prev, ...newKeyData]);
+  };
+
   const submitData = (formValues: Partial<AccountFormData>) => {
     const transformData = transformFormData(
       formValues,
       isEditView,
       accountData?.rid,
-      isValueUpdateInKeyContact,
-      account?.accountDetails?.keyContacts?.[0]?.rid
+      account?.accountDetails?.keyContacts
     );
     if (isEditView) {
       updateAccount.mutate(transformData);
@@ -234,12 +274,6 @@ export const AccountForm: React.FC = () => {
         setDataResidency(DATA_STORAGE_OPTIONS);
       }
     }
-    if (keyContactInfo.includes(data.fieldName)) {
-      setPrimaryKeyContactInfo((prev) => ({
-        ...prev,
-        [data.fieldName]: data.fieldValue,
-      }));
-    }
     // show others field if industry is selected as Others
     if (data.fieldName === 'industry_rid') {
       // others id
@@ -253,23 +287,54 @@ export const AccountForm: React.FC = () => {
     window.history.back();
   };
 
+  const formConfig = FormData(
+    memoizedContry,
+    memoizedParentAccounts,
+    memoizedCurrency,
+    memoizedState,
+    dataResidency,
+    memoizedIndustry,
+    memoizedRole,
+    isParentAccountRequired,
+    keyContacts,
+    addKeyContactInfo,
+    removeKeyContactInfo,
+    isEditView,
+    states.isLoading,
+    showOthersField
+  );
+
+  const formLoading =
+    allCountries.isLoading ||
+    parentAccount.isLoading ||
+    currency.isLoading ||
+    industry.isLoading ||
+    keyContactRoles.isLoading ||
+    !isKeyContactsReady;
+
+  if (
+    !accountIsEnable ||
+    (isEditView ? !isAccountEditEnable : !isAccountCreateEnable)
+  )
+    return <AccessRestricted />;
+
   return (
     <>
-      <div className='flex items-center justify-between px-10 py-6 border-b-2 border-gray-200'>
+      <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
           <img
             src={isEditView ? editIcon : accountHomeIcon}
             alt='menu-icon'
-            className='h-8 w-8 bg-[#7D98B6] p-2.5 rounded'
+            className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
           />
           <div className='w-[90%]'>
             {isEditView && (
-              <h5 className='text-[20px] font-semibold ml-2 text-[#2D3E4F]'>
+              <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F]'>
                 Edit Account
               </h5>
             )}
             <h4
-              className={`${isEditView ? 'text-[14px]' : 'text-[20px]'} font-semibold text-[#2D3E4F] ml-2 leading-4 w-[95%] overflow-ellipsis truncate`}
+              className={`${isEditView ? 'text-[14px]' : 'text-[16px]'} font-bold text-[#2D3E4F] -mt-1 ml-2 leading-4 w-[95%] overflow-ellipsis truncate`}
             >
               {isEditView ? accountData.account_name : 'Create Account'}
             </h4>
@@ -299,43 +364,29 @@ export const AccountForm: React.FC = () => {
           />
         </div>
       </div>
-      <FormBuilder
-        data={FormData(
-          memoizedContry,
-          memoizedParentAccounts,
-          memoizedCurrency,
-          memoizedState,
-          dataResidency,
-          memoizedIndustry,
-          memoizedRole,
-          isValueUpdateInKeyContact,
-          isParentAccountRequired,
-          isEditView,
-          states.isLoading,
-          showOthersField
+      <div className={`${isEditView ? 'pb-10' : 'pb-4'}`}>
+        {formLoading ? (
+          <SkeletonForm />
+        ) : (
+          <FormBuilder
+            data={formConfig}
+            loading={false}
+            values={
+              isEditView && accountData
+                ? { ...accountData }
+                : {
+                    status: defaultActiveValue,
+                    autosend_interaction: YesNo.Yes,
+                    auto_access_rd: YesNo.Yes,
+                  } // Set default values in Create Account
+            }
+            outData={submitData}
+            formRef={formRef}
+            onChange={onChangeField}
+            layout={Layout.TYPE_1}
+          />
         )}
-        loading={
-          allCountries.isLoading ||
-          parentAccount.isLoading ||
-          currency.isLoading ||
-          industry.isLoading ||
-          keyContactRoles.isLoading
-        }
-        values={
-          isEditView && accountData
-            ? { ...accountData }
-            : {
-                status: defaultActiveValue,
-                key_contact_status: defaultActiveValue,
-                autosend_interaction: YesNo.Yes,
-                auto_access_rd: YesNo.Yes,
-              } // Set default values in Create Account
-        }
-        outData={submitData}
-        formRef={formRef}
-        onChange={onChangeField}
-        layout={Layout.TYPE_1}
-      />
+      </div>
     </>
   );
 };

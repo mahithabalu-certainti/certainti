@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { CircularProgress, Typography } from '@mui/material';
 import { SxProps } from '@mui/material';
 import React from 'react';
 import { leftArrowIcon } from '../../../../../assets';
@@ -6,12 +7,25 @@ import TextButton from '../../../../../components/button/text-button';
 import { Theme } from '@emotion/react';
 import { NewProjectData } from '../../../../types/project';
 import {
-  formatDateToMMDDYYYY,
-  formatDateToMMDDYYYYWithTime,
+  formatDateToYYYYMMDD,
+  formatDateToYYYYMMDDWithTime,
 } from '../../../account-details-sidebar/sidebar-pages/resources/utils';
+import { KeyContactProps } from '../../../account-details/utils';
+import { costDisplay } from '../../../../../common-utils';
+import DetailsSection from '../../../../../components/details-section/details';
+import KeyContactSection from '../../../../../components/details-section/keyContact';
 interface DetailItem {
   label: string;
   value: React.ReactNode;
+}
+interface trasnformedKeyContacts {
+  keyContactId?: string | undefined;
+  keyContactName?: string | undefined;
+  keyContactRole?: string | undefined;
+  keyContactEmail?: string | undefined;
+  isPrimaryContact?: boolean | undefined;
+  includeInCommnunications?: boolean | undefined;
+  keyContactStatus?: string | undefined;
 }
 interface ProjectOverviewProps {
   title: string;
@@ -22,11 +36,14 @@ interface ProjectOverviewProps {
     onClick: () => void;
     sx?: SxProps<Theme>;
     disabled?: boolean;
+    hide?: boolean;
   }[];
   toggleViewMode?: () => void;
   showBackArrow?: boolean;
   onBackClick?: () => void;
   projectDetails?: NewProjectData | null;
+  isDetailsLoading?: boolean;
+  detailsError?: boolean;
 }
 
 const formatKey = (key: string): string => {
@@ -47,99 +64,47 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   showBackArrow = false,
   onBackClick,
   projectDetails,
+  isDetailsLoading,
+  detailsError,
 }) => {
-  console.log('projectDetails', projectDetails);
-
-  const DetailsSection: React.FC<{
-    title: string;
-    data: DetailItem[];
-  }> = ({ title, data }) => {
-    // Split data into two columns
-    const leftColumn: DetailItem[] = [];
-    const rightColumn: DetailItem[] = [];
-
-    data.forEach((item, index) => {
-      if (index % 2 === 0) {
-        leftColumn.push(item);
-      } else {
-        rightColumn.push(item);
-      }
-    });
-
-    const renderValue = (value: React.ReactNode) => {
-      if (typeof value === 'string') {
-        const status = value.toLowerCase();
-        if (status === 'active') {
-          return <span className='text-[#199806]'>Active</span>;
-        }
-        if (status === 'inactive') {
-          return <span className='text-[#f44336]'>In-Active</span>;
-        }
-      }
-      return (
-        <span className='font-light text-[14px] text-[#2D3E4F]'>
-          {value || 'NA'}
-        </span>
-      );
-    };
-
+  if (isDetailsLoading) {
     return (
-      <div className={title === 'Basic Information' ? 'mt-0' : 'mt-6'}>
-        <div className='text-[16px] text-[#2D3E4F] font-semibold'>{title}</div>
-        <div className='text-sm my-1.5 grid gap-y-2'>
-          {title === 'Comments'
-            ? // Full-width single column layout for Comments
-              data.map((item, index) => (
-                <div
-                  key={`comment-row-${index}`}
-                  className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-4 py-2'
-                >
-                  <div className='text-right font-normal text-[14px] text-[#65686F] pr-2'>
-                    {item.label}
-                  </div>
-                  <div className='font-light text-[14px] break-all overflow-hidden'>
-                    {renderValue(item.value)}
-                  </div>
-                </div>
-              ))
-            : leftColumn.map((leftItem, index) => {
-                const rightItem = rightColumn[index];
-
-                return (
-                  <div
-                    key={`row-${index}`}
-                    className='grid grid-cols-1 md:grid-cols-2 gap-6'
-                  >
-                    {/* Left column */}
-                    <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-4 py-2'>
-                      <div className='text-right font-normal text-[14px] text-[#65686F] pr-2'>
-                        {leftItem.label}
-                      </div>
-                      <div className='font-light text-[14px] break-all overflow-hidden'>
-                        {renderValue(leftItem.value)}
-                      </div>
-                    </div>
-
-                    {/* Right column */}
-                    {rightItem ? (
-                      <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-4 py-2'>
-                        <div className='text-right font-normal text-[14px] text-[#65686F] pr-2'>
-                          {rightItem.label}
-                        </div>
-                        <div className='font-light text-[14px] break-all overflow-hidden'>
-                          {renderValue(rightItem.value)}
-                        </div>
-                      </div>
-                    ) : (
-                      <div />
-                    )}
-                  </div>
-                );
-              })}
-        </div>
+      <div className='flex items-center justify-center h-64'>
+        <CircularProgress />
+        <Typography variant='body1' className='ml-4'>
+          Loading details...
+        </Typography>
       </div>
     );
-  };
+  }
+
+  if (detailsError) {
+    return (
+      <div className='flex flex-col items-center justify-center h-64 p-4'>
+        <Typography variant='h6' color='error' className='mb-2'>
+          Error loading details
+        </Typography>
+        <Typography
+          variant='body2'
+          color='textSecondary'
+          className='text-center'
+        >
+          {'Failed to fetch details. Please try again later.'}
+        </Typography>
+      </div>
+    );
+  }
+
+  if (!projectDetails) {
+    return (
+      <div className='flex flex-col items-center justify-center h-64 p-4'>
+        <Typography variant='h6' color='textSecondary'>
+          No details available
+        </Typography>
+      </div>
+    );
+  }
+
   const CreateSectionData = (
     dataObj: Partial<NewProjectData>,
     customMappings?: Record<string, (val: any) => React.ReactNode>
@@ -149,7 +114,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       if (value && typeof value === 'object' && !Array.isArray(value)) {
         return {
           label: formatKey(key),
-          value: Object.values(value).join(', ') || 'NA', // or handle nested objects differently
+          value: Object.values(value).join(', ') || '-', // or handle nested objects differently
         };
       }
       if (
@@ -158,7 +123,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       ) {
         return {
           label: formatKey(key),
-          value: formatDateToMMDDYYYYWithTime(value), // custom formatter
+          value: formatDateToYYYYMMDDWithTime(value), // custom formatter
         };
       }
       if (
@@ -167,12 +132,12 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       ) {
         return {
           label: formatKey(key),
-          value: formatDateToMMDDYYYY(value), // custom formatter
+          value: formatDateToYYYYMMDD(value), // custom formatter
         };
       }
       const displayValue =
         value === null || value === '' || value === undefined
-          ? 'NA'
+          ? '-'
           : customMappings?.[key]
             ? customMappings[key](value)
             : value;
@@ -184,95 +149,150 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     });
   };
 
-  const basicInfo = CreateSectionData({
-    project_code: projectDetails?.project_code,
-    name: projectDetails?.project_name,
-    industry:
-      projectDetails?.industry_name || projectDetails?.industry_rid_name,
-    program_name: projectDetails?.program_name,
-    fiscal_year: projectDetails?.fiscal_year,
-    project_startdate: projectDetails?.project_startdate,
-    project_enddate: projectDetails?.project_enddate,
-    project_type: projectDetails?.project_type,
-    clasification: projectDetails?.project_classification_rid,
-    client_group: projectDetails?.project_client_group,
-    description: projectDetails?.project_description,
-    status: projectDetails?.project_status,
-  });
+  const basicInfo: DetailItem[] = [
+    { label: 'Project Code', value: projectDetails?.project_code },
+    { label: 'Fiscal Year', value: projectDetails?.fiscal_year },
+    { label: 'Name', value: projectDetails?.project_name },
+    { label: 'Project Type', value: projectDetails?.project_type },
+    { label: 'Start Date', value: projectDetails?.project_startdate },
+    { label: 'End Date', value: projectDetails?.project_enddate },
+    {
+      label: 'Classification',
+      value:
+        projectDetails?.project_classification_other ||
+        projectDetails?.classification_name,
+    },
 
-  const locationInfo = CreateSectionData({
-    country: projectDetails?.country_name,
-    region: projectDetails?.region_name,
-    currency: projectDetails?.currency_name,
-  });
-  const firstKeyContact = projectDetails?.keyContact?.[0];
-  const keyContacts = CreateSectionData({
-    key_contact_name: firstKeyContact?.key_contact_name ?? '',
-    key_contact_role: firstKeyContact?.role_name ?? '',
-    key_contact_email: firstKeyContact?.key_contact_email ?? '',
-    is_primary_contact: firstKeyContact?.is_primary_contact ? 'Yes' : 'No',
-    include_in_communication: firstKeyContact?.include_in_communication
-      ? 'Yes'
-      : 'No',
-    key_contact_status: firstKeyContact?.status ?? undefined,
-  });
-  const fincialInfo = CreateSectionData({
-    efforts_in_hrs: projectDetails?.total_effort,
-    total_cost: projectDetails?.total_cost,
-    total_fte_count: projectDetails?.total_fte,
-    total_sub_con_count: projectDetails?.total_sub_con_count,
-    total_fte_effort: projectDetails?.total_fte_effort,
-    total_sub_con_effort: projectDetails?.total_sub_con_effort,
-    total_fte_cost: projectDetails?.total_fte_cost,
-    total_sub_con_cost: projectDetails?.total_sub_con_cost,
-    total_non_labor_cost: projectDetails?.total_non_labor_cost,
-  });
+    { label: 'Project Group', value: projectDetails?.project_group },
+    { label: 'Client Group', value: projectDetails?.project_client_group },
+    { label: 'Program Name', value: projectDetails?.program_name },
+    {
+      label: 'Industry',
+      value: projectDetails?.industry_name || projectDetails?.industry_rid_name,
+    },
+    { label: 'Status', value: projectDetails?.project_status },
+  ];
+
+  const locationInfo: DetailItem[] = [
+    { label: 'Country', value: projectDetails?.country_name },
+    { label: 'Region', value: projectDetails?.region_name },
+    { label: 'Currency', value: projectDetails?.currency_name },
+  ];
+
+  const keyContactsList: trasnformedKeyContacts[] | undefined =
+    projectDetails?.keyContact?.map((contact: KeyContactProps) => ({
+      keyContactId: contact.r_number,
+      keyContactName: contact.key_contact_name,
+      keyContactRole: contact.role_name,
+      keyContactEmail: contact.key_contact_email,
+      isPrimaryContact: contact.is_primary_contact,
+      includeInCommnunications: contact.include_in_communication,
+      keyContactStatus: contact.status,
+    }));
+  const financialInfo: DetailItem[] = [
+    { label: 'Total FTE Count', value: projectDetails?.total_fte },
+    {
+      label: 'Total Sub Con Count',
+      value: projectDetails?.total_sub_con,
+    },
+    { label: '', value: 'empty' },
+    { label: 'Total FTE Effort', value: projectDetails?.total_fte_effort },
+    {
+      label: 'Total Sub Con Effort',
+      value: projectDetails?.total_sub_con_effort,
+    },
+    { label: 'Total Effort in Hrs', value: projectDetails?.total_effort },
+    {
+      label: 'Total FTE Cost',
+      value: costDisplay(
+        projectDetails?.total_fte_cost,
+        projectDetails?.currency_symbol
+      ),
+    },
+    {
+      label: 'Total Sub Con Cost',
+      value: costDisplay(
+        projectDetails?.total_sub_con_cost,
+        projectDetails?.currency_symbol
+      ),
+    },
+
+    {
+      label: 'Total Non Labor Cost',
+      value: costDisplay(
+        projectDetails?.total_non_labor_cost,
+        projectDetails?.currency_symbol
+      ),
+    },
+    {
+      label: 'Total Cost',
+      value: costDisplay(
+        projectDetails?.total_cost,
+        projectDetails?.currency_symbol
+      ),
+    },
+  ];
+
   const auditInfo = CreateSectionData({
     record_id: projectDetails?.rid,
-    project_id: projectDetails?.r_number,
     created_on: projectDetails?.created_datetime,
-    created_by: projectDetails?.created_by,
+    created_by: projectDetails?.created_name,
+    project_id: projectDetails?.r_number,
     updated_on: projectDetails?.modified_datetime,
-    Updated_By: projectDetails?.modified_by,
+    Updated_By: projectDetails?.modified_name,
   });
-  const settingInfo = CreateSectionData({
-    auto_send_ai_interaction: projectDetails?.auto_send_ai_interaction
-      ? 'Yes'
-      : 'No',
-    max_ai_interaction: projectDetails?.max_ai_interaction,
-    auto_assessment: projectDetails?.auto_access_rd ? 'Yes' : 'No',
-    blended_rate_fte: projectDetails?.blended_rate_fte,
-    blended_rate_sub_con: projectDetails?.blended_rate_sub_con,
-  });
+  // const settingInfo = CreateSectionData({
+  //   auto_send_ai_interaction: projectDetails?.auto_send_ai_interaction
+  //     ? 'Yes'
+  //     : 'No',
+  //   blended_rate_FTE: projectDetails?.blended_rate_fte,
+  //   auto_assessment: projectDetails?.auto_access_rd ? 'Yes' : 'No',
+  //   blended_rate_subCon: projectDetails?.blended_rate_sub_con,
+  //   max_ai_interaction_follow_up: projectDetails?.max_ai_interaction,
+  // });
   const comments = CreateSectionData({
     comments: projectDetails?.comments,
   });
+  const description = CreateSectionData({
+    description: projectDetails?.project_description,
+  });
+
+  const settingInfo: DetailItem[] = [
+    { label: 'Blended Rate - FTE', value: projectDetails?.blended_rate_fte },
+    {
+      label: 'Blended Rate - SubCon',
+      value: projectDetails?.blended_rate_sub_con,
+    },
+    { label: '', value: 'empty' },
+    {
+      label: 'Auto Assessment',
+      value: projectDetails?.auto_access_rd ? 'Yes' : 'No',
+    },
+    {
+      label: 'Auto Send Interaction',
+      value: projectDetails?.auto_send_ai_interaction ? 'Yes' : 'No',
+    }, // need to Discuss
+
+    {
+      label: 'Max Interaction Follow up',
+      value: projectDetails?.max_ai_interaction,
+    },
+  ];
   return (
     <>
-      <div className='border-t border-[1px] border-b-0 border-[#CBD6E2] rounded-tl-[2px] h-[50px] rounded-tr-[2px]'>
-        <div className='flex items-center justify-between h-full px-4'>
+      <div className='border-t border-[1px] border-b-0 border-[#CBD6E2] rounded-tl-[2px]  rounded-tr-[2px]'>
+        <div className='flex items-center  justify-between  gap-4 h-[35px] px-2  rounded-[2px]'>
           <div className='flex items-center gap-2'>
             {showBackArrow && (
               <div
-                className='cursor-pointer w-[24px] h-[24px] flex justify-center items-center -ml-2'
+                className='cursor-pointer  flex justify-center items-center -ml-2'
                 onClick={onBackClick}
               >
-                <img
-                  src={leftArrowIcon}
-                  className='h-[14px]'
-                  alt='leftArrowIcon'
-                />
+                <img src={leftArrowIcon} alt='leftArrowIcon' />
               </div>
-              //   <button
-              //     onClick={onBackClick}
-              //     className='mr-2'
-              //     aria-label='Go back'
-              //   >
-
-              //   </button>
             )}
             {titleIcon && (
-              <div className='w-[24px] h-[24px] flex items-center justify-center'>
+              <div className='text-[13px] text-[#2D3E4F] font-semibold'>
                 {titleIcon}
               </div>
             )}
@@ -281,51 +301,58 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
 
           <div className='flex items-center gap-2'>
             <div className='flex gap-2'>
-              {headerButtons?.map((button, index) => (
-                <TextButton
-                  key={`header-button-${index}`}
-                  label={button.label}
-                  onClick={
-                    button.label.toLowerCase() === 'view'
-                      ? toggleViewMode
-                      : button.onClick
-                  }
-                  aria-label={button.label}
-                  sx={button.sx}
-                  disabled={button.disabled}
-                />
-              ))}
+              {headerButtons?.map((button, index) => {
+                if (button.hide) return null;
+                return (
+                  <TextButton
+                    key={`header-button-${index}`}
+                    label={button.label}
+                    onClick={
+                      button.label.toLowerCase() === 'view'
+                        ? toggleViewMode
+                        : button.onClick
+                    }
+                    aria-label={button.label}
+                    sx={button.sx}
+                    disabled={button.disabled}
+                  />
+                );
+              })}
             </div>
           </div>
         </div>
       </div>
       <div>
-        <div className='max-w-6xl p-6  border-[1px]  border-[#CBD6E2]'>
+        <div className='border-[1px]  border-[#CBD6E2]'>
           <DetailsSection
             title='Basic Information'
             data={basicInfo as DetailItem[]}
+            customStyle='pt-2 mt-0'
           />
+          <DetailsSection title='' data={description as DetailItem[]} />
           <DetailsSection
             title='Location and Currency Information'
             data={locationInfo as DetailItem[]}
           />
-          <DetailsSection
-            title='Project Key Contacts - List'
-            data={keyContacts as DetailItem[]}
+          {/* {isKeyContactAvailable && keyContactsList && ( */}
+          <KeyContactSection
+            title='Key Contacts List'
+            data={keyContactsList || []}
           />
+          {/* )} */}
           <DetailsSection
-            title='Project Key Contacts - List'
-            data={fincialInfo as DetailItem[]}
+            title='Financial Information'
+            data={financialInfo as DetailItem[]}
           />
           <DetailsSection
             title='Project Settings'
             data={settingInfo as DetailItem[]}
           />
+          <DetailsSection title='Comments' data={comments as DetailItem[]} />
           <DetailsSection
             title='Audit Information'
             data={auditInfo as DetailItem[]}
           />
-          <DetailsSection title='Comments' data={comments as DetailItem[]} />
         </div>
       </div>
     </>

@@ -17,6 +17,13 @@ export interface CurrencyApiResponse extends CommonApiResponse {
     currency: Currencys[];
   };
 }
+
+export interface ColorCodeApiResponse extends CommonApiResponse {
+  data: {
+    colors: ColorItems[];
+  };
+}
+
 export interface ClassificationApiResponse extends CommonApiResponse {
   data: {
     projectClassifications: Classification[];
@@ -72,6 +79,12 @@ export interface GloablAcconunts {
   rid: string;
   account_name: string;
 }
+export interface ColorItems {
+  rid: string;
+  color_number: number;
+  color_code: string;
+  status: 'Active' | 'Inactive';
+}
 
 export interface Industries {
   rid: string;
@@ -85,9 +98,16 @@ export interface Account {
   accountNumber: string;
   industry: string;
   country: string;
-  currency: string;
-  status: string;
-  primaryContact: string;
+  totalProjects: string | number;
+  totalProjectHours: string | number;
+  totalProjectCost: string | number;
+  estimatedHours: string | number;
+  qre: string | number;
+  estimatedCredits: string | number;
+  actualCredits: string | number;
+  financeExecutive: string;
+  financeHead: string;
+  professionalConsultant: string;
 }
 
 export interface Column<T> {
@@ -118,6 +138,11 @@ export enum Status {
 export enum YesNo {
   Yes = 'yes',
   No = 'no',
+}
+
+export enum enumValue {
+  Yes = 'Yes',
+  No = 'No',
 }
 
 export enum KeyContactsUpdate {
@@ -217,7 +242,8 @@ type Country = {
 };
 
 type Currency = {
-  currency_code: string;
+  currency_code?: string;
+  currency_symbol?: string;
 };
 
 export type AccountListResponse = {
@@ -225,7 +251,9 @@ export type AccountListResponse = {
   statusCodeValue: string;
   statusMessage: string;
   data: {
-    account: AccountList[];
+    account: {
+      data: AccountList[];
+    };
     count: number;
   };
 };
@@ -239,6 +267,19 @@ export type GlobalAccountListResponse = {
     count: number;
   };
 };
+
+export interface ProjectsByYear {
+  fiscal_year: string;
+  account_rid: string;
+  total_projects: number | null;
+  total_project_hours: string;
+  total_project_cost: string;
+  qualifying_project_hours_fed: number | null;
+  qualifying_project_qre_fed: number | null;
+  qualifying_project_rd_credits_fed: number | null;
+  total_projects_rd_credits: string;
+  currency: string;
+}
 
 export interface AccountListURLParams {
   page?: number;
@@ -260,7 +301,8 @@ type Industry = {
 export type AccountList = {
   rid: string;
   r_number: string;
-  serial_number: number;
+  createdAt: string;
+  updatedAt: string;
   account_name: string;
   comments: string;
   eid: string | null;
@@ -273,18 +315,34 @@ export type AccountList = {
   database_connection_rid: string | null;
   country_rid: string;
   currency_rid: string;
-  industry: Industry;
-  industry_name_other: string;
-  primary_contact_name: string;
-  createdAt: string;
-  updatedAt: string;
+  industry_rid: string;
+  industry_name_other: string | null;
+  is_file_drop_enabled: boolean;
+  file_drop_medium: string | null;
+  file_drop_config_id: string | null;
+  total_projects: number;
+  total_project_cost: number;
+  total_projects_rd_credits: number;
+  total_project_hours: number;
+  qualifying_project_hours_fed: number;
+  qualifying_project_qre_fed: number;
+  qualifying_project_rd_credits_fed: number;
+  created_datetime: string;
+  modified_datetime: string;
+  created_by: string;
+  modified_by: string;
+  country?: Country | null;
+  currency?: Currency | null;
+  industry?: Industry;
   child_accounts?: AccountList[];
-  country?: Country;
-  currency?: Currency;
-  account_id?: string;
-  parent_account?: string;
-  account_number?: number;
-  primary_contact?: string;
+  key_contacts: KeyContacts[];
+  technical_consultant: string;
+  financial_consultant: string;
+  delivery_head: string;
+  finance_executive: string;
+  professional_services_consultant: string;
+  finance_lead: string;
+  projects_by_fiscal_year?: ProjectsByYear[];
 };
 
 export interface ConvertedAccount {
@@ -295,10 +353,24 @@ export interface ConvertedAccount {
   industry: string;
   country: string;
   currency: string;
-  status: 'Active' | 'In Active';
-  primaryContact: string;
-  parentAccountID: string | null;
-  annualRevenue: string;
+  // currency: string;
+  // status: 'Active' | 'In Active';
+  // primaryContact: string;
+  // parentAccountID: string | null;
+  // annualRevenue: string;
+  color?: string;
+  bgColor?: string;
+  totalProjects: string | number;
+  totalProjectHours: string | number;
+  totalProjectCost: string | number;
+  estimatedHours: string | number;
+  qre: string | number;
+  estimatedCredits: string | number;
+  actualCredits: string | number;
+  financeExecutive: string;
+  financeHead: string;
+  professionalConsultant: string;
+  projectsByYear?: ProjectsByYear[];
 }
 
 export interface keyContactRoles {

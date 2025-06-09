@@ -8,17 +8,11 @@ import { BUTTON_STYLES, HEADER_STYLES } from './styles';
 import { ADMIN_CREATE_USER } from '../../../routes';
 import { UserDetailComponent } from '../../../components';
 import { Skeleton } from '@mui/material';
-
-const MENU_ITEMS = [
-  {
-    label: 'Assign Permission to User',
-    onClick: () => console.log('user clicked'),
-  },
-  {
-    label: 'View Permissions',
-    onClick: () => console.log('View Permissions clicked'),
-  },
-];
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../store/store';
+import { checkPermission } from '../../../common-utils';
+import { AllModules, AllPermissions } from '../../../common-service';
+import { AccessRestricted } from '../../../components/account-restricted';
 
 export const ManageUserDetails: React.FC = () => {
   // Get userId from URL params
@@ -31,11 +25,62 @@ export const ManageUserDetails: React.FC = () => {
   const userFullName =
     `${userDetail?.first_name || ''} ${userDetail?.last_name || ''}`.trim();
 
-  const userActionButtons: { label: string; width: string }[] = [
-    { label: 'Suspend User', width: '104px' },
-    { label: 'Reinstate User', width: '116px' },
-    { label: 'Reset Password', width: '118px' },
-    { label: 'Delete', width: '58px' },
+  // Permission Mangement
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const userIsEnable = checkPermission(modules, AllModules.USER_MANAGEMENT);
+  const isUserViewEnable = checkPermission(
+    permission,
+    AllPermissions.USER_VIEW
+  );
+  const isUserCreateEnable = checkPermission(
+    permission,
+    AllPermissions.USER_CREATE
+  );
+  const isUserDeleteEnable = checkPermission(
+    permission,
+    AllPermissions.USER_DELETE
+  );
+  const isUserSuspendEnable = checkPermission(
+    permission,
+    AllPermissions.USER_SUSPEND
+  );
+  const isUserViewPermissionEnable = checkPermission(
+    permission,
+    AllPermissions.USER_VIEW_PERMISSION
+  );
+  const isUserResetPasswordEnable = checkPermission(
+    permission,
+    AllPermissions.USER_RESET_PASSWORD
+  );
+  const isUserAssignPermissionEnable = checkPermission(
+    permission,
+    AllPermissions.USER_ASSIGN_PERMISSION
+  );
+
+  const MENU_ITEMS = [
+    {
+      label: 'Assign Permission to User',
+      onClick: () => console.log('user clicked'),
+      hide: !isUserAssignPermissionEnable,
+    },
+    {
+      label: 'View Permissions',
+      onClick: () => console.log('View Permissions clicked'),
+      hide: !isUserViewPermissionEnable,
+    },
+  ];
+
+  const userActionButtons = [
+    { label: 'Suspend User', width: '104px', hide: !isUserSuspendEnable },
+    { label: 'Reinstate User', width: '116px', hide: false },
+    {
+      label: 'Reset Password',
+      width: '118px',
+      hide: !isUserResetPasswordEnable,
+    },
+    { label: 'Delete', width: '58px', hide: !isUserDeleteEnable },
   ];
 
   const handleAction = (action: string) => {
@@ -65,6 +110,8 @@ export const ManageUserDetails: React.FC = () => {
     window.history.back();
   };
 
+  if (!userIsEnable || !isUserViewEnable) return <AccessRestricted />;
+
   return (
     <div className='flex flex-col h-[calc(100vh-64px)] w-full overflow-y-auto p-4 gap-3'>
       <div className='w-full min-h-[75px] h-[75px] px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
@@ -83,17 +130,19 @@ export const ManageUserDetails: React.FC = () => {
         </div>
         <div className='flex gap-2 items-center'>
           <ActionsDropdown actions={MENU_ITEMS} />
-          <TextButton
-            label='Create User'
-            sx={{
-              ...BUTTON_STYLES,
-              fontSize: '13px',
-              fontWeight: 700,
-              width: '91px',
-              minWidth: '91px',
-            }}
-            onClick={() => navigate(ADMIN_CREATE_USER)}
-          />
+          {isUserCreateEnable && (
+            <TextButton
+              label='Create User'
+              sx={{
+                ...BUTTON_STYLES,
+                fontSize: '13px',
+                fontWeight: 700,
+                width: '91px',
+                minWidth: '91px',
+              }}
+              onClick={() => navigate(ADMIN_CREATE_USER)}
+            />
+          )}
 
           <TextButton
             label='Back'
@@ -109,7 +158,7 @@ export const ManageUserDetails: React.FC = () => {
       </div>
       {/* User Details section  */}
       <div className='flex flex-col border border-[#CBD6E2] rounded-[4px]'>
-        <div className='flex items-center justify-between w-full border-b border-[#CBD6E2] p-4'>
+        <div className='flex items-center justify-between w-full border-b border-[#CBD6E2] p-2'>
           <div className='w-[50%]'>
             <div className='text-[11px] text-[#7D98B6]'>User</div>
             <div className='font-semibold text-[16px] text-[#2D3E4F] leading-5 tracking-normal truncate overflow-ellipsis'>
@@ -121,21 +170,24 @@ export const ManageUserDetails: React.FC = () => {
             </div>
           </div>
           <div className='w-[50%] flex justify-end gap-2'>
-            {userActionButtons.map((button) => (
-              <TextButton
-                key={button.label}
-                label={button.label}
-                onClick={() => handleAction(button.label)}
-                sx={{
-                  ...BUTTON_STYLES,
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  width: button.width,
-                  minWidth: button.width,
-                  maxWidth: button.width,
-                }}
-              />
-            ))}
+            {userActionButtons.map((button) => {
+              if (button.hide) return null;
+              return (
+                <TextButton
+                  key={button.label}
+                  label={button.label}
+                  onClick={() => handleAction(button.label)}
+                  sx={{
+                    ...BUTTON_STYLES,
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    width: button.width,
+                    minWidth: button.width,
+                    maxWidth: button.width,
+                  }}
+                />
+              );
+            })}
           </div>
         </div>
         <UserDetailComponent

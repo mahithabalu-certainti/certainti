@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   useLocation,
   useParams,
@@ -8,7 +7,7 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { accountDetailsIcon } from '../../../assets';
-import { PageHeader } from '../../../components';
+import { InfoSection, PageHeader, SideMenuPanel } from '../../../components';
 import { ACCOUNT } from '../../../routes';
 import { useAccountDetail } from '../../services/account-details/account-details-service';
 import {
@@ -24,15 +23,19 @@ import {
   Resources,
   Timesheet,
 } from '../account-details-sidebar';
-import { AccountInfo } from './account-info';
-import Sidebar from './sidebar';
 import { transformAccountData } from './utils';
 import { CircularProgress } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
-import { AccountState } from '../../../store/slices/account-slice';
 import { ExportModule } from '../../types/resource-skill';
 import { exportData } from '../../services/resource-details/resource-details-service';
+import { ActionsDropdownItem, checkPermission } from '../../../common-utils';
+import { AllModules, AllPermissions } from '../../../common-service';
+import { AccessRestricted } from '../../../components/account-restricted';
+import { AccountState } from '../../../store/type';
+import { MenuItem } from '../../types';
+import { exportProjectData } from '../../services/project';
+import { ProjectListParams } from '../../types/project';
 
 export const AccountDetails = () => {
   const [searchParams] = useSearchParams();
@@ -41,13 +44,36 @@ export const AccountDetails = () => {
   const [accountDetails, setAccountDetails] = useState<any>(null);
   const [accountDetailsForEdit, setAccountDetailsForEdit] = useState<any>(null);
   const { accountid } = useParams();
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
   const { filters, fiscalYear } = useSelector<RootState, AccountState>(
     (state: RootState) => state.account
   );
+
+  // Permission Mangement
+  const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
+  const isAccountDetailsEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_DETAILS_VIEW
+  );
+  const isAccountDetailsDownloadEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_DETAILS_DOWNLOAD
+  );
+  const isAccountEditEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_EDIT
+  );
+  const isAccountExportEnable = checkPermission(
+    permission,
+    AllPermissions.ACCOUNT_EXPORT
+  );
+
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
 
-  const defaultTab = searchParams.get('list') || 'financial';
-  const [activeKey, setActiveKey] = useState(defaultTab);
+  const defaultTab = searchParams.get('list');
+  const [activeKey, setActiveKey] = useState(defaultTab as string);
 
   const [tableParams, setTableParams] = useState<ExportModule>({
     sortBy: 'created_datetime',
@@ -56,11 +82,23 @@ export const AccountDetails = () => {
     rNumber: accountDetailsForEdit?.account_by_id?.r_number || '',
     resourceRid: '',
   });
-  const [exportType, setExportType] = useState<'resource' | 'cost' | 'skill'>(
-    'resource'
-  );
-  const handleExport = (exportType: 'resource' | 'cost' | 'skill') => {
-    if (searchParams.get('list') !== 'resources') {
+  const [projectParams, setProjectParams] = useState<ProjectListParams>({
+    sortBy: 'created_datetime',
+    sortOrder: 'DESC',
+    filters: {},
+    fiscalYear: String(convertedFiscalYear),
+    accountNumber: accountDetailsForEdit?.account_by_id?.r_number || '',
+  });
+  const [exportType, setExportType] = useState<
+    'resource' | 'cost' | 'skill' | 'project'
+  >('resource');
+  const handleExport = (
+    exportType: 'resource' | 'cost' | 'skill' | 'project'
+  ) => {
+    if (
+      searchParams.get('list') !== 'resources' &&
+      searchParams.get('list') !== 'projects'
+    ) {
       return;
     }
 
@@ -79,7 +117,11 @@ export const AccountDetails = () => {
       ...(exportType === 'cost' && { fiscalYear }),
     };
 
-    exportData(exportType, exportPayload);
+    if (exportType === 'project') {
+      exportProjectData(exportType, projectParams);
+    } else {
+      exportData(exportType, exportPayload);
+    }
   };
 
   useEffect(() => {
@@ -104,12 +146,15 @@ export const AccountDetails = () => {
     }
   }, [searchParams]);
 
+  // getting user is inactive error, need to uncomment once details page UI is done
+
   const {
     data,
     isLoading,
     isError,
   }: { data: any; isLoading: boolean; isError: boolean } = useAccountDetail(
-    accountid as string
+    accountid as string,
+    isAccountDetailsEnable
   );
 
   useEffect(() => {
@@ -119,7 +164,7 @@ export const AccountDetails = () => {
     }
   }, [data]);
 
-  const menuItems = [
+  const menuItems: ActionsDropdownItem[] = [
     {
       label: 'Manage user',
       onClick: () => console.log('manage user clicked'),
@@ -127,6 +172,7 @@ export const AccountDetails = () => {
     {
       label: 'Export',
       onClick: () => handleExport(exportType),
+      hide: !isAccountExportEnable,
     },
   ];
 
@@ -157,19 +203,34 @@ export const AccountDetails = () => {
       case 'financial':
         return <FinancialSummary />;
       case 'details':
-        return <Details />;
+        return (
+          <Details
+            accountDetails={{ ...data?.data }}
+            isLoading={isLoading}
+            isError={isError}
+            isAccountEditEnable={isAccountEditEnable}
+            isAccountDetailsDownloadEnable={isAccountDetailsDownloadEnable}
+          />
+        );
       case 'resources':
         return (
           <Resources
             accountDetails={{ ...data, activeKey: 'resources' }}
             setTableParams={setTableParams}
             setExportType={setExportType}
+            permission={permission}
           />
         );
       case 'attachments':
         return <Attachments />;
       case 'projects':
-        return <Projects accountDetails={{ ...data, activeKey: 'Projects' }} />;
+        return (
+          <Projects
+            accountDetails={{ ...data, activeKey: 'Projects' }}
+            setExportType={setExportType}
+            setProjectParams={setProjectParams}
+          />
+        );
       case 'cases':
         return <Cases />;
       case 'activities':
@@ -187,40 +248,113 @@ export const AccountDetails = () => {
     }
   };
 
+  const disable = data?.data?.accountById?.is_parent;
+
+  const sideMenuItems = useMemo<MenuItem[]>(
+    () => [
+      {
+        name: 'Financial Highlights',
+        key: 'financial',
+        id: AllModules.FINANCIAL_HIGHLIGHTS,
+        disabled: false,
+      },
+      {
+        name: 'Details',
+        key: 'details',
+        id: AllModules.DETAILS,
+        disabled: false,
+      },
+      {
+        name: 'Resources',
+        key: 'resources',
+        id: AllModules.RESOURCES,
+        disabled: disable,
+      },
+      {
+        name: 'Projects',
+        key: 'projects',
+        id: AllModules.PROJECTS,
+        disabled: disable,
+      },
+      { name: 'Cases', key: 'cases', id: AllModules.CASES, disabled: disable },
+      {
+        name: 'Activities',
+        key: 'activities',
+        id: AllModules.ACTIVITIES,
+        disabled: disable,
+      },
+      { name: 'Notes', key: 'notes', id: AllModules.NOTES, disabled: disable },
+      {
+        name: 'Attachments',
+        key: 'attachments',
+        id: AllModules.ATTACHMENTS,
+        disabled: disable,
+      },
+      {
+        name: 'Checklist',
+        key: 'checklist',
+        id: AllModules.CHECKLISTS,
+        disabled: disable,
+      },
+      {
+        name: 'Timesheet',
+        key: 'timesheet',
+        id: AllModules.TIMESHEETS,
+        disabled: disable,
+      },
+      {
+        name: 'Imports',
+        key: 'imports',
+        id: AllModules.IMPORTS,
+        disabled: disable,
+      },
+    ],
+    [disable]
+  ); // Only recalculate when 'disable' changes
+
+  if (!accountIsEnable || !isAccountDetailsEnable) return <AccessRestricted />;
+
   return (
-    <div className='flex flex-col'>
-      <div className='flex h-[108px]'>
+    <div className='flex flex-col h-full'>
+      <div className='flex h-[60px]'>
         <PageHeader
           variant='sub'
           placeholder='Account Name'
           icon={accountDetailsIcon}
           iconBackgroundColor='#4B9BFF'
-          iconClasses='h-8 w-8 rounded'
+          iconClasses='h-6 w-6 rounded'
           title={data?.data?.accountById?.account_name || 'Account Title'}
           totalRecords={5}
           actionItems={menuItems}
-          primaryButton={{
-            label: 'Edit',
-            onClick: handleEditAccount,
-          }}
+          primaryButton={
+            isAccountEditEnable
+              ? {
+                  label: 'Edit',
+                  onClick: handleEditAccount,
+                }
+              : undefined
+          }
           onActionsClick={handleActionsClick}
           onSettingsClick={handleSettingsClick}
         />
       </div>
-      <AccountInfo
+      <InfoSection
         columns={accountDetails}
         loading={isLoading}
         error={isError}
+        singleLineView={true}
       />
-      <div className='flex flex-row w-full'>
-        <div className='flex w-[261px] min-w-[261px] max-w-[261px]'>
-          <Sidebar
+      <div className='flex flex-1 flex-row w-full'>
+        <div className='flex-1 w-[200px] min-w-[200px] max-w-[200px]'>
+          <SideMenuPanel
+            menuItems={sideMenuItems}
             activeKey={activeKey}
             onSelect={setActiveKey}
-            disble={data?.data?.accountById?.is_parent}
+            headerTitle='Related List'
+            showBackIcon={true}
           />
         </div>
-        <div className='flex-1 p-4 overflow-hidden'>
+        <div className='flex-1 overflow-hidden'>
           {isLoading ? (
             <div className='flex items-center justify-center w-full h-full'>
               <CircularProgress />

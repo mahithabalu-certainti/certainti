@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from 'react';
 import { arrowIcon, checkedIcon, closeIcon } from '../../assets';
@@ -10,9 +11,14 @@ import {
 } from '@mui/material';
 import {
   DateOptions,
+  DateValueOptions,
+  EnumSelectFilterOption,
+  enumSelectOperators,
   FilterModalProps,
   FilterState,
   NumberFilterOption,
+  numberOperators,
+  textfieldOperators,
   TextFilterOption,
 } from '../../consultant/types/account-filter';
 import {
@@ -30,11 +36,11 @@ import {
   NewBooleanFilterControl,
   SELECT_STYLES,
   MENU_PROPS,
-  DateFilterControl,
+  KeyContactFilterControl,
+  NewDateFilterControl,
+  EnumSelectFilterControl,
 } from './helpers';
 import { useLocation } from 'react-router-dom';
-
-const systemFilters = ['Touched Records', 'Untouched Records', 'Record Action'];
 
 const FilterModal: React.FC<FilterModalProps> = ({
   isOpen,
@@ -44,6 +50,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
   filterFields,
   setPage,
   handleCloseFilter,
+  handleSorting,
 }) => {
   const location = useLocation();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -52,6 +59,10 @@ const FilterModal: React.FC<FilterModalProps> = ({
     {}
   );
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const [selectedSystemFilters, setSelectedSystemFilters] = useState<string[]>(
+    []
+  );
+  const [currentSort, setCurrentSort] = useState<string | null>(null);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -61,12 +72,43 @@ const FilterModal: React.FC<FilterModalProps> = ({
     setAnchorEl(null);
   };
 
+  const systemFilters = filterFields.filter(
+    (field) => field.type === 'system' || field.type === 'system-sort'
+  );
+  const regularFilters = filterFields.filter(
+    (field) => field.type !== 'system' && field.type !== 'system-sort'
+  );
+
+  const handleModalClose = () => {
+    const saved = getStoredFilters();
+    if (saved) {
+      const selected = Object.keys(saved);
+      const savedFilters = saved as Record<string, FilterState>;
+      setSelectedFilters(selected);
+      setFilterStates(saved as Record<string, FilterState>);
+      const systemFilter = savedFilters['system_filter'];
+      if (systemFilter && systemFilter.system?.values) {
+        setSelectedSystemFilters(systemFilter.system.values);
+      }
+    } else {
+      setSelectedFilters([]);
+      setFilterStates({});
+      setSelectedSystemFilters([]);
+    }
+    handleCloseFilter();
+  };
+
   useEffect(() => {
     const saved = getStoredFilters();
     if (saved) {
       const selected = Object.keys(saved);
+      const savedFilters = saved as Record<string, FilterState>;
       setSelectedFilters(selected);
       setFilterStates(saved as Record<string, FilterState>);
+      const systemFilter = savedFilters['system_filter'];
+      if (systemFilter && systemFilter.system?.values) {
+        setSelectedSystemFilters(systemFilter.system.values);
+      }
       setAppliedFilters(
         formatFilterForApi(saved as Record<string, FilterState>)
       );
@@ -74,11 +116,26 @@ const FilterModal: React.FC<FilterModalProps> = ({
   }, []);
 
   useEffect(() => {
+    const saved = getStoredFilters();
+    if (filterFields.length > 0 && !saved) {
+      // Automatically select the first field if no saved filters exist
+      const firstField = filterFields[0];
+      setSelectedFilters([firstField.name]);
+      setFilterStates({
+        [firstField.name]: getInitialStateForField(firstField),
+      });
+    }
+  }, [filterFields]);
+
+  useEffect(() => {
     const handleRouteChange = () => {
       clearFilters();
       setSelectedFilters([]);
       setFilterStates({});
       setAppliedFilters({});
+      setSelectedSystemFilters([]);
+      setCurrentSort(null);
+      handleSorting?.('', 'desc');
     };
 
     const currentPathname = location.pathname;
@@ -150,6 +207,18 @@ const FilterModal: React.FC<FilterModalProps> = ({
                 },
               },
             };
+          case 'enumSelect':
+            return {
+              ...prev,
+              [fieldName]: {
+                ...currentState,
+                enumSelect: {
+                  ...currentState.enumSelect!,
+                  option: event.target.value as EnumSelectFilterOption,
+                  value: [],
+                },
+              },
+            };
           case 'status':
             return {
               ...prev,
@@ -161,6 +230,51 @@ const FilterModal: React.FC<FilterModalProps> = ({
                 },
               },
             };
+          case 'keyContact': {
+            const key = event.target.name; // 'roleOption' or 'nameOption'
+            const value = event.target.value;
+
+            const keyContact = currentState.keyContact || {
+              role: { option: 'contains', value: '' },
+              name: { option: 'contains', value: '' },
+            };
+
+            if (key === 'roleOption') {
+              return {
+                ...prev,
+                [fieldName]: {
+                  ...currentState,
+                  keyContact: {
+                    ...keyContact,
+                    role: {
+                      option: value,
+                      value:
+                        value === 'is_empty' ? 'true' : keyContact.role.value,
+                    },
+                  },
+                },
+              };
+            }
+
+            if (key === 'nameOption') {
+              return {
+                ...prev,
+                [fieldName]: {
+                  ...currentState,
+                  keyContact: {
+                    ...keyContact,
+                    name: {
+                      option: value,
+                      value:
+                        value === 'is_empty' ? 'true' : keyContact.name.value,
+                    },
+                  },
+                },
+              };
+            }
+
+            return prev;
+          }
           default:
             return prev;
         }
@@ -248,11 +362,128 @@ const FilterModal: React.FC<FilterModalProps> = ({
     }));
   };
 
+  const handleSystemFilter = (fieldName: string, filterValue: string) => {
+    setSelectedSystemFilters((prevSelected) => {
+      const updatedSelected = prevSelected.includes(filterValue)
+        ? prevSelected.filter((val) => val !== filterValue) // remove
+        : [...prevSelected, filterValue]; // add
+
+      const updatedFilterStates = { ...filterStates };
+
+      if (updatedSelected.length === 0) {
+        delete updatedFilterStates[fieldName];
+      } else {
+        updatedFilterStates[fieldName] = {
+          system: { values: updatedSelected },
+        };
+      }
+
+      setFilterStates(updatedFilterStates);
+      const formattedFilters = formatFilterForApi(updatedFilterStates);
+      setAppliedFilters(formattedFilters);
+      storeFilters(updatedFilterStates);
+
+      return updatedSelected;
+    });
+  };
+
+  const handleSortingSelection = (sortValue: string) => {
+    if (currentSort === sortValue) {
+      setCurrentSort(null);
+      handleSorting?.('', 'desc');
+    } else {
+      setCurrentSort(sortValue);
+      const [field, direction] = sortValue.split('_') as [
+        string,
+        'asc' | 'desc',
+      ];
+      handleSorting?.(field, direction);
+    }
+  };
+
   const handleBooleanChange = (fieldName: string, value: boolean) => {
     setFilterStates((prev) => ({
       ...prev,
       [fieldName]: { boolean: { option: 'equals', value } },
     }));
+  };
+
+  const handleKeyContactSelectChange = (
+    fieldName: string,
+    type: 'role' | 'name',
+    value: string
+  ) => {
+    setFilterStates((prev: Record<string, FilterState>) => {
+      const currentState = prev[fieldName] || {};
+      const keyContact = currentState.keyContact || {
+        role: { option: 'contains', value: '' },
+        name: { option: 'contains', value: '' },
+      };
+
+      // If changing name option to 'is_empty', clear the name value
+      if (type === 'name' && value === 'is_empty') {
+        return {
+          ...prev,
+          [fieldName]: {
+            ...currentState,
+            keyContact: {
+              ...keyContact,
+              name: {
+                option: 'is_empty',
+                value: 'true',
+              },
+            },
+          },
+        };
+      }
+
+      return {
+        ...prev,
+        [fieldName]: {
+          ...currentState,
+          keyContact: {
+            ...keyContact,
+            [type]: {
+              ...keyContact[type],
+              value: value,
+            },
+          },
+        },
+      };
+    });
+  };
+
+  const handleDateChange = (type: string, fieldName: string, value: string) => {
+    setFilterStates((prev: any) => {
+      return {
+        ...prev,
+        [fieldName]: {
+          ...prev[fieldName],
+          date: {
+            ...prev[fieldName].date,
+            value: {
+              ...prev[fieldName].date.value,
+              [type]: value,
+            },
+          },
+        },
+      };
+    });
+  };
+
+  const handleEnumSelectChange = (fieldName: string, value: string[]) => {
+    setFilterStates((prev: any) => {
+      return {
+        ...prev,
+        [fieldName]: {
+          ...prev[fieldName],
+          enumSelect: {
+            ...prev[fieldName].enumSelect,
+            value: value,
+          },
+        },
+      };
+    });
   };
 
   const handleApplyFilters = () => {
@@ -263,29 +494,36 @@ const FilterModal: React.FC<FilterModalProps> = ({
     for (const key in updatedStates) {
       const state = updatedStates[key];
 
-      if (state.date) {
-        const isValueEmpty = !state.date.value?.trim();
-        const isToValueEmpty =
-          state.date.option === 'between' && !state.date.toValue?.trim();
+      // if (state.date) {
+      //   const isValueEmpty = !state.date.value?.trim();
+      //   const isToValueEmpty =
+      //     state.date.option === 'between' && !state.date.toValue?.trim();
 
-        if (isValueEmpty || isToValueEmpty) {
-          hasInvalid = true;
-        }
-      }
+      //   if (isValueEmpty || isToValueEmpty) {
+      //     hasInvalid = true;
+      //   }
+      // }
 
       if (state.text) {
-        const isEmpty = !state.text.value.trim();
-        if (isEmpty) hasInvalid = true;
+        const { option, value } = state.text;
+        const isEmptyCheck = option === 'is_empty';
+
+        if (!isEmptyCheck) {
+          const isEmpty = !value.trim();
+          if (isEmpty) hasInvalid = true;
+        }
       }
 
       if (state.number) {
         const { option, value } = state.number;
         let hasError = false;
 
-        if (option === 'between') {
-          hasError = !Array.isArray(value) || value.some((v) => !v.trim());
-        } else {
-          hasError = !value || (typeof value === 'string' && !value.trim());
+        if (option !== 'is_empty') {
+          if (option === 'between') {
+            hasError = !Array.isArray(value) || value.some((v) => !v.trim());
+          } else {
+            hasError = !value || (typeof value === 'string' && !value.trim());
+          }
         }
 
         state.number.error = hasError;
@@ -308,6 +546,27 @@ const FilterModal: React.FC<FilterModalProps> = ({
           state.multiSelect.values.length === 0;
         if (isEmpty) hasInvalid = true;
       }
+
+      // Add validation for keyContact field
+      if (state.keyContact) {
+        const { role, name } = state.keyContact;
+
+        // Validate role
+        if (role.option !== 'is_empty' && !role.value?.trim()) {
+          hasInvalid = true;
+          state.keyContact.role.error = true;
+        } else {
+          state.keyContact.role.error = false;
+        }
+
+        // Validate name (only if name operator is not 'is_empty')
+        if (name.option !== 'is_empty' && !name.value?.trim()) {
+          hasInvalid = true;
+          state.keyContact.name.error = true;
+        } else {
+          state.keyContact.name.error = false;
+        }
+      }
     }
 
     if (hasInvalid) {
@@ -321,10 +580,13 @@ const FilterModal: React.FC<FilterModalProps> = ({
 
   const handleResetFilters = () => {
     if (!Object.keys(filterStates).length) return null;
-
+    handleCloseFilter();
     setSelectedFilters([]);
     setFilterStates({});
     setAppliedFilters({});
+    setSelectedSystemFilters([]);
+    setCurrentSort(null);
+    handleSorting?.('', 'desc');
     clearFilters();
   };
 
@@ -340,6 +602,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
           <NewTextFilterControl
             fieldName={fieldName}
             state={state}
+            menuOption={fieldConfig.operatorOption || textfieldOperators}
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleFilterValueChange}
           />
@@ -358,6 +621,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
           <NewNumberFilterControl
             fieldName={fieldName}
             state={state}
+            menuOption={fieldConfig.operatorOption || numberOperators}
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleFilterValueChange}
           />
@@ -379,13 +643,47 @@ const FilterModal: React.FC<FilterModalProps> = ({
             onChange={handleBooleanChange}
           />
         );
-      case 'date':
+      case 'enumSelect':
         return (
-          <DateFilterControl
+          <EnumSelectFilterControl
+            filterStates={filterStates}
+            menuOption={fieldConfig.operatorOption || enumSelectOperators}
+            valueOptions={
+              (fieldConfig.options as { label: string; value: string }[]) || []
+            }
             fieldName={fieldName}
             state={state}
             onOptionChange={handleFilterOptionChange}
-            onValueChange={handleFilterValueChange}
+            onChange={handleEnumSelectChange}
+          />
+        );
+      case 'date':
+        return (
+          <NewDateFilterControl
+            filterStates={filterStates}
+            menuOption={fieldConfig.operatorOption || DateValueOptions}
+            fieldName={fieldName}
+            state={state}
+            onOptionChange={handleFilterOptionChange}
+            onValueChange={handleDateChange}
+            mode={'date'}
+            // onChange={handleBooleanChange}
+          />
+        );
+      case 'keyContact':
+        return (
+          <KeyContactFilterControl
+            filterStates={filterStates}
+            menuOption={
+              fieldConfig.operatorOption as { label: string; value: string }[]
+            }
+            valueOptions={
+              fieldConfig.options as { label: string; value: string }[]
+            }
+            fieldName={fieldName}
+            state={state}
+            onOptionChange={handleFilterOptionChange}
+            onChange={handleKeyContactSelectChange}
           />
         );
       default:
@@ -398,7 +696,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
       id={filterId}
       open={isOpen}
       anchorEl={filterAnchorEl}
-      onClose={handleCloseFilter}
+      onClose={handleModalClose}
       anchorOrigin={{
         vertical: 'bottom',
         horizontal: 'right',
@@ -409,13 +707,15 @@ const FilterModal: React.FC<FilterModalProps> = ({
       }}
       PaperProps={{
         sx: {
-          boxShadow: 'none',
+          boxShadow: '0px 4px 15px 11px #0000001A',
           bgcolor: 'transparent',
           mt: 0.5,
+          borderRadius: '8px',
+          border: '1px solid #CBD6E2',
         },
       }}
     >
-      <div className='h-auto min-h-[165px] w-[530px] min-w-[530px] max-w-[530px] flex flex-col gap-4 bg-white rounded-[8px] p-6 border border-[#CBD6E2]'>
+      <div className='h-auto min-h-[165px] w-[550px] min-w-[550px] max-w-[550px] flex flex-col gap-4 bg-white p-6'>
         <div className='flex justify-between items-center'>
           <h2 className='text-[16px] font-bold text-[#2D3E4F]'>Filters</h2>
           <div className='flex justify-end gap-4'>
@@ -434,38 +734,91 @@ const FilterModal: React.FC<FilterModalProps> = ({
           </div>
         </div>
 
-        <div>
-          <h3 className='text-[13px] font-bold text-[#425A76] mb-2'>
-            System Define filters
-          </h3>
-          <div className='flex gap-2 flex-wrap'>
-            {systemFilters.map((label) => (
-              <span
-                key={label}
-                className='border border-[#CBD6E2] cursor-pointer rounded-full px-1 h-[24px] text-[12px] font-normal flex items-center gap-0.5 text-[#425A76]'
-              >
-                <img src={checkedIcon} alt='checked-icon' />
-                {label}
-              </span>
-            ))}
+        {systemFilters.length > 0 && (
+          <div>
+            <h3 className='text-[13px] font-bold text-[#425A76] mb-2'>
+              System Define filters
+            </h3>
+            <div className='flex gap-2 flex-wrap'>
+              {/* Render system filters */}
+              {systemFilters
+                .filter((filter) => filter.type === 'system')
+                .flatMap((systemFilter) =>
+                  systemFilter.options?.map((field: any) => (
+                    <button
+                      key={field.value}
+                      className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${
+                        selectedSystemFilters.includes(field.value)
+                          ? 'bg-[#E6F9EA] border-[#34C759] text-[#0F5132]'
+                          : 'border-[#CBD6E2] text-[#425A76] hover:bg-gray-50'
+                      }`}
+                      onClick={() =>
+                        handleSystemFilter('system_filter', field.value)
+                      }
+                    >
+                      <img
+                        src={checkedIcon}
+                        alt='checked-icon'
+                        className='w-3 h-3 mt-[0.3px]'
+                        style={{
+                          filter: selectedSystemFilters.includes(field.value)
+                            ? 'invert(56%) sepia(96%) saturate(676%) hue-rotate(80deg) brightness(95%) contrast(101%)'
+                            : 'none',
+                        }}
+                      />
+                      {field.label}
+                    </button>
+                  ))
+                )}
+
+              {/* Render sort options */}
+              {systemFilters
+                .filter((filter) => filter.type === 'system-sort')
+                .flatMap((sortFilter) =>
+                  sortFilter.options?.map((field: any) => (
+                    <button
+                      key={field.value}
+                      className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${
+                        currentSort === field.value
+                          ? 'bg-[#E6F9EA] border-[#34C759] text-[#0F5132]'
+                          : 'border-[#CBD6E2] text-[#425A76] hover:bg-gray-50'
+                      }`}
+                      onClick={() => handleSortingSelection(field.value)}
+                    >
+                      <img
+                        src={checkedIcon}
+                        alt='checked-icon'
+                        className='w-3 h-3 mt-[0.3px]'
+                        style={{
+                          filter:
+                            currentSort === field.value
+                              ? 'invert(56%) sepia(96%) saturate(676%) hue-rotate(80deg) brightness(95%) contrast(101%)'
+                              : 'none',
+                        }}
+                      />
+                      {field.label}
+                    </button>
+                  ))
+                )}
+            </div>
           </div>
-        </div>
+        )}
 
         {selectedFilters.length > 0 && (
           <div className='flex-1'>
             <h3 className='text-[13px] font-bold text-[#425A76] mb-2'>
               All filters
             </h3>
-            <div className='flex flex-col gap-3 mb-1 pt-1 -mr-6 min-h-[80px] overflow-y-auto max-h-[150px]'>
+            <div className='flex flex-col gap-3 mb-1 pt-1 -mr-6 min-h-[40px] overflow-y-auto max-h-[150px]'>
               {selectedFilters.map((fieldName) => {
-                const fieldConfig = filterFields.find(
+                const fieldConfig = regularFilters.find(
                   (f) => f.name === fieldName
                 );
                 return fieldConfig ? (
                   <div key={fieldName}>
                     <div className='flex items-center gap-2'>
-                      <div className='flex-1 flex items-center gap-2 w-[450px] max-w-[450px]'>
-                        <div className='flex items-center gap-1'>
+                      <div className='flex-1 flex items-start gap-2 w-[480px] max-w-[480px]'>
+                        <div className='flex flex-col items-center gap-1'>
                           <Select
                             size='small'
                             value={fieldName}
@@ -518,14 +871,14 @@ const FilterModal: React.FC<FilterModalProps> = ({
                                     alt='checked'
                                     className='w-3'
                                   />
-                                  <span className='pt-0.5'>
+                                  <span className='max-w-[173px] text-ellipsis overflow-hidden'>
                                     {selectedField?.label || selected}
                                   </span>
                                 </div>
                               );
                             }}
                           >
-                            {filterFields.map((field) => (
+                            {regularFilters.map((field) => (
                               <MenuItem
                                 key={field.name}
                                 value={field.name}
@@ -547,12 +900,31 @@ const FilterModal: React.FC<FilterModalProps> = ({
                                 <img
                                   src={checkedIcon}
                                   alt='checked'
-                                  className='w-4'
+                                  className='w-4 h-4'
                                 />
                                 {field.label}
                               </MenuItem>
                             ))}
                           </Select>
+                          {fieldConfig.name === 'key_contact' &&
+                            filterStates?.key_contact?.keyContact?.role
+                              ?.value &&
+                            filterStates?.key_contact?.keyContact?.role
+                              ?.option !== 'is_empty' && (
+                              <div className='mt-1 rounded-[2px] min-w-[173px] max-w-[173px] h-[28px] border border-[#CBD6E2]'>
+                                <div className='flex items-center justify-between pl-3.5 pr-[7px] text-[12px] text-[#425A76] h-full font-semibold'>
+                                  <div className='flex items-center gap-1'>
+                                    <img
+                                      src={checkedIcon}
+                                      alt='checked'
+                                      className='w-3'
+                                    />
+                                    <span>Name</span>
+                                  </div>
+                                  {/* <img src={arrowIcon} alt='arrowIcon' /> */}
+                                </div>
+                              </div>
+                            )}
                         </div>
                         {renderFilterControl(fieldName)}
                       </div>
@@ -588,7 +960,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
           </div>
         )}
 
-        <div className='flex items-center justify-between mt-1'>
+        <div className='flex-1 flex items-end justify-between mt-1'>
           <button
             ref={buttonRef}
             onClick={handleClick}
@@ -627,13 +999,15 @@ const FilterModal: React.FC<FilterModalProps> = ({
         PaperProps={{
           style: {
             minWidth: 170,
+            maxWidth: 170,
             borderRadius: '8px',
             border: '1px solid #CBD6E2',
             boxShadow: 'none',
+            maxHeight: 250,
           },
         }}
       >
-        {filterFields.filter((field) => !selectedFilters.includes(field.name))
+        {regularFilters.filter((field) => !selectedFilters.includes(field.name))
           .length === 0 ? (
           <MenuItem
             disabled
@@ -649,7 +1023,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
             No fields available
           </MenuItem>
         ) : (
-          filterFields
+          regularFilters
             .filter((field) => !selectedFilters.includes(field.name))
             .map((field) => (
               <MenuItem
@@ -663,7 +1037,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                   py: '1px',
                 }}
               >
-                <img src={checkedIcon} alt='checked' className='w-4 mr-1' />
+                <img src={checkedIcon} alt='checked' className='w-4 h-4 mr-1' />
                 {field.label}
               </MenuItem>
             ))

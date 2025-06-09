@@ -63,18 +63,18 @@ interface ResourceTransformationOptions {
 }
 
 // Helper functions
-const formatDateToMMDDYYYY = (dateString?: string | null): string => {
-  if (!dateString) return '';
+// const formatDateToMMDDYYYY = (dateString?: string | null): string => {
+//   if (!dateString) return '';
 
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return '';
+//   const date = new Date(dateString);
+//   if (isNaN(date.getTime())) return '';
 
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
+//   const day = String(date.getDate()).padStart(2, '0');
+//   const month = String(date.getMonth() + 1).padStart(2, '0');
+//   const year = date.getFullYear();
 
-  return `${month}/${day}/${year}`;
-};
+//   return `${month}/${day}/${year}`;
+// };
 
 // const capitalizeFirstLetter = (str?: string): string => {
 //   return str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '';
@@ -91,23 +91,19 @@ export function transformPayloadforUpdateResource(
   existingResource?: ResourceDetailsTypes,
   options: ResourceTransformationOptions = {}
 ) {
-  const fullName = `${rawData.resource_firstname || ''} ${rawData.resource_lastname || ''}`.trim();
+  const fullName =
+    `${rawData.resource_firstname || ''} ${rawData.resource_lastname || ''}`.trim();
   return {
     resource_id: options.resource_id || '',
     account_number: options.account_number || '',
     resource_code:
       rawData.resource_code || existingResource?.resource_code || '',
-    resource_type:
-      rawData.resource_type || '',
+    resource_type: rawData.resource_type || '',
 
-    name:
-    fullName || rawData.resource_name ||'',
-      first_name:
-      rawData.resource_firstname  || '',
-      last_name:
-      rawData.resource_lastname  || '',
-    org_name:
-      rawData.resource_orgname || '',
+    name: fullName || rawData.resource_name || '',
+    first_name: rawData.resource_firstname || '',
+    last_name: rawData.resource_lastname || '',
+    org_name: rawData.resource_orgname || '',
     role: rawData.resource_role || existingResource?.resource_role,
     resource_status:
       rawData.resource_status || existingResource?.resource_status,
@@ -116,14 +112,11 @@ export function transformPayloadforUpdateResource(
     resource_city: rawData.city || existingResource?.city || '',
     comments: rawData.comments || existingResource?.comments || '',
     effective_from_date:
-      formatDateToMMDDYYYY(rawData.resource_startdate) ||
-      formatDateToMMDDYYYY(existingResource?.resource_startdate) ||
-      '',
+      rawData.resource_startdate || existingResource?.resource_startdate || '',
     effective_end_date:
-      formatDateToMMDDYYYY(rawData.resource_enddate) ||
-      formatDateToMMDDYYYY(existingResource?.resource_enddate) ||
-      '',
-    resource_designation: rawData.designation || existingResource?.designation || '',
+      rawData.resource_enddate || existingResource?.resource_enddate || '',
+    resource_designation:
+      rawData.designation || existingResource?.designation || '',
     total_years_experience: safeParseNumber(
       rawData.total_years_experience,
       existingResource?.resource_total_experience || 0
@@ -138,7 +131,8 @@ export function transformPayloadforUpdateResource(
 export const transformPayloadforCreateResource = (
   formData: ResourceDetailsForPayload
 ) => {
-  const fullName = `${formData.resource_firstname || ''} ${formData.resource_lastname || ''}`.trim();
+  const fullName =
+    `${formData.resource_firstname || ''} ${formData.resource_lastname || ''}`.trim();
   return {
     account_id: formData.account_id,
     account_number: formData.account_number,
@@ -152,8 +146,8 @@ export const transformPayloadforCreateResource = (
     resource_country: formData.country,
     resource_region: formData.state,
     resource_city: formData.city,
-    effective_from_date: formatDateToMMDDYYYY(formData.resource_startdate),
-    effective_end_date: formatDateToMMDDYYYY(formData.resource_enddate),
+    effective_from_date: formData.resource_startdate,
+    effective_end_date: formData.resource_enddate,
     resource_designation: formData.designation,
     total_years_experience: formData.total_years_experience,
     total_years_in_org: formData.total_years_in_org,
@@ -174,6 +168,7 @@ export const transformCostData = (
       ? formData.financial_start_date
       : '',
     end_date: formData.financial_end_date ? formData.financial_end_date : '',
+    effort_in_hrs: formData.effort_in_hrs || '',
     annual_cost: formData.annual_cost || '',
     monthly_cost: formData.monthly_cost || '',
     weekly_cost: formData.weekly_cost || '',
@@ -216,12 +211,12 @@ export const transformSkillData = (
     resource_rid: formData.resource_rid,
     resource_code: formData.resource_code,
     resource_ref_id: formData.resource_ref_id,
-    start_date: formData.skill_start_date ? formData.skill_start_date : '',
+    effective_from: formData.skill_start_date ? formData.skill_start_date : '',
     skill_level: formData.skill_level as skillLevel,
     skill_type_rid: formData.skill_type,
     skill_subtype_rid: formData.skill_sub_type,
-    skill_type_others: formData.skill_type_others || "",
-    skill_subtype_others: formData.skill_subtype_others || "",
+    skill_type_others: formData.skill_type_others || '',
+    skill_subtype_others: formData.skill_subtype_others || '',
     skill_details: formData.skill_details,
     accountNumber: formData.accountNumber,
     resource_number: formData?.resource_number,

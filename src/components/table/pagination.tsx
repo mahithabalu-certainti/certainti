@@ -13,7 +13,7 @@ const TablePagination: React.FC<ITablePaginationProps> = ({
   page,
   onPageChange,
   onRowsPerPageChange,
-  rowsPerPageOptions = [5, 10, 25, 50],
+  rowsPerPageOptions = [5, 10, 25, 50, 100],
 }) => {
   const totalPages = Math.ceil(count / rowsPerPage);
 
@@ -27,7 +27,7 @@ const TablePagination: React.FC<ITablePaginationProps> = ({
   };
 
   return (
-    <Box className='flex items-center justify-between p-2.5 w-full'>
+    <Box className='flex items-center justify-between px-2.5 py-1 w-full'>
       <Box className='flex items-center gap-4'>
         <Select
           value={rowsPerPage}

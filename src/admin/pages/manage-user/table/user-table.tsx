@@ -12,13 +12,19 @@ import { editIcon, eyeIcon } from '../../../../assets';
 interface IUserTableProps {
   appliedFilters: Record<string, any>;
   tableParams: UserListParams;
+  isUserEditEnable?: boolean;
+  isUserViewEnable?: boolean;
   setTableParams: React.Dispatch<React.SetStateAction<UserListParams>>;
+  onSelectionChange: (selectedIds: string[]) => void;
 }
 
 export const UserTable: React.FC<IUserTableProps> = ({
   appliedFilters,
   tableParams,
+  isUserEditEnable,
+  isUserViewEnable,
   setTableParams,
+  onSelectionChange,
 }) => {
   const [users, setUsers] = useState<ManageUser[]>([]);
   const navigate = useNavigate();
@@ -103,11 +109,13 @@ export const UserTable: React.FC<IUserTableProps> = ({
       label: 'View',
       onClick: (row: ManageUser) => handleView(row),
       icon: eyeIcon,
+      hide: !isUserViewEnable,
     },
     {
       label: 'Edit',
       onClick: (row: ManageUser) => handleEdit(row),
       icon: editIcon,
+      hide: !isUserEditEnable,
       iconStyle: {
         filter:
           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
@@ -129,7 +137,7 @@ export const UserTable: React.FC<IUserTableProps> = ({
       stickyColumnsCount={2}
       // Selection
       selectable={true}
-      onSelectionChange={(selectedIds) => console.log('Selected:', selectedIds)}
+      onSelectionChange={onSelectionChange}
       // Actions
       actionWidth={100}
       actionDisplayMode='icon'
@@ -138,6 +146,7 @@ export const UserTable: React.FC<IUserTableProps> = ({
       loading={isLoading}
       error={isError ? 'Failed to load users' : undefined}
       // Pagination
+      rowsPerPageOptions={[25, 50, 100]}
       rowsPerPage={tableParams.limit}
       currentPage={(tableParams.page ?? 1) - 1}
       totalItems={totalItems}

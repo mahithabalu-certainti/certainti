@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { createresourceIcon, editIcon } from '../../../assets';
 import { Layout, OnChange, useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
@@ -37,8 +37,7 @@ import {
 } from './utils.tsx';
 import { SkillSubtype, SkillType } from '../../types/resource.ts';
 import {
-  formatDateToMMDDYYYY,
-  formatDateToMMDDYYYYWithTime,
+  formatDateToYYYYMMDDWithTime
 } from '../account-details-sidebar/sidebar-pages/resources/utils.tsx';
 
 const ResourceForm: React.FC = () => {
@@ -50,21 +49,23 @@ const ResourceForm: React.FC = () => {
     state: '',
   });
   const [currentSkillType, setCurrentSkillType] = useState({
-    skillSubType: '',
-    skill_type: '',
-    skill_sub_type: '',
+    skillSubType: [] as string[],
+    skill_type: [] as string[],
+    skill_sub_type: [] as string[],
   });
   const [formValues, setFormValues] = useState<Record<string, any>>({});
 
   // Hooks
   const { successToast } = useToast();
   const location = useLocation();
+  const { resourcesid } = useParams();
   const { state } = location;
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const resourceId = searchParams.get('res_id');
   const [resourceDetails, setResourceDetails] = useState<any>(null);
   const accountId = searchParams.get('account_id');
+  const accNumber = searchParams.get('acc_number');
   const [skillSubTypeData, setSkillSubTypeData] = useState<SelectOption[]>([]);
   const [isResourceFullNameEmpty, setIsResourceFullNameEmpty] =
     useState<boolean>(false);
@@ -113,9 +114,9 @@ const ResourceForm: React.FC = () => {
 
   // Data fetching
   const { data: resource, isSuccess } = useResourceDetail(
-    resourceId || location?.state?.resource?.rid || resourceRId,
+    resourcesid || resourceId || location?.state?.resource?.rid || resourceRId,
     location?.state?.accountDetails?.data?.accountById?.r_number ||
-      accountNumber
+    accountNumber || accNumber
   );
 
   useEffect(() => {
@@ -131,24 +132,22 @@ const ResourceForm: React.FC = () => {
         resourceDetailsData?.resource_total_experience_organization,
       Record_id: resourceDetailsData?.rid,
       Resource_id: resourceDetailsData?.r_number,
-      Created_On: formatDateToMMDDYYYYWithTime(
-        resourceDetailsData?.created_datetime
-      ),
+      resource_startdate: resourceDetailsData?.resource_startdate,
+      resource_enddate: resourceDetailsData?.resource_enddate,
+      Created_On: formatDateToYYYYMMDDWithTime(resourceDetailsData?.created_datetime),
       Created_By: resourceDetailsData?.created_by,
-      Updated_On: formatDateToMMDDYYYYWithTime(
-        resourceDetailsData?.modified_datetime
-      ),
+      Updated_On: formatDateToYYYYMMDDWithTime(resourceDetailsData?.modified_datetime),
       Updated_By: resourceDetailsData?.modified_by,
       resource_name:
         resourceDetailsData?.resource_firstname &&
-        resourceDetailsData?.resource_lastname
+          resourceDetailsData?.resource_lastname
           ? ''
           : !resourceDetailsData?.resource_firstname &&
-              !resourceDetailsData?.resource_lastname
+            !resourceDetailsData?.resource_lastname
             ? resourceDetailsData?.resource_name
             : resourceDetailsData?.resource_firstname ||
-              resourceDetailsData?.resource_lastname ||
-              '',
+            resourceDetailsData?.resource_lastname ||
+            '',
     };
     setResourceDetails(finalResourceDetails || null);
   }, [resource]);
@@ -183,6 +182,7 @@ const ResourceForm: React.FC = () => {
         ...formValues,
         financial_start_date: costInfo?.effective_date || '',
         financial_end_date: costInfo?.end_date || '',
+        effort_in_hrs: costInfo?.effort_in_hrs || '',
         currency: costInfo?.currency_rid || null,
         annual_cost: costInfo?.annual_cost || '',
         monthly_cost: costInfo?.monthly_cost || '',
@@ -201,14 +201,19 @@ const ResourceForm: React.FC = () => {
         skill_details: skillInfo?.skillDetails || '',
         skill_type: skillInfo?.skillTypeId || '',
         skill_sub_type: skillInfo?.skillSubTypeId || '',
-        skill_start_date:
-          formatDateToMMDDYYYY(skillInfo?.startDate as string) || '',
+        skill_start_date: skillInfo?.startDate as string || '',
         skill_type_others: skillInfo?.skillTypeOthers || '',
         skill_subtype_others: skillInfo?.skillSubTypeOthers || '',
         years_of_experience: skillInfo?.yearsOfExperience || '',
         comments: skillInfo?.comments || '',
       };
       setFormValues(skillValues);
+    } else if (formValues && !isEditView && state?.cost) {
+      const values = {
+        ...formValues,
+        currency: costAndSKillAccountInfo?.currency_rid || null,
+      }
+      setFormValues(values);
     } else if (formValues && !isEditView) {
       // Set form values with resource details when creataing cost and skill
       setFormValues(formValues);
@@ -232,13 +237,13 @@ const ResourceForm: React.FC = () => {
     if (skillTypeId) {
       setCurrentSkillType((prev) => ({
         ...prev,
-        skill_type: skillInfo.skillTypeId,
+        skill_type: [skillInfo.skillTypeId],
       }));
     }
     if (skillSubTypeId) {
       setCurrentSkillType((prev) => ({
         ...prev,
-        skillSubType: skillInfo.skillSubTypeId,
+        skillSubType: [skillInfo.skillSubTypeId],
       }));
     }
   }, [skillTypeId, skillSubTypeId]);
@@ -345,7 +350,7 @@ const ResourceForm: React.FC = () => {
             : 'Resource skill details added successfully'
         );
       }
-      if (!state.skill && !state.cost) {
+      if (!state?.skill && !state?.cost) {
         successToast(
           isEditView
             ? 'Resource updated successfully'
@@ -354,7 +359,7 @@ const ResourceForm: React.FC = () => {
       }
       navigate(-1);
     }
-  }, [commonSuccess, isEditView, state.cost, state.skill]);
+  }, [commonSuccess, isEditView, state?.cost, state?.skill]);
 
   // Handlers
   const handleSubmit = (formValues: any) => {
@@ -400,8 +405,8 @@ const ResourceForm: React.FC = () => {
           formValues,
           resource?.data?.resourceDetails, // Adjusted to access the correct property
           {
-            resource_id: location?.state?.resource?.rid,
-            account_number: accountData?.r_number,
+            resource_id: location?.state?.resource?.rid || resourcesid,
+            account_number: accountData?.r_number || accNumber,
             text: 'sample',
           }
         );
@@ -448,14 +453,14 @@ const ResourceForm: React.FC = () => {
     if (fieldName === 'skill_type') {
       setCurrentSkillType((prev) => ({
         ...prev,
-        skill_sub_type: '',
-        [fieldName]: fieldValue as string,
+        skill_sub_type: [],
+        [fieldName]: [fieldValue] as string[],
       }));
     }
     if (fieldName === 'skill_sub_type') {
       setCurrentSkillType((prev) => ({
         ...prev,
-        [fieldName]: fieldValue as string,
+        [fieldName]: [fieldValue] as string[],
       }));
     }
 
@@ -516,37 +521,37 @@ const ResourceForm: React.FC = () => {
 
   return (
     <div className='resource-form-container'>
-      <div className='flex justify-between items-center border-b-2 border-gray-200 px-10 py-6'>
+      <div className='h-[50px] border-box flex justify-between items-center border-b-2 border-gray-200 px-10'>
         <div className='flex items-center'>
           <img
             src={isEditView ? editIcon : createresourceIcon}
             alt='menu-icon'
-            className={`${isEditView ? 'bg-[#7D98B6] p-2.5' : ''} h-8 w-8 rounded`}
+            className={`${isEditView ? 'bg-[#7D98B6] p-1.5' : ''} h-6 w-6 rounded`}
           />
           <div>
             {/* {isEditView && !state?.skill && !state?.cost && (
               <h5 className='mb-1 ml-2 text-xs text-gray-500'>Edit Resource</h5>
             )} */}
-            <div className='font-semibold text-[11px] leading-[20px] ml-2 text-[#7D98B6]'>
+            <div className='font-semibold text-[12px] leading-[20px] ml-2 text-[#7D98B6]'>
               {!state?.skill && !state?.cost
                 ? `Account > ${accountData?.account_name}`
-                : `Account > ${costAndSKillAccountInfo?.account_name}`}
+                : `Account > ${costAndSKillAccountInfo?.account_name} > ${resource?.data?.resourceDetails?.r_number || ''}`}
             </div>
             {!isEditView && (
-              <h4 className='ml-2 font-semibold text-[20px] leading-[20px] tracking-[0] text-[#2D3E4F]'>
+              <h4 className='ml-2 font-bold text-[16px] leading-[20px] tracking-[0] text-[#2D3E4F]'>
                 {state?.cost
                   ? `${resourceName} Cost`
                   : state?.skill
-                    ? `${resourceName} Skill`
+                    ? `${resourceName} Skills`
                     : resourceName}
               </h4>
             )}
             {isEditView && (
-              <h4 className='ml-2 font-semibold text-[20px] leading-[20px] tracking-[0] text-[#2D3E4F]'>
+              <h4 className='ml-2 font-bold text-[16px] leading-[20px] tracking-[0] text-[#2D3E4F]'>
                 {state?.cost
                   ? 'Edit Resource Cost'
                   : state?.skill
-                    ? `Edit Resource Skill`
+                    ? `Edit Resource Skills`
                     : (resourceName ?? 'Edit Resource')}
               </h4>
             )}
@@ -588,21 +593,21 @@ const ResourceForm: React.FC = () => {
         loading={allCountries.isLoading}
         values={
           isEditView &&
-          !state?.cost &&
-          !state?.skill &&
-          (resourceDetails as unknown as Record<
-            string,
-            string | number | boolean | string[] | null
-          >)
+            !state?.cost &&
+            !state?.skill &&
+            (resourceDetails as unknown as Record<
+              string,
+              string | number | boolean | string[] | null
+            >)
             ? (resourceDetails as unknown as Record<
+              string,
+              string | number | boolean | string[] | null
+            >)
+            : state?.cost || state?.skill
+              ? (formValues as unknown as Record<
                 string,
                 string | number | boolean | string[] | null
               >)
-            : state?.cost || state?.skill
-              ? (formValues as unknown as Record<
-                  string,
-                  string | number | boolean | string[] | null
-                >)
               : undefined
         }
         // values={
@@ -615,8 +620,8 @@ const ResourceForm: React.FC = () => {
         formRef={formRef}
         onChange={onChangeField}
         layout={Layout.TYPE_1}
-        keyStart={state.cost ? 'financial_start_date' : 'resource_startdate'}
-        keyEnd={state.cost ? 'financial_end_date' : 'resource_enddate'}
+        keyStart={state?.cost ? 'financial_start_date' : 'resource_startdate'}
+        keyEnd={state?.cost ? 'financial_end_date' : 'resource_enddate'}
       />
     </div>
   );

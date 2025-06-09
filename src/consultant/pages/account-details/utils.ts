@@ -7,6 +7,7 @@ export interface AccountData {
     is_parent: boolean;
     country: {
       country_name: string;
+      country_code: string;
     };
     currency: {
       currency_code: string;
@@ -26,6 +27,7 @@ interface DisplayColumn {
   items: Array<{
     label: string;
     value: string;
+    className?: string;
   }>;
 }
 
@@ -77,21 +79,30 @@ interface OutputData {
 
 const getValueOrDefault = (
   value?: string | number | null,
-  defaultValue = 'NA'
+  defaultValue = '-'
 ): string => {
   return value?.toString() || defaultValue;
 };
 
 export const transformAccountData = (data: AccountData): DisplayColumn[] => {
   const account = data?.accountById;
+  const status = account?.status?.toLowerCase();
 
   return [
     {
       items: [
-        { label: 'Account ID', value: account?.r_number },
         {
-          label: 'Country',
-          value: getValueOrDefault(account?.country?.country_name),
+          label: 'Account ID',
+          value: account?.r_number || '-',
+          className: `${status === 'active' ? 'text-[#199806]' : 'text-[#f44336]'}`,
+        },
+      ],
+    },
+    {
+      items: [
+        {
+          label: 'Name',
+          value: getValueOrDefault(account?.account_name),
         },
       ],
     },
@@ -101,21 +112,13 @@ export const transformAccountData = (data: AccountData): DisplayColumn[] => {
           label: 'Parent Name',
           value: getValueOrDefault(account?.parent_account?.account_name),
         },
-        {
-          label: 'Currency',
-          value: getValueOrDefault(account?.currency?.currency_code),
-        },
       ],
     },
     {
       items: [
         {
-          label: 'Account Name',
-          value: getValueOrDefault(account?.account_name),
-        },
-        {
-          label: 'Is Parent Account',
-          value: account?.is_parent ? 'Yes' : 'No',
+          label: 'Country / Currency',
+          value: `${getValueOrDefault(account?.country?.country_code)} / ${getValueOrDefault(account?.currency?.currency_code)}`,
         },
       ],
     },
@@ -124,11 +127,6 @@ export const transformAccountData = (data: AccountData): DisplayColumn[] => {
         {
           label: 'Industry',
           value: getValueOrDefault(account?.industry?.industry_name),
-        },
-        {
-          label: 'Status',
-          value:
-            account?.status.charAt(0).toUpperCase() + account?.status.slice(1),
         },
       ],
     },
@@ -165,6 +163,73 @@ interface InputAccountById {
     account_name: string;
     rid: string;
   } | null;
+}
+
+export interface accountByIdProps {
+  rid: string;
+  account_name: string;
+  industry: {
+    industry_name: string;
+  };
+  business_details: string;
+  is_parent: boolean;
+  parent_account: {
+    account_name: string;
+  };
+  status: string;
+  annual_revenue: string;
+  country: {
+    country_name: string;
+  };
+  region_details: {
+    state_name: string;
+  };
+  currency: {
+    currency_code: string;
+    currency_symbol: string;
+  };
+  r_number: string;
+  comments: string;
+  created_datetime: string;
+  modified_datetime: string;
+  created_by: string;
+  modified_by: string;
+}
+
+export interface accountByDetailsProps {
+  account_rid: string;
+  created_datetime: string;
+  created_by: string;
+  modified_datetime: string;
+  modified_by: string;
+  fiscal_start_date: string;
+  fiscal_end_date: string;
+  autosend_interaction: string;
+  max_ai_interactions: string;
+  auto_access_rd: string;
+  blended_rate_fte: string;
+  blended_rate_subcon: string;
+  data_residency: string;
+  website: string;
+  project_manager: string;
+  keyContacts: KeyContactProps[];
+  business_details: string;
+  data_storage: string;
+}
+
+export interface KeyContactProps {
+  r_number?: string;
+  key_contact_name?: string;
+  role_name?: string;
+  key_contact_email?: string;
+  is_primary_contact?: boolean;
+  include_in_communication?: boolean;
+  status?: string;
+}
+
+export interface accountDetailsProps {
+  accountById?: accountByIdProps;
+  accountDetails?: accountByDetailsProps;
 }
 
 function capitalizeFirstLetter(str: string): string {

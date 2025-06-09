@@ -1,19 +1,20 @@
 import { Box, Checkbox, IconButton, TableCell, TableRow } from '@mui/material';
-import React from 'react';
+import React, { Fragment } from 'react';
 import { arrowDownIcon, childAccountIcon } from '../../../../assets';
 import { Account, ConvertedAccount } from '../../../types';
 import ActionButton from './action-button';
 import { TruncateWithTooltip } from '../../../../components';
+import { costDisplay } from '../../../../common-utils';
 
-const formatNumberWithCommas = (num: number | string): string => {
-  if (num) {
-    if (typeof num === 'string') {
-      num = parseFloat(num);
-    }
-    return num.toLocaleString('en-US');
-  }
-  return 'NA';
-};
+// const formatNumberWithCommas = (num: number | string): string => {
+//   if (num) {
+//     if (typeof num === 'string') {
+//       num = parseFloat(num);
+//     }
+//     return num.toLocaleString('en-US');
+//   }
+//   return '-';
+// };
 
 interface RenderRowsProps {
   accounts: ConvertedAccount[];
@@ -25,6 +26,8 @@ interface RenderRowsProps {
   handleDelete: (account: Account) => void;
   renderChildRows: (parentAccount: string | null) => React.ReactNode;
   handleAccountNameClick: (account: Account) => void;
+  isAccountEditEnable?: boolean;
+  isAccountDeleteEnable?: boolean;
 }
 
 interface RenderChildRowsProps {
@@ -36,6 +39,10 @@ interface RenderChildRowsProps {
   handleDelete: (account: Account) => void;
   handleAccountNameClick: (account: Account) => void;
   openRows: Set<string>;
+  openChildRows: Set<string>;
+  handleChildRowClick: (accountId: string) => void;
+  isAccountEditEnable?: boolean;
+  isAccountDeleteEnable?: boolean;
 }
 
 export const renderRows = ({
@@ -48,6 +55,8 @@ export const renderRows = ({
   handleDelete,
   renderChildRows,
   handleAccountNameClick,
+  isAccountEditEnable,
+  isAccountDeleteEnable,
 }: RenderRowsProps) => {
   const rows = accounts?.filter((account) => !account?.parentAccount);
   return rows?.map((account) => {
@@ -73,7 +82,7 @@ export const renderRows = ({
       <React.Fragment key={account.accountName}>
         <TableRow
           hover
-          className={`${openRows.has(account.accountName) ? 'bg-[#F2F2F2]' : ''}`}
+          className={`${openRows.has(account.accountName) ? 'bg-[#F2F2F2]' : ''} group`}
           selected={selectedRows.has(globalIndex as number)}
           sx={{
             '&:hover td': {
@@ -135,9 +144,9 @@ export const renderRows = ({
               zIndex: 6,
               fontWeight: '400 !important',
               color: '#2D3E4F !important',
-              minWidth: '300px',
-              width: '300px',
-              maxWidth: '300px',
+              minWidth: '250px',
+              width: '250px',
+              maxWidth: '250px',
             }}
           >
             {hasChildren ? ( // Only show the icon if there are children
@@ -171,82 +180,161 @@ export const renderRows = ({
                   />
                 )}
               </IconButton>
-            ) : null}
+            ) : (
+              <div className='h-[10px] w-[22px] inline-flex'></div>
+            )}
             <TruncateWithTooltip
               text={String(account.accountName)}
-              maxWidth={250}
-              className={`inline-flex items-center rounded-[4px] text-white text-[14px] px-2 font-semibold h-[26px] bg-[#00B7A8] cursor-pointer no-underline hover:underline`}
+              maxWidth={200}
+              className={`inline-flex items-center rounded-[4px] text-[14px] px-2 font-semibold h-[26px] cursor-pointer group-hover:underline`}
+              style={{
+                background: `linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), ${account.bgColor}`,
+                color: account.color,
+              }}
             >
               <span onClick={() => handleAccountNameClick(account)}>
-                {account.accountName || 'NA'}
+                {account.accountName || '-'}
               </span>
-            </TruncateWithTooltip>
-          </TableCell>
-          <TableCell
-            sx={{ width: '180px', maxWidth: '180px', minWidth: '180px' }}
-          >
-            <TruncateWithTooltip
-              text={String(account.accountNumber)}
-              maxWidth={180}
-            >
-              {account.accountNumber || 'NA'}
             </TruncateWithTooltip>
           </TableCell>
           <TableCell
             sx={{ width: '200px', maxWidth: '200px', minWidth: '200px' }}
           >
             <TruncateWithTooltip text={String(account.industry)} maxWidth={200}>
-              {account.industry || 'NA'}
+              {account.industry || '-'}
             </TruncateWithTooltip>
           </TableCell>
           <TableCell
             sx={{ width: '150px', maxWidth: '150px', minWidth: '150px' }}
           >
             <TruncateWithTooltip text={String(account.country)} maxWidth={150}>
-              {account.country || 'NA'}
+              {account.country || '-'}
             </TruncateWithTooltip>
           </TableCell>
           <TableCell
-            sx={{ width: '100px', maxWidth: '100px', minWidth: '100px' }}
+            sx={{
+              width: '150px',
+              maxWidth: '150px',
+              minWidth: '150px',
+              textAlign: 'right',
+            }}
           >
-            {account.currency || 'NA'}
+            {account.totalProjects}
+          </TableCell>
+
+          <TableCell
+            sx={{
+              width: '180px',
+              maxWidth: '180px',
+              minWidth: '180px',
+              textAlign: 'right',
+            }}
+          >
+            {account.totalProjectHours}
+          </TableCell>
+          <TableCell
+            sx={{
+              width: '150px',
+              maxWidth: '150px',
+              minWidth: '150px',
+              textAlign: 'right',
+            }}
+          >
+            {account.totalProjectCost
+              ? costDisplay(account.totalProjectCost, account.currency)
+              : '-'}
+          </TableCell>
+          <TableCell
+            sx={{
+              width: '200px',
+              maxWidth: '200px',
+              minWidth: '200px',
+              textAlign: 'right',
+            }}
+          >
+            {account.estimatedHours}
+          </TableCell>
+          <TableCell
+            sx={{
+              width: '140px',
+              maxWidth: '140px',
+              minWidth: '140px',
+              textAlign: 'right',
+            }}
+          >
+            {account.qre ? costDisplay(account.qre, account.currency) : '-'}
+          </TableCell>
+          <TableCell
+            sx={{
+              width: '200px',
+              maxWidth: '200px',
+              minWidth: '200px',
+              textAlign: 'right',
+            }}
+          >
+            {account.estimatedCredits
+              ? costDisplay(account.estimatedCredits, account.currency)
+              : '-'}
+          </TableCell>
+          <TableCell
+            sx={{
+              width: '180px',
+              maxWidth: '180px',
+              minWidth: '180px',
+              textAlign: 'right',
+            }}
+          >
+            {account.actualCredits
+              ? costDisplay(account.actualCredits, account.currency)
+              : '-'}
+          </TableCell>
+          <TableCell
+            sx={{ width: '200px', maxWidth: '200px', minWidth: '200px' }}
+          >
+            {account.financeExecutive || '-'}
+          </TableCell>
+
+          <TableCell
+            sx={{ width: '160px', maxWidth: '160px', minWidth: '160px' }}
+          >
+            {account.financeHead || '-'}
+          </TableCell>
+          <TableCell
+            sx={{ width: '250px', maxWidth: '250px', minWidth: '240px' }}
+          >
+            {account.professionalConsultant || '-'}
           </TableCell>
           <TableCell
             sx={{ width: '160px', maxWidth: '160px', minWidth: '160px' }}
           >
             <TruncateWithTooltip
-              text={formatNumberWithCommas(account.annualRevenue)}
-              maxWidth={160}
+              text={String(account.accountNumber)}
+              maxWidth={180}
             >
-              {formatNumberWithCommas(account.annualRevenue)}
+              {account.accountNumber || '-'}
             </TruncateWithTooltip>
           </TableCell>
-          <TableCell
-            sx={{
-              width: '100px',
-              maxWidth: '100px',
-              minWidth: '100px',
-              color:
-                account.status === 'Active'
-                  ? '#199806 !important'
-                  : '#f44336 !important',
-            }}
-          >
-            {account.status === 'Active' ? 'Active' : 'In-Active'}
-          </TableCell>
-          <TableCell
-            sx={{
-              width: '100px',
-              minWidth: '100px',
-              maxWidth: '100px',
-              padding: '0px !important',
-            }}
-          >
-            <ActionButton
-              onEdit={() => handleEdit(account)}
-              onDelete={() => handleDelete(account)}
-            />
-          </TableCell>
+          {(isAccountEditEnable || isAccountDeleteEnable) && (
+            <TableCell
+              sx={{
+                width: '60px',
+                minWidth: '60px',
+                maxWidth: '60px',
+                padding: '0px !important',
+              }}
+            >
+              <ActionButton
+                onEdit={() => handleEdit(account)}
+                onDelete={() => handleDelete(account)}
+                editCustomOption={{
+                  hide: !isAccountEditEnable,
+                }}
+                deleteCustomOption={{
+                  hide: !isAccountDeleteEnable,
+                }}
+              />
+            </TableCell>
+          )}
         </TableRow>
         {openRows.has(account.accountName) &&
           renderChildRows(account.accountName)}
@@ -274,164 +362,513 @@ export const renderChildRows = ({
   handleEdit,
   handleDelete,
   handleAccountNameClick,
-  openRows,
+  // openRows,
+  openChildRows,
+  handleChildRowClick,
+  isAccountEditEnable,
+  isAccountDeleteEnable,
 }: RenderChildRowsProps) => {
+  console.log(accounts, 'accounts');
   return accounts
     ?.filter((account) => account.parentAccount === parentAccount)
     ?.map((account) => {
       const globalIndex = accounts.findIndex(
         (acc) => acc.accountName === account.accountName
       );
+      const hasProjects =
+        account.projectsByYear && account.projectsByYear.length > 0;
       return (
-        <TableRow
-          key={account.accountName}
-          hover
-          selected={selectedRows.has(globalIndex)}
-          sx={{
-            '&:hover td': {
-              backgroundColor: '#F5F9FF',
-            },
-            '&.Mui-selected td': {
-              backgroundColor: '#f5f7fa',
-            },
-            '&.Mui-selected:hover td': {
-              backgroundColor: '#F5F9FF',
-            },
-          }}
-        >
-          <TableCell
+        <Fragment key={account.accountName}>
+          <TableRow
+            key={account.accountName}
+            hover
+            selected={selectedRows.has(globalIndex)}
             sx={{
-              position: 'sticky',
-              left: 0,
-              background: '#fff',
-              zIndex: 7,
-              width: '32px',
-              maxWidth: '32px',
-              minWidth: '32px',
-              padding: '0 !important',
-              borderBottom: '1px solid #CBD6E2 !important',
+              '&:hover td': {
+                backgroundColor: '#F5F9FF',
+              },
+              '&.Mui-selected td': {
+                backgroundColor: '#f5f7fa',
+              },
+              '&.Mui-selected:hover td': {
+                backgroundColor: '#F5F9FF',
+              },
             }}
           >
-            <Box className='flex items-center justify-center !h-[32px] !w-[32px]'>
-              <Checkbox
-                size='small'
-                disableRipple
-                checked={selectedRows.has(globalIndex)}
-                onChange={() => handleSelectRow(globalIndex)}
-                sx={{
-                  color: '#CBD6E2',
-                  '&.Mui-checked': {
-                    color: '#1755E7',
-                  },
+            <TableCell
+              sx={{
+                position: 'sticky',
+                left: 0,
+                background: '#fff',
+                zIndex: 7,
+                width: '32px',
+                maxWidth: '32px',
+                minWidth: '32px',
+                padding: '0 !important',
+                borderBottom: '1px solid #CBD6E2 !important',
+              }}
+            >
+              <Box className='flex items-center justify-center !h-[32px] !w-[32px]'>
+                <Checkbox
+                  size='small'
+                  disableRipple
+                  checked={selectedRows.has(globalIndex)}
+                  onChange={() => handleSelectRow(globalIndex)}
+                  sx={{
+                    color: '#CBD6E2',
+                    '&.Mui-checked': {
+                      color: '#1755E7',
+                    },
+                  }}
+                />
+              </Box>
+            </TableCell>
+            <TableCell
+              sx={{
+                position: 'sticky',
+                left: '32px',
+                background: '#fff',
+                zIndex: 6,
+                fontWeight: '400 !important',
+                color: '#2D3E4F !important',
+                borderRight: '1px solid #CBD6E2',
+                width: '250px',
+                maxWidth: '250px',
+                minWidth: '250px',
+                borderBottom: '1px solid #CBD6E2 !important',
+              }}
+            >
+              <Box className='inline-flex items-center gap-1 ml-[15px]'>
+                {hasProjects ? (
+                  <IconButton
+                    aria-label='expand projects'
+                    size='small'
+                    disableRipple
+                    className='!p-0 !mr-0'
+                    onClick={() => handleChildRowClick(account.accountId)}
+                  >
+                    {openChildRows.has(account.accountId) ? (
+                      <img
+                        src={arrowDownIcon}
+                        alt='arrowUp'
+                        style={{
+                          filter:
+                            'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
+                        }}
+                        className='h-[18px] w-[18px]'
+                      />
+                    ) : (
+                      <img
+                        src={arrowDownIcon}
+                        alt='arrowDown'
+                        style={{
+                          transform: 'rotate(-90deg)',
+                          filter:
+                            'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
+                        }}
+                        className='h-[18px] w-[18px]'
+                      />
+                    )}
+                  </IconButton>
+                ) : (
+                  <div className='w-[18px] h-[18px]'></div>
+                )}
+                <div className='flex items-center justify-center w-[18px] h-[17px] bg-[#425A76] rounded-[4px]'>
+                  <img
+                    src={childAccountIcon}
+                    alt='childAccountIcon'
+                    className='w-[9px] h-[10px]'
+                  />
+                </div>
+                <TruncateWithTooltip
+                  text={String(account.accountName)}
+                  maxWidth={200}
+                  className={`text-[13px] font-semibold cursor-pointer underline text-[#1755E7]`}
+                >
+                  <span onClick={() => handleAccountNameClick(account)}>
+                    {account.accountName || '-'}
+                  </span>
+                </TruncateWithTooltip>
+              </Box>
+            </TableCell>
+            <TableCell
+              sx={{ width: '200px', maxWidth: '200px', minWidth: '200px' }}
+            >
+              <TruncateWithTooltip
+                text={String(account.industry)}
+                maxWidth={200}
+              >
+                {account.industry || '-'}
+              </TruncateWithTooltip>
+            </TableCell>
+            <TableCell
+              sx={{ width: '150px', maxWidth: '150px', minWidth: '150px' }}
+            >
+              <TruncateWithTooltip
+                text={String(account.country)}
+                maxWidth={150}
+              >
+                {account.country || '-'}
+              </TruncateWithTooltip>
+            </TableCell>
+            <TableCell
+              sx={{
+                width: '150px',
+                maxWidth: '150px',
+                minWidth: '150px',
+                textAlign: 'right',
+              }}
+            >
+              {account.totalProjects}
+            </TableCell>
+            <TableCell
+              sx={{
+                width: '180px',
+                maxWidth: '180px',
+                minWidth: '180px',
+                textAlign: 'right',
+              }}
+            >
+              {account.totalProjectHours}
+            </TableCell>
+            <TableCell
+              sx={{
+                width: '150px',
+                maxWidth: '150px',
+                minWidth: '150px',
+                textAlign: 'right',
+              }}
+            >
+              {account.totalProjectCost
+                ? costDisplay(account.totalProjectCost, account.currency)
+                : '-'}
+            </TableCell>
+            <TableCell
+              sx={{
+                width: '200px',
+                maxWidth: '200px',
+                minWidth: '200px',
+                textAlign: 'right',
+              }}
+            >
+              {account.estimatedHours}
+            </TableCell>
+            <TableCell
+              sx={{
+                width: '140px',
+                maxWidth: '140px',
+                minWidth: '140px',
+                textAlign: 'right',
+              }}
+            >
+              {account.qre ? costDisplay(account.qre, account.currency) : '-'}
+            </TableCell>
+            <TableCell
+              sx={{
+                width: '200px',
+                maxWidth: '200px',
+                minWidth: '200px',
+                textAlign: 'right',
+              }}
+            >
+              {account.estimatedCredits
+                ? costDisplay(account.estimatedCredits, account.currency)
+                : '-'}
+            </TableCell>
+            <TableCell
+              sx={{
+                width: '180px',
+                maxWidth: '180px',
+                minWidth: '180px',
+                textAlign: 'right',
+              }}
+            >
+              {account.actualCredits
+                ? costDisplay(account.actualCredits, account.currency)
+                : '-'}
+            </TableCell>
+            <TableCell
+              sx={{ width: '200px', maxWidth: '200px', minWidth: '200px' }}
+            >
+              {account.financeExecutive || '-'}
+            </TableCell>
+            <TableCell
+              sx={{ width: '160px', maxWidth: '160px', minWidth: '160px' }}
+            >
+              {account.financeHead || '-'}
+            </TableCell>
+            <TableCell
+              sx={{ width: '250px', maxWidth: '250px', minWidth: '250px' }}
+            >
+              {account.professionalConsultant || '-'}
+            </TableCell>
+            <TableCell
+              sx={{ width: '160px', maxWidth: '160px', minWidth: '160px' }}
+            >
+              <TruncateWithTooltip
+                text={String(account.accountNumber)}
+                maxWidth={180}
+              >
+                {account.accountNumber || '-'}
+              </TruncateWithTooltip>
+            </TableCell>
+            <TableCell
+              sx={{
+                width: '60px',
+                minWidth: '60px',
+                maxWidth: '60px',
+                padding: '0px !important',
+              }}
+            >
+              <ActionButton
+                onEdit={() => handleEdit(account)}
+                onDelete={() => handleDelete(account)}
+                editCustomOption={{
+                  hide: !isAccountEditEnable,
+                }}
+                deleteCustomOption={{
+                  hide: !isAccountDeleteEnable,
                 }}
               />
-            </Box>
-          </TableCell>
-          <TableCell
-            sx={{
-              position: 'sticky',
-              left: '32px',
-              background: '#fff',
-              zIndex: 6,
-              fontWeight: '400 !important',
-              color: '#2D3E4F !important',
-              borderRight: '1px solid #CBD6E2',
-              width: '300px',
-              maxWidth: '300px',
-              minWidth: '300px',
-              borderBottom: '1px solid #CBD6E2 !important',
-            }}
-          >
-            <Box className='inline-flex items-center gap-1 ml-[22px]'>
-              <div className='flex items-center justify-center w-[18px] h-[17px] bg-[#425A76] rounded-[4px]'>
-                <img
-                  src={childAccountIcon}
-                  alt='childAccountIcon'
-                  className='w-[9px] h-[10px]'
-                />
-              </div>
-              <TruncateWithTooltip
-                text={String(account.accountName)}
-                maxWidth={250}
-                className={`text-[13px] font-semibold cursor-pointer hover:underline hover:text-[#1755E7]`}
-              >
-                <span onClick={() => handleAccountNameClick(account)}>
-                  {account.accountName || 'NA'}
-                </span>
-              </TruncateWithTooltip>
-            </Box>
-          </TableCell>
-          <TableCell
-            sx={{ minWidth: '180px', maxWidth: '180px', width: '180px' }}
-          >
-            <TruncateWithTooltip
-              text={String(account.accountNumber)}
-              maxWidth={180}
-            >
-              {account.accountNumber || 'NA'}
-            </TruncateWithTooltip>
-          </TableCell>
-          <TableCell
-            sx={{ minWidth: '200px', maxWidth: '200px', width: '200px' }}
-          >
-            <TruncateWithTooltip text={String(account.industry)} maxWidth={200}>
-              {account.industry || 'NA'}
-            </TruncateWithTooltip>
-          </TableCell>
-          <TableCell
-            sx={{ minWidth: '150px', maxWidth: '150px', width: '150px' }}
-          >
-            <TruncateWithTooltip text={String(account.country)} maxWidth={150}>
-              {account.country || 'NA'}
-            </TruncateWithTooltip>
-          </TableCell>
-          <TableCell
-            sx={{ minWidth: '100px', maxWidth: '100px', width: '100px' }}
-            className={`last-column ${
-              openRows.has(account.accountName) ? 'no-border-right' : ''
-            }`}
-          >
-            <TruncateWithTooltip text={String(account.currency)} maxWidth={100}>
-              {account.currency || 'NA'}
-            </TruncateWithTooltip>
-          </TableCell>
-          <TableCell
-            sx={{ minWidth: '160px', maxWidth: '160px', width: '160px' }}
-          >
-            <TruncateWithTooltip
-              text={formatNumberWithCommas(account.annualRevenue)}
-              maxWidth={160}
-            >
-              {formatNumberWithCommas(account.annualRevenue)}
-            </TruncateWithTooltip>
-          </TableCell>
-          <TableCell
-            sx={{
-              color:
-                account.status === 'Active'
-                  ? '#199806 !important'
-                  : '#f44336 !important',
-              minWidth: '100px',
-              maxWidth: '100px',
-              width: '100px',
-            }}
-          >
-            {account.status === 'Active' ? 'Active' : 'In-Active'}
-          </TableCell>
-          <TableCell
-            sx={{
-              width: '100px',
-              minWidth: '100px',
-              maxWidth: '100px',
-              padding: '0px !important',
-            }}
-          >
-            <ActionButton
-              onEdit={() => handleEdit(account)}
-              onDelete={() => handleDelete(account)}
-            />
-          </TableCell>
-        </TableRow>
+            </TableCell>
+          </TableRow>
+          {hasProjects && openChildRows.has(account.accountId) && (
+            <>
+              {account.projectsByYear?.map((project) => (
+                <TableRow
+                  key={project.account_rid}
+                  hover
+                  // selected={selectedRows.has(globalIndex)}
+                  sx={{
+                    '&:hover td': {
+                      backgroundColor: '#F5F9FF',
+                    },
+                    '&.Mui-selected td': {
+                      backgroundColor: '#f5f7fa',
+                    },
+                    '&.Mui-selected:hover td': {
+                      backgroundColor: '#F5F9FF',
+                    },
+                  }}
+                >
+                  <TableCell
+                    sx={{
+                      position: 'sticky',
+                      left: 0,
+                      background: '#fff',
+                      zIndex: 7,
+                      width: '32px',
+                      maxWidth: '32px',
+                      minWidth: '32px',
+                      padding: '0 !important',
+                      borderBottom: '1px solid #CBD6E2 !important',
+                    }}
+                  >
+                    <Box className='flex items-center justify-center !h-[32px] !w-[32px]'>
+                      <Checkbox
+                        size='small'
+                        disableRipple
+                        // checked={selectedRows.has(globalIndex)}
+                        // onChange={() => handleSelectRow(globalIndex)}
+                        sx={{
+                          color: '#CBD6E2',
+                          '&.Mui-checked': {
+                            color: '#1755E7',
+                          },
+                        }}
+                      />
+                    </Box>
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      position: 'sticky',
+                      left: '32px',
+                      background: '#fff',
+                      zIndex: 6,
+                      fontWeight: '400 !important',
+                      color: '#2D3E4F !important',
+                      borderRight: '1px solid #CBD6E2',
+                      width: '250px',
+                      maxWidth: '250px',
+                      minWidth: '250px',
+                      borderBottom: '1px solid #CBD6E2 !important',
+                    }}
+                  >
+                    <Box className='inline-flex items-center gap-1 ml-[55px]'>
+                      <div className='flex items-center justify-center w-[18px] h-[17px] bg-[#425A76] rounded-[4px]'>
+                        <img
+                          src={childAccountIcon}
+                          alt='childAccountIcon'
+                          className='w-[9px] h-[10px]'
+                        />
+                      </div>
+                      <span className='text-[13px] font-semibold'>
+                        {project.fiscal_year || '-'}
+                      </span>
+                    </Box>
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      width: '200px',
+                      maxWidth: '200px',
+                      minWidth: '200px',
+                    }}
+                  >
+                    {'-'}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      width: '150px',
+                      maxWidth: '150px',
+                      minWidth: '150px',
+                    }}
+                  >
+                    {'-'}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      width: '150px',
+                      maxWidth: '150px',
+                      minWidth: '150px',
+                      textAlign: 'right',
+                    }}
+                  >
+                    {project.total_projects || '-'}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      width: '180px',
+                      maxWidth: '180px',
+                      minWidth: '180px',
+                      textAlign: 'right',
+                    }}
+                  >
+                    {project.total_project_hours || '-'}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      width: '150px',
+                      maxWidth: '150px',
+                      minWidth: '150px',
+                      textAlign: 'right',
+                    }}
+                  >
+                    {project.total_project_cost
+                      ? costDisplay(
+                          project.total_project_cost,
+                          account.currency
+                        )
+                      : '-'}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      width: '200px',
+                      maxWidth: '200px',
+                      minWidth: '200px',
+                      textAlign: 'right',
+                    }}
+                  >
+                    {project.qualifying_project_hours_fed || '-'}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      width: '140px',
+                      maxWidth: '140px',
+                      minWidth: '140px',
+                      textAlign: 'right',
+                    }}
+                  >
+                    {project.qualifying_project_qre_fed
+                      ? costDisplay(
+                          project.qualifying_project_qre_fed,
+                          account.currency
+                        )
+                      : '-'}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      width: '200px',
+                      maxWidth: '200px',
+                      minWidth: '200px',
+                      textAlign: 'right',
+                    }}
+                  >
+                    {project.qualifying_project_rd_credits_fed
+                      ? costDisplay(
+                          project.qualifying_project_rd_credits_fed,
+                          account.currency
+                        )
+                      : '-'}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      width: '180px',
+                      maxWidth: '180px',
+                      minWidth: '180px',
+                      textAlign: 'right',
+                    }}
+                  >
+                    {project.total_projects_rd_credits
+                      ? costDisplay(
+                          project.total_projects_rd_credits,
+                          account.currency
+                        )
+                      : '-'}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      width: '200px',
+                      maxWidth: '200px',
+                      minWidth: '200px',
+                    }}
+                  >
+                    {'-'}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      width: '160px',
+                      maxWidth: '160px',
+                      minWidth: '160px',
+                    }}
+                  >
+                    {'-'}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      width: '250px',
+                      maxWidth: '250px',
+                      minWidth: '250px',
+                    }}
+                  >
+                    {'-'}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      width: '160px',
+                      maxWidth: '160px',
+                      minWidth: '160px',
+                    }}
+                  >
+                    {'-'}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      width: '60px',
+                      minWidth: '60px',
+                      maxWidth: '60px',
+                      padding: '0px !important',
+                    }}
+                  >
+                    <ActionButton
+                      onEdit={() => handleEdit(account)}
+                      onDelete={() => handleDelete(account)}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </>
+          )}
+        </Fragment>
       );
     });
 };

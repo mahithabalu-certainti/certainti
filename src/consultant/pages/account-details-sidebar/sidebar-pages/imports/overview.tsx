@@ -54,14 +54,18 @@ const Overview: React.FC<OverviewProps> = ({
     },
   ];
 
-  const fiscalYears = Array.from({ length: 6 }, (_, i) => {
-    const year = new Date().getFullYear() - i;
-    return {
-      value: year.toString(),
-      label: `FY-${year}`,
-      onClick: () => setFiscalYear(year.toString()),
-    };
-  });
+  const currentYear = new Date().getFullYear();
+
+  const fiscalYears = Array.from(
+    { length: currentYear - 2000 + 1 },
+    (_, index) => {
+      const year = currentYear - index;
+      return {
+        label: `FY-${year}`,
+        onClick: () => setFiscalYear(year.toString()),
+      };
+    }
+  );
 
   const showError = (text: string) => {
     setMessage({ type: 'error', text });
@@ -215,7 +219,7 @@ const Overview: React.FC<OverviewProps> = ({
               width: '75px',
               minWidth: '75px',
               fontWeight: 400,
-              fontSize: '12px',
+              fontSize: '13px',
             }}
           />
           <TextButton

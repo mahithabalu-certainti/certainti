@@ -5,36 +5,95 @@ import { ManageUserIcon, newFilterIcon } from '../../../../assets/icons';
 import { FilterModal } from '../../../../components';
 import ActionsDropdown from '../../../../components/actions-dropdown/actions-dropdown';
 import TextButton from '../../../../components/button/text-button';
-import { ADMIN_CREATE_USER } from '../../../../routes';
+import { ADMIN_CREATE_USER, ADMIN_MANAGE_USER } from '../../../../routes';
 import { UserTable } from '../table/user-table';
-import { getUserFilterfields } from './helpers';
+import { getUserFilterFields } from './helpers';
 import { exportUserList, useManageUserProfile } from '../../../service';
 import { UserListParams } from '../../../types/manage-user';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../../store/store';
+import { checkPermission } from '../../../../common-utils';
+import { AllModules, AllPermissions } from '../../../../common-service';
+import { AccessRestricted } from '../../../../components/account-restricted';
 import {
   formatFilterForApi,
   getStoredFilters,
 } from '../../../../components/filter-component/utils';
+import { useToast } from '../../../../hooks';
 
 const BUTTON_STYLES = {
-  height: '32px',
+  height: '24px',
   fontSize: '13px',
-  fontWeight: 700,
+  fontWeight: 600,
 };
 
 const UserList: React.FC = () => {
   const navigate = useNavigate();
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
-  // const [searchTerm, setSearchTerm] = useState<string>('');
   const [page, setPage] = useState<number>(1);
   const [tableParams, setTableParams] = useState<UserListParams>({
     page: page,
-    limit: 10,
+    limit: 100,
     sortBy: 'createdAt',
     sortOrder: 'DESC',
   });
 
-  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+  // Permission Mangement
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
+  const userIsEnable = checkPermission(modules, AllModules.USER_MANAGEMENT);
+  const isUserCreateEnable = checkPermission(
+    permission,
+    AllPermissions.USER_CREATE
+  );
+  const isUserEditEnable = checkPermission(
+    permission,
+    AllPermissions.USER_EDIT_UPDATE
+  );
+  const isUserDeleteEnable = checkPermission(
+    permission,
+    AllPermissions.USER_DELETE
+  );
+  const isUserViewEnable = checkPermission(
+    permission,
+    AllPermissions.USER_VIEW
+  );
+  const isUserViewAllEnable = checkPermission(
+    permission,
+    AllPermissions.USER_VIEW_ALL
+  );
+  const isUserSuspendEnable = checkPermission(
+    permission,
+    AllPermissions.USER_SUSPEND
+  );
+  const isUserResetPasswordEnable = checkPermission(
+    permission,
+    AllPermissions.USER_RESET_PASSWORD
+  );
+  const isUserExportEnable = checkPermission(
+    permission,
+    AllPermissions.USER_EXPORT
+  );
+  const isUserViewPermissionEnable = checkPermission(
+    permission,
+    AllPermissions.USER_VIEW_PERMISSION
+  );
+  const isUserAssignPermissionEnable = checkPermission(
+    permission,
+    AllPermissions.USER_ASSIGN_PERMISSION
+  );
+  
+  const userActionButtons = [
+    { label: 'Suspend User', width: '104px', hide: !isUserSuspendEnable },
+    { label: 'Reinstate User', width: '116px', hide: false },
+    { label: 'Reset Password', width: '118px', hide: !isUserResetPasswordEnable },
+    { label: 'Delete', width: '58px', hide: !isUserDeleteEnable },
+  ];
 
+  const [selectedUserId, setSelectedUserId] = useState<string[]>([]);
+  const { errorToast } = useToast();
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -46,25 +105,35 @@ const UserList: React.FC = () => {
   const isFilterOpen = Boolean(anchorEl);
   const filterId = isFilterOpen ? 'user-filter-popover' : undefined;
 
-  const userActionButtons = [
-    { label: 'Suspend User', width: '104px' },
-    { label: 'Reinstate User', width: '116px' },
-    { label: 'Reset Password', width: '118px' },
-    { label: 'Delete', width: '58px' },
-  ];
+  const handleSelectionChange = (selectedIds: string[]) => {
+    setSelectedUserId(selectedIds);
+  };
 
   const MENU_ITEMS = [
     {
-      label: 'Assign Permission to User',
-      onClick: () => console.log('user clicked'),
+      label: 'Assign Permissions to User',
+      hide: !isUserAssignPermissionEnable,
+      onClick: () => {
+        if (selectedUserId.length === 1) {
+          navigate(
+            ADMIN_MANAGE_USER + '/extended-permission/' + selectedUserId[0]
+          );
+        } else if (selectedUserId.length > 1) {
+          errorToast('Please select only one user to assign permissions.');
+        } else {
+          errorToast('You must select a user to assign permissions.');
+        }
+      },
     },
     {
       label: 'View Permissions',
       onClick: () => console.log('View Permissions clicked'),
+      hide: !isUserViewPermissionEnable,
     },
     {
       label: 'Export',
       onClick: () => exportUserList(tableParams),
+      hide: !isUserExportEnable,
     },
   ];
 
@@ -72,11 +141,14 @@ const UserList: React.FC = () => {
 
   const userProfiles = useMemo(() => {
     return (
-      profileList.data?.data.profiles.map((item) => item.profile_name) || []
+      profileList.data?.data.profiles.map((item) => ({
+        label: item.profile_name,
+        value: item.profile_name,
+      })) || []
     );
   }, [profileList]);
 
-  const userFilterfields = getUserFilterfields(userProfiles);
+  const userFilterfields = getUserFilterFields(userProfiles);
 
   useEffect(() => {
     const saved = getStoredFilters();
@@ -104,6 +176,8 @@ const UserList: React.FC = () => {
     }
   };
 
+  if (!userIsEnable || !isUserViewAllEnable) return <AccessRestricted />;
+
   return (
     <div className='flex flex-col w-full h-full'>
       {/* Header Section */}
@@ -127,16 +201,18 @@ const UserList: React.FC = () => {
         </div>
         <div className='flex gap-3 justify-center items-center'>
           <ActionsDropdown actions={MENU_ITEMS} />
-          <TextButton
-            label='Create User'
-            onClick={() => navigate(ADMIN_CREATE_USER)}
-            sx={{
-              ...BUTTON_STYLES,
-              width: '91px',
-              minWidth: '91px',
-              maxWidth: '91px',
-            }}
-          />
+          {isUserCreateEnable && (
+            <TextButton
+              label='Create User'
+              onClick={() => navigate(ADMIN_CREATE_USER)}
+              sx={{
+                ...BUTTON_STYLES,
+                width: '91px',
+                minWidth: '91px',
+                maxWidth: '91px',
+              }}
+            />
+          )}
         </div>
       </div>
 
@@ -148,7 +224,7 @@ const UserList: React.FC = () => {
           <div className='relative h-[32px]'>
             <button
               aria-describedby={filterId}
-              className={`w-[64px] h-[26px] text-[13px] mt-[3px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
+              className={`w-[64px] h-[24px] text-[13px] mt-[4px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
               ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) ? 'bg-[#F3F3F3]' : ''}`}
               onClick={handleFilterModal}
             >
@@ -173,19 +249,22 @@ const UserList: React.FC = () => {
               handleCloseFilter={handleCloseFilter}
             />
           </div>
-          {userActionButtons.map((button) => (
-            <TextButton
-              key={button.label}
-              label={button.label}
-              onClick={() => handleAction(button.label)}
-              sx={{
-                ...BUTTON_STYLES,
-                width: button.width,
-                minWidth: button.width,
-                maxWidth: button.width,
-              }}
-            />
-          ))}
+          {userActionButtons.map((button) => {
+            if (button.hide) return null;
+            return (
+              <TextButton
+                key={button.label}
+                label={button.label}
+                onClick={() => handleAction(button.label)}
+                sx={{
+                  ...BUTTON_STYLES,
+                  width: button.width,
+                  minWidth: button.width,
+                  maxWidth: button.width,
+                }}
+              />
+            );
+          })}
         </div>
       </div>
 
@@ -195,6 +274,9 @@ const UserList: React.FC = () => {
           appliedFilters={appliedFilters}
           tableParams={tableParams}
           setTableParams={setTableParams}
+          isUserEditEnable={isUserEditEnable}
+          isUserViewEnable={isUserViewEnable}
+          onSelectionChange={handleSelectionChange}
         />
       </div>
     </div>

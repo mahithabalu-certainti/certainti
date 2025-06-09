@@ -8,6 +8,7 @@ import {
   MenuItem,
   Popover,
   Toolbar,
+  Tooltip,
 } from '@mui/material';
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -23,22 +24,28 @@ import {
   // searchIcon,
   settingsIcon,
 } from '../../assets';
-import { UserRoles } from '../../common-service';
+import { AllPermissions } from '../../common-service';
 import { msalConfig, msalResetPasswordConfig } from '../../config/msalConfig';
 import { useAuthHook, useToast } from '../../hooks';
 import { RootState } from '../../store/store';
 import { setFiscalYear } from '../../store/slices/account-slice';
-import { fiscalYears } from '../../common-utils';
+import { checkPermission, fiscalYears } from '../../common-utils';
 import { useNavigate } from 'react-router-dom';
 import { PROFILE } from '../../routes';
 import { FiscalYearDropdown } from '../fiscal-dropdown';
 import GlobalFilterModal from '../global-modal/global-filter';
 
 interface NavbarProps {
+  showAdminSidebar: boolean;
+  switchSideBarMenus: () => void;
   handleSidebarToggle: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle }) => {
+export const Navbar: React.FC<NavbarProps> = ({
+  handleSidebarToggle,
+  showAdminSidebar,
+  switchSideBarMenus,
+}) => {
   const msalSigninInstance = new PublicClientApplication(msalConfig);
   const msalResetInstance = new PublicClientApplication(
     msalResetPasswordConfig
@@ -55,8 +62,22 @@ export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle }) => {
   const dispatch = useDispatch();
   const { logout } = useAuthHook();
   const navigate = useNavigate();
-  const { role, name } = useSelector((state: RootState) => state.auth);
-  const { fiscalYear } = useSelector((state: RootState) => state.account);
+  const { name } = useSelector((state: RootState) => state.auth);
+  const { fiscalYear, filters } = useSelector(
+    (state: RootState) => state.account
+  );
+  const isAdminEnable = useSelector(
+    (state: RootState) => state.permission.isAdminEnable
+  );
+
+  // Permission Mangement
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const isViewProfileEnable = checkPermission(
+    permission,
+    AllPermissions.PROFILE_VIEW
+  );
+
+  const isFilterApplied = filters.length > 0;
 
   const [globalAnchorEl, setGlobalAnchorEl] =
     useState<HTMLButtonElement | null>(null);
@@ -76,7 +97,6 @@ export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle }) => {
     ? 'global-filter-popover'
     : undefined;
 
-  const isConsultant = role !== UserRoles.Admin;
   const menuId = 'account-menu';
   const mobileMenuId = 'account-menu-mobile';
   const notificationId = 'notification-menu';
@@ -155,6 +175,7 @@ export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle }) => {
       await msalSigninInstance.initialize();
       await msalSigninInstance.logoutPopup();
       await msalSigninInstance.clearCache();
+      localStorage.removeItem('showAdminSidebar');
       logout();
       window.location.replace('/login');
     } catch (error) {
@@ -183,9 +204,11 @@ export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle }) => {
       open={isMenuOpen}
       onClose={handleMenuClose}
     >
-      <MenuItem sx={{ fontSize: '14px' }} onClick={goToProfile}>
-        View Profile Details
-      </MenuItem>
+      {isViewProfileEnable && (
+        <MenuItem sx={{ fontSize: '14px' }} onClick={goToProfile}>
+          View Profile Details
+        </MenuItem>
+      )}
       <MenuItem sx={{ fontSize: '14px' }} onClick={changePassword}>
         Change Password
       </MenuItem>
@@ -350,22 +373,30 @@ export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle }) => {
           <Box
             sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}
           >
-            {isConsultant && (
+            {!showAdminSidebar && (
               <>
                 <div className='relative'>
-                  <IconButton
-                    color='inherit'
+                  <button
                     aria-describedby={globalFilterId}
-                    disableRipple
                     onClick={handleGlobalFilterModal}
+                    className={`${isGlobalModalOpen || isFilterApplied ? 'bg-[#FFFFFF26]' : 'bg-transparent'} w-[85px] min-w-[85px] px-3 h-[25px] flex justify-center items-center gap-1.5 mr-2 cursor-pointer focus:outline-none rounded-[2px] hover:bg-[#FFFFFF33] hover:rounded-xs whitespace-nowrap`}
                   >
-                    <img
-                      src={globeIcon}
-                      alt='global'
-                      className='h-[16px] w-[16px]'
-                    />
-                    <span className='text-[13px] font-normal px-2'>Global</span>
-                  </IconButton>
+                    <div className='relative'>
+                      <img
+                        src={globeIcon}
+                        alt='global'
+                        className='h-[16px] w-[16px]'
+                      />
+                      {isFilterApplied && (
+                        <div className='absolute -top-[5px] -right-[5px] w-4 h-4 flex items-center justify-center text-xs'>
+                          <span className='w-[8px] h-[8px] bg-[#FF3C03] rounded-full flex items-center justify-center z-10'></span>
+                        </div>
+                      )}
+                    </div>
+                    <span className='text-[13px] font-normal text-white'>
+                      Global
+                    </span>
+                  </button>
                   <GlobalFilterModal
                     isOpen={isGlobalModalOpen}
                     filterAnchorEl={globalAnchorEl}
@@ -383,7 +414,7 @@ export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle }) => {
               </>
             )}
             <IconButton size='large' color='inherit'>
-              <img src={phoneIcon} alt='phone' className='h-[18px] w-[18px]' />
+              <img src={phoneIcon} alt='phone' className='h-[20px] w-[20px]' />
             </IconButton>
             <IconButton
               size='large'
@@ -399,13 +430,24 @@ export const Navbar: React.FC<NavbarProps> = ({ handleSidebarToggle }) => {
                 className='h-[22px] w-[22px]'
               />
             </IconButton>
-            <IconButton size='large' color='inherit'>
-              <img
-                src={settingsIcon}
-                alt='settings'
-                className='h-[20px] w-[20px]'
-              />
-            </IconButton>
+            {isAdminEnable && (
+              <Tooltip
+                title={`Switch to ${showAdminSidebar ? 'Consultant' : 'Admin'}`}
+                arrow
+              >
+                <IconButton
+                  size='large'
+                  color='inherit'
+                  onClick={switchSideBarMenus}
+                >
+                  <img
+                    src={settingsIcon}
+                    alt='settings'
+                    className='h-[20px] w-[20px]'
+                  />
+                </IconButton>
+              </Tooltip>
+            )}
             <div className='border-l border-[#FFFFFF4D] mx-2 h-6' />
             <IconButton
               size='large'

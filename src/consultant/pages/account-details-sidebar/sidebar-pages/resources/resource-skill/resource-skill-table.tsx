@@ -20,6 +20,8 @@ interface ResourceSkillTableProps {
   setSkillOrderBy: (field: keyof ResourceSkillList) => void;
   currentPage: number;
   setCurrentPage: (page: number) => void;
+  isResourceSkillEditEnable?: boolean;
+  isResourceSkillDeleteEnable?: boolean;
 }
 const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   appliedFilters,
@@ -31,9 +33,11 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   setSkillOrder,
   skillOrderBy,
   setSkillOrderBy,
+  isResourceSkillEditEnable,
+  isResourceSkillDeleteEnable
 }) => {
   const navigate = useNavigate();
-  const [rowsPerPage, setRowsPerPage] = useState<number>(25);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(100);
   const accountInActive =
     accountDetails?.data?.accountById?.status === 'inactive';
   const apiOrder = skillOrder.toUpperCase() as 'ASC' | 'DESC';
@@ -82,11 +86,13 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       label: 'Edit',
       onClick: handleEdit,
       disabled: accountInActive,
+      hide: !isResourceSkillEditEnable
     },
     {
       label: 'Delete',
       onClick: () => console.log('Delete'),
       disabled: accountInActive,
+      hide: !isResourceSkillDeleteEnable
     },
   ];
 
@@ -102,11 +108,12 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
         stickyHeader={false}
         stickyColumnsCount={1}
         selectable={false}
-        actionWidth={100}
+        actionWidth={80}
         actionDisplayMode='dropdown'
         actionMenuItems={actionMenuItems}
         loading={isLoading}
         error={error ? 'Failed to load resource' : undefined}
+        rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={rowsPerPage}
         currentPage={currentPage}
         totalItems={skillList?.count ?? 0}

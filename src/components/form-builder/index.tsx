@@ -1,10 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Autocomplete,
   Checkbox,
   MenuItem,
   Select,
   Skeleton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   TextField,
+  Tooltip,
 } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -15,7 +23,15 @@ import { CountryCode, parsePhoneNumberFromString } from 'libphonenumber-js';
 import React, { useEffect } from 'react';
 import PhoneInput, { CountryData } from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
-import { calendarIcon, closeIcon, searchBlackIcon } from '../../assets';
+import {
+  calendarIcon,
+  closeIcon,
+  keyContactRemoveIcon,
+  keyContactAddIcon,
+  searchBlackIcon,
+  verticalSeparatorIcon,
+  errorInfoIcon,
+} from '../../assets';
 
 import { useLocation } from 'react-router-dom';
 import { FieldTypes, Layout, OnChange } from '../../common-service';
@@ -26,6 +42,7 @@ import {
   GroupFields,
   SelectOption,
 } from '../../consultant/types';
+import ConfirmationPopup from '../../common-utils/confirmation-popup';
 
 interface FormBuilderProps {
   data: FormType[];
@@ -37,6 +54,8 @@ interface FormBuilderProps {
   onChange?: (params: OnChange) => void;
   keyStart?: string;
   keyEnd?: string;
+  newContactLength?: number;
+  admin?: boolean;
 }
 
 export const FormBuilder: React.FC<FormBuilderProps> = ({
@@ -49,6 +68,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   outData,
   keyStart,
   keyEnd,
+  admin = false,
 }) => {
   const location = useLocation();
   const { state } = location;
@@ -56,6 +76,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   const [constructFormData, setConstructFormData] = React.useState<
     Record<string, FieldTypes>
   >({});
+  const [confirmationState, setConfirmationState] = React.useState<{
+    isOpen: boolean;
+    message: string;
+    onConfirm: () => void;
+  }>({ isOpen: false, message: '', onConfirm: () => {} });
 
   const CommonSkeleton = (
     <Skeleton variant='rounded' width='100%' height={32} />
@@ -69,6 +94,88 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       );
       if (resourceOrgNameField) {
         resourceOrgNameField.disabled = true;
+      }
+    }
+  }, [constructFormData, formData]);
+
+  useEffect(() => {
+    const keyContactSection = formData?.find(
+      (section) => section.sectionName === 'Key Contacts List'
+    );
+
+    if (!keyContactSection) return;
+
+    const fieldsPerRow = 8;
+    const rowCount = Math.ceil(keyContactSection.fields.length / fieldsPerRow);
+
+    for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+      const baseIndex = rowIndex * fieldsPerRow;
+
+      const nameField = keyContactSection.fields[baseIndex];
+      const roleField = keyContactSection.fields[baseIndex + 1];
+      const emailField = keyContactSection.fields[baseIndex + 2];
+      const primaryField = keyContactSection.fields[baseIndex + 4];
+      const includeInCommField = keyContactSection.fields[baseIndex + 5];
+
+      if (
+        !nameField ||
+        !emailField ||
+        !roleField ||
+        !primaryField ||
+        !includeInCommField
+      )
+        continue;
+
+      const hasNameOrEmail =
+        (constructFormData[nameField.name]?.toString().trim() || '') !== '' ||
+        (constructFormData[emailField.name]?.toString().trim() || '') !== '';
+
+      const isPrimary = constructFormData[primaryField.name] === 'yes';
+
+      const shouldUpdateRole = roleField.required !== hasNameOrEmail;
+      const shouldUpdatePrimary = primaryField.required !== hasNameOrEmail;
+      const shouldUpdateEmail = emailField.required !== isPrimary;
+      const shouldUpdateIncludeInComm =
+        includeInCommField.disabled !== isPrimary;
+
+      if (
+        shouldUpdateRole ||
+        shouldUpdatePrimary ||
+        shouldUpdateEmail ||
+        shouldUpdateIncludeInComm
+      ) {
+        setFormData((prevFormData) =>
+          prevFormData?.map((section) => {
+            if (section.sectionName === 'Key Contacts List') {
+              return {
+                ...section,
+                fields: section.fields.map((field) => {
+                  if (field.name === roleField.name && shouldUpdateRole) {
+                    return { ...field, required: hasNameOrEmail };
+                  }
+                  if (field.name === primaryField.name && shouldUpdatePrimary) {
+                    return { ...field, required: hasNameOrEmail };
+                  }
+                  if (field.name === emailField.name && shouldUpdateEmail) {
+                    return { ...field, required: isPrimary };
+                  }
+                  if (
+                    field.name === includeInCommField.name &&
+                    shouldUpdateIncludeInComm
+                  ) {
+                    return {
+                      ...field,
+                      disabled: isPrimary,
+                      value: isPrimary ? 'yes' : field.value,
+                    };
+                  }
+                  return field;
+                }),
+              };
+            }
+            return section;
+          })
+        );
       }
     }
   }, [constructFormData, formData]);
@@ -91,6 +198,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               ...newField,
               error: oldField?.error ?? newField.error,
               value: oldField?.value ?? newField.value,
+              ...(newField.name.startsWith('include_in_communication_')
+                ? { disabled: oldField?.disabled ?? newField.disabled }
+                : {}),
             };
           }),
         };
@@ -114,13 +224,84 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, values, state]);
 
+  const handleRemoveKeyContactRow = (rowIndexToRemove: number) => {
+    const fieldsPerRow = 8;
+
+    setFormData((prevFormData) => {
+      if (!prevFormData) return prevFormData;
+
+      const keyContactSection = prevFormData.find(
+        (section) => section.sectionName === 'Key Contacts List'
+      );
+      if (!keyContactSection) return prevFormData;
+
+      const startIndex = rowIndexToRemove * fieldsPerRow;
+      const newFields = [...keyContactSection.fields];
+      newFields.splice(startIndex, fieldsPerRow);
+
+      const reindexedFields = newFields.map((field, idx) => {
+        const newRowIndex = Math.floor(idx / fieldsPerRow);
+        const baseName = field.name.replace(/_\d+$/, '');
+
+        return {
+          ...field,
+          name: `${baseName}_${newRowIndex}`,
+        };
+      });
+
+      return prevFormData.map((section) => {
+        if (section.sectionName === 'Key Contacts List') {
+          return {
+            ...section,
+            fields: reindexedFields,
+          };
+        }
+        return section;
+      });
+    });
+
+    setConstructFormData((prevData) => {
+      if (!prevData) return prevData;
+
+      const newData: Record<string, any> = {};
+
+      Object.entries(prevData).forEach(([key, value]) => {
+        const match = key.match(/_(\d+)$/);
+        if (match) {
+          const idx = Number(match[1]);
+          if (idx < rowIndexToRemove) {
+            newData[key] = value;
+          } else if (idx > rowIndexToRemove) {
+            const baseKey = key.replace(/_\d+$/, '');
+            newData[`${baseKey}_${idx - 1}`] = value;
+          }
+        } else {
+          newData[key] = value;
+        }
+      });
+
+      return newData;
+    });
+  };
+
   const getFields = (field: FormTypeFields) => {
-    const isError = field.error ? 'border-red-500' : 'border-gray-300';
+    const isError = field.error
+      ? 'border-red-500 bg-[#FEF2F2]'
+      : 'bg-[#FFFFFF]';
     const fontSize = '0.875rem';
     const fieldValue = (constructFormData[field.name] as string) || '';
     const fieldDisabled = field.disabled ? ' bg-gray-100' : '';
 
     const handleChange = (value: FieldTypes, countryCode?: FieldTypes) => {
+      if (
+        field.name.startsWith('include_in_communication_') &&
+        formData?.some((section) =>
+          section.fields.some((f) => f.name === field.name && f.disabled)
+        )
+      ) {
+        return; // Prevent changes if disabled
+      }
+
       const newData = {
         ...constructFormData,
         [field.name]: value,
@@ -148,6 +329,213 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           newData[field.defaultSelect.key] =
             field.defaultSelect.ifNotMatchValue;
         }
+      }
+
+      // 🔁 Role changed for a primary contact
+      if (field.name.startsWith('key_contact_role_')) {
+        const currentIndex = parseInt(field.name.split('_').pop() || '0', 10);
+        const isPrimaryField = `is_primary_contact_${currentIndex}`;
+        const newRole = value;
+        const isPrimary = constructFormData[isPrimaryField] === 'yes';
+
+        if (isPrimary && newRole) {
+          const conflictExists = Object.keys(constructFormData).some((key) => {
+            if (
+              key.startsWith('is_primary_contact_') &&
+              key !== isPrimaryField &&
+              constructFormData[key] === 'yes'
+            ) {
+              const otherIndex = parseInt(key.split('_').pop() || '0', 10);
+              const otherRoleKey = `key_contact_role_${otherIndex}`;
+              const otherRole = constructFormData[otherRoleKey];
+              return otherRole === newRole;
+            }
+            return false;
+          });
+
+          if (conflictExists) {
+            const roleLabel =
+              field.options?.find((opt) => opt.value === newRole)?.label ||
+              newRole;
+            setConfirmationState({
+              isOpen: true,
+              message: `There is already a primary contact assigned to the role '${roleLabel}'. If you continue, this contact will replace the existing primary. Do you want to proceed?`,
+              onConfirm: () => {
+                newData[isPrimaryField] = 'no';
+                const commFieldName = `include_in_communication_${currentIndex}`;
+                const emailFieldName = `key_contact_email_${currentIndex}`;
+                newData[commFieldName] = 'no';
+
+                setFormData((prevFormData) =>
+                  prevFormData?.map((section) => ({
+                    ...section,
+                    fields: section.fields.map((f) => {
+                      if (f.name === isPrimaryField)
+                        return { ...f, value: 'no' };
+                      if (f.name === commFieldName)
+                        return { ...f, disabled: false };
+                      if (f.name === emailFieldName)
+                        return { ...f, required: false, error: '' };
+                      return f;
+                    }),
+                  }))
+                );
+
+                setConstructFormData(newData);
+              },
+            });
+            return;
+          }
+        }
+      }
+
+      // Handle setting is_primary_contact = yes
+      if (field.name.startsWith('is_primary_contact_') && value === 'yes') {
+        const currentIndex = parseInt(field.name.split('_').pop() || '0', 10);
+        const currentRoleKey = `key_contact_role_${currentIndex}`;
+        const selectedRole = constructFormData[currentRoleKey];
+
+        const conflictExists = Object.keys(constructFormData).some((key) => {
+          if (key.startsWith('is_primary_contact_') && key !== field.name) {
+            const otherIndex = parseInt(key.split('_').pop() || '0', 10);
+            const otherRoleKey = `key_contact_role_${otherIndex}`;
+            const isPrimary = constructFormData[key] === 'yes';
+            const otherRole = constructFormData[otherRoleKey];
+            return selectedRole && otherRole === selectedRole && isPrimary;
+          }
+          return false;
+        });
+
+        if (conflictExists) {
+          setConfirmationState({
+            isOpen: true,
+            message:
+              'Primary Contact with the same role already exists. Would you like to proceed?',
+            onConfirm: () => {
+              Object.keys(newData).forEach((key) => {
+                if (
+                  key.startsWith('is_primary_contact_') &&
+                  key !== field.name
+                ) {
+                  const otherIndex = parseInt(key.split('_').pop() || '0', 10);
+                  const otherRoleKey = `key_contact_role_${otherIndex}`;
+                  const otherRole = constructFormData[otherRoleKey];
+
+                  if (otherRole === selectedRole && selectedRole !== '') {
+                    newData[key] = 'no';
+                    const otherCommKey = `include_in_communication_${otherIndex}`;
+                    const otherEmailKey = `key_contact_email_${otherIndex}`;
+                    newData[otherCommKey] = 'no';
+
+                    setFormData((prevFormData) =>
+                      prevFormData?.map((section) => ({
+                        ...section,
+                        fields: section.fields.map((f) => {
+                          if (f.name === otherCommKey)
+                            return { ...f, disabled: false };
+                          if (f.name === otherEmailKey)
+                            return { ...f, required: false, error: '' };
+                          return f;
+                        }),
+                      }))
+                    );
+                  }
+                }
+              });
+
+              const commFieldName = `include_in_communication_${currentIndex}`;
+              const emailFieldName = `key_contact_email_${currentIndex}`;
+              newData[commFieldName] = 'yes';
+
+              setFormData((prevFormData) =>
+                prevFormData?.map((section) => ({
+                  ...section,
+                  fields: section.fields.map((f) => {
+                    if (f.name === commFieldName)
+                      return { ...f, disabled: true };
+                    if (f.name === emailFieldName)
+                      return { ...f, required: true };
+                    return f;
+                  }),
+                }))
+              );
+
+              setConstructFormData(newData);
+            },
+          });
+          return;
+        }
+
+        // No conflict — proceed
+        const commFieldName = `include_in_communication_${currentIndex}`;
+        const emailFieldName = `key_contact_email_${currentIndex}`;
+
+        newData[commFieldName] = 'yes';
+
+        setFormData((prevFormData) =>
+          prevFormData?.map((section) => ({
+            ...section,
+            fields: section.fields.map((f) => {
+              if (f.name === commFieldName) return { ...f, disabled: true };
+              if (f.name === emailFieldName) return { ...f, required: true };
+              return f;
+            }),
+          }))
+        );
+      }
+
+      // Handle is_primary_contact = no
+      if (field.name.startsWith('is_primary_contact_') && value === 'no') {
+        const currentIndex = parseInt(field.name.split('_').pop() || '0', 10);
+        const commFieldName = `include_in_communication_${currentIndex}`;
+        const emailFieldName = `key_contact_email_${currentIndex}`;
+
+        setFormData((prevFormData) =>
+          prevFormData?.map((section) => ({
+            ...section,
+            fields: section.fields.map((f) => {
+              if (f.name === commFieldName) return { ...f, disabled: false };
+              if (f.name === emailFieldName)
+                return { ...f, required: false, error: '' };
+              return f;
+            }),
+          }))
+        );
+      }
+
+      // Set required for role/primary if name or email is filled
+      if (
+        field.name.startsWith('key_contact_name_') ||
+        field.name.startsWith('key_contact_email_')
+      ) {
+        const currentIndex = parseInt(field.name.split('_').pop() || '0', 10);
+        const hasName =
+          (newData[`key_contact_name_${currentIndex}`]?.toString().trim() ||
+            '') !== '';
+        const hasEmail =
+          (newData[`key_contact_email_${currentIndex}`]?.toString().trim() ||
+            '') !== '';
+        const requiredFlag = hasName || hasEmail;
+
+        const roleFieldName = `key_contact_role_${currentIndex}`;
+        const primaryFieldName = `is_primary_contact_${currentIndex}`;
+
+        setFormData((prevFormData) =>
+          prevFormData?.map((section) => {
+            if (section.sectionName === 'Key Contacts List') {
+              return {
+                ...section,
+                fields: section.fields.map((f) => {
+                  if (f.name === roleFieldName || f.name === primaryFieldName) {
+                    return { ...f, required: requiredFlag };
+                  }
+                  return f;
+                }),
+              };
+            }
+            return section;
+          })
+        );
       }
 
       if (field.onChange && onChange) {
@@ -216,7 +604,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             placeholder={field.placeholder}
             autoComplete='off'
             className={
-              'placeholder-custom-color w-full sm:text-sm px-2 h-[32px] border border-[#CBD6E2] rounded-xs focus:border focus:border-black focus:outline-none focus:ring-0' +
+              'placeholder-custom-color placeholder-[#7D98B6] outline-none focus:border-2 focus:border-blue-400 w-full sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs ' +
               isError +
               fieldDisabled
             }
@@ -225,13 +613,38 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             value={fieldValue || field.defaultValue}
           />
         );
-      case 'select':
+      case 'website':
+        return (
+          <input
+            type={'text'}
+            name={field.name}
+            placeholder={field.placeholder}
+            autoComplete='off'
+            className={
+              'focus:outline-none placeholder-custom-color placeholder-[#7D98B6] w-full sm:text-sm px-1 h-[32px]' +
+              // isError +
+              fieldDisabled
+            }
+            disabled={field.disabled}
+            onChange={(e) => handleChange(e.target.value)}
+            value={fieldValue || field.defaultValue}
+          />
+        );
+      case 'select': {
+        const fieldValue =
+          (constructFormData[field.name] || field.defaultValue) ?? '';
         return (
           <div className='w-full'>
             <Select
               name={field.name}
-              value={fieldValue}
+              className={
+                'custom-select-no-arrow w-full h-full sm:text-sm px-1.5 py-[7px]  ' +
+                (fieldValue === '' ? 'text-[#7D98B6] ' : '') +
+                isError +
+                fieldDisabled
+              }
               onChange={(e) => handleChange(e.target.value)}
+              value={fieldValue}
               disabled={field.disabled}
               displayEmpty
               fullWidth
@@ -256,44 +669,74 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               sx={{
                 height: '32px',
                 fontSize: '13px',
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  border: '2px solid #60A5FA',
+                },
+                '& .MuiOutlinedInput-root': {
+                  '&.Mui-focused': {
+                    boxShadow: 'none',
+                  },
+                },
                 '.MuiSelect-select': {
-                  padding: '6px 12px',
+                  padding: '6px 6px',
                   color: fieldValue === '' ? '#7D98B6' : 'black',
                 },
                 '&.Mui-disabled': {
                   backgroundColor: '#f3f4f6',
                 },
                 '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: field.error ? '#ef4444' : '#CBD6E2',
+                  border: field.error
+                    ? '1px solid #ef4444'
+                    : '1px solid #CBD6E2',
                   borderRadius: '2px',
                 },
                 '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: field.error ? '#ef4444' : 'black',
+                  border: field.error
+                    ? '1px solid #ef4444'
+                    : '1px solid #CBD6E2',
                 },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: field.error ? '#ef4444' : 'black',
-                },
+                // '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                //   borderColor: field.error ? '#ef4444' : 'black',
+                // },
                 '& svg': {
                   color: '#7D98B6',
                 },
               }}
             >
-              <MenuItem value='' sx={{ color: '#7D98B6' }}>
+              <MenuItem
+                value=''
+                sx={{
+                  color: '#425A76',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                }}
+              >
                 {field.placeholder}
               </MenuItem>
               {field?.options?.map((option, i) => (
-                <MenuItem key={i} value={option.value} title={option.label}>
+                <MenuItem
+                  sx={{
+                    color: '#425A76',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                  }}
+                  key={i}
+                  value={option.value}
+                  title={option.label}
+                >
                   {option.label}
                 </MenuItem>
               ))}
             </Select>
           </div>
         );
+      }
       case 'textarea':
         return (
           <textarea
             className={
-              'placeholder-custom-color w-full sm:text-sm p-2 border border-[#CBD6E2] rounded-xs h-[95px] resize-none focus:border focus:border-black focus:outline-none focus:ring-0' +
+              // caret-blue-400 -  change cursor border color when focus
+              'outline-none placeholder-custom-color w-full sm:text-sm py-2 px-3 border border-[#CBD6E2] rounded-xs h-[95px] resize-none focus:border-2 focus:border-blue-400 ' +
               isError +
               fieldDisabled
             }
@@ -371,9 +814,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             ))}
           </div>
         );
-      case 'radio':
+      case 'radio': {
+        const fieldValue =
+          (constructFormData[field.name] || field.defaultValue) ?? '';
         return (
-          <div className='flex gap-4 mt-1.5'>
+          <div className='flex items-center gap-4 !h-[32px]'>
             {field?.options?.map((option, i) => (
               <label
                 key={i}
@@ -383,7 +828,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   type='radio'
                   name={field.name}
                   value={option.value}
-                  checked={constructFormData[field.name] === option.value}
+                  checked={fieldValue === option.value}
                   disabled={field.disabled}
                   onChange={(e) => {
                     handleChange(e.target.value);
@@ -397,6 +842,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             ))}
           </div>
         );
+      }
       case 'date': {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const startDateValue: string | undefined | any = keyStart
@@ -405,7 +851,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         const today: Dayjs = dayjs();
         const isEndDateField = field.name === keyEnd;
         const parsedStartDate = startDateValue
-          ? dayjs(startDateValue, 'MM/DD/YYYY')
+          ? dayjs(startDateValue, 'YYYY-MM-DD')
           : undefined;
 
         // Get the selected fiscal year from form data
@@ -417,8 +863,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         const customMinDate: Dayjs | undefined = (() => {
           if (isFinancialDateField && selectedFiscalYear) {
             const fiscalYearStart = dayjs(
-              `01/01/${selectedFiscalYear}`,
-              'MM/DD/YYYY'
+              `${selectedFiscalYear}-01-01`,
+              'YYYY-MM-DD'
             );
 
             if (isEndDateField && parsedStartDate) {
@@ -437,8 +883,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         const customMaxDate: Dayjs | undefined = (() => {
           if (isFinancialDateField && selectedFiscalYear) {
             const fiscalYearEnd = dayjs(
-              `12/31/${selectedFiscalYear}`,
-              'MM/DD/YYYY'
+              `${selectedFiscalYear}-12-31`,
+              'YYYY-MM-DD'
             );
 
             if (field?.maxDate) {
@@ -460,22 +906,26 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
-              className={fieldDisabled}
+              className={
+                'placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium border border-[#CBD6E2]' +
+                isError +
+                fieldDisabled
+              }
               minDate={customMinDate}
               maxDate={customMaxDate}
-              value={dayjs(fieldValue, 'MM/DD/YYYY')}
+              value={dayjs(fieldValue, 'YYYY-MM-DD')}
               disabled={field.disabled}
-              format='MM/DD/YYYY'
+              format='YYYY-MM-DD'
               // onOpen={() => {
               //   if (!fieldValue && isFinancialDateField && selectedFiscalYear) {
               //     // Show calendar from Jan 1 of fiscal year
               //     const date = dayjs().month(dayjs().month()).year(Number(selectedFiscalYear));
-              //     handleChange(date.format('MM/DD/YYYY'));
+              //     handleChange(date.format('YYYY-MM-DD'));
               //   }
               // }}
               onChange={(newValue) => {
                 handleChange(
-                  newValue ? dayjs(newValue).format('MM/DD/YYYY') : null
+                  newValue ? dayjs(newValue).format('YYYY-MM-DD') : null
                 );
               }}
               shouldDisableDate={
@@ -518,16 +968,23 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                         fontWeight: 400,
                         fontSize: '13px',
                         lineHeight: '21px',
+                        pl: '11px',
                         '& ::placeholder': {
                           color: '#7D98B6 !important',
                         },
                         color: 'black !important',
                         WebkitTextFillColor: 'black !important',
 
-                        '&[value="MM/DD/YYYY"]': {
+                        '&[value="YYYY-MM-DD"]': {
                           color: '#7D98B6 !important',
                           WebkitTextFillColor: '#7D98B6 !important',
                         },
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        border: '1px solid #CBD6E2', // match default
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        border: '2px solid #60A5FA',
                       },
                       '&.Mui-disabled': {
                         '& input': {
@@ -542,7 +999,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   // onBlur: (event) => {
                   //   //For cache typed data
                   //   const value = event.target.value;
-                  //   if (value !== 'MM/DD/YYYY') {
+                  //   if (value !== 'YYYY-MM-DD') {
                   //     //For Avoid default data
                   //     handleChange(value);
                   //   }
@@ -557,7 +1014,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         return (
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
-              className={fieldDisabled}
+              className={
+                'placeholder:text-[13px] placeholder:text-[#425A76] placeholder:font-medium border border-[#CBD6E2]' +
+                isError +
+                fieldDisabled
+              }
               value={dayjs(fieldValue, 'DD/MM')}
               disabled={field.disabled}
               format='MM/DD'
@@ -585,6 +1046,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                         fontWeight: 400,
                         fontSize: '13px',
                         lineHeight: '21px',
+                        pl: '12px',
                         '& ::placeholder': {
                           color: '#7D98B6 !important',
                         },
@@ -600,6 +1062,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                           color: 'black',
                           WebkitTextFillColor: 'black',
                         },
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        border: '1px solid #CBD6E2', // match default
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        border: '2px solid #60A5FA',
                       },
                       '& .MuiIconButton-edgeEnd': {
                         display: 'none',
@@ -622,11 +1090,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             onChange={(phone, country: CountryData) =>
               handleChange(phone, country.countryCode)
             }
-            inputClass={`placeholder-custom-color !w-full !text-[13px] !p-2 !pl-12 !border !h-[32px] !rounded-xs ${
-              field.error ? '!border-red-500' : '!border-gray-300'
-            }${field.disabled ? ' !bg-gray-100' : ''}`}
+            inputClass={`!outline-none placeholder:text-[13px] placeholder:color[#425A76] placeholder:font-medium !w-full !text-[13px] !p-2 !pl-12 !h-[32px] !rounded-xs ${field.error ? '!border-red-500' : ''}${field.disabled ? ' !bg-gray-100' : ''}`}
             buttonClass={`!bg-transparent !border-r ${field.error ? '!border-red-500' : '!border-gray-300'} !rounded-tl-xs !rounded-bl-xs !hover:bg-transparent !shadow-none !px-0 !m-0`}
-            containerClass='!w-full'
+            containerClass='!w-full focus-within:outline-none focus-within:!border-2 focus-within:!border-blue-400'
             inputProps={{
               name: field.name,
               disabled: field.disabled,
@@ -634,6 +1100,21 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }}
           />
         );
+      case 'button':
+        return (
+          <button
+            className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] rounded-[2px] color-[#2D3E4F] px-2 text-[12px] font-semibold'
+            type='button'
+            onClick={field.onClick}
+          >
+            <span>
+              <img src={keyContactAddIcon} alt='add-btn' className='w-5 h-5' />
+            </span>
+            {field.name}
+          </button>
+        );
+      case 'emptyFeild':
+        return <></>;
       default:
         return null;
     }
@@ -666,7 +1147,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
   const isValidDate = (
     dateString: string,
-    format: string = 'DD/MM/YYYY'
+    format: string = 'YYYY-MM-DD'
   ): boolean => {
     return dayjs(dateString, format, true).isValid();
   };
@@ -680,19 +1161,17 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     e.preventDefault();
     let hasError = false;
 
-    // Get group fields only from visible sections
+    //get group fields from formData
     const groupFields: GroupFields = new Map();
     formData?.forEach((section) => {
-      if (!section.hide) {
-        section.fields.forEach((field) => {
-          if (field.group && !field.hide) {
-            if (!groupFields.has(field.group)) {
-              groupFields.set(field.group, []);
-            }
-            groupFields.get(field.group)?.push(field.name);
+      section.fields.forEach((field) => {
+        if (field.group) {
+          if (!groupFields.has(field.group)) {
+            groupFields.set(field.group, []);
           }
-        });
-      }
+          groupFields.get(field.group)?.push(field.name);
+        }
+      });
     });
 
     const dataValidation = formData?.map((section) => {
@@ -763,16 +1242,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               if (selectedFiscalYear) {
                 // Fiscal year bounds
                 const fiscalYearStart = dayjs(
-                  `01/01/${selectedFiscalYear}`,
-                  'MM/DD/YYYY'
+                  `${selectedFiscalYear}-01-01`,
+                  'YYYY-MM-DD'
                 );
                 const fiscalYearEnd = dayjs(
-                  `12/31/${selectedFiscalYear}`,
-                  'MM/DD/YYYY'
+                  `${selectedFiscalYear}-12-31`,
+                  'YYYY-MM-DD'
                 );
 
                 if (dateValue) {
-                  const currentDate = dayjs(dateValue, 'MM/DD/YYYY');
+                  const currentDate = dayjs(dateValue, 'YYYY-MM-DD');
 
                   // Check against fiscal year bounds
                   if (
@@ -794,7 +1273,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     hasError = true;
                     return {
                       ...field,
-                      error: `${field.name === 'financial_start_date' ? 'Start' : 'End'} date cannot be after ${dayjs(field.maxDate).format('MM/DD/YYYY')}`,
+                      error: `${field.name === 'financial_start_date' ? 'Start' : 'End'} date cannot be after ${dayjs(field.maxDate).format('YYYY-MM-DD')}`,
                     };
                   }
                 }
@@ -807,8 +1286,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 ] as string;
 
                 if (startDateValue) {
-                  const startDate = dayjs(startDateValue, 'MM/DD/YYYY');
-                  const endDate = dayjs(dateValue, 'MM/DD/YYYY');
+                  const startDate = dayjs(startDateValue, 'YYYY-MM-DD');
+                  const endDate = dayjs(dateValue, 'YYYY-MM-DD');
 
                   if (endDate.isSame(startDate, 'day')) {
                     hasError = true;
@@ -904,10 +1383,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 hasError = true;
                 return {
                   ...field,
-                  error: `${field.name === 'resource_startdate' ? 'Effective Date' : field.name === 'skill_start_date' ? 'Start Date' : 'This date'} cannot be in the future`,
+                  error: `${field.name === 'resource_startdate' ? 'Effective Date' : field.name === 'skill_start_date' || field.name === 'project_startdate' ? 'Start Date' : 'This date'} cannot be in the future`,
                 };
               }
-              if (dateValue && !isValidDate(dateValue, 'MM/DD/YYYY')) {
+              if (dateValue && !isValidDate(dateValue, 'YYYY-MM-DD')) {
                 hasError = true;
                 return {
                   ...field,
@@ -928,13 +1407,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               hasError = true;
               return {
                 ...field,
-                error: `${field.name === 'resource_startdate' ? 'Effective Date' : 'This date'} cannot be in the future`,
+                error: `${field.name === 'resource_startdate' ? 'Effective Date' : field.name === 'project_startdate' ? 'Start Date' : 'This date'} cannot be in the future`,
               };
             }
             const currentDate = dayjs();
 
             if (
-              field.name === 'resource_enddate' &&
+              (field.name === 'resource_enddate' ||
+                field.name === 'project_enddate') &&
               dayjs(dateValue).isAfter(currentDate, 'day')
             ) {
               hasError = true;
@@ -945,21 +1425,74 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
 
             // Check if date is before the minimum allowed date (1-1-1950)
-            const minAllowedDate = dayjs('1-1-1950', 'D-M-YYYY');
+            const minAllowedDate =
+              field.name === 'project_startdate'
+                ? dayjs('2000-01-01', 'YYYY-MM-DD')
+                : dayjs('1-1-1950', 'D-M-YYYY');
             if (dayjs(dateValue).isBefore(minAllowedDate, 'day')) {
               hasError = true;
               return {
                 ...field,
                 error:
                   field.name === 'resource_startdate'
-                    ? 'Effective Date cannot be before 01-01-1950'
+                    ? 'Effective Date cannot be before 1950-01-01'
                     : field.name === 'skill_start_date'
-                      ? 'Start Date cannot be before 01-01-1950'
-                      : 'Date cannot be before 01-01-1950',
+                      ? 'Start Date cannot be before 1950-01-01'
+                      : field.name === 'project_startdate'
+                        ? 'Start Date cannot be before 2000-01-01'
+                        : field.name === 'project_enddate'
+                          ? 'End Date cannot be before 2000-01-01'
+                          : 'Date cannot be before 1950-01-01',
               };
             }
-
             // Check if both start and end dates are either provided or not provided
+            // Handle project dates validation
+            if (
+              field.name === 'project_startdate' ||
+              field.name === 'project_enddate'
+            ) {
+              const startDate = constructFormData[
+                'project_startdate'
+              ] as string;
+              const endDate = constructFormData['project_enddate'] as string;
+
+              if ((startDate && !endDate) || (!startDate && endDate)) {
+                hasError = true;
+                return {
+                  ...field,
+                  error: 'Both Start Date and End Date must be be provided',
+                };
+              }
+
+              if (startDate && endDate) {
+                const start = dayjs(startDate);
+                const end = dayjs(endDate);
+
+                if (start.isSame(end, 'day')) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error:
+                      field.name === 'project_startdate'
+                        ? 'Start Date cannot be the same as End Date'
+                        : 'End Date cannot be the same as Start Date',
+                  };
+                }
+
+                if (start.isAfter(end, 'day')) {
+                  hasError = true;
+                  return {
+                    ...field,
+                    error:
+                      field.name === 'project_startdate'
+                        ? 'Start Date cannot be after End Date'
+                        : 'End Date cannot be before Start Date',
+                  };
+                }
+              }
+            }
+
+            // Handle resource dates validation
             if (
               field.name === 'resource_startdate' ||
               field.name === 'resource_enddate'
@@ -1116,7 +1649,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         }),
       };
     });
-    // Group field validation - only for visible fields
+    //group field validation
     groupFields.forEach((fieldNames, groupName) => {
       // Filter out any fields that might be in hidden sections
       const visibleFields = fieldNames.filter((fieldName) => {
@@ -1193,51 +1726,330 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     );
   }
 
-  return (
-    <form onSubmit={submitData} ref={formRef}>
-      {formData?.map((section, i) => {
-        const isHalf = section.fillType === 'half';
-        if (section.hide) return null;
-        return (
-          <div key={i}>
-            {section.sectionName && (
-              <h4
-                className={`font-semibold text-base text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle mb-6 py-2 bg-[#DCE8FF] text-[14px] ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'}`}
-              >
-                {section.sectionName}
-              </h4>
-            )}
-            <div
-              className={`grid md:grid-cols-${isHalf ? '2' : '1'} gap-4 ${layout === Layout.TYPE_1 ? 'px-10' : 'px-6'} mb-6`}
+  const chunkFields = (arr: FormTypeFields[], chunkSize: number = 0) => {
+    const chunks = [];
+    for (let i = 0; i < arr.length; i += chunkSize) {
+      chunks.push(arr.slice(i, i + chunkSize));
+    }
+    return chunks;
+  };
+
+  const loadKeyContactSection = (section: FormType) => {
+    const visibleFields = section.fields.filter(
+      (field) => !field.name.startsWith('key_contact_rid_')
+    );
+    const headerFields = visibleFields.slice(0, 7);
+    const fieldRows = chunkFields(visibleFields, 7);
+    return (
+      <div className='px-10'>
+        <TableContainer sx={{ overflowX: 'auto' }}>
+          <Table className='border-l border-[#CBD6E2]'>
+            <TableHead
+              sx={{
+                '& .MuiTableCell-root': {
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  color: '#2A2A2A',
+                  padding: '0px 8px',
+                  height: '29px',
+                  boxSizing: 'border-box',
+                },
+              }}
             >
-              {section.fields.map((field, j) => {
-                if (field.hide) return null;
-                return (
-                  <div key={j} className='grid md:grid-cols-12 gap-4'>
-                    <label
-                      className={`text-sm text-[#65686F] font-normal leading-[21px] tracking-[0] md:text-right mt-1.5 ${isHalf ? 'col-span-4' : 'col-span-2'}`}
-                      htmlFor={field.name}
+              <TableRow sx={{ height: 29 }}>
+                {headerFields.map((field, j) => {
+                  return (
+                    <TableCell
+                      sx={{
+                        width: `${field.width}`,
+                        minWidth: `${field.width}`,
+                        maxWidth: `${field.width}`,
+                      }}
+                      key={`${field.name}_${j}`}
                     >
                       {field.label}
-                      {field.required && (
-                        <span className='text-red-500'> *</span>
-                      )}
-                    </label>
-                    <div className={isHalf ? 'col-span-8' : 'col-span-10'}>
+                    </TableCell>
+                  );
+                })}
+              </TableRow>
+            </TableHead>
+            <TableBody
+              sx={{
+                '& .MuiTableCell-root': {
+                  padding: '0px',
+                  '& input': {
+                    border: 'none',
+                    outline: 'none',
+                    boxShadow: 'none',
+                    background: 'transparent',
+                  },
+                  '& radio': {
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  },
+                },
+              }}
+            >
+              {fieldRows.map((row, rowIndex) => (
+                <TableRow key={rowIndex}>
+                  {row.map((field, colIndex) => {
+                    const isLastColumn = colIndex === row.length - 1;
+                    const isRequired = field.required;
+                    return (
+                      <TableCell
+                        sx={{
+                          position: 'relative',
+                          height: '32px !important',
+                          width: `${field.width}`,
+                          minWidth: `${field.width}`,
+                          maxWidth: `${field.width}`,
+                          paddingLeft:
+                            `${field.type}` === 'iconButton' ||
+                            `${field.type}` === 'radio'
+                              ? '10px !important'
+                              : 'none',
+                          verticalAlign:
+                            `${field.type}` === 'iconButton'
+                              ? 'middle !important'
+                              : 'top',
+                          '& input': {
+                            border: field.error
+                              ? '1px solid #fb2c36 !important'
+                              : 'none',
+                            '&:focus': {
+                              border: field.error
+                                ? '1px solid #fb2c36'
+                                : '1px solid #60A5FA',
+                            },
+                          },
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            border: 'none !important',
+                          },
+                          '& .MuiOutlinedInput-root': {
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                              border: '1px solid #60A5FA !important',
+                            },
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            border: 'none',
+                          },
+                        }}
+                        key={colIndex}
+                        style={{
+                          verticalAlign: 'top',
+                          height: '32px !important',
+                          backgroundColor: field.error
+                            ? '#FEF2F2'
+                            : 'transparent',
+                        }}
+                      >
+                        {field.type === 'iconButton' && isLastColumn ? (
+                          <Tooltip
+                            title={'Remove contact'}
+                            arrow
+                            placement='top'
+                          >
+                            <button
+                              type='button'
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                field.onClick?.(e);
+                                handleRemoveKeyContactRow(rowIndex);
+                              }}
+                              style={{
+                                cursor: 'pointer',
+                                background: 'transparent',
+                                border: 'none',
+                                padding: 0,
+                                marginTop: '6px',
+                              }}
+                              aria-label='Remove contact'
+                            >
+                              <img
+                                src={field.iconUrl || keyContactRemoveIcon}
+                                alt='Remove'
+                                style={{ width: 20, height: 20 }}
+                              />
+                            </button>
+                          </Tooltip>
+                        ) : field.type === 'text' ? (
+                          <div
+                            className={`!h-[32px] !max-h-[32px] box-border relative ${field.error ? 'bg-[#FEF2F2]' : ''}`}
+                          >
+                            {getFields(field)}
+                            {field.error && (
+                              <Tooltip
+                                title={field.error}
+                                arrow
+                                placement='top'
+                                slotProps={{
+                                  tooltip: {
+                                    sx: {
+                                      backgroundColor: '#FEF2F2',
+                                      mr: 1,
+                                    },
+                                  },
+                                }}
+                              >
+                                <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
+                                  <img
+                                    src={errorInfoIcon}
+                                    alt='error'
+                                    className='w-5 h-3.5'
+                                  />
+                                </span>
+                              </Tooltip>
+                            )}
+                            {isRequired && !field.error && (
+                              <span className='absolute top-0 right-1 text-red-500 text-[16px]'>
+                                *
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <>
+                            {getFields(field)}
+                            {isRequired && (
+                              <span className='absolute top-0 right-1 text-red-500 text-[16px]'>
+                                *
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </div>
+    );
+  };
+
+  const loadDefaultSections = (
+    section: FormType,
+    isHalf: boolean,
+    index: number
+  ) => {
+    return (
+      <div
+        className={`grid md:grid-cols-3 gap-x-4 gap-y-[2px] ${layout === Layout.TYPE_1 ? 'px-10' : 'px-6'} ${!formData?.[index + 1]?.sectionName ? 'mb-1' : 'mb-4'} `}
+      >
+        {section.fields.map((field, j) => {
+          if (field.hide) return null;
+          return (
+            <div
+              key={j}
+              className={`col-span-1 ${!isHalf ? 'md:col-span-3' : ''} flex flex-col`}
+            >
+              <label
+                className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left mt-1`}
+                htmlFor={field.name}
+              >
+                {field.label}
+                {field.required && <span className='text-red-500'> *</span>}
+              </label>
+              <div>
+                {field.type === 'website' ? (
+                  <div
+                    className={`border border-[#CBD6E2] rounded-[2px] overflow-hidden focus-within:border-2 focus-within:border-blue-400 ${field.error ? 'border-red-500 bg-[#FEF2F2]' : ''}`}
+                  >
+                    <div className='h-[32px]  box-border flex items-center gap-[4px]'>
+                      <span className='pl-[10px] text-[13px] text-[#425A76]'>
+                        https://
+                      </span>
+                      <img src={verticalSeparatorIcon} alt-='separtor' />
                       {getFields(field)}
-                      {field.error && (
-                        <span className='text-red-500 text-sm col-span-full'>
-                          {field.error}
-                        </span>
-                      )}
                     </div>
                   </div>
-                );
-              })}
+                ) : (
+                  getFields(field)
+                )}
+
+                {field.error && (
+                  <span className='text-[12px] text-red-400 col-span-full'>
+                    {field.error}
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-        );
-      })}
-    </form>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const loadSectionsWithoutTitle = (section: FormType) => {
+    return (
+      <div
+        className={`grid md:grid-cols-3 gap-x-4 gap-y-[2px] ${layout === Layout.TYPE_1 ? 'px-10' : 'px-6'} mb-4`}
+      >
+        {section.fields.map((field, j) => {
+          if (field.hide) return null;
+          return (
+            <div key={j} className={`col-span-3 flex flex-col`}>
+              <label
+                className={`text-[13px] text-[#2D3E4F] font-semibold leading-[21px] tracking-[0] md:text-left`}
+                htmlFor={field.name}
+              >
+                {field.label}
+                {field.required && <span className='text-red-500'> *</span>}
+              </label>
+              <div className={`${!field.label ? 'mt-1.5' : ''}`}>
+                {getFields(field)}
+                {field.error && (
+                  <span className='text-[12px] text-red-400 col-span-full'>
+                    {field.error}
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  return (
+    <>
+      <form onSubmit={submitData} ref={formRef}>
+        {formData?.map((section, i) => {
+          const isHalf = section.fillType === 'half';
+          if (section.hide) return null;
+          return (
+            <div key={i}>
+              {section.sectionName && (
+                <h4
+                  className={`${i === 0 ? 'border-b' : 'border'} h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 ${admin ? 'bg-[#FCFCFC]' : 'bg-[#F5F9FF]'}  ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'}`}
+                >
+                  {section.sectionName}
+                </h4>
+              )}
+              <>
+                {!section.sectionName
+                  ? loadSectionsWithoutTitle(section)
+                  : section.sectionName === 'Key Contacts List'
+                    ? loadKeyContactSection(section)
+                    : loadDefaultSections(section, isHalf, i)}
+              </>
+            </div>
+          );
+        })}
+      </form>
+      <ConfirmationPopup
+        isOpen={confirmationState.isOpen}
+        message={confirmationState.message}
+        onConfirm={() => {
+          confirmationState.onConfirm();
+          setConfirmationState((prev) => ({ ...prev, isOpen: false }));
+        }}
+        onCancel={() =>
+          setConfirmationState((prev) => ({ ...prev, isOpen: false }))
+        }
+      />
+    </>
   );
 };

@@ -14,6 +14,7 @@ import {
   dateOptions,
   EnumFilterOption,
   enumOptions,
+  FieldConfig,
   FilterComponentProps,
   FilterState,
   NumberFilterOption,
@@ -33,15 +34,19 @@ import {
   TextFilterControl,
   TextFilterControlForCostAndSKill,
 } from './helper';
-import { resetFilter } from './utils';
+import {
+  clearFilters,
+  getStoredFilters,
+  resetFilter,
+  storeFilters,
+} from './utils';
 import {
   MENU_PROPS,
   SELECT_STYLES,
 } from '../../../../../components/filter-component/helpers';
+import { useLocation } from 'react-router-dom';
+// const systemFilters = ['Touched Records', 'Untouched Records', 'Record Action'];
 
-const systemFilters = ['Touched Records', 'Untouched Records', 'Record Action'];
-
-// filter to use in resource, cost and skill list pages
 const Filter: React.FC<FilterComponentProps> = ({
   value,
   isOpen,
@@ -49,18 +54,17 @@ const Filter: React.FC<FilterComponentProps> = ({
   filterId,
   filterMenu,
   setAppliedFilters,
-  handleFilter,
-  savedFilterStates = {},
-  onFilterStatesChange,
-  savedSelectedFilters = [],
-  onSelectedFiltersChange,
+  handleCloseFilter,
   setCurrentPage,
+  setCurrentSkillType,
+  setCurrentCountry,
   mode,
 }) => {
-  const [selectedFilters, setSelectedFilters] =
-    useState<string[]>(savedSelectedFilters);
-  const [filterStates, setFilterStates] =
-    useState<Record<string, FilterState>>(savedFilterStates);
+  const location = useLocation();
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [filterStates, setFilterStates] = useState<Record<string, FilterState>>(
+    {}
+  );
 
   //new
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -78,6 +82,90 @@ const Filter: React.FC<FilterComponentProps> = ({
     handleResetFilter();
   }, [value]);
 
+  useEffect(() => {
+    const saved = getStoredFilters(value || 'resource');
+    if (filterMenu.length > 0 && !saved) {
+      // Automatically select the first field if no saved filters exist
+      const firstField = filterMenu[0];
+      setSelectedFilters([firstField.value]);
+      setFilterStates({
+        [firstField.value]: getInitialStateForField(firstField),
+      });
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (setCurrentSkillType) {
+      if (filterStates?.skill_type_rid?.enum?.value) {
+        const skillTypeValue = Array.isArray(
+          filterStates?.skill_type_rid?.enum?.value
+        )
+          ? filterStates?.skill_type_rid?.enum?.value
+          : [filterStates?.skill_type_rid?.enum?.value];
+
+        const skillSubTypeValue = Array.isArray(
+          filterStates?.skill_sub_type?.enum?.value
+        )
+          ? filterStates?.skill_sub_type?.enum?.value
+          : [filterStates?.skill_sub_type?.enum?.value];
+
+        setCurrentSkillType({
+          skill_type_rid: skillTypeValue,
+          skill_subtype_rid: skillSubTypeValue,
+        });
+      }
+    }
+
+    if (setCurrentCountry) {
+      const country = Array.isArray(filterStates?.resource_country?.enum?.value)
+        ? filterStates?.resource_country?.enum?.value
+        : [filterStates?.resource_country?.enum?.value];
+
+      setCurrentCountry(country as string[]);
+    }
+  }, [
+    filterStates?.skill_type_rid?.enum?.value,
+    filterStates?.resource_country?.enum?.value,
+    filterStates?.skill_sub_type?.enum?.value,
+  ]);
+
+  const handleModalClose = () => {
+    const saved = getStoredFilters(value || 'resource');
+    if (saved) {
+      const selected = Object.keys(saved);
+      setSelectedFilters(selected);
+      setFilterStates(saved as Record<string, FilterState>);
+    } else {
+      setSelectedFilters([]);
+      setFilterStates({});
+    }
+    handleCloseFilter();
+  };
+
+  useEffect(() => {
+    const saved = getStoredFilters(value || 'resource');
+    if (saved) {
+      const selected = Object.keys(saved);
+      setSelectedFilters(selected);
+      setFilterStates(saved as Record<string, FilterState>);
+      setAppliedFilters(
+        formatFilterForApi(saved as Record<string, FilterState>)
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    const currentPathname = location.pathname;
+
+    const unListen = () => {
+      if (window.location.pathname !== currentPathname) {
+        localStorage.removeItem(`allProjects`);
+      }
+    };
+
+    return unListen;
+  }, [location.pathname]);
+
   const handleFilterSelect = (field: string) => {
     const fieldConfig = filterMenu.find((f) => f.value === field);
     if (fieldConfig) {
@@ -90,55 +178,23 @@ const Filter: React.FC<FilterComponentProps> = ({
     handleClose();
   };
 
-  // Update parent component when local states change
-  useEffect(() => {
-    if (onFilterStatesChange) {
-      onFilterStatesChange(filterStates);
-    }
-  }, [filterStates, onFilterStatesChange]);
-
-  useEffect(() => {
-    if (onSelectedFiltersChange) {
-      onSelectedFiltersChange(selectedFilters);
-    }
-  }, [selectedFilters, onSelectedFiltersChange]);
-
   const handleApplyFilters = () => {
     const formattedFilters = formatFilterForApi(filterStates);
     setAppliedFilters(formattedFilters);
     setCurrentPage(0);
-    // handleFilter();
+    storeFilters(filterStates, value || 'resource');
   };
 
   const handleResetFilter = () => {
     if (!Object.keys(filterStates).length) return null;
-
+    clearFilters(value || 'resource');
     resetFilter({
       setAppliedFilters,
       setFilterStates,
       setSelectedFilters,
-      onFilterStatesChange,
-      onSelectedFiltersChange,
     });
+    handleCloseFilter();
   };
-
-  // const handleClickFilterMenu = (fieldName: string) => {
-  //   setSelectedFilters((prev) =>
-  //     prev.includes(fieldName)
-  //       ? prev.filter((item) => item !== fieldName)
-  //       : [...prev, fieldName]
-  //   );
-
-  //   if (!filterStates[fieldName]) {
-  //     const fieldConfig = filterMenu.find((f) => f.value === fieldName);
-  //     if (!fieldConfig) return;
-
-  //     setFilterStates((prev) => ({
-  //       ...prev,
-  //       [fieldName]: getInitialStateForField(fieldConfig),
-  //     }));
-  //   }
-  // };
 
   const handleFilterOptionChange = (
     fieldName: string,
@@ -341,6 +397,27 @@ const Filter: React.FC<FilterComponentProps> = ({
     });
   };
 
+  const disableDependantFilterFields = (
+    filterFieldName: string,
+    field: FieldConfig,
+    fieldState: FilterState
+  ) => {
+    const fieldValue = filterStates[filterFieldName]?.enum?.value;
+    const enabled = !!fieldValue && !!fieldValue[0]; // Only enable if skill type is selected
+    return (
+      <EnumFilterControl
+        filterStates={filterStates}
+        menuOption={enumOptions}
+        valueOptions={field.options as { option: string; value: string }[]}
+        fieldName={field.value}
+        state={fieldState}
+        onOptionChange={handleFilterOptionChange}
+        onChange={handleEnumSelectChange}
+        disabled={!enabled}
+      />
+    );
+  };
+
   const renderFilterControls = (fieldName: string) => {
     if (!selectedFilters.includes(fieldName)) return null;
 
@@ -348,22 +425,16 @@ const Filter: React.FC<FilterComponentProps> = ({
     if (!field) return null;
 
     const fieldState = filterStates[field.value] || {};
-    let enabled = false;
+    // let enabled = false;
     if (field.value === 'skill_subtype_rid') {
-      const skillTypeValue = filterStates['skill_type_rid']?.enum?.value;
-      enabled = !!skillTypeValue && !!skillTypeValue[0]; // Only enable if skill type is selected
+      return disableDependantFilterFields('skill_type_rid', field, fieldState);
+    }
 
-      return (
-        <EnumFilterControl
-          filterStates={filterStates}
-          menuOption={enumOptions}
-          valueOptions={field.options as { option: string; value: string }[]}
-          fieldName={field.value}
-          state={fieldState}
-          onOptionChange={handleFilterOptionChange}
-          onChange={handleEnumSelectChange}
-          disabled={!enabled}
-        />
+    if (field.value === 'resource_region') {
+      return disableDependantFilterFields(
+        'resource_country',
+        field,
+        fieldState
       );
     }
 
@@ -372,7 +443,12 @@ const Filter: React.FC<FilterComponentProps> = ({
         return (
           <TextFilterControl
             filterStates={filterStates}
-            menuOption={textOptions}
+            menuOption={
+              field?.required
+                ? (field?.filterOptions ?? textOptions)
+                : (field.operatorOption ?? textOptions)
+            }
+            // menuOption={field.operatorOption || textOptions}
             fieldName={field.value}
             state={fieldState}
             onOptionChange={handleFilterOptionChange}
@@ -383,7 +459,12 @@ const Filter: React.FC<FilterComponentProps> = ({
         return (
           <TextFilterControlForCostAndSKill
             filterStates={filterStates}
-            menuOption={textOptionForCostAndSkill}
+            menuOption={
+              field?.required
+                ? (field?.filterOptions ?? textOptionForCostAndSkill)
+                : textOptionForCostAndSkill
+            }
+            // menuOption={textOptionForCostAndSkill}
             fieldName={field.value}
             state={fieldState}
             onOptionChange={handleFilterOptionChange}
@@ -394,7 +475,7 @@ const Filter: React.FC<FilterComponentProps> = ({
         return (
           <NumberFilterControl
             filterStates={filterStates}
-            menuOption={numberOptions}
+            menuOption={field.operatorOption || numberOptions}
             fieldName={field.value}
             state={fieldState}
             onOptionChange={handleFilterOptionChange}
@@ -405,7 +486,11 @@ const Filter: React.FC<FilterComponentProps> = ({
         return (
           <EnumFilterControl
             filterStates={filterStates}
-            menuOption={enumOptions}
+            menuOption={
+              field?.required
+                ? (field?.filterOptions ?? enumOptions)
+                : (field.operatorOption ?? enumOptions)
+            }
             valueOptions={field.options as { option: string; value: string }[]}
             fieldName={field.value}
             state={fieldState}
@@ -429,9 +514,11 @@ const Filter: React.FC<FilterComponentProps> = ({
         return (
           <DateFilterControl
             filterStates={filterStates}
-            menuOption={dateOptions}
+            menuOption={field.operatorOption || dateOptions}
             fieldName={field.value}
             state={fieldState}
+            minDate={field.minDate}
+            maxDate={field.maxDate}
             onOptionChange={handleFilterOptionChange}
             onValueChange={handleDateChange}
             mode={mode as 'date' | 'year'}
@@ -456,7 +543,7 @@ const Filter: React.FC<FilterComponentProps> = ({
       id={filterId}
       open={isOpen}
       anchorEl={filterAnchorEl}
-      onClose={handleFilter}
+      onClose={handleModalClose}
       anchorOrigin={{
         vertical: 'bottom',
         horizontal: 'right',
@@ -467,13 +554,15 @@ const Filter: React.FC<FilterComponentProps> = ({
       }}
       PaperProps={{
         sx: {
-          boxShadow: 'none',
+          boxShadow: '0px 4px 15px 11px #0000001A',
           bgcolor: 'transparent',
           mt: 0.5,
+          borderRadius: '8px',
+          border: '1px solid #CBD6E2',
         },
       }}
     >
-      <div className='h-auto min-h-[165px] w-[530px] min-w-[530px] max-w-[530px] mt-1 flex flex-col gap-4 bg-white rounded-[8px] p-6 border border-[#CBD6E2]'>
+      <div className='h-auto min-h-[165px] w-[550px] min-w-[550px] max-w-[550px] flex flex-col gap-4 bg-white p-6'>
         <div className='flex justify-between items-center'>
           <h2 className='text-[16px] font-bold text-[#2D3E4F]'>Filters</h2>
           <div className='flex justify-end gap-4'>
@@ -492,7 +581,7 @@ const Filter: React.FC<FilterComponentProps> = ({
           </div>
         </div>
 
-        <div>
+        {/* <div>
           <h3 className='text-[13px] font-bold text-[#425A76] mb-2'>
             System Define filters
           </h3>
@@ -507,14 +596,14 @@ const Filter: React.FC<FilterComponentProps> = ({
               </span>
             ))}
           </div>
-        </div>
+        </div> */}
 
         {selectedFilters.length > 0 && (
           <div className='flex-1'>
             <h3 className='text-[13px] font-bold text-[#425A76] mb-2'>
               All filters
             </h3>
-            <div className='flex flex-col gap-3 mb-1 pt-1 -mr-6 min-h-[80px] overflow-y-auto max-h-[150px]'>
+            <div className='flex flex-col gap-3 mb-1 pt-1 -mr-6 min-h-[40px] overflow-y-auto max-h-[150px]'>
               {selectedFilters.map((fieldValue) => {
                 const fieldConfig = filterMenu.find(
                   (f) => f.value === fieldValue
@@ -522,7 +611,7 @@ const Filter: React.FC<FilterComponentProps> = ({
                 return fieldConfig ? (
                   <div key={fieldValue}>
                     <div className='flex items-center gap-2'>
-                      <div className='flex-1 flex items-center gap-2 w-[450px] max-w-[450px]'>
+                      <div className='flex-1 flex items-center gap-2 w-[480px] max-w-[480px]'>
                         <div className='flex items-center gap-1'>
                           <Select
                             size='small'
@@ -553,7 +642,18 @@ const Filter: React.FC<FilterComponentProps> = ({
                               }
                             }}
                             sx={SELECT_STYLES}
-                            MenuProps={MENU_PROPS}
+                            MenuProps={{
+                              ...MENU_PROPS,
+                              PaperProps: {
+                                ...MENU_PROPS.PaperProps,
+                                style: {
+                                  ...(MENU_PROPS.PaperProps?.style || {}),
+                                  width: 100,
+                                  maxWidth: 100,
+                                  maxHeight: 200,
+                                },
+                              },
+                            }}
                             renderValue={(selected) => {
                               const selectedField = filterMenu.find(
                                 (f) => f.value === selected
@@ -565,7 +665,7 @@ const Filter: React.FC<FilterComponentProps> = ({
                                     alt='checked'
                                     className='w-3'
                                   />
-                                  <span className='pt-0.5'>
+                                  <span className='max-w-[173px] text-ellipsis overflow-hidden'>
                                     {selectedField?.name || selected}
                                   </span>
                                 </div>
@@ -594,7 +694,7 @@ const Filter: React.FC<FilterComponentProps> = ({
                                 <img
                                   src={checkedIcon}
                                   alt='checked'
-                                  className='w-4'
+                                  className='w-4 h-4'
                                 />
                                 {field.name}
                               </MenuItem>
@@ -648,7 +748,7 @@ const Filter: React.FC<FilterComponentProps> = ({
           </div>
         )}
 
-        <div className='flex items-center justify-between mt-1'>
+        <div className='flex-1 flex items-end justify-between mt-1'>
           <button
             ref={buttonRef}
             onClick={handleClick}
@@ -658,26 +758,6 @@ const Filter: React.FC<FilterComponentProps> = ({
             Fields
             <img src={arrowIcon} alt={'arrowIcon'} className='mt-0.5' />
           </button>
-          {/* <div className='flex justify-end gap-2'>
-            <button
-              className='text-[12px] rounded-[2px] text-[#425A76] h-[24px] flex items-center px-2 border border-[#CBD6E2] cursor-pointer'
-              style={{
-                background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-              }}
-              onClick={handleFilter}
-            >
-              Close
-            </button>
-            <button
-              className='text-[12px] rounded-[2px] text-[#425A76] h-[24px] flex items-center px-2 border border-[#CBD6E2] cursor-pointer'
-              style={{
-                background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-              }}
-              onClick={handleApplyFilters}
-            >
-              Apply
-            </button>
-          </div> */}
         </div>
       </div>
 
@@ -688,9 +768,11 @@ const Filter: React.FC<FilterComponentProps> = ({
         PaperProps={{
           style: {
             minWidth: 170,
+            maxWidth: 170,
             borderRadius: '8px',
             border: '1px solid #CBD6E2',
             boxShadow: 'none',
+            maxHeight: 250,
           },
         }}
       >
@@ -724,7 +806,7 @@ const Filter: React.FC<FilterComponentProps> = ({
                   py: '1px',
                 }}
               >
-                <img src={checkedIcon} alt='checked' className='w-4 mr-1' />
+                <img src={checkedIcon} alt='checked' className='w-4 h-4 mr-1' />
                 {field.name}
               </MenuItem>
             ))

@@ -56,10 +56,31 @@ export const getResourceColumns = (
     sortable: true,
   },
   {
+    id: 'resource_orgname',
+    sortId: 'resource_orgname',
+    label: 'Org Name',
+    width: 140,
+    sortable: true,
+  },
+  {
     id: 'resource_designation',
     sortId: 'resource_designation',
     label: 'Designation',
     width: 200,
+    sortable: true,
+  },
+  {
+    id: 'resource_role',
+    sortId: 'resource_role',
+    label: 'Role',
+    width: 200,
+    sortable: true,
+  },
+  {
+    id: 'region_name',
+    sortId: 'resource_region',
+    label: 'Region',
+    width: 150,
     sortable: true,
   },
   {
@@ -70,11 +91,24 @@ export const getResourceColumns = (
     sortable: true,
   },
   {
-    id: 'region_name',
-    sortId: 'resource_region',
-    label: 'Region',
-    width: 150,
+    id: 'total_project_hours',
+    sortId: 'total_project_hours',
+    label: 'Total Project Hours',
+    width: 160,
     sortable: true,
+    sx: {
+      textAlign: 'right',
+    },
+  },
+  {
+    id: 'estimated_rd_hours',
+    sortId: 'estimated_rd_hours',
+    label: 'Estimated R&D Hours',
+    width: 180,
+    sortable: true,
+    sx: {
+      textAlign: 'right',
+    },
   },
   {
     id: 'resource_status',
@@ -91,5 +125,19 @@ export const getResourceColumns = (
         {row.resource_status === 'Active' ? 'Active' : 'In-Active'}
       </span>
     ),
+  },
+  {
+    id: 'comments',
+    sortId: 'comments',
+    label: 'Comments',
+    width: 160,
+    sortable: true,
+  },
+  {
+    id: 'r_number',
+    sortId: 'r_number',
+    label: 'Resource ID',
+    width: 150,
+    sortable: true,
   },
 ];

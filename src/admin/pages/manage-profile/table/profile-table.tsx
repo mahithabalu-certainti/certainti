@@ -13,13 +13,21 @@ import { deleteIcon, editIcon } from '../../../../assets';
 interface IUserTableProps {
   appliedFilters: Record<string, any>;
   tableParams: UserListParams;
+  isProfileViewEnable?: boolean;
+  isProfileEditEnable?: boolean;
+  isProfileDeleteEnable?: boolean;
   setTableParams: React.Dispatch<React.SetStateAction<UserListParams>>;
+  onSelectionChange: (selectedIds: string[]) => void;
 }
 
 export const ProfileTable: React.FC<IUserTableProps> = ({
   appliedFilters,
   tableParams,
+  // isProfileViewEnable,
+  isProfileEditEnable,
+  isProfileDeleteEnable,
   setTableParams,
+  onSelectionChange,
 }) => {
   const navigate = useNavigate();
 
@@ -52,7 +60,12 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
       state: { user: data },
     });
   };
-
+  // const handleView = (row: ManageProfileList) => {
+  //   const data = convertUserListData(row);
+  //   navigate(MANAGE_PROFILE + '/view/' + data.id, {
+  //     state: { user: data },
+  //   });
+  // };
   const handleDelete = (row: ManageProfileList) => {
     // navigate(`/admin/manage-user/${row.id}`, {
     //   state: { user: row },
@@ -85,6 +98,11 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
   };
 
   const actionButtons: ActionItem<ManageProfileList>[] = [
+    // {
+    //   label: 'View',
+    //   onClick: (row: ManageProfileList) => handleView(row),
+    //   hide: !isProfileViewEnable,
+    // },
     {
       label: 'Edit',
       onClick: (row: ManageProfileList) => handleEdit(row),
@@ -93,11 +111,13 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
         filter:
           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
       },
+      hide: !isProfileEditEnable,
     },
     {
       label: 'Delete',
       onClick: (row: ManageProfileList) => handleDelete(row),
       icon: deleteIcon,
+      hide: !isProfileDeleteEnable,
     },
   ];
 
@@ -107,16 +127,17 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
       columns={profileColumns}
       getRowId={getRowId}
       hoverHighlight={false}
-      tableStyle={{ height: 'auto' }}
+      tableStyle={{ overflowY: 'hidden' }}
       stickyHeader={false}
       stickyColumnsCount={2}
       selectable={true}
-      onSelectionChange={(selectedIds) => console.log('Selected:', selectedIds)}
-      actionWidth={100}
+      onSelectionChange={onSelectionChange}
+      actionWidth={60}
       actionDisplayMode='dropdown'
       actionMenuItems={actionButtons}
       loading={isLoading}
       error={isError ? 'Failed to load profiles' : undefined}
+      rowsPerPageOptions={[25, 50, 100]}
       rowsPerPage={tableParams.limit}
       currentPage={(tableParams.page ?? 1) - 1}
       totalItems={totalItems}

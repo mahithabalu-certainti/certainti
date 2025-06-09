@@ -20,6 +20,8 @@ interface ResourceCostTableProps {
   setCostOrder: (costOrder: 'asc' | 'desc') => void;
   costorderBy: string;
   setCostorderBy: (field: keyof ResourceCostList) => void;
+  isResourceCostDeleteEnable?: boolean;
+  isResourceCostEditEnable?: boolean;
 }
 
 const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
@@ -33,9 +35,11 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   setCostOrder,
   costorderBy,
   setCostorderBy,
+  isResourceCostDeleteEnable,
+  isResourceCostEditEnable,
 }) => {
   const navigate = useNavigate();
-  const [rowsPerPage, setRowsPerPage] = useState<number>(25);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(100);
   const accountInActive =
     accountDetails?.data?.accountById?.status === 'inactive';
   const apiOrder = costOrder.toUpperCase() as 'ASC' | 'DESC';
@@ -81,11 +85,13 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       label: 'Edit',
       onClick: handleEdit,
       disabled: accountInActive,
+      hide: !isResourceCostEditEnable,
     },
     {
       label: 'Delete',
       onClick: () => console.log('Delete'),
       disabled: accountInActive,
+      hide: !isResourceCostDeleteEnable,
     },
   ];
 
@@ -102,11 +108,12 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
         stickyHeader={false}
         stickyColumnsCount={1}
         selectable={false}
-        actionWidth={100}
+        actionWidth={80}
         actionDisplayMode='dropdown'
         actionMenuItems={actionMenuItems}
         loading={isLoading}
         error={error ? 'Failed to load resource cost data' : undefined}
+        rowsPerPageOptions={[25, 50, 100]}
         rowsPerPage={rowsPerPage}
         currentPage={currentPage}
         totalItems={costList?.count ?? 0}

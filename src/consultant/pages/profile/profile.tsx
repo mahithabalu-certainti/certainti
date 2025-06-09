@@ -5,15 +5,27 @@ import { accountHomeIcon } from '../../../assets/icons';
 import TextButton from '../../../components/button/text-button';
 import { RootState } from '../../../store/store';
 import { UserDetailComponent } from '../../../components';
+import { AccessRestricted } from '../../../components/account-restricted';
+import { checkPermission } from '../../../common-utils';
+import { AllPermissions } from '../../../common-service';
 
 export const Profile: React.FC = () => {
   const { userId } = useSelector((state: RootState) => state.auth);
   const userDetails = useManageUserDetail(userId as string);
   const userDatas = userDetails.data?.data?.users;
 
+  // Permission Mangement
+  const { permission } = useSelector((state: RootState) => state.permission);
+  const isViewProfileEnable = checkPermission(
+    permission,
+    AllPermissions.PROFILE_VIEW
+  );
+
   const goBack = () => {
     window.history.back();
   };
+
+  if (!isViewProfileEnable) return <AccessRestricted />;
 
   return (
     <>
@@ -29,7 +41,17 @@ export const Profile: React.FC = () => {
           </div>
         </div>
         <div className='flex gap-3'>
-          <TextButton label='Back' onClick={goBack} />
+          <TextButton
+            label='Back'
+            sx={{
+              fontSize: '13px',
+              fontWeight: '700',
+              width: '49px',
+            }}
+            // variant='outlined'
+            // color='inherit'
+            onClick={goBack}
+          />
         </div>
       </div>
       <div className='m-4 border border-gray-200'>

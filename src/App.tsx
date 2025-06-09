@@ -8,6 +8,7 @@ import {
   ProfileList,
   CreateProfile,
   UserList,
+  ExtendedPermission,
 } from './admin/pages';
 import { AppLayout, Toast } from './components';
 import {
@@ -41,6 +42,7 @@ import {
   MANAGE_PROFILE,
   MANAGE_PROFILE_CREATE,
   MANAGE_PROFILE_EDIT,
+  MANAGE_PROFILE_VIEW,
   NOT_MATCH,
   PROFILE,
   PROJECT,
@@ -55,8 +57,10 @@ import {
   RESOURCECOST_EDIT,
   RESOURCESKILL_CREATE,
   RESOURCESKILL_EDIT,
+  USER_EXTENDED_PERMISSION,
 } from './routes';
 import { RootState } from './store/store';
+import { ViewProfile } from './admin/pages/manage-profile/view-profile';
 
 /**
  * App component serves as the root component of the application.
@@ -90,7 +94,7 @@ export const App: React.FC<IApp> = ({ instance }) => {
             <Route path={PROJECT} element={<Projects />} />
             <Route path={PROJECT_DETAILS} element={<ProjectDetails />} />
             <Route path={PROJECT_CREATE} element={<ProjectForm />} />
-            <Route path={ PROJECT_EDIT} element={<ProjectForm />} />
+            <Route path={PROJECT_EDIT} element={<ProjectForm />} />
             <Route path={RESOURCE_CREATE} element={<ResourceForm />} />
             <Route path={RESOURCE_EDIT} element={<ResourceForm />} />
             <Route path={RESOURCECOST_CREATE} element={<ResourceForm />} />
@@ -114,9 +118,14 @@ export const App: React.FC<IApp> = ({ instance }) => {
             />
             <Route path={ADMIN_CREATE_USER} element={<CreateUser />} />
             <Route path={ADMIN_EDIT_USER} element={<CreateUser />} />
+            <Route
+              path={USER_EXTENDED_PERMISSION}
+              element={<ExtendedPermission />}
+            />
             <Route path={MANAGE_PROFILE} element={<ProfileList />} />
             <Route path={MANAGE_PROFILE_CREATE} element={<CreateProfile />} />
             <Route path={MANAGE_PROFILE_EDIT} element={<CreateProfile />} />
+            <Route path={MANAGE_PROFILE_VIEW} element={<ViewProfile />} />
           </Route>
           {/* Page not found */}
           <Route path={NOT_MATCH} element={<NotFound />} />

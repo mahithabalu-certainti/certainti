@@ -53,7 +53,7 @@ export interface ITablePaginationProps {
 export type ListTableColumn<T> = {
   id: string;
   label: string;
-  width: string | number;
+  width?: string | number;
   sortId: string;
   sortable?: boolean;
   sticky?: boolean;
@@ -67,6 +67,7 @@ export interface ActionItem<T extends RowData> {
   disabled?: boolean;
   icon?: string;
   iconStyle?: React.CSSProperties;
+  hide?: boolean;
 }
 
 export interface ListTableProps<T extends RowData> {
@@ -88,6 +89,7 @@ export interface ListTableProps<T extends RowData> {
   loading?: boolean;
   error?: string;
   // Pagination
+  rowsPerPageOptions?: number[];
   rowsPerPage?: number;
   currentPage?: number;
   totalItems?: number;
