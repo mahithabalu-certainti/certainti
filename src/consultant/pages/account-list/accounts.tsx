@@ -51,6 +51,9 @@ export const Accounts: React.FC = () => {
   const [page, setPage] = useState<number>(1);
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
+  const [refreshAccountTrigger, setRefreshAccountTrigger] = useState<number>(
+    Date.now()
+  );
 
   const { fiscalYear, filters } = useSelector<
     RootState,
@@ -59,7 +62,9 @@ export const Accounts: React.FC = () => {
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
-
+  const onRefreshClick = () => {
+    setRefreshAccountTrigger(Date.now()); // unique on every click
+  };
   const handleCloseFilter = () => {
     setAnchorEl(null);
   };
@@ -214,7 +219,10 @@ export const Accounts: React.FC = () => {
             />
           )}
           <div className='flex items-center justify-center border border-[#EAF0F5] w-[48px] h-[24px]'>
-            <div className='flex items-center justify-center w-1/2'>
+            <div
+              className='flex items-center justify-center w-1/2 cursor-pointer'
+              onClick={onRefreshClick}
+            >
               <img src={refreshIcon} alt='refresh-icon' className='h-4' />
             </div>
             <div className='border-l border-[#EAF0F5] h-full'></div>
@@ -276,6 +284,7 @@ export const Accounts: React.FC = () => {
           page={page}
           isAccountEditEnable={isAccountEditEnable}
           isAccountDeleteEnable={isAccountDeleteEnable}
+          refreshAccountTrigger={refreshAccountTrigger}
         />
       </div>
     </div>

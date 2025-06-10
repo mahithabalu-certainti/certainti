@@ -20,6 +20,7 @@ interface IProjectTableProps {
   isProjectDeleteEnable?: boolean;
   setTableParams: React.Dispatch<React.SetStateAction<ProjectListParams>>;
   setTotalCount: React.Dispatch<React.SetStateAction<number>>;
+  refreshProjectsTrigger?: number;
 }
 
 export const ProjectTable: React.FC<IProjectTableProps> = ({
@@ -29,6 +30,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   isProjectDeleteEnable,
   setTableParams,
   setTotalCount,
+  refreshProjectsTrigger,
 }) => {
   const navigate = useNavigate();
   const { fiscalYear, filters } = useSelector<
@@ -48,7 +50,11 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     }));
   }, [appliedFilters, fiscalYear, filters]);
 
-  const { data, isLoading, isError } = useAllProjects(tableParams);
+  const { data, isLoading, isError } = useAllProjects(
+    tableParams,
+    undefined,
+    refreshProjectsTrigger
+  );
   const totalItems = data?.count || 0;
 
   // Update total count when data changes
@@ -61,7 +67,6 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   const getRowId = (row: ProjectList) => row.rid;
 
   const handleEdit = (account: any) => {
-    console.log('Edit row', account);
     navigate(`/Project/edit/${account?.project_id}`, {
       state: {
         accountID: account?.account_id,

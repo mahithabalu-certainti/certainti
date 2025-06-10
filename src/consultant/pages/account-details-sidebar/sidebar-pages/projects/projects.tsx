@@ -60,8 +60,11 @@ const Projects: React.FC<ProjectsProps> = ({
     (state: RootState) => state.account
   );
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
-
-  const accountInActive = accountDetails?.data?.accountById?.status === 'inactive';
+  const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
+    Date.now()
+  );
+  const accountInActive =
+    accountDetails?.data?.accountById?.status === 'inactive';
 
   // Permission Mangement
   const { modules, permission } = useSelector(
@@ -101,10 +104,13 @@ const Projects: React.FC<ProjectsProps> = ({
       fiscalYear: convertedFiscalYear,
       accountNumber: accountDetails?.data?.accountDetails?.account_rid || '',
     },
-    projectOverviewIsEnable && projectViewAllIsEnable
+    projectOverviewIsEnable && projectViewAllIsEnable,
+    refreshProjectsTrigger
   );
   const totalItems = data?.count || 0;
-
+  const onRefreshClick = () => {
+    setRefreshProjectsTrigger(Date.now());
+  };
   useEffect(() => {
     const isHide = (tab: ResourceTabs) => {
       return (
@@ -226,6 +232,8 @@ const Projects: React.FC<ProjectsProps> = ({
         handleFilter={handleFilter}
         setCurrentPage={setCurrentPage}
         resourceTab={projectsTabs}
+        showRefresh={true}
+        onRefreshClick={onRefreshClick}
       />
       {projectOverviewIsEnable && projectViewAllIsEnable ? (
         <>

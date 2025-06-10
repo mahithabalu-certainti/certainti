@@ -40,7 +40,12 @@ export const Projects: React.FC = () => {
     fiscalYear: 0,
     globalFilters: {},
   });
-
+  const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
+    Date.now()
+  );
+  const onRefreshClick = () => {
+    setRefreshProjectsTrigger(Date.now()); // unique on every click
+  };
   // Permission Mangement
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
@@ -151,7 +156,10 @@ export const Projects: React.FC = () => {
             }}
           /> */}
           <div className='flex items-center justify-center border border-[#EAF0F5] w-[48px] h-[24px]'>
-            <div className='flex items-center justify-center w-1/2'>
+            <div
+              className='flex items-center justify-center w-1/2  cursor-pointer'
+              onClick={onRefreshClick}
+            >
               <img src={refreshIcon} alt='refresh-icon' className='h-4' />
             </div>
             <div className='border-l border-[#EAF0F5] h-full'></div>
@@ -208,6 +216,7 @@ export const Projects: React.FC = () => {
           setTotalCount={setTotalCount}
           isProjectEditEnable={isProjectEditEnable}
           isProjectDeleteEnable={isProjectDeleteEnable}
+          refreshProjectsTrigger={refreshProjectsTrigger}
         />
       </div>
     </div>

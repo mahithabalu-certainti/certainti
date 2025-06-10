@@ -36,6 +36,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
   isAccountEditEnable,
   isAccountDeleteEnable,
   // setPage
+  refreshAccountTrigger,
 }) => {
   const navigate = useNavigate();
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
@@ -50,16 +51,19 @@ const AccountTable: React.FC<Record<string, any>> = ({
     { filters: unknown; fiscalYear: string }
   >((state: RootState) => state.account);
 
-  const { data: accountList, isLoading: loading } = useAccounts({
-    page: page,
-    limit: 1000,
-    sortBy: orderBy,
-    sortOrder: apiOrder,
-    filters: appliedFilters,
-    globalFilters: reshapeGlobalFilter(filters as FilterState),
-    fiscalYear,
-  });
-
+  const { data: accountList, isLoading: loading } = useAccounts(
+    {
+      page: page,
+      limit: 1000,
+      sortBy: orderBy,
+      sortOrder: apiOrder,
+      filters: appliedFilters,
+      globalFilters: reshapeGlobalFilter(filters as FilterState),
+      fiscalYear,
+    },
+    undefined,
+    refreshAccountTrigger
+  );
   const colorCodes = useFetchColorCodes();
 
   const colorCodesList = useMemo(() => {
@@ -251,6 +255,10 @@ const AccountTable: React.FC<Record<string, any>> = ({
       isAccountDeleteEnable,
     });
 
+  const isSkeletonLoading = loading;
+  const isEmptyState =
+    !loading && isDataLoaded && !colorCodes.isLoading && accounts?.length === 0;
+
   return (
     <div className='border-t border-[#CBD6E2] h-full'>
       <Paper
@@ -384,7 +392,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                 },
               }}
             >
-              {loading && !isDataLoaded && colorCodes.isLoading ? (
+              {isSkeletonLoading ? (
                 <TableSkeleton
                   rowsPerPage={15}
                   columnsCount={accountColumns.length}
@@ -393,10 +401,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                   borderHide={true}
                   stickyColumnsCount={2}
                 />
-              ) : !loading &&
-                isDataLoaded &&
-                !colorCodes.isLoading &&
-                accounts?.length === 0 ? (
+              ) : isEmptyState ? (
                 <TableRow
                   sx={{
                     height: '32px',

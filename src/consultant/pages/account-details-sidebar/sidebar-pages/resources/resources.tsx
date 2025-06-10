@@ -119,7 +119,13 @@ const Resource: React.FC<ResourceProps> = ({
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const accountInActive =
     accountDetails?.data?.accountById?.status === 'inactive';
-
+  const [refreshTrigger, setRefreshTrigger] = useState<number>(Date.now());
+  const [refreshCostTrigger, setRefreshCostTrigger] = useState<number>(
+    Date.now()
+  );
+  const [refreshSkillTrigger, setRefreshSkillTrigger] = useState<number>(
+    Date.now()
+  );
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -176,7 +182,8 @@ const Resource: React.FC<ResourceProps> = ({
       sortOrder: sortOrder,
       filters: appliedFilters,
     },
-    isResourceViewAllEnable
+    isResourceViewAllEnable,
+    refreshTrigger
   );
 
   const isResoureceOverviewHide = resourceTab[0].hide;
@@ -345,9 +352,9 @@ const Resource: React.FC<ResourceProps> = ({
     const accNumber = accountDetails?.data?.accountById.r_number;
     navigate(
       RESOURCE +
-      '/edit/' +
-      resourceId +
-      `?account_id=${accountid}&acc_number=${accNumber}`
+        '/edit/' +
+        resourceId +
+        `?account_id=${accountid}&acc_number=${accNumber}`
     );
   };
 
@@ -465,6 +472,16 @@ const Resource: React.FC<ResourceProps> = ({
 
   const resourceColumns = getResourceColumns(handleResourceClick);
 
+  const onRefreshClick = () => {
+    if (value === 'cost') {
+      setRefreshCostTrigger(Date.now()); // Toggle the refreshTrigger to force re-fetch
+    } else if (value === 'skill') {
+      setRefreshSkillTrigger(Date.now()); // Toggle the refreshTrigger to force re-fetch
+    } else {
+      setRefreshTrigger(Date.now()); // Toggle the refreshTrigger to force re-fetch
+    }
+  };
+
   return (
     <div className='w-full py-3 pl-3 pr-4'>
       <TabPanel
@@ -484,6 +501,8 @@ const Resource: React.FC<ResourceProps> = ({
         }
         handleFilter={handleFilter}
         setCurrentPage={setCurrentPage}
+        showRefresh={true}
+        onRefreshClick={onRefreshClick}
       />
       {!isResoureceOverviewHide && isResourceViewAllEnable && (
         <>
@@ -521,6 +540,8 @@ const Resource: React.FC<ResourceProps> = ({
               setSkillOrder={setSkillOrder}
               skillOrderBy={skillOrderBy}
               setSkillOrderBy={setSkillOrderBy}
+              refreshCostTrigger={refreshCostTrigger}
+              refreshSkillTrigger={refreshSkillTrigger}
             />
           )}
           {viewResourceList && !value && (
