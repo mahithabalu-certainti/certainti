@@ -354,28 +354,61 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           });
 
           if (conflictExists) {
-            const roleLabel =
-              field.options?.find((opt) => opt.value === newRole)?.label ||
-              newRole;
             setConfirmationState({
               isOpen: true,
-              message: `There is already a primary contact assigned to the role '${roleLabel}'. If you continue, this contact will replace the existing primary. Do you want to proceed?`,
+              message:
+                'Primary Contact with the same role already exists. Would you like to proceed?',
               onConfirm: () => {
-                newData[isPrimaryField] = 'no';
+                Object.keys(newData).forEach((key) => {
+                  if (
+                    key.startsWith('is_primary_contact_') &&
+                    key !== isPrimaryField
+                  ) {
+                    const otherIndex = parseInt(
+                      key.split('_').pop() || '0',
+                      10
+                    );
+                    const otherRoleKey = `key_contact_role_${otherIndex}`;
+                    const otherRole = constructFormData[otherRoleKey];
+
+                    if (otherRole === newRole && newRole !== '') {
+                      newData[key] = 'no';
+
+                      const otherCommKey = `include_in_communication_${otherIndex}`;
+                      const otherEmailKey = `key_contact_email_${otherIndex}`;
+                      newData[otherCommKey] = 'no';
+
+                      setFormData((prevFormData) =>
+                        prevFormData?.map((section) => ({
+                          ...section,
+                          fields: section.fields.map((f) => {
+                            if (f.name === otherCommKey)
+                              return { ...f, disabled: false };
+                            if (f.name === otherEmailKey)
+                              return { ...f, required: false, error: '' };
+                            return f;
+                          }),
+                        }))
+                      );
+                    }
+                  }
+                });
+
+                newData[isPrimaryField] = 'yes';
                 const commFieldName = `include_in_communication_${currentIndex}`;
                 const emailFieldName = `key_contact_email_${currentIndex}`;
-                newData[commFieldName] = 'no';
+                newData[commFieldName] = 'yes';
 
                 setFormData((prevFormData) =>
                   prevFormData?.map((section) => ({
                     ...section,
                     fields: section.fields.map((f) => {
                       if (f.name === isPrimaryField)
-                        return { ...f, value: 'no' };
+                        return { ...f, value: 'yes' };
                       if (f.name === commFieldName)
-                        return { ...f, disabled: false };
+                        return { ...f, disabled: true };
                       if (f.name === emailFieldName)
-                        return { ...f, required: false, error: '' };
+                        return { ...f, required: true };
                       return f;
                     }),
                   }))

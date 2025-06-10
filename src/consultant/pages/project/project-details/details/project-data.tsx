@@ -2,12 +2,16 @@
   useEffect,
   useState,
 } from 'react';
-import { projectsBook } from '../../../../../assets';
+import {
+  detailsKeyContactErrorIcon,
+  projectsBook,
+} from '../../../../../assets';
 import TabPanel from './tab';
 import { useNavigate } from 'react-router-dom';
 import ProjectOverview from './project-overview';
 import { NewProjectData } from '../../../../types/project';
 import { AllPermissions, Permissions } from '../../../../../common-service';
+import { Box } from '@mui/material';
 
 const BUTTON_STYLES = {
   height: '26px !important',
@@ -16,7 +20,7 @@ const BUTTON_STYLES = {
 };
 
 interface ProjectsDataProps {
-  accountInActive: boolean,
+  accountInActive: boolean;
   permission: Permissions[];
   projectDetails?: NewProjectData | null;
   activeKey?: string;
@@ -83,7 +87,8 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
       },
     });
   };
-
+  const isKeyContactAvailable =
+    projectDetails?.keyContact && projectDetails?.keyContact.length > 0;
   const headerButtons = [
     {
       label: 'Edit',
@@ -117,22 +122,38 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
 
   return (
     <div className='w-full'>
-      <TabPanel
-        tabValue={tabValue}
-        setCurrentPage={setCurrentPage}
-        detailsTab={detailsTab}
-        handleTabChange={handleTabChange}
-      />
-      {currentPage === 0 && isOverViewEnable && (
-        <ProjectOverview
-          title='Projects'
-          titleIcon={<img src={projectsBook} alt='project-header-icon' />}
-          headerButtons={headerButtons}
-          projectDetails={projectDetails}
-          isDetailsLoading={isDetailsLoading}
-          detailsError={detailsError}
-        />
+      {!isKeyContactAvailable && (
+        <Box className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
+          <Box>
+            <img src={detailsKeyContactErrorIcon} alt='key-contact' />
+          </Box>
+          <Box>
+            <span className='font-bold mr-1'>Contact Details </span> -{' '}
+            <span className='ml-1 font-medium'>
+              {' '}
+              {`Not added for ${projectDetails?.project_name || 'project'}`}
+            </span>
+          </Box>
+        </Box>
       )}
+      <Box className='p-3'>
+        <TabPanel
+          tabValue={tabValue}
+          setCurrentPage={setCurrentPage}
+          detailsTab={detailsTab}
+          handleTabChange={handleTabChange}
+        />
+        {currentPage === 0 && isOverViewEnable && (
+          <ProjectOverview
+            title='Projects'
+            titleIcon={<img src={projectsBook} alt='project-header-icon' />}
+            headerButtons={headerButtons}
+            projectDetails={projectDetails}
+            isDetailsLoading={isDetailsLoading}
+            detailsError={detailsError}
+          />
+        )}
+      </Box>
     </div>
   );
 };
