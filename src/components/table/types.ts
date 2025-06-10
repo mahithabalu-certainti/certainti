@@ -99,4 +99,5 @@ export interface ListTableProps<T extends RowData> {
   sortBy?: string;
   sortOrder?: SortDirection;
   onSort?: (sortBy: string, sortOrder: SortOrder) => void;
+  component?: string;
 }

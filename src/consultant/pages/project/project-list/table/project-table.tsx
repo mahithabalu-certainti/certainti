@@ -149,6 +149,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       sortBy={tableParams.sortBy}
       sortOrder={tableParams.sortOrder}
       onSort={handleSort}
+      component='global-project'
     />
   );
 };
