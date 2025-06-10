@@ -54,7 +54,6 @@ export const CreateProfile: React.FC = () => {
   const editSuccess = updateProfilePermission.isSuccess;
   const [initialPrivileges, setInitialPrivileges] = useState<Privilege[]>([]);
 
-  // Called once after profile data loads
   useEffect(() => {
     if (isEditView && getProfileDetails?.data?.data?.privileges) {
       setPrivileges(getProfileDetails.data.data.privileges);
@@ -65,7 +64,6 @@ export const CreateProfile: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getProfileDetails?.data?.data, createProfile?.data?.data]);
-  // Permission Mangement
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
   );
