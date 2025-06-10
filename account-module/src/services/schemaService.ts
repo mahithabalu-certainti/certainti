@@ -1399,13 +1399,17 @@ class SchemaService {
     try {
     const sequelize = await initSequelize();
     const orgDbSequelize = await initOrgSequelize();
-    const ROLE_KEY_MAP: Record<string, string> = {
-    technical_consultant: "Technical Consultant",
-    professional_services_consultant: "Professional Services Consultant",
-    delivery_head: "Client Project Delivery Head",
-    finance_executive: "Client Finance Executive",
-    finance_lead: "Client Finance Lead"
-  };
+    const ROLE_KEY_MAP: Record<string, string> = {};
+    const dbRoleMap = await sequelize.query(
+      `SELECT role_map, role_name FROM key_contact_role WHERE role_map IS NOT NULL`,
+      { type: "SELECT" }
+  );
+
+  dbRoleMap.forEach((row: any) => {
+      if (row.role_map && row.role_name) {
+          ROLE_KEY_MAP[row.role_map] = row.role_name;
+      }
+  });
     
     // 2. Account processing
     const parentRidToRNumber = new Map<string, string>();
