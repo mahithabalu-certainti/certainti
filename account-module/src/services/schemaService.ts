@@ -1670,7 +1670,7 @@ class SchemaService {
     // 5. Apply sorting if needed
     const SORTABLE_FIELDS = new Set([
       "professional_services_consultant",
-      "financial_lead",
+      "finance_lead",
       "finance_executive",
     ]);
 

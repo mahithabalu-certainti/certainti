@@ -445,9 +445,9 @@ class SchemaService {
         resource_country: resourceData.resource_country || null,
         resource_city: resourceData.resource_city || null,
         resource_designation: resourceData.resource_designation || null,
-        resource_total_experience: resourceData.total_years_experience || 0,
+        resource_total_experience: resourceData.total_years_experience || null,
         resource_total_experience_organization:
-          resourceData.total_years_in_org || 0,
+          resourceData.total_years_in_org || null,
         created_by: resourceData.created_by,
         modified_by: resourceData.modified_by,
         account_rid: resourceData.account_id,
