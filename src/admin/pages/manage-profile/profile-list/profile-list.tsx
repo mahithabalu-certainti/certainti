@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { newFilterIcon, userIcon } from '../../../../assets';
+import { newFilterIcon, userIcon, refreshIcon } from '../../../../assets';
 import TextButton from '../../../../components/button/text-button';
 import { useNavigate } from 'react-router-dom';
 import { MANAGE_PROFILE_CREATE } from '../../../../routes';
@@ -40,6 +40,12 @@ export const ProfileList: React.FC = () => {
   const { errorToast } = useToast();
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
+  };
+  const [refreshProfileTrigger, setRefreshProfileTrigger] = useState<number>(
+    Date.now()
+  );
+  const onRefreshClick = () => {
+    setRefreshProfileTrigger(Date.now());
   };
 
   // Permission Mangement
@@ -133,6 +139,12 @@ export const ProfileList: React.FC = () => {
           </div>
         </div>
         <div className='flex gap-3 justify-center items-center'>
+          <button
+            className='flex border border-[#CBD6E2] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
+            onClick={onRefreshClick}
+          >
+            <img src={refreshIcon} alt='refresh-icon' className='h-4' />
+          </button>
           {isProfileCreateEnable && (
             <TextButton
               label='Create Profile'
@@ -207,6 +219,7 @@ export const ProfileList: React.FC = () => {
           isProfileViewEnable={isProfileViewEnable}
           isProfileEditEnable={isProfileEditEnable}
           isProfileDeleteEnable={isProfileDeleteEnable}
+          refreshProfileTrigger={refreshProfileTrigger}
         />
       </div>
     </div>

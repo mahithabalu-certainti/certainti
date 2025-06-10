@@ -1,7 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ManageUserIcon, newFilterIcon } from '../../../../assets/icons';
+import {
+  ManageUserIcon,
+  newFilterIcon,
+  refreshIcon,
+} from '../../../../assets/icons';
 import { FilterModal } from '../../../../components';
 import ActionsDropdown from '../../../../components/actions-dropdown/actions-dropdown';
 import TextButton from '../../../../components/button/text-button';
@@ -37,7 +41,12 @@ const UserList: React.FC = () => {
     sortBy: 'createdAt',
     sortOrder: 'DESC',
   });
-
+  const [refreshUserTrigger, setRefreshUserTrigger] = useState<number>(
+    Date.now()
+  );
+  const onRefreshClick = () => {
+    setRefreshUserTrigger(Date.now());
+  };
   // Permission Mangement
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
@@ -83,11 +92,15 @@ const UserList: React.FC = () => {
     permission,
     AllPermissions.USER_ASSIGN_PERMISSION
   );
-  
+
   const userActionButtons = [
     { label: 'Suspend User', width: '104px', hide: !isUserSuspendEnable },
     { label: 'Reinstate User', width: '116px', hide: false },
-    { label: 'Reset Password', width: '118px', hide: !isUserResetPasswordEnable },
+    {
+      label: 'Reset Password',
+      width: '118px',
+      hide: !isUserResetPasswordEnable,
+    },
     { label: 'Delete', width: '58px', hide: !isUserDeleteEnable },
   ];
 
@@ -201,6 +214,12 @@ const UserList: React.FC = () => {
         </div>
         <div className='flex gap-3 justify-center items-center'>
           <ActionsDropdown actions={MENU_ITEMS} />
+          <button
+            className='flex border border-[#CBD6E2] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
+            onClick={onRefreshClick}
+          >
+            <img src={refreshIcon} alt='refresh-icon' className='h-4' />
+          </button>
           {isUserCreateEnable && (
             <TextButton
               label='Create User'
@@ -277,6 +296,7 @@ const UserList: React.FC = () => {
           isUserEditEnable={isUserEditEnable}
           isUserViewEnable={isUserViewEnable}
           onSelectionChange={handleSelectionChange}
+          refreshUserTrigger={refreshUserTrigger}
         />
       </div>
     </div>

@@ -128,7 +128,7 @@ export const CreateProfile: React.FC = () => {
       JSON.stringify(privileges) !== JSON.stringify(initialPrivileges);
 
     if (!hasChanges) {
-      errorToast('No changes to save');
+      errorToast('No modifications detected');
       return;
     }
     if (isEditView) {
