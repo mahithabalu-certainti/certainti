@@ -16,6 +16,7 @@ interface IUserTableProps {
   isUserViewEnable?: boolean;
   setTableParams: React.Dispatch<React.SetStateAction<UserListParams>>;
   onSelectionChange: (selectedIds: string[]) => void;
+  refreshUserTrigger?: number;
 }
 
 export const UserTable: React.FC<IUserTableProps> = ({
@@ -25,6 +26,7 @@ export const UserTable: React.FC<IUserTableProps> = ({
   isUserViewEnable,
   setTableParams,
   onSelectionChange,
+  refreshUserTrigger,
 }) => {
   const [users, setUsers] = useState<ManageUser[]>([]);
   const navigate = useNavigate();
@@ -37,7 +39,10 @@ export const UserTable: React.FC<IUserTableProps> = ({
     }));
   }, [appliedFilters]);
 
-  const { data, isLoading, isError } = useManageUserList(tableParams);
+  const { data, isLoading, isError } = useManageUserList(
+    tableParams,
+    refreshUserTrigger
+  );
   const totalItems = data?.data?.count || 0;
 
   const convertUserListData = (data: User[]): ManageUser[] => {

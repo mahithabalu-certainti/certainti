@@ -137,7 +137,6 @@ export const ProjectDetails = () => {
   const { data, isLoading, isError } = useProjectDetail(accountID, projectID);
   const accountInActive = data?.data?.project?.account_status === 'inactive';
 
-
   useEffect(() => {
     if (data?.data) {
       setProjectDetails(transformProjectData(data.data));
@@ -238,10 +237,10 @@ export const ProjectDetails = () => {
           primaryButton={
             projectEditIsEnable
               ? {
-                label: 'Edit',
-                onClick: handleEditAccount,
-                disabled: accountInActive,
-              }
+                  label: 'Edit',
+                  onClick: handleEditAccount,
+                  disabled: accountInActive,
+                }
               : undefined
           }
           onActionsClick={handleActionsClick}
@@ -264,7 +263,7 @@ export const ProjectDetails = () => {
             showBackIcon={true}
           />
         </div>
-        <div className='flex-1 p-4 overflow-hidden'>
+        <div className='flex-1  overflow-hidden'>
           {isLoading ? (
             <div className='flex items-center justify-center w-full h-full'>
               <CircularProgress />

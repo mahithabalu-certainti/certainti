@@ -49,10 +49,6 @@ export const SELECT_STYLES = {
   '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
     borderColor: '#CBD6E2',
   },
-  '& .MuiSelect-nativeInput': {
-    position: 'relative',
-    width: '24px',
-  },
   '& .MuiSelect-icon': {
     top: '40%',
   },

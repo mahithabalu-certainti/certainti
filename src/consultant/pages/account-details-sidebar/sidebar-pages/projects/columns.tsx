@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { costDisplay } from '../../../../../common-utils';
+import { costDisplay, valueDisplay } from '../../../../../common-utils';
 import { ProjectList } from '../../../../types/project';
 import { formatDateToYYYYMMDD } from '../resources/utils';
 interface TableColumn<T> {
@@ -116,6 +116,8 @@ export const getProjectColumns = (
     sx: {
       textAlign: 'right',
     },
+    render: (row: ProjectList) =>
+      row.total_effort ? valueDisplay(row.total_effort) : '-',
   },
   {
     id: 'total_cost',
