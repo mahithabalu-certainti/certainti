@@ -1399,7 +1399,7 @@ class SchemaService {
     try {
     const sequelize = await initSequelize();
     const orgDbSequelize = await initOrgSequelize();
-    const ROLE_KEY_MAP: Record<string, string> = {};
+    const roleKeyMap: Record<string, string> = {};
     const dbRoleMap = await sequelize.query(
       `SELECT role_map, role_name FROM key_contact_role WHERE role_map IS NOT NULL`,
       { type: "SELECT" }
@@ -1407,7 +1407,7 @@ class SchemaService {
 
   dbRoleMap.forEach((row: any) => {
       if (row.role_map && row.role_name) {
-          ROLE_KEY_MAP[row.role_map] = row.role_name;
+          roleKeyMap[row.role_map] = row.role_name;
       }
   });
     
@@ -1533,7 +1533,7 @@ class SchemaService {
       const contact = keyContacts.find(kc => kc.is_primary_contact);
       if (!contact) return { roleKey: null, name: null };
 
-      const roleKey = Object.entries(ROLE_KEY_MAP).find(
+      const roleKey = Object.entries(roleKeyMap).find(
         ([_, value]) => value === contact.role_name
       )?.[0] || null;
 
@@ -1615,7 +1615,7 @@ class SchemaService {
     else if (typeof filterValue === 'object' && filterValue !== null) {
       const filterType = Object.keys(filterValue)[0];
       const filterVal = filterValue[filterType];
-       const roleName = ROLE_KEY_MAP[filterKey];
+       const roleName = roleKeyMap[filterKey];
       enrichedAccounts = enrichedAccounts.filter((account: any) => {
         const contactName = account[filterKey] || '';
          // Step 2: Find the primary contact for this specific role
