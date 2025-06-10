@@ -1399,13 +1399,17 @@ class SchemaService {
     try {
     const sequelize = await initSequelize();
     const orgDbSequelize = await initOrgSequelize();
-    const ROLE_KEY_MAP: Record<string, string> = {
-    technical_consultant: "Technical Consultant",
-    professional_services_consultant: "Professional Services Consultant",
-    delivery_head: "Client Project Delivery Head",
-    finance_executive: "Client Finance Executive",
-    finance_lead: "Client Finance Lead"
-  };
+    const roleKeyMap: Record<string, string> = {};
+    const dbRoleMap = await sequelize.query(
+      `SELECT role_map, role_name FROM key_contact_role WHERE role_map IS NOT NULL`,
+      { type: "SELECT" }
+  );
+
+  dbRoleMap.forEach((row: any) => {
+      if (row.role_map && row.role_name) {
+          roleKeyMap[row.role_map] = row.role_name;
+      }
+  });
     
     // 2. Account processing
     const parentRidToRNumber = new Map<string, string>();
@@ -1529,7 +1533,7 @@ class SchemaService {
       const contact = keyContacts.find(kc => kc.is_primary_contact);
       if (!contact) return { roleKey: null, name: null };
 
-      const roleKey = Object.entries(ROLE_KEY_MAP).find(
+      const roleKey = Object.entries(roleKeyMap).find(
         ([_, value]) => value === contact.role_name
       )?.[0] || null;
 
@@ -1611,26 +1615,26 @@ class SchemaService {
     else if (typeof filterValue === 'object' && filterValue !== null) {
       const filterType = Object.keys(filterValue)[0];
       const filterVal = filterValue[filterType];
+       const roleName = roleKeyMap[filterKey];
       enrichedAccounts = enrichedAccounts.filter((account: any) => {
         const contactName = account[filterKey] || '';
-        
-        switch (filterType) {
-          case 'equals':
-            return contactName.toLowerCase() === String(filterVal).toLowerCase();
-            
-         case 'not_equals':
-          const roleName = ROLE_KEY_MAP[filterKey];
-          if (!roleName) {
-              // Role mapping not found → exclude the account (filter key is invalid for this account)
-          return false;
-          }
-          // Step 2: Find the primary contact for this specific role
+         // Step 2: Find the primary contact for this specific role
           const primaryContact = (account.key_contacts || []).find(
             (kc: any) => 
               kc.is_primary_contact && 
               kc.role_name === roleName
           );
 
+        switch (filterType) {
+          case 'equals':
+            return contactName.toLowerCase() === String(filterVal).toLowerCase();
+            
+         case 'not_equals': 
+          if (!roleName) {
+              // Role mapping not found → exclude the account (filter key is invalid for this account)
+          return false;
+          }
+        
           // Step 3: If no primary contact exists for this role, exclude the account
           if (!primaryContact) {
             return false;
@@ -1643,11 +1647,19 @@ class SchemaService {
           case 'contains':
             return contactName.toLowerCase().includes(String(filterVal).toLowerCase());
             
-          case 'is_empty':
-            return (filterVal === true) 
-              ? contactName.trim() === '' 
-              : contactName.trim() !== '';
-            
+         case 'is_empty':
+         
+          if (!roleName) {
+            return false; // Invalid role → exclude account
+          }
+      
+
+          if (filterVal === true) {
+            // Filter for empty: either no contact or empty name
+            return !primaryContact || 
+                  !primaryContact.key_contact_name || 
+                  primaryContact.key_contact_name.trim() === '';
+          }
           default:
             return true;
         }

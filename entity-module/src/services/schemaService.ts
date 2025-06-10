@@ -1547,7 +1547,7 @@ class SchemaService {
         }
 
         const fullQuery = `
-        SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name, acc.rid as account_id,
+        SELECT ps.project_code, ps.project_name , ps.fiscal_year, acc.account_name,acc.status as account_status, acc.rid as account_id,
         ps.project_id, ps.modified_datetime, ps.assessment_status,
         COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other,
         ps.project_type, ps.project_client_group , ps.project_group,
