@@ -48,6 +48,7 @@ const ListTable = <T extends RowData>({
   sortBy,
   sortOrder = 'ASC',
   onSort,
+  component,
 }: ListTableProps<T>) => {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
 
@@ -421,6 +422,7 @@ const ListTable = <T extends RowData>({
                             <TableActionButton
                               actions={actionMenuItems.map((item) => ({
                                 ...item,
+                                disabled: component === 'global-project' ? row.account_status === 'inactive' : item.disabled,
                                 onClick: () => item.onClick(row),
                               }))}
                             />
