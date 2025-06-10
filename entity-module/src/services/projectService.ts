@@ -555,7 +555,7 @@ export class ProjectService {
   insertAccount(project: any, account: any,){
     return {
       ...(project.dataValues || project),
-      account_name: account.accountName,
+      account_name: account.account_name,
       account_status:account.status
     }
   }
