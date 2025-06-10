@@ -255,7 +255,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
       isAccountDeleteEnable,
     });
 
-  const isSkeletonLoading = loading;
+  const isSkeletonLoading = loading || !isDataLoaded || colorCodes.isLoading;
   const isEmptyState =
     !loading && isDataLoaded && !colorCodes.isLoading && accounts?.length === 0;
 
