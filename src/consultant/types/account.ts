@@ -17,6 +17,13 @@ export interface CurrencyApiResponse extends CommonApiResponse {
     currency: Currencys[];
   };
 }
+
+export interface ColorCodeApiResponse extends CommonApiResponse {
+  data: {
+    colors: ColorItems[];
+  };
+}
+
 export interface ClassificationApiResponse extends CommonApiResponse {
   data: {
     projectClassifications: Classification[];
@@ -72,6 +79,12 @@ export interface GloablAcconunts {
   rid: string;
   account_name: string;
 }
+export interface ColorItems {
+  rid: string;
+  color_number: number;
+  color_code: string;
+  status: 'Active' | 'Inactive';
+}
 
 export interface Industries {
   rid: string;
@@ -125,6 +138,11 @@ export enum Status {
 export enum YesNo {
   Yes = 'yes',
   No = 'no',
+}
+
+export enum enumValue {
+  Yes = 'Yes',
+  No = 'No',
 }
 
 export enum KeyContactsUpdate {
@@ -224,7 +242,8 @@ type Country = {
 };
 
 type Currency = {
-  currency_code: string;
+  currency_code?: string;
+  currency_symbol?: string;
 };
 
 export type AccountListResponse = {
@@ -259,6 +278,7 @@ export interface ProjectsByYear {
   qualifying_project_qre_fed: number | null;
   qualifying_project_rd_credits_fed: number | null;
   total_projects_rd_credits: string;
+  currency: string;
 }
 
 export interface AccountListURLParams {
@@ -320,6 +340,8 @@ export type AccountList = {
   financial_consultant: string;
   delivery_head: string;
   finance_executive: string;
+  professional_services_consultant: string;
+  finance_lead: string;
   projects_by_fiscal_year?: ProjectsByYear[];
 };
 
@@ -330,13 +352,14 @@ export interface ConvertedAccount {
   accountNumber: string;
   industry: string;
   country: string;
+  currency: string;
   // currency: string;
   // status: 'Active' | 'In Active';
   // primaryContact: string;
   // parentAccountID: string | null;
   // annualRevenue: string;
-  color: string;
-  bgColor: string;
+  color?: string;
+  bgColor?: string;
   totalProjects: string | number;
   totalProjectHours: string | number;
   totalProjectCost: string | number;

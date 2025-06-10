@@ -10,14 +10,14 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { reshapeGlobalFilter } from '../../../../common-utils';
 import { TableSkeleton, TableSortHeader } from '../../../../components/table';
 import { ACCOUNT, ACCOUNT_DETAILS } from '../../../../routes';
 import { RootState } from '../../../../store/store';
-import { useAccounts } from '../../../services/account';
+import { useAccounts, useFetchColorCodes } from '../../../services/account';
 import { FilterState } from '../../../types';
 import { Account, ConvertedAccount } from '../../../types/account';
 import { convertAccounts } from '../helpers';
@@ -36,6 +36,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
   isAccountEditEnable,
   isAccountDeleteEnable,
   // setPage
+  refreshAccountTrigger,
 }) => {
   const navigate = useNavigate();
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
@@ -50,19 +51,36 @@ const AccountTable: React.FC<Record<string, any>> = ({
     { filters: unknown; fiscalYear: string }
   >((state: RootState) => state.account);
 
-  const { data: accountList, isLoading: loading } = useAccounts({
-    page: page,
-    limit: 1000,
-    sortBy: orderBy,
-    sortOrder: apiOrder,
-    filters: appliedFilters,
-    globalFilters: reshapeGlobalFilter(filters as FilterState),
-    fiscalYear,
-  });
+  const { data: accountList, isLoading: loading } = useAccounts(
+    {
+      page: page,
+      limit: 1000,
+      sortBy: orderBy,
+      sortOrder: apiOrder,
+      filters: appliedFilters,
+      globalFilters: reshapeGlobalFilter(filters as FilterState),
+      fiscalYear,
+    },
+    undefined,
+    refreshAccountTrigger
+  );
+  const colorCodes = useFetchColorCodes();
+
+  const colorCodesList = useMemo(() => {
+    return (
+      colorCodes.data?.data.colors.map((item) => ({
+        color: '#000000',
+        bgColor: item.color_code,
+      })) || []
+    );
+  }, [colorCodes]);
 
   useEffect(() => {
     if (!loading && accountList) {
-      const convertedData = convertAccounts(accountList.accounts || []);
+      const convertedData = convertAccounts(
+        accountList.accounts || [],
+        colorCodesList
+      );
       setAccounts(convertedData);
       setTotalCount(accountList.count || 0);
       setIsDataLoaded(true);
@@ -237,6 +255,10 @@ const AccountTable: React.FC<Record<string, any>> = ({
       isAccountDeleteEnable,
     });
 
+  const isSkeletonLoading = loading;
+  const isEmptyState =
+    !loading && isDataLoaded && !colorCodes.isLoading && accounts?.length === 0;
+
   return (
     <div className='border-t border-[#CBD6E2] h-full'>
       <Paper
@@ -370,7 +392,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                 },
               }}
             >
-              {loading && !isDataLoaded ? (
+              {isSkeletonLoading ? (
                 <TableSkeleton
                   rowsPerPage={15}
                   columnsCount={accountColumns.length}
@@ -379,7 +401,7 @@ const AccountTable: React.FC<Record<string, any>> = ({
                   borderHide={true}
                   stickyColumnsCount={2}
                 />
-              ) : !loading && isDataLoaded && accounts?.length === 0 ? (
+              ) : isEmptyState ? (
                 <TableRow
                   sx={{
                     height: '32px',

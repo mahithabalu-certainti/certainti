@@ -20,10 +20,12 @@ export const fetchResourceList = async (
 };
 
 export const useResourceList = (
-  params: ResourceListURLParams, isResourceViewAllEnable?: boolean
+  params: ResourceListURLParams,
+  isResourceViewAllEnable?: boolean,
+  refreshTrigger?: number
 ): UseQueryResult<{ resource: ResourceList[]; count: number }, Error> => {
   return useQuery<{ resource: ResourceList[]; count: number }, Error>({
-    queryKey: ['resourceList', params],
+    queryKey: ['resourceList', params, refreshTrigger],
     queryFn: () => fetchResourceList(params),
     retry: 0,
     gcTime: 0,

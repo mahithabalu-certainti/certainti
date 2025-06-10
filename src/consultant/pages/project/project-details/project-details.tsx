@@ -135,7 +135,9 @@ export const ProjectDetails = () => {
   }, [location.state]);
 
   const { data, isLoading, isError } = useProjectDetail(accountID, projectID);
-  // console.log('projectDetails outerr', data);
+  const accountInActive = data?.data?.project?.account_status === 'inactive';
+
+
   useEffect(() => {
     if (data?.data) {
       setProjectDetails(transformProjectData(data.data));
@@ -186,6 +188,7 @@ export const ProjectDetails = () => {
       case 'projectDetails':
         return (
           <ProjectDetailsData
+            accountInActive={accountInActive}
             projectDetails={projectData}
             isDetailsLoading={isLoading}
             detailsError={isError}
@@ -220,11 +223,11 @@ export const ProjectDetails = () => {
   if (!projectIsEnable) return <AccessRestricted />;
 
   return (
-    <div className='flex flex-col'>
+    <div className='flex flex-col h-full'>
       <div className='flex'>
         <PageHeader
           variant='sub'
-          placeholder='Project Name'
+          placeholder='Name'
           icon={projectDetailsIcon}
           iconBackgroundColor='#AF78FF'
           iconClasses='h-8 w-8 rounded p-[6px]'
@@ -235,9 +238,10 @@ export const ProjectDetails = () => {
           primaryButton={
             projectEditIsEnable
               ? {
-                  label: 'Edit',
-                  onClick: handleEditAccount,
-                }
+                label: 'Edit',
+                onClick: handleEditAccount,
+                disabled: accountInActive,
+              }
               : undefined
           }
           onActionsClick={handleActionsClick}
@@ -248,9 +252,10 @@ export const ProjectDetails = () => {
         columns={projectDetails}
         loading={isLoading}
         error={isError}
+        singleLineView={true}
       />
-      <div className='flex flex-row w-full'>
-        <div className='flex w-[200px] min-w-[200px] max-w-[200px]'>
+      <div className='flex flex-row flex-1 w-full'>
+        <div className='flex-1 w-[200px] min-w-[200px] max-w-[200px]'>
           <SideMenuPanel
             menuItems={sideMenuItems}
             activeKey={activeKey as string}

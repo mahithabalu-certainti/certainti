@@ -3,6 +3,7 @@ import { FieldType, FormType, SelectOption, YesNo } from '../../types';
 import { DATA_STORAGE_OPTIONS } from './utils';
 import {
   createButton,
+  createEmptyField,
   createFiscalDateField,
   createImgButton,
   createRadioField,
@@ -22,36 +23,44 @@ export const newKeyContactFields = (
   createTextField('key_contact_name', 'Contact Name', {
     required: false,
     width: '190px',
-    regex: REGEX_PATTERNS.CONTACT_NAME,
-    regexErrorMessage:
-      "Only letters, spaces, apostrophes ('), commas (,), periods (.), and hyphens (-) are allowed",
     placeholder: 'Enter Contact Name',
     onChange: true,
     errorHandling: [
       {
-        regex: REGEX_PATTERNS.MIN_NAME_REGEX,
-        errorMessage: 'Key Contact Name must be more than 1 characters long',
+        regex: REGEX_PATTERNS.MIN_2,
+        errorMessage: 'Key Contact Name must be at least 2 characters long',
       },
       {
         regex: REGEX_PATTERNS.MAX_NAME_REGEX,
-        errorMessage: 'Max length exceeded',
+        errorMessage: 'Key Contact Name must not exceed 128 characters',
       },
       {
-        regex: REGEX_PATTERNS.NOT_ALLOW_SPACE_SYMBOLS_AT_START_END,
-        errorMessage: 'Cannot begin or end with a space or special character',
+        regex: REGEX_PATTERNS.CONTACT_NAME,
+        errorMessage:
+          "Key Contact Name can only contain letters, spaces, apostrophes ('), and hyphens (-)",
+      },
+      {
+        regex: REGEX_PATTERNS.KEY_CONTACT_NO_CONSECUTIVE,
+        errorMessage:
+          'Key Contact Name must not contain consecutive special characters',
+      },
+      {
+        regex: REGEX_PATTERNS.KEY_CONTACT_NO_TRAILING,
+        errorMessage:
+          'Key Contact Name cannot begin or end with a space or special character',
       },
     ],
   }),
   createSelectField('key_contact_role', 'Role', {
     options: roles,
-    width: '140px',
+    width: '180px',
     required: false,
     placeholder: 'Choose Role',
     onChange: true,
   }),
   createTextField('key_contact_email', 'Email', {
     required: false,
-    width: '160px',
+    width: '180px',
     placeholder: 'Enter Email',
     onChange: true,
     errorHandling: [
@@ -65,25 +74,32 @@ export const newKeyContactFields = (
       },
     ],
   }),
+  createTextField('key_contact_rid', 'Key Contact ID', {
+    required: false,
+    hide: true,
+    placeholder: '',
+  }),
   createRadioField('is_primary_contact', 'Is Primary Contact?', {
     radioOptions: YES_NO_OPTIONS,
     width: '140px',
     required: isPrimaryContactRequired,
     onChange: true,
   }),
-  createRadioField('include_in_communication', 'Include in Communications?', {
+  createRadioField('include_in_communication', 'Include In Communications?', {
     radioOptions: YES_NO_OPTIONS,
-    width: '190px',
+    width: '160px',
     required: false,
+    // defaultValue: YesNo.No,
   }),
   createSelectField('key_contact_status', 'Status', {
     required: false,
     width: '140px',
     options: STATUS_OPTIONS,
     placeholder: 'Choose Status',
+    defaultValue: STATUS_OPTIONS[0].value,
   }),
-  createImgButton(closeIcon, {
-    width: '60px',
+  createImgButton('button', closeIcon, {
+    width: '30px',
   }),
 ];
 
@@ -93,26 +109,28 @@ const createDynamicField = (
   removeKeyContact: (index: number) => void
 ) => {
   const fieldsArr = [];
-  const groupIndex = Math.floor(index / 7);
+  const groupIndex = Math.floor(index / 8);
   const { name, label, ...rest } = contacts;
+  const dynamicName = `${name}_${groupIndex}`;
   if (contacts.type === 'text') {
     fieldsArr.push(
-      createTextField(name + '_' + groupIndex, label, {
+      createTextField(dynamicName, label, {
         ...rest,
       })
     );
   }
   if (contacts.type === 'select') {
     fieldsArr.push(
-      createSelectField(name + '_' + groupIndex, label, {
+      createSelectField(dynamicName, label, {
         ...rest,
         options: rest.options || [],
       })
     );
   }
+
   if (contacts.type === 'radio') {
     fieldsArr.push(
-      createRadioField(name + '_' + groupIndex, label, {
+      createRadioField(dynamicName, label, {
         required: rest.required,
         width: rest.width,
         defaultValue: rest.defaultValue,
@@ -124,7 +142,7 @@ const createDynamicField = (
   }
   if (contacts.type === 'iconButton') {
     fieldsArr.push(
-      createImgButton('', {
+      createImgButton(dynamicName, '', {
         width: rest.width,
         onClick: () => removeKeyContact(index),
       })
@@ -142,7 +160,6 @@ export const FormData = (
   dataResidency: SelectOption[],
   industrys: SelectOption[],
   roles: SelectOption[],
-  isPrimaryContactRequired: boolean,
   isParentAccountRequired: boolean,
   keyContacts: FieldType[],
   addNewKeyContact: () => void,
@@ -157,13 +174,6 @@ export const FormData = (
         sectionName: 'Basic Information',
         fillType: 'half',
         fields: [
-          // createTextField('rid', 'Account ID', {
-          //   required: true,
-          //   regex: REGEX_PATTERNS.ALPHANUMERIC,
-          //   regexErrorMessage: 'Please Enter valid Account ID',
-          //   placeholder: 'Enter Account ID',
-          //   disabled: disableFields,
-          // }),
           createTextField('account_name', 'Name', {
             required: true,
             placeholder: 'Enter Name',
@@ -183,12 +193,6 @@ export const FormData = (
               },
             ],
           }),
-          createSelectField('industry_rid', 'Industry', {
-            options: industrys,
-            placeholder: 'Choose Industry',
-            required: true,
-            onChange: true,
-          }),
           createRadioField('is_parent', 'Is Parent Account', {
             radioOptions: YES_NO_OPTIONS,
             disabled: disableFields,
@@ -201,22 +205,21 @@ export const FormData = (
               ifNotMatchValue: DATA_STORAGE_OPTIONS[1].value,
             },
           }),
-          createTextField('website', 'Website', {
-            type: 'website',
-            required: false,
-            regex: REGEX_PATTERNS.WEBSITE,
-            regexErrorMessage: 'Enter a valid website URL',
-            placeholder: 'Enter Website',
-            errorHandling: [
-              {
-                regex: REGEX_PATTERNS.MIN_WEBSITE,
-                errorMessage: 'Minimum 10 characters required',
-              },
-              {
-                regex: REGEX_PATTERNS.MAX_WEBSITE,
-                errorMessage: 'Max length exceeded',
-              },
-            ],
+          createSelectField('parent_account_rid', 'Parent Account', {
+            options: parentAccount,
+            placeholder: 'Choose Parent Account',
+            required: isParentAccountRequired,
+            disabled: !isParentAccountRequired || disableFields,
+            clearValue: {
+              key: 'is_parent',
+              matchedValue: YesNo.Yes,
+            },
+          }),
+          createSelectField('industry_rid', 'Industry', {
+            options: industrys,
+            placeholder: 'Choose Industry',
+            required: true,
+            onChange: true,
           }),
           createTextField('industry_name_other', 'Industry-other', {
             required: true,
@@ -239,20 +242,40 @@ export const FormData = (
               },
             ],
           }),
+          createTextField('website', 'Website', {
+            type: 'text',
+            required: false,
+            regex: REGEX_PATTERNS.WEBSITE,
+            regexErrorMessage: 'Enter a valid website URL',
+            placeholder: 'Enter Website',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MIN_WEBSITE,
+                errorMessage: 'Minimum 10 characters required',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_WEBSITE,
+                errorMessage: 'Max length exceeded',
+              },
+            ],
+          }),
+          createTextField('annual_revenue', 'Annual Revenue', {
+            required: false,
+            regex: REGEX_PATTERNS.ANNUAL_REVENUE,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 12 digits and 2 decimal places',
+            placeholder: 'Enter Annual Revenue',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_ANNUAL_REVENUE,
+                errorMessage: 'Maximum length exceeded.',
+              },
+            ],
+          }),
           createSelectField('status', 'Status', {
             required: true,
             options: STATUS_OPTIONS,
             placeholder: 'Choose Status',
-          }),
-          createSelectField('parent_account_rid', 'Parent Account', {
-            options: parentAccount,
-            placeholder: 'Choose Parent Account',
-            required: isParentAccountRequired,
-            disabled: !isParentAccountRequired || disableFields,
-            clearValue: {
-              key: 'is_parent',
-              matchedValue: YesNo.Yes,
-            },
           }),
           // createTextField('project_manager', 'Delivery Manager', {
           //   required: false,
@@ -277,19 +300,6 @@ export const FormData = (
           //     },
           //   ],
           // }),
-          createTextField('annual_revenue', 'Annual Revenue', {
-            required: false,
-            regex: REGEX_PATTERNS.ANNUAL_REVENUE,
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 12 digits and 2 decimal places',
-            placeholder: 'Enter Annual Revenue',
-            errorHandling: [
-              {
-                regex: REGEX_PATTERNS.MAX_ANNUAL_REVENUE,
-                errorMessage: 'Maximum length exceeded.',
-              },
-            ],
-          }),
         ],
       },
       {
@@ -338,31 +348,6 @@ export const FormData = (
               ...createDynamicField(contacts, index, removeKeyContact),
             ])
             .flat(),
-          //
-          // createTextField('finance_poc_name', 'Finance Contact Name', {
-          //   required: true,
-          //   regex: REGEX_PATTERNS.LETTERS_3_TO_25,
-          //   regexErrorMessage: 'Letters Only and between 3 to 25 characters',
-          //   placeholder: 'Enter Finance point of contact',
-          // }),
-          // createTextField('finance_poc_email', 'Finance POC Email', {
-          //   required: true,
-          //   regex: REGEX_PATTERNS.EMAIL,
-          //   regexErrorMessage: 'Enter a valid email address',
-          //   placeholder: 'Enter Finance POC Email',
-          // }),
-          // createPhoneInputField(
-          //   'primary_contact_number',
-          //   'Primary Contact Phone',
-          //   {
-          //     required: true,
-          //     placeholder: 'Enter Primary Contact Phone',
-          //   }
-          // ),
-          // createPhoneInputField('finanace_poc_number', 'Finance POC Phone', {
-          //   required: true,
-          //   placeholder: 'Enter Finance POC Phone',
-          // }),
         ],
       },
       {
@@ -383,17 +368,6 @@ export const FormData = (
             required: true,
             disabled: disableFields,
           }),
-          createTextField('blended_rate_fte', 'Blended Rate - FTE', {
-            required: false,
-            regex: REGEX_PATTERNS.BLENDED_NUMBER,
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 3 digits and 2 decimal places',
-            placeholder: 'Enter Blended Rate - FTE',
-          }),
-          createRadioField('autosend_interaction', 'Auto Send Interaction', {
-            radioOptions: YES_NO_OPTIONS,
-            required: true,
-          }),
           createFiscalDateField('fiscal_end_date', 'Fiscal End', {
             disabled: disableFields,
             required: true,
@@ -403,6 +377,19 @@ export const FormData = (
                 'Fiscal End Date cannot be the same as the Fiscal Start Date',
             },
           }),
+          createEmptyField('', '', {
+            name: 'emptyData',
+            label: '',
+            type: '',
+            required: false,
+          }),
+          createTextField('blended_rate_fte', 'Blended Rate - FTE', {
+            required: false,
+            regex: REGEX_PATTERNS.BLENDED_NUMBER,
+            regexErrorMessage:
+              'Only positive numbers allowed, up to 3 digits and 2 decimal places',
+            placeholder: 'Enter Blended Rate - FTE',
+          }),
           createTextField('blended_rate_subcon', 'Blended Rate - SubCon', {
             required: false,
             regex: REGEX_PATTERNS.BLENDED_NUMBER,
@@ -410,7 +397,17 @@ export const FormData = (
               'Only positive numbers allowed, up to 3 digits and 2 decimal places',
             placeholder: 'Enter Blended Rate - SubCon',
           }),
+          createEmptyField('', '', {
+            name: 'emptyData',
+            label: '',
+            type: '',
+            required: false,
+          }),
           createRadioField('auto_access_rd', 'Auto Assessment', {
+            radioOptions: YES_NO_OPTIONS,
+            required: true,
+          }),
+          createRadioField('autosend_interaction', 'Auto Send Interaction', {
             radioOptions: YES_NO_OPTIONS,
             required: true,
           }),
@@ -482,11 +479,11 @@ export const FormData = (
       stateLoading,
       currency,
       roles,
-      isPrimaryContactRequired,
       dataResidency,
       showOthersField,
       keyContacts,
       addNewKeyContact,
+      removeKeyContact,
     ]
   );
 };

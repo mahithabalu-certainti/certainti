@@ -16,6 +16,7 @@ const BUTTON_STYLES = {
 };
 
 interface ProjectsDataProps {
+  accountInActive: boolean,
   permission: Permissions[];
   projectDetails?: NewProjectData | null;
   activeKey?: string;
@@ -44,6 +45,7 @@ const detailsTabs: DetailsTabs[] = [
 ];
 
 const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
+  accountInActive,
   projectDetails,
   isDetailsLoading,
   detailsError,
@@ -86,6 +88,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
     {
       label: 'Edit',
       variant: 'outlined' as const,
+      disabled: accountInActive,
       onClick: () => handleEdit(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
       hide: !projectEditIsEnable,

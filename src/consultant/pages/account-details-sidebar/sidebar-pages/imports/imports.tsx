@@ -50,28 +50,10 @@ const Import: React.FC<ImportProps> = ({ accountDetails }) => {
       onClick: () => console.log('Export clicked'),
     },
   ];
-  // const menuAccounts = [
-  //   {
-  //     label: 'Recently Added',
-  //     onClick: () => console.log('manage user clicked'),
-  //   },
-  //   {
-  //     label: 'Ascending',
-  //     onClick: () => console.log('Export clicked'),
-  //   },
-  //   {
-  //     label: 'Descending',
-  //     onClick: () => console.log('Export clicked'),
-  //   },
-  //   {
-  //     label: 'Popularity',
-  //     onClick: () => console.log('Export clicked'),
-  //   },
-  // ];
 
   return (
-    <div className='p-1 w-full'>
-      <div className='w-full h-12  flex justify-between items-center'>
+    <div className='w-full p-1'>
+      <div className='flex items-center justify-between w-full h-12'>
         <div className='bg-white border border-[#CBD6E27D] p-1 flex gap-2'>
           <button
             className={`flex items-center cursor-pointer font-medium justify-center text-[#2D3E4F] text-[14px] rounded w-[120px] h-[28px] border whitespace-nowrap ${

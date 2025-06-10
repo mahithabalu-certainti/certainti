@@ -1,14 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  CircularProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from '@mui/material';
+import { CircularProgress, Typography } from '@mui/material';
 import { SxProps } from '@mui/material';
 import React from 'react';
 import { leftArrowIcon } from '../../../../../assets';
@@ -20,6 +11,9 @@ import {
   formatDateToYYYYMMDDWithTime,
 } from '../../../account-details-sidebar/sidebar-pages/resources/utils';
 import { KeyContactProps } from '../../../account-details/utils';
+import { costDisplay } from '../../../../../common-utils';
+import DetailsSection from '../../../../../components/details-section/details';
+import KeyContactSection from '../../../../../components/details-section/keyContact';
 interface DetailItem {
   label: string;
   value: React.ReactNode;
@@ -73,242 +67,6 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   isDetailsLoading,
   detailsError,
 }) => {
-  const DetailsSection: React.FC<{
-    title: string;
-    data: DetailItem[];
-  }> = ({ title, data }) => {
-    // Split data into two columns
-    const leftColumn: DetailItem[] = [];
-    const rightColumn: DetailItem[] = [];
-
-    data.forEach((item, index) => {
-      if (index % 2 === 0) {
-        leftColumn.push(item);
-      } else {
-        rightColumn.push(item);
-      }
-    });
-
-    const renderValue = (value: React.ReactNode, label?: string) => {
-      if (typeof value === 'string') {
-        const status = value.toLowerCase();
-        if (status === 'active') {
-          return <span className='text-[#199806]'>Active</span>;
-        }
-        if (status === 'inactive') {
-          return <span className='text-[#f44336]'>In-Active</span>;
-        }
-        if (label && label.toLowerCase() === 'website') {
-          return (
-            <span className='font-medium text-[13px] text-[#425A76]'>
-              {value ? (
-                <a
-                  href={value}
-                  target='_blank'
-                  className='underline decoration-[#425A76]'
-                >
-                  {value}
-                </a>
-              ) : (
-                '-'
-              )}
-            </span>
-          );
-        }
-      }
-      return (
-        <span className='font-medium text-[13px] text-[#425A76]'>
-          {value || '-'}
-        </span>
-      );
-    };
-
-    return (
-      <div
-        className={
-          title === 'Basic Information' ? 'px-6 pt-2 mt-0' : 'px-6 pt-2 mt-3'
-        }
-      >
-        {title !== 'description' && (
-          <div className='text-[15px] text-[#2D3E4F] font-bold'>{title}</div>
-        )}
-
-        <div className='text-sm my-[6px] grid gap-y-3'>
-          {title === 'Comments' || title === 'description'
-            ? // Full-width single column layout for Comments
-              data.map((item, index) => (
-                <div
-                  key={`comment-row-${index}`}
-                  className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2'
-                >
-                  <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
-                    {item.label}
-                  </div>
-                  <div className='font-medium text-[13px] break-all overflow-hidden'>
-                    {renderValue(item.value)}
-                  </div>
-                </div>
-              ))
-            : leftColumn.map((leftItem, index) => {
-                const rightItem = rightColumn[index];
-
-                return (
-                  <div
-                    key={`row-${index}`}
-                    className='grid grid-cols-1 md:grid-cols-2 gap-6'
-                  >
-                    {/* Left column */}
-                    <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2'>
-                      <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
-                        {leftItem.label}
-                      </div>
-                      <div className='font-medium text-[13px] break-all overflow-hidden'>
-                        {renderValue(leftItem.value, leftItem.label)}
-                      </div>
-                    </div>
-
-                    {/* Right column */}
-                    {rightItem ? (
-                      <div className='grid grid-cols-[120px_auto] sm:grid-cols-[200px_auto] gap-x-2'>
-                        <div className='text-right font-semibold text-[13px] text-[#425A76] pr-1'>
-                          {rightItem.label}
-                        </div>
-                        <div className='font-medium text-[13px] break-all overflow-hidden'>
-                          {renderValue(rightItem.value, rightItem.label)}
-                        </div>
-                      </div>
-                    ) : (
-                      <div />
-                    )}
-                  </div>
-                );
-              })}
-        </div>
-      </div>
-    );
-  };
-
-  const KeyContactSection: React.FC<{
-    title: string;
-    data: trasnformedKeyContacts[];
-  }> = ({ title, data }) => {
-    return (
-      <div className=''>
-        <div className='flex items-center align-middle px-6 h-[30px] border-x-0 border border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#F5F9FF]'>
-          {title}
-        </div>
-        <TableContainer
-          sx={{
-            'overflow-x': 'auto',
-          }}
-        >
-          <Table>
-            <TableHead
-              sx={{
-                '& .MuiTableCell-root': {
-                  fontWeight: 700,
-                  fontSize: '13px',
-                  color: '#2A2A2A',
-                  padding: '0px 8px',
-                  height: '29px',
-                  boxSizing: 'border-box',
-                  backgroundColor: ' #FCFCFC',
-                  borderBottom: '1px solid #CBD6E2',
-                },
-                '& .MuiTableCell-root:first-of-type': {
-                  paddingLeft: '24px',
-                },
-              }}
-            >
-              <TableRow sx={{ height: 29 }}>
-                <TableCell sx={{ minWidth: '140px' }}>ID</TableCell>
-                <TableCell sx={{ minWidth: '140px' }}>Name</TableCell>
-                <TableCell sx={{ minWidth: '140px' }}>Role</TableCell>
-                <TableCell sx={{ minWidth: '180px' }}>Email</TableCell>
-                <TableCell sx={{ minWidth: '140px' }}>
-                  Is Primary Contact?
-                </TableCell>
-                <TableCell sx={{ minWidth: '190px' }}>
-                  Include in Communications?
-                </TableCell>
-                <TableCell sx={{ minWidth: '140px', borderRight: 'none' }}>
-                  Status
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody
-              sx={{
-                '& .MuiTableCell-root': {
-                  padding: '0px 8px',
-                  borderBottom: '1px solid #CBD6E2',
-                  // borderTop: 'none',
-                  height: '30px',
-                  color: '#425A76',
-                  fontWeight: 500,
-                  fontSize: '13px',
-                  // borderRight: 'none',
-                },
-                '& .MuiTableRow-root > .MuiTableCell-root:first-of-type': {
-                  paddingLeft: '24px',
-                },
-              }}
-            >
-              {data.map((field) => (
-                <TableRow
-                  sx={{
-                    '& .MuiTableCell-root': {
-                      height: '30px !important',
-                    },
-                  }}
-                >
-                  <TableCell sx={{ minWidth: '140px' }}>
-                    {field.keyContactId || '-'}
-                  </TableCell>
-                  <TableCell sx={{ minWidth: '140px' }}>
-                    {field.keyContactName || '-'}
-                  </TableCell>
-                  <TableCell sx={{ minWidth: '140px' }}>
-                    {field.keyContactRole || '-'}
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      minWidth: '180px',
-                      textDecoration: field.keyContactEmail
-                        ? 'underline'
-                        : 'none',
-                      textDecorationColor: '#425A76',
-                    }}
-                  >
-                    {field.keyContactEmail || '-'}
-                  </TableCell>
-                  <TableCell sx={{ minWidth: '140px' }}>
-                    {field.isPrimaryContact ? 'Yes' : 'No'}
-                  </TableCell>
-                  <TableCell sx={{ minWidth: '190px' }}>
-                    {field.includeInCommnunications ? 'Yes' : 'No'}
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      minWidth: '140px',
-                      borderRight: 'none',
-                      color:
-                        field.keyContactStatus?.toLowerCase() === 'active'
-                          ? '#3EA72F !important'
-                          : '#f44336 !important',
-                    }}
-                  >
-                    {field.keyContactStatus?.toLowerCase() === 'active'
-                      ? 'Active'
-                      : 'In-Active'}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </div>
-    );
-  };
   if (isDetailsLoading) {
     return (
       <div className='flex items-center justify-center h-64'>
@@ -346,8 +104,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       </div>
     );
   }
-  const isKeyContactAvailable =
-    projectDetails?.keyContact && projectDetails.keyContact.length > 0;
+
   const CreateSectionData = (
     dataObj: Partial<NewProjectData>,
     customMappings?: Record<string, (val: any) => React.ReactNode>
@@ -392,29 +149,35 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     });
   };
 
-  const basicInfo = CreateSectionData({
-    project_code: projectDetails?.project_code,
-    fiscal_year: projectDetails?.fiscal_year,
-    name: projectDetails?.project_name,
-    start_date: projectDetails?.project_startdate,
-    program_name: projectDetails?.program_name,
-    end_date: projectDetails?.project_enddate,
-    project_group: projectDetails?.project_group,
-    industry:
-      projectDetails?.industry_name || projectDetails?.industry_rid_name,
-    client_group: projectDetails?.project_client_group,
-    classification:
-      projectDetails?.project_classification_other ||
-      projectDetails?.classification_name,
-    project_type: projectDetails?.project_type,
-    status: projectDetails?.project_status,
-  });
+  const basicInfo: DetailItem[] = [
+    { label: 'Project Code', value: projectDetails?.project_code },
+    { label: 'Fiscal Year', value: projectDetails?.fiscal_year },
+    { label: 'Name', value: projectDetails?.project_name },
+    { label: 'Project Type', value: projectDetails?.project_type },
+    { label: 'Start Date', value: projectDetails?.project_startdate },
+    { label: 'End Date', value: projectDetails?.project_enddate },
+    {
+      label: 'Classification',
+      value:
+        projectDetails?.project_classification_other ||
+        projectDetails?.classification_name,
+    },
 
-  const locationInfo = CreateSectionData({
-    country: projectDetails?.country_name,
-    region: projectDetails?.region_name,
-    currency: projectDetails?.currency_name,
-  });
+    { label: 'Project Group', value: projectDetails?.project_group },
+    { label: 'Client Group', value: projectDetails?.project_client_group },
+    { label: 'Program Name', value: projectDetails?.program_name },
+    {
+      label: 'Industry',
+      value: projectDetails?.industry_name || projectDetails?.industry_rid_name,
+    },
+    { label: 'Status', value: projectDetails?.project_status },
+  ];
+
+  const locationInfo: DetailItem[] = [
+    { label: 'Country', value: projectDetails?.country_name },
+    { label: 'Region', value: projectDetails?.region_name },
+    { label: 'Currency', value: projectDetails?.currency_name },
+  ];
 
   const keyContactsList: trasnformedKeyContacts[] | undefined =
     projectDetails?.keyContact?.map((contact: KeyContactProps) => ({
@@ -427,33 +190,54 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       keyContactStatus: contact.status,
     }));
   const financialInfo: DetailItem[] = [
-    { label: 'Total Effort in Hrs', value: projectDetails?.total_effort },
-    { label: 'Total Cost', value: projectDetails?.total_cost },
+    { label: 'Total FTE Count', value: projectDetails?.total_fte },
+    {
+      label: 'Total Sub Con Count',
+      value: projectDetails?.total_sub_con,
+    },
+    { label: '', value: 'empty' },
     { label: 'Total FTE Effort', value: projectDetails?.total_fte_effort },
-    { label: 'Total FTE Cost', value: projectDetails?.total_fte_cost },
-
     {
       label: 'Total Sub Con Effort',
       value: projectDetails?.total_sub_con_effort,
     },
-    { label: 'Total Sub Con Cost', value: projectDetails?.total_sub_con_cost },
-    { label: 'Total FTE Count', value: projectDetails?.total_fte },
+    { label: 'Total Effort in Hrs', value: projectDetails?.total_effort },
+    {
+      label: 'Total FTE Cost',
+      value: costDisplay(
+        projectDetails?.total_fte_cost,
+        projectDetails?.currency_symbol
+      ),
+    },
+    {
+      label: 'Total Sub Con Cost',
+      value: costDisplay(
+        projectDetails?.total_sub_con_cost,
+        projectDetails?.currency_symbol
+      ),
+    },
 
     {
       label: 'Total Non Labor Cost',
-      value: projectDetails?.total_non_labor_cost,
+      value: costDisplay(
+        projectDetails?.total_non_labor_cost,
+        projectDetails?.currency_symbol
+      ),
     },
     {
-      label: 'Total Sub Con Count',
-      value: projectDetails?.total_sub_con,
+      label: 'Total Cost',
+      value: costDisplay(
+        projectDetails?.total_cost,
+        projectDetails?.currency_symbol
+      ),
     },
   ];
 
   const auditInfo = CreateSectionData({
     record_id: projectDetails?.rid,
-    project_id: projectDetails?.r_number,
     created_on: projectDetails?.created_datetime,
     created_by: projectDetails?.created_name,
+    project_id: projectDetails?.r_number,
     updated_on: projectDetails?.modified_datetime,
     Updated_By: projectDetails?.modified_name,
   });
@@ -474,21 +258,21 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   });
 
   const settingInfo: DetailItem[] = [
-    {
-      label: 'Auto Send Interaction',
-      value: projectDetails?.auto_send_ai_interaction ? 'Yes' : 'No',
-    }, // need to Discuss
     { label: 'Blended Rate - FTE', value: projectDetails?.blended_rate_fte },
-
-    {
-      label: 'Auto Assessment',
-      value: projectDetails?.auto_access_rd ? 'Yes' : 'No',
-    },
-
     {
       label: 'Blended Rate - SubCon',
       value: projectDetails?.blended_rate_sub_con,
     },
+    { label: '', value: 'empty' },
+    {
+      label: 'Auto Assessment',
+      value: projectDetails?.auto_access_rd ? 'Yes' : 'No',
+    },
+    {
+      label: 'Auto Send Interaction',
+      value: projectDetails?.auto_send_ai_interaction ? 'Yes' : 'No',
+    }, // need to Discuss
+
     {
       label: 'Max Interaction Follow up',
       value: projectDetails?.max_ai_interaction,
@@ -543,21 +327,19 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
           <DetailsSection
             title='Basic Information'
             data={basicInfo as DetailItem[]}
+            customStyle='pt-2 mt-0'
           />
-          <DetailsSection
-            title='description'
-            data={description as DetailItem[]}
-          />
+          <DetailsSection title='' data={description as DetailItem[]} />
           <DetailsSection
             title='Location and Currency Information'
             data={locationInfo as DetailItem[]}
           />
-          {isKeyContactAvailable && keyContactsList && (
-            <KeyContactSection
-              title='Key Contacts List'
-              data={keyContactsList}
-            />
-          )}
+          {/* {isKeyContactAvailable && keyContactsList && ( */}
+          <KeyContactSection
+            title='Key Contacts List'
+            data={keyContactsList || []}
+          />
+          {/* )} */}
           <DetailsSection
             title='Financial Information'
             data={financialInfo as DetailItem[]}

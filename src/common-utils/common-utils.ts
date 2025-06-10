@@ -17,6 +17,7 @@ import {
 
 import {
   AllowedCountry,
+  enumValue,
   ErrorHandling,
   FieldType,
   InputType,
@@ -155,6 +156,7 @@ export const createRadioField = (
   disabled: options.disabled,
   onChange: options.onChange,
   defaultSelect: options.defaultSelect,
+  defaultValue: options.defaultValue,
 });
 
 export const createSelectField = (
@@ -170,6 +172,7 @@ export const createSelectField = (
     onChange?: boolean;
     isLoading?: boolean;
     resetDependsFields?: string[];
+    defaultValue?: string;
   }
 ): FieldType => ({
   type: 'select',
@@ -183,6 +186,7 @@ export const createSelectField = (
   clearValue: others.clearValue,
   onChange: others.onChange,
   isLoading: others.isLoading,
+  defaultValue: others.defaultValue,
   resetDependsFields: others.resetDependsFields,
 });
 
@@ -201,24 +205,33 @@ export const createButton = (
   iconUrl: others.iconUrl,
   onClick: others.onClick,
 });
+export const createEmptyField = (
+  name: string,
+  label: string,
+  options?: { name?: string; label?: string; type?: string; required?: boolean }
+): FieldType => ({
+  type: 'emptyFeild',
+  name: options?.name || name,
+  label: options?.label || label,
+  required: options?.required ?? false,
+});
 
 export const createImgButton = (
+  name: string,
   iconUrl: string,
   others?: {
     width?: string;
-    onClick?: (index: number) => void;
+    onClick?: (e?: React.MouseEvent<HTMLElement>) => void;
   }
 ): FieldType => ({
   type: 'iconButton',
   iconUrl: iconUrl,
-  name: '',
+  name: name,
   label: '',
   required: false,
   width: others?.width,
-  onClick: (index?: number) => {
-    if (others?.onClick && index !== undefined) {
-      others.onClick(index);
-    }
+  onClick: (e?: React.MouseEvent<HTMLElement>) => {
+    others?.onClick?.(e);
   },
 });
 
@@ -281,6 +294,10 @@ export const YES_NO_OPTIONS: SelectOption[] = [
   { label: 'Yes', value: YesNo.Yes },
   { label: 'No', value: YesNo.No },
 ];
+export const PROJECT_YES_NO_OPTIONS: SelectOption[] = [
+  { label: 'Yes', value: enumValue.Yes },
+  { label: 'No', value: enumValue.No },
+];
 
 export interface ActionsDropdownItem {
   label: string;
@@ -294,7 +311,7 @@ export const REGEX_PATTERNS = {
   LETTERS_SPACES: /^[A-Za-z\s]+$/,
   ACCOUNT_NAME: /^[A-Za-z0-9 &'.,-]+$/,
   PROJECT_NAME: /^[A-Za-z0-9 &'.,_-]+$/,
-  CONTACT_NAME: /^[A-Za-z &'’.,\-\\–\\—]+$/,
+  CONTACT_NAME: /^[A-Za-z\s'-]+$/,
   INDUSTRY: /^[A-Za-z &]{5,25}$/,
   LETTERS_5_TO_25: /^[A-Za-z\s]{5,25}$/,
   LETTERS_3_TO_25: /^(?!.*\s{2,-'})[A-Za-z\s]{3,25}$/,
@@ -306,7 +323,7 @@ export const REGEX_PATTERNS = {
     /^(?=.{6,254}$)[a-zA-Z0-9]+(?:[._+-][a-zA-Z0-9]+)*@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63}$/,
   PHONE: /^([0-9]{10})$/,
   WEBSITE:
-    /^(https?:\/\/|www\.)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(:[0-9]+)?(\/[a-zA-Z0-9\-.:/]*)?$/,
+    /([Hh][Tt][Tt][Pp][Ss]?:\/\/|[Ww][Ww][Ww]\.)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(:[0-9]+)?(\/[a-zA-Z0-9\-.:]*)?/,
   MAX_WEBSITE: /^.{0,255}$/,
   MIN_WEBSITE: /^.{10,}$/,
   DATA_RESIDENCY: /^[A-Za-z0-9\s-]+$/,
@@ -377,6 +394,10 @@ export const REGEX_PATTERNS = {
   SKILL_OTHERS_ALLOWED_CHARS_REGEX: /^[A-Za-z\-'._\s]+$/,
   SKILL_OTHERS_NO_CONSECUTIVE_SPECIALS_REGEX: /^(?!.*[&\-.'", ]{2})/,
   CONSECUTIVE_SPECIAL_CHARS: /^(?!.*[ '\\-]{2})/,
+  EFFORT_IN_HOURS_REGEX: /^(0|([1-9]\d{0,15}))(\.\d{1,2})?$/,
+  MAX_EFFORT_IN_HOURS: /^.{1,18}$/,
+  KEY_CONTACT_NO_CONSECUTIVE: /^(?!.*[-'\s]{2,})/,
+  KEY_CONTACT_NO_TRAILING: /^[A-Za-z].*[A-Za-z]$/,
 };
 
 /**
@@ -535,5 +556,22 @@ export const formatDateToYYYYMMDDWithTime = (
 
   const formattedTime = `${String(hours).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
 
-  return `${year}/${month}/${day}, ${formattedTime}`;
+  return `${year}-${month}-${day}, ${formattedTime}`;
+};
+
+export const costDisplay = (
+  cost: string | number | null | undefined,
+  symbol: string = '$'
+) => {
+  if (cost === null || cost === undefined) return '-';
+
+  const numberCost = Number(cost);
+  const hasDecimal = !Number.isInteger(numberCost);
+
+  const formattedCost = numberCost.toLocaleString('en-US', {
+    minimumFractionDigits: hasDecimal ? 2 : 0,
+    maximumFractionDigits: hasDecimal ? 2 : 0,
+  });
+
+  return symbol ? `${symbol} ${formattedCost}` : formattedCost;
 };

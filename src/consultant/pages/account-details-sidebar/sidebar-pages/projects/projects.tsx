@@ -60,6 +60,11 @@ const Projects: React.FC<ProjectsProps> = ({
     (state: RootState) => state.account
   );
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
+  const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
+    Date.now()
+  );
+  const accountInActive =
+    accountDetails?.data?.accountById?.status === 'inactive';
 
   // Permission Mangement
   const { modules, permission } = useSelector(
@@ -99,10 +104,13 @@ const Projects: React.FC<ProjectsProps> = ({
       fiscalYear: convertedFiscalYear,
       accountNumber: accountDetails?.data?.accountDetails?.account_rid || '',
     },
-    projectOverviewIsEnable && projectViewAllIsEnable
+    projectOverviewIsEnable && projectViewAllIsEnable,
+    refreshProjectsTrigger
   );
   const totalItems = data?.count || 0;
-
+  const onRefreshClick = () => {
+    setRefreshProjectsTrigger(Date.now());
+  };
   useEffect(() => {
     const isHide = (tab: ResourceTabs) => {
       return (
@@ -151,11 +159,13 @@ const Projects: React.FC<ProjectsProps> = ({
   const actionMenuItems = [
     {
       label: 'Edit',
+      disabled: accountInActive,
       onClick: (row: any) => handleEdit(row),
       hide: !projectEditIsEnable,
     },
     {
       label: 'Delete',
+      disabled: accountInActive,
       onClick: (row: any) => console.log('Delete', row),
       hide: !projectDeleteIsEnable,
     },
@@ -177,6 +187,7 @@ const Projects: React.FC<ProjectsProps> = ({
     {
       label: 'New',
       variant: 'outlined' as const,
+      disabled: accountInActive,
       onClick: () => handleCreateProject(),
       sx: { ...BUTTON_STYLES, width: '61px', minWidth: '61px' },
       hide: !projectCreateIsEnable,
@@ -221,6 +232,8 @@ const Projects: React.FC<ProjectsProps> = ({
         handleFilter={handleFilter}
         setCurrentPage={setCurrentPage}
         resourceTab={projectsTabs}
+        showRefresh={true}
+        onRefreshClick={onRefreshClick}
       />
       {projectOverviewIsEnable && projectViewAllIsEnable ? (
         <>
@@ -247,7 +260,7 @@ const Projects: React.FC<ProjectsProps> = ({
               error={error ? 'Failed to load projects' : undefined}
               rowsPerPageOptions={[25, 50, 100]}
               rowsPerPage={rowsPerPage}
-              currentPage={(currentPage ?? 1) - 1}
+              currentPage={currentPage ?? 1}
               totalItems={totalItems}
               onPageChange={setCurrentPage}
               onRowsPerPageChange={setRowsPerPage}

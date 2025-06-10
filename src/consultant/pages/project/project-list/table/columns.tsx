@@ -1,15 +1,16 @@
+import { costDisplay } from '../../../../../common-utils';
 import { ProjectTableColumn, ProjectList } from '../../../../types/project';
-import { formatDateToYMD } from '../../../account-details-sidebar/sidebar-pages/projects/columns';
+import { formatDateToYYYYMMDD } from '../../../account-details-sidebar/sidebar-pages/resources/utils';
 
 export const getAllProjectListColumns = (
   onClick: (row: ProjectList) => void
 ): ProjectTableColumn<ProjectList>[] => [
   {
-    id: 'account_name',
-    label: 'Account Name',
+    id: 'project_code',
+    label: 'Project Code',
     sortable: true,
-    sortId: 'account_name',
-    width: 150,
+    sortId: 'project_code',
+    width: 160,
     sticky: true,
     sx: {
       position: 'sticky',
@@ -25,11 +26,32 @@ export const getAllProjectListColumns = (
           onClick={() => onClick(row)}
           className='cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
         >
-          {row.account_name}
+          {row.project_code}
         </span>
       ) : (
-        row.account_name
+        row.project_code
       ),
+  },
+  {
+    id: 'project_name',
+    label: 'Name',
+    sortable: true,
+    sortId: 'project_name',
+    width: 160,
+  },
+  {
+    id: 'project_type',
+    label: 'Project Type',
+    sortable: true,
+    sortId: 'project_type',
+    width: 160,
+  },
+  {
+    id: 'account_name',
+    label: 'Account Name',
+    sortable: true,
+    sortId: 'account_name',
+    width: 150,
   },
   {
     id: 'fiscal_year',
@@ -40,6 +62,13 @@ export const getAllProjectListColumns = (
     sx: {
       textAlign: 'right',
     },
+  },
+  {
+    id: 'classification_name',
+    label: 'Project Classification',
+    sortable: true,
+    sortId: 'classification_name',
+    width: 170,
   },
   {
     id: 'project_client_group',
@@ -54,34 +83,6 @@ export const getAllProjectListColumns = (
     sortable: true,
     sortId: 'project_group',
     width: 160,
-  },
-  {
-    id: 'project_code',
-    label: 'Project Code',
-    sortable: true,
-    sortId: 'project_code',
-    width: 160,
-  },
-  {
-    id: 'project_name',
-    label: 'Project Name',
-    sortable: true,
-    sortId: 'project_name',
-    width: 160,
-  },
-  {
-    id: 'project_type',
-    label: 'Project Type',
-    sortable: true,
-    sortId: 'project_type',
-    width: 160,
-  },
-  {
-    id: 'classification_name',
-    label: 'Project Classification',
-    sortable: true,
-    sortId: 'classification_name',
-    width: 170,
   },
   {
     id: 'total_effort',
@@ -102,6 +103,8 @@ export const getAllProjectListColumns = (
     sx: {
       textAlign: 'right',
     },
+    render: (row: ProjectList) =>
+      row.total_cost ? costDisplay(row.total_cost, row.currency_symbol) : '-',
   },
   {
     id: 'total_fte_cost',
@@ -112,6 +115,10 @@ export const getAllProjectListColumns = (
     sx: {
       textAlign: 'right',
     },
+    render: (row: ProjectList) =>
+      row.total_fte_cost
+        ? costDisplay(row.total_fte_cost, row.currency_symbol)
+        : '-',
   },
   {
     id: 'total_sub_con_cost',
@@ -122,6 +129,10 @@ export const getAllProjectListColumns = (
     sx: {
       textAlign: 'right',
     },
+    render: (row: ProjectList) =>
+      row.total_sub_con_cost
+        ? costDisplay(row.total_sub_con_cost, row.currency_symbol)
+        : '-',
   },
   {
     id: 'total_non_labor_cost',
@@ -132,6 +143,10 @@ export const getAllProjectListColumns = (
     sx: {
       textAlign: 'right',
     },
+    render: (row: ProjectList) =>
+      row.total_non_labor_cost
+        ? costDisplay(row.total_non_labor_cost, row.currency_symbol)
+        : '-',
   },
   {
     id: 'assessment_status',
@@ -149,6 +164,8 @@ export const getAllProjectListColumns = (
     sx: {
       textAlign: 'right',
     },
+    render: (row: ProjectList) =>
+      row.qre ? costDisplay(row.qre, row.currency_symbol) : '-',
   },
   {
     id: 'qualified_research_expenditure',
@@ -159,6 +176,10 @@ export const getAllProjectListColumns = (
     sx: {
       textAlign: 'right',
     },
+    render: (row: ProjectList) =>
+      row.qualified_research_expenditure
+        ? costDisplay(row.qualified_research_expenditure, row.currency_symbol)
+        : '-',
   },
   {
     id: 'project_point_of_contact',
@@ -186,9 +207,9 @@ export const getAllProjectListColumns = (
     label: 'Last Modified',
     sortable: true,
     sortId: 'modified_datetime',
-    width: 130,
+    width: 140,
     render: (row: ProjectList) =>
-      row.modified_datetime ? formatDateToYMD(row.modified_datetime) : '-',
+      row.modified_datetime ? formatDateToYYYYMMDD(row.modified_datetime) : '-',
   },
   {
     id: 'r_number',

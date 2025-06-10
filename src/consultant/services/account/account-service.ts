@@ -11,6 +11,7 @@ import {
   AccountListURLParams,
   CitysApiResponse,
   ClassificationApiResponse,
+  ColorCodeApiResponse,
   CurrencyApiResponse,
   GlobalAccountListResponse,
   IndustrysApiResponse,
@@ -23,6 +24,7 @@ import {
   AccountListURL,
   CityUrl,
   ClassificationUrl,
+  ColorCodeUrl,
   CurrencyUrl,
   getAccountExportUrl,
   getKeyContactRolesUrl,
@@ -70,10 +72,11 @@ export const fetchAccounts = async (
 
 export const useAccounts = (
   params: AccountListURLParams = {},
-  options?: UseQueryOptions<{ accounts: AccountList[]; count: number }, Error>
+  options?: UseQueryOptions<{ accounts: AccountList[]; count: number }, Error>,
+  refreshAccountTrigger?: number
 ): UseQueryResult<{ accounts: AccountList[]; count: number }, Error> => {
   return useQuery<{ accounts: AccountList[]; count: number }, Error>({
-    queryKey: ['accounts', params],
+    queryKey: ['accounts', params, refreshAccountTrigger],
     queryFn: () => fetchAccounts(params),
     retry: 0,
     ...options,
@@ -98,6 +101,13 @@ export const fetchCurrency = async (): Promise<CurrencyApiResponse> => {
     await accountServiceApi.get<CurrencyApiResponse>(CurrencyUrl);
   return data;
 };
+
+export const fetchColorCodes = async (): Promise<ColorCodeApiResponse> => {
+  const { data } =
+    await accountServiceApi.get<ColorCodeApiResponse>(ColorCodeUrl);
+  return data;
+};
+
 export const fetchClassification =
   async (): Promise<ClassificationApiResponse> => {
     const { data } =
@@ -153,23 +163,25 @@ export const exportAccountList = async (params: AccountListURLParams = {}) => {
   document.body.removeChild(link);
 };
 
-export const fetchKeyContactRoles =
-  async (): Promise<keyContactRolesApiResponse> => {
-    try {
-      const { data } = await accountServiceApi.get<keyContactRolesApiResponse>(
-        getKeyContactRolesUrl()
-      );
-      return data;
-    } catch (error) {
-      console.error('Error fetching key contact roles:', error);
-      throw error;
-    }
-  };
+export const fetchKeyContactRoles = async (
+  entityType: string
+): Promise<keyContactRolesApiResponse> => {
+  try {
+    const { data } = await accountServiceApi.get<keyContactRolesApiResponse>(
+      getKeyContactRolesUrl(entityType)
+    );
+    return data;
+  } catch (error) {
+    console.error('Error fetching key contact roles:', error);
+    throw error;
+  }
+};
 
-export const useKeyContactRoles = () => {
+export const useKeyContactRoles = (entityType: string) => {
   return useQuery<keyContactRolesApiResponse, Error>({
     queryKey: ['keyContactRoles'], // Unique query key
-    queryFn: () => fetchKeyContactRoles(),
+    queryFn: () => fetchKeyContactRoles(entityType),
     retry: 0,
+    enabled: !!entityType,
   });
 };

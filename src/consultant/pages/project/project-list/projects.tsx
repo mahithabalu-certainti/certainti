@@ -38,10 +38,18 @@ export const Projects: React.FC = () => {
     sortBy: 'createdAt',
     sortOrder: 'DESC',
     fiscalYear: 0,
+    globalFilters: {},
   });
-
+  const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
+    Date.now()
+  );
+  const onRefreshClick = () => {
+    setRefreshProjectsTrigger(Date.now()); // unique on every click
+  };
   // Permission Mangement
-  const { modules, permission } = useSelector((state: RootState) => state.permission);
+  const { modules, permission } = useSelector(
+    (state: RootState) => state.permission
+  );
   const projectIsEnable = checkPermission(modules, AllModules.PROJECTS);
   const isProjectExportEnable = checkPermission(
     permission,
@@ -74,6 +82,7 @@ export const Projects: React.FC = () => {
       sortOrder: tableParams.sortOrder,
       filters: appliedFilters,
       fiscalYear: tableParams.fiscalYear,
+      globalFilters: tableParams.globalFilters,
     };
     exportProjectData('projectall', projectParams);
   };
@@ -126,7 +135,7 @@ export const Projects: React.FC = () => {
             />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-bold text-[16px] text-[#2D3E4F]'>
-                All Projects
+                Projects
               </div>
               <div className='font-semibold text-[#7D98B6] text-[12px] -mt-1'>
                 {`All Projects • ${totalCount} items`}
@@ -147,7 +156,10 @@ export const Projects: React.FC = () => {
             }}
           /> */}
           <div className='flex items-center justify-center border border-[#EAF0F5] w-[48px] h-[24px]'>
-            <div className='flex items-center justify-center w-1/2'>
+            <div
+              className='flex items-center justify-center w-1/2  cursor-pointer'
+              onClick={onRefreshClick}
+            >
               <img src={refreshIcon} alt='refresh-icon' className='h-4' />
             </div>
             <div className='border-l border-[#EAF0F5] h-full'></div>
@@ -204,6 +216,7 @@ export const Projects: React.FC = () => {
           setTotalCount={setTotalCount}
           isProjectEditEnable={isProjectEditEnable}
           isProjectDeleteEnable={isProjectDeleteEnable}
+          refreshProjectsTrigger={refreshProjectsTrigger}
         />
       </div>
     </div>

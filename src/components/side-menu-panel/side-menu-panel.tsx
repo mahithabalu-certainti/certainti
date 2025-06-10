@@ -59,7 +59,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
   };
 
   return (
-    <div className='w-full bg-white border-r border-[#CBD6E2] py-2'>
+    <div className='w-full h-full bg-white border-r border-[#CBD6E2] py-2'>
       {/* Header */}
       <div className='flex items-center gap-1.5 mb-1'>
         {showBackIcon && (

@@ -37,7 +37,6 @@ import {
 } from './utils.tsx';
 import { SkillSubtype, SkillType } from '../../types/resource.ts';
 import {
-  formatDateToYYYYMMDD,
   formatDateToYYYYMMDDWithTime
 } from '../account-details-sidebar/sidebar-pages/resources/utils.tsx';
 
@@ -133,8 +132,8 @@ const ResourceForm: React.FC = () => {
         resourceDetailsData?.resource_total_experience_organization,
       Record_id: resourceDetailsData?.rid,
       Resource_id: resourceDetailsData?.r_number,
-      resource_startdate: formatDateToYYYYMMDD(resourceDetailsData?.resource_startdate),
-      resource_enddate: formatDateToYYYYMMDD(resourceDetailsData?.resource_enddate),
+      resource_startdate: resourceDetailsData?.resource_startdate,
+      resource_enddate: resourceDetailsData?.resource_enddate,
       Created_On: formatDateToYYYYMMDDWithTime(resourceDetailsData?.created_datetime),
       Created_By: resourceDetailsData?.created_by,
       Updated_On: formatDateToYYYYMMDDWithTime(resourceDetailsData?.modified_datetime),
@@ -178,11 +177,12 @@ const ResourceForm: React.FC = () => {
 
   useEffect(() => {
     const formValues = resource?.data?.resourceDetails;
-    if (state?.cost && isSuccess && costSuccess && isEditView) {
+    if (state?.cost && isSuccess && costInfo && costSuccess && isEditView) {
       const costValues = {
         ...formValues,
-        financial_start_date: formatDateToYYYYMMDD(costInfo?.effective_date) || '',
-        financial_end_date: formatDateToYYYYMMDD(costInfo?.end_date) || '',
+        financial_start_date: costInfo?.effective_date || '',
+        financial_end_date: costInfo?.end_date || '',
+        effort_in_hrs: costInfo?.effort_in_hrs || '',
         currency: costInfo?.currency_rid || null,
         annual_cost: costInfo?.annual_cost || '',
         monthly_cost: costInfo?.monthly_cost || '',
@@ -201,14 +201,19 @@ const ResourceForm: React.FC = () => {
         skill_details: skillInfo?.skillDetails || '',
         skill_type: skillInfo?.skillTypeId || '',
         skill_sub_type: skillInfo?.skillSubTypeId || '',
-        skill_start_date:
-          formatDateToYYYYMMDD(skillInfo?.startDate as string) || '',
+        skill_start_date: skillInfo?.startDate as string || '',
         skill_type_others: skillInfo?.skillTypeOthers || '',
         skill_subtype_others: skillInfo?.skillSubTypeOthers || '',
         years_of_experience: skillInfo?.yearsOfExperience || '',
         comments: skillInfo?.comments || '',
       };
       setFormValues(skillValues);
+    } else if (formValues && !isEditView && state?.cost) {
+      const values = {
+        ...formValues,
+        currency: costAndSKillAccountInfo?.currency_rid || null,
+      }
+      setFormValues(values);
     } else if (formValues && !isEditView) {
       // Set form values with resource details when creataing cost and skill
       setFormValues(formValues);

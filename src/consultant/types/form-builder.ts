@@ -1,7 +1,9 @@
 export interface FormType {
   sectionName: string;
   fillType: 'half' | 'full' | 'quarter';
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   fields: FormTypeFields[];
+
   hide?: boolean;
 }
 
@@ -46,7 +48,7 @@ export interface FormTypeFields {
   endDateLabel?: string;
   defaultValue?: string;
   errorHandling?: ErrorHandling[];
-  onClick?: () => void;
+  onClick?: (event?: React.MouseEvent<HTMLElement>) => void;
   iconUrl?: string;
 }
 
@@ -66,6 +68,7 @@ export type InputType =
   | 'phone'
   | 'fiscalDate'
   | 'button'
+  | 'emptyFeild'
   | 'website'
   | 'iconButton';
 
@@ -115,7 +118,7 @@ export interface FieldType {
     maxErrorMessage: string;
   };
   onChange?: boolean;
-  onClick?: (index?: number) => void;
+  onClick?: (event?: React.MouseEvent<HTMLElement>) => void;
   anyOneRequired?: boolean; // financial information error handling
   isLoading?: boolean;
   errorHandling?: ErrorHandling[];
@@ -132,4 +135,4 @@ export type AllowedCountry =
   | 'au'
   | 'fr';
 
-  export type GroupFields = Map<string, string[]>;
+export type GroupFields = Map<string, string[]>;

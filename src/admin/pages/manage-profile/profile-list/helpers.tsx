@@ -22,6 +22,12 @@ export const getManageProfileFilterfields = (): FieldConfig[] => [
     operatorOption: textfieldOptions,
   },
   {
+    label: 'Profile Description',
+    name: 'profile_description',
+    type: 'text',
+    operatorOption: textfieldOptions,
+  },
+  {
     label: 'Created On',
     name: 'created_datetime',
     type: 'date',

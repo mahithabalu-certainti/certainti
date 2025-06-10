@@ -119,7 +119,13 @@ const Resource: React.FC<ResourceProps> = ({
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
   const accountInActive =
     accountDetails?.data?.accountById?.status === 'inactive';
-
+  const [refreshTrigger, setRefreshTrigger] = useState<number>(Date.now());
+  const [refreshCostTrigger, setRefreshCostTrigger] = useState<number>(
+    Date.now()
+  );
+  const [refreshSkillTrigger, setRefreshSkillTrigger] = useState<number>(
+    Date.now()
+  );
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -167,15 +173,19 @@ const Resource: React.FC<ResourceProps> = ({
     data: ResourceList,
     isLoading,
     error,
-  } = useResourceList({
-    page: currentPage + 1, // API expects 1-based index
-    limit: rowsPerPage,
-    accountNumber: accountDetails?.data?.accountById.r_number,
-    sortBy: sortField,
-    sortOrder: sortOrder,
-    filters: appliedFilters,
-  }, isResourceViewAllEnable);
-  
+  } = useResourceList(
+    {
+      page: currentPage + 1, // API expects 1-based index
+      limit: rowsPerPage,
+      accountNumber: accountDetails?.data?.accountById.r_number,
+      sortBy: sortField,
+      sortOrder: sortOrder,
+      filters: appliedFilters,
+    },
+    isResourceViewAllEnable,
+    refreshTrigger
+  );
+
   const isResoureceOverviewHide = resourceTab[0].hide;
 
   useEffect(() => {
@@ -321,7 +331,10 @@ const Resource: React.FC<ResourceProps> = ({
       label: value === 'details' ? 'Edit' : 'New',
       variant: 'outlined' as const,
       disabled: accountInActive,
-      onClick: value === 'details' ? () => handleEditResource() : () => handleCreateResource(),
+      onClick:
+        value === 'details'
+          ? () => handleEditResource()
+          : () => handleCreateResource(),
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
       hide: handleCreateButtonEnable(),
     },
@@ -337,8 +350,13 @@ const Resource: React.FC<ResourceProps> = ({
   const handleEditResource = () => {
     const resourceId = searchParams.get('res_id');
     const accNumber = accountDetails?.data?.accountById.r_number;
-    navigate(RESOURCE + '/edit/' + resourceId + `?account_id=${accountid}&acc_number=${accNumber}`);
-  }
+    navigate(
+      RESOURCE +
+        '/edit/' +
+        resourceId +
+        `?account_id=${accountid}&acc_number=${accNumber}`
+    );
+  };
 
   const handleBackClick = () => {
     setViewResourceList(!viewResourceList);
@@ -454,6 +472,16 @@ const Resource: React.FC<ResourceProps> = ({
 
   const resourceColumns = getResourceColumns(handleResourceClick);
 
+  const onRefreshClick = () => {
+    if (value === 'cost') {
+      setRefreshCostTrigger(Date.now()); // Toggle the refreshTrigger to force re-fetch
+    } else if (value === 'skill') {
+      setRefreshSkillTrigger(Date.now()); // Toggle the refreshTrigger to force re-fetch
+    } else {
+      setRefreshTrigger(Date.now()); // Toggle the refreshTrigger to force re-fetch
+    }
+  };
+
   return (
     <div className='w-full py-3 pl-3 pr-4'>
       <TabPanel
@@ -473,6 +501,8 @@ const Resource: React.FC<ResourceProps> = ({
         }
         handleFilter={handleFilter}
         setCurrentPage={setCurrentPage}
+        showRefresh={true}
+        onRefreshClick={onRefreshClick}
       />
       {!isResoureceOverviewHide && isResourceViewAllEnable && (
         <>
@@ -510,6 +540,8 @@ const Resource: React.FC<ResourceProps> = ({
               setSkillOrder={setSkillOrder}
               skillOrderBy={skillOrderBy}
               setSkillOrderBy={setSkillOrderBy}
+              refreshCostTrigger={refreshCostTrigger}
+              refreshSkillTrigger={refreshSkillTrigger}
             />
           )}
           {viewResourceList && !value && (
@@ -531,6 +563,7 @@ const Resource: React.FC<ResourceProps> = ({
                 actionMenuItems={actionMenuItems}
                 loading={isLoading}
                 error={error ? 'Failed to load resource data' : undefined}
+                rowsPerPageOptions={[25, 50, 100]}
                 rowsPerPage={rowsPerPage}
                 currentPage={currentPage}
                 totalItems={ResourceList?.count || 0}
