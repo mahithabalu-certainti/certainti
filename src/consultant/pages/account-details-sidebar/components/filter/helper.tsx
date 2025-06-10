@@ -49,7 +49,7 @@ export const TextFilterControl: React.FC<{
   const option = formatString(filterStates?.[fieldName]?.text?.option);
   const hideInput = option === 'Is Empty' || option === 'Is Not Empty';
   return (
-    <div className='flex gap-2 items-center'>
+    <div className='flex items-center gap-2'>
       <Select
         value={state.text?.option || 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
@@ -133,7 +133,7 @@ export const TextFilterControlForCostAndSKill: React.FC<{
   );
   const hideInput = option === 'Is Empty';
   return (
-    <div className='flex gap-2 items-center'>
+    <div className='flex items-center gap-2'>
       <Select
         value={state.textCostAndSkill?.option.toLowerCase() || 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
@@ -216,7 +216,7 @@ export const NumberFilterControl: React.FC<{
   const isBetween = option === 'Between';
   const hideInput = option === 'Is Empty';
   return (
-    <div className='flex gap-2 items-center'>
+    <div className='flex items-center gap-2'>
       <Select
         value={state.number?.option.toLowerCase() || 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
@@ -243,7 +243,7 @@ export const NumberFilterControl: React.FC<{
             </MenuItem>
           ))}
       </Select>
-      <div className='flex gap-2 flex-1'>
+      <div className='flex flex-1 gap-2'>
         {!hideInput && (
           <TextField
             size='small'
@@ -373,7 +373,7 @@ export const DateFilterControl: React.FC<{
   // option === 'Last 7 Days' ||
   // option === 'Last 30 Days';
   return (
-    <div className='flex gap-2 items-center'>
+    <div className='flex items-center gap-2'>
       <Select
         value={state.date?.option || 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
@@ -595,7 +595,7 @@ export const CurrencySelectFilterControl: React.FC<{
   const selectedValues: string[] = state?.currencySelect?.value || [];
 
   return (
-    <div className='flex gap-2 items-center'>
+    <div className='flex items-center gap-2'>
       <Select
         value={state?.currencySelect?.option?.toLowerCase() ?? 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
@@ -728,10 +728,9 @@ export const EnumFilterControl: React.FC<{
   const isMultiple = option === 'In';
   const hideInput = option === 'Is Empty';
   const selectedValues: string[] = state?.enum?.value || [];
-  console.log('disabled', disabled);
 
   return (
-    <div className='flex gap-2 items-center'>
+    <div className='flex items-center gap-2'>
       <Select
         value={state?.enum?.option ?? 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
@@ -929,7 +928,6 @@ export const formatFilterForApi = (
         };
       }
     } else if (state.select) {
-      console.log('formattedFilters[fieldKey]', formattedFilters[fieldKey]);
       if (fieldKey === 'is_rd_qualified') {
         const selectedValue = state.select.value;
         formattedFilters[fieldKey] = {
