@@ -33,6 +33,8 @@ interface SubcomponentProps {
   setSkillOrder: (order: 'asc' | 'desc') => void;
   skillOrderBy: string;
   setSkillOrderBy: (field: keyof ResourceSkillList) => void;
+  refreshCostTrigger?: number;
+  refreshSkillTrigger?: number;
 }
 
 const ResourceSubComponents: React.FC<SubcomponentProps> = ({
@@ -57,6 +59,9 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
   setSkillOrder,
   skillOrderBy,
   setSkillOrderBy,
+
+  refreshCostTrigger,
+  refreshSkillTrigger,
 }) => {
   // Permission Mangement
   const isResourceViewEnable = checkPermission(
@@ -149,6 +154,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               setCostorderBy={setCostorderBy}
               isResourceCostEditEnable={isResourceCostEditEnable}
               isResourceCostDeleteEnable={isResourceCostDeleteEnable}
+              refreshCostTrigger={refreshCostTrigger}
             />
           </Box>
         )}
@@ -168,6 +174,7 @@ const ResourceSubComponents: React.FC<SubcomponentProps> = ({
               setSkillOrderBy={setSkillOrderBy}
               isResourceSkillEditEnable={isResourceSkillEditEnable}
               isResourceSkillDeleteEnable={isResourceSkillDeleteEnable}
+              refreshSkillTrigger={refreshSkillTrigger}
             />
           </Box>
         )}

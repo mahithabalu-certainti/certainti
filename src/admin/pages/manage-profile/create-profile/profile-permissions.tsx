@@ -433,6 +433,289 @@ const PrivilegeAccordion: React.FC<{
     }));
   };
 
+  // const handleFieldChange =
+  //   (
+  //     moduleId: string,
+  //     permissionId: string,
+  //     fieldId: string,
+  //     type: 'read' | 'edit'
+  //   ) =>
+  //   (e: React.MouseEvent) => {
+  //     e.stopPropagation();
+  //     setPrivileges((prev) => ({
+  //       ...prev,
+  //       modules: prev.modules.map((mod) => {
+  //         if (mod.module.module_id === moduleId) {
+  //           return {
+  //             ...mod,
+  //             permissions: mod.permissions.map((perm) => {
+  //               if (perm.permission_id === permissionId) {
+  //                 return {
+  //                   ...perm,
+  //                   fields: perm.fields?.map((field) => {
+  //                     if (field.field_id === fieldId) {
+  //                       const newValue = !field[type];
+  //                       return {
+  //                         ...field,
+  //                         [type]: newValue,
+  //                         // If edit is being checked, also check read
+  //                         // If read is being unchecked, also uncheck edit
+  //                         read:
+  //                           type === 'edit'
+  //                             ? newValue
+  //                               ? true
+  //                               : field.read
+  //                             : newValue,
+  //                         edit:
+  //                           type === 'read' && !newValue
+  //                             ? false
+  //                             : type === 'edit'
+  //                               ? newValue
+  //                               : field.edit,
+  //                         is_modified: true,
+  //                       };
+  //                     }
+  //                     return field;
+  //                   }),
+  //                 };
+  //               }
+  //               return perm;
+  //             }),
+  //           };
+  //         }
+  //         return mod;
+  //       }),
+  //     }));
+  //   };
+
+  // const handlePermissionCheck =
+  //   (moduleId: string, permissionId: string) => (e: React.MouseEvent) => {
+  //     e.stopPropagation();
+  //     const currentModule = privileges.modules.find(
+  //       (m) => m.module.module_id === moduleId
+  //     );
+  //     const currentPermission = currentModule?.permissions.find(
+  //       (p) => p.permission_id === permissionId
+  //     );
+  //     const newPermissionState = !currentPermission?.is_enabled;
+
+  //     if (!newPermissionState && currentPermission?.is_field_available) {
+  //       // Expand permission to show its fields
+  //       setExpandedPermissions((prev) =>
+  //         prev.includes(permissionId) ? prev : [...prev, permissionId]
+  //       );
+  //       setConfirmationState({
+  //         isOpen: true,
+  //         message:
+  //           'Disabling this parent permission will also remove its associated child permissions. Are you sure you want to proceed?',
+  //         onConfirm: () => {
+  //           setPrivileges((prev) => {
+  //             // If nothing has changed, return the previous state
+  //             if (!currentModule || !currentPermission) return prev;
+
+  //             // Check if all permissions in this module will be disabled
+  //             const updatedModulePermissions = currentModule?.permissions.map(
+  //               (p) =>
+  //                 p.permission_id === permissionId
+  //                   ? { ...p, is_enabled: newPermissionState }
+  //                   : p
+  //             );
+  //             const allPermissionsDisabled = updatedModulePermissions?.every(
+  //               (p) => !p.is_enabled
+  //             );
+
+  //             return {
+  //               ...prev,
+  //               // Update module enabled state based on its permissions
+  //               modules: prev.modules.map((mod) => {
+  //                 if (mod.module.module_id === moduleId) {
+  //                   return {
+  //                     ...mod,
+  //                     module: {
+  //                       ...mod.module,
+  //                       is_enabled: !allPermissionsDisabled,
+  //                     },
+  //                     permissions: mod.permissions.map((perm) => {
+  //                       if (perm.permission_id === permissionId) {
+  //                         return {
+  //                           ...perm,
+  //                           is_enabled: newPermissionState,
+  //                           // Update field states when permission is disabled
+  //                           fields: perm.fields?.map((field) => ({
+  //                             ...field,
+  //                             read: newPermissionState ? field.read : false,
+  //                             edit: newPermissionState ? field.edit : false,
+  //                             // is_enabled: newPermissionState ? field.is_enabled : false
+  //                           })),
+  //                         };
+  //                       }
+  //                       return perm;
+  //                     }),
+  //                   };
+  //                 }
+  //                 return mod;
+  //               }),
+  //             };
+  //           });
+  //           setConfirmationState((prev) => ({ ...prev, isOpen: false }));
+  //         },
+  //       });
+  //       return;
+  //     }
+  //     {
+  //       /*  popup-confirmation end*/
+  //     }
+  //     setPrivileges((prev) => {
+  //       // First, get the current module and permission
+  //       // const currentModule = prev.modules.find(m => m.module.module_id === moduleId);
+  //       // const currentPermission = currentModule?.permissions.find(p => p.permission_id === permissionId);
+
+  //       // If nothing has changed, return the previous state
+  //       if (!currentModule || !currentPermission) return prev;
+
+  //       // const newPermissionState = !currentPermission.is_enabled;
+
+  //       // Check if all permissions in this module will be disabled
+  //       const updatedModulePermissions = currentModule?.permissions.map((p) =>
+  //         p.permission_id === permissionId
+  //           ? { ...p, is_enabled: newPermissionState }
+  //           : p
+  //       );
+  //       const allPermissionsDisabled = updatedModulePermissions?.every(
+  //         (p) => !p.is_enabled
+  //       );
+
+  //       return {
+  //         ...prev,
+  //         // Update module enabled state based on its permissions
+  //         modules: prev.modules.map((mod) => {
+  //           if (mod.module.module_id === moduleId) {
+  //             return {
+  //               ...mod,
+  //               module: {
+  //                 ...mod.module,
+  //                 is_enabled: !allPermissionsDisabled,
+  //               },
+  //               permissions: mod.permissions.map((perm) => {
+  //                 if (perm.permission_id === permissionId) {
+  //                   return {
+  //                     ...perm,
+  //                     is_enabled: newPermissionState,
+  //                     // Update field states when permission is disabled
+  //                     fields: perm.fields?.map((field) => ({
+  //                       ...field,
+  //                       read: newPermissionState ? field.read : false,
+  //                       edit: newPermissionState ? field.edit : false,
+  //                       // is_enabled: newPermissionState ? field.is_enabled : false
+  //                     })),
+  //                   };
+  //                 }
+  //                 return perm;
+  //               }),
+  //             };
+  //           }
+  //           return mod;
+  //         }),
+  //       };
+  //     });
+  //   };
+  const handlePermissionCheck =
+    (moduleId: string, permissionId: string) => (e: React.MouseEvent) => {
+      e.stopPropagation();
+
+      const currentModule = privileges.modules.find(
+        (m) => m.module.module_id === moduleId
+      );
+      const currentPermission = currentModule?.permissions.find(
+        (p) => p.permission_id === permissionId
+      );
+      const newPermissionState = !currentPermission?.is_enabled;
+
+      // Confirm if disabling permission with fields
+      if (!newPermissionState && currentPermission?.is_field_available) {
+        setExpandedPermissions((prev) =>
+          prev.includes(permissionId) ? prev : [...prev, permissionId]
+        );
+
+        setConfirmationState({
+          isOpen: true,
+          message:
+            'Disabling this parent permission will also remove its associated child permissions. Are you sure you want to proceed?',
+          onConfirm: () => {
+            applyPermissionUpdate(moduleId, permissionId, newPermissionState);
+            setConfirmationState((prev) => ({ ...prev, isOpen: false }));
+          },
+        });
+
+        return;
+      }
+
+      applyPermissionUpdate(moduleId, permissionId, newPermissionState);
+    };
+
+  const applyPermissionUpdate = (
+    moduleId: string,
+    permissionId: string,
+    newPermissionState: boolean
+  ) => {
+    setPrivileges((prev) => {
+      const currentModule = prev.modules.find(
+        (m) => m.module.module_id === moduleId
+      );
+      const currentPermission = currentModule?.permissions.find(
+        (p) => p.permission_id === permissionId
+      );
+      if (!currentModule || !currentPermission) return prev;
+
+      const updatedPermissions = currentModule.permissions.map((p) =>
+        p.permission_id === permissionId
+          ? {
+              ...p,
+              is_enabled: newPermissionState,
+              fields: p.fields?.map((field) => ({
+                ...field,
+                read: newPermissionState ? field.read : false,
+                edit: newPermissionState ? field.edit : false,
+              })),
+            }
+          : p
+      );
+
+      const allPermissionsDisabled = updatedPermissions.every(
+        (p) => !p.is_enabled
+      );
+
+      const updatedModules = prev.modules.map((mod) => {
+        if (mod.module.module_id === moduleId) {
+          return {
+            ...mod,
+            module: {
+              ...mod.module,
+              is_enabled: newPermissionState ? true : !allPermissionsDisabled,
+            },
+            permissions: updatedPermissions,
+          };
+        }
+        return mod;
+      });
+
+      // ✅ Find and enable the parent menu if needed
+      const updatedMenus =
+        currentModule.module.menu_id && newPermissionState
+          ? {
+              ...prev.menu,
+              is_enabled: true,
+              is_modified: true,
+            }
+          : prev.menu;
+
+      return {
+        ...prev,
+        menu: updatedMenus,
+        modules: updatedModules,
+      };
+    });
+  };
   const handleFieldChange =
     (
       moduleId: string,
@@ -442,180 +725,79 @@ const PrivilegeAccordion: React.FC<{
     ) =>
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      setPrivileges((prev) => ({
-        ...prev,
-        modules: prev.modules.map((mod) => {
-          if (mod.module.module_id === moduleId) {
-            return {
-              ...mod,
-              permissions: mod.permissions.map((perm) => {
-                if (perm.permission_id === permissionId) {
-                  return {
-                    ...perm,
-                    fields: perm.fields?.map((field) => {
-                      if (field.field_id === fieldId) {
-                        const newValue = !field[type];
-                        return {
-                          ...field,
-                          [type]: newValue,
-                          // If edit is being checked, also check read
-                          // If read is being unchecked, also uncheck edit
-                          read:
-                            type === 'edit'
-                              ? newValue
-                                ? true
-                                : field.read
-                              : newValue,
-                          edit:
-                            type === 'read' && !newValue
-                              ? false
-                              : type === 'edit'
-                                ? newValue
-                                : field.edit,
-                          is_modified: true,
-                        };
-                      }
-                      return field;
-                    }),
-                  };
-                }
-                return perm;
-              }),
-            };
-          }
-          return mod;
-        }),
-      }));
-    };
 
-  const handlePermissionCheck =
-    (moduleId: string, permissionId: string) => (e: React.MouseEvent) => {
-      e.stopPropagation();
-      const currentModule = privileges.modules.find(
-        (m) => m.module.module_id === moduleId
-      );
-      const currentPermission = currentModule?.permissions.find(
-        (p) => p.permission_id === permissionId
-      );
-      const newPermissionState = !currentPermission?.is_enabled;
-
-      if (!newPermissionState && currentPermission?.is_field_available) {
-        // Expand permission to show its fields
-        setExpandedPermissions((prev) =>
-          prev.includes(permissionId) ? prev : [...prev, permissionId]
-        );
-        setConfirmationState({
-          isOpen: true,
-          message:
-            'Disabling this parent permission will also remove its associated child permissions. Are you sure you want to proceed?',
-          onConfirm: () => {
-            setPrivileges((prev) => {
-              // If nothing has changed, return the previous state
-              if (!currentModule || !currentPermission) return prev;
-
-              // Check if all permissions in this module will be disabled
-              const updatedModulePermissions = currentModule?.permissions.map(
-                (p) =>
-                  p.permission_id === permissionId
-                    ? { ...p, is_enabled: newPermissionState }
-                    : p
-              );
-              const allPermissionsDisabled = updatedModulePermissions?.every(
-                (p) => !p.is_enabled
-              );
-
-              return {
-                ...prev,
-                // Update module enabled state based on its permissions
-                modules: prev.modules.map((mod) => {
-                  if (mod.module.module_id === moduleId) {
-                    return {
-                      ...mod,
-                      module: {
-                        ...mod.module,
-                        is_enabled: !allPermissionsDisabled,
-                      },
-                      permissions: mod.permissions.map((perm) => {
-                        if (perm.permission_id === permissionId) {
-                          return {
-                            ...perm,
-                            is_enabled: newPermissionState,
-                            // Update field states when permission is disabled
-                            fields: perm.fields?.map((field) => ({
-                              ...field,
-                              read: newPermissionState ? field.read : false,
-                              edit: newPermissionState ? field.edit : false,
-                              // is_enabled: newPermissionState ? field.is_enabled : false
-                            })),
-                          };
-                        }
-                        return perm;
-                      }),
-                    };
-                  }
-                  return mod;
-                }),
-              };
-            });
-            setConfirmationState((prev) => ({ ...prev, isOpen: false }));
-          },
-        });
-        return;
-      }
-      {
-        /*  popup-confirmation end*/
-      }
       setPrivileges((prev) => {
-        // First, get the current module and permission
-        // const currentModule = prev.modules.find(m => m.module.module_id === moduleId);
-        // const currentPermission = currentModule?.permissions.find(p => p.permission_id === permissionId);
+        const updatedModules = prev.modules.map((mod) => {
+          if (mod.module.module_id !== moduleId) return mod;
 
-        // If nothing has changed, return the previous state
-        if (!currentModule || !currentPermission) return prev;
+          const updatedPermissions = mod.permissions.map((perm) => {
+            if (perm.permission_id !== permissionId) return perm;
 
-        // const newPermissionState = !currentPermission.is_enabled;
+            const updatedFields = perm.fields?.map((field) => {
+              if (field.field_id !== fieldId) return field;
 
-        // Check if all permissions in this module will be disabled
-        const updatedModulePermissions = currentModule?.permissions.map((p) =>
-          p.permission_id === permissionId
-            ? { ...p, is_enabled: newPermissionState }
-            : p
-        );
-        const allPermissionsDisabled = updatedModulePermissions?.every(
-          (p) => !p.is_enabled
+              const newValue = !field[type];
+
+              // Clone the field and apply logic
+              const updatedField: FieldPrivilege = {
+                ...field,
+                is_modified: true,
+                [type]: newValue,
+              };
+
+              // ✅ Force read=true when enabling edit
+              if (type === 'edit' && newValue) {
+                updatedField.read = true;
+                updatedField.edit = true; // << very important!
+              }
+
+              // ✅ Disable edit if read is being unchecked
+              if (type === 'read' && !newValue) {
+                updatedField.edit = false;
+              }
+
+              return updatedField;
+            });
+
+            const isAnyFieldEnabled = updatedFields?.some(
+              (f) => f.read || f.edit
+            );
+
+            return {
+              ...perm,
+              is_enabled: !!isAnyFieldEnabled,
+              is_modified: true,
+              fields: updatedFields,
+            };
+          });
+
+          const isAnyPermissionEnabled = updatedPermissions.some(
+            (p) => p.is_enabled
+          );
+
+          return {
+            ...mod,
+            module: {
+              ...mod.module,
+              is_enabled: !!isAnyPermissionEnabled,
+              is_modified: true,
+            },
+            permissions: updatedPermissions,
+          };
+        });
+
+        const isAnyModuleEnabled = updatedModules.some(
+          (m) => m.module.is_enabled
         );
 
         return {
           ...prev,
-          // Update module enabled state based on its permissions
-          modules: prev.modules.map((mod) => {
-            if (mod.module.module_id === moduleId) {
-              return {
-                ...mod,
-                module: {
-                  ...mod.module,
-                  is_enabled: !allPermissionsDisabled,
-                },
-                permissions: mod.permissions.map((perm) => {
-                  if (perm.permission_id === permissionId) {
-                    return {
-                      ...perm,
-                      is_enabled: newPermissionState,
-                      // Update field states when permission is disabled
-                      fields: perm.fields?.map((field) => ({
-                        ...field,
-                        read: newPermissionState ? field.read : false,
-                        edit: newPermissionState ? field.edit : false,
-                        // is_enabled: newPermissionState ? field.is_enabled : false
-                      })),
-                    };
-                  }
-                  return perm;
-                }),
-              };
-            }
-            return mod;
-          }),
+          menu: {
+            ...prev.menu,
+            is_enabled: !!isAnyModuleEnabled,
+            is_modified: true,
+          },
+          modules: updatedModules,
         };
       });
     };
@@ -765,21 +947,28 @@ const PrivilegeAccordion: React.FC<{
                                       }
                                       onChange={(e) => {
                                         e.stopPropagation();
-                                        permission.fields
-                                          ?.slice(
+                                        const fields =
+                                          permission.fields?.slice(
                                             0,
                                             Math.ceil(
                                               permission.fields.length / 2
                                             )
-                                          )
-                                          .forEach((field) => {
+                                          ) || [];
+
+                                        const allChecked = fields.every(
+                                          (field) => field.read
+                                        );
+
+                                        fields.forEach((field) => {
+                                          if (field.read !== !allChecked) {
                                             handleFieldChange(
                                               module.module_id!,
                                               permission.permission_id!,
                                               field.field_id,
                                               'read'
                                             )(e);
-                                          });
+                                          }
+                                        });
                                       }}
                                       disabled={viewProfileDisabled}
                                     />
@@ -801,21 +990,28 @@ const PrivilegeAccordion: React.FC<{
                                       }
                                       onChange={(e) => {
                                         e.stopPropagation();
-                                        permission.fields
-                                          ?.slice(
+                                        const fields =
+                                          permission.fields?.slice(
                                             0,
                                             Math.ceil(
                                               permission.fields.length / 2
                                             )
-                                          )
-                                          .forEach((field) => {
+                                          ) || [];
+
+                                        const allChecked = fields.every(
+                                          (field) => field.edit
+                                        );
+
+                                        fields.forEach((field) => {
+                                          if (field.edit !== !allChecked) {
                                             handleFieldChange(
                                               module.module_id!,
                                               permission.permission_id!,
                                               field.field_id,
                                               'edit'
                                             )(e);
-                                          });
+                                          }
+                                        });
                                       }}
                                       disabled={viewProfileDisabled}
                                     />
@@ -904,20 +1100,27 @@ const PrivilegeAccordion: React.FC<{
                                       }
                                       onChange={(e) => {
                                         e.stopPropagation();
-                                        permission.fields
-                                          ?.slice(
+                                        const fields =
+                                          permission.fields?.slice(
                                             Math.ceil(
                                               permission.fields.length / 2
                                             )
-                                          )
-                                          .forEach((field) => {
+                                          ) || [];
+
+                                        const allChecked = fields.every(
+                                          (field) => field.read
+                                        );
+
+                                        fields.forEach((field) => {
+                                          if (field.read !== !allChecked) {
                                             handleFieldChange(
                                               module.module_id!,
                                               permission.permission_id!,
                                               field.field_id,
                                               'read'
                                             )(e);
-                                          });
+                                          }
+                                        });
                                       }}
                                       disabled={viewProfileDisabled}
                                     />
@@ -938,20 +1141,27 @@ const PrivilegeAccordion: React.FC<{
                                       }
                                       onChange={(e) => {
                                         e.stopPropagation();
-                                        permission.fields
-                                          ?.slice(
+                                        const fields =
+                                          permission.fields?.slice(
                                             Math.ceil(
                                               permission.fields.length / 2
                                             )
-                                          )
-                                          .forEach((field) => {
+                                          ) || [];
+
+                                        const allChecked = fields.every(
+                                          (field) => field.edit
+                                        );
+
+                                        fields.forEach((field) => {
+                                          if (field.edit !== !allChecked) {
                                             handleFieldChange(
                                               module.module_id!,
                                               permission.permission_id!,
                                               field.field_id,
                                               'edit'
                                             )(e);
-                                          });
+                                          }
+                                        });
                                       }}
                                       disabled={viewProfileDisabled}
                                     />

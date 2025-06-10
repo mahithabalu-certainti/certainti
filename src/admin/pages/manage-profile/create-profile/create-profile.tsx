@@ -33,7 +33,7 @@ const HEADER_STYLES = {
 export const CreateProfile: React.FC = () => {
   const [privileges, setPrivileges] = useState<Privilege[]>([]);
   const { profileId } = useParams();
-  const { successToast } = useToast();
+  const { successToast, errorToast } = useToast();
   const navigate = useNavigate();
 
   const userProfiles = useManageUserProfile();
@@ -52,7 +52,19 @@ export const CreateProfile: React.FC = () => {
   const commonSuccess = createProfile.isSuccess;
   const ProfilePermissionSuccess = createProfilePermission.isSuccess;
   const editSuccess = updateProfilePermission.isSuccess;
+  const [initialPrivileges, setInitialPrivileges] = useState<Privilege[]>([]);
 
+  // Called once after profile data loads
+  useEffect(() => {
+    if (isEditView && getProfileDetails?.data?.data?.privileges) {
+      setPrivileges(getProfileDetails.data.data.privileges);
+      setInitialPrivileges(getProfileDetails.data.data.privileges);
+    } else if (createProfile?.data?.data?.privileges) {
+      setPrivileges(createProfile.data.data.privileges);
+      setInitialPrivileges(createProfile.data.data.privileges);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [getProfileDetails?.data?.data, createProfile?.data?.data]);
   // Permission Mangement
   const { modules, permission } = useSelector(
     (state: RootState) => state.permission
@@ -114,6 +126,13 @@ export const CreateProfile: React.FC = () => {
     setPrivileges(updatedPrivileges);
   };
   const handleSaveProfile = () => {
+    const hasChanges =
+      JSON.stringify(privileges) !== JSON.stringify(initialPrivileges);
+
+    if (!hasChanges) {
+      errorToast('No changes to save');
+      return;
+    }
     if (isEditView) {
       const payload = {
         profile_id: getProfileDetails.data?.data?.profile_id,

@@ -22,6 +22,7 @@ interface ResourceSkillTableProps {
   setCurrentPage: (page: number) => void;
   isResourceSkillEditEnable?: boolean;
   isResourceSkillDeleteEnable?: boolean;
+  refreshSkillTrigger?: number;
 }
 const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   appliedFilters,
@@ -34,7 +35,8 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
   skillOrderBy,
   setSkillOrderBy,
   isResourceSkillEditEnable,
-  isResourceSkillDeleteEnable
+  isResourceSkillDeleteEnable,
+  refreshSkillTrigger,
 }) => {
   const navigate = useNavigate();
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
@@ -45,15 +47,19 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
     data: skillList,
     isLoading,
     error,
-  } = useResourceSkill({
-    page: currentPage + 1,
-    limit: rowsPerPage,
-    sortBy: skillOrderBy,
-    sortOrder: apiOrder,
-    filters: appliedFilters,
-    accountNumber: accountDetails?.data?.accountById?.r_number,
-    resourceRid,
-  });
+  } = useResourceSkill(
+    {
+      page: currentPage + 1,
+      limit: rowsPerPage,
+      sortBy: skillOrderBy,
+      sortOrder: apiOrder,
+      filters: appliedFilters,
+      accountNumber: accountDetails?.data?.accountById?.r_number,
+      resourceRid,
+    },
+    undefined,
+    refreshSkillTrigger
+  );
 
   // useEffect(() => {
   //   setResourceSkillList(convertResourceSkill(skillList?.resourceSkill || []));
@@ -86,13 +92,13 @@ const ResourceSkillTable: React.FC<ResourceSkillTableProps> = ({
       label: 'Edit',
       onClick: handleEdit,
       disabled: accountInActive,
-      hide: !isResourceSkillEditEnable
+      hide: !isResourceSkillEditEnable,
     },
     {
       label: 'Delete',
       onClick: () => console.log('Delete'),
       disabled: accountInActive,
-      hide: !isResourceSkillDeleteEnable
+      hide: !isResourceSkillDeleteEnable,
     },
   ];
 
