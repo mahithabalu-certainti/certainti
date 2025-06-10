@@ -14,7 +14,6 @@ import { AccessRestricted } from '../../../../components/account-restricted';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { checkPermission } from '../../../../common-utils';
-import { useAccountDetail } from '../../../services/account-details/account-details-service';
 
 const sideMenuItems: MenuItem[] = [
   {
@@ -112,11 +111,6 @@ export const ProjectDetails = () => {
     AllPermissions.PROJECT_PROJECTS_EDIT
   );
 
-  const isAccountDetailsEnable = checkPermission(
-    permission,
-    AllPermissions.ACCOUNT_DETAILS_VIEW
-  );
-
   useEffect(() => {
     const list = searchParams.get('list');
     if (list) {
@@ -140,16 +134,9 @@ export const ProjectDetails = () => {
     }
   }, [location.state]);
 
-  const {
-    data: accountDetails
-  }: { data: any } = useAccountDetail(
-    accountID as string,
-    isAccountDetailsEnable
-  );
-
-  const accountInActive = accountDetails?.data?.accountById?.status === 'inactive';
-
   const { data, isLoading, isError } = useProjectDetail(accountID, projectID);
+  const accountInActive = data?.data?.project?.account_status === 'inactive';
+
   // console.log('projectDetails outerr', data);
   useEffect(() => {
     if (data?.data) {

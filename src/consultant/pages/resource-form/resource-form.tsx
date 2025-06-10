@@ -177,7 +177,7 @@ const ResourceForm: React.FC = () => {
 
   useEffect(() => {
     const formValues = resource?.data?.resourceDetails;
-    if (state?.cost && isSuccess && costSuccess && isEditView) {
+    if (state?.cost && isSuccess && costInfo && costSuccess && isEditView) {
       const costValues = {
         ...formValues,
         financial_start_date: costInfo?.effective_date || '',
