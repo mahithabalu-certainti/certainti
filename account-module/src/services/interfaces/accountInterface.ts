@@ -37,7 +37,12 @@ export interface IAccountService {
     errorMessage?: string;
     data?: { account: any };
   }>;
-
+  listAllAccounts(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { accountData: any; orgData: any };
+  }>;
   updateAccount(accountData: IUpdateAccount, userId: string): Promise<{
     statusCode: number;
     message: string;

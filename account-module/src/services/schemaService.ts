@@ -1718,5 +1718,25 @@ class SchemaService {
       throw new Error("Error updating key contacts.");
   }
 }
+
+  async getOrgInfo() {
+    try {
+      const mainDdSequilze = await initSequelize();
+
+      const result: any = await mainDdSequilze.query(
+          `SELECT logo_url,firm_name FROM organization_licenses`,
+          {
+            type: "SELECT",
+          }
+        );
+
+        const orgLicenseInfo = result[0]
+      
+      console.log("orgLicenseInfo",orgLicenseInfo)
+      return orgLicenseInfo;
+    } catch (err) {
+      throw new Error("Error enriching key roles: " + (err as Error).message);
+    }
+  }
 }
 export default SchemaService;

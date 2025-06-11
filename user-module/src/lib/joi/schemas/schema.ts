@@ -27,6 +27,8 @@ const createUserSchema = Joi.object({
   phone: Joi.string().pattern(/^[1-9]\d{9,14}$/).optional().label("Phone"),
   country: Joi.string().max(255).allow('', null).optional().label("Country"),
   created_by: Joi.string().max(255).required().label("Created By"),
+  is_consultant_firm:Joi.boolean().required(),
+  org_id:Joi.string().required()
 });
 
 const enterpriseUserSchema = Joi.object({
@@ -73,6 +75,8 @@ const updateUserSchema = Joi.object({
   country: Joi.string().max(255).allow('', null).optional().label("Country"),
   phone: Joi.string().pattern(/^[1-9]\d{9,14}$/).optional().label("Phone"),
   modified_by: Joi.string().max(255).allow('', null).optional(),
+  is_consultant_firm:Joi.boolean().required(),
+  org_id:Joi.string().required()
 });
 
 const userDetailsUpdateSchema = Joi.object({

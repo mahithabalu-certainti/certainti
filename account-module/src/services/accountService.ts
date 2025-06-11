@@ -616,6 +616,8 @@ async accountList(
         status,
         annual_revenue,
         key_contacts,
+        logo_url,
+        organisation_name
       } = accountData;
 
       if (data_storage === "store_in_parent" && !parent_account_rid) {
@@ -673,7 +675,9 @@ async accountList(
         status,
         created_by: userId,
         modified_by: userId,
-        annual_revenue: annual_revenue ? new Decimal(annual_revenue).toNumber().toString() : ""
+        annual_revenue: annual_revenue ? new Decimal(annual_revenue).toNumber().toString() : "",
+        logo_url:logo_url,
+        organisation_name
       });
 
       if (parent_account && data_storage === "store_in_parent") {
@@ -786,7 +790,9 @@ async insertClientTemplateDetails(
         industry_rid,
         industry_name_other,
         key_contacts,
-        parent_account_rid
+        parent_account_rid,
+        logo_url,
+        organisation_name
       } = accountData;
 
       // Check if account name already exists before update
@@ -827,7 +833,9 @@ async insertClientTemplateDetails(
           modified_by: userId,
           industry_name_other: industry_name_other,
           annual_revenue: annual_revenue ? new Decimal(annual_revenue).toNumber().toString() : "",
-          modified_datetime: new Date()
+          modified_datetime: new Date(),
+          logo_url:logo_url,
+          organisation_name
         },
         {
           where: {
@@ -1115,7 +1123,33 @@ async insertClientTemplateDetails(
     
     return result;
   }
-
+  async listAllAccounts(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { accountData: any; orgData: any };
+  }> {
+    try {
+      const repository = await this.getAccountRepository();
+      const accountData = await repository.findAll({
+         where: {
+          status: 'active'
+        },
+        attributes: ["rid", "account_name"],
+      });
+      const orgData = await this.schemaService.getOrgInfo();
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          accountData,
+          orgData
+        },
+      };
+    } catch (err) {
+      return this.throwServiceError(err as Error);
+    }
+  }
   
   async listGlobalAccounts(): Promise<{
     statusCode: number;
