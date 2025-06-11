@@ -18,6 +18,7 @@ interface IUserTableProps {
   isProfileDeleteEnable?: boolean;
   setTableParams: React.Dispatch<React.SetStateAction<UserListParams>>;
   onSelectionChange: (selectedIds: string[]) => void;
+  refreshProfileTrigger?: number;
 }
 
 export const ProfileTable: React.FC<IUserTableProps> = ({
@@ -28,6 +29,7 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
   isProfileDeleteEnable,
   setTableParams,
   onSelectionChange,
+  refreshProfileTrigger,
 }) => {
   const navigate = useNavigate();
 
@@ -39,7 +41,10 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appliedFilters]);
 
-  const { data, isLoading, isError } = useManageProfileList(tableParams);
+  const { data, isLoading, isError } = useManageProfileList(
+    tableParams,
+    refreshProfileTrigger
+  );
   const totalItems = data?.data?.count || 0;
 
   const convertUserListData = (data: ManageProfileList): ManageProfile => {

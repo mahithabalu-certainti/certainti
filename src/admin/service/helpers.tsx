@@ -32,7 +32,7 @@ export const generateFile = (base64Data: string) => {
   // Trigger download
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = 'user_records.xlsx';
+  link.download = 'profile_records.xlsx';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

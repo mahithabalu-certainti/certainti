@@ -93,7 +93,7 @@ export const newKeyContactFields = (
   }),
   createRadioField('include_in_communication', 'Include In Communications?', {
     radioOptions: YES_NO_OPTIONS,
-    width: '160px',
+    width: '200px',
     required: false,
     // defaultValue: YesNo.No,
   }),

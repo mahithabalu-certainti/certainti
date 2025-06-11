@@ -29,14 +29,15 @@ export const useResourceSkill = (
   options?: UseQueryOptions<
     { resourceSkill: ResourceSkillList[]; count: number },
     Error
-  >
+  >,
+  refreshSkillTrigger?: number
 ): UseQueryResult<
   { resourceSkill: ResourceSkillList[]; count: number },
   Error
 > => {
   return useQuery<{ resourceSkill: ResourceSkillList[]; count: number }, Error>(
     {
-      queryKey: ['resourceSkill', params],
+      queryKey: ['resourceSkill', params, refreshSkillTrigger],
       queryFn: async () => {
         const res = await fetchResourceSkill(params);
         return {

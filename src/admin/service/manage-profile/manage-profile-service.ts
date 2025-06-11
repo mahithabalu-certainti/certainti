@@ -33,9 +33,12 @@ export const fetchManageProfileList = async (params: UserListParams = {}) => {
   // return manageProfileMockData
 };
 
-export const useManageProfileList = (params: UserListParams = {}) => {
+export const useManageProfileList = (
+  params: UserListParams = {},
+  refreshProfileTrigger?: number
+) => {
   return useQuery<ManageProfileApiResponse, Error>({
-    queryKey: ['manageProfile', params],
+    queryKey: ['manageProfile', params, refreshProfileTrigger],
     queryFn: () => fetchManageProfileList(params),
     staleTime: 0, // No cache
     gcTime: 0, // Immediately remove from cache

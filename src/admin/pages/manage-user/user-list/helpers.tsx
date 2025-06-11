@@ -45,4 +45,10 @@ export const getUserFilterFields = (
     options: StatusOptions,
     operatorOption: enumOperator,
   },
+  {
+    label: 'Sort Options',
+    name: 'sort_options',
+    type: 'system-sort',
+    options: [{ value: 'createdAt_desc', label: 'Recently Created' }],
+  },
 ];

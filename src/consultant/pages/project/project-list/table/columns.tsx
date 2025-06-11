@@ -1,4 +1,4 @@
-import { costDisplay } from '../../../../../common-utils';
+import { costDisplay, valueDisplay } from '../../../../../common-utils';
 import { ProjectTableColumn, ProjectList } from '../../../../types/project';
 import { formatDateToYYYYMMDD } from '../../../account-details-sidebar/sidebar-pages/resources/utils';
 
@@ -93,6 +93,8 @@ export const getAllProjectListColumns = (
     sx: {
       textAlign: 'right',
     },
+    render: (row: ProjectList) =>
+      row.total_effort ? valueDisplay(row.total_effort) : '-',
   },
   {
     id: 'total_cost',
