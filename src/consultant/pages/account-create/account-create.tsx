@@ -207,8 +207,10 @@ export const AccountForm: React.FC = () => {
     }
 
     setKeyContacts(fields);
-    setIsKeyContactsReady(existingContacts.length > 0);
+    setIsKeyContactsReady(!getAccount.isPending && !keyContactRoles.isPending);
   }, [
+    getAccount.isPending,
+    keyContactRoles.isPending,
     memoizedRole,
     account?.accountDetails?.keyContacts,
     isEditView,
