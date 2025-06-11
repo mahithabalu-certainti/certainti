@@ -62,7 +62,7 @@ const TabPanel: React.FC<TabProps> = ({
 
   return (
     <Box className=' rounded-lg'>
-      <Box className='flex justify-between items-center mb-2.5'>
+      <Box className='flex justify-between items-center mb-2'>
         {currentValue && (
           <Tabs
             value={currentValue}
@@ -112,7 +112,7 @@ const TabPanel: React.FC<TabProps> = ({
           </Tabs>
         )}
 
-        <Box className='flex items-center space-x-2'>
+        <Box className='hidden items-center space-x-2'>
           <ActionImportDropdown
             variant={'filled'}
             actions={menuActivity}

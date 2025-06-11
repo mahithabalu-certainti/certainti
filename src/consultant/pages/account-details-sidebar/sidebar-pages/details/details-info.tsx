@@ -143,10 +143,21 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
 
     { label: 'Fiscal End', value: accountDetails?.fiscal_end_date },
     { label: '', value: 'empty' },
-    { label: 'Blended Rate - FTE', value: accountDetails?.blended_rate_fte },
+    {
+      label: 'Blended Rate - FTE',
+      value:
+        costDisplay(
+          accountDetails?.blended_rate_fte?.toString(),
+          accountById?.currency?.currency_symbol
+        ) || '-',
+    },
     {
       label: 'Blended Rate - SubCon',
-      value: accountDetails?.blended_rate_subcon,
+      value:
+        costDisplay(
+          accountDetails?.blended_rate_subcon?.toString(),
+          accountById?.currency?.currency_symbol
+        ) || '-',
     },
     { label: '', value: 'empty' },
     {
@@ -187,7 +198,7 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
       <DetailsSection
         title='Basic Information'
         data={basicInfo}
-        customStyle='pt-2 mt-0'
+        customStyle='pt-0 mt-0'
       />
       <DetailsSection
         title=''

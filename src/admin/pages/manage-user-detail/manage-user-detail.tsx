@@ -169,7 +169,7 @@ export const ManageUserDetails: React.FC = () => {
               )}
             </div>
           </div>
-          <div className='w-[50%] flex justify-end gap-2'>
+          <div className='w-[50%] hidden justify-end gap-2'>
             {userActionButtons.map((button) => {
               if (button.hide) return null;
               return (

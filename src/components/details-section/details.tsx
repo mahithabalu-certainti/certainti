@@ -34,12 +34,14 @@ const DetailsSection: React.FC<{
       if (value === 'empty') return <span></span>;
 
       if (label?.toLowerCase() === 'website') {
+        const hasProtocol = /^https?:\/\//i.test(value);
+        const formattedHref = hasProtocol ? value : `https://${value}`;
         return (
           <span className='font-medium text-[13px] text-[#425A76]'>
             <a
-              href={value}
+              href={formattedHref}
               target='_blank'
-              rel='noreferrer'
+              rel='noopener noreferrer'
               className='underline decoration-[#425A76]'
             >
               {value}
@@ -63,7 +65,7 @@ const DetailsSection: React.FC<{
   return (
     <div className={styleName}>
       {title && (
-        <div className='flex items-center align-middle px-6  h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#F5F9FF]'>
+        <div className='flex items-center align-middle px-6  h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
           {title}
         </div>
       )}
@@ -72,7 +74,7 @@ const DetailsSection: React.FC<{
           ? data.map((item, index) => (
               <div
                 key={index}
-                className='grid grid-cols-[100px_auto] sm:grid-cols-[120px_auto] gap-x-2'
+                className='grid grid-cols-[100px_auto] sm:grid-cols-[200px_auto] gap-x-2'
               >
                 <div className='text-left font-semibold text-[13px] text-[#425A76] pr-1'>
                   {item.label}
@@ -96,7 +98,7 @@ const DetailsSection: React.FC<{
                       item && (
                         <div
                           key={idx}
-                          className='grid grid-cols-[100px_auto] sm:grid-cols-[120px_auto] gap-x-2'
+                          className='grid grid-cols-[100px_auto] sm:grid-cols-[200px_auto] gap-x-2'
                         >
                           <div className='text-left font-semibold text-[13px] text-[#425A76] pr-1'>
                             {item.label}

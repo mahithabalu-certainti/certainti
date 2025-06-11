@@ -31,7 +31,7 @@ const SkeletonForm: React.FC<SkeletonFormProps> = ({ sectionCount = 2 }) => {
       {Array.from({ length: sectionCount }).map((_, sectionIndex) => (
         <div key={sectionIndex}>
           <div
-            className={`${sectionIndex === 0 ? 'border-b' : 'border'} mb-1 h-[30px] border-[#CBD6E2] flex items-center justify-start py-1 bg-[#F5F9FF] px-10`}
+            className={`${sectionIndex === 0 ? 'border-b' : 'border'} mb-1 h-[30px] border-[#CBD6E2] flex items-center justify-start py-1 bg-[#ECECEC] px-10`}
           >
             <Skeleton
               variant='rectangular'

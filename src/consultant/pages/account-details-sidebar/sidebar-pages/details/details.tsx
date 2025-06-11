@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { AllPermissions } from '../../../../../common-service';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../../store/store';
-import { checkPermission } from '../../../../../common-utils';
+// import { checkPermission } from '../../../../../common-utils';
 
 const BUTTON_STYLES = {
   height: '26px !important',
@@ -56,17 +56,19 @@ const Details: React.FC<DetailsProps> = ({
   isLoading,
   isError,
   isAccountEditEnable,
-  isAccountDetailsDownloadEnable,
 }) => {
   const [detailsTab, setDetailsTab] = useState(detailsTabs);
   const navigate = useNavigate();
   const [tabValue, setTabValue] = useState('');
 
   const { permission } = useSelector((state: RootState) => state?.permission);
-  const isAccountDetailActivityEnable = checkPermission(
-    permission,
-    AllPermissions.ACCOUNT_DETAILS_ADD_ACTIVITY
-  );
+  // Functionality will be implemented later
+  // const isAccountDetailActivityEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.ACCOUNT_DETAILS_ADD_ACTIVITY
+  // );
+
+  const isAccountDetailActivityEnable = false;
 
   const isOverViewEnable = !detailsTab[0].hide;
 
@@ -125,13 +127,6 @@ const Details: React.FC<DetailsProps> = ({
       sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
       hide: !isAccountEditEnable,
     },
-    {
-      label: 'Download',
-      variant: 'outlined' as const,
-      onClick: () => console.log('Download'),
-      sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
-      hide: !isAccountDetailsDownloadEnable,
-    },
   ];
 
   return (
@@ -150,7 +145,7 @@ const Details: React.FC<DetailsProps> = ({
           </Box>
         </Box>
       )}
-      <Box className='p-3'>
+      <Box className='pr-4 pl-2 py-2'>
         <OverviewTimelineTab
           tabValue={tabValue}
           handleTabChange={handleTabChange}
@@ -159,8 +154,8 @@ const Details: React.FC<DetailsProps> = ({
           isAccountDetailActivityEnable={isAccountDetailActivityEnable}
         />
         {isOverViewEnable && (
-          <>
-            <Box className='flex items-center justify-between gap-4 h-[38px] py-1 px-2 border border-[#CBD6E2] rounded-[2px]'>
+          <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px]'>
+            <Box className='flex items-center justify-between gap-4 h-[38px] py-1 px-2'>
               <Box className='flex items-center gap-2'>
                 <Box>
                   <img
@@ -190,14 +185,14 @@ const Details: React.FC<DetailsProps> = ({
                 })}
               </Box>
             </Box>
-            <Box className='border-t-0 border border-[#CBD6E2]'>
+            <Box>
               <DetailsInfo
                 detailsInfo={accountDetails}
                 isDetailsLoading={isLoading}
                 detailsError={isError}
               />
             </Box>
-          </>
+          </div>
         )}
       </Box>
     </div>
