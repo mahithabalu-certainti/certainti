@@ -533,7 +533,7 @@ export class ProjectService {
           mainDbSequlize
         );
 
-        projectData = this.insertAccount(projectData, accountData.account_name);
+        projectData = this.insertAccount(projectData, accountData);
 
         projectData = await this.schemaService.insertUserDetails(projectData);
       }
@@ -552,10 +552,11 @@ export class ProjectService {
     }
   }
 
-  insertAccount(project: any, accountName: string){
+  insertAccount(project: any, account: any,){
     return {
       ...(project.dataValues || project),
-      account_name: accountName
+      account_name: account.account_name,
+      account_status:account.status
     }
   }
 
