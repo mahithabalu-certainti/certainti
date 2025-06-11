@@ -752,6 +752,7 @@ class SchemaService {
           fiscal_year integer NOT NULL,
           effective_date DATE,
           end_date DATE,
+          effort_in_hrs  numeric(18,2),
           annual_cost numeric(18,2),
           monthly_cost numeric(18,2),
           weekly_cost numeric(18,2),
