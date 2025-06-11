@@ -245,6 +245,8 @@ export const ProjectDetails = () => {
           }
           onActionsClick={handleActionsClick}
           onSettingsClick={handleSettingsClick}
+          showActions={false}
+          showSettings={false}
         />
       </div>
       <InfoSection

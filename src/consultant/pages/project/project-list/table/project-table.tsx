@@ -9,7 +9,7 @@ import { useSelector } from 'react-redux';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { PROJECT_DETAILS } from '../../../../../routes';
 import { ActionItem } from '../../../../../components/table/types';
-import { deleteIcon, editIcon } from '../../../../../assets';
+import { editIcon } from '../../../../../assets';
 import { reshapeGlobalFilter } from '../../../../../common-utils';
 import { FilterState } from '../../../../types';
 
@@ -27,7 +27,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   appliedFilters,
   tableParams,
   isProjectEditEnable,
-  isProjectDeleteEnable,
+  // isProjectDeleteEnable,
   setTableParams,
   setTotalCount,
   refreshProjectsTrigger,
@@ -121,12 +121,13 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
       },
       hide: !isProjectEditEnable,
     },
-    {
-      label: 'Delete',
-      onClick: (row: any) => console.log('Delete row', row),
-      icon: deleteIcon,
-      hide: !isProjectDeleteEnable,
-    },
+    // Delete functionality will be implemented later
+    // {
+    //   label: 'Delete',
+    //   onClick: (row: any) => console.log('Delete row', row),
+    //   icon: deleteIcon,
+    //   hide: !isProjectDeleteEnable,
+    // },
   ];
 
   return (

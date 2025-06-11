@@ -44,6 +44,7 @@ interface ProjectOverviewProps {
   projectDetails?: NewProjectData | null;
   isDetailsLoading?: boolean;
   detailsError?: boolean;
+  isKeyContactAvailable?: boolean;
 }
 
 const formatKey = (key: string): string => {
@@ -66,6 +67,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   projectDetails,
   isDetailsLoading,
   detailsError,
+  isKeyContactAvailable,
 }) => {
   if (isDetailsLoading) {
     return (
@@ -258,10 +260,19 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   });
 
   const settingInfo: DetailItem[] = [
-    { label: 'Blended Rate - FTE', value: projectDetails?.blended_rate_fte },
+    {
+      label: 'Blended Rate - FTE',
+      value: costDisplay(
+        projectDetails?.blended_rate_fte,
+        projectDetails?.currency_symbol
+      ),
+    },
     {
       label: 'Blended Rate - SubCon',
-      value: projectDetails?.blended_rate_sub_con,
+      value: costDisplay(
+        projectDetails?.blended_rate_sub_con,
+        projectDetails?.currency_symbol
+      ),
     },
     { label: '', value: 'empty' },
     {
@@ -279,83 +290,79 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     },
   ];
   return (
-    <>
-      <div className='border-t border-[1px] border-b-0 border-[#CBD6E2] rounded-tl-[2px]  rounded-tr-[2px]'>
-        <div className='flex items-center  justify-between  gap-4 h-[35px] px-2  rounded-[2px]'>
-          <div className='flex items-center gap-2'>
-            {showBackArrow && (
-              <div
-                className='cursor-pointer  flex justify-center items-center -ml-2'
-                onClick={onBackClick}
-              >
-                <img src={leftArrowIcon} alt='leftArrowIcon' />
-              </div>
-            )}
-            {titleIcon && (
-              <div className='text-[13px] text-[#2D3E4F] font-semibold'>
-                {titleIcon}
-              </div>
-            )}
-            <h1 className='text-[14px] font-medium text-[#2D3E4F]'>{title}</h1>
-          </div>
-
-          <div className='flex items-center gap-2'>
-            <div className='flex gap-2'>
-              {headerButtons?.map((button, index) => {
-                if (button.hide) return null;
-                return (
-                  <TextButton
-                    key={`header-button-${index}`}
-                    label={button.label}
-                    onClick={
-                      button.label.toLowerCase() === 'view'
-                        ? toggleViewMode
-                        : button.onClick
-                    }
-                    aria-label={button.label}
-                    sx={button.sx}
-                    disabled={button.disabled}
-                  />
-                );
-              })}
+    <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px]'>
+      <div className='flex items-center justify-between gap-4 h-[38px] py-1 px-2'>
+        <div className='flex items-center gap-2'>
+          {showBackArrow && (
+            <div
+              className='cursor-pointer  flex justify-center items-center -ml-2'
+              onClick={onBackClick}
+            >
+              <img src={leftArrowIcon} alt='leftArrowIcon' />
             </div>
+          )}
+          {titleIcon && (
+            <div className='text-[13px] text-[#2D3E4F] font-semibold'>
+              {titleIcon}
+            </div>
+          )}
+          <h1 className='text-[14px] font-medium text-[#2D3E4F]'>{title}</h1>
+        </div>
+
+        <div className='flex items-center gap-2'>
+          <div className='flex gap-2'>
+            {headerButtons?.map((button, index) => {
+              if (button.hide) return null;
+              return (
+                <TextButton
+                  key={`header-button-${index}`}
+                  label={button.label}
+                  onClick={
+                    button.label.toLowerCase() === 'view'
+                      ? toggleViewMode
+                      : button.onClick
+                  }
+                  aria-label={button.label}
+                  sx={button.sx}
+                  disabled={button.disabled}
+                />
+              );
+            })}
           </div>
         </div>
       </div>
       <div>
-        <div className='border-[1px]  border-[#CBD6E2]'>
-          <DetailsSection
-            title='Basic Information'
-            data={basicInfo as DetailItem[]}
-            customStyle='pt-2 mt-0'
-          />
-          <DetailsSection title='' data={description as DetailItem[]} />
-          <DetailsSection
-            title='Location and Currency Information'
-            data={locationInfo as DetailItem[]}
-          />
-          {/* {isKeyContactAvailable && keyContactsList && ( */}
+        <DetailsSection
+          title='Basic Information'
+          data={basicInfo as DetailItem[]}
+          customStyle='pt-0 mt-0'
+        />
+        <DetailsSection title='' data={description as DetailItem[]} />
+        <DetailsSection
+          title='Location and Currency Information'
+          data={locationInfo as DetailItem[]}
+        />
+        {isKeyContactAvailable && keyContactsList && (
           <KeyContactSection
             title='Key Contacts List'
             data={keyContactsList || []}
           />
-          {/* )} */}
-          <DetailsSection
-            title='Financial Information'
-            data={financialInfo as DetailItem[]}
-          />
-          <DetailsSection
-            title='Project Settings'
-            data={settingInfo as DetailItem[]}
-          />
-          <DetailsSection title='Comments' data={comments as DetailItem[]} />
-          <DetailsSection
-            title='Audit Information'
-            data={auditInfo as DetailItem[]}
-          />
-        </div>
+        )}
+        <DetailsSection
+          title='Financial Information'
+          data={financialInfo as DetailItem[]}
+        />
+        <DetailsSection
+          title='Project Settings'
+          data={settingInfo as DetailItem[]}
+        />
+        <DetailsSection title='Comments' data={comments as DetailItem[]} />
+        <DetailsSection
+          title='Audit Information'
+          data={auditInfo as DetailItem[]}
+        />
       </div>
-    </>
+    </div>
   );
 };
 

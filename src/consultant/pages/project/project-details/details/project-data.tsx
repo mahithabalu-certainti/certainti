@@ -136,7 +136,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
           </Box>
         </Box>
       )}
-      <Box className='p-3'>
+      <Box className='pr-4 pl-2 py-2'>
         <TabPanel
           tabValue={tabValue}
           setCurrentPage={setCurrentPage}
@@ -146,11 +146,18 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
         {currentPage === 0 && isOverViewEnable && (
           <ProjectOverview
             title='Projects'
-            titleIcon={<img src={projectsBook} alt='project-header-icon' />}
+            titleIcon={
+              <img
+                src={projectsBook}
+                alt='project-header-icon'
+                className='w-6 h-6'
+              />
+            }
             headerButtons={headerButtons}
             projectDetails={projectDetails}
             isDetailsLoading={isDetailsLoading}
             detailsError={detailsError}
+            isKeyContactAvailable={isKeyContactAvailable}
           />
         )}
       </Box>

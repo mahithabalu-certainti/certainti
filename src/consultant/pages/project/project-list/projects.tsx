@@ -1,17 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useMemo, useState } from 'react';
-// import { useNavigate } from 'react-router-dom';
-// import { PROJECT_CREATE } from '../../../../routes';
 import {
   accountSettingsIcon,
   actionIcon,
-  downloadIcon,
   newFilterIcon,
   projectDetailsIcon,
   refreshIcon,
 } from '../../../../assets';
 import { ActionsDropdown } from '../../../../components';
-// import TextButton from '../../../../components/button/text-button';
 import { getAllProjectFilterFields } from './helpers';
 import { ProjectTable } from './table/project-table';
 import { ProjectListParams } from '../../../types/project';
@@ -24,10 +20,6 @@ import { AccessRestricted } from '../../../../components/account-restricted';
 import { exportProjectData } from '../../../services/project';
 import { useFetchClassification } from '../../../services/account';
 
-// const BUTTON_STYLES = {
-//   height: '32px',
-// };
-
 export const Projects: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [page, setPage] = useState<number>(1);
@@ -35,14 +27,16 @@ export const Projects: React.FC = () => {
   const [tableParams, setTableParams] = useState<ProjectListParams>({
     page: page,
     limit: 100,
-    sortBy: 'createdAt',
-    sortOrder: 'DESC',
+    sortBy: 'project_code',
+    sortOrder: 'ASC',
     fiscalYear: 0,
     globalFilters: {},
   });
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
     Date.now()
   );
+  const [sortFilterCount, setSortFilterCount] = useState<number>(0);
+
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now()); // unique on every click
   };
@@ -76,6 +70,28 @@ export const Projects: React.FC = () => {
   const isFilterOpen = Boolean(anchorEl);
   const filterId = isFilterOpen ? 'all-project-filter-popover' : undefined;
 
+  const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const defaultSortField = 'project_code';
+    const defaultSortOrder = 'ASC';
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+
+    if (!sortBy) {
+      setSortFilterCount(0);
+      setTableParams((prev) => ({
+        ...prev,
+        sortBy: defaultSortField,
+        sortOrder: defaultSortOrder,
+      }));
+    } else {
+      setSortFilterCount(1);
+      setTableParams((prev) => ({
+        ...prev,
+        sortBy,
+        sortOrder: apiOrder,
+      }));
+    }
+  };
+
   const handleExport = () => {
     const projectParams = {
       sortBy: tableParams.sortBy,
@@ -97,12 +113,6 @@ export const Projects: React.FC = () => {
       onClick: () => handleExport(),
     },
   ];
-
-  // const navigate = useNavigate();
-
-  // const handleCreateProject = () => {
-  //   navigate(PROJECT_CREATE);
-  // };
 
   const Classification = useFetchClassification();
   const memoizedClassification = useMemo(
@@ -145,32 +155,16 @@ export const Projects: React.FC = () => {
         </div>
         <div className='flex gap-3 justify-center items-center'>
           <ActionsDropdown actions={menuItems} />
-          {/* <TextButton
-            label='Create Project'
-            onClick={handleCreateProject}
-            sx={{
-              ...BUTTON_STYLES,
-              width: '114px',
-              minWidth: '114px',
-              maxWidth: '114px',
-            }}
-          /> */}
-          <div className='flex items-center justify-center border border-[#EAF0F5] w-[48px] h-[24px]'>
-            <div
-              className='flex items-center justify-center w-1/2  cursor-pointer'
-              onClick={onRefreshClick}
-            >
-              <img src={refreshIcon} alt='refresh-icon' className='h-4' />
-            </div>
-            <div className='border-l border-[#EAF0F5] h-full'></div>
-            <div className='flex items-center justify-center w-1/2'>
-              <img src={downloadIcon} alt='download-icon' className='h-4' />
-            </div>
+          <div
+            className='flex items-center justify-center border border-[#CBD6E2] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] w-[24px] h-[23px] cursor-pointer'
+            onClick={onRefreshClick}
+          >
+            <img src={refreshIcon} alt='refresh-icon' className='h-4' />
           </div>
-          <div className='flex border border-[#CBD6E2] w-[24px] h-[24px] justify-center items-center bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'>
+          <div className='hidden border border-[#CBD6E2] w-[24px] h-[24px] justify-center items-center bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'>
             <img src={actionIcon} alt='menu-icon' className='h-4' />
           </div>
-          <div className='flex border border-[#CBD6E2] w-[24px] h-[24px]  justify-center items-center bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'>
+          <div className='hidden border border-[#CBD6E2] w-[24px] h-[24px]  justify-center items-center bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'>
             <img src={accountSettingsIcon} alt='menu-icon' className='h-4' />
           </div>
         </div>
@@ -180,19 +174,21 @@ export const Projects: React.FC = () => {
           <button
             aria-describedby={filterId}
             className={`w-[64px] h-[26px] text-[13px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
-              ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) ? 'bg-[#F3F3F3]' : ''}`}
+              ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) || sortFilterCount > 0 ? 'bg-[#F3F3F3]' : ''}`}
             onClick={handleFilterModal}
           >
             <img src={newFilterIcon} alt='filter-icon' />
             Filter
-            {appliedFilters && Object.keys(appliedFilters).length > 0 && (
+            {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
+            sortFilterCount > 0 ? (
               <div className='absolute -top-[5px] -right-2 w-4 h-4 flex items-center justify-center text-xs'>
                 <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
                 <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
-                  {Object.keys(appliedFilters).length}
+                  {(appliedFilters ? Object.keys(appliedFilters).length : 0) +
+                    sortFilterCount}
                 </span>
               </div>
-            )}
+            ) : null}
           </button>
           <Filter
             value={'allProjects'}
@@ -204,6 +200,7 @@ export const Projects: React.FC = () => {
             handleCloseFilter={handleCloseFilter}
             setCurrentPage={setPage}
             mode={'date'}
+            handleSorting={handleSorting}
           />
         </div>
       </div>

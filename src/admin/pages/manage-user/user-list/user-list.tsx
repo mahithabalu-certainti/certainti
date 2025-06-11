@@ -38,9 +38,10 @@ const UserList: React.FC = () => {
   const [tableParams, setTableParams] = useState<UserListParams>({
     page: page,
     limit: 100,
-    sortBy: 'createdAt',
-    sortOrder: 'DESC',
+    sortBy: 'first_name',
+    sortOrder: 'ASC',
   });
+  const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const [refreshUserTrigger, setRefreshUserTrigger] = useState<number>(
     Date.now()
   );
@@ -120,6 +121,28 @@ const UserList: React.FC = () => {
 
   const handleSelectionChange = (selectedIds: string[]) => {
     setSelectedUserId(selectedIds);
+  };
+
+  const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const defaultSortField = 'first_name';
+    const defaultSortOrder = 'ASC';
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+
+    if (!sortBy) {
+      setSortFilterCount(0);
+      setTableParams((prev) => ({
+        ...prev,
+        sortBy: defaultSortField,
+        sortOrder: defaultSortOrder,
+      }));
+    } else {
+      setSortFilterCount(1);
+      setTableParams((prev) => ({
+        ...prev,
+        sortBy,
+        sortOrder: apiOrder,
+      }));
+    }
   };
 
   const MENU_ITEMS = [
@@ -215,7 +238,7 @@ const UserList: React.FC = () => {
         <div className='flex gap-3 justify-center items-center'>
           <ActionsDropdown actions={MENU_ITEMS} />
           <button
-            className='flex border border-[#CBD6E2] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
+            className='flex border border-[#CBD6E2] w-[24px] h-[23px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
             onClick={onRefreshClick}
           >
             <img src={refreshIcon} alt='refresh-icon' className='h-4' />
@@ -244,19 +267,21 @@ const UserList: React.FC = () => {
             <button
               aria-describedby={filterId}
               className={`w-[64px] h-[24px] text-[13px] mt-[4px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
-              ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) ? 'bg-[#F3F3F3]' : ''}`}
+              ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) || sortFilterCount > 0 ? 'bg-[#F3F3F3]' : ''}`}
               onClick={handleFilterModal}
             >
               <img src={newFilterIcon} alt='filter-icon' />
               Filter
-              {appliedFilters && Object.keys(appliedFilters).length > 0 && (
+              {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
+              sortFilterCount > 0 ? (
                 <div className='absolute -top-[5px] -right-2 w-4 h-4 flex items-center justify-center text-xs'>
                   <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
                   <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
-                    {Object.keys(appliedFilters).length}
+                    {(appliedFilters ? Object.keys(appliedFilters).length : 0) +
+                      sortFilterCount}
                   </span>
                 </div>
-              )}
+              ) : null}
             </button>
             <FilterModal
               isOpen={isFilterOpen}
@@ -266,6 +291,7 @@ const UserList: React.FC = () => {
               setAppliedFilters={setAppliedFilters}
               setPage={setPage}
               handleCloseFilter={handleCloseFilter}
+              handleSorting={handleSorting}
             />
           </div>
           {userActionButtons.map((button) => {
@@ -280,6 +306,7 @@ const UserList: React.FC = () => {
                   width: button.width,
                   minWidth: button.width,
                   maxWidth: button.width,
+                  display: 'none',
                 }}
               />
             );

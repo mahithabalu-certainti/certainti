@@ -1,11 +1,13 @@
 import { ManageUser, UserTableColumn } from '../../../types/manage-user';
 
-export const userColumns: UserTableColumn<ManageUser>[] = [
+export const getUserColumns = (
+  onClick: (row: ManageUser) => void
+): UserTableColumn<ManageUser>[] => [
   {
     id: 'username',
     sortId: 'first_name',
     label: 'Username',
-    width: 300,
+    width: 320,
     sortable: true,
     sticky: true,
     sx: {
@@ -16,19 +18,30 @@ export const userColumns: UserTableColumn<ManageUser>[] = [
       borderRight: '1px solid #CBD6E2',
       borderBottom: '1px solid #CBD6E2 !important',
     },
+    render: (row: ManageUser) =>
+      onClick ? (
+        <span
+          onClick={() => onClick(row)}
+          className='cursor-pointer no-underline hover:underline hover:text-[#1755E7]'
+        >
+          {row.username}
+        </span>
+      ) : (
+        row.username
+      ),
   },
   {
     id: 'email',
     sortId: 'email',
     label: 'Email',
-    width: 300,
+    width: 380,
     sortable: true,
   },
   {
     id: 'profile',
     sortId: 'profile',
     label: 'Profile',
-    width: 300,
+    width: 380,
     sortable: true,
   },
   {

@@ -5,7 +5,7 @@ import { ListTable } from '../../../../components/table';
 import { ADMIN_MANAGE_USER } from '../../../../routes';
 import { useManageUserList } from '../../../service/manage-user/manage-user-service';
 import { ManageUser, User, UserListParams } from '../../../types/manage-user';
-import { userColumns } from './columns';
+import { getUserColumns } from './columns';
 import { ActionItem } from '../../../../components/table/types';
 import { editIcon, eyeIcon } from '../../../../assets';
 
@@ -109,6 +109,8 @@ export const UserTable: React.FC<IUserTableProps> = ({
     }));
   };
 
+  const userColumns = getUserColumns(handleView);
+
   const actionButtons: ActionItem<ManageUser>[] = [
     {
       label: 'View',
@@ -144,8 +146,8 @@ export const UserTable: React.FC<IUserTableProps> = ({
       selectable={true}
       onSelectionChange={onSelectionChange}
       // Actions
-      actionWidth={100}
-      actionDisplayMode='icon'
+      actionWidth={60}
+      actionDisplayMode='dropdown'
       actionMenuItems={actionButtons}
       // State
       loading={isLoading}
