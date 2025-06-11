@@ -643,7 +643,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
             disabled={field.disabled}
             onChange={(e) => handleChange(e.target.value)}
-            value={fieldValue || field.defaultValue}
+            value={fieldValue || field.defaultValue || ''}
           />
         );
       case 'website':
@@ -660,7 +660,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }
             disabled={field.disabled}
             onChange={(e) => handleChange(e.target.value)}
-            value={fieldValue || field.defaultValue}
+            value={fieldValue || field.defaultValue || ''}
           />
         );
       case 'select': {
