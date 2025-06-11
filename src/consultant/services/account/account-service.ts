@@ -72,10 +72,11 @@ export const fetchAccounts = async (
 
 export const useAccounts = (
   params: AccountListURLParams = {},
-  options?: UseQueryOptions<{ accounts: AccountList[]; count: number }, Error>
+  options?: UseQueryOptions<{ accounts: AccountList[]; count: number }, Error>,
+  refreshAccountTrigger?: number
 ): UseQueryResult<{ accounts: AccountList[]; count: number }, Error> => {
   return useQuery<{ accounts: AccountList[]; count: number }, Error>({
-    queryKey: ['accounts', params],
+    queryKey: ['accounts', params, refreshAccountTrigger],
     queryFn: () => fetchAccounts(params),
     retry: 0,
     ...options,

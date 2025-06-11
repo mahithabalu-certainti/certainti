@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Box, Menu, MenuItem, Tab, Tabs } from '@mui/material';
 import React, { useEffect, useMemo, useState } from 'react';
-import { resourceFilterIcon } from '../../../../assets';
+import { resourceFilterIcon, refreshIcon } from '../../../../assets';
 import ActionImportDropdown from '../sidebar-pages/imports/importdropdown';
 import {
   getCostFilterFields,
@@ -35,6 +35,11 @@ interface TabProps {
   setCurrentPage: (page: number) => void;
   appliedFilters: Record<string, any>;
   setAppliedFilters: (filters: Record<string, any>) => void;
+  showRefresh?: boolean;
+  onRefreshClick?: () => void;
+  handleSorting?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
+  sortFilterCount: number;
+  setSortFilterCount: (count: number) => void;
 }
 const TabPanel: React.FC<TabProps> = ({
   resourceTab,
@@ -45,6 +50,11 @@ const TabPanel: React.FC<TabProps> = ({
   showFilter,
   filterVisibility,
   setCurrentPage,
+  showRefresh,
+  onRefreshClick,
+  handleSorting,
+  sortFilterCount,
+  setSortFilterCount,
 }) => {
   const [tabValue, setTabValue] = useState('');
   const location = useLocation();
@@ -57,7 +67,6 @@ const TabPanel: React.FC<TabProps> = ({
   const [regionData, setRegionData] = useState<
     { option: string; value: string }[]
   >([]);
-
   const [skillSubTypeData, setSkillSubTypeData] = useState<
     { option: string; value: string }[]
   >([]);
@@ -74,6 +83,7 @@ const TabPanel: React.FC<TabProps> = ({
     setCurrentPage(0);
     setAppliedFilters({});
     clearFilters(value || 'resource');
+    setSortFilterCount(0);
   };
   const currency = useFetchCurrency();
   const allCountries = useGetAllCountries();
@@ -227,6 +237,7 @@ const TabPanel: React.FC<TabProps> = ({
     value,
     memoizedCountry,
     regionData,
+    memoizedClassification,
     memoizedCurrency,
     memoizedSkillType,
     skillSubTypeData,
@@ -252,13 +263,15 @@ const TabPanel: React.FC<TabProps> = ({
   useEffect(() => {
     setAppliedFilters({});
     clearFilters(value || 'resource');
+    setSortFilterCount(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location]);
 
   const isFilterOpen = Boolean(filterAnchorEl);
   const filterId = isFilterOpen ? `resource${value}-filter-popover` : undefined;
 
   return (
-    <Box className=' rounded-lg'>
+    <Box>
       <Box className='flex justify-between items-center mb-2'>
         {tabValue && (
           <Tabs
@@ -309,41 +322,56 @@ const TabPanel: React.FC<TabProps> = ({
           </Tabs>
         )}
 
-        <Box className='flex items-center space-x-2'>
+        <Box className='flex items-center'>
           {/* <ActionsDropdown actions={MENU_ITEMS} /> */}
 
           {filterVisibility && value !== 'details' && (
-            <Box className='relative'>
-              <Box
-                component='button'
-                onClick={handleFilterModal}
-                className='w-[24px] h-[24px] max-h-[24px] flex items-center justify-center border border-[#CBD6E2] rounded-[2px] cursor-pointer'
-                aria-describedby={filterId}
-              >
-                <img src={resourceFilterIcon} className='p-1' />
-                {appliedFilters && Object.keys(appliedFilters).length > 0 && (
-                  <div className='absolute -top-[8px] -right-1.5 w-4 h-4 flex items-center justify-center text-xs'>
-                    <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
-                    <span className='w-3.5 h-3.5 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
-                      {Object.keys(appliedFilters).length}
-                    </span>
-                  </div>
-                )}
+            <>
+              <Box className='relative'>
+                <Box
+                  component='button'
+                  onClick={handleFilterModal}
+                  className='w-[24px] h-[24px] max-h-[24px] flex items-center justify-center border border-[#CBD6E2] rounded-[2px] cursor-pointer'
+                  aria-describedby={filterId}
+                >
+                  <img src={resourceFilterIcon} className='p-1' />
+                  {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
+                  sortFilterCount > 0 ? (
+                    <div className='absolute -top-[8px] -right-1.5 w-4 h-4 flex items-center justify-center text-xs'>
+                      <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
+                      <span className='w-3.5 h-3.5 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
+                        {(appliedFilters
+                          ? Object.keys(appliedFilters).length
+                          : 0) + sortFilterCount}
+                      </span>
+                    </div>
+                  ) : null}
+                </Box>
+                <Filter
+                  value={value}
+                  isOpen={isFilterOpen && showFilter}
+                  filterAnchorEl={filterAnchorEl}
+                  filterId={filterId}
+                  filterMenu={filterFields}
+                  setAppliedFilters={setAppliedFilters}
+                  handleCloseFilter={handleCloseFilter}
+                  setCurrentSkillType={setCurrentSkillType}
+                  setCurrentCountry={setCurrentCountry}
+                  setCurrentPage={setCurrentPage}
+                  mode={'date'}
+                  handleSorting={handleSorting}
+                />
               </Box>
-              <Filter
-                value={value}
-                isOpen={isFilterOpen && showFilter}
-                filterAnchorEl={filterAnchorEl}
-                filterId={filterId}
-                filterMenu={filterFields}
-                setAppliedFilters={setAppliedFilters}
-                handleCloseFilter={handleCloseFilter}
-                setCurrentSkillType={setCurrentSkillType}
-                setCurrentCountry={setCurrentCountry}
-                setCurrentPage={setCurrentPage}
-                mode={'date'}
-              />
-            </Box>
+
+              {showRefresh && (
+                <button
+                  className='flex border border-[#CBD6E2] ml-2 w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
+                  onClick={onRefreshClick}
+                >
+                  <img src={refreshIcon} alt='refresh-icon' className='h-4' />
+                </button>
+              )}
+            </>
           )}
           <ActionImportDropdown
             variant='filled'
@@ -354,6 +382,7 @@ const TabPanel: React.FC<TabProps> = ({
               fontSize: '13px',
               width: '143px',
               height: '24px',
+              display: 'none',
             }}
           />
 

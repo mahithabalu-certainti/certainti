@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { newFilterIcon, userIcon } from '../../../../assets';
+import { newFilterIcon, userIcon, refreshIcon } from '../../../../assets';
 import TextButton from '../../../../components/button/text-button';
 import { useNavigate } from 'react-router-dom';
 import { MANAGE_PROFILE_CREATE } from '../../../../routes';
@@ -30,8 +30,8 @@ export const ProfileList: React.FC = () => {
   const [tableParams, setTableParams] = useState<UserListParams>({
     page: page,
     limit: 100,
-    sortBy: 'createdAt',
-    sortOrder: 'DESC',
+    sortBy: 'profile_name',
+    sortOrder: 'ASC',
   });
   const navigate = useNavigate();
   const [isExporting, setIsExporting] = useState(false);
@@ -40,6 +40,14 @@ export const ProfileList: React.FC = () => {
   const { errorToast } = useToast();
   const handleFilterModal = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
+  };
+  const [refreshProfileTrigger, setRefreshProfileTrigger] = useState<number>(
+    Date.now()
+  );
+  const [sortFilterCount, setSortFilterCount] = useState<number>(0);
+
+  const onRefreshClick = () => {
+    setRefreshProfileTrigger(Date.now());
   };
 
   // Permission Mangement
@@ -84,6 +92,28 @@ export const ProfileList: React.FC = () => {
 
   const handleSelectionChange = (selectedIds: string[]) => {
     setSelectedProfileId(selectedIds);
+  };
+
+  const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const defaultSortField = 'profile_name';
+    const defaultSortOrder = 'ASC';
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+
+    if (!sortBy) {
+      setSortFilterCount(0);
+      setTableParams((prev) => ({
+        ...prev,
+        sortBy: defaultSortField,
+        sortOrder: defaultSortOrder,
+      }));
+    } else {
+      setSortFilterCount(1);
+      setTableParams((prev) => ({
+        ...prev,
+        sortBy,
+        sortOrder: apiOrder,
+      }));
+    }
   };
 
   const handleExport = async () => {
@@ -133,6 +163,12 @@ export const ProfileList: React.FC = () => {
           </div>
         </div>
         <div className='flex gap-3 justify-center items-center'>
+          <button
+            className='flex border border-[#CBD6E2] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
+            onClick={onRefreshClick}
+          >
+            <img src={refreshIcon} alt='refresh-icon' className='h-4' />
+          </button>
           {isProfileCreateEnable && (
             <TextButton
               label='Create Profile'
@@ -157,19 +193,21 @@ export const ProfileList: React.FC = () => {
             <button
               aria-describedby={filterId}
               className={`w-[64px] h-[24px] text-[13px] mt-[5px] text-[#425A76] cursor-pointer flex items-center justify-center gap-1 font-semibold rounded-[2px] relative 
-              ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) ? 'bg-[#F3F3F3]' : ''}`}
+              ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) || sortFilterCount > 0 ? 'bg-[#F3F3F3]' : ''}`}
               onClick={handleFilterModal}
             >
               <img src={newFilterIcon} alt='filter-icon' />
               Filter
-              {appliedFilters && Object.keys(appliedFilters).length > 0 && (
+              {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
+              sortFilterCount > 0 ? (
                 <div className='absolute -top-[5px] -right-2 w-4 h-4 flex items-center justify-center text-xs'>
                   <span className='absolute w-full h-full bg-[#FF6666] rounded-full animate-ping opacity-75 z-0'></span>
                   <span className='w-4 h-4 bg-[#FF6666] text-white rounded-full flex items-center justify-center z-10 font-semibold'>
-                    {Object.keys(appliedFilters).length}
+                    {(appliedFilters ? Object.keys(appliedFilters).length : 0) +
+                      sortFilterCount}
                   </span>
                 </div>
-              )}
+              ) : null}
             </button>
             <FilterModal
               isOpen={isFilterOpen}
@@ -179,6 +217,7 @@ export const ProfileList: React.FC = () => {
               setAppliedFilters={setAppliedFilters}
               setPage={setPage}
               handleCloseFilter={handleCloseFilter}
+              handleSorting={handleSorting}
             />
           </div>
           {isProfileExportEnable && (
@@ -207,6 +246,7 @@ export const ProfileList: React.FC = () => {
           isProfileViewEnable={isProfileViewEnable}
           isProfileEditEnable={isProfileEditEnable}
           isProfileDeleteEnable={isProfileDeleteEnable}
+          refreshProfileTrigger={refreshProfileTrigger}
         />
       </div>
     </div>

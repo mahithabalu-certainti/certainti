@@ -48,6 +48,7 @@ const ListTable = <T extends RowData>({
   sortBy,
   sortOrder = 'ASC',
   onSort,
+  component,
 }: ListTableProps<T>) => {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
 
@@ -335,8 +336,8 @@ const ListTable = <T extends RowData>({
                         : row[column.id];
                       const displayValue =
                         cellValue !== null &&
-                          cellValue !== undefined &&
-                          cellValue !== ''
+                        cellValue !== undefined &&
+                        cellValue !== ''
                           ? cellValue
                           : '-';
 
@@ -351,11 +352,12 @@ const ListTable = <T extends RowData>({
                             zIndex: column.sticky ? 6 : 'auto',
                             left: selectable ? '32px' : 0,
                           }}
-                          className={`${hoverHighlight &&
+                          className={`${
+                            hoverHighlight &&
                             (isStatus
-                              ? `${statusValue === 'Active' ? 'group-hover:!text-[#199806]' : 'group-hover:!text-[#f44336]'} group-hover:underline`
-                              : 'group-hover:!text-blue-600 group-hover:underline')
-                            } cursor-context-menu`}
+                              ? `${statusValue === 'Active' ? 'group-hover:!text-[#199806]' : 'group-hover:!text-[#f44336]'}`
+                              : 'group-hover:!text-[#1755E7]')
+                          } cursor-context-menu`}
                         >
                           <TruncateWithTooltip
                             text={displayValue as string}
@@ -421,6 +423,10 @@ const ListTable = <T extends RowData>({
                             <TableActionButton
                               actions={actionMenuItems.map((item) => ({
                                 ...item,
+                                disabled:
+                                  component === 'global-project'
+                                    ? row.account_status === 'inactive'
+                                    : item.disabled,
                                 onClick: () => item.onClick(row),
                               }))}
                             />

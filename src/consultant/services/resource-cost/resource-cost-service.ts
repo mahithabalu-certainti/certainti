@@ -62,13 +62,14 @@ export const useResourceCost = (
   options?: UseQueryOptions<
     { resourceCost: ResourceCostList[]; count: number },
     Error
-  >
+  >,
+  refreshCostTrigger?: number
 ): UseQueryResult<
   { resourceCost: ResourceCostList[]; count: number },
   Error
 > => {
   return useQuery<{ resourceCost: ResourceCostList[]; count: number }, Error>({
-    queryKey: ['resourceCost', params],
+    queryKey: ['resourceCost', params, refreshCostTrigger],
     queryFn: async () => {
       const res = await fetchResourceCost(params);
       return {
