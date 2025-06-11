@@ -111,8 +111,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   const fiscalYearsDropDown = [{ value: '', label: 'FY-All' }].concat(
     fiscalYears
   );
-  const urlParams = new URLSearchParams(window.location.hash.slice(1));
-  const ifPasswordReset = useRef<string>(urlParams.get('client_info'));
 
   // Initialize password reset instance once
   useEffect(() => {
@@ -125,18 +123,26 @@ export const Navbar: React.FC<NavbarProps> = ({
         })
         .catch(console.error);
     }
+    const urlParams = new URLSearchParams(window.location.hash.slice(1));
+    if (
+      !localStorage.getItem('resetPassword') &&
+      urlParams.get('client_info')
+    ) {
+      localStorage.setItem('resetPassword', 'true');
+    }
   }, []);
 
   // Handle password reset callback
   useEffect(() => {
     const logoutInstance = async () => {
       if (
-        ifPasswordReset.current &&
+        localStorage.getItem('resetPassword') &&
         inProgress === InteractionStatus.None && // Ensure no interactions pending
         passwordResetInstanceRef.current
       ) {
         try {
           successToast('Your password has been updated successfully');
+          localStorage.removeItem('resetPassword');
           await passwordResetInstanceRef.current.handleRedirectPromise();
           await passwordResetInstanceRef.current.clearCache();
           handleLogout();
@@ -147,7 +153,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     };
     logoutInstance();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inProgress, ifPasswordReset]);
+  }, [inProgress]);
 
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);

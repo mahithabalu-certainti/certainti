@@ -20,7 +20,7 @@ import { accountNavItems } from '../../../components/sidebar/accounts-menu';
  */
 export const Login: React.FC = () => {
   const { instance } = useMsal();
-  const activeAccount = instance.getActiveAccount();
+  const allAccount = instance.getAllAccounts();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -28,7 +28,7 @@ export const Login: React.FC = () => {
   const { errorToast } = useToast();
   const t = useAppTranslation();
   const fragment = useRef<string>(window.location.hash.slice(1));
-
+  
   useEffect(() => {
     if (fragment.current) {
       // add loader when return back from azure
@@ -37,10 +37,10 @@ export const Login: React.FC = () => {
   }, [fragment]);
 
   useEffect(() => {
-    if (activeAccount) {
+    if (allAccount.length > 0) {
       const getResponse = async () => {
         const { localAccountId, idToken, username, name, idTokenClaims } =
-          activeAccount;
+          allAccount[0];
         const userRole = await fetchCurrentUserRole(
           localAccountId,
           idToken as string
@@ -72,8 +72,7 @@ export const Login: React.FC = () => {
       getResponse();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeAccount]);
-
+  }, [allAccount]);
 
   const handleLogin = () => {
     setIsLoading(true);
