@@ -128,13 +128,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       )
         continue;
 
-      if (!constructFormData[statusField.name]) {
-        setConstructFormData((prev) => ({
-          ...prev,
-          [statusField.name]: 'active', // Default status
-        }));
-        continue;
-      }
+      // if (!constructFormData[statusField.name]) {
+      //   setConstructFormData((prev) => ({
+      //     ...prev,
+      //     [statusField.name]: 'active', // Default status
+      //   }));
+      //   continue;
+      // }
 
       const hasNameOrEmail =
         (constructFormData[nameField.name]?.toString().trim() || '') !== '' ||
