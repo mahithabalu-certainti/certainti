@@ -44,6 +44,7 @@ interface ProjectOverviewProps {
   projectDetails?: NewProjectData | null;
   isDetailsLoading?: boolean;
   detailsError?: boolean;
+  isKeyContactAvailable?: boolean;
 }
 
 const formatKey = (key: string): string => {
@@ -66,6 +67,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   projectDetails,
   isDetailsLoading,
   detailsError,
+  isKeyContactAvailable,
 }) => {
   if (isDetailsLoading) {
     return (
@@ -340,12 +342,12 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
           title='Location and Currency Information'
           data={locationInfo as DetailItem[]}
         />
-        {/* {isKeyContactAvailable && keyContactsList && ( */}
-        <KeyContactSection
-          title='Key Contacts List'
-          data={keyContactsList || []}
-        />
-        {/* )} */}
+        {isKeyContactAvailable && keyContactsList && (
+          <KeyContactSection
+            title='Key Contacts List'
+            data={keyContactsList || []}
+          />
+        )}
         <DetailsSection
           title='Financial Information'
           data={financialInfo as DetailItem[]}

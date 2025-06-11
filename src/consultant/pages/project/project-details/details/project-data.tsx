@@ -157,6 +157,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
             projectDetails={projectDetails}
             isDetailsLoading={isDetailsLoading}
             detailsError={detailsError}
+            isKeyContactAvailable={isKeyContactAvailable}
           />
         )}
       </Box>

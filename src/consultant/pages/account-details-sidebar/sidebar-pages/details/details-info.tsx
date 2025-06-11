@@ -20,6 +20,7 @@ interface DetailsInfoProps {
   detailsInfo?: accountDetailsProps;
   isDetailsLoading?: boolean;
   detailsError?: boolean; //ErrorProps | null | undefined;
+  isKeyContactAvailable?: boolean;
 }
 
 interface trasnformedKeyContacts {
@@ -41,6 +42,7 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
   detailsInfo,
   isDetailsLoading,
   detailsError,
+  isKeyContactAvailable,
   // accountId,
 }) => {
   const accountById = detailsInfo?.accountById;
@@ -211,12 +213,12 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
         data={locationInfo}
         customStyle=' pt-2 mt-2 mb-4'
       />
-      {/* {isKeyContactAvailable && keyContactsList && ( */}
-      <KeyContactSection
-        title='Key Contacts List'
-        data={keyContactsList || []}
-      />
-      {/* )} */}
+      {isKeyContactAvailable && keyContactsList && (
+        <KeyContactSection
+          title='Key Contacts List'
+          data={keyContactsList || []}
+        />
+      )}
 
       <DetailsSection title='Account Settings' data={accountSettings} />
       <DetailsSection title='Comments' data={description} fullColumn={true} />

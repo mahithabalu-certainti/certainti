@@ -190,6 +190,7 @@ const Details: React.FC<DetailsProps> = ({
                 detailsInfo={accountDetails}
                 isDetailsLoading={isLoading}
                 detailsError={isError}
+                isKeyContactAvailable={isKeyContactAvailable}
               />
             </Box>
           </div>
