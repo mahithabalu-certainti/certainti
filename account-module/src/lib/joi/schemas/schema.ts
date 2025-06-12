@@ -121,7 +121,7 @@ const accountSchema = Joi.object({
     .valid("separate_db", "store_in_parent")
     .max(255)
     .required().label("Data Storage"),
-  organisation_name: Joi.string().max(255).required(),
+   organisation_name: Joi.string().min(7).max(125).required().label("Organisation Name"),
   key_contacts: Joi.array()
     .items(
     Joi.object({
@@ -246,7 +246,7 @@ const updateAccountSchema = Joi.object({
     .valid("separate_db", "store_in_parent")
     .max(255)
     .required().label("Data Storage"),
-  organisation_name: Joi.string().max(255).required(),
+  organisation_name: Joi.string().min(7).max(125).required().label("Organisation Name"),
   key_contacts: Joi.array()
     .items(
       Joi.object({
