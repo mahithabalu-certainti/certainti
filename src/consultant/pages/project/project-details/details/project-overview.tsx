@@ -360,6 +360,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
         <DetailsSection
           title='Audit Information'
           data={auditInfo as DetailItem[]}
+          isAudit={true}
         />
       </div>
     </div>

@@ -262,7 +262,7 @@ const ProjectForm: React.FC = () => {
 
   return (
     <>
-      <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200'>
+      <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200 sticky top-0 z-10 bg-white'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
           <img
             src={isEditView ? editIcon : projectCreateIcon}

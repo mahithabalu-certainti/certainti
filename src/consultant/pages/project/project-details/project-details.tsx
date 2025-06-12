@@ -2,7 +2,17 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
-import { projectDetailsIcon } from '../../../../assets';
+import {
+  activitiesIcon,
+  attachmentsSideIcon,
+  casesIcon,
+  checklistIcon,
+  detailsIcon,
+  financialIcon,
+  notesSideIcon,
+  projectDetailsIcon,
+  resourcesIcon,
+} from '../../../../assets';
 import { CircularProgress } from '@mui/material';
 import { useProjectDetail } from '../../../services/project';
 import { transformProjectData } from '../utils';
@@ -21,18 +31,21 @@ const sideMenuItems: MenuItem[] = [
     key: 'financial',
     id: AllModules.PROJECT_FINANCIAL_HIGHLIGHTS,
     disabled: false,
+    icon: <img src={financialIcon} alt='financial' className='w-4 h-4' />,
   },
   {
     name: 'Project Details',
     key: 'projectDetails',
     id: AllModules.PROJECT_DETAILS,
     disabled: false,
+    icon: <img src={detailsIcon} alt='detailsIcon' className='w-4 h-4' />,
   },
   {
     name: 'Project Resources',
     key: 'projectResources',
     id: AllModules.PROJECT_RESOURCES,
     disabled: false,
+    icon: <img src={resourcesIcon} alt='resourcesIcon' className='w-4 h-4' />,
   },
   {
     name: 'Projects Task',
@@ -57,30 +70,41 @@ const sideMenuItems: MenuItem[] = [
     key: 'cases',
     id: AllModules.PROJECT_CASES,
     disabled: false,
+    icon: <img src={casesIcon} alt='casesIcon' className='w-4 h-4' />,
   },
   {
     name: 'Activities',
     key: 'activities',
     id: AllModules.PROJECT_ACTIVITIES,
     disabled: false,
+    icon: <img src={activitiesIcon} alt='activitiesIcon' className='w-4 h-4' />,
   },
   {
     name: 'Notes',
     key: 'notes',
     id: AllModules.PROJECT_NOTES,
     disabled: false,
+    icon: <img src={notesSideIcon} alt='notesSideIcon' className='w-4 h-4' />,
   },
   {
     name: 'Attachments',
     key: 'attachments',
     id: AllModules.PROJECT_ATTACHMENTS,
     disabled: false,
+    icon: (
+      <img
+        src={attachmentsSideIcon}
+        alt='attachmentsSideIcon'
+        className='w-4 h-4'
+      />
+    ),
   },
   {
     name: 'Checklists',
     key: 'checklists',
     id: AllModules.PROJECT_CHECKLISTS,
     disabled: false,
+    icon: <img src={checklistIcon} alt='checklistIcon' className='w-4 h-4' />,
   },
 ];
 
@@ -92,6 +116,7 @@ export const ProjectDetails = () => {
   const defaultTab = searchParams.get('list');
   const [activeKey, setActiveKey] = useState(defaultTab);
   const [projectData, setProjectData] = useState<NewProjectData | null>(null);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const navigate = useNavigate();
   // Permission Mangement
   const { modules, permission } = useSelector(
@@ -256,13 +281,17 @@ export const ProjectDetails = () => {
         singleLineView={true}
       />
       <div className='flex flex-row flex-1 w-full'>
-        <div className='flex-1 w-[200px] min-w-[200px] max-w-[200px]'>
+        <div
+          className={`flex ${isCollapsed ? 'w-[60px]' : 'w-[200px] min-w-[200px] max-w-[200px]'}`}
+        >
           <SideMenuPanel
             menuItems={sideMenuItems}
             activeKey={activeKey as string}
             onSelect={setActiveKey}
             headerTitle='Related List'
             showBackIcon={true}
+            isCollapsed={isCollapsed}
+            onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
           />
         </div>
         <div className='flex-1  overflow-hidden'>

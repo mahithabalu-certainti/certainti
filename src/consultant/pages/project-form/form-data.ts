@@ -432,7 +432,7 @@ export const FormData = (
         sectionName: '',
         fillType: 'full',
         fields: [
-          createButton('Add another key contact', '', {
+          createButton('Add key contact', '', {
             iconUrl: '',
             onClick: addNewKeyContact,
           }),

@@ -222,7 +222,11 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
 
       <DetailsSection title='Account Settings' data={accountSettings} />
       <DetailsSection title='Comments' data={description} fullColumn={true} />
-      <DetailsSection title='Audit Information' data={auditInfo} />
+      <DetailsSection
+        title='Audit Information'
+        data={auditInfo}
+        isAudit={true}
+      />
     </Fragment>
   );
 };
