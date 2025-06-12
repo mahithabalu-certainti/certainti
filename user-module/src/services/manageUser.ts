@@ -150,4 +150,42 @@ const updateAzureUser = async (users: UpdateUser) => {
   }
 };
 
-export { createAzureB2CUser, updateAzureUser };
+const deleteAzureB2CUser = async (users: User) => {
+  try {
+    if (!users.email) {
+      throw new Error("Email is required to delete a user");
+    }
+
+    const accessToken = await getAzureB2CToken();
+    if (!accessToken) {
+      throw new Error("Failed to get Azure B2C access token");
+    }
+
+    const client = Client.init({
+      authProvider: async (done) => {
+        done(null, accessToken);
+      },
+    });
+
+    // First, find the user by email
+    const existingUser = await client
+      .api("/users")
+      .filter(`mail eq '${users.email}'`)
+      .get();
+
+    if (existingUser.value.length === 0) {
+      throw new Error(`User with email ${users.email} not found`);
+    }
+
+    const userId = existingUser.value[0].id;
+    
+    // Delete the user
+    await client.api(`/users/${userId}`).delete();
+
+    return { success: true, message: `User ${users.email} deleted successfully` };
+  } catch (error: any) {
+    throw new Error(`Failed to delete Azure B2C user: ${error.message}`);
+  }
+};
+
+export { createAzureB2CUser, updateAzureUser,deleteAzureB2CUser };
