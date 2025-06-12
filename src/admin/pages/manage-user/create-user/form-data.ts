@@ -100,7 +100,7 @@ export const FormData = (
           }),
           createRadioField('is_consultant_firm', 'Is Consultant Firm', {
             radioOptions: YES_NO_OPTIONS,
-            // disabled: disableFields,
+            disabled: true,
             required: true,
             onChange: true,
             // resetDependsFields: ['org_id'],
@@ -114,7 +114,7 @@ export const FormData = (
           createSelectField('org_id', 'Org Name', {
             options: orgNames,
             required: true,
-            disabled: isConsultantFirm === 'yes',
+            disabled: true,
             defaultValue: isConsultantFirm === 'yes' ? orgNames[0].value : '',
             placeholder: 'Choose Org Name',
             isLoading: false,
