@@ -13,7 +13,7 @@ import {
   useFetchState,
   useKeyContactRoles,
 } from '../../services/account';
-import { enumValue, FieldType, SelectOption } from '../../types';
+import { enumValue, FieldType, SelectOption, YesNo } from '../../types';
 import { transformFormData, transformKeyContactsFromAPI } from './utils';
 import { NewProjectData } from '../../types/project';
 import {
@@ -142,8 +142,6 @@ const ProjectForm: React.FC = () => {
     [keyContactRoles.data?.data.keyContactRoles]
   );
   useEffect(() => {
-    if (isKeyContactsReady) return; // Do not reinitialize
-
     const existingContacts = account?.keyContact || [];
     const newKeyData = newKeyContactFields(memoizedRole);
 
@@ -158,10 +156,16 @@ const ProjectForm: React.FC = () => {
     }
 
     setKeyContacts(fields);
-    setTimeout(() => {
-      setIsKeyContactsReady(true);
-    }, 5000);
-  }, [memoizedRole, account?.keyContact, isEditView, isKeyContactsReady]);
+    setIsKeyContactsReady(
+      !getProjectData.isPending && !keyContactRoles.isPending
+    );
+  }, [
+    getProjectData.isPending,
+    keyContactRoles.isPending,
+    memoizedRole,
+    account?.keyContact,
+    isEditView,
+  ]);
 
   const removeKeyContactInfo = (fieldIndex: number) => {
     const contactsArr = [...keyContacts];
@@ -257,8 +261,7 @@ const ProjectForm: React.FC = () => {
     currency.isLoading ||
     industry.isLoading ||
     Classification.isLoading ||
-    keyContactRoles.isLoading ||
-    !isKeyContactsReady;
+    keyContactRoles.isLoading;
 
   return (
     <>
@@ -314,14 +317,19 @@ const ProjectForm: React.FC = () => {
             data={formConfig}
             loading={false}
             values={
-              isEditView && projectData
+              isEditView && isKeyContactsReady
                 ? { ...projectData }
-                : {
-                    project_status: defaultActiveValue,
-                    status: defaultActiveValue,
-                    auto_send_ai_interaction: enumValue.Yes,
-                    auto_access_rd: enumValue.Yes,
-                  }
+                : !isEditView && keyContacts.length > 0
+                  ? {
+                      project_status: defaultActiveValue,
+                      status: defaultActiveValue,
+                      auto_send_ai_interaction: enumValue.No,
+                      auto_access_rd: enumValue.Yes,
+                      is_primary_contact_0: YesNo.No,
+                      include_in_communication_0: YesNo.No,
+                      key_contact_status_0: defaultActiveValue,
+                    }
+                  : {}
             }
             outData={submitData}
             formRef={formRef}

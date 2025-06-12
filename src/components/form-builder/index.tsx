@@ -413,7 +413,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           setConfirmationState({
             isOpen: true,
             message:
-              'Only one active contact can be included in communications. Would you like to proceed?',
+              'Only one active contact can be Interaction Recipient. Would you like to proceed?',
             onConfirm: () => {
               // Set all other active include_in_communication fields to 'no'
               Object.keys(newData).forEach((key) => {
@@ -733,15 +733,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           let combinedMessage = '';
           if (primaryConflict && commConflict) {
             combinedMessage =
-              '1. Primary Contact with the same role already exists\n' +
-              '2. Another active contact is already included in communications\n' +
-              'Would you like to proceed?';
+              'A Primary Contact with the same role and an active Interaction Recipient already exist. Would you like to proceed?';
           } else if (primaryConflict) {
             combinedMessage =
               'Primary Contact with the same role already exists. Would you like to proceed?';
           } else if (commConflict) {
             combinedMessage =
-              'Only one active contact can be included in communications. Would you like to proceed?';
+              'Only one active contact can be Interaction Recipient. Would you like to proceed?';
           }
 
           if (primaryConflict || commConflict) {
