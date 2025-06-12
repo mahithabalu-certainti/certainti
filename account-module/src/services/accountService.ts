@@ -636,6 +636,15 @@ async accountList(
         };
       }
 
+      const isUniqueOrg = await this.checkIsAccounOrgUnique(organisation_name);
+      if(!isUniqueOrg){
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: `An account with the organisation name "${organisation_name}" already exists. Please choose a different name.`
+        };
+      }
+
       if (parent_account_rid !== null) {
         const parent_account = await repository.findOne({
           where: {
@@ -811,11 +820,28 @@ async insertClientTemplateDetails(
         }
       });
 
+       // Check if organisation name already exists before update
+      const existingOrgAccount = await repository.findOne({
+        where: {
+          organisation_name: { [Op.iLike]: organisation_name }, // Case insensitive comparison
+          rid: { [Op.ne]: account_rid } // Exclude current account
+        }
+      });
+
+
+
       if (existingAccount) {
         return {
           statusCode: HttpStatus.BAD_REQUEST,
           message: HttpStatus.BAD_REQUEST_MESSAGE,
           errorMessage: `An account with the name "${account_name}" already exists. Please choose a different name.`
+        };
+      }
+      if (existingOrgAccount) {
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: HttpStatus.BAD_REQUEST_MESSAGE,
+          errorMessage: `An account with the organisation name "${organisation_name}" already exists. Please choose a different name.`
         };
       }
 
@@ -1141,9 +1167,12 @@ async insertClientTemplateDetails(
       const repository = await this.getAccountRepository();
       const accountData = await repository.findAll({
          where: {
-          status: 'active'
+          status: 'active',
+           organisation_name: {
+          [Op.ne]: '',
+        },    
         },
-        attributes: ["rid", "account_name"],
+        attributes: ["rid", "account_name","organisation_name"],
       });
       const orgData = await this.schemaService.getOrgInfo();
       return {
@@ -1607,6 +1636,21 @@ async insertClientTemplateDetails(
     }
     return true;
   }
+
+   private async checkIsAccounOrgUnique(organisation_name: string): Promise<boolean> {
+    const response = await Account.findOne({
+      where: {
+        organisation_name: {
+          [Op.eq]: organisation_name,
+        },
+      },
+    });
+    if (response && response.organisation_name) {
+      return false;
+    }
+    return true;
+  }
+  
 
   private throwServiceError(err: Error): {
     statusCode: number;
