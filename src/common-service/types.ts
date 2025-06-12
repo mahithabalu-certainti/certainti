@@ -38,6 +38,8 @@ export interface GetCurrentUserRoleApiResponse extends CommonApiResponse {
     user_role: UserRoles;
     user_id: string;
     permissions: Permissions[];
+    organisation_name: string;
+    logo_url: string;
   };
 }
 

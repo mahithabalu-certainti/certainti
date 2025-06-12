@@ -9,12 +9,13 @@ import {
   toastSlice,
   accountSlice,
   permissionSlice,
+  orgLogoSlice,
 } from './slices';
 
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['permission']
+  whitelist: ['permission'],
 };
 
 const rootReducer = combineReducers({
@@ -23,6 +24,7 @@ const rootReducer = combineReducers({
   auth: authSlice.reducer,
   toast: toastSlice.reducer,
   account: accountSlice.reducer,
+  orgLogoInfo: orgLogoSlice.reducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

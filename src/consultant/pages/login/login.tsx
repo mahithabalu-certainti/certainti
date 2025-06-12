@@ -10,7 +10,7 @@ import { useAuthHook, useToast } from '../../../hooks';
 import { useAppTranslation } from '../../../hooks/use-app-translation';
 import { useAppDispatch } from '../../../store/store';
 import { IAuthDetails } from '../../../store/type';
-import { setUserId, updatePermissions } from '../../../store/slices';
+import { setUserId, UpdateOrgLogo, updatePermissions } from '../../../store/slices';
 import { checkPermission, reShapePermissionData } from '../../../common-utils';
 import { AllModules } from '../../../common-service';
 import { NOT_FOUND } from '../../../routes';
@@ -65,6 +65,10 @@ export const Login: React.FC = () => {
       login(authDetail as IAuthDetails);
       dispatch(setUserId(account?.localAccountId));
       dispatch(updatePermissions({ ...reShapeData, isAdminEnable }));
+      dispatch(UpdateOrgLogo({
+        orgName: userRole.data.organisation_name,
+        logoUrl: userRole.data.logo_url,
+      }))
       setIsLoading(false);
       const currentActiveRoute = accountNavItems.find(
         (menu) =>
