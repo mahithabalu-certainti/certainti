@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { FormType, SelectOption, YesNo } from '../../../../consultant/types';
+import { FormType, SelectOption } from '../../../../consultant/types';
 import {
   createPhoneInputField,
   createRadioField,
@@ -100,24 +100,16 @@ export const FormData = (
           }),
           createRadioField('is_consultant_firm', 'Is Consultant Firm', {
             radioOptions: YES_NO_OPTIONS,
-            disabled: true,
+            // disabled: true,
             required: true,
             onChange: true,
-            // resetDependsFields: ['org_id'],
-            defaultSelect: {
-              matchedValue: YesNo.Yes,
-              key: 'org_id',
-              ifMatchValue: isConsultantFirm === 'yes' ? orgNames[0].value : '',
-              ifNotMatchValue: '',
-            },
+            resetDependsFields: ['org_id'],
           }),
           createSelectField('org_id', 'Org Name', {
-            options: orgNames,
             required: true,
-            disabled: true,
-            defaultValue: isConsultantFirm === 'yes' ? orgNames[0].value : '',
+            options: orgNames,
             placeholder: 'Choose Org Name',
-            isLoading: false,
+            disabled: isConsultantFirm === 'yes',
           }),
         ],
       },

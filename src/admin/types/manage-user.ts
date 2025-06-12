@@ -113,6 +113,8 @@ export interface UserDetail {
   business_teams: {
     business_teams: string;
   };
+  org_id: string;
+  is_consultant_firm: boolean;
 }
 
 export enum UserRole {
@@ -201,6 +203,7 @@ export interface UserPermissionApiResponse {
 export interface accountInfo {
   rid: string;
   account_name: string;
+  organisation_name: string;
 }
 export interface orgData {
   logo_url: string;

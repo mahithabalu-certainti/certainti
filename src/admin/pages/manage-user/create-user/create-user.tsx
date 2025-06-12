@@ -18,7 +18,7 @@ import { useToast } from '../../../../hooks';
 import { ADMIN_MANAGE_USER } from '../../../../routes';
 import {
   useCreateUserDetails,
-  // useFetchOrgNames,
+  useFetchOrgNames,
   useManageUserDetail,
   useManageUserProfile,
   useManageUserRole,
@@ -58,7 +58,7 @@ export const CreateUser: React.FC = () => {
   const userRoles = useManageUserRole();
   const states = useFetchState(currentCountry.country);
   const city = useFetchCity(currentCountry.state);
-  // const orgName = useFetchOrgNames();
+  const orgName = useFetchOrgNames();
   const updateUser = useUpdateUserDetails();
   const createUser = useCreateUserDetails();
 
@@ -134,24 +134,24 @@ export const CreateUser: React.FC = () => {
       })) || [],
     [userProfiles.data?.data.profiles]
   );
-  // const memoizeOrgNames: SelectOption[] = useMemo(() => {
-  //   let orgNameOptions: SelectOption[] = [];
-  //   if (isConsultantFirm === 'no' && orgName.data?.data?.accountData) {
-  //     orgNameOptions = orgName.data?.data?.accountData.map((org) => ({
-  //       label: org.account_name,
-  //       value: org.rid,
-  //     }));
-  //   } else if (isConsultantFirm === 'yes' && orgName.data?.data?.orgData) {
+  const memoizeOrgNames: SelectOption[] = useMemo(() => {
+    let orgNameOptions: SelectOption[] = [];
+    if (isConsultantFirm === 'no' && orgName.data?.data?.accountData) {
+      orgNameOptions = orgName.data?.data?.accountData.map((org) => ({
+        label: org.account_name,
+        value: org.rid,
+      }));
+    } else if (isConsultantFirm === 'yes' && orgName.data?.data?.orgData) {
 
-  //     orgNameOptions = [
-  //       {
-  //         label: orgName.data?.data?.orgData?.firm_name,
-  //         value: orgName.data?.data?.orgData?.firm_name, // You might want a unique ID here if available
-  //       },
-  //     ];
-  //   }
-  //   return orgNameOptions;
-  // }, [isConsultantFirm, orgName.data?.data]);
+      orgNameOptions = [
+        {
+          label: orgName.data?.data?.orgData?.firm_name,
+          value: orgName.data?.data?.orgData?.firm_name, // You might want a unique ID here if available
+        },
+      ];
+    }
+    return orgNameOptions;
+  }, [isConsultantFirm, orgName.data?.data]);
 
   const memoizeRole: SelectOption[] = useMemo(
     () =>
@@ -198,7 +198,7 @@ export const CreateUser: React.FC = () => {
         // modified_by: UserRole.Admin,
         profile_id: data.profile_rid,
         country: data.country || null,
-        is_consultant_firm: true,
+        is_consultant_firm: isConsultantFirm === 'yes' ? true : false,
       } as Partial<UserDetail>;
       delete constructData.profile_rid;
       delete constructData.email;
@@ -215,7 +215,7 @@ export const CreateUser: React.FC = () => {
         role: data.role_rid,
         profile_id: data.profile_rid,
         created_by: UserRole.Admin,
-        is_consultant_firm: true,
+        is_consultant_firm: isConsultantFirm === 'yes' ? true : false,
       } as Partial<UserDetail>;
       delete constructData.profile_rid;
       delete constructData.role_rid;
@@ -351,12 +351,13 @@ export const CreateUser: React.FC = () => {
                 memoizeRole,
                 memoizedState,
                 memoizeCity,
-                [
-                  {
-                    label: 'ResDev',
-                    value: 'ResDev',
-                  },
-                ],
+                memoizeOrgNames,
+                // [
+                //   {
+                //     label: 'ResDev',
+                //     value: 'ResDev',
+                //   },
+                // ],
                 isEditView,
                 states.isLoading,
                 city.isLoading,
@@ -366,13 +367,13 @@ export const CreateUser: React.FC = () => {
               values={
                 isEditView && userDatas
                   ? {
-                      ...userDatas,
-                      is_consultant_firm: YesNo.Yes,
-                      org_id: 'ResDev',
-                    }
-                  : !isEditView
-                    ? { is_consultant_firm: YesNo.Yes, org_id: 'ResDev' }
-                    : {}
+                    ...userDatas,
+                    is_consultant_firm: YesNo.Yes,
+                    org_id: 'ResDev',
+                  }
+                  // : !isEditView
+                  //   ? { org_id: isConsultantFirm === 'yes' ? memoizeOrgNames[0].value : '' }
+                  : {}
               }
               outData={submitData}
               formRef={formRef}
