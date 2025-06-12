@@ -54,7 +54,11 @@ class GeoDataService {
     data?: { currency: any; count: number };
   }> {
     try {
-      const currency = await Currency.findAll();
+     const currency = await Currency.findAll({
+      order: [
+        ['currency_name', 'ASC']
+      ]
+    });
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
