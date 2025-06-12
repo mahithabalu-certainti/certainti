@@ -808,7 +808,7 @@ export class ProjectService {
     sortOrder: string = "ASC",
     globalFilters: Record<string, string[]> = {},
     userId: string,
-    timezone: any
+    timezone: string
   ): Promise<{
     statusCode: number;
     message: string;

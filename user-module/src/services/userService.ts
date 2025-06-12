@@ -1297,7 +1297,7 @@ async getAllUserPermission(userId: string, profileId: string) {
     sortBy: string,
     sortOrder: string,
     organization: string,
-    timezone:any
+    timezone:string
   ): Promise<{
     statusCode: number;
     message: string;
