@@ -36,6 +36,8 @@ export interface IUserData {
   phone?: string;
   created_by: string;
   organization: string
+  is_consultant_firm:boolean
+  org_id:string
 }
 
 export interface IUpdateUserData {

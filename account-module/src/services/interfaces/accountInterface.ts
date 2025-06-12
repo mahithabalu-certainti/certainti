@@ -31,13 +31,18 @@ export interface IAccountService {
     data?: { account: any };
   }>;
 
-  createAccount(accountData: IAccount, userId: string): Promise<{
+  createAccount(accountData: IAccount, userId: string,file?:Express.Multer.File): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
     data?: { account: any };
   }>;
-
+  listAllAccounts(): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { accountData: any; orgData: any };
+  }>;
   updateAccount(accountData: IUpdateAccount, userId: string): Promise<{
     statusCode: number;
     message: string;

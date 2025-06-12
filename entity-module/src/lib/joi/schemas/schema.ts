@@ -636,7 +636,7 @@ const createResourceSkillSchema = Joi.object({
   resource_rid: Joi.string().max(255).optional().allow(null).allow(""),
   resource_number: Joi.string().max(255).required(),
   resource_code: Joi.string().max(255).required(),
-  start_date: Joi.string()
+  effective_from: Joi.string()
     .max(10)
     .custom((value, helpers) => {
       if (!value) return value;
@@ -655,13 +655,13 @@ const createResourceSkillSchema = Joi.object({
     
       if (inputDate < minDate) {
         return helpers.error("date.min", {
-          message: "Start date cannot be before 1950-01-01"
+          message: "Effective from cannot be before 1950-01-01"
         });
       }
     
       if (inputDate > today) {
         return helpers.error("date.max", {
-          message: "Start date cannot be in the future"
+          message: "Effective from cannot be in the future"
         });
       }
     
@@ -671,11 +671,11 @@ const createResourceSkillSchema = Joi.object({
     .allow("")
     .allow(null)
     .messages({
-      "string.base": "Start date must be a valid date",
-      "string.max": "Start date format should be YYYY-MM-DD",
+      "string.base": "Effective from must be a valid date",
+      "string.max": "Effective from  format should be YYYY-MM-DD",
       "date.invalidFormat": "Invalid date format. Please use YYYY-MM-DD",
-      "date.min": "Start date cannot be before 1950-01-01",
-      "date.max": "Start date cannot be in the future"
+      "date.min": "Effective from  cannot be before 1950-01-01",
+      "date.max": "Effective from  cannot be in the future"
     }),
   skill_description: Joi.string().max(255).optional().allow(null).allow(""),
   skill_level: Joi.string()
@@ -719,7 +719,7 @@ const createResourceSkillSchema = Joi.object({
 const updateResourceSkillSchema = Joi.object({
   rid: Joi.string().max(255).required(),
   eid: Joi.string().max(255).optional().allow(null).allow(""),
-  start_date: Joi.string()
+  effective_from: Joi.string()
     .max(10)
     .custom((value, helpers) => {
       if (!value) return value;
@@ -738,13 +738,13 @@ const updateResourceSkillSchema = Joi.object({
     
       if (inputDate < minDate) {
         return helpers.error("date.min", {
-          message: "Start date cannot be before 1950-01-01"
+          message: "Effective from cannot be before 1950-01-01"
         });
       }
     
       if (inputDate > today) {
         return helpers.error("date.max", {
-          message: "Start date cannot be in the future"
+          message: "Effective from cannot be in the future"
         });
       }
     
@@ -754,11 +754,11 @@ const updateResourceSkillSchema = Joi.object({
     .allow("")
     .allow(null)
     .messages({
-      "string.base": "Start date must be a valid date",
-      "string.max": "Start date format should be YYYY-MM-DD",
+      "string.base": "Effective from must be a valid date",
+      "string.max": "Effective from format should be YYYY-MM-DD",
       "date.invalidFormat": "Invalid date format. Please use YYYY-MM-DD",
-      "date.min": "Start date cannot be before 1950-01-01",
-      "date.max": "Start date cannot be in the future"
+      "date.min": "Effective from cannot be before 1950-01-01",
+      "date.max": "Effective from cannot be in the future"
     }),
   skill_description: Joi.string().max(255).optional().allow(null).allow(""),
   skill_level: Joi.string()
@@ -1381,7 +1381,7 @@ const createProjectSchema = Joi.object({
       }),
       key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow(null),
       is_primary_contact: Joi.boolean().valid(true, false).optional().allow(null),
-      include_in_communication: Joi.boolean().valid(true, false).optional().allow(null),
+      include_in_communication: Joi.boolean().optional().allow(null),
       status: Joi.string().valid("Active", "Inactive").optional().allow(null),
       action_type: Joi.string().valid('add').required()
     })
@@ -1670,7 +1670,7 @@ const updateProjectSchema = Joi.object({
         }),
         key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional().allow(null),
-        include_in_communication: Joi.boolean().valid(true, false).optional().allow(null),
+        include_in_communication: Joi.boolean().optional().allow(null),
         status: Joi.string().valid("Active", "Inactive").optional().allow(null)
       })
     )

@@ -380,136 +380,6 @@ export class ProjectService {
         userId
       );
 
-      // const orgDbSequlize = await initOrgSequelize();
-      // const schemaName = `platform_v2_${accountNumber}`;
-      // const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
-
-      // // const existingData = await ProjectModel.findOne({
-      // //   where: {
-      // //     rid: projectData.project_id,
-      // //   },
-      // // });
-
-      // // const existingRefId = await ProjectModel.findOne({
-      // //   where: {
-      // //     project_code: projectData.project_code,
-      // //   },
-      // // });
-
-      // if (existingRefId && existingRefId.rid !== projectData.project_id) {
-      //   throw new Error(
-      //     `Duplicate Project Code: '${projectData.project_code}' already exists.`
-      //   );
-      // }
-
-      // if (!existingData) {
-      //   throw new Error(
-      //     "Invalid project ID. The specified project was not found."
-      //   );
-      // }
-
-      // projectData.modified_by = userId;
-
-      // const updateProjectData = {
-      //   project_name: projectData.project_name || null,
-      //   project_description: projectData.project_description || null,
-      //   program_name: projectData.program_name || null,
-      //   project_status:
-      //     (projectData.project_status as "Active" | "Inactive") || "Active",
-      //   project_startdate: startDate?.toDate() || null,
-      //   project_enddate: endDate?.toDate() || null,
-      //   project_code: projectData.project_code,
-      //   project_type: projectData.project_type as "Fixed" | "Time & Material",
-      //   project_classification_rid:
-      //     projectData.project_classification_rid || null,
-      //   project_classification_other:
-      //     projectData.project_classification_other || null,
-      //   project_client_group: projectData.project_client_group || null,
-      //   project_group: projectData.project_group || null,
-      //   project_summary: projectData.project_summary || null,
-      //   industry_rid: projectData.industry_rid,
-      //   industry_name: projectData.industry_name,
-      //   fiscal_year: projectData.fiscal_year,
-      //   total_effort:
-      //     (projectData.total_effort && parseInt(projectData.total_effort)) ||
-      //     null,
-      //   total_cost: projectData.total_cost || null,
-      //   total_fte: projectData.total_fte || 0,
-      //   total_sub_con: projectData.total_sub_con || 0,
-
-      //   country: projectData.country || null,
-      //   currency: projectData.currency || null,
-      //   region: projectData.region || null,
-
-      //   total_non_labor_cost: projectData.total_non_labor_cost || null,
-      //   total_fte_effort:
-      //     (projectData.total_fte_effort &&
-      //       parseInt(projectData.total_fte_effort)) ||
-      //     null,
-      //   total_sub_con_effort:
-      //     (projectData.total_sub_con_effort &&
-      //       parseInt(projectData.total_sub_con_effort)) ||
-      //     null,
-      //   total_fte_cost: projectData.total_fte_cost || null,
-      //   total_sub_con_cost: projectData.total_sub_con_cost || null,
-      //   auto_send_ai_interaction: projectData.auto_send_ai_interaction ?? false,
-      //   auto_access_rd: projectData.auto_access_rd ?? false,
-      //   max_ai_interaction: projectData.max_ai_interaction || 0,
-      //   blended_rate_fte: projectData.blended_rate_fte || null,
-      //   blended_rate_sub_con: projectData.blended_rate_sub_con || null,
-      //   modified_by: userId,
-      //   modified_datetime: new Date(),
-      //   comments: projectData.comments || null,
-      // };
-
-      // const updateProject = await ProjectModel.update(
-      //   {
-      //     ...updateProjectData,
-      //   },
-      //   {
-      //     where: {
-      //       rid: projectData.project_id,
-      //     },
-      //   }
-      // );
-
-      // if (updateProject) {
-      //   await this.schemaService.manageKeyContacts(
-      //     projectData.key_contacts,
-      //     projectData.project_id,
-      //     userId,
-      //     schemaName
-      //   );
-      //   await this.updateProjectSummary(
-      //     projectData,
-      //     startDate,
-      //     endDate,
-      //     projectData.key_contacts,
-      //     userId
-      //   );
-      //   await this.updateProjectFiscal(
-      //     updateProjectData,
-      //     orgDbSequlize,
-      //     schemaName,
-      //     projectData.project_id
-      //   );
-      //   await this.addProjectTimeline(
-      //     accountNumber,
-      //     projectData.account_id,
-      //     "update",
-      //     projectData.project_id,
-      //     projectData
-      //   );
-      //   await this.updateProjectHistory(
-      //     accountNumber,
-      //     projectData.project_id,
-      //     updateProjectData,
-      //     existingData
-      //   );
-      // }
-
-      // await this.redisService.deleteUserProjectCache(userId)
-
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -664,7 +534,7 @@ export class ProjectService {
           mainDbInit
         );
 
-        projectData = this.insertAccount(projectData, accountData.account_name);
+        projectData = this.insertAccount(projectData, accountData);
 
         projectData = await this.schemaService.insertUserDetails(projectData);
       }
@@ -683,11 +553,12 @@ export class ProjectService {
     }
   }
 
-  insertAccount(project: any, accountName: string) {
+  insertAccount(project: any, account: any,){
     return {
       ...(project.dataValues || project),
-      account_name: accountName,
-    };
+      account_name: account.account_name,
+      account_status:account.status
+    }
   }
 
   async projectList(
@@ -906,14 +777,14 @@ export class ProjectService {
       const rawResult = allProjectList || [];
       let exportData = rawResult.map((project: any) => {
         return {
+          "Project Code": project.project_code || "-",
+          "Name": project.project_name || "-",
+          "Project Type": project.project_type || "-",
           "Account Name": project.account_name || "-",
+          "Project Classification": project.classification_name || "-",
           "Fiscal Year": project.fiscal_year || "-",
           "Customer Group": project.project_client_group || "-",
           "Project Group": project?.project_group || "-",
-          "Project Code": project.project_code || "-",
-          "Project Name": project.project_name || "-",
-          "Project Type": project.project_type || "-",
-          "Project Classification": project.classification_name || "-",
           "Project Effort (Hours)": project.total_effort || "-",
           "Project Cost":
             formatNumberForExport(
@@ -1149,12 +1020,12 @@ export class ProjectService {
       let exportData = rawResult.map((project: any) => {
         return {
           "Project Code": project.project_code || "-",
-          "Fiscal Year": project.fiscal_year || "-",
+          "Name": project.project_name || "-",
+          "Project Type": project.project_type || "-",
+          "Fiscal Year":project.fiscal_year || "-",
+          "Project Classification": project.classification_name || "-",
           "Customer Group": project.project_client_group || "-",
           "Project Group": project?.project_group || "-",
-          "Project Name": project.project_name || "-",
-          "Project Type": project.project_type || "-",
-          "Project Classification": project.classification_name || "-",
           "Project Effort (Hours)": project.total_effort || "-",
           "Project Cost":
             formatNumberForExport(
@@ -1267,8 +1138,8 @@ export class ProjectService {
         project_startdate: projectData.project_startdate || null,
         project_enddate: projectData.project_enddate || null,
 
-        total_fte_prj: projectData.total_fte || 0,
-        total_subcon_prj: projectData.total_sub_con || 0,
+        total_fte_prj: projectData.total_fte || null,
+        total_subcon_prj: projectData.total_sub_con || null,
 
         blended_rate_fte: projectData.blended_rate_fte || null,
         blended_rate_subcon: projectData.blended_rate_sub_con || null,
@@ -1314,13 +1185,13 @@ export class ProjectService {
         fiscal_year: projectData.fiscal_year,
         max_ai_interaction: projectData.max_ai_interaction || 0,
         auto_send_ai_interaction: projectData.auto_send_ai_interaction ?? false,
-        project_startdate: projectData.project_startdate || null,
-        project_enddate: projectData.project_enddate || null,
+        project_startdate: projectData?.project_startdate || null,
+        project_enddate: projectData?.project_enddate || null,
 
-        total_fte: projectData.total_fte || 0,
-        total_sub_con: projectData.total_sub_con || 0,
+        total_fte: projectData.total_fte || null,
+        total_sub_con: projectData.total_sub_con || null,
 
-        total_cost: projectData.total_cost || 0,
+        total_cost: projectData.total_cost || null,
         blended_rate_fte: projectData.blended_rate_fte || null,
         blended_rate_sub_con: projectData.blended_rate_sub_con || null,
         interaction_cc_list: projectData.project_cc_list || null,
@@ -1328,11 +1199,11 @@ export class ProjectService {
         modified_datetime: new Date(),
         project_status: projectData.project_status as "Active" | "Inactive",
 
-        total_fte_prj: projectData.total_fte || 0,
-        total_subcon_prj: projectData.total_sub_con || 0,
+        total_fte_prj: projectData.total_fte || null,
+        total_subcon_prj: projectData.total_sub_con || null,
 
-        total_cost_prj: projectData.total_cost || 0,
-        total_cost_fte_prj: projectData.total_fte_cost || 0,
+        total_cost_prj: projectData.total_cost || null,
+        total_cost_fte_prj: projectData.total_fte_cost || null,
         total_cost_subcon_prj: projectData.total_sub_con_cost,
         total_cost_nonlabor_prj: projectData.total_non_labor_cost,
 
@@ -1464,8 +1335,8 @@ export class ProjectService {
         total_effort: projectData.total_effort || null,
         total_cost: projectData.total_cost || null,
 
-        total_fte: projectData.total_fte || 0,
-        total_sub_con: projectData.total_sub_con || 0,
+        total_fte: projectData.total_fte || null,
+        total_sub_con: projectData.total_sub_con || null,
 
         total_fte_cost: projectData.total_fte_cost || null,
         total_sub_con_cost: projectData.total_sub_con_cost || null,
@@ -1534,7 +1405,7 @@ export class ProjectService {
 
       const technicalContact = enrichedKeyContacts.find(
         (e: any) =>
-          e.role_name === "Technical Consultant" && e.is_primary_contact
+          e.role_name === "Client Project Technical Point of Contact" && e.is_primary_contact
       );
       const financialContact = enrichedKeyContacts.find(
         (e: any) =>
@@ -1542,7 +1413,7 @@ export class ProjectService {
       );
       const pointOfContact = enrichedKeyContacts.find(
         (e: any) =>
-          e.role_name === "Project Point of Contact" && e.is_primary_contact
+          e.role_name === "Client Project Point of Contact" && e.is_primary_contact
       );
 
       technicalConsultant = technicalContact
@@ -2120,10 +1991,8 @@ export class ProjectService {
   }
 
   async assignCurrencyRid(result: any, mainDbSequelize: any) {
-    if (!result.currency_rid) {
-      const currencyRid = await this.getCurrencyDetailsByAccountRidRaw(
-        result.account_rid
-      );
+    if (!result.currency) {
+      const currencyRid = await this.getCurrencyDetailsByAccountRidRaw(result.account_rid);
       if (currencyRid) {
         result.currency = currencyRid;
       } else {

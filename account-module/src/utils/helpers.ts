@@ -4,7 +4,8 @@ import { HttpStatus } from "./constant";
 import { errorResponse, successResponse } from "./apiResponse";
 import configurations from "../config/config";
 import ExcelJS from 'exceljs';
-
+import { BlobServiceClient } from '@azure/storage-blob';
+import { getSecret } from "../utils/azureSecrets";
 function getLogger() {
   return configurations.getInstance().getLogger();
 }
@@ -15,8 +16,48 @@ export async function validateRequest(
   type?: "GET" | "POST" | "PUT" | "DELETE",
   organization?: string,
 ): Promise<any> {
-  const requestValidationType = type === "GET" ? req.query : req.body;
-  const { error, value } = schema.validate(requestValidationType, {
+  const isMultipart = req.headers["content-type"]?.includes("multipart/form-data");
+  let requestValidationData: any;
+  if (type === "GET") {
+    requestValidationData = req.query;
+  } else {
+    requestValidationData = isMultipart ? { ...req.body } : req.body;
+    // 🟡 If `data` is a JSON string in multipart/form-data, parse it
+    if (isMultipart ) {
+        const rawData = requestValidationData.data;
+    if (rawData === undefined) {
+        return errorResponse(
+          res,
+          HttpStatus.BAD_REQUEST,
+          HttpStatus.BAD_REQUEST_MESSAGE,
+          ["Missing 'data' field"]
+        );
+      }
+    if (typeof rawData === "string") {
+    if (rawData.trim() === "") {
+      return errorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        ["'data' field is empty"]
+      );
+    }
+  }
+  try {
+      requestValidationData.data = JSON.parse(rawData);
+      } 
+  catch (e) {
+      return errorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        ["Invalid JSON in 'data' field"]
+      );
+      }
+    }
+  }
+  const dataToValidate = isMultipart ? requestValidationData?.data : requestValidationData;
+  const { error, value } = schema.validate(dataToValidate, {
     abortEarly: false,
   });
   if (error) {
@@ -99,6 +140,25 @@ export async function generateExcelBase64(
   return Buffer.from(buffer).toString('base64');
 }
 
+export async function uploadToAzureBlob(file: Express.Multer.File,account_id:string): Promise<string> {
+  const connectionString =  await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
+  const containerName = 'account';
+  
+  const connString =  connectionString;
+  if (!connString) throw new Error('Azure storage connection string is required');
+  const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+  const containerClient = blobServiceClient.getContainerClient(containerName);
+  await containerClient.createIfNotExists({ access: 'blob' })
+
+  const blobName = `${account_id}/logo/${file.originalname}`;
+  const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+  
+  await blockBlobClient.uploadData(file.buffer, {
+    blobHTTPHeaders: { blobContentType: file.mimetype }
+  });
+
+  return blockBlobClient.url;
+}
 
 type ColumnSchema = {
   column_name: string;

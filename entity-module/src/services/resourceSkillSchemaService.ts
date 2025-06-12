@@ -347,7 +347,7 @@ async exportResoucreSkill(
       "Resource Code": rs.resource_code || "-",
       "Name": rs.resource_name || "-",
       "Resource Type": rs.resource_type || "-",
-      "Start Date": rs.start_date || "-",
+      "Effective From": rs.start_date || "-",
       "Skill Type": rs.skill_type_name || "-",
       "Skill SubType": rs.skill_subtype_name || "-",
       "Skill Level": rs.skill_level || "-",

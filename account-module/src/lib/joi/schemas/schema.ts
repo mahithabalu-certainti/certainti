@@ -103,10 +103,10 @@ const accountSchema = Joi.object({
   business_details: Joi.string().min(1).max(2000).required().label("Business Details"),
   website: Joi.string()
     .min(10)
-    .max(50)
+    .max(255)
     .allow(null)
     .optional()
-    .pattern(/^(https?:\/\/|www\.)[a-zA-Z0-9.-]+(:[0-9]+)?(\/[a-zA-Z0-9.-]*)*\/?$/)
+    .pattern(/^(https?:\/\/|www\.)[a-zA-Z0-9.-]+(:[0-9]+)?(\/[a-zA-Z0-9.-]*)*\/?$/i)
     .messages({
       "string.pattern.base": `Website URL must begin with 'http' ,'www.' or 'https://'`,
       "string.max": "The website must not exceed 255 characters."
@@ -121,6 +121,7 @@ const accountSchema = Joi.object({
     .valid("separate_db", "store_in_parent")
     .max(255)
     .required().label("Data Storage"),
+   organisation_name: Joi.string().min(7).max(125).required().label("Organisation Name"),
   key_contacts: Joi.array()
     .items(
     Joi.object({
@@ -144,7 +145,7 @@ const accountSchema = Joi.object({
         }),
         key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional(),
-        include_in_communication: Joi.boolean().valid(true, false).optional(),
+        include_in_communication: Joi.boolean().allow(null).optional(),
         status: Joi.string().valid('Active', 'Inactive').required(),
         action_type: Joi.string().valid('add', 'edit','delete').required()
       })
@@ -232,7 +233,7 @@ const updateAccountSchema = Joi.object({
     .max(255)
     .allow(null)
     .optional()
-   .pattern(/^(https?:\/\/|www\.)[a-zA-Z0-9.-]+(:[0-9]+)?(\/[a-zA-Z0-9.-]*)*\/?$/)
+    .pattern(/^(https?:\/\/|www\.)[a-zA-Z0-9.-]+(:[0-9]+)?(\/[a-zA-Z0-9.-]*)*\/?$/i)
     .messages({
       "string.pattern.base": `Website URL must begin with 'http','www.' or 'https://'`,
       "string.max": "The website must not exceed 255 characters."
@@ -245,6 +246,7 @@ const updateAccountSchema = Joi.object({
     .valid("separate_db", "store_in_parent")
     .max(255)
     .required().label("Data Storage"),
+  organisation_name: Joi.string().min(7).max(125).required().label("Organisation Name"),
   key_contacts: Joi.array()
     .items(
       Joi.object({
@@ -273,7 +275,7 @@ const updateAccountSchema = Joi.object({
         }),
         key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("").allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional(),
-        include_in_communication: Joi.boolean().valid(true, false).optional(),
+        include_in_communication: Joi.boolean().allow(null).optional(),
         status: Joi.string().valid('Active', 'Inactive').required(),
         action_type: Joi.string().valid('add', 'edit','delete').required()
       })

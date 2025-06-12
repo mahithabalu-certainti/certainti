@@ -29,6 +29,8 @@ interface UserAttributes {
   created_datetime?: Date;
   modified_datetime?: Date;
   business_teams?: string;
+  is_consultant_firm: boolean;
+  org_id?:string;
 }
 
 interface UserCreationAttributes extends Optional<UserAttributes, "rid"> {}
@@ -61,6 +63,8 @@ export class User
   public created_by?: string;
   public modified_by?: string;
   public business_teams?: any;
+  public is_consultant_firm!: boolean;
+  public org_id?: string;
 
   public readonly created_datetime!: Date;
   public readonly modified_datetime!: Date;
@@ -176,6 +180,14 @@ export class User
           allowNull: true,
           defaultValue: DataTypes.NOW,
         },
+         is_consultant_firm: {
+          type: DataTypes.BOOLEAN,
+          allowNull: false,
+        }, 
+         org_id: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        }
       },
       {
         sequelize,
