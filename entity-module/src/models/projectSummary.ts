@@ -8,7 +8,7 @@ export interface ProjectSummaryAttributes {
   project_id: string;
   project_number: string;
   project_code: string;
-  industry_rid: string;
+  industry_rid?: string;
   industry_name?: string;
   account_rid: string;
   program_name?: string | null;
@@ -16,33 +16,35 @@ export interface ProjectSummaryAttributes {
   project_startdate?: Date | null;
   project_enddate?: Date | null;
   project_status: "Active" | "Inactive";
-  fiscal_year: number;
   project_type: "Fixed" | "Time & Material";
   project_classification_rid?: string | null;
   project_classification_other?: string | null;
   project_client_group?: string | null;
   project_group?: string | null;
-
+  fiscal_year: number;
   country?: string | null;
   region?: string | null;
   currency?: string | null;
 
-  total_effort?: string | null;
-  total_cost?: string | null;
-  total_fte?: number;
-  total_sub_con?: number;
-  total_non_labor_cost?: string | null;
-  total_fte_cost?: string | null;
-  total_sub_con_cost?: string | null;
+  total_effort?: number | null;
+  total_cost?: number | null;
+  
+  total_fte?: number | null;
+  total_subcon?: number | null;
+  
+  total_cost_nonlabor?: number | null;
+  total_cost_fte?: number | null;
+  total_cost_subcon?: number | null;
+
+  qre_potential?: number | null;
+  qre_final?: number | null;
+
   comments?: string | null;
 
-  qualified_research_expenditure?: number | null;
-  is_rd_qualified?: boolean | null;
-  qre?: number | null;
-
   project_point_of_contact?: string | null;
-  financial_consultant?: string | null;
   technical_point_of_contact?: string | null;
+  financial_consultant?: string | null;
+
   assessment_status?: string | null;
 
   created_datetime?: Date;
@@ -78,27 +80,26 @@ export class ProjectSummary
   public country?: string | null;
   public region?: string | null;
   public currency?: string | null;
-  public total_effort?: string | null;
-  public total_cost?: string | null;
+  public total_effort?: number | null;
+  public total_cost?: number | null;
   public total_fte?: number;
-  public total_sub_con?: number;
-  public total_non_labor_cost?: string | null;
-  public total_fte_cost?: string | null;
-  public total_sub_con_cost?: string | null;
+  public total_subcon?: number;
+  public total_cost_nonlabor?: number | null;
+  public total_cost_fte?: number | null;
+  public total_cost_subcon?: number | null;
   public created_datetime?: Date;
   public modified_datetime?: Date;
   public created_by!: string;
   public modified_by?: string | null;
   public comments?: string | null;
-  public qualified_research_expenditure?: number | null;
-  public is_rd_qualified?: boolean | null;
-  public qre?: number | null;
   public project_point_of_contact?: string | null;
   public technical_point_of_contact?: string | null;
   public financial_consultant?: string | null;
   public project_number!: string;
-  public assessment_status?: string | null;
   public project_classification_other?: string | null;
+  public qre_potential?: number | null;
+  public qre_final?: number | null;
+  public assessment_status?: string | null;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
     ProjectSummary.init(
@@ -175,22 +176,22 @@ export class ProjectSummary
           type: DataTypes.UUID,
           allowNull: true,
         },
-        total_effort: DataTypes.DOUBLE,
-        total_cost: DataTypes.DOUBLE,
+        assessment_status: {
+          type: DataTypes.STRING(150),
+          allowNull: true
+        },
+        total_effort: DataTypes.DECIMAL(18, 2),
+        total_cost: DataTypes.DECIMAL(18, 2),
         total_fte: DataTypes.INTEGER,
-        total_sub_con: DataTypes.INTEGER,
-        total_fte_cost: DataTypes.DOUBLE,
-        total_sub_con_cost: DataTypes.DOUBLE,
-        total_non_labor_cost: DataTypes.DOUBLE,
-        qualified_research_expenditure: {
-          type: DataTypes.DOUBLE,
+        total_subcon: DataTypes.INTEGER,
+        total_cost_fte: DataTypes.DECIMAL(18, 2),
+        total_cost_subcon: DataTypes.DECIMAL(18, 2),
+        total_cost_nonlabor: DataTypes.DECIMAL(18, 2),
+        qre_final: {
+          type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },
-        is_rd_qualified: {
-          type: DataTypes.BOOLEAN,
-          allowNull: true,
-        },
-        qre: {
+        qre_potential: {
           type: DataTypes.INTEGER,
           allowNull: true,
         },
@@ -225,10 +226,6 @@ export class ProjectSummary
         },
         comments: {
           type: DataTypes.STRING(2000),
-          allowNull: true,
-        },
-        assessment_status: {
-          type: DataTypes.STRING(100),
           allowNull: true,
         },
         project_classification_other: {

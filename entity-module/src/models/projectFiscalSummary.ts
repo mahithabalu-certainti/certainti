@@ -1,11 +1,12 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { R_NUMBER_PREFIX } from "../utils/constants";
-import { KeyContact } from "./keyContactDetails";
+import { ProjectSummary } from "./projectSummary";
 
-export interface ProjectFiscalAttributes {
+export interface ProjectFiscalSummaryAttributes {
   rid?: string;
   r_number?: string;
   project_rid: string;
+  project_fiscal_rid: string;
   eid?: string | null;
   project_code: string;
   industry_rid: string | null;
@@ -66,7 +67,7 @@ export interface ProjectFiscalAttributes {
   qre_cost_subcon?: number;
   qre_cost_nonlabor?: number;
 
-  is_rd_qualified?: boolean;
+  is_rd_qualified?: boolean | null;
 
   rd_credits_total?: number;
   rd_credits_fte?: number;
@@ -81,6 +82,10 @@ export interface ProjectFiscalAttributes {
   blended_rate_subcon?: number | null;
   blended_rate?: number | null;
 
+  project_point_of_contact?: string | null;
+  technical_point_of_contact?: string | null;
+  financial_consultant?: string | null;
+
   assessment_status?: string | null;
 
   created_datetime?: Date;
@@ -89,16 +94,20 @@ export interface ProjectFiscalAttributes {
   modified_by?: string;
 }
 
-interface ProjectFiscalCreationAttributes
-  extends Optional<ProjectFiscalAttributes, "rid"> {}
+interface ProjectFiscalSummaryCreationAttributes
+  extends Optional<ProjectFiscalSummaryAttributes, "rid"> {}
 
-export class ProjectFiscal
-  extends Model<ProjectFiscalAttributes, ProjectFiscalCreationAttributes>
-  implements ProjectFiscalAttributes
+export class ProjectFiscalSummary
+  extends Model<
+    ProjectFiscalSummaryAttributes,
+    ProjectFiscalSummaryCreationAttributes
+  >
+  implements ProjectFiscalSummaryAttributes
 {
   public rid?: string;
   public r_number?: string;
   public project_rid!: string;
+  public project_fiscal_rid!: string;
   public eid?: string | null;
   public project_code!: string;
   public industry_rid!: string | null;
@@ -159,7 +168,7 @@ export class ProjectFiscal
   public qre_cost_subcon?: number;
   public qre_cost_nonlabor?: number;
 
-  public is_rd_qualified?: boolean;
+  public is_rd_qualified?: boolean | null;
 
   public rd_credits_total?: number;
   public rd_credits_fte?: number;
@@ -176,13 +185,17 @@ export class ProjectFiscal
 
   public assessment_status?: string | null;
 
+  public project_point_of_contact?: string | null;
+  public technical_point_of_contact?: string | null;
+  public financial_consultant?: string | null;
+
   public created_datetime?: Date;
   public modified_datetime?: Date;
   public created_by!: string;
   public modified_by?: string;
 
   static initialize(sequelize: Sequelize, schema: string) {
-    ProjectFiscal.init(
+    ProjectFiscalSummary.init(
       {
         rid: {
           type: DataTypes.UUID,
@@ -195,6 +208,10 @@ export class ProjectFiscal
           unique: true,
         },
         project_rid: {
+          type: DataTypes.UUID,
+          allowNull: false,
+        },
+        project_fiscal_rid: {
           type: DataTypes.UUID,
           allowNull: false,
         },
@@ -221,15 +238,10 @@ export class ProjectFiscal
         project_client_group: DataTypes.STRING,
         project_group: DataTypes.STRING,
         project_status: DataTypes.STRING,
-        country: DataTypes.STRING,
-        region: DataTypes.STRING,
+        country: DataTypes.UUID,
+        region: DataTypes.UUID,
         comments: DataTypes.STRING(2000),
-        currency: DataTypes.STRING,
-
-        assessment_status: {
-          type: DataTypes.STRING(150),
-          allowNull: true
-        },
+        currency: DataTypes.UUID,
 
         total_fte: DataTypes.INTEGER,
         total_subcon: DataTypes.INTEGER,
@@ -263,7 +275,7 @@ export class ProjectFiscal
         total_cost_subcon_prj_task: DataTypes.DECIMAL(18, 2),
         total_cost_nonlabor_prj_task: DataTypes.DECIMAL(18, 2),
 
-        qre_potential: DataTypes.DECIMAL(18, 2),
+        qre_potential: DataTypes.INTEGER,
         qre_adjustment: DataTypes.DECIMAL(18, 2),
         qre_final: DataTypes.DECIMAL(18, 2),
         qre_cost_total: DataTypes.DECIMAL(18, 2),
@@ -272,10 +284,10 @@ export class ProjectFiscal
         qre_cost_nonlabor: DataTypes.DECIMAL(18, 2),
 
         is_rd_qualified: DataTypes.BOOLEAN,
-        rd_credits_total: DataTypes.DECIMAL(18, 2),
-        rd_credits_fte: DataTypes.DECIMAL(18, 2),
-        rd_credits_subcon: DataTypes.DECIMAL(18, 2),
-        rd_credits_nonlabor: DataTypes.DECIMAL(18, 2),
+        rd_credits_total: DataTypes.DECIMAL,
+        rd_credits_fte: DataTypes.DECIMAL,
+        rd_credits_subcon: DataTypes.DECIMAL,
+        rd_credits_nonlabor: DataTypes.DECIMAL,
 
         auto_send_ai_interaction: {
           type: DataTypes.BOOLEAN,
@@ -289,10 +301,25 @@ export class ProjectFiscal
           type: DataTypes.INTEGER,
           allowNull: false,
         },
+        assessment_status: {
+          type: DataTypes.STRING(150),
+          allowNull: true
+        },
         blended_rate_fte: DataTypes.DECIMAL(18, 2),
         blended_rate_subcon: DataTypes.DECIMAL(18, 2),
         blended_rate: DataTypes.DECIMAL(18, 2),
-
+        project_point_of_contact: {
+          type: DataTypes.STRING(100),
+          allowNull: true,
+        },
+        technical_point_of_contact: {
+          type: DataTypes.STRING(100),
+          allowNull: true,
+        },
+        financial_consultant: {
+          type: DataTypes.STRING(100),
+          allowNull: true,
+        },
         created_datetime: {
           type: DataTypes.DATE,
           defaultValue: DataTypes.NOW,
@@ -310,19 +337,25 @@ export class ProjectFiscal
       {
         sequelize,
         schema,
-        tableName: "project_fiscal",
+        tableName: "project_fiscal_summary",
         timestamps: false,
         underscored: true,
       }
     );
 
-    // ProjectFiscal.hasMany(KeyContact, {
-    //   foreignKey: 'entity_rid',
-    //   sourceKey: 'rid',
-    //   as: 'ProjectFiscalKeyContact',
-    // });
+    ProjectFiscalSummary.belongsTo(ProjectSummary, {
+      foreignKey: "project_rid",
+      targetKey: "rid",
+      as: "project",
+    });
 
-    return ProjectFiscal;
+    ProjectSummary.hasMany(ProjectFiscalSummary, {
+      foreignKey: "project_rid",
+      sourceKey: "rid",
+      as: "ProjectFiscal",
+    });
+
+    return ProjectFiscalSummary;
   }
 }
 
@@ -332,10 +365,10 @@ export async function setupProjectFiscal(
 ) {
   try {
     await sequelize.query(
-      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_fiscal_seq START 1`
+      `CREATE SEQUENCE IF NOT EXISTS "${schemaName}".project_fiscal_summary_seq START 1`
     );
 
-    await sequelize.query(`ALTER TABLE "${schemaName}".project_fiscal
+    await sequelize.query(`ALTER TABLE "${schemaName}".project_fiscal_summary
       ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT_FISCAL} ' || LPAD(nextval('"${schemaName}".project_fiscal_seq')::text, 10, '0')`);
 
     console.log("Project fiscal sequence setup complete");

@@ -4,24 +4,39 @@ import { Project, setupProjectSequence } from "../models/project";
 import { HttpStatus } from "../utils/constants";
 import { ICreateProject, IUpdateProject } from "../utils/types";
 import SchemaService from "./schemaService";
-import { ProjectTimeline, setupProjectTimelineSeq } from "../models/projectTimeline";
+import {
+  ProjectTimeline,
+  setupProjectTimelineSeq,
+} from "../models/projectTimeline";
 import { ProjectFiscal, setupProjectFiscal } from "../models/projectFiscal";
 import { Op, Sequelize } from "sequelize";
-import { ProjectHistory, setupProjectHistorySeq } from "../models/projectHistory";
+import {
+  ProjectHistory,
+  setupProjectHistorySeq,
+} from "../models/projectHistory";
 import { initMainDbSequelize } from "../config/mainDataSource";
-import { RedisService } from "./redisService";
-import Decimal from "decimal.js";
-import { KeyContact, setupKeyContactsSequence } from "../models/keyContactDetails";
-import { ProjectSummary, setupProjectSummarySequence } from "../models/projectSummary";
+import {
+  KeyContact,
+  setupKeyContactsSequence,
+} from "../models/keyContactDetails";
+import {
+  ProjectSummary,
+  setupProjectSummarySequence,
+} from "../models/projectSummary";
 import currency from "currency.js";
+import ProjectIngestionService from "./projectIngestionService";
+import {
+  AccountFiscal,
+  setupAccountFiscalSequence,
+} from "../models/accountFiscal";
 
 export class ProjectService {
   private schemaService: SchemaService;
-  // private redisService: RedisService;
+  private projectIngestion: ProjectIngestionService;
 
   constructor() {
     this.schemaService = new SchemaService();
-    // this.redisService = redisService;
+    this.projectIngestion = new ProjectIngestionService();
   }
 
   async createProject(
@@ -42,8 +57,10 @@ export class ProjectService {
         throw new Error("Error creating project: Invalid account ID");
       }
 
-      if(accountData.status !== "active"){
-        throw new Error("Project creation failed: The selected account is inactive. Please choose an active account.");
+      if (accountData.status !== "active") {
+        throw new Error(
+          "Project creation failed: The selected account is inactive. Please choose an active account."
+        );
       }
 
       let accountNumber = accountData.r_number;
@@ -76,7 +93,9 @@ export class ProjectService {
 
       const project = await this.createProjectRecords(
         projectData,
-        accountNumber
+        accountNumber,
+        accountData,
+        userId
       );
 
       return {
@@ -97,17 +116,17 @@ export class ProjectService {
       const mainDbSequlize = await initMainDbSequelize();
       const schemaName = `platform_v2_${accountNumber}`;
 
-      const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
-
       const KeyContactModel = await KeyContact.initialize(
         orgDbSequlize,
         schemaName
       );
-      const ProjectTimelineModel = await ProjectTimeline.initialize(
+
+      const ProjectFiscalModel = await ProjectFiscal.initialize(
         orgDbSequlize,
         schemaName
       );
-      const ProjectFiscalModel = await ProjectFiscal.initialize(
+      const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
+      const ProjectTimelineModel = await ProjectTimeline.initialize(
         orgDbSequlize,
         schemaName
       );
@@ -115,140 +134,196 @@ export class ProjectService {
         orgDbSequlize,
         schemaName
       );
-      // const ProjectSummaryModel = await ProjectSummary.initialize(
-      //   mainDbSequlize,
-      //   ""
-      // );
+      const AccountFiscalModel = await AccountFiscal.initialize(
+        orgDbSequlize,
+        schemaName
+      );
 
       await ProjectModel.sync({ force: false });
-      await KeyContactModel.sync({ force: false });
       await ProjectFiscalModel.sync({ force: false });
+      await KeyContactModel.sync({ force: false });
       await ProjectHistory.sync({ force: false });
       await ProjectTimelineModel.sync({ force: false });
       await ProjectHistoryModel.sync({ force: false });
-      // await ProjectSummaryModel.sync({ force: false });
+      await AccountFiscalModel.sync({ force: false });
       await setupProjectSequence(orgDbSequlize, schemaName);
       await setupProjectFiscal(orgDbSequlize, schemaName);
       await setupProjectTimelineSeq(orgDbSequlize, schemaName);
       await setupProjectHistorySeq(orgDbSequlize, schemaName);
       await setupProjectSummarySequence(mainDbSequlize);
       await setupKeyContactsSequence(orgDbSequlize, schemaName);
+      await setupAccountFiscalSequence(orgDbSequlize, schemaName);
     } catch (err) {
-      console.log("Error project tales", err);
       return this.throwServiceError(err as Error);
     }
   }
 
   async createProjectRecords(
     projectData: ICreateProject,
-    accountNumber: string
-  ): Promise<Project> {
+    accountNumber: string,
+    accountData: any,
+    userId: string
+  ): Promise<any> {
     try {
-      const orgDbSequlize = await initOrgSequelize();
-      const schemaName = `platform_v2_${accountNumber}`;
-      const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
+      const existing = await this.projectIngestion.checkIfProjectExists(
+        accountNumber,
+        projectData,
+        accountData
+      );
 
-      const isRefIdExist = await ProjectModel.findOne({
-        where: {
-          project_code: projectData.project_code,
-        },
-      });
+      let createdProjectId = "";
 
-      if (isRefIdExist) {
-        throw new Error("Project code must be unique.");
+      if (existing === "fiscal_exists") {
+        throw new Error(
+          "Project already exists in the account for the fiscal year"
+        );
       }
 
-      const startDate = projectData.project_startdate !== null ? moment.utc(projectData.project_startdate, "YYYY-MM-DD") : null;
-      const endDate = projectData.project_enddate !== null ? moment.utc(projectData.project_enddate, "YYYY-MM-DD") : null;
-
-      const projectCreationData = {
-        project_code: projectData.project_code,
-        industry_rid: projectData.industry_rid,
-        industry_name: projectData.industry_name,
-        account_rid: projectData.account_id,
-        account_fiscal_rid: null,
-        program_name: projectData.program_name || null,
-        project_name: projectData.project_name || null,
-        project_startdate: startDate?.toDate() || null,
-        project_enddate: endDate?.toDate() || null,
-        project_type: projectData.project_type,
-        project_classification_rid:
-          projectData.project_classification_rid || null,
-        project_classification_other: projectData.project_classification_other || null, 
-        project_client_group: projectData.project_client_group || null,
-        project_group: projectData.project_group || null,
-        project_status: projectData.project_status,
-        fiscal_year: projectData.fiscal_year,
-        country: projectData.country || null,
-        region: projectData.region || null,
-        currency: projectData.currency || null,
-        total_effort: projectData.total_effort && parseInt(projectData.total_effort) || null,
-        
-        total_cost: projectData.total_cost || null,
-
-        total_fte: projectData.total_fte || 0,
-        total_sub_con: projectData.total_sub_con || 0,
-        total_non_labor_cost: projectData.total_non_labor_cost || null,
-        total_fte_effort: projectData.total_fte_effort && parseInt(projectData.total_fte_effort) || null,
-        total_sub_con_effort: projectData.total_sub_con_effort && parseInt(projectData.total_sub_con_effort) || null,
-        total_fte_cost: projectData.total_fte_cost || null,
-        total_sub_con_cost: projectData.total_sub_con_cost || null,
-        auto_send_ai_interaction: projectData.auto_send_ai_interaction,
-        auto_access_rd: projectData.auto_access_rd ?? false,
-        max_ai_interaction: projectData.max_ai_interaction,
-        blended_rate_fte: projectData.blended_rate_fte || null,
-        blended_rate_sub_con: projectData.blended_rate_sub_con || null,
-        project_description: projectData.project_description || null,
-        created_datetime: new Date(),
-        modified_datetime: new Date(),
-        created_by: projectData.created_by,
-        modified_by: projectData.modified_by || null,
-        comments: projectData.comments || null,
-      };
-
-      const project = await ProjectModel.create({
-        ...projectCreationData,
-      });
-
-      if (project && project.rid) {
-        await this.addProjectSummary(
-          projectData,
-          project,
-          startDate,
-          endDate,
-          projectData.key_contacts
+      if (existing === "project_exists") {
+        const existingProject = await this.projectIngestion.getProjectByCode(
+          accountNumber,
+          projectData.project_code,
+          accountData.rid
         );
 
-        if (projectData.key_contacts) {
-          await this.schemaService.manageKeyContacts(
+        if (existingProject && existingProject.rid) {
+          const createdProjectFiscal =
+            await this.projectIngestion.addProjectFiscal(
+              accountNumber,
+              projectData,
+              existingProject.rid,
+              userId
+            );
+
+          if (createdProjectFiscal && createdProjectFiscal.rid) {
+            createdProjectId = createdProjectFiscal.rid;
+            await this.projectIngestion.addProjectFiscalSummary(
+              accountNumber,
+              projectData,
+              existingProject.rid,
+              projectData.key_contacts,
+              createdProjectFiscal.rid
+            );
+
+            await this.projectIngestion.updateProjectAggregatesFromFiscal(
+              accountNumber,
+              accountData.rid,
+              existingProject.project_code
+            );
+
+            await this.projectIngestion.updateProjectSummaryAggregatesFromFiscal(
+              accountNumber,
+              existingProject.project_code,
+              accountData.rid
+            );
+
+            await this.projectIngestion.addAccountFiscal(
+              accountNumber,
+              projectData
+            );
+
+            await this.projectIngestion.updateAccountAggregatesFromAccountFiscal(
+              accountNumber,
+              projectData.account_id
+            );
+
+            if (projectData.key_contacts && createdProjectFiscal.rid) {
+              await this.projectIngestion.manageKeyContacts(
+                projectData.key_contacts,
+                createdProjectFiscal.rid,
+                projectData.created_by,
+                accountNumber
+              );
+            }
+          }
+        }
+
+        return {
+          rid: createdProjectId
+        };
+      } else {
+        const createdProject =
+          await this.projectIngestion.createProjectWithFiscal(
+            accountNumber,
+            projectData,
+            userId
+          );
+
+        if (createdProject && createdProject.rid) {
+          createdProjectId = createdProject.rid;
+          const createdProjectFiscal =
+            await this.projectIngestion.addProjectFiscal(
+              accountNumber,
+              projectData,
+              createdProject.rid,
+              userId
+            );
+
+          const startDate = moment.utc(
+            projectData.project_startdate,
+            "YYYY-MM-DD"
+          );
+          const endDate = moment.utc(projectData.project_enddate, "YYYY-MM-DD");
+
+          await this.projectIngestion.addProjectSummary(
+            accountNumber,
+            projectData,
+            createdProject,
+            startDate,
+            endDate,
+            projectData.key_contacts
+          );
+
+          await this.projectIngestion.addProjectFiscalSummary(
+            accountNumber,
+            projectData,
+            createdProject.rid,
             projectData.key_contacts,
-            project.rid,
-            projectCreationData.created_by,
-            schemaName
+            createdProjectFiscal.rid || ""
+          );
+
+          await this.projectIngestion.addAccountFiscal(
+            accountNumber,
+            projectData
+          );
+
+          await this.projectIngestion.updateAccountAggregatesFromAccountFiscal(
+            accountNumber,
+            projectData.account_id
+          );
+
+          if (projectData.key_contacts) {
+            await this.projectIngestion.manageKeyContacts(
+              projectData.key_contacts,
+              createdProject.rid || "",
+              projectData.created_by,
+              accountNumber
+            );
+            await this.projectIngestion.manageKeyContacts(
+              projectData.key_contacts,
+              createdProjectFiscal.rid || "",
+              projectData.created_by,
+              accountNumber
+            );
+          }
+
+          await this.projectIngestion.addProjectTimeline(
+            accountNumber,
+            projectData.account_id,
+            "create",
+            createdProject.rid,
+            projectData
           );
         }
-        this.addProjectFiscalRecords(
-          projectCreationData,
-          orgDbSequlize,
-          schemaName,
-          project.rid
-        );
-        this.addProjectTimeline(
-          accountNumber,
-          projectData.account_id,
-          "create",
-          project.rid,
-          projectData
-        );
       }
 
-      return project;
+      return { rid: createdProjectId };
     } catch (err) {
-      throw new Error("Error creating project: " + (err as Error).message);
+      throw new Error((err as Error).message);
     }
   }
 
-  async updateProjectRecords(
+  async updateProject(
     projectData: IUpdateProject,
     userId: string
   ): Promise<{
@@ -262,8 +337,10 @@ export class ProjectService {
 
       const accountData = await this.schemaService.fetchAccountById(account_id);
 
-      if(accountData.status !== "active"){
-        throw new Error("Project creation failed: The selected account is inactive. Please choose an active account.");
+      if (accountData.status !== "active") {
+        throw new Error(
+          "Project creation failed: The selected account is inactive. Please choose an active account."
+        );
       }
 
       if (!accountData) {
@@ -293,127 +370,143 @@ export class ProjectService {
         throw new Error("Invalid account ID: project does not exist.");
       }
 
-      const orgDbSequlize = await initOrgSequelize();
-      const schemaName = `platform_v2_${accountNumber}`;
-      const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
-
-      const startDate = projectData.project_startdate !== null ? moment.utc(projectData.project_startdate, "YYYY-MM-DD") : null;
-      const endDate = projectData.project_enddate !== null ? moment.utc(projectData.project_enddate, "YYYY-MM-DD") : null;
-
-      const existingData = await ProjectModel.findOne({
-        where: {
-          rid: projectData.project_id,
-        },
-      });
-
-      const existingRefId = await ProjectModel.findOne({
-        where: {
-          project_code: projectData.project_code,
-        },
-      });
-
-      if (existingRefId && existingRefId.rid !== projectData.project_id) {
-        throw new Error(
-          `Duplicate Project Code: '${projectData.project_code}' already exists.`
-        );
-      }
-
-      if (!existingData) {
-        throw new Error(
-          "Invalid project ID. The specified project was not found."
-        );
-      }
-
       projectData.modified_by = userId;
+      projectData.created_by = userId;
 
-      const updateProjectData = {
-        project_name: projectData.project_name || null,
-        project_description: projectData.project_description || null,
-        program_name: projectData.program_name || null,
-        project_status:
-          (projectData.project_status as "Active" | "Inactive") || "Active",
-        project_startdate: startDate?.toDate() || null,
-        project_enddate: endDate?.toDate() || null,
-        project_code: projectData.project_code,
-        project_type: projectData.project_type as "Fixed" | "Time & Material",
-        project_classification_rid:
-          projectData.project_classification_rid || null,
-        project_classification_other: projectData.project_classification_other || null, 
-        project_client_group: projectData.project_client_group || null,
-        project_group: projectData.project_group || null,
-        project_summary: projectData.project_summary || null,
-        industry_rid: projectData.industry_rid,
-        industry_name: projectData.industry_name,
-        fiscal_year: projectData.fiscal_year,
-        total_effort: projectData.total_effort && parseInt(projectData.total_effort) || null,
-        total_cost: projectData.total_cost || null,
-        total_fte: projectData.total_fte || 0,
-        total_sub_con: projectData.total_sub_con || 0,
-
-        country: projectData.country || null,
-        currency: projectData.currency || null,
-        region: projectData.region || null,
-
-        total_non_labor_cost: projectData.total_non_labor_cost || null,
-        total_fte_effort: projectData.total_fte_effort && parseInt(projectData.total_fte_effort) || null,
-        total_sub_con_effort: projectData.total_sub_con_effort && parseInt(projectData.total_sub_con_effort) || null,
-        total_fte_cost: projectData.total_fte_cost || null,
-        total_sub_con_cost: projectData.total_sub_con_cost || null,
-        auto_send_ai_interaction: projectData.auto_send_ai_interaction ?? false,
-        auto_access_rd: projectData.auto_access_rd ?? false,
-        max_ai_interaction: projectData.max_ai_interaction || 0,
-        blended_rate_fte: projectData.blended_rate_fte || null,
-        blended_rate_sub_con: projectData.blended_rate_sub_con || null,
-        modified_by: userId,
-        modified_datetime: new Date(),
-        comments: projectData.comments || null,
-      };
-
-      const updateProject = await ProjectModel.update(
-        {
-          ...updateProjectData,
-        },
-        {
-          where: {
-            rid: projectData.project_id,
-          },
-        }
+      await this.updateProjectRecords(
+        accountNumber,
+        projectData,
+        accountData,
+        userId
       );
 
-      if (updateProject) {
-        await this.schemaService.manageKeyContacts(
-          projectData.key_contacts,
-          projectData.project_id,
-          userId,
-          schemaName
-        );
-        await this.updateProjectSummary(
-          projectData,
-          startDate,
-          endDate,
-          projectData.key_contacts,
-          userId
-        );
-        await this.updateProjectFiscal(
-          updateProjectData,
-          orgDbSequlize,
-          schemaName,
-          projectData.project_id
-        );
-        await this.addProjectTimeline(
-          accountNumber,
-          projectData.account_id,
-          "update",
-          projectData.project_id,
-          projectData
-        );
-        await this.updateProjectHistory(
-          accountNumber,
-          projectData.project_id,
-          updateProjectData,
-          existingData
-        );
-      }
+      // const orgDbSequlize = await initOrgSequelize();
+      // const schemaName = `platform_v2_${accountNumber}`;
+      // const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
+
+      // // const existingData = await ProjectModel.findOne({
+      // //   where: {
+      // //     rid: projectData.project_id,
+      // //   },
+      // // });
+
+      // // const existingRefId = await ProjectModel.findOne({
+      // //   where: {
+      // //     project_code: projectData.project_code,
+      // //   },
+      // // });
+
+      // if (existingRefId && existingRefId.rid !== projectData.project_id) {
+      //   throw new Error(
+      //     `Duplicate Project Code: '${projectData.project_code}' already exists.`
+      //   );
+      // }
+
+      // if (!existingData) {
+      //   throw new Error(
+      //     "Invalid project ID. The specified project was not found."
+      //   );
+      // }
+
+      // projectData.modified_by = userId;
+
+      // const updateProjectData = {
+      //   project_name: projectData.project_name || null,
+      //   project_description: projectData.project_description || null,
+      //   program_name: projectData.program_name || null,
+      //   project_status:
+      //     (projectData.project_status as "Active" | "Inactive") || "Active",
+      //   project_startdate: startDate?.toDate() || null,
+      //   project_enddate: endDate?.toDate() || null,
+      //   project_code: projectData.project_code,
+      //   project_type: projectData.project_type as "Fixed" | "Time & Material",
+      //   project_classification_rid:
+      //     projectData.project_classification_rid || null,
+      //   project_classification_other:
+      //     projectData.project_classification_other || null,
+      //   project_client_group: projectData.project_client_group || null,
+      //   project_group: projectData.project_group || null,
+      //   project_summary: projectData.project_summary || null,
+      //   industry_rid: projectData.industry_rid,
+      //   industry_name: projectData.industry_name,
+      //   fiscal_year: projectData.fiscal_year,
+      //   total_effort:
+      //     (projectData.total_effort && parseInt(projectData.total_effort)) ||
+      //     null,
+      //   total_cost: projectData.total_cost || null,
+      //   total_fte: projectData.total_fte || 0,
+      //   total_sub_con: projectData.total_sub_con || 0,
+
+      //   country: projectData.country || null,
+      //   currency: projectData.currency || null,
+      //   region: projectData.region || null,
+
+      //   total_non_labor_cost: projectData.total_non_labor_cost || null,
+      //   total_fte_effort:
+      //     (projectData.total_fte_effort &&
+      //       parseInt(projectData.total_fte_effort)) ||
+      //     null,
+      //   total_sub_con_effort:
+      //     (projectData.total_sub_con_effort &&
+      //       parseInt(projectData.total_sub_con_effort)) ||
+      //     null,
+      //   total_fte_cost: projectData.total_fte_cost || null,
+      //   total_sub_con_cost: projectData.total_sub_con_cost || null,
+      //   auto_send_ai_interaction: projectData.auto_send_ai_interaction ?? false,
+      //   auto_access_rd: projectData.auto_access_rd ?? false,
+      //   max_ai_interaction: projectData.max_ai_interaction || 0,
+      //   blended_rate_fte: projectData.blended_rate_fte || null,
+      //   blended_rate_sub_con: projectData.blended_rate_sub_con || null,
+      //   modified_by: userId,
+      //   modified_datetime: new Date(),
+      //   comments: projectData.comments || null,
+      // };
+
+      // const updateProject = await ProjectModel.update(
+      //   {
+      //     ...updateProjectData,
+      //   },
+      //   {
+      //     where: {
+      //       rid: projectData.project_id,
+      //     },
+      //   }
+      // );
+
+      // if (updateProject) {
+      //   await this.schemaService.manageKeyContacts(
+      //     projectData.key_contacts,
+      //     projectData.project_id,
+      //     userId,
+      //     schemaName
+      //   );
+      //   await this.updateProjectSummary(
+      //     projectData,
+      //     startDate,
+      //     endDate,
+      //     projectData.key_contacts,
+      //     userId
+      //   );
+      //   await this.updateProjectFiscal(
+      //     updateProjectData,
+      //     orgDbSequlize,
+      //     schemaName,
+      //     projectData.project_id
+      //   );
+      //   await this.addProjectTimeline(
+      //     accountNumber,
+      //     projectData.account_id,
+      //     "update",
+      //     projectData.project_id,
+      //     projectData
+      //   );
+      //   await this.updateProjectHistory(
+      //     accountNumber,
+      //     projectData.project_id,
+      //     updateProjectData,
+      //     existingData
+      //   );
+      // }
 
       // await this.redisService.deleteUserProjectCache(userId)
 
@@ -421,12 +514,85 @@ export class ProjectService {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          project: updateProject,
+          project: [],
         },
       };
     } catch (err) {
       throw new Error("Error updating project: " + (err as Error).message);
     }
+  }
+
+  async updateProjectRecords(
+    accountNumber: string,
+    projectData: IUpdateProject,
+    accountData: any,
+    userId: string
+  ) {
+    const fiscalData =
+      await this.projectIngestion.checkIfProjectFiscalExistsOnUpdate(
+        accountNumber,
+        projectData,
+        accountData.rid,
+        projectData.project_fiscal_id
+      );
+
+    if (fiscalData) {
+      throw new Error(
+        "Project already exists in the account for the fiscal year"
+      );
+    }
+
+    const existingFiscalData =
+      await this.projectIngestion.fetchProjectFiscalById(
+        accountNumber,
+        projectData.project_fiscal_id
+      );
+
+    await this.projectIngestion.updateProjectFiscal(
+      accountNumber,
+      projectData,
+      existingFiscalData?.project_code || ""
+    );
+
+    if (projectData.key_contacts) {
+      await this.projectIngestion.manageKeyContacts(
+        projectData.key_contacts,
+        projectData.project_fiscal_id,
+        userId,
+        accountNumber
+      );
+    }
+
+    await this.projectIngestion.updateProjectHistory(
+      accountNumber,
+      projectData,
+      existingFiscalData
+    );
+
+    await this.projectIngestion.updateProjectFiscalSummary(
+      accountNumber,
+      projectData,
+      existingFiscalData?.project_code
+    );
+
+    await this.projectIngestion.updateProjectAggregatesFromFiscal(
+      accountNumber,
+      accountData.rid,
+      projectData.project_code
+    );
+
+    await this.projectIngestion.updateProjectSummaryAggregatesFromFiscal(
+      accountNumber,
+      projectData?.project_code || "",
+      accountData.rid
+    );
+
+    await this.projectIngestion.addAccountFiscal(accountNumber, projectData);
+
+    await this.projectIngestion.updateAccountAggregatesFromAccountFiscal(
+      accountNumber,
+      accountData.rid
+    );
   }
 
   async projectById(
@@ -474,48 +640,28 @@ export class ProjectService {
         };
       }
 
-      const orgDbSequlize = await initOrgSequelize();
-      const mainDbSequlize = await initMainDbSequelize();
-      const schemaName = `platform_v2_${accountRNumber}`;
-      const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
-      const KeyContactModel = await KeyContact.initialize(
-        orgDbSequlize,
-        schemaName
-      );
-
-      let projectData = await ProjectModel.findOne({
-        where: {
-          rid: projectId,
-        },
-        include: [
-          {
-            model: KeyContactModel,
-            as: "keyContact",
-          },
-        ],
-      });
+      let projectData = await this.projectIngestion.fetchProjectById(accountRNumber, projectId);
 
       if (projectData) {
-
         const mainDbInit = await initMainDbSequelize();
 
         await this.assignCurrencyRid(projectData, mainDbInit);
 
         projectData = await this.schemaService.insertProjectGeoData(
           projectData,
-          mainDbSequlize
+          mainDbInit
         );
         projectData = await this.schemaService.insertIndustyName(
           projectData,
-          mainDbSequlize
+          mainDbInit
         );
         projectData = await this.schemaService.projectKeyContactData(
           projectData,
-          mainDbSequlize
+          mainDbInit
         );
         projectData = await this.schemaService.projectClassificationData(
           projectData,
-          mainDbSequlize
+          mainDbInit
         );
 
         projectData = this.insertAccount(projectData, accountData.account_name);
@@ -537,11 +683,11 @@ export class ProjectService {
     }
   }
 
-  insertAccount(project: any, accountName: string){
+  insertAccount(project: any, accountName: string) {
     return {
       ...(project.dataValues || project),
-      account_name: accountName
-    }
+      account_name: accountName,
+    };
   }
 
   async projectList(
@@ -552,7 +698,8 @@ export class ProjectService {
     search: string,
     filters: Record<string, any> = {},
     sortBy: string = "created_datetime",
-    sortOrder: string = "ASC"
+    sortOrder: string = "ASC",
+    bothParentAndChild: boolean = false
   ): Promise<{
     statusCode: number;
     message: string;
@@ -560,6 +707,7 @@ export class ProjectService {
     data?: { projects: any; totalCount: number };
   }> {
     try {
+
       const accountData = await this.schemaService.fetchAccountById(accountId);
 
       if (!accountData) {
@@ -596,123 +744,39 @@ export class ProjectService {
         };
       }
 
-      const orgDbSequlize = await initOrgSequelize();
-      const schemaName = `platform_v2_${accountRNumber}`;
-      const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
-      const KeyContactModel = await KeyContact.initialize(
-        orgDbSequlize,
-        schemaName
-      );
-
       const [finalSortBy, finalSortOrder] = this.getSortParameters(
         sortBy,
         sortOrder
       );
-      const [finalMetaDataSortBy, finalMetaDataSortOrder] = this.getMetaDataSortParameters(
-        sortBy,
-        sortOrder
-      );
+      const [finalMetaDataSortBy, finalMetaDataSortOrder] =
+        this.getMetaDataSortParameters(sortBy, sortOrder);
 
       const { whereClause } = this.buildWhereClause(filters, search, false);
 
       const offset = (page - 1) * limit;
 
-      let { rows: projectData, count } = await ProjectModel.findAndCountAll({
-        where: {
-          account_rid: accountData.rid,
-          ...whereClause,
-          ...(fiscalYear && fiscalYear !== 0
-            ? { fiscal_year: fiscalYear }
-            : {}),
-        },
-        order: [[finalSortBy, finalSortOrder]],
-        distinct: true,
+      const order = [[finalSortBy, finalSortOrder]];
+
+      const projectList = await this.projectIngestion.fetchProjectList(
+        accountRNumber,
+        accountData,
+        whereClause,
+        fiscalYear,
         offset,
         limit,
-        attributes: [
-          "rid",
-          "r_number",
-          "project_code",
-          "project_name",
-          "program_name",
-          "fiscal_year",
-          "industry_rid",
-          "industry_name",
-          "project_startdate",
-          "project_enddate",
-          "project_type",
-          "project_classification_rid",
-          "project_classification_other",
-          "project_client_group",
-          "project_group",
-          "project_status",
-          "account_rid",
-          "rid",
-          "total_cost",
-          "total_effort",
-          "total_fte",
-          "total_fte_cost",
-          "total_sub_con",
-          "total_sub_con_cost",
-          "total_non_labor_cost",
-          "comments",
-          "country",
-          "region",
-          "currency",
-          "industry_name",
-          "qualified_research_expenditure",
-          "is_rd_qualified",
-          "qre",
-          "created_datetime",
-          "modified_datetime",
-          "assessment_status"
-        ],
-        include: [
-          {
-            model: KeyContactModel,
-            as: "keyContact",
-          },
-        ],
-      });
-
-      
-
-      if (projectData) {
-        const mainDbInit = await initMainDbSequelize();
-
-        await Promise.all(projectData.map(result => this.assignCurrencyRid(result, mainDbInit)));
-      
-        projectData.forEach((val) => {
-          const dataValues = val.dataValues as any;
-          dataValues.account_name = accountData.account_name;
-        });
-        projectData = await this.schemaService.insertProjectListGeoData(
-          projectData,
-          mainDbInit
-        );
-        projectData = await this.schemaService.insertIndusty(
-          projectData,
-          mainDbInit
-        );
-
-        projectData = await this.schemaService.insertKeyRole(
-          projectData,
-          mainDbInit
-        );
-        projectData = await this.schemaService.insertProjectClassification(
-          projectData,
-          mainDbInit
-        );
-
-        projectData = await this.schemaService.finalProjectSort(projectData, finalMetaDataSortBy, finalMetaDataSortOrder, filters);
-      }
+        order,
+        bothParentAndChild,
+        filters,
+        finalMetaDataSortBy,
+        finalMetaDataSortOrder
+      );
 
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          projects: projectData,
-          totalCount: count,
+          projects: projectList,
+          totalCount: projectList.length,
         },
       };
     } catch (err) {
@@ -753,9 +817,7 @@ export class ProjectService {
       };
 
       const appliedAccountNumber =
-        await this.schemaService.computeGlobalAccountFilter(
-          globalFilters,
-        );
+        await this.schemaService.computeGlobalAccountFilter(globalFilters);
 
       const { finalResult: allProjectList, totalCount } =
         await this.schemaService.fetchAllProjects(
@@ -812,9 +874,7 @@ export class ProjectService {
       };
 
       const appliedAccountNumber =
-        await this.schemaService.computeGlobalAccountFilter(
-          globalFilters,
-        );
+        await this.schemaService.computeGlobalAccountFilter(globalFilters);
 
       const { finalResult: allProjectList, totalCount } =
         await this.schemaService.fetchAllProjectsForExport(
@@ -823,28 +883,31 @@ export class ProjectService {
           fiscalYear,
           appliedAccountNumber,
           userId,
-          search,
+          search
         );
 
-        const formatNumberForExport = (value: any, currency_symbol: string): string => {
-          if (value == null || value === '') return '-';
-          const num = Number(value);
-          if (isNaN(num)) return '-';
-          // Use currency.js to format the number with the provided currency symbol
-          return currency(num, {
-            symbol: currency_symbol? currency_symbol : '$',
-            precision: 2,
-            pattern: '! #',
-            separator: ',',
-            decimal: '.'
-          }).format();
-        };  
+      const formatNumberForExport = (
+        value: any,
+        currency_symbol: string
+      ): string => {
+        if (value == null || value === "") return "-";
+        const num = Number(value);
+        if (isNaN(num)) return "-";
+        // Use currency.js to format the number with the provided currency symbol
+        return currency(num, {
+          symbol: currency_symbol ? currency_symbol : "$",
+          precision: 2,
+          pattern: "! #",
+          separator: ",",
+          decimal: ".",
+        }).format();
+      };
 
       const rawResult = allProjectList || [];
-      let exportData = rawResult.map((project: any) => {   
+      let exportData = rawResult.map((project: any) => {
         return {
           "Account Name": project.account_name || "-",
-          "Fiscal Year":project.fiscal_year || "-",
+          "Fiscal Year": project.fiscal_year || "-",
           "Customer Group": project.project_client_group || "-",
           "Project Group": project?.project_group || "-",
           "Project Code": project.project_code || "-",
@@ -852,19 +915,40 @@ export class ProjectService {
           "Project Type": project.project_type || "-",
           "Project Classification": project.classification_name || "-",
           "Project Effort (Hours)": project.total_effort || "-",
-          "Project Cost": formatNumberForExport(project.total_cost, project.currency_symbol) || "-",
-          "FTE Cost": formatNumberForExport(project.total_fte_cost, project.currency_symbol) || "-",
-          "SubCon Cost": formatNumberForExport(project.total_sub_con, project.currency_symbol) || "-",
-          "Non-Labor Cost": formatNumberForExport(project.total_non_labor_cost, project.currency_symbol) || "-",
+          "Project Cost":
+            formatNumberForExport(
+              project.total_cost,
+              project.currency_symbol
+            ) || "-",
+          "FTE Cost":
+            formatNumberForExport(
+              project.total_fte_cost,
+              project.currency_symbol
+            ) || "-",
+          "SubCon Cost":
+            formatNumberForExport(
+              project.total_sub_con,
+              project.currency_symbol
+            ) || "-",
+          "Non-Labor Cost":
+            formatNumberForExport(
+              project.total_non_labor_cost,
+              project.currency_symbol
+            ) || "-",
           "Assessment Status": project.assessment_status || "-",
           "QRE %": project.qre || "-",
-          "QRE": formatNumberForExport(project.qualified_research_expenditure, project.currency_symbol) || "-",
+          QRE:
+            formatNumberForExport(
+              project.qualified_research_expenditure,
+              project.currency_symbol
+            ) || "-",
           "Project Point of Contact": project.project_point_of_contact || "-",
-          "Technical Point of Contact": project.technical_point_of_contact || "-",
-          "Comments": project.comments || "-",
+          "Technical Point of Contact":
+            project.technical_point_of_contact || "-",
+          Comments: project.comments || "-",
           "Last Modified": project.modified_datetime
-          ? moment(project.modified_datetime).format('YYYY-MM-DD')
-          : '-',
+            ? moment(project.modified_datetime).format("YYYY-MM-DD")
+            : "-",
           "Project ID": project.r_number || "-",
         };
       });
@@ -895,8 +979,7 @@ export class ProjectService {
     errorMessage?: string;
     data?: { projects: any; totalCount: number };
   }> {
-    try{
-
+    try {
       const accountData = await this.schemaService.fetchAccountById(accountId);
 
       if (!accountData) {
@@ -945,10 +1028,8 @@ export class ProjectService {
         sortBy,
         sortOrder
       );
-      const [finalMetaDataSortBy, finalMetaDataSortOrder] = this.getMetaDataSortParameters(
-        sortBy,
-        sortOrder
-      );
+      const [finalMetaDataSortBy, finalMetaDataSortOrder] =
+        this.getMetaDataSortParameters(sortBy, sortOrder);
 
       const { whereClause } = this.buildWhereClause(filters, search, false);
 
@@ -998,7 +1079,7 @@ export class ProjectService {
           "qre",
           "created_datetime",
           "modified_datetime",
-          "assessment_status"
+          "assessment_status",
         ],
         include: [
           {
@@ -1011,7 +1092,11 @@ export class ProjectService {
       if (projectData) {
         const mainDbInit = await initMainDbSequelize();
 
-        await Promise.all(projectData.map(result => this.assignCurrencyRid(result, mainDbInit)));
+        await Promise.all(
+          projectData.map((result) =>
+            this.assignCurrencyRid(result, mainDbInit)
+          )
+        );
 
         projectData.forEach((val) => {
           const dataValues = val.dataValues as any;
@@ -1035,47 +1120,76 @@ export class ProjectService {
           mainDbInit
         );
 
-        projectData = await this.schemaService.finalProjectSort(projectData, finalMetaDataSortBy, finalMetaDataSortOrder, filters);
+        projectData = await this.schemaService.finalProjectSort(
+          projectData,
+          finalMetaDataSortBy,
+          finalMetaDataSortOrder,
+          filters
+        );
       }
 
-      const formatNumberForExport = (value: any, currency_symbol: string): string => {
-        if (value == null || value === '') return '-';
+      const formatNumberForExport = (
+        value: any,
+        currency_symbol: string
+      ): string => {
+        if (value == null || value === "") return "-";
         const num = Number(value);
-        if (isNaN(num)) return '-';
+        if (isNaN(num)) return "-";
         // Use currency.js to format the number with the provided currency symbol
         return currency(num, {
-          symbol: currency_symbol? currency_symbol : '$',
+          symbol: currency_symbol ? currency_symbol : "$",
           precision: 2,
-          pattern: '! #',
-          separator: ',',
-          decimal: '.'
+          pattern: "! #",
+          separator: ",",
+          decimal: ".",
         }).format();
       };
 
       const rawResult = projectData || [];
-      let exportData = rawResult.map((project: any) => {   
+      let exportData = rawResult.map((project: any) => {
         return {
           "Project Code": project.project_code || "-",
-          "Fiscal Year":project.fiscal_year || "-",
+          "Fiscal Year": project.fiscal_year || "-",
           "Customer Group": project.project_client_group || "-",
           "Project Group": project?.project_group || "-",
           "Project Name": project.project_name || "-",
           "Project Type": project.project_type || "-",
           "Project Classification": project.classification_name || "-",
           "Project Effort (Hours)": project.total_effort || "-",
-          "Project Cost": formatNumberForExport(project.total_cost, project.currency_symbol) || "-",
-          "FTE Cost": formatNumberForExport(project.total_fte_cost, project.currency_symbol) || "-",
-          "SubCon Cost": formatNumberForExport(project.total_sub_con, project.currency_symbol) || "-",
-          "Non-Labor Cost": formatNumberForExport(project.total_non_labor_cost, project.currency_symbol) || "-",
+          "Project Cost":
+            formatNumberForExport(
+              project.total_cost,
+              project.currency_symbol
+            ) || "-",
+          "FTE Cost":
+            formatNumberForExport(
+              project.total_fte_cost,
+              project.currency_symbol
+            ) || "-",
+          "SubCon Cost":
+            formatNumberForExport(
+              project.total_sub_con,
+              project.currency_symbol
+            ) || "-",
+          "Non-Labor Cost":
+            formatNumberForExport(
+              project.total_non_labor_cost,
+              project.currency_symbol
+            ) || "-",
           "Assessment Status": project.assessment_status || "-",
           "QRE %": project.qre || "-",
-          "QRE": formatNumberForExport(project.qualified_research_expenditure, project.currency_symbol) || "-",
+          QRE:
+            formatNumberForExport(
+              project.qualified_research_expenditure,
+              project.currency_symbol
+            ) || "-",
           "Project Point of Contact": project.project_point_of_contact || "-",
-          "Technical Point of Contact": project.technical_point_of_contact || "-",
-          "Comments": project.comments || "-",
+          "Technical Point of Contact":
+            project.technical_point_of_contact || "-",
+          Comments: project.comments || "-",
           "Last Modified": project.modified_datetime
-          ? moment(project.modified_datetime).format('YYYY-MM-DD')
-          : '-',
+            ? moment(project.modified_datetime).format("YYYY-MM-DD")
+            : "-",
           "Project ID": project.r_number || "-",
         };
       });
@@ -1088,7 +1202,7 @@ export class ProjectService {
           totalCount: count,
         },
       };
-    }catch(err){
+    } catch (err) {
       throw new Error("Error fetching project: " + (err as Error).message);
     }
   }
@@ -1143,6 +1257,7 @@ export class ProjectService {
         eid: projectData.eid || null,
         fiscal_year: projectData.fiscal_year,
         account_rid: projectData.account_rid,
+        project_code: projectData.program_code,
 
         max_ai_interactions: projectData.max_ai_interaction || 0,
         expiry_duration: null,
@@ -1176,7 +1291,7 @@ export class ProjectService {
         total_hours_subcon_prj: projectData.total_sub_con_effort,
       };
 
-      await ProjectFiscalModel.create(projectFiscalData);
+      // await ProjectFiscalModel.create(projectFiscalData);
     } catch (err) {
       throw new Error("Error adding project fiscal: " + (err as Error).message);
     }
@@ -1287,7 +1402,8 @@ export class ProjectService {
               : "",
           new_value:
             newValue !== null && newValue !== undefined ? String(newValue) : "",
-          modified_by: newProjectData["modified_by"],        }));
+          modified_by: newProjectData["modified_by"],
+        }));
 
       if (historyChanges.length === 0) return;
 
@@ -1304,69 +1420,6 @@ export class ProjectService {
       throw new Error(
         "Error updating project history : " + (err as Error).message
       );
-    }
-  }
-
-  async addProjectSummary(
-    projectData: any,
-    project: any,
-    startDate: Moment | null,
-    endDate: Moment | null,
-    keyContacts: any[]
-  ) {
-    try {
-      const mainDbSequlize = await initMainDbSequelize();
-      const ProjectSummaryModel = await ProjectSummary.initialize(
-        mainDbSequlize,
-        ""
-      );
-      // await ProjectSummaryModel.sync({ force: false });
-
-      const {
-        technicalConsultant,
-        financialConsultant,
-        projectPointOfContact,
-      } = await this.calculateKeyContactDetails(keyContacts, mainDbSequlize);
-
-      await ProjectSummaryModel.create({
-        project_code: projectData.project_code,
-        industry_rid: projectData.industry_rid,
-        industry_name: projectData.industry_name,
-        account_rid: projectData.account_id,
-        program_name: projectData.program_name || null,
-        project_name: projectData.project_name || null,
-        project_startdate: startDate?.toDate() || null,
-        project_enddate: endDate?.toDate() || null,
-        project_status: projectData.project_status,
-        project_type: projectData.project_type,
-        project_client_group: projectData.project_client_group,
-        project_group: projectData.project_group,
-        project_classification_rid: projectData.project_classification_rid,
-        project_classification_other: projectData.project_classification_other,
-        fiscal_year: projectData.fiscal_year,
-        country: projectData.country || null,
-        region: projectData.region || null,
-        currency: projectData.currency || null,
-        total_effort: projectData.total_effort || null,
-        total_cost: projectData.total_cost || null,
-        total_fte: projectData.total_fte || 0,
-        total_sub_con: projectData.total_sub_con || 0,
-        total_non_labor_cost: projectData.total_non_labor_cost || null,
-        total_fte_cost: projectData.total_fte_cost || null,
-        total_sub_con_cost: projectData.total_sub_con_cost || null,
-        comments: projectData.comments || null,
-        created_datetime: new Date(),
-        modified_datetime: new Date(),
-        created_by: projectData.created_by,
-        modified_by: projectData.modified_by || null,
-        project_number: project.r_number || "",
-        project_id: project.rid || "",
-        technical_point_of_contact: technicalConsultant,
-        financial_consultant: financialConsultant,
-        project_point_of_contact: projectPointOfContact,
-      });
-    } catch (err) {
-      throw err;
     }
   }
 
@@ -1491,10 +1544,16 @@ export class ProjectService {
         (e: any) =>
           e.role_name === "Project Point of Contact" && e.is_primary_contact
       );
-      
-      technicalConsultant = technicalContact ? technicalContact.key_contact_name : null;
-      financialConsultant = financialContact ? financialContact.key_contact_name : null;
-      projectPointOfContact = pointOfContact ? pointOfContact.key_contact_name : null;
+
+      technicalConsultant = technicalContact
+        ? technicalContact.key_contact_name
+        : null;
+      financialConsultant = financialContact
+        ? financialContact.key_contact_name
+        : null;
+      projectPointOfContact = pointOfContact
+        ? pointOfContact.key_contact_name
+        : null;
     } else {
       return {
         technicalConsultant: null,
@@ -1538,7 +1597,7 @@ export class ProjectService {
       "fiscal_year",
       "comments",
       "modified_datetime",
-      "assessment_status"
+      "assessment_status",
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -1549,7 +1608,10 @@ export class ProjectService {
     return [sortBy, sortOrder];
   }
 
-  getMetaDataSortParameters(sortBy: string, sortOrder: string): [string, string] {
+  getMetaDataSortParameters(
+    sortBy: string,
+    sortOrder: string
+  ): [string, string] {
     const validSortColumns = [
       "account_name",
       "country_name",
@@ -1559,7 +1621,7 @@ export class ProjectService {
       "financial_consultant",
       "project_point_of_contact",
       "classification_name",
-      "industry_name"
+      "industry_name",
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -1630,198 +1692,223 @@ export class ProjectService {
       : finalSearchCondition;
   }
 
-    private applyFilters(
-      filters: Record<string, any>,
-      whereClause: Record<string, any>,
-      isAllProject: boolean
-    ): Record<string, any> {
-      const castToTextFields = [
-        "rid",
-        "project_type",
-        "project_status",
-        "project_startdate",
-        "project_enddate",
-        "total_effort",
-        "total_cost",
-        "fiscal_year"
-      ];
-    
-      const numberFields = ["total_effort", "total_cost", "fiscal_year", "total_fte", "total_fte_cost", "total_sub_con", 
-        "total_sub_con_cost", "total_non_labor_cost", "qualified_research_expenditure", "qre"]; 
-      const dateFields = [ "project_startdate", "project_enddate", "modified_datetime"];
-      const enumFields = [
-        "project_status",
-        "project_type",
-        "fiscal_year",
-      ];
-      const booleanFields = [ "is_rd_qualified" ];
-    
-      const filterFields = this.getFilterFields(isAllProject);
-    
-      filterFields.forEach(({ clientField, dbField }) => {
-        if (filters[clientField]) {
-          const fieldFilter = filters[clientField];
-          const isNumber = numberFields.includes(dbField);
-          const isDate = dateFields.includes(dbField);
-          const isEnum = enumFields.includes(dbField);
-          const isBoolean = booleanFields.includes(dbField);
-          const isTextCastNeeded = castToTextFields.includes(dbField) && !isNumber && !isDate && !isBoolean;
+  private applyFilters(
+    filters: Record<string, any>,
+    whereClause: Record<string, any>,
+    isAllProject: boolean
+  ): Record<string, any> {
+    const castToTextFields = [
+      "rid",
+      "project_type",
+      "project_status",
+      "project_startdate",
+      "project_enddate",
+      "total_effort",
+      "total_cost",
+      "fiscal_year",
+    ];
 
+    const numberFields = [
+      "total_effort",
+      "total_cost",
+      "fiscal_year",
+      "total_fte",
+      "total_cost_fte",
+      "total_subcon",
+      "total_cost_subcon",
+      "total_cost_nonlabor",
+      "qualified_research_expenditure",
+      "qre",
+      "qre_final"
+    ];
+    const dateFields = [
+      "project_startdate",
+      "project_enddate",
+      "modified_datetime",
+    ];
+    const enumFields = ["project_status", "project_type", "fiscal_year", "ProjectFiscal.project_type"];
+    const booleanFields = ["is_rd_qualified"];
 
-          if (isTextCastNeeded) {
-            whereClause[dbField] = Sequelize.where(
-              Sequelize.cast(Sequelize.col(dbField), "TEXT"),
-              this.getFieldFilter(fieldFilter, dbField, isNumber, isDate, isEnum, isBoolean)
-            );
-          } else {
-            whereClause[dbField] = this.getFieldFilter(fieldFilter, dbField, isNumber, isDate, isEnum, isBoolean);
-          }
+    const filterFields = this.getFilterFields(isAllProject);
+
+    filterFields.forEach(({ clientField, dbField }) => {
+      if (filters[clientField]) {
+        const fieldFilter = filters[clientField];
+        const isNumber = numberFields.includes(dbField);
+        const isDate = dateFields.includes(dbField);
+        const isEnum = enumFields.includes(dbField);
+        const isBoolean = booleanFields.includes(dbField);
+        const isTextCastNeeded =
+          castToTextFields.includes(clientField) &&
+          !isNumber &&
+          !isDate &&
+          !isBoolean;
+
+        if (isTextCastNeeded) {
+          whereClause[dbField] = Sequelize.where(
+            Sequelize.cast(Sequelize.col(dbField), "TEXT"),
+            this.getFieldFilter(
+              fieldFilter,
+              dbField,
+              isNumber,
+              isDate,
+              isEnum,
+              isBoolean
+            )
+          );
+        } else {
+          whereClause[dbField] = this.getFieldFilter(
+            fieldFilter,
+            dbField,
+            isNumber,
+            isDate,
+            isEnum,
+            isBoolean
+          );
         }
-      });
-    
-      return whereClause;
+      }
+    });
+
+    return whereClause;
+  }
+
+  private getFieldFilter(
+    fieldFilter: any,
+    dbField: string,
+    isNumberField: boolean,
+    isDateField: boolean,
+    isEnumField: boolean,
+    isBooleanField: boolean
+  ): any {
+    if (isNumberField) {
+      if (fieldFilter.equals !== undefined) {
+        return { [Op.eq]: fieldFilter.equals };
+      }
+      if (fieldFilter.not_equals !== undefined) {
+        return {
+          [Op.or]: [{ [Op.ne]: fieldFilter.not_equals }, { [Op.is]: null }],
+        };
+      }
+      if (fieldFilter.less_than !== undefined) {
+        return { [Op.lt]: fieldFilter.less_than };
+      }
+      if (fieldFilter.greater_than !== undefined) {
+        return { [Op.gt]: fieldFilter.greater_than };
+      }
+      if (
+        fieldFilter.between &&
+        Array.isArray(fieldFilter.between) &&
+        fieldFilter.between.length === 2
+      ) {
+        return {
+          [Op.between]: [fieldFilter.between[0], fieldFilter.between[1]],
+        };
+      }
+      if (fieldFilter.is_empty === true) {
+        return { [Op.or]: [null] };
+      }
     }
-    
-    private getFieldFilter(
-      fieldFilter: any,
-      dbField: string,
-      isNumberField: boolean,
-      isDateField: boolean,
-      isEnumField: boolean,
-      isBooleanField: boolean
-    ): any {
-      if (isNumberField) {
+
+    if (isDateField) {
+      if (fieldFilter.equals !== undefined) {
         if (fieldFilter.equals !== undefined) {
-          return { [Op.eq]: fieldFilter.equals };
-        }
-        if (fieldFilter.not_equals !== undefined) {
-          return { 
-            [Op.or]: [
-              { [Op.ne]: fieldFilter.not_equals },
-              { [Op.is]: null },
-            ]
-          };
-        }
-        if (fieldFilter.less_than !== undefined) {
-          return { [Op.lt]: fieldFilter.less_than };
-        }
-        if (fieldFilter.greater_than !== undefined) {
-          return { [Op.gt]: fieldFilter.greater_than };
-        }
-        if (
-          fieldFilter.between &&
-          Array.isArray(fieldFilter.between) &&
-          fieldFilter.between.length === 2
-        ) {
+          const dateStr = fieldFilter.equals;
+
+          const startOfDay = moment
+            .utc(dateStr, "YYYY-MM-DD")
+            .startOf("day")
+            .toDate();
+          const endOfDay = moment
+            .utc(dateStr, "YYYY-MM-DD")
+            .endOf("day")
+            .toDate();
+
           return {
-            [Op.between]: [fieldFilter.between[0], fieldFilter.between[1]],
+            [Op.between]: [startOfDay, endOfDay],
           };
         }
-        if (fieldFilter.is_empty === true) {
-          return { [Op.or]: [null] };
-        }
       }
-    
-      if (isDateField) {
-        if (fieldFilter.equals !== undefined) {
-          if (fieldFilter.equals !== undefined) {
-            const dateStr = fieldFilter.equals;
-
-            const startOfDay = moment.utc(dateStr, "YYYY-MM-DD").startOf("day").toDate();
-            const endOfDay = moment.utc(dateStr, "YYYY-MM-DD").endOf("day").toDate();
-
-            return {
-              [Op.between]: [startOfDay, endOfDay],
-            };
-          }
-        }
-        if (fieldFilter.before !== undefined) {
-          return { [Op.lt]: this.normalizeDate(fieldFilter.before) };
-        }
-        if (fieldFilter.after !== undefined) {
-          return { [Op.gt]: this.normalizeDate(fieldFilter.after) };
-        }
-        if (
-          fieldFilter.between &&
-          Array.isArray(fieldFilter.between) &&
-          fieldFilter.between.length === 2
-        ) {
-          return {
-            [Op.between]: [
-              this.normalizeDate(fieldFilter.between[0]),
-              this.normalizeDate(fieldFilter.between[1]),
-            ],
-          };
-        }
-        if (fieldFilter.is_empty === true) {
-          return { [Op.or]: [null] };
-        }
+      if (fieldFilter.before !== undefined) {
+        return { [Op.lt]: this.normalizeDate(fieldFilter.before) };
       }
-
-      if (isEnumField) {
-        if (fieldFilter.equals !== undefined) {
-          return { [Op.eq]: fieldFilter.equals };
-        }
-        if (fieldFilter.not_equals !== undefined) {
-          return { 
-            [Op.or]: [
-              { [Op.ne]: fieldFilter.not_equals },
-              { [Op.is]: null },
-            ],
-          };
-        }
-        if (fieldFilter.in && Array.isArray(fieldFilter.in)) {
-          return { [Op.in]: fieldFilter.in };
-        }
-        if (fieldFilter.is_empty === true) {
-          return { [Op.or]: [null] };
-        }
+      if (fieldFilter.after !== undefined) {
+        return { [Op.gt]: this.normalizeDate(fieldFilter.after) };
       }
-
-      if (isBooleanField) {
-        if (fieldFilter.isTrue === true) {
-          return { [Op.eq]: true };
-        }
-        if (fieldFilter.isFalse === true) {
-          return { [Op.eq]: false };
-        }
-        if (fieldFilter.is_empty === true) {
-          return { [Op.or]: [null] };
-        }
-      }
-    
-      // String (default)
-      if (fieldFilter.equals) {
-        return { [Op.iLike]: fieldFilter.equals };
-      }
-      if (fieldFilter.not_equals) {
-        return { 
-          [Op.or]: [
-            { [Op.notILike]: fieldFilter.not_equals },
-            { [Op.is]: null },
+      if (
+        fieldFilter.between &&
+        Array.isArray(fieldFilter.between) &&
+        fieldFilter.between.length === 2
+      ) {
+        return {
+          [Op.between]: [
+            this.normalizeDate(fieldFilter.between[0]),
+            this.normalizeDate(fieldFilter.between[1]),
           ],
         };
       }
-      if (fieldFilter.contains) {
-        return { [Op.iLike]: `%${fieldFilter.contains}%` };
+      if (fieldFilter.is_empty === true) {
+        return { [Op.or]: [null] };
       }
-      if (fieldFilter.not_contains) {
-        return { 
-          [Op.or]: [
-            { [Op.notILike]: `%${fieldFilter.not_contains}%` },
-            { [Op.is]: null },
-          ]        
-         };
+    }
+
+    if (isEnumField) {
+      if (fieldFilter.equals !== undefined) {
+        return { [Op.eq]: fieldFilter.equals };
+      }
+      if (fieldFilter.not_equals !== undefined) {
+        return {
+          [Op.or]: [{ [Op.ne]: fieldFilter.not_equals }, { [Op.is]: null }],
+        };
+      }
+      if (fieldFilter.in && Array.isArray(fieldFilter.in)) {
+        return { [Op.in]: fieldFilter.in };
       }
       if (fieldFilter.is_empty === true) {
-        return { [Op.or]: [null, ""] };
+        return { [Op.or]: [null] };
       }
-      if (fieldFilter.value) {
-        return fieldFilter.value;
-      }
-    
-      return undefined;
     }
+
+    if (isBooleanField) {
+      if (fieldFilter.isTrue === true) {
+        return { [Op.eq]: true };
+      }
+      if (fieldFilter.isFalse === true) {
+        return { [Op.eq]: false };
+      }
+      if (fieldFilter.is_empty === true) {
+        return { [Op.or]: [null] };
+      }
+    }
+
+    // String (default)
+    if (fieldFilter.equals) {
+      return { [Op.iLike]: fieldFilter.equals };
+    }
+    if (fieldFilter.not_equals) {
+      return {
+        [Op.or]: [{ [Op.notILike]: fieldFilter.not_equals }, { [Op.is]: null }],
+      };
+    }
+    if (fieldFilter.contains) {
+      return { [Op.iLike]: `%${fieldFilter.contains}%` };
+    }
+    if (fieldFilter.not_contains) {
+      return {
+        [Op.or]: [
+          { [Op.notILike]: `%${fieldFilter.not_contains}%` },
+          { [Op.is]: null },
+        ],
+      };
+    }
+    if (fieldFilter.is_empty === true) {
+      return { [Op.or]: [null, ""] };
+    }
+    if (fieldFilter.value) {
+      return fieldFilter.value;
+    }
+
+    return undefined;
+  }
 
   getSortParametersForAllProjects(
     sortBy: string,
@@ -1861,7 +1948,7 @@ export class ProjectService {
       "classification_name",
       "modified_datetime",
       "assessment_status",
-      "project_type"
+      "project_type",
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -1909,22 +1996,24 @@ export class ProjectService {
       { clientField: "fiscal_year", dbField: "fiscal_year" },
       { clientField: "total_effort", dbField: "total_effort" },
       { clientField: "total_cost", dbField: "total_cost" },
-      { clientField: "project_type", dbField: "project_type" },
       { clientField: "project_status", dbField: "project_status" },
       { clientField: "project_startdate", dbField: "project_startdate" },
       { clientField: "project_enddate", dbField: "project_enddate" },
       { clientField: "project_client_group", dbField: "project_client_group" },
       { clientField: "project_group", dbField: "project_group" },
-      { clientField: "project_status", dbField: "project_status" },
       { clientField: "created_datetime", dbField: "created_datetime" },
       { clientField: "created_by", dbField: "created_by" },
-      { clientField: "total_fte_cost", dbField: "total_fte_cost" },
+      { clientField: "total_cost_fte", dbField: "total_cost_fte" },
       { clientField: "total_fte", dbField: "total_fte" },
-      { clientField: "total_sub_con", dbField: "total_sub_con" },
-      { clientField: "total_sub_con_cost", dbField: "total_sub_con_cost" },
-      { clientField: "total_non_labor_cost", dbField: "total_non_labor_cost" },
+      { clientField: "total_subcon", dbField: "total_subcon" },
+      { clientField: "total_cost_subcon", dbField: "total_cost_subcon" },
+      { clientField: "total_cost_nonlabor", dbField: "total_cost_nonlabor" },
       { clientField: "comments", dbField: "comments" },
-      { clientField: "qualified_research_expenditure", dbField: "qualified_research_expenditure" },
+      { clientField: "qre_final", dbField: "qre_final" },
+      {
+        clientField: "qualified_research_expenditure",
+        dbField: "qualified_research_expenditure",
+      },
       { clientField: "is_rd_qualified", dbField: "is_rd_qualified" },
       { clientField: "qre", dbField: "qre" },
       { clientField: "modified_datetime", dbField: "modified_datetime" },
@@ -1934,19 +2023,24 @@ export class ProjectService {
     return projectFilterFields;
   }
 
-  buildMetaDataWhereClause(filters: Record<string, any>){
-
+  buildMetaDataWhereClause(filters: Record<string, any>) {
     const filterFields = [
       { clientField: "account_name", dbField: "account_name" },
       { clientField: "country_name", dbField: "country_name" },
       { clientField: "region_name", dbField: "region_name" },
       { clientField: "currency_name", dbField: "currency_name" },
-      { clientField: "technical_point_of_contact", dbField: "technical_point_of_contact" },
+      {
+        clientField: "technical_point_of_contact",
+        dbField: "technical_point_of_contact",
+      },
       { clientField: "financial_consultant", dbField: "financial_consultant" },
-      { clientField: "project_point_of_contact", dbField: "project_point_of_contact" },
+      {
+        clientField: "project_point_of_contact",
+        dbField: "project_point_of_contact",
+      },
       { clientField: "classification_name", dbField: "classification_name" },
-    ]
-  
+    ];
+
     return filterFields;
   }
 
@@ -2008,35 +2102,39 @@ export class ProjectService {
     };
   }
 
-  async getCurrencyDetailsByAccountRidRaw(accountRid: string): Promise<string | null> {
+  async getCurrencyDetailsByAccountRidRaw(
+    accountRid: string
+  ): Promise<string | null> {
     const query = `SELECT a.currency_rid FROM public.account a WHERE a.rid = :accountRid`;
     try {
       const mainDb = await initMainDbSequelize();
       const result = await mainDb.query(query, {
         replacements: { accountRid },
-        type: 'SELECT'
+        type: "SELECT",
       });
-      return result?(result[0] as any).currency_rid : null;
+      return result ? (result[0] as any).currency_rid : null;
     } catch (err) {
-      console.error('Error getting currency symbol:', err);
+      console.error("Error getting currency symbol:", err);
       return null;
     }
   }
 
   async assignCurrencyRid(result: any, mainDbSequelize: any) {
     if (!result.currency_rid) {
-      const currencyRid = await this.getCurrencyDetailsByAccountRidRaw(result.account_rid);
+      const currencyRid = await this.getCurrencyDetailsByAccountRidRaw(
+        result.account_rid
+      );
       if (currencyRid) {
         result.currency = currencyRid;
       } else {
         try {
           const usdCurrencyId = await mainDbSequelize.query(
             `SELECT c.* FROM public.currency c WHERE c.currency_code = 'USD'`,
-            { type: 'SELECT' }
+            { type: "SELECT" }
           );
           result.currency = usdCurrencyId[0]?.rid;
         } catch (err) {
-          console.error('Error getting USD currency rid:', err);
+          console.error("Error getting USD currency rid:", err);
         }
       }
     }
