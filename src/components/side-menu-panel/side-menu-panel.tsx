@@ -115,11 +115,11 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                   disableHoverListener={!isCollapsed}
                 >
                   <span
-                    className={`${isCollapsed ? 'bg-[#ECECEC] rounded-full flex items-center justify-center w-[24px] h-[24px]' : ''}`}
+                    className={`${isCollapsed ? 'bg-[#FFFFFF] rounded-full flex items-center justify-center w-[24px] h-[24px]' : ''}`}
                   >
                     {isCollapsed ? (
                       item.icon ? (
-                        <span className='w-4 h-4 flex items-center justify-center'>
+                        <span className='flex items-center justify-center w-4 h-4'>
                           {item.icon}
                         </span>
                       ) : (

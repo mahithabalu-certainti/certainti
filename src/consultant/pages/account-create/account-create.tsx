@@ -73,8 +73,6 @@ export const AccountForm: React.FC = () => {
   const logoUrl = account?.accountById?.logo_url;
   const logoName = logoUrl && logoUrl.substring(logoUrl.lastIndexOf('/') + 1);
   useEffect(() => {
-    console.log('account', account);
-
     if (account?.accountById?.logo_url) {
       setLogo({ name: logoName || '' } as File);
     }
