@@ -18,6 +18,7 @@ enum skillLevel {
 }
 
 export type ResourceSkillList = {
+  resource_code?: string;
   rid: string;
   r_number: string;
   eid: '';

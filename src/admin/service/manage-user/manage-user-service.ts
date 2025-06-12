@@ -36,9 +36,12 @@ export const fetchManageUserList = async (params: UserListParams = {}) => {
   return response.data;
 };
 
-export const useManageUserList = (params: UserListParams = {}) => {
+export const useManageUserList = (
+  params: UserListParams = {},
+  refreshUserTrigger?: number
+) => {
   return useQuery<ManageUserApiResponse, Error>({
-    queryKey: ['manageUsers', params],
+    queryKey: ['manageUsers', params, refreshUserTrigger],
     queryFn: () => fetchManageUserList(params),
     staleTime: 0, // No cache
     gcTime: 0, // Immediately remove from cache

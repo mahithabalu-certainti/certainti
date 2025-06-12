@@ -203,8 +203,6 @@ export const AccountForm: React.FC = () => {
   );
 
   useEffect(() => {
-    if (isKeyContactsReady) return; // Do not reinitialize
-
     const existingContacts = account?.accountDetails?.keyContacts || [];
     const newKeyData = newKeyContactFields(memoizedRole, false);
 
@@ -219,14 +217,13 @@ export const AccountForm: React.FC = () => {
     }
 
     setKeyContacts(fields);
-    setTimeout(() => {
-      setIsKeyContactsReady(true);
-    }, 5000);
+    setIsKeyContactsReady(!getAccount.isPending && !keyContactRoles.isPending);
   }, [
+    getAccount.isPending,
+    keyContactRoles.isPending,
     memoizedRole,
     account?.accountDetails?.keyContacts,
     isEditView,
-    isKeyContactsReady,
   ]);
 
   const removeKeyContactInfo = (fieldIndex: number) => {
@@ -314,7 +311,6 @@ export const AccountForm: React.FC = () => {
     memoizedState,
     dataResidency,
     memoizedIndustry,
-    memoizedRole,
     isParentAccountRequired,
     keyContacts,
     addKeyContactInfo,
@@ -329,8 +325,7 @@ export const AccountForm: React.FC = () => {
     parentAccount.isLoading ||
     currency.isLoading ||
     industry.isLoading ||
-    keyContactRoles.isLoading ||
-    !isKeyContactsReady;
+    keyContactRoles.isLoading;
 
   if (
     !accountIsEnable ||
@@ -392,13 +387,16 @@ export const AccountForm: React.FC = () => {
             data={formConfig}
             loading={false}
             values={
-              isEditView && accountData
+              isEditView && isKeyContactsReady
                 ? { ...accountData }
-                : {
-                  status: defaultActiveValue,
-                  autosend_interaction: YesNo.Yes,
-                  auto_access_rd: YesNo.Yes,
-                } // Set default values in Create Account
+                : !isEditView
+                  ? {
+                    // Set default values in Create Account
+                    status: defaultActiveValue,
+                    autosend_interaction: YesNo.Yes,
+                    auto_access_rd: YesNo.Yes,
+                  }
+                  : {}
             }
             outData={submitData}
             formRef={formRef}

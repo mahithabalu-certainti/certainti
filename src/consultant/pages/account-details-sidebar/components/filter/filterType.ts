@@ -162,6 +162,10 @@ interface StatusFilterState {
   value: string;
 }
 
+interface SystemFilterState {
+  values: string[];
+}
+
 // Union type for all possible filter states
 export type FilterState = {
   text?: TextFilterState;
@@ -171,6 +175,7 @@ export type FilterState = {
   textCostAndSkill?: TextFilterStateForCostAndSkill;
   select?: StatusFilterState;
   currencySelect?: CurrencySelectFilterState;
+  system?: SystemFilterState;
 };
 
 // Define field configuration
@@ -186,7 +191,9 @@ export type FieldConfig = {
     | 'select'
     | 'currencySelect'
     | 'skillTypeFilter'
-    | 'skillSubTypeFilter';
+    | 'skillSubTypeFilter'
+    | 'system'
+    | 'system-sort';
   options?: { option: string; value: string }[];
   required?: boolean;
   dependsOn?: string;
@@ -213,4 +220,5 @@ export interface FilterComponentProps {
   setCurrentCountry?: Dispatch<SetStateAction<string[] | null>>;
   setCurrentPage: (page: number) => void;
   mode?: string;
+  handleSorting?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
 }

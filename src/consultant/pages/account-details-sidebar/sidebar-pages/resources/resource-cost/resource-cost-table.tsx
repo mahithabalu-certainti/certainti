@@ -22,6 +22,7 @@ interface ResourceCostTableProps {
   setCostorderBy: (field: keyof ResourceCostList) => void;
   isResourceCostDeleteEnable?: boolean;
   isResourceCostEditEnable?: boolean;
+  refreshCostTrigger?: number;
 }
 
 const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
@@ -37,6 +38,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   setCostorderBy,
   isResourceCostDeleteEnable,
   isResourceCostEditEnable,
+  refreshCostTrigger,
 }) => {
   const navigate = useNavigate();
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
@@ -47,16 +49,20 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     data: costList,
     isLoading,
     error,
-  } = useResourceCost({
-    page: currentPage + 1,
-    limit: rowsPerPage,
-    sortBy: costorderBy,
-    sortOrder: apiOrder,
-    filters: appliedFilters,
-    accountNumber: accountDetails?.data?.accountById?.r_number,
-    fiscalYear,
-    resourceRid,
-  });
+  } = useResourceCost(
+    {
+      page: currentPage + 1,
+      limit: rowsPerPage,
+      sortBy: costorderBy,
+      sortOrder: apiOrder,
+      filters: appliedFilters,
+      accountNumber: accountDetails?.data?.accountById?.r_number,
+      fiscalYear,
+      resourceRid,
+    },
+    undefined,
+    refreshCostTrigger
+  );
 
   const handleEdit = (cost: ResourceCostList) => {
     const data = convertResourceCost(cost);

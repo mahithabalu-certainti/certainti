@@ -580,3 +580,17 @@ export const costDisplay = (
 
   return symbol ? `${symbol} ${formattedCost}` : formattedCost;
 };
+
+export const valueDisplay = (value: string | number | null | undefined) => {
+  if (value === null || value === undefined) return '-';
+
+  const numberCost = Number(value);
+  const hasDecimal = !Number.isInteger(numberCost);
+
+  const formattedCost = numberCost.toLocaleString('en-US', {
+    minimumFractionDigits: hasDecimal ? 2 : 0,
+    maximumFractionDigits: hasDecimal ? 2 : 0,
+  });
+
+  return formattedCost;
+};

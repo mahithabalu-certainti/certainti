@@ -20,6 +20,7 @@ interface DetailsInfoProps {
   detailsInfo?: accountDetailsProps;
   isDetailsLoading?: boolean;
   detailsError?: boolean; //ErrorProps | null | undefined;
+  isKeyContactAvailable?: boolean;
 }
 
 interface trasnformedKeyContacts {
@@ -41,6 +42,7 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
   detailsInfo,
   isDetailsLoading,
   detailsError,
+  isKeyContactAvailable,
   // accountId,
 }) => {
   const accountById = detailsInfo?.accountById;
@@ -144,10 +146,21 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
 
     { label: 'Fiscal End', value: accountDetails?.fiscal_end_date },
     { label: '', value: 'empty' },
-    { label: 'Blended Rate - FTE', value: accountDetails?.blended_rate_fte },
+    {
+      label: 'Blended Rate - FTE',
+      value:
+        costDisplay(
+          accountDetails?.blended_rate_fte?.toString(),
+          accountById?.currency?.currency_symbol
+        ) || '-',
+    },
     {
       label: 'Blended Rate - SubCon',
-      value: accountDetails?.blended_rate_subcon,
+      value:
+        costDisplay(
+          accountDetails?.blended_rate_subcon?.toString(),
+          accountById?.currency?.currency_symbol
+        ) || '-',
     },
     { label: '', value: 'empty' },
     {
@@ -188,7 +201,7 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
       <DetailsSection
         title='Basic Information'
         data={basicInfo}
-        customStyle='pt-2 mt-0'
+        customStyle='pt-0 mt-0'
       />
       <DetailsSection
         title=''
@@ -201,12 +214,12 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
         data={locationInfo}
         customStyle=' pt-2 mt-2 mb-4'
       />
-      {/* {isKeyContactAvailable && keyContactsList && ( */}
-      <KeyContactSection
-        title='Key Contacts List'
-        data={keyContactsList || []}
-      />
-      {/* )} */}
+      {isKeyContactAvailable && keyContactsList && (
+        <KeyContactSection
+          title='Key Contacts List'
+          data={keyContactsList || []}
+        />
+      )}
 
       <DetailsSection title='Account Settings' data={accountSettings} />
       <DetailsSection title='Comments' data={description} fullColumn={true} />

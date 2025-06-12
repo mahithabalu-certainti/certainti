@@ -137,7 +137,6 @@ export const ProjectDetails = () => {
   const { data, isLoading, isError } = useProjectDetail(accountID, projectID);
   const accountInActive = data?.data?.project?.account_status === 'inactive';
 
-  // console.log('projectDetails outerr', data);
   useEffect(() => {
     if (data?.data) {
       setProjectDetails(transformProjectData(data.data));
@@ -238,14 +237,16 @@ export const ProjectDetails = () => {
           primaryButton={
             projectEditIsEnable
               ? {
-                label: 'Edit',
-                onClick: handleEditAccount,
-                disabled: accountInActive,
-              }
+                  label: 'Edit',
+                  onClick: handleEditAccount,
+                  disabled: accountInActive,
+                }
               : undefined
           }
           onActionsClick={handleActionsClick}
           onSettingsClick={handleSettingsClick}
+          showActions={false}
+          showSettings={false}
         />
       </div>
       <InfoSection
@@ -254,7 +255,7 @@ export const ProjectDetails = () => {
         error={isError}
         singleLineView={true}
       />
-      <div className='flex flex-1 flex-row w-full'>
+      <div className='flex flex-row flex-1 w-full'>
         <div className='flex-1 w-[200px] min-w-[200px] max-w-[200px]'>
           <SideMenuPanel
             menuItems={sideMenuItems}
@@ -264,7 +265,7 @@ export const ProjectDetails = () => {
             showBackIcon={true}
           />
         </div>
-        <div className='flex-1 p-4 overflow-hidden'>
+        <div className='flex-1  overflow-hidden'>
           {isLoading ? (
             <div className='flex items-center justify-center w-full h-full'>
               <CircularProgress />
