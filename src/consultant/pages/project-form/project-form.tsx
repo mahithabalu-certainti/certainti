@@ -145,7 +145,7 @@ const ProjectForm: React.FC = () => {
     if (isKeyContactsReady) return; // Do not reinitialize
 
     const existingContacts = account?.keyContact || [];
-    const newKeyData = newKeyContactFields(memoizedRole, false);
+    const newKeyData = newKeyContactFields(memoizedRole);
 
     let fields: FieldType[] = [];
 
@@ -169,7 +169,7 @@ const ProjectForm: React.FC = () => {
     const groupIndex = Math.floor(fieldIndex / groupSize);
     const startIndex = groupIndex * groupSize;
     if (contactsArr.length <= groupSize) {
-      const newEmptyContact = newKeyContactFields(memoizedRole, false);
+      const newEmptyContact = newKeyContactFields(memoizedRole);
       contactsArr.splice(0, groupSize, ...newEmptyContact);
     } else {
       contactsArr.splice(startIndex, groupSize);
@@ -179,7 +179,7 @@ const ProjectForm: React.FC = () => {
   };
 
   const addKeyContactInfo = () => {
-    const newKeyData = newKeyContactFields(memoizedRole, false);
+    const newKeyData = newKeyContactFields(memoizedRole);
     setKeyContacts((prev) => [...prev, ...newKeyData]);
   };
   const submitData = (formValues: Partial<NewProjectData>) => {

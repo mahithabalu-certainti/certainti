@@ -16,10 +16,7 @@ import {
 } from '../../../common-utils';
 import { closeIcon } from '../../../assets';
 
-export const newKeyContactFields = (
-  roles: SelectOption[],
-  isPrimaryContactRequired: boolean
-) => [
+export const newKeyContactFields = (roles: SelectOption[]) => [
   createTextField('key_contact_name', 'Contact Name', {
     required: false,
     width: '190px',
@@ -82,24 +79,27 @@ export const newKeyContactFields = (
   createRadioField('is_primary_contact', 'Is Primary Contact?', {
     radioOptions: YES_NO_OPTIONS,
     width: '140px',
-    required: isPrimaryContactRequired,
-    onChange: true,
+    required: true,
   }),
-  createRadioField('include_in_communication', 'Include In Communications?', {
+  createRadioField('include_in_communication', 'Interaction Recipient?', {
     radioOptions: YES_NO_OPTIONS,
     width: '200px',
-    required: false,
-    // defaultValue: YesNo.No,
+    required: true,
   }),
+  // createRadioField('interaction_cc_recipient', 'Interaction CC Recipient?', {
+  //   radioOptions: YES_NO_OPTIONS,
+  //   width: '200px',
+  //   required: true,
+  //   defaultValue: YesNo.No,
+  // }),
   createSelectField('key_contact_status', 'Status', {
     required: false,
     width: '140px',
     options: STATUS_OPTIONS,
     placeholder: 'Choose Status',
-    defaultValue: STATUS_OPTIONS[0].value,
   }),
   createImgButton('button', closeIcon, {
-    width: '30px',
+    width: '35px',
   }),
 ];
 
@@ -339,8 +339,9 @@ export const FormData = (
         ],
       },
       {
-        sectionName: 'Key Contacts List',
+        sectionName: 'key_contacts_list',
         fillType: 'half',
+        from: 'account',
         fields: [
           ...keyContacts
             .map((contacts, index) => [

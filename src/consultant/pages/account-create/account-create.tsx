@@ -194,7 +194,7 @@ export const AccountForm: React.FC = () => {
 
   useEffect(() => {
     const existingContacts = account?.accountDetails?.keyContacts || [];
-    const newKeyData = newKeyContactFields(memoizedRole, false);
+    const newKeyData = newKeyContactFields(memoizedRole);
 
     let fields: FieldType[] = [];
 
@@ -222,7 +222,7 @@ export const AccountForm: React.FC = () => {
     const groupIndex = Math.floor(fieldIndex / groupSize);
     const startIndex = groupIndex * groupSize;
     if (contactsArr.length <= groupSize) {
-      const newEmptyContact = newKeyContactFields(memoizedRole, false);
+      const newEmptyContact = newKeyContactFields(memoizedRole);
       contactsArr.splice(0, groupSize, ...newEmptyContact);
     } else {
       contactsArr.splice(startIndex, groupSize);
@@ -232,7 +232,7 @@ export const AccountForm: React.FC = () => {
   };
 
   const addKeyContactInfo = () => {
-    const newKeyData = newKeyContactFields(memoizedRole, false);
+    const newKeyData = newKeyContactFields(memoizedRole);
     setKeyContacts((prev) => [...prev, ...newKeyData]);
   };
 
@@ -369,12 +369,15 @@ export const AccountForm: React.FC = () => {
             values={
               isEditView && isKeyContactsReady
                 ? { ...accountData }
-                : !isEditView
+                : !isEditView && keyContacts.length > 0
                   ? {
                       // Set default values in Create Account
                       status: defaultActiveValue,
-                      autosend_interaction: YesNo.Yes,
+                      autosend_interaction: YesNo.No,
                       auto_access_rd: YesNo.Yes,
+                      is_primary_contact_0: YesNo.No,
+                      include_in_communication_0: YesNo.No,
+                      key_contact_status_0: defaultActiveValue,
                     }
                   : {}
             }
