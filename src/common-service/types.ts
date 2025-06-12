@@ -90,7 +90,7 @@ export enum AllModules {
   PROJECT_ACTIVITIES = 'project_activities',
   PROJECT_NOTES = 'project_notes',
   PROJECT_ATTACHMENTS = 'project_attachments',
-  PROJECT_CHECKLISTS = 'project_checklists'
+  PROJECT_CHECKLISTS = 'project_checklists',
 }
 
 export enum AllPermissions {
@@ -159,7 +159,7 @@ export interface Country {
   country_name: string;
 }
 
-export type FieldTypes = string | string[] | dayjs.Dayjs | null;
+export type FieldTypes = string | string[] | dayjs.Dayjs | null | File;
 
 export interface OnChange {
   fieldName: string;

@@ -18,6 +18,7 @@ import { useToast } from '../../../../hooks';
 import { ADMIN_MANAGE_USER } from '../../../../routes';
 import {
   useCreateUserDetails,
+  useFetchOrgNames,
   useManageUserDetail,
   useManageUserProfile,
   useManageUserRole,
@@ -42,6 +43,8 @@ export const CreateUser: React.FC = () => {
     country: '',
     state: '',
   });
+  const [isConsultantFirm, setIsConsultantFirm] = useState('');
+  const [defaultOrgValues, setDefaultOrgValues] = useState({});
   const { successToast } = useToast();
   const location = useLocation();
   const { userid } = useParams();
@@ -55,6 +58,7 @@ export const CreateUser: React.FC = () => {
   const userRoles = useManageUserRole();
   const states = useFetchState(currentCountry.country);
   const city = useFetchCity(currentCountry.state);
+  const orgName = useFetchOrgNames();
   const updateUser = useUpdateUserDetails();
   const createUser = useCreateUserDetails();
 
@@ -130,6 +134,27 @@ export const CreateUser: React.FC = () => {
       })) || [],
     [userProfiles.data?.data.profiles]
   );
+  const memoizeOrgNames: SelectOption[] = useMemo(
+    () => {
+      let orgNameOptions: SelectOption[] = [];
+      if (isConsultantFirm === 'no' && orgName.data?.data?.accountData) {
+        orgNameOptions = orgName.data?.data?.accountData.map((org) => ({
+          label: org.account_name,
+          value: org.rid,
+        }));
+      } else if (isConsultantFirm === 'yes' && orgName.data?.data?.orgData) {
+        console.log("else if");
+
+        orgNameOptions = [
+          {
+            label: orgName.data?.data?.orgData?.firm_name,
+            value: orgName.data?.data?.orgData?.firm_name, // You might want a unique ID here if available
+          },
+        ];
+      }
+      return orgNameOptions;
+    }, [isConsultantFirm, orgName.data?.data]
+  );
 
   const memoizeRole: SelectOption[] = useMemo(
     () =>
@@ -183,6 +208,8 @@ export const CreateUser: React.FC = () => {
       if (!constructData.phone) {
         delete constructData.phone;
       }
+      console.log("cosntsruct data", constructData);
+
       updateUser.mutate(constructData);
     } else {
       const constructData = {
@@ -201,6 +228,14 @@ export const CreateUser: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    if (isConsultantFirm == 'yes') {
+      setDefaultOrgValues({
+        org_id: memoizeOrgNames[0]?.value,
+      })
+    }
+  }, [isConsultantFirm, memoizeOrgNames])
+
   const handleExternalSubmit = () => {
     formRef.current?.requestSubmit(); // This will trigger the form's onSubmit
   };
@@ -217,6 +252,9 @@ export const CreateUser: React.FC = () => {
         ...prev,
         state: fieldValue as string,
       }));
+    }
+    if (fieldName === 'is_consultant_firm') {
+      setIsConsultantFirm(fieldValue as string);
     }
   };
 
@@ -315,12 +353,14 @@ export const CreateUser: React.FC = () => {
                 memoizeRole,
                 memoizedState,
                 memoizeCity,
+                memoizeOrgNames,
                 isEditView,
                 states.isLoading,
                 city.isLoading,
-                isEditView ? !isUserActivateEnable : false
+                isEditView ? !isUserActivateEnable : false,
+                isConsultantFirm,
               )}
-              values={isEditView && userDatas ? { ...userDatas } : undefined}
+              values={isEditView && userDatas ? { ...userDatas } : { ...defaultOrgValues }}
               outData={submitData}
               formRef={formRef}
               onChange={onChangeField}

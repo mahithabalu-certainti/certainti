@@ -154,6 +154,7 @@ export const transformFormData = (
     business_details: formData.business_details,
     key_contacts:
       keyContactsTransformPayload(formData, isEdit, keyContactsList) || [],
+    organisation_name: formData.organisation_name,
   };
   if (isEdit) {
     data.account_rid = account_rid;

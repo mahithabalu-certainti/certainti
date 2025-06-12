@@ -1,11 +1,13 @@
 import { useMemo } from 'react';
-import { FormType, SelectOption } from '../../../../consultant/types';
+import { FormType, SelectOption, YesNo } from '../../../../consultant/types';
 import {
   createPhoneInputField,
+  createRadioField,
   createSelectField,
   createTextField,
   REGEX_PATTERNS,
   STATUS_OPTIONS,
+  YES_NO_OPTIONS,
 } from '../../../../common-utils';
 
 export const FormData = (
@@ -14,11 +16,15 @@ export const FormData = (
   role: SelectOption[],
   states: SelectOption[],
   city: SelectOption[],
+  orgNames: SelectOption[],
   disableFields?: boolean,
   stateLoading?: boolean,
   cityLoading?: boolean,
-  disabledStatus?: boolean
+  disabledStatus?: boolean,
+  isConsultantFirm?: string
 ): FormType[] => {
+  console.log('orgname', orgNames);
+
   return useMemo(
     () => [
       {
@@ -91,6 +97,27 @@ export const FormData = (
           createPhoneInputField('phone', 'Phone Number', {
             required: false,
             placeholder: 'Enter Phone Number',
+          }),
+          createRadioField('is_consultant_firm', 'Is Consultant Firm', {
+            radioOptions: YES_NO_OPTIONS,
+            // disabled: disableFields,
+            required: true,
+            onChange: true,
+            // resetDependsFields: ['org_id'],
+            defaultSelect: {
+              matchedValue: YesNo.Yes,
+              key: 'org_id',
+              ifMatchValue: isConsultantFirm === 'yes' ? orgNames[0].value : '',
+              ifNotMatchValue: '',
+            },
+          }),
+          createSelectField('org_id', 'Org Name', {
+            options: orgNames,
+            required: true,
+            disabled: isConsultantFirm === 'yes',
+            defaultValue: isConsultantFirm === 'yes' ? orgNames[0].value : '',
+            placeholder: 'Choose Org Name',
+            isLoading: false,
           }),
         ],
       },
@@ -182,10 +209,12 @@ export const FormData = (
       role,
       disableFields,
       states,
+      orgNames,
       stateLoading,
       city,
       cityLoading,
-      disabledStatus
+      disabledStatus,
+      isConsultantFirm,
     ]
   );
 };

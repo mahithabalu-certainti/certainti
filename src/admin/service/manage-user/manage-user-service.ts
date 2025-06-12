@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { userServiceApi } from '../../../api/api';
+import { accountServiceApi, userServiceApi } from '../../../api/api';
 import {
   CommonApiResponse,
   UpdateExtendedPermission,
@@ -12,9 +12,11 @@ import {
   UserProfileApiResponse,
   UserRolesApiResponse,
   UserPermissionApiResponse,
+  OrgNameApiResponse,
 } from '../../types/manage-user';
 import { getUserExportUrl, getUserListUrl } from '../urls';
 import { generateFile } from '../helpers';
+// import { mockReponseOrgName } from './mock-org-name-response';
 const ORGANIZATION = import.meta.env.VITE_ORGANIZATION;
 
 export const fetchManageUserList = async (params: UserListParams = {}) => {
@@ -288,5 +290,39 @@ export const useUpdateExtendedPermission = () => {
     Partial<UpdateExtendedPermission>
   >({
     mutationFn: (body) => updateExtendedPermission(body),
+  });
+};
+
+export const getOrgNameUrl = (): string => {
+  return `/api/accounts/listOrgAccounts`;
+};
+
+/**
+ * Fetches informatio about the organasation name
+ * @returns Promise with org details
+ */
+
+export const fetchOrgNames = async (): Promise<OrgNameApiResponse> => {
+  try {
+    // return mockReponseOrgName;
+    const { data } =
+      await accountServiceApi.get<OrgNameApiResponse>(getOrgNameUrl());
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    return data;
+  } catch (error) {
+    console.error('Error fetching user details:', error);
+    throw error;
+  }
+};
+
+/**
+ * React Query hook for fetching organasation name (view only)
+ * @returns UseQueryResult with org name list and query state
+ */
+export const useFetchOrgNames = () => {
+  return useQuery<OrgNameApiResponse, Error>({
+    queryKey: ['org-name-lists'], // Unique query key
+    queryFn: () => fetchOrgNames(),
+    retry: 0,
   });
 };

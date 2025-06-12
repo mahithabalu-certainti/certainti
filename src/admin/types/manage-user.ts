@@ -195,3 +195,25 @@ export interface UserPermissionApiResponse {
   statusMessage: string;
   data: UserPermissionData;
 }
+
+// orgname api response
+
+export interface accountInfo {
+  rid: string;
+  account_name: string;
+}
+export interface orgData {
+  logo_url: string;
+  firm_name: string;
+}
+export interface OrgNameData {
+  accountData: accountInfo[];
+  orgData: orgData;
+}
+export interface OrgNameApiResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: OrgNameData;
+  requestId: string;
+}
