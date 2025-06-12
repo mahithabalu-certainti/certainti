@@ -4,6 +4,7 @@ import { constants } from "../utils/constant";
 import { IUpdateUserData, IUserData } from "../utils/types";
 import { Op, Sequelize, IndexHints } from "sequelize";
 import ExcelJS from 'exceljs';
+import { OrganizationLicenses } from "../models/organisationLicense";
   const { 
     User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams,
     ProfileMenuAccess, Menu, ProfileModuleAccess, MenuModule, ProfilePermissionAccess, ModulePermission,
@@ -75,6 +76,8 @@ class UserService {
         created_by,
         organization,
         phone,
+        is_consultant_firm,
+        org_id
       } = userData;
 
       const repository = this.getAccountRepository();
@@ -96,6 +99,8 @@ class UserService {
         phone,
         created_by: userId,
         modified_by: userId,
+        is_consultant_firm:is_consultant_firm,
+        org_id
       });
 
       if (organization === constants.PLATFORM_ONE) {
@@ -594,11 +599,19 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
     statusCode: number;
     message: string;
     errorMessage?: string;
-    data?: { rid: string; user_role: string; user_id: string; profile_id: string; permissions: any[] } | null;
+    data?: {
+    rid: string;
+    user_role: string;
+    user_id: string;
+    profile_id: string;
+    permissions: any[];
+    organisation_name: string;
+    logo_url: string;
+  } | null;
   }> {
     try {
       const roles = await User.findOne({
-        attributes: ["role_rid", "rid", "profile_rid"],
+        attributes: ["role_rid", "rid", "profile_rid", "is_consultant_firm", "org_id"],
         where: { azure_id: azureId },
         include: [
           {
@@ -609,8 +622,10 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
           },
         ],
       });
-      console.log(`After Profile retrieve: ${new Date(Date.now()).toISOString()}`);
+      console.log(`After Profile retrieve: ${new Date().toISOString()}`);
 
+      let organisation_name = "";
+      let logo_url = "";
 
       if (!roles || !roles.business_teams) {
         return {
@@ -619,19 +634,55 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
           data: null,
         };
       }
+    const mainDbSequelize = await initSequelize();
+   if (roles.is_consultant_firm) {
+      const org = await OrganizationLicenses.findOne({
+        attributes: ["firm_name", "logo_url"],
+      });
+      if (org) {
+        organisation_name = org.firm_name || "";
+        logo_url = org.logo_url || "";
+      }
+    } else {
+      const mainDbSequelize = await initSequelize();
+      const [account]: any[] = await mainDbSequelize.query(
+        `SELECT organisation_name, logo_url FROM account WHERE rid = :rid`,
+        {
+          replacements: { rid: roles.org_id },
+          type: "SELECT",
+        }
+      );
+      if (account) {
+        organisation_name = account.organisation_name || "";
+        logo_url = account.logo_url || "";
+      }
+    }
 
-      // Call getAllUserPermission here
-      const permissions = await this.getAllUserPermission(roles.rid, roles.profile_rid || "");
+    // Check again for roles.business_teams
+    if (!roles.business_teams) {
+      return {
+        statusCode: constants.NOT_FOUND,
+        message: constants.NOT_FOUND_MESSAGE,
+        data: null,
+      };
+    }
+
+  const permissions = await this.getAllUserPermission(
+      roles.rid,
+      roles.profile_rid || ""
+    );
 
       return {
         statusCode: constants.SUCCESS,
         message: constants.SUCCESS_MESSAGE,
         data: {
           rid: roles.role_rid || "",
-          user_role: roles.business_teams?.business_teams,
+          user_role: roles.business_teams.business_teams,
           user_id: roles.rid,
           profile_id: roles.profile_rid || "",
-          permissions
+          permissions,
+          organisation_name,
+          logo_url,
         },
       };
     } catch (err) {

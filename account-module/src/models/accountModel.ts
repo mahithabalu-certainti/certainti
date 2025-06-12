@@ -37,6 +37,8 @@ interface AccountAttributes {
   qualifying_project_qre_fed?:number;
   qualifying_project_rd_credits_fed?:number;
   total_projects_rd_credits?:number;
+  logo_url?:string;
+  organisation_name:string;
 
 }
 
@@ -77,6 +79,8 @@ export class Account
   public qualifying_project_qre_fed?:number;
   public qualifying_project_rd_credits_fed?:number;
   public total_projects_rd_credits?:number;
+  public logo_url?:string;
+  public organisation_name!:string;
 
   static initialize(sequelize: Sequelize) {
     Account.init(
@@ -124,6 +128,14 @@ export class Account
           allowNull: true,
         },
         storage_type: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        logo_url: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+         organisation_name: {
           type: DataTypes.STRING,
           allowNull: false,
         },

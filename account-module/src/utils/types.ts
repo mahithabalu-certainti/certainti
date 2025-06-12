@@ -37,6 +37,8 @@ export interface IAccount {
   data_storage: "separate_db" | "store_in_parent";
   key_contacts:any;
   business_details:string
+  logo_url:string;
+  organisation_name:string;
 }
 
 export interface IUpdateAccount {
@@ -80,6 +82,8 @@ export interface IUpdateAccount {
   r_number: string;
   business_details:string;
   key_contacts:any;
+  logo_url:string;
+  organisation_name:string;
 }
 
 export interface IKeyContactDetail {

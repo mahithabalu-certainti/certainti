@@ -7,7 +7,8 @@ import {
   handleSuccessResponse,
   successLog,
   validateRequest,
-  generateExcelBase64
+  generateExcelBase64,
+  uploadToAzureBlob
 } from "../utils/helpers";
 import {
   accountSchema,
@@ -190,8 +191,11 @@ async function exportAccounts(req: Request, res: Response): Promise<void> {
  */
 async function createAccount(req: Request, res: Response): Promise<void> {
   const methodName = "create account";
+  let file_url = '';
   try {
     const value = await validateRequest(req, accountSchema, res);
+     if (!value) {
+      return;    }
     const userId = req.headers['x-user-id'] as string;
 
     if (!userId) {
@@ -204,8 +208,12 @@ async function createAccount(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    if (!value) {
-      return;
+   
+    if(req.file)
+    {
+      file_url = await uploadToAzureBlob(req.file);
+     // file_url = 'https://devplatform20stor.blob.core.windows.net/account-logos/1749203213569-resdev.png'
+      value.file_url = file_url; 
     }
 
     const account = await accountServices.createAccount(value, userId);
@@ -251,10 +259,13 @@ async function createAccount(req: Request, res: Response): Promise<void> {
  */
 async function updateAccount(req: Request, res: Response): Promise<void> {
   const methodName = "update account";
+  let file_url = '';
   try {
     const value = await validateRequest(req, updateAccountSchema, res);
+    if (!value) {
+      return;
+    }
     const userId = req.headers['x-user-id'] as string;
-
     if (!userId) {
       handleErrorResponse(
         res,
@@ -264,11 +275,12 @@ async function updateAccount(req: Request, res: Response): Promise<void> {
       );
       return;
     }
-
-    if (!value) {
-      return;
+    if(req.file)
+    {
+      file_url = await uploadToAzureBlob(req.file);
+      //file_url = 'https://devplatform20stor.blob.core.windows.net/account-logos/1749203213569-resdev.png'
+      value.file_url = file_url; 
     }
-
     const account = await accountServices.updateAccount(value, userId);
 
     if (account.statusCode === HttpStatus.SUCCESS) {
@@ -381,6 +393,34 @@ async function accountById(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function listOrgAccounts(req: Request, res: Response): Promise<void> {
+   const methodName = "List global account";
+    try {
+    const account = await accountServices.listAllAccounts();
+
+    if (account.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, account.data);
+    } else {
+      errorLog(methodName, account.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        account.errorMessage
+      );
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
 async function ListGlobalAccounts(req: Request, res: Response): Promise<void> {
   const methodName = "List global account";
   try {
@@ -453,4 +493,5 @@ export default {
   accountById,
   ListGlobalAccounts,
   getKeyContactRoles,
+  listOrgAccounts
 };
