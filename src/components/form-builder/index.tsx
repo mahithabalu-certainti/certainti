@@ -20,7 +20,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs, { Dayjs } from 'dayjs';
 
 import { CountryCode, parsePhoneNumberFromString } from 'libphonenumber-js';
-import React, { useEffect } from 'react';
+import React, { ChangeEvent, useEffect } from 'react';
 import PhoneInput, { CountryData } from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import {
@@ -43,6 +43,7 @@ import {
   SelectOption,
 } from '../../consultant/types';
 import ConfirmationPopup from '../../common-utils/confirmation-popup';
+import TextButton from '../button/text-button';
 
 interface FormBuilderProps {
   data: FormType[];
@@ -56,6 +57,7 @@ interface FormBuilderProps {
   keyEnd?: string;
   newContactLength?: number;
   admin?: boolean;
+  logo?: File,
 }
 
 export const FormBuilder: React.FC<FormBuilderProps> = ({
@@ -69,6 +71,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   keyStart,
   keyEnd,
   admin = false,
+  logo,
 }) => {
   const location = useLocation();
   const { state } = location;
@@ -80,11 +83,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     isOpen: boolean;
     message: string;
     onConfirm: () => void;
-  }>({ isOpen: false, message: '', onConfirm: () => {} });
+  }>({ isOpen: false, message: '', onConfirm: () => { } });
 
   const CommonSkeleton = (
     <Skeleton variant='rounded' width='100%' height={32} />
   );
+
+  console.log("constructFormData", constructFormData);
+
 
   useEffect(() => {
     //if field.name === 'resource_type' then disable resource_orgname
@@ -234,6 +240,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, values, state]);
+  console.log("values", values)
 
   const handleRemoveKeyContactRow = (rowIndexToRemove: number) => {
     const fieldsPerRow = 8;
@@ -332,9 +339,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         });
       }
 
+      if (field.name === 'org_id') {
+        newData[field.name] = field.defaultValue || '';
+      }
+
       // update value when change depends fields
       if (field.defaultSelect) {
         if (field.defaultSelect.matchedValue === value) {
+          console.log("values selct", field.defaultSelect.key, field.defaultSelect.ifMatchValue);
           newData[field.defaultSelect.key] = field.defaultSelect.ifMatchValue;
         } else {
           newData[field.defaultSelect.key] =
@@ -778,6 +790,17 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       setConstructFormData(newData);
     };
 
+    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+      // Update the parent's state (if `handleChange` expects the file object)
+      // or just the filename for display
+      if (e.target.files && e.target.files.length > 0) {
+        const file = e.target.files[0];
+        if (field.onChange && onChange) {
+          onChange({ fieldName: field.name, fieldValue: file }); // Update local state for display
+        }
+      }
+    };
+
     if (field.isLoading) {
       return CommonSkeleton;
     }
@@ -799,6 +822,43 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             onChange={(e) => handleChange(e.target.value)}
             value={fieldValue || field.defaultValue || ''}
           />
+        );
+      case 'file':
+        return (
+          <div className='w-full flex items-center gap-2'>
+            <input
+              id='upload-logo'
+              type={field.type}
+              name={field.name}
+              autoComplete='off'
+              className={
+                'hidden'
+              }
+              disabled={field.disabled}
+              onChange={handleFileChange}
+            />
+            <div className='flex items-center w-[72%] sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'>
+              <span className={`${logo && logo.name ? 'text-[#000000]' : 'text-[#7D98B6]'} truncate`}> {/* Apply truncate directly to the span */}
+                {logo ? logo.name : 'No file selected'}
+              </span>
+            </div>
+            <TextButton
+              // type='button'
+              label='Browse'
+              sx={{
+                height: '32px !important',
+                minWidth: '90px',
+                maxWidth: '90px',
+                fontSize: '13px',
+                fontWeight: '400'
+              }}
+              // className='sm:text-sm min-w-[90px] h-[32px] px-2 box-border border border-[#CBD6E2] rounded-xs'
+              onClick={() => {
+                const logoFileInput = document.getElementById('upload-logo') as HTMLInputElement;
+                logoFileInput.click();
+              }}
+            />
+          </div>
         );
       case 'website':
         return (
@@ -1371,6 +1431,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           let hasValue: boolean = Boolean(
             constructFormData[field.name]?.toString().trim()
           );
+          console.log('constructFormData', constructFormData['org_id']);
+
           if (field.type === 'checkbox') {
             hasValue = (constructFormData[field.name] as string[])?.length > 0;
           }
@@ -1381,6 +1443,26 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           if (field.required && !hasValue) {
             hasError = true;
             return { ...field, error: 'Field is required' };
+          }
+
+          if (field.type === 'file' && logo) {
+            const allowedTypes = [
+              'image/jpeg',
+              'image/jpg', // 'image/jpeg' usually covers .jpg, but sometimes explicit for clarity
+              'image/png',
+              'image/svg+xml'
+            ];
+            const maxFileSize = 200 * 1024;
+
+            if (logo?.type && !allowedTypes.includes(logo?.type)) {
+              hasError = true;
+              return { ...field, error: 'Invalid file type. Only JPG, JPEG, PNG, and SVG are allowed.' };
+            }
+
+            if (logo?.size && logo?.size > maxFileSize) {
+              hasError = true;
+              return { ...field, error: 'File size exceeds the limit of 200 KB.' };
+            }
           }
 
           if (field.type === 'phone') {
@@ -1890,7 +1972,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       }
     });
     setFormData(dataValidation);
-
+    console.log("dataValidation", dataValidation);
     if (!hasError) {
       //If there is no error then only submit the data
       const cleanedData = Object.fromEntries(
@@ -1994,7 +2076,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                           maxWidth: `${field.width}`,
                           paddingLeft:
                             `${field.type}` === 'iconButton' ||
-                            `${field.type}` === 'radio'
+                              `${field.type}` === 'radio'
                               ? '10px !important'
                               : 'none',
                           verticalAlign:

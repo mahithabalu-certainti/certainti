@@ -27,7 +27,7 @@ const userServiceApi = axios.create({
 // Create Account Service Axios instance
 const accountServiceApi = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL + import.meta.env.VITE_ACCOUNT_URL,
-  headers: { 'Content-Type': 'application/json' },
+  // headers: { 'Content-Type': 'application/json' },
 });
 
 // Create Resource Service Axios instance

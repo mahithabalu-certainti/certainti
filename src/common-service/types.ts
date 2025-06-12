@@ -38,6 +38,8 @@ export interface GetCurrentUserRoleApiResponse extends CommonApiResponse {
     user_role: UserRoles;
     user_id: string;
     permissions: Permissions[];
+    organisation_name: string;
+    logo_url: string;
   };
 }
 
@@ -90,7 +92,7 @@ export enum AllModules {
   PROJECT_ACTIVITIES = 'project_activities',
   PROJECT_NOTES = 'project_notes',
   PROJECT_ATTACHMENTS = 'project_attachments',
-  PROJECT_CHECKLISTS = 'project_checklists'
+  PROJECT_CHECKLISTS = 'project_checklists',
 }
 
 export enum AllPermissions {
@@ -159,7 +161,7 @@ export interface Country {
   country_name: string;
 }
 
-export type FieldTypes = string | string[] | dayjs.Dayjs | null;
+export type FieldTypes = string | string[] | dayjs.Dayjs | null | File;
 
 export interface OnChange {
   fieldName: string;
