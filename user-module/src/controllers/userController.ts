@@ -12,7 +12,7 @@ import {
 import { errorResponse } from "../utils/apiResponse";
 import { constants } from "../utils/constant";
 import configurations from "../config/config";
-import { createAzureB2CUser, updateAzureUser } from "../services/manageUser";
+import { createAzureB2CUser, updateAzureUser ,deleteAzureB2CUser} from "../services/manageUser";
 import { generateSecurePassword } from "../utils/generatePassword";
 import { sendEmail } from "../services/emailService";
 import { mailTemplate } from "../utils/mailTemplate";
@@ -121,6 +121,7 @@ async function createUser(req: Request, res: Response): Promise<void> {
       return;
     } else {
       errorLog(methodName, user.errorMessage);
+      deleteAzureB2CUser(value);
       handleErrorResponse(
         res,
         constants.BAD_REQUEST,
