@@ -15,7 +15,7 @@ import {
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['permission'],
+  whitelist: ['permission', 'orgLogoInfo'],
 };
 
 const rootReducer = combineReducers({

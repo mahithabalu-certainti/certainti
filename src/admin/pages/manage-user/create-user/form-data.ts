@@ -21,10 +21,9 @@ export const FormData = (
   stateLoading?: boolean,
   cityLoading?: boolean,
   disabledStatus?: boolean,
-  isConsultantFirm?: string
+  isConsultantFirm?: string,
+  org_id?: string
 ): FormType[] => {
-  console.log('orgname', orgNames);
-
   return useMemo(
     () => [
       {
@@ -111,7 +110,7 @@ export const FormData = (
             placeholder: 'Choose Org Name',
             disabled: isConsultantFirm === YesNo.Yes,
             defaultValue:
-              isConsultantFirm === YesNo.Yes ? orgNames[0].value : '',
+              isConsultantFirm === YesNo.Yes ? orgNames[0]?.value : org_id,
             assignDefaultValue: true,
           }),
         ],
@@ -210,6 +209,7 @@ export const FormData = (
       cityLoading,
       disabledStatus,
       isConsultantFirm,
+      org_id,
     ]
   );
 };

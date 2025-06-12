@@ -74,7 +74,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   // Permission Mangement
   const { permission } = useSelector((state: RootState) => state.permission);
   const { orgName, logoUrl } = useSelector((state: RootState) => state.orgLogoInfo);
-  console.log("orgName", orgName, "logoUrl", logoUrl)
   const isViewProfileEnable = checkPermission(
     permission,
     AllPermissions.PROFILE_VIEW

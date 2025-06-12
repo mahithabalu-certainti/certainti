@@ -83,7 +83,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     isOpen: boolean;
     message: string;
     onConfirm: () => void;
-  }>({ isOpen: false, message: '', onConfirm: () => {} });
+  }>({ isOpen: false, message: '', onConfirm: () => { } });
 
   const CommonSkeleton = (
     <Skeleton variant='rounded' width='100%' height={32} />
@@ -242,7 +242,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     // updated default value into constuctFormData
     formData?.forEach((section) => {
       section.fields.forEach((field) => {
-        if (field.assignDefaultValue && field.defaultValue && constructFormData[field.name] === '') {
+        if (field.assignDefaultValue && field.defaultValue) {
           setConstructFormData((prev) => ({
             ...prev,
             [field.name]: field.defaultValue || '',
@@ -356,11 +356,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       // update value when change depends fields
       if (field.defaultSelect) {
         if (field.defaultSelect.matchedValue === value) {
-          console.log(
-            'values selct',
-            field.defaultSelect.key,
-            field.defaultSelect.ifMatchValue
-          );
           newData[field.defaultSelect.key] = field.defaultSelect.ifMatchValue;
         } else {
           newData[field.defaultSelect.key] =
@@ -2097,7 +2092,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                           maxWidth: `${field.width}`,
                           paddingLeft:
                             `${field.type}` === 'iconButton' ||
-                            `${field.type}` === 'radio'
+                              `${field.type}` === 'radio'
                               ? '10px !important'
                               : 'none',
                           verticalAlign:

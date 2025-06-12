@@ -43,7 +43,10 @@ export const CreateUser: React.FC = () => {
     country: '',
     state: '',
   });
-  const [isConsultantFirm, setIsConsultantFirm] = useState('');
+  const [isConsultantFirm, setIsConsultantFirm] = useState({
+    isConsultantFirm: '',
+    org_id: '',
+  });
   // const [defaultOrgValues, setDefaultOrgValues] = useState({});
   const { successToast } = useToast();
   const location = useLocation();
@@ -97,6 +100,16 @@ export const CreateUser: React.FC = () => {
   }, [commonSuccess, isEditView]);
 
   useEffect(() => {
+    if (userDatas && isEditView) {
+      setIsConsultantFirm((prev) => ({
+        ...prev,
+        isConsultantFirm: userDatas?.is_consultant_firm ? YesNo.Yes : YesNo.No,
+        org_id: userDatas?.org_id,
+      }));
+    }
+  }, [userDatas?.is_consultant_firm]);
+
+  useEffect(() => {
     if (userDatas?.country || userDatas?.state) {
       setCurrentCountry((prev) => ({
         ...prev,
@@ -136,12 +149,12 @@ export const CreateUser: React.FC = () => {
   );
   const memoizeOrgNames: SelectOption[] = useMemo(() => {
     let orgNameOptions: SelectOption[] = [];
-    if (isConsultantFirm === 'no' && orgName.data?.data?.accountData) {
+    if (isConsultantFirm.isConsultantFirm === YesNo.No && orgName.data?.data?.accountData) {
       orgNameOptions = orgName.data?.data?.accountData.map((org) => ({
-        label: org.account_name,
+        label: org.organisation_name,
         value: org.rid,
       }));
-    } else if (isConsultantFirm === 'yes' && orgName.data?.data?.orgData) {
+    } else if (isConsultantFirm.isConsultantFirm === YesNo.Yes && orgName.data?.data?.orgData) {
 
       orgNameOptions = [
         {
@@ -198,7 +211,7 @@ export const CreateUser: React.FC = () => {
         // modified_by: UserRole.Admin,
         profile_id: data.profile_rid,
         country: data.country || null,
-        is_consultant_firm: isConsultantFirm === 'yes' ? true : false,
+        is_consultant_firm: isConsultantFirm.isConsultantFirm === YesNo.Yes ? true : false,
       } as Partial<UserDetail>;
       delete constructData.profile_rid;
       delete constructData.email;
@@ -215,7 +228,7 @@ export const CreateUser: React.FC = () => {
         role: data.role_rid,
         profile_id: data.profile_rid,
         created_by: UserRole.Admin,
-        is_consultant_firm: isConsultantFirm === 'yes' ? true : false,
+        is_consultant_firm: isConsultantFirm.isConsultantFirm === YesNo.Yes ? true : false,
       } as Partial<UserDetail>;
       delete constructData.profile_rid;
       delete constructData.role_rid;
@@ -252,7 +265,11 @@ export const CreateUser: React.FC = () => {
       }));
     }
     if (fieldName === 'is_consultant_firm') {
-      setIsConsultantFirm(fieldValue as string);
+      setIsConsultantFirm((prev) => ({
+        ...prev,
+        isConsultantFirm: fieldValue as string,
+        org_id: ''
+      }));
     }
   };
 
@@ -356,14 +373,15 @@ export const CreateUser: React.FC = () => {
                 states.isLoading,
                 city.isLoading,
                 isEditView ? !isUserActivateEnable : false,
-                isConsultantFirm
+                isConsultantFirm.isConsultantFirm,
+                isConsultantFirm.org_id
               )}
               values={
                 isEditView && userDatas
                   ? {
                     ...userDatas,
-                    is_consultant_firm: YesNo.Yes,
-                    org_id: 'ResDev',
+                    is_consultant_firm: userDatas?.is_consultant_firm === true ? YesNo.Yes : YesNo.No,
+                    // org_id: 'ResDev',
                   }
                   // : !isEditView
                   //   ? { org_id: isConsultantFirm === 'yes' ? memoizeOrgNames[0].value : '' }
