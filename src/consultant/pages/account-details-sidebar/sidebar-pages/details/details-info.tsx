@@ -179,12 +179,12 @@ const DetailsInfo: React.FC<DetailsInfoProps> = ({
 
   const auditInfo: DetailItem[] = [
     { label: 'Record ID', value: accountDetails?.account_rid },
+    { label: 'Account ID', value: accountById?.r_number },
     {
       label: 'Created On',
       value: formatDateToYYYYMMDDWithTime(accountById?.created_datetime),
     },
     { label: 'Created By', value: accountById?.created_by },
-    { label: 'Account ID', value: accountById?.r_number },
     {
       label: 'Updated On',
       value: formatDateToYYYYMMDDWithTime(accountById?.modified_datetime),
