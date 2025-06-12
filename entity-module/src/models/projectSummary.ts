@@ -5,40 +5,38 @@ export interface ProjectSummaryAttributes {
   rid?: string;
   r_number?: string;
 
-  project_id: string;
-  project_number: string;
-  project_code: string;
-  industry_rid: string;
-  industry_name?: string;
-  account_rid: string;
-  program_name?: string | null;
-  project_name?: string | null;
-  project_startdate?: Date | null;
-  project_enddate?: Date | null;
-  project_status: "Active" | "Inactive";
-  fiscal_year: number;
-  project_type: "Fixed" | "Time & Material";
-  project_classification_rid?: string | null;
-  project_classification_other?: string | null;
-  project_client_group?: string | null;
-  project_group?: string | null;
+  project_id: string; 
+  project_number: string; 
+  project_code: string; 
+  industry_rid: string; 
+  industry_name?: string; 
+  account_rid: string; 
+  program_name?: string | null; 
+  project_name?: string | null; 
+  project_startdate?: Date | null; 
+  project_enddate?: Date | null; 
+  project_status: "Active" | "Inactive"; 
+  project_type: "Fixed" | "Time & Material"; 
+  project_classification_rid?: string | null; 
+  project_classification_other?: string | null; 
+  project_client_group?: string | null; 
+  project_group?: string | null; 
 
-  country?: string | null;
-  region?: string | null;
-  currency?: string | null;
+  country?: string | null; 
+  region?: string | null; 
+  currency?: string | null; 
 
-  total_effort?: string | null;
-  total_cost?: string | null;
-  total_fte?: number | null;
-  total_sub_con?: number | null;
-  total_non_labor_cost?: string | null;
-  total_fte_cost?: string | null;
-  total_sub_con_cost?: string | null;
-  comments?: string | null;
+  total_effort?: string | null; 
+  total_cost?: string | null; 
+  total_fte?: number; 
+  total_subcon?: number; 
+  total_cost_nonlabor?: string | null; 
+  total_cost_fte?: string | null; 
+  total_cost_subcon?: string | null; 
+  comments?: string | null; 
 
-  qualified_research_expenditure?: number | null;
-  is_rd_qualified?: boolean | null;
-  qre?: number | null;
+  is_rd_qualified?: boolean | null; 
+  qre?: number | null; 
 
   project_point_of_contact?: string | null;
   financial_consultant?: string | null;
@@ -80,17 +78,16 @@ export class ProjectSummary
   public currency?: string | null;
   public total_effort?: string | null;
   public total_cost?: string | null;
-  public total_fte?: number | null;
-  public total_sub_con?: number | null;
-  public total_non_labor_cost?: string | null;
-  public total_fte_cost?: string | null;
-  public total_sub_con_cost?: string | null;
+  public total_fte?: number;
+  public total_subcon?: number;
+  public total_cost_nonlabor?: string | null;
+  public total_cost_fte?: string | null;
+  public total_cost_subcon?: string | null;
   public created_datetime?: Date;
   public modified_datetime?: Date;
   public created_by!: string;
   public modified_by?: string | null;
   public comments?: string | null;
-  public qualified_research_expenditure?: number | null;
   public is_rd_qualified?: boolean | null;
   public qre?: number | null;
   public project_point_of_contact?: string | null;
@@ -159,10 +156,6 @@ export class ProjectSummary
         },
         project_client_group: DataTypes.STRING(255),
         project_group: DataTypes.STRING(255),
-        fiscal_year: {
-          type: DataTypes.INTEGER,
-          allowNull: false,
-        },
         country: {
           type: DataTypes.UUID,
           allowNull: true,
@@ -175,15 +168,32 @@ export class ProjectSummary
           type: DataTypes.UUID,
           allowNull: true,
         },
-        total_effort: DataTypes.DOUBLE,
-        total_cost: DataTypes.DOUBLE,
-        total_fte: DataTypes.INTEGER,
-        total_sub_con: DataTypes.INTEGER,
-        total_fte_cost: DataTypes.DOUBLE,
-        total_sub_con_cost: DataTypes.DOUBLE,
-        total_non_labor_cost: DataTypes.DOUBLE,
-        qualified_research_expenditure: {
-          type: DataTypes.DOUBLE,
+        total_effort: {
+          type: DataTypes.DECIMAL(18,2),
+          allowNull: true,
+        },
+        total_cost: {
+          type: DataTypes.DECIMAL(18,2),
+          allowNull: true,
+        },
+        total_fte: {
+          type: DataTypes.DECIMAL(18,2),
+          allowNull: true,
+        },
+        total_subcon: {
+          type: DataTypes.DECIMAL(18,2),
+          allowNull: true,
+        },
+        total_cost_fte: {
+          type: DataTypes.DECIMAL(18,2),
+          allowNull: true,
+        },
+        total_cost_subcon: {
+          type: DataTypes.DECIMAL(18,2),
+          allowNull: true,
+        },
+        total_cost_nonlabor: {
+          type: DataTypes.DECIMAL(18,2),
           allowNull: true,
         },
         is_rd_qualified: {
@@ -191,7 +201,7 @@ export class ProjectSummary
           allowNull: true,
         },
         qre: {
-          type: DataTypes.INTEGER,
+          type: DataTypes.DECIMAL(18,2),
           allowNull: true,
         },
         project_point_of_contact: {
