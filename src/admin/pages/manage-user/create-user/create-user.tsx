@@ -352,12 +352,6 @@ export const CreateUser: React.FC = () => {
                 memoizedState,
                 memoizeCity,
                 memoizeOrgNames,
-                // [
-                //   {
-                //     label: 'ResDev',
-                //     value: 'ResDev',
-                //   },
-                // ],
                 isEditView,
                 states.isLoading,
                 city.isLoading,

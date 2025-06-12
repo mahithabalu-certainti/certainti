@@ -175,6 +175,7 @@ export const createSelectField = (
     isLoading?: boolean;
     resetDependsFields?: string[];
     defaultValue?: string;
+    assignDefaultValue?: boolean
   }
 ): FieldType => ({
   type: 'select',
@@ -190,6 +191,7 @@ export const createSelectField = (
   isLoading: others.isLoading,
   defaultValue: others.defaultValue,
   resetDependsFields: others.resetDependsFields,
+  assignDefaultValue: others.assignDefaultValue,
 });
 
 export const createButton = (

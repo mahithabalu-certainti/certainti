@@ -6,6 +6,8 @@ export const mockUserDetails: ManageUserDetailApiResponse = {
   statusMessage: 'Success',
   data: {
     users: {
+      org_id: '',
+      is_consultant_firm: false,
       rid: '90ec4002-9aa2-4347-be66-57a93ecfde08',
       r_number: '',
       azure_id: 'c78c57bb-e89c-4310-9f8a-d429e8ebcdf4',

@@ -16,6 +16,7 @@ import {
 } from '../../types/manage-user';
 import { getUserExportUrl, getUserListUrl } from '../urls';
 import { generateFile } from '../helpers';
+import { mockUserDetails } from '../../mockdata';
 // import { mockReponseOrgName } from './mock-org-name-response';
 const ORGANIZATION = import.meta.env.VITE_ORGANIZATION;
 
@@ -68,11 +69,11 @@ export const fetchManageUserDetail = async (
   userId: string
 ): Promise<ManageUserDetailApiResponse> => {
   try {
-    const { data } = await userServiceApi.get<ManageUserDetailApiResponse>(
-      getUserDetailUrl(userId)
-    );
-    // await new Promise((resolve) => setTimeout(resolve, 1000));
-    return data;
+    // const { data } = await userServiceApi.get<ManageUserDetailApiResponse>(
+    //   getUserDetailUrl(userId)
+    // );
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    return mockUserDetails;
   } catch (error) {
     console.error('Error fetching user details:', error);
     throw error;

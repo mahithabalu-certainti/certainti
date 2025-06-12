@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { FormType, SelectOption } from '../../../../consultant/types';
+import { FormType, SelectOption, YesNo } from '../../../../consultant/types';
 import {
   createPhoneInputField,
   createRadioField,
@@ -109,7 +109,10 @@ export const FormData = (
             required: true,
             options: orgNames,
             placeholder: 'Choose Org Name',
-            disabled: isConsultantFirm === 'yes',
+            disabled: isConsultantFirm === YesNo.Yes,
+            defaultValue:
+              isConsultantFirm === YesNo.Yes ? orgNames[0].value : '',
+            assignDefaultValue: true,
           }),
         ],
       },
