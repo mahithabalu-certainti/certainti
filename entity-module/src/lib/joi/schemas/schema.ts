@@ -607,6 +607,7 @@ const exportListResourceSchema = Joi.object({
     .default("DESC")
     .optional()
     .allow(""),
+  bothParentAndChild: Joi.boolean().optional().default(false),
 });
 
 const exportResourceSchema = Joi.object({

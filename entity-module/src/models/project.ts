@@ -378,12 +378,6 @@ export class Project
       as: 'ProjectFiscal',
     });
 
-    // Project.hasMany(KeyContact, {
-    //   foreignKey: 'entity_rid',
-    //   sourceKey: 'rid',
-    //   as: 'ProjectKeyContact',
-    // });
-
     return model;
   }
 }

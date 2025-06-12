@@ -628,7 +628,7 @@ export class ProjectService {
 
       const order = [[finalSortBy, finalSortOrder]];
 
-      const projectList = await this.projectIngestion.fetchProjectList(
+      const { projects, count } = await this.projectIngestion.fetchProjectList(
         accountRNumber,
         accountData,
         whereClause,
@@ -646,8 +646,8 @@ export class ProjectService {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
-          projects: projectList,
-          totalCount: projectList.length,
+          projects: projects,
+          totalCount: count,
         },
       };
     } catch (err) {
@@ -843,7 +843,8 @@ export class ProjectService {
     search: string,
     filters: Record<string, any> = {},
     sortBy: string = "created_datetime",
-    sortOrder: string = "ASC"
+    sortOrder: string = "ASC",
+    bothParentAndChild: boolean = false
   ): Promise<{
     statusCode: number;
     message: string;
@@ -887,14 +888,6 @@ export class ProjectService {
         };
       }
 
-      const orgDbSequlize = await initOrgSequelize();
-      const schemaName = `platform_v2_${accountRNumber}`;
-      const ProjectModel = await Project.initialize(orgDbSequlize, schemaName);
-      const KeyContactModel = await KeyContact.initialize(
-        orgDbSequlize,
-        schemaName
-      );
-
       const [finalSortBy, finalSortOrder] = this.getSortParameters(
         sortBy,
         sortOrder
@@ -904,61 +897,18 @@ export class ProjectService {
 
       const { whereClause } = this.buildWhereClause(filters, search, false);
 
-      let { rows: projectData, count } = await ProjectModel.findAndCountAll({
-        where: {
-          account_rid: accountData.rid,
-          ...whereClause,
-          ...(fiscalYear && fiscalYear !== 0
-            ? { fiscal_year: fiscalYear }
-            : {}),
-        },
-        order: [[finalSortBy, finalSortOrder]],
-        distinct: true,
-        attributes: [
-          "rid",
-          "r_number",
-          "project_code",
-          "project_name",
-          "program_name",
-          "fiscal_year",
-          "industry_rid",
-          "industry_name",
-          "project_startdate",
-          "project_enddate",
-          "project_type",
-          "project_classification_rid",
-          "project_classification_other",
-          "project_client_group",
-          "project_group",
-          "project_status",
-          "account_rid",
-          "rid",
-          "total_cost",
-          "total_effort",
-          "total_fte",
-          "total_fte_cost",
-          "total_sub_con",
-          "total_sub_con_cost",
-          "total_non_labor_cost",
-          "comments",
-          "country",
-          "region",
-          "currency",
-          "industry_name",
-          "qualified_research_expenditure",
-          "is_rd_qualified",
-          "qre",
-          "created_datetime",
-          "modified_datetime",
-          "assessment_status",
-        ],
-        include: [
-          {
-            model: KeyContactModel,
-            as: "keyContact",
-          },
-        ],
-      });
+      const order = [[finalSortBy, finalSortOrder]];
+
+      let { projects: projectData, count } = await this.projectIngestion.fetchProjectListExport(accountRNumber,
+        accountData,
+        whereClause,
+        fiscalYear,
+        order,
+        bothParentAndChild,
+        filters,
+        finalMetaDataSortBy,
+        finalMetaDataSortOrder
+      );
 
       if (projectData) {
         const mainDbInit = await initMainDbSequelize();
@@ -969,9 +919,8 @@ export class ProjectService {
           )
         );
 
-        projectData.forEach((val) => {
-          const dataValues = val.dataValues as any;
-          dataValues.account_name = accountData.account_name;
+        projectData.forEach((val: any) => {
+          val.account_name = accountData.account_name;
         });
         projectData = await this.schemaService.insertProjectListGeoData(
           projectData,
@@ -1059,7 +1008,7 @@ export class ProjectService {
             project.technical_point_of_contact || "-",
           Comments: project.comments || "-",
           "Last Modified": project.modified_datetime
-            ? moment(project.modified_datetime).format("YYYY-MM-DD")
+            ? moment(project.modified_datetime).format("YYYY-MM-DD, HH:mm:ss")
             : "-",
           "Project ID": project.r_number || "-",
         };

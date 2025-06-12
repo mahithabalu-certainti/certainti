@@ -278,7 +278,8 @@ export interface IProjectService {
     search: string,
     filters: Record<string, string>,
     sortBy: string,
-    sortOrder: string
+    sortOrder: string,
+    bothParentAndChild: boolean,
   ): Promise<{
     statusCode: number;
     message: string;

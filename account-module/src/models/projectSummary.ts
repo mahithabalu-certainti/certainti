@@ -249,12 +249,10 @@ export class ProjectSummary
         created_datetime: {
           type: DataTypes.DATE,
           allowNull: true,
-          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
         },
         modified_datetime: {
           type: DataTypes.DATE,
           allowNull: true,
-          defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
         },
         created_by: {
           type: DataTypes.UUID,

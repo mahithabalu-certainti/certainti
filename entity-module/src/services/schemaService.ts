@@ -2462,7 +2462,7 @@ class SchemaService {
       );
 
       const updatedProjects = project.map((res: any) => ({
-        ...res.toJSON(),
+        ...res,
         country_name: countryMap[res.country]?.country_name || null,
         region_name: regionMap[res.region]?.state_name || null,
         currency_name: currencyMap[res.currency]?.currency_code || null,

@@ -1020,10 +1020,138 @@ class ProjectIngestionService {
       ]);
     }
 
-    let projects = await Project.findAll({
+    let { rows: projects, count } = await Project.findAndCountAll({
       where: whereProject,
       offset,
       limit,
+      order: fullOrder,
+      include: [
+        {
+          model: ProjectFiscal,
+          as: "ProjectFiscal",
+          required: false,
+          where: {
+            account_rid: accountData.rid,
+            ...whereFiscal,
+          },
+        },
+      ],
+    });
+
+    if (this.mainDbSequelize) {
+
+      let projectData = await this.enrichKeyContactsManually(
+        projects,
+        accountNumber
+      );
+
+      projectData = await this.keyContacts.insertKeyRole(
+        projectData,
+        this.mainDbSequelize
+      );
+
+      projectData = await this.insertProjectClassification(
+        projectData,
+        this.mainDbSequelize
+      );
+
+      projectData = await this.finalProjectSort(
+        projectData,
+        finalMetaDataSortBy,
+        finalMetaDataSortOrder,
+        bothParentAndChild,
+        rawFilters
+      );
+      projects = projectData;
+    }
+
+    return {
+      projects,
+      count
+    };
+  }
+
+  async fetchProjectListExport(
+    accountNumber: string,
+    accountData: any,
+    filters: Record<string, any> = {},
+    fiscalYear: number,
+    order: string[][],
+    bothParentAndChild: boolean,
+    rawFilters: Record<string, any> = {},
+    finalMetaDataSortBy: string,
+    finalMetaDataSortOrder: string
+  ) {
+    const { Project, ProjectFiscal } = await this.getModels(accountNumber);
+
+    const parentLevelFields = [
+      "project_name",
+      "industry_name",
+      "classification_name",
+      "technical_point_of_contact",
+      "financial_consultant",
+      "project_point_of_contact",
+      "account_name",
+      "project_code",
+      "project_client_group",
+      "project_group",
+      "total_effort",
+      "total_cost",
+      "total_cost_fte",
+      "total_cost_subcon",
+      "total_cost_nonlabor",
+      "assessment_status",
+      "qre_final",
+      "qre_potential",
+      "project_point_of_contact",
+      "technical_point_of_contact",
+      "comments",
+      "modified_datetime",
+      "r_number",
+    ];
+
+    const parentFilters: Record<string, any> = {};
+
+    for (const key in filters) {
+      if (parentLevelFields.includes(key)) {
+        parentFilters[key] = filters[key];
+      }
+    }
+
+    const whereProject: Record<string, any> = {
+      account_rid: accountData.rid,
+      ...(bothParentAndChild ? parentFilters : {}),
+    };
+
+    const whereFiscal: Record<string, any> = {
+      account_rid: accountData.rid,
+      ...(filters || {}),
+    };
+
+    if (fiscalYear) {
+      whereFiscal.fiscal_year = fiscalYear;
+    }
+
+    const fullOrder: any[] = [];
+
+    for (const [field, direction] of order) {
+      if (bothParentAndChild) {
+        if (parentLevelFields.includes(field)) {
+          fullOrder.push([field, direction]);
+        }
+      } else {
+        fullOrder.push(["created_datetime", "DESC"]);
+      }
+
+      fullOrder.push([
+        { model: ProjectFiscal, as: "ProjectFiscal" },
+        field,
+        direction,
+      ]);
+    }
+
+    let { rows: projects, count } = await Project.findAndCountAll({
+      where: whereProject,
       order: fullOrder,
       include: [
         {
@@ -1064,7 +1192,10 @@ class ProjectIngestionService {
       projects = projectData;
     }
 
-    return projects;
+    return {
+      projects,
+      count
+    };
   }
 
   async fetchProjectById(accountNumber: string, projectId: string) {
