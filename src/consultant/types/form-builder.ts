@@ -49,7 +49,8 @@ export interface FormTypeFields {
   errorHandling?: ErrorHandling[];
   onClick?: (event?: React.MouseEvent<HTMLElement>) => void;
   iconUrl?: string;
-  assignDefaultValue?: boolean
+  assignDefaultValue?: boolean;
+  dependantLabel?: string;
 }
 
 // export interface SelectOptions {
@@ -124,7 +125,8 @@ export interface FieldType {
   isLoading?: boolean;
   errorHandling?: ErrorHandling[];
   width?: string;
-  assignDefaultValue?: boolean
+  assignDefaultValue?: boolean;
+  dependantLabel?: string;
 }
 
 export type AllowedCountry =

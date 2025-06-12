@@ -104,7 +104,6 @@ export const CreateUser: React.FC = () => {
       setIsConsultantFirm((prev) => ({
         ...prev,
         isConsultantFirm: userDatas?.is_consultant_firm ? YesNo.Yes : YesNo.No,
-        org_id: userDatas?.org_id,
       }));
     }
   }, [userDatas?.is_consultant_firm]);
@@ -164,7 +163,7 @@ export const CreateUser: React.FC = () => {
       ];
     }
     return orgNameOptions;
-  }, [isConsultantFirm, orgName.data?.data]);
+  }, [isConsultantFirm.isConsultantFirm, orgName.data?.data]);
 
   const memoizeRole: SelectOption[] = useMemo(
     () =>
@@ -212,6 +211,7 @@ export const CreateUser: React.FC = () => {
         profile_id: data.profile_rid,
         country: data.country || null,
         is_consultant_firm: isConsultantFirm.isConsultantFirm === YesNo.Yes ? true : false,
+        org_id: data.org_id,
       } as Partial<UserDetail>;
       delete constructData.profile_rid;
       delete constructData.email;
@@ -229,6 +229,7 @@ export const CreateUser: React.FC = () => {
         profile_id: data.profile_rid,
         created_by: UserRole.Admin,
         is_consultant_firm: isConsultantFirm.isConsultantFirm === YesNo.Yes ? true : false,
+        org_id: data.org_id,
       } as Partial<UserDetail>;
       delete constructData.profile_rid;
       delete constructData.role_rid;
@@ -265,11 +266,11 @@ export const CreateUser: React.FC = () => {
       }));
     }
     if (fieldName === 'is_consultant_firm') {
-      setIsConsultantFirm((prev) => ({
-        ...prev,
+      console.log("fieldValue", fieldValue)
+      setIsConsultantFirm({
         isConsultantFirm: fieldValue as string,
-        org_id: ''
-      }));
+        org_id: '',
+      });
     }
   };
 

@@ -24,6 +24,8 @@ export const FormData = (
   isConsultantFirm?: string,
   org_id?: string
 ): FormType[] => {
+  console.log('orgid', org_id);
+
   return useMemo(
     () => [
       {
@@ -103,6 +105,11 @@ export const FormData = (
             required: true,
             onChange: true,
             resetDependsFields: ['org_id'],
+            dependantLabel: 'org_id',
+            // clearValue: {
+            //   key: 'is_consultant_firm',
+            //   matchedValue: YesNo.No,
+            // },
           }),
           createSelectField('org_id', 'Org Name', {
             required: true,
@@ -112,6 +119,11 @@ export const FormData = (
             defaultValue:
               isConsultantFirm === YesNo.Yes ? orgNames[0]?.value : org_id,
             assignDefaultValue: true,
+            dependantLabel: 'is_consultant_firm',
+            clearValue: {
+              key: 'is_consultant_firm',
+              matchedValue: YesNo.Yes,
+            },
           }),
         ],
       },

@@ -149,15 +149,25 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     // updated default value into constuctFormData
     formData?.forEach((section) => {
       section.fields.forEach((field) => {
-        if (field.assignDefaultValue && field.defaultValue) {
-          setConstructFormData((prev) => ({
-            ...prev,
-            [field.name]: field.defaultValue || '',
-          }));
+        if (field.assignDefaultValue && field.defaultValue && field.clearValue) {
+          const { key, matchedValue } = field.clearValue;
+          if (constructFormData[key] === matchedValue) {
+            console.log("matchedValue yes");
+
+            setConstructFormData((prev) => ({
+              ...prev,
+              [field.name]: field.defaultValue || '',
+            }));
+          } else {
+            setConstructFormData((prev) => ({
+              ...prev,
+              [field.name]: '',
+            }));
+          }
         }
       });
     });
-  }, [formData, constructFormData]);
+  }, [formData]);
 
   useEffect(() => {
     if (Object.keys(constructFormData).length === 0) return;
@@ -372,6 +382,21 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         }),
       };
 
+      if (field.dependantLabel) {
+        setConstructFormData((prev) => {
+          const newState = { ...prev, [field.name]: value };
+
+          // Clear dependent field when is_consultant_firm is changed to No
+          if (field.name === 'is_consultant_firm' && value === 'no') {
+            newState[field.dependantLabel as string] = ''; // clear org_id
+          }
+
+          return newState;
+        });
+      }
+
+
+
       if (field.resetDependsFields?.length) {
         field.resetDependsFields.forEach((fieldEntry) => {
           fieldEntry
@@ -548,7 +573,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                           ...f,
                           disabled:
                             section?.from === 'project' &&
-                            otherStatus === 'active'
+                              otherStatus === 'active'
                               ? true
                               : false,
                         };
