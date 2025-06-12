@@ -1498,8 +1498,11 @@ class SchemaService {
       COALESCE((
         SELECT json_agg(pfs_sub ${applyChildSort ? `ORDER BY pfs_sub.${sort.sortCol} ${sort.sortOrder}` : ""})
         FROM (
-          SELECT pfs.*
+          SELECT pfs.*, acc.account_name, ps.qre,
+          COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name
           FROM project_fiscal_summary pfs
+          INNER JOIN account acc ON acc.rid = pfs.account_rid 
+          LEFT JOIN project_classification pc on pc.rid = pfs.project_classification_rid
           WHERE pfs.project_code = ps.project_code
             AND pfs.project_rid = ps.project_id
             ${fiscalYearClause}
@@ -1529,7 +1532,7 @@ class SchemaService {
         LEFT JOIN currency curr ON curr.rid = ps.currency 
         LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
         LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD'
-        left join project_classification pc on pc.rid = ps.project_classification_rid 
+        LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid 
         WHERE acc.rid IN (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
         }
@@ -1605,8 +1608,11 @@ class SchemaService {
       COALESCE((
         SELECT json_agg(pfs_sub ${applyChildSort ? `ORDER BY pfs_sub.${sort.sortCol} ${sort.sortOrder}` : ""})
         FROM (
-          SELECT pfs.*
+          SELECT pfs.*, acc.account_name, ps.qre,
+          COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name
           FROM project_fiscal_summary pfs
+          INNER JOIN account acc ON acc.rid = pfs.account_rid 
+          LEFT JOIN project_classification pc on pc.rid = pfs.project_classification_rid
           WHERE pfs.project_code = ps.project_code
             AND pfs.project_rid = ps.project_id
             ${fiscalYearClause}
@@ -1636,7 +1642,7 @@ class SchemaService {
         LEFT JOIN currency curr ON curr.rid = ps.currency
         LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
         LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD' 
-        left join project_classification pc on pc.rid = ps.project_classification_rid
+        LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid
         ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
         GROUP BY 
         ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_id, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
@@ -1755,8 +1761,11 @@ class SchemaService {
       COALESCE((
         SELECT json_agg(pfs_sub ${applyChildSort ? `ORDER BY pfs_sub.${sort.sortCol} ${sort.sortOrder}` : ""})
         FROM (
-          SELECT pfs.*
+          SELECT pfs.*, acc.account_name, ps.qre,
+          COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name
           FROM project_fiscal_summary pfs
+          INNER JOIN account acc ON acc.rid = pfs.account_rid 
+          LEFT JOIN project_classification pc on pc.rid = pfs.project_classification_rid
           WHERE pfs.project_code = ps.project_code
             AND pfs.project_rid = ps.project_id
             ${fiscalYearClause}
@@ -1786,7 +1795,7 @@ class SchemaService {
         LEFT JOIN currency curr ON curr.rid = ps.currency
         LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
         LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD' 
-        left join project_classification pc on pc.rid = ps.project_classification_rid  
+        LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid  
         WHERE acc.rid IN (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
         }
@@ -1858,8 +1867,11 @@ class SchemaService {
       COALESCE((
         SELECT json_agg(pfs_sub ${applyChildSort ? `ORDER BY pfs_sub.${sort.sortCol} ${sort.sortOrder}` : ""})
         FROM (
-          SELECT pfs.*
+          SELECT pfs.*, acc.account_name, ps.qre,
+          COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name
           FROM project_fiscal_summary pfs
+          INNER JOIN account acc ON acc.rid = pfs.account_rid 
+          LEFT JOIN project_classification pc on pc.rid = pfs.project_classification_rid
           WHERE pfs.project_code = ps.project_code
             AND pfs.project_rid = ps.project_id
             ${fiscalYearClause}
@@ -1889,7 +1901,7 @@ class SchemaService {
         LEFT JOIN currency curr ON curr.rid = ps.currency
         LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
         LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD' 
-        left join project_classification pc on pc.rid = ps.project_classification_rid  
+        LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid  
         ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
         GROUP BY 
         ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_id, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
