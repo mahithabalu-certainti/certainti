@@ -1,7 +1,7 @@
 import { Op, Sequelize,UniqueConstraintError  } from "sequelize";
 import { HttpStatus } from "../utils/constant";
 import { IAccount, IUpdateAccount,IKeyContactDetail } from "../utils/types";
-import { getTableSchemaByEntity} from  "../utils/helpers";
+import { getTableSchemaByEntity, uploadToAzureBlob} from  "../utils/helpers";
 import SchemaService from "./schemaService";
 import { models } from "../models";
 import Decimal from "decimal.js";
@@ -594,7 +594,7 @@ async accountList(
       }
     }
   
-  async createAccount(accountData: IAccount, userId:string): Promise<{
+  async createAccount(accountData: IAccount, userId:string,file:Express.Multer.File): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
@@ -616,7 +616,6 @@ async accountList(
         status,
         annual_revenue,
         key_contacts,
-        logo_url,
         organisation_name
       } = accountData;
 
@@ -676,10 +675,19 @@ async accountList(
         created_by: userId,
         modified_by: userId,
         annual_revenue: annual_revenue ? new Decimal(annual_revenue).toNumber().toString() : "",
-        logo_url:logo_url,
         organisation_name
       });
-
+      if(account.rid && file)
+      {
+        if(file)
+            {
+             const file_url = await uploadToAzureBlob(file,account.rid);
+              await repository.update({logo_url: file_url},
+              { where: { rid: account.rid},
+                returning: true
+              })
+            }
+      }
       if (parent_account && data_storage === "store_in_parent") {
         await this.schemaService.insertAccountDetails(
           parent_account?.r_number || '',

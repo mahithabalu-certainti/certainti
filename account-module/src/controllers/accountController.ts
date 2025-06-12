@@ -209,14 +209,9 @@ async function createAccount(req: Request, res: Response): Promise<void> {
     }
 
    
-    if(req.file)
-    {
-      file_url = await uploadToAzureBlob(req.file);
-     // file_url = 'https://devplatform20stor.blob.core.windows.net/account-logos/1749203213569-resdev.png'
-      value.logo_url = file_url; 
-    }
+    
 
-    const account = await accountServices.createAccount(value, userId);
+    const account = await accountServices.createAccount(value, userId,req.file);
 
     if (account.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -277,8 +272,7 @@ async function updateAccount(req: Request, res: Response): Promise<void> {
     }
     if(req.file)
     {
-      file_url = await uploadToAzureBlob(req.file);
-      //file_url = 'https://devplatform20stor.blob.core.windows.net/account-logos/1749203213569-resdev.png'
+      file_url = await uploadToAzureBlob(req.file,value?.account_rid);
       value.logo_url = file_url; 
     }
     const account = await accountServices.updateAccount(value, userId);

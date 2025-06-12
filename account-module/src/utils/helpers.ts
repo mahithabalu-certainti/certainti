@@ -140,9 +140,9 @@ export async function generateExcelBase64(
   return Buffer.from(buffer).toString('base64');
 }
 
-export async function uploadToAzureBlob(file: Express.Multer.File): Promise<string> {
+export async function uploadToAzureBlob(file: Express.Multer.File,account_id:string): Promise<string> {
   const connectionString =  await getSecret(process.env.AZURE_STORAGE_CONNECTION_STRING as string);
-  const containerName = 'account-logos';
+  const containerName = 'account';
   
   const connString =  connectionString;
   if (!connString) throw new Error('Azure storage connection string is required');
@@ -150,7 +150,7 @@ export async function uploadToAzureBlob(file: Express.Multer.File): Promise<stri
   const containerClient = blobServiceClient.getContainerClient(containerName);
   await containerClient.createIfNotExists({ access: 'blob' })
 
-  const blobName = `${file.originalname}`;
+  const blobName = `${account_id}/logo/${file.originalname}`;
   const blockBlobClient = containerClient.getBlockBlobClient(blobName);
   
   await blockBlobClient.uploadData(file.buffer, {
