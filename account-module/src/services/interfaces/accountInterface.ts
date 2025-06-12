@@ -31,7 +31,7 @@ export interface IAccountService {
     data?: { account: any };
   }>;
 
-  createAccount(accountData: IAccount, userId: string): Promise<{
+  createAccount(accountData: IAccount, userId: string,file?:Express.Multer.File): Promise<{
     statusCode: number;
     message: string;
     errorMessage?: string;
