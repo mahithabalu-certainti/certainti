@@ -101,6 +101,8 @@ jobs:
           AZURE_B2C_CLIENT_ID=$API_CLIENT_ID
           AZURE_B2C_TENANT_ID=$API_TENANT_ID
           AZURE_SCOPE=https://graph.microsoft.com/.default
+          AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
+
           MAINDB_NAME=main-database-name
           MAINDB_PASSWORD=main-db-admin-password
           MAINDB_USERNAME=main-db-admin-username
@@ -213,6 +215,8 @@ jobs:
           cat <<EOF > $ENV_FILE
           SERVER_PORT=5001
           KEY_VAULT_URI=$KEY_VAULT_URI
+          AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
+          
           MAINDB_NAME=main-database-name
           MAINDB_PASSWORD=main-db-admin-password
           MAINDB_USERNAME=main-db-admin-username
