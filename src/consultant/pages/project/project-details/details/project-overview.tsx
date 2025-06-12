@@ -237,9 +237,9 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
 
   const auditInfo = CreateSectionData({
     record_id: projectDetails?.rid,
+    project_id: projectDetails?.r_number,
     created_on: projectDetails?.created_datetime,
     created_by: projectDetails?.created_name,
-    project_id: projectDetails?.r_number,
     updated_on: projectDetails?.modified_datetime,
     Updated_By: projectDetails?.modified_name,
   });
@@ -360,6 +360,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
         <DetailsSection
           title='Audit Information'
           data={auditInfo as DetailItem[]}
+          isAudit={true}
         />
       </div>
     </div>

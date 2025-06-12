@@ -4,6 +4,7 @@ import { adminSubmenuActiveIcon, backIcon } from '../../assets';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { MenuItem } from '../../consultant/types';
+import { Tooltip } from '@mui/material';
 
 interface SideMenuPanelProps {
   menuItems: MenuItem[];
@@ -11,6 +12,8 @@ interface SideMenuPanelProps {
   onSelect: (key: string) => void;
   headerTitle?: string;
   showBackIcon?: boolean;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
@@ -19,6 +22,8 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
   onSelect,
   headerTitle = 'Menu',
   showBackIcon = true,
+  isCollapsed,
+  onToggleCollapse,
 }) => {
   const [accountMenus, setAccountMenus] = useState<MenuItem[]>(menuItems);
   const navigate = useNavigate();
@@ -58,16 +63,34 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
     onSelect(key);
   };
 
+  const getShortName = (name: string): string => {
+    const words = name.split(' ').filter(Boolean);
+    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+    return words
+      .map((word) => word[0])
+      .join('')
+      .toUpperCase();
+  };
+
   return (
     <div className='w-full h-full bg-white border-r border-[#CBD6E2] py-2'>
       {/* Header */}
-      <div className='flex items-center gap-1.5 mb-1'>
-        {showBackIcon && (
-          <img src={backIcon} alt='Back' className='w-[18px] h-[18px]' />
+      <div
+        className={`h-[30px] flex items-center ${isCollapsed ? 'justify-end' : 'justify-between'} gap-1.5 mb-1`}
+      >
+        {!isCollapsed && (
+          <span className='text-[15px] text-[#2D3E4F] font-bold pl-6'>
+            {headerTitle}
+          </span>
         )}
-        <span className='text-[15px] text-[#2D3E4F] font-bold'>
-          {headerTitle}
-        </span>
+        {showBackIcon && (
+          <div
+            className={`w-[18px] h-[18px] cursor-pointer transform transition-transform ${isCollapsed ? 'rotate-180' : ''}`}
+            onClick={onToggleCollapse}
+          >
+            <img src={backIcon} alt='Back' className='w-[18px] h-[18px]' />
+          </div>
+        )}
       </div>
 
       {/* List */}
@@ -75,24 +98,51 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
         {accountMenus.map((item) => {
           if (item.hide) return null;
           return (
-            <li key={item.key} className='min-h-[32px] min-w-[181px] mb-1'>
+            <li key={item.key} className='min-h-[32px] mb-1'>
               <button
                 onClick={() => handleSelect(item.key)}
                 disabled={item.disabled}
                 className={`${
                   activeKey === item.key ? 'bg-[#0BBFB726] !font-bold' : ''
-                } group w-full flex items-center text-[14px] font-semibold gap-2 text-[#2D3E4F] text-left pl-6 pr-3 py-2 hover:bg-[#0BBFB726] ${item.disabled ? 'cursor-not-allowed' : 'cursor-pointer'}  `}
+                } group w-full flex items-center text-[14px] font-semibold gap-2 text-[#2D3E4F] text-left hover:bg-[#0BBFB726] ${
+                  item.disabled ? 'cursor-not-allowed' : 'cursor-pointer'
+                } ${isCollapsed ? 'px-2 py-1.5 justify-center' : 'pl-6 py-2 pr-3 justify-start'}`}
               >
-                <span>{item.name}</span>
-                <img
-                  src={adminSubmenuActiveIcon}
-                  alt='active'
-                  className={`w-[12px] h-[12px] transition-opacity duration-150 ${
-                    activeKey === item.key
-                      ? 'opacity-100'
-                      : 'opacity-0 group-hover:opacity-100'
-                  }`}
-                />
+                <Tooltip
+                  title={isCollapsed ? item.name : ''}
+                  placement='right'
+                  arrow
+                  disableHoverListener={!isCollapsed}
+                >
+                  <span
+                    className={`${isCollapsed ? 'bg-[#FFFFFF] rounded-full flex items-center justify-center w-[24px] h-[24px]' : ''}`}
+                  >
+                    {isCollapsed ? (
+                      item.icon ? (
+                        <span className='flex items-center justify-center w-4 h-4'>
+                          {item.icon}
+                        </span>
+                      ) : (
+                        <span className='uppercase text-[12px]'>
+                          {getShortName(item.name)}
+                        </span>
+                      )
+                    ) : (
+                      item.name
+                    )}
+                  </span>
+                </Tooltip>
+                {!isCollapsed && (
+                  <img
+                    src={adminSubmenuActiveIcon}
+                    alt='active'
+                    className={`w-[12px] h-[12px] transition-opacity duration-150 ${
+                      activeKey === item.key
+                        ? 'opacity-100'
+                        : 'opacity-0 group-hover:opacity-100'
+                    }`}
+                  />
+                )}
               </button>
             </li>
           );
