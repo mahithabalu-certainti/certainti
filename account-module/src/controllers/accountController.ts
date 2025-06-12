@@ -213,7 +213,7 @@ async function createAccount(req: Request, res: Response): Promise<void> {
     {
       file_url = await uploadToAzureBlob(req.file);
      // file_url = 'https://devplatform20stor.blob.core.windows.net/account-logos/1749203213569-resdev.png'
-      value.file_url = file_url; 
+      value.logo_url = file_url; 
     }
 
     const account = await accountServices.createAccount(value, userId);
@@ -279,7 +279,7 @@ async function updateAccount(req: Request, res: Response): Promise<void> {
     {
       file_url = await uploadToAzureBlob(req.file);
       //file_url = 'https://devplatform20stor.blob.core.windows.net/account-logos/1749203213569-resdev.png'
-      value.file_url = file_url; 
+      value.logo_url = file_url; 
     }
     const account = await accountServices.updateAccount(value, userId);
 
