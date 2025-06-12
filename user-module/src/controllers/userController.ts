@@ -406,7 +406,8 @@ async function exportUsers(req: Request, res: Response): Promise<void> {
       parsedFilters,
       value.sortBy,
       value.sortOrder,
-      value.organization
+      value.organization,
+      value.timezone
     );
 
     if (result.statusCode === constants.SUCCESS) {

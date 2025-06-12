@@ -411,7 +411,8 @@ async function exportAllProjectList(req: Request, res: Response): Promise<void> 
       value.sortBy,
       value.sortOrder,
       parsedGlobalFilters,
-      userId
+      userId,
+      value.timezone
     );
 
     if (project.statusCode === HttpStatus.SUCCESS) {
