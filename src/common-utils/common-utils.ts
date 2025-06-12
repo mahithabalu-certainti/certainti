@@ -139,6 +139,7 @@ export const createRadioField = (
     defaultValue?: string;
     disabled?: boolean;
     onChange?: boolean;
+    resetDependsFields?: string[];
     defaultSelect?: {
       key: string;
       matchedValue: YesNo.Yes;
@@ -157,6 +158,7 @@ export const createRadioField = (
   onChange: options.onChange,
   defaultSelect: options.defaultSelect,
   defaultValue: options.defaultValue,
+  resetDependsFields: options.resetDependsFields,
 });
 
 export const createSelectField = (
@@ -398,6 +400,9 @@ export const REGEX_PATTERNS = {
   MAX_EFFORT_IN_HOURS: /^.{1,18}$/,
   KEY_CONTACT_NO_CONSECUTIVE: /^(?!.*[-'\s]{2,})/,
   KEY_CONTACT_NO_TRAILING: /^[A-Za-z].*[A-Za-z]$/,
+  ACCOUNT_ORG_NAME: /^[A-Za-z0-9 -&.,']+$/,
+  MAX_ORG_NAME_LEGNTH: /^.{7,125}/,
+  MIN_ORG_NAME_LEGNTH: /^.{7,}/,
 };
 
 /**

@@ -24,7 +24,7 @@ import {
   useUpdateAccount,
 } from '../../services/account-create';
 import { AccountFormData, FieldType, SelectOption, YesNo } from '../../types';
-import { FormData, newKeyContactFields } from './form-data';
+import { AccFormData, newKeyContactFields } from './form-data';
 import {
   DATA_STORAGE_OPTIONS,
   othersIndustryId,
@@ -44,6 +44,7 @@ import SkeletonForm from '../../../components/form-builder/skeleton-form';
 export const AccountForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [currentCountry, setCurrentCountry] = useState('');
+  const [logo, setLogo] = useState<File>();
   const [isParentAccountRequired, setIsParentAccountRequired] = useState(false);
   const [showOthersField, setShowOthersField] = useState(false);
   const [isKeyContactsReady, setIsKeyContactsReady] = useState<boolean>(false);
@@ -69,6 +70,15 @@ export const AccountForm: React.FC = () => {
 
   const getAccount = useFetchAccountFields(accountid as string);
   const account = getAccount.data?.data;
+  const logoUrl = account?.accountById?.logo_url;
+  const logoName = logoUrl && logoUrl.substring(logoUrl.lastIndexOf('/') + 1);
+  useEffect(() => {
+    console.log('account', account);
+
+    if (account?.accountById?.logo_url) {
+      setLogo({ name: logoName || '' } as File);
+    }
+  }, [account]);
   // Remaping all fields to match with form controls
   const accountData = useMemo(
     () => ({
@@ -243,10 +253,13 @@ export const AccountForm: React.FC = () => {
       accountData?.rid,
       account?.accountDetails?.keyContacts
     );
+    const formData = new FormData();
+    formData.append('logo', logo as Blob);
+    formData.append('data', JSON.stringify(transformData));
     if (isEditView) {
-      updateAccount.mutate(transformData);
+      updateAccount.mutate(formData);
     } else {
-      createAccount.mutate(transformData);
+      createAccount.mutate(formData);
     }
   };
 
@@ -278,13 +291,20 @@ export const AccountForm: React.FC = () => {
         data.fieldValue === othersIndustryId // others id
       );
     }
+    if (data.fieldName === 'logo') {
+      const selectedFile: File = data.fieldValue as File;
+      console.log('selectedFile', selectedFile);
+      if (selectedFile) {
+        setLogo(selectedFile);
+      }
+    }
   };
 
   const goBack = () => {
     window.history.back();
   };
 
-  const formConfig = FormData(
+  const formConfig = AccFormData(
     memoizedContry,
     memoizedParentAccounts,
     memoizedCurrency,
@@ -385,6 +405,7 @@ export const AccountForm: React.FC = () => {
             formRef={formRef}
             onChange={onChangeField}
             layout={Layout.TYPE_1}
+            logo={logo}
           />
         )}
       </div>

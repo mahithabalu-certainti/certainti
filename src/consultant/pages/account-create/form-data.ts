@@ -152,7 +152,7 @@ const createDynamicField = (
   return fieldsArr;
 };
 
-export const FormData = (
+export const AccFormData = (
   country: SelectOption[],
   parentAccount: SelectOption[],
   currency: SelectOption[],
@@ -275,6 +275,29 @@ export const FormData = (
             required: true,
             options: STATUS_OPTIONS,
             placeholder: 'Choose Status',
+          }),
+          createTextField('organisation_name', 'Org Name', {
+            required: true,
+            regex: REGEX_PATTERNS.ACCOUNT_ORG_NAME,
+            regexErrorMessage:
+              'Only letters, numbers, spaces, hyphens, ampersands, periods, apostrophes are allowed',
+            placeholder: 'Enter Org Name',
+            errorHandling: [
+              {
+                regex: REGEX_PATTERNS.MAX_ORG_NAME_LEGNTH,
+                errorMessage: 'Maximum length exceeded.',
+              },
+              {
+                regex: REGEX_PATTERNS.MIN_ORG_NAME_LEGNTH,
+                errorMessage: 'Minimum 7 characters required',
+              },
+            ],
+          }),
+          createTextField('logo', 'Upload Logo', {
+            type: 'file',
+            onChange: true,
+            required: false,
+            placeholder: 'Browse Image',
           }),
           // createTextField('project_manager', 'Delivery Manager', {
           //   required: false,
