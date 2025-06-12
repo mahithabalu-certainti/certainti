@@ -74,7 +74,7 @@ export const AccountForm: React.FC = () => {
   const logoName = logoUrl && logoUrl.substring(logoUrl.lastIndexOf('/') + 1);
   useEffect(() => {
     if (account?.accountById?.logo_url) {
-      setLogo({ name: logoName || '', } as File);
+      setLogo({ name: logoName || '' } as File);
     }
   }, [account]);
   // Remaping all fields to match with form controls
@@ -202,7 +202,7 @@ export const AccountForm: React.FC = () => {
 
   useEffect(() => {
     const existingContacts = account?.accountDetails?.keyContacts || [];
-    const newKeyData = newKeyContactFields(memoizedRole, false);
+    const newKeyData = newKeyContactFields(memoizedRole);
 
     let fields: FieldType[] = [];
 
@@ -230,7 +230,7 @@ export const AccountForm: React.FC = () => {
     const groupIndex = Math.floor(fieldIndex / groupSize);
     const startIndex = groupIndex * groupSize;
     if (contactsArr.length <= groupSize) {
-      const newEmptyContact = newKeyContactFields(memoizedRole, false);
+      const newEmptyContact = newKeyContactFields(memoizedRole);
       contactsArr.splice(0, groupSize, ...newEmptyContact);
     } else {
       contactsArr.splice(startIndex, groupSize);
@@ -240,7 +240,7 @@ export const AccountForm: React.FC = () => {
   };
 
   const addKeyContactInfo = () => {
-    const newKeyData = newKeyContactFields(memoizedRole, false);
+    const newKeyData = newKeyContactFields(memoizedRole);
     setKeyContacts((prev) => [...prev, ...newKeyData]);
   };
 
@@ -251,7 +251,7 @@ export const AccountForm: React.FC = () => {
       accountData?.rid,
       account?.accountDetails?.keyContacts
     );
-    const formData = new FormData()
+    const formData = new FormData();
     formData.append('logo', logo as Blob);
     formData.append('data', JSON.stringify(transformData));
     if (isEditView) {
@@ -332,7 +332,7 @@ export const AccountForm: React.FC = () => {
 
   return (
     <>
-      <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200'>
+      <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200 sticky top-0 z-10 bg-white'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
           <img
             src={isEditView ? editIcon : accountHomeIcon}
@@ -386,12 +386,15 @@ export const AccountForm: React.FC = () => {
             values={
               isEditView && isKeyContactsReady
                 ? { ...accountData }
-                : !isEditView
+                : !isEditView && keyContacts.length > 0
                   ? {
                     // Set default values in Create Account
                     status: defaultActiveValue,
-                    autosend_interaction: YesNo.Yes,
+                    autosend_interaction: YesNo.No,
                     auto_access_rd: YesNo.Yes,
+                    is_primary_contact_0: YesNo.No,
+                    include_in_communication_0: YesNo.No,
+                    key_contact_status_0: defaultActiveValue,
                   }
                   : {}
             }

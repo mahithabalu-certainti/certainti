@@ -92,6 +92,19 @@ import menuArrowRightHover from './menu-arrow-right-hover.svg';
 import moduleArrowright from './module-arrow-right.svg';
 import checkboxChecked from './checkboxChecked.svg';
 import checkboxUnchecked from './checkboxUnChecked.svg';
+import copyIcon from './copy-icon.svg';
+import financialIcon from './financial-icon.svg';
+import detailsIcon from './details-icon.svg';
+import resourcesIcon from './resources-icon.svg';
+import projectsSideIcon from './projects-icon.svg';
+import casesIcon from './cases-icon.svg';
+import activitiesIcon from './activities-icon.svg';
+import notesSideIcon from './notes-icon.svg';
+import checklistIcon from './checklist-icon.svg';
+import timeSheetIcon from './timesheet-icon.svg';
+import importsIcon from './imports-icon.svg';
+import attachmentsSideIcon from './attachments-icon.svg';
+
 export {
   accountDetailsIcon,
   accountHomeIcon,
@@ -123,6 +136,7 @@ export {
   chevronLeftIcon,
   closeCircleIcon,
   closeIcon,
+  copyIcon,
   detailsKeyContactErrorIcon,
   keyContactRemoveIcon,
   keyContactAddIcon,
@@ -186,4 +200,15 @@ export {
   uploadIcon,
   userIcon,
   deleteIcon,
+  financialIcon,
+  detailsIcon,
+  resourcesIcon,
+  attachmentsSideIcon,
+  projectsSideIcon,
+  casesIcon,
+  activitiesIcon,
+  notesSideIcon,
+  checklistIcon,
+  timeSheetIcon,
+  importsIcon,
 };

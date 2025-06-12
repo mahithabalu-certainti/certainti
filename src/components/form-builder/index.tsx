@@ -102,99 +102,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   }, [constructFormData, formData]);
 
   useEffect(() => {
-    const keyContactSection = formData?.find(
-      (section) => section.sectionName === 'Key Contacts List'
-    );
-
-    if (!keyContactSection) return;
-
-    const fieldsPerRow = 8;
-    const rowCount = Math.ceil(keyContactSection.fields.length / fieldsPerRow);
-
-    for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
-      const baseIndex = rowIndex * fieldsPerRow;
-
-      const nameField = keyContactSection.fields[baseIndex];
-      const roleField = keyContactSection.fields[baseIndex + 1];
-      const emailField = keyContactSection.fields[baseIndex + 2];
-      const primaryField = keyContactSection.fields[baseIndex + 4];
-      const includeInCommField = keyContactSection.fields[baseIndex + 5];
-      const statusField = keyContactSection.fields[baseIndex + 6];
-
-      if (
-        !nameField ||
-        !emailField ||
-        !roleField ||
-        !primaryField ||
-        !includeInCommField ||
-        !statusField
-      )
-        continue;
-
-      // if (!constructFormData[statusField.name]) {
-      //   setConstructFormData((prev) => ({
-      //     ...prev,
-      //     [statusField.name]: 'active', // Default status
-      //   }));
-      //   continue;
-      // }
-
-      const hasNameOrEmail =
-        (constructFormData[nameField.name]?.toString().trim() || '') !== '' ||
-        (constructFormData[emailField.name]?.toString().trim() || '') !== '';
-
-      const isPrimary = constructFormData[primaryField.name] === 'yes';
-      const isActive = constructFormData[statusField.name] === 'active';
-
-      const shouldUpdateRole = roleField.required !== hasNameOrEmail;
-      const shouldUpdatePrimary = primaryField.required !== hasNameOrEmail;
-      const shouldUpdateEmail = emailField.required !== (isPrimary && isActive);
-      const shouldUpdateIncludeInComm =
-        includeInCommField.disabled !== (isPrimary && isActive);
-
-      if (
-        shouldUpdateRole ||
-        shouldUpdatePrimary ||
-        shouldUpdateEmail ||
-        shouldUpdateIncludeInComm
-      ) {
-        setFormData((prevFormData) =>
-          prevFormData?.map((section) => {
-            if (section.sectionName === 'Key Contacts List') {
-              return {
-                ...section,
-                fields: section.fields.map((field) => {
-                  if (field.name === roleField.name && shouldUpdateRole) {
-                    return { ...field, required: hasNameOrEmail };
-                  }
-                  if (field.name === primaryField.name && shouldUpdatePrimary) {
-                    return { ...field, required: hasNameOrEmail };
-                  }
-                  if (field.name === emailField.name && shouldUpdateEmail) {
-                    return { ...field, required: isPrimary && isActive };
-                  }
-                  if (
-                    field.name === includeInCommField.name &&
-                    shouldUpdateIncludeInComm
-                  ) {
-                    return {
-                      ...field,
-                      disabled: isPrimary && isActive,
-                      value: isPrimary && isActive ? 'yes' : field.value,
-                    };
-                  }
-                  return field;
-                }),
-              };
-            }
-            return section;
-          })
-        );
-      }
-    }
-  }, [constructFormData, formData]);
-
-  useEffect(() => {
     setFormData((prevFormData = []) => {
       return data.map((newSection) => {
         const oldSection = prevFormData.find(
@@ -252,6 +159,109 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     });
   }, [formData, constructFormData]);
 
+  useEffect(() => {
+    if (Object.keys(constructFormData).length === 0) return;
+    const keyContactSection = formData?.find(
+      (section) => section.sectionName === 'key_contacts_list'
+    );
+
+    if (!keyContactSection) return;
+
+    const fieldsPerRow = 8;
+    const rowCount = Math.ceil(keyContactSection.fields.length / fieldsPerRow);
+
+    for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+      const baseIndex = rowIndex * fieldsPerRow;
+
+      const nameField = keyContactSection.fields[baseIndex];
+      const roleField = keyContactSection.fields[baseIndex + 1];
+      const emailField = keyContactSection.fields[baseIndex + 2];
+      const primaryField = keyContactSection.fields[baseIndex + 4];
+      const includeInCommField = keyContactSection.fields[baseIndex + 5];
+      const statusField = keyContactSection.fields[baseIndex + 6];
+
+      if (
+        !nameField ||
+        !emailField ||
+        !roleField ||
+        !primaryField ||
+        !includeInCommField ||
+        !statusField
+      )
+        continue;
+
+      const includeInCommValue =
+        constructFormData[includeInCommField.name] === 'yes';
+      const nameValue =
+        constructFormData[nameField.name]?.toString().trim() || '';
+      const emailValue =
+        constructFormData[emailField.name]?.toString().trim() || '';
+      const isPrimary = constructFormData[primaryField.name] === 'yes';
+      const isActive = constructFormData[statusField.name] === 'active';
+
+      // Name and Email requirements:
+      // - If Include In Communications is Yes: Both are required
+      // - If Include In Communications is No: At least one is required (either name or email)
+      const nameRequired =
+        includeInCommValue || (!includeInCommValue && !emailValue);
+      const emailRequired =
+        includeInCommValue || (!includeInCommValue && !nameValue);
+
+      // Role is required when is Primary is true
+      const roleRequired = isPrimary;
+
+      // Check if we need to update any fields
+      const shouldUpdateName = nameField.required !== nameRequired;
+      const shouldUpdateEmail = emailField.required !== emailRequired;
+      const shouldUpdateRole = roleField.required !== roleRequired;
+      const shouldUpdateIncludeInComm =
+        includeInCommField.disabled !== (isPrimary && isActive);
+
+      if (
+        shouldUpdateName ||
+        shouldUpdateEmail ||
+        shouldUpdateRole ||
+        shouldUpdateIncludeInComm
+      ) {
+        setFormData((prevFormData) =>
+          prevFormData?.map((section) => {
+            if (section.sectionName === 'key_contacts_list') {
+              return {
+                ...section,
+                fields: section.fields.map((field) => {
+                  if (field.name === nameField.name && shouldUpdateName) {
+                    return { ...field, required: nameRequired };
+                  }
+                  if (field.name === emailField.name && shouldUpdateEmail) {
+                    return { ...field, required: emailRequired };
+                  }
+                  if (field.name === roleField.name && shouldUpdateRole) {
+                    return { ...field, required: roleRequired };
+                  }
+                  if (
+                    field.name === includeInCommField.name &&
+                    shouldUpdateIncludeInComm
+                  ) {
+                    return {
+                      ...field,
+                      disabled:
+                        section.from === 'project'
+                          ? isPrimary && isActive
+                          : false,
+                      value: isPrimary && isActive ? 'yes' : field.value,
+                    };
+                  }
+                  return field;
+                }),
+              };
+            }
+            return section;
+          })
+        );
+      }
+    }
+  }, [constructFormData, formData]);
+
   const handleRemoveKeyContactRow = (rowIndexToRemove: number) => {
     const fieldsPerRow = 8;
 
@@ -259,7 +269,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       if (!prevFormData) return prevFormData;
 
       const keyContactSection = prevFormData.find(
-        (section) => section.sectionName === 'Key Contacts List'
+        (section) => section.sectionName === 'key_contacts_list'
       );
       if (!keyContactSection) return prevFormData;
 
@@ -278,7 +288,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       });
 
       return prevFormData.map((section) => {
-        if (section.sectionName === 'Key Contacts List') {
+        if (section.sectionName === 'key_contacts_list') {
           return {
             ...section,
             fields: reindexedFields,
@@ -307,6 +317,30 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           newData[key] = value;
         }
       });
+
+      return newData;
+    });
+  };
+
+  const handleAddKeyContact = () => {
+    const fieldsPerRow = 8;
+    // Update constructFormData with default values for the new row
+    setConstructFormData((prevData) => {
+      if (!prevData) return prevData;
+      const newRowIndex = Math.floor(
+        (formData?.find((s) => s.sectionName === 'key_contacts_list')?.fields
+          .length || 0) / fieldsPerRow
+      );
+
+      const newData = { ...prevData };
+      newData[`key_contact_name_${newRowIndex}`] = '';
+      newData[`key_contact_role_${newRowIndex}`] = '';
+      newData[`key_contact_email_${newRowIndex}`] = '';
+      newData[`key_contact_rid_${newRowIndex}`] = '';
+      newData[`is_primary_contact_${newRowIndex}`] = 'no';
+      newData[`include_in_communication_${newRowIndex}`] = 'no';
+      newData[`key_contact_status_${newRowIndex}`] = 'active';
+      newData[`button_${newRowIndex}`] = '';
 
       return newData;
     });
@@ -360,6 +394,69 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         } else {
           newData[field.defaultSelect.key] =
             field.defaultSelect.ifNotMatchValue;
+        }
+      }
+
+      // Handle Include In Communications changes
+      if (field.name.startsWith('include_in_communication_')) {
+        const currentIndex = parseInt(field.name.split('_').pop() || '0', 10);
+        const newIncludeValue = value === 'yes';
+        const statusField = `key_contact_status_${currentIndex}`;
+        const currentStatus = constructFormData[statusField];
+
+        // Skip validation if the contact is inactive
+        if (currentStatus === 'inactive') {
+          setConstructFormData(newData);
+          return;
+        }
+
+        // Check if another active contact already has Include In Communications set to yes
+        const otherIncludeExists = Object.keys(constructFormData).some(
+          (key) => {
+            if (
+              key.startsWith('include_in_communication_') &&
+              key !== field.name
+            ) {
+              const otherIndex = parseInt(key.split('_').pop() || '0', 10);
+              const otherStatusField = `key_contact_status_${otherIndex}`;
+              const otherStatus = constructFormData[otherStatusField];
+
+              // Only consider active contacts
+              return (
+                constructFormData[key] === 'yes' && otherStatus === 'active'
+              );
+            }
+            return false;
+          }
+        );
+
+        if (newIncludeValue && otherIncludeExists) {
+          setConfirmationState({
+            isOpen: true,
+            message:
+              'Only one active contact can be Interaction Recipient. Would you like to proceed?',
+            onConfirm: () => {
+              // Set all other active include_in_communication fields to 'no'
+              Object.keys(newData).forEach((key) => {
+                if (
+                  key.startsWith('include_in_communication_') &&
+                  key !== field.name
+                ) {
+                  const otherIndex = parseInt(key.split('_').pop() || '0', 10);
+                  const otherStatusField = `key_contact_status_${otherIndex}`;
+                  const otherStatus = constructFormData[otherStatusField];
+
+                  if (otherStatus === 'active') {
+                    newData[key] = 'no';
+                  }
+                }
+              });
+
+              // Update the form data with the new values
+              setConstructFormData(newData);
+            },
+          });
+          return;
         }
       }
 
@@ -418,7 +515,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       newData[key] = 'no';
 
                       const otherCommKey = `include_in_communication_${otherIndex}`;
-                      const otherEmailKey = `key_contact_email_${otherIndex}`;
                       newData[otherCommKey] = 'no';
 
                       setFormData((prevFormData) =>
@@ -427,8 +523,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                           fields: section.fields.map((f) => {
                             if (f.name === otherCommKey)
                               return { ...f, disabled: false };
-                            if (f.name === otherEmailKey)
-                              return { ...f, required: false, error: '' };
                             return f;
                           }),
                         }))
@@ -439,7 +533,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
                 newData[isPrimaryField] = 'yes';
                 const commFieldName = `include_in_communication_${currentIndex}`;
-                const emailFieldName = `key_contact_email_${currentIndex}`;
                 newData[commFieldName] = 'yes';
                 const otherStatusKey = `key_contact_status_${currentIndex}`;
                 const otherStatus = constructFormData[otherStatusKey];
@@ -453,12 +546,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       if (f.name === commFieldName)
                         return {
                           ...f,
-                          disabled: otherStatus === 'active' ? true : false,
-                        };
-                      if (f.name === emailFieldName)
-                        return {
-                          ...f,
-                          required: otherStatus === 'active' ? true : false,
+                          disabled:
+                            section?.from === 'project' &&
+                            otherStatus === 'active'
+                              ? true
+                              : false,
                         };
                       return f;
                     }),
@@ -528,7 +620,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     ) {
                       newData[key] = 'no';
                       const otherCommKey = `include_in_communication_${otherIndex}`;
-                      const otherEmailKey = `key_contact_email_${otherIndex}`;
                       newData[otherCommKey] = 'no';
 
                       setFormData((prevFormData) =>
@@ -537,8 +628,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                           fields: section.fields.map((f) => {
                             if (f.name === otherCommKey)
                               return { ...f, disabled: false };
-                            if (f.name === otherEmailKey)
-                              return { ...f, required: false, error: '' };
                             return f;
                           }),
                         }))
@@ -548,7 +637,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 });
 
                 const commFieldName = `include_in_communication_${currentIndex}`;
-                const emailFieldName = `key_contact_email_${currentIndex}`;
                 newData[commFieldName] = 'yes';
 
                 setFormData((prevFormData) =>
@@ -556,9 +644,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     ...section,
                     fields: section.fields.map((f) => {
                       if (f.name === commFieldName)
-                        return { ...f, disabled: true };
-                      if (f.name === emailFieldName)
-                        return { ...f, required: true };
+                        return {
+                          ...f,
+                          disabled: section?.from === 'project' ? true : false,
+                        };
                       return f;
                     }),
                   }))
@@ -572,7 +661,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         }
         // No conflict — proceed
         const commFieldName = `include_in_communication_${currentIndex}`;
-        const emailFieldName = `key_contact_email_${currentIndex}`;
 
         newData[commFieldName] = 'yes';
 
@@ -580,8 +668,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           prevFormData?.map((section) => ({
             ...section,
             fields: section.fields.map((f) => {
-              if (f.name === commFieldName) return { ...f, disabled: true };
-              if (f.name === emailFieldName) return { ...f, required: true };
+              if (f.name === commFieldName)
+                return {
+                  ...f,
+                  disabled: section?.from === 'project' ? true : false,
+                };
               return f;
             }),
           }))
@@ -592,53 +683,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       if (field.name.startsWith('is_primary_contact_') && value === 'no') {
         const currentIndex = parseInt(field.name.split('_').pop() || '0', 10);
         const commFieldName = `include_in_communication_${currentIndex}`;
-        const emailFieldName = `key_contact_email_${currentIndex}`;
 
         setFormData((prevFormData) =>
           prevFormData?.map((section) => ({
             ...section,
             fields: section.fields.map((f) => {
               if (f.name === commFieldName) return { ...f, disabled: false };
-              if (f.name === emailFieldName)
-                return { ...f, required: false, error: '' };
               return f;
             }),
           }))
-        );
-      }
-
-      // Set required for role/primary if name or email is filled
-      if (
-        field.name.startsWith('key_contact_name_') ||
-        field.name.startsWith('key_contact_email_')
-      ) {
-        const currentIndex = parseInt(field.name.split('_').pop() || '0', 10);
-        const hasName =
-          (newData[`key_contact_name_${currentIndex}`]?.toString().trim() ||
-            '') !== '';
-        const hasEmail =
-          (newData[`key_contact_email_${currentIndex}`]?.toString().trim() ||
-            '') !== '';
-        const requiredFlag = hasName || hasEmail;
-
-        const roleFieldName = `key_contact_role_${currentIndex}`;
-        const primaryFieldName = `is_primary_contact_${currentIndex}`;
-
-        setFormData((prevFormData) =>
-          prevFormData?.map((section) => {
-            if (section.sectionName === 'Key Contacts List') {
-              return {
-                ...section,
-                fields: section.fields.map((f) => {
-                  if (f.name === roleFieldName || f.name === primaryFieldName) {
-                    return { ...f, required: requiredFlag };
-                  }
-                  return f;
-                }),
-              };
-            }
-            return section;
-          })
         );
       }
 
@@ -652,97 +705,135 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         const roleField = `key_contact_role_${currentIndex}`;
         const currentRole = constructFormData[roleField];
         const isPrimary = constructFormData[isPrimaryField] === 'yes';
+        const commFieldName = `include_in_communication_${currentIndex}`;
+        const currentCommValue = constructFormData[commFieldName] === 'yes';
 
-        // Check if the popup needs to be shown
-        const shouldShowPopup =
-          previousStatus === 'inactive' &&
-          newStatus === 'active' &&
-          isPrimary &&
-          Object.keys(constructFormData).some((key) => {
-            if (
-              key.startsWith('is_primary_contact_') &&
-              key !== isPrimaryField &&
-              constructFormData[key] === 'yes'
-            ) {
-              const index = parseInt(key.split('_').pop() || '0', 10);
-              const roleKey = `key_contact_role_${index}`;
-              const statusKey = `key_contact_status_${index}`;
+        // Only proceed if changing from inactive to active
+        if (previousStatus === 'inactive' && newStatus === 'active') {
+          newData[statusField] = 'active';
 
-              return (
-                constructFormData[roleKey] === currentRole &&
-                constructFormData[statusKey] === 'active'
-              );
-            }
-            return false;
-          });
+          // Check for both conditions that might require confirmation
+          const primaryConflict =
+            isPrimary &&
+            currentRole &&
+            Object.keys(constructFormData).some((key) => {
+              if (
+                key.startsWith('is_primary_contact_') &&
+                key !== isPrimaryField &&
+                constructFormData[key] === 'yes'
+              ) {
+                const index = parseInt(key.split('_').pop() || '0', 10);
+                const roleKey = `key_contact_role_${index}`;
+                const statusKey = `key_contact_status_${index}`;
+                return (
+                  constructFormData[roleKey] === currentRole &&
+                  constructFormData[statusKey] === 'active'
+                );
+              }
+              return false;
+            });
 
-        if (shouldShowPopup) {
-          setConfirmationState({
-            isOpen: true,
-            message:
-              'Primary Contact with the same role already exists. Would you like to proceed?',
-            onConfirm: () => {
-              const commFieldName = `include_in_communication_${currentIndex}`;
-              const emailFieldName = `key_contact_email_${currentIndex}`;
-              newData[statusField] = 'active';
-              newData[commFieldName] = 'yes';
+          const commConflict =
+            currentCommValue &&
+            Object.keys(constructFormData).some((key) => {
+              if (
+                key.startsWith('include_in_communication_') &&
+                key !== commFieldName
+              ) {
+                const otherIndex = parseInt(key.split('_').pop() || '0', 10);
+                const otherStatusField = `key_contact_status_${otherIndex}`;
+                return (
+                  constructFormData[key] === 'yes' &&
+                  constructFormData[otherStatusField] === 'active'
+                );
+              }
+              return false;
+            });
 
-              // Deactivate other primary contacts with same role
-              Object.keys(constructFormData).forEach((key) => {
-                if (
-                  key.startsWith('is_primary_contact_') &&
-                  key !== isPrimaryField &&
-                  constructFormData[key] === 'yes'
-                ) {
-                  const otherIndex = parseInt(key.split('_').pop() || '0', 10);
-                  const otherRoleKey = `key_contact_role_${otherIndex}`;
-                  const otherStatusKey = `key_contact_status_${otherIndex}`;
-                  const otherCommKey = `include_in_communication_${otherIndex}`;
-                  const otherEmailKey = `key_contact_email_${otherIndex}`;
+          // Prepare combined message if both conflicts exist
+          let combinedMessage = '';
+          if (primaryConflict && commConflict) {
+            combinedMessage =
+              'A Primary Contact with the same role and an active Interaction Recipient already exist. Would you like to proceed?';
+          } else if (primaryConflict) {
+            combinedMessage =
+              'Primary Contact with the same role already exists. Would you like to proceed?';
+          } else if (commConflict) {
+            combinedMessage =
+              'Only one active contact can be Interaction Recipient. Would you like to proceed?';
+          }
 
-                  if (
-                    constructFormData[otherRoleKey] === currentRole &&
-                    constructFormData[otherStatusKey] === 'active'
-                  ) {
-                    newData[key] = 'no';
-                    newData[otherCommKey] = 'no';
+          if (primaryConflict || commConflict) {
+            setConfirmationState({
+              isOpen: true,
+              message: combinedMessage,
+              onConfirm: () => {
+                // Handle primary contact conflicts
+                if (primaryConflict) {
+                  Object.keys(newData).forEach((key) => {
+                    if (
+                      key.startsWith('is_primary_contact_') &&
+                      key !== isPrimaryField &&
+                      constructFormData[key] === 'yes'
+                    ) {
+                      const otherIndex = parseInt(
+                        key.split('_').pop() || '0',
+                        10
+                      );
+                      const otherRoleKey = `key_contact_role_${otherIndex}`;
+                      const otherStatusKey = `key_contact_status_${otherIndex}`;
+                      const otherCommKey = `include_in_communication_${otherIndex}`;
 
-                    setFormData((prev) =>
-                      prev?.map((section) => ({
-                        ...section,
-                        fields: section.fields.map((f) => {
-                          if (f.name === otherCommKey)
-                            return { ...f, disabled: false };
-                          if (f.name === otherEmailKey)
-                            return { ...f, required: false, error: '' };
-                          return f;
-                        }),
-                      }))
-                    );
-                  }
+                      if (
+                        constructFormData[otherRoleKey] === currentRole &&
+                        constructFormData[otherStatusKey] === 'active'
+                      ) {
+                        newData[key] = 'no';
+                        newData[otherCommKey] = 'no';
+                      }
+                    }
+                  });
                 }
-              });
 
-              setFormData((prev) =>
-                prev?.map((section) => ({
-                  ...section,
-                  fields: section.fields.map((f) => {
-                    if (f.name === statusField)
-                      return { ...f, value: 'active' };
-                    if (f.name === commFieldName)
-                      return { ...f, disabled: true };
-                    if (f.name === emailFieldName)
-                      return { ...f, required: true };
-                    return f;
-                  }),
-                }))
-              );
+                // Handle communication inclusion conflicts
+                if (commConflict) {
+                  Object.keys(newData).forEach((key) => {
+                    if (
+                      key.startsWith('include_in_communication_') &&
+                      key !== commFieldName
+                    ) {
+                      const otherIndex = parseInt(
+                        key.split('_').pop() || '0',
+                        10
+                      );
+                      const otherStatusField = `key_contact_status_${otherIndex}`;
+                      if (constructFormData[otherStatusField] === 'active') {
+                        newData[key] = 'no';
+                      }
+                    }
+                  });
+                }
 
-              setConstructFormData(newData);
-            },
-          });
+                // Ensure this contact is properly set
+                if (isPrimary) {
+                  newData[isPrimaryField] = 'yes';
+                }
+                if (currentCommValue) {
+                  newData[commFieldName] = 'yes';
+                }
 
-          return;
+                setConstructFormData(newData);
+              },
+            });
+            return;
+          }
+
+          // If no conflicts, just update the status
+          setConstructFormData(newData);
+        } else {
+          // For other status changes (not inactive→active), just update
+          newData[statusField] = newStatus;
+          setConstructFormData(newData);
         }
       }
 
@@ -789,6 +880,34 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             ) {
               newData[f.name] = '';
               updatedField.error = '';
+            }
+            // Handle name/email error clearing when Include In Communications is No
+            if (
+              field.name.startsWith('key_contact_name_') ||
+              field.name.startsWith('key_contact_email_')
+            ) {
+              const currentIndex = parseInt(
+                field.name.split('_').pop() || '0',
+                10
+              );
+              const includeInCommField = `include_in_communication_${currentIndex}`;
+              const includeInCommValue =
+                constructFormData[includeInCommField] === 'yes';
+
+              if (!includeInCommValue) {
+                const nameField = `key_contact_name_${currentIndex}`;
+                const emailField = `key_contact_email_${currentIndex}`;
+
+                // If either name or email is being changed and has a value, clear errors for both
+                if (
+                  (field.name === nameField && value) ||
+                  (field.name === emailField && value)
+                ) {
+                  if (f.name === nameField || f.name === emailField) {
+                    updatedField.error = '';
+                  }
+                }
+              }
             }
 
             return updatedField;
@@ -1365,7 +1484,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           <button
             className='flex items-center cursor-pointer gap-1 bg-[#EAF0F5] h-[30px] rounded-[2px] color-[#2D3E4F] px-2 text-[12px] font-semibold'
             type='button'
-            onClick={field.onClick}
+            onClick={(e) => {
+              e.stopPropagation();
+              field.onClick?.(e);
+              handleAddKeyContact();
+            }}
           >
             <span>
               <img src={keyContactAddIcon} alt='add-btn' className='w-5 h-5' />
@@ -2110,15 +2233,19 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                             },
                           },
                           '& .MuiOutlinedInput-notchedOutline': {
-                            border: 'none !important',
+                            border: field.error
+                              ? '1px solid #ef4444'
+                              : 'none !important',
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            border: field.error
+                              ? '1px solid #ef4444'
+                              : 'none !important',
                           },
                           '& .MuiOutlinedInput-root': {
                             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                               border: '1px solid #60A5FA !important',
                             },
-                          },
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            border: 'none',
                           },
                         }}
                         key={colIndex}
@@ -2309,15 +2436,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             <div key={i}>
               {section.sectionName && (
                 <h4
-                  className={`${i === 0 ? 'border-b' : 'border'} h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 ${admin ? 'bg-[#FCFCFC]' : 'bg-[#ECECEC]'}  ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'}`}
+                  className={`${i === 0 ? 'border-b' : 'border'} capitalize h-[30px] border-box border-[#CBD6E2] font-bold text-[14px] text-[#2D3E4F] leading-[21px] tracking-[0%] align-middle py-1 ${admin ? 'bg-[#FCFCFC]' : 'bg-[#ECECEC]'}  ${layout === Layout.TYPE_1 ? 'px-10' : 'px-4'}`}
                 >
-                  {section.sectionName}
+                  {section.sectionName.replace(/_/g, ' ')}
                 </h4>
               )}
               <>
                 {!section.sectionName
                   ? loadSectionsWithoutTitle(section)
-                  : section.sectionName === 'Key Contacts List'
+                  : section.sectionName === 'key_contacts_list'
                     ? loadKeyContactSection(section)
                     : loadDefaultSections(section, isHalf, i)}
               </>
