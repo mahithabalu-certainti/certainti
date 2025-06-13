@@ -278,50 +278,29 @@ export const AccFormData = (
           }),
           createTextField('organisation_name', 'Org Name', {
             required: true,
-            regex: REGEX_PATTERNS.ACCOUNT_ORG_NAME,
-            regexErrorMessage:
-              'Only letters, numbers, spaces, hyphens, ampersands, periods, apostrophes are allowed',
             placeholder: 'Enter Org Name',
             errorHandling: [
               {
-                regex: REGEX_PATTERNS.MAX_ORG_NAME_LEGNTH,
+                regex: REGEX_PATTERNS.MIN_ORG_NAME_LEGNTH,
+                errorMessage: 'Org Name must be more than 6 characters long',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_125,
                 errorMessage: 'Maximum length exceeded.',
               },
               {
-                regex: REGEX_PATTERNS.MIN_ORG_NAME_LEGNTH,
-                errorMessage: 'Minimum 7 characters required',
+                regex: REGEX_PATTERNS.ACCOUNT_NAME,
+                errorMessage:
+                  "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes (') and commas (,)",
               },
             ],
           }),
-          createTextField('logo', 'Upload Logo', {
+          createTextField('logo', 'Org Logo', {
             type: 'file',
             onChange: true,
             required: false,
             placeholder: 'Browse Image',
           }),
-          // createTextField('project_manager', 'Delivery Manager', {
-          //   required: false,
-          //   regex: REGEX_PATTERNS.MANAGER_REGEX,
-          //   regexErrorMessage:
-          //     "Only letters, spaces, apostrophes (') and hyphens (-) are allowed",
-          //   placeholder: 'Enter Delivery Manager Name',
-          //   errorHandling: [
-          //     {
-          //       regex: REGEX_PATTERNS.MIN_NAME_REGEX,
-          //       errorMessage:
-          //         'Delivery Manager Name must be more than 1 characters long',
-          //     },
-          //     {
-          //       regex: REGEX_PATTERNS.MAX_NAME_REGEX,
-          //       errorMessage: 'Max length exceeded',
-          //     },
-          //     {
-          //       regex: REGEX_PATTERNS.NOT_ALLOW_SPACE_SYMBOLS_AT_START_END,
-          //       errorMessage:
-          //         'Cannot start or end with a space, apostrophe, or hyphens',
-          //     },
-          //   ],
-          // }),
         ],
       },
       {

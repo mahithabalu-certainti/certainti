@@ -49,12 +49,9 @@ export interface FormTypeFields {
   errorHandling?: ErrorHandling[];
   onClick?: (event?: React.MouseEvent<HTMLElement>) => void;
   iconUrl?: string;
+  assignDefaultValue?: boolean;
+  dependantLabel?: string;
 }
-
-// export interface SelectOptions {
-//   label: string;
-//   value: string;
-// }
 
 export type InputType =
   | 'text'
@@ -123,6 +120,8 @@ export interface FieldType {
   isLoading?: boolean;
   errorHandling?: ErrorHandling[];
   width?: string;
+  assignDefaultValue?: boolean;
+  dependantLabel?: string;
 }
 
 export type AllowedCountry =

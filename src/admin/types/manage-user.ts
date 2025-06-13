@@ -113,6 +113,8 @@ export interface UserDetail {
   business_teams: {
     business_teams: string;
   };
+  org_id: string;
+  is_consultant_firm: boolean;
 }
 
 export enum UserRole {
@@ -169,17 +171,6 @@ export interface UserRolesApiResponse extends CommonApiResponse {
   };
 }
 
-// For your table component (simplified version)
-// export type ManageUserList = {
-//   id: string; // mapped from rid
-//   username: string; // mapped from first_name
-//   fullName: string; // mapped from full_name
-//   email: string;
-//   profile: string; // mapped from profile.profile_name
-//   status: string;
-//   businessTeam: string; // mapped from business_teams.business_teams
-// };
-
 // User Permission Types
 interface UserPermissionData {
   rid: string;
@@ -201,6 +192,7 @@ export interface UserPermissionApiResponse {
 export interface accountInfo {
   rid: string;
   account_name: string;
+  organisation_name: string;
 }
 export interface orgData {
   logo_url: string;

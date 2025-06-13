@@ -76,7 +76,7 @@ export const AccountForm: React.FC = () => {
     if (account?.accountById?.logo_url) {
       setLogo({ name: logoName || '' } as File);
     }
-  }, [account]);
+  }, [account, logoName]);
   // Remaping all fields to match with form controls
   const accountData = useMemo(
     () => ({
@@ -291,7 +291,6 @@ export const AccountForm: React.FC = () => {
     }
     if (data.fieldName === 'logo') {
       const selectedFile: File = data.fieldValue as File;
-      console.log('selectedFile', selectedFile);
       if (selectedFile) {
         setLogo(selectedFile);
       }

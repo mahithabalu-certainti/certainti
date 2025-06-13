@@ -140,6 +140,8 @@ export const createRadioField = (
     disabled?: boolean;
     onChange?: boolean;
     resetDependsFields?: string[];
+    dependantLabel?: string;
+    clearValue?: Record<string, string>;
     defaultSelect?: {
       key: string;
       matchedValue: YesNo.Yes;
@@ -159,6 +161,8 @@ export const createRadioField = (
   defaultSelect: options.defaultSelect,
   defaultValue: options.defaultValue,
   resetDependsFields: options.resetDependsFields,
+  dependantLabel: options.dependantLabel,
+  clearValue: options.clearValue,
 });
 
 export const createSelectField = (
@@ -175,6 +179,8 @@ export const createSelectField = (
     isLoading?: boolean;
     resetDependsFields?: string[];
     defaultValue?: string;
+    assignDefaultValue?: boolean;
+    dependantLabel?: string;
   }
 ): FieldType => ({
   type: 'select',
@@ -190,6 +196,8 @@ export const createSelectField = (
   isLoading: others.isLoading,
   defaultValue: others.defaultValue,
   resetDependsFields: others.resetDependsFields,
+  assignDefaultValue: others.assignDefaultValue,
+  dependantLabel: others.dependantLabel,
 });
 
 export const createButton = (
@@ -352,6 +360,7 @@ export const REGEX_PATTERNS = {
   MAX_64: /^.{0,64}$/,
   MAX_50: /^.{0,50}$/,
   MAX_100: /^.{0,100}$/,
+  MAX_125: /^.{0,125}$/,
   MAX_150: /^.{0,150}$/,
   MAX_200: /^.{0,200}$/,
   MAX_1000: /^.{0,1000}$/,

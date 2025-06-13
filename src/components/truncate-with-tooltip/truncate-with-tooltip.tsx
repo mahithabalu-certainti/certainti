@@ -7,6 +7,7 @@ interface TruncateWithTooltipProps {
   className?: string;
   children?: ReactNode;
   style?: React.CSSProperties;
+  placement?: 'top' | 'bottom' | 'left' | 'right';
 }
 
 const TruncateWithTooltip = ({
@@ -15,6 +16,7 @@ const TruncateWithTooltip = ({
   className = '',
   children,
   style = {},
+  placement = 'top',
 }: TruncateWithTooltipProps) => {
   const [isOverflowing, setIsOverflowing] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
@@ -46,7 +48,7 @@ const TruncateWithTooltip = ({
   };
 
   return isOverflowing ? (
-    <Tooltip title={text} arrow placement='top'>
+    <Tooltip title={text} arrow placement={placement}>
       <div ref={textRef} style={contentStyle} className={className}>
         {children || text}
       </div>

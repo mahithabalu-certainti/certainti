@@ -21,10 +21,9 @@ export const FormData = (
   stateLoading?: boolean,
   cityLoading?: boolean,
   disabledStatus?: boolean,
-  isConsultantFirm?: string
+  isConsultantFirm?: string,
+  org_id?: string
 ): FormType[] => {
-  console.log('orgname', orgNames);
-
   return useMemo(
     () => [
       {
@@ -100,24 +99,24 @@ export const FormData = (
           }),
           createRadioField('is_consultant_firm', 'Is Consultant Firm', {
             radioOptions: YES_NO_OPTIONS,
-            disabled: true,
             required: true,
             onChange: true,
-            // resetDependsFields: ['org_id'],
-            defaultSelect: {
-              matchedValue: YesNo.Yes,
-              key: 'org_id',
-              ifMatchValue: isConsultantFirm === 'yes' ? orgNames[0].value : '',
-              ifNotMatchValue: '',
-            },
+            resetDependsFields: ['org_id'],
+            dependantLabel: 'org_id',
           }),
           createSelectField('org_id', 'Org Name', {
-            options: orgNames,
             required: true,
-            disabled: true,
-            defaultValue: isConsultantFirm === 'yes' ? orgNames[0].value : '',
+            options: orgNames,
             placeholder: 'Choose Org Name',
-            isLoading: false,
+            disabled: isConsultantFirm === YesNo.Yes,
+            defaultValue:
+              isConsultantFirm === YesNo.Yes ? orgNames[0]?.value : org_id,
+            assignDefaultValue: true,
+            dependantLabel: 'is_consultant_firm',
+            clearValue: {
+              key: 'is_consultant_firm',
+              matchedValue: YesNo.Yes,
+            },
           }),
         ],
       },
@@ -215,6 +214,7 @@ export const FormData = (
       cityLoading,
       disabledStatus,
       isConsultantFirm,
+      org_id,
     ]
   );
 };

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { TruncateWithTooltip } from '../truncate-with-tooltip';
 
 interface CompanyBadgeProps {
   name: string;
@@ -18,7 +19,7 @@ const CompanyBadge = ({ name, logoUrl }: CompanyBadgeProps) => {
   };
 
   return (
-    <div className='w-[218px] min-w-[218px] max-w-[218px] h-[24px] rounded-[2px] px-2 border border-[#CBD6E266] bg-[#495E744D] flex items-center gap-2'>
+    <div className='inline-flex items-center gap-2 px-2 h-[24px] rounded-[2px] border border-[#CBD6E266] bg-[#495E744D]'>
       {!imageError ? (
         <div className='h-[24px] w-[24px] overflow-hidden'>
           <img
@@ -33,9 +34,11 @@ const CompanyBadge = ({ name, logoUrl }: CompanyBadgeProps) => {
           {getInitials(name)}
         </div>
       )}
-      <span className='font-medium text-[13px] leading-[20px] w-[170px] text-nowrap text-[#FFFFFF] max-w-[170px] overflow-hidden text-ellipsis'>
-        {name}
-      </span>
+      <TruncateWithTooltip text={name} maxWidth={170} placement='right'>
+        <span className='font-medium text-[13px] leading-[20px] text-nowrap text-[#FFFFFF] max-w-[170px] overflow-hidden text-ellipsis'>
+          {name}
+        </span>
+      </TruncateWithTooltip>
     </div>
   );
 };
