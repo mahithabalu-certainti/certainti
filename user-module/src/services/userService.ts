@@ -5,6 +5,8 @@ import { IUpdateUserData, IUserData } from "../utils/types";
 import { Op, Sequelize, IndexHints } from "sequelize";
 import ExcelJS from 'exceljs';
 import { OrganizationLicenses } from "../models/organisationLicense";
+import moment, { Moment } from "moment";
+import "moment-timezone"; 
   const { 
     User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams,
     ProfileMenuAccess, Menu, ProfileModuleAccess, MenuModule, ProfilePermissionAccess, ModulePermission,
@@ -960,7 +962,7 @@ async getAllUserPermission(userId: string, profileId: string) {
 
     const { count, rows } = await User.findAndCountAll({
       where: whereClause,
-      attributes: ["rid", "email", "status", "first_name"],
+      attributes: ["rid", "email", "status", "first_name","created_datetime","modified_datetime"],
       limit,
       offset,
       order,
@@ -1298,7 +1300,8 @@ async getAllUserPermission(userId: string, profileId: string) {
     filters: Record<string, string>,
     sortBy: string,
     sortOrder: string,
-    organization: string
+    organization: string,
+    timezone:string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1349,6 +1352,11 @@ const rawResult = users || [];
           "Email": basicUserInfo.email || "-", 
           "Profile": profile?.profile_name || "-",
           "Status": basicUserInfo.status ? (basicUserInfo.status.toLowerCase() === 'active' ? "Active" : "In-Active") : "-",
+          "Last Modified": basicUserInfo.modified_datetime
+          ? timezone && isValidTimezone(timezone)
+          ? moment(basicUserInfo.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
+          : moment(basicUserInfo.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
+          : '-',
         };
       });
 
@@ -1818,6 +1826,9 @@ if (fieldData.length > 0) {
 
 }
 
+function isValidTimezone(tz: string) {
+  return moment.tz.names().includes(tz);
+}
 
   // Helper function to calculate unique key based on type
 function getPermissionKey(permission: any): string {

@@ -1,4 +1,5 @@
 import moment, { Moment } from "moment";
+import "moment-timezone";  
 import { initOrgSequelize } from "../config/orgDataSource";
 import { Project, setupProjectSequence } from "../models/project";
 import { HttpStatus } from "../utils/constants";
@@ -806,7 +807,8 @@ export class ProjectService {
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
     globalFilters: Record<string, string[]> = {},
-    userId: string
+    userId: string,
+    timezone: string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -879,7 +881,9 @@ export class ProjectService {
           "Technical Point of Contact": project.technical_point_of_contact || "-",
           "Comments": project.comments || "-",
           "Last Modified": project.modified_datetime
-          ? moment(project.modified_datetime).format('YYYY-MM-DD')
+          ? timezone && isValidTimezone(timezone)
+          ? moment(project.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
+          : moment(project.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
           : '-',
           "Project ID": project.r_number || "-",
         };
@@ -2057,4 +2061,8 @@ export class ProjectService {
       }
     }
   }
+}
+
+function isValidTimezone(tz: string) {
+  return moment.tz.names().includes(tz);
 }

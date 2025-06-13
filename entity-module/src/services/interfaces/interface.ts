@@ -289,7 +289,8 @@ export interface IProjectService {
     sortBy: string,
     sortOrder: string,
     globalFilters: Record<string, string[]>,
-    userId: string
+    userId: string,
+    timezone:any
   ): Promise<{
     statusCode: number;
     message: string;
