@@ -1464,13 +1464,17 @@ class SchemaService {
       const applyChildSort = isAlwaysChildSort || !bothParentAndChild || bothParentAndChild;
       const applyParentSort = !isAlwaysChildSort && bothParentAndChild;
 
+      // Check if whereClause contains fiscal_year or qre_final
+      const hasChildOnlyFilters = whereClause && 
+        (whereClause.fiscal_year !== undefined || whereClause.qre_final !== undefined);
+
       if (accountMeta.length > 0) {
         const accountRids = accountMeta.map((acc) => `'${acc}'`).join(", ");
 
         const { 
           whereSQL: filterWhereSQLParent, 
           replacements: whereReplacementsParent 
-        } = bothParentAndChild === true
+        } = (!hasChildOnlyFilters && bothParentAndChild === true)
           ? this.buildRawWhereClause(whereClause, search, true) 
           : { whereSQL: "", replacements: [] };
         
@@ -1489,22 +1493,24 @@ class SchemaService {
         
         let fullWhereClause = filterWhereSQLParent;
         if (whereConditions.length > 0) {
-        fullWhereClause += fullWhereClause
-        ? ` AND ${whereConditions.join(" AND ")}`
-        : `${whereConditions.join(" AND ")}`;
+          fullWhereClause += fullWhereClause
+            ? ` AND ${whereConditions.join(" AND ")}`
+            : `${whereConditions.join(" AND ")}`;
         }
 
         const childAggSQL = `
       COALESCE((
         SELECT json_agg(pfs_sub ${applyChildSort ? `ORDER BY pfs_sub.${sort.sortCol} ${sort.sortOrder}` : ""})
         FROM (
-          SELECT pfs.*, acc.account_name, ps.qre,
-          COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name
+          SELECT pfs.project_code, pfs.project_group, pfs.project_name, pfs.project_type, pfs.fiscal_year, pfs.project_client_group, acc.account_name, ps.qre,
+          COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name, pfs.total_effort_prj as total_effort, pfs.total_cost_prj as total_cost,
+          pfs.total_cost_fte_prj as total_cost_fte, pfs.total_cost_subcon_prj as total_cost_subcon, pfs.total_cost_nonlabor_prj as total_cost_nonlabor, pfs.assessment_status,
+          pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, pfs.project_rid
           FROM project_fiscal_summary pfs
           INNER JOIN account acc ON acc.rid = pfs.account_rid 
           LEFT JOIN project_classification pc on pc.rid = pfs.project_classification_rid
           WHERE pfs.project_code = ps.project_code
-            AND pfs.project_rid = ps.project_id
+            AND pfs.project_rid = ps.project_rid
             ${fiscalYearClause}
             ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
         ) AS pfs_sub
@@ -1513,12 +1519,12 @@ class SchemaService {
 
         const fullQuery = `
         SELECT ps.project_code, ps.project_name, acc.account_name, acc.rid as account_id,
-        ps.project_id, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
+        ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other, 
-        ps.project_number, ps.project_type, ps.project_client_group , ps.project_group,
+        ps.project_type, ps.project_client_group , ps.project_group,
         ps.project_classification_rid, 
         COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_point_of_contact , ps.r_number,
+        ps.project_status , ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
         ps.program_name, ps.project_startdate , ps.project_enddate ,
         ps.total_cost , ps.total_effort , ps.total_fte , ps.total_cost_fte ,
         ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
@@ -1537,11 +1543,11 @@ class SchemaService {
           fullWhereClause ? "AND " + fullWhereClause : ""
         }
         GROUP BY 
-        ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_id, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
+        ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         ps.industry_name, ind.industry_name, ps.project_type, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, ps.project_classification_other, pc.classification_name,
-        ps.project_status, ps.project_point_of_contact, ps.financial_consultant, ps.technical_point_of_contact,
-        ps.r_number, ps.project_number, ps.program_name, ps.project_startdate, ps.project_enddate,
+        ps.project_status, ps.project_point_of_contact, ps.technical_point_of_contact,
+        ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
         ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
         usd_curr.currency_code, curr.currency_symbol, acc_curr.currency_symbol, usd_curr.currency_symbol,
@@ -1579,11 +1585,10 @@ class SchemaService {
         const { 
           whereSQL: filterWhereSQLParent, 
           replacements: whereReplacementsParent 
-        } = bothParentAndChild === true 
+        } = (!hasChildOnlyFilters && bothParentAndChild === true)
           ? this.buildRawWhereClause(whereClause, search, true) 
           : { whereSQL: "", replacements: [] };
         
-
         const { 
           whereSQL: filterWhereSQLChild, 
           replacements: whereReplacementsChild 
@@ -1599,22 +1604,24 @@ class SchemaService {
 
         let fullWhereClause = filterWhereSQLParent;
         if (whereConditions.length > 0) {
-        fullWhereClause += fullWhereClause
-        ? ` AND ${whereConditions.join(" AND ")}`
-        : `${whereConditions.join(" AND ")}`;
+          fullWhereClause += fullWhereClause
+            ? ` AND ${whereConditions.join(" AND ")}`
+            : `${whereConditions.join(" AND ")}`;
         }
 
         const childAggSQL = `
       COALESCE((
         SELECT json_agg(pfs_sub ${applyChildSort ? `ORDER BY pfs_sub.${sort.sortCol} ${sort.sortOrder}` : ""})
         FROM (
-          SELECT pfs.*, acc.account_name, ps.qre,
-          COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name
+          SELECT pfs.project_code, pfs.project_group, pfs.project_name, pfs.project_type, pfs.fiscal_year, pfs.project_client_group, acc.account_name, ps.qre,
+          COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name, pfs.total_effort_prj as total_effort, pfs.total_cost_prj as total_cost,
+          pfs.total_cost_fte_prj as total_cost_fte, pfs.total_cost_subcon_prj as total_cost_subcon, pfs.total_cost_nonlabor_prj as total_cost_nonlabor, pfs.assessment_status,
+          pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, pfs.project_rid
           FROM project_fiscal_summary pfs
           INNER JOIN account acc ON acc.rid = pfs.account_rid 
           LEFT JOIN project_classification pc on pc.rid = pfs.project_classification_rid
           WHERE pfs.project_code = ps.project_code
-            AND pfs.project_rid = ps.project_id
+            AND pfs.project_rid = ps.project_rid
             ${fiscalYearClause}
             ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
         ) AS pfs_sub
@@ -1623,12 +1630,12 @@ class SchemaService {
 
         const fullQuery = `
         SELECT ps.project_code, ps.project_name, acc.account_name, acc.rid as account_id,
-        ps.project_id, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
+        ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other,
         ps.project_type, ps.project_client_group , ps.project_group,
         ps.project_classification_rid, 
         COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_point_of_contact , ps.r_number, ps.project_number,
+        ps.project_status , ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
         ps.program_name, ps.project_startdate , ps.project_enddate ,
         ps.total_cost , ps.total_effort , ps.total_fte , ps.total_cost_fte ,
         ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
@@ -1645,11 +1652,11 @@ class SchemaService {
         LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid
         ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
         GROUP BY 
-        ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_id, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
+        ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         ps.industry_name, ind.industry_name, ps.project_type, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, ps.project_classification_other, pc.classification_name,
-        ps.project_status, ps.project_point_of_contact, ps.financial_consultant, ps.technical_point_of_contact,
-        ps.r_number, ps.project_number, ps.program_name, ps.project_startdate, ps.project_enddate,
+        ps.project_status, ps.project_point_of_contact, ps.technical_point_of_contact,
+        ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
         ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
         usd_curr.currency_code, curr.currency_symbol, acc_curr.currency_symbol, usd_curr.currency_symbol,
@@ -1727,13 +1734,17 @@ class SchemaService {
       const applyChildSort = isAlwaysChildSort || !bothParentAndChild || bothParentAndChild;
       const applyParentSort = !isAlwaysChildSort && bothParentAndChild;
 
+      // Check if whereClause contains fiscal_year or qre_final
+      const hasChildOnlyFilters = whereClause && 
+        (whereClause.fiscal_year !== undefined || whereClause.qre_final !== undefined);
+
       if (accountMeta.length > 0) {
         const accountRids = accountMeta.map((acc) => `'${acc}'`).join(", ");
 
         const { 
           whereSQL: filterWhereSQLParent, 
           replacements: whereReplacementsParent 
-        } = bothParentAndChild === true
+        } = (!hasChildOnlyFilters && bothParentAndChild === true)
           ? this.buildRawWhereClause(whereClause, search, true) 
           : { whereSQL: "", replacements: [] };
         
@@ -1761,13 +1772,15 @@ class SchemaService {
       COALESCE((
         SELECT json_agg(pfs_sub ${applyChildSort ? `ORDER BY pfs_sub.${sort.sortCol} ${sort.sortOrder}` : ""})
         FROM (
-          SELECT pfs.*, acc.account_name, ps.qre,
-          COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name
+          SELECT pfs.project_code, pfs.project_group, pfs.project_name, pfs.project_type, pfs.fiscal_year, pfs.project_client_group, acc.account_name, ps.qre,
+          COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name, pfs.total_effort_prj as total_effort, pfs.total_cost_prj as total_cost,
+          pfs.total_cost_fte_prj as total_cost_fte, pfs.total_cost_subcon_prj as total_cost_subcon, pfs.total_cost_nonlabor_prj as total_cost_nonlabor, pfs.assessment_status,
+          pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, pfs.project_rid
           FROM project_fiscal_summary pfs
           INNER JOIN account acc ON acc.rid = pfs.account_rid 
           LEFT JOIN project_classification pc on pc.rid = pfs.project_classification_rid
           WHERE pfs.project_code = ps.project_code
-            AND pfs.project_rid = ps.project_id
+            AND pfs.project_rid = ps.project_rid
             ${fiscalYearClause}
             ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
         ) AS pfs_sub
@@ -1776,12 +1789,12 @@ class SchemaService {
 
         const fullQuery = `
         SELECT ps.project_code, ps.project_name, acc.account_name, acc.rid as account_id,
-        ps.project_id, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
+        ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other, 
-        ps.project_number, ps.project_type, ps.project_client_group , ps.project_group,
+        ps.project_type, ps.project_client_group , ps.project_group,
         ps.project_classification_rid, 
         COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_point_of_contact , ps.r_number,
+        ps.project_status , ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
         ps.program_name, ps.project_startdate , ps.project_enddate,
         ps.total_cost , ps.total_effort , ps.total_fte , ps.total_cost_fte ,
         ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
@@ -1800,11 +1813,11 @@ class SchemaService {
           fullWhereClause ? "AND " + fullWhereClause : ""
         }
         GROUP BY 
-        ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_id, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
+        ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         ps.industry_name, ind.industry_name, ps.project_type, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, ps.project_classification_other, pc.classification_name,
-        ps.project_status, ps.project_point_of_contact, ps.financial_consultant, ps.technical_point_of_contact,
-        ps.r_number, ps.project_number, ps.program_name, ps.project_startdate, ps.project_enddate,
+        ps.project_status, ps.project_point_of_contact, ps.technical_point_of_contact,
+        ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
         ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
         usd_curr.currency_code, curr.currency_symbol, acc_curr.currency_symbol, usd_curr.currency_symbol,
@@ -1839,7 +1852,7 @@ class SchemaService {
         const { 
           whereSQL: filterWhereSQLParent, 
           replacements: whereReplacementsParent 
-        } = bothParentAndChild === true 
+        } = (!hasChildOnlyFilters && bothParentAndChild === true) 
           ? this.buildRawWhereClause(whereClause, search, true) 
           : { whereSQL: "", replacements: [] };
         
@@ -1867,13 +1880,15 @@ class SchemaService {
       COALESCE((
         SELECT json_agg(pfs_sub ${applyChildSort ? `ORDER BY pfs_sub.${sort.sortCol} ${sort.sortOrder}` : ""})
         FROM (
-          SELECT pfs.*, acc.account_name, ps.qre,
-          COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name
+          SELECT pfs.project_code, pfs.project_group, pfs.project_name, pfs.project_type, pfs.fiscal_year, pfs.project_client_group, acc.account_name, ps.qre,
+          COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name, pfs.total_effort_prj as total_effort, pfs.total_cost_prj as total_cost,
+          pfs.total_cost_fte_prj as total_cost_fte, pfs.total_cost_subcon_prj as total_cost_subcon, pfs.total_cost_nonlabor_prj as total_cost_nonlabor, pfs.assessment_status,
+          pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, pfs.project_rid
           FROM project_fiscal_summary pfs
           INNER JOIN account acc ON acc.rid = pfs.account_rid 
           LEFT JOIN project_classification pc on pc.rid = pfs.project_classification_rid
           WHERE pfs.project_code = ps.project_code
-            AND pfs.project_rid = ps.project_id
+            AND pfs.project_rid = ps.project_rid
             ${fiscalYearClause}
             ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
         ) AS pfs_sub
@@ -1882,12 +1897,12 @@ class SchemaService {
 
         const fullQuery = `
         SELECT ps.project_code, ps.project_name, acc.account_name, acc.rid as account_id,
-        ps.project_id, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
+        ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         COALESCE(ps.industry_name, ind.industry_name) AS industry_name_other,
         ps.project_type, ps.project_client_group , ps.project_group,
         ps.project_classification_rid, 
         COALESCE(ps.project_classification_other, pc.classification_name) AS classification_name,
-        ps.project_status , ps.project_point_of_contact , ps.financial_consultant , ps.technical_point_of_contact , ps.r_number, ps.project_number,
+        ps.project_status , ps.project_point_of_contact , ps.technical_point_of_contact , ps.r_number,
         ps.program_name, ps.project_startdate , ps.project_enddate ,
         ps.total_cost , ps.total_effort , ps.total_fte , ps.total_cost_fte ,
         ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
@@ -1904,11 +1919,11 @@ class SchemaService {
         LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid  
         ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
         GROUP BY 
-        ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_id, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
+        ps.project_code, ps.project_name, acc.account_name, acc.rid, ps.project_rid, ps.modified_datetime, ps.assessment_status, ps.qre, ps.is_rd_qualified,
         ps.industry_name, ind.industry_name, ps.project_type, ps.project_client_group, ps.project_group,
         ps.project_classification_rid, ps.project_classification_other, pc.classification_name,
-        ps.project_status, ps.project_point_of_contact, ps.financial_consultant, ps.technical_point_of_contact,
-        ps.r_number, ps.project_number, ps.program_name, ps.project_startdate, ps.project_enddate,
+        ps.project_status, ps.project_point_of_contact, ps.technical_point_of_contact,
+        ps.r_number, ps.program_name, ps.project_startdate, ps.project_enddate,
         ps.total_cost, ps.total_effort, ps.total_fte, ps.total_cost_fte, ps.total_subcon, ps.total_cost_subcon,
         ps.total_cost_nonlabor, ps."comments", cou.country_name, curr.currency_code, acc_curr.currency_code,
         usd_curr.currency_code, curr.currency_symbol, acc_curr.currency_symbol, usd_curr.currency_symbol,
@@ -2177,29 +2192,29 @@ class SchemaService {
       project_name: `${tablePrefix}.project_name`,
       project_startdate: `${tablePrefix}.project_startdate`,
       project_enddate: `${tablePrefix}.project_enddate`,
-      total_effort: `${tablePrefix}.total_effort`,
-      total_cost: `${tablePrefix}.total_cost`,
-      total_fte: `${tablePrefix}.total_fte`,
-      total_cost_fte: `${tablePrefix}.total_cost_fte`,
-      total_cost_subcon: `${tablePrefix}.total_cost_subcon`,
-      total_subcon: `${tablePrefix}.total_subcon`,
-      total_cost_nonlabor: `${tablePrefix}.total_cost_nonlabor`,
+      // total_effort: `total_effort`,
+      // total_cost: `${tablePrefix}.total_cost`,
+      // total_fte: `${tablePrefix}.total_fte`,
+      // total_cost_fte: `${tablePrefix}.total_cost_fte`,
+      // total_cost_subcon: `${tablePrefix}.total_cost_subcon`,
+      // total_subcon: `${tablePrefix}.total_subcon`,
+      // total_cost_nonlabor: `${tablePrefix}.total_cost_nonlabor`,
       project_code: `${tablePrefix}.project_code`,
       assessment_status: `${tablePrefix}.assessment_status`,
       project_point_of_contact: `${tablePrefix}.project_point_of_contact`,
       technical_point_of_contact: `${tablePrefix}.technical_point_of_contact`,
-      financial_consultant: `${tablePrefix}.financial_consultant`,
+      // financial_consultant: `${tablePrefix}.financial_consultant`,
     };
 
     const numberFields = [
-      `${tablePrefix}.total_effort`,
-      `${tablePrefix}.total_cost`,
+      `total_effort`,
+      `total_cost`,
       "fiscal_year",
       "total_fte",
-      `${tablePrefix}.total_cost_fte`,
+      `total_cost_fte`,
       "total_subcon",
-      `${tablePrefix}.total_cost_subcon`,
-      `${tablePrefix}.total_cost_nonlabor`,
+      `total_cost_subcon`,
+      `total_cost_nonlabor`,
       "qre",
       "qre_final"
     ];

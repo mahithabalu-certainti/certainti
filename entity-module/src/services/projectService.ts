@@ -1420,10 +1420,8 @@ export class ProjectService {
         modified_datetime: new Date(),
         created_by: projectData.created_by,
         modified_by: projectData.modified_by || null,
-        project_number: project.r_number || "",
-        project_id: project.rid || "",
+        project_rid: project.rid || "",
         technical_point_of_contact: technicalConsultant,
-        financial_consultant: financialConsultant,
         project_point_of_contact: projectPointOfContact,
       });
     } catch (err) {
@@ -1500,7 +1498,7 @@ export class ProjectService {
         },
         {
           where: {
-            project_id: projectData.project_id,
+            project_rid: projectData.project_rid,
           },
         }
       );
@@ -1593,8 +1591,6 @@ export class ProjectService {
       "country",
       "region",
       "currency",
-      "qualified_research_expenditure",
-      "is_rd_qualified",
       "qre",
       "fiscal_year",
       "comments",
