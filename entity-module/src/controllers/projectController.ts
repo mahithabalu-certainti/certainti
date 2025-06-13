@@ -413,7 +413,8 @@ async function exportAllProjectList(req: Request, res: Response): Promise<void> 
       value.sortOrder,
       parsedGlobalFilters,
       userId,
-      value.bothParentAndChild
+      value.bothParentAndChild,
+      value.timezone
     );
 
     if (project.statusCode === HttpStatus.SUCCESS) {

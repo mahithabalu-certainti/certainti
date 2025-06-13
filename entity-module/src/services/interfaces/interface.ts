@@ -292,6 +292,7 @@ export interface IProjectService {
     globalFilters: Record<string, string[]>,
     userId: string,
     bothParentAndChild: boolean,
+    timezone:any
   ): Promise<{
     statusCode: number;
     message: string;

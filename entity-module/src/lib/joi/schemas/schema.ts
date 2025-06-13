@@ -608,6 +608,7 @@ const exportListResourceSchema = Joi.object({
     .optional()
     .allow(""),
   bothParentAndChild: Joi.boolean().default(false),
+  timezone: Joi.string().optional(),
   });
 
 const exportResourceSchema = Joi.object({
