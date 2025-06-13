@@ -5,7 +5,7 @@ import ActionsDropdown from '../../../components/actions-dropdown/actions-dropdo
 import TextButton from '../../../components/button/text-button';
 import { useManageUserDetail } from '../../service/manage-user-detail/manage-user-detail-service';
 import { BUTTON_STYLES, HEADER_STYLES } from './styles';
-import { ADMIN_CREATE_USER } from '../../../routes';
+import { ADMIN_CREATE_USER, ADMIN_MANAGE_USER } from '../../../routes';
 import { UserDetailComponent } from '../../../components';
 import { Skeleton } from '@mui/material';
 import { useSelector } from 'react-redux';
@@ -62,7 +62,8 @@ export const ManageUserDetails: React.FC = () => {
   const MENU_ITEMS = [
     {
       label: 'Assign Permission to User',
-      onClick: () => console.log('user clicked'),
+      onClick: () =>
+        navigate(ADMIN_MANAGE_USER + '/extended-permission/' + userDetail?.rid),
       hide: !isUserAssignPermissionEnable,
     },
     {
@@ -114,14 +115,14 @@ export const ManageUserDetails: React.FC = () => {
 
   return (
     <div className='flex flex-col h-[calc(100vh-64px)] w-full overflow-y-auto p-4 gap-3'>
-      <div className='w-full min-h-[75px] h-[75px] px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
-        <div className='flex items-center gap-2'>
+      <div className='w-full h-[55px] min-h-[50px] px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
+        <div className='flex items-center justify-center'>
           <img
             src={ManageUserIcon}
             alt='manage user'
-            className='w-8 h-8 rounded'
+            className='h-7 w-7 rounded'
           />
-          <div className='flex flex-col mb-1'>
+          <div className='flex flex-col mx-2.5 pb-1'>
             <div className={HEADER_STYLES.adminPermission}>
               Admin Permission
             </div>
@@ -136,7 +137,7 @@ export const ManageUserDetails: React.FC = () => {
               sx={{
                 ...BUTTON_STYLES,
                 fontSize: '13px',
-                fontWeight: 700,
+                fontWeight: 600,
                 width: '91px',
                 minWidth: '91px',
               }}
@@ -150,7 +151,7 @@ export const ManageUserDetails: React.FC = () => {
             sx={{
               width: '49px',
               minWidth: '49px',
-              fontWeight: 700,
+              fontWeight: 600,
               fontSize: '13px',
             }}
           />
@@ -169,7 +170,7 @@ export const ManageUserDetails: React.FC = () => {
               )}
             </div>
           </div>
-          <div className='w-[50%] flex justify-end gap-2'>
+          <div className='w-[50%] hidden justify-end gap-2'>
             {userActionButtons.map((button) => {
               if (button.hide) return null;
               return (
@@ -180,7 +181,7 @@ export const ManageUserDetails: React.FC = () => {
                   sx={{
                     ...BUTTON_STYLES,
                     fontSize: '13px',
-                    fontWeight: 700,
+                    fontWeight: 600,
                     width: button.width,
                     minWidth: button.width,
                     maxWidth: button.width,

@@ -53,8 +53,8 @@ const Projects: React.FC<ProjectsProps> = ({
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [appliedFilters, setAppliedFilters] = useState<Record<string, any>>({});
   const [currentPage, setCurrentPage] = useState(0);
-  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
-  const [sortField, setSortField] = useState<string>('created_datetime');
+  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
+  const [sortField, setSortField] = useState<string>('project_code');
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
@@ -63,6 +63,7 @@ const Projects: React.FC<ProjectsProps> = ({
   const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState<number>(
     Date.now()
   );
+  const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const accountInActive =
     accountDetails?.data?.accountById?.status === 'inactive';
 
@@ -152,6 +153,7 @@ const Projects: React.FC<ProjectsProps> = ({
       state: {
         accountID: account?.account_rid,
         projectID: account?.rid,
+        breadcrumbs: [{ label: 'Account' }, { label: account?.account_name }],
       },
     });
   };
@@ -189,22 +191,31 @@ const Projects: React.FC<ProjectsProps> = ({
       variant: 'outlined' as const,
       disabled: accountInActive,
       onClick: () => handleCreateProject(),
-      sx: { ...BUTTON_STYLES, width: '61px', minWidth: '61px' },
+      sx: { ...BUTTON_STYLES, width: '48px', minWidth: '48px' },
       hide: !projectCreateIsEnable,
     },
     {
       label: 'Download',
       variant: 'outlined' as const,
       onClick: () => console.log('Download'),
-      sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
+      sx: {
+        ...BUTTON_STYLES,
+        width: '96px',
+        minWidth: '96px',
+        display: 'none',
+      },
       hide: !projectDownloadIsEnable,
     },
   ];
 
   const handleCreateProject = () => {
     const accountID = accountDetails?.data?.accountById?.rid;
+    const accountName = accountDetails?.data?.accountById?.account_name;
     navigate(`${PROJECT_CREATE}`, {
-      state: { accountID },
+      state: {
+        accountID,
+        breadcrumbs: [{ label: 'Account' }, { label: accountName }],
+      },
     });
   };
 
@@ -217,12 +228,28 @@ const Projects: React.FC<ProjectsProps> = ({
     });
   };
 
+  const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const defaultSortField = 'project_code';
+    const defaultSortOrder = 'ASC';
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+
+    if (!sortBy) {
+      setSortFilterCount(0);
+      setSortOrder(defaultSortOrder);
+      setSortField(defaultSortField);
+    } else {
+      setSortFilterCount(1);
+      setSortOrder(apiOrder);
+      setSortField(sortBy);
+    }
+  };
+
   const projectColumns = getProjectColumns(handleProject);
 
   if (!projectIsEnable) return <AccessRestricted />;
 
   return (
-    <div className='w-full py-3 pl-3 pr-4'>
+    <div className='w-full py-2 pl-2 pr-4'>
       <TabPanel
         value='projects'
         appliedFilters={appliedFilters}
@@ -234,6 +261,9 @@ const Projects: React.FC<ProjectsProps> = ({
         resourceTab={projectsTabs}
         showRefresh={true}
         onRefreshClick={onRefreshClick}
+        handleSorting={handleSorting}
+        sortFilterCount={sortFilterCount}
+        setSortFilterCount={setSortFilterCount}
       />
       {projectOverviewIsEnable && projectViewAllIsEnable ? (
         <>

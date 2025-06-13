@@ -131,8 +131,8 @@ export const PageHeader: React.FC<HeaderProps> = ({
               sx={{
                 ...DEFAULT_BUTTON_STYLES,
                 ...customStyles.button,
-                width: '43px',
-                minWidth: '43px',
+                width: '48px',
+                minWidth: '48px',
                 fontSize: '13px',
                 fontWeight: 400,
               }}

@@ -8,7 +8,11 @@ import { useAuthHook, useToast } from '../../../hooks';
 import { useAppTranslation } from '../../../hooks/use-app-translation';
 import { useAppDispatch } from '../../../store/store';
 import { IAuthDetails } from '../../../store/type';
-import { setUserId, updatePermissions } from '../../../store/slices';
+import {
+  setUserId,
+  UpdateOrgLogo,
+  updatePermissions,
+} from '../../../store/slices';
 import { checkPermission, reShapePermissionData } from '../../../common-utils';
 import { AllModules } from '../../../common-service';
 import { NOT_FOUND } from '../../../routes';
@@ -28,7 +32,7 @@ export const Login: React.FC = () => {
   const { errorToast } = useToast();
   const t = useAppTranslation();
   const fragment = useRef<string>(window.location.hash.slice(1));
-  
+
   useEffect(() => {
     if (fragment.current) {
       // add loader when return back from azure
@@ -63,6 +67,12 @@ export const Login: React.FC = () => {
         login(authDetail as IAuthDetails);
         dispatch(setUserId(localAccountId));
         dispatch(updatePermissions({ ...reShapeData, isAdminEnable }));
+        dispatch(
+          UpdateOrgLogo({
+            orgName: userRole.data.organisation_name,
+            logoUrl: userRole.data.logo_url,
+          })
+        );
         const currentActiveRoute = accountNavItems.find(
           (menu) =>
             reShapeData.menus.find((item) => item.name === menu.id)?.is_enabled

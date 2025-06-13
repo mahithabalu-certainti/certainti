@@ -936,6 +936,8 @@ export const formatFilterForApi = (
       } else {
         formattedFilters[fieldKey] = state.select.value;
       }
+    } else if (state.system) {
+      formattedFilters[fieldName] = state.system.values;
     }
   });
 

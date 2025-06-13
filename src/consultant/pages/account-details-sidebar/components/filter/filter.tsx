@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Menu,
@@ -45,7 +46,6 @@ import {
   SELECT_STYLES,
 } from '../../../../../components/filter-component/helpers';
 import { useLocation } from 'react-router-dom';
-// const systemFilters = ['Touched Records', 'Untouched Records', 'Record Action'];
 
 const Filter: React.FC<FilterComponentProps> = ({
   value,
@@ -58,6 +58,7 @@ const Filter: React.FC<FilterComponentProps> = ({
   setCurrentPage,
   setCurrentSkillType,
   setCurrentCountry,
+  handleSorting,
   mode,
 }) => {
   const location = useLocation();
@@ -66,9 +67,12 @@ const Filter: React.FC<FilterComponentProps> = ({
     {}
   );
 
-  //new
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const [selectedSystemFilters, setSelectedSystemFilters] = useState<string[]>(
+    []
+  );
+  const [currentSort, setCurrentSort] = useState<string | null>(null);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -77,6 +81,13 @@ const Filter: React.FC<FilterComponentProps> = ({
   const handleClose = () => {
     setAnchorEl(null);
   };
+
+  const systemFilters = filterMenu.filter(
+    (field) => field.type === 'system' || field.type === 'system-sort'
+  );
+  const regularFilters = filterMenu.filter(
+    (field) => field.type !== 'system' && field.type !== 'system-sort'
+  );
 
   useEffect(() => {
     handleResetFilter();
@@ -133,8 +144,13 @@ const Filter: React.FC<FilterComponentProps> = ({
     const saved = getStoredFilters(value || 'resource');
     if (saved) {
       const selected = Object.keys(saved);
+      const savedFilters = saved as Record<string, FilterState>;
       setSelectedFilters(selected);
       setFilterStates(saved as Record<string, FilterState>);
+      const systemFilter = savedFilters['system_filter'];
+      if (systemFilter && systemFilter.system?.values) {
+        setSelectedSystemFilters(systemFilter.system.values);
+      }
     } else {
       setSelectedFilters([]);
       setFilterStates({});
@@ -146,8 +162,13 @@ const Filter: React.FC<FilterComponentProps> = ({
     const saved = getStoredFilters(value || 'resource');
     if (saved) {
       const selected = Object.keys(saved);
+      const savedFilters = saved as Record<string, FilterState>;
       setSelectedFilters(selected);
       setFilterStates(saved as Record<string, FilterState>);
+      const systemFilter = savedFilters['system_filter'];
+      if (systemFilter && systemFilter.system?.values) {
+        setSelectedSystemFilters(systemFilter.system.values);
+      }
       setAppliedFilters(
         formatFilterForApi(saved as Record<string, FilterState>)
       );
@@ -160,6 +181,9 @@ const Filter: React.FC<FilterComponentProps> = ({
     const unListen = () => {
       if (window.location.pathname !== currentPathname) {
         localStorage.removeItem(`allProjects`);
+        setSelectedSystemFilters([]);
+        setCurrentSort(null);
+        handleSorting?.('', 'desc');
       }
     };
 
@@ -188,6 +212,9 @@ const Filter: React.FC<FilterComponentProps> = ({
   const handleResetFilter = () => {
     if (!Object.keys(filterStates).length) return null;
     clearFilters(value || 'resource');
+    setSelectedSystemFilters([]);
+    setCurrentSort(null);
+    handleSorting?.('', 'desc');
     resetFilter({
       setAppliedFilters,
       setFilterStates,
@@ -377,6 +404,44 @@ const Filter: React.FC<FilterComponentProps> = ({
         },
       };
     });
+  };
+
+  const handleSystemFilter = (fieldName: string, filterValue: string) => {
+    setSelectedSystemFilters((prevSelected) => {
+      const updatedSelected = prevSelected.includes(filterValue)
+        ? prevSelected.filter((val) => val !== filterValue) // remove
+        : [...prevSelected, filterValue]; // add
+
+      const updatedFilterStates = { ...filterStates };
+
+      if (updatedSelected.length === 0) {
+        delete updatedFilterStates[fieldName];
+      } else {
+        updatedFilterStates[fieldName] = {
+          system: { values: updatedSelected },
+        };
+      }
+
+      setFilterStates(updatedFilterStates);
+      const formattedFilters = formatFilterForApi(updatedFilterStates);
+      setAppliedFilters(formattedFilters);
+      storeFilters(updatedFilterStates, value || 'resource');
+
+      return updatedSelected;
+    });
+  };
+
+  const handleSortingSelection = (sortValue: string) => {
+    if (currentSort === sortValue) {
+      setCurrentSort(null);
+      handleSorting?.('', 'desc');
+    } else {
+      setCurrentSort(sortValue);
+      const parts = sortValue.split('_');
+      const direction = parts.pop() as 'asc' | 'desc';
+      const field = parts.join('_');
+      handleSorting?.(field, direction);
+    }
   };
 
   const handleDateChange = (type: string, fieldName: string, value: string) => {
@@ -581,22 +646,75 @@ const Filter: React.FC<FilterComponentProps> = ({
           </div>
         </div>
 
-        {/* <div>
-          <h3 className='text-[13px] font-bold text-[#425A76] mb-2'>
-            System Define filters
-          </h3>
-          <div className='flex gap-2 flex-wrap'>
-            {systemFilters.map((label) => (
-              <span
-                key={label}
-                className='border border-[#CBD6E2] cursor-pointer rounded-full px-1 h-[24px] text-[12px] font-normal flex items-center gap-0.5 text-[#425A76]'
-              >
-                <img src={checkedIcon} alt='checked-icon' />
-                {label}
-              </span>
-            ))}
+        {systemFilters.length > 0 && (
+          <div>
+            <h3 className='text-[13px] font-bold text-[#425A76] mb-2'>
+              System Define filters
+            </h3>
+            <div className='flex gap-2 flex-wrap'>
+              {/* Render system filters */}
+              {systemFilters
+                .filter((filter) => filter.type === 'system')
+                .flatMap((systemFilter) =>
+                  systemFilter.options?.map((field: any) => (
+                    <button
+                      key={field.value}
+                      className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${
+                        selectedSystemFilters.includes(field.value)
+                          ? 'bg-[#E6F9EA] border-[#34C759] text-[#0F5132]'
+                          : 'border-[#CBD6E2] text-[#425A76] hover:bg-gray-50'
+                      }`}
+                      onClick={() =>
+                        handleSystemFilter('system_filter', field.value)
+                      }
+                    >
+                      <img
+                        src={checkedIcon}
+                        alt='checked-icon'
+                        className='w-3 h-3 mt-[0.3px]'
+                        style={{
+                          filter: selectedSystemFilters.includes(field.value)
+                            ? 'invert(56%) sepia(96%) saturate(676%) hue-rotate(80deg) brightness(95%) contrast(101%)'
+                            : 'none',
+                        }}
+                      />
+                      {field.option}
+                    </button>
+                  ))
+                )}
+
+              {/* Render sort options */}
+              {systemFilters
+                .filter((filter) => filter.type === 'system-sort')
+                .flatMap((sortFilter) =>
+                  sortFilter.options?.map((field: any) => (
+                    <button
+                      key={field.value}
+                      className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${
+                        currentSort === field.value
+                          ? 'bg-[#E6F9EA] border-[#34C759] text-[#0F5132]'
+                          : 'border-[#CBD6E2] text-[#425A76] hover:bg-gray-50'
+                      }`}
+                      onClick={() => handleSortingSelection(field.value)}
+                    >
+                      <img
+                        src={checkedIcon}
+                        alt='checked-icon'
+                        className='w-3 h-3 mt-[0.3px]'
+                        style={{
+                          filter:
+                            currentSort === field.value
+                              ? 'invert(56%) sepia(96%) saturate(676%) hue-rotate(80deg) brightness(95%) contrast(101%)'
+                              : 'none',
+                        }}
+                      />
+                      {field.option}
+                    </button>
+                  ))
+                )}
+            </div>
           </div>
-        </div> */}
+        )}
 
         {selectedFilters.length > 0 && (
           <div className='flex-1'>
@@ -605,7 +723,7 @@ const Filter: React.FC<FilterComponentProps> = ({
             </h3>
             <div className='flex flex-col gap-3 mb-1 pt-1 -mr-6 min-h-[40px] overflow-y-auto max-h-[150px]'>
               {selectedFilters.map((fieldValue) => {
-                const fieldConfig = filterMenu.find(
+                const fieldConfig = regularFilters.find(
                   (f) => f.value === fieldValue
                 );
                 return fieldConfig ? (
@@ -672,7 +790,7 @@ const Filter: React.FC<FilterComponentProps> = ({
                               );
                             }}
                           >
-                            {filterMenu.map((field) => (
+                            {regularFilters.map((field) => (
                               <MenuItem
                                 key={field.value}
                                 value={field.value}
@@ -776,8 +894,9 @@ const Filter: React.FC<FilterComponentProps> = ({
           },
         }}
       >
-        {filterMenu.filter((field) => !selectedFilters.includes(field.value))
-          .length === 0 ? (
+        {regularFilters.filter(
+          (field) => !selectedFilters.includes(field.value)
+        ).length === 0 ? (
           <MenuItem
             disabled
             sx={{
@@ -792,7 +911,7 @@ const Filter: React.FC<FilterComponentProps> = ({
             No fields available
           </MenuItem>
         ) : (
-          filterMenu
+          regularFilters
             .filter((field) => !selectedFilters.includes(field.value))
             .map((field) => (
               <MenuItem

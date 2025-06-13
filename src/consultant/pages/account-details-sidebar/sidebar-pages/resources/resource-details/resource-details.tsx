@@ -245,11 +245,11 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
   ];
 
   return (
-    <div className=''>
+    <div>
       <DetailsSection
         title='Basic Information'
         data={basicInfo}
-        customStyle='pt-2 mt-0'
+        customStyle='pt-0 mt-0'
       />
       <DetailsSection
         title='Location and Currency Information'

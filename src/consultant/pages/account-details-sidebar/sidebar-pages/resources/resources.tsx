@@ -103,14 +103,14 @@ const Resource: React.FC<ResourceProps> = ({
   const [showBackArrow, setShowBackArrow] = useState<boolean>(false);
   const [resourceData, setResourceData] = useState<any>({});
   const [currentPage, setCurrentPage] = useState(0);
-  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
-  const [sortField, setSortField] = useState<string>('created_datetime');
-  const [costOrder, setCostOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
+  const [sortField, setSortField] = useState<string>('resource_code');
+  const [costOrder, setCostOrder] = useState<'asc' | 'desc'>('asc');
   const [costorderBy, setCostOrderBy] =
-    useState<keyof ResourceCostList>('created_datetime');
-  const [skillOrder, setSkillOrder] = useState<'asc' | 'desc'>('desc');
+    useState<keyof ResourceCostList>('resource_code');
+  const [skillOrder, setSkillOrder] = useState<'asc' | 'desc'>('asc');
   const [skillOrderBy, setSkillOrderBy] =
-    useState<keyof ResourceSkillList>('created_datetime');
+    useState<keyof ResourceSkillList>('resource_code');
   const [rowsPerPage, setRowsPerPage] = useState(100);
   const { fiscalYear } = useSelector<RootState, { fiscalYear: string }>(
     (state: RootState) => state.account
@@ -126,6 +126,7 @@ const Resource: React.FC<ResourceProps> = ({
   const [refreshSkillTrigger, setRefreshSkillTrigger] = useState<number>(
     Date.now()
   );
+  const [sortFilterCount, setSortFilterCount] = useState<number>(0);
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -226,6 +227,7 @@ const Resource: React.FC<ResourceProps> = ({
     // setValue(newValue);
     setShowFilter(false);
     setAppliedFilters({});
+    setSortFilterCount(0);
     clearFilters(value || 'resource');
     // update the URL with the tab value
     searchParams.set('tab', newValue);
@@ -240,6 +242,7 @@ const Resource: React.FC<ResourceProps> = ({
     setShowFilter(false);
     // setFilterVisibility(false);
     setAppliedFilters({});
+    setSortFilterCount(0);
     clearFilters(value || 'resource');
     // assign default tab value
     const activeTab = tabMenus.find((tab) => !tab.hide)?.value;
@@ -342,7 +345,12 @@ const Resource: React.FC<ResourceProps> = ({
       label: 'Download',
       variant: 'outlined' as const,
       onClick: () => console.log('Download'),
-      sx: { ...BUTTON_STYLES, width: '96px', minWidth: '96px' },
+      sx: {
+        ...BUTTON_STYLES,
+        width: '96px',
+        minWidth: '96px',
+        display: 'none',
+      },
       hide: handleDownloadButtonEnable(),
     },
   ];
@@ -378,6 +386,7 @@ const Resource: React.FC<ResourceProps> = ({
     setValue('');
     setFilterVisibility(true);
     setAppliedFilters({});
+    setSortFilterCount(0);
     clearFilters('resource');
   };
 
@@ -482,8 +491,28 @@ const Resource: React.FC<ResourceProps> = ({
     }
   };
 
+  const handleSorting = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    const defaultSortField = 'resource_code';
+    const apiOrder = sortOrder === 'asc' ? 'ASC' : 'DESC';
+    const apiSortBy = sortBy || defaultSortField;
+    const isSortByEmpty = !sortBy;
+
+    setSortFilterCount(sortBy ? 1 : 0);
+
+    if (value === 'skill') {
+      setSkillOrder(isSortByEmpty ? 'asc' : sortOrder);
+      setSkillOrderBy(apiSortBy as keyof ResourceSkillList);
+    } else if (value === 'cost') {
+      setCostOrder(isSortByEmpty ? 'asc' : sortOrder);
+      setCostOrderBy(apiSortBy as keyof ResourceCostList);
+    } else {
+      setSortOrder(isSortByEmpty ? 'ASC' : apiOrder);
+      setSortField(apiSortBy);
+    }
+  };
+
   return (
-    <div className='w-full py-3 pl-3 pr-4'>
+    <div className='w-full py-2 pl-2 pr-4'>
       <TabPanel
         resourceTab={resourceTab}
         value={value}
@@ -503,6 +532,9 @@ const Resource: React.FC<ResourceProps> = ({
         setCurrentPage={setCurrentPage}
         showRefresh={true}
         onRefreshClick={onRefreshClick}
+        handleSorting={handleSorting}
+        sortFilterCount={sortFilterCount}
+        setSortFilterCount={setSortFilterCount}
       />
       {!isResoureceOverviewHide && isResourceViewAllEnable && (
         <>

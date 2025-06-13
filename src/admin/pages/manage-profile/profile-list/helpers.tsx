@@ -39,4 +39,10 @@ export const getManageProfileFilterfields = (): FieldConfig[] => [
     type: 'text',
     operatorOption: textfieldOptions,
   },
+  {
+    label: 'Sort Options',
+    name: 'sort_options',
+    type: 'system-sort',
+    options: [{ value: 'createdAt_desc', label: 'Recently Created' }],
+  },
 ];
