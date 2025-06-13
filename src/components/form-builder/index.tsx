@@ -156,8 +156,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         ) {
           const { key, matchedValue } = field.clearValue;
           if (constructFormData[key] === matchedValue) {
-            console.log('matchedValue yes');
-
             setConstructFormData((prev) => ({
               ...prev,
               [field.name]: field.defaultValue || '',
@@ -171,7 +169,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         }
       });
     });
-  }, [formData]);
+  }, [constructFormData, formData]);
 
   useEffect(() => {
     if (Object.keys(constructFormData).length === 0) return;

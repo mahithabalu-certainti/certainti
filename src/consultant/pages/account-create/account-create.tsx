@@ -76,7 +76,7 @@ export const AccountForm: React.FC = () => {
     if (account?.accountById?.logo_url) {
       setLogo({ name: logoName || '' } as File);
     }
-  }, [account]);
+  }, [account, logoName]);
   // Remaping all fields to match with form controls
   const accountData = useMemo(
     () => ({
@@ -84,26 +84,26 @@ export const AccountForm: React.FC = () => {
       ...account?.accountById,
       ...(account?.accountById &&
         account?.accountDetails && {
-        is_parent: account?.accountById.is_parent ? 'yes' : 'no',
-        autosend_interaction: account?.accountDetails.autosend_interaction
-          ? 'yes'
-          : 'no',
-        auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
-        ...transformKeyContactsFromAPI(
-          account?.accountDetails?.keyContacts || []
-        ),
-        record_id: account?.accountDetails?.rid,
-        account_id: account?.accountById?.r_number,
-        created_on: formatDateToYYYYMMDDWithTime(
-          account?.accountById?.created_datetime
-        ),
-        updated_on: formatDateToYYYYMMDDWithTime(
-          account?.accountById?.modified_datetime
-        ),
-        created_by: account?.accountDetails?.created_by,
-        updated_by: account?.accountDetails?.modified_by,
-        website: account?.accountDetails?.website || '',
-      }),
+          is_parent: account?.accountById.is_parent ? 'yes' : 'no',
+          autosend_interaction: account?.accountDetails.autosend_interaction
+            ? 'yes'
+            : 'no',
+          auto_access_rd: account?.accountDetails.auto_access_rd ? 'yes' : 'no',
+          ...transformKeyContactsFromAPI(
+            account?.accountDetails?.keyContacts || []
+          ),
+          record_id: account?.accountDetails?.rid,
+          account_id: account?.accountById?.r_number,
+          created_on: formatDateToYYYYMMDDWithTime(
+            account?.accountById?.created_datetime
+          ),
+          updated_on: formatDateToYYYYMMDDWithTime(
+            account?.accountById?.modified_datetime
+          ),
+          created_by: account?.accountDetails?.created_by,
+          updated_by: account?.accountDetails?.modified_by,
+          website: account?.accountDetails?.website || '',
+        }),
     }),
     [account]
   );
@@ -388,14 +388,14 @@ export const AccountForm: React.FC = () => {
                 ? { ...accountData }
                 : !isEditView && keyContacts.length > 0
                   ? {
-                    // Set default values in Create Account
-                    status: defaultActiveValue,
-                    autosend_interaction: YesNo.No,
-                    auto_access_rd: YesNo.Yes,
-                    is_primary_contact_0: YesNo.No,
-                    include_in_communication_0: YesNo.No,
-                    key_contact_status_0: defaultActiveValue,
-                  }
+                      // Set default values in Create Account
+                      status: defaultActiveValue,
+                      autosend_interaction: YesNo.No,
+                      auto_access_rd: YesNo.Yes,
+                      is_primary_contact_0: YesNo.No,
+                      include_in_communication_0: YesNo.No,
+                      key_contact_status_0: defaultActiveValue,
+                    }
                   : {}
             }
             outData={submitData}
