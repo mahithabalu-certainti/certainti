@@ -17,6 +17,8 @@ import { initMainDbSequelize } from "../config/mainDataSource";
 import { ProjectFiscalSummary } from "../models/projectFiscalSummary";
 import { AccountFiscal } from "../models/accountFiscal";
 import { ProjectHistory } from "../models/projectHistory";
+import currency from "currency.js";
+import { isValidTimezone } from "../utils/valideTimeChecker";
 
 class ProjectIngestionService {
   private orgDbSequelize: Sequelize | null = null;
@@ -1132,7 +1134,8 @@ class ProjectIngestionService {
     bothParentAndChild: boolean,
     rawFilters: Record<string, any> = {},
     finalMetaDataSortBy: string,
-    finalMetaDataSortOrder: string
+    finalMetaDataSortOrder: string,
+    timezone: string
   ) {
     const { Project, ProjectFiscal } = await this.getModels(accountNumber);
 
@@ -1314,8 +1317,84 @@ class ProjectIngestionService {
       projects = projectData;
     }
 
+    const formatNumberForExport = (value: any, currency_symbol: string): string => {
+      if (value == null || value === '') return '-';
+      const num = Number(value);
+      if (isNaN(num)) return '-';
+      return currency(num, {
+        symbol: currency_symbol? currency_symbol : '$',
+        precision: 2,
+        pattern: '! #',
+        separator: ',',
+        decimal: '.'
+      }).format();
+    };
+
+    const rawResult = projects || [];
+
+    let exportData = rawResult.flatMap((project: any) => {
+      const baseRow = {
+        "Project Code": project.project_code || "-",
+        "Name": project.project_name || "-",
+        "Project Type": project.project_type || "-",
+        "Fiscal Year": project.fiscal_year || "-",
+        "Project Classification": project.classification_name || "-",
+        "Customer Group": project.project_client_group || "-",
+        "Project Group": project?.project_group || "-",
+        "Project Effort (Hours)": project.total_effort || "-",
+        "Project Cost": formatNumberForExport(project.total_cost, project.currency_symbol) || "-",
+        "FTE Cost": formatNumberForExport(project.total_fte_cost, project.currency_symbol) || "-",
+        "SubCon Cost": formatNumberForExport(project.total_sub_con, project.currency_symbol) || "-",
+        "Non-Labor Cost": formatNumberForExport(project.total_non_labor_cost, project.currency_symbol) || "-",
+        "Assessment Status": project.assessment_status || "-",
+        "QRE %": project.qre || "-",
+        "QRE": formatNumberForExport(project.qualified_research_expenditure, project.currency_symbol) || "-",
+        "Project Point of Contact": project.project_point_of_contact || "-",
+        "Technical Point of Contact": project.technical_point_of_contact || "-",
+        "Comments": project.comments || "-",
+        "Last Modified": project.modified_datetime
+          ? timezone && isValidTimezone(timezone)
+            ? moment(project.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
+            : moment(project.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
+          : '-',
+        "Project ID": project.r_number || "-",
+      };
+
+      const fiscalSummaries = project.ProjectFiscal || [];
+
+      const fiscalRows = fiscalSummaries.map((fiscal: any) => ({
+        "Project Code": fiscal.project_code || "-",
+        "Name": fiscal.project_name || "-",
+        "Project Type": fiscal.project_type || "-",
+        "Fiscal Year": fiscal.fiscal_year || "-",
+        "Project Classification": fiscal.classification_name || "-",
+        "Customer Group": fiscal.project_client_group || "-",
+        "Project Group": fiscal?.project_group || "-",
+        "Project Effort (Hours)": fiscal.total_effort || "-",
+        "Project Cost": formatNumberForExport(fiscal.total_cost, project.currency_symbol) || "-",
+        "FTE Cost": formatNumberForExport(fiscal.total_cost_fte, project.currency_symbol) || "-",
+        "SubCon Cost": formatNumberForExport(fiscal.total_cost_subcon, project.currency_symbol) || "-",
+        "Non-Labor Cost": formatNumberForExport(fiscal.total_cost_nonlabor, project.currency_symbol) || "-",
+        "Assessment Status": fiscal.assessment_status || "-",
+        "QRE %": "-", // Only base project has QRE %
+        "QRE": formatNumberForExport(fiscal.qre_final, project.currency_symbol) || "-",
+        "Project Point of Contact": fiscal.project_point_of_contact || "-",
+        "Technical Point of Contact": fiscal.technical_point_of_contact || "-",
+        "Comments": fiscal.comments || "-",
+        "Last Modified": fiscal.modified_datetime
+          ? timezone && isValidTimezone(timezone)
+            ? moment(fiscal.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
+            : moment(fiscal.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
+          : '-',
+        "Project ID": fiscal.r_number || "-",
+      }));
+
+      return [baseRow, ...fiscalRows];
+    });
+
+
     return {
-      projects,
+      exportData,
       count
     };
   }

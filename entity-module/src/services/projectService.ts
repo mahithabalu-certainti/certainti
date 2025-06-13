@@ -30,6 +30,7 @@ import {
   AccountFiscal,
   setupAccountFiscalSequence,
 } from "../models/accountFiscal";
+import { isValidTimezone } from "../utils/valideTimeChecker";
 
 export class ProjectService {
   private schemaService: SchemaService;
@@ -657,6 +658,96 @@ export class ProjectService {
     }
   }
 
+  async exportProjectList(
+    accountId: string,
+    fiscalYear: number = 0,
+    search: string,
+    filters: Record<string, any> = {},
+    sortBy: string = "created_datetime",
+    sortOrder: string = "ASC",
+    bothParentAndChild: boolean = false,
+    timezone: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { projects: any; totalCount: number };
+  }> {
+    try {
+
+      const accountData = await this.schemaService.fetchAccountById(accountId);
+
+      if (!accountData) {
+        throw new Error("Invalid account account ID.");
+      }
+
+      if (
+        accountData.parent_account_rid === null ||
+        accountData.parent_account_rid === ""
+      ) {
+        throw new Error("Invalid account ID");
+      }
+
+      let accountRNumber = accountData.r_number;
+
+      if (accountData.storage_type === "store_in_parent") {
+        accountRNumber = await this.schemaService.fetchParentAccount(
+          accountData.parent_account_rid
+        );
+      }
+
+      const isExists = await this.schemaService.checkIfSchemaAndTableExists(
+        accountRNumber
+      );
+
+      if (!isExists) {
+        return {
+          statusCode: HttpStatus.SUCCESS,
+          message: HttpStatus.SUCCESS_MESSAGE,
+          data: {
+            projects: [],
+            totalCount: 0,
+          },
+        };
+      }
+
+      const [finalSortBy, finalSortOrder] = this.getSortParameters(
+        sortBy,
+        sortOrder
+      );
+      const [finalMetaDataSortBy, finalMetaDataSortOrder] =
+        this.getMetaDataSortParameters(sortBy, sortOrder);
+
+      const { whereClause } = this.buildWhereClause(filters, search, false, bothParentAndChild);
+
+      const order = [[finalSortBy, finalSortOrder]];
+
+      const { exportData, count } = await this.projectIngestion.fetchProjectListExport(
+        accountRNumber,
+        accountData,
+        whereClause,
+        fiscalYear,
+        order,
+        bothParentAndChild,
+        filters,
+        finalMetaDataSortBy,
+        finalMetaDataSortOrder,
+        timezone
+      );
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          projects: exportData,
+          totalCount: count,
+        },
+      };
+    } catch (err) {
+      throw new Error("Error fetching project: " + (err as Error).message);
+    }
+  }
+
   async allProjectList(
     fiscalYear: number = 0,
     page: number = 1,
@@ -739,20 +830,22 @@ export class ProjectService {
     try {
       const [finalSortBy, finalSortOrder] =
         this.getSortParametersForAllProjects(sortBy, sortOrder);
-
+ 
       const { accountDataSort } = this.processAccountDataSort(
         sortBy,
         sortOrder
       );
-
+ 
       const sort = {
         sortCol: finalSortBy,
         sortOrder: finalSortOrder,
       };
-
+ 
       const appliedAccountNumber =
-        await this.schemaService.computeGlobalAccountFilter(globalFilters);
-
+        await this.schemaService.computeGlobalAccountFilter(
+          globalFilters,
+        );
+ 
       const { finalResult: allProjectList, totalCount } =
         await this.schemaService.fetchAllProjectsForExport(
           sort,
@@ -763,68 +856,36 @@ export class ProjectService {
           search,
           bothParentAndChild
         );
-
-      const formatNumberForExport = (
-        value: any,
-        currency_symbol: string
-      ): string => {
-        if (value == null || value === "") return "-";
-        const num = Number(value);
-        if (isNaN(num)) return "-";
-        // Use currency.js to format the number with the provided currency symbol
-        return currency(num, {
-          symbol: currency_symbol ? currency_symbol : "$",
-          precision: 2,
-          pattern: "! #",
-          separator: ",",
-          decimal: ".",
-        }).format();
-      };
-
+ 
+        const formatNumberForExport = (value: any, currency_symbol: string): string => {
+          if (value == null || value === '') return '-';
+          const num = Number(value);
+          if (isNaN(num)) return '-';
+          // Use currency.js to format the number with the provided currency symbol
+          return currency(num, {
+            symbol: currency_symbol? currency_symbol : '$',
+            precision: 2,
+            pattern: '! #',
+            separator: ',',
+            decimal: '.'
+          }).format();
+        };  
+ 
       const rawResult = allProjectList || [];
-      let exportData = rawResult.map((project: any) => {
-        return {
+      let exportData: any[] = [];
+ 
       rawResult.forEach((project: any) => {
         // Always add base project data row first
         exportData.push({
           "Project Group": project?.project_group || "-",
           "Project Code": project.project_code || "-",
-          "Project Name": project.project_name || "-", 
+          "Project Name": project.project_name || "-",
           "Project Type": project.project_type || "-",
           "Account Name": project.account_name || "-",
-
           "Fiscal Year": "-",
           "Project Classification": project.classification_name || "-",
-          "Fiscal Year": project.fiscal_year || "-",
           "Customer Group": project.project_client_group || "-",
           "Project Effort (Hours)": project.total_effort || "-",
-          "Project Cost":
-            formatNumberForExport(
-              project.total_cost,
-              project.currency_symbol
-            ) || "-",
-          "FTE Cost":
-            formatNumberForExport(
-              project.total_fte_cost,
-              project.currency_symbol
-            ) || "-",
-          "SubCon Cost":
-            formatNumberForExport(
-              project.total_sub_con,
-              project.currency_symbol
-            ) || "-",
-          "Non-Labor Cost":
-            formatNumberForExport(
-              project.total_non_labor_cost,
-              project.currency_symbol
-            ) || "-",
-          "Assessment Status": project.assessment_status || "-",
-          "QRE %": project.qre || "-",
-          QRE:
-            formatNumberForExport(
-              project.qualified_research_expenditure,
-              project.currency_symbol
-            ) || "-",
           "Project Cost": formatNumberForExport(project.total_cost, project.currency_symbol) || "-",
           "FTE Cost": formatNumberForExport(project.total_fte_cost, project.currency_symbol) || "-",
           "SubCon Cost": formatNumberForExport(project.total_subcon, project.currency_symbol) || "-",
@@ -833,9 +894,8 @@ export class ProjectService {
           "QRE%": project.qre || "-",
           "QRE": "-",
           "Project Point of Contact": project.project_point_of_contact || "-",
-          "Technical Point of Contact":
-            project.technical_point_of_contact || "-",
-          Comments: project.comments || "-",
+          "Technical Point of Contact": project.technical_point_of_contact || "-",
+          "Comments": project.comments || "-",
           "Last Modified": project.modified_datetime
           ? timezone && isValidTimezone(timezone)
           ? moment(project.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
@@ -843,7 +903,7 @@ export class ProjectService {
           : '-',
           "Project ID": project.r_number || "-",
         });
-
+ 
         // Add fiscal summary rows if they exist
         const fiscalSummaries = project.project_fiscal_summary || [];
         if (fiscalSummaries.length > 0) {
@@ -853,7 +913,7 @@ export class ProjectService {
               "Project Code": fiscal.project_code || "-",
               "Project Name": fiscal.project_name || "-",
               "Project Type": fiscal.project_type || "-",
-              "Account Name": fiscal.account_name || "-", 
+              "Account Name": fiscal.account_name || "-",
               "Fiscal Year": fiscal.fiscal_year || "-",
               "Project Classification": fiscal.classification_name || "-",
               "Customer Group": fiscal.project_client_group || "-",
@@ -869,213 +929,22 @@ export class ProjectService {
               "Technical Point of Contact": fiscal.technical_point_of_contact || "-",
               "Comments": fiscal.comments || "-",
               "Last Modified": fiscal.modified_datetime
-                ? moment(fiscal.modified_datetime).format('YYYY-MM-DD')
-                : '-',
+              ? timezone && isValidTimezone(timezone)
+              ? moment(fiscal.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
+              : moment(fiscal.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
+              : '-',
               "Project ID": fiscal.r_number || "-",
             });
           });
         }
       });
-
+ 
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
           projects: exportData,
           count: totalCount,
-        },
-      };
-    } catch (err) {
-      throw new Error("Error fetching project: " + (err as Error).message);
-    }
-  }
-
-  async exportProjectList(
-    accountId: string,
-    fiscalYear: number = 0,
-    search: string,
-    filters: Record<string, any> = {},
-    sortBy: string = "created_datetime",
-    sortOrder: string = "ASC",
-    bothParentAndChild: boolean = false,
-    timezone:string
-  ): Promise<{
-    statusCode: number;
-    message: string;
-    errorMessage?: string;
-    data?: { projects: any; totalCount: number };
-  }> {
-    try {
-      const accountData = await this.schemaService.fetchAccountById(accountId);
-
-      if (!accountData) {
-        throw new Error("Invalid account account ID.");
-      }
-
-      if (
-        accountData.parent_account_rid === null ||
-        accountData.parent_account_rid === ""
-      ) {
-        throw new Error("Invalid account ID");
-      }
-
-      let accountRNumber = accountData.r_number;
-
-      if (accountData.storage_type === "store_in_parent") {
-        accountRNumber = await this.schemaService.fetchParentAccount(
-          accountData.parent_account_rid
-        );
-      }
-
-      const isExists = await this.schemaService.checkIfSchemaAndTableExists(
-        accountRNumber
-      );
-
-      if (!isExists) {
-        return {
-          statusCode: HttpStatus.SUCCESS,
-          message: HttpStatus.SUCCESS_MESSAGE,
-          data: {
-            projects: [],
-            totalCount: 0,
-          },
-        };
-      }
-
-      const [finalSortBy, finalSortOrder] = this.getSortParameters(
-        sortBy,
-        sortOrder
-      );
-      const [finalMetaDataSortBy, finalMetaDataSortOrder] =
-        this.getMetaDataSortParameters(sortBy, sortOrder);
-
-      const { whereClause } = this.buildWhereClause(filters, search, false, bothParentAndChild);
-
-      const order = [[finalSortBy, finalSortOrder]];
-
-      let { projects: projectData, count } = await this.projectIngestion.fetchProjectListExport(accountRNumber,
-        accountData,
-        whereClause,
-        fiscalYear,
-        order,
-        bothParentAndChild,
-        filters,
-        finalMetaDataSortBy,
-        finalMetaDataSortOrder
-      );
-
-      if (projectData) {
-        const mainDbInit = await initMainDbSequelize();
-
-        await Promise.all(
-          projectData.map((result) =>
-            this.assignCurrencyRid(result, mainDbInit)
-          )
-        );
-
-        projectData.forEach((val: any) => {
-          val.account_name = accountData.account_name;
-        });
-        projectData = await this.schemaService.insertProjectListGeoData(
-          projectData,
-          mainDbInit
-        );
-        projectData = await this.schemaService.insertIndusty(
-          projectData,
-          mainDbInit
-        );
-
-        projectData = await this.schemaService.insertKeyRole(
-          projectData,
-          mainDbInit
-        );
-        projectData = await this.schemaService.insertProjectClassification(
-          projectData,
-          mainDbInit
-        );
-
-        projectData = await this.schemaService.finalProjectSort(
-          projectData,
-          finalMetaDataSortBy,
-          finalMetaDataSortOrder,
-          filters
-        );
-      }
-
-      const formatNumberForExport = (
-        value: any,
-        currency_symbol: string
-      ): string => {
-        if (value == null || value === "") return "-";
-        const num = Number(value);
-        if (isNaN(num)) return "-";
-        // Use currency.js to format the number with the provided currency symbol
-        return currency(num, {
-          symbol: currency_symbol ? currency_symbol : "$",
-          precision: 2,
-          pattern: "! #",
-          separator: ",",
-          decimal: ".",
-        }).format();
-      };
-
-      const rawResult = projectData || [];
-      let exportData = rawResult.map((project: any) => {
-        return {
-          "Project Code": project.project_code || "-",
-          "Name": project.project_name || "-",
-          "Project Type": project.project_type || "-",
-          "Fiscal Year":project.fiscal_year || "-",
-          "Project Classification": project.classification_name || "-",
-          "Customer Group": project.project_client_group || "-",
-          "Project Group": project?.project_group || "-",
-          "Project Effort (Hours)": project.total_effort || "-",
-          "Project Cost":
-            formatNumberForExport(
-              project.total_cost,
-              project.currency_symbol
-            ) || "-",
-          "FTE Cost":
-            formatNumberForExport(
-              project.total_fte_cost,
-              project.currency_symbol
-            ) || "-",
-          "SubCon Cost":
-            formatNumberForExport(
-              project.total_sub_con,
-              project.currency_symbol
-            ) || "-",
-          "Non-Labor Cost":
-            formatNumberForExport(
-              project.total_non_labor_cost,
-              project.currency_symbol
-            ) || "-",
-          "Assessment Status": project.assessment_status || "-",
-          "QRE %": project.qre || "-",
-          QRE:
-            formatNumberForExport(
-              project.qualified_research_expenditure,
-              project.currency_symbol
-            ) || "-",
-          "Project Point of Contact": project.project_point_of_contact || "-",
-          "Technical Point of Contact":
-            project.technical_point_of_contact || "-",
-          Comments: project.comments || "-",
-          "Last Modified": project.modified_datetime
-          ? timezone && isValidTimezone(timezone)
-          ? moment(project.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
-          : moment(project.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
-          : '-',
-          "Project ID": project.r_number || "-",
-        };
-      });
-
-      return {
-        statusCode: HttpStatus.SUCCESS,
-        message: HttpStatus.SUCCESS_MESSAGE,
-        data: {
-          projects: exportData,
-          totalCount: count,
         },
       };
     } catch (err) {
@@ -1291,143 +1160,6 @@ export class ProjectService {
     }
   }
 
-  async addProjectSummary(
-    projectData: any,
-    project: any,
-    startDate: Moment | null,
-    endDate: Moment | null,
-    keyContacts: any[]
-  ) {
-    try {
-      const mainDbSequlize = await initMainDbSequelize();
-      const ProjectSummaryModel = await ProjectSummary.initialize(
-        mainDbSequlize,
-        ""
-      );
-      // await ProjectSummaryModel.sync({ force: false });
-
-      const {
-        technicalConsultant,
-        financialConsultant,
-        projectPointOfContact,
-      } = await this.calculateKeyContactDetails(keyContacts, mainDbSequlize);
-
-      await ProjectSummaryModel.create({
-        project_code: projectData.project_code,
-        industry_rid: projectData.industry_rid,
-        industry_name: projectData.industry_name,
-        account_rid: projectData.account_id,
-        program_name: projectData.program_name || null,
-        project_name: projectData.project_name || null,
-        project_startdate: startDate?.toDate() || null,
-        project_enddate: endDate?.toDate() || null,
-        project_status: projectData.project_status,
-        project_type: projectData.project_type,
-        project_client_group: projectData.project_client_group,
-        project_group: projectData.project_group,
-        project_classification_rid: projectData.project_classification_rid,
-        project_classification_other: projectData.project_classification_other,
-        country: projectData.country || null,
-        region: projectData.region || null,
-        currency: projectData.currency || null,
-        total_effort: projectData.total_effort || null,
-        total_cost: projectData.total_cost || null,
-        total_fte: projectData.total_fte || 0,
-        total_subcon: projectData.total_sub_con || 0,
-        total_cost_nonlabor: projectData.total_non_labor_cost || null,
-        total_cost_fte: projectData.total_fte_cost || null,
-        total_cost_subcon: projectData.total_sub_con_cost || null,
-        comments: projectData.comments || null,
-        created_datetime: new Date(),
-        modified_datetime: new Date(),
-        created_by: projectData.created_by,
-        modified_by: projectData.modified_by || null,
-        project_rid: project.rid || "",
-        technical_point_of_contact: technicalConsultant,
-        project_point_of_contact: projectPointOfContact,
-      });
-    } catch (err) {
-      throw err;
-    }
-  }
-
-  async updateProjectSummary(
-    projectData: any,
-    startDate: Moment | null,
-    endDate: Moment | null,
-    keyContacts: any[],
-    userId: string
-  ) {
-    try {
-      const mainDbSequlize = await initMainDbSequelize();
-      const ProjectSummaryModel = await ProjectSummary.initialize(
-        mainDbSequlize,
-        ""
-      );
-
-      const {
-        technicalConsultant,
-        financialConsultant,
-        projectPointOfContact,
-      } = await this.calculateKeyContactDetails(keyContacts, mainDbSequlize);
-
-      const updateProjectData = {
-        project_name: projectData.project_name || null,
-        program_name: projectData.program_name || null,
-        project_status:
-          (projectData.project_status as "Active" | "Inactive") || "Active",
-        project_startdate: startDate?.toDate() || null,
-        project_enddate: endDate?.toDate() || null,
-        project_code: projectData.project_code,
-        industry_rid: projectData.industry_rid,
-        industry_name: projectData.industry_name,
-        fiscal_year: projectData.fiscal_year,
-
-        project_type: projectData.project_type,
-        project_client_group: projectData.project_client_group,
-        project_group: projectData.project_group,
-        project_classification_rid: projectData.project_classification_rid,
-        project_classification_other: projectData.project_classification_other,
-
-        total_effort: projectData.total_effort || null,
-        total_cost: projectData.total_cost || null,
-
-        total_fte: projectData.total_fte || null,
-        total_sub_con: projectData.total_sub_con || null,
-
-        total_fte_cost: projectData.total_fte_cost || null,
-        total_sub_con_cost: projectData.total_sub_con_cost || null,
-        total_non_labor_cost: projectData.total_non_labor_cost || null,
-
-        modified_by: userId,
-        modified_datetime: new Date(),
-        comments: projectData.comments || null,
-
-        ...(technicalConsultant && {
-          technical_point_of_contact: technicalConsultant,
-        }),
-        ...(financialConsultant && {
-          financial_consultant: financialConsultant,
-        }),
-        ...(projectPointOfContact && {
-          project_point_of_contact: projectPointOfContact,
-        }),
-      };
-
-      await ProjectSummaryModel.update(
-        {
-          ...updateProjectData,
-        },
-        {
-          where: {
-            project_rid: projectData.project_rid,
-          },
-        }
-      );
-    } catch (err) {
-      throw err;
-    }
-  }
 
   async calculateKeyContactDetails(keyContacts: any[], mainDbSequlize: any) {
     let technicalConsultant = "-";
@@ -2070,8 +1802,4 @@ export class ProjectService {
       }
     }
   }
-}
-
-function isValidTimezone(tz: string) {
-  return moment.tz.names().includes(tz);
 }
