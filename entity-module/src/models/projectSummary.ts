@@ -1,56 +1,64 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { R_NUMBER_PREFIX } from "../utils/constants";
-
 export interface ProjectSummaryAttributes {
   rid?: string;
   r_number?: string;
+  eid?: string;
 
-  project_id: string;
-  project_number: string;
   project_code: string;
-  industry_rid?: string;
-  industry_name?: string;
-  account_rid: string;
-  program_name?: string | null;
-  project_name?: string | null;
-  project_startdate?: Date | null;
-  project_enddate?: Date | null;
-  project_status: "Active" | "Inactive";
-  project_type: "Fixed" | "Time & Material";
-  project_classification_rid?: string | null;
-  project_classification_other?: string | null;
-  project_client_group?: string | null;
-  project_group?: string | null;
-  fiscal_year: number;
-  country?: string | null;
-  region?: string | null;
-  currency?: string | null;
-
-  total_effort?: number | null;
-  total_cost?: number | null;
-  
-  total_fte?: number | null;
-  total_subcon?: number | null;
-  
-  total_cost_nonlabor?: number | null;
-  total_cost_fte?: number | null;
-  total_cost_subcon?: number | null;
-
-  qre_potential?: number | null;
-  qre_final?: number | null;
-
-  comments?: string | null;
-
-  project_point_of_contact?: string | null;
-  technical_point_of_contact?: string | null;
-  financial_consultant?: string | null;
-
-  assessment_status?: string | null;
+  project_rid: string;
 
   created_datetime?: Date;
   modified_datetime?: Date;
   created_by: string;
   modified_by?: string | null;
+
+  account_rid: string;
+
+  program_name?: string | null;
+  project_name?: string | null;
+  project_startdate?: Date | null;
+  project_enddate?: Date | null;
+
+  industry_rid: string | null;
+  industry_name?: string | null;
+
+  project_type: "Fixed" | "Time & Material";
+  project_classification_rid?: string | null;
+  project_classification_other?: string | null;
+
+  project_client_group?: string | null;
+  project_group?: string | null;
+  project_status?: string;
+
+  country_rid?: string | null;
+  region_rid?: string | null;
+  currency_rid?: string | null;
+
+  total_effort?: number | null;
+  total_cost?: number | null;
+
+  total_fte?: number | null;
+  total_subcon?: number | null;
+
+  total_cost_fte?: number | null;
+  total_cost_subcon?: number | null;
+  total_cost_nonlabor?: number | null;
+
+  blended_rate_fte?: number | null;
+  blended_rate_subcon?: number | null;
+  blended_rate?: number | null;
+
+  project_description?: string | null;
+  comments?: string | null;
+
+  is_rd_qualified?: boolean;
+  qre?: number | null;
+
+  assessment_status?: string | null;
+
+  project_point_of_contact?: string | null;
+  technical_point_of_contact?: string | null;
 }
 
 interface ProjectSummaryCreationAttributes
@@ -60,46 +68,64 @@ export class ProjectSummary
   extends Model<ProjectSummaryAttributes, ProjectSummaryCreationAttributes>
   implements ProjectSummaryAttributes
 {
-  public rid?: string;
+  public rid!: string;
   public r_number?: string;
-  public project_id!: string;
+  public eid?: string;
   public project_code!: string;
-  public account_rid!: string;
-  public industry_rid!: string;
-  public industry_name?: string;
-  public program_name?: string | null;
-  public project_name?: string | null;
-  public project_startdate?: Date | null;
-  public project_enddate?: Date | null;
-  public project_status!: "Active" | "Inactive";
-  public project_type!: "Fixed" | "Time & Material";
-  public project_classification_rid?: string | null;
-  public project_client_group?: string | null;
-  public project_group?: string | null;
-  public fiscal_year!: number;
-  public country?: string | null;
-  public region?: string | null;
-  public currency?: string | null;
-  public total_effort?: number | null;
-  public total_cost?: number | null;
-  public total_fte?: number;
-  public total_subcon?: number;
-  public total_cost_nonlabor?: number | null;
-  public total_cost_fte?: number | null;
-  public total_cost_subcon?: number | null;
+  public project_rid!: string;
+
   public created_datetime?: Date;
   public modified_datetime?: Date;
   public created_by!: string;
   public modified_by?: string | null;
+
+  public account_rid!: string;
+
+  public program_name?: string | null;
+  public project_name?: string | null;
+
+  public project_startdate?: Date | null;
+  public project_enddate?: Date | null;
+
+  public project_type!: "Fixed" | "Time & Material";
+  public project_classification_rid?: string | null;
+  public project_classification_other?: string | null;
+
+  public industry_rid!: string;
+  public industry_name?: string;
+
+  public project_client_group?: string | null;
+  public project_group?: string | null;
+
+  public project_status!: "Active" | "Inactive";
+
+  public country_rid?: string | null;
+  public region_rid?: string | null;
+  public currency_rid?: string | null;
+
+  public total_effort?: number | null;
+  public total_cost?: number | null;
+  public total_fte?: number | null;
+  public total_subcon?: number | null;
+
+  public total_cost_fte?: number | null;
+  public total_cost_subcon?: number | null;
+  public total_cost_nonlabor?: number | null;
+
+  public blended_rate_fte?: number | null;
+  public blended_rate_subcon?: number | null;
+  public blended_rate?: number | null;
+
+  public project_description?: string | null;
   public comments?: string | null;
+
+  public is_rd_qualified?: boolean;
+  public qre?: number | null;
+
+  public assessment_status?: string | null;
+
   public project_point_of_contact?: string | null;
   public technical_point_of_contact?: string | null;
-  public financial_consultant?: string | null;
-  public project_number!: string;
-  public project_classification_other?: string | null;
-  public qre_potential?: number | null;
-  public qre_final?: number | null;
-  public assessment_status?: string | null;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
     ProjectSummary.init(
@@ -114,107 +140,16 @@ export class ProjectSummary
           allowNull: true,
           unique: true,
         },
-        project_number: {
-          type: DataTypes.STRING(200),
-          allowNull: false,
-        },
-        project_id: {
-          type: DataTypes.UUID,
-          allowNull: false,
-        },
-        account_rid: {
-          type: DataTypes.UUID,
-          allowNull: false,
-        },
-        project_code: {
-          type: DataTypes.STRING(50),
-          allowNull: false,
-          unique: false,
-        },
-        industry_rid: {
-          type: DataTypes.UUID,
-          allowNull: true,
-        },
-        industry_name: {
-          type: DataTypes.STRING(100),
-          allowNull: true,
-        },
-        program_name: {
-          type: DataTypes.STRING(255),
-          allowNull: true,
-        },
-        project_name: DataTypes.STRING(255),
-        project_startdate: DataTypes.DATE,
-        project_enddate: DataTypes.DATE,
-        project_status: {
-          type: DataTypes.ENUM("Active", "Inactive"),
-          allowNull: false,
-        },
-        project_type: {
-          type: DataTypes.ENUM("Fixed", "Time & Material"),
-          allowNull: false,
-        },
-        project_classification_rid: {
-          type: DataTypes.UUID,
-          allowNull: true,
-        },
-        project_client_group: DataTypes.STRING(255),
-        project_group: DataTypes.STRING(255),
-        fiscal_year: {
-          type: DataTypes.INTEGER,
-          allowNull: false,
-        },
-        country: {
-          type: DataTypes.UUID,
-          allowNull: true,
-        },
-        region: {
-          type: DataTypes.UUID,
-          allowNull: true,
-        },
-        currency: {
-          type: DataTypes.UUID,
-          allowNull: true,
-        },
-        assessment_status: {
-          type: DataTypes.STRING(150),
-          allowNull: true
-        },
-        total_effort: DataTypes.DECIMAL(18, 2),
-        total_cost: DataTypes.DECIMAL(18, 2),
-        total_fte: DataTypes.INTEGER,
-        total_subcon: DataTypes.INTEGER,
-        total_cost_fte: DataTypes.DECIMAL(18, 2),
-        total_cost_subcon: DataTypes.DECIMAL(18, 2),
-        total_cost_nonlabor: DataTypes.DECIMAL(18, 2),
-        qre_final: {
-          type: DataTypes.DECIMAL(18, 2),
-          allowNull: true,
-        },
-        qre_potential: {
-          type: DataTypes.INTEGER,
-          allowNull: true,
-        },
-        project_point_of_contact: {
-          type: DataTypes.STRING(100),
-          allowNull: true,
-        },
-        technical_point_of_contact: {
-          type: DataTypes.STRING(100),
-          allowNull: true,
-        },
-        financial_consultant: {
-          type: DataTypes.STRING(100),
+        eid: {
+          type: DataTypes.STRING(120),
           allowNull: true,
         },
         created_datetime: {
           type: DataTypes.DATE,
           allowNull: false,
-          defaultValue: DataTypes.NOW,
         },
         modified_datetime: {
           type: DataTypes.DATE,
-          defaultValue: DataTypes.NOW,
         },
         created_by: {
           type: DataTypes.UUID,
@@ -224,12 +159,110 @@ export class ProjectSummary
           type: DataTypes.UUID,
           allowNull: true,
         },
-        comments: {
-          type: DataTypes.STRING(2000),
+        project_code: {
+          type: DataTypes.STRING(120),
+          allowNull: false,
+        },
+        project_rid: {
+          type: DataTypes.UUID,
+          allowNull: false,
+        },
+        account_rid: {
+          type: DataTypes.UUID,
+          allowNull: false,
+        },
+        program_name: {
+          type: DataTypes.STRING(255),
+          allowNull: true,
+        },
+        project_name: {
+          type: DataTypes.STRING(255),
+          allowNull: true,
+        },
+        project_startdate: DataTypes.DATE,
+        project_enddate: DataTypes.DATE,
+        project_type: {
+          type: DataTypes.ENUM("Fixed", "Time & Material"),
+          allowNull: false,
+        },
+        project_classification_rid: {
+          type: DataTypes.UUID,
           allowNull: true,
         },
         project_classification_other: {
           type: DataTypes.STRING(300),
+          allowNull: true,
+        },
+        project_client_group: {
+          type: DataTypes.STRING(255),
+          allowNull: true,
+        },
+        project_group: {
+          type: DataTypes.STRING(255),
+          allowNull: true,
+        },
+        project_status: {
+          type: DataTypes.ENUM("Active", "Inactive"),
+          allowNull: false,
+        },
+        industry_rid: {
+          type: DataTypes.UUID,
+          allowNull: true,
+        },
+        industry_name: {
+          type: DataTypes.STRING(100),
+          allowNull: true,
+        },
+        comments: {
+          type: DataTypes.STRING(2000),
+          allowNull: true,
+        },
+        project_description: {
+          type: DataTypes.STRING(2000),
+          allowNull: true,
+        },
+        assessment_status: {
+          type: DataTypes.STRING(150),
+          allowNull: true,
+        },
+        country_rid: {
+          type: DataTypes.UUID,
+          allowNull: true,
+        },
+        region_rid: {
+          type: DataTypes.UUID,
+          allowNull: true,
+        },
+        currency_rid: {
+          type: DataTypes.UUID,
+          allowNull: true,
+        },
+        total_fte: DataTypes.INTEGER,
+        total_subcon: DataTypes.INTEGER,
+        total_effort: DataTypes.DECIMAL(18, 2),
+        total_cost: DataTypes.DECIMAL(18, 2),
+        total_cost_fte: DataTypes.DECIMAL(18, 2),
+        total_cost_subcon: DataTypes.DECIMAL(18, 2),
+        total_cost_nonlabor: DataTypes.DECIMAL(18, 2),
+
+        blended_rate_fte: DataTypes.DECIMAL(18, 2),
+        blended_rate_subcon: DataTypes.DECIMAL(18, 2),
+        blended_rate: DataTypes.DECIMAL(18, 2),
+
+        is_rd_qualified: {
+          type: DataTypes.BOOLEAN,
+          allowNull: true,
+        },
+        qre: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: true,
+        },
+        project_point_of_contact: {
+          type: DataTypes.STRING(100),
+          allowNull: true,
+        },
+        technical_point_of_contact: {
+          type: DataTypes.STRING(100),
           allowNull: true,
         },
       },

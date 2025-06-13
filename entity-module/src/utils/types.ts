@@ -189,6 +189,9 @@ export interface ICreateProject {
   created_by: string;
   key_contacts: any;
   comments?: string;
+  assessment_status?: string;
+  is_rd_qualified?: boolean;
+  qre?: number;
 }
 
 export interface IUpdateProject {

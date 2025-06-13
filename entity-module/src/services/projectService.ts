@@ -279,7 +279,8 @@ export class ProjectService {
             projectData,
             createdProject.rid,
             projectData.key_contacts,
-            createdProjectFiscal.rid || ""
+            createdProjectFiscal.rid || "",
+
           );
 
           await this.projectIngestion.addAccountFiscal(
@@ -622,7 +623,7 @@ export class ProjectService {
       const [finalMetaDataSortBy, finalMetaDataSortOrder] =
         this.getMetaDataSortParameters(sortBy, sortOrder);
 
-      const { whereClause } = this.buildWhereClause(filters, search, false);
+      const { whereClause } = this.buildWhereClause(filters, search, false, bothParentAndChild);
 
       const offset = (page - 1) * limit;
 
@@ -895,7 +896,7 @@ export class ProjectService {
       const [finalMetaDataSortBy, finalMetaDataSortOrder] =
         this.getMetaDataSortParameters(sortBy, sortOrder);
 
-      const { whereClause } = this.buildWhereClause(filters, search, false);
+      const { whereClause } = this.buildWhereClause(filters, search, false, bothParentAndChild);
 
       const order = [[finalSortBy, finalSortOrder]];
 
@@ -1227,14 +1228,6 @@ export class ProjectService {
 
       if (historyChanges.length === 0) return;
 
-      // const latest = await ProjectHistoryModel.findAll();
-
-      // historyChanges.forEach((change, i) => {
-      //   change.r_number = `${(latest.length + i + 1)
-      //     .toString()
-      //     .padStart(4, "0")}`;
-      // });
-
       await ProjectHistoryModel.bulkCreate(historyChanges);
     } catch (err) {
       throw new Error(
@@ -1312,7 +1305,7 @@ export class ProjectService {
         },
         {
           where: {
-            project_id: projectData.project_id,
+            project_rid: projectData.project_id,
           },
         }
       );
@@ -1404,20 +1397,20 @@ export class ProjectService {
       "total_cost",
       "total_effort",
       "total_fte",
-      "total_fte_cost",
-      "total_sub_con",
-      "total_sub_con_cost",
-      "total_non_labor_cost",
+      "total_cost_fte",
+      "total_subcon",
+      "total_cost_subcon",
+      "total_cost_nonlabor",
       "country",
       "region",
       "currency",
       "qualified_research_expenditure",
       "is_rd_qualified",
-      "qre",
       "fiscal_year",
       "comments",
       "modified_datetime",
       "assessment_status",
+      "qre_final"
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -1455,7 +1448,8 @@ export class ProjectService {
   buildWhereClause(
     filters: Record<string, any>,
     search: string,
-    isAllProject: boolean = false
+    isAllProject: boolean = false,
+    isParent: boolean = false
   ): {
     whereClause: Record<string, any>;
   } {
@@ -1469,7 +1463,7 @@ export class ProjectService {
       );
     }
 
-    whereClause = this.applyFilters(filters, whereClause, isAllProject);
+    whereClause = this.applyFilters(filters, whereClause, isAllProject, isParent);
 
     return { whereClause };
   }
@@ -1515,7 +1509,8 @@ export class ProjectService {
   private applyFilters(
     filters: Record<string, any>,
     whereClause: Record<string, any>,
-    isAllProject: boolean
+    isAllProject: boolean,
+    isParent: boolean
   ): Record<string, any> {
     const castToTextFields = [
       "rid",
@@ -1534,6 +1529,7 @@ export class ProjectService {
       "fiscal_year",
       "total_fte",
       "total_cost_fte",
+      "total_effort_prj",
       "total_subcon",
       "total_cost_subcon",
       "total_cost_nonlabor",
@@ -1549,7 +1545,7 @@ export class ProjectService {
     const enumFields = ["project_status", "project_type", "fiscal_year", "ProjectFiscal.project_type"];
     const booleanFields = ["is_rd_qualified"];
 
-    const filterFields = this.getFilterFields(isAllProject);
+    const filterFields = this.getFilterFields(isAllProject, isParent);
 
     filterFields.forEach(({ clientField, dbField }) => {
       if (filters[clientField]) {
@@ -1804,7 +1800,8 @@ export class ProjectService {
   }
 
   getFilterFields(
-    isAllProject: boolean
+    isAllProject: boolean,
+    isParent: boolean
   ): { clientField: string; dbField: string }[] {
     const projectFilterFields = [
       { clientField: "rid", dbField: "rid" },
@@ -1814,7 +1811,7 @@ export class ProjectService {
       { clientField: "project_name", dbField: "project_name" },
       { clientField: "project_description", dbField: "project_description" },
       { clientField: "fiscal_year", dbField: "fiscal_year" },
-      { clientField: "total_effort", dbField: "total_effort" },
+      { clientField: "total_effort", dbField: "total_effort"},
       { clientField: "total_cost", dbField: "total_cost" },
       { clientField: "project_status", dbField: "project_status" },
       { clientField: "project_startdate", dbField: "project_startdate" },

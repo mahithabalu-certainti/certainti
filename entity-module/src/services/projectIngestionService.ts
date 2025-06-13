@@ -255,52 +255,52 @@ class ProjectIngestionService {
       attributes: [
         "project_code",
         [
-          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_cost, 0)")),
-          "total_cost",
+          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_cost_prj, 0)")),
+          "total_cost_prj",
         ],
         [
-          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_effort, 0)")),
-          "total_effort",
+          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_effort_prj, 0)")),
+          "total_effort_prj",
         ],
         [
-          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_fte, 0)")),
-          "total_fte",
+          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_fte_prj, 0)")),
+          "total_fte_prj",
         ],
         [
-          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_subcon, 0)")),
-          "total_subcon",
-        ],
-        [
-          Sequelize.fn(
-            "SUM",
-            Sequelize.literal("COALESCE(total_effort_fte, 0)")
-          ),
-          "total_effort_fte",
+          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_subcon_prj, 0)")),
+          "total_subcon_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(total_effort_subcon, 0)")
+            Sequelize.literal("COALESCE(total_effort_fte_prj, 0)")
           ),
-          "total_effort_subcon",
-        ],
-        [
-          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_cost_fte, 0)")),
-          "total_cost_fte",
+          "total_effort_fte_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(total_cost_subcon, 0)")
+            Sequelize.literal("COALESCE(total_effort_subcon_prj, 0)")
           ),
-          "total_cost_subcon",
+          "total_effort_subcon_prj",
+        ],
+        [
+          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_cost_fte_prj, 0)")),
+          "total_cost_fte_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(total_cost_nonlabor, 0)")
+            Sequelize.literal("COALESCE(total_cost_subcon_prj, 0)")
           ),
-          "total_cost_nonlabor",
+          "total_cost_subcon_prj",
+        ],
+        [
+          Sequelize.fn(
+            "SUM",
+            Sequelize.literal("COALESCE(total_cost_nonlabor_prj, 0)")
+          ),
+          "total_cost_nonlabor_prj",
         ],
       ],
       where: { project_code: projectCode, account_rid: accountId },
@@ -313,15 +313,15 @@ class ProjectIngestionService {
     // 2. Update Project table with aggregated totals
     await Project.update(
       {
-        total_cost: aggregates.total_cost,
-        total_effort: aggregates.total_effort,
-        total_fte: aggregates.total_fte,
-        total_subcon: aggregates.total_subcon,
-        total_effort_fte: aggregates.total_effort_fte,
-        total_effort_subcon: aggregates.total_effort_subcon,
-        total_cost_fte: aggregates.total_cost_fte,
-        total_cost_subcon: aggregates.total_cost_subcon,
-        total_cost_nonlabor: aggregates.total_cost_nonlabor,
+        total_cost: aggregates.total_cost_prj,
+        total_effort: aggregates.total_effort_prj,
+        total_fte: aggregates.total_fte_prj,
+        total_subcon: aggregates.total_subcon_prj,
+        total_effort_fte: aggregates.total_effort_fte_prj,
+        total_effort_subcon: aggregates.total_effort_subcon_prj,
+        total_cost_fte: aggregates.total_cost_fte_prj,
+        total_cost_subcon: aggregates.total_cost_subcon_prj,
+        total_cost_nonlabor: aggregates.total_cost_nonlabor_prj,
       },
       {
         where: { project_code: projectCode, account_rid: accountId },
@@ -342,52 +342,38 @@ class ProjectIngestionService {
       attributes: [
         "project_code",
         [
-          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_cost, 0)")),
-          "total_cost",
+          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_cost_prj, 0)")),
+          "total_cost_prj",
         ],
         [
-          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_effort, 0)")),
-          "total_effort",
+          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_effort_prj, 0)")),
+          "total_effort_prj",
         ],
         [
-          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_fte, 0)")),
-          "total_fte",
+          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_fte_prj, 0)")),
+          "total_fte_prj",
         ],
         [
-          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_subcon, 0)")),
-          "total_subcon",
+          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_subcon_prj, 0)")),
+          "total_subcon_prj",
         ],
         [
-          Sequelize.fn(
-            "SUM",
-            Sequelize.literal("COALESCE(total_effort_fte, 0)")
-          ),
-          "total_effort_fte",
+          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_cost_fte_prj, 0)")),
+          "total_cost_fte_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(total_effort_subcon, 0)")
+            Sequelize.literal("COALESCE(total_cost_subcon_prj, 0)")
           ),
-          "total_effort_subcon",
-        ],
-        [
-          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_cost_fte, 0)")),
-          "total_cost_fte",
+          "total_cost_subcon_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(total_cost_subcon, 0)")
+            Sequelize.literal("COALESCE(total_cost_nonlabor_prj, 0)")
           ),
-          "total_cost_subcon",
-        ],
-        [
-          Sequelize.fn(
-            "SUM",
-            Sequelize.literal("COALESCE(total_cost_nonlabor, 0)")
-          ),
-          "total_cost_nonlabor",
+          "total_cost_nonlabor_prj",
         ],
       ],
       where: { project_code: projectCode, account_rid: accountId },
@@ -400,13 +386,13 @@ class ProjectIngestionService {
     // 2. Update Project table with aggregated totals
     await ProjectSummary.update(
       {
-        total_cost: aggregates.total_cost,
-        total_effort: aggregates.total_effort,
-        total_fte: aggregates.total_fte,
-        total_subcon: aggregates.total_subcon,
-        total_cost_fte: aggregates.total_cost_fte,
-        total_cost_subcon: aggregates.total_cost_subcon,
-        total_cost_nonlabor: aggregates.total_cost_nonlabor,
+        total_cost: aggregates.total_cost_prj,
+        total_effort: aggregates.total_effort_prj,
+        total_fte: aggregates.total_fte_prj,
+        total_subcon: aggregates.total_subcon_prj,
+        total_cost_fte: aggregates.total_cost_fte_prj,
+        total_cost_subcon: aggregates.total_cost_subcon_prj,
+        total_cost_nonlabor: aggregates.total_cost_nonlabor_prj,
       },
       {
         where: { project_code: projectCode, account_rid: accountId },
@@ -487,7 +473,7 @@ class ProjectIngestionService {
   ) {
     const { ProjectSummary } = await this.getModels(accountNumber);
 
-    const { technicalConsultant, financialConsultant, projectPointOfContact } =
+    const { technicalConsultant, projectPointOfContact } =
       await this.keyContactService.calculateKeyContactDetails(
         keyContacts,
         this.mainDbSequelize
@@ -499,11 +485,10 @@ class ProjectIngestionService {
       startDate,
       endDate,
       technicalConsultant,
-      financialConsultant,
       projectPointOfContact
     );
 
-    await ProjectSummary.create(summaryData);
+    return await ProjectSummary.create(summaryData);
   }
 
   async addProjectFiscalSummary(
@@ -515,7 +500,7 @@ class ProjectIngestionService {
   ) {
     const { ProjectFiscalSummary } = await this.getModels(accountNumber);
 
-    const { technicalConsultant, financialConsultant, projectPointOfContact } =
+    const { technicalConsultant, projectPointOfContact } =
       await this.keyContactService.calculateKeyContactDetails(
         keyContacts,
         this.mainDbSequelize
@@ -534,9 +519,8 @@ class ProjectIngestionService {
       startDate,
       endDate,
       technicalConsultant,
-      financialConsultant,
       projectPointOfContact,
-      projectFiscalId
+      projectFiscalId,
     );
 
     await ProjectFiscalSummary.create(summaryData);
@@ -600,52 +584,52 @@ class ProjectIngestionService {
           "total_projects",
         ],
         [
-          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_cost, 0)")),
-          "total_cost",
+          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_cost_prj, 0)")),
+          "total_cost_prj",
         ],
         [
-          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_effort, 0)")),
-          "total_effort",
+          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_effort_prj, 0)")),
+          "total_effort_prj",
         ],
         [
-          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_fte, 0)")),
-          "total_fte",
+          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_fte_prj, 0)")),
+          "total_fte_prj",
         ],
         [
-          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_subcon, 0)")),
-          "total_subcon",
-        ],
-        [
-          Sequelize.fn(
-            "SUM",
-            Sequelize.literal("COALESCE(total_effort_fte, 0)")
-          ),
-          "total_effort_fte",
+          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_subcon_prj, 0)")),
+          "total_subcon_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(total_effort_subcon, 0)")
+            Sequelize.literal("COALESCE(total_effort_fte_prj, 0)")
           ),
-          "total_effort_subcon",
-        ],
-        [
-          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_cost_fte, 0)")),
-          "total_cost_fte",
+          "total_effort_fte_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(total_cost_subcon, 0)")
+            Sequelize.literal("COALESCE(total_effort_subcon_prj, 0)")
           ),
-          "total_cost_subcon",
+          "total_effort_subcon_prj",
+        ],
+        [
+          Sequelize.fn("SUM", Sequelize.literal("COALESCE(total_cost_fte_prj, 0)")),
+          "total_cost_fte_prj",
         ],
         [
           Sequelize.fn(
             "SUM",
-            Sequelize.literal("COALESCE(total_cost_nonlabor, 0)")
+            Sequelize.literal("COALESCE(total_cost_subcon_prj, 0)")
           ),
-          "total_cost_nonlabor",
+          "total_cost_subcon_prj",
+        ],
+        [
+          Sequelize.fn(
+            "SUM",
+            Sequelize.literal("COALESCE(total_cost_nonlabor_prj, 0)")
+          ),
+          "total_cost_nonlabor_prj",
         ],
       ],
       where: {
@@ -884,7 +868,7 @@ class ProjectIngestionService {
       accountNumber
     );
 
-    const { technicalConsultant, financialConsultant, projectPointOfContact } =
+    const { technicalConsultant, projectPointOfContact } =
       await this.keyContactService.calculateKeyContactDetails(
         projectData.keyContacts,
         this.mainDbSequelize
@@ -902,7 +886,6 @@ class ProjectIngestionService {
       startDate,
       endDate,
       technicalConsultant,
-      financialConsultant,
       projectPointOfContact
     );
 
@@ -971,14 +954,33 @@ class ProjectIngestionService {
       "total_cost_subcon",
       "total_cost_nonlabor",
       "assessment_status",
-      "qre_final",
-      "qre_potential",
+      "qre",
       "project_point_of_contact",
       "technical_point_of_contact",
       "comments",
       "modified_datetime",
       "r_number",
     ];
+
+    const fiscalFieldMap: Record<string, string> = {
+      total_cost: "total_cost_prj",
+      total_cost_fte: "total_cost_fte_prj",
+      total_cost_subcon: "total_cost_subcon_prj",
+      total_cost_nonlabor: "total_cost_nonlabor_prj",
+      total_effort: "total_effort_prj",
+      total_fte: "total_fte_prj",
+      modified_datetime: "modified_datetime",
+      assessment_status: "assessment_status",
+      qre_final: "qre_final",
+      r_number: "r_number",
+      comments: "comments",
+      project_group: "project_group",
+      project_client_group: "project_client_group",
+      fiscal_year: "fiscal_year",
+      project_type: "project_type",
+      project_name: "project_name",
+      project_code: "project_code"
+    };
 
     const parentFilters: Record<string, any> = {};
 
@@ -995,8 +997,14 @@ class ProjectIngestionService {
 
     const whereFiscal: Record<string, any> = {
       account_rid: accountData.rid,
-      ...(filters || {}),
     };
+
+    for (const key in filters) {
+      const dbField = fiscalFieldMap[key];
+      if (dbField) {
+        whereFiscal[dbField] = filters[key]; 
+      }
+    }
 
     if (fiscalYear) {
       whereFiscal.fiscal_year = fiscalYear;
@@ -1013,12 +1021,14 @@ class ProjectIngestionService {
         fullOrder.push(["created_datetime", "DESC"]);
       }
 
+      const aliasFilter = fiscalFieldMap[field] !== undefined ? fiscalFieldMap[field] : field;
+
       fullOrder.push([
         { model: ProjectFiscal, as: "ProjectFiscal" },
-        field,
+        aliasFilter,
         direction,
       ]);
-    }
+    };
 
     let { rows: projects, count } = await Project.findAndCountAll({
       where: whereProject,
@@ -1034,6 +1044,48 @@ class ProjectIngestionService {
             account_rid: accountData.rid,
             ...whereFiscal,
           },
+          attributes: [
+            "rid",
+            "r_number",
+            "project_rid",
+            "eid",
+            "created_datetime",
+            "modified_datetime",
+            "created_by",
+            "modified_by",
+            "project_code",
+            "industry_rid",
+            "industry_name",
+            "fiscal_year",
+            "project_name",
+            "program_name",
+            "project_type",
+            "project_classification_rid",
+            "project_classification_other",
+            "project_client_group",
+            "project_group",
+            "auto_send_ai_interaction",
+            "account_rid",
+            "country_rid",
+            "region_rid",
+            "currency_rid",
+            "max_ai_interaction",
+            "expiry_duration",
+            "auto_access_rd",
+            "project_status",
+            "project_startdate",
+            "project_enddate",
+            "qre_final",
+            "comments",
+            ["total_fte_prj", "total_fte"],
+            "total_subcon_prj",
+            "total_nonlabor_prj",
+            ["total_effort_prj", "total_effort"],
+            ["total_cost_prj", "total_cost"],
+            ["total_cost_fte_prj", "total_cost_fte"],
+            ["total_cost_subcon_prj", "total_cost_subcon"],
+            ["total_cost_nonlabor_prj", "total_cost_nonlabor"]
+          ]
         },
       ],
     });
@@ -1101,14 +1153,33 @@ class ProjectIngestionService {
       "total_cost_subcon",
       "total_cost_nonlabor",
       "assessment_status",
-      "qre_final",
-      "qre_potential",
+      "qre",
       "project_point_of_contact",
       "technical_point_of_contact",
       "comments",
       "modified_datetime",
       "r_number",
     ];
+
+    const fiscalFieldMap: Record<string, string> = {
+      total_cost: "total_cost_prj",
+      total_cost_fte: "total_cost_fte_prj",
+      total_cost_subcon: "total_cost_subcon_prj",
+      total_cost_nonlabor: "total_cost_nonlabor_prj",
+      total_effort: "total_effort_prj",
+      total_fte: "total_fte_prj",
+      modified_datetime: "modified_datetime",
+      assessment_status: "assessment_status",
+      qre_final: "qre_final",
+      r_number: "r_number",
+      comments: "comments",
+      project_group: "project_group",
+      project_client_group: "project_client_group",
+      fiscal_year: "fiscal_year",
+      project_type: "project_type",
+      project_name: "project_name",
+      project_code: "project_code"
+    };
 
     const parentFilters: Record<string, any> = {};
 
@@ -1125,8 +1196,14 @@ class ProjectIngestionService {
 
     const whereFiscal: Record<string, any> = {
       account_rid: accountData.rid,
-      ...(filters || {}),
     };
+
+    for (const key in filters) {
+      const dbField = fiscalFieldMap[key];
+      if (dbField) {
+        whereFiscal[dbField] = filters[key]; 
+      }
+    }
 
     if (fiscalYear) {
       whereFiscal.fiscal_year = fiscalYear;
@@ -1143,12 +1220,14 @@ class ProjectIngestionService {
         fullOrder.push(["created_datetime", "DESC"]);
       }
 
+      const aliasFilter = fiscalFieldMap[field] !== undefined ? fiscalFieldMap[field] : field;
+
       fullOrder.push([
         { model: ProjectFiscal, as: "ProjectFiscal" },
-        field,
+        aliasFilter,
         direction,
       ]);
-    }
+    };
 
     let { rows: projects, count } = await Project.findAndCountAll({
       where: whereProject,
@@ -1162,11 +1241,54 @@ class ProjectIngestionService {
             account_rid: accountData.rid,
             ...whereFiscal,
           },
+          attributes: [
+            "rid",
+            "r_number",
+            "project_rid",
+            "eid",
+            "created_datetime",
+            "modified_datetime",
+            "created_by",
+            "modified_by",
+            "project_code",
+            "industry_rid",
+            "industry_name",
+            "fiscal_year",
+            "project_name",
+            "program_name",
+            "project_type",
+            "project_classification_rid",
+            "project_classification_other",
+            "project_client_group",
+            "project_group",
+            "auto_send_ai_interaction",
+            "account_rid",
+            "country_rid",
+            "region_rid",
+            "currency_rid",
+            "max_ai_interaction",
+            "expiry_duration",
+            "auto_access_rd",
+            "project_status",
+            "project_startdate",
+            "project_enddate",
+            "qre_final",
+            "comments",
+            ["total_fte_prj", "total_fte"],
+            "total_subcon_prj",
+            "total_nonlabor_prj",
+            ["total_effort_prj", "total_effort"],
+            ["total_cost_prj", "total_cost"],
+            ["total_cost_fte_prj", "total_cost_fte"],
+            ["total_cost_subcon_prj", "total_cost_subcon"],
+            ["total_cost_nonlabor_prj", "total_cost_nonlabor"]
+          ]
         },
       ],
     });
 
     if (this.mainDbSequelize) {
+
       let projectData = await this.enrichKeyContactsManually(
         projects,
         accountNumber
@@ -1450,7 +1572,10 @@ class ProjectIngestionService {
                 ProjectFiscal: matchingChildren,
               };
             } else {
-              return null;
+              return {
+                ...project,
+                ProjectFiscal: [],
+              };
             }
           }
         })

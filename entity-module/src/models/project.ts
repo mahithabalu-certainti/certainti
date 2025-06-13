@@ -1,37 +1,45 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { R_NUMBER_PREFIX } from "../utils/constants";
 import { ProjectFiscal } from "./projectFiscal";
-import { KeyContact } from "./keyContactDetails";
 export interface ProjectAttributes {
-  rid?: string;
+  rid: string;
   r_number?: string;
   eid?: string;
   project_code: string;
-  industry_rid: string;
-  industry_name?: string;
+
+  created_datetime?: Date;
+  modified_datetime?: Date;
+  created_by: string;
+  modified_by?: string | null;
+
+  industry_rid: string | null;
+  industry_name?: string | null;
+
   account_rid: string;
-  account_fiscal_rid?: string | null;
+
   program_name?: string | null;
   project_name?: string | null;
 
   project_startdate?: Date | null;
   project_enddate?: Date | null;
+
   project_type: "Fixed" | "Time & Material";
   project_classification_rid?: string | null;
   project_classification_other?: string | null;
+
   project_client_group?: string | null;
   project_group?: string | null;
-  project_status: "Active" | "Inactive";
-  country?: string | null;
-  region?: string | null;
-  comments?: string | null;
-  currency?: string | null;
 
-  total_fte?: number | null;
-  total_subcon?: number | null;
+  project_status: "Active" | "Inactive";
+
+  country_rid?: string | null;
+  region_rid?: string | null;
+  currency_rid?: string | null;
 
   total_effort?: number | null;
   total_cost?: number | null;
+  total_fte?: number | null;
+  total_subcon?: number | null;
 
   total_effort_fte?: number | null;
   total_effort_subcon?: number | null;
@@ -39,43 +47,6 @@ export interface ProjectAttributes {
   total_cost_fte?: number | null;
   total_cost_subcon?: number | null;
   total_cost_nonlabor?: number | null;
-
-  total_fte_prj_res?: number | null;
-  total_subcon_prj_res?: number | null;
-
-  total_effort_prj_res?: number | null;
-  total_effort_fte_prj_res?: number | null;
-  total_effort_subcon_prj_res?: number | null;
-
-  total_cost_prj_res?: number | null;
-  total_cost_fte_prj_res?: number | null;
-  total_cost_subcon_prj_res?: number | null;
-  total_cost_nonlabor_prj_res?: number | null;
-
-  total_fte_prj_task?: number | null;
-  total_subcon_prj_task?: number | null;
-
-  total_effort_prj_task?: number | null;
-  total_effort_fte_prj_task?: number | null;
-  total_effort_subcon_prj_task?: number | null;
-
-  total_cost_prj_task?: number | null;
-  total_cost_fte_prj_task?: number | null;
-  total_cost_subcon_prj_task?: number | null;
-  total_cost_nonlabor_prj_task?: number | null;
-
-  qre_potential?: number | null;
-  qre_adjustment?: number | null;
-  qre_final?: number | null;
-  qre_cost_total?: number | null;
-  qre_cost_fte?: number | null;
-  qre_cost_subcon?: number | null;
-  qre_cost_nonlabor?: number | null;
-
-  rd_credits_total?: number | null;
-  rd_credits_fte?: number | null;
-  rd_credits_subcon?: number | null;
-  rd_credits_nonlabor?: number | null;
 
   auto_send_ai_interaction: boolean;
   auto_access_rd?: boolean;
@@ -85,12 +56,13 @@ export interface ProjectAttributes {
   blended_rate_subcon?: number | null;
   blended_rate?: number | null;
 
-  assessment_status?: string | null;
+  project_description?: string | null;
+  comments?: string | null;
 
-  created_datetime?: Date;
-  modified_datetime?: Date;
-  created_by: string;
-  modified_by?: string | null;
+  is_rd_qualified?: boolean;
+  qre?: number | null;
+
+  assessment_status?: string | null;
 }
 
 interface ProjectCreationAttributes
@@ -100,35 +72,44 @@ export class Project
   extends Model<ProjectAttributes, ProjectCreationAttributes>
   implements ProjectAttributes
 {
-  public rid?: string;
+  public rid!: string;
   public r_number?: string;
   public eid?: string;
   public project_code!: string;
+
+  public created_datetime?: Date;
+  public modified_datetime?: Date;
+  public created_by!: string;
+  public modified_by?: string | null;
+
   public industry_rid!: string;
   public industry_name?: string;
+
   public account_rid!: string;
-  public account_fiscal_rid?: string | null;
+
   public program_name?: string | null;
   public project_name?: string | null;
 
   public project_startdate?: Date | null;
   public project_enddate?: Date | null;
+
   public project_type!: "Fixed" | "Time & Material";
   public project_classification_rid?: string | null;
   public project_classification_other?: string | null;
+
   public project_client_group?: string | null;
   public project_group?: string | null;
-  public project_status!: "Active" | "Inactive";
-  public country?: string | null;
-  public region?: string | null;
-  public comments?: string | null;
-  public currency?: string | null;
 
-  public total_fte?: number | null;
-  public total_subcon?: number | null;
+  public project_status!: "Active" | "Inactive";
+
+  public country_rid?: string | null;
+  public region_rid?: string | null;
+  public currency_rid?: string | null;
 
   public total_effort?: number | null;
   public total_cost?: number | null;
+  public total_fte?: number | null;
+  public total_subcon?: number | null;
 
   public total_effort_fte?: number | null;
   public total_effort_subcon?: number | null;
@@ -136,43 +117,6 @@ export class Project
   public total_cost_fte?: number | null;
   public total_cost_subcon?: number | null;
   public total_cost_nonlabor?: number | null;
-
-  public total_fte_prj_res?: number | null;
-  public total_subcon_prj_res?: number | null;
-
-  public total_effort_prj_res?: number | null;
-  public total_effort_fte_prj_res?: number | null;
-  public total_effort_subcon_prj_res?: number | null;
-
-  public total_cost_prj_res?: number | null;
-  public total_cost_fte_prj_res?: number | null;
-  public total_cost_subcon_prj_res?: number | null;
-  public total_cost_nonlabor_prj_res?: number | null;
-
-  public total_fte_prj_task?: number | null;
-  public total_subcon_prj_task?: number | null;
-
-  public total_effort_prj_task?: number | null;
-  public total_effort_fte_prj_task?: number | null;
-  public total_effort_subcon_prj_task?: number | null;
-
-  public total_cost_prj_task?: number | null;
-  public total_cost_fte_prj_task?: number | null;
-  public total_cost_subcon_prj_task?: number | null;
-  public total_cost_nonlabor_prj_task?: number | null;
-
-  public qre_potential?: number | null;
-  public qre_adjustment?: number | null;
-  public qre_final?: number | null;
-  public qre_cost_total?: number | null;
-  public qre_cost_fte?: number | null;
-  public qre_cost_subcon?: number | null;
-  public qre_cost_nonlabor?: number | null;
-
-  public rd_credits_total?: number | null;
-  public rd_credits_fte?: number | null;
-  public rd_credits_subcon?: number | null;
-  public rd_credits_nonlabor?: number | null;
 
   public auto_send_ai_interaction!: boolean;
   public auto_access_rd?: boolean;
@@ -182,12 +126,13 @@ export class Project
   public blended_rate_subcon?: number | null;
   public blended_rate?: number | null;
 
-  public assessment_status?: string | null;
+  public project_description?: string | null;
+  public comments?: string | null;
 
-  public created_datetime?: Date;
-  public modified_datetime?: Date;
-  public created_by!: string;
-  public modified_by?: string | null;
+  public is_rd_qualified?: boolean;
+  public qre?: number | null;
+
+  public assessment_status?: string | null;
 
   static initialize(sequelize: Sequelize, schemaName: string) {
     const model = Project.init(
@@ -203,11 +148,26 @@ export class Project
           unique: true,
         },
         eid: {
+          type: DataTypes.STRING(120),
+          allowNull: true,
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+        },
+        created_by: {
+          type: DataTypes.UUID,
+          allowNull: false,
+        },
+        modified_by: {
           type: DataTypes.UUID,
           allowNull: true,
         },
         project_code: {
-          type: DataTypes.STRING(50),
+          type: DataTypes.STRING(120),
           allowNull: false,
         },
         industry_rid: {
@@ -221,10 +181,6 @@ export class Project
         account_rid: {
           type: DataTypes.UUID,
           allowNull: false,
-        },
-        account_fiscal_rid: {
-          type: DataTypes.UUID,
-          allowNull: true,
         },
         program_name: {
           type: DataTypes.STRING(255),
@@ -260,15 +216,15 @@ export class Project
           type: DataTypes.ENUM("Active", "Inactive"),
           allowNull: false,
         },
-        country: {
+        country_rid: {
           type: DataTypes.UUID,
           allowNull: true,
         },
-        region: {
+        region_rid: {
           type: DataTypes.UUID,
           allowNull: true,
         },
-        currency: {
+        currency_rid: {
           type: DataTypes.UUID,
           allowNull: true,
         },
@@ -276,56 +232,24 @@ export class Project
           type: DataTypes.STRING(2000),
           allowNull: true,
         },
-
+        project_description: {
+          type: DataTypes.STRING(2000),
+          allowNull: true,
+        },
         assessment_status: {
           type: DataTypes.STRING(150),
-          allowNull: true
+          allowNull: true,
         },
 
         total_fte: DataTypes.INTEGER,
         total_subcon: DataTypes.INTEGER,
-
         total_effort: DataTypes.DECIMAL(18, 2),
         total_cost: DataTypes.DECIMAL(18, 2),
-
         total_effort_fte: DataTypes.DECIMAL(18, 2),
         total_effort_subcon: DataTypes.DECIMAL(18, 2),
         total_cost_fte: DataTypes.DECIMAL(18, 2),
         total_cost_subcon: DataTypes.DECIMAL(18, 2),
         total_cost_nonlabor: DataTypes.DECIMAL(18, 2),
-
-        total_fte_prj_res: DataTypes.INTEGER,
-        total_subcon_prj_res: DataTypes.INTEGER,
-        total_effort_prj_res: DataTypes.DECIMAL(18, 2),
-        total_effort_fte_prj_res: DataTypes.DECIMAL(18, 2),
-        total_effort_subcon_prj_res: DataTypes.DECIMAL(18, 2),
-        total_cost_prj_res: DataTypes.DECIMAL(18, 2),
-        total_cost_fte_prj_res: DataTypes.DECIMAL(18, 2),
-        total_cost_subcon_prj_res: DataTypes.DECIMAL(18, 2),
-        total_cost_nonlabor_prj_res: DataTypes.DECIMAL(18, 2),
-
-        total_fte_prj_task: DataTypes.INTEGER,
-        total_subcon_prj_task: DataTypes.INTEGER,
-        total_effort_prj_task: DataTypes.DECIMAL(18, 2),
-        total_effort_fte_prj_task: DataTypes.DECIMAL(18, 2),
-        total_effort_subcon_prj_task: DataTypes.DECIMAL(18, 2),
-        total_cost_prj_task: DataTypes.DECIMAL(18, 2),
-        total_cost_fte_prj_task: DataTypes.DECIMAL(18, 2),
-        total_cost_subcon_prj_task: DataTypes.DECIMAL(18, 2),
-        total_cost_nonlabor_prj_task: DataTypes.DECIMAL(18, 2),
-
-        qre_potential: DataTypes.DECIMAL(18, 2),
-        qre_adjustment: DataTypes.DECIMAL(18, 2),
-        qre_final: DataTypes.DECIMAL(18, 2),
-        qre_cost_total: DataTypes.DECIMAL(18, 2),
-        qre_cost_fte: DataTypes.DECIMAL(18, 2),
-        qre_cost_subcon: DataTypes.DECIMAL(18, 2),
-        qre_cost_nonlabor: DataTypes.DECIMAL(18, 2),
-
-        rd_credits_total: DataTypes.DECIMAL(18, 2),
-        rd_credits_fte: DataTypes.DECIMAL(18, 2),
-        rd_credits_subcon: DataTypes.DECIMAL(18, 2),
-        rd_credits_nonlabor: DataTypes.DECIMAL(18, 2),
 
         auto_send_ai_interaction: {
           type: DataTypes.BOOLEAN,
@@ -345,21 +269,12 @@ export class Project
         blended_rate_subcon: DataTypes.DECIMAL(18, 2),
         blended_rate: DataTypes.DECIMAL(18, 2),
 
-        created_datetime: {
-          type: DataTypes.DATE,
-          allowNull: false,
-          defaultValue: DataTypes.NOW,
+        is_rd_qualified: {
+          type: DataTypes.BOOLEAN,
+          allowNull: true,
         },
-        modified_datetime: {
-          type: DataTypes.DATE,
-          defaultValue: DataTypes.NOW,
-        },
-        created_by: {
-          type: DataTypes.UUID,
-          allowNull: false,
-        },
-        modified_by: {
-          type: DataTypes.UUID,
+        qre: {
+          type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },
       },
@@ -373,9 +288,9 @@ export class Project
     );
 
     Project.hasMany(ProjectFiscal, {
-      foreignKey: 'project_rid',
-      sourceKey: 'rid',
-      as: 'ProjectFiscal',
+      foreignKey: "project_rid",
+      sourceKey: "rid",
+      as: "ProjectFiscal",
     });
 
     return model;

@@ -1351,9 +1351,9 @@ class SchemaService {
 
   async insertProjectGeoData(project: any, mainDdSequilze: Sequelize) {
     try {
-      const countryId = project.country;
-      const regionId = project.region;
-      const currencyId = project.currency;
+      const countryId = project.country_rid;
+      const regionId = project.region_rid;
+      const currencyId = project.currency_rid;
 
       let countryRow: any = null;
       let regionRow: any = null;

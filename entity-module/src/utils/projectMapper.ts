@@ -26,9 +26,9 @@ export class ProjectMapper {
       project_group: projectData.project_group || null,
       project_status: projectData.project_status,
       fiscal_year: projectData.fiscal_year,
-      country: projectData.country || null,
-      region: projectData.region || null,
-      currency: projectData.currency || null,
+      country_rid: projectData.country || null,
+      region_rid: projectData.region || null,
+      currency_rid: projectData.currency || null,
       total_effort: projectData.total_effort || null,
       total_cost: projectData.total_cost || null,
       total_fte: Number(projectData.total_fte) || 0,
@@ -45,7 +45,6 @@ export class ProjectMapper {
       blended_rate_subcon: projectData.blended_rate_subcon,
       project_description: projectData.project_description || null,
       created_datetime: new Date(),
-      modified_datetime: new Date(),
       created_by: userId,
       modified_by: projectData.modified_by || null,
       comments: projectData.comments || null,
@@ -61,49 +60,107 @@ export class ProjectMapper {
   ) {
     return {
       project_rid: projectId,
-      eid: null,
+
+      created_datetime: new Date(),
+      created_by: userId,
+      modified_by: userId,
+
       project_code: data.project_code,
       industry_rid: data.industry_rid || null,
       industry_name: data.industry_name || null,
-      account_rid: data.account_id,
-      account_fiscal_rid: null,
-      program_name: data.program_name || null,
-      project_name: data.project_name || null,
       fiscal_year: data.fiscal_year,
+      project_name: data.project_name || null,
+      program_name: data.program_name || null,
+      account_rid: data.account_id,
+
+      country_rid: data.country || null,
+      region_rid: data.region || null,
+      currency_rid: data.currency || null,
+
+      max_ai_interaction: data.max_ai_interaction,
+      expiry_duration: null,
+      auto_access_rd: data.auto_access_rd ?? false,
+
+      project_status: data.project_status || null,
       project_startdate: startDate?.toDate() || null,
       project_enddate: endDate?.toDate() || null,
       project_type: data.project_type,
-      project_classification_rid: data.project_classification_rid || null,
-      project_classification_other: data.project_classification_other || null,
+
       project_client_group: data.project_client_group || null,
       project_group: data.project_group || null,
-      project_status: data.project_status || null,
-      country: data.country || null,
-      region: data.region || null,
-      comments: data.comments || "",
-      currency: data.currency || null,
-
-      total_fte: data.total_fte || 0,
-      total_subcon: data.total_subcon || 0,
-      total_effort: data.total_effort || null,
-      total_cost: data.total_cost || null,
-      total_effort_fte: data.total_effort_fte || null,
-      total_effort_subcon: data.total_effort_subcon || null,
-      total_cost_fte: data.total_cost_fte || null,
-      total_cost_subcon: data.total_cost_subcon || null,
-      total_cost_nonlabor: data.total_cost_nonlabor || null,
+      project_classification_rid: data.project_classification_rid || null,
+      project_classification_other: data.project_classification_other || null,
 
       auto_send_ai_interaction: data.auto_send_ai_interaction,
-      auto_access_rd: data.auto_access_rd ?? false,
-      max_ai_interaction: data.max_ai_interaction,
+
+      total_fte_prj: data.total_fte || null,
+      total_subcon_prj: data.total_subcon || null,
+      total_nonlabor_prj: data.total_cost_nonlabor || null,
+      total_effort_prj: data.total_effort || null,
+      total_cost_prj: data.total_cost || null,
+
+      total_effort_fte_prj: data.total_effort_fte || null,
+      total_effort_subcon_prj: data.total_effort_subcon || null,
+      total_cost_fte_prj: data.total_cost_fte || null,
+      total_cost_subcon_prj: data.total_cost_subcon || null,
+
+      total_fte_from_prj_res: null,
+      total_subcon_from_prj_res: null,
+      total_nonlabor_from_prj_res: null,
+      total_resources_prj: null,
+      total_resources_from_prj_res: null,
+      total_resources_from_tasks: null,
+      total_effort_from_prj_res: null,
+      total_effort_fte_from_prj_res: null,
+      total_effort_subcon_from_prj_res: null,
+      total_cost_from_prj_res: null,
+      total_cost_fte_from_prj_res: null,
+      total_cost_subcon_from_prj_res: null,
+      total_cost_nonlabor_from_prj_res: null,
+
+      total_fte_from_tasks: null,
+      total_subcon_from_tasks: null,
+      total_effort_from_tasks: null,
+      total_effort_fte_from_tasks: null,
+      total_effort_subcon_from_tasks: null,
+      total_cost_fte_from_tasks: null,
+      total_cost_subcon_from_tasks: null,
+      total_cost_from_tasks: null,
+
+      total_cost_prj_blended: null,
+      total_cost_fte_prj_blended: null,
+      total_cost_subcon_prj_blended: null,
+      total_cost_from_prj_res_blended: null,
+      total_cost_fte_from_prj_res_blended: null,
+      total_cost_subcon_from_prj_res_blended: null,
+      total_cost_from_tasks_blended: null,
+      total_cost_fte_from_tasks_blended: null,
+      total_cost_subcon_from_tasks_blended: null,
 
       blended_rate_fte: data.blended_rate_fte || null,
       blended_rate_subcon: data.blended_rate_subcon || null,
 
-      created_datetime: new Date(),
-      modified_datetime: new Date(),
-      created_by: userId,
-      modified_by: userId,
+      rd_percent_potential_ai: null,
+      rd_percent_adjustment: null,
+      rd_percent_final: null,
+
+      qre_fte: null,
+      qre_subcon: null,
+      qre_nonlabor: null,
+      qre_final: null,
+
+      rd_credits_fte_fed_level: null,
+      rd_credits_subcon_fed_level: null,
+      rd_credits_nonlabor_fed_level: null,
+      rd_credits_fed_level: null,
+      rd_credits_total: null,
+
+      interaction_cc_list: null,
+      assessment_status: data.assessment_status || null,
+      claim_status: null,
+
+      comments: data.comments || null,
+      project_description: data.project_description || null,
     };
   }
 
@@ -113,112 +170,192 @@ export class ProjectMapper {
     startDate: moment.Moment | null,
     endDate: moment.Moment | null,
     technicalConsultant: string | null,
-    financialConsultant: string | null,
     projectPointOfContact: string | null
   ) {
     return {
       project_code: projectData.project_code,
-      industry_rid: projectData.industry_rid,
-      industry_name: projectData.industry_name,
-      account_rid: projectData.account_id,
-      program_name: projectData.program_name || null,
-      project_name: projectData.project_name || null,
-      project_startdate: startDate?.toDate() || null,
-      project_enddate: endDate?.toDate() || null,
-      project_status: projectData.project_status,
-      project_type: projectData.project_type,
-      project_client_group: projectData.project_client_group,
-      project_group: projectData.project_group,
-      project_classification_rid: projectData.project_classification_rid,
-      project_classification_other: projectData.project_classification_other,
-      fiscal_year: projectData.fiscal_year,
-      country: projectData.country || null,
-      region: projectData.region || null,
-      currency: projectData.currency || null,
-      total_effort: projectData.total_effort || null,
-      total_cost: projectData.total_cost || null,
-      total_fte: projectData.total_fte || 0,
-      total_subcon: projectData.total_subcon || 0,
-      total_cost_nonlabor: projectData.total_cost_nonlabor || null,
-      total_cost_fte: projectData.total_cost_fte || null,
-      total_cost_subcon: projectData.total_cost_subcon || null,
-      comments: projectData.comments || null,
+      project_rid: project.rid || "",
+
       created_datetime: new Date(),
       modified_datetime: new Date(),
       created_by: projectData.created_by,
       modified_by: projectData.modified_by || null,
-      project_number: project.r_number || "",
-      project_id: project.rid || "",
-      technical_point_of_contact: technicalConsultant,
-      financial_consultant: financialConsultant,
+
+      account_rid: projectData.account_id,
+
+      program_name: projectData.program_name || null,
+      project_name: projectData.project_name || null,
+      project_startdate: startDate?.toDate() || null,
+      project_enddate: endDate?.toDate() || null,
+
+      industry_rid: projectData.industry_rid || null,
+      industry_name: projectData.industry_name || null,
+
+      country_rid: projectData.country || null,
+      region_rid: projectData.region || null,
+      currency_rid: projectData.currency || null,
+
+      project_type: projectData.project_type,
+      project_classification_rid:
+        projectData.project_classification_rid || null,
+      project_classification_other:
+        projectData.project_classification_other || null,
+
+      project_client_group: projectData.project_client_group || null,
+      project_group: projectData.project_group || null,
+      project_status: projectData.project_status || null,
+
+      total_effort: projectData.total_effort || null,
+      total_cost: projectData.total_cost || null,
+
+      total_fte: projectData.total_fte || null,
+      total_subcon: projectData.total_subcon || null,
+
+      total_cost_fte: projectData.total_cost_fte || null,
+      total_cost_subcon: projectData.total_cost_subcon || null,
+      total_cost_nonlabor: projectData.total_cost_nonlabor || null,
+
+      blended_rate_fte: projectData.blended_rate_fte || null,
+      blended_rate_subcon: projectData.blended_rate_subcon || null,
+
+      project_description: projectData.project_description || null,
+      comments: projectData.comments || null,
+
+      is_rd_qualified: projectData.is_rd_qualified ?? false,
+      qre: projectData.qre || null,
+
+      assessment_status: projectData.assessment_status || null,
+
       project_point_of_contact: projectPointOfContact,
+      technical_point_of_contact: technicalConsultant,
     };
   }
 
   static mapToProjectFiscalSummary(
     projectData: ICreateProject,
-    projectId: any,
+    projectId: string,
     startDate: moment.Moment | null,
     endDate: moment.Moment | null,
     technicalConsultant: string | null,
-    financialConsultant: string | null,
     projectPointOfContact: string | null,
     projectFiscalId: string
   ) {
     return {
       project_rid: projectId,
       project_fiscal_rid: projectFiscalId,
-      eid: null,
-      project_code: projectData.project_code,
-      industry_rid: projectData.industry_rid || null,
-      industry_name: projectData.industry_name || null,
-      account_rid: projectData.account_id,
-      account_fiscal_rid: null,
-      program_name: projectData.program_name || null,
-      project_name: projectData.project_name || null,
-      fiscal_year: projectData.fiscal_year,
-      project_startdate: startDate?.toDate() || null,
-      project_enddate: endDate?.toDate() || null,
-      project_type: projectData.project_type,
-      project_classification_rid:
-        projectData.project_classification_rid || null,
-      project_classification_other:
-        projectData.project_classification_other || null,
-      project_client_group: projectData.project_client_group || null,
-      project_group: projectData.project_group || null,
-      project_status: projectData.project_status || null,
-      country: projectData.country || null,
-      region: projectData.region || null,
-      comments: projectData.comments || "",
-      currency: projectData.currency || null,
-
-      total_fte: projectData.total_fte || 0,
-      total_subcon: projectData.total_subcon || 0,
-      total_effort: projectData.total_effort || null,
-      total_cost: projectData.total_cost || null,
-      total_effort_fte: projectData.total_effort_fte || null,
-      total_effort_subcon: projectData.total_effort_subcon || null,
-      total_cost_fte: projectData.total_cost_fte || null,
-      total_cost_subcon: projectData.total_cost_subcon || null,
-      total_cost_nonlabor: projectData.total_cost_nonlabor || null,
-
-      auto_send_ai_interaction: projectData.auto_send_ai_interaction,
-      auto_access_rd: projectData.auto_access_rd ?? false,
-      max_ai_interaction: projectData.max_ai_interaction,
-
-      blended_rate_fte: projectData.blended_rate_fte || null,
-      blended_rate_subcon: projectData.blended_rate_subcon || null,
 
       created_datetime: new Date(),
       modified_datetime: new Date(),
       created_by: projectData.created_by,
-      modified_by: projectData.modified_by,
+      modified_by: projectData.modified_by || null,
 
-      technical_point_of_contact: technicalConsultant,
-      financial_consultant: financialConsultant,
+      project_code: projectData.project_code,
+      industry_rid: projectData.industry_rid || null,
+      industry_name: projectData.industry_name || null,
+
+      fiscal_year: projectData.fiscal_year,
+      project_name: projectData.project_name || null,
+      program_name: projectData.program_name || null,
+
+      account_rid: projectData.account_id,
+
+      country_rid: projectData.country || null,
+      region_rid: projectData.region || null,
+      currency_rid: projectData.currency || null,
+
+      max_ai_interaction: projectData.max_ai_interaction,
+      expiry_duration: null,
+      auto_access_rd: projectData.auto_access_rd ?? false,
+
+      project_status: projectData.project_status || null,
+      project_startdate: startDate?.toDate() || null,
+      project_enddate: endDate?.toDate() || null,
+
+      project_type: projectData.project_type,
+      project_client_group: projectData.project_client_group || null,
+      project_group: projectData.project_group || null,
+      project_classification_rid:
+        projectData.project_classification_rid || null,
+      project_classification_other:
+        projectData.project_classification_other || null,
+
+      auto_send_ai_interaction: projectData.auto_send_ai_interaction,
+
+      total_fte_prj: projectData.total_fte || null,
+      total_subcon_prj: projectData.total_subcon || null,
+      total_nonlabor_prj: null,
+      total_effort_prj: projectData.total_effort || null,
+
+      total_effort_fte_prj: projectData.total_effort_fte || null,
+      total_effort_subcon_prj: projectData.total_effort_subcon || null,
+
+      total_cost_prj: projectData.total_cost || null,
+      total_cost_fte_prj: projectData.total_cost_fte || null,
+      total_cost_subcon_prj: projectData.total_cost_subcon || null,
+      total_cost_nonlabor_prj: projectData.total_cost_nonlabor || null,
+
+      blended_rate_fte: projectData.blended_rate_fte || null,
+      blended_rate_subcon: projectData.blended_rate_subcon || null,
+
+      comments: projectData.comments || null,
+      project_description: projectData.project_description || null,
+
+      total_fte_from_prj_res: null,
+      total_fte_from_tasks: null,
+      total_subcon_from_prj_res: null,
+      total_subcon_from_tasks: null,
+      total_nonlabor_from_prj_res: null,
+      total_resources_prj: null,
+      total_resources_from_prj_res: null,
+      total_resources_from_tasks: null,
+
+      total_effort_from_prj_res: null,
+      total_effort_fte_from_prj_res: null,
+      total_effort_subcon_from_prj_res: null,
+      total_effort_from_tasks: null,
+      total_effort_fte_from_tasks: null,
+      total_effort_subcon_from_tasks: null,
+
+      total_cost_fte_from_prj_res: null,
+      total_cost_subcon_from_prj_res: null,
+      total_cost_nonlabor_from_prj_res: null,
+      total_cost_from_prj_res: null,
+
+      total_cost_fte_from_tasks: null,
+      total_cost_subcon_from_tasks: null,
+      total_cost_from_tasks: null,
+
+      total_cost_prj_blended: null,
+      total_cost_fte_prj_blended: null,
+      total_cost_subcon_prj_blended: null,
+      total_cost_from_prj_res_blended: null,
+      total_cost_fte_from_prj_res_blended: null,
+      total_cost_subcon_from_prj_res_blended: null,
+      total_cost_from_tasks_blended: null,
+      total_cost_fte_from_tasks_blended: null,
+      total_cost_subcon_from_tasks_blended: null,
+
+      rd_percent_potential_ai: null,
+      rd_percent_adjustment: null,
+      rd_percent_final: null,
+
+      qre_fte: null,
+      qre_subcon: null,
+      qre_nonlabor: null,
+      qre_final: null,
+
+      rd_credits_fte_fed_level: null,
+      rd_credits_subcon_fed_level: null,
+      rd_credits_nonlabor_fed_level: null,
+      rd_credits_fed_level: null,
+      rd_credits_total: null,
+
+      interaction_cc_list: null,
+      assessment_status: null,
+      claim_status: null,
+
       project_point_of_contact: projectPointOfContact,
-
-      is_rd_qualified: null,
+      technical_point_of_contact: technicalConsultant,
     };
   }
 
@@ -281,7 +418,7 @@ export class ProjectMapper {
   static mapToProjectFiscalUpdateModel(
     data: IUpdateProject,
     startDate: moment.Moment | null,
-    endDate: moment.Moment | null,
+    endDate: moment.Moment | null
   ) {
     return {
       project_code: data.project_code,
@@ -299,19 +436,19 @@ export class ProjectMapper {
       project_group: data.project_group || null,
       project_status: data.project_status || null,
       country: data.country || null,
-      region: data.region || null,
-      comments: data.comments || "",
-      currency: data.currency || null,
+      region_rid: data.region || null,
+      comments_rid: data.comments || "",
+      currency_rid: data.currency || null,
 
-      total_fte: data.total_fte || 0,
-      total_subcon: data.total_subcon || 0,
-      total_effort: data.total_effort || null,
-      total_cost: data.total_cost || null,
-      total_effort_fte: data.total_effort_fte || null,
-      total_effort_subcon: data.total_effort_subcon || null,
-      total_cost_fte: data.total_cost_fte || null,
-      total_cost_subcon: data.total_cost_subcon || null,
-      total_cost_nonlabor: data.total_cost_nonlabor || null,
+      total_fte_prj: data.total_fte || 0,
+      total_subcon_prj: data.total_subcon || 0,
+      total_effort_prj: data.total_effort || null,
+      total_cost_prj: data.total_cost || null,
+      total_effort_fte_prj: data.total_effort_fte || null,
+      total_effort_subcon_prj: data.total_effort_subcon || null,
+      total_cost_fte_prj: data.total_cost_fte || null,
+      total_cost_subcon_prj: data.total_cost_subcon || null,
+      total_cost_nonlabor_prj: data.total_cost_nonlabor || null,
 
       auto_send_ai_interaction: data.auto_send_ai_interaction,
       auto_access_rd: data.auto_access_rd ?? false,
@@ -330,7 +467,6 @@ export class ProjectMapper {
     startDate: moment.Moment | null,
     endDate: moment.Moment | null,
     technicalConsultant: string | null,
-    financialConsultant: string | null,
     projectPointOfContact: string | null
   ) {
     return {
@@ -350,20 +486,24 @@ export class ProjectMapper {
       project_client_group: projectData.project_client_group || null,
       project_group: projectData.project_group || null,
       project_status: projectData.project_status || null,
-      country: projectData.country || null,
-      region: projectData.region || null,
-      comments: projectData.comments || "",
-      currency: projectData.currency || null,
+      country_rid: projectData.country || null,
+      region_rid: projectData.region || null,
+      currency_rid: projectData.currency || null,
+      comments: projectData.comments || null,
+      project_description: projectData.project_description || null,
 
-      total_fte: projectData.total_fte || 0,
-      total_subcon: projectData.total_subcon || 0,
-      total_effort: projectData.total_effort || null,
-      total_cost: projectData.total_cost || null,
-      total_effort_fte: projectData.total_effort_fte || null,
-      total_effort_subcon: projectData.total_effort_subcon || null,
-      total_cost_fte: projectData.total_cost_fte || null,
-      total_cost_subcon: projectData.total_cost_subcon || null,
-      total_cost_nonlabor: projectData.total_cost_nonlabor || null,
+      total_fte_prj: projectData.total_fte || null,
+      total_subcon_prj: projectData.total_subcon || null,
+      
+      total_effort_prj: projectData.total_effort || null,
+      total_cost_prj: projectData.total_cost || null,
+
+      total_effort_fte_prj: projectData.total_effort_fte || null,
+      total_effort_subcon_prj: projectData.total_effort_subcon || null,
+
+      total_cost_fte_prj: projectData.total_cost_fte || null,
+      total_cost_subcon_prj: projectData.total_cost_subcon || null,
+      total_cost_nonlabor_prj: projectData.total_cost_nonlabor || null,
 
       auto_send_ai_interaction: projectData.auto_send_ai_interaction,
       auto_access_rd: projectData.auto_access_rd ?? false,
@@ -373,10 +513,9 @@ export class ProjectMapper {
       blended_rate_subcon: projectData.blended_rate_subcon || null,
 
       modified_datetime: new Date(),
-      modified_by: projectData.modified_by,
+      modified_by: projectData.modified_by || null,
 
       technical_point_of_contact: technicalConsultant,
-      financial_consultant: financialConsultant,
       project_point_of_contact: projectPointOfContact,
     };
   }
