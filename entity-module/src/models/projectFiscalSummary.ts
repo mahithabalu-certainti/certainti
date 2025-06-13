@@ -1,6 +1,7 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { R_NUMBER_PREFIX } from "../utils/constants";
 import { ProjectSummary } from "./projectSummary";
+
 export interface ProjectFiscalSummaryAttributes {
   rid: string;
   r_number?: string;

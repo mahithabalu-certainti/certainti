@@ -666,7 +666,8 @@ export class ProjectService {
     sortBy: string = "created_datetime",
     sortOrder: string = "ASC",
     globalFilters: Record<string, string[]> = {},
-    userId: string
+    userId: string,
+    bothParentAndChild: boolean,
   ): Promise<{
     statusCode: number;
     message: string;
@@ -702,7 +703,8 @@ export class ProjectService {
           appliedAccountNumber,
           userId,
           search,
-          accountDataSort
+          accountDataSort,
+          bothParentAndChild
         );
 
       return {
@@ -726,6 +728,7 @@ export class ProjectService {
     sortOrder: string = "ASC",
     globalFilters: Record<string, string[]> = {},
     userId: string,
+    bothParentAndChild: boolean,
     timezone: string
   ): Promise<{
     statusCode: number;
@@ -757,7 +760,8 @@ export class ProjectService {
           fiscalYear,
           appliedAccountNumber,
           userId,
-          search
+          search,
+          bothParentAndChild
         );
 
       const formatNumberForExport = (
@@ -780,14 +784,19 @@ export class ProjectService {
       const rawResult = allProjectList || [];
       let exportData = rawResult.map((project: any) => {
         return {
+      rawResult.forEach((project: any) => {
+        // Always add base project data row first
+        exportData.push({
+          "Project Group": project?.project_group || "-",
           "Project Code": project.project_code || "-",
-          "Name": project.project_name || "-",
+          "Project Name": project.project_name || "-", 
           "Project Type": project.project_type || "-",
           "Account Name": project.account_name || "-",
+
+          "Fiscal Year": "-",
           "Project Classification": project.classification_name || "-",
           "Fiscal Year": project.fiscal_year || "-",
           "Customer Group": project.project_client_group || "-",
-          "Project Group": project?.project_group || "-",
           "Project Effort (Hours)": project.total_effort || "-",
           "Project Cost":
             formatNumberForExport(
@@ -816,6 +825,13 @@ export class ProjectService {
               project.qualified_research_expenditure,
               project.currency_symbol
             ) || "-",
+          "Project Cost": formatNumberForExport(project.total_cost, project.currency_symbol) || "-",
+          "FTE Cost": formatNumberForExport(project.total_fte_cost, project.currency_symbol) || "-",
+          "SubCon Cost": formatNumberForExport(project.total_subcon, project.currency_symbol) || "-",
+          "Non-Labor Cost": formatNumberForExport(project.total_cost_nonlabor, project.currency_symbol) || "-",
+          "Assessment Status": project.assessment_status || "-",
+          "QRE%": project.qre || "-",
+          "QRE": "-",
           "Project Point of Contact": project.project_point_of_contact || "-",
           "Technical Point of Contact":
             project.technical_point_of_contact || "-",
@@ -826,7 +842,39 @@ export class ProjectService {
           : moment(project.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
           : '-',
           "Project ID": project.r_number || "-",
-        };
+        });
+
+        // Add fiscal summary rows if they exist
+        const fiscalSummaries = project.project_fiscal_summary || [];
+        if (fiscalSummaries.length > 0) {
+          fiscalSummaries.forEach((fiscal: any) => {
+            exportData.push({
+              "Project Group": fiscal?.project_group || "-",
+              "Project Code": fiscal.project_code || "-",
+              "Project Name": fiscal.project_name || "-",
+              "Project Type": fiscal.project_type || "-",
+              "Account Name": fiscal.account_name || "-", 
+              "Fiscal Year": fiscal.fiscal_year || "-",
+              "Project Classification": fiscal.classification_name || "-",
+              "Customer Group": fiscal.project_client_group || "-",
+              "Project Effort (Hours)": fiscal.total_effort || "-",
+              "Project Cost": formatNumberForExport(fiscal.total_cost, project.currency_symbol) || "-",
+              "FTE Cost": formatNumberForExport(fiscal.total_cost_fte, project.currency_symbol) || "-",
+              "SubCon Cost": formatNumberForExport(fiscal.total_cost_subcon, project.currency_symbol) || "-",
+              "Non-Labor Cost": formatNumberForExport(fiscal.total_cost_nonlabor, project.currency_symbol) || "-",
+              "Assessment Status": fiscal.assessment_status || "-",
+              "QRE%": "-",
+              "QRE": formatNumberForExport(fiscal.qre_final, project.currency_symbol) || "-",
+              "Project Point of Contact": fiscal.project_point_of_contact || "-",
+              "Technical Point of Contact": fiscal.technical_point_of_contact || "-",
+              "Comments": fiscal.comments || "-",
+              "Last Modified": fiscal.modified_datetime
+                ? moment(fiscal.modified_datetime).format('YYYY-MM-DD')
+                : '-',
+              "Project ID": fiscal.r_number || "-",
+            });
+          });
+        }
       });
 
       return {
@@ -1243,6 +1291,66 @@ export class ProjectService {
     }
   }
 
+  async addProjectSummary(
+    projectData: any,
+    project: any,
+    startDate: Moment | null,
+    endDate: Moment | null,
+    keyContacts: any[]
+  ) {
+    try {
+      const mainDbSequlize = await initMainDbSequelize();
+      const ProjectSummaryModel = await ProjectSummary.initialize(
+        mainDbSequlize,
+        ""
+      );
+      // await ProjectSummaryModel.sync({ force: false });
+
+      const {
+        technicalConsultant,
+        financialConsultant,
+        projectPointOfContact,
+      } = await this.calculateKeyContactDetails(keyContacts, mainDbSequlize);
+
+      await ProjectSummaryModel.create({
+        project_code: projectData.project_code,
+        industry_rid: projectData.industry_rid,
+        industry_name: projectData.industry_name,
+        account_rid: projectData.account_id,
+        program_name: projectData.program_name || null,
+        project_name: projectData.project_name || null,
+        project_startdate: startDate?.toDate() || null,
+        project_enddate: endDate?.toDate() || null,
+        project_status: projectData.project_status,
+        project_type: projectData.project_type,
+        project_client_group: projectData.project_client_group,
+        project_group: projectData.project_group,
+        project_classification_rid: projectData.project_classification_rid,
+        project_classification_other: projectData.project_classification_other,
+        country: projectData.country || null,
+        region: projectData.region || null,
+        currency: projectData.currency || null,
+        total_effort: projectData.total_effort || null,
+        total_cost: projectData.total_cost || null,
+        total_fte: projectData.total_fte || 0,
+        total_subcon: projectData.total_sub_con || 0,
+        total_cost_nonlabor: projectData.total_non_labor_cost || null,
+        total_cost_fte: projectData.total_fte_cost || null,
+        total_cost_subcon: projectData.total_sub_con_cost || null,
+        comments: projectData.comments || null,
+        created_datetime: new Date(),
+        modified_datetime: new Date(),
+        created_by: projectData.created_by,
+        modified_by: projectData.modified_by || null,
+        project_rid: project.rid || "",
+        technical_point_of_contact: technicalConsultant,
+        project_point_of_contact: projectPointOfContact,
+      });
+    } catch (err) {
+      throw err;
+    }
+  }
+
   async updateProjectSummary(
     projectData: any,
     startDate: Moment | null,
@@ -1312,7 +1420,7 @@ export class ProjectService {
         },
         {
           where: {
-            project_rid: projectData.project_id,
+            project_rid: projectData.project_rid,
           },
         }
       );
@@ -1413,6 +1521,7 @@ export class ProjectService {
       "currency",
       "qualified_research_expenditure",
       "is_rd_qualified",
+      "qre",
       "fiscal_year",
       "comments",
       "modified_datetime",
@@ -1750,14 +1859,14 @@ export class ProjectService {
       "fiscal_year",
       "account_name",
       "program_name",
-      "qualified_research_expenditure",
       "is_rd_qualified",
       "qre",
+      "qre_final",
       "total_fte",
-      "total_fte_cost",
-      "total_sub_con",
-      "total_sub_con_cost",
-      "total_non_labor_cost",
+      "total_cost_fte",
+      "total_subcon",
+      "total_cost_subcon",
+      "total_cost_nonlabor",
       "comments",
       "country_name",
       "currency_code",

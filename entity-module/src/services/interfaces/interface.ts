@@ -258,7 +258,8 @@ export interface IProjectService {
     sortBy: string,
     sortOrder: string,
     globalFilters: Record<string, string[]>,
-    userId: string
+    userId: string,
+    bothParentAndChild: boolean, 
   ): Promise<{
     statusCode: number;
     message: string;
@@ -295,6 +296,7 @@ export interface IProjectService {
     sortOrder: string,
     globalFilters: Record<string, string[]>,
     userId: string,
+    bothParentAndChild: boolean,
     timezone:string
   ): Promise<{
     statusCode: number;
