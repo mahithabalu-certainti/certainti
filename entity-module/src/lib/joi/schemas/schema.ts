@@ -588,6 +588,7 @@ const listResourceSchema = Joi.object({
     .default("DESC")
     .optional()
     .allow(""),
+  bothParentAndChild: Joi.boolean().default(false),
 });
 
 const exportListResourceSchema = Joi.object({
@@ -606,8 +607,9 @@ const exportListResourceSchema = Joi.object({
     .default("DESC")
     .optional()
     .allow(""),
-  timezone: Joi.string().optional()
-});
+  bothParentAndChild: Joi.boolean().default(false),
+  timezone: Joi.string().optional(),
+  });
 
 const exportResourceSchema = Joi.object({
   fiscalYear: Joi.number().min(1000).max(9999).optional().allow(0).messages({
