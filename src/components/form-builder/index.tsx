@@ -978,7 +978,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         );
       case 'file':
         return (
-          <div className='w-full flex items-center gap-2'>
+          <div className='w-full flex items-center justify-between'>
             <input
               id='upload-logo'
               type={field.type}
@@ -988,7 +988,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               disabled={field.disabled}
               onChange={handleFileChange}
             />
-            <div className='flex items-center w-[72%] sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'>
+            <div className='flex items-center w-[74%] sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'>
               <span
                 className={`${logo && logo.name ? 'text-[#000000]' : 'text-[#7D98B6]'} truncate`}
               >
