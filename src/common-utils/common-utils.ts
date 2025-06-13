@@ -353,7 +353,7 @@ export const REGEX_PATTERNS = {
   MAX_ANNUAL_REVENUE: /^.{1,15}$/,
   MAX_COST_REVENUE: /^.{1,15}$/,
   COST_REGEX: /^(0|([1-9]\d{0,11}))(\.\d{1,2})?$/,
-  NAME_REGEX: /^(?!.*[ '-]{2})[A-Za-z]+(?:['-][A-Za-z]+)*$/,
+  NAME_REGEX: /^[A-Za-z' -]+$/,
   USER_NAME: /^(?!.*['-]{2})(?!.*^\s)(?!.*\s$)[A-Za-z]+(?:['-][A-Za-z]+)*$/,
   STREET_REGEX: /^(?![\W_]+$)(?!\s*$)[a-zA-Z0-9\s,.\-#]+$/,
   MAX_255: /^.{0,255}$/,

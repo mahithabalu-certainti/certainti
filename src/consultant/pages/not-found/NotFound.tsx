@@ -1,18 +1,11 @@
 import { Box } from '@mui/material';
 import React from 'react';
-import { Text } from '../../../components';
-import { useAppTranslation } from '../../../hooks/use-app-translation';
+import { comingSoon } from '../../../assets';
 
 export const NotFound: React.FC = () => {
-  const t = useAppTranslation();
   return (
-    <Box className='flex flex-col items-center justify-center min-h-screen'>
-      <Text className='text-[28px] text-primary font-bold'>
-        {t('core', 'notFound.title')}
-      </Text>
-      <Text className='text-[28px] text-primary'>
-        {t('core', 'notFound.message')}
-      </Text>
+    <Box className='flex items-center justify-center h-full'>
+      <img src={comingSoon} alt='comingSoon' />
     </Box>
   );
 };

@@ -1,7 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { costDisplay, valueDisplay } from '../../../../../common-utils';
+import {
+  costDisplay,
+  formatDateToYYYYMMDDWithTime,
+  valueDisplay,
+} from '../../../../../common-utils';
 import { ProjectList } from '../../../../types/project';
-import { formatDateToYYYYMMDD } from '../resources/utils';
 interface TableColumn<T> {
   id: string;
   sortId: string;
@@ -232,9 +234,11 @@ export const getProjectColumns = (
     label: 'Last Modified',
     sortable: true,
     sortId: 'modified_datetime',
-    width: 140,
+    width: 190,
     render: (row: ProjectList) =>
-      row.modified_datetime ? formatDateToYYYYMMDD(row.modified_datetime) : '-',
+      row.modified_datetime
+        ? formatDateToYYYYMMDDWithTime(row.modified_datetime)
+        : '-',
   },
   {
     id: 'r_number',

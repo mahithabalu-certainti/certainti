@@ -13,7 +13,13 @@ import {
   useFetchState,
   useKeyContactRoles,
 } from '../../services/account';
-import { enumValue, FieldType, SelectOption, YesNo } from '../../types';
+import {
+  enumValue,
+  FieldType,
+  KeyContactHeader,
+  OthersEnum,
+  SelectOption,
+} from '../../types';
 import { transformFormData, transformKeyContactsFromAPI } from './utils';
 import { NewProjectData } from '../../types/project';
 import {
@@ -21,14 +27,34 @@ import {
   useUpdateProject,
 } from '../../services/project/project-create-service';
 import { useProjectDetail } from '../../services/project';
-import {
-  othersClassificationId,
-  othersIndustryId,
-} from '../account-create/utils';
 import { STATUS_OPTIONS } from '../../../common-utils';
 import { FormData, newKeyContactFields } from './form-data';
 import { formatDateToYYYYMMDDWithTime } from '../account-details-sidebar/sidebar-pages/resources/utils';
 import SkeletonForm from '../../../components/form-builder/skeleton-form';
+
+const defaultKeyContactHeaders: KeyContactHeader[] = [
+  { name: 'key_contact_name', label: 'Contact Name', width: '190px' },
+  { name: 'key_contact_role', label: 'Role', width: '180px' },
+  { name: 'key_contact_email', label: 'Email', width: '180px' },
+  // { name: 'key_contact_rid', label: 'Key Contact ID', width: '120px' },
+  { name: 'is_primary_contact', label: 'Is Primary Contact?', width: '140px' },
+  {
+    name: 'include_in_communication',
+    label: 'Interaction Recipient?',
+    width: '200px',
+  },
+  // {
+  //   name: 'interaction_cc_recipient',
+  //   label: 'Interaction CC Recipient?',
+  //   width: '200px',
+  // },
+  {
+    name: 'key_contact_status',
+    label: 'Status',
+    width: '140px',
+  },
+  { name: 'button', label: '', width: '35px' },
+];
 
 const ProjectForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -40,6 +66,8 @@ const ProjectForm: React.FC = () => {
   const { successToast } = useToast();
   const location = useLocation();
   const { accountID, projectID } = location.state || {};
+  const breadcrumbs = location.state.breadcrumbs || [];
+  const firstLine = breadcrumbs.map((crumb: any) => crumb.label).join(' > ');
 
   const getProjectData = useProjectDetail(accountID, projectID);
   const account = getProjectData.data?.data?.project;
@@ -151,8 +179,6 @@ const ProjectForm: React.FC = () => {
       existingContacts.forEach(() => {
         fields = [...fields, ...newKeyData];
       });
-    } else {
-      fields = [...newKeyData];
     }
 
     setKeyContacts(fields);
@@ -173,13 +199,11 @@ const ProjectForm: React.FC = () => {
     const groupIndex = Math.floor(fieldIndex / groupSize);
     const startIndex = groupIndex * groupSize;
     if (contactsArr.length <= groupSize) {
-      const newEmptyContact = newKeyContactFields(memoizedRole);
-      contactsArr.splice(0, groupSize, ...newEmptyContact);
+      setKeyContacts([]);
     } else {
       contactsArr.splice(startIndex, groupSize);
+      setKeyContacts(contactsArr);
     }
-
-    setKeyContacts(contactsArr);
   };
 
   const addKeyContactInfo = () => {
@@ -217,10 +241,22 @@ const ProjectForm: React.FC = () => {
       setCurrentCountry(data.fieldValue as string);
     }
     if (data.fieldName === 'industry_rid') {
-      setShowOthersField(data.fieldValue === othersIndustryId);
+      const selectedIndustry = memoizedIndustry.find(
+        (option) => String(option.value) === String(data.fieldValue)
+      );
+
+      setShowOthersField(
+        selectedIndustry?.label.toLowerCase() === OthersEnum.Other
+      );
     }
     if (data.fieldName === 'project_classification_rid') {
-      setShowClassifyOthersField(data.fieldValue === othersClassificationId);
+      const selectedClassification = memoizedClassification.find(
+        (option) => String(option.value) === String(data.fieldValue)
+      );
+
+      setShowClassifyOthersField(
+        selectedClassification?.label.toLowerCase() === OthersEnum.Other
+      );
     }
   };
   useEffect(() => {
@@ -230,15 +266,25 @@ const ProjectForm: React.FC = () => {
   }, [account?.country]);
 
   useEffect(() => {
-    if (account?.industry_rid === othersIndustryId) {
-      setShowOthersField(true);
-    }
-  }, [account?.industry_rid]);
+    const selectedIndustry = memoizedIndustry.find(
+      (option) => String(option.value) === String(account?.industry_rid)
+    );
+
+    setShowOthersField(
+      selectedIndustry?.label.toLowerCase() === OthersEnum.Other
+    );
+  }, [account?.industry_rid, memoizedIndustry]);
+
   useEffect(() => {
-    if (account?.project_classification_rid === othersClassificationId) {
-      setShowClassifyOthersField(true);
-    }
-  }, [account?.project_classification_rid]);
+    const selectedClassification = memoizedClassification.find(
+      (option) =>
+        String(option.value) === String(account?.project_classification_rid)
+    );
+
+    setShowClassifyOthersField(
+      selectedClassification?.label.toLowerCase() === OthersEnum.Other
+    );
+  }, [account?.project_classification_rid, memoizedClassification]);
 
   const formConfig = FormData(
     memoizedContry,
@@ -273,15 +319,11 @@ const ProjectForm: React.FC = () => {
             className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
           />
           <div className='w-[90%]'>
-            {isEditView && (
-              <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F]'>
-                Edit Project
-              </h5>
-            )}
-            <h4
-              className={`${isEditView ? 'text-[14px]' : 'text-[16px]'} font-bold text-[#2D3E4F] ml-2  w-[95%] overflow-ellipsis truncate`}
-            >
-              {isEditView ? projectData.project_name : 'Create Project'}
+            <div className='font-semibold text-[12px] leading-[20px] ml-2 text-[#7D98B6]'>
+              {firstLine}
+            </div>
+            <h4 className='ml-2 font-bold text-[16px] leading-[20px] tracking-[0] text-[#2D3E4F]'>
+              {isEditView ? 'Edit Project' : 'Create Project'}
             </h4>
           </div>
         </div>
@@ -319,15 +361,12 @@ const ProjectForm: React.FC = () => {
             values={
               isEditView && isKeyContactsReady
                 ? { ...projectData }
-                : !isEditView && keyContacts.length > 0
+                : !isEditView
                   ? {
                       project_status: defaultActiveValue,
                       status: defaultActiveValue,
                       auto_send_ai_interaction: enumValue.No,
                       auto_access_rd: enumValue.Yes,
-                      is_primary_contact_0: YesNo.No,
-                      include_in_communication_0: YesNo.No,
-                      key_contact_status_0: defaultActiveValue,
                     }
                   : {}
             }
@@ -337,6 +376,7 @@ const ProjectForm: React.FC = () => {
             keyStart='project_startdate'
             keyEnd='project_enddate'
             layout={Layout.TYPE_1}
+            keyContactHeaders={defaultKeyContactHeaders}
           />
         )}
       </div>

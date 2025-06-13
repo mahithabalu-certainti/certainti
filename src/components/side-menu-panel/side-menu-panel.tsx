@@ -76,13 +76,13 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
     <div className='w-full h-full bg-white border-r border-[#CBD6E2] py-2'>
       {/* Header */}
       <div
-        className={`h-[30px] flex items-center ${isCollapsed ? 'justify-end' : 'justify-between'} gap-1.5 mb-1`}
+        className={`relative h-[30px] flex items-center ${isCollapsed ? 'justify-end' : 'justify-between'} gap-1.5 mb-1`}
       >
-        {!isCollapsed && (
-          <span className='text-[15px] text-[#2D3E4F] font-bold pl-6'>
-            {headerTitle}
-          </span>
-        )}
+        <span
+          className={`text-[15px] text-[#2D3E4F] font-bold ${!isCollapsed ? 'pl-6.5' : 'absolute right-[19px]'}`}
+        >
+          {!isCollapsed ? headerTitle : getShortName(headerTitle)}
+        </span>
         {showBackIcon && (
           <div
             className={`w-[18px] h-[18px] cursor-pointer transform transition-transform ${isCollapsed ? 'rotate-180' : ''}`}
@@ -106,7 +106,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                   activeKey === item.key ? 'bg-[#0BBFB726] !font-bold' : ''
                 } group w-full flex items-center text-[14px] font-semibold gap-2 text-[#2D3E4F] text-left hover:bg-[#0BBFB726] ${
                   item.disabled ? 'cursor-not-allowed' : 'cursor-pointer'
-                } ${isCollapsed ? 'px-2 py-1.5 justify-center' : 'pl-6 py-2 pr-3 justify-start'}`}
+                } ${isCollapsed ? 'px-2 py-1.5 justify-center' : 'pl-6 py-1.5 pr-3 justify-start'}`}
               >
                 <Tooltip
                   title={isCollapsed ? item.name : ''}
@@ -115,23 +115,25 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                   disableHoverListener={!isCollapsed}
                 >
                   <span
-                    className={`${isCollapsed ? 'bg-[#FFFFFF] rounded-full flex items-center justify-center w-[24px] h-[24px]' : ''}`}
+                    className={
+                      'flex items-center justify-center w-[22px] h-[22px]'
+                    }
                   >
-                    {isCollapsed ? (
-                      item.icon ? (
-                        <span className='flex items-center justify-center w-4 h-4'>
-                          {item.icon}
-                        </span>
-                      ) : (
-                        <span className='uppercase text-[12px]'>
-                          {getShortName(item.name)}
-                        </span>
-                      )
+                    {item.icon ? (
+                      <span className='flex items-center justify-center w-4 h-4'>
+                        {item.icon}
+                      </span>
                     ) : (
-                      item.name
+                      <span className='uppercase text-[12px]'>
+                        {getShortName(item.name)}
+                      </span>
                     )}
                   </span>
                 </Tooltip>
+                {/* Show text only in expanded view */}
+                {!isCollapsed && (
+                  <span className='flex-1 truncate'>{item.name}</span>
+                )}
                 {!isCollapsed && (
                   <img
                     src={adminSubmenuActiveIcon}

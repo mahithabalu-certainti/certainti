@@ -8,6 +8,9 @@ export type ManageUser = {
   email: string;
   profile: string;
   status: 'Active' | 'Inactive';
+  created_datetime: string;
+  modified_datetime: string;
+  role: string;
 };
 
 export interface UserTableColumn<T> {
@@ -41,6 +44,7 @@ export interface UserListParams {
   filters?: Filters;
   searchTerm?: string;
   exportKey?: string;
+  timezone?: string;
 }
 
 // User Profile Type
@@ -62,6 +66,8 @@ export interface User {
   first_name: string;
   profile: UserProfile;
   business_teams: BusinessTeams;
+  created_datetime: string;
+  modified_datetime: string;
 }
 
 export interface Profile {

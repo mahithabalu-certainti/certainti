@@ -413,12 +413,12 @@ export const AccFormData = (
             radioOptions: YES_NO_OPTIONS,
             required: true,
           }),
-          createTextField('max_ai_interactions', 'Max Interaction follow up', {
+          createTextField('max_ai_interactions', 'Max Interaction Follow Up', {
             required: true,
             regex: REGEX_PATTERNS.MAX_AI_INTERACTIONS,
             regexErrorMessage:
-              'Max interaction Follow up must be between 1 and 10',
-            placeholder: 'Enter Max interaction Follow up',
+              'Max Interaction Follow Up must be between 1 and 10',
+            placeholder: 'Enter Max Interaction Follow Up',
           }),
           createRadioField('data_storage', 'Data Residency', {
             required: true,

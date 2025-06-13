@@ -140,6 +140,10 @@ export enum YesNo {
   No = 'no',
 }
 
+export enum OthersEnum {
+  Other = 'other',
+}
+
 export enum enumValue {
   Yes = 'Yes',
   No = 'No',
