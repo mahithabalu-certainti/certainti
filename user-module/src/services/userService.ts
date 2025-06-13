@@ -1409,17 +1409,18 @@ const rawResult = users || [];
   ) {
     const order: any[] = [];
 
-    if (sortBy !== "$profile.profile_name$") {
-      order.push([sortBy, sortOrder]);
-    }
-
-    if (sortBy === "$profile.profile_name$") {
-      order.push([
-        { model: Profile, as: "profile" },
-        "profile_name",
-        sortOrder,
-      ]);
-      order.push(["first_name", "asc"]);
+    if (sortBy === "$business_teams.business_teams$") {
+        order.push(
+          [{ model: BusinessTeams, as: "business_teams" }, "business_teams", sortOrder],
+          ["first_name", "asc"]
+        );
+    } else if (sortBy === "$profile.profile_name$") {
+        order.push(
+          [{ model: Profile, as: "profile" }, "profile_name", sortOrder],
+          ["first_name", "asc"]
+        );
+    } else {
+        order.push([sortBy, sortOrder]);
     }
 
     const { count, rows } = await User.findAndCountAll({
