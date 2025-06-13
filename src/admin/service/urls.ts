@@ -42,6 +42,7 @@ export const getUserExportUrl = (params: UserListParams = {}): string => {
     sortBy: params.sortBy || 'createdAt',
     sortOrder: params.sortOrder || 'DESC',
     filters: params.filters,
+    timezone: params.timezone,
   };
 
   return `/api/user/export?${buildQueryString(queryParams)}`;

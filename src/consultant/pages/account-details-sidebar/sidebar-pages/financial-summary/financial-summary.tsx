@@ -7,6 +7,8 @@
 // import SummaryTab from './tab/summary';
 // import { a11yProps } from './utils';
 
+import { comingSoon } from '../../../../../assets';
+
 // const FinancialSummary = () => {
 //   // State for current tab
 //   const [currentTab, setCurrentTab] = useState(0);
@@ -85,8 +87,8 @@
 
 const FinancialSummary = () => {
   return (
-    <div className='p-6'>
-      <h1 className='text-2xl font-bold mb-4'>FinancialSummary</h1>
+    <div className='flex items-center justify-center h-full'>
+      <img src={comingSoon} alt='comingSoon' />
     </div>
   );
 };

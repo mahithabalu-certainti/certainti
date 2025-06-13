@@ -46,8 +46,8 @@ const InfoSection: React.FC<InfoSectionProps> = ({
     return value;
   };
 
-  const loadingRows = singleLineView ? 1 : 2;
-  const totalColumns = Array.isArray(columns) ? columns.length : 3;
+  const loadingRows = 1;
+  const totalColumns = 3;
 
   if (error) {
     return (

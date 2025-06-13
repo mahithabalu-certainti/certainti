@@ -12,7 +12,11 @@ import TextButton from '../../../../components/button/text-button';
 import { ADMIN_CREATE_USER, ADMIN_MANAGE_USER } from '../../../../routes';
 import { UserTable } from '../table/user-table';
 import { getUserFilterFields } from './helpers';
-import { exportUserList, useManageUserProfile } from '../../../service';
+import {
+  exportUserList,
+  useManageUserProfile,
+  useManageUserRole,
+} from '../../../service';
 import { UserListParams } from '../../../types/manage-user';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
@@ -45,6 +49,8 @@ const UserList: React.FC = () => {
   const [refreshUserTrigger, setRefreshUserTrigger] = useState<number>(
     Date.now()
   );
+  // const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   const onRefreshClick = () => {
     setRefreshUserTrigger(Date.now());
   };
@@ -169,11 +175,13 @@ const UserList: React.FC = () => {
     {
       label: 'Export',
       onClick: () => exportUserList(tableParams),
+      // onClick: () => exportUserList({ ...tableParams, timezone }),
       hide: !isUserExportEnable,
     },
   ];
 
   const profileList = useManageUserProfile();
+  const userRoles = useManageUserRole();
 
   const userProfiles = useMemo(() => {
     return (
@@ -184,7 +192,16 @@ const UserList: React.FC = () => {
     );
   }, [profileList]);
 
-  const userFilterfields = getUserFilterFields(userProfiles);
+  const memoizeRole = useMemo(
+    () =>
+      userRoles.data?.data.roles.map((role) => ({
+        label: role.business_teams,
+        value: role.business_teams,
+      })) || [],
+    [userRoles.data?.data.roles]
+  );
+
+  const userFilterfields = getUserFilterFields(userProfiles, memoizeRole);
 
   useEffect(() => {
     const saved = getStoredFilters();

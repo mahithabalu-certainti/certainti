@@ -85,6 +85,7 @@ export const AccountDetails = () => {
   );
 
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const defaultTab = searchParams.get('list');
   const [activeKey, setActiveKey] = useState(defaultTab as string);
@@ -132,7 +133,7 @@ export const AccountDetails = () => {
     };
 
     if (exportType === 'project') {
-      exportProjectData(exportType, projectParams);
+      exportProjectData(exportType, { ...projectParams, timezone });
     } else {
       exportData(exportType, exportPayload);
     }
@@ -258,7 +259,11 @@ export const AccountDetails = () => {
       case 'imports':
         return <Import accountDetails={{ ...data, activeKey: 'imports' }} />;
       default:
-        return <div className='p-6'>Page Not Found</div>;
+        return (
+          <div className='flex items-center justify-center h-full'>
+            Page Not Found
+          </div>
+        );
     }
   };
 
@@ -405,7 +410,7 @@ export const AccountDetails = () => {
       />
       <div className='flex flex-1 flex-row w-full'>
         <div
-          className={`flex ${isCollapsed ? 'w-[60px]' : 'w-[200px] min-w-[200px] max-w-[200px]'}`}
+          className={`flex ${isCollapsed ? 'w-[60px]' : 'w-[220px] min-w-[220px] max-w-[220px]'}`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}

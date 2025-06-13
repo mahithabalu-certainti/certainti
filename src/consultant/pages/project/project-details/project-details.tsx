@@ -9,9 +9,12 @@ import {
   checklistIcon,
   detailsIcon,
   financialIcon,
+  interactionsIcon,
   notesSideIcon,
   projectDetailsIcon,
+  projectsSideIcon,
   resourcesIcon,
+  techSummaryIcon,
 } from '../../../../assets';
 import { CircularProgress } from '@mui/material';
 import { useProjectDetail } from '../../../services/project';
@@ -24,6 +27,7 @@ import { AccessRestricted } from '../../../../components/account-restricted';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { checkPermission } from '../../../../common-utils';
+import { NotFound } from '../../not-found';
 
 const sideMenuItems: MenuItem[] = [
   {
@@ -52,18 +56,27 @@ const sideMenuItems: MenuItem[] = [
     key: 'projectsTask',
     id: AllModules.PROJECT_TASK,
     disabled: false,
+    icon: (
+      <img src={projectsSideIcon} alt='projectsSideIcon' className='w-4 h-4' />
+    ),
   },
   {
     name: 'Interactions',
     key: 'interactions',
     id: AllModules.PROJECT_INTERACTIONS,
     disabled: false,
+    icon: (
+      <img src={interactionsIcon} alt='interactionsIcon' className='w-4 h-4' />
+    ),
   },
   {
     name: 'Technical Summary',
     key: 'technicalSummary',
     id: AllModules.PROJECT_TECHNICAL_SUMMARY,
     disabled: false,
+    icon: (
+      <img src={techSummaryIcon} alt='techSummaryIcon' className='w-4 h-4' />
+    ),
   },
   {
     name: 'Cases',
@@ -185,6 +198,10 @@ export const ProjectDetails = () => {
       state: {
         accountID: projectData?.account_rid,
         projectID: projectData?.rid,
+        breadcrumbs: [
+          { label: 'Project' },
+          { label: projectData?.project_code },
+        ],
       },
     });
   };
@@ -208,7 +225,7 @@ export const ProjectDetails = () => {
   const renderContent = () => {
     switch (activeKey) {
       case 'financial':
-        return <div>Financial Highlights</div>;
+        return <NotFound />;
       case 'projectDetails':
         return (
           <ProjectDetailsData
@@ -222,25 +239,29 @@ export const ProjectDetails = () => {
           />
         );
       case 'projectResources':
-        return <div>Project Resources</div>;
+        return <NotFound />;
       case 'projectsTask':
-        return <div>Projects Task</div>;
+        return <NotFound />;
       case 'interactions':
-        return <div>Interactions</div>;
+        return <NotFound />;
       case 'technicalSummary':
-        return <div>Technical Summary</div>;
+        return <NotFound />;
       case 'cases':
-        return <div>Cases</div>;
+        return <NotFound />;
       case 'activities':
-        return <div>Activities</div>;
+        return <NotFound />;
       case 'notes':
-        return <div>Notes</div>;
+        return <NotFound />;
       case 'attachments':
-        return <div>Attachments</div>;
+        return <NotFound />;
       case 'checklists':
-        return <div>Checklists</div>;
+        return <NotFound />;
       default:
-        return <div className='p-6'>Page Not Found</div>;
+        return (
+          <div className='flex items-center justify-center h-full'>
+            Page Not Found
+          </div>
+        );
     }
   };
 
@@ -248,7 +269,7 @@ export const ProjectDetails = () => {
 
   return (
     <div className='flex flex-col h-full'>
-      <div className='flex'>
+      <div className='flex h-[60px]'>
         <PageHeader
           variant='sub'
           placeholder='Name'
@@ -282,7 +303,7 @@ export const ProjectDetails = () => {
       />
       <div className='flex flex-row flex-1 w-full'>
         <div
-          className={`flex ${isCollapsed ? 'w-[60px]' : 'w-[200px] min-w-[200px] max-w-[200px]'}`}
+          className={`flex ${isCollapsed ? 'w-[60px]' : 'w-[220px] min-w-[220px] max-w-[220px]'}`}
         >
           <SideMenuPanel
             menuItems={sideMenuItems}
@@ -294,7 +315,7 @@ export const ProjectDetails = () => {
             onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
           />
         </div>
-        <div className='flex-1  overflow-hidden'>
+        <div className='flex-1 overflow-hidden'>
           {isLoading ? (
             <div className='flex items-center justify-center w-full h-full'>
               <CircularProgress />

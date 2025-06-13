@@ -1343,6 +1343,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               }}
               slotProps={{
                 field: { clearable: !field.disabled },
+                clearButton: {
+                  tabIndex: -1, // disable tab focus for clear button
+                },
+                openPickerButton: {
+                  tabIndex: -1, // prevent focus on calendar icon
+                },
                 day: {
                   sx: {
                     '&.MuiPickersDay-today': {
@@ -1434,6 +1440,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               }}
               slotProps={{
                 field: { clearable: !field.disabled },
+                clearButton: {
+                  tabIndex: -1, // disable tab focus for clear button
+                },
                 textField: {
                   fullWidth: true,
                   size: 'small',

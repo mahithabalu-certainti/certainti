@@ -36,6 +36,7 @@ export const Projects: React.FC = () => {
     Date.now()
   );
   const [sortFilterCount, setSortFilterCount] = useState<number>(0);
+  const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const onRefreshClick = () => {
     setRefreshProjectsTrigger(Date.now()); // unique on every click
@@ -99,6 +100,7 @@ export const Projects: React.FC = () => {
       filters: appliedFilters,
       fiscalYear: tableParams.fiscalYear,
       globalFilters: tableParams.globalFilters,
+      timezone: systemTimezone,
     };
     exportProjectData('projectall', projectParams);
   };

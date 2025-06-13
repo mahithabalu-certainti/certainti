@@ -23,11 +23,16 @@ import {
   useCreateAccount,
   useUpdateAccount,
 } from '../../services/account-create';
-import { AccountFormData, FieldType, SelectOption, YesNo } from '../../types';
+import {
+  AccountFormData,
+  FieldType,
+  OthersEnum,
+  SelectOption,
+  YesNo,
+} from '../../types';
 import { AccFormData, newKeyContactFields } from './form-data';
 import {
   DATA_STORAGE_OPTIONS,
-  othersIndustryId,
   transformFormData,
   transformKeyContactsFromAPI,
 } from './utils';
@@ -140,12 +145,6 @@ export const AccountForm: React.FC = () => {
     }
   }, [accountData.country_rid]);
 
-  useEffect(() => {
-    if (accountData.industry_rid === othersIndustryId) {
-      setShowOthersField(true);
-    }
-  }, [accountData.industry_rid]);
-
   const memoizedContry: SelectOption[] = useMemo(
     () =>
       allCountries.data?.data.country.map((country) => ({
@@ -199,6 +198,16 @@ export const AccountForm: React.FC = () => {
       })) || [],
     [keyContactRoles.data?.data.keyContactRoles]
   );
+
+  useEffect(() => {
+    const selectedIndustry = memoizedIndustry.find(
+      (option) => String(option.value) === String(accountData.industry_rid)
+    );
+
+    setShowOthersField(
+      selectedIndustry?.label.toLowerCase() === OthersEnum.Other
+    );
+  }, [accountData.industry_rid, memoizedIndustry]);
 
   useEffect(() => {
     const existingContacts = account?.accountDetails?.keyContacts || [];
@@ -284,9 +293,12 @@ export const AccountForm: React.FC = () => {
     }
     // show others field if industry is selected as Others
     if (data.fieldName === 'industry_rid') {
-      // others id
+      const selectedIndustry = memoizedIndustry.find(
+        (option) => String(option.value) === String(data.fieldValue)
+      );
+
       setShowOthersField(
-        data.fieldValue === othersIndustryId // others id
+        selectedIndustry?.label.toLowerCase() === OthersEnum.Other
       );
     }
     if (data.fieldName === 'logo') {

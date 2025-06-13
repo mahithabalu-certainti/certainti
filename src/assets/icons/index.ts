@@ -104,6 +104,9 @@ import checklistIcon from './checklist-icon.svg';
 import timeSheetIcon from './timesheet-icon.svg';
 import importsIcon from './imports-icon.svg';
 import attachmentsSideIcon from './attachments-icon.svg';
+import comingSoon from './coming-soon.svg';
+import interactionsIcon from './interactions-icon.svg';
+import techSummaryIcon from './tech-summary.svg';
 
 export {
   accountDetailsIcon,
@@ -137,6 +140,7 @@ export {
   closeCircleIcon,
   closeIcon,
   copyIcon,
+  comingSoon,
   detailsKeyContactErrorIcon,
   keyContactRemoveIcon,
   keyContactAddIcon,
@@ -211,4 +215,6 @@ export {
   checklistIcon,
   timeSheetIcon,
   importsIcon,
+  interactionsIcon,
+  techSummaryIcon,
 };

@@ -8,7 +8,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     return data.map((detail, index) => (
       <div
         key={index}
-        className={`${detail.full ? 'col-span-2 border-t -mt-[1px] bg-[#DCE8FF]' : ''} grid ${detail.full ? 'grid-cols-1' : 'grid-cols-[150px_auto]'} gap-1 items-center border-gray-200 p-2 px-4`}
+        className={`${detail.full ? 'col-span-2 border-t -mt-[1px] bg-[#ECECEC]' : ''} grid ${detail.full ? 'grid-cols-1' : 'grid-cols-[150px_auto]'} gap-1 items-center border-gray-200 p-2 px-4`}
       >
         <div
           className={`text-[14px] text-left ${detail.full ? 'font-semibold text-[#2D3E4F] ' : 'font-medium text-[#425A76]'}`}
