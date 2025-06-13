@@ -947,7 +947,8 @@ export class ProjectService {
     search: string,
     filters: Record<string, any> = {},
     sortBy: string = "created_datetime",
-    sortOrder: string = "ASC"
+    sortOrder: string = "ASC",
+    timezone:string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1133,7 +1134,9 @@ export class ProjectService {
           "Technical Point of Contact": project.technical_point_of_contact || "-",
           "Comments": project.comments || "-",
           "Last Modified": project.modified_datetime
-          ? moment(project.modified_datetime).format('YYYY-MM-DD')
+          ? timezone && isValidTimezone(timezone)
+          ? moment(project.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
+          : moment(project.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
           : '-',
           "Project ID": project.r_number || "-",
         };

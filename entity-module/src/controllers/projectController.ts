@@ -252,7 +252,8 @@ async function exportProjectList(req: Request, res: Response): Promise<void> {
       value.search,
       parsedFilters,
       value.sortBy,
-      value.sortOrder
+      value.sortOrder,
+      value.timezone
     );
 
     if (project.statusCode === HttpStatus.SUCCESS) {
