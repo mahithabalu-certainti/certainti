@@ -275,7 +275,8 @@ export interface IProjectService {
     search: string,
     filters: Record<string, string>,
     sortBy: string,
-    sortOrder: string
+    sortOrder: string,
+    timezone:string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -290,7 +291,7 @@ export interface IProjectService {
     sortOrder: string,
     globalFilters: Record<string, string[]>,
     userId: string,
-    timezone:any
+    timezone:string
   ): Promise<{
     statusCode: number;
     message: string;
