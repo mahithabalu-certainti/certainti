@@ -157,6 +157,8 @@ class UserService {
         middle_name,
         organization,
         phone,
+        is_consultant_firm,
+        org_id
       } = userData;
 
       const repository = this.getAccountRepository();
@@ -187,6 +189,8 @@ class UserService {
           phone,
           modified_by: loggedInUser,
           modified_datetime: new Date(),
+          is_consultant_firm,
+          org_id
         },
         {
           where: {
