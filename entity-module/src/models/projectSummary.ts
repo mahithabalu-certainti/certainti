@@ -2,127 +2,129 @@ import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
 import { R_NUMBER_PREFIX } from "../utils/constants";
 export interface ProjectSummaryAttributes {
   rid?: string;
-  project_rid?: string;
   r_number?: string;
   eid?: string;
- 
+
   project_code: string;
- 
+  project_rid: string;
+
   created_datetime?: Date;
   modified_datetime?: Date;
   created_by: string;
   modified_by?: string | null;
- 
+
   account_rid: string;
- 
+
   program_name?: string | null;
   project_name?: string | null;
   project_startdate?: Date | null;
   project_enddate?: Date | null;
- 
+
+  industry_rid: string | null;
+  industry_name?: string | null;
+
   project_type: "Fixed" | "Time & Material";
   project_classification_rid?: string | null;
   project_classification_other?: string | null;
- 
+
   project_client_group?: string | null;
   project_group?: string | null;
   project_status?: string;
- 
-  total_effort?: number | null;
-  total_cost?: number | null;
- 
-  total_fte?: number | null;
-  total_subcon?: number | null;
- 
-  total_cost_fte?: number | null;
-  total_cost_subcon?: number | null;
-  total_cost_nonlabor?: number | null;
- 
-  blended_rate_fte?: number | null;
-  blended_rate_subcon?: number | null;
-  blended_rate?: number | null;
- 
-  project_description?: string | null;
-  comments?: string | null;
- 
-  is_rd_qualified?: boolean;
-  qre?: number | null;
- 
-  assessment_status?: string | null;
- 
-  project_point_of_contact?: string | null;
-  technical_point_of_contact?: string | null;
-  industry_rid: string;
-  industry_name?: string | null; 
+
   country_rid?: string | null;
   region_rid?: string | null;
   currency_rid?: string | null;
+
+  total_effort?: number | null;
+  total_cost?: number | null;
+
+  total_fte?: number | null;
+  total_subcon?: number | null;
+
+  total_cost_fte?: number | null;
+  total_cost_subcon?: number | null;
+  total_cost_nonlabor?: number | null;
+
+  blended_rate_fte?: number | null;
+  blended_rate_subcon?: number | null;
+  blended_rate?: number | null;
+
+  project_description?: string | null;
+  comments?: string | null;
+
+  is_rd_qualified?: boolean;
+  qre?: number | null;
+
+  assessment_status?: string | null;
+
+  project_point_of_contact?: string | null;
+  technical_point_of_contact?: string | null;
 }
- 
 interface ProjectSummaryCreationAttributes
   extends Optional<ProjectSummaryAttributes, "rid"> {}
- 
 export class ProjectSummary
   extends Model<ProjectSummaryAttributes, ProjectSummaryCreationAttributes>
   implements ProjectSummaryAttributes
 {
   public rid!: string;
-  public project_rid!: string;
   public r_number?: string;
   public eid?: string;
   public project_code!: string;
- 
+  public project_rid!: string;
+
   public created_datetime?: Date;
   public modified_datetime?: Date;
   public created_by!: string;
   public modified_by?: string | null;
- 
+
   public account_rid!: string;
- 
+
   public program_name?: string | null;
   public project_name?: string | null;
- 
+
   public project_startdate?: Date | null;
   public project_enddate?: Date | null;
- 
+
   public project_type!: "Fixed" | "Time & Material";
   public project_classification_rid?: string | null;
   public project_classification_other?: string | null;
- 
+
+  public industry_rid!: string;
+  public industry_name?: string;
+
   public project_client_group?: string | null;
   public project_group?: string | null;
- 
+
   public project_status!: "Active" | "Inactive";
- 
+
+  public country_rid?: string | null;
+  public region_rid?: string | null;
+  public currency_rid?: string | null;
+
   public total_effort?: number | null;
   public total_cost?: number | null;
   public total_fte?: number | null;
   public total_subcon?: number | null;
- 
+
   public total_cost_fte?: number | null;
   public total_cost_subcon?: number | null;
   public total_cost_nonlabor?: number | null;
- 
+
   public blended_rate_fte?: number | null;
   public blended_rate_subcon?: number | null;
   public blended_rate?: number | null;
- 
+
   public project_description?: string | null;
   public comments?: string | null;
- 
+
   public is_rd_qualified?: boolean;
   public qre?: number | null;
- 
+
   public assessment_status?: string | null;
- 
+
   public project_point_of_contact?: string | null;
   public technical_point_of_contact?: string | null;
-  public industry_rid!: string;
-  public industry_name?: string | null; 
-  public country_rid?: string | null;
-  public region_rid?: string | null;
-  public currency_rid?: string | null;
- 
+
   static initialize(sequelize: Sequelize, schemaName: string) {
     ProjectSummary.init(
       {
@@ -130,10 +132,6 @@ export class ProjectSummary
           type: DataTypes.UUID,
           defaultValue: UUIDV4,
           primaryKey: true,
-        },
-        project_rid: {
-          type: DataTypes.UUID,
-          allowNull: false,
         },
         r_number: {
           type: DataTypes.STRING(20),
@@ -161,6 +159,10 @@ export class ProjectSummary
         },
         project_code: {
           type: DataTypes.STRING(120),
+          allowNull: false,
+        },
+        project_rid: {
+          type: DataTypes.UUID,
           allowNull: false,
         },
         account_rid: {
@@ -201,6 +203,14 @@ export class ProjectSummary
           type: DataTypes.ENUM("Active", "Inactive"),
           allowNull: false,
         },
+        industry_rid: {
+          type: DataTypes.UUID,
+          allowNull: true,
+        },
+        industry_name: {
+          type: DataTypes.STRING(100),
+          allowNull: true,
+        },
         comments: {
           type: DataTypes.STRING(2000),
           allowNull: true,
@@ -213,7 +223,18 @@ export class ProjectSummary
           type: DataTypes.STRING(150),
           allowNull: true,
         },
- 
+        country_rid: {
+          type: DataTypes.UUID,
+          allowNull: true,
+        },
+        region_rid: {
+          type: DataTypes.UUID,
+          allowNull: true,
+        },
+        currency_rid: {
+          type: DataTypes.UUID,
+          allowNull: true,
+        },
         total_fte: DataTypes.INTEGER,
         total_subcon: DataTypes.INTEGER,
         total_effort: DataTypes.DECIMAL(18, 2),
@@ -221,11 +242,11 @@ export class ProjectSummary
         total_cost_fte: DataTypes.DECIMAL(18, 2),
         total_cost_subcon: DataTypes.DECIMAL(18, 2),
         total_cost_nonlabor: DataTypes.DECIMAL(18, 2),
- 
+
         blended_rate_fte: DataTypes.DECIMAL(18, 2),
         blended_rate_subcon: DataTypes.DECIMAL(18, 2),
         blended_rate: DataTypes.DECIMAL(18, 2),
- 
+
         is_rd_qualified: {
           type: DataTypes.BOOLEAN,
           allowNull: true,
@@ -242,26 +263,6 @@ export class ProjectSummary
           type: DataTypes.STRING(100),
           allowNull: true,
         },
-        industry_rid: {
-          type: DataTypes.UUID,
-          allowNull: false,
-        },
-        industry_name: {
-          type: DataTypes.STRING(100),
-          allowNull: true,
-        },
-        country_rid: {
-          type: DataTypes.UUID,
-          allowNull: true,
-        },
-        region_rid: {
-          type: DataTypes.UUID,
-          allowNull: true,
-        },
-        currency_rid: {
-          type: DataTypes.UUID,
-          allowNull: true,
-        },
       },
       {
         sequelize,
@@ -271,20 +272,20 @@ export class ProjectSummary
         underscored: true,
       }
     );
- 
+
     return ProjectSummary;
   }
 }
- 
+
 export async function setupProjectSummarySequence(sequelize: Sequelize) {
   try {
     await sequelize.query(
       "CREATE SEQUENCE IF NOT EXISTS project_summary_seq START 1"
     );
- 
+
     await sequelize.query(`ALTER TABLE project_summary
         ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT_SUMMARY} ' || LPAD(nextval('project_summary_seq')::text, 10, '0')`);
- 
+
     console.log("Project summary sequence setup complete");
   } catch (error) {
     console.error("Error setting up Project summary sequence:", error);

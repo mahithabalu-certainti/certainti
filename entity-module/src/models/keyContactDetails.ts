@@ -1,6 +1,6 @@
 import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
-import { Project } from "./project";
 import { R_NUMBER_PREFIX } from "../utils/constants";
+import { ProjectFiscal } from "./projectFiscal";
 
 export interface KeyContactDetailsAttributes {
   rid?: string;
@@ -119,17 +119,11 @@ export class KeyContact
       }
     );
 
-    KeyContact.belongsTo(Project, {
-      foreignKey: 'entity_rid',
-      targetKey: 'rid',
-      as: 'project',
-    });
-
-    Project.hasMany(KeyContact, {
-      foreignKey: 'entity_rid',
-      sourceKey: 'rid',
-      as: 'keyContact',
-    });
+    // KeyContact.belongsTo(ProjectFiscal, {
+    //   foreignKey: 'entity_rid',
+    //   targetKey: 'rid',
+    //   as: 'project',
+    // });
 
     return KeyContact;
   }

@@ -588,7 +588,7 @@ const listResourceSchema = Joi.object({
     .default("DESC")
     .optional()
     .allow(""),
-  bothParentAndChild: Joi.boolean().default(false),
+  bothParentAndChild: Joi.boolean().optional().default(false),
 });
 
 const exportListResourceSchema = Joi.object({
@@ -607,9 +607,9 @@ const exportListResourceSchema = Joi.object({
     .default("DESC")
     .optional()
     .allow(""),
-  bothParentAndChild: Joi.boolean().default(false),
-  timezone: Joi.string().optional(),
-  });
+  bothParentAndChild: Joi.boolean().optional().default(false),
+  timezone: Joi.string().optional()
+});
 
 const exportResourceSchema = Joi.object({
   fiscalYear: Joi.number().min(1000).max(9999).optional().allow(0).messages({
@@ -1171,11 +1171,15 @@ const createProjectSchema = Joi.object({
     "string.pattern.base": "Total Effort must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
@@ -1204,8 +1208,8 @@ const createProjectSchema = Joi.object({
   .optional()
   .allow(null),
   total_fte: Joi.number().greater(0).optional().allow(null),
-  total_sub_con: Joi.number().greater(0).optional().allow(null),
-  total_non_labor_cost: Joi.string()
+  total_subcon: Joi.number().greater(0).optional().allow(null),
+  total_cost_nonlabor: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
     "string.pattern.base": "Total NON Labor Cost must have up to 16 digits before the decimal and up to 2 decimal places",
@@ -1226,41 +1230,49 @@ const createProjectSchema = Joi.object({
   })
   .optional()
   .allow(null),
-  total_fte_effort: Joi.string()
+  total_effort_fte: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
     "string.pattern.base": "Total FTE Effort must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
   })
   .optional()
   .allow(null),
-  total_sub_con_effort: Joi.string()
+  total_effort_subcon: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
     "string.pattern.base": "Total SUB Con Effort must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
   })
   .optional()
   .allow(null),
-  total_fte_cost: Joi.string()
+  total_cost_fte: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
     "string.pattern.base": "Total FTE Cost must have up to 16 digits before the decimal and up to 2 decimal places",
@@ -1281,7 +1293,7 @@ const createProjectSchema = Joi.object({
   })
   .optional()
   .allow(null),
-  total_sub_con_cost: Joi.string()
+  total_cost_subcon: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
     "string.pattern.base": "Total SUB Con Cost must have up to 16 digits before the decimal and up to 2 decimal places",
@@ -1311,28 +1323,36 @@ const createProjectSchema = Joi.object({
     "string.pattern.base": "Blended Rate FTE must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
   })
   .optional()
   .allow(null),
-  blended_rate_sub_con: Joi.string()
+  blended_rate_subcon: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
     "string.pattern.base": "Blended Rate Sub Con must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Blended Rate Sub Con must be a valid positive number",
@@ -1373,7 +1393,7 @@ const createProjectSchema = Joi.object({
 });
 
 const updateProjectSchema = Joi.object({
-  project_id: Joi.string().guid({ version: ["uuidv4"] }).required(),
+  project_fiscal_id: Joi.string().guid({ version: ["uuidv4"] }).required(),
   account_id: Joi.string().guid({ version: ["uuidv4"] }).required(),
   project_code: Joi.string().min(5).max(50).required(),
   program_name: Joi.string().min(4).max(255).optional().allow("").allow(null),
@@ -1427,11 +1447,15 @@ const updateProjectSchema = Joi.object({
     "string.pattern.base": "Total Effort must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
@@ -1461,43 +1485,51 @@ const updateProjectSchema = Joi.object({
   .allow(null),
 
   total_fte: Joi.number().greater(0).optional().allow(null),
-  total_sub_con: Joi.number().greater(0).optional().allow(null),
+  total_subcon: Joi.number().greater(0).optional().allow(null),
   
-  total_fte_effort: Joi.string()
+  total_effort_fte: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
     "string.pattern.base": "Total FTE Effort must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
   })
   .optional()
   .allow(null),
-  total_sub_con_effort: Joi.string()
+  total_effort_subcon: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
     "string.pattern.base": "Total SUB Con Effort must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
   })
   .optional()
   .allow(null),
-  total_fte_cost: Joi.string()
+  total_cost_fte: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
     "string.pattern.base": "Total FTE Cost must have up to 16 digits before the decimal and up to 2 decimal places",
@@ -1518,7 +1550,7 @@ const updateProjectSchema = Joi.object({
   })
   .optional()
   .allow(null),
-  total_sub_con_cost: Joi.string()
+  total_cost_subcon: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
     "string.pattern.base": "Total SUB Con Cost must have up to 16 digits before the decimal and up to 2 decimal places",
@@ -1539,7 +1571,7 @@ const updateProjectSchema = Joi.object({
   })
   .optional()
   .allow(null),
-  total_non_labor_cost: Joi.string()
+  total_cost_nonlabor: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
     "string.pattern.base": "Total NON Labor Cost must have up to 16 digits before the decimal and up to 2 decimal places",
@@ -1571,28 +1603,36 @@ const updateProjectSchema = Joi.object({
     "string.pattern.base": "Blended Rate FTE  must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",
   })
   .optional()
   .allow(null),
-  blended_rate_sub_con: Joi.string()
+  blended_rate_subcon: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
     "string.pattern.base": "Blened Rate SUB Con must have up to 16 digits before the decimal and up to 2 decimal places",
   })
   .custom((value, helpers) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
+    try {
+      const num = new Decimal(value);
+      if (num.lte(0)) {
+        return helpers.error("any.invalid");
+      }
+      return value; 
+    } catch (err) {
       return helpers.error("any.invalid");
     }
-    return num;
   })
   .messages({
     "any.invalid": "Total Effort must be a valid positive number",

@@ -90,7 +90,7 @@ async function updateProject(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const project = await projectService.updateProjectRecords(value, userId);
+    const project = await projectService.updateProject(value, userId);
 
     if (project.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -190,7 +190,8 @@ async function projectList(req: Request, res: Response): Promise<void> {
       value.search,
       parsedFilters,
       value.sortBy,
-      value.sortOrder
+      value.sortOrder,
+      value.bothParentAndChild
     );
 
     if (project.statusCode === HttpStatus.SUCCESS) {
@@ -253,6 +254,7 @@ async function exportProjectList(req: Request, res: Response): Promise<void> {
       parsedFilters,
       value.sortBy,
       value.sortOrder,
+      value.bothParentAndChild,
       value.timezone
     );
 
