@@ -135,3 +135,9 @@ export type AllowedCountry =
   | 'fr';
 
 export type GroupFields = Map<string, string[]>;
+
+export type KeyContactHeader = {
+  name: string;
+  label: string;
+  width: string;
+};
