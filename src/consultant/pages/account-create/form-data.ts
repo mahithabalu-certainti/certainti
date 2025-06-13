@@ -278,18 +278,20 @@ export const AccFormData = (
           }),
           createTextField('organisation_name', 'Org Name', {
             required: true,
-            regex: REGEX_PATTERNS.ACCOUNT_ORG_NAME,
-            regexErrorMessage:
-              'Only letters, numbers, spaces, hyphens, ampersands, periods, apostrophes are allowed',
             placeholder: 'Enter Org Name',
             errorHandling: [
               {
-                regex: REGEX_PATTERNS.MAX_ORG_NAME_LEGNTH,
+                regex: REGEX_PATTERNS.MIN_ORG_NAME_LEGNTH,
+                errorMessage: 'Org Name must be more than 6 characters long',
+              },
+              {
+                regex: REGEX_PATTERNS.MAX_125,
                 errorMessage: 'Maximum length exceeded.',
               },
               {
-                regex: REGEX_PATTERNS.MIN_ORG_NAME_LEGNTH,
-                errorMessage: 'Minimum 7 characters required',
+                regex: REGEX_PATTERNS.ACCOUNT_NAME,
+                errorMessage:
+                  "Only allows letters, numbers, spaces, hyphens (-), ampersands (&), periods (.), apostrophes (') and commas (,)",
               },
             ],
           }),

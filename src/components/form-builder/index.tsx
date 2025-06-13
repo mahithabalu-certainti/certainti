@@ -83,7 +83,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     isOpen: boolean;
     message: string;
     onConfirm: () => void;
-  }>({ isOpen: false, message: '', onConfirm: () => { } });
+  }>({ isOpen: false, message: '', onConfirm: () => {} });
 
   const CommonSkeleton = (
     <Skeleton variant='rounded' width='100%' height={32} />
@@ -149,10 +149,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     // updated default value into constuctFormData
     formData?.forEach((section) => {
       section.fields.forEach((field) => {
-        if (field.assignDefaultValue && field.defaultValue && field.clearValue) {
+        if (
+          field.assignDefaultValue &&
+          field.defaultValue &&
+          field.clearValue
+        ) {
           const { key, matchedValue } = field.clearValue;
           if (constructFormData[key] === matchedValue) {
-            console.log("matchedValue yes");
+            console.log('matchedValue yes');
 
             setConstructFormData((prev) => ({
               ...prev,
@@ -395,8 +399,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         });
       }
 
-
-
       if (field.resetDependsFields?.length) {
         field.resetDependsFields.forEach((fieldEntry) => {
           fieldEntry
@@ -573,7 +575,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                           ...f,
                           disabled:
                             section?.from === 'project' &&
-                              otherStatus === 'active'
+                            otherStatus === 'active'
                               ? true
                               : false,
                         };
@@ -1604,28 +1606,38 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           }
 
           if (field.type === 'file' && logo) {
-            const allowedTypes = [
-              'image/jpeg',
-              'image/jpg', // 'image/jpeg' usually covers .jpg, but sometimes explicit for clarity
+            const allowedMimeTypes = [
               'image/png',
               'image/svg+xml',
+              'image/jpeg',
             ];
-            const maxFileSize = 200 * 1024;
+            const allowedExtensions = ['.png', '.svg', '.jpg'];
+            const maxFileSize = 1 * 1024 * 1024; // 1 MB
 
-            if (logo?.type && !allowedTypes.includes(logo?.type)) {
+            const fileName = logo.name.toLowerCase();
+            const fileExtension = fileName.substring(fileName.lastIndexOf('.'));
+
+            const isExtensionValid = allowedExtensions.includes(fileExtension);
+            const isMimeTypeValid = allowedMimeTypes.includes(logo.type);
+
+            // Reject if MIME type is not valid or if the extension is not exactly .jpg
+            if (
+              !isMimeTypeValid ||
+              !isExtensionValid ||
+              fileExtension === '.jpeg'
+            ) {
               hasError = true;
               return {
                 ...field,
-                error:
-                  'Invalid file type. Only JPG, JPEG, PNG, and SVG are allowed.',
+                error: 'Only PNG, SVG, and JPG  files are allowed.',
               };
             }
 
-            if (logo?.size && logo?.size > maxFileSize) {
+            if (logo.size >= maxFileSize) {
               hasError = true;
               return {
                 ...field,
-                error: 'File size exceeds the limit of 200 KB.',
+                error: 'File size must be less than 1 MB.',
               };
             }
           }
@@ -2240,7 +2252,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                           maxWidth: `${field.width}`,
                           paddingLeft:
                             `${field.type}` === 'iconButton' ||
-                              `${field.type}` === 'radio'
+                            `${field.type}` === 'radio'
                               ? '10px !important'
                               : 'none',
                           verticalAlign:
