@@ -42,15 +42,15 @@ export const FormData = (
                 regex: REGEX_PATTERNS.MAX_64,
                 errorMessage: 'Max length exceeded',
               },
-              {
-                regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_REGEX,
-                errorMessage:
-                  'First name cannot start or end with a space, apostrophe, or hyphen.',
-              },
+              // {
+              //   regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_REGEX,
+              //   errorMessage:
+              //     'Name cannot begin or end with special characters.',
+              // },
               {
                 regex: REGEX_PATTERNS.NAME_REGEX,
                 errorMessage:
-                  "First name must contain only letters, apostrophes (') and hyphens (-).",
+                  "First name must contain only letters, space( ), apostrophes(') and hyphens(-).",
               },
             ],
           }),
@@ -67,14 +67,9 @@ export const FormData = (
                 errorMessage: 'Max length exceeded',
               },
               {
-                regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_REGEX,
-                errorMessage:
-                  'Last name cannot start or end with a space, apostrophe, or hyphen.',
-              },
-              {
                 regex: REGEX_PATTERNS.NAME_REGEX,
                 errorMessage:
-                  "Last name must contain only letters, apostrophes (') and hyphens (-).",
+                  "Last name must contain only letters, space( ), apostrophes(') and hyphens(-).",
               },
             ],
           }),

@@ -90,7 +90,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     { label: 'User Record ID', value: getValueOrDefault(data?.rid) },
     {
       label: 'User ID',
-      value: getValueOrDefault(data?.r_number),
+      value: getValueOrDefault(data?.rid),
     },
     {
       label: 'Created On',

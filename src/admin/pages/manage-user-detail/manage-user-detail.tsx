@@ -5,7 +5,7 @@ import ActionsDropdown from '../../../components/actions-dropdown/actions-dropdo
 import TextButton from '../../../components/button/text-button';
 import { useManageUserDetail } from '../../service/manage-user-detail/manage-user-detail-service';
 import { BUTTON_STYLES, HEADER_STYLES } from './styles';
-import { ADMIN_CREATE_USER } from '../../../routes';
+import { ADMIN_CREATE_USER, ADMIN_MANAGE_USER } from '../../../routes';
 import { UserDetailComponent } from '../../../components';
 import { Skeleton } from '@mui/material';
 import { useSelector } from 'react-redux';
@@ -62,7 +62,8 @@ export const ManageUserDetails: React.FC = () => {
   const MENU_ITEMS = [
     {
       label: 'Assign Permission to User',
-      onClick: () => console.log('user clicked'),
+      onClick: () =>
+        navigate(ADMIN_MANAGE_USER + '/extended-permission/' + userDetail?.rid),
       hide: !isUserAssignPermissionEnable,
     },
     {
