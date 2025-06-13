@@ -35,9 +35,9 @@ export interface IUserData {
   function_group_id?: string;
   phone?: string;
   created_by: string;
-  organization: string
-  is_consultant_firm:boolean
-  org_id:string
+  organization: string;
+  is_consultant_firm:boolean;
+  org_id:string;
 }
 
 export interface IUpdateUserData {
@@ -64,4 +64,7 @@ export interface IUpdateUserData {
   organization: string
   phone?: string;
   modified_by: string;
+  is_consultant_firm:boolean;
+  org_id:string;
+  
 }

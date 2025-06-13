@@ -254,7 +254,8 @@ async function exportProjectList(req: Request, res: Response): Promise<void> {
       parsedFilters,
       value.sortBy,
       value.sortOrder,
-      value.bothParentAndChild
+      value.bothParentAndChild,
+      value.timezone
     );
 
     if (project.statusCode === HttpStatus.SUCCESS) {
@@ -413,7 +414,8 @@ async function exportAllProjectList(req: Request, res: Response): Promise<void> 
       value.sortBy,
       value.sortOrder,
       parsedGlobalFilters,
-      userId
+      userId,
+      value.timezone
     );
 
     if (project.statusCode === HttpStatus.SUCCESS) {

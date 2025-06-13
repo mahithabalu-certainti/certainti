@@ -132,6 +132,7 @@ const exportUserSchema = Joi.object({
   sortBy: Joi.string().default("created_datetime"),
   sortOrder: Joi.string().valid("ASC", "DESC").default("DESC"),
   organization: Joi.string().required().valid(constants.PLATFORM_TWO, constants.PLATFORM_ONE),
+  timezone: Joi.string().optional(),
 });
 
 const listUserByIdSchema = Joi.object({

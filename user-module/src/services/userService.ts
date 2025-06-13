@@ -5,6 +5,8 @@ import { IUpdateUserData, IUserData } from "../utils/types";
 import { Op, Sequelize, IndexHints } from "sequelize";
 import ExcelJS from 'exceljs';
 import { OrganizationLicenses } from "../models/organisationLicense";
+import moment, { Moment } from "moment";
+import "moment-timezone"; 
   const { 
     User, UserDetails, Department, FunctionGroup, Profile, BusinessTeams,
     ProfileMenuAccess, Menu, ProfileModuleAccess, MenuModule, ProfilePermissionAccess, ModulePermission,
@@ -157,6 +159,8 @@ class UserService {
         middle_name,
         organization,
         phone,
+        is_consultant_firm,
+        org_id
       } = userData;
 
       const repository = this.getAccountRepository();
@@ -187,6 +191,8 @@ class UserService {
           phone,
           modified_by: loggedInUser,
           modified_datetime: new Date(),
+          is_consultant_firm,
+          org_id
         },
         {
           where: {
@@ -956,7 +962,7 @@ async getAllUserPermission(userId: string, profileId: string) {
 
     const { count, rows } = await User.findAndCountAll({
       where: whereClause,
-      attributes: ["rid", "email", "status", "first_name"],
+      attributes: ["rid", "email", "status", "first_name","created_datetime","modified_datetime"],
       limit,
       offset,
       order,
@@ -1294,7 +1300,8 @@ async getAllUserPermission(userId: string, profileId: string) {
     filters: Record<string, string>,
     sortBy: string,
     sortOrder: string,
-    organization: string
+    organization: string,
+    timezone:string
   ): Promise<{
     statusCode: number;
     message: string;
@@ -1345,6 +1352,17 @@ const rawResult = users || [];
           "Email": basicUserInfo.email || "-", 
           "Profile": profile?.profile_name || "-",
           "Status": basicUserInfo.status ? (basicUserInfo.status.toLowerCase() === 'active' ? "Active" : "In-Active") : "-",
+          "Role": business_teams.business_teams || "-",
+          "Created Date": basicUserInfo.created_datetime
+          ? timezone && isValidTimezone(timezone)
+          ? moment(basicUserInfo.created_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
+          : moment(basicUserInfo.created_datetime).format('YYYY-MM-DD, hh:mm:ss A')
+          : '-',
+          "Updated Date": basicUserInfo.modified_datetime
+          ? timezone && isValidTimezone(timezone)
+          ? moment(basicUserInfo.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
+          : moment(basicUserInfo.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
+          : '-',
         };
       });
 
@@ -1383,7 +1401,7 @@ const rawResult = users || [];
 
     const { count, rows } = await User.findAndCountAll({
       where: whereClause,
-      attributes: ["rid", "email", "status", "first_name"],
+      attributes: ["rid", "email", "status", "first_name","created_datetime","modified_datetime"],
       order,
       include: [
         {
@@ -1427,6 +1445,11 @@ const rawResult = users || [];
         {
           model: FunctionGroup,
           attributes: ["function_group_name"],
+          required: true,
+        },        {
+          model: BusinessTeams,
+          as: "business_teams",
+          attributes: ["business_teams"],
           required: true,
         },
       ],
@@ -1814,6 +1837,9 @@ if (fieldData.length > 0) {
 
 }
 
+function isValidTimezone(tz: string) {
+  return moment.tz.names().includes(tz);
+}
 
   // Helper function to calculate unique key based on type
 function getPermissionKey(permission: any): string {
