@@ -1533,9 +1533,9 @@ class SchemaService {
         FROM project_summary AS ps
         INNER JOIN account acc ON acc.rid = ps.account_rid 
         LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country 
-        LEFT JOIN state st ON st.rid = ps.region 
-        LEFT JOIN currency curr ON curr.rid = ps.currency 
+        LEFT JOIN country cou ON cou.rid = ps.country_rid 
+        LEFT JOIN state st ON st.rid = ps.region_rid 
+        LEFT JOIN currency curr ON curr.rid = ps.currency_rid 
         LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
         LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD'
         LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid 
@@ -1561,9 +1561,9 @@ class SchemaService {
           FROM project_summary AS ps
           INNER JOIN account acc ON acc.rid = ps.account_rid 
           LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-          LEFT JOIN country cou ON cou.rid = ps.country 
-          LEFT JOIN state st ON st.rid = ps.region 
-          LEFT JOIN currency curr ON curr.rid = ps.currency 
+          LEFT JOIN country cou ON cou.rid = ps.country_rid 
+          LEFT JOIN state st ON st.rid = ps.region_rid 
+          LEFT JOIN currency curr ON curr.rid = ps.currency_rid 
           LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
           WHERE acc.rid IN (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
@@ -1644,9 +1644,9 @@ class SchemaService {
         FROM project_summary AS ps
         INNER JOIN account acc ON acc.rid = ps.account_rid 
         LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country 
-        LEFT JOIN state st ON st.rid = ps.region 
-        LEFT JOIN currency curr ON curr.rid = ps.currency
+        LEFT JOIN country cou ON cou.rid = ps.country_rid 
+        LEFT JOIN state st ON st.rid = ps.region_rid 
+        LEFT JOIN currency curr ON curr.rid = ps.currency_rid
         LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
         LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD' 
         LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid
@@ -1670,9 +1670,9 @@ class SchemaService {
         FROM project_summary AS ps
         INNER JOIN account acc ON acc.rid = ps.account_rid 
         LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country 
-        LEFT JOIN state st ON st.rid = ps.region 
-        LEFT JOIN currency curr ON curr.rid = ps.currency 
+        LEFT JOIN country cou ON cou.rid = ps.country_rid 
+        LEFT JOIN state st ON st.rid = ps.region_rid 
+        LEFT JOIN currency curr ON curr.rid = ps.currency_rid 
         LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid
         ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
       `;
@@ -1803,9 +1803,9 @@ class SchemaService {
         FROM project_summary AS ps
         INNER JOIN account acc ON acc.rid = ps.account_rid 
         LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country 
-        LEFT JOIN state st ON st.rid = ps.region 
-        LEFT JOIN currency curr ON curr.rid = ps.currency
+        LEFT JOIN country cou ON cou.rid = ps.country_rid 
+        LEFT JOIN state st ON st.rid = ps.region_rid 
+        LEFT JOIN currency curr ON curr.rid = ps.currency_rid
         LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
         LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD' 
         LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid  
@@ -1830,9 +1830,9 @@ class SchemaService {
           FROM project_summary AS ps
           INNER JOIN account acc ON acc.rid = ps.account_rid 
           LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-          LEFT JOIN country cou ON cou.rid = ps.country 
-          LEFT JOIN state st ON st.rid = ps.region 
-          LEFT JOIN currency curr ON curr.rid = ps.currency 
+          LEFT JOIN country cou ON cou.rid = ps.country_rid 
+          LEFT JOIN state st ON st.rid = ps.region_rid 
+          LEFT JOIN currency curr ON curr.rid = ps.currency_rid 
           LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
           WHERE acc.rid in (${accountRids}) ${
           fullWhereClause ? "AND " + fullWhereClause : ""
@@ -1911,9 +1911,9 @@ class SchemaService {
         FROM project_summary AS ps
         INNER JOIN account acc ON acc.rid = ps.account_rid 
         LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country 
-        LEFT JOIN state st ON st.rid = ps.region 
-        LEFT JOIN currency curr ON curr.rid = ps.currency
+        LEFT JOIN country cou ON cou.rid = ps.country_rid 
+        LEFT JOIN state st ON st.rid = ps.region_rid 
+        LEFT JOIN currency curr ON curr.rid = ps.currency_rid
         LEFT JOIN currency acc_curr ON acc_curr.rid = acc.currency_rid
         LEFT JOIN currency usd_curr ON usd_curr.currency_code = 'USD' 
         LEFT JOIN project_classification pc on pc.rid = ps.project_classification_rid  
@@ -1936,9 +1936,9 @@ class SchemaService {
         FROM project_summary AS ps
         INNER JOIN account acc ON acc.rid = ps.account_rid 
         LEFT JOIN industry ind ON ind.rid = ps.industry_rid
-        LEFT JOIN country cou ON cou.rid = ps.country 
-        LEFT JOIN state st ON st.rid = ps.region 
-        LEFT JOIN currency curr ON curr.rid = ps.currency 
+        LEFT JOIN country cou ON cou.rid = ps.country_rid 
+        LEFT JOIN state st ON st.rid = ps.region_rid 
+        LEFT JOIN currency curr ON curr.rid = ps.currency_rid 
         LEFT JOIN project_classification pc ON pc.rid = ps.project_classification_rid 
         ${fullWhereClause ? "WHERE " + fullWhereClause : ""}
       `;

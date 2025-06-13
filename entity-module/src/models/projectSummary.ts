@@ -54,9 +54,9 @@ export interface ProjectSummaryAttributes {
   technical_point_of_contact?: string | null;
   industry_rid: string;
   industry_name?: string | null; 
-  country?: string | null;
-  region?: string | null;
-  currency?: string | null;
+  country_rid?: string | null;
+  region_rid?: string | null;
+  currency_rid?: string | null;
 }
  
 interface ProjectSummaryCreationAttributes
@@ -119,9 +119,9 @@ export class ProjectSummary
   public technical_point_of_contact?: string | null;
   public industry_rid!: string;
   public industry_name?: string | null; 
-  public country?: string | null;
-  public region?: string | null;
-  public currency?: string | null;
+  public country_rid?: string | null;
+  public region_rid?: string | null;
+  public currency_rid?: string | null;
  
   static initialize(sequelize: Sequelize, schemaName: string) {
     ProjectSummary.init(
@@ -250,15 +250,15 @@ export class ProjectSummary
           type: DataTypes.STRING(100),
           allowNull: true,
         },
-        country: {
+        country_rid: {
           type: DataTypes.UUID,
           allowNull: true,
         },
-        region: {
+        region_rid: {
           type: DataTypes.UUID,
           allowNull: true,
         },
-        currency: {
+        currency_rid: {
           type: DataTypes.UUID,
           allowNull: true,
         },

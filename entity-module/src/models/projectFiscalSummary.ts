@@ -24,9 +24,9 @@ export interface ProjectFiscalSummaryAttributes {
  
   account_rid: string;
  
-  country?: string | null;
-  region?: string | null;
-  currency?: string | null;
+  country_rid?: string | null;
+  region_rid?: string | null;
+  currency_rid?: string | null;
  
   max_ai_interaction: number;
   expiry_duration?: number | null;
@@ -169,9 +169,9 @@ export class ProjectFiscalSummary
  
   public account_rid!: string;
  
-  public country?: string | null;
-  public region?: string | null;
-  public currency?: string | null;
+  public country_rid?: string | null;
+  public region_rid?: string | null;
+  public currency_rid?: string | null;
  
   public max_ai_interaction!: number;
   public expiry_duration?: number | null;
@@ -355,15 +355,15 @@ export class ProjectFiscalSummary
           type: DataTypes.UUID,
           allowNull: false,
         },
-        country: {
+        country_rid: {
           type: DataTypes.UUID,
           allowNull: true,
         },
-        region: {
+        region_rid: {
           type: DataTypes.UUID,
           allowNull: true,
         },
-        currency: {
+        currency_rid: {
           type: DataTypes.UUID,
           allowNull: true,
         },
