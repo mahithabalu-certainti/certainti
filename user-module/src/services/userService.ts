@@ -943,17 +943,18 @@ async getAllUserPermission(userId: string, profileId: string) {
   ) {
     const order: any[] = [];
 
-    if (sortBy !== "$profile.profile_name$") {
-      order.push([sortBy, sortOrder]);
-    }
-
-    if (sortBy === "$profile.profile_name$") {
-      order.push([
-        { model: Profile, as: "profile" },
-        "profile_name",
-        sortOrder,
-      ]);
-      order.push(["first_name", "asc"]);
+    if (sortBy === "$business_teams.business_teams$") {
+        order.push(
+          [{ model: BusinessTeams, as: "business_teams" }, "business_teams", sortOrder],
+          ["first_name", "asc"]
+        );
+    } else if (sortBy === "$profile.profile_name$") {
+        order.push(
+          [{ model: Profile, as: "profile" }, "profile_name", sortOrder],
+          ["first_name", "asc"]
+        );
+    } else {
+        order.push([sortBy, sortOrder]);
     }
 
     const { count, rows } = await User.findAndCountAll({
@@ -1076,6 +1077,8 @@ async getAllUserPermission(userId: string, profileId: string) {
       { clientField: "middle_name", dbField: "middle_name" },
       { clientField: "r_number", dbField: "r_number" },
       { clientField: "email", dbField: "email" },
+      { clientField: "created_datetime", dbField: "created_datetime" },
+      { clientField: "modified_datetime", dbField: "modified_datetime" },
       // Status is handled separately
     ];
   
@@ -1085,6 +1088,15 @@ async getAllUserPermission(userId: string, profileId: string) {
   
       if (filters[clientField]) {
         const fieldFilter = filters[clientField];
+
+      if ((clientField === 'created_datetime' || clientField === 'modified_datetime') && fieldFilter.equals) {
+        const dateStr = fieldFilter.equals;
+        const startOfDay = moment.utc(dateStr, "YYYY-MM-DD").startOf("day").toDate();
+        const endOfDay = moment.utc(dateStr, "YYYY-MM-DD").endOf("day").toDate();
+
+        whereClause[dbField] = { [Op.between]: [startOfDay, endOfDay] };
+        return;
+      }
   
         if (fieldFilter.startsWith) {
           whereClause[dbField] = { [Op.iLike]: `${fieldFilter.startsWith}%` };
@@ -1130,6 +1142,16 @@ async getAllUserPermission(userId: string, profileId: string) {
       if (Array.isArray(filters.profile)) {
         whereClause["$profile.profile_name$"] = {
           [Op.in]: filters.profile
+        };
+      }
+    }
+
+        // Handle profile filters
+    if (filters.role) {
+       whereClause["$business_teams.business_teams$"] = this.getMultiValueFilter(filters.role, 'business_teams.business_teams');
+      if (Array.isArray(filters.role)) {
+        whereClause["$business_teams.business_teams$"] = {
+          [Op.in]: filters.role
         };
       }
     }
@@ -1214,6 +1236,7 @@ async getAllUserPermission(userId: string, profileId: string) {
       "created_datetime",
       "modified_datetime",
       "profile",
+      "business_teams"
     ];
 
     if (!validSortColumns.includes(sortBy)) {
@@ -1222,6 +1245,10 @@ async getAllUserPermission(userId: string, profileId: string) {
 
     if (sortBy === "profile") {
       sortBy = "$profile.profile_name$";
+    }
+
+    if (sortBy === "business_teams") {
+      sortBy = "$business_teams.business_teams$";
     }
 
     sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
