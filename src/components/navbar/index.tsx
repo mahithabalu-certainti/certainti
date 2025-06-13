@@ -20,8 +20,6 @@ import {
   menuIcon,
   notificationIcon,
   phoneIcon,
-  // plusIcon,
-  // searchIcon,
   settingsIcon,
 } from '../../assets';
 import { AllPermissions } from '../../common-service';
@@ -73,7 +71,9 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   // Permission Mangement
   const { permission } = useSelector((state: RootState) => state.permission);
-  const { orgName, logoUrl } = useSelector((state: RootState) => state.orgLogoInfo);
+  const { orgName, logoUrl } = useSelector(
+    (state: RootState) => state.orgLogoInfo
+  );
   const isViewProfileEnable = checkPermission(
     permission,
     AllPermissions.PROFILE_VIEW
@@ -140,10 +140,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   const handleNotificationOpen = (event: React.MouseEvent<HTMLElement>) => {
     setNotificationAnchor(event.currentTarget);
   };
-
-  // const handleSearchMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-  //   setSearchAnchor(event.currentTarget);
-  // };
 
   const changePassword = async () => {
     handleMenuClose();
@@ -350,10 +346,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className='h-[32px] w-[32px]'
               />
             </button>
-            {orgName && logoUrl && <CompanyBadge
-              name={orgName}
-              logoUrl={logoUrl}
-            />}
+            {orgName && logoUrl && (
+              <CompanyBadge name={orgName} logoUrl={logoUrl} />
+            )}
           </div>
           <Box
             sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}

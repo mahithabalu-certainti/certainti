@@ -53,11 +53,6 @@ export interface FormTypeFields {
   dependantLabel?: string;
 }
 
-// export interface SelectOptions {
-//   label: string;
-//   value: string;
-// }
-
 export type InputType =
   | 'text'
   | 'select'

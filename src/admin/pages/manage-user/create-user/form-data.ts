@@ -24,8 +24,6 @@ export const FormData = (
   isConsultantFirm?: string,
   org_id?: string
 ): FormType[] => {
-  console.log('orgid', org_id);
-
   return useMemo(
     () => [
       {
@@ -101,15 +99,10 @@ export const FormData = (
           }),
           createRadioField('is_consultant_firm', 'Is Consultant Firm', {
             radioOptions: YES_NO_OPTIONS,
-            // disabled: true,
             required: true,
             onChange: true,
             resetDependsFields: ['org_id'],
             dependantLabel: 'org_id',
-            // clearValue: {
-            //   key: 'is_consultant_firm',
-            //   matchedValue: YesNo.No,
-            // },
           }),
           createSelectField('org_id', 'Org Name', {
             required: true,

@@ -408,10 +408,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         });
       }
 
-      // if (field.name === 'org_id') {
-      //   newData[field.name] = field.defaultValue || '';
-      // }
-
       // update value when change depends fields
       if (field.defaultSelect) {
         if (field.defaultSelect.matchedValue === value) {

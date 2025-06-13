@@ -47,7 +47,6 @@ export const CreateUser: React.FC = () => {
     isConsultantFirm: '',
     org_id: '',
   });
-  // const [defaultOrgValues, setDefaultOrgValues] = useState({});
   const { successToast } = useToast();
   const location = useLocation();
   const { userid } = useParams();
@@ -148,13 +147,18 @@ export const CreateUser: React.FC = () => {
   );
   const memoizeOrgNames: SelectOption[] = useMemo(() => {
     let orgNameOptions: SelectOption[] = [];
-    if (isConsultantFirm.isConsultantFirm === YesNo.No && orgName.data?.data?.accountData) {
+    if (
+      isConsultantFirm.isConsultantFirm === YesNo.No &&
+      orgName.data?.data?.accountData
+    ) {
       orgNameOptions = orgName.data?.data?.accountData.map((org) => ({
         label: org.organisation_name,
         value: org.rid,
       }));
-    } else if (isConsultantFirm.isConsultantFirm === YesNo.Yes && orgName.data?.data?.orgData) {
-
+    } else if (
+      isConsultantFirm.isConsultantFirm === YesNo.Yes &&
+      orgName.data?.data?.orgData
+    ) {
       orgNameOptions = [
         {
           label: orgName.data?.data?.orgData?.firm_name,
@@ -185,32 +189,15 @@ export const CreateUser: React.FC = () => {
 
   const submitData = (data: Partial<UserDetail>) => {
     if (isEditView && userDatas) {
-      // const normalizeValue = (value: unknown) => {
-      //   return value === undefined || value === null || value === ''
-      //     ? ''
-      //     : value;
-      // };
-
-      // const compareData = (data: Partial<UserDetail>, userDatas: UserDetail) => {
-      //   return Object.entries(data).some(([key, value]) => {
-      //     return normalizeValue(value) !== normalizeValue(userDatas[key as keyof UserDetail]);
-      //   });
-      // };
-
-      // if (!compareData(data, userDatas)) {
-      //   window.history.back();
-      //   return;
-      // }
-
       const constructData = {
         ...data,
         role: data?.role_rid,
         rid: userDatas?.rid,
         azure_id: userDatas?.azure_id,
-        // modified_by: UserRole.Admin,
         profile_id: data.profile_rid,
         country: data.country || null,
-        is_consultant_firm: isConsultantFirm.isConsultantFirm === YesNo.Yes ? true : false,
+        is_consultant_firm:
+          isConsultantFirm.isConsultantFirm === YesNo.Yes ? true : false,
         org_id: data.org_id,
       } as Partial<UserDetail>;
       delete constructData.profile_rid;
@@ -228,7 +215,8 @@ export const CreateUser: React.FC = () => {
         role: data.role_rid,
         profile_id: data.profile_rid,
         created_by: UserRole.Admin,
-        is_consultant_firm: isConsultantFirm.isConsultantFirm === YesNo.Yes ? true : false,
+        is_consultant_firm:
+          isConsultantFirm.isConsultantFirm === YesNo.Yes ? true : false,
         org_id: data.org_id,
       } as Partial<UserDetail>;
       delete constructData.profile_rid;
@@ -239,14 +227,6 @@ export const CreateUser: React.FC = () => {
       createUser.mutate(constructData);
     }
   };
-
-  // useEffect(() => {
-  //   if (isConsultantFirm == 'yes') {
-  //     setDefaultOrgValues({
-  //       org_id: memoizeOrgNames[0]?.value,
-  //     });
-  //   }
-  // }, [isConsultantFirm, memoizeOrgNames]);
 
   const handleExternalSubmit = () => {
     formRef.current?.requestSubmit(); // This will trigger the form's onSubmit
@@ -266,7 +246,6 @@ export const CreateUser: React.FC = () => {
       }));
     }
     if (fieldName === 'is_consultant_firm') {
-      console.log("fieldValue", fieldValue)
       setIsConsultantFirm({
         isConsultantFirm: fieldValue as string,
         org_id: '',
@@ -302,8 +281,6 @@ export const CreateUser: React.FC = () => {
           <div className='flex gap-2 items-center'>
             <TextButton
               label='Back'
-              // variant='outlined'
-              // color='inherit'
               onClick={goBack}
               sx={{
                 width: '49px',
@@ -380,13 +357,14 @@ export const CreateUser: React.FC = () => {
               values={
                 isEditView && userDatas
                   ? {
-                    ...userDatas,
-                    is_consultant_firm: userDatas?.is_consultant_firm === true ? YesNo.Yes : YesNo.No,
-                    // org_id: 'ResDev',
-                  }
-                  // : !isEditView
-                  //   ? { org_id: isConsultantFirm === 'yes' ? memoizeOrgNames[0].value : '' }
-                  : {}
+                      ...userDatas,
+                      is_consultant_firm:
+                        userDatas?.is_consultant_firm === true
+                          ? YesNo.Yes
+                          : YesNo.No,
+                    }
+                  : //   ? { org_id: isConsultantFirm === 'yes' ? memoizeOrgNames[0].value : '' }
+                    {}
               }
               outData={submitData}
               formRef={formRef}

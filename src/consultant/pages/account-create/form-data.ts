@@ -295,35 +295,12 @@ export const AccFormData = (
               },
             ],
           }),
-          createTextField('logo', 'Upload Logo', {
+          createTextField('logo', 'Org Logo', {
             type: 'file',
             onChange: true,
             required: false,
             placeholder: 'Browse Image',
           }),
-          // createTextField('project_manager', 'Delivery Manager', {
-          //   required: false,
-          //   regex: REGEX_PATTERNS.MANAGER_REGEX,
-          //   regexErrorMessage:
-          //     "Only letters, spaces, apostrophes (') and hyphens (-) are allowed",
-          //   placeholder: 'Enter Delivery Manager Name',
-          //   errorHandling: [
-          //     {
-          //       regex: REGEX_PATTERNS.MIN_NAME_REGEX,
-          //       errorMessage:
-          //         'Delivery Manager Name must be more than 1 characters long',
-          //     },
-          //     {
-          //       regex: REGEX_PATTERNS.MAX_NAME_REGEX,
-          //       errorMessage: 'Max length exceeded',
-          //     },
-          //     {
-          //       regex: REGEX_PATTERNS.NOT_ALLOW_SPACE_SYMBOLS_AT_START_END,
-          //       errorMessage:
-          //         'Cannot start or end with a space, apostrophe, or hyphens',
-          //     },
-          //   ],
-          // }),
         ],
       },
       {
