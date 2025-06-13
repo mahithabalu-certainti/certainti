@@ -138,6 +138,7 @@ export class Account
          organisation_name: {
           type: DataTypes.STRING,
           allowNull: false,
+          unique: true,
         },
         parent_account_rid: {
           type: DataTypes.UUID,

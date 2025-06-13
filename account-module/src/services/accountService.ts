@@ -1173,6 +1173,7 @@ async insertClientTemplateDetails(
         },    
         },
         attributes: ["rid", "account_name","organisation_name"],
+        order: [['organisation_name', 'ASC']]
       });
       const orgData = await this.schemaService.getOrgInfo();
       return {
