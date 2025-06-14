@@ -16,7 +16,7 @@ import {
   Popover,
 } from '@mui/material';
 import { FilterState, GlobalFilterModalProps } from '../../consultant/types';
-import { arrowIcon, closeIcon, allAccountIcon } from '../../assets';
+import { ArrowIcon, CloseIcon, AllAccountIcon } from '../../assets';
 import { useToast } from '../../hooks';
 
 const SELECT_STYLES = {
@@ -280,12 +280,11 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
                       size='small'
                       className='min-w-[220px] max-w-[220px] h-[28px]'
                       IconComponent={(props) => (
-                        <img src={arrowIcon} alt='arrowIcon' {...props} />
+                        <ArrowIcon alt='arrowIcon' {...props} />
                       )}
                       renderValue={(selected) => (
                         <div className='flex items-center gap-1'>
-                          <img
-                            src={allAccountIcon}
+                          <AllAccountIcon
                             alt='account'
                             className='w-4 h-4'
                           />
@@ -361,8 +360,7 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
                       size='small'
                       className='min-w-[220px] max-w-[220px] h-[28px]'
                       IconComponent={(props) => (
-                        <img
-                          src={arrowIcon}
+                        <ArrowIcon
                           alt='arrowIcon'
                           className='pr-3 cursor-pointer'
                           {...props}
@@ -461,8 +459,7 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
                       onClick={() => handleRemoveFilter(index)}
                       disableRipple
                     >
-                      <img
-                        src={closeIcon}
+                      <CloseIcon
                         alt='closeIcon'
                         className='w-[12px] h-[12px]'
                       />

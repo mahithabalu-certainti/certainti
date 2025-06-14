@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  menuArrowRight,
-  menuArrowRightHover,
-  moduleArrowright,
-  checkboxChecked,
-  checkboxUnchecked,
+  MenuArrowRight,
+  MenuArrowRightHover,
+  ModuleArrowRight,
+  CheckboxChecked,
+  CheckboxUnchecked,
 } from '../../../../assets/icons';
 import ConfirmationPopup from '../../../../common-utils/confirmation-popup';
 import { Privilege } from '../../../types';
@@ -74,11 +74,11 @@ const CustomCheckbox: React.FC<{
     className={`cursor-${disabled ? 'not-allowed' : 'pointer'} ${disabled ? 'opacity-50' : ''}`}
     onClick={(e) => !disabled && onChange(e)}
   >
-    <img
-      src={checked ? checkboxChecked : checkboxUnchecked}
-      alt={checked ? 'checked' : 'unchecked'}
-      className='h-6 w-6'
-    />
+    {checked ? (
+      <CheckboxChecked alt='checkbox' className='h-6 w-6' />
+    ) : (
+      <CheckboxUnchecked alt='checkbox' className='h-6 w-6' />
+    )}
   </div>
 );
 
@@ -533,11 +533,14 @@ const PrivilegeAccordion: React.FC<{
         >
           <div className='w-[75%] text-[13px] text-[#425A76] flex items-center gap-2'>
             <span className={`transform transition-transform duration-200`}>
-              <img
-                src={isMenuExpanded ? menuArrowRightHover : menuArrowRight}
-                alt='menu arrow'
-                className='h-4 w-4 rounded'
-              />
+              {isMenuExpanded ? (
+                <MenuArrowRightHover
+                  alt='menu arrow'
+                  className='h-4 w-4 rounded'
+                />
+              ) : (
+                <MenuArrowRight alt='menu arrow' className='h-4 w-4 rounded' />
+              )}
             </span>
             {privileges.menu.desc}
           </div>
@@ -569,8 +572,7 @@ const PrivilegeAccordion: React.FC<{
                   <span
                     className={`transform transition-transform duration-200 ${expandedModules.includes(module.module_id!) ? 'rotate-90' : ''}`}
                   >
-                    <img
-                      src={moduleArrowright}
+                    <ModuleArrowRight
                       alt='module arrow'
                       className='h-4 w-4 rounded'
                     />
@@ -605,8 +607,7 @@ const PrivilegeAccordion: React.FC<{
                         <span
                           className={`transform transition-transform duration-200 ${expandedPermissions.includes(permission.permission_id!) ? 'rotate-90' : ''} ${!permission.is_field_available ? 'opacity-30' : ''}`}
                         >
-                          <img
-                            src={moduleArrowright}
+                          <ModuleArrowRight
                             alt='permission arrow'
                             className='h-4 w-4 rounded'
                           />

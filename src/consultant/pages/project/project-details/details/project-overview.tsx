@@ -2,7 +2,7 @@
 import { CircularProgress, Typography } from '@mui/material';
 import { SxProps } from '@mui/material';
 import React from 'react';
-import { leftArrowIcon } from '../../../../../assets';
+import { LeftArrowIcon } from '../../../../../assets';
 import TextButton from '../../../../../components/button/text-button';
 import { Theme } from '@emotion/react';
 import { NewProjectData } from '../../../../types/project';
@@ -298,7 +298,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
               className='cursor-pointer  flex justify-center items-center -ml-2'
               onClick={onBackClick}
             >
-              <img src={leftArrowIcon} alt='leftArrowIcon' />
+              <LeftArrowIcon alt='leftArrowIcon' />
             </div>
           )}
           {titleIcon && (

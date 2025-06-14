@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from 'react';
-import { arrowIcon, checkedIcon, closeIcon } from '../../assets';
+import { ArrowIcon, CheckedIcon, CloseIcon } from '../../assets';
 import {
   Menu,
   MenuItem,
@@ -755,8 +755,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                         handleSystemFilter('system_filter', field.value)
                       }
                     >
-                      <img
-                        src={checkedIcon}
+                      <CheckedIcon
                         alt='checked-icon'
                         className='w-3 h-3 mt-[0.3px]'
                         style={{
@@ -784,8 +783,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                       }`}
                       onClick={() => handleSortingSelection(field.value)}
                     >
-                      <img
-                        src={checkedIcon}
+                      <CheckedIcon
                         alt='checked-icon'
                         className='w-3 h-3 mt-[0.3px]'
                         style={{
@@ -823,7 +821,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                             value={fieldName}
                             className='min-w-[173px] max-w-[173px] h-[28px]'
                             IconComponent={(props) => (
-                              <img src={arrowIcon} alt='arrowIcon' {...props} />
+                              <ArrowIcon alt='arrowIcon' {...props} />
                             )}
                             onChange={(e) => {
                               const newFieldName = e.target.value;
@@ -865,8 +863,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                               );
                               return (
                                 <div className='flex items-center gap-1'>
-                                  <img
-                                    src={checkedIcon}
+                                  <CheckedIcon
                                     alt='checked'
                                     className='w-3'
                                   />
@@ -896,8 +893,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                                   gap: '4px',
                                 }}
                               >
-                                <img
-                                  src={checkedIcon}
+                                <CheckedIcon
                                   alt='checked'
                                   className='w-4 h-4'
                                 />
@@ -913,8 +909,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                               <div className='mt-1 rounded-[2px] min-w-[173px] max-w-[173px] h-[28px] border border-[#CBD6E2]'>
                                 <div className='flex items-center justify-between pl-3.5 pr-[7px] text-[12px] text-[#425A76] h-full font-semibold'>
                                   <div className='flex items-center gap-1'>
-                                    <img
-                                      src={checkedIcon}
+                                    <CheckedIcon
                                       alt='checked'
                                       className='w-3'
                                     />
@@ -945,8 +940,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                         }}
                         className='cursor-pointer pl-1'
                       >
-                        <img
-                          src={closeIcon}
+                        <CloseIcon
                           alt='closeIcon'
                           className='w-[12px] h-[12px]'
                         />
@@ -967,7 +961,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
           >
             <span className='font-normal text-[16px]'>+</span> Add Filter By
             Fields
-            <img src={arrowIcon} alt={'arrowIcon'} className='mt-0.5' />
+            <ArrowIcon alt='arrowIcon' className='mt-0.5' />
           </button>
           {/* <div className='flex justify-end gap-2'>
             <button
@@ -1036,7 +1030,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                   py: '1px',
                 }}
               >
-                <img src={checkedIcon} alt='checked' className='w-4 h-4 mr-1' />
+                <CheckedIcon alt='checked' className='w-4 h-4 mr-1' />
                 {field.label}
               </MenuItem>
             ))

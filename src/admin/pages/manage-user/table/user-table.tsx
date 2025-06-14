@@ -7,7 +7,7 @@ import { useManageUserList } from '../../../service/manage-user/manage-user-serv
 import { ManageUser, User, UserListParams } from '../../../types/manage-user';
 import { getUserColumns } from './columns';
 import { ActionItem } from '../../../../components/table/types';
-import { editIcon, eyeIcon } from '../../../../assets';
+import { EditIcon, EyeIcon } from '../../../../assets';
 
 interface IUserTableProps {
   appliedFilters: Record<string, any>;
@@ -115,13 +115,13 @@ export const UserTable: React.FC<IUserTableProps> = ({
     {
       label: 'View',
       onClick: (row: ManageUser) => handleView(row),
-      icon: eyeIcon,
+      icon: EyeIcon,
       hide: !isUserViewEnable,
     },
     {
       label: 'Edit',
       onClick: (row: ManageUser) => handleEdit(row),
-      icon: editIcon,
+      icon: EditIcon,
       hide: !isUserEditEnable,
       iconStyle: {
         filter:

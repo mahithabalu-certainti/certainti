@@ -3,8 +3,8 @@
   useState,
 } from 'react';
 import {
-  detailsKeyContactErrorIcon,
-  projectsBook,
+  DetailsKeyContactErrorIcon,
+  ProjectsBook,
 } from '../../../../../assets';
 import TabPanel from './tab';
 import { useNavigate } from 'react-router-dom';
@@ -125,7 +125,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
       {!isKeyContactAvailable && (
         <Box className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
           <Box>
-            <img src={detailsKeyContactErrorIcon} alt='key-contact' />
+            <DetailsKeyContactErrorIcon alt='key-contact' />
           </Box>
           <Box>
             <span className='font-bold mr-1'>Contact Details </span> -{' '}
@@ -147,8 +147,7 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
           <ProjectOverview
             title='Projects'
             titleIcon={
-              <img
-                src={projectsBook}
+              <ProjectsBook
                 alt='project-header-icon'
                 className='w-6 h-6'
               />

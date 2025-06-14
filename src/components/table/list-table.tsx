@@ -408,12 +408,13 @@ const ListTable = <T extends RowData>({
                                       size='small'
                                       onClick={() => item.onClick(row)}
                                     >
-                                      <img
-                                        src={item.icon?.toString()}
-                                        alt='actionIcon'
-                                        className='w-4 h-4'
-                                        style={item.iconStyle}
-                                      />
+                                      {item.icon && (
+                                        <item.icon
+                                          alt='actionIcon'
+                                          className='w-4 h-4'
+                                          style={item.iconStyle}
+                                        />
+                                      )}
                                     </IconButton>
                                   </Tooltip>
                                 );

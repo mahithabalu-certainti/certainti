@@ -10,30 +10,30 @@ import {
   ListItemText,
   Tooltip,
 } from '@mui/material';
-import { useState, useEffect, Fragment, useCallback } from 'react';
+import React, { useState, useEffect, Fragment, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  adminChevronDownIcon,
-  adminChevronUpIcon,
-  administrationIcon,
-  adminPermissionIcon,
-  adminSubmenuActiveIcon,
-  adminTemplateIcon,
-  configureSettingIcon,
-  logo,
-  logoSmall,
-  checklistTemplateIcon,
-  emailTemplateIcon,
-  importTemplateIcon,
-  interactionTemplateIcon,
-  manageGeoIcon,
-  manageGroupIcon,
-  manageProfileIcon,
-  manageSettingsIcon,
-  manageUserAccessIcon,
-  managerUserIcon,
-  surveyTemplateIcon,
-  taskTemplateIcon,
+  AdminChevronDownIcon,
+  AdminChevronUpIcon,
+  AdministrationIcon,
+  AdminPermissionIcon,
+  AdminSubmenuActiveIcon,
+  Logo,
+  LogoSmall,
+  ManagerUserIcon,
+  ManageProfileIcon,
+  ManageGroupIcon,
+  ManageUserAccessIcon,
+  ConfigureSettingIcon,
+  ManageSettingsIcon,
+  ManageGeoIcon,
+  AdminTemplateIcon,
+  ImportTemplateIcon,
+  InteractionTemplateIcon,
+  ChecklistTemplateIcon,
+  TaskTemplateIcon,
+  SurveyTemplateIcon,
+  EmailTemplateIcon,
 } from '../../assets';
 import {
   AdminNavItem,
@@ -63,34 +63,34 @@ import { accountNavItems } from './accounts-menu';
 const sideNavAdminItems: AdminNavItem[] = [
   {
     title: 'Admin Permission',
-    icon: adminPermissionIcon,
+    icon: AdminPermissionIcon,
     openStatus: false,
     subItemTitle: [
       {
         id: MenuOption.MANAGE_USER,
         name: 'Manage User',
-        icon: managerUserIcon,
+        icon: ManagerUserIcon,
         link: ADMIN_MANAGE_USER,
         matchLink: ADMIN_MANAGE_USER,
       },
       {
         id: MenuOption.MANAGE_PROFILE,
         name: 'Manage Profile',
-        icon: manageProfileIcon,
+        icon: ManageProfileIcon,
         link: MANAGE_PROFILE,
         matchLink: MANAGE_PROFILE,
       },
       {
         id: MenuOption.MANAGE_USER_GROUP,
         name: 'Manage User Group',
-        icon: manageGroupIcon,
+        icon: ManageGroupIcon,
         link: MANAGE_USER_GROUP,
         matchLink: MANAGE_USER_GROUP,
       },
       {
         id: MenuOption.MANAGE_USER_ACCESS,
         name: 'Manage User Access',
-        icon: manageUserAccessIcon,
+        icon: ManageUserAccessIcon,
         link: MANAGE_USER_ACCESS,
         matchLink: MANAGE_USER_ACCESS,
       },
@@ -98,20 +98,20 @@ const sideNavAdminItems: AdminNavItem[] = [
   },
   {
     title: 'Configure Settings',
-    icon: configureSettingIcon,
+    icon: ConfigureSettingIcon,
     openStatus: false,
     subItemTitle: [
       {
         id: MenuOption.MANAGE_SETTINGS,
         name: 'Manage Settings',
-        icon: manageSettingsIcon,
+        icon: ManageSettingsIcon,
         link: MANAGE_SETTINGS,
         matchLink: MANAGE_SETTINGS,
       },
       {
         id: MenuOption.MANAGE_GEO_BASED_RULE,
         name: 'Manage Geo-Based Rule',
-        icon: manageGeoIcon,
+        icon: ManageGeoIcon,
         link: MANAGE_GEO_BASED_RULE,
         matchLink: MANAGE_GEO_BASED_RULE,
       },
@@ -119,48 +119,48 @@ const sideNavAdminItems: AdminNavItem[] = [
   },
   {
     title: 'Admin Template',
-    icon: adminTemplateIcon,
+    icon: AdminTemplateIcon,
     openStatus: false,
     subItemTitle: [
       {
         id: MenuOption.IMPORT_TEMPLATE,
         name: 'Import templates',
-        icon: importTemplateIcon,
+        icon: ImportTemplateIcon,
         link: IMPORT_TEMPLATES,
         matchLink: IMPORT_TEMPLATES,
       },
       {
         id: MenuOption.INTERACTION_TEMPLATE,
         name: 'Interaction templates',
-        icon: interactionTemplateIcon,
+        icon: InteractionTemplateIcon,
         link: INTERACTION_TEMPLATES,
         matchLink: INTERACTION_TEMPLATES,
       },
       {
         id: MenuOption.EMAIL_TEMPLATE,
         name: 'Email templates',
-        icon: emailTemplateIcon,
+        icon: EmailTemplateIcon,
         link: EMAIL_TEMPLATES,
         matchLink: EMAIL_TEMPLATES,
       },
       {
         id: MenuOption.SURVEY_TEMPLATE,
         name: 'Survey templates',
-        icon: surveyTemplateIcon,
+        icon: SurveyTemplateIcon,
         link: SURVEY_TEMPLATES,
         matchLink: SURVEY_TEMPLATES,
       },
       {
         id: MenuOption.TASK_TEMPLATE,
         name: 'Task templates',
-        icon: taskTemplateIcon,
+        icon: TaskTemplateIcon,
         link: TASK_TEMPLATES,
         matchLink: TASK_TEMPLATES,
       },
       {
         id: MenuOption.CHECKLIST_TEMPLATE,
         name: 'Checklist templates',
-        icon: checklistTemplateIcon,
+        icon: ChecklistTemplateIcon,
         link: CHECKLIST_TEMPLATES,
         matchLink: CHECKLIST_TEMPLATES,
       },
@@ -263,11 +263,11 @@ export const Sidebar: React.FC<SideBarProps> = ({
     >
       <div className='flex items-center justify-center h-[40px]'>
         <Link aria-label='logo'>
-          <img
-            src={sidebarExpand ? logo : logoSmall}
-            alt='logo'
-            className={sidebarExpand ? 'h-[16px]' : 'h-[18px]'}
-          />
+          {sidebarExpand ? (
+            <Logo alt='logo' className='h-[16px]' />
+          ) : (
+            <LogoSmall alt='logo' className='h-[18px]' />
+          )}
         </Link>
       </div>
 
@@ -358,8 +358,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                         justifyContent: 'center',
                       }}
                     >
-                      <img
-                        src={item.icon}
+                      <item.icon
                         alt='menu-icon'
                         className='h-[16px]'
                       />
@@ -406,11 +405,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                   justifyContent: 'center',
                 }}
               >
-                <img
-                  src={administrationIcon}
-                  alt='menu-icon'
-                  className='h-[16px]'
-                />
+                <AdministrationIcon alt='menu-icon' className='h-[16px]' />
               </ListItemIcon>
               {sidebarExpand && (
                 <ListItemText
@@ -465,7 +460,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                       justifyContent: 'center',
                     }}
                   >
-                    <img src={item.icon} alt='menu-icon' className='h-[16px]' />
+                    <item.icon alt='menu-icon' className='h-[16px]' />
                   </ListItemIcon>
                   {sidebarExpand && (
                     <Box
@@ -486,14 +481,12 @@ export const Sidebar: React.FC<SideBarProps> = ({
                       />
                       {item.subItemTitle.length > 0 &&
                         (item.openStatus ? (
-                          <img
-                            src={adminChevronUpIcon}
+                          <AdminChevronUpIcon
                             alt='up'
                             className='h-[16px] mr-0.5'
                           />
                         ) : (
-                          <img
-                            src={adminChevronDownIcon}
+                          <AdminChevronDownIcon
                             alt='down'
                             className='h-[16px] mr-0.5'
                           />
@@ -544,8 +537,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                               justifyContent: 'center',
                             }}
                           >
-                            <img
-                              src={subItem.icon}
+                            <subItem.icon
                               alt='menu-icon'
                               className='h-[16px]'
                               style={{
@@ -589,11 +581,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                                 primary={subItem.name}
                               />
                               {matchCheck(subItem, trimmedPathname(2)) && (
-                                <img
-                                  src={adminSubmenuActiveIcon}
-                                  alt='menu-icon'
-                                  className='h-[16px] w-[16px] mr-0.5'
-                                />
+                                <AdminSubmenuActiveIcon className='h-[16px] w-[16px] mr-0.5' />
                               )}
                             </Box>
                           )}

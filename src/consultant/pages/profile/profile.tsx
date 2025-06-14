@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { useManageUserDetail } from '../../../admin/service/manage-user-detail/manage-user-detail-service';
-import { accountHomeIcon } from '../../../assets/icons';
+import { AccountHomeIcon } from '../../../assets/icons';
 import TextButton from '../../../components/button/text-button';
 import { RootState } from '../../../store/store';
 import { UserDetailComponent } from '../../../components';
@@ -31,11 +31,7 @@ export const Profile: React.FC = () => {
     <>
       <div className='flex justify-between items-center border-b-2 border-gray-200 px-10 py-6'>
         <div className='flex items-center'>
-          <img
-            src={accountHomeIcon}
-            alt='menu-icon'
-            className='h-10 w-10 bg-[#7D98B6] p-2.5 rounded'
-          />
+          <AccountHomeIcon className='h-10 w-10 bg-[#7D98B6] p-2.5 rounded' />
           <div>
             <h4 className='font-bold text-lg ml-2 leading-4'>My Information</h4>
           </div>
@@ -60,3 +56,5 @@ export const Profile: React.FC = () => {
     </>
   );
 };
+
+export default Profile;

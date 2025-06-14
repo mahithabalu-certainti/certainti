@@ -194,7 +194,7 @@ export const createButton = (
   name: string,
   label: string,
   others: {
-    iconUrl?: string;
+    iconUrl?: React.ElementType | string;
     onClick?: () => void;
   }
 ): FieldType => ({
@@ -218,7 +218,7 @@ export const createEmptyField = (
 
 export const createImgButton = (
   name: string,
-  iconUrl: string,
+  iconUrl: React.ElementType | string,
   others?: {
     width?: string;
     onClick?: (e?: React.MouseEvent<HTMLElement>) => void;

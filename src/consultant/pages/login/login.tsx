@@ -90,3 +90,5 @@ export const Login: React.FC = () => {
     </Box>
   );
 };
+
+export default Login;

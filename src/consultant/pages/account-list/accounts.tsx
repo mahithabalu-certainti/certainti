@@ -2,11 +2,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  accountHomeIcon,
-  accountSettingsIcon,
-  actionIcon,
-  newFilterIcon,
-  refreshIcon,
+  AccountHomeIcon,
+  AccountSettingsIcon,
+  ActionIcon,
+  NewFilterIcon,
+  RefreshIcon,
 } from '../../../assets';
 import { FilterModal } from '../../../components';
 import ActionsDropdown from '../../../components/actions-dropdown/actions-dropdown';
@@ -190,11 +190,7 @@ export const Accounts: React.FC = () => {
       <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
         <div className='flex h-[33px]'>
           <div className='flex items-center justify-center'>
-            <img
-              src={accountHomeIcon}
-              alt='menu-icon'
-              className='h-7 w-7 bg-[#d16dd3] p-[7px] rounded'
-            />
+            <AccountHomeIcon alt='menu-icon' className='h-7 w-7 bg-[#d16dd3] p-[7px] rounded' />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-bold text-[16px] text-[#2D3E4F]'>
                 Accounts
@@ -223,13 +219,13 @@ export const Accounts: React.FC = () => {
             className='flex items-center justify-center border border-[#CBD6E2] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] w-[24px] h-[23px] cursor-pointer'
             onClick={onRefreshClick}
           >
-            <img src={refreshIcon} alt='refresh-icon' className='h-4' />
+            <RefreshIcon alt='refresh-icon' className='h-4' />
           </div>
           <div className='hidden border border-[#CBD6E2] w-[24px] h-[24px] justify-center items-center bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'>
-            <img src={actionIcon} alt='menu-icon' className='h-4' />
+            <ActionIcon alt='menu-icon' className='h-4' />
           </div>
           <div className='hidden border border-[#CBD6E2] w-[24px] h-[24px]  justify-center items-center bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'>
-            <img src={accountSettingsIcon} alt='menu-icon' className='h-4' />
+            <AccountSettingsIcon alt='menu-icon' className='h-4' />
           </div>
         </div>
       </div>
@@ -242,7 +238,7 @@ export const Accounts: React.FC = () => {
               ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) || sortFilterCount > 0 ? 'bg-[#F3F3F3]' : ''}`}
             onClick={handleFilterModal}
           >
-            <img src={newFilterIcon} alt='filter-icon' />
+            <NewFilterIcon alt='filter-icon' />
             Filter
             {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
             sortFilterCount > 0 ? (
@@ -285,3 +281,5 @@ export const Accounts: React.FC = () => {
     </div>
   );
 };
+
+export default Accounts;

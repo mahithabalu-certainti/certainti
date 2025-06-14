@@ -1,8 +1,13 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { createresourceIcon, editIcon } from '../../../assets';
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
+import { CreateResourceIcon, EditIcon } from '../../../assets';
 import { Layout, OnChange, useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
@@ -36,9 +41,7 @@ import {
   transformSkillData,
 } from './utils.tsx';
 import { SkillSubtype, SkillType } from '../../types/resource.ts';
-import {
-  formatDateToYYYYMMDDWithTime
-} from '../account-details-sidebar/sidebar-pages/resources/utils.tsx';
+import { formatDateToYYYYMMDDWithTime } from '../account-details-sidebar/sidebar-pages/resources/utils.tsx';
 
 const ResourceForm: React.FC = () => {
   // Refs
@@ -116,7 +119,8 @@ const ResourceForm: React.FC = () => {
   const { data: resource, isSuccess } = useResourceDetail(
     resourcesid || resourceId || location?.state?.resource?.rid || resourceRId,
     location?.state?.accountDetails?.data?.accountById?.r_number ||
-    accountNumber || accNumber
+      accountNumber ||
+      accNumber
   );
 
   useEffect(() => {
@@ -134,20 +138,24 @@ const ResourceForm: React.FC = () => {
       Resource_id: resourceDetailsData?.r_number,
       resource_startdate: resourceDetailsData?.resource_startdate,
       resource_enddate: resourceDetailsData?.resource_enddate,
-      Created_On: formatDateToYYYYMMDDWithTime(resourceDetailsData?.created_datetime),
+      Created_On: formatDateToYYYYMMDDWithTime(
+        resourceDetailsData?.created_datetime
+      ),
       Created_By: resourceDetailsData?.created_by,
-      Updated_On: formatDateToYYYYMMDDWithTime(resourceDetailsData?.modified_datetime),
+      Updated_On: formatDateToYYYYMMDDWithTime(
+        resourceDetailsData?.modified_datetime
+      ),
       Updated_By: resourceDetailsData?.modified_by,
       resource_name:
         resourceDetailsData?.resource_firstname &&
-          resourceDetailsData?.resource_lastname
+        resourceDetailsData?.resource_lastname
           ? ''
           : !resourceDetailsData?.resource_firstname &&
-            !resourceDetailsData?.resource_lastname
+              !resourceDetailsData?.resource_lastname
             ? resourceDetailsData?.resource_name
             : resourceDetailsData?.resource_firstname ||
-            resourceDetailsData?.resource_lastname ||
-            '',
+              resourceDetailsData?.resource_lastname ||
+              '',
     };
     setResourceDetails(finalResourceDetails || null);
   }, [resource]);
@@ -201,7 +209,7 @@ const ResourceForm: React.FC = () => {
         skill_details: skillInfo?.skillDetails || '',
         skill_type: skillInfo?.skillTypeId || '',
         skill_sub_type: skillInfo?.skillSubTypeId || '',
-        skill_start_date: skillInfo?.startDate as string || '',
+        skill_start_date: (skillInfo?.startDate as string) || '',
         skill_type_others: skillInfo?.skillTypeOthers || '',
         skill_subtype_others: skillInfo?.skillSubTypeOthers || '',
         years_of_experience: skillInfo?.yearsOfExperience || '',
@@ -212,7 +220,7 @@ const ResourceForm: React.FC = () => {
       const values = {
         ...formValues,
         currency: costAndSKillAccountInfo?.currency_rid || null,
-      }
+      };
       setFormValues(values);
     } else if (formValues && !isEditView) {
       // Set form values with resource details when creataing cost and skill
@@ -506,7 +514,6 @@ const ResourceForm: React.FC = () => {
     city.isLoading,
     currency.isLoading,
     skillSubTypeLoading,
-    isEditView,
     state?.cost || state?.skill,
     disableOrgname,
     currentSkillType.skill_type,
@@ -523,11 +530,14 @@ const ResourceForm: React.FC = () => {
     <div className='resource-form-container'>
       <div className='h-[50px] border-box flex justify-between items-center border-b-2 border-gray-200 px-10'>
         <div className='flex items-center'>
-          <img
-            src={isEditView ? editIcon : createresourceIcon}
-            alt='menu-icon'
-            className={`${isEditView ? 'bg-[#7D98B6] p-1.5' : ''} h-6 w-6 rounded`}
-          />
+          {isEditView ? (
+            <EditIcon
+              alt='menu-icon'
+              className='bg-[#7D98B6] p-1.5 h-6 w-6 rounded'
+            />
+          ) : (
+            <CreateResourceIcon alt='menu-icon' className='h-6 w-6 rounded' />
+          )}
           <div>
             {/* {isEditView && !state?.skill && !state?.cost && (
               <h5 className='mb-1 ml-2 text-xs text-gray-500'>Edit Resource</h5>
@@ -593,21 +603,21 @@ const ResourceForm: React.FC = () => {
         loading={allCountries.isLoading}
         values={
           isEditView &&
-            !state?.cost &&
-            !state?.skill &&
-            (resourceDetails as unknown as Record<
-              string,
-              string | number | boolean | string[] | null
-            >)
+          !state?.cost &&
+          !state?.skill &&
+          (resourceDetails as unknown as Record<
+            string,
+            string | number | boolean | string[] | null
+          >)
             ? (resourceDetails as unknown as Record<
-              string,
-              string | number | boolean | string[] | null
-            >)
-            : state?.cost || state?.skill
-              ? (formValues as unknown as Record<
                 string,
                 string | number | boolean | string[] | null
               >)
+            : state?.cost || state?.skill
+              ? (formValues as unknown as Record<
+                  string,
+                  string | number | boolean | string[] | null
+                >)
               : undefined
         }
         // values={

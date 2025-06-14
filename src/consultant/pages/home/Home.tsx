@@ -13,3 +13,5 @@ export const HomePage: React.FC = () => {
   if (!isDashboardEnable) return <AccessRestricted />;
   return <div className='p-10'>Dashboard</div>;
 };
+
+export default HomePage;

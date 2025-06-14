@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { arrowDownIcon, fiscalYearArrowIcon } from '../../assets';
+import { ArrowDownIcon, FiscalYearArrowIcon } from '../../assets';
 
 interface FiscalYearOption {
   label: string;
@@ -99,8 +99,7 @@ const FiscalYearDropdown = ({
         aria-expanded={open}
       >
         {selectedLabel}
-        <img
-          src={arrowDownIcon}
+        <ArrowDownIcon
           alt='dropdown arrow'
           className={`transition-transform duration-300 ${open ? 'rotate-180' : ''
             }`}
@@ -121,8 +120,7 @@ const FiscalYearDropdown = ({
                 className='cursor-pointer disabled:cursor-not-allowed'
                 onClick={handlePrevDecade}
               >
-                <img
-                  src={fiscalYearArrowIcon}
+                <FiscalYearArrowIcon
                   alt='less-than'
                   className={`${yearsInDecade.includes(minYear) ? 'invert grayscale' : ''}`}
                 />
@@ -136,8 +134,7 @@ const FiscalYearDropdown = ({
                 className='cursor-pointer disabled:cursor-not-allowed'
                 onClick={handleNextDecade}
               >
-                <img
-                  src={fiscalYearArrowIcon}
+                <FiscalYearArrowIcon
                   className={`rotate-[180deg] ${yearsInDecade.includes(currentYear) ? 'invert grayscale' : ''}`}
                   alt='less-than'
                 />

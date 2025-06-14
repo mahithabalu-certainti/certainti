@@ -7,7 +7,7 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { resourceProfileIcon } from '../../../../../assets';
+import { ResourceProfileIcon } from '../../../../../assets';
 import { RESOURCE, RESOURCE_CREATE } from '../../../../../routes';
 import { RootState } from '../../../../../store/store';
 import { useResourceList } from '../../../../services/resource-list';
@@ -543,7 +543,7 @@ const Resource: React.FC<ResourceProps> = ({
             title='Resources'
             resourceNumber={resourceData?.r_number ?? resourceNumber}
             titleIcon={
-              <img src={resourceProfileIcon} alt='resource header icon' />
+              <ResourceProfileIcon alt='resource header icon' />
             }
             headerButtons={headerButtons}
             showBackArrow={showBackArrow}

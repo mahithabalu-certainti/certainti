@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
-import { projectDetailsIcon } from '../../../../assets';
+import { ProjectDetailsIcon } from '../../../../assets';
 import { CircularProgress } from '@mui/material';
 import { useProjectDetail } from '../../../services/project';
 import { transformProjectData } from '../utils';
@@ -227,9 +227,12 @@ export const ProjectDetails = () => {
         <PageHeader
           variant='sub'
           placeholder='Name'
-          icon={projectDetailsIcon}
-          iconBackgroundColor='#AF78FF'
-          iconClasses='h-8 w-8 rounded p-[6px]'
+          icon={
+            <ProjectDetailsIcon
+              className='h-6 w-6 rounded p-[4px]'
+              style={{ backgroundColor: '#AF78FF' }}
+            />
+          }
           //   title={data?.data?.accountById?.account_name || 'Project Title'}
           title={data?.data?.project?.project_name || 'Project Title'}
           totalRecords={5}

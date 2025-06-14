@@ -1,9 +1,7 @@
 export interface FormType {
   sectionName: string;
   fillType: 'half' | 'full' | 'quarter';
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   fields: FormTypeFields[];
-
   hide?: boolean;
 }
 
@@ -49,7 +47,7 @@ export interface FormTypeFields {
   defaultValue?: string;
   errorHandling?: ErrorHandling[];
   onClick?: (event?: React.MouseEvent<HTMLElement>) => void;
-  iconUrl?: string;
+  iconUrl?: string | React.ElementType;
 }
 
 // export interface SelectOptions {
@@ -90,7 +88,8 @@ export interface FieldType {
   required: boolean;
   minDate?: Date;
   maxDate?: Date;
-  iconUrl?: string;
+  iconUrl?: React.ElementType | string;
+
   options?: SelectOption[];
   regex?: RegExp;
   regexErrorMessage?: string;

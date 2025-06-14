@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { adminSubmenuActiveIcon, backIcon } from '../../assets';
+import { AdminSubmenuActiveIcon, BackIcon } from '../../assets';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { MenuItem } from '../../consultant/types';
@@ -63,7 +63,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
       {/* Header */}
       <div className='flex items-center gap-1.5 mb-1'>
         {showBackIcon && (
-          <img src={backIcon} alt='Back' className='w-[18px] h-[18px]' />
+          <BackIcon alt='Back' className='w-[18px] h-[18px]' />
         )}
         <span className='text-[15px] text-[#2D3E4F] font-bold'>
           {headerTitle}
@@ -84,8 +84,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                 } group w-full flex items-center text-[14px] font-semibold gap-2 text-[#2D3E4F] text-left pl-6 pr-3 py-2 hover:bg-[#0BBFB726] ${item.disabled ? 'cursor-not-allowed' : 'cursor-pointer'}  `}
               >
                 <span>{item.name}</span>
-                <img
-                  src={adminSubmenuActiveIcon}
+                <AdminSubmenuActiveIcon
                   alt='active'
                   className={`w-[12px] h-[12px] transition-opacity duration-150 ${
                     activeKey === item.key

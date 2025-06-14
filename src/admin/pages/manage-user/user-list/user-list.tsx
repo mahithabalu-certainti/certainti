@@ -3,8 +3,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ManageUserIcon,
-  newFilterIcon,
-  refreshIcon,
+  NewFilterIcon,
+  RefreshIcon,
 } from '../../../../assets/icons';
 import { FilterModal } from '../../../../components';
 import ActionsDropdown from '../../../../components/actions-dropdown/actions-dropdown';
@@ -220,8 +220,7 @@ const UserList: React.FC = () => {
       <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
         <div className='flex h-[33px]'>
           <div className='flex items-center justify-center'>
-            <img
-              src={ManageUserIcon}
+            <ManageUserIcon
               alt='manage user'
               className='h-7 w-7 rounded'
             />
@@ -241,7 +240,7 @@ const UserList: React.FC = () => {
             className='flex border border-[#CBD6E2] w-[24px] h-[23px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
             onClick={onRefreshClick}
           >
-            <img src={refreshIcon} alt='refresh-icon' className='h-4' />
+            <RefreshIcon alt='refresh-icon' className='h-4' />
           </button>
           {isUserCreateEnable && (
             <TextButton
@@ -270,7 +269,7 @@ const UserList: React.FC = () => {
               ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) || sortFilterCount > 0 ? 'bg-[#F3F3F3]' : ''}`}
               onClick={handleFilterModal}
             >
-              <img src={newFilterIcon} alt='filter-icon' />
+              <NewFilterIcon alt='filter-icon' />
               Filter
               {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
               sortFilterCount > 0 ? (

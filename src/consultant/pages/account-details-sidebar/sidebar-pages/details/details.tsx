@@ -2,8 +2,8 @@ import { Box } from '@mui/material';
 import { useEffect, useState } from 'react';
 import OverviewTimelineTab from '../../components/overview-tab/overview-timeline-tab';
 import {
-  detailsKeyContactErrorIcon,
-  realatedListDetailsIcon,
+  DetailsKeyContactErrorIcon,
+  RealatedListDetailsIcon,
 } from '../../../../../assets';
 import TextButton from '../../../../../components/button/text-button';
 import DetailsInfo from './details-info';
@@ -134,7 +134,7 @@ const Details: React.FC<DetailsProps> = ({
       {!isKeyContactAvailable && (
         <Box className='flex items-center gap-1.5 h-8 border-b border-[#FFC77B] bg-[#FEF8F0] text-[13px] text-[#2D3E4F] px-3 py-2 border-box'>
           <Box>
-            <img src={detailsKeyContactErrorIcon} alt='key-contact' />
+            <DetailsKeyContactErrorIcon alt='key-contact' />
           </Box>
           <Box>
             <span className='font-bold mr-1'>Contact Details </span> -{' '}
@@ -158,8 +158,7 @@ const Details: React.FC<DetailsProps> = ({
             <Box className='flex items-center justify-between gap-4 h-[38px] py-1 px-2'>
               <Box className='flex items-center gap-2'>
                 <Box>
-                  <img
-                    src={realatedListDetailsIcon}
+                  <RealatedListDetailsIcon
                     alt='details'
                     className='w-6 h-6'
                   />

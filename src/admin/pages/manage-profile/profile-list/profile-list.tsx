@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { newFilterIcon, userIcon, refreshIcon } from '../../../../assets';
+import { NewFilterIcon, UserIcon, RefreshIcon } from '../../../../assets';
 import TextButton from '../../../../components/button/text-button';
 import { useNavigate } from 'react-router-dom';
 import { MANAGE_PROFILE_CREATE } from '../../../../routes';
@@ -147,8 +147,7 @@ export const ProfileList: React.FC = () => {
       <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
         <div className='flex h-[33px]'>
           <div className='flex items-center justify-center'>
-            <img
-              src={userIcon}
+            <UserIcon
               alt='manage user'
               className='h-7 w-7 rounded bg-[#BE3EB5] p-[7px]'
             />
@@ -167,7 +166,7 @@ export const ProfileList: React.FC = () => {
             className='flex border border-[#CBD6E2] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
             onClick={onRefreshClick}
           >
-            <img src={refreshIcon} alt='refresh-icon' className='h-4' />
+            <RefreshIcon alt='refresh-icon' className='h-4' />
           </button>
           {isProfileCreateEnable && (
             <TextButton
@@ -196,7 +195,7 @@ export const ProfileList: React.FC = () => {
               ${isFilterOpen || (appliedFilters && Object.keys(appliedFilters).length > 0) || sortFilterCount > 0 ? 'bg-[#F3F3F3]' : ''}`}
               onClick={handleFilterModal}
             >
-              <img src={newFilterIcon} alt='filter-icon' />
+              <NewFilterIcon alt='filter-icon' />
               Filter
               {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
               sortFilterCount > 0 ? (
@@ -252,3 +251,5 @@ export const ProfileList: React.FC = () => {
     </div>
   );
 };
+
+export default ProfileList;

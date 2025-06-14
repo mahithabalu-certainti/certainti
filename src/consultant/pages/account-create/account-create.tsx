@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import { accountHomeIcon, editIcon } from '../../../assets';
+import { AccountHomeIcon, EditIcon } from '../../../assets';
 import {
   AllModules,
   AllPermissions,
@@ -317,11 +317,11 @@ export const AccountForm: React.FC = () => {
     <>
       <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
-          <img
-            src={isEditView ? editIcon : accountHomeIcon}
-            alt='menu-icon'
-            className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
-          />
+          {isEditView ? (
+            <EditIcon className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded' />
+          ) : (
+            <AccountHomeIcon className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded' />
+          )}
           <div className='w-[90%]'>
             {isEditView && (
               <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F]'>
@@ -388,3 +388,5 @@ export const AccountForm: React.FC = () => {
     </>
   );
 };
+
+export default AccountForm;

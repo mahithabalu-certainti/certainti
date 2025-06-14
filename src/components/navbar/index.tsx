@@ -10,19 +10,17 @@ import {
   Toolbar,
   Tooltip,
 } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  accountsIcon,
-  burgerMenuIcon,
-  chevronDownIcon,
-  globeIcon,
-  menuIcon,
-  notificationIcon,
-  phoneIcon,
-  // plusIcon,
-  // searchIcon,
-  settingsIcon,
+  AccountsIcon,
+  BurgerMenuIcon,
+  ChevronDownIcon,
+  GlobeIcon,
+  MenuIcon,
+  NotificationIcon,
+  PhoneIcon,
+  SettingsIcon,
 } from '../../assets';
 import { AllPermissions } from '../../common-service';
 import { msalConfig, msalResetPasswordConfig } from '../../config/msalConfig';
@@ -72,25 +70,26 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   // Permission Mangement
   const { permission } = useSelector((state: RootState) => state.permission);
-  const isViewProfileEnable = checkPermission(
-    permission,
-    AllPermissions.PROFILE_VIEW
+  const isViewProfileEnable = useMemo(
+    () => checkPermission(permission, AllPermissions.PROFILE_VIEW),
+    [permission]
   );
 
-  const isFilterApplied = filters.length > 0;
+  const isFilterApplied = useMemo(() => filters.length > 0, [filters]);
 
   const [globalAnchorEl, setGlobalAnchorEl] =
     useState<HTMLButtonElement | null>(null);
 
-  const handleGlobalFilterModal = (
-    event: React.MouseEvent<HTMLButtonElement>
-  ) => {
-    setGlobalAnchorEl(event.currentTarget);
-  };
+  const handleGlobalFilterModal = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      setGlobalAnchorEl(event.currentTarget);
+    },
+    []
+  );
 
-  const handleCloseGlobalFilter = () => {
+  const handleCloseGlobalFilter = useCallback(() => {
     setGlobalAnchorEl(null);
-  };
+  }, []);
 
   const isGlobalModalOpen = Boolean(globalAnchorEl);
   const globalFilterId = isGlobalModalOpen
@@ -105,14 +104,21 @@ export const Navbar: React.FC<NavbarProps> = ({
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
   const isNotificationMenuOpen = Boolean(notificationAnchor);
   const isSearchMenuOpen = Boolean(searchAnchor);
-  const searchMenus = ['Account', 'Projects', 'Case', 'Resources', 'TimeSheet'];
-  const fiscalYearsDropDown = [{ value: '', label: 'FY-All' }].concat(
-    fiscalYears
+  const searchMenus = useMemo(
+    () => ['Account', 'Projects', 'Case', 'Resources', 'TimeSheet'],
+    []
+  );
+  const fiscalYearsDropDown = useMemo(
+    () => [{ value: '', label: 'FY-All' }].concat(fiscalYears),
+    []
   );
 
-  const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
+  const handleProfileMenuOpen = useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      setAnchorEl(event.currentTarget);
+    },
+    []
+  );
 
   const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setMobileMoreAnchorEl(event.currentTarget);
@@ -122,34 +128,32 @@ export const Navbar: React.FC<NavbarProps> = ({
     setMobileMoreAnchorEl(null);
   };
 
-  const handleMenuClose = () => {
+  const handleMenuClose = useCallback(() => {
     setAnchorEl(null);
-    handleMobileMenuClose();
-  };
+    setMobileMoreAnchorEl(null);
+  }, []);
 
-  const handleNotificationClose = () => {
+  const handleNotificationClose = useCallback(() => {
     setNotificationAnchor(null);
-  };
+  }, []);
 
   const handleSearchMenuClose = () => {
     setSearchAnchor(null);
   };
 
-  const handleNotificationOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setNotificationAnchor(event.currentTarget);
-  };
+  const handleNotificationOpen = useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      setNotificationAnchor(event.currentTarget);
+    },
+    []
+  );
 
-  // const handleSearchMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-  //   setSearchAnchor(event.currentTarget);
-  // };
-
-  const changePassword = async () => {
+  const changePassword = useCallback(async () => {
     handleMenuClose();
     try {
       await msalResetInstance.initialize();
       await msalResetInstance.loginPopup();
       successToast('Your password has been updated successfully');
-
       await msalSigninInstance.initialize();
       await msalSigninInstance.logoutPopup();
       await msalSigninInstance.clearCache();
@@ -157,19 +161,19 @@ export const Navbar: React.FC<NavbarProps> = ({
       window.location.replace('/login');
     } catch (error) {
       const err = error as BrowserAuthError;
-      // Prevent show error for User cancelation
-      const isCanceledByUser = [
-        'The user has cancelled entering self-asserted information.',
-        'User cancelled the flow',
-      ].some((msg) => err.errorMessage.includes(msg));
-
-      if (!isCanceledByUser) {
+      if (
+        ![
+          'The user has cancelled entering self-asserted information.',
+          'User cancelled the flow',
+        ].some((msg) => err.errorMessage.includes(msg))
+      ) {
         errorToast(err.errorMessage);
       }
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [msalResetInstance, msalSigninInstance]);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     handleMenuClose();
     try {
       await msalSigninInstance.initialize();
@@ -181,156 +185,181 @@ export const Navbar: React.FC<NavbarProps> = ({
     } catch (error) {
       console.error('Error logging out:', error);
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [msalSigninInstance]);
 
-  const goToProfile = () => {
+  const goToProfile = useCallback(() => {
     navigate(PROFILE);
     handleMenuClose();
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const renderMenu = (
-    <Menu
-      anchorEl={anchorEl}
-      anchorOrigin={{
-        vertical: 'bottom',
-        horizontal: 'right',
-      }}
-      id={menuId}
-      keepMounted
-      transformOrigin={{
-        vertical: 'top',
-        horizontal: 'right',
-      }}
-      open={isMenuOpen}
-      onClose={handleMenuClose}
-    >
-      {isViewProfileEnable && (
-        <MenuItem sx={{ fontSize: '14px' }} onClick={goToProfile}>
-          View Profile Details
+  const renderMenu = useMemo(
+    () => (
+      <Menu
+        anchorEl={anchorEl}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        id={menuId}
+        keepMounted
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        open={isMenuOpen}
+        onClose={handleMenuClose}
+      >
+        {isViewProfileEnable && (
+          <MenuItem sx={{ fontSize: '14px' }} onClick={goToProfile}>
+            View Profile Details
+          </MenuItem>
+        )}
+        <MenuItem sx={{ fontSize: '14px' }} onClick={changePassword}>
+          Change Password
         </MenuItem>
-      )}
-      <MenuItem sx={{ fontSize: '14px' }} onClick={changePassword}>
-        Change Password
-      </MenuItem>
-      <MenuItem sx={{ fontSize: '14px' }} onClick={handleLogout}>
-        Logout
-      </MenuItem>
-    </Menu>
+        <MenuItem sx={{ fontSize: '14px' }} onClick={handleLogout}>
+          Logout
+        </MenuItem>
+      </Menu>
+    ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [anchorEl, isMenuOpen, isViewProfileEnable]
   );
 
-  const renderNotificationMenu = (
-    <Popover
-      id={notificationId}
-      open={isNotificationMenuOpen}
-      anchorEl={notificationAnchor}
-      onClose={handleNotificationClose}
-      anchorOrigin={{
-        vertical: 'bottom',
-        horizontal: 'left',
-      }}
-      transformOrigin={{
-        vertical: 'top',
-        horizontal: 'center',
-      }}
-    >
-      <div className='p-5'>
-        <div className='flex justify-between items-center mb-4'>
-          <h4 className='font-medium'>Notification for you</h4>{' '}
-          <span className='text-gray-600 text-xs cursor-pointer'>
-            Mark all read
-          </span>
-        </div>
-        {[...Array(5)].map((_, i) => (
-          <div
-            className='px-3 py-1 flex items-center cursor-pointer hover:bg-gray-100'
-            key={i}
-          >
-            <img
-              className='w-10 h-10 rounded-full object-cover'
-              src='https://mui.com/static/images/avatar/2.jpg'
-              alt='User Avatar'
-            />
-            <div className='px-4'>
-              <h4 className='font-medium'>Distribution</h4>
-              <span className='text-xs text-gray-600'>
-                Bender Rodriguez . DesignDrops . Mar 4
-              </span>
-            </div>
-            <span className='w-2 h-2 bg-red-500 rounded-full' />
+  const renderNotificationMenu = useMemo(
+    () => (
+      <Popover
+        id={notificationId}
+        open={isNotificationMenuOpen}
+        anchorEl={notificationAnchor}
+        onClose={handleNotificationClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'center',
+        }}
+      >
+        <div className='p-5'>
+          <div className='flex justify-between items-center mb-4'>
+            <h4 className='font-medium'>Notification for you</h4>{' '}
+            <span className='text-gray-600 text-xs cursor-pointer'>
+              Mark all read
+            </span>
           </div>
-        ))}
-      </div>
-      <div className='bg-gray-100 py-3 px-6 bt-2 border-t border-gray-200'>
-        <h4 className='font-medium cursor-pointer text-sm'>
-          Previous Notification
-        </h4>
-      </div>
-    </Popover>
-  );
-
-  const renderSearchMenu = (
-    <Popover
-      id={searchMenuId}
-      open={isSearchMenuOpen}
-      anchorEl={searchAnchor}
-      onClose={handleSearchMenuClose}
-      anchorOrigin={{
-        vertical: 'bottom',
-        horizontal: 'center',
-      }}
-      transformOrigin={{
-        vertical: 'top',
-        horizontal: 'center',
-      }}
-    >
-      <div className='p-2 bg-[#465a6e] text-white text-sm'>
-        {searchMenus.map((menu, i) => (
-          <h4 key={i} className='cursor-pointer px-4 py-1 hover:bg-[#667c93]'>
-            {menu}
+          {[...Array(5)].map((_, i) => (
+            <div
+              className='px-3 py-1 flex items-center cursor-pointer hover:bg-gray-100'
+              key={i}
+            >
+              <img
+                className='w-10 h-10 rounded-full object-cover'
+                src='https://mui.com/static/images/avatar/2.jpg'
+                alt='User Avatar'
+              />
+              <div className='px-4'>
+                <h4 className='font-medium'>Distribution</h4>
+                <span className='text-xs text-gray-600'>
+                  Bender Rodriguez . DesignDrops . Mar 4
+                </span>
+              </div>
+              <span className='w-2 h-2 bg-red-500 rounded-full' />
+            </div>
+          ))}
+        </div>
+        <div className='bg-gray-100 py-3 px-6 bt-2 border-t border-gray-200'>
+          <h4 className='font-medium cursor-pointer text-sm'>
+            Previous Notification
           </h4>
-        ))}
-      </div>
-    </Popover>
+        </div>
+      </Popover>
+    ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isNotificationMenuOpen, notificationAnchor]
   );
 
-  const renderMobileMenu = (
-    <Menu
-      anchorEl={mobileMoreAnchorEl}
-      anchorOrigin={{
-        vertical: 'top',
-        horizontal: 'right',
-      }}
-      id={mobileMenuId}
-      keepMounted
-      transformOrigin={{
-        vertical: 'top',
-        horizontal: 'right',
-      }}
-      open={isMobileMenuOpen}
-      onClose={handleMobileMenuClose}
-    >
-      <MenuItem>
-        <IconButton size='large' color='inherit'>
-          <Badge badgeContent={4} color='error'>
-            <img src={notificationIcon} alt='notification' />
-          </Badge>
-        </IconButton>
-        <p>Messages</p>
-      </MenuItem>
-      <MenuItem onClick={handleProfileMenuOpen}>
-        <IconButton
-          size='large'
-          aria-label='account of current user'
-          aria-controls='primary-search-account-menu'
-          aria-haspopup='true'
-          color='inherit'
-        >
-          <img src={accountsIcon} alt='accounts' />
-        </IconButton>
-        <p>Profile</p>
-      </MenuItem>
-    </Menu>
+  const renderSearchMenu = useMemo(
+    () => (
+      <Popover
+        id={searchMenuId}
+        open={isSearchMenuOpen}
+        anchorEl={searchAnchor}
+        onClose={handleSearchMenuClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'center',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'center',
+        }}
+      >
+        <div className='p-2 bg-[#465a6e] text-white text-sm'>
+          {searchMenus.map((menu, i) => (
+            <h4 key={i} className='cursor-pointer px-4 py-1 hover:bg-[#667c93]'>
+              {menu}
+            </h4>
+          ))}
+        </div>
+      </Popover>
+    ),
+    [isSearchMenuOpen, searchAnchor, searchMenus]
   );
+
+  const renderMobileMenu = useMemo(
+    () => (
+      <Menu
+        anchorEl={mobileMoreAnchorEl}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        id={mobileMenuId}
+        keepMounted
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        open={isMobileMenuOpen}
+        onClose={handleMobileMenuClose}
+      >
+        <MenuItem>
+          <IconButton size='large' color='inherit'>
+            <Badge badgeContent={4} color='error'>
+              <NotificationIcon alt='notification' />
+            </Badge>
+          </IconButton>
+          <p>Messages</p>
+        </MenuItem>
+        <MenuItem onClick={handleProfileMenuOpen}>
+          <IconButton
+            size='large'
+            aria-label='account of current user'
+            aria-controls='primary-search-account-menu'
+            aria-haspopup='true'
+            color='inherit'
+          >
+            <AccountsIcon />
+          </IconButton>
+          <p>Profile</p>
+        </MenuItem>
+      </Menu>
+    ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isMobileMenuOpen, mobileMoreAnchorEl]
+  );
+
+  const MemoizedAvatar = React.memo(({ name }: { name: string | null }) => (
+    <img
+      className='w-6 h-6 p-0.5 rounded-full bg-white object-cover'
+      src='https://cdn-icons-png.flaticon.com/512/666/666201.png'
+      alt={`${name}'s avatar`}
+    />
+  ));
 
   return (
     <>
@@ -342,8 +371,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               type='button'
               onClick={handleSidebarToggle}
             >
-              <img
-                src={burgerMenuIcon}
+              <BurgerMenuIcon
                 alt='menu'
                 className='h-[32px] w-[32px]'
               />
@@ -382,8 +410,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     className={`${isGlobalModalOpen || isFilterApplied ? 'bg-[#FFFFFF26]' : 'bg-transparent'} w-[85px] min-w-[85px] px-3 h-[25px] flex justify-center items-center gap-1.5 mr-2 cursor-pointer focus:outline-none rounded-[2px] hover:bg-[#FFFFFF33] hover:rounded-xs whitespace-nowrap`}
                   >
                     <div className='relative'>
-                      <img
-                        src={globeIcon}
+                      <GlobeIcon
                         alt='global'
                         className='h-[16px] w-[16px]'
                       />
@@ -414,7 +441,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </>
             )}
             <IconButton size='large' color='inherit'>
-              <img src={phoneIcon} alt='phone' className='h-[20px] w-[20px]' />
+              <PhoneIcon alt='phone' className='h-[20px] w-[20px]' />
             </IconButton>
             <IconButton
               size='large'
@@ -424,8 +451,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               color='inherit'
               aria-controls={notificationId}
             >
-              <img
-                src={notificationIcon}
+              <NotificationIcon
                 alt='notification'
                 className='h-[22px] w-[22px]'
               />
@@ -440,8 +466,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   color='inherit'
                   onClick={switchSideBarMenus}
                 >
-                  <img
-                    src={settingsIcon}
+                  <SettingsIcon
                     alt='settings'
                     className='h-[20px] w-[20px]'
                   />
@@ -459,13 +484,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               color='inherit'
               disableRipple
             >
-              <img
-                className='w-6 h-6 p-0.5 rounded-full bg-white object-cover'
-                src='https://cdn-icons-png.flaticon.com/512/666/666201.png'
-                alt='User Avatar'
-              />
+              <MemoizedAvatar name={name} />
               <span className='text-[12px] font-[400] px-2'>{name}</span>
-              <img src={chevronDownIcon} alt='down nav' />
+              <ChevronDownIcon alt='down nav' />
             </IconButton>
           </Box>
           {/* mobile view */}
@@ -478,7 +499,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={handleMobileMenuOpen}
               color='inherit'
             >
-              <img src={menuIcon} alt='menu' />
+              <MenuIcon alt='menu' />
             </IconButton>
           </Box>
         </Toolbar>

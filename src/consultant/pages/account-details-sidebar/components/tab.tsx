@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Box, Menu, MenuItem, Tab, Tabs } from '@mui/material';
 import React, { useEffect, useMemo, useState } from 'react';
-import { resourceFilterIcon, refreshIcon } from '../../../../assets';
+import { ResourceFilterIcon, RefreshIcon } from '../../../../assets';
 import ActionImportDropdown from '../sidebar-pages/imports/importdropdown';
 import {
   getCostFilterFields,
@@ -334,7 +334,7 @@ const TabPanel: React.FC<TabProps> = ({
                   className='w-[24px] h-[24px] max-h-[24px] flex items-center justify-center border border-[#CBD6E2] rounded-[2px] cursor-pointer'
                   aria-describedby={filterId}
                 >
-                  <img src={resourceFilterIcon} className='p-1' />
+                  <ResourceFilterIcon className='p-1' />
                   {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
                   sortFilterCount > 0 ? (
                     <div className='absolute -top-[8px] -right-1.5 w-4 h-4 flex items-center justify-center text-xs'>
@@ -368,7 +368,7 @@ const TabPanel: React.FC<TabProps> = ({
                   className='flex border border-[#CBD6E2] ml-2 w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center cursor-pointer'
                   onClick={onRefreshClick}
                 >
-                  <img src={refreshIcon} alt='refresh-icon' className='h-4' />
+                  <RefreshIcon alt='refresh-icon' className='h-4' />
                 </button>
               )}
             </>

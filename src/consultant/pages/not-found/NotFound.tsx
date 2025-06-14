@@ -16,3 +16,5 @@ export const NotFound: React.FC = () => {
     </Box>
   );
 };
+
+export default NotFound;

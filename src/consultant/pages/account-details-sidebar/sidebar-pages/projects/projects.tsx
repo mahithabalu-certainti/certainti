@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
-import { projectHeaderIcon } from '../../../../../assets';
+import { ProjectHeaderIcon } from '../../../../../assets';
 import TabPanel from '../../components/tab';
 // import ListTable from '../../components/table';
 import { useSelector } from 'react-redux';
@@ -266,7 +266,7 @@ const Projects: React.FC<ProjectsProps> = ({
             value={'projects'}
             title='Projects'
             titleIcon={
-              <img src={projectHeaderIcon} alt='project-header-icon' />
+              <ProjectHeaderIcon alt='project-header-icon' />
             }
             headerButtons={headerButtons}
           />

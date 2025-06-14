@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { profileIcon } from '../../../../assets/icons';
+import { ProfileIcon } from '../../../../assets/icons';
 import TextButton from '../../../../components/button/text-button';
 import { ProfileForm } from './profile-form';
 import { SelectOption } from '../../../../consultant/types';
@@ -164,8 +164,7 @@ export const CreateProfile: React.FC = () => {
         {/* Header Section */}
         <div className='w-full min-h-[50px] h-[50px] px-4 flex items-center justify-between border-b-1 border-[#CBD6E2]'>
           <div className='flex items-center gap-2'>
-            <img
-              src={profileIcon}
+            <ProfileIcon
               alt='create profile'
               className='h-8 w-8 rounded'
             />
@@ -247,3 +246,5 @@ export const CreateProfile: React.FC = () => {
     </>
   );
 };
+
+export default CreateProfile;

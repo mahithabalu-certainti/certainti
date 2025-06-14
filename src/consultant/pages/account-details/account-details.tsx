@@ -6,7 +6,7 @@ import {
   useNavigate,
   useSearchParams,
 } from 'react-router-dom';
-import { accountDetailsIcon } from '../../../assets';
+import { AccountDetailsIcon } from '../../../assets';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../components';
 import { ACCOUNT } from '../../../routes';
 import { useAccountDetail } from '../../services/account-details/account-details-service';
@@ -320,9 +320,12 @@ export const AccountDetails = () => {
         <PageHeader
           variant='sub'
           placeholder='Account Name'
-          icon={accountDetailsIcon}
-          iconBackgroundColor='#4B9BFF'
-          iconClasses='h-6 w-6 rounded'
+          icon={
+            <AccountDetailsIcon
+              className='h-6 w-6 rounded'
+              style={{ backgroundColor: '#4B9BFF' }}
+            />
+          }
           title={data?.data?.accountById?.account_name || 'Account Title'}
           totalRecords={5}
           actionItems={menuItems}

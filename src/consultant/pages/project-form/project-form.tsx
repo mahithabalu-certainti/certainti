@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { editIcon, projectCreateIcon } from '../../../assets';
+import { EditIcon, ProjectCreateIcon } from '../../../assets';
 import { Layout, OnChange, useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
@@ -264,11 +264,18 @@ const ProjectForm: React.FC = () => {
     <>
       <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200'>
         <div className='flex items-center w-[80%] max-w-[80%]'>
-          <img
-            src={isEditView ? editIcon : projectCreateIcon}
-            alt='projrct-icon'
-            className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
-          />
+          {isEditView ? (
+            <EditIcon
+              alt='projrct-icon'
+              className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
+            />
+          ) : (
+            <ProjectCreateIcon
+              alt='projrct-icon'
+              className='h-6 w-6 bg-[#7D98B6] p-1.5 border-box rounded'
+            />
+          )}
+
           <div className='w-[90%]'>
             {isEditView && (
               <h5 className='text-[16px] font-bold ml-2 text-[#2D3E4F]'>

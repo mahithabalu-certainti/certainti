@@ -1,6 +1,6 @@
 import React from 'react';
 import { SelectOption } from '../../../../consultant/types';
-import { arrowDownIcon } from '../../../../assets';
+import { ArrowDownIcon } from '../../../../assets';
 import TextButton from '../../../../components/button/text-button';
 import { TextareaAutosize } from '@mui/material';
 
@@ -146,8 +146,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
                   </option>
                 ))}
               </select>
-              <img
-                src={arrowDownIcon}
+              <ArrowDownIcon
                 alt='dropdown arrow'
                 className={`absolute right-2 ${
                   errors.existingProfile ? 'top-1/3' : 'top-1/2'

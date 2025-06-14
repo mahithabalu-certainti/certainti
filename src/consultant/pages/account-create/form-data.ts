@@ -14,7 +14,7 @@ import {
   STATUS_OPTIONS,
   YES_NO_OPTIONS,
 } from '../../../common-utils';
-import { closeIcon } from '../../../assets';
+import { CloseIcon } from '../../../assets';
 
 export const newKeyContactFields = (
   roles: SelectOption[],
@@ -98,7 +98,7 @@ export const newKeyContactFields = (
     placeholder: 'Choose Status',
     defaultValue: STATUS_OPTIONS[0].value,
   }),
-  createImgButton('button', closeIcon, {
+  createImgButton('button', CloseIcon, {
     width: '30px',
   }),
 ];

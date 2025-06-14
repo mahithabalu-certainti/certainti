@@ -116,8 +116,7 @@ export const ManageUserDetails: React.FC = () => {
     <div className='flex flex-col h-[calc(100vh-64px)] w-full overflow-y-auto p-4 gap-3'>
       <div className='w-full min-h-[75px] h-[75px] px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
         <div className='flex items-center gap-2'>
-          <img
-            src={ManageUserIcon}
+          <ManageUserIcon
             alt='manage user'
             className='w-8 h-8 rounded'
           />
@@ -198,3 +197,5 @@ export const ManageUserDetails: React.FC = () => {
     </div>
   );
 };
+
+export default ManageUserDetails;

@@ -16,7 +16,7 @@ import {
 } from '../../../common-utils';
 import { FieldType, FormType, SelectOption } from '../../types';
 import { fiscalYears } from '../resource-form/form-data';
-import { closeIcon } from '../../../assets';
+import { CloseIcon } from '../../../assets';
 const DATE_CONFIG = {
   FISCAL_YEARS_RANGE: 6,
   MIN_YEARS_BACK: 6,
@@ -104,7 +104,7 @@ export const newKeyContactFields = (
     placeholder: 'Choose Status',
     defaultValue: STATUS_OPTIONS[0].value,
   }),
-  createImgButton('button', closeIcon, {
+  createImgButton('button', CloseIcon, {
     width: '30px',
   }),
 ];
