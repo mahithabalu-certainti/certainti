@@ -10,7 +10,14 @@ import {
   ListItemText,
   Tooltip,
 } from '@mui/material';
-import React, { useState, useEffect, Fragment, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  Fragment,
+  useCallback,
+  Suspense,
+  useMemo,
+} from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   AdminChevronDownIcon,
@@ -187,25 +194,19 @@ export const Sidebar: React.FC<SideBarProps> = ({
   );
   const { logout } = useAuthHook();
 
-  const [accountMenus, setAccountMenus] = useState(accountNavItems);
-  const [adminNavItems, setAdminNavItems] =
-    useState<AdminNavItem[]>(sideNavAdminItems);
   // Permission Mangement
   const { menus } = useSelector((state: RootState) => state.permission);
-
-  useEffect(() => {
-    const updatedItems = accountNavItems.map((item) => {
+  const accountMenus = useMemo(() => {
+    return accountNavItems.map((item) => {
       const menu = menus.find((menu) => menu.name === item.id);
       return {
         ...item,
         hide: menu && !menu.is_enabled,
       };
     });
-    setAccountMenus(updatedItems);
   }, [menus]);
-
-  useEffect(() => {
-    const updatedItems = sideNavAdminItems.map((item) => ({
+  const memoizedAdminNavItems = useMemo(() => {
+    return sideNavAdminItems.map((item) => ({
       ...item,
       subItemTitle: item.subItemTitle.map((subItem) => {
         const menu = menus.find((menu) => menu.name === subItem.id);
@@ -218,14 +219,15 @@ export const Sidebar: React.FC<SideBarProps> = ({
         matchCheck(subItem, trimmedPathname(2))
       ),
     }));
-    setAdminNavItems(updatedItems);
   }, [menus, trimmedPathname]);
+  const [adminNavItems, setAdminNavItems] = useState<AdminNavItem[]>(
+    memoizedAdminNavItems
+  );
+  useEffect(() => {
+    setAdminNavItems(memoizedAdminNavItems);
+  }, [memoizedAdminNavItems]);
 
-  const handleLogout = () => {
-    logout();
-  };
-
-  const handleToggle = (index: number) => {
+  const handleToggle = useCallback((index: number) => {
     setAdminNavItems((prevItems) =>
       prevItems.map((item, idx) =>
         idx === index
@@ -233,7 +235,11 @@ export const Sidebar: React.FC<SideBarProps> = ({
           : { ...item, openStatus: false }
       )
     );
-  };
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    logout();
+  }, [logout]);
 
   const noItemsOpen = adminNavItems.every((item) => !item.openStatus);
 
@@ -358,10 +364,7 @@ export const Sidebar: React.FC<SideBarProps> = ({
                         justifyContent: 'center',
                       }}
                     >
-                      <item.icon
-                        alt='menu-icon'
-                        className='h-[16px]'
-                      />
+                      <item.icon alt='menu-icon' className='h-[16px]' />
                     </ListItemIcon>
                   </Tooltip>
                   {sidebarExpand && (
@@ -479,23 +482,26 @@ export const Sidebar: React.FC<SideBarProps> = ({
                         }}
                         primary={item.title}
                       />
-                      {item.subItemTitle.length > 0 &&
-                        (item.openStatus ? (
-                          <AdminChevronUpIcon
-                            alt='up'
-                            className='h-[16px] mr-0.5'
-                          />
-                        ) : (
-                          <AdminChevronDownIcon
-                            alt='down'
-                            className='h-[16px] mr-0.5'
-                          />
-                        ))}
+                      {item.subItemTitle.length > 0 && (
+                        <Suspense fallback={null}>
+                          {item.openStatus ? (
+                            <AdminChevronUpIcon
+                              alt='up'
+                              className='h-[16px] mr-0.5'
+                            />
+                          ) : (
+                            <AdminChevronDownIcon
+                              alt='down'
+                              className='h-[16px] mr-0.5'
+                            />
+                          )}
+                        </Suspense>
+                      )}
                     </Box>
                   )}
                 </ListItemButton>
               </ListItem>
-              <Collapse in={item.openStatus} timeout='auto' unmountOnExit>
+              <Collapse in={item.openStatus}>
                 {item.subItemTitle &&
                   item.subItemTitle.map((subItem, subIndex) => {
                     if (subItem.hide) return null;

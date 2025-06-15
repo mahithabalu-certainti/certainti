@@ -1,12 +1,14 @@
+/// <reference types="vite-plugin-svgr/client" />
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import viteCompression from 'vite-plugin-compression';
+import svgr from 'vite-plugin-svgr';
 
 // https://vite.dev/config/
 export default defineConfig({
   base: '/',
-  plugins: [react(), tailwindcss(), viteCompression()],
+  plugins: [react(), tailwindcss(), viteCompression(), svgr()],
   server: {
     port: 3000,
   },
@@ -25,6 +27,6 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
   },
   optimizeDeps: {
-    include: ['react', 'react-dom']
+    include: ['**/*.svg?react', 'react', 'react-dom'],
   },
 });
