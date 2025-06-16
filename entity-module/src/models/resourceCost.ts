@@ -11,18 +11,24 @@ interface ResourceCostAttributes {
   resource_rid: string;
   resource_number: string;
   resource_code: string;
-  effective_date?: Date | null;
+  effective_from?: Date | null;
   end_date?: Date | null;
   // cost?: number;
   // cost_type?: string;
-  annual_cost?: number;
+  // annual_cost?: number;
   // semi_annual_cost?: number;
-  monthly_cost?: number;
-  weekly_cost?: number;
-  bi_weekly_cost?: number;
-  daily_cost?: number;
-  hourly_cost?: number;
+  // monthly_cost?: number;
+  // weekly_cost?: number;
+  // bi_weekly_cost?: number;
+  // daily_cost?: number;
+  // hourly_cost?: number;
   effort_in_hrs?: number;
+  salary: number;
+  bonus?: number;
+  insurance?: number;
+  deductions?: number;
+  net_resource_cost: number;
+  resource_cost?: number;
   currency_rid?: string;
   fiscal_year: number;
   status?: string;
@@ -48,19 +54,25 @@ export class ResourceCost
   resource_rid!: string;
   resource_number!: string;
   resource_code!: string;
-  effective_date?: Date;
+  effective_from?: Date;
   end_date?: Date;
   // cost?: number;
   // cost_type?: string;
   fiscal_year!: number;
-  annual_cost?: number;
+  // annual_cost?: number;
   // semi_annual_cost?: number;
-  monthly_cost?: number;
-  weekly_cost?: number;
-  bi_weekly_cost?: number;
-  daily_cost?: number;
-  hourly_cost?: number;
+  // monthly_cost?: number;
+  // weekly_cost?: number;
+  // bi_weekly_cost?: number;
+  // daily_cost?: number;
+  // hourly_cost?: number;
   effort_in_hrs?: number;
+  salary!: number;
+  bonus?: number;
+  insurance?: number;
+  deductions?: number;
+  net_resource_cost!: number;
+  resource_cost?: number;
   currency_rid?: string;
   status?: string;
   comments?: string;
@@ -110,7 +122,7 @@ export class ResourceCost
           type: DataTypes.INTEGER,
           allowNull: false,
         },
-        effective_date: {
+        effective_from: {
           type: DataTypes.DATE,
           allowNull: true,
           validate: {
@@ -156,31 +168,55 @@ export class ResourceCost
         //   type: DataTypes.STRING(255),
         //   allowNull: true,
         // },
-        annual_cost: {
-          type: DataTypes.DECIMAL(18, 2),
-          allowNull: true,
-        },
+        // annual_cost: {
+        //   type: DataTypes.DECIMAL(18, 2),
+        //   allowNull: true,
+        // },
         // semi_annual_cost: {
         //   type: DataTypes.DECIMAL(18, 2),
         //   allowNull: true,
         // },
-        monthly_cost: {
+        // monthly_cost: {
+        //   type: DataTypes.DECIMAL(18, 2),
+        //   allowNull: true,
+        // },
+        // weekly_cost: {
+        //   type: DataTypes.DECIMAL(18, 2),
+        //   allowNull: true,
+        // },
+        // bi_weekly_cost: {
+        //   type: DataTypes.DECIMAL(18, 2),
+        //   allowNull: true,
+        // },
+        // daily_cost: {
+        //   type: DataTypes.DECIMAL(18, 2),
+        //   allowNull: true,
+        // },
+        // hourly_cost: {
+        //   type: DataTypes.DECIMAL(18, 2),
+        //   allowNull: true,
+        // },
+        salary: {
+          type: DataTypes.DECIMAL(18, 2),
+          allowNull: false,
+        },
+        bonus: {
           type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },
-        weekly_cost: {
+        insurance: {
           type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },
-        bi_weekly_cost: {
+        deductions: {
           type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },
-        daily_cost: {
+        net_resource_cost: {
           type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },
-        hourly_cost: {
+        resource_cost: {
           type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },

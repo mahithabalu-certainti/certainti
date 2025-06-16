@@ -932,15 +932,18 @@ class ResourceCostSchemaService {
   processNumericFilter(key: string, value: any): string {
     // Your existing implementation
     let condition = "";
-    if(key === "fiscal_year") {
-      key = "fiscal_year";
-    }
-    else if(key === "effort_in_hrs") {
-      key = "effort_in_hrs";
-    }
-    else {
-      key = `${key}_cost`;
-    }
+    // if(key === "fiscal_year") {
+    //   key = "fiscal_year";
+    // }
+    // else if(key === "effort_in_hrs") {
+    //   key = "effort_in_hrs";
+    // }
+    // else if(key === "bonus") {
+    //   key = "bonus";
+    // }
+    // else {
+    //   key = `${key}_cost`;
+    // }
     if (value.equals !== undefined) {
       condition += ` AND rc."${key}" = ${value.equals}`;
     } else if (value.not_equals !== undefined) {

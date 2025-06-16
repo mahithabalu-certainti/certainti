@@ -250,17 +250,22 @@ async createResourceCost(
         resource_type,
         resource_rid,
         resource_code,
-        effective_date,
+        effective_from,
         end_date,
         // cost_frequency,
         // cost,
-        annual_cost,
+        // annual_cost,
         // semi_annual_cost,
-        monthly_cost,
-        weekly_cost,
-        bi_weekly_cost,
-        daily_cost,
-        hourly_cost,
+        // monthly_cost,
+        // weekly_cost,
+        // bi_weekly_cost,
+        // daily_cost,
+        // hourly_cost,
+        salary,
+        deductions,
+        insurance,
+        bonus,
+        resource_cost,
         effort_in_hrs,
         currency_rid,
         accountNumber,
@@ -298,25 +303,14 @@ async createResourceCost(
       let createdResourceCost;
       let eventStatus = "Success";
       let errorMessage = "";
-      // let frequency: Record<string, string | null> = {
-      //   annual_cost: null,
-      //   semi_annual_cost: null,
-      //   monthly_cost: null,
-      //   weekly_cost: null,
-      //   bi_weekly_cost: null,
-      //   daily_cost: null,
-      //   hourly_cost: null
-      // };
+  
       try {
         const costFields = {
-          annual_cost,
-          // semi_annual_cost,
-          monthly_cost,
-          weekly_cost,
-          bi_weekly_cost,
-          daily_cost,
-          hourly_cost,
+          deductions,
+          insurance,
+          bonus,
           effort_in_hrs,
+          resource_cost,
         };
 
         const costValues = Object.entries(costFields).reduce((acc, [key, value]) => {
@@ -331,56 +325,49 @@ async createResourceCost(
               throw new Error(`Invalid number format for ${key}: ${value}`);
             }
           }
-        
           return acc;
         }, {} as Record<string, string | null>);
         
-        // Set only the relevant frequency cost field
-        // switch (cost_frequency) {
-        //   case "annual":
-        //     frequency.annual_cost = costValue;
-        //     break;
-        //   case "semi_annual":
-        //     frequency.semi_annual_cost = costValue;
-        //     break;
-        //   case "monthly":
-        //     frequency.monthly_cost = costValue;
-        //     break;
-        //   case "weekly":
-        //     frequency.weekly_cost = costValue;
-        //     break;
-        //   case "bi_weekly":
-        //     frequency.bi_weekly_cost = costValue;
-        //     break;
-        //   case "daily":
-        //     frequency.daily_cost = costValue;
-        //     break;
-        //   case "hourly":
-        //     frequency.hourly_cost = costValue;
-        //     break;
-        //   default:
-        //     throw new Error(`Invalid cost frequency: ${cost_frequency}`);
-        // }
         const sequelize = await this.getOrgSequelize();
         ResourceCost.initialize(sequelize, schemaName);
-        const effectiveDate = this.formatDateForDb(effective_date as string);
+        const effectiveFrom = this.formatDateForDb(effective_from as string);
         const endDate = this.formatDateForDb(end_date as string);
-        if (effectiveDate && endDate) {
-          // Find which cost type has a value
-          const costType = Object.entries(costValues).find(([key, value]) => value !== null)?.[0];
-          
-          const existingCost = await ResourceCost.findOne({
+
+        // Calculate resource cost
+        const calculatedResourceCost = Number(new Decimal(salary || 0).plus(bonus || 0).plus(insurance || 0).plus(resource_cost || 0).minus(deductions || 0));
+        
+        let status = "active";
+
+        // Check for duplicate record
+          const existingCost = await ResourceCost.findAll({
             where: {
               resource_rid,
-              effective_date: effectiveDate,
+              effective_from: effectiveFrom,
               end_date: endDate,
-              [costType as string]: { [Op.ne]: null } // Check for existing record with same cost type
+              salary,
+              deductions,
+              insurance,
+              bonus,
+              fiscal_year,
+              comments,
+              currency_rid,
+              status,
+              effort_in_hrs,
+              resource_cost,
+              net_resource_cost: calculatedResourceCost,
+              account_rid,
             },
           });
+          
           if (existingCost) {
-            throw new Error("Compensation already exists for this duration.");
+            status = 'duplicate';
           }
-        }
+          else if (effort_in_hrs && Number(effort_in_hrs) > 3000) {
+            status = 'anomaly';
+          }
+          else if (calculatedResourceCost > 200000) {
+          status = 'anomaly';
+          }
 
         createdResourceCost = await ResourceCost.create({
           eid,
@@ -389,19 +376,23 @@ async createResourceCost(
           resource_rid,
           resource_number,
           resource_code,
-          effective_date: effectiveDate || null,
+          effective_from: effectiveFrom || null,
           end_date: endDate || null,
           // cost_type: cost_frequency,
           // cost: cost,
           // ...frequency,
           ...costValues,
+          net_resource_cost: calculatedResourceCost,
+          salary,
           currency_rid: currency_rid || undefined,
           fiscal_year,
           comments,
+          status,
           created_datetime: new Date(),
           created_by: userId,
           modified_by: userId,
         });
+
         if (resource_rid) {
           try {
             ResourceFiscal.initialize(sequelize, schemaName);
@@ -412,7 +403,6 @@ async createResourceCost(
             });
             if (existingFiscal) {
               await existingFiscal.update({
-                // ...frequency,
                 ...costValues,
                 modified_datetime: new Date(),
                 modified_by: userId,
@@ -426,6 +416,7 @@ async createResourceCost(
         eventStatus = "Failure";
         errorMessage = (error as Error).message;
       }
+
       try {
         await this.createResourceCostTimeline(
           createdResourceCost ? createdResourceCost : {},
@@ -438,6 +429,7 @@ async createResourceCost(
       } catch (timelineError) {
         console.error("Failed to create timeline entry:", timelineError);
       }
+
       if (eventStatus === "Failure") {
         return {
           statusCode: HttpStatus.FAILED,
@@ -445,6 +437,7 @@ async createResourceCost(
           errorMessage: errorMessage,
         };
       }
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -456,6 +449,7 @@ async createResourceCost(
       return this.throwServiceError(err as Error);
     }
   }
+
   /**
    * Creates a record in the ResourceCostTimeline table using Sequelize ORM
    * @param resourceCost - The created resource cost object
@@ -509,19 +503,25 @@ async createResourceCost(
     try {
       const {
         eid,
-        effective_date,
+        effective_from,
         end_date,
         // cost_frequency,
         // cost,
-        annual_cost,
+        // annual_cost,
         // semi_annual_cost,
-        monthly_cost,
-        weekly_cost,
-        bi_weekly_cost,
-        daily_cost,
-        hourly_cost,
+        // monthly_cost,
+        // weekly_cost,
+        // bi_weekly_cost,
+        // daily_cost,
+        // hourly_cost,
+        salary,
+        deductions,
+        insurance,
+        bonus,
+        resource_cost,
         effort_in_hrs,
         currency_rid,
+        resource_rid,
         accountNumber,
         rid,
         fiscal_year,
@@ -566,25 +566,13 @@ async createResourceCost(
         };
       }
 
-      // let frequency: Record<string, string | null> = {
-      //   annual_cost: null,
-      //   semi_annual_cost: null,
-      //   monthly_cost: null,
-      //   weekly_cost: null,
-      //   bi_weekly_cost: null,
-      //   daily_cost: null,
-      //   hourly_cost: null
-      // };
       try {
         const costFields = {
-          annual_cost,
-          // semi_annual_cost,
-          monthly_cost,
-          weekly_cost,
-          bi_weekly_cost,
-          daily_cost,
-          hourly_cost,
+          deductions,
+          insurance,
+          bonus,
           effort_in_hrs,
+          resource_cost,
         };
 
         const costValues = Object.entries(costFields).reduce((acc, [key, value]) => {
@@ -602,76 +590,60 @@ async createResourceCost(
         
           return acc;
         }, {} as Record<string, string | null>);
-        
-        // Set only the relevant frequency cost field
-        // switch (cost_frequency) {
-        //   case "annual":
-        //     frequency.annual_cost = costValue;
-        //     break;
-        //   case "semi_annual":
-        //     frequency.semi_annual_cost = costValue;
-        //     break;
-        //   case "monthly":
-        //     frequency.monthly_cost = costValue;
-        //     break;
-        //   case "weekly":
-        //     frequency.weekly_cost = costValue;
-        //     break;
-        //   case "bi_weekly":
-        //     frequency.bi_weekly_cost = costValue;
-        //     break;
-        //   case "daily":
-        //     frequency.daily_cost = costValue;
-        //     break;
-        //   case "hourly":
-        //     frequency.hourly_cost = costValue;
-        //     break;
-        //   default:
-        //     throw new Error(`Invalid cost frequency: ${cost_frequency}`);
-        // }
 
-        const effectiveDate = this.formatDateForDb(effective_date as string);
+        const effectiveFrom = this.formatDateForDb(effective_from as string);
         const endDate = this.formatDateForDb(end_date as string);
-        if (effectiveDate && endDate) {
-          const existingRow = await ResourceCost.findOne({
+        // Calculate resource cost
+        const calculatedResourceCost = Number(new Decimal(salary || 0).plus(bonus || 0).plus(insurance || 0).plus(resource_cost || 0).minus(deductions || 0));
+        
+        let resourceCostStatus = status;
+
+        // Check for duplicate record
+          const existingCost = await ResourceCost.findAll({
             where: {
-              rid: rid,
+              resource_rid,
+              effective_from: effectiveFrom,
+              end_date: endDate,
+              salary,
+              deductions,
+              insurance,
+              bonus,
+              fiscal_year,
+              comments,
+              currency_rid,
+              status: resourceCostStatus,
+              effort_in_hrs,
+              resource_cost,
+              net_resource_cost: calculatedResourceCost,
             },
           });
-
-          if (existingRow) {
-            // Find which cost type has a value
-          const costType = Object.entries(costValues).find(([key, value]) => value !== null)?.[0];
-
-            const existingCost = await ResourceCost.findOne({
-              where: {
-                resource_rid: existingRow.resource_rid,
-                effective_date: effectiveDate,
-                end_date: endDate,
-                [costType as string]: { [Op.ne]: null }, // Check for existing record with same cost type
-                rid: { [Op.ne]: rid } // Exclude the current record being updated
-              },
-            });
-
-            if (existingCost) {
-              throw new Error("Compensation already exists for this duration.");
-            }
+          
+          if (existingCost) {
+            resourceCostStatus = 'duplicate';
           }
-        }
+          else if (effort_in_hrs && Number(effort_in_hrs) > 3000) {
+            resourceCostStatus = 'anomaly';
+          }
+          else if (calculatedResourceCost > 200000) {
+            resourceCostStatus = 'anomaly';
+          }
+
         const [affectedCounts, affectedRows] = await ResourceCost.update(
           {
             eid,
-            effective_date: effectiveDate || null,
+            effective_from: effectiveFrom || null,
             end_date: endDate || null,
             // cost_type: cost_frequency,
             // cost: cost,
             // ...frequency,
             ...costValues,
+            salary,
+            net_resource_cost: calculatedResourceCost,
             currency_rid,
             fiscal_year,
             comments,
             rid,
-            status,
+            status: resourceCostStatus,
             modified_datetime: new Date(),
             modified_by: userId,
           },
@@ -799,15 +771,21 @@ async createResourceCost(
       // Define the attributes to track changes for
       const trackedAttributes = [
         "eid",
-        "effective_date",
+        "effective_from",
         "end_date",
-        "annual_cost",
+        // "annual_cost",
         // "semi_annual_cost",
-        "monthly_cost",
-        "weekly_cost",
-        "bi_weekly_cost",
-        "daily_cost",
-        "hourly_cost",
+        // "monthly_cost",
+        // "weekly_cost",
+        // "bi_weekly_cost",
+        // "daily_cost",
+        // "hourly_cost",
+        "salary",
+        "deductions",
+        "insurance",
+        "bonus",
+        "resource_cost",
+        "net_resource_cost",
         "effort_in_hrs",
         "currency_rid",
         "fiscal_year",
@@ -830,7 +808,7 @@ async createResourceCost(
             let formattedOldValue = oldValue;
             let formattedNewValue = newValue;
 
-            if (attribute === "effective_date" || attribute === "end_date") {
+            if (attribute === "effective_from" || attribute === "end_date") {
               if (oldValue)
                 formattedOldValue = new Date(oldValue)
                   .toISOString()
@@ -976,8 +954,8 @@ async createResourceCost(
         costData.modified_by = userNames.modified_by_name;
 
         // Format dates to yyyy-mm-dd format
-        if (costData.effective_date) {
-          costData.effective_date = moment(costData.effective_date).format(
+        if (costData.effective_from) {
+          costData.effective_from = moment(costData.effective_from).format(
             "YYYY-MM-DD"
           ) as any;
         }

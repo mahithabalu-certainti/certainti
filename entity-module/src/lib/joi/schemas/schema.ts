@@ -159,7 +159,7 @@ const costFields = [
 ];
 
 // Shared validation method
-const MAX_COST_VALUE = 999999999999.99;
+const MAX_COST_VALUE = 9999999999999999.99;
 
 const costFieldValidator = (fieldName: string) => {
   return Joi.string()
@@ -865,8 +865,9 @@ const updateResourceCostSchema = Joi.object({
   rid: Joi.string().pattern(uuidRegex).required(),
   eid: Joi.string().max(255).optional().allow(null).allow(""),
   accountNumber: Joi.string().max(255).required(),
+  resource_rid: Joi.string().pattern(uuidRegex).required(),
   currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
-  effective_date: Joi.string()
+  effective_from: Joi.string()
     .max(10)
     .custom(isValidDate, "Effective date validation")
     .optional()
@@ -889,13 +890,20 @@ const updateResourceCostSchema = Joi.object({
       "date.invalidFormat":
         "Invalid end date. Please use the format YYYY-MM-DD",
     }),
-  annual_cost: costFieldValidator('annual_cost'),
+  // annual_cost: costFieldValidator('annual_cost'),
   // semi_annual_cost: costFieldValidator('semi_annual_cost'),
-  monthly_cost: costFieldValidator('monthly_cost'),
-  bi_weekly_cost: costFieldValidator('bi_weekly_cost'),
-  weekly_cost: costFieldValidator('weekly_cost'),
-  daily_cost: costFieldValidator('daily_cost'),
-  hourly_cost: costFieldValidator('hourly_cost'),
+  // monthly_cost: costFieldValidator('monthly_cost'),
+  // bi_weekly_cost: costFieldValidator('bi_weekly_cost'),
+  // weekly_cost: costFieldValidator('weekly_cost'),
+  // daily_cost: costFieldValidator('daily_cost'),
+  // hourly_cost: costFieldValidator('hourly_cost'),
+  salary: costFieldValidator('salary').required().messages({
+    'any.required': 'Salary is required'
+  }),
+  bonus: costFieldValidator('bonus'),
+  insurance: costFieldValidator('insurance'),
+  deductions: costFieldValidator('deductions'),
+  resource_cost: costFieldValidator('resource_cost'),
   effort_in_hrs: Joi.string()
   .pattern(/^\d{1,16}(\.\d{1,2})?$/)
   .messages({
@@ -933,22 +941,24 @@ const updateResourceCostSchema = Joi.object({
     .iso()
     .default(() => new Date()),
   modified_by: Joi.string().max(255).optional(),
-}).custom((value, helpers) => {
-  const filled = costFields.filter(field => value[field] && value[field].toString().trim() !== '');
-
-  if (filled.length === 0) {
-    return helpers.error('any.atLeastOneCostRequired');
-  }
-
-  if (filled.length > 1) {
-    return helpers.error('any.onlyOneCostAllowed');
-  }
-
-  return value;
-}).messages({
-  'any.onlyOneCostAllowed': 'Only one cost field should have a value',
-  'any.atLeastOneCostRequired': 'At least one cost field is required'
 });
+
+// .custom((value, helpers) => {
+//   const filled = costFields.filter(field => value[field] && value[field].toString().trim() !== '');
+
+//   if (filled.length === 0) {
+//     return helpers.error('any.atLeastOneCostRequired');
+//   }
+
+//   if (filled.length > 1) {
+//     return helpers.error('any.onlyOneCostAllowed');
+//   }
+
+//   return value;
+// }).messages({
+//   'any.onlyOneCostAllowed': 'Only one cost field should have a value',
+//   'any.atLeastOneCostRequired': 'At least one cost field is required'
+// });
 
 
 const getResourceCostSchema = Joi.object({
@@ -1015,7 +1025,7 @@ const resourceCostSchema = Joi.object({
   }),
   resource_rid: Joi.string().pattern(uuidRegex).required(),
   resource_code: Joi.string().max(255).required(),
-  effective_date: Joi.string()
+  effective_from: Joi.string()
     .max(10)
     .custom(isValidDate, "Effective date validation")
     .optional()
@@ -1038,13 +1048,20 @@ const resourceCostSchema = Joi.object({
       "date.invalidFormat":
         "Invalid end date. Please use the format YYYY-MM-DD",
     }),
-  annual_cost: costFieldValidator('annual_cost'),
+  // annual_cost: costFieldValidator('annual_cost'),
   // semi_annual_cost: costFieldValidator('semi_annual_cost'),
-  monthly_cost: costFieldValidator('monthly_cost'),
-  bi_weekly_cost: costFieldValidator('bi_weekly_cost'),
-  weekly_cost: costFieldValidator('weekly_cost'),
-  daily_cost: costFieldValidator('daily_cost'),
-  hourly_cost: costFieldValidator('hourly_cost'),
+  // monthly_cost: costFieldValidator('monthly_cost'),
+  // bi_weekly_cost: costFieldValidator('bi_weekly_cost'),
+  // weekly_cost: costFieldValidator('weekly_cost'),
+  // daily_cost: costFieldValidator('daily_cost'),
+  // hourly_cost: costFieldValidator('hourly_cost'),
+  salary: costFieldValidator('salary').required().messages({
+    'any.required': 'Salary is required'
+  }),
+  bonus: costFieldValidator('bonus'),
+  insurance: costFieldValidator('insurance'),
+  deductions: costFieldValidator('deductions'),
+  resource_cost: costFieldValidator('resource_cost'),
   effort_in_hrs: Joi.string()
   .pattern(/^\d{1,16}(\.\d{1,2})?$/)
   .messages({
@@ -1087,22 +1104,24 @@ const resourceCostSchema = Joi.object({
     .default(() => new Date()),
   created_by: Joi.string().max(255).optional(),
   modified_by: Joi.string().max(255).optional(),
-}).custom((value, helpers) => {
-  const filled = costFields.filter(field => value[field] && value[field].toString().trim() !== '');
-
-  if (filled.length === 0) {
-    return helpers.error('any.atLeastOneCostRequired');
-  }
-
-  if (filled.length > 1) {
-    return helpers.error('any.onlyOneCostAllowed');
-  }
-
-  return value;
-}).messages({
-  'any.onlyOneCostAllowed': 'Only one cost field should have a value',
-  'any.atLeastOneCostRequired': 'At least one cost field is required'
 });
+
+// .custom((value, helpers) => {
+//   const filled = costFields.filter(field => value[field] && value[field].toString().trim() !== '');
+
+//   if (filled.length === 0) {
+//     return helpers.error('any.atLeastOneCostRequired');
+//   }
+
+//   if (filled.length > 1) {
+//     return helpers.error('any.onlyOneCostAllowed');
+//   }
+
+//   return value;
+// }).messages({
+//   'any.onlyOneCostAllowed': 'Only one cost field should have a value',
+//   'any.atLeastOneCostRequired': 'At least one cost field is required'
+// });
 
 const createProjectSchema = Joi.object({
   account_id: Joi.string()
