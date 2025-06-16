@@ -14,6 +14,7 @@ import {
   TextField,
   Tooltip,
 } from '@mui/material';
+import CancelIcon from '@mui/icons-material/Cancel';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -58,7 +59,7 @@ interface FormBuilderProps {
   keyEnd?: string;
   newContactLength?: number;
   admin?: boolean;
-  logo?: File;
+  logo?: File | null;
   keyContactHeaders?: KeyContactHeader[];
 }
 
@@ -172,7 +173,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         }
       });
     });
-  }, [constructFormData, formData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData]);
 
   useEffect(() => {
     if (Object.keys(constructFormData).length === 0) return;
@@ -989,41 +991,55 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         );
       case 'file':
         return (
-          <div className='w-full flex items-center justify-between'>
+          <div className='w-full flex items-center justify-between gap-2'>
             <input
               id='upload-logo'
               type={field.type}
               name={field.name}
               autoComplete='off'
-              className={'hidden'}
+              className='hidden'
               disabled={field.disabled}
               onChange={handleFileChange}
             />
-            <div className='flex items-center w-[74%] sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs'>
+
+            <div className='flex items-center  justify-between w-[74%] sm:text-sm px-3 h-[32px] border border-[#CBD6E2] rounded-xs overflow-hidden'>
               <span
                 className={`${logo && logo.name ? 'text-[#000000]' : 'text-[#7D98B6]'} truncate`}
               >
-                {' '}
-                {/* Apply truncate directly to the span */}
                 {logo ? logo.name : 'No file selected'}
               </span>
+              {logo && (
+                <CancelIcon
+                  sx={{ fontSize: '14px' }}
+                  className='cursor-pointer text-[#7D98B6] hover:text-red-500'
+                  onClick={() => {
+                    const fileInput = document.getElementById(
+                      'upload-logo'
+                    ) as HTMLInputElement;
+                    if (fileInput) fileInput.value = '';
+
+                    if (field.name === 'logo') {
+                      onChange?.({ fieldName: 'logo', fieldValue: null });
+                    }
+                  }}
+                />
+              )}
             </div>
+
             <TextButton
-              // type='button'
               label='Browse'
               sx={{
                 height: '32px !important',
-                minWidth: '90px',
-                maxWidth: '90px',
+                minWidth: '26%',
+                maxWidth: '26%',
                 fontSize: '13px',
                 fontWeight: '400',
               }}
-              // className='sm:text-sm min-w-[90px] h-[32px] px-2 box-border border border-[#CBD6E2] rounded-xs'
               onClick={() => {
                 const logoFileInput = document.getElementById(
                   'upload-logo'
                 ) as HTMLInputElement;
-                logoFileInput.click();
+                logoFileInput?.click();
               }}
             />
           </div>
