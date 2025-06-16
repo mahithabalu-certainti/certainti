@@ -1,6 +1,5 @@
 import {
   BrowserAuthError,
-  InteractionStatus,
   PublicClientApplication,
 } from '@azure/msal-browser';
 import {
@@ -14,7 +13,13 @@ import {
   Toolbar,
   Tooltip,
 } from '@mui/material';
-import React, { useEffect, useRef, useCallback, useMemo, useState } from 'react';
+import React, {
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+  useState,
+} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   AccountsIcon,
@@ -50,7 +55,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   showAdminSidebar,
   switchSideBarMenus,
 }) => {
-  const { instance, inProgress } = useMsal();
+  const { instance } = useMsal();
   const passwordResetInstanceRef = useRef<PublicClientApplication | null>(null);
   const { successToast, errorToast } = useToast();
   const [searchAnchor, setSearchAnchor] = useState<null | HTMLElement>(null);
@@ -75,7 +80,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   const { permission } = useSelector((state: RootState) => state.permission);
   const isViewProfileEnable = useMemo(
     () => checkPermission(permission, AllPermissions.PROFILE_VIEW),
-    [permission])
+    [permission]
+  );
   const { orgName, logoUrl } = useSelector(
     (state: RootState) => state.orgLogoInfo
   );
@@ -129,37 +135,25 @@ export const Navbar: React.FC<NavbarProps> = ({
         })
         .catch(console.error);
     }
-    const urlParams = new URLSearchParams(window.location.hash.slice(1));
-    if (
-      !localStorage.getItem('resetPassword') &&
-      urlParams.get('client_info')
-    ) {
-      localStorage.setItem('resetPassword', 'true');
-    }
   }, []);
 
   // Handle password reset callback
   useEffect(() => {
-    const logoutInstance = async () => {
-      if (
-        localStorage.getItem('resetPassword') &&
-        inProgress === InteractionStatus.None && // Ensure no interactions pending
-        passwordResetInstanceRef.current
-      ) {
-        try {
+    instance
+      .handleRedirectPromise()
+      .then(async(response) => {
+        if (localStorage.getItem('resetPassword') && response) {
           successToast('Your password has been updated successfully');
-          localStorage.removeItem('resetPassword');
-          await passwordResetInstanceRef.current.handleRedirectPromise();
-          await passwordResetInstanceRef.current.clearCache();
+          await passwordResetInstanceRef?.current?.clearCache();
           handleLogout();
-        } catch (error) {
-          console.error('Password reset processing error:', error);
         }
-      }
-    };
-    logoutInstance();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inProgress]);
+      })
+      .catch((error) => {
+        localStorage.removeItem('resetPassword')
+        console.log('Password reset processing error:', error);
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [instance]);
 
   const handleProfileMenuOpen = useCallback(
     (event: React.MouseEvent<HTMLElement>) => {
@@ -201,6 +195,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     try {
       await passwordResetInstanceRef.current?.handleRedirectPromise();
       await passwordResetInstanceRef.current?.clearCache();
+      localStorage.setItem('resetPassword', 'true');
       await passwordResetInstanceRef.current?.loginRedirect();
     } catch (error) {
       const err = error as BrowserAuthError;
@@ -213,17 +208,16 @@ export const Navbar: React.FC<NavbarProps> = ({
         errorToast(err.errorMessage);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [passwordResetInstanceRef]);
 
   const handleLogout = useCallback(async () => {
     handleMenuClose();
-    localStorage.removeItem('showAdminSidebar');
     logout();
     instance.logoutRedirect().catch((e) => {
       console.error('Error logging out:', e);
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [instance]);
 
   const goToProfile = useCallback(() => {
@@ -409,10 +403,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               type='button'
               onClick={handleSidebarToggle}
             >
-              <BurgerMenuIcon
-                alt='menu'
-                className='h-[32px] w-[32px]'
-              />
+              <BurgerMenuIcon alt='menu' className='h-[32px] w-[32px]' />
             </button>
             {orgName && logoUrl && (
               <CompanyBadge name={orgName} logoUrl={logoUrl} />
@@ -430,10 +421,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     className={`${isGlobalModalOpen || isFilterApplied ? 'bg-[#FFFFFF26]' : 'bg-transparent'} w-[85px] min-w-[85px] px-3 h-[25px] flex justify-center items-center gap-1.5 mr-2 cursor-pointer focus:outline-none rounded-[2px] hover:bg-[#FFFFFF33] hover:rounded-xs whitespace-nowrap`}
                   >
                     <div className='relative'>
-                      <GlobeIcon
-                        alt='global'
-                        className='h-[16px] w-[16px]'
-                      />
+                      <GlobeIcon alt='global' className='h-[16px] w-[16px]' />
                       {isFilterApplied && (
                         <div className='absolute -top-[5px] -right-[5px] w-4 h-4 flex items-center justify-center text-xs'>
                           <span className='w-[8px] h-[8px] bg-[#FF3C03] rounded-full flex items-center justify-center z-10'></span>
@@ -486,10 +474,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   color='inherit'
                   onClick={switchSideBarMenus}
                 >
-                  <SettingsIcon
-                    alt='settings'
-                    className='h-[20px] w-[20px]'
-                  />
+                  <SettingsIcon alt='settings' className='h-[20px] w-[20px]' />
                 </IconButton>
               </Tooltip>
             )}

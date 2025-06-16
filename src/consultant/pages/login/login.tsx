@@ -1,6 +1,6 @@
 import { useMsal } from '@azure/msal-react';
 import Box from '@mui/material/Box';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LeftPane, RightPane } from '.';
 import { fetchCurrentUserRole } from '../../../common-service/common-service';
@@ -31,14 +31,13 @@ export const Login: React.FC = () => {
   const { login } = useAuthHook();
   const { errorToast } = useToast();
   const t = useAppTranslation();
-  const fragment = useRef<string>(window.location.hash.slice(1));
 
   useEffect(() => {
-    if (fragment.current) {
-      // add loader when return back from azure
+    const loginInitiated = localStorage.getItem('loginInitiated');
+    if (loginInitiated) {
       setIsLoading(true);
     }
-  }, [fragment]);
+  }, []);
 
   useEffect(() => {
     if (allAccount.length > 0) {
@@ -77,6 +76,7 @@ export const Login: React.FC = () => {
           (menu) =>
             reShapeData.menus.find((item) => item.name === menu.id)?.is_enabled
         );
+        localStorage.removeItem('loginInitiated');
         navigate(currentActiveRoute?.link || NOT_FOUND);
       };
       getResponse();
@@ -86,7 +86,9 @@ export const Login: React.FC = () => {
 
   const handleLogin = () => {
     setIsLoading(true);
+    localStorage.setItem('loginInitiated', 'true');
     instance.loginRedirect().catch((e) => {
+      localStorage.removeItem('loginInitiated');
       setIsLoading(false);
       const err = e as Error;
       if (err?.message !== 'user_cancelled: User cancelled the flow.') {
