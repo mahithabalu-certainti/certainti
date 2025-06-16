@@ -1378,18 +1378,18 @@ const rawResult = users || [];
           "Username": basicUserInfo.first_name || "-",
           "Email": basicUserInfo.email || "-", 
           "Profile": profile?.profile_name || "-",
-          "Status": basicUserInfo.status ? (basicUserInfo.status.toLowerCase() === 'active' ? "Active" : "In-Active") : "-",
           "Role": business_teams.business_teams || "-",
-          "Created Date": basicUserInfo.created_datetime
+          "Created On": basicUserInfo.created_datetime
           ? timezone && isValidTimezone(timezone)
           ? moment(basicUserInfo.created_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
           : moment(basicUserInfo.created_datetime).format('YYYY-MM-DD, hh:mm:ss A')
           : '-',
-          "Updated Date": basicUserInfo.modified_datetime
+          "Updated On": basicUserInfo.modified_datetime
           ? timezone && isValidTimezone(timezone)
           ? moment(basicUserInfo.modified_datetime).tz(timezone).format('YYYY-MM-DD, hh:mm:ss A')
           : moment(basicUserInfo.modified_datetime).format('YYYY-MM-DD, hh:mm:ss A')
           : '-',
+          "Status": basicUserInfo.status ? (basicUserInfo.status.toLowerCase() === 'active' ? "Active" : "In-Active") : "-",
         };
       });
 

@@ -218,7 +218,8 @@ async accountList(
             attributes: ["rid", "industry_name"],
             required: false,
           }
-        ]
+        ],
+        order: [["account_name", "ASC"]]
       });
 
       // Set USD currency for child accounts with no currency
@@ -449,7 +450,8 @@ async accountList(
                 as: "parent_account",
                 attributes: ["rid", "account_name"],
               },
-            ]
+            ],
+            order: [["account_name", "ASC"]]
           });
   
           // Group child accounts by parent_account_rid
