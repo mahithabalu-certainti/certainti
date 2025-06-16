@@ -261,11 +261,12 @@ export class ProjectService {
               userId
             );
 
-          const startDate = moment.utc(
-            projectData.project_startdate,
-            "YYYY-MM-DD"
-          );
-          const endDate = moment.utc(projectData.project_enddate, "YYYY-MM-DD");
+          const startDate = projectData.project_startdate
+          ? moment.utc(projectData.project_startdate, "YYYY-MM-DD")
+          : null;
+          const endDate = projectData.project_enddate
+            ? moment.utc(projectData.project_enddate, "YYYY-MM-DD")
+            : null;
 
           await this.projectIngestion.addProjectSummary(
             accountNumber,
