@@ -75,7 +75,7 @@ const defaultKeyContactHeaders: KeyContactHeader[] = [
 export const AccountForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [currentCountry, setCurrentCountry] = useState('');
-  const [logo, setLogo] = useState<File>();
+  const [logo, setLogo] = useState<File | null>();
   const [isParentAccountRequired, setIsParentAccountRequired] = useState(false);
   const [showOthersField, setShowOthersField] = useState(false);
   const [isKeyContactsReady, setIsKeyContactsReady] = useState<boolean>(false);
@@ -328,9 +328,11 @@ export const AccountForm: React.FC = () => {
       );
     }
     if (data.fieldName === 'logo') {
-      const selectedFile: File = data.fieldValue as File;
+      const selectedFile = data.fieldValue as File | null;
       if (selectedFile) {
         setLogo(selectedFile);
+      } else {
+        setLogo(null);
       }
     }
   };
