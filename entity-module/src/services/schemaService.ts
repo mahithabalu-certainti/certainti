@@ -1506,7 +1506,7 @@ class SchemaService {
           COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name, pfs.total_effort_prj as total_effort, pfs.total_cost_prj as total_cost,
           pfs.total_cost_fte_prj as total_cost_fte, pfs.total_cost_subcon_prj as total_cost_subcon, pfs.total_cost_nonlabor_prj as total_cost_nonlabor, pfs.assessment_status, pfs.created_datetime,
           pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, 
-          pfs.project_rid, pfs.project_fiscal_rid
+          pfs.project_rid, pfs.project_fiscal_rid, acc.rid
           FROM project_fiscal_summary pfs
           INNER JOIN account acc ON acc.rid = pfs.account_rid 
           LEFT JOIN project_classification pc on pc.rid = pfs.project_classification_rid
@@ -1618,7 +1618,7 @@ class SchemaService {
           SELECT pfs.project_code, pfs.project_group, pfs.project_name, pfs.project_type, pfs.fiscal_year, pfs.project_client_group, acc.account_name, ps.qre,
           COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name, pfs.total_effort_prj as total_effort, pfs.total_cost_prj as total_cost,
           pfs.total_cost_fte_prj as total_cost_fte, pfs.total_cost_subcon_prj as total_cost_subcon, pfs.total_cost_nonlabor_prj as total_cost_nonlabor, pfs.assessment_status,
-          pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, pfs.project_rid, pfs.created_datetime, pfs.project_fiscal_rid
+          pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, pfs.project_rid, pfs.created_datetime, pfs.project_fiscal_rid, acc.rid
           FROM project_fiscal_summary pfs
           INNER JOIN account acc ON acc.rid = pfs.account_rid 
           LEFT JOIN project_classification pc on pc.rid = pfs.project_classification_rid
