@@ -1440,13 +1440,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 isError +
                 fieldDisabled
               }
-              value={dayjs(fieldValue, 'DD/MM')}
+              value={dayjs(fieldValue, 'MM/DD')}
               disabled={field.disabled}
               format='MM/DD'
               views={['month', 'day']}
               open={false}
               onChange={(newValue) => {
-                handleChange(dayjs(newValue).format('DD/MM'));
+                handleChange(dayjs(newValue).format('MM/DD'));
               }}
               slots={{
                 clearIcon: () => (
@@ -1683,7 +1683,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           // Date validation
           if (field.type === 'fiscalDate' && constructFormData[field.name]) {
             const dateValue = constructFormData[field.name] as string;
-            if (!isValidDate(dateValue, 'DD/MM')) {
+            if (!isValidDate(dateValue, 'MM/DD')) {
               hasError = true;
               return {
                 ...field,

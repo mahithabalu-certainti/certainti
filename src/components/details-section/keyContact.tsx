@@ -46,7 +46,7 @@ const KeyContactSection: React.FC<{ title: string; data: KeyContact[] }> = ({
               { label: 'Key Contact Role', fixedWidth: 200 },
               { label: 'Key Contact Email', fixedWidth: 200 },
               { label: 'Is Primary Contact?', fixedWidth: 160 },
-              { label: 'Include In Communications?', fixedWidth: 200 },
+              { label: 'Interaction Recipient?', fixedWidth: 200 },
               { label: 'Key Contact Status', fixedWidth: 160 },
             ].map((col, i) => (
               <TableCell
