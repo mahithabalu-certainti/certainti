@@ -1577,7 +1577,7 @@ export class ProjectService {
 
   getSortParametersForAllProjects(
     sortBy: string,
-    sortOrder: string
+    sortOrder: string,
   ): [string, string] {
     const validSortColumns = [
       "r_number",
@@ -1617,7 +1617,7 @@ export class ProjectService {
     ];
 
     if (!validSortColumns.includes(sortBy)) {
-      sortBy = "ps.created_datetime";
+      sortBy = "created_datetime";
     }
 
     sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";
