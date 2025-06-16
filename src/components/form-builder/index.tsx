@@ -14,7 +14,6 @@ import {
   TextField,
   Tooltip,
 } from '@mui/material';
-import CancelIcon from '@mui/icons-material/Cancel';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -1009,9 +1008,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 {logo ? logo.name : 'No file selected'}
               </span>
               {logo && (
-                <CancelIcon
-                  sx={{ fontSize: '14px' }}
-                  className='cursor-pointer text-[#7D98B6] hover:text-red-500'
+                <img
+                  src={closeIcon}
+                  alt='close-icon'
+                  className='w-2.5 h-2.5 ml-2 cursor-pointer hover:brightness-90'
                   onClick={() => {
                     const fileInput = document.getElementById(
                       'upload-logo'
