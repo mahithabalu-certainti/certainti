@@ -967,6 +967,7 @@ async insertClientTemplateDetails(
           } as any,
         },
         attributes: ["rid", "account_name"],
+         order: [["account_name", "ASC"]] 
       });
       return {
         statusCode: HttpStatus.SUCCESS,

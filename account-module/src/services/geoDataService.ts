@@ -24,7 +24,11 @@ class GeoDataService {
     data?: { country: any; count: number };
   }> {
     try {
-      const country = await Country.findAll();
+      const country = await Country.findAll({
+      order: [
+        ['country_name', 'ASC']
+      ]
+    });
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -88,7 +92,11 @@ class GeoDataService {
     data?: { regions: any; count: number };
   }> {
     try {
-      const regions = await Region.findAll();
+      const regions = await Region.findAll({
+      order: [
+        ['region_name', 'ASC']
+      ]
+    });
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
