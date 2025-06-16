@@ -1,4 +1,4 @@
-import { AccountList, FilterState } from "../../consultant/types";
+import { AccountList, FilterState } from '../../consultant/types';
 
 export interface AccountState {
   userId: string;
@@ -8,4 +8,5 @@ export interface AccountState {
   loading: boolean;
   error: string | null;
   fiscalYear: string;
+  refetchGlobalAccounts: boolean;
 }

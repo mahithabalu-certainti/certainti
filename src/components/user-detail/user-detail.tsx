@@ -1,33 +1,10 @@
-import { Detail } from '../../admin/types/admin-user-detail';
 import { UserDetail } from '../../common-service';
-import { Skeleton } from '@mui/material';
+import { CircularProgress, Typography } from '@mui/material';
 import { formatDateToYYYYMMDDWithTime } from '../../common-utils';
+import { Fragment } from 'react/jsx-runtime';
+import DetailsSection, { DetailItem } from '../details-section/details';
 
 export const UserDetailComponent = ({ data, loading }: UserDetail) => {
-  const renderRows = (data: Detail[]) => {
-    return data.map((detail, index) => (
-      <div
-        key={index}
-        className={`${detail.full ? 'col-span-2 border-t -mt-[1px] bg-[#ECECEC]' : ''} grid ${detail.full ? 'grid-cols-1' : 'grid-cols-[150px_auto]'} gap-1 items-center border-gray-200 p-2 px-4`}
-      >
-        <div
-          className={`text-[14px] text-left ${detail.full ? 'font-semibold text-[#2D3E4F] ' : 'font-medium text-[#425A76]'}`}
-        >
-          {detail.label ?? ''}
-        </div>
-        {!detail.full && (
-          <div className='break-all whitespace-normal font-light text-[#425A76] text-[14px] max-w-full'>
-            {loading ? (
-              <Skeleton variant='rounded' width='100%' />
-            ) : (
-              (detail.value ?? '-')
-            )}
-          </div>
-        )}
-      </div>
-    ));
-  };
-
   const capitalizeFirstLetter = (str?: string | null) => {
     if (str) {
       return str.charAt(0).toUpperCase() + str.slice(1);
@@ -43,34 +20,34 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     return value?.toString() || defaultValue;
   };
 
-  const mappedUserDetails: Detail[] = [
-    { label: 'Identity', value: '', full: true },
+  if (loading) {
+    return (
+      <div className='flex items-center justify-center h-64 border-t border-[#CBD6E2]'>
+        <CircularProgress />
+        <Typography variant='body1' className='ml-4'>
+          Loading details...
+        </Typography>
+      </div>
+    );
+  }
+
+  const identityInfo: DetailItem[] = [
     {
       label: 'First Name',
-      value: getValueOrDefault(data?.first_name),
+      value: getValueOrDefault(data?.first_name) || '-',
     },
-    { label: 'Last Name', value: getValueOrDefault(data?.last_name) },
-    { label: 'Email address', value: getValueOrDefault(data?.email) },
+    {
+      label: 'Last Name',
+      value: getValueOrDefault(data?.last_name) || '-',
+    },
+    { label: 'Email address', value: getValueOrDefault(data?.email) || '-' },
     {
       label: 'Phone Number',
-      value: getValueOrDefault(data?.phone),
+      value: getValueOrDefault(data?.phone) || '-',
     },
-    { label: 'Access & Role', value: '', full: true },
-    {
-      label: 'Profile',
-      value: getValueOrDefault(data?.profile?.profile_name),
-    },
-    {
-      label: 'Role',
-      value: getValueOrDefault(data?.business_teams?.business_teams),
-    },
-    {
-      label: 'Status',
-      value: capitalizeFirstLetter(
-        data?.status === 'inactive' ? 'In-Active' : data?.status
-      ),
-    },
-    { label: 'Address', value: '', full: true },
+  ];
+
+  const accessInfo: DetailItem[] = [
     { label: 'Street', value: getValueOrDefault(data?.street) },
     {
       label: 'Country',
@@ -85,8 +62,24 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
       label: 'Zip Code / Area Code',
       value: getValueOrDefault(data?.zip_code),
     },
+  ];
 
-    { label: 'Audit Information', value: '', full: true },
+  const addressInfo: DetailItem[] = [
+    {
+      label: 'Profile',
+      value: getValueOrDefault(data?.profile?.profile_name),
+    },
+    {
+      label: 'Role',
+      value: getValueOrDefault(data?.business_teams?.business_teams),
+    },
+    {
+      label: 'Status',
+      value: data?.status,
+    },
+  ];
+
+  const auditInfo: DetailItem[] = [
     { label: 'User Record ID', value: getValueOrDefault(data?.rid) },
     {
       label: 'User ID',
@@ -106,9 +99,21 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     },
     { label: 'Updated By', value: capitalizeFirstLetter(data?.modified_by) },
   ];
+
   return (
-    <div className='grid grid-cols-2 divide-y'>
-      {renderRows(mappedUserDetails)}
-    </div>
+    <Fragment>
+      <DetailsSection
+        title='Identity'
+        data={identityInfo}
+        customStyle='pt-0 mt-0'
+      />
+      <DetailsSection title='Access & Role' data={accessInfo} />
+      <DetailsSection title='Address' data={addressInfo} />
+      <DetailsSection
+        title='Audit Information'
+        data={auditInfo}
+        isAudit={true}
+      />
+    </Fragment>
   );
 };

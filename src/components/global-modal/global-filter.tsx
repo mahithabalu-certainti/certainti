@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState, useAppDispatch } from '../../store/store';
 import {
   fetchAccountsThunk,
   resetFilters,
   setFilters,
+  setRefetchGlobalAccounts,
 } from '../../store/slices/account-slice';
 import {
   Select,
@@ -95,12 +96,13 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const { errorToast } = useToast();
-  const { accounts, loading, filters, error } = useSelector(
-    (state: RootState) => state.account
-  );
+  const { accounts, loading, filters, error, refetchGlobalAccounts } =
+    useSelector((state: RootState) => state.account);
   const [selectedFilters, setSelectedFilters] = useState<FilterState>([
     { account: '', child: [] },
   ]);
+  const prevAccountsRef = useRef<typeof accounts | null>(null);
+  const isFilterApplied = filters.length > 0;
 
   useEffect(() => {
     if (error) {
@@ -117,10 +119,69 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
   }, [isOpen]);
 
   useEffect(() => {
+    if (isFilterApplied && refetchGlobalAccounts) {
+      dispatch(fetchAccountsThunk()).then(() => {
+        dispatch(setRefetchGlobalAccounts(false));
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFilterApplied, refetchGlobalAccounts]);
+
+  useEffect(() => {
     if (filters?.length > 0) {
       setSelectedFilters(filters);
     }
   }, [filters]);
+
+  useEffect(() => {
+    if (!accounts || !isFilterApplied || !refetchGlobalAccounts) return;
+    const prevAccounts = prevAccountsRef.current;
+    prevAccountsRef.current = accounts;
+
+    if (!prevAccounts) return;
+
+    let shouldUpdate = false;
+
+    const updatedFilters = selectedFilters.map((filter) => {
+      const currentParent = accounts.find((acc) => acc.rid === filter.account);
+      const prevParent = prevAccounts.find((acc) => acc.rid === filter.account);
+
+      if (!currentParent || !prevParent) return filter;
+
+      const currentChildIds =
+        currentParent.child_accounts?.map((child) => child.rid) || [];
+      const prevChildIds =
+        prevParent.child_accounts?.map((child) => child.rid) || [];
+
+      const hadAllChildrenSelected =
+        filter.child.length > 0 &&
+        prevChildIds.every((id) => filter.child.includes(id)) &&
+        filter.child.length === prevChildIds.length;
+
+      const newChildIds = currentChildIds.filter(
+        (id) => !prevChildIds.includes(id)
+      );
+
+      if (hadAllChildrenSelected && newChildIds.length > 0) {
+        shouldUpdate = true;
+        return {
+          ...filter,
+          child: currentChildIds,
+        };
+      }
+
+      return {
+        ...filter,
+        child: filter.child.filter((id) => currentChildIds.includes(id)),
+      };
+    });
+
+    if (shouldUpdate) {
+      setSelectedFilters(updatedFilters);
+      dispatch(setFilters(updatedFilters.filter((f) => f.account !== '')));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accounts, isFilterApplied, refetchGlobalAccounts]);
 
   const handleAddAccount = () => {
     setSelectedFilters([...selectedFilters, { account: '', child: [] }]);
@@ -481,26 +542,6 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
           >
             <span className='font-normal text-[16px]'>+</span> Add Account
           </button>
-          {/* <div className='flex justify-end gap-2'>
-            <button
-              className='text-[12px] rounded-[2px] text-[#425A76] h-[24px] flex items-center px-2 border border-[#CBD6E2] cursor-pointer'
-              style={{
-                background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-              }}
-              onClick={handleClose}
-            >
-              Close
-            </button>
-            <button
-              className='text-[12px] rounded-[2px] text-[#425A76] h-[24px] flex items-center px-2 border border-[#CBD6E2] cursor-pointer'
-              style={{
-                background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
-              }}
-              onClick={handleSaveFilters}
-            >
-              Apply
-            </button>
-          </div> */}
         </div>
       </div>
     </Popover>

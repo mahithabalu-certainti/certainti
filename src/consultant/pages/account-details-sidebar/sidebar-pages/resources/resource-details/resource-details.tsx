@@ -231,12 +231,12 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   const auditInfo: DetailItem[] = [
     { label: 'Record ID', value: resourceData?.rid },
+    { label: 'Resource Number', value: resourceData?.r_number },
     {
       label: 'Created On',
       value: formatDateToYYYYMMDDWithTime(resourceData?.created_datetime),
     },
     { label: 'Created By', value: resourceData?.created_by },
-    { label: 'Resource Number', value: resourceData?.r_number },
     {
       label: 'Updated On',
       value: formatDateToYYYYMMDDWithTime(resourceData?.modified_datetime),
@@ -257,7 +257,11 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
       />
       <DetailsSection title='Employment Details' data={employmentDetails} />
       <DetailsSection title='Comments' data={description} />
-      <DetailsSection title='Audit Information' data={auditInfo} />
+      <DetailsSection
+        title='Audit Information'
+        data={auditInfo}
+        isAudit={true}
+      />
     </div>
   );
 };
