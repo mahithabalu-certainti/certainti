@@ -1,4 +1,8 @@
-import { BrowserAuthError, PublicClientApplication } from '@azure/msal-browser';
+import {
+  BrowserAuthError,
+  InteractionStatus,
+  PublicClientApplication,
+} from '@azure/msal-browser';
 import {
   AppBar,
   Badge,
@@ -10,7 +14,7 @@ import {
   Toolbar,
   Tooltip,
 } from '@mui/material';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useEffect, useRef, useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   AccountsIcon,
@@ -23,7 +27,6 @@ import {
   SettingsIcon,
 } from '../../assets';
 import { AllPermissions } from '../../common-service';
-import { msalConfig, msalResetPasswordConfig } from '../../config/msalConfig';
 import { useAuthHook, useToast } from '../../hooks';
 import { RootState } from '../../store/store';
 import { setFiscalYear } from '../../store/slices/account-slice';
@@ -32,6 +35,9 @@ import { useNavigate } from 'react-router-dom';
 import { PROFILE } from '../../routes';
 import { FiscalYearDropdown } from '../fiscal-dropdown';
 import GlobalFilterModal from '../global-modal/global-filter';
+import { useMsal } from '@azure/msal-react';
+import { msalResetPasswordConfig } from '../../config/msalConfig';
+import CompanyBadge from './company-badge';
 
 interface NavbarProps {
   showAdminSidebar: boolean;
@@ -44,11 +50,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   showAdminSidebar,
   switchSideBarMenus,
 }) => {
-  const msalSigninInstance = new PublicClientApplication(msalConfig);
-  const msalResetInstance = new PublicClientApplication(
-    msalResetPasswordConfig
-  );
-
+  const { instance, inProgress } = useMsal();
+  const passwordResetInstanceRef = useRef<PublicClientApplication | null>(null);
   const { successToast, errorToast } = useToast();
   const [searchAnchor, setSearchAnchor] = useState<null | HTMLElement>(null);
   const [notificationAnchor, setNotificationAnchor] =
@@ -72,7 +75,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   const { permission } = useSelector((state: RootState) => state.permission);
   const isViewProfileEnable = useMemo(
     () => checkPermission(permission, AllPermissions.PROFILE_VIEW),
-    [permission]
+    [permission])
+  const { orgName, logoUrl } = useSelector(
+    (state: RootState) => state.orgLogoInfo
   );
 
   const isFilterApplied = useMemo(() => filters.length > 0, [filters]);
@@ -113,6 +118,49 @@ export const Navbar: React.FC<NavbarProps> = ({
     []
   );
 
+  // Initialize password reset instance once
+  useEffect(() => {
+    if (!passwordResetInstanceRef.current) {
+      const instance = new PublicClientApplication(msalResetPasswordConfig);
+      instance
+        .initialize()
+        .then(() => {
+          passwordResetInstanceRef.current = instance;
+        })
+        .catch(console.error);
+    }
+    const urlParams = new URLSearchParams(window.location.hash.slice(1));
+    if (
+      !localStorage.getItem('resetPassword') &&
+      urlParams.get('client_info')
+    ) {
+      localStorage.setItem('resetPassword', 'true');
+    }
+  }, []);
+
+  // Handle password reset callback
+  useEffect(() => {
+    const logoutInstance = async () => {
+      if (
+        localStorage.getItem('resetPassword') &&
+        inProgress === InteractionStatus.None && // Ensure no interactions pending
+        passwordResetInstanceRef.current
+      ) {
+        try {
+          successToast('Your password has been updated successfully');
+          localStorage.removeItem('resetPassword');
+          await passwordResetInstanceRef.current.handleRedirectPromise();
+          await passwordResetInstanceRef.current.clearCache();
+          handleLogout();
+        } catch (error) {
+          console.error('Password reset processing error:', error);
+        }
+      }
+    };
+    logoutInstance();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inProgress]);
+
   const handleProfileMenuOpen = useCallback(
     (event: React.MouseEvent<HTMLElement>) => {
       setAnchorEl(event.currentTarget);
@@ -151,14 +199,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   const changePassword = useCallback(async () => {
     handleMenuClose();
     try {
-      await msalResetInstance.initialize();
-      await msalResetInstance.loginPopup();
-      successToast('Your password has been updated successfully');
-      await msalSigninInstance.initialize();
-      await msalSigninInstance.logoutPopup();
-      await msalSigninInstance.clearCache();
-      logout();
-      window.location.replace('/login');
+      await passwordResetInstanceRef.current?.handleRedirectPromise();
+      await passwordResetInstanceRef.current?.clearCache();
+      await passwordResetInstanceRef.current?.loginRedirect();
     } catch (error) {
       const err = error as BrowserAuthError;
       if (
@@ -170,23 +213,18 @@ export const Navbar: React.FC<NavbarProps> = ({
         errorToast(err.errorMessage);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [msalResetInstance, msalSigninInstance]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [passwordResetInstanceRef]);
 
   const handleLogout = useCallback(async () => {
     handleMenuClose();
-    try {
-      await msalSigninInstance.initialize();
-      await msalSigninInstance.logoutPopup();
-      await msalSigninInstance.clearCache();
-      localStorage.removeItem('showAdminSidebar');
-      logout();
-      window.location.replace('/login');
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [msalSigninInstance]);
+    localStorage.removeItem('showAdminSidebar');
+    logout();
+    instance.logoutRedirect().catch((e) => {
+      console.error('Error logging out:', e);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [instance]);
 
   const goToProfile = useCallback(() => {
     navigate(PROFILE);
@@ -365,7 +403,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     <>
       <AppBar sx={{ boxShadow: 'none' }} position='sticky'>
         <Toolbar className='justify-between !h-[40px] !max-h-[40px] !min-h-[40px] !pl-0'>
-          <div className='relative rounded-md mr-2 flex gap-2'>
+          <div className='relative rounded-md mr-2 flex items-center gap-2'>
             <button
               className='cursor-pointer '
               type='button'
@@ -376,27 +414,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className='h-[32px] w-[32px]'
               />
             </button>
-            {/* <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-              <img
-                src={searchIcon}
-                alt='search'
-                className='h-4.5 w-4.5 text-gray-400'
-              />
-            </div>
-            <input
-              type='text'
-              placeholder='Search'
-              aria-label='search'
-              className='bg-[#495E74] text-white text-[13px] font-[300] rounded px-4 h-8 pl-9 focus:outline-none lg:w-[320px] placeholder:text-white'
-            />
-            <img
-              src={plusIcon}
-              aria-haspopup='true'
-              onClick={handleSearchMenuOpen}
-              aria-controls={notificationId}
-              alt='plus'
-              className='cursor-pointer h-8 w-7'
-            /> */}
+            {orgName && logoUrl && (
+              <CompanyBadge name={orgName} logoUrl={logoUrl} />
+            )}
           </div>
           <Box
             sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}

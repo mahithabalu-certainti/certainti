@@ -140,6 +140,10 @@ export enum YesNo {
   No = 'no',
 }
 
+export enum OthersEnum {
+  Other = 'other',
+}
+
 export enum enumValue {
   Yes = 'Yes',
   No = 'No',
@@ -169,6 +173,7 @@ export interface AccountById {
   rid: string;
   created_datetime: string;
   modified_datetime: string;
+  logo_url: string;
 }
 
 export interface KeyContacts {
@@ -225,6 +230,12 @@ export interface NewAccountData extends AccountFieldsTypes, AccountById {
   include_in_communication: string;
   key_contact_status: Status;
   key_contacts: KeyContacts[];
+  organisation_name: string;
+}
+
+export interface updatedAccountFormData {
+  logo: File;
+  data: NewAccountData;
 }
 
 export interface AccountFormData

@@ -2,6 +2,7 @@ export interface FormType {
   sectionName: string;
   fillType: 'half' | 'full' | 'quarter';
   fields: FormTypeFields[];
+  from?: string;
   hide?: boolean;
 }
 
@@ -48,12 +49,9 @@ export interface FormTypeFields {
   errorHandling?: ErrorHandling[];
   onClick?: (event?: React.MouseEvent<HTMLElement>) => void;
   iconUrl?: string | React.ElementType;
+  assignDefaultValue?: boolean;
+  dependantLabel?: string;
 }
-
-// export interface SelectOptions {
-//   label: string;
-//   value: string;
-// }
 
 export type InputType =
   | 'text'
@@ -68,7 +66,8 @@ export type InputType =
   | 'button'
   | 'emptyFeild'
   | 'website'
-  | 'iconButton';
+  | 'iconButton'
+  | 'file';
 
 export interface SelectOption {
   label: string;
@@ -122,6 +121,8 @@ export interface FieldType {
   isLoading?: boolean;
   errorHandling?: ErrorHandling[];
   width?: string;
+  assignDefaultValue?: boolean;
+  dependantLabel?: string;
 }
 
 export type AllowedCountry =
@@ -135,3 +136,9 @@ export type AllowedCountry =
   | 'fr';
 
 export type GroupFields = Map<string, string[]>;
+
+export type KeyContactHeader = {
+  name: string;
+  label: string;
+  width: string;
+};

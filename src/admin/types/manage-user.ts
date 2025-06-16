@@ -8,6 +8,9 @@ export type ManageUser = {
   email: string;
   profile: string;
   status: 'Active' | 'Inactive';
+  created_datetime: string;
+  modified_datetime: string;
+  role: string;
 };
 
 export interface UserTableColumn<T> {
@@ -41,6 +44,7 @@ export interface UserListParams {
   filters?: Filters;
   searchTerm?: string;
   exportKey?: string;
+  timezone?: string;
 }
 
 // User Profile Type
@@ -62,6 +66,8 @@ export interface User {
   first_name: string;
   profile: UserProfile;
   business_teams: BusinessTeams;
+  created_datetime: string;
+  modified_datetime: string;
 }
 
 export interface Profile {
@@ -113,6 +119,8 @@ export interface UserDetail {
   business_teams: {
     business_teams: string;
   };
+  org_id: string;
+  is_consultant_firm: boolean;
 }
 
 export enum UserRole {
@@ -169,17 +177,6 @@ export interface UserRolesApiResponse extends CommonApiResponse {
   };
 }
 
-// For your table component (simplified version)
-// export type ManageUserList = {
-//   id: string; // mapped from rid
-//   username: string; // mapped from first_name
-//   fullName: string; // mapped from full_name
-//   email: string;
-//   profile: string; // mapped from profile.profile_name
-//   status: string;
-//   businessTeam: string; // mapped from business_teams.business_teams
-// };
-
 // User Permission Types
 interface UserPermissionData {
   rid: string;
@@ -194,4 +191,27 @@ export interface UserPermissionApiResponse {
   statusCodeValue: string;
   statusMessage: string;
   data: UserPermissionData;
+}
+
+// orgname api response
+
+export interface accountInfo {
+  rid: string;
+  account_name: string;
+  organisation_name: string;
+}
+export interface orgData {
+  logo_url: string;
+  firm_name: string;
+}
+export interface OrgNameData {
+  accountData: accountInfo[];
+  orgData: orgData;
+}
+export interface OrgNameApiResponse {
+  statusCode: number;
+  statusCodeValue: string;
+  statusMessage: string;
+  data: OrgNameData;
+  requestId: string;
 }

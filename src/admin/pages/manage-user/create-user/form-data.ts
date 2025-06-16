@@ -1,11 +1,13 @@
 import { useMemo } from 'react';
-import { FormType, SelectOption } from '../../../../consultant/types';
+import { FormType, SelectOption, YesNo } from '../../../../consultant/types';
 import {
   createPhoneInputField,
+  createRadioField,
   createSelectField,
   createTextField,
   REGEX_PATTERNS,
   STATUS_OPTIONS,
+  YES_NO_OPTIONS,
 } from '../../../../common-utils';
 
 export const FormData = (
@@ -14,10 +16,13 @@ export const FormData = (
   role: SelectOption[],
   states: SelectOption[],
   city: SelectOption[],
+  orgNames: SelectOption[],
   disableFields?: boolean,
   stateLoading?: boolean,
   cityLoading?: boolean,
-  disabledStatus?: boolean
+  disabledStatus?: boolean,
+  isConsultantFirm?: string,
+  org_id?: string
 ): FormType[] => {
   return useMemo(
     () => [
@@ -37,15 +42,15 @@ export const FormData = (
                 regex: REGEX_PATTERNS.MAX_64,
                 errorMessage: 'Max length exceeded',
               },
-              {
-                regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_REGEX,
-                errorMessage:
-                  'First name cannot start or end with a space, apostrophe, or hyphen.',
-              },
+              // {
+              //   regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_REGEX,
+              //   errorMessage:
+              //     'Name cannot begin or end with special characters.',
+              // },
               {
                 regex: REGEX_PATTERNS.NAME_REGEX,
                 errorMessage:
-                  "First name must contain only letters, apostrophes (') and hyphens (-).",
+                  "First name must contain only letters, space( ), apostrophes(') and hyphens(-).",
               },
             ],
           }),
@@ -62,14 +67,9 @@ export const FormData = (
                 errorMessage: 'Max length exceeded',
               },
               {
-                regex: REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_REGEX,
-                errorMessage:
-                  'Last name cannot start or end with a space, apostrophe, or hyphen.',
-              },
-              {
                 regex: REGEX_PATTERNS.NAME_REGEX,
                 errorMessage:
-                  "Last name must contain only letters, apostrophes (') and hyphens (-).",
+                  "Last name must contain only letters, space( ), apostrophes(') and hyphens(-).",
               },
             ],
           }),
@@ -91,6 +91,27 @@ export const FormData = (
           createPhoneInputField('phone', 'Phone Number', {
             required: false,
             placeholder: 'Enter Phone Number',
+          }),
+          createRadioField('is_consultant_firm', 'Is Consultant Firm', {
+            radioOptions: YES_NO_OPTIONS,
+            required: true,
+            onChange: true,
+            resetDependsFields: ['org_id'],
+            dependantLabel: 'org_id',
+          }),
+          createSelectField('org_id', 'Org Name', {
+            required: true,
+            options: orgNames,
+            placeholder: 'Choose Org Name',
+            disabled: isConsultantFirm === YesNo.Yes,
+            defaultValue:
+              isConsultantFirm === YesNo.Yes ? orgNames[0]?.value : org_id,
+            assignDefaultValue: true,
+            dependantLabel: 'is_consultant_firm',
+            clearValue: {
+              key: 'is_consultant_firm',
+              matchedValue: YesNo.Yes,
+            },
           }),
         ],
       },
@@ -182,10 +203,13 @@ export const FormData = (
       role,
       disableFields,
       states,
+      orgNames,
       stateLoading,
       city,
       cityLoading,
-      disabledStatus
+      disabledStatus,
+      isConsultantFirm,
+      org_id,
     ]
   );
 };

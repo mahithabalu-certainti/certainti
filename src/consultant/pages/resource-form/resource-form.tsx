@@ -528,7 +528,7 @@ const ResourceForm: React.FC = () => {
 
   return (
     <div className='resource-form-container'>
-      <div className='h-[50px] border-box flex justify-between items-center border-b-2 border-gray-200 px-10'>
+      <div className='h-[50px] border-box flex justify-between items-center border-b-2 border-gray-200 px-10 sticky top-0 z-10 bg-white'>
         <div className='flex items-center'>
           {isEditView ? (
             <EditIcon

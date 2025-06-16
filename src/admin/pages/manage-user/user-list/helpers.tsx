@@ -16,8 +16,17 @@ export const enumOperator: { label: string; value: string }[] = [
   { label: 'In', value: 'in' },
 ];
 
+const dateOptions: { label: string; value: string }[] = [
+  { label: 'Equals', value: 'equals' },
+  { label: 'Before', value: 'before' },
+  { label: 'After', value: 'after' },
+  { label: 'Between', value: 'between' },
+  { label: 'Is Empty', value: 'is_empty' },
+];
+
 export const getUserFilterFields = (
-  userProfiles: FilterSelectOption[]
+  userProfiles: FilterSelectOption[],
+  roleOptions: FilterSelectOption[]
 ): FieldConfig[] => [
   {
     label: 'Username',
@@ -37,6 +46,25 @@ export const getUserFilterFields = (
     type: 'enumSelect',
     options: userProfiles,
     operatorOption: enumOperator,
+  },
+  {
+    label: 'Role',
+    name: 'role',
+    type: 'enumSelect',
+    options: roleOptions,
+    operatorOption: enumOperator,
+  },
+  {
+    label: 'Created On',
+    name: 'created_datetime',
+    type: 'date',
+    operatorOption: dateOptions,
+  },
+  {
+    label: 'Updated On',
+    name: 'modified_datetime',
+    type: 'date',
+    operatorOption: dateOptions,
   },
   {
     label: 'Status',

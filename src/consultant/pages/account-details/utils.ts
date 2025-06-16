@@ -194,6 +194,7 @@ export interface accountByIdProps {
   modified_datetime: string;
   created_by: string;
   modified_by: string;
+  organisation_name: string;
 }
 
 export interface accountByDetailsProps {

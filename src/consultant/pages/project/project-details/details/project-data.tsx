@@ -84,6 +84,10 @@ const ProjectDetailsData: React.FC<ProjectsDataProps> = ({
       state: {
         accountID: projectDetails?.account_rid,
         projectID: projectDetails?.rid,
+        breadcrumbs: [
+          { label: 'Project' },
+          { label: projectDetails?.project_code },
+        ],
       },
     });
   };

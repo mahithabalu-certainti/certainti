@@ -1,10 +1,8 @@
 export const BUTTON_STYLES = {
-  height: '32px',
+  height: '24px',
 };
 
 export const HEADER_STYLES = {
-  adminPermission:
-    'font-medium text-[#7D98B6] text-[11px] leading-5 tracking-normal',
-  manageUser:
-    'font-semibold text-[20px] text-[#2D3E4F] leading-5 tracking-normal',
+  adminPermission: 'font-semibold text-[#7D98B6] text-[12px] pt-1',
+  manageUser: 'font-bold text-[16px] text-[#2D3E4F] -mt-1',
 };

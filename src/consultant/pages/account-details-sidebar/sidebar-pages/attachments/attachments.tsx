@@ -1,7 +1,9 @@
+import { ComingSoon } from '../../../../../assets';
+
 const Attachments = () => {
   return (
-    <div className='p-6'>
-      <h1 className='text-2xl font-bold mb-4'>Attachments</h1>
+    <div className='flex items-center justify-center h-full'>
+      <ComingSoon alt='comingSoon' />
     </div>
   );
 };

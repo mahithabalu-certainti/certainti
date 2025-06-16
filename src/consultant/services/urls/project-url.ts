@@ -41,6 +41,7 @@ export const ProjectExportListURL = ({
   fiscalYear,
   accountNumber,
   globalFilters,
+  timezone,
 }: ProjectListParams): string => {
   const baseUrl = accountNumber
     ? `/api/project/export${accountNumber ? `/${accountNumber}` : ''}`
@@ -56,6 +57,7 @@ export const ProjectExportListURL = ({
   if (globalFilters !== undefined) {
     searchParams.set('globalFilters', JSON.stringify(globalFilters));
   }
+  if (timezone !== undefined) searchParams.set('timezone', timezone);
   const queryString = searchParams.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 };

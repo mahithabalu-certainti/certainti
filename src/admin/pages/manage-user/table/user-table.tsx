@@ -61,6 +61,9 @@ export const UserTable: React.FC<IUserTableProps> = ({
         email: item.email,
         profile: item.profile.profile_name,
         status: convertedStatus,
+        role: item.business_teams.business_teams,
+        created_datetime: item.created_datetime,
+        modified_datetime: item.modified_datetime,
       };
     });
   };

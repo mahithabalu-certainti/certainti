@@ -366,7 +366,6 @@ export const renderChildRows = ({
   isAccountEditEnable,
   isAccountDeleteEnable,
 }: RenderChildRowsProps) => {
-  console.log(accounts, 'accounts');
   return accounts
     ?.filter((account) => account.parentAccount === parentAccount)
     ?.map((account) => {
@@ -477,7 +476,7 @@ export const renderChildRows = ({
                 </div>
                 <TruncateWithTooltip
                   text={String(account.accountName)}
-                  maxWidth={200}
+                  maxWidth={155}
                   className={`text-[13px] font-semibold cursor-pointer underline text-[#1755E7]`}
                 >
                   <span onClick={() => handleAccountNameClick(account)}>

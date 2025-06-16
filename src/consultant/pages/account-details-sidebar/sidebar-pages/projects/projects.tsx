@@ -153,6 +153,7 @@ const Projects: React.FC<ProjectsProps> = ({
       state: {
         accountID: account?.account_rid,
         projectID: account?.rid,
+        breadcrumbs: [{ label: 'Account' }, { label: account?.account_name }],
       },
     });
   };
@@ -209,8 +210,12 @@ const Projects: React.FC<ProjectsProps> = ({
 
   const handleCreateProject = () => {
     const accountID = accountDetails?.data?.accountById?.rid;
+    const accountName = accountDetails?.data?.accountById?.account_name;
     navigate(`${PROJECT_CREATE}`, {
-      state: { accountID },
+      state: {
+        accountID,
+        breadcrumbs: [{ label: 'Account' }, { label: accountName }],
+      },
     });
   };
 

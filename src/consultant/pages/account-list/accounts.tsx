@@ -201,8 +201,14 @@ export const Accounts: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className='flex gap-3 justify-center items-center'>
+        <div className='flex items-center justify-center gap-3'>
           <ActionsDropdown actions={menuItems} />
+          <div
+            className='flex items-center justify-center border border-[#CBD6E2] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] w-[24px] h-[23px] cursor-pointer'
+            onClick={onRefreshClick}
+          >
+            <RefreshIcon alt='refresh-icon' className='h-4' />
+          </div>
           {isAccountCreateEnable && (
             <TextButton
               label='Create Account'
@@ -215,12 +221,7 @@ export const Accounts: React.FC = () => {
               }}
             />
           )}
-          <div
-            className='flex items-center justify-center border border-[#CBD6E2] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] w-[24px] h-[23px] cursor-pointer'
-            onClick={onRefreshClick}
-          >
-            <RefreshIcon alt='refresh-icon' className='h-4' />
-          </div>
+          
           <div className='hidden border border-[#CBD6E2] w-[24px] h-[24px] justify-center items-center bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'>
             <ActionIcon alt='menu-icon' className='h-4' />
           </div>
