@@ -448,7 +448,7 @@ export const FormData = (
               'Total FTE Count Count must be a positive integer with up to 9 digits',
             placeholder: 'Enter Total FTE Count',
           }),
-          createTextField('total_sub_con', 'Total Sub Con Count', {
+          createTextField('total_subcon', 'Total Sub Con Count', {
             regex: REGEX_PATTERNS.EFFORTS_INTEGER_9,
             regexErrorMessage:
               'Total Sub Con Count must be a positive integer with up to 9 digits',
@@ -460,13 +460,13 @@ export const FormData = (
             type: '',
             required: false,
           }),
-          createTextField('total_fte_effort', 'Total FTE Effort', {
+          createTextField('total_effort_fte', 'Total FTE Effort', {
             regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
             regexErrorMessage:
               'Total FTE Effort must be a positive integer with up to 16 digits',
             placeholder: 'Enter Total FTE Effort',
           }),
-          createTextField('total_sub_con_effort', 'Total Sub Con Effort', {
+          createTextField('total_effort_subcon', 'Total Sub Con Effort', {
             regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
             regexErrorMessage:
               'Total Sub Con Effort must be a positive integer with up to 16 digits',
@@ -478,19 +478,19 @@ export const FormData = (
               'Effort In Hrs must be a positive integer with up to 16 digits',
             placeholder: 'Enter Total Effort In Hrs',
           }),
-          createTextField('total_fte_cost', 'Total FTE Cost', {
+          createTextField('total_cost_fte', 'Total FTE Cost', {
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total FTE Cost',
           }),
-          createTextField('total_sub_con_cost', 'Total Sub Con Cost', {
+          createTextField('total_cost_subcon', 'Total Sub Con Cost', {
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
               'Total Sub Con Cost must be a positive integer up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Sub Con Cost',
           }),
-          createTextField('total_non_labor_cost', 'Total Non Labor Cost', {
+          createTextField('total_cost_nonlabor', 'Total Non Labor Cost', {
             regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
               'Total Non Labor Cost must be a positive integer with up to 16 digits and 2 decimal places',
@@ -515,7 +515,7 @@ export const FormData = (
             regexErrorMessage:
               'Only positive numbers allowed, up to 3 digits and 2 decimal places',
           }),
-          createTextField('blended_rate_sub_con', 'Blended Rate - SubCon', {
+          createTextField('blended_rate_subcon', 'Blended Rate - SubCon', {
             required: false,
             placeholder: 'Enter Blended Rate - SubCon',
             regex: REGEX_PATTERNS.BLENDED_NUMBER,

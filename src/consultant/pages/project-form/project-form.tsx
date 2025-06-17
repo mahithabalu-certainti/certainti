@@ -68,6 +68,7 @@ const ProjectForm: React.FC = () => {
   const { accountID, projectID, settings } = location.state || {};
   const breadcrumbs = location.state.breadcrumbs || [];
   const firstLine = breadcrumbs.map((crumb: any) => crumb.label).join(' > ');
+  const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
 
   const getProjectData = useProjectDetail(accountID, projectID);
   const account = getProjectData.data?.data?.project;
@@ -103,7 +104,6 @@ const ProjectForm: React.FC = () => {
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
 
-  const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
   const defaultActiveValue = STATUS_OPTIONS[0].value;
   const commonSuccess = createProject.isSuccess || updateProject.isSuccess;
   useEffect(() => {

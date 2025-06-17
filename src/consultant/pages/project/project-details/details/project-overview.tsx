@@ -195,26 +195,26 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     { label: 'Total FTE Count', value: projectDetails?.total_fte },
     {
       label: 'Total Sub Con Count',
-      value: projectDetails?.total_sub_con,
+      value: projectDetails?.total_subcon,
     },
     { label: '', value: 'empty' },
-    { label: 'Total FTE Effort', value: projectDetails?.total_fte_effort },
+    { label: 'Total FTE Effort', value: projectDetails?.total_effort_fte },
     {
       label: 'Total Sub Con Effort',
-      value: projectDetails?.total_sub_con_effort,
+      value: projectDetails?.total_effort_subcon,
     },
     { label: 'Total Effort in Hrs', value: projectDetails?.total_effort },
     {
       label: 'Total FTE Cost',
       value: costDisplay(
-        projectDetails?.total_fte_cost,
+        projectDetails?.total_cost_fte,
         projectDetails?.currency_symbol
       ),
     },
     {
       label: 'Total Sub Con Cost',
       value: costDisplay(
-        projectDetails?.total_sub_con_cost,
+        projectDetails?.total_cost_subcon,
         projectDetails?.currency_symbol
       ),
     },
@@ -222,7 +222,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     {
       label: 'Total Non Labor Cost',
       value: costDisplay(
-        projectDetails?.total_non_labor_cost,
+        projectDetails?.total_cost_nonlabor,
         projectDetails?.currency_symbol
       ),
     },
@@ -270,7 +270,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({
     {
       label: 'Blended Rate - SubCon',
       value: costDisplay(
-        projectDetails?.blended_rate_sub_con,
+        projectDetails?.blended_rate_subcon,
         projectDetails?.currency_symbol
       ),
     },

@@ -4,17 +4,21 @@ import {
   UseQueryResult,
 } from '@tanstack/react-query';
 import {
-  ProjectList,
+  // ProjectList,
   ProjectListParams,
-  ProjectListResponse,
+  // ProjectListResponse,
 } from '../../types/project';
 import { resourceServiceApi } from '../../../api/api';
 import { ProjectExportListURL, ProjectListURL } from '../urls';
+import {
+  ProjectAccordionResponse,
+  Project,
+} from '../../../components/table/types';
 
 export const fetchProjects = async (
   params: ProjectListParams
-): Promise<{ projects: ProjectList[]; count: number }> => {
-  const response = await resourceServiceApi.get<ProjectListResponse>(
+): Promise<{ projects: Project[]; count: number }> => {
+  const response = await resourceServiceApi.get<ProjectAccordionResponse>(
     ProjectListURL(params)
   );
 
@@ -28,21 +32,20 @@ export const useAccountProjects = (
   params: ProjectListParams,
   projectOverviewIsEnable?: boolean,
   refreshProjectsTrigger?: number
-): UseQueryResult<{ projects: ProjectList[]; count: number }, Error> => {
-  return useQuery<{ projects: ProjectList[]; count: number }, Error>({
+): UseQueryResult<{ projects: Project[]; count: number }, Error> => {
+  return useQuery<{ projects: Project[]; count: number }, Error>({
     queryKey: ['accountProjects', params, refreshProjectsTrigger],
     queryFn: () => fetchProjects(params),
     retry: 0,
     enabled: projectOverviewIsEnable,
   });
 };
-
 export const useAllProjects = (
   params: ProjectListParams,
-  options?: UseQueryOptions<{ projects: ProjectList[]; count: number }, Error>,
+  options?: UseQueryOptions<{ projects: Project[]; count: number }, Error>,
   refreshProjectsTrigger?: number
-): UseQueryResult<{ projects: ProjectList[]; count: number }, Error> => {
-  return useQuery<{ projects: ProjectList[]; count: number }, Error>({
+): UseQueryResult<{ projects: Project[]; count: number }, Error> => {
+  return useQuery<{ projects: Project[]; count: number }, Error>({
     queryKey: ['allProjects', params, refreshProjectsTrigger],
     queryFn: () => fetchProjects(params),
     retry: 0,

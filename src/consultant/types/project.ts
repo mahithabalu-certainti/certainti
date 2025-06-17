@@ -171,12 +171,12 @@ export interface NewProjectData {
   total_effort?: string | null;
   total_cost?: string | null;
   total_fte?: number | null;
-  total_sub_con?: number | null;
-  total_non_labor_cost?: string | null;
-  total_fte_effort?: string | null;
-  total_sub_con_effort?: string | null;
-  total_fte_cost?: string | null;
-  total_sub_con_cost?: string | null;
+  total_subcon?: number | null;
+  total_cost_nonlabor?: string | null;
+  total_effort_fte?: string | null;
+  total_effort_subcon?: string | null;
+  total_cost_fte?: string | null;
+  total_cost_subcon?: string | null;
   auto_send_ai_interaction?: boolean | string;
   auto_assessment?: boolean | string;
   auto_access_rd?: boolean;
@@ -185,7 +185,7 @@ export interface NewProjectData {
   blended_rate_FTE?: string | null;
   max_ai_interaction_follow_up?: number | null;
   blended_rate_subCon?: string | null;
-  blended_rate_sub_con?: string | null;
+  blended_rate_subcon?: string | null;
   project_description?: string;
   comments?: string;
   key_contacts?: KeyContacts[];
@@ -196,4 +196,5 @@ export interface NewProjectData {
   is_primary_contact?: string;
   include_in_communication?: string;
   key_contact_status?: Status;
+  project_fiscal_id?: string;
 }
