@@ -23,7 +23,7 @@ const KeyContactSection: React.FC<{ title: string; data: KeyContact[] }> = ({
   data,
 }) => (
   <div>
-    <div className='flex items-center align-middle px-6 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#F5F9FF]'>
+    <div className='flex items-center align-middle px-6 h-[30px] border-t border-b border-[#CBD6E2] text-[#2D3E4F] text-[14px] font-bold bg-[#ECECEC]'>
       {title}
     </div>
     <TableContainer sx={{ overflowX: 'auto' }}>
@@ -35,16 +35,18 @@ const KeyContactSection: React.FC<{ title: string; data: KeyContact[] }> = ({
               fontSize: '13px',
               fontWeight: 700,
             },
+            '& .MuiTableRow-root > .MuiTableCell-root:last-of-type': {
+              borderRight: 'none',
+            },
           }}
         >
           <TableRow>
             {[
-              { label: 'Key Contact ID', fixedWidth: 170 },
               { label: 'Key Contact Name', fixedWidth: 200 },
               { label: 'Key Contact Role', fixedWidth: 200 },
               { label: 'Key Contact Email', fixedWidth: 200 },
               { label: 'Is Primary Contact?', fixedWidth: 160 },
-              { label: 'Include In Communications?', fixedWidth: 200 },
+              { label: 'Interaction Recipient?', fixedWidth: 200 },
               { label: 'Key Contact Status', fixedWidth: 160 },
             ].map((col, i) => (
               <TableCell
@@ -71,6 +73,9 @@ const KeyContactSection: React.FC<{ title: string; data: KeyContact[] }> = ({
               fontSize: '13px',
               fontWeight: 500,
             },
+            '& .MuiTableRow-root > .MuiTableCell-root:last-of-type': {
+              borderRight: 'none',
+            },
           }}
         >
           {data.length === 0 ? (
@@ -84,20 +89,9 @@ const KeyContactSection: React.FC<{ title: string; data: KeyContact[] }> = ({
               <TableRow key={i} sx={{ height: '28px' }}>
                 <TableCell
                   sx={{
-                    height: '28px',
                     py: 0,
                     px: 3.2,
-                    width: '170px',
-                    minWidth: '170px',
-                    maxWidth: '170px',
-                  }}
-                >
-                  {field.keyContactId || '-'}
-                </TableCell>
-                <TableCell
-                  sx={{
                     height: '28px',
-                    padding: '0px 8px',
                     width: '200px',
                     minWidth: '200px',
                     maxWidth: '200px',

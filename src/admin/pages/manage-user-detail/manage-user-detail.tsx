@@ -1,13 +1,13 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ManageUserIcon } from '../../../assets/icons';
+import { ManageUserIcon, realatedListDetailsIcon } from '../../../assets/icons';
 import ActionsDropdown from '../../../components/actions-dropdown/actions-dropdown';
 import TextButton from '../../../components/button/text-button';
 import { useManageUserDetail } from '../../service/manage-user-detail/manage-user-detail-service';
 import { BUTTON_STYLES, HEADER_STYLES } from './styles';
-import { ADMIN_CREATE_USER } from '../../../routes';
+import { ADMIN_CREATE_USER, ADMIN_MANAGE_USER } from '../../../routes';
 import { UserDetailComponent } from '../../../components';
-import { Skeleton } from '@mui/material';
+import { Box } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store/store';
 import { checkPermission } from '../../../common-utils';
@@ -62,7 +62,8 @@ export const ManageUserDetails: React.FC = () => {
   const MENU_ITEMS = [
     {
       label: 'Assign Permission to User',
-      onClick: () => console.log('user clicked'),
+      onClick: () =>
+        navigate(ADMIN_MANAGE_USER + '/extended-permission/' + userDetail?.rid),
       hide: !isUserAssignPermissionEnable,
     },
     {
@@ -114,16 +115,16 @@ export const ManageUserDetails: React.FC = () => {
 
   return (
     <div className='flex flex-col h-[calc(100vh-64px)] w-full overflow-y-auto p-4 gap-3'>
-      <div className='w-full min-h-[75px] h-[75px] px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
-        <div className='flex items-center gap-2'>
+      <div className='w-full h-[55px] min-h-[50px] px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
+        <div className='flex items-center justify-center'>
           <img
             src={ManageUserIcon}
             alt='manage user'
-            className='w-8 h-8 rounded'
+            className='h-7 w-7 rounded'
           />
-          <div className='flex flex-col mb-1'>
+          <div className='flex flex-col mx-2.5 pb-1'>
             <div className={HEADER_STYLES.adminPermission}>
-              Admin Permission
+              {`Admin Permission > ${userDetail?.full_name ?? userFullName}`}
             </div>
             <div className={HEADER_STYLES.manageUser}>Manage User</div>
           </div>
@@ -136,7 +137,7 @@ export const ManageUserDetails: React.FC = () => {
               sx={{
                 ...BUTTON_STYLES,
                 fontSize: '13px',
-                fontWeight: 700,
+                fontWeight: 400,
                 width: '91px',
                 minWidth: '91px',
               }}
@@ -150,37 +151,41 @@ export const ManageUserDetails: React.FC = () => {
             sx={{
               width: '49px',
               minWidth: '49px',
-              fontWeight: 700,
+              fontWeight: 400,
               fontSize: '13px',
             }}
           />
         </div>
       </div>
       {/* User Details section  */}
-      <div className='flex flex-col border border-[#CBD6E2] rounded-[4px]'>
-        <div className='flex items-center justify-between w-full border-b border-[#CBD6E2] p-2'>
-          <div className='w-[50%]'>
-            <div className='text-[11px] text-[#7D98B6]'>User</div>
-            <div className='font-semibold text-[16px] text-[#2D3E4F] leading-5 tracking-normal truncate overflow-ellipsis'>
-              {userDetails.isLoading ? (
-                <Skeleton variant='rounded' width={200} />
-              ) : (
-                (userDetail?.full_name ?? userFullName)
-              )}
-            </div>
-          </div>
-          <div className='w-[50%] flex justify-end gap-2'>
-            {userActionButtons.map((button) => {
+      <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px]'>
+        <Box className='flex items-center justify-between gap-4 h-[38px] py-1 px-2'>
+          <Box className='flex items-center gap-2'>
+            <Box>
+              <img
+                src={realatedListDetailsIcon}
+                alt='details'
+                className='w-6 h-6'
+              />
+            </Box>
+            <Box className='text-[13px] text-[#2D3E4F] font-semibold'>
+              Details
+            </Box>
+          </Box>
+          <Box className='hidden items-center gap-2'>
+            {userActionButtons?.map((button, index) => {
               if (button.hide) return null;
               return (
                 <TextButton
-                  key={button.label}
+                  key={`header-button-${index}`}
                   label={button.label}
+                  // variant={button.variant}
                   onClick={() => handleAction(button.label)}
+                  aria-label={button.label}
                   sx={{
                     ...BUTTON_STYLES,
                     fontSize: '13px',
-                    fontWeight: 700,
+                    fontWeight: 600,
                     width: button.width,
                     minWidth: button.width,
                     maxWidth: button.width,
@@ -188,12 +193,14 @@ export const ManageUserDetails: React.FC = () => {
                 />
               );
             })}
-          </div>
-        </div>
-        <UserDetailComponent
-          data={userDetail}
-          loading={userDetails.isLoading}
-        />
+          </Box>
+        </Box>
+        <Box>
+          <UserDetailComponent
+            data={userDetail}
+            loading={userDetails.isLoading}
+          />
+        </Box>
       </div>
     </div>
   );

@@ -1,10 +1,9 @@
-import { PublicClientApplication } from '@azure/msal-browser';
+import { EventType, PublicClientApplication } from '@azure/msal-browser';
 import { ThemeProvider } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
-import { BrowserRouter } from 'react-router-dom';
 
 import { App } from './App.tsx';
 import { msalConfig } from './config/msalConfig.ts';
@@ -19,16 +18,25 @@ import './index.css';
 const msalInstance = new PublicClientApplication(msalConfig);
 const queryClient = new QueryClient();
 
+// Account selection logic
+msalInstance.addEventCallback((event) => {
+  if (
+    event.eventType === EventType.LOGIN_SUCCESS &&
+    event.payload &&
+    "account" in event.payload
+  ) {
+    msalInstance.setActiveAccount(event.payload.account || null);
+  }
+});
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>
     <PersistGate loading={null} persistor={persistor}>
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
           <ThemeProvider theme={theme}>
             <App instance={msalInstance} />
           </ThemeProvider>
-        </BrowserRouter>
       </QueryClientProvider>
       </PersistGate>
     </Provider>

@@ -393,10 +393,9 @@ const FilterModal: React.FC<FilterModalProps> = ({
       handleSorting?.('', 'desc');
     } else {
       setCurrentSort(sortValue);
-      const [field, direction] = sortValue.split('_') as [
-        string,
-        'asc' | 'desc',
-      ];
+      const parts = sortValue.split('_');
+      const direction = parts.pop() as 'asc' | 'desc';
+      const field = parts.join('_');
       handleSorting?.(field, direction);
     }
   };

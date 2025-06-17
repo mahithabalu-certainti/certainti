@@ -83,6 +83,7 @@ export interface ProjectListParams {
   fiscalYear?: number | string;
   accountNumber?: string;
   globalFilters?: globalFilters;
+  timezone?: string;
 }
 export enum Status {
   Active = 'active',

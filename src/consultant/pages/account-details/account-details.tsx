@@ -6,7 +6,20 @@ import {
   useNavigate,
   useSearchParams,
 } from 'react-router-dom';
-import { accountDetailsIcon } from '../../../assets';
+import {
+  accountDetailsIcon,
+  activitiesIcon,
+  attachmentsSideIcon,
+  casesIcon,
+  checklistIcon,
+  detailsIcon,
+  financialIcon,
+  importsIcon,
+  notesSideIcon,
+  projectsSideIcon,
+  resourcesIcon,
+  timeSheetIcon,
+} from '../../../assets';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../components';
 import { ACCOUNT } from '../../../routes';
 import { useAccountDetail } from '../../services/account-details/account-details-service';
@@ -50,6 +63,7 @@ export const AccountDetails = () => {
   const { filters, fiscalYear } = useSelector<RootState, AccountState>(
     (state: RootState) => state.account
   );
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
 
   // Permission Mangement
   const accountIsEnable = checkPermission(modules, AllModules.ACCOUNTS);
@@ -71,6 +85,7 @@ export const AccountDetails = () => {
   );
 
   const convertedFiscalYear = fiscalYear !== 'FY-All' ? Number(fiscalYear) : 0;
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const defaultTab = searchParams.get('list');
   const [activeKey, setActiveKey] = useState(defaultTab as string);
@@ -118,7 +133,7 @@ export const AccountDetails = () => {
     };
 
     if (exportType === 'project') {
-      exportProjectData(exportType, projectParams);
+      exportProjectData(exportType, { ...projectParams, timezone });
     } else {
       exportData(exportType, exportPayload);
     }
@@ -244,7 +259,11 @@ export const AccountDetails = () => {
       case 'imports':
         return <Import accountDetails={{ ...data, activeKey: 'imports' }} />;
       default:
-        return <div className='p-6'>Page Not Found</div>;
+        return (
+          <div className='flex items-center justify-center h-full'>
+            Page Not Found
+          </div>
+        );
     }
   };
 
@@ -257,56 +276,99 @@ export const AccountDetails = () => {
         key: 'financial',
         id: AllModules.FINANCIAL_HIGHLIGHTS,
         disabled: false,
+        icon: <img src={financialIcon} alt='financial' className='w-4 h-4' />,
       },
       {
         name: 'Details',
         key: 'details',
         id: AllModules.DETAILS,
         disabled: false,
+        icon: <img src={detailsIcon} alt='detailsIcon' className='w-4 h-4' />,
       },
       {
         name: 'Resources',
         key: 'resources',
         id: AllModules.RESOURCES,
         disabled: disable,
+        icon: (
+          <img src={resourcesIcon} alt='resourcesIcon' className='w-4 h-4' />
+        ),
       },
       {
         name: 'Projects',
         key: 'projects',
         id: AllModules.PROJECTS,
         disabled: disable,
+        icon: (
+          <img
+            src={projectsSideIcon}
+            alt='projectsSideIcon'
+            className='w-4 h-4'
+          />
+        ),
       },
-      { name: 'Cases', key: 'cases', id: AllModules.CASES, disabled: disable },
+      {
+        name: 'Cases',
+        key: 'cases',
+        id: AllModules.CASES,
+        disabled: disable,
+        icon: <img src={casesIcon} alt='casesIcon' className='w-4 h-4' />,
+      },
       {
         name: 'Activities',
         key: 'activities',
         id: AllModules.ACTIVITIES,
         disabled: disable,
+        icon: (
+          <img src={activitiesIcon} alt='activitiesIcon' className='w-4 h-4' />
+        ),
       },
-      { name: 'Notes', key: 'notes', id: AllModules.NOTES, disabled: disable },
+      {
+        name: 'Notes',
+        key: 'notes',
+        id: AllModules.NOTES,
+        disabled: disable,
+        icon: (
+          <img src={notesSideIcon} alt='notesSideIcon' className='w-4 h-4' />
+        ),
+      },
       {
         name: 'Attachments',
         key: 'attachments',
         id: AllModules.ATTACHMENTS,
         disabled: disable,
+        icon: (
+          <img
+            src={attachmentsSideIcon}
+            alt='attachmentsSideIcon'
+            className='w-4 h-4'
+          />
+        ),
       },
       {
         name: 'Checklist',
         key: 'checklist',
         id: AllModules.CHECKLISTS,
         disabled: disable,
+        icon: (
+          <img src={checklistIcon} alt='checklistIcon' className='w-4 h-4' />
+        ),
       },
       {
         name: 'Timesheet',
         key: 'timesheet',
         id: AllModules.TIMESHEETS,
         disabled: disable,
+        icon: (
+          <img src={timeSheetIcon} alt='timeSheetIcon' className='w-4 h-4' />
+        ),
       },
       {
         name: 'Imports',
         key: 'imports',
         id: AllModules.IMPORTS,
         disabled: disable,
+        icon: <img src={importsIcon} alt='importsIcon' className='w-4 h-4' />,
       },
     ],
     [disable]
@@ -336,6 +398,8 @@ export const AccountDetails = () => {
           }
           onActionsClick={handleActionsClick}
           onSettingsClick={handleSettingsClick}
+          showActions={false}
+          showSettings={false}
         />
       </div>
       <InfoSection
@@ -345,13 +409,17 @@ export const AccountDetails = () => {
         singleLineView={true}
       />
       <div className='flex flex-1 flex-row w-full'>
-        <div className='flex-1 w-[200px] min-w-[200px] max-w-[200px]'>
+        <div
+          className={`flex ${isCollapsed ? 'w-[60px]' : 'w-[220px] min-w-[220px] max-w-[220px]'}`}
+        >
           <SideMenuPanel
             menuItems={sideMenuItems}
             activeKey={activeKey}
             onSelect={setActiveKey}
             headerTitle='Related List'
             showBackIcon={true}
+            isCollapsed={isCollapsed}
+            onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
           />
         </div>
         <div className='flex-1 overflow-hidden'>

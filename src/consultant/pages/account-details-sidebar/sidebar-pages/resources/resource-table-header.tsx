@@ -33,9 +33,9 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
   resourceNumber,
 }) => {
   return (
-    <div className='border-t border-[1px] border-b-0 border-[#CBD6E2] rounded-tl-[2px] h-[50px] rounded-tr-[2px]'>
-      <div className='flex items-center justify-between h-full px-4'>
-        <div className='flex items-center gap-2'>
+    <div className='border-t border-[1px] border-b-0 border-[#CBD6E2] rounded-tl-[2px] h-[38px] rounded-tr-[2px]'>
+      <div className='h-full flex items-center justify-between gap-4 py-1 px-2'>
+        <div className='flex items-center gap-1'>
           {showBackArrow && (
             <div
               className='cursor-pointer w-[24px] h-[24px] flex justify-center items-center -ml-2'
@@ -43,7 +43,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
             >
               <img
                 src={leftArrowIcon}
-                className='h-[14px]'
+                className='h-[12px]'
                 alt='leftArrowIcon'
               />
             </div>
