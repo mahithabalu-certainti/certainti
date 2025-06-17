@@ -145,8 +145,8 @@ export class ResourceCost
           allowNull: true,
           validate: {
             isAfterEffectiveDate(value: Date) {
-              if (value && this.effective_date) {
-                const effectiveDate = new Date(this.effective_date as Date);
+              if (value && this.effective_from) {
+                const effectiveDate = new Date(this.effective_from as Date);
                 effectiveDate.setHours(0, 0, 0, 0);
                 const endDate = new Date(value);
                 endDate.setHours(0, 0, 0, 0);
@@ -263,7 +263,7 @@ export class ResourceCost
         timestamps: false,
         validate: {
           bothDatesOrNeither() {
-            const hasEffectiveDate = this.effective_date !== null && this.effective_date !== undefined;
+            const hasEffectiveDate = this.effective_from !== null && this.effective_from !== undefined;
             const hasEndDate = this.end_date !== null && this.end_date !== undefined;
             
             if (hasEffectiveDate !== hasEndDate) {
