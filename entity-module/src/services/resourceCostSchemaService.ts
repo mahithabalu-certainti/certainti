@@ -710,7 +710,7 @@ class ResourceCostSchemaService {
           "Status": resource.status.toLowerCase() === "active" ? "Active" 
           : resource.status.toLowerCase() === "anomaly" ? "Anomaly" 
           : resource.status.toLowerCase() === "duplicate" ? "Duplicate" 
-          : "Inactive" || "-",
+          : "Inactive",
           "Cost ID": resource.r_number || "-",
           // "Annual Compensation": formatNumberForExport(resource.annual_cost , resource.currency_symbol) || "-",
           // "Monthly Compensation": formatNumberForExport(resource.monthly_cost, resource.currency_symbol) || "-",
