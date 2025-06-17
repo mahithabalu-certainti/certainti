@@ -354,7 +354,7 @@ class ResourceCostSchemaService {
       //Build the base query without sorting or pagination
       let query = `
         SELECT rc.*,rc.r_number as r_number, r.resource_name, r.resource_orgname, r.resource_designation, r.resource_role, ad.account_name, ad.account_rid,
-        TO_CHAR(rc.effective_from, 'YYYY-MM-DD') as effective_date,
+        TO_CHAR(rc.effective_from, 'YYYY-MM-DD') as effective_from,
         TO_CHAR(rc.end_date, 'YYYY-MM-DD') as end_date
         FROM "${schemaName}"."resource_cost" rc
         INNER JOIN "${schemaName}"."resources" r ON rc.resource_rid = r.rid
@@ -548,7 +548,7 @@ class ResourceCostSchemaService {
       //Build the base query without sorting or pagination
       let query = `
         SELECT rc.*,rc.r_number as r_number, r.resource_name, r.resource_orgname, r.resource_designation, r.resource_role, ad.account_name, ad.account_rid,
-        TO_CHAR(rc.effective_date, 'YYYY-MM-DD') as effective_date,
+        TO_CHAR(rc.effective_date, 'YYYY-MM-DD') as effective_from,
         TO_CHAR(rc.end_date, 'YYYY-MM-DD') as end_date
         FROM "${schemaName}"."resource_cost" rc
         INNER JOIN "${schemaName}"."resources" r ON rc.resource_rid = r.rid
@@ -697,18 +697,27 @@ class ResourceCostSchemaService {
           "Effective From": resource.effective_date || "-",
           "End Date": resource.end_date || "-",
           "Currency": resource.currency_code || "USD",
-          "Annual Compensation": formatNumberForExport(resource.annual_cost , resource.currency_symbol) || "-",
-          "Monthly Compensation": formatNumberForExport(resource.monthly_cost, resource.currency_symbol) || "-",
-          "Bi-Weekly Compensation": formatNumberForExport(resource.bi_weekly_cost, resource.currency_symbol) || "-",
-          "Weekly Compensation": formatNumberForExport(resource.weekly_cost, resource.currency_symbol) || "-",
-          "Daily Compensation": formatNumberForExport(resource.daily_cost, resource.currency_symbol) || "-",
-          "Hourly Compensation": formatNumberForExport(resource.hourly_cost, resource.currency_symbol) || "-",
           "Effort In Hours": resource.effort_in_hrs || "-",
+          "Salary": formatNumberForExport(resource.salary , resource.currency_symbol) || "-",
+          "Bonus": formatNumberForExport(resource.bonus , resource.currency_symbol) || "-",
+          "Insurance": formatNumberForExport(resource.insurance , resource.currency_symbol) || "-",
+          "Deductions": formatNumberForExport(resource.deductions , resource.currency_symbol) || "-",
+          "Cost": formatNumberForExport(resource.resource_cost , resource.currency_symbol) || "-",
           "Org Name": resource.resource_orgname || "-",
           "Designation": resource.resource_designation || "-",
           "Role": resource.resource_role || "-",
           "Comments": resource.comments || "-",
+          "Status": resource.status.toLowerCase() === "active" ? "Active" 
+          : resource.status.toLowerCase() === "anomaly" ? "Anomaly" 
+          : resource.status.toLowerCase() === "duplicate" ? "Duplicate" 
+          : "Inactive" || "-",
           "Cost ID": resource.r_number || "-",
+          // "Annual Compensation": formatNumberForExport(resource.annual_cost , resource.currency_symbol) || "-",
+          // "Monthly Compensation": formatNumberForExport(resource.monthly_cost, resource.currency_symbol) || "-",
+          // "Bi-Weekly Compensation": formatNumberForExport(resource.bi_weekly_cost, resource.currency_symbol) || "-",
+          // "Weekly Compensation": formatNumberForExport(resource.weekly_cost, resource.currency_symbol) || "-",
+          // "Daily Compensation": formatNumberForExport(resource.daily_cost, resource.currency_symbol) || "-",
+          // "Hourly Compensation": formatNumberForExport(resource.hourly_cost, resource.currency_symbol) || "-",
           // "Semi Annual": resource.semi_annual_cost,
         };
       });
@@ -846,17 +855,23 @@ class ResourceCostSchemaService {
     // Define field types for proper filter handling
     const alphanumericFields = ["status","resource_code"];
     const numericFields = [
-      "annual",
-      "monthly",
-      "weekly",
-      "daily",
-      "hourly",
-      "bi_weekly",
+      // "annual",
+      // "monthly",
+      // "weekly",
+      // "daily",
+      // "hourly",
+      // "bi_weekly",
       "fiscal_year",
       "effort_in_hrs",
+      "salary",
+      "bonus",
+      "insurance",
+      "deductions",
+      "resource_cost",
+      "net_resource_cost"
       // "semi_annual",
     ];
-    const dateFields = ["effective_date", "end_date"];
+    const dateFields = ["effective_from", "end_date"];
     const specialFields = ["resource_cost_number"];
 
     // Process each filter

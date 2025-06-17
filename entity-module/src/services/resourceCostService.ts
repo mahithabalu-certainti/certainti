@@ -117,8 +117,6 @@ class ResourceCostService {
         fiscalYear
       );
 
-      console.log("Where conditions", filters);
-
       // Execute queries and return results
       return await resourceCostSchemaService.executeQueries(
         schemaName,
