@@ -508,14 +508,16 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
         });
 
         if (users) {
-          const { country, state, city } = await this.getGeoData(
+          const { country, state, city,orgName } = await this.getGeoData(
             users.country || "",
             users.state || "",
-            users.city || ""
+            users.city || "",
+            users.org_id || ""
           );
           (users as any).dataValues.country_name = country;
           (users as any).dataValues.state_name = state;
           (users as any).dataValues.city_name = city;
+          (users as any).dataValues.org_name = orgName;
 
           // Fetch user names for created_by and modified_by
         const userNames = await this.fetchUserNames({
@@ -1307,12 +1309,24 @@ async getAllUserPermission(userId: string, profileId: string) {
     return [sortBy, sortOrder];
   }
 
-  async getGeoData(countryId: string, stateId: string, cityId: string) {
+  async getGeoData(countryId: string, stateId: string, cityId: string,orgId:string) {
     const mainDbSequelize = await initSequelize();
 
     let country: string | null = null;
     let state: string | null = null;
     let city: string | null = null;
+    let orgName: string | null = null;
+
+    if (orgId) {
+      const [orgNameResult]: any[] = await mainDbSequelize.query(
+        `SELECT organisation_name FROM account WHERE rid = :rid`,
+        {
+          replacements: { rid: orgId },
+          type: "SELECT",
+        }
+      );
+      orgName = orgNameResult?.organisation_name || null;
+    }
 
     if (countryId) {
       const [countryResult]: any[] = await mainDbSequelize.query(
@@ -1350,7 +1364,8 @@ async getAllUserPermission(userId: string, profileId: string) {
     return {
       country,
       state,
-      city
+      city,
+      orgName
     };
   }
 
