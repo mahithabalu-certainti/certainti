@@ -629,9 +629,12 @@ class ResourceCostService {
 
         if (existingCost) {
           resourceCostStatus = "duplicate";
-        } else if (effort_in_hrs && Number(effort_in_hrs) > 3000) {
+        } else if (effort_in_hrs!== undefined && Number(effort_in_hrs) > 3000) {
           resourceCostStatus = "anomaly";
-        } else if (calculatedResourceCost > 200000) {
+        } else if (
+          (resource_cost !== undefined && Number(resource_cost) > 200000) ||
+          (salary !== undefined && Number(salary) > 200000)
+        ) {
           resourceCostStatus = "anomaly";
         }
 
