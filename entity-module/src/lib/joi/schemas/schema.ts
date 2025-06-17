@@ -174,7 +174,7 @@ const costFieldValidator = (fieldName: string) => {
 
       return value;
     })
-    .allow('')
+    .allow('').allow(null)
     .messages({
       'string.pattern.base': `${fieldName.replace(/_/g, ' ')} must be a valid number with up to 2 decimal places`,
       'number.maxCost': `${fieldName.replace(/_/g, ' ')} must be a valid string number maximum up to (${MAX_COST_VALUE})`
@@ -874,7 +874,7 @@ const updateResourceCostSchema = Joi.object({
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "effective_date must be in the format YYYY-MM-DD",
+      "string.pattern.base": "Effective from must be in the format YYYY-MM-DD",
       "any.invalid": "Date cannot be in the future.",
       "date.invalidFormat":
         "Invalid effective date. Please use the format YYYY-MM-DD",
@@ -1044,7 +1044,7 @@ const resourceCostSchema = Joi.object({
     .allow(null)
     .allow("")
     .messages({
-      "string.pattern.base": "effective_date must be in the format YYYY-MM-DD",
+      "string.pattern.base": "Effective from must be in the format YYYY-MM-DD",
       "any.invalid": "Date cannot be in the future.",
       "date.invalidFormat":
         "Invalid effective date. Please use the format YYYY-MM-DD",

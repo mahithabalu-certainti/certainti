@@ -548,7 +548,7 @@ class ResourceCostSchemaService {
       //Build the base query without sorting or pagination
       let query = `
         SELECT rc.*,rc.r_number as r_number, r.resource_name, r.resource_orgname, r.resource_designation, r.resource_role, ad.account_name, ad.account_rid,
-        TO_CHAR(rc.effective_date, 'YYYY-MM-DD') as effective_from,
+        TO_CHAR(rc.effective_from, 'YYYY-MM-DD') as effective_from,
         TO_CHAR(rc.end_date, 'YYYY-MM-DD') as end_date
         FROM "${schemaName}"."resource_cost" rc
         INNER JOIN "${schemaName}"."resources" r ON rc.resource_rid = r.rid
@@ -694,7 +694,7 @@ class ResourceCostSchemaService {
           "Fiscal Year": resource.fiscal_year || "-",
           "Name": resource.resource_name || "-",
           "Resource Type": resource.resource_type || "-",
-          "Effective From": resource.effective_date || "-",
+          "Effective From": resource.effective_from || "-",
           "End Date": resource.end_date || "-",
           "Currency": resource.currency_code || "USD",
           "Effort In Hours": resource.effort_in_hrs || "-",
