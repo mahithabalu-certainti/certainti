@@ -1067,6 +1067,8 @@ class ResourceCostService {
             resourceCostStatus = "anomaly";
           } else if (resourceCostBy?.salary && resourceCostBy.salary > 200000) {
             resourceCostStatus = "anomaly";
+          } else if (resourceCostBy?.resource_cost && resourceCostBy.resource_cost > 200000) {
+            resourceCostStatus = "anomaly";
           }
         }
       }
