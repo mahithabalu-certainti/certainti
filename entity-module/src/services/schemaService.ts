@@ -1515,7 +1515,7 @@ class SchemaService {
             ${fiscalYearClause}
             ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
         ) AS pfs_sub
-      ), '[]') AS project_fiscal_summary
+      ), '[]') AS "ProjectFiscal"
     `;
 
         const fullQuery = `
@@ -1627,7 +1627,7 @@ class SchemaService {
             ${fiscalYearClause}
             ${filterWhereSQLChild ? `AND ${filterWhereSQLChild}` : ""}
         ) AS pfs_sub
-      ), '[]') AS project_fiscal_summary
+      ), '[]') AS "ProjectFiscal"
     `;
 
         const fullQuery = `

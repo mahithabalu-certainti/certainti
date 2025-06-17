@@ -1037,6 +1037,12 @@ class ProjectIngestionService {
       offset,
       limit,
       order: fullOrder,
+      attributes: {
+        include: [
+          ['account_rid', 'account_id'],
+          ['rid', 'project_rid'] 
+        ]
+      },
       include: [
         {
           model: ProjectFiscal,
@@ -1047,7 +1053,7 @@ class ProjectIngestionService {
             ...whereFiscal,
           },
           attributes: [
-            "rid",
+            ["rid", "project_fiscal_rid"],
             "r_number",
             "project_rid",
             "eid",
@@ -1067,7 +1073,7 @@ class ProjectIngestionService {
             "project_client_group",
             "project_group",
             "auto_send_ai_interaction",
-            "account_rid",
+            ["account_rid", "rid"],
             "country_rid",
             "region_rid",
             "currency_rid",
