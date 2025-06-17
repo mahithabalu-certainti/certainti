@@ -787,7 +787,7 @@ class SchemaService {
 
     await sequelize.query(`
           CREATE TABLE IF NOT EXISTS "${schemaName}".resource_cost (
-          rid uuid PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
+          rid UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
           r_number varchar(20) DEFAULT (
             'RCO '::text || lpad((nextval('"${schemaName}".resource_cost_seq'::regclass))::text, 10, '0'::text)),
           eid varchar(255),
@@ -799,13 +799,7 @@ class SchemaService {
           fiscal_year integer NOT NULL,
           effective_from DATE,
           end_date DATE,
-          effort_in_hrs  numeric(18,2),
-          annual_cost numeric(18,2),
-          monthly_cost numeric(18,2),
-          weekly_cost numeric(18,2),
-          bi_weekly_cost numeric(18,2),
-          daily_cost numeric(18,2),
-          hourly_cost numeric(18,2),
+          effort_in_hrs numeric(18,2),
           currency_rid uuid,
           status varchar(255) DEFAULT 'active',
           comments text,
@@ -819,7 +813,6 @@ class SchemaService {
           resource_cost numeric(18,2),
           salary numeric(18,2),
           net_resource_cost numeric(18,2),
-          CONSTRAINT resource_cost_pkey PRIMARY KEY (rid),
           CONSTRAINT resource_cost_resource_rid_fkey FOREIGN KEY (resource_rid)
               REFERENCES "${schemaName}".resources (rid)
               ON UPDATE CASCADE

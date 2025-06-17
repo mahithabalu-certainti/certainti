@@ -897,9 +897,7 @@ const updateResourceCostSchema = Joi.object({
   // weekly_cost: costFieldValidator('weekly_cost'),
   // daily_cost: costFieldValidator('daily_cost'),
   // hourly_cost: costFieldValidator('hourly_cost'),
-  salary: costFieldValidator('salary').required().messages({
-    'any.required': 'Salary is required'
-  }),
+  salary: costFieldValidator('salary'),
   bonus: costFieldValidator('bonus'),
   insurance: costFieldValidator('insurance'),
   deductions: costFieldValidator('deductions'),
@@ -953,6 +951,10 @@ export const updateResourceDuplicateStatus = Joi.object({
       "any.required": "Action is required"
     }),
   accountNumber: Joi.string().max(255).required(),
+  type: Joi.string().valid("anomaly", "duplicate").required().messages({
+      "any.only": 'Type must be either "anomaly" or "duplicate"',
+      "any.required": "Type is required"
+    }),
 });
 
 // .custom((value, helpers) => {
@@ -1067,9 +1069,7 @@ const resourceCostSchema = Joi.object({
   // weekly_cost: costFieldValidator('weekly_cost'),
   // daily_cost: costFieldValidator('daily_cost'),
   // hourly_cost: costFieldValidator('hourly_cost'),
-  salary: costFieldValidator('salary').required().messages({
-    'any.required': 'Salary is required'
-  }),
+  salary: costFieldValidator('salary'),
   bonus: costFieldValidator('bonus'),
   insurance: costFieldValidator('insurance'),
   deductions: costFieldValidator('deductions'),
