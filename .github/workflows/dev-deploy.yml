@@ -379,4 +379,4 @@ jobs:
               echo "Deployment failed!"
               exit 1
             fi
-          EOF 
+          EOF
