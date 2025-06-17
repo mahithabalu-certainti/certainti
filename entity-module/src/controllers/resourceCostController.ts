@@ -8,14 +8,15 @@ import {
   errorLog,
   handleSuccessResponse,
   handleErrorResponse,
-  generateExcelBase64
+  generateExcelBase64,
 } from "../utils/helpers";
 import {
   resourceCostSchema,
   listResourceCostSchema,
   getResourceCostSchema,
   updateResourceCostSchema,
-  exportResourceCostSchema
+  exportResourceCostSchema,
+  updateResourceDuplicateStatus,
 } from "../lib/joi/schemas/schema";
 
 // const logger = configurations.getInstance().getLogger();
@@ -97,7 +98,6 @@ async function resourceCosts(req: Request, res: Response): Promise<void> {
   }
 }
 
-
 /**
  * @async
  * @function resourceCosts
@@ -144,7 +144,13 @@ async function exportResourceCosts(req: Request, res: Response): Promise<void> {
 
     if (resourceCost.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
-       handleSuccessResponse(res, await generateExcelBase64(resourceCost?.data?.resourceCost,"Resource Cost"));
+      handleSuccessResponse(
+        res,
+        await generateExcelBase64(
+          resourceCost?.data?.resourceCost,
+          "Resource Cost"
+        )
+      );
     } else {
       errorLog(methodName, resourceCost.errorMessage);
       handleErrorResponse(
@@ -199,7 +205,10 @@ async function createResourceCost(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const resourceCost = await resourceCostService.createResourceCost(value,userId);
+    const resourceCost = await resourceCostService.createResourceCost(
+      value,
+      userId
+    );
 
     if (resourceCost.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -211,7 +220,9 @@ async function createResourceCost(req: Request, res: Response): Promise<void> {
         res,
         HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
-        resourceCost.errorMessage?.replace(/(Validation error:|Validation failed)/g, '').trim()
+        resourceCost.errorMessage
+          ?.replace(/(Validation error:|Validation failed)/g, "")
+          .trim()
       );
       return;
     }
@@ -260,7 +271,10 @@ async function updateResourceCost(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const resourceCost = await resourceCostService.updateResourceCost(value,userId);
+    const resourceCost = await resourceCostService.updateResourceCost(
+      value,
+      userId
+    );
 
     if (resourceCost.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -272,7 +286,9 @@ async function updateResourceCost(req: Request, res: Response): Promise<void> {
         res,
         HttpStatus.BAD_REQUEST,
         HttpStatus.BAD_REQUEST_MESSAGE,
-        resourceCost.errorMessage?.replace(/(Validation error:|Validation failed)/g, '').trim()
+        resourceCost.errorMessage
+          ?.replace(/(Validation error:|Validation failed)/g, "")
+          .trim()
       );
       return;
     }
@@ -307,7 +323,88 @@ async function resourceCostById(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params;
     const accountNumber = req.query.accountNumber as string;
-    const result = await resourceCostService.resourceCostById(id,accountNumber);
+    const result = await resourceCostService.resourceCostById(
+      id,
+      accountNumber
+    );
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, result.data);
+    } else {
+      errorLog(methodName, result.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+async function acceptDuplicate(req: Request, res: Response): Promise<void> {
+  const methodName = "Accept duplicate";
+  try {
+    const value = await validateRequest(req, updateResourceDuplicateStatus, res);
+
+    if(!value){
+      return;
+    }
+
+    const result = await resourceCostService.acceptDuplicate(
+      value.rid,
+      value.accountNumber,
+      value.action
+    );
+
+    if (result.statusCode === HttpStatus.SUCCESS) {
+      successLog(methodName);
+      handleSuccessResponse(res, result.data);
+    } else {
+      errorLog(methodName, result.errorMessage);
+      handleErrorResponse(
+        res,
+        HttpStatus.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST_MESSAGE,
+        result.errorMessage
+      );
+    }
+  } catch (err) {
+    const error = err as Error;
+    errorLog(methodName, error.message);
+    handleErrorResponse(
+      res,
+      HttpStatus.FAILED,
+      HttpStatus.FAILED_MESSAGE,
+      error.message
+    );
+  }
+}
+
+async function acceptAnomaly(req: Request, res: Response): Promise<void> {
+  const methodName = "Accept anomaly";
+  try {
+    const value = await validateRequest(req, updateResourceDuplicateStatus, res);
+
+    if(!value){
+      return;
+    }
+
+    const result = await resourceCostService.acceptAnomaly(
+      value.rid,
+      value.accountNumber,
+      value.action
+    );
 
     if (result.statusCode === HttpStatus.SUCCESS) {
       successLog(methodName);
@@ -339,4 +436,6 @@ export default {
   createResourceCost,
   updateResourceCost,
   resourceCostById,
+  acceptDuplicate,
+  acceptAnomaly
 };
