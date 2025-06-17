@@ -118,6 +118,8 @@ class ResourceCostService {
         fiscalYear
       );
 
+      console.log("Where conditions", filters);
+
       // Execute queries and return results
       return await resourceCostSchemaService.executeQueries(
         schemaName,
@@ -234,7 +236,7 @@ class ResourceCostService {
    * @param resourceCost - Object containing resource cost details including costs, dates, and identifiers
    * @returns Promise resolving to status object with created resource cost data or error message
    */
-async createResourceCost(
+  async createResourceCost(
     resourceCost: IResourceCost,
     userId: string
   ): Promise<{
@@ -276,7 +278,7 @@ async createResourceCost(
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
       const schemaName = `platform_v2_${accountNumberFetched}`;
-      
+
       const [resourceCostTableCreated, timelineTableCreated] =
         await Promise.all([
           resourceCostSchemaService.validateSchema(schemaName, "resource_cost"),
@@ -303,7 +305,7 @@ async createResourceCost(
       let createdResourceCost;
       let eventStatus = "Success";
       let errorMessage = "";
-  
+
       try {
         const costFields = {
           deductions,
@@ -313,61 +315,71 @@ async createResourceCost(
           resource_cost,
         };
 
-        const costValues = Object.entries(costFields).reduce((acc, [key, value]) => {
-          // Normalize empty string to null
-          if (value === "" || value === null || value === undefined) {
-            acc[key] = null;
-          } else {
-            try {
-              // Convert valid string/number to Decimal
-              acc[key] = new Decimal(value).toString();
-            } catch (error) {
-              throw new Error(`Invalid number format for ${key}: ${value}`);
+        const costValues = Object.entries(costFields).reduce(
+          (acc, [key, value]) => {
+            // Normalize empty string to null
+            if (value === "" || value === null || value === undefined) {
+              acc[key] = null;
+            } else {
+              try {
+                // Convert valid string/number to Decimal
+                acc[key] = new Decimal(value).toString();
+              } catch (error) {
+                throw new Error(`Invalid number format for ${key}: ${value}`);
+              }
             }
-          }
-          return acc;
-        }, {} as Record<string, string | null>);
-        
+            return acc;
+          },
+          {} as Record<string, string | null>
+        );
+
         const sequelize = await this.getOrgSequelize();
         ResourceCost.initialize(sequelize, schemaName);
         const effectiveFrom = this.formatDateForDb(effective_from as string);
         const endDate = this.formatDateForDb(end_date as string);
 
         // Calculate resource cost
-        const calculatedResourceCost = Number(new Decimal(salary || 0).plus(bonus || 0).plus(insurance || 0).plus(resource_cost || 0).minus(deductions || 0));
-        
+        const calculatedResourceCost = Number(
+          new Decimal(salary || 0)
+            .plus(bonus || 0)
+            .plus(insurance || 0)
+            .plus(resource_cost || 0)
+            .minus(deductions || 0)
+        );
+
         let status = "active";
 
         // Check for duplicate record
-          const existingCost = await ResourceCost.findAll({
-            where: {
-              resource_rid,
-              effective_from: effectiveFrom,
-              end_date: endDate,
-              salary,
-              deductions,
-              insurance,
-              bonus,
-              fiscal_year,
-              comments,
-              currency_rid,
-              status,
-              effort_in_hrs,
-              resource_cost,
-              net_resource_cost: calculatedResourceCost,
-              account_rid,
-            },
-          });
-          
-          if (existingCost) {
-            status = 'duplicate';
-          }
-          else if (effort_in_hrs && Number(effort_in_hrs) > 3000) {
-            status = 'anomaly';
-          }
-          else if (calculatedResourceCost > 200000) {
-          status = 'anomaly';
-          }
+        const existingCost = await ResourceCost.findAll({
+          where: {
+            resource_rid,
+            effective_from: effectiveFrom,
+            end_date: endDate,
+            salary,
+            deductions,
+            insurance,
+            bonus,
+            fiscal_year,
+            comments,
+            currency_rid,
+            status,
+            effort_in_hrs,
+            resource_cost,
+            net_resource_cost: calculatedResourceCost,
+            account_rid,
+          },
+        });
+
+        if (existingCost) {
+          status = "duplicate";
+        } else if (effort_in_hrs && Number(effort_in_hrs) > 3000) {
+          status = "anomaly";
+        } else if (
+          (resource_cost !== undefined && Number(resource_cost) > 200000) ||
+          salary > 200000
+        ) {
+          status = "anomaly";
+        }
 
         createdResourceCost = await ResourceCost.create({
           eid,
@@ -575,58 +587,65 @@ async createResourceCost(
           resource_cost,
         };
 
-        const costValues = Object.entries(costFields).reduce((acc, [key, value]) => {
-          // Normalize empty string to null
-          if (value === "" || value === null || value === undefined) {
-            acc[key] = null;
-          } else {
-            try {
-              // Convert valid string/number to Decimal
-              acc[key] = new Decimal(value).toString();
-            } catch (error) {
-              throw new Error(`Invalid number format for ${key}: ${value}`);
+        const costValues = Object.entries(costFields).reduce(
+          (acc, [key, value]) => {
+            // Normalize empty string to null
+            if (value === "" || value === null || value === undefined) {
+              acc[key] = null;
+            } else {
+              try {
+                // Convert valid string/number to Decimal
+                acc[key] = new Decimal(value).toString();
+              } catch (error) {
+                throw new Error(`Invalid number format for ${key}: ${value}`);
+              }
             }
-          }
-        
-          return acc;
-        }, {} as Record<string, string | null>);
+
+            return acc;
+          },
+          {} as Record<string, string | null>
+        );
 
         const effectiveFrom = this.formatDateForDb(effective_from as string);
         const endDate = this.formatDateForDb(end_date as string);
         // Calculate resource cost
-        const calculatedResourceCost = Number(new Decimal(salary || 0).plus(bonus || 0).plus(insurance || 0).plus(resource_cost || 0).minus(deductions || 0));
-        
+        const calculatedResourceCost = Number(
+          new Decimal(salary || 0)
+            .plus(bonus || 0)
+            .plus(insurance || 0)
+            .plus(resource_cost || 0)
+            .minus(deductions || 0)
+        );
+
         let resourceCostStatus = status;
 
         // Check for duplicate record
-          const existingCost = await ResourceCost.findAll({
-            where: {
-              resource_rid,
-              effective_from: effectiveFrom,
-              end_date: endDate,
-              salary,
-              deductions,
-              insurance,
-              bonus,
-              fiscal_year,
-              comments,
-              currency_rid,
-              status: resourceCostStatus,
-              effort_in_hrs,
-              resource_cost,
-              net_resource_cost: calculatedResourceCost,
-            },
-          });
-          
-          if (existingCost) {
-            resourceCostStatus = 'duplicate';
-          }
-          else if (effort_in_hrs && Number(effort_in_hrs) > 3000) {
-            resourceCostStatus = 'anomaly';
-          }
-          else if (calculatedResourceCost > 200000) {
-            resourceCostStatus = 'anomaly';
-          }
+        const existingCost = await ResourceCost.findAll({
+          where: {
+            resource_rid,
+            effective_from: effectiveFrom,
+            end_date: endDate,
+            salary,
+            deductions,
+            insurance,
+            bonus,
+            fiscal_year,
+            comments,
+            currency_rid,
+            status: resourceCostStatus,
+            effort_in_hrs,
+            resource_cost,
+            net_resource_cost: calculatedResourceCost,
+          },
+        });
+
+        if (existingCost) {
+          resourceCostStatus = "duplicate";
+        } else if (effort_in_hrs && Number(effort_in_hrs) > 3000) {
+          resourceCostStatus = "anomaly";
+        } else if (calculatedResourceCost > 200000) {
+          resourceCostStatus = "anomaly";
+        }
 
         const [affectedCounts, affectedRows] = await ResourceCost.update(
           {
@@ -685,7 +704,7 @@ async createResourceCost(
             originalResourceCost.toJSON(),
             affectedRows[0],
             userId,
-            accountNumberFetched,
+            accountNumberFetched
           );
 
           // Also log to timeline
@@ -899,7 +918,7 @@ async createResourceCost(
       if (resourceCostById) {
         const costData = resourceCostById.toJSON();
         const sequelize = await this.getMainDbSequelize();
-        await resourceCostSchemaService.assignCurrencyRid(costData,sequelize);
+        await resourceCostSchemaService.assignCurrencyRid(costData, sequelize);
         // Query the currency table in the main database
         const [currencyResult] = await sequelize.query(
           `SELECT currency_name,currency_code,currency_symbol FROM public.currency WHERE rid = :currency_rid`,
@@ -1007,6 +1026,154 @@ async createResourceCost(
         message: HttpStatus.SUCCESS_MESSAGE,
         data: {
           resourceCostById,
+        },
+      };
+    } catch (err) {
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: (err as Error).message,
+      };
+    }
+  }
+
+  async acceptDuplicate(id: string, accountNumber: string, action: string) {
+    try {
+      let { accountNumber: accountNumberFetched } =
+        await this.schemaService.fetchAccountByNumber(accountNumber);
+
+      const schemaName = `platform_v2_${accountNumberFetched}`;
+      const validateSchema = await resourceCostSchemaService.validateSchema(
+        schemaName,
+        "resource_cost"
+      );
+
+      if (!validateSchema) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Account schema does not exist",
+        };
+      }
+
+      const sequelize = await this.getOrgSequelize();
+      ResourceCost.initialize(sequelize, schemaName);
+      const resourceCostBy = await ResourceCost.findOne({
+        where: {
+          rid: id,
+        },
+      });
+
+      let resourceCostStatus = "Active";
+
+      if (resourceCostBy) {
+        if (
+          resourceCostBy.effort_in_hrs &&
+          Number(resourceCostBy.effort_in_hrs) > 3000
+        ) {
+          resourceCostStatus = "anomaly";
+        } else if (resourceCostBy.salary > 200000) {
+          resourceCostStatus = "anomaly";
+        }
+      }
+
+      let updateStatus = null;
+
+      if(action === "accept"){
+        updateStatus = await ResourceCost.update(
+          {
+            status: resourceCostStatus,
+          },
+          {
+            where: {
+              rid: id,
+            },
+          }
+        );
+      }else{
+        updateStatus = await ResourceCost.update(
+          {
+            status: "inactive",
+          },
+          {
+            where: {
+              rid: id,
+            },
+          }
+        );
+      }
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          updateStatus,
+        },
+      };
+    } catch (err) {
+      return {
+        statusCode: HttpStatus.FAILED,
+        message: HttpStatus.FAILED_MESSAGE,
+        errorMessage: (err as Error).message,
+      };
+    }
+  }
+
+  async acceptAnomaly(id: string, accountNumber: string, action: string) {
+    try {
+      let { accountNumber: accountNumberFetched } =
+        await this.schemaService.fetchAccountByNumber(accountNumber);
+
+      const schemaName = `platform_v2_${accountNumberFetched}`;
+      const validateSchema = await resourceCostSchemaService.validateSchema(
+        schemaName,
+        "resource_cost"
+      );
+
+      if (!validateSchema) {
+        return {
+          statusCode: HttpStatus.FAILED,
+          message: HttpStatus.FAILED_MESSAGE,
+          errorMessage: "Account schema does not exist",
+        };
+      }
+
+      const sequelize = await this.getOrgSequelize();
+      ResourceCost.initialize(sequelize, schemaName);
+
+      let resourceCostStatus = "active";
+
+      let updateStatus = null;
+
+      if(action === "accept"){
+        updateStatus = await ResourceCost.update(
+          {
+            status: resourceCostStatus,
+          },
+          {
+            where: {
+              rid: id,
+            },
+          }
+        );
+      }else{
+        updateStatus = await ResourceCost.update(
+          {
+            status: "inactive",
+          },
+          {
+            where: {
+              rid: id,
+            },
+          }
+        );
+      }
+
+      return {
+        statusCode: HttpStatus.SUCCESS,
+        message: HttpStatus.SUCCESS_MESSAGE,
+        data: {
+          updateStatus,
         },
       };
     } catch (err) {

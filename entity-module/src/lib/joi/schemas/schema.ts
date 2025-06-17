@@ -943,6 +943,18 @@ const updateResourceCostSchema = Joi.object({
   modified_by: Joi.string().max(255).optional(),
 });
 
+export const updateResourceDuplicateStatus = Joi.object({
+  rid: Joi.string().uuid().required(),
+  action: Joi.string()
+    .valid("accept", "reject")
+    .required()
+    .messages({
+      "any.only": 'Action must be either "accept" or "reject"',
+      "any.required": "Action is required"
+    }),
+  accountNumber: Joi.string().max(255).required(),
+});
+
 // .custom((value, helpers) => {
 //   const filled = costFields.filter(field => value[field] && value[field].toString().trim() !== '');
 

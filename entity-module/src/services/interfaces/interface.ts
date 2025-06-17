@@ -127,6 +127,28 @@ export interface IResourceCostService {
     errorMessage?: string;
     data?: { resourceCostById: any };
   }>;
+
+  acceptDuplicate(
+    id: string,
+    accountNumber: string,
+    action: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { updateStatus: any };
+  }>;
+
+  acceptAnomaly(
+    id: string,
+    accountNumber: string,
+    action: string
+  ): Promise<{
+    statusCode: number;
+    message: string;
+    errorMessage?: string;
+    data?: { updateStatus: any };
+  }>;
 }
 
 export interface IResourceSkillService {
