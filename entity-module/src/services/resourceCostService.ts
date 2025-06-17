@@ -12,7 +12,6 @@ import { initMainDbSequelize } from "../config/mainDataSource";
 import { Op, Sequelize } from "sequelize";
 import moment from "moment";
 import Decimal from "decimal.js";
-import { isNull, isNullOrUndefined } from "util";
 
 class ResourceCostService {
   private schemaService: SchemaService;
@@ -350,7 +349,7 @@ class ResourceCostService {
         let status = "active";
 
         // Check for duplicate record
-        const existingCost = await ResourceCost.findAll({
+        const existingCost = await ResourceCost.findOne({
           where: {
             resource_rid,
             effective_from: effectiveFrom,
@@ -620,7 +619,7 @@ class ResourceCostService {
         let resourceCostStatus = status;
 
         // Check for duplicate record
-        const existingCost = await ResourceCost.findAll({
+        const existingCost = await ResourceCost.findOne({
           where: {
             resource_rid,
             effective_from: effectiveFrom,
