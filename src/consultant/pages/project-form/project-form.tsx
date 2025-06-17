@@ -65,7 +65,7 @@ const ProjectForm: React.FC = () => {
   const [keyContacts, setKeyContacts] = useState<FieldType[]>([]);
   const { successToast } = useToast();
   const location = useLocation();
-  const { accountID, projectID } = location.state || {};
+  const { accountID, projectID, settings } = location.state || {};
   const breadcrumbs = location.state.breadcrumbs || [];
   const firstLine = breadcrumbs.map((crumb: any) => crumb.label).join(' > ');
 
@@ -372,8 +372,11 @@ const ProjectForm: React.FC = () => {
                   ? {
                       project_status: defaultActiveValue,
                       status: defaultActiveValue,
-                      auto_send_ai_interaction: enumValue.No,
-                      auto_access_rd: enumValue.Yes,
+                      auto_send_ai_interaction:
+                        settings?.auto_send_interaction || enumValue.No,
+                      auto_access_rd: settings?.auto_access_rd || enumValue.Yes,
+                      max_ai_interaction: settings?.max_ai_interactions,
+                      currency: settings?.currency_rid,
                     }
                   : {}
             }

@@ -15,6 +15,7 @@ const initialState: AccountState = {
   loading: false,
   error: null,
   fiscalYear: 'FY-All',
+  refetchGlobalAccounts: false,
 };
 
 export const fetchAccountsThunk = createAsyncThunk(
@@ -52,6 +53,9 @@ export const accountSlice = createSlice({
         saveFiltersToStorage(state.userId, state.filters, state.fiscalYear);
       }
     },
+    setRefetchGlobalAccounts: (state, action: PayloadAction<boolean>) => {
+      state.refetchGlobalAccounts = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -71,5 +75,10 @@ export const accountSlice = createSlice({
   },
 });
 
-export const { setUserId, setFilters, setFiscalYear, resetFilters } =
-  accountSlice.actions;
+export const {
+  setUserId,
+  setFilters,
+  setFiscalYear,
+  resetFilters,
+  setRefetchGlobalAccounts,
+} = accountSlice.actions;

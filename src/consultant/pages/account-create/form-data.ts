@@ -244,8 +244,6 @@ export const AccFormData = (
           createTextField('website', 'Website', {
             type: 'text',
             required: false,
-            regex: REGEX_PATTERNS.WEBSITE,
-            regexErrorMessage: 'Enter a valid website URL',
             placeholder: 'Enter Website',
             errorHandling: [
               {
@@ -255,6 +253,10 @@ export const AccFormData = (
               {
                 regex: REGEX_PATTERNS.MAX_WEBSITE,
                 errorMessage: 'Max length exceeded',
+              },
+              {
+                regex: REGEX_PATTERNS.WEBSITE,
+                errorMessage: 'Enter a valid website URL',
               },
             ],
           }),

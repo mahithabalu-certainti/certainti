@@ -43,9 +43,10 @@ import {
   STATUS_OPTIONS,
 } from '../../../common-utils';
 import { useSelector } from 'react-redux';
-import { RootState } from '../../../store/store';
+import { RootState, useAppDispatch } from '../../../store/store';
 import { AccessRestricted } from '../../../components/account-restricted';
 import SkeletonForm from '../../../components/form-builder/skeleton-form';
+import { setRefetchGlobalAccounts } from '../../../store/slices';
 
 const defaultKeyContactHeaders: KeyContactHeader[] = [
   { name: 'key_contact_name', label: 'Contact Name', width: '190px' },
@@ -74,7 +75,7 @@ const defaultKeyContactHeaders: KeyContactHeader[] = [
 export const AccountForm: React.FC = () => {
   const formRef = React.useRef<HTMLFormElement>(null);
   const [currentCountry, setCurrentCountry] = useState('');
-  const [logo, setLogo] = useState<File>();
+  const [logo, setLogo] = useState<File | null>();
   const [isParentAccountRequired, setIsParentAccountRequired] = useState(false);
   const [showOthersField, setShowOthersField] = useState(false);
   const [isKeyContactsReady, setIsKeyContactsReady] = useState<boolean>(false);
@@ -83,6 +84,7 @@ export const AccountForm: React.FC = () => {
   const { successToast } = useToast();
   const location = useLocation();
   const { accountid } = useParams();
+  const dispatch = useAppDispatch();
 
   // Permission Mangement
   const { modules, permission } = useSelector(
@@ -160,6 +162,9 @@ export const AccountForm: React.FC = () => {
           : 'Account created successfully'
       );
       goBack();
+      if (!isEditView) {
+        dispatch(setRefetchGlobalAccounts(true));
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commonSuccess, isEditView]);
@@ -323,9 +328,11 @@ export const AccountForm: React.FC = () => {
       );
     }
     if (data.fieldName === 'logo') {
-      const selectedFile: File = data.fieldValue as File;
+      const selectedFile = data.fieldValue as File | null;
       if (selectedFile) {
         setLogo(selectedFile);
+      } else {
+        setLogo(null);
       }
     }
   };

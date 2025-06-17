@@ -211,10 +211,23 @@ const Projects: React.FC<ProjectsProps> = ({
   const handleCreateProject = () => {
     const accountID = accountDetails?.data?.accountById?.rid;
     const accountName = accountDetails?.data?.accountById?.account_name;
+    const projectSettings = {
+      auto_access_rd: accountDetails?.data?.accountDetails?.auto_access_rd
+        ? 'Yes'
+        : 'No',
+      auto_send_interaction: accountDetails?.data?.accountDetails
+        ?.autosend_interaction
+        ? 'Yes'
+        : 'No',
+      max_ai_interactions:
+        accountDetails?.data?.accountDetails?.max_ai_interactions,
+      currency_rid: accountDetails?.data?.accountById?.currency_rid,
+    };
     navigate(`${PROJECT_CREATE}`, {
       state: {
         accountID,
         breadcrumbs: [{ label: 'Account' }, { label: accountName }],
+        settings: projectSettings,
       },
     });
   };

@@ -8,6 +8,7 @@ import {
 } from '../../../../assets/icons';
 import ConfirmationPopup from '../../../../common-utils/confirmation-popup';
 import { Privilege } from '../../../types';
+import { CircularProgress } from '@mui/material';
 
 type BasePrivilege = {
   rid: string;
@@ -55,6 +56,7 @@ interface ProfileModuleListProps {
   createProfilePermissionsData?: Privilege[];
   onPrivilegesChange: (updatedPrivileges: Privilege[]) => void;
   viewProfileDisabled?: boolean;
+  loading?: boolean;
 }
 
 interface GroupedPrivileges {
@@ -965,6 +967,7 @@ export const ProfilePermissions: React.FC<ProfileModuleListProps> = ({
   createProfilePermissionsData,
   onPrivilegesChange,
   viewProfileDisabled,
+  loading,
 }) => {
   const privileges = createProfilePermissionsData || [];
 
@@ -1021,8 +1024,20 @@ export const ProfilePermissions: React.FC<ProfileModuleListProps> = ({
     setAllModifiedPrivileges(merged);
     onPrivilegesChange(merged);
   };
+
+  if (loading) {
+    return (
+      <div
+        className='flex justify-center items-center w-full'
+        style={{ height: 'calc(100vh - 200px)' }}
+      >
+        <CircularProgress />
+      </div>
+    );
+  }
+
   return (
-    <div className='px-4'>
+    <div className='px-10 pb-5'>
       <div className='border border-[#CBD6E2] rounded-[4px]'>
         <div className='flex justify-between items-center bg-[#EAF0F5] border-b border-[#CBD6E2] h-[38px]'>
           <div className='w-[75%] px-4 font-semibold text-[14px] leading-[32px] tracking-[0%] align-middle text-[#2D3E4F]'>

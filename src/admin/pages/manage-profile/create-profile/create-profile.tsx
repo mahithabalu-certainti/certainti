@@ -1,7 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ProfileIcon } from '../../../../assets/icons';
-import TextButton from '../../../../components/button/text-button';
 import { ProfileForm } from './profile-form';
 import { SelectOption } from '../../../../consultant/types';
 import {
@@ -15,20 +13,12 @@ import { useToast } from '../../../../hooks';
 import { Privilege, ProfileDetail } from '../../../types';
 import { ProfilePermissions } from './profile-permissions';
 import { ProfileHeaderDetail } from './profile-header-details';
-import { CircularProgress } from '@mui/material';
 import { MANAGE_PROFILE } from '../../../../routes';
 import { AccessRestricted } from '../../../../components/account-restricted';
 import { useSelector } from 'react-redux';
 import { checkPermission } from '../../../../common-utils';
 import { RootState } from '../../../../store/store';
 import { AllModules, AllPermissions } from '../../../../common-service';
-
-const HEADER_STYLES = {
-  adminPermission:
-    'font-medium text-[#7D98B6] text-[11px] leading-5 tracking-normal',
-  manageProfile:
-    'font-semibold text-[20px] text-[#2D3E4F] leading-5 tracking-normal',
-};
 
 export const CreateProfile: React.FC = () => {
   const [privileges, setPrivileges] = useState<Privilege[]>([]);
@@ -148,10 +138,6 @@ export const CreateProfile: React.FC = () => {
     }
   };
 
-  const goBack = () => {
-    window.history.back();
-  };
-
   if (
     !isProfileEnable ||
     (isEditView ? !isProfileEditEnable : !isProfileCreateEnable)
@@ -160,89 +146,41 @@ export const CreateProfile: React.FC = () => {
 
   return (
     <>
-      <div className='flex flex-col gap-3'>
-        {/* Header Section */}
-        <div className='w-full min-h-[50px] h-[50px] px-4 flex items-center justify-between border-b-1 border-[#CBD6E2]'>
-          <div className='flex items-center gap-2'>
-            <ProfileIcon
-              alt='create profile'
-              className='h-8 w-8 rounded'
-            />
-            <div className='flex flex-col mb-1'>
-              <div className={HEADER_STYLES.adminPermission}>
-                Admin Permission
-              </div>
-              <div className={HEADER_STYLES.manageProfile}>Manage Profile</div>
-            </div>
-          </div>
-          <div className='flex gap-2 items-center'>
-            <TextButton
-              label='Back'
-              onClick={goBack}
-              sx={{
-                width: '64px',
-                minWidth: '64px',
-                fontWeight: 400,
-                fontSize: '13px',
-                height: '32px',
-              }}
-            />
-          </div>
+      {!commonSuccess && !isEditView ? (
+        <div className='w-full h-full'>
+          <ProfileForm
+            profileOptions={memoizeProfiles}
+            loading={createProfile.isPending}
+            onSubmit={handleSubmit}
+          />
         </div>
-        {(
-          isEditView ? getProfileDetails.isPending : createProfile.isPending
-        ) ? (
-          <div
-            className='flex justify-center items-center w-full'
-            style={{ height: 'calc(100vh - 200px)' }}
-          >
-            <CircularProgress />
-          </div>
-        ) : !commonSuccess && !isEditView ? (
-          <div className='px-4'>
-            <div className='border border-[#CBD6E2] rounded-[4px]'>
-              <div className='flex justify-between items-center bg-[#FCFCFC] border-b border-[#CBD6E2] h-[38px]'>
-                <div className='px-4 font-semibold text-[14px] leading-[32px] tracking-[0%] align-middle text-[#2D3E4F]'>
-                  Create Profile
-                </div>
-              </div>
-              <div className='flex items-center p-2'>
-                <ProfileForm
-                  profileOptions={memoizeProfiles}
-                  loading={createProfile.isPending}
-                  onSubmit={handleSubmit}
-                />
-              </div>
-            </div>
-          </div>
-        ) : (
-          <>
-            <ProfileHeaderDetail
-              profileHeaderData={
-                !isEditView
-                  ? createProfile.data?.data
-                  : getProfileDetails.data?.data
-              }
-              onSave={handleSaveProfile}
-              loading={
-                createProfilePermission.isPending ||
-                updateProfilePermission.isPending
-              }
-              isEditView={isEditView}
-            />
-            <div className='py-2'>
-              <ProfilePermissions
-                createProfilePermissionsData={
-                  isEditView
-                    ? getProfileDetails?.data?.data.privileges
-                    : createProfile?.data?.data.privileges
-                }
-                onPrivilegesChange={handlePrivilegesChange}
-              />
-            </div>
-          </>
-        )}
-      </div>
+      ) : (
+        <>
+          <ProfileHeaderDetail
+            profileHeaderData={
+              !isEditView
+                ? createProfile.data?.data
+                : getProfileDetails.data?.data
+            }
+            onSave={handleSaveProfile}
+            loading={
+              createProfilePermission.isPending ||
+              updateProfilePermission.isPending
+            }
+            isEditView={isEditView}
+            profileLoading={getProfileDetails.isLoading}
+          />
+          <ProfilePermissions
+            createProfilePermissionsData={
+              isEditView
+                ? getProfileDetails?.data?.data.privileges
+                : createProfile?.data?.data.privileges
+            }
+            loading={getProfileDetails.isLoading}
+            onPrivilegesChange={handlePrivilegesChange}
+          />
+        </>
+      )}
     </>
   );
 };

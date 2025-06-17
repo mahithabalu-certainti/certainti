@@ -49,7 +49,7 @@ const UserList: React.FC = () => {
   const [refreshUserTrigger, setRefreshUserTrigger] = useState<number>(
     Date.now()
   );
-  // const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const onRefreshClick = () => {
     setRefreshUserTrigger(Date.now());
@@ -174,8 +174,7 @@ const UserList: React.FC = () => {
     },
     {
       label: 'Export',
-      onClick: () => exportUserList(tableParams),
-      // onClick: () => exportUserList({ ...tableParams, timezone }),
+      onClick: () => exportUserList({ ...tableParams, timezone }),
       hide: !isUserExportEnable,
     },
   ];

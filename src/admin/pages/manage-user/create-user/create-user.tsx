@@ -4,6 +4,7 @@ import { ManageUserIcon } from '../../../../assets/icons';
 import {
   AllModules,
   AllPermissions,
+  Layout,
   OnChange,
   useGetAllCountries,
 } from '../../../../common-service';
@@ -30,11 +31,12 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../../store/store';
 import { checkPermission } from '../../../../common-utils';
 import { AccessRestricted } from '../../../../components/account-restricted';
+import SkeletonForm from '../../../../components/form-builder/skeleton-form';
 
 const HEADER_STYLES = {
   adminPermission:
     'font-semibold text-[#7D98B6] text-[12px] leading-5 tracking-normal',
-  manageUser: 'font-bold text-[16px] text-[#2D3E4F] leading-5 tracking-normal',
+  manageUser: 'text-[16px] font-bold text-[#2D3E4F] -mt-0.5',
 };
 
 export const CreateUser: React.FC = () => {
@@ -54,6 +56,8 @@ export const CreateUser: React.FC = () => {
 
   const userDetails = useManageUserDetail(userid as string);
   const userDatas = userDetails.data?.data?.users;
+  const userFullName =
+    `${userDatas?.first_name || ''} ${userDatas?.last_name || ''}`.trim();
 
   const userProfiles = useManageUserProfile();
   const allCountries = useGetAllCountries();
@@ -81,10 +85,10 @@ export const CreateUser: React.FC = () => {
     permission,
     AllPermissions.USER_ACTIVATE
   );
-  const isUserDeleteEnable = checkPermission(
-    permission,
-    AllPermissions.USER_DELETE
-  );
+  // const isUserDeleteEnable = checkPermission(
+  //   permission,
+  //   AllPermissions.USER_DELETE
+  // );
 
   const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
   const commonSuccess = updateUser.isSuccess || createUser.isSuccess;
@@ -257,121 +261,100 @@ export const CreateUser: React.FC = () => {
     window.history.back();
   };
 
+  const formConfig = FormData(
+    memoizedCountry,
+    memoizeProfiles,
+    memoizeRole,
+    memoizedState,
+    memoizeCity,
+    memoizeOrgNames,
+    isEditView,
+    states.isLoading,
+    city.isLoading,
+    isEditView ? !isUserActivateEnable : false,
+    isConsultantFirm.isConsultantFirm,
+    isConsultantFirm.org_id
+  );
+
+  const formLoading =
+    userDetails.isLoading ||
+    userProfiles.isLoading ||
+    allCountries.isLoading ||
+    userRoles.isLoading;
+
   if (!userIsEnable || (isEditView ? !isUserEditEnable : !isUserCreateEnable))
     return <AccessRestricted />;
 
   return (
     <>
-      <div className='flex flex-col gap-3'>
-        {/* Header Section */}
-        <div className='w-full min-h-[50px] h-[50px] border-box py-1 px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
-          <div className='flex items-center gap-3'>
-            <ManageUserIcon
-              alt='manage user'
-              className='h-6 w-6 rounded'
-            />
-            <div className='flex flex-col mb-1'>
-              <div className={HEADER_STYLES.adminPermission}>
-                Admin Permissions
-              </div>
-              <div className={HEADER_STYLES.manageUser}>Manage User</div>
+      {/* Header Section */}
+      <div className='h-[50px] border-box flex items-center justify-between px-10 border-b-2 border-gray-200 sticky top-0 z-10 bg-white'>
+        <div className='flex items-center gap-2 w-[80%] max-w-[80%]'>
+          <ManageUserIcon
+            alt='manage user'
+            className='h-6 w-6 rounded'
+          />
+          <div className='w-[90%]'>
+            <div className={HEADER_STYLES.adminPermission}>
+              {isEditView
+                ? `Admin Permission > ${userDatas?.full_name ?? userFullName}`
+                : 'Admin Permission'}
+            </div>
+            <div className={HEADER_STYLES.manageUser}>
+              {isEditView ? 'Edit User' : 'Create User'}
             </div>
           </div>
-          <div className='flex gap-2 items-center'>
-            <TextButton
-              label='Back'
-              onClick={goBack}
-              sx={{
-                width: '49px',
-                minWidth: '49px',
-                fontWeight: 700,
-                fontSize: '13px',
-                height: '32px',
-              }}
-            />
-          </div>
         </div>
-        <div className='p-4'>
-          <div className='border border-[#CBD6E2] rounded-[4px]'>
-            <div className='flex justify-between items-center bg-[#FCFCFC] border-b border-[#CBD6E2] h-[38px] pl-4 pr-1'>
-              <div className='font-semibold text-base leading-[32px] tracking-[0%] align-middle text-[#2D3E4F]'>
-                {isEditView ? 'Edit User' : 'Create User'}
-              </div>
-              <div className='flex gap-2'>
-                <TextButton
-                  label='Save'
-                  loading={updateUser.isPending || createUser.isPending}
-                  onClick={handleExternalSubmit}
-                  sx={{
-                    width: '64px',
-                    minWidth: '64px',
-                    fontWeight: 400,
-                    fontSize: '13px',
-                  }}
-                />
-                {isEditView && isUserDeleteEnable && (
-                  <TextButton
-                    label='Delete'
-                    sx={{
-                      width: '75px',
-                      minWidth: '75px',
-                      fontWeight: 400,
-                      fontSize: '13px',
-                    }}
-                  />
-                )}
-                <TextButton
-                  label='Cancel'
-                  onClick={goBack}
-                  sx={{
-                    width: '75px',
-                    minWidth: '75px',
-                    fontWeight: 400,
-                    fontSize: '13px',
-                  }}
-                />
-              </div>
-            </div>
-            <FormBuilder
-              loading={
-                userDetails.isLoading ||
-                userProfiles.isLoading ||
-                allCountries.isLoading ||
-                userRoles.isLoading
-              }
-              data={FormData(
-                memoizedCountry,
-                memoizeProfiles,
-                memoizeRole,
-                memoizedState,
-                memoizeCity,
-                memoizeOrgNames,
-                isEditView,
-                states.isLoading,
-                city.isLoading,
-                isEditView ? !isUserActivateEnable : false,
-                isConsultantFirm.isConsultantFirm,
-                isConsultantFirm.org_id
-              )}
-              values={
-                isEditView && userDatas
-                  ? {
-                      ...userDatas,
-                      is_consultant_firm:
-                        userDatas?.is_consultant_firm === true
-                          ? YesNo.Yes
-                          : YesNo.No,
-                    }
-                  : //   ? { org_id: isConsultantFirm === 'yes' ? memoizeOrgNames[0].value : '' }
-                    {}
-              }
-              outData={submitData}
-              formRef={formRef}
-              onChange={onChangeField}
-              admin={true}
-            />
-          </div>
+        <div className='flex gap-3'>
+          <TextButton
+            label='Save'
+            loading={updateUser.isPending || createUser.isPending}
+            onClick={handleExternalSubmit}
+            sx={{
+              width: '64px',
+              minWidth: '64px',
+              fontSize: '13px',
+              fontWeight: 400,
+            }}
+          />
+          <TextButton
+            label='Cancel'
+            onClick={goBack}
+            sx={{
+              width: '75px',
+              minWidth: '75px',
+              fontSize: '12px',
+              fontWeight: 400,
+            }}
+          />
         </div>
+      </div>
+
+      <div className={`${isEditView ? 'pb-10' : 'pb-4'}`}>
+        {formLoading ? (
+          <SkeletonForm />
+        ) : (
+          <FormBuilder
+            loading={false}
+            data={formConfig}
+            values={
+              isEditView && userDatas
+                ? {
+                    ...userDatas,
+                    is_consultant_firm:
+                      userDatas?.is_consultant_firm === true
+                        ? YesNo.Yes
+                        : YesNo.No,
+                  }
+                : //   ? { org_id: isConsultantFirm === 'yes' ? memoizeOrgNames[0].value : '' }
+                  {}
+            }
+            outData={submitData}
+            formRef={formRef}
+            onChange={onChangeField}
+            layout={Layout.TYPE_1}
+          />
+        )}
       </div>
     </>
   );
