@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback, Suspense } from 'react';
 import { ArrowDownIcon, FiscalYearArrowIcon } from '../../assets';
 
 interface FiscalYearOption {
@@ -106,7 +106,7 @@ const FiscalYearDropdown = ({
           style={{ width: 15, height: 15, filter: 'brightness(0) invert(1)' }}
         />
       </button>
-
+      <Suspense fallback={null}>
       {open && (
         <div
           className='absolute right-0 mt-1 w-[261px] min-w-[261px] max-w-[261px] p-5 bg-white border border-[#CBD6E2] rounded-[8px] h-[204px]'
@@ -172,6 +172,7 @@ const FiscalYearDropdown = ({
           ))} */}
         </div>
       )}
+       </Suspense>
     </div>
   );
 };

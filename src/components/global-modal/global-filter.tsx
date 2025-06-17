@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState, useAppDispatch } from '../../store/store';
 import {
@@ -270,7 +270,6 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
   };
 
   if (!isOpen) return null;
-
   return (
     <Popover
       id={filterId}
@@ -320,128 +319,44 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
           </h3>
 
           <div className='flex flex-col gap-2 min-h-[40px] overflow-y-auto max-h-[100px] -mr-6'>
-            {selectedFilters.map((filter, index) => (
-              <div key={index} className='flex items-center gap-2'>
-                {loading ? (
-                  <>
-                    <Skeleton variant='rounded' width='220px' height={28} />
-                    <Skeleton variant='rounded' width='220px' height={28} />
-                  </>
-                ) : (
-                  <>
-                    <Select
-                      value={filter.account}
-                      onChange={(e) =>
-                        handleParentAccountChange(
-                          index,
-                          e.target.value as string
-                        )
-                      }
-                      displayEmpty
-                      size='small'
-                      className='min-w-[220px] max-w-[220px] h-[28px]'
-                      IconComponent={(props) => (
-                        <ArrowIcon alt='arrowIcon' {...props} />
-                      )}
-                      renderValue={(selected) => (
-                        <div className='flex items-center gap-1'>
-                          <AllAccountIcon
-                            alt='account'
-                            className='w-4 h-4'
-                          />
-                          <span className='pt-0.5'>
-                            {selected
-                              ? accounts?.find((acc) => acc.rid === selected)
-                                  ?.account_name
-                              : 'Select Account'}
-                          </span>
-                        </div>
-                      )}
-                      sx={SELECT_STYLES}
-                      MenuProps={MENU_PROPS}
-                    >
-                      <MenuItem
-                        value=''
-                        sx={{
-                          fontSize: '13px',
-                          fontWeight: 700,
-                          color: '#2D3E4F',
-                          lineHeight: '20px',
-                          '&.Mui-selected': {
-                            backgroundColor: 'transparent',
-                          },
-                        }}
+            <Suspense fallback={null}>
+              {selectedFilters.map((filter, index) => (
+                <div key={index} className='flex items-center gap-2'>
+                  {loading ? (
+                    <>
+                      <Skeleton variant='rounded' width='220px' height={28} />
+                      <Skeleton variant='rounded' width='220px' height={28} />
+                    </>
+                  ) : (
+                    <>
+                      <Select
+                        value={filter.account}
+                        onChange={(e) =>
+                          handleParentAccountChange(
+                            index,
+                            e.target.value as string
+                          )
+                        }
+                        displayEmpty
+                        size='small'
+                        className='min-w-[220px] max-w-[220px] h-[28px]'
+                        IconComponent={(props) => (
+                          <ArrowIcon alt='arrowIcon' {...props} />
+                        )}
+                        renderValue={(selected) => (
+                          <div className='flex items-center gap-1'>
+                            <AllAccountIcon alt='account' className='w-4 h-4' />
+                            <span className='pt-0.5'>
+                              {selected
+                                ? accounts?.find((acc) => acc.rid === selected)
+                                    ?.account_name
+                                : 'Select Account'}
+                            </span>
+                          </div>
+                        )}
+                        sx={SELECT_STYLES}
+                        MenuProps={MENU_PROPS}
                       >
-                        <span className='pl-0.5'>All Account names</span>
-                      </MenuItem>
-                      {getAvailableAccounts(index) ? (
-                        getAvailableAccounts(index)?.map((account) => (
-                          <MenuItem
-                            sx={{
-                              ...MENU_ITEM_STYLES,
-                              '&.Mui-selected': {
-                                backgroundColor: 'transparent',
-                              },
-                            }}
-                            key={account.rid}
-                            value={account.rid}
-                          >
-                            <Checkbox
-                              size='small'
-                              checked={filter.account === account.rid}
-                              sx={{
-                                color: '#CBD6E2',
-                                '&.Mui-checked': {
-                                  color: '#1755E7',
-                                },
-                                padding: '0px',
-                                mr: 1,
-                              }}
-                            />
-                            {account.account_name}
-                          </MenuItem>
-                        ))
-                      ) : (
-                        <MenuItem disabled sx={MENU_ITEM_STYLES}>
-                          <span className='pl-0.5'>Data not available</span>
-                        </MenuItem>
-                      )}
-                    </Select>
-                    <Select
-                      multiple
-                      value={filter.child}
-                      onChange={(e) =>
-                        handleChildAccountChange(
-                          index,
-                          e.target.value as string[]
-                        )
-                      }
-                      displayEmpty
-                      disabled={!filter.account}
-                      size='small'
-                      className='min-w-[220px] max-w-[220px] h-[28px]'
-                      IconComponent={(props) => (
-                        <ArrowIcon
-                          alt='arrowIcon'
-                          className='pr-3 cursor-pointer'
-                          {...props}
-                        />
-                      )}
-                      renderValue={(selected) => (
-                        <div className='flex items-center gap-1'>
-                          <span className='pt-0.5'>
-                            {getSelectedChildAccountsText(
-                              selected as string[],
-                              filter.account
-                            )}
-                          </span>
-                        </div>
-                      )}
-                      sx={SELECT_STYLES}
-                      MenuProps={MENU_PROPS}
-                    >
-                      {accounts?.find((acc) => acc.rid === filter.account)
-                        ?.child_accounts?.length && (
                         <MenuItem
                           value=''
                           sx={{
@@ -449,41 +364,15 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
                             fontWeight: 700,
                             color: '#2D3E4F',
                             lineHeight: '20px',
-                            borderBottom: '1px solid #CBD6E2',
                             '&.Mui-selected': {
                               backgroundColor: 'transparent',
                             },
                           }}
                         >
-                          <Checkbox
-                            size='small'
-                            checked={Boolean(
-                              filter.account &&
-                                filter.child.length ===
-                                  accounts?.find(
-                                    (acc) => acc.rid === filter.account
-                                  )?.child_accounts?.length
-                            )}
-                            onChange={(e) =>
-                              handleSelectAllChildren(index, e.target.checked)
-                            }
-                            sx={{
-                              color: '#CBD6E2',
-                              '&.Mui-checked': {
-                                color: '#1755E7',
-                              },
-                              padding: '0px',
-                              mr: 1,
-                            }}
-                          />
-                          <span className='pl-0.5'>Select All</span>
+                          <span className='pl-0.5'>All Account names</span>
                         </MenuItem>
-                      )}
-                      {accounts?.find((acc) => acc.rid === filter.account)
-                        ?.child_accounts?.length ? (
-                        accounts
-                          ?.find((acc) => acc.rid === filter.account)
-                          ?.child_accounts?.map((child) => (
+                        {getAvailableAccounts(index) ? (
+                          getAvailableAccounts(index)?.map((account) => (
                             <MenuItem
                               sx={{
                                 ...MENU_ITEM_STYLES,
@@ -491,12 +380,12 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
                                   backgroundColor: 'transparent',
                                 },
                               }}
-                              key={child.rid}
-                              value={child.rid}
+                              key={account.rid}
+                              value={account.rid}
                             >
                               <Checkbox
                                 size='small'
-                                checked={filter.child.indexOf(child.rid) > -1}
+                                checked={filter.account === account.rid}
                                 sx={{
                                   color: '#CBD6E2',
                                   '&.Mui-checked': {
@@ -506,29 +395,138 @@ const GlobalFilterModal: React.FC<GlobalFilterModalProps> = ({
                                   mr: 1,
                                 }}
                               />
-                              {child.account_name}
+                              {account.account_name}
                             </MenuItem>
                           ))
-                      ) : (
-                        <MenuItem disabled sx={MENU_ITEM_STYLES}>
-                          <span className='pl-0.5'>Data not available</span>
-                        </MenuItem>
-                      )}
-                    </Select>
-                    <IconButton
-                      size='small'
-                      onClick={() => handleRemoveFilter(index)}
-                      disableRipple
-                    >
-                      <CloseIcon
-                        alt='closeIcon'
-                        className='w-[12px] h-[12px]'
-                      />
-                    </IconButton>
-                  </>
-                )}
-              </div>
-            ))}
+                        ) : (
+                          <MenuItem disabled sx={MENU_ITEM_STYLES}>
+                            <span className='pl-0.5'>Data not available</span>
+                          </MenuItem>
+                        )}
+                      </Select>
+                      <Select
+                        multiple
+                        value={filter.child}
+                        onChange={(e) =>
+                          handleChildAccountChange(
+                            index,
+                            e.target.value as string[]
+                          )
+                        }
+                        displayEmpty
+                        disabled={!filter.account}
+                        size='small'
+                        className='min-w-[220px] max-w-[220px] h-[28px]'
+                        IconComponent={(props) => (
+                          <ArrowIcon
+                            alt='arrowIcon'
+                            className='pr-3 cursor-pointer'
+                            {...props}
+                          />
+                        )}
+                        renderValue={(selected) => (
+                          <div className='flex items-center gap-1'>
+                            <span className='pt-0.5'>
+                              {getSelectedChildAccountsText(
+                                selected as string[],
+                                filter.account
+                              )}
+                            </span>
+                          </div>
+                        )}
+                        sx={SELECT_STYLES}
+                        MenuProps={MENU_PROPS}
+                      >
+                        {accounts?.find((acc) => acc.rid === filter.account)
+                          ?.child_accounts?.length && (
+                          <MenuItem
+                            value=''
+                            sx={{
+                              fontSize: '13px',
+                              fontWeight: 700,
+                              color: '#2D3E4F',
+                              lineHeight: '20px',
+                              borderBottom: '1px solid #CBD6E2',
+                              '&.Mui-selected': {
+                                backgroundColor: 'transparent',
+                              },
+                            }}
+                          >
+                            <Checkbox
+                              size='small'
+                              checked={Boolean(
+                                filter.account &&
+                                  filter.child.length ===
+                                    accounts?.find(
+                                      (acc) => acc.rid === filter.account
+                                    )?.child_accounts?.length
+                              )}
+                              onChange={(e) =>
+                                handleSelectAllChildren(index, e.target.checked)
+                              }
+                              sx={{
+                                color: '#CBD6E2',
+                                '&.Mui-checked': {
+                                  color: '#1755E7',
+                                },
+                                padding: '0px',
+                                mr: 1,
+                              }}
+                            />
+                            <span className='pl-0.5'>Select All</span>
+                          </MenuItem>
+                        )}
+                        {accounts?.find((acc) => acc.rid === filter.account)
+                          ?.child_accounts?.length ? (
+                          accounts
+                            ?.find((acc) => acc.rid === filter.account)
+                            ?.child_accounts?.map((child) => (
+                              <MenuItem
+                                sx={{
+                                  ...MENU_ITEM_STYLES,
+                                  '&.Mui-selected': {
+                                    backgroundColor: 'transparent',
+                                  },
+                                }}
+                                key={child.rid}
+                                value={child.rid}
+                              >
+                                <Checkbox
+                                  size='small'
+                                  checked={filter.child.indexOf(child.rid) > -1}
+                                  sx={{
+                                    color: '#CBD6E2',
+                                    '&.Mui-checked': {
+                                      color: '#1755E7',
+                                    },
+                                    padding: '0px',
+                                    mr: 1,
+                                  }}
+                                />
+                                {child.account_name}
+                              </MenuItem>
+                            ))
+                        ) : (
+                          <MenuItem disabled sx={MENU_ITEM_STYLES}>
+                            <span className='pl-0.5'>Data not available</span>
+                          </MenuItem>
+                        )}
+                      </Select>
+                      <IconButton
+                        size='small'
+                        onClick={() => handleRemoveFilter(index)}
+                        disableRipple
+                      >
+                        <CloseIcon
+                          alt='closeIcon'
+                          className='w-[12px] h-[12px]'
+                        />
+                      </IconButton>
+                    </>
+                  )}
+                </div>
+              ))}
+            </Suspense>
           </div>
         </div>
 

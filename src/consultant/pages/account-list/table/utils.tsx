@@ -1,5 +1,5 @@
 import { Box, Checkbox, IconButton, TableCell, TableRow } from '@mui/material';
-import React, { Fragment } from 'react';
+import React, { Fragment, Suspense } from 'react';
 import { ArrowDownIcon, ChildAccountIcon } from '../../../../assets';
 import { Account, ConvertedAccount } from '../../../types';
 import ActionButton from './action-button';
@@ -334,8 +334,10 @@ export const renderRows = ({
             </TableCell>
           )}
         </TableRow>
-        {openRows.has(account.accountName) &&
-          renderChildRows(account.accountName)}
+        <Suspense fallback={null}>
+          {openRows.has(account.accountName) &&
+            renderChildRows(account.accountName)}
+        </Suspense>
         <TableRow
           sx={{
             '& .MuiTableCell-root': {
