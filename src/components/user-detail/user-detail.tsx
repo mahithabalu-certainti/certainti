@@ -5,13 +5,6 @@ import { Fragment } from 'react/jsx-runtime';
 import DetailsSection, { DetailItem } from '../details-section/details';
 
 export const UserDetailComponent = ({ data, loading }: UserDetail) => {
-  const capitalizeFirstLetter = (str?: string | null) => {
-    if (str) {
-      return str.charAt(0).toUpperCase() + str.slice(1);
-    }
-    return '-';
-  };
-
   // Map your API data to the mock data structure
   const getValueOrDefault = (
     value?: string | number | null,
@@ -47,7 +40,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     },
   ];
 
-  const accessInfo: DetailItem[] = [
+  const addressInfo: DetailItem[] = [
     { label: 'Street', value: getValueOrDefault(data?.street) },
     {
       label: 'Country',
@@ -64,7 +57,7 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     },
   ];
 
-  const addressInfo: DetailItem[] = [
+  const accessInfo: DetailItem[] = [
     {
       label: 'Profile',
       value: getValueOrDefault(data?.profile?.profile_name),
@@ -80,10 +73,10 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
   ];
 
   const auditInfo: DetailItem[] = [
-    { label: 'User Record ID', value: getValueOrDefault(data?.rid) },
+    { label: 'Record ID', value: getValueOrDefault(data?.rid) },
     {
       label: 'User ID',
-      value: getValueOrDefault(data?.rid),
+      value: getValueOrDefault(data?.r_number),
     },
     {
       label: 'Created On',
@@ -91,13 +84,13 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
     },
     {
       label: 'Created By',
-      value: capitalizeFirstLetter(data?.created_by),
+      value: data?.created_by,
     },
     {
       label: 'Updated On',
       value: formatDateToYYYYMMDDWithTime(data?.modified_datetime) || '-',
     },
-    { label: 'Updated By', value: capitalizeFirstLetter(data?.modified_by) },
+    { label: 'Updated By', value: data?.modified_by },
   ];
 
   return (

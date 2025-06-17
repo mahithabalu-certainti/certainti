@@ -1,7 +1,7 @@
 export interface Detail {
   label: string;
   value: string | number | undefined;
-  full?: boolean
+  full?: boolean;
 }
 
 // Base types for nested objects

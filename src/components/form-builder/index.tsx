@@ -1134,16 +1134,18 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 },
               }}
             >
-              <MenuItem
-                value=''
-                sx={{
-                  color: '#425A76',
-                  fontSize: '13px',
-                  fontWeight: '500',
-                }}
-              >
-                {field.placeholder}
-              </MenuItem>
+              {field.placeholder && (
+                <MenuItem
+                  value=''
+                  sx={{
+                    color: '#425A76',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                  }}
+                >
+                  {field.placeholder}
+                </MenuItem>
+              )}
               {field?.options?.map((option, i) => (
                 <MenuItem
                   sx={{

@@ -102,7 +102,6 @@ export const newKeyContactFields = (roles: SelectOption[]) => [
     required: false,
     width: '140px',
     options: STATUS_OPTIONS,
-    placeholder: 'Choose Status',
   }),
   createImgButton('button', closeIcon, {
     width: '35px',

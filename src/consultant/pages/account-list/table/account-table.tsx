@@ -84,10 +84,28 @@ const AccountTable: React.FC<Record<string, any>> = ({
       setAccounts(convertedData);
       setTotalCount(accountList.count || 0);
       setIsDataLoaded(true);
+
+      const globalFilters = filters as FilterState;
+
+      const fetchedAccountIds = new Set<string>(
+        convertedData.map((acc) => acc.accountId)
+      );
+
+      const newOpenRows = new Set<string>();
+
+      if (globalFilters.length > 0) {
+        for (const entry of globalFilters) {
+          if (fetchedAccountIds.has(entry.account)) {
+            newOpenRows.add(entry.account);
+          }
+        }
+      }
+
+      setOpenRows(newOpenRows);
     } else {
       setIsDataLoaded(false);
     }
-  }, [loading, accountList]);
+  }, [loading, accountList, filters]);
 
   // Add this handler in the AccountTable component
   const handleAccountNameClick = (account: Account) => {
@@ -111,12 +129,12 @@ const AccountTable: React.FC<Record<string, any>> = ({
   };
 
   // Toggle expand/collapse state for a row
-  const handleRowClick = (accountName: string) => {
+  const handleRowClick = (accountId: string) => {
     const newOpenRows = new Set(openRows);
-    if (newOpenRows.has(accountName)) {
-      newOpenRows.delete(accountName);
+    if (newOpenRows.has(accountId)) {
+      newOpenRows.delete(accountId);
     } else {
-      newOpenRows.add(accountName);
+      newOpenRows.add(accountId);
     }
     setOpenRows(newOpenRows);
   };
