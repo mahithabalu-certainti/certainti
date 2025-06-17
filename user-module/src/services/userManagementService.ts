@@ -906,7 +906,7 @@ class UserManagementService {
     data?: { profiles: any[]; count: number };
   }> {
     try {
-      const profiles = await Profile.findAll({  order: [["created_datetime", "DESC"]],});
+      const profiles = await Profile.findAll({  order: [["profile_name", "ASC"]],});
 
       return {
         statusCode: constants.SUCCESS,

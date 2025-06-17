@@ -1504,8 +1504,9 @@ class SchemaService {
         FROM (
           SELECT pfs.project_code, pfs.project_group, pfs.project_name, pfs.project_type, pfs.fiscal_year, pfs.project_client_group, acc.account_name, ps.qre,
           COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name, pfs.total_effort_prj as total_effort, pfs.total_cost_prj as total_cost,
-          pfs.total_cost_fte_prj as total_cost_fte, pfs.total_cost_subcon_prj as total_cost_subcon, pfs.total_cost_nonlabor_prj as total_cost_nonlabor, pfs.assessment_status,
-          pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, pfs.project_rid
+          pfs.total_cost_fte_prj as total_cost_fte, pfs.total_cost_subcon_prj as total_cost_subcon, pfs.total_cost_nonlabor_prj as total_cost_nonlabor, pfs.assessment_status, pfs.created_datetime,
+          pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, 
+          pfs.project_rid, pfs.project_fiscal_rid, acc.rid
           FROM project_fiscal_summary pfs
           INNER JOIN account acc ON acc.rid = pfs.account_rid 
           LEFT JOIN project_classification pc on pc.rid = pfs.project_classification_rid
@@ -1528,7 +1529,8 @@ class SchemaService {
         ps.program_name, ps.project_startdate , ps.project_enddate ,
         ps.total_cost , ps.total_effort , ps.total_fte , ps.total_cost_fte ,
         ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
-        cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name,
+        cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , 
+        COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name, ps.created_datetime,
         ${childAggSQL}
         FROM project_summary AS ps
         INNER JOIN account acc ON acc.rid = ps.account_rid 
@@ -1616,7 +1618,7 @@ class SchemaService {
           SELECT pfs.project_code, pfs.project_group, pfs.project_name, pfs.project_type, pfs.fiscal_year, pfs.project_client_group, acc.account_name, ps.qre,
           COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name, pfs.total_effort_prj as total_effort, pfs.total_cost_prj as total_cost,
           pfs.total_cost_fte_prj as total_cost_fte, pfs.total_cost_subcon_prj as total_cost_subcon, pfs.total_cost_nonlabor_prj as total_cost_nonlabor, pfs.assessment_status,
-          pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, pfs.project_rid
+          pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, pfs.project_rid, pfs.created_datetime, pfs.project_fiscal_rid, acc.rid
           FROM project_fiscal_summary pfs
           INNER JOIN account acc ON acc.rid = pfs.account_rid 
           LEFT JOIN project_classification pc on pc.rid = pfs.project_classification_rid
@@ -1639,7 +1641,7 @@ class SchemaService {
         ps.program_name, ps.project_startdate , ps.project_enddate ,
         ps.total_cost , ps.total_effort , ps.total_fte , ps.total_cost_fte ,
         ps.total_subcon , ps.total_cost_subcon, ps.total_cost_nonlabor , ps."comments" , 
-        cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name,
+        cou.country_name , COALESCE(curr.currency_code,acc_curr.currency_code,usd_curr.currency_code) as currency_code , COALESCE(curr.currency_symbol,acc_curr.currency_symbol,usd_curr.currency_symbol) as currency_symbol , st.state_name as region_name, ps.created_datetime,
         ${childAggSQL}
         FROM project_summary AS ps
         INNER JOIN account acc ON acc.rid = ps.account_rid 

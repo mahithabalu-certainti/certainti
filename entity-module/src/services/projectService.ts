@@ -261,11 +261,12 @@ export class ProjectService {
               userId
             );
 
-          const startDate = moment.utc(
-            projectData.project_startdate,
-            "YYYY-MM-DD"
-          );
-          const endDate = moment.utc(projectData.project_enddate, "YYYY-MM-DD");
+          const startDate = projectData.project_startdate
+          ? moment.utc(projectData.project_startdate, "YYYY-MM-DD")
+          : null;
+          const endDate = projectData.project_enddate
+            ? moment.utc(projectData.project_enddate, "YYYY-MM-DD")
+            : null;
 
           await this.projectIngestion.addProjectSummary(
             accountNumber,
@@ -1576,7 +1577,7 @@ export class ProjectService {
 
   getSortParametersForAllProjects(
     sortBy: string,
-    sortOrder: string
+    sortOrder: string,
   ): [string, string] {
     const validSortColumns = [
       "r_number",
@@ -1616,7 +1617,7 @@ export class ProjectService {
     ];
 
     if (!validSortColumns.includes(sortBy)) {
-      sortBy = "ps.created_datetime";
+      sortBy = "created_datetime";
     }
 
     sortOrder = sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC";

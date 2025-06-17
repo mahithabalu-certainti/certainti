@@ -218,7 +218,8 @@ async accountList(
             attributes: ["rid", "industry_name"],
             required: false,
           }
-        ]
+        ],
+        order: [["account_name", "ASC"]]
       });
 
       // Set USD currency for child accounts with no currency
@@ -449,7 +450,8 @@ async accountList(
                 as: "parent_account",
                 attributes: ["rid", "account_name"],
               },
-            ]
+            ],
+            order: [["account_name", "ASC"]]
           });
   
           // Group child accounts by parent_account_rid
@@ -965,6 +967,7 @@ async insertClientTemplateDetails(
           } as any,
         },
         attributes: ["rid", "account_name"],
+         order: [["account_name", "ASC"]] 
       });
       return {
         statusCode: HttpStatus.SUCCESS,
@@ -1209,10 +1212,12 @@ async insertClientTemplateDetails(
             model: Account,
             as: "child_accounts",
             attributes: ["rid", "account_name"],
-            required: false
+            required: false,
+            separate: true,  // Ensures child ordering works
+            order: [["account_name", "ASC"]]
           }
         ],
-        order: [["created_datetime", "DESC"]]
+        order: [["account_name", "ASC"]]
       });
       return {
         statusCode: HttpStatus.SUCCESS,
