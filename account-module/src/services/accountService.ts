@@ -1212,10 +1212,12 @@ async insertClientTemplateDetails(
             model: Account,
             as: "child_accounts",
             attributes: ["rid", "account_name"],
-            required: false
+            required: false,
+            separate: true,  // Ensures child ordering works
+            order: [["account_name", "ASC"]]
           }
         ],
-        order: [["created_datetime", "DESC"]]
+        order: [["account_name", "ASC"]]
       });
       return {
         statusCode: HttpStatus.SUCCESS,
