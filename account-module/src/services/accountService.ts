@@ -59,8 +59,8 @@ async accountList(
     try {
       const repository = this.getAccountRepository();
       
-      // Get USD currency_rid
-      const usdCurrency = await this.getUSDCurrency();
+      // Get USD currency_rid (with caching)
+      let usdCurrency = await this.getUSDCurrency();
       
       // Parse filters if it's a string
       const parsedFilters = typeof filters === 'string' ? 
@@ -144,9 +144,23 @@ async accountList(
       // Check if filters contain key_contact filter
       const hasKeyContactFilter = !!(parsedFilters?.finance_executive || parsedFilters?.professional_services_consultant || parsedFilters?.finance_lead)  ||
            ['professional_services_consultant', 'financial_lead', 'finance_executive'].includes(finalSortBy || '');
+
+      // Combined query for parent and child accounts
+      const combinedWhere = {
+        [Op.or]: [
+          baseWhereClause,
+          {
+            parent_account_rid: {
+              [Op.not]: null,
+            },
+            ...(Object.keys(childClause).length > 0 ? childClause : {}),
+          }
+        ]
+      };
+
       // Build the query options dynamically
       const queryOptions: any = {
-        where: baseWhereClause,
+        where: combinedWhere,
         order,
         include: [
           {
@@ -166,6 +180,12 @@ async accountList(
             as: "industry",
             attributes: ["rid", "industry_name"],
             required: false,
+          },
+          {
+            model: Account,
+            as: "parent_account",
+            attributes: ["rid", "account_name"],
+            required: false,
           }
         ]
       };
@@ -174,56 +194,14 @@ async accountList(
       queryOptions.limit = limit;
       queryOptions.offset = offset;
     }
-    const parentAccounts = await repository.findAll(queryOptions);
+      const allAccounts = await repository.findAll(queryOptions);
 
-    // Set USD currency for accounts with no currency
-    parentAccounts.forEach((account: any) => {
-      if (!account.currency_rid || account.currency_rid === '') {
-        account.currency_rid = usdCurrency?.rid;
-        account.setDataValue('currency', usdCurrency);
-      }      
-    });
+      // Separate parent and child accounts
+      const parentAccounts = allAccounts.filter(account => account.parent_account_rid === null);
+      const childAccounts = allAccounts.filter(account => account.parent_account_rid !== null);
 
-    // Then, for each account, fetch its child accounts separately
-    const accountIds = parentAccounts.map((account: any) => account.rid);
-    //  const { whereClauseChildAccount } = this.buildchildAccountWhereClause(parsedFilters);
-    if(accountIds.length > 0) {
-      const childAccounts = await repository.findAll({
-        where: {
-          parent_account_rid: {
-            [Op.in]: accountIds,
-          },
-      //    ...whereClauseChildAccount,
-          ...(Object.keys(childClause).length > 0 ? childClause : {}),
-        },
-        include: [
-          {
-            model: Country,
-            as: "country",
-            attributes: ["rid", "country_name"]
-          },
-          {
-            model: Currency,
-            as: "currency",
-            attributes: ["rid", "currency_code", "currency_symbol"]
-          },
-          {
-            model: Account,
-            as: "parent_account",
-            attributes: ["rid", "account_name"],
-          },
-          {
-            model: Industry,
-            as: "industry",
-            attributes: ["rid", "industry_name"],
-            required: false,
-          }
-        ],
-        order: [["account_name", "ASC"]]
-      });
-
-      // Set USD currency for child accounts with no currency
-      childAccounts.forEach((account: any) => {
+      // Set USD currency for all accounts with no currency
+      allAccounts.forEach((account: any) => {
         if (!account.currency_rid || account.currency_rid === '') {
           account.currency_rid = usdCurrency?.rid;
           account.setDataValue('currency', usdCurrency);
@@ -243,37 +221,15 @@ async accountList(
       parentAccounts.forEach((account: any) => {
         account.setDataValue('child_accounts', childAccountsByParent[account.rid] || []);
       });
-    } else {
-      // If no parent accounts found, set empty child_accounts array
-      parentAccounts.forEach((account: any) => {
-        account.setDataValue('child_accounts', []);
-      });
-    }
 
     const updatedAccount = await this.schemaService.insertKeyContactInfo(parentAccounts,filters,limit,offset,finalSortBy,finalSortOrder,'create');
 
-    // Get total count without pagination
-    const totalCount = await repository.count({
-      where: baseWhereClause,
-      distinct: true,
-      include: [
-        {
-          model: Country,
-          as: "country",
-          attributes: []
-        },
-        {
-          model: Currency,
-          as: "currency",
-          attributes: []
-        },
-        {
-          model: Industry,
-          as: "industry",
-          attributes: []
-        }
-      ]
-    });
+      // Get total count without pagination (simplified)
+      const totalCount = await repository.count({
+        where: baseWhereClause,
+        distinct: true,
+        col: 'rid', // Specify the column to count on
+      });
 
     return {
       statusCode: HttpStatus.SUCCESS,

@@ -1092,14 +1092,55 @@ async getAllUserPermission(userId: string, profileId: string) {
   
       if (filters[clientField]) {
         const fieldFilter = filters[clientField];
+      
+      if (clientField === 'created_datetime' || clientField === 'modified_datetime') {
+        if (fieldFilter.equals !== undefined) {
+          const dateStr = fieldFilter.equals;
 
-      if ((clientField === 'created_datetime' || clientField === 'modified_datetime') && fieldFilter.equals) {
-        const dateStr = fieldFilter.equals;
-        const startOfDay = moment.utc(dateStr, "YYYY-MM-DD").startOf("day").toDate();
-        const endOfDay = moment.utc(dateStr, "YYYY-MM-DD").endOf("day").toDate();
+          const startOfDay = moment
+                            .utc(dateStr, "YYYY-MM-DD")
+                            .startOf("day")
+                            .toDate();
+          const endOfDay = moment
+                            .utc(dateStr, "YYYY-MM-DD")
+                            .endOf("day")
+                            .toDate();
 
-        whereClause[dbField] = { [Op.between]: [startOfDay, endOfDay] };
-        return;
+          whereClause[dbField] = {
+          [Op.between]: [startOfDay, endOfDay],
+          };  
+          return;
+        }
+
+        if (fieldFilter.before !== undefined) {
+          whereClause[dbField] = { [Op.lt]: this.normalizeDate(fieldFilter.before),};
+          return;
+        }
+
+        if (fieldFilter.after !== undefined) {
+          whereClause[dbField] = { [Op.gt]: this.normalizeDate(fieldFilter.after),};
+          return;
+        }
+
+        if ( fieldFilter.between && typeof fieldFilter.between === 'object' && fieldFilter.between.from && fieldFilter.between.to) {
+          const startDate = moment
+                            .utc(fieldFilter.between.from, "YYYY-MM-DD")
+                            .startOf("day")
+                            .toDate();
+
+          const endDate = moment
+                            .utc(fieldFilter.between.to, "YYYY-MM-DD")
+                            .endOf("day")
+                            .toDate();
+
+          whereClause[dbField] = { [Op.between]: [startDate, endDate],};
+          return;
+        }
+
+        if (fieldFilter.is_empty === true) {
+            whereClause[dbField] = {[Op.or]: [null],};
+          return;
+        }
       }
   
         if (fieldFilter.startsWith) {
@@ -1161,6 +1202,13 @@ async getAllUserPermission(userId: string, profileId: string) {
     }
   
     return whereClause;
+  }
+    normalizeDate(input: string): any | null {
+    let parsed = moment.utc(input, "YYYY-MM-DD", true);
+    if (!parsed.isValid()) throw new Error("Invalid date");
+
+    const startOfDay = parsed.startOf("day").toDate();
+    return startOfDay;
   }
   private getMultiValueFilter(filter: any, fieldName: string): any {
   if (!filter) return null;
