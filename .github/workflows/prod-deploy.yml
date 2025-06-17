@@ -1,382 +1,382 @@
-# name: Deploy Platform 2.0 Production Backend Services
+name: Deploy Platform 2.0 Production Backend Services
 
-# on:
-#   push:
-#     branches:
-#       - main
-#     paths:
-#       - user-module/**
-#       - account-module/**
-#       - entity-module/**
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - user-module/**
+      - account-module/**
+      - entity-module/**
 
-# env:
-#   ENVIRONMENT: prod
+env:
+  ENVIRONMENT: prod
 
-# jobs:
-#   # JOB to run change detection
-#   changes:
-#     runs-on: ubuntu-latest
-#     # Set job outputs to values from filter step
-#     outputs:
-#       user-module: ${{ steps.filter.outputs.user-module }}
-#       account-module: ${{ steps.filter.outputs.account-module }}
-#       entity-module: ${{ steps.filter.outputs.entity-module }}
-#     # For pull requests it's not necessary to checkout the code
-#     steps:
-#       - uses: actions/checkout@v3
-#       - uses: dorny/paths-filter@v2
-#         id: filter
-#         with:
-#           base: ${{ github.ref }}
-#           filters: |
-#             user-module:
-#               - 'user-module/**'
-#             account-module:
-#               - 'account-module/**'
-#             entity-module:
-#               - 'entity-module/**'
+jobs:
+  # JOB to run change detection
+  changes:
+    runs-on: ubuntu-latest
+    # Set job outputs to values from filter step
+    outputs:
+      user-module: ${{ steps.filter.outputs.user-module }}
+      account-module: ${{ steps.filter.outputs.account-module }}
+      entity-module: ${{ steps.filter.outputs.entity-module }}
+    # For pull requests it's not necessary to checkout the code
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          base: ${{ github.ref }}
+          filters: |
+            user-module:
+              - 'user-module/**'
+            account-module:
+              - 'account-module/**'
+            entity-module:
+              - 'entity-module/**'
 
-#   # JOB to build backend user-module code
-#   user-module:
-#     needs: changes
-#     if: ${{ needs.changes.outputs.user-module == 'true' }}
-#     name: Build and Deploy User Module
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout
-#         uses: actions/checkout@v4
-#       - name: Set Up Tag
-#         run: echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-#       - name: Login to Azure
-#         uses: azure/login@v2
-#         with:
-#           creds: ${{ secrets.AZURE_CREDENTIALS }}
-#       - name: Login to ACR
-#         run: az acr login --name ${{ secrets.PROD_ACR_NAME }}
-#         working-directory: user-module
-#       - name: Build Docker Image
-#         run: |
-#           docker build -t ${{ secrets.PROD_ACR_LOGIN_SERVER }}/user-module:${{ env.IMAGE_TAG }} .
-#         working-directory: user-module
-#       - name: Push Docker Image to ACR
-#         run: docker push ${{ secrets.PROD_ACR_LOGIN_SERVER }}/user-module:${{ env.IMAGE_TAG }}
-#         working-directory: user-module
-#       - name: Set up SSH key
-#         run: |
-#           mkdir -p ~/.ssh
-#           echo "${{ secrets.PROD_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-#           chmod 600 ~/.ssh/id_rsa
-#           ssh-keyscan -H ${{ secrets.PROD_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
-#       - name: Fetch secrets and create .env file
-#         working-directory: user-module
-#         run: |
-#           KEY_VAULT_NAME=${{ secrets.PROD_KEY_VAULT_NAME }}
-#           ENV_FILE=".env.usermodule"
+  # JOB to build backend user-module code
+  user-module:
+    needs: changes
+    if: ${{ needs.changes.outputs.user-module == 'true' }}
+    name: Build and Deploy User Module
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set Up Tag
+        run: echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Login to ACR
+        run: az acr login --name ${{ secrets.PROD_ACR_NAME }}
+        working-directory: user-module
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.PROD_ACR_LOGIN_SERVER }}/user-module:${{ env.IMAGE_TAG }} .
+        working-directory: user-module
+      - name: Push Docker Image to ACR
+        run: docker push ${{ secrets.PROD_ACR_LOGIN_SERVER }}/user-module:${{ env.IMAGE_TAG }}
+        working-directory: user-module
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PROD_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.PROD_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
+      - name: Fetch secrets and create .env file
+        working-directory: user-module
+        run: |
+          KEY_VAULT_NAME=${{ secrets.PROD_KEY_VAULT_NAME }}
+          ENV_FILE=".env.usermodule"
           
-#           # Ensure Azure CLI is authenticated
-#           az account show > /dev/null 2>&1
-#           if [ $? -ne 0 ]; then
-#             echo "Error: Azure CLI is not authenticated. Run 'az login' first."
-#             exit 1
-#           fi
+          # Ensure Azure CLI is authenticated
+          az account show > /dev/null 2>&1
+          if [ $? -ne 0 ]; then
+            echo "Error: Azure CLI is not authenticated. Run 'az login' first."
+            exit 1
+          fi
           
-#           # Fetch secrets from Azure Key Vault and write to .env file
-#           echo "Fetching secrets from Azure Key Vault: $KEY_VAULT_NAME"
+          # Fetch secrets from Azure Key Vault and write to .env file
+          echo "Fetching secrets from Azure Key Vault: $KEY_VAULT_NAME"
           
-#           KEY_VAULT_URI=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "key-vault-uri" --query value -o tsv)
-#           API_CLIENT_ID=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "b2c-tenant-api-client-id" --query value -o tsv)
-#           API_CLIENT_SECRET=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "b2c-tenant-api-client-secret" --query value -o tsv)
-#           API_TENANT_ID=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "b2c-tenant-api-tenant-id" --query value -o tsv)
-#           API_TENANT_DOMAIN=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "b2c-tenant-domain" --query value -o tsv)
-#           MAIL_CLIENT_SECRET=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-client-secret" --query value -o tsv)
-#           MAIL_CLIENT_ID=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-client-id" --query value -o tsv)
-#           MAIL_TENANT_ID=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-tenant-id" --query value -o tsv)
+          KEY_VAULT_URI=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "key-vault-uri" --query value -o tsv)
+          API_CLIENT_ID=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "b2c-tenant-api-client-id" --query value -o tsv)
+          API_CLIENT_SECRET=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "b2c-tenant-api-client-secret" --query value -o tsv)
+          API_TENANT_ID=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "b2c-tenant-api-tenant-id" --query value -o tsv)
+          API_TENANT_DOMAIN=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "b2c-tenant-domain" --query value -o tsv)
+          MAIL_CLIENT_SECRET=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-client-secret" --query value -o tsv)
+          MAIL_CLIENT_ID=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-client-id" --query value -o tsv)
+          MAIL_TENANT_ID=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "mail-app-tenant-id" --query value -o tsv)
           
-#           # Write secrets to .env file
-#           cat <<EOF > $ENV_FILE
-#           SERVER_PORT=5000
-#           KEY_VAULT_URI=$KEY_VAULT_URI
-#           AZURE_B2C_TENANT=$API_TENANT_DOMAIN
-#           AZURE_B2C_CLIENT_SECRET=$API_CLIENT_SECRET
-#           AZURE_B2C_CLIENT_ID=$API_CLIENT_ID
-#           AZURE_B2C_TENANT_ID=$API_TENANT_ID
-#           AZURE_SCOPE=https://graph.microsoft.com/.default
-#           AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
+          # Write secrets to .env file
+          cat <<EOF > $ENV_FILE
+          SERVER_PORT=5000
+          KEY_VAULT_URI=$KEY_VAULT_URI
+          AZURE_B2C_TENANT=$API_TENANT_DOMAIN
+          AZURE_B2C_CLIENT_SECRET=$API_CLIENT_SECRET
+          AZURE_B2C_CLIENT_ID=$API_CLIENT_ID
+          AZURE_B2C_TENANT_ID=$API_TENANT_ID
+          AZURE_SCOPE=https://graph.microsoft.com/.default
+          AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
 
-#           MAINDB_NAME=main-database-name
-#           MAINDB_PASSWORD=main-db-admin-password
-#           MAINDB_USERNAME=main-db-admin-username
-#           MAINDB_ENDPOINT=main-db-endpoint
-#           MAIL_TENANT_ID=$MAIL_TENANT_ID
-#           MAIL_CLIENT_ID=$MAIL_CLIENT_ID
-#           MAIL_CLIENT_SECRET=$MAIL_CLIENT_SECRET
-#           EMAIL_FROM=interactions@certainti.ai
-#           LOGIN_URL=https://platform20-prod.certainti.ai
-#           SUPPORT_EMAIL=support@certainti.ai
-#           LOG_LEVEL=debug
-#           NODE_ENV=PROD
-#           EOF
+          MAINDB_NAME=main-database-name
+          MAINDB_PASSWORD=main-db-admin-password
+          MAINDB_USERNAME=main-db-admin-username
+          MAINDB_ENDPOINT=main-db-endpoint
+          MAIL_TENANT_ID=$MAIL_TENANT_ID
+          MAIL_CLIENT_ID=$MAIL_CLIENT_ID
+          MAIL_CLIENT_SECRET=$MAIL_CLIENT_SECRET
+          EMAIL_FROM=interactions@certainti.ai
+          LOGIN_URL=https://platform20-prod.certainti.ai
+          SUPPORT_EMAIL=support@certainti.ai
+          LOG_LEVEL=debug
+          NODE_ENV=PROD
+          EOF
           
-#           echo "$ENV_FILE file created successfully!"
-#           ls -la
-#       - name: Copy .env file to VM
-#         run: |
-#           scp -v -o StrictHostKeyChecking=no .env.usermodule adminuser@${{ secrets.PROD_BACKEND_VM_HOST }}:/tmp/
-#         working-directory: user-module
-#       - name: SSH into VM and deploy
-#         run: |
-#           ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.PROD_BACKEND_VM_HOST }} << 'EOF'
-#             sudo -s
-#             cd /app/backend
+          echo "$ENV_FILE file created successfully!"
+          ls -la
+      - name: Copy .env file to VM
+        run: |
+          scp -v -o StrictHostKeyChecking=no .env.usermodule adminuser@${{ secrets.PROD_BACKEND_VM_HOST }}:/tmp/
+        working-directory: user-module
+      - name: SSH into VM and deploy
+        run: |
+          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.PROD_BACKEND_VM_HOST }} << 'EOF'
+            sudo -s
+            cd /app/backend
 
-#             # Ensure docker-compose.yml exists
-#             if [ ! -f "docker-compose.yml" ]; then
-#               echo "docker-compose.yml not found!"
-#               exit 1
-#             fi
+            # Ensure docker-compose.yml exists
+            if [ ! -f "docker-compose.yml" ]; then
+              echo "docker-compose.yml not found!"
+              exit 1
+            fi
           
-#             # Move .env file with sudo
-#             sudo mv /tmp/.env.usermodule /app/backend/.env.usermodule
-#             echo ".env file moved successfully!"
+            # Move .env file with sudo
+            sudo mv /tmp/.env.usermodule /app/backend/.env.usermodule
+            echo ".env file moved successfully!"
             
-#             # Update only the usermodule image tag
-#             echo "Updating docker-compose.yml..."
-#             sed -i 's|image:.*user-module:.*|image: ${{ secrets.PROD_ACR_LOGIN_SERVER }}/user-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
-#             echo "Docker Compose updated successfully!"
+            # Update only the usermodule image tag
+            echo "Updating docker-compose.yml..."
+            sed -i 's|image:.*user-module:.*|image: ${{ secrets.PROD_ACR_LOGIN_SERVER }}/user-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            echo "Docker Compose updated successfully!"
             
-#             # Login to ACR 
-#             az acr login --name ${{ secrets.PROD_ACR_NAME }}
-#             echo "Logged in to ACR successfully!"
+            # Login to ACR 
+            az acr login --name ${{ secrets.PROD_ACR_NAME }}
+            echo "Logged in to ACR successfully!"
             
-#             # Pull latest changes and restart
-#             if docker compose up -d --pull always --no-deps user-module; then
-#               echo "Deployment successful!"
-#               # Remove old stopped containers
-#               docker container prune -f || true
-#               # Remove unused images (keeps only the latest deployed version)
-#               docker image prune -af || true
-#             else
-#               echo "Deployment failed!"
-#               exit 1
-#             fi
-#           EOF
+            # Pull latest changes and restart
+            if docker compose up -d --pull always --no-deps user-module; then
+              echo "Deployment successful!"
+              # Remove old stopped containers
+              docker container prune -f || true
+              # Remove unused images (keeps only the latest deployed version)
+              docker image prune -af || true
+            else
+              echo "Deployment failed!"
+              exit 1
+            fi
+          EOF
 
-#   # JOB to build backend account-module code
-#   account-module:
-#     needs:
-#       - changes
-#     if: ${{ needs.changes.outputs.account-module == 'true' }}
-#     name: Build and Deploy Account Module
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout
-#         uses: actions/checkout@v4
-#       - name: Set Up Tag
-#         run: echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-#       - name: Login to Azure
-#         uses: azure/login@v2
-#         with:
-#           creds: ${{ secrets.AZURE_CREDENTIALS }}
-#       - name: Login to ACR
-#         run: az acr login --name ${{ secrets.PROD_ACR_NAME }}
-#         working-directory: account-module
-#       - name: Build Docker Image
-#         run: |
-#           docker build -t ${{ secrets.PROD_ACR_LOGIN_SERVER }}/account-module:${{ env.IMAGE_TAG }} .
-#         working-directory: account-module
-#       - name: Push Docker Image to ACR
-#         run: docker push ${{ secrets.PROD_ACR_LOGIN_SERVER }}/account-module:${{ env.IMAGE_TAG }}
-#         working-directory: account-module
-#       - name: Set up SSH key
-#         run: |
-#           mkdir -p ~/.ssh
-#           echo "${{ secrets.PROD_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-#           chmod 600 ~/.ssh/id_rsa
-#           ssh-keyscan -H ${{ secrets.PROD_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
-#       - name: Fetch secrets and create .env file
-#         working-directory: account-module
-#         run: |
-#           KEY_VAULT_NAME=${{ secrets.PROD_KEY_VAULT_NAME }}
-#           ENV_FILE=".env.accountmodule"
+  # JOB to build backend account-module code
+  account-module:
+    needs:
+      - changes
+    if: ${{ needs.changes.outputs.account-module == 'true' }}
+    name: Build and Deploy Account Module
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set Up Tag
+        run: echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Login to ACR
+        run: az acr login --name ${{ secrets.PROD_ACR_NAME }}
+        working-directory: account-module
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.PROD_ACR_LOGIN_SERVER }}/account-module:${{ env.IMAGE_TAG }} .
+        working-directory: account-module
+      - name: Push Docker Image to ACR
+        run: docker push ${{ secrets.PROD_ACR_LOGIN_SERVER }}/account-module:${{ env.IMAGE_TAG }}
+        working-directory: account-module
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PROD_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.PROD_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
+      - name: Fetch secrets and create .env file
+        working-directory: account-module
+        run: |
+          KEY_VAULT_NAME=${{ secrets.PROD_KEY_VAULT_NAME }}
+          ENV_FILE=".env.accountmodule"
           
-#           # Ensure Azure CLI is authenticated
-#           az account show > /dev/null 2>&1
-#           if [ $? -ne 0 ]; then
-#           echo "Error: Azure CLI is not authenticated. Run 'az login' first."
-#           exit 1
-#           fi
+          # Ensure Azure CLI is authenticated
+          az account show > /dev/null 2>&1
+          if [ $? -ne 0 ]; then
+          echo "Error: Azure CLI is not authenticated. Run 'az login' first."
+          exit 1
+          fi
           
-#           # Fetch secrets from Azure Key Vault and write to .env file
-#           echo "Fetching secrets from Azure Key Vault: $KEY_VAULT_NAME"
+          # Fetch secrets from Azure Key Vault and write to .env file
+          echo "Fetching secrets from Azure Key Vault: $KEY_VAULT_NAME"
           
-#           KEY_VAULT_URI=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "key-vault-uri" --query value -o tsv)
+          KEY_VAULT_URI=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "key-vault-uri" --query value -o tsv)
           
-#           # Write secrets to .env file
-#           cat <<EOF > $ENV_FILE
-#           SERVER_PORT=5001
-#           KEY_VAULT_URI=$KEY_VAULT_URI
-#           AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
+          # Write secrets to .env file
+          cat <<EOF > $ENV_FILE
+          SERVER_PORT=5001
+          KEY_VAULT_URI=$KEY_VAULT_URI
+          AZURE_STORAGE_CONNECTION_STRING = "storage-account-connection-string"
           
-#           MAINDB_NAME=main-database-name
-#           MAINDB_PASSWORD=main-db-admin-password
-#           MAINDB_USERNAME=main-db-admin-username
-#           MAINDB_ENDPOINT=main-db-endpoint
-#           ORGDB_NAME=org-database-name
-#           ORGDB_PASSWORD=org-db-admin-password
-#           ORGDB_USERNAME=org-db-admin-username
-#           ORGDB_ENDPOINT=org-db-endpoint
-#           LOG_LEVEL=debug
-#           NODE_ENV=PROD
-#           EOF
+          MAINDB_NAME=main-database-name
+          MAINDB_PASSWORD=main-db-admin-password
+          MAINDB_USERNAME=main-db-admin-username
+          MAINDB_ENDPOINT=main-db-endpoint
+          ORGDB_NAME=org-database-name
+          ORGDB_PASSWORD=org-db-admin-password
+          ORGDB_USERNAME=org-db-admin-username
+          ORGDB_ENDPOINT=org-db-endpoint
+          LOG_LEVEL=debug
+          NODE_ENV=PROD
+          EOF
           
-#           echo "$ENV_FILE file created successfully!"
-#       - name: Copy .env file to VM
-#         run: |
-#           scp -o StrictHostKeyChecking=no .env.accountmodule adminuser@${{ secrets.PROD_BACKEND_VM_HOST }}:/tmp/
-#         working-directory: account-module
-#       - name: SSH into VM and deploy
-#         run: |
-#           ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.PROD_BACKEND_VM_HOST }} << 'EOF'
-#             sudo -s
-#             cd /app/backend
+          echo "$ENV_FILE file created successfully!"
+      - name: Copy .env file to VM
+        run: |
+          scp -o StrictHostKeyChecking=no .env.accountmodule adminuser@${{ secrets.PROD_BACKEND_VM_HOST }}:/tmp/
+        working-directory: account-module
+      - name: SSH into VM and deploy
+        run: |
+          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.PROD_BACKEND_VM_HOST }} << 'EOF'
+            sudo -s
+            cd /app/backend
 
-#             # Ensure docker-compose.yml exists
-#             if [ ! -f "docker-compose.yml" ]; then
-#               echo "docker-compose.yml not found!"
-#               exit 1
-#             fi
+            # Ensure docker-compose.yml exists
+            if [ ! -f "docker-compose.yml" ]; then
+              echo "docker-compose.yml not found!"
+              exit 1
+            fi
             
-#             # Move .env file with sudo
-#             sudo mv /tmp/.env.accountmodule /app/backend/.env.accountmodule
-#             echo ".env file moved successfully!"
+            # Move .env file with sudo
+            sudo mv /tmp/.env.accountmodule /app/backend/.env.accountmodule
+            echo ".env file moved successfully!"
           
-#             # Update only the account-module image tag
-#             echo "Updating docker-compose.yml..."
-#             sed -i 's|image:.*account-module:.*|image: ${{ secrets.PROD_ACR_LOGIN_SERVER }}/account-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
-#             echo "Docker Compose updated successfully!"
+            # Update only the account-module image tag
+            echo "Updating docker-compose.yml..."
+            sed -i 's|image:.*account-module:.*|image: ${{ secrets.PROD_ACR_LOGIN_SERVER }}/account-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            echo "Docker Compose updated successfully!"
           
-#             # Login to ACR 
-#             az acr login --name ${{ secrets.PROD_ACR_NAME }}
-#             echo "Logged in to ACR successfully!"
+            # Login to ACR 
+            az acr login --name ${{ secrets.PROD_ACR_NAME }}
+            echo "Logged in to ACR successfully!"
           
-#             # Pull latest changes and restart
-#             if docker compose up -d --pull always --no-deps account-module; then
-#               echo "Deployment successful!"
-#               # Remove old stopped containers
-#               docker container prune -f || true
-#               # Remove unused images (keeps only the latest deployed version)
-#               docker image prune -af || true
-#             else
-#               echo "Deployment failed!"
-#               exit 1
-#             fi
-#           EOF
+            # Pull latest changes and restart
+            if docker compose up -d --pull always --no-deps account-module; then
+              echo "Deployment successful!"
+              # Remove old stopped containers
+              docker container prune -f || true
+              # Remove unused images (keeps only the latest deployed version)
+              docker image prune -af || true
+            else
+              echo "Deployment failed!"
+              exit 1
+            fi
+          EOF
 
-#   # JOB to build backend entity-module code
-#   entity-module:
-#     needs:
-#       - changes
-#     if: ${{ needs.changes.outputs.entity-module == 'true' }}
-#     name: Build and Deploy Entity Module
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout
-#         uses: actions/checkout@v4
-#       - name: Set Up Tag
-#         run: echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-#       - name: Login to Azure
-#         uses: azure/login@v2
-#         with:
-#           creds: ${{ secrets.AZURE_CREDENTIALS }}
-#       - name: Login to ACR
-#         run: az acr login --name ${{ secrets.PROD_ACR_NAME }}
-#         working-directory: entity-module
-#       - name: Build Docker Image
-#         run: |
-#           docker build -t ${{ secrets.PROD_ACR_LOGIN_SERVER }}/entity-module:${{ env.IMAGE_TAG }} .
-#         working-directory: entity-module
-#       - name: Push Docker Image to ACR
-#         run: docker push ${{ secrets.PROD_ACR_LOGIN_SERVER }}/entity-module:${{ env.IMAGE_TAG }}
-#         working-directory: entity-module
-#       - name: Set up SSH key
-#         run: |
-#           mkdir -p ~/.ssh
-#           echo "${{ secrets.PROD_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-#           chmod 600 ~/.ssh/id_rsa
-#           ssh-keyscan -H ${{ secrets.PROD_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
-#       - name: Fetch secrets and create .env file
-#         working-directory: entity-module
-#         run: |
-#           KEY_VAULT_NAME=${{ secrets.PROD_KEY_VAULT_NAME }}
-#           ENV_FILE=".env.entitymodule"
+  # JOB to build backend entity-module code
+  entity-module:
+    needs:
+      - changes
+    if: ${{ needs.changes.outputs.entity-module == 'true' }}
+    name: Build and Deploy Entity Module
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set Up Tag
+        run: echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Login to ACR
+        run: az acr login --name ${{ secrets.PROD_ACR_NAME }}
+        working-directory: entity-module
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.PROD_ACR_LOGIN_SERVER }}/entity-module:${{ env.IMAGE_TAG }} .
+        working-directory: entity-module
+      - name: Push Docker Image to ACR
+        run: docker push ${{ secrets.PROD_ACR_LOGIN_SERVER }}/entity-module:${{ env.IMAGE_TAG }}
+        working-directory: entity-module
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PROD_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.PROD_BACKEND_VM_HOST }} >> ~/.ssh/known_hosts
+      - name: Fetch secrets and create .env file
+        working-directory: entity-module
+        run: |
+          KEY_VAULT_NAME=${{ secrets.PROD_KEY_VAULT_NAME }}
+          ENV_FILE=".env.entitymodule"
           
-#           # Ensure Azure CLI is authenticated
-#           az account show > /dev/null 2>&1
-#           if [ $? -ne 0 ]; then
-#           echo "Error: Azure CLI is not authenticated. Run 'az login' first."
-#           exit 1
-#           fi
+          # Ensure Azure CLI is authenticated
+          az account show > /dev/null 2>&1
+          if [ $? -ne 0 ]; then
+          echo "Error: Azure CLI is not authenticated. Run 'az login' first."
+          exit 1
+          fi
           
-#           # Fetch secrets from Azure Key Vault and write to .env file
-#           echo "Fetching secrets from Azure Key Vault: $KEY_VAULT_NAME"
+          # Fetch secrets from Azure Key Vault and write to .env file
+          echo "Fetching secrets from Azure Key Vault: $KEY_VAULT_NAME"
           
-#           KEY_VAULT_URI=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "key-vault-uri" --query value -o tsv)
+          KEY_VAULT_URI=$(az keyvault secret show --vault-name "$KEY_VAULT_NAME" --name "key-vault-uri" --query value -o tsv)
           
-#           # Write secrets to .env file
-#           cat <<EOF > $ENV_FILE
-#           SERVER_PORT=5006
-#           KEY_VAULT_URI=$KEY_VAULT_URI
-#           MAINDB_NAME=main-database-name
-#           MAINDB_PASSWORD=main-db-admin-password
-#           MAINDB_USERNAME=main-db-admin-username
-#           MAINDB_ENDPOINT=main-db-endpoint
-#           ORGDB_NAME=org-database-name
-#           ORGDB_PASSWORD=org-db-admin-password
-#           ORGDB_USERNAME=org-db-admin-username
-#           ORGDB_ENDPOINT=org-db-endpoint
-#           LOG_LEVEL=debug
-#           NODE_ENV=PROD
-#           EOF
+          # Write secrets to .env file
+          cat <<EOF > $ENV_FILE
+          SERVER_PORT=5006
+          KEY_VAULT_URI=$KEY_VAULT_URI
+          MAINDB_NAME=main-database-name
+          MAINDB_PASSWORD=main-db-admin-password
+          MAINDB_USERNAME=main-db-admin-username
+          MAINDB_ENDPOINT=main-db-endpoint
+          ORGDB_NAME=org-database-name
+          ORGDB_PASSWORD=org-db-admin-password
+          ORGDB_USERNAME=org-db-admin-username
+          ORGDB_ENDPOINT=org-db-endpoint
+          LOG_LEVEL=debug
+          NODE_ENV=PROD
+          EOF
           
-#           echo "$ENV_FILE file created successfully!"
-#       - name: Copy .env file to VM
-#         run: |
-#           scp -o StrictHostKeyChecking=no .env.entitymodule adminuser@${{ secrets.PROD_BACKEND_VM_HOST }}:/tmp/
-#         working-directory: entity-module
-#       - name: SSH into VM and deploy
-#         run: |
-#           ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.PROD_BACKEND_VM_HOST }} << 'EOF'
-#             sudo -s
-#             cd /app/backend
+          echo "$ENV_FILE file created successfully!"
+      - name: Copy .env file to VM
+        run: |
+          scp -o StrictHostKeyChecking=no .env.entitymodule adminuser@${{ secrets.PROD_BACKEND_VM_HOST }}:/tmp/
+        working-directory: entity-module
+      - name: SSH into VM and deploy
+        run: |
+          ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.PROD_BACKEND_VM_HOST }} << 'EOF'
+            sudo -s
+            cd /app/backend
 
-#             # Ensure docker-compose.yml exists
-#             if [ ! -f "docker-compose.yml" ]; then
-#               echo "docker-compose.yml not found!"
-#               exit 1
-#             fi
+            # Ensure docker-compose.yml exists
+            if [ ! -f "docker-compose.yml" ]; then
+              echo "docker-compose.yml not found!"
+              exit 1
+            fi
             
-#             # Move .env file with sudo
-#             sudo mv /tmp/.env.entitymodule /app/backend/.env.entitymodule
-#             echo ".env file moved successfully!"
+            # Move .env file with sudo
+            sudo mv /tmp/.env.entitymodule /app/backend/.env.entitymodule
+            echo ".env file moved successfully!"
           
-#             # Update only the entity-module image tag
-#             echo "Updating docker-compose.yml..."
-#             sed -i 's|image:.*entity-module:.*|image: ${{ secrets.PROD_ACR_LOGIN_SERVER }}/entity-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
-#             echo "Docker Compose updated successfully!"
+            # Update only the entity-module image tag
+            echo "Updating docker-compose.yml..."
+            sed -i 's|image:.*entity-module:.*|image: ${{ secrets.PROD_ACR_LOGIN_SERVER }}/entity-module:${{ env.IMAGE_TAG }}|' docker-compose.yml
+            echo "Docker Compose updated successfully!"
           
-#             # Login to ACR 
-#             az acr login --name ${{ secrets.PROD_ACR_NAME }}
-#             echo "Logged in to ACR successfully!"
+            # Login to ACR 
+            az acr login --name ${{ secrets.PROD_ACR_NAME }}
+            echo "Logged in to ACR successfully!"
           
-#             # Pull latest changes and restart
-#             if docker compose up -d --pull always --no-deps entity-module; then
-#               echo "Deployment successful!"
-#               # Remove old stopped containers
-#               docker container prune -f || true
-#               # Remove unused images (keeps only the latest deployed version)
-#               docker image prune -af || true
-#             else
-#               echo "Deployment failed!"
-#               exit 1
-#             fi
-#           EOF
+            # Pull latest changes and restart
+            if docker compose up -d --pull always --no-deps entity-module; then
+              echo "Deployment successful!"
+              # Remove old stopped containers
+              docker container prune -f || true
+              # Remove unused images (keeps only the latest deployed version)
+              docker image prune -af || true
+            else
+              echo "Deployment failed!"
+              exit 1
+            fi
+          EOF
