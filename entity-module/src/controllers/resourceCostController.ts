@@ -352,7 +352,7 @@ async function resourceCostById(req: Request, res: Response): Promise<void> {
   }
 }
 
-async function acceptDuplicate(req: Request, res: Response): Promise<void> {
+async function acceptStatus(req: Request, res: Response): Promise<void> {
   const methodName = "Accept duplicate";
   try {
     const value = await validateRequest(req, updateResourceDuplicateStatus, res);
@@ -361,49 +361,11 @@ async function acceptDuplicate(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const result = await resourceCostService.acceptDuplicate(
+    const result = await resourceCostService.acceptResourceCostStatus(
       value.rid,
       value.accountNumber,
-      value.action
-    );
-
-    if (result.statusCode === HttpStatus.SUCCESS) {
-      successLog(methodName);
-      handleSuccessResponse(res, result.data);
-    } else {
-      errorLog(methodName, result.errorMessage);
-      handleErrorResponse(
-        res,
-        HttpStatus.BAD_REQUEST,
-        HttpStatus.BAD_REQUEST_MESSAGE,
-        result.errorMessage
-      );
-    }
-  } catch (err) {
-    const error = err as Error;
-    errorLog(methodName, error.message);
-    handleErrorResponse(
-      res,
-      HttpStatus.FAILED,
-      HttpStatus.FAILED_MESSAGE,
-      error.message
-    );
-  }
-}
-
-async function acceptAnomaly(req: Request, res: Response): Promise<void> {
-  const methodName = "Accept anomaly";
-  try {
-    const value = await validateRequest(req, updateResourceDuplicateStatus, res);
-
-    if(!value){
-      return;
-    }
-
-    const result = await resourceCostService.acceptAnomaly(
-      value.rid,
-      value.accountNumber,
-      value.action
+      value.action,
+      value.type
     );
 
     if (result.statusCode === HttpStatus.SUCCESS) {
@@ -436,6 +398,5 @@ export default {
   createResourceCost,
   updateResourceCost,
   resourceCostById,
-  acceptDuplicate,
-  acceptAnomaly
+  acceptStatus,
 };

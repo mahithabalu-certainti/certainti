@@ -310,6 +310,7 @@ class ResourceCostService {
           bonus,
           effort_in_hrs,
           resource_cost,
+          salary,
         };
 
         const costValues = Object.entries(costFields).reduce(
@@ -352,16 +353,11 @@ class ResourceCostService {
             resource_rid,
             effective_from: effectiveFrom,
             end_date: endDate,
-            salary,
-            deductions,
-            insurance,
-            bonus,
+            ...costValues,
             fiscal_year,
             comments,
             currency_rid,
-            status,
-            effort_in_hrs,
-            resource_cost,
+            status: "active",
             net_resource_cost: calculatedResourceCost,
             account_rid,
           },
@@ -369,11 +365,11 @@ class ResourceCostService {
 
         if (existingCost) {
           status = "duplicate";
-        } else if (effort_in_hrs && Number(effort_in_hrs) > 3000) {
+        } else if (effort_in_hrs!== undefined && Number(effort_in_hrs) > 3000) {
           status = "anomaly";
         } else if (
           (resource_cost !== undefined && Number(resource_cost) > 200000) ||
-          salary > 200000
+          (salary !== undefined && Number(salary) > 200000)
         ) {
           status = "anomaly";
         }
@@ -392,7 +388,6 @@ class ResourceCostService {
           // ...frequency,
           ...costValues,
           net_resource_cost: calculatedResourceCost,
-          salary,
           currency_rid: currency_rid || undefined,
           fiscal_year,
           comments,
@@ -582,6 +577,7 @@ class ResourceCostService {
           bonus,
           effort_in_hrs,
           resource_cost,
+          salary,
         };
 
         const costValues = Object.entries(costFields).reduce(
@@ -622,25 +618,23 @@ class ResourceCostService {
             resource_rid,
             effective_from: effectiveFrom,
             end_date: endDate,
-            salary,
-            deductions,
-            insurance,
-            bonus,
+            ...costValues,
             fiscal_year,
             comments,
             currency_rid,
-            status: resourceCostStatus,
-            effort_in_hrs,
-            resource_cost,
+            status: "active",
             net_resource_cost: calculatedResourceCost,
           },
         });
 
         if (existingCost) {
           resourceCostStatus = "duplicate";
-        } else if (effort_in_hrs && Number(effort_in_hrs) > 3000) {
+        } else if (effort_in_hrs!== undefined && Number(effort_in_hrs) > 3000) {
           resourceCostStatus = "anomaly";
-        } else if (calculatedResourceCost > 200000) {
+        } else if (
+          (resource_cost !== undefined && Number(resource_cost) > 200000) ||
+          (salary !== undefined && Number(salary) > 200000)
+        ) {
           resourceCostStatus = "anomaly";
         }
 
@@ -653,7 +647,6 @@ class ResourceCostService {
             // cost: cost,
             // ...frequency,
             ...costValues,
-            salary,
             net_resource_cost: calculatedResourceCost,
             currency_rid,
             fiscal_year,
@@ -1034,89 +1027,7 @@ class ResourceCostService {
     }
   }
 
-  async acceptDuplicate(id: string, accountNumber: string, action: string) {
-    try {
-      let { accountNumber: accountNumberFetched } =
-        await this.schemaService.fetchAccountByNumber(accountNumber);
-
-      const schemaName = `platform_v2_${accountNumberFetched}`;
-      const validateSchema = await resourceCostSchemaService.validateSchema(
-        schemaName,
-        "resource_cost"
-      );
-
-      if (!validateSchema) {
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: "Account schema does not exist",
-        };
-      }
-
-      const sequelize = await this.getOrgSequelize();
-      ResourceCost.initialize(sequelize, schemaName);
-      const resourceCostBy = await ResourceCost.findOne({
-        where: {
-          rid: id,
-        },
-      });
-
-      let resourceCostStatus = "Active";
-
-      if (resourceCostBy) {
-        if (
-          resourceCostBy.effort_in_hrs &&
-          Number(resourceCostBy.effort_in_hrs) > 3000
-        ) {
-          resourceCostStatus = "anomaly";
-        } else if (resourceCostBy.salary > 200000) {
-          resourceCostStatus = "anomaly";
-        }
-      }
-
-      let updateStatus = null;
-
-      if(action === "accept"){
-        updateStatus = await ResourceCost.update(
-          {
-            status: resourceCostStatus,
-          },
-          {
-            where: {
-              rid: id,
-            },
-          }
-        );
-      }else{
-        updateStatus = await ResourceCost.update(
-          {
-            status: "inactive",
-          },
-          {
-            where: {
-              rid: id,
-            },
-          }
-        );
-      }
-
-      return {
-        statusCode: HttpStatus.SUCCESS,
-        message: HttpStatus.SUCCESS_MESSAGE,
-        data: {
-          updateStatus,
-        },
-      };
-    } catch (err) {
-      return {
-        statusCode: HttpStatus.FAILED,
-        message: HttpStatus.FAILED_MESSAGE,
-        errorMessage: (err as Error).message,
-      };
-    }
-  }
-
-  async acceptAnomaly(id: string, accountNumber: string, action: string) {
+  async acceptResourceCostStatus(id: string, accountNumber: string, action: string, type: string) {
     try {
       let { accountNumber: accountNumberFetched } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
@@ -1140,31 +1051,38 @@ class ResourceCostService {
 
       let resourceCostStatus = "active";
 
-      let updateStatus = null;
+      // Only check for anomaly conditions if handling duplicate type
+      if (type === 'duplicate') {
+        const resourceCostBy = await ResourceCost.findOne({
+          where: {
+            rid: id,
+          },
+        });
 
-      if(action === "accept"){
-        updateStatus = await ResourceCost.update(
-          {
-            status: resourceCostStatus,
-          },
-          {
-            where: {
-              rid: id,
-            },
+        if (resourceCostBy) {
+          if (
+            resourceCostBy.effort_in_hrs &&
+            Number(resourceCostBy.effort_in_hrs) > 3000
+          ) {
+            resourceCostStatus = "anomaly";
+          } else if (resourceCostBy?.salary && resourceCostBy.salary > 200000) {
+            resourceCostStatus = "anomaly";
+          } else if (resourceCostBy?.resource_cost && resourceCostBy.resource_cost > 200000) {
+            resourceCostStatus = "anomaly";
           }
-        );
-      }else{
-        updateStatus = await ResourceCost.update(
-          {
-            status: "inactive",
-          },
-          {
-            where: {
-              rid: id,
-            },
-          }
-        );
+        }
       }
+
+      const updateStatus = await ResourceCost.update(
+        {
+          status: action === "accept" ? resourceCostStatus : "inactive",
+        },
+        {
+          where: {
+            rid: id,
+          },
+        }
+      );
 
       return {
         statusCode: HttpStatus.SUCCESS,

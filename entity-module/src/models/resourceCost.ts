@@ -23,7 +23,7 @@ interface ResourceCostAttributes {
   // daily_cost?: number;
   // hourly_cost?: number;
   effort_in_hrs?: number;
-  salary: number;
+  salary?: number;
   bonus?: number;
   insurance?: number;
   deductions?: number;
@@ -67,7 +67,7 @@ export class ResourceCost
   // daily_cost?: number;
   // hourly_cost?: number;
   effort_in_hrs?: number;
-  salary!: number;
+  salary?: number;
   bonus?: number;
   insurance?: number;
   deductions?: number;
@@ -198,7 +198,7 @@ export class ResourceCost
         // },
         salary: {
           type: DataTypes.DECIMAL(18, 2),
-          allowNull: false,
+          allowNull: true,
         },
         bonus: {
           type: DataTypes.DECIMAL(18, 2),

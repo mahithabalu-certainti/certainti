@@ -128,21 +128,11 @@ export interface IResourceCostService {
     data?: { resourceCostById: any };
   }>;
 
-  acceptDuplicate(
+  acceptResourceCostStatus(
     id: string,
     accountNumber: string,
-    action: string
-  ): Promise<{
-    statusCode: number;
-    message: string;
-    errorMessage?: string;
-    data?: { updateStatus: any };
-  }>;
-
-  acceptAnomaly(
-    id: string,
-    accountNumber: string,
-    action: string
+    action: string,
+    type: string,
   ): Promise<{
     statusCode: number;
     message: string;

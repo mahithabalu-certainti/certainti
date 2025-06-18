@@ -63,7 +63,7 @@ export interface IResourceCost {
   // daily_cost?: number | "";
   // hourly_cost?: number | "";
   effort_in_hrs?: number | "";
-  salary: number;
+  salary?: number | "";
   bonus?: number | "";
   insurance?: number | "";
   deductions?: number | "";
@@ -98,7 +98,7 @@ export interface IUpdateResourceCost {
   // daily_cost?: number | "";
   // hourly_cost?: number | "";
   effort_in_hrs?: number | "";
-  salary: number;
+  salary?: number | "";
   bonus?: number | "";
   insurance?: number | "";
   deductions?: number | "";
