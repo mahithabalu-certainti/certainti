@@ -6,6 +6,7 @@ import {
   Popover,
   Select,
   SelectChangeEvent,
+  Tooltip,
 } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
 import { arrowIcon, checkedIcon, closeIcon } from '../../../../../assets';
@@ -40,6 +41,7 @@ import {
   getStoredFilters,
   resetFilter,
   storeFilters,
+  validateFilters,
 } from './utils';
 import {
   MENU_PROPS,
@@ -73,6 +75,7 @@ const Filter: React.FC<FilterComponentProps> = ({
     []
   );
   const [currentSort, setCurrentSort] = useState<string | null>(null);
+  const [isApplyDisabled, setIsApplyDisabled] = useState(false);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -190,6 +193,11 @@ const Filter: React.FC<FilterComponentProps> = ({
     return unListen;
   }, [location.pathname]);
 
+  useEffect(() => {
+    const hasInvalid = validateFilters(filterStates);
+    setIsApplyDisabled(hasInvalid);
+  }, [filterStates]);
+
   const handleFilterSelect = (field: string) => {
     const fieldConfig = filterMenu.find((f) => f.value === field);
     if (fieldConfig) {
@@ -203,6 +211,14 @@ const Filter: React.FC<FilterComponentProps> = ({
   };
 
   const handleApplyFilters = () => {
+    const updatedStates = { ...filterStates };
+    const hasInvalid = validateFilters(updatedStates);
+
+    if (hasInvalid) {
+      setFilterStates(updatedStates);
+      setIsApplyDisabled(true);
+      return;
+    }
     const formattedFilters = formatFilterForApi(filterStates);
     setAppliedFilters(formattedFilters);
     setCurrentPage(0);
@@ -631,12 +647,24 @@ const Filter: React.FC<FilterComponentProps> = ({
         <div className='flex justify-between items-center'>
           <h2 className='text-[16px] font-bold text-[#2D3E4F]'>Filters</h2>
           <div className='flex justify-end gap-4'>
-            <button
-              className='text-[12px] font-medium text-[#425A76] underline cursor-pointer hover:text-[#131a20]'
-              onClick={handleApplyFilters}
+            <Tooltip
+              title={
+                isApplyDisabled ? 'Fill all added filter fields to apply' : ''
+              }
+              disableHoverListener={!isApplyDisabled}
+              placement='top'
+              arrow
             >
-              Apply
-            </button>
+              <span>
+                <button
+                  onClick={handleApplyFilters}
+                  disabled={isApplyDisabled}
+                  className='text-[12px] font-medium text-[#425A76] underline cursor-pointer hover:text-[#131a20] disabled:opacity-45'
+                >
+                  Apply
+                </button>
+              </span>
+            </Tooltip>
             <button
               onClick={handleResetFilter}
               className='text-[12px] font-medium text-[#425A76] underline cursor-pointer hover:text-[#FF6666]'

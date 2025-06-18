@@ -1,6 +1,5 @@
-import { IconButton, Snackbar, Tooltip } from '@mui/material';
-import React, { useState } from 'react';
-import { copyIcon } from '../../assets';
+import React from 'react';
+import { TruncateWithTooltip } from '../truncate-with-tooltip';
 
 interface DetailItem {
   label?: string;
@@ -30,14 +29,6 @@ const DetailsSection: React.FC<{
       else rightColumn.push(item);
     });
   }
-
-  const [copiedValue, setCopiedValue] = useState<string | null>(null);
-
-  const handleCopy = (valueToCopy: string) => {
-    navigator.clipboard.writeText(valueToCopy);
-    setCopiedValue(valueToCopy);
-    setTimeout(() => setCopiedValue(null), 1500);
-  };
 
   const renderValue = (value: React.ReactNode, label?: string) => {
     if (value === 'empty') return <span></span>;
@@ -69,28 +60,7 @@ const DetailsSection: React.FC<{
       }
 
       return (
-        <Tooltip
-          title={
-            <div className='flex items-center gap-1'>
-              <span className='break-all max-w-[200px]'>{value}</span>
-              <IconButton
-                size='small'
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleCopy(value);
-                }}
-              >
-                <img src={copyIcon} alt='copy-icon' className='w-3.5 h-3.5' />
-              </IconButton>
-            </div>
-          }
-          arrow
-          placement='top-start'
-        >
-          <span className='font-medium text-[13px] text-[#425A76] truncate max-w-full inline-block'>
-            {value}
-          </span>
-        </Tooltip>
+        <span className='font-medium text-[13px] text-[#425A76]'>{value}</span>
       );
     }
 
@@ -120,7 +90,9 @@ const DetailsSection: React.FC<{
                   {item.label}
                 </div>
                 <div className='font-medium text-[13px] break-all overflow-hidden text-ellipsis whitespace-nowrap'>
-                  {renderValue(item.value)}
+                  <TruncateWithTooltip text={String(item.value)} maxWidth={900}>
+                    {renderValue(item.value)}
+                  </TruncateWithTooltip>
                 </div>
               </div>
             ))
@@ -149,8 +121,13 @@ const DetailsSection: React.FC<{
                           <div className='text-left font-semibold text-[13px] text-[#425A76] pr-1'>
                             {item.label}
                           </div>
-                          <div className='font-medium text-[13px] break-all overflow-hidden text-ellipsis whitespace-nowrap'>
-                            {renderValue(item.value, item.label)}
+                          <div className='font-medium text-[13px]'>
+                            <TruncateWithTooltip
+                              text={String(item.value)}
+                              maxWidth={isAudit ? 300 : 170}
+                            >
+                              {renderValue(item.value, item.label)}
+                            </TruncateWithTooltip>
                           </div>
                         </div>
                       )
@@ -159,11 +136,6 @@ const DetailsSection: React.FC<{
               );
             })}
       </div>
-      <Snackbar
-        open={!!copiedValue}
-        autoHideDuration={1500}
-        message='Copied to clipboard'
-      />
     </div>
   );
 };

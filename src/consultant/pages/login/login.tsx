@@ -75,6 +75,7 @@ export const Login: React.FC = () => {
         );
         const currentActiveRoute = accountNavItems.find(
           (menu) =>
+            !menu.noRedirect &&
             reShapeData.menus.find((item) => item.name === menu.id)?.is_enabled
         );
         navigate(currentActiveRoute?.link || NOT_FOUND);
