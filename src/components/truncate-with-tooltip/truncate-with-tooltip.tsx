@@ -1,5 +1,5 @@
 import { IconButton, Tooltip, TooltipProps } from '@mui/material';
-import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import React, { ReactNode, Suspense, useEffect, useRef, useState } from 'react';
 import { CopyIcon, TickIcon } from '../../assets';
 
 interface TruncateWithTooltipProps {
@@ -80,7 +80,11 @@ const TruncateWithTooltip = ({
   );
 
   return isOverflowing ? (
-    <Tooltip title={tooltipContent} arrow placement={placement}>
+    <Tooltip
+      title={<Suspense fallback={null}>{tooltipContent}</Suspense>}
+      arrow
+      placement={placement}
+    >
       <div ref={textRef} style={contentStyle} className={className}>
         {children || text}
       </div>
