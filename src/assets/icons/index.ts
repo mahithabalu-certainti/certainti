@@ -108,6 +108,7 @@ import comingSoon from './coming-soon.svg';
 import interactionsIcon from './interactions-icon.svg';
 import techSummaryIcon from './tech-summary.svg';
 import tickIcon from './tick-Icon.svg';
+import orgIcon from './org-icon.svg';
 
 export {
   accountDetailsIcon,
@@ -219,4 +220,5 @@ export {
   interactionsIcon,
   techSummaryIcon,
   tickIcon,
+  orgIcon,
 };
