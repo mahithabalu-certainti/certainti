@@ -507,6 +507,13 @@ class ResourceCostSchemaService {
         });
       }
 
+      resourceCost.forEach((rc: any) => {
+        rc.status = rc.status.toLowerCase() === "active" ? "Active" 
+        : rc.status.toLowerCase() === "anomaly" ? "Anomaly" 
+        : rc.status.toLowerCase() === "duplicate" ? "Duplicate" 
+        : "Inactive";
+      });
+
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,

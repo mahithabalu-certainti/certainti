@@ -332,6 +332,11 @@ class ResourceCostService {
         );
 
         const sequelize = await this.getOrgSequelize();
+        const mainDbSequelize = await this.getMainDbSequelize();
+        
+        // Get currency threshold
+        const currencyThreshold = await getCurrencyThreshold(mainDbSequelize, currency_rid);
+
         ResourceCost.initialize(sequelize, schemaName);
         const effectiveFrom = this.formatDateForDb(effective_from as string);
         const endDate = this.formatDateForDb(end_date as string);
@@ -365,11 +370,11 @@ class ResourceCostService {
 
         if (existingCost) {
           status = "duplicate";
-        } else if (effort_in_hrs!== undefined && Number(effort_in_hrs) > 3000) {
+        } else if (effort_in_hrs !== undefined && Number(effort_in_hrs) > 3000) {
           status = "anomaly";
         } else if (
-          (resource_cost !== undefined && Number(resource_cost) > 200000) ||
-          (salary !== undefined && Number(salary) > 200000)
+          (resource_cost !== undefined && currencyThreshold !== null && Number(resource_cost) > currencyThreshold) ||
+          (salary !== undefined && currencyThreshold !== null && Number(salary) > currencyThreshold)
         ) {
           status = "anomaly";
         }
@@ -599,6 +604,11 @@ class ResourceCostService {
           {} as Record<string, string | null>
         );
 
+        const mainDbSequelize = await this.getMainDbSequelize();
+        
+        // Get currency threshold
+        const currencyThreshold = await getCurrencyThreshold(mainDbSequelize, currency_rid);
+
         const effectiveFrom = this.formatDateForDb(effective_from as string);
         const endDate = this.formatDateForDb(end_date as string);
         // Calculate resource cost
@@ -632,8 +642,8 @@ class ResourceCostService {
         } else if (effort_in_hrs!== undefined && Number(effort_in_hrs) > 3000) {
           resourceCostStatus = "anomaly";
         } else if (
-          (resource_cost !== undefined && Number(resource_cost) > 200000) ||
-          (salary !== undefined && Number(salary) > 200000)
+          (resource_cost !== undefined && currencyThreshold !== null && Number(resource_cost) > currencyThreshold) ||
+          (salary !== undefined && currencyThreshold !== null && Number(salary) > currencyThreshold)
         ) {
           resourceCostStatus = "anomaly";
         }
@@ -1027,78 +1037,83 @@ class ResourceCostService {
     }
   }
 
-  async acceptResourceCostStatus(id: string, accountNumber: string, action: string, type: string) {
-    try {
-      let { accountNumber: accountNumberFetched } =
-        await this.schemaService.fetchAccountByNumber(accountNumber);
+async acceptResourceCostStatus(id: string, accountNumber: string, action: string, type: string) {
+  try {
+    let { accountNumber: accountNumberFetched } =
+      await this.schemaService.fetchAccountByNumber(accountNumber);
 
-      const schemaName = `platform_v2_${accountNumberFetched}`;
-      const validateSchema = await resourceCostSchemaService.validateSchema(
-        schemaName,
-        "resource_cost"
-      );
+    const schemaName = `platform_v2_${accountNumberFetched}`;
+    const validateSchema = await resourceCostSchemaService.validateSchema(
+      schemaName,
+      "resource_cost"
+    );
 
-      if (!validateSchema) {
-        return {
-          statusCode: HttpStatus.FAILED,
-          message: HttpStatus.FAILED_MESSAGE,
-          errorMessage: "Account schema does not exist",
-        };
-      }
-
-      const sequelize = await this.getOrgSequelize();
-      ResourceCost.initialize(sequelize, schemaName);
-
-      let resourceCostStatus = "active";
-
-      // Only check for anomaly conditions if handling duplicate type
-      if (type === 'duplicate') {
-        const resourceCostBy = await ResourceCost.findOne({
-          where: {
-            rid: id,
-          },
-        });
-
-        if (resourceCostBy) {
-          if (
-            resourceCostBy.effort_in_hrs &&
-            Number(resourceCostBy.effort_in_hrs) > 3000
-          ) {
-            resourceCostStatus = "anomaly";
-          } else if (resourceCostBy?.salary && resourceCostBy.salary > 200000) {
-            resourceCostStatus = "anomaly";
-          } else if (resourceCostBy?.resource_cost && resourceCostBy.resource_cost > 200000) {
-            resourceCostStatus = "anomaly";
-          }
-        }
-      }
-
-      const updateStatus = await ResourceCost.update(
-        {
-          status: action === "accept" ? resourceCostStatus : "inactive",
-        },
-        {
-          where: {
-            rid: id,
-          },
-        }
-      );
-
-      return {
-        statusCode: HttpStatus.SUCCESS,
-        message: HttpStatus.SUCCESS_MESSAGE,
-        data: {
-          updateStatus,
-        },
-      };
-    } catch (err) {
+    if (!validateSchema) {
       return {
         statusCode: HttpStatus.FAILED,
         message: HttpStatus.FAILED_MESSAGE,
-        errorMessage: (err as Error).message,
+        errorMessage: "Account schema does not exist",
       };
     }
+
+    const sequelize = await this.getOrgSequelize();
+    const mainDbSequelize = await this.getMainDbSequelize();
+    ResourceCost.initialize(sequelize, schemaName);
+
+    let resourceCostStatus = "active";
+
+    // Only check for anomaly conditions if handling duplicate type
+    if (type === 'duplicate') {
+      const resourceCostBy = await ResourceCost.findOne({
+        where: {
+          rid: id,
+        },
+      });
+
+      if (resourceCostBy) {
+        // Get currency threshold based on resource cost's currency_rid
+        const currencyThreshold = await getCurrencyThreshold(mainDbSequelize, resourceCostBy.currency_rid);
+
+        if (
+          resourceCostBy.effort_in_hrs &&
+          Number(resourceCostBy.effort_in_hrs) > 3000
+        ) {
+          resourceCostStatus = "anomaly";
+        } else if (
+          (resourceCostBy?.salary && currencyThreshold !== null && Number(resourceCostBy.salary) > currencyThreshold) ||
+          (resourceCostBy?.resource_cost && currencyThreshold !== null && Number(resourceCostBy.resource_cost) > currencyThreshold)
+        ) {
+          resourceCostStatus = "anomaly";
+        }
+      }
+    }
+
+    const updateStatus = await ResourceCost.update(
+      {
+        status: action === "accept" ? resourceCostStatus : "inactive",
+      },
+      {
+        where: {
+          rid: id,
+        },
+      }
+    );
+
+    return {
+      statusCode: HttpStatus.SUCCESS,
+      message: HttpStatus.SUCCESS_MESSAGE,
+      data: {
+        updateStatus,
+      },
+    };
+  } catch (err) {
+    return {
+      statusCode: HttpStatus.FAILED,
+      message: HttpStatus.FAILED_MESSAGE,
+      errorMessage: (err as Error).message,
+    };
   }
+}
 
   /**
    * Creates a standardized error response object for service errors.
@@ -1189,6 +1204,40 @@ class ResourceCostService {
 
     return date.toDate();
   }
+}
+
+/**
+ * Fetches the currency threshold from the currency table.
+ * Falls back to USD if currency_rid is not provided.
+ *
+ * @param mainDbSequelize - Sequelize instance for the main DB.
+ * @param currency_rid - Optional currency RID to lookup.
+ * @returns currency_threshold value or null if not found.
+ */
+async function getCurrencyThreshold(
+  mainDbSequelize: Sequelize,
+  currency_rid?: string
+): Promise<number | null> {
+  let currencyResult;
+
+  if (currency_rid) {
+    [currencyResult] = await mainDbSequelize.query(
+      `SELECT currency_threshold FROM public.currency WHERE rid = :currency_rid`,
+      {
+        replacements: { currency_rid },
+        type: "SELECT",
+      }
+    );
+  } else {
+    [currencyResult] = await mainDbSequelize.query(
+      `SELECT currency_threshold FROM public.currency WHERE currency_code = 'USD'`,
+      {
+        type: "SELECT",
+      }
+    );
+  }
+
+  return (currencyResult as any)?.currency_threshold ?? null;
 }
 
 export default ResourceCostService;
