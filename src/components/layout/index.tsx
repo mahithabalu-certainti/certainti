@@ -2,7 +2,10 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { Navbar, Sidebar } from '../';
-import { ACCOUNT, ADMIN_MANAGE_USER, MAIN_ROUTE } from '../../routes';
+import { ADMIN_MANAGE_USER, MAIN_ROUTE } from '../../routes';
+import { accountNavItems } from '../sidebar/accounts-menu';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store/store';
 
 export const AppLayout: React.FC = () => {
   const navigate = useNavigate();
@@ -12,6 +15,7 @@ export const AppLayout: React.FC = () => {
     return saved ? JSON.parse(saved) : true;
   });
   const [showAdminSidebar, setShowAdminSidebar] = useState<boolean>(false);
+  const { menus } = useSelector((state: RootState) => state.permission);
 
   useEffect(() => {
     const showAdminSidebarLocalStorage =
@@ -37,9 +41,20 @@ export const AppLayout: React.FC = () => {
   const switchSideBarMenus = () => {
     setShowAdminSidebar((prev) => !prev);
     localStorage.setItem('showAdminSidebar', JSON.stringify(!showAdminSidebar));
-    const intendedRoute = showAdminSidebar ? ACCOUNT : ADMIN_MANAGE_USER;
+    const intendedRoute = showAdminSidebar
+      ? checkConsultantRoute()?.link
+      : ADMIN_MANAGE_USER;
     navigate(intendedRoute || MAIN_ROUTE);
   };
+
+  const checkConsultantRoute = () => {
+    return accountNavItems.find(
+      (menu) =>
+        !menu.noRedirect &&
+        menus.find((item) => item.name === menu.id)?.is_enabled
+    );
+  };
+
   const handleSidebarToggle = () => {
     const newState = !sidebarExpand;
     setSidebarExpand(newState);
