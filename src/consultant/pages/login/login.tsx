@@ -17,13 +17,14 @@ import { checkPermission, reShapePermissionData } from '../../../common-utils';
 import { AllModules } from '../../../common-service';
 import { NOT_FOUND } from '../../../routes';
 import { accountNavItems } from '../../../components/sidebar/accounts-menu';
+import { InteractionStatus } from '@azure/msal-browser';
 
 /**
  * Login component handles the user authentication process.
  * It uses MSAL for authentication and navigates to the home page upon successful login.
  */
 export const Login: React.FC = () => {
-  const { instance } = useMsal();
+  const { instance, inProgress } = useMsal();
   const allAccount = instance.getAllAccounts();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const navigate = useNavigate();
@@ -33,14 +34,8 @@ export const Login: React.FC = () => {
   const t = useAppTranslation();
 
   useEffect(() => {
-    const loginInitiated = localStorage.getItem('loginInitiated');
-    if (loginInitiated) {
-      setIsLoading(true);
-    }
-  }, []);
-
-  useEffect(() => {
     if (allAccount.length > 0) {
+      setIsLoading(true);
       const getResponse = async () => {
         const { localAccountId, idToken, username, name, idTokenClaims } =
           allAccount[0];
@@ -86,7 +81,6 @@ export const Login: React.FC = () => {
 
   const handleLogin = () => {
     setIsLoading(true);
-    localStorage.setItem('loginInitiated', 'true');
     instance.loginRedirect().catch((e) => {
       localStorage.removeItem('loginInitiated');
       setIsLoading(false);
@@ -101,7 +95,12 @@ export const Login: React.FC = () => {
   return (
     <Box className='min-h-screen flex'>
       <Box className='flex-1 grid md:grid-cols-2'>
-        <LeftPane handleLogin={handleLogin} isLoading={isLoading} />
+        <LeftPane
+          handleLogin={handleLogin}
+          isLoading={
+            inProgress === InteractionStatus.HandleRedirect || isLoading
+          }
+        />
         <RightPane />
       </Box>
     </Box>

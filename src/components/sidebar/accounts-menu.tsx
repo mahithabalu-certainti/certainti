@@ -8,7 +8,7 @@ import {
   ProjectsIcon,
   SettingsIcon,
   SurveyIcon,
-  TimesheetIcon,
+  TimeLineIcon,
 } from '../../assets';
 import { MenuOption } from '../../common-service';
 import { INavItem } from '../../consultant/types';
@@ -41,7 +41,7 @@ export const accountNavItems: INavItem[] = [
   },
   {
     id: MenuOption.TIMESHEET,
-    icon: TimesheetIcon,
+    icon: TimeLineIcon,
     name: 'Timeline',
     link: NOT_FOUND,
     type: 'link',

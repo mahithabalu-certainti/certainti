@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
 import {
   ActivitiesIcon,
   AttachmentsSideIcon,
-  CaseIcon,
+  CasesIcon,
   ChecklistIcon,
   DetailsIcon,
   FinancialIcon,
@@ -77,7 +77,7 @@ const sideMenuItems: MenuItem[] = [
     key: 'cases',
     id: AllModules.PROJECT_CASES,
     disabled: false,
-    icon: CaseIcon,
+    icon: CasesIcon,
   },
   {
     name: 'Activities',
@@ -312,7 +312,7 @@ export const ProjectDetails = () => {
               <CircularProgress />
             </div>
           ) : (
-            <>{renderContent()}</>
+            <Suspense fallback={null}>{renderContent()}</Suspense>
           )}
         </div>
       </div>

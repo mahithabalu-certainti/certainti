@@ -271,11 +271,11 @@ const ListTable = <T extends RowData>({
             {/* Data rows */}
             {!loading &&
               !error &&
-              paginatedData?.map((row) => {
+              paginatedData?.map((row, i) => {
                 const rowId = getRowId(row);
                 return (
                   <TableRow
-                    key={rowId}
+                    key={i}
                     hover
                     selected={selectedRows.has(rowId)}
                     className={`${hoverHighlight ? 'group' : ''}`}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { NewFilterIcon, UserIcon, RefreshIcon } from '../../../../assets';
 import TextButton from '../../../../components/button/text-button';
 import { useNavigate } from 'react-router-dom';
@@ -208,16 +208,18 @@ export const ProfileList: React.FC = () => {
                 </div>
               ) : null}
             </button>
-            <FilterModal
-              isOpen={isFilterOpen}
-              filterAnchorEl={anchorEl}
-              filterId={filterId}
-              filterFields={getManageProfileFilterfields()}
-              setAppliedFilters={setAppliedFilters}
-              setPage={setPage}
-              handleCloseFilter={handleCloseFilter}
-              handleSorting={handleSorting}
-            />
+            <Suspense fallback={null}>
+              <FilterModal
+                isOpen={isFilterOpen}
+                filterAnchorEl={anchorEl}
+                filterId={filterId}
+                filterFields={getManageProfileFilterfields()}
+                setAppliedFilters={setAppliedFilters}
+                setPage={setPage}
+                handleCloseFilter={handleCloseFilter}
+                handleSorting={handleSorting}
+              />
+            </Suspense>
           </div>
           {isProfileExportEnable && (
             <TextButton
@@ -237,16 +239,18 @@ export const ProfileList: React.FC = () => {
 
       {/* Profile Table Section */}
       <div className='border border-[#CBD6E2]'>
-        <ProfileTable
-          appliedFilters={appliedFilters}
-          tableParams={tableParams}
-          setTableParams={setTableParams}
-          onSelectionChange={handleSelectionChange}
-          isProfileViewEnable={isProfileViewEnable}
-          isProfileEditEnable={isProfileEditEnable}
-          isProfileDeleteEnable={isProfileDeleteEnable}
-          refreshProfileTrigger={refreshProfileTrigger}
-        />
+        <Suspense fallback={null}>
+          <ProfileTable
+            appliedFilters={appliedFilters}
+            tableParams={tableParams}
+            setTableParams={setTableParams}
+            onSelectionChange={handleSelectionChange}
+            isProfileViewEnable={isProfileViewEnable}
+            isProfileEditEnable={isProfileEditEnable}
+            isProfileDeleteEnable={isProfileDeleteEnable}
+            refreshProfileTrigger={refreshProfileTrigger}
+          />
+        </Suspense>
       </div>
     </div>
   );

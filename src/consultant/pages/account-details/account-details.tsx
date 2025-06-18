@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, Suspense } from 'react';
 import {
   useLocation,
   useParams,
@@ -10,7 +10,7 @@ import {
   AccountDetailsIcon,
   ActivitiesIcon,
   AttachmentsSideIcon,
-  CaseIcon,
+  CasesIcon,
   ChecklistIcon,
   DeleteIcon,
   FinancialIcon,
@@ -18,7 +18,7 @@ import {
   NotesSideIcon,
   ProjectsSideIcon,
   ResourcesIcon,
-  TimesheetIcon,
+  TimeSheetIcon,
 } from '../../../assets';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../components';
 import { ACCOUNT } from '../../../routes';
@@ -304,7 +304,7 @@ export const AccountDetails = () => {
         key: 'cases',
         id: AllModules.CASES,
         disabled: disable,
-        icon: CaseIcon,
+        icon: CasesIcon,
       },
       {
         name: 'Activities',
@@ -339,7 +339,7 @@ export const AccountDetails = () => {
         key: 'timesheet',
         id: AllModules.TIMESHEETS,
         disabled: disable,
-        icon: TimesheetIcon,
+        icon: TimeSheetIcon,
       },
       {
         name: 'Imports',
@@ -409,7 +409,7 @@ export const AccountDetails = () => {
               <CircularProgress />
             </div>
           ) : (
-            <>{renderContent()}</>
+            <Suspense fallback={null}>{renderContent()}</Suspense>
           )}
         </div>
       </div>

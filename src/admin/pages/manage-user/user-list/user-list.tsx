@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ManageUserIcon,
@@ -236,10 +236,7 @@ const UserList: React.FC = () => {
       <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
         <div className='flex h-[33px]'>
           <div className='flex items-center justify-center'>
-            <ManageUserIcon
-              alt='manage user'
-              className='h-7 w-7 rounded'
-            />
+            <ManageUserIcon alt='manage user' className='h-7 w-7 rounded' />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>
                 Admin Permission
@@ -298,16 +295,18 @@ const UserList: React.FC = () => {
                 </div>
               ) : null}
             </button>
-            <FilterModal
-              isOpen={isFilterOpen}
-              filterAnchorEl={anchorEl}
-              filterId={filterId}
-              filterFields={userFilterfields}
-              setAppliedFilters={setAppliedFilters}
-              setPage={setPage}
-              handleCloseFilter={handleCloseFilter}
-              handleSorting={handleSorting}
-            />
+            <Suspense fallback={null}>
+              <FilterModal
+                isOpen={isFilterOpen}
+                filterAnchorEl={anchorEl}
+                filterId={filterId}
+                filterFields={userFilterfields}
+                setAppliedFilters={setAppliedFilters}
+                setPage={setPage}
+                handleCloseFilter={handleCloseFilter}
+                handleSorting={handleSorting}
+              />
+            </Suspense>
           </div>
           {userActionButtons.map((button) => {
             if (button.hide) return null;

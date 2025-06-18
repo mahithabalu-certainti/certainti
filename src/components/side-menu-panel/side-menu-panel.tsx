@@ -121,7 +121,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                   >
                     {item.icon ? (
                       <span className='flex items-center justify-center w-4 h-4'>
-                        <item.icon alt='icon' className='w-4 h-4' />
+                        <item.icon alt='icon' className='w-4 h-4 text-black' />
                       </span>
                     ) : (
                       <span className='uppercase text-[12px]'>

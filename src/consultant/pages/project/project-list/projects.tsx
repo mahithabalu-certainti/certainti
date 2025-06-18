@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useMemo, useState } from 'react';
+import React, { Suspense, useMemo, useState } from 'react';
 import {
   AccountSettingsIcon,
   ActionIcon,
@@ -191,18 +191,20 @@ export const Projects: React.FC = () => {
               </div>
             ) : null}
           </button>
-          <Filter
-            value={'allProjects'}
-            isOpen={isFilterOpen}
-            filterAnchorEl={anchorEl}
-            filterId={filterId}
-            filterMenu={projectFilterFields}
-            setAppliedFilters={setAppliedFilters}
-            handleCloseFilter={handleCloseFilter}
-            setCurrentPage={setPage}
-            mode={'date'}
-            handleSorting={handleSorting}
-          />
+          <Suspense fallback={null}>
+            <Filter
+              value={'allProjects'}
+              isOpen={isFilterOpen}
+              filterAnchorEl={anchorEl}
+              filterId={filterId}
+              filterMenu={projectFilterFields}
+              setAppliedFilters={setAppliedFilters}
+              handleCloseFilter={handleCloseFilter}
+              setCurrentPage={setPage}
+              mode={'date'}
+              handleSorting={handleSorting}
+            />
+          </Suspense>
         </div>
       </div>
 

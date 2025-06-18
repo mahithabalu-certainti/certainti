@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Box, Menu, MenuItem, Tab, Tabs } from '@mui/material';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { ResourceFilterIcon, RefreshIcon } from '../../../../assets';
 import ActionImportDropdown from '../sidebar-pages/imports/importdropdown';
 import {
@@ -334,7 +334,7 @@ const TabPanel: React.FC<TabProps> = ({
                   className='w-[24px] h-[24px] max-h-[24px] flex items-center justify-center border border-[#CBD6E2] rounded-[2px] cursor-pointer'
                   aria-describedby={filterId}
                 >
-                  <ResourceFilterIcon className='p-1' />
+                  <ResourceFilterIcon />
                   {(appliedFilters && Object.keys(appliedFilters).length > 0) ||
                   sortFilterCount > 0 ? (
                     <div className='absolute -top-[8px] -right-1.5 w-4 h-4 flex items-center justify-center text-xs'>
@@ -347,20 +347,22 @@ const TabPanel: React.FC<TabProps> = ({
                     </div>
                   ) : null}
                 </Box>
-                <Filter
-                  value={value}
-                  isOpen={isFilterOpen && showFilter}
-                  filterAnchorEl={filterAnchorEl}
-                  filterId={filterId}
-                  filterMenu={filterFields}
-                  setAppliedFilters={setAppliedFilters}
-                  handleCloseFilter={handleCloseFilter}
-                  setCurrentSkillType={setCurrentSkillType}
-                  setCurrentCountry={setCurrentCountry}
-                  setCurrentPage={setCurrentPage}
-                  mode={'date'}
-                  handleSorting={handleSorting}
-                />
+                <Suspense fallback={null}>
+                  <Filter
+                    value={value}
+                    isOpen={isFilterOpen && showFilter}
+                    filterAnchorEl={filterAnchorEl}
+                    filterId={filterId}
+                    filterMenu={filterFields}
+                    setAppliedFilters={setAppliedFilters}
+                    handleCloseFilter={handleCloseFilter}
+                    setCurrentSkillType={setCurrentSkillType}
+                    setCurrentCountry={setCurrentCountry}
+                    setCurrentPage={setCurrentPage}
+                    mode={'date'}
+                    handleSorting={handleSorting}
+                  />
+                </Suspense>
               </Box>
 
               {showRefresh && (
