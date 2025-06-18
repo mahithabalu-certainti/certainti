@@ -1,8 +1,8 @@
-import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
-import { R_NUMBER_PREFIX } from "../utils/constants";
+import { Model, DataTypes, Sequelize, Optional } from "sequelize";
+import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
 
 export interface AccountFiscalAttributes {
-  rid: number;
+  rid: string;
   r_number?: string;
   eid?: string;
   fiscal_year: number;
@@ -56,7 +56,7 @@ export class AccountFiscal
   extends Model<AccountFiscalAttributes, AccountFiscalCreationAttributes>
   implements AccountFiscalAttributes
 {
-  public rid!: number;
+  public rid!: string;
   public r_number!: string;
   public eid?: string;
   public fiscal_year!: number;
@@ -119,8 +119,8 @@ export class AccountFiscal
     const model = AccountFiscal.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: UUIDV4,
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           allowNull: false,
           primaryKey: true,
         },
@@ -130,11 +130,28 @@ export class AccountFiscal
           unique: true,
         },
         eid: {
+          type: DataTypes.STRING(120),
+          allowNull: true,
+        },
+         created_by: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        modified_by: {
           type: DataTypes.STRING(50),
           allowNull: true,
         },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+        },
         account_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         fiscal_year: {
@@ -269,23 +286,8 @@ export class AccountFiscal
           type: DataTypes.DECIMAL(18, 2),
           allowNull: true,
         },
-        created_datetime: {
-          type: DataTypes.DATE,
-          allowNull: false,
-          defaultValue: DataTypes.NOW,
-        },
-        modified_datetime: {
-          type: DataTypes.DATE,
-          defaultValue: DataTypes.NOW,
-        },
-        created_by: {
-          type: DataTypes.UUID,
-          allowNull: false,
-        },
-        modified_by: {
-          type: DataTypes.UUID,
-          allowNull: true,
-        },
+       
+       
       },
       {
         sequelize,
@@ -309,7 +311,7 @@ export async function setupAccountFiscalSequence(
     );
 
     await sequelize.query(`ALTER TABLE "${schemaName}".account_fiscal
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT} ' || LPAD(nextval('"${schemaName}".account_fiscal_seq')::text, 10, '0')`);
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT}-' || LPAD(nextval('"${schemaName}".account_fiscal_seq')::text, 10, '0')`);
 
     console.log("Project sequence setup complete");
   } catch (error) {

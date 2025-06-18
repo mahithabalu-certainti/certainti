@@ -1,6 +1,6 @@
-import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
+import { Model, DataTypes,Sequelize, Optional } from "sequelize";
 import { Resources } from "./resource";
-import { R_NUMBER_PREFIX } from "../utils/constants";
+import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
 
 interface ResourceCostAttributes {
   rid: string;
@@ -85,8 +85,8 @@ export class ResourceCost
     ResourceCost.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: UUIDV4,
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
         },
         r_number: {
@@ -95,11 +95,28 @@ export class ResourceCost
           unique:true,
         },
         eid: {
-          type: DataTypes.STRING(255),
+          type: DataTypes.STRING(120),
+          allowNull: true,
+        },
+         created_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        modified_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
           allowNull: true,
         },
         account_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         resource_type: {
@@ -107,7 +124,7 @@ export class ResourceCost
           allowNull: false,
         },
         resource_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         resource_code: {
@@ -225,7 +242,7 @@ export class ResourceCost
           allowNull: true,
         },
         currency_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         status: {
@@ -234,24 +251,6 @@ export class ResourceCost
         },
         comments: {
           type: DataTypes.TEXT,
-          allowNull: true,
-        },
-        created_datetime: {
-          type: DataTypes.DATE,
-          allowNull: true,
-          defaultValue: DataTypes.NOW,
-        },
-        modified_datetime: {
-          type: DataTypes.DATE,
-          allowNull: true,
-          defaultValue: DataTypes.NOW,
-        },
-        created_by: {
-          type: DataTypes.UUID,
-          allowNull: true,
-        },
-        modified_by: {
-          type: DataTypes.UUID,
           allowNull: true,
         },
       },
@@ -297,7 +296,7 @@ export async function setupResourceCostSeq(sequelize: Sequelize, schemaName: str
     
     // Step 2: Set the default value for r_number to use the sequence
     await sequelize.query(`ALTER TABLE "${schemaName}".resource_cost
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE_COST} ' || LPAD(nextval('"${schemaName}".resource_cost_seq')::text, 10, '0')`);
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE_COST}-' || LPAD(nextval('"${schemaName}".resource_cost_seq')::text, 10, '0')`);
     
     console.log('Resource cost sequence setup complete');
   } catch (error) {

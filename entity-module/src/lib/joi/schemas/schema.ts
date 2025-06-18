@@ -1,8 +1,6 @@
 import Decimal from "decimal.js";
 import Joi from "joi";
-
-const uuidRegex =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const uuidRegex = /^[A-Z0-9]{4}-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const decimal18_2Regex = /^\d{1,16}(\.\d{1,2})?$/;
 
 const isNotFutureDate = (value: string, helpers: Joi.CustomHelpers): any => {
@@ -184,7 +182,7 @@ const costFieldValidator = (fieldName: string) => {
 const createResourcesSchema = Joi.object({
   account_number: Joi.string().max(50).required(),
   account_id: Joi.string()
-    .guid({ version: ["uuidv4"] })
+    .pattern(uuidRegex, "valid UUID")
     .required(),
   resource_code: Joi.string()
     .pattern(/^[A-Za-z][A-Za-z0-9\-_]{2,49}$/)
@@ -263,16 +261,16 @@ const createResourcesSchema = Joi.object({
       "string.min": "Role must be at least 3 characters long",
       "string.max": "Role must not exceed 64 characters"
     }),  
-  resource_country: Joi.string()
-    .guid({ version: ["uuidv4"] })
+  country_rid: Joi.string()
+     .pattern(uuidRegex, "valid UUID")
     .optional()
     .allow("", null),
-  resource_region: Joi.string()
-    .guid({ version: ["uuidv4"] })
+  region_rid: Joi.string()
+     .pattern(uuidRegex, "valid UUID")
     .optional()
     .allow("", null),
-  resource_city: Joi.string()
-    .guid({ version: ["uuidv4"] })
+  city_rid: Joi.string()
+     .pattern(uuidRegex, "valid UUID")
     .optional()
     .allow("", null),
   effective_from_date: Joi.string()
@@ -370,14 +368,14 @@ const createResourcesSchema = Joi.object({
     }),
   resource_status: Joi.string().valid("Active", "Inactive").optional(),
   created_by: Joi.string()
-    .guid({ version: ["uuidv4"] })
+    .pattern(uuidRegex, "valid UUID")
     .optional(),
   comments: Joi.string().optional().allow("").allow(null),
 });
 
 const updateResourceSchema = Joi.object({
   resource_id: Joi.string()
-    .guid({ version: ["uuidv4"] })
+    .pattern(uuidRegex, "valid UUID")
     .required(),
   account_number: Joi.string().max(50).required(),
   resource_code: Joi.string()
@@ -457,16 +455,16 @@ const updateResourceSchema = Joi.object({
       "string.min": "Role must be at least 3 characters long",
       "string.max": "Role must not exceed 64 characters"
     }),
-  resource_country: Joi.string()
-    .guid({ version: ["uuidv4"] })
+  country_rid: Joi.string()
+    .pattern(uuidRegex, "valid UUID")
     .optional()
     .allow("", null),
-  resource_region: Joi.string()
-    .guid({ version: ["uuidv4"] })
+  region_rid: Joi.string()
+    .pattern(uuidRegex, "valid UUID")
     .optional()
     .allow("", null),
-  resource_city: Joi.string()
-    .guid({ version: ["uuidv4"] })
+  city_rid: Joi.string()
+    .pattern(uuidRegex, "valid UUID")
     .optional()
     .allow("", null),
     effective_from_date: Joi.string()
@@ -1137,13 +1135,13 @@ const resourceCostSchema = Joi.object({
 
 const createProjectSchema = Joi.object({
   account_id: Joi.string()
-    .guid({ version: ["uuidv4"] })
+    .pattern(uuidRegex, "valid UUID")
     .required(),
   project_code: Joi.string().min(5).max(50).required(),
   program_name: Joi.string().min(4).max(255).optional().allow("").allow(null),
   project_name: Joi.string().min(4).max(255).optional().allow("").allow(null),
   industry_rid: Joi.string()
-  .guid({ version: ["uuidv4"] })
+  .pattern(uuidRegex, "valid UUID")
   .optional().allow(null),
   industry_name: Joi.string().min(4).max(100).optional().allow(null).allow(""),
   project_startdate: Joi.string()
@@ -1173,7 +1171,7 @@ const createProjectSchema = Joi.object({
       "date.invalidFormat": "Invalid Project end date.",
     }),
   project_type: Joi.string().valid("Fixed", "Time & Material").required(),
-  project_classification_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow(null),
+  project_classification_rid: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow(null),
   project_classification_other: Joi.string().optional().allow(null).allow(""),
   project_client_group: Joi.string().max(255).optional().allow("").allow(null),
   project_group: Joi.string().max(255).optional().allow("").allow(null),
@@ -1184,16 +1182,16 @@ const createProjectSchema = Joi.object({
     "number.max": "Fiscal year must be a 4-digit number",
     "any.required": "Fiscal year is required",
   }),
-  country: Joi.string()
-    .guid({ version: ["uuidv4"] })
+  country_rid: Joi.string()
+    .pattern(uuidRegex, "valid UUID")
     .optional()
     .allow("", null),
-  region: Joi.string()
-    .guid({ version: ["uuidv4"] })
+  region_rid: Joi.string()
+    .pattern(uuidRegex, "valid UUID")
     .optional()
     .allow("", null),
-  currency: Joi.string()
-    .guid({ version: ["uuidv4"] })
+  currency_rid: Joi.string()
+    .pattern(uuidRegex, "valid UUID")
     .optional()
     .allow("", null),
   total_effort: Joi.string()
@@ -1412,7 +1410,7 @@ const createProjectSchema = Joi.object({
         "string.max": "Key Contact Email cannot exceed 254 characters.",
         "string.pattern.base": "Key Contact Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
       }),
-      key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow(null),
+      key_contact_role: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow(null),
       is_primary_contact: Joi.boolean().valid(true, false).optional().allow(null),
       include_in_communication: Joi.boolean().optional().allow(null),
       status: Joi.string().valid("Active", "Inactive").optional().allow(null),
@@ -1424,13 +1422,13 @@ const createProjectSchema = Joi.object({
 });
 
 const updateProjectSchema = Joi.object({
-  project_fiscal_id: Joi.string().guid({ version: ["uuidv4"] }).required(),
-  account_id: Joi.string().guid({ version: ["uuidv4"] }).required(),
+  project_fiscal_id: Joi.string().pattern(uuidRegex, "valid UUID").required(),
+  account_id: Joi.string().pattern(uuidRegex, "valid UUID").required(),
   project_code: Joi.string().min(5).max(50).required(),
   program_name: Joi.string().min(4).max(255).optional().allow("").allow(null),
   project_name: Joi.string().min(4).max(255).optional().allow("").allow(null),
   industry_rid: Joi.string()
-  .guid({ version: ["uuidv4"] })
+  .pattern(uuidRegex, "valid UUID")
   .optional().allow(null),
   industry_name: Joi.string().min(4).max(100).optional().allow(null).allow(""),
   project_startdate: Joi.string()
@@ -1458,7 +1456,7 @@ const updateProjectSchema = Joi.object({
     }),
 
   project_type: Joi.string().valid("Fixed", "Time & Material").required(),
-  project_classification_rid: Joi.string().guid({ version: ["uuidv4"] }).optional().allow(null),
+  project_classification_rid: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow(null),
   project_classification_other: Joi.string().optional().allow(null).allow(""),
   project_client_group: Joi.string().max(255).optional().allow("").allow(null),
   project_group: Joi.string().max(255).optional().allow("").allow(null),
@@ -1469,9 +1467,9 @@ const updateProjectSchema = Joi.object({
     "number.max": "Fiscal year must be a 4-digit number",
     "any.required": "Fiscal year is required",
   }),
-  country: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("", null),
-  region: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("", null),
-  currency: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("", null),
+  country_rid: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow("", null),
+  region_rid: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow("", null),
+  currency_rid: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow("", null),
   total_effort: Joi.string()
   .pattern(decimal18_2Regex)
   .messages({
@@ -1623,7 +1621,7 @@ const updateProjectSchema = Joi.object({
   })
   .optional()
   .allow(null),
-  last_rd_ai_assess_by: Joi.string().guid({ version: ["uuidv4"] }).optional().allow("", null),
+  last_rd_ai_assess_by: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow("", null),
   auto_send_ai_interaction: Joi.boolean().optional().allow(null).default(false),
   auto_access_rd: Joi.boolean().optional().allow(null).default(false),
   max_ai_interaction: Joi.number().greater(0).optional().allow(null),
@@ -1677,7 +1675,7 @@ const updateProjectSchema = Joi.object({
       Joi.object({
         action_type: Joi.string().valid('edit', "add", "delete").required(),
         rid: Joi.string()
-        .guid({ version: ["uuidv4"] })
+         .pattern(uuidRegex, "valid UUID")
         .when("action_type", {
           is: "edit",
           then: Joi.required(),
@@ -1701,7 +1699,7 @@ const updateProjectSchema = Joi.object({
           "string.max": "Key Contact Email cannot exceed 254 characters.",
           "string.pattern.base": "Key Contact Email must follow the format: localpart@domain.tld, with a valid TLD (2–63 characters)."
         }),
-        key_contact_role: Joi.string().guid({ version: ["uuidv4"] }).optional().allow(null),
+        key_contact_role: Joi.string().pattern(uuidRegex, "valid UUID").optional().allow(null),
         is_primary_contact: Joi.boolean().valid(true, false).optional().allow(null),
         include_in_communication: Joi.boolean().optional().allow(null),
         status: Joi.string().valid("Active", "Inactive").optional().allow(null)

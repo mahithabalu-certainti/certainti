@@ -163,7 +163,6 @@ export class KeyContactService {
           keyContactDetails.include_in_communication || null,
         entity_rid: project_rid,
         created_by: userId,
-        modified_by: userId,
         entity_type: "Project",
       });
     } catch (error) {

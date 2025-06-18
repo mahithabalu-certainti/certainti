@@ -225,10 +225,10 @@ class ResourceCostSchemaService {
     accountNumber: string,
     tableName?: string
   ): Promise<boolean> {
-    // Check if accountNumber already includes the platform_v2_ prefix
-    const schemaName = accountNumber.startsWith("platform_v2_")
+    // Check if accountNumber already includes the trd365_ prefix
+    const schemaName = accountNumber.startsWith("trd365_")
       ? accountNumber
-      : `platform_v2_${accountNumber}`;
+      : `trd365_${accountNumber.replace(/\D/g, '')}`;
 
     // If we're creating resource_cost, make sure resources table exists first
     if (tableName === "resource_cost") {
@@ -1082,7 +1082,7 @@ class ResourceCostSchemaService {
         if (isUuidField) {
           condition += ` AND (${tableAlias}."${key}" != '${value.not_equals}' OR ${tableAlias}."${key}" IS NULL)`;
         } else {
-          condition += ` AND (LOWER(${tableAlias}."${key}") != LOWER('${value.not_equals}') OR ${tableAlias}."${key}" IS NULL)`;
+          condition += ` AND LOWER(${tableAlias}."${key}") != LOWER('${value.not_equals}') OR ${tableAlias}."${key}" IS NULL`;
         }
       } else {
         condition += ` AND (${tableAlias}."${key}" != ${value.not_equals} OR ${tableAlias}."${key}" IS NULL)`;

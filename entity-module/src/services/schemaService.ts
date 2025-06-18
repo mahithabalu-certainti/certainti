@@ -54,7 +54,7 @@ class SchemaService {
    */
   async checkIfSchemaExists(accountNumber: string) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
 
       const result = await sequelize.query(
@@ -112,7 +112,7 @@ class SchemaService {
    */
   async createResourceTable(accountNumber: string) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
 
       const Resource = Resources.initialize(sequelize, schemaName);
@@ -203,7 +203,7 @@ class SchemaService {
     accountId: string
   ) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
       const mainDdSequilze = await initMainDbSequelize();
       let finalResources = null;
@@ -295,9 +295,9 @@ class SchemaService {
           "Resources.resource_role",
           "Resources.resource_designation",
           "Resources.resource_total_experience",
-          "Resources.resource_country",
-          "Resources.resource_region",
-          "Resources.resource_city",
+          "Resources.country_rid",
+          "Resources.region_rid",
+          "Resources.city_rid",
           "AccountDetails.rid",
           "AccountDetails.account_rid",
           "AccountDetails.account_name",
@@ -319,9 +319,9 @@ class SchemaService {
           "resource_orgname",
           "comments",
           "resource_total_experience",
-          "resource_country",
-          "resource_region",
-          "resource_city",
+          "country_rid",
+          "region_rid",
+          "city_rid",
           [Sequelize.col("AccountDetails.account_name"), "account_name"],
           [
             Sequelize.literal(
@@ -376,7 +376,7 @@ class SchemaService {
    */
   async fetchResourceById(accountNumber: string, accountId: string) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
 
       const Resource = Resources.initialize(sequelize, schemaName);
@@ -408,7 +408,7 @@ class SchemaService {
     accountNumber: string
   ) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
 
       const sequelize = await initOrgSequelize();
 
@@ -441,15 +441,14 @@ class SchemaService {
           ? moment(endDate).toDate()
           : null,
         resource_role: resourceData.role || null,
-        resource_region: resourceData.resource_region || null,
-        resource_country: resourceData.resource_country || null,
-        resource_city: resourceData.resource_city || null,
+        resource_region: resourceData.region_rid || null,
+        country_rid: resourceData.country_rid || null,
+        city_rid: resourceData.city_rid || null,
         resource_designation: resourceData.resource_designation || null,
         resource_total_experience: resourceData.total_years_experience || null,
         resource_total_experience_organization:
           resourceData.total_years_in_org || null,
         created_by: resourceData.created_by,
-        modified_by: resourceData.modified_by,
         account_rid: resourceData.account_id,
         comments: resourceData.comments || "",
       };
@@ -497,7 +496,7 @@ class SchemaService {
     accountId: string
   ) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
       const mainDdSequilze = await initMainDbSequelize();
       let finalResources = null;
@@ -587,9 +586,9 @@ class SchemaService {
           "Resources.resource_role",
           "Resources.resource_designation",
           "Resources.resource_total_experience",
-          "Resources.resource_country",
-          "Resources.resource_region",
-          "Resources.resource_city",
+          "Resources.country_rid",
+          "Resources.region_rid",
+          "Resources.city_rid",
           "AccountDetails.rid",
           "AccountDetails.account_rid",
           "AccountDetails.account_name",
@@ -611,9 +610,9 @@ class SchemaService {
           "resource_orgname",
           "comments",
           "resource_total_experience",
-          "resource_country",
-          "resource_region",
-          "resource_city",
+          "country_rid",
+          "region_rid",
+          "city_rid",
           [Sequelize.col("AccountDetails.account_name"), "account_name"],
           [
             Sequelize.literal(
@@ -662,9 +661,9 @@ class SchemaService {
           "Resources.resource_role",
           "Resources.resource_designation",
           "Resources.resource_total_experience",
-          "Resources.resource_country",
-          "Resources.resource_region",
-          "Resources.resource_city",
+          "Resources.country_rid",
+          "Resources.region_rid",
+          "Resources.city_rid",
           "AccountDetails.rid",
           "AccountDetails.account_rid",
           "AccountDetails.account_name",
@@ -728,8 +727,8 @@ class SchemaService {
         account_rid: resourceData.account_id,
         resource_type: resourceData.resource_type,
         resource_rid: resourceId,
-        country_rid: resourceData.resource_country || null,
-        country_region_rid: resourceData.resource_region || null,
+        country_rid: resourceData.country_rid || null,
+        country_region_rid: resourceData.region_rid || null,
         effective_date: moment(startDate).isValid()
           ? moment(startDate).toDate()
           : null,
@@ -760,7 +759,7 @@ class SchemaService {
         throw new Error("Resource ID and account number are required");
       }
 
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
 
       // Verify schema exists before querying
@@ -812,7 +811,7 @@ class SchemaService {
     accountId: string
   ) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
 
       const Resource = Resources.initialize(sequelize, schemaName);
@@ -855,9 +854,9 @@ class SchemaService {
         resource_role: resourceData.role || null,
         resource_type: resourceData.resource_type || "",
         resource_status: resourceData.resource_status,
-        resource_country: resourceData.resource_country || null,
-        resource_region: resourceData.resource_region || null,
-        resource_city: resourceData.resource_city || null,
+        country_rid: resourceData.country_rid || null,
+        region_rid: resourceData.region_rid || null,
+        city_rid: resourceData.city_rid || null,
         resource_startdate: moment(startDate).isValid()
           ? moment(startDate).toDate()
           : null,
@@ -926,7 +925,7 @@ class SchemaService {
     accountNumber: string
   ) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
 
       const ResourceFiscalModel = ResourceFiscal.initialize(
@@ -936,8 +935,8 @@ class SchemaService {
       await ResourceFiscalModel.update(
         {
           resource_type: resourceData.resource_type || "",
-          country_rid: resourceData.resource_country || null,
-          country_region_rid: resourceData.resource_region || null,
+          country_rid: resourceData.country_rid || null,
+          country_region_rid: resourceData.region_rid || null,
           effective_date: moment(startDate).isValid()
             ? moment(startDate).toDate()
             : null,
@@ -1036,7 +1035,7 @@ class SchemaService {
     existingResourceData: any
   ) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
       const ResourcesHistoryModel = await ResourcesHistory.initialize(
         sequelize,
@@ -1103,7 +1102,7 @@ class SchemaService {
    */
   async resourceDetails(accountNumber: string, resourceId: string) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
       const mainDbSequelize = await initMainDbSequelize();
 
@@ -1119,7 +1118,7 @@ class SchemaService {
         const [country]: any[] = await mainDbSequelize.query(
           `SELECT country_code,country_name FROM country WHERE rid = :rid`,
           {
-            replacements: { rid: resource.resource_country },
+            replacements: { rid: resource.country_rid },
             type: "SELECT",
           }
         );
@@ -1133,7 +1132,7 @@ class SchemaService {
         const [city]: any[] = await mainDbSequelize.query(
           `SELECT city_name FROM city WHERE rid = :rid`,
           {
-            replacements: { rid: resource.resource_city },
+            replacements: { rid: resource.city_rid },
             type: "SELECT",
           }
         );
@@ -1180,7 +1179,7 @@ class SchemaService {
     accountId: string
   ) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
       const ResourcesTimelineModel = await ResourcesTimeline.initialize(
         sequelize,
@@ -1193,10 +1192,7 @@ class SchemaService {
         event_status: "success",
         event_type: "ui handler",
         entity_rid: resourceId,
-        modified_by:
-          eventName === "update"
-            ? resourceData.modified_by
-            : resourceData.created_by,
+        created_by: resourceData.created_by,
       });
     } catch (err) {
       throw new Error("Error adding timeline : " + (err as Error).message);
@@ -1206,13 +1202,13 @@ class SchemaService {
   async insertGeoData(resources: any, mainDdSequilze: Sequelize) {
     try {
       const countryIds = [
-        ...new Set(resources.map((r: any) => r.resource_country)),
+        ...new Set(resources.map((r: any) => r.country_rid)),
       ].filter(Boolean);
       const regionIds = [
-        ...new Set(resources.map((r: any) => r.resource_region)),
+        ...new Set(resources.map((r: any) => r.region_rid)),
       ].filter(Boolean);
       const cityIds = [
-        ...new Set(resources.map((r: any) => r.resource_city)),
+        ...new Set(resources.map((r: any) => r.city_rid)),
       ].filter(Boolean);
 
       let countryRows: any[] = [];
@@ -1266,9 +1262,9 @@ class SchemaService {
 
       const updatedResources = resources.map((res: any) => ({
         ...res.toJSON(),
-        country_name: countryMap[res.resource_country]?.country_name || null,
-        region_name: regionMap[res.resource_region]?.state_name || null,
-        city_name: cityMap[res.resource_city]?.city_name || null,
+        country_name: countryMap[res.country_rid]?.country_name || null,
+        region_name: regionMap[res.region_rid]?.state_name || null,
+        city_name: cityMap[res.city_rid]?.city_name || null,
       }));
 
       return updatedResources;
@@ -1287,11 +1283,11 @@ class SchemaService {
         let compareValueA, compareValueB;
 
         switch (sortField) {
-          case "resource_country":
+          case "country_rid":
             compareValueA = a.country_name || null;
             compareValueB = b.country_name || null;
             break;
-          case "resource_region":
+          case "region_rid":
             compareValueA = a.region_name || null;
             compareValueB = b.region_name || null;
             break;
@@ -2093,7 +2089,6 @@ class SchemaService {
           keyContactDetails.include_in_communication || null,
         entity_rid: project_rid,
         created_by: userId,
-        modified_by: userId,
         entity_type: "Project",
       });
     } catch (error) {
@@ -2115,7 +2110,7 @@ class SchemaService {
 
   async checkIfSchemaAndTableExists(accountNumber: string) {
     try {
-      const schemaName = `platform_v2_${accountNumber}`;
+      const schemaName = `trd365_${accountNumber.replace(/\D/g, '')}`;
       const sequelize = await initOrgSequelize();
 
       const result = await sequelize.query(
@@ -2176,9 +2171,9 @@ class SchemaService {
     const fieldAliasMap: Record<string, string> = {
       r_number: `${tablePrefix}.r_number`,
       comments: `${tablePrefix}.comments`,
-      region: "st.rid",
-      currency: "curr.rid",
-      country: "cou.rid",
+      region_rid: "st.rid",
+      currency_rid: "curr.rid",
+      country_rid: "cou.rid",
       industry_name: `COALESCE(${tablePrefix}.industry_name, ind.industry_name)`,
       industry_name_other: `COALESCE(${tablePrefix}.industry_name, ind.industry_name)`,
       // modified_datetime: `modified_datetime`,
@@ -2942,9 +2937,9 @@ class SchemaService {
   ): any {
     const filterableClientFields = [
       "account_name",
-      "country",
-      "region",
-      "currency",
+      "country_rid",
+      "region_rid",
+      "currency_rid",
       "technical_point_of_contact",
       "financial_consultant",
       "project_point_of_contact",
@@ -2952,7 +2947,7 @@ class SchemaService {
       "industry_name",
     ];
 
-    const enumFields = ["country", "currency", "region", "classification_name"];
+    const enumFields = ["country_rid", "currency_rid", "region_rid", "classification_name"];
 
     let filteredProjects = [...project];
 

@@ -1,6 +1,7 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { Profile } from "./profileModel";
 import { ModulePermission } from "./modulePermissionModel";
+import { ENV_PREFIX } from "../utils/constant";
 
 interface ProfilePermissionAccessAttributes {
   rid: string;
@@ -32,21 +33,9 @@ export class ProfilePermissionAccess
     ProfilePermissionAccess.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
+          type: DataTypes.STRING(50), 
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
-        },
-        profile_id: {
-          type: DataTypes.UUID,
-          allowNull: false,
-        },
-        module_permission_id: {
-          type: DataTypes.UUID,
-          allowNull: false,
-        },
-        is_enabled: {
-          type: DataTypes.BOOLEAN,
-          allowNull: false,
         },
         created_by: DataTypes.STRING,
         modified_by: DataTypes.STRING,
@@ -57,6 +46,19 @@ export class ProfilePermissionAccess
         modified_datetime: {
           type: DataTypes.DATE,
         },
+        profile_id: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        module_permission_id: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        is_enabled: {
+          type: DataTypes.BOOLEAN,
+          allowNull: false,
+        },
+       
       },
       {
         sequelize,

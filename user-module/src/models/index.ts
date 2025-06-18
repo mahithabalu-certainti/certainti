@@ -140,7 +140,7 @@ export async function initModels() {
         model.associate(models); 
       } 
     });
-    await sequelize.sync({ force: false });
+    //await sequelize.sync({ force: false });
     await setupProfileSequence(sequelize);
     await setupUserSequence(sequelize);
   } catch (err) {

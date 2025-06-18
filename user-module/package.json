@@ -16,6 +16,7 @@
     "@azure/keyvault-secrets": "^4.9.0",
     "@microsoft/microsoft-graph-client": "^3.0.7",
     "cors": "^2.8.5",
+    "cross-fetch": "^4.1.0",
     "dayjs": "^1.11.13",
     "dotenv": "^16.4.7",
     "exceljs": "^4.4.0",

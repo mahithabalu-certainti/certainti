@@ -1,8 +1,8 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { Project } from "./project";
-import { R_NUMBER_PREFIX } from "../utils/constants";
+import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
 interface ClassificationAttributes {
-  rid: string; // UUID
+  rid: string;
   r_number?: string;
   eid?: number;
   classification_name: string;
@@ -41,31 +41,10 @@ export class Classification
     Classification.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: DataTypes.UUIDV4,
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
           allowNull: false,
-        },
-        r_number: {
-          type: DataTypes.STRING,
-          allowNull: true,
-          unique: true,
-        },
-        eid: {
-          type: DataTypes.INTEGER,
-          allowNull: true,
-        },
-        classification_name: {
-          type: DataTypes.STRING,
-          allowNull: false,
-        },
-        classification_description: {
-          type: DataTypes.STRING,
-          allowNull: true,
-        },
-        classification_status: {
-          type: DataTypes.STRING,
-          allowNull: true,
         },
         created_by: {
           type: DataTypes.STRING,
@@ -82,9 +61,21 @@ export class Classification
         },
         modified_datetime: {
           type: DataTypes.DATE,
-          allowNull: true,
-          defaultValue: null,
+          allowNull: true
         },
+        classification_name: {
+          type: DataTypes.STRING,
+          allowNull: false,
+        },
+        classification_description: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+        classification_status: {
+          type: DataTypes.STRING,
+          allowNull: true,
+        },
+        
       },
       {
         sequelize,
@@ -96,19 +87,3 @@ export class Classification
   }
 }
 
-export async function setupClassificationSequence(sequelize: Sequelize) {
-  try {
-    // Step 1: Create the sequence if it doesn't exist
-    await sequelize.query('CREATE SEQUENCE IF NOT EXISTS classification_seq START 1');
-    
-    // Step 2: Set the default value for r_number to use the sequence
-    await sequelize.query(`ALTER TABLE project_classification
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.CLASSIFICATION} ' || LPAD(nextval('classification_seq')::text, 10, '0')`);
-    
-    console.log('Classification sequence setup complete');
-  } catch (error) {
-    console.error('Error setting up Classification sequence:', error);
-    // Don't throw the error to allow the application to continue starting up
-    // The sequence setup can be handled separately if needed
-  }
-}

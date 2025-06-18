@@ -80,7 +80,7 @@ class ResourceCostService {
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
       // Check if account-specific schema exists
-      const schemaName = `platform_v2_${accountNumberFetched}`;
+      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
       const tableName = "resource_cost";
       const schemaAndTableValidation =
         await resourceCostSchemaService.validateSchema(
@@ -168,7 +168,7 @@ class ResourceCostService {
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
       // Check if account-specific schema exists
-      const schemaName = `platform_v2_${accountNumberFetched}`;
+      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
       const tableName = "resource_cost";
       const schemaAndTableValidation =
         await resourceCostSchemaService.validateSchema(
@@ -274,8 +274,8 @@ class ResourceCostService {
       } = resourceCost;
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
-      const schemaName = `platform_v2_${accountNumberFetched}`;
-
+      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
+      
       const [resourceCostTableCreated, timelineTableCreated] =
         await Promise.all([
           resourceCostSchemaService.validateSchema(schemaName, "resource_cost"),
@@ -393,8 +393,7 @@ class ResourceCostService {
           comments,
           status,
           created_datetime: new Date(),
-          created_by: userId,
-          modified_by: userId,
+          created_by: userId
         });
 
         if (resource_rid) {
@@ -480,8 +479,8 @@ class ResourceCostService {
         event_name: eventName,
         event_status: eventStatus,
         entity_rid: resourceCost.rid || "",
-        modified_datetime: new Date(),
-        modified_by: modifiedBy,
+        created_datetime: new Date(),
+        created_by: modifiedBy
       });
     } catch (error) {
       console.error("Failed to create timeline entry:", error);
@@ -536,7 +535,7 @@ class ResourceCostService {
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
 
-      const schemaName = `platform_v2_${accountNumberFetched}`;
+      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
       const tableName = "resource_cost_timeline";
       const schemaAndTableValidation =
         await resourceCostSchemaService.validateSchema(schemaName, tableName);
@@ -766,7 +765,7 @@ class ResourceCostService {
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
       // Make sure we're in the right schema context
-      const schemaName = `platform_v2_${accountNumberFetched}`;
+      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
       const tableExists = await resourceCostSchemaService.validateSchema(
         schemaName,
         "resource_cost_history"
@@ -842,8 +841,8 @@ class ResourceCostService {
                 formattedNewValue !== undefined
                   ? String(formattedNewValue)
                   : "",
-              modified_by: modifiedBy,
-              modified_datetime: new Date(),
+              created_by: modifiedBy,
+              created_datetime: new Date(),
             });
           }
         } catch (attrError) {
@@ -872,7 +871,7 @@ class ResourceCostService {
     try {
       let { accountNumber: accountNumberFetched, accountId } =
         await this.schemaService.fetchAccountByNumber(accountNumber);
-      const schemaName = `platform_v2_${accountNumberFetched}`;
+      const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
       const validateSchema = await resourceCostSchemaService.validateSchema(
         schemaName,
         "resource_cost"

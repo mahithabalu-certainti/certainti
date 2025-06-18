@@ -1,5 +1,5 @@
-import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
-import { R_NUMBER_PREFIX } from "../utils/constants";
+import { Model, DataTypes, Sequelize, Optional } from "sequelize";
+import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
 export interface ProjectSummaryAttributes {
   rid?: string;
   r_number?: string;
@@ -129,8 +129,8 @@ export class ProjectSummary
     ProjectSummary.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: UUIDV4,
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           primaryKey: true,
         },
         r_number: {
@@ -142,6 +142,14 @@ export class ProjectSummary
           type: DataTypes.STRING(120),
           allowNull: true,
         },
+        created_by: {
+          type: DataTypes.STRING(50),
+          allowNull: false,
+        },
+        modified_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
         created_datetime: {
           type: DataTypes.DATE,
           allowNull: false,
@@ -149,24 +157,16 @@ export class ProjectSummary
         modified_datetime: {
           type: DataTypes.DATE,
         },
-        created_by: {
-          type: DataTypes.UUID,
-          allowNull: false,
-        },
-        modified_by: {
-          type: DataTypes.UUID,
-          allowNull: true,
-        },
         project_code: {
           type: DataTypes.STRING(120),
           allowNull: false,
         },
         project_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         account_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         program_name: {
@@ -184,7 +184,7 @@ export class ProjectSummary
           allowNull: false,
         },
         project_classification_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         project_classification_other: {
@@ -204,7 +204,7 @@ export class ProjectSummary
           allowNull: false,
         },
         industry_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         industry_name: {
@@ -224,15 +224,15 @@ export class ProjectSummary
           allowNull: true,
         },
         country_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         region_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         currency_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         total_fte: DataTypes.INTEGER,
@@ -284,7 +284,7 @@ export async function setupProjectSummarySequence(sequelize: Sequelize) {
     );
 
     await sequelize.query(`ALTER TABLE project_summary
-        ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT_SUMMARY} ' || LPAD(nextval('project_summary_seq')::text, 10, '0')`);
+        ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.PROJECT_SUMMARY}-' || LPAD(nextval('project_summary_seq')::text, 10, '0')`);
 
     console.log("Project summary sequence setup complete");
   } catch (error) {

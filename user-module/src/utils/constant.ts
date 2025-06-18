@@ -33,3 +33,6 @@ export const R_NUMBER_PREFIX = {
   USER: 'UID',
   PROFILE: 'PRF',
 }
+
+
+export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || 'D001-';

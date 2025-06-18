@@ -60,21 +60,7 @@ const checkUserStatusMiddleware = (permissionName?: string) => {
             return;
         }
   
-        if (permissionName  && permissionName !== "NA") {
-          const hasPermission = await checkUserAPIPermission(
-            user.rid,
-            user.profile_rid,
-            permissionName,
-            req.originalUrl
-          );
-          if (!hasPermission) {
-            res.status(HttpStatus.FORBIDDEN).json({
-              error: HttpStatus.FORBIDDEN_MESSAGE,
-              message: "Access Restricted. Contact administrator to gain access"
-            });
-            return;
-          }
-        }
+    
         // const accountrid = req.headers['x-account-id'] as string;
         // if (!accountrid) {
         //   res.status(HttpStatus.BAD_REQUEST).json({

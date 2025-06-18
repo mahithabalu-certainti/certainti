@@ -28,7 +28,7 @@ export const constants = {
   SELECT: 'SELECT',
   INSERT: 'INSERT'
 }
-
+export const ENV_PREFIX = process.env.NODE_ENV_DB_PREFIX || 'D001-';
 export const R_NUMBER_PREFIX = {
   PROJECT: 'PRJ',
   PROJECT_FISCAL: 'PFI',

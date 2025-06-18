@@ -1,5 +1,5 @@
-import { Model, DataTypes, UUIDV4, Sequelize, Optional } from "sequelize";
-import { R_NUMBER_PREFIX } from "../utils/constants";
+import { Model, DataTypes, Sequelize, Optional } from "sequelize";
+import { ENV_PREFIX, R_NUMBER_PREFIX } from "../utils/constants";
 
 export interface ResourcesAttributes {
   rid?: string;
@@ -13,9 +13,9 @@ export interface ResourcesAttributes {
   resource_lastname?: string | null;
   resource_orgname?: string | null;
   resource_role?: string | null;
-  resource_country?: string | null;
-  resource_region?: string | null;
-  resource_city?: string | null;
+  country_rid?: string | null;
+  region_rid?: string | null;
+  city_rid?: string | null;
   resource_startdate?: Date | null;
   resource_enddate?: Date | null;
   resource_designation?: string | null;
@@ -46,9 +46,9 @@ export class Resources
   public resource_lastname?: string | null;
   public resource_orgname?: string;
   public resource_role?: string | null;
-  public resource_country?: string | null;
-  public resource_region?: string | null;
-  public resource_city?: string | null;
+  public country_rid?: string | null;
+  public region_rid?: string | null;
+  public city_rid?: string | null;
   public resource_startdate?: Date;
   public resource_enddate?: Date;
   public resource_designation?: string | null;
@@ -66,8 +66,8 @@ export class Resources
     Resources.init(
       {
         rid: {
-          type: DataTypes.UUID,
-          defaultValue: UUIDV4,
+          type: DataTypes.STRING(50),
+          defaultValue: Sequelize.literal(`'${ENV_PREFIX}' || gen_random_uuid()`),
           allowNull: false,
           primaryKey: true,
         },
@@ -77,11 +77,28 @@ export class Resources
           unique: true,
         },
         eid: {
+          type: DataTypes.STRING(120),
+          allowNull: true,
+        },
+         created_by: {
           type: DataTypes.STRING(50),
           allowNull: true,
         },
+        modified_by: {
+          type: DataTypes.STRING(50),
+          allowNull: true,
+        },
+        created_datetime: {
+          type: DataTypes.DATE,
+          allowNull: false,
+          defaultValue: DataTypes.NOW,
+        },
+        modified_datetime: {
+          type: DataTypes.DATE,
+          allowNull: true
+        },
         account_rid: {
-          type: DataTypes.UUID,
+          type: DataTypes.STRING(50),
           allowNull: false,
         },
         resource_code: {
@@ -128,16 +145,16 @@ export class Resources
           },
           allowNull: true,
         },
-        resource_country: {
-          type: DataTypes.UUID,
+        country_rid: {
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
-        resource_region: {
-          type: DataTypes.UUID,
+        region_rid: {
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
-        resource_city: {
-          type: DataTypes.UUID,
+        city_rid: {
+          type: DataTypes.STRING(50),
           allowNull: true,
         },
         resource_startdate: {
@@ -171,24 +188,6 @@ export class Resources
         },
         resource_status: {
           type: DataTypes.ENUM("Active", "Inactive"),
-          allowNull: true,
-        },
-        created_datetime: {
-          type: DataTypes.DATE,
-          allowNull: false,
-          defaultValue: DataTypes.NOW,
-        },
-        modified_datetime: {
-          type: DataTypes.DATE,
-          allowNull: false,
-          defaultValue: DataTypes.NOW,
-        },
-        created_by: {
-          type: DataTypes.UUID,
-          allowNull: true,
-        },
-        modified_by: {
-          type: DataTypes.UUID,
           allowNull: true,
         },
         comments: {
@@ -234,7 +233,7 @@ export async function setupResourceSeq(sequelize: Sequelize, schemaName: string)
     // Step 2: Set the default value for r_number to use the sequence
     await sequelize.query(`
       ALTER TABLE "${schemaName}".resources
-      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE} ' || LPAD(nextval('"${schemaName}".resources_seq')::text, 10, '0');
+      ALTER COLUMN r_number SET DEFAULT '${R_NUMBER_PREFIX.RESOURCE}-' || LPAD(nextval('"${schemaName}".resources_seq')::text, 10, '0');
     `);
 
     console.log('Resource sequence setup complete');
