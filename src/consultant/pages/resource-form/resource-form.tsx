@@ -82,6 +82,14 @@ const ResourceForm: React.FC = () => {
     resource_lastname: '',
   });
   const [disableOrgname, setDisableOrgname] = useState<string>('');
+  const [, setResourceFinancials] = useState({
+    salary: '',
+    bonus: '',
+    insurance: '',
+    resource_cost: '',
+    deductions: '',
+  });
+  const [autoCalculatedValue, setAutoCalculatedValue] = useState<number>(0);
   // Derived values
   const isEditView = location.pathname.includes('/edit');
   const accountData = isEditView
@@ -109,7 +117,29 @@ const ResourceForm: React.FC = () => {
       accountNumber: accountNumber,
       id: state?.costInfo?.costRid,
     });
+  const [isSalaryRequired, setIsSalaryRequired] = useState(true);
+  const calculateAutoValue = ({
+    salary = '0',
+    bonus = '0',
+    insurance = '0',
+    resource_cost = '0',
+    deductions = '0',
+  }: {
+    salary?: string;
+    bonus?: string;
+    insurance?: string;
+    resource_cost?: string;
+    deductions?: string;
+  }) => {
+    const s = parseFloat(salary) || 0;
+    const b = parseFloat(bonus) || 0;
+    const i = parseFloat(insurance) || 0;
+    const r = parseFloat(resource_cost) || 0;
+    const d = parseFloat(deductions) || 0;
+    return s + b + i + r - d;
+  };
 
+  const isresourceType = resourceDetails?.resource_type === 'Full-Time';
   const costInfo =
     (costDetails as { resourceCostById?: Record<string, any> })
       ?.resourceCostById || {};
@@ -185,23 +215,37 @@ const ResourceForm: React.FC = () => {
 
   useEffect(() => {
     const formValues = resource?.data?.resourceDetails;
+
     if (state?.cost && isSuccess && costInfo && costSuccess && isEditView) {
       const costValues = {
         ...formValues,
-        financial_start_date: costInfo?.effective_date || '',
+        financial_start_date: costInfo?.effective_from || '',
         financial_end_date: costInfo?.end_date || '',
         effort_in_hrs: costInfo?.effort_in_hrs || '',
         currency: costInfo?.currency_rid || null,
-        annual_cost: costInfo?.annual_cost || '',
-        monthly_cost: costInfo?.monthly_cost || '',
-        weekly_cost: costInfo?.weekly_cost || '',
-        bi_weekly_cost: costInfo?.bi_weekly_cost || '',
-        daily_cost: costInfo?.daily_cost || '',
-        hourly_cost: costInfo?.hourly_cost || '',
+        salary: costInfo?.salary || '',
+        bonus: costInfo?.bonus || '',
+        insurance: costInfo?.insurance || '',
+        deductions: costInfo?.deductions || '',
+        resource_cost: costInfo?.resource_cost || '',
+        resource_status: costInfo?.status || '',
         fiscal_year: costInfo?.fiscal_year || '',
         comments: costInfo?.comments || '',
       };
       setFormValues(costValues);
+      // Update resource financials state
+      const financials = {
+        salary: costInfo?.salary || '',
+        bonus: costInfo?.bonus || '',
+        insurance: costInfo?.insurance || '',
+        resource_cost: costInfo?.resource_cost || '',
+        deductions: costInfo?.deductions || '',
+      };
+      setResourceFinancials(financials);
+
+      // Calculate and set auto value
+      const total = calculateAutoValue(financials);
+      setAutoCalculatedValue(total);
     } else if (state?.skill && isSuccess && skillInfo && isEditView) {
       const skillValues = {
         ...formValues,
@@ -223,10 +267,13 @@ const ResourceForm: React.FC = () => {
       };
       setFormValues(values);
     } else if (formValues && !isEditView) {
-      // Set form values with resource details when creataing cost and skill
       setFormValues(formValues);
     }
   }, [state, costDetails, resource]);
+
+  // useEffect(() => {
+  //   setAutoCalculatedValue(calculateAutoValue(resourceFinancials));
+  // }, [resourceFinancials]);
 
   const countryId = resource?.data?.resourceDetails.resource_country;
   const stateId = resource?.data?.resourceDetails.resource_region;
@@ -376,7 +423,7 @@ const ResourceForm: React.FC = () => {
         ...formValues,
         accountNumber: state?.data?.accountById?.r_number,
         account_rid: state?.data?.accountById?.rid,
-        resource_rid: resourceId,
+        resource_rid: resource?.data.resourceDetails.rid,
         resource_number: resource?.data.resourceDetails.r_number,
         cost_rid: state?.costInfo?.costRid,
         resource_code: resource?.data.resourceDetails.resource_code,
@@ -443,7 +490,6 @@ const ResourceForm: React.FC = () => {
       replace: true,
     });
   };
-
   const onChangeField = ({ fieldName, fieldValue }: OnChange) => {
     if (fieldName === 'country') {
       setCurrentCountry({
@@ -497,6 +543,38 @@ const ResourceForm: React.FC = () => {
     if (fieldName === 'resource_type') {
       setDisableOrgname(String(fieldValue));
     }
+    if (
+      ['salary', 'bonus', 'insurance', 'resource_cost', 'deductions'].includes(
+        fieldName
+      )
+    ) {
+      setResourceFinancials((prev) => {
+        const updated = {
+          ...prev,
+          [fieldName]: fieldValue as string,
+        };
+
+        const salary = parseFloat(updated.salary) || 0;
+        const bonus = parseFloat(updated.bonus) || 0;
+        const insurance = parseFloat(updated.insurance) || 0;
+        const resourceCost = parseFloat(updated.resource_cost) || 0;
+        const deductions = parseFloat(updated.deductions) || 0;
+
+        const total = salary + bonus + insurance + resourceCost - deductions;
+        setAutoCalculatedValue(total);
+
+        return updated;
+      });
+
+      // Salary-specific validation
+      if (
+        fieldName === 'salary' &&
+        resourceDetails?.resource_type === 'Full-Time'
+      ) {
+        const salaryValue = (fieldValue as string).trim();
+        setIsSalaryRequired(salaryValue === '');
+      }
+    }
   };
 
   //disable orgname in the formdata if the user select resource type as full-time
@@ -524,7 +602,10 @@ const ResourceForm: React.FC = () => {
     state?.resourceCreate,
     isResourceFullNameEmpty,
     isAnyResourceNameFilled,
-    currentResource
+    isresourceType,
+    isSalaryRequired,
+    currentResource,
+    autoCalculatedValue
   );
 
   return (

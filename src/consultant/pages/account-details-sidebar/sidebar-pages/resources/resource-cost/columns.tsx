@@ -1,4 +1,4 @@
-import { costDisplay } from '../../../../../../common-utils';
+import { costDisplay, valueDisplay } from '../../../../../../common-utils';
 import { ResourceCostList } from '../../../../../types/resource-cost';
 import { dateFormatToYYYYMMDD } from '../utils';
 
@@ -24,11 +24,11 @@ export interface ResourceCostTableColumn<T> {
 export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
   [
     {
-      id: 'resource_code',
-      sortId: 'resource_code',
-      label: 'Resource Code',
+      id: 'account_name',
+      sortId: 'account_name',
+      label: 'Account Name',
       width: 130,
-      sortable: true,
+      sortable: false,
 
       sticky: true,
       sx: {
@@ -39,6 +39,12 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
         borderRight: '1px solid #CBD6E2 !important',
         borderBottom: '1px solid #CBD6E2 !important',
       },
+    },
+    {
+      id: 'resource_code',
+      sortId: 'resource_code',
+      label: 'Resource Code',
+      width: 130,
     },
     {
       id: 'fiscal_year',
@@ -62,17 +68,17 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       sortId: 'resource_type',
       label: 'Resource Type',
       width: 130,
-      sortable: true,
+      sortable: false,
     },
     {
-      id: 'effective_date',
-      sortId: 'effective_date',
+      id: 'effective_from',
+      sortId: 'effective_from',
       label: 'Effective From',
       width: 130,
       sortable: true,
 
       render: (row: ResourceCostList) => (
-        <span>{dateFormatToYYYYMMDD(row.effective_date as string) || '-'}</span>
+        <span>{dateFormatToYYYYMMDD(row.effective_from as string) || '-'}</span>
       ),
     },
     {
@@ -94,81 +100,81 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       sortable: true,
     },
     {
-      id: 'annual_cost',
-      sortId: 'annual_cost',
-      label: 'Annual Compensation',
+      id: 'effort_in_hrs',
+      sortId: 'effort_in_hrs',
+      label: 'Effort in Hrs',
       width: 180,
       sortable: true,
       sx: {
         textAlign: 'right',
       },
       render: (row: ResourceCostList) => (
-        <span>{costDisplay(row.annual_cost, row.currency_symbol)}</span>
+        <span>{valueDisplay(row.effort_in_hrs)}</span>
       ),
     },
     {
-      id: 'monthly_cost',
-      sortId: 'monthly_cost',
-      label: 'Monthly Compensation',
+      id: 'salary',
+      sortId: 'salary',
+      label: 'Salary',
       width: 180,
       sortable: true,
       sx: {
         textAlign: 'right',
       },
       render: (row: ResourceCostList) => (
-        <span>{costDisplay(row.monthly_cost, row.currency_symbol)}</span>
+        <span>{costDisplay(row.salary, row.currency_symbol)}</span>
       ),
     },
     {
-      id: 'bi_weekly_cost',
-      sortId: 'bi_weekly_cost',
-      label: 'Bi-Weekly Compensation',
+      id: 'bonus',
+      sortId: 'bonus',
+      label: 'Bonus',
       width: 200,
       sortable: true,
       sx: {
         textAlign: 'right',
       },
       render: (row: ResourceCostList) => (
-        <span>{costDisplay(row.bi_weekly_cost, row.currency_symbol)}</span>
+        <span>{costDisplay(row.bonus, row.currency_symbol)}</span>
       ),
     },
     {
-      id: 'weekly_cost',
-      sortId: 'weekly_cost',
-      label: 'Weekly Compensation',
+      id: 'insurance',
+      sortId: 'insurance',
+      label: 'Insurance',
       width: 180,
       sortable: true,
       sx: {
         textAlign: 'right',
       },
       render: (row: ResourceCostList) => (
-        <span>{costDisplay(row.weekly_cost, row.currency_symbol)}</span>
+        <span>{costDisplay(row.insurance, row.currency_symbol)}</span>
       ),
     },
     {
-      id: 'daily_cost',
-      sortId: 'daily_cost',
-      label: 'Daily Compensation',
+      id: 'deductions',
+      sortId: 'deductions',
+      label: 'Deductions',
       width: 160,
       sortable: true,
       sx: {
         textAlign: 'right',
       },
       render: (row: ResourceCostList) => (
-        <span>{costDisplay(row.daily_cost, row.currency_symbol)}</span>
+        <span>{costDisplay(row.deductions, row.currency_symbol)}</span>
       ),
     },
     {
-      id: 'hourly_cost',
-      sortId: 'hourly_cost',
-      label: 'Hourly Compensation',
+      id: 'resource_cost',
+      sortId: 'resource_cost',
+      label: 'Cost',
       width: 180,
       sortable: true,
       sx: {
         textAlign: 'right',
       },
       render: (row: ResourceCostList) => (
-        <span>{costDisplay(row.hourly_cost, row.currency_symbol)}</span>
+        <span>{costDisplay(row.resource_cost, row.currency_symbol)}</span>
       ),
     },
     {
@@ -176,26 +182,33 @@ export const resourceCostColumns: ResourceCostTableColumn<ResourceCostList>[] =
       sortId: 'resource_orgname',
       label: 'Org Name',
       width: 130,
-      sortable: true,
+      sortable: false,
     },
     {
       id: 'resource_designation',
       sortId: 'resource_designation',
       label: 'Designation',
       width: 130,
-      sortable: true,
+      sortable: false,
     },
     {
       id: 'resource_role',
       sortId: 'resource_role',
       label: 'Role',
       width: 130,
-      sortable: true,
+      sortable: false,
     },
     {
       id: 'comments',
       sortId: 'comments',
       label: 'Comments',
+      width: 130,
+      sortable: true,
+    },
+    {
+      id: 'status',
+      sortId: 'status',
+      label: 'Status',
       width: 130,
       sortable: true,
     },
