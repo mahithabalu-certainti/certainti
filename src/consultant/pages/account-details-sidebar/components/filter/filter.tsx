@@ -7,6 +7,7 @@ import {
   Select,
   SelectChangeEvent,
   Tooltip,
+  Switch,
 } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
 import { arrowIcon, checkedIcon, closeIcon } from '../../../../../assets';
@@ -62,6 +63,8 @@ const Filter: React.FC<FilterComponentProps> = ({
   setCurrentCountry,
   handleSorting,
   mode,
+  toggleEnabled,
+  setToggleEnabled,
 }) => {
   const location = useLocation();
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
@@ -619,6 +622,13 @@ const Filter: React.FC<FilterComponentProps> = ({
         return null;
     }
   };
+
+  const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (setToggleEnabled) {
+      setToggleEnabled(event.target.checked);
+    }
+  };
+
   return (
     <Popover
       id={filterId}
@@ -679,67 +689,82 @@ const Filter: React.FC<FilterComponentProps> = ({
             <h3 className='text-[13px] font-bold text-[#425A76] mb-2'>
               System Define filters
             </h3>
-            <div className='flex gap-2 flex-wrap'>
-              {/* Render system filters */}
-              {systemFilters
-                .filter((filter) => filter.type === 'system')
-                .flatMap((systemFilter) =>
-                  systemFilter.options?.map((field: any) => (
-                    <button
-                      key={field.value}
-                      className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${
-                        selectedSystemFilters.includes(field.value)
-                          ? 'bg-[#E6F9EA] border-[#34C759] text-[#0F5132]'
-                          : 'border-[#CBD6E2] text-[#425A76] hover:bg-gray-50'
-                      }`}
-                      onClick={() =>
-                        handleSystemFilter('system_filter', field.value)
-                      }
-                    >
-                      <img
-                        src={checkedIcon}
-                        alt='checked-icon'
-                        className='w-3 h-3 mt-[0.3px]'
-                        style={{
-                          filter: selectedSystemFilters.includes(field.value)
-                            ? 'invert(56%) sepia(96%) saturate(676%) hue-rotate(80deg) brightness(95%) contrast(101%)'
-                            : 'none',
-                        }}
-                      />
-                      {field.option}
-                    </button>
-                  ))
-                )}
-
-              {/* Render sort options */}
-              {systemFilters
-                .filter((filter) => filter.type === 'system-sort')
-                .flatMap((sortFilter) =>
-                  sortFilter.options?.map((field: any) => (
-                    <button
-                      key={field.value}
-                      className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${
-                        currentSort === field.value
-                          ? 'bg-[#E6F9EA] border-[#34C759] text-[#0F5132]'
-                          : 'border-[#CBD6E2] text-[#425A76] hover:bg-gray-50'
-                      }`}
-                      onClick={() => handleSortingSelection(field.value)}
-                    >
-                      <img
-                        src={checkedIcon}
-                        alt='checked-icon'
-                        className='w-3 h-3 mt-[0.3px]'
-                        style={{
-                          filter:
-                            currentSort === field.value
+            <div className='flex justify-between gap-2 flex-wrap'>
+              <div className='flex gap-2 flex-wrap'>
+                {/* Render system filters */}
+                {systemFilters
+                  .filter((filter) => filter.type === 'system')
+                  .flatMap((systemFilter) =>
+                    systemFilter.options?.map((field: any) => (
+                      <button
+                        key={field.value}
+                        className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${
+                          selectedSystemFilters.includes(field.value)
+                            ? 'bg-[#E6F9EA] border-[#34C759] text-[#0F5132]'
+                            : 'border-[#CBD6E2] text-[#425A76] hover:bg-gray-50'
+                        }`}
+                        onClick={() =>
+                          handleSystemFilter('system_filter', field.value)
+                        }
+                      >
+                        <img
+                          src={checkedIcon}
+                          alt='checked-icon'
+                          className='w-3 h-3 mt-[0.3px]'
+                          style={{
+                            filter: selectedSystemFilters.includes(field.value)
                               ? 'invert(56%) sepia(96%) saturate(676%) hue-rotate(80deg) brightness(95%) contrast(101%)'
                               : 'none',
-                        }}
-                      />
-                      {field.option}
-                    </button>
-                  ))
-                )}
+                          }}
+                        />
+                        {field.option}
+                      </button>
+                    ))
+                  )}
+
+                {/* Render sort options */}
+                {systemFilters
+                  .filter((filter) => filter.type === 'system-sort')
+                  .flatMap((sortFilter) =>
+                    sortFilter.options?.map((field: any) => (
+                      <button
+                        key={field.value}
+                        className={`border rounded-full px-1.5 h-[24px] text-[12px] font-normal flex items-center gap-0.5 cursor-pointer ${
+                          currentSort === field.value
+                            ? 'bg-[#E6F9EA] border-[#34C759] text-[#0F5132]'
+                            : 'border-[#CBD6E2] text-[#425A76] hover:bg-gray-50'
+                        }`}
+                        onClick={() => handleSortingSelection(field.value)}
+                      >
+                        <img
+                          src={checkedIcon}
+                          alt='checked-icon'
+                          className='w-3 h-3 mt-[0.3px]'
+                          style={{
+                            filter:
+                              currentSort === field.value
+                                ? 'invert(56%) sepia(96%) saturate(676%) hue-rotate(80deg) brightness(95%) contrast(101%)'
+                                : 'none',
+                          }}
+                        />
+                        {field.option}
+                      </button>
+                    ))
+                  )}
+              </div>
+              <div>
+                <div className='flex items-center gap-2'>
+                  <span className='text-sm text-gray-700'>
+                    Include Aggregation
+                  </span>
+                  <Switch
+                    checked={toggleEnabled}
+                    onChange={handleToggleChange}
+                    size='small'
+                    color='success'
+                  />
+                </div>
+              </div>
             </div>
           </div>
         )}

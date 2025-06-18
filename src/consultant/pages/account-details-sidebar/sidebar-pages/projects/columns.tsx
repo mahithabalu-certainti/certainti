@@ -134,45 +134,45 @@ export const getProjectColumns = (
       row.total_cost ? costDisplay(row.total_cost, row.currency_symbol) : '-',
   },
   {
-    id: 'total_fte_cost',
+    id: 'total_cost_fte',
     label: 'FTE Cost',
     sortable: true,
-    sortId: 'total_fte_cost',
+    sortId: 'total_cost_fte',
     width: 140,
     sx: {
       textAlign: 'right',
     },
     render: (row: ProjectList) =>
-      row.total_fte_cost
-        ? costDisplay(row.total_fte_cost, row.currency_symbol)
+      row.total_cost_fte
+        ? costDisplay(row.total_cost_fte, row.currency_symbol)
         : '-',
   },
   {
-    id: 'total_sub_con_cost',
+    id: 'total_cost_subcon',
     label: 'SubCon Cost',
     sortable: true,
-    sortId: 'total_sub_con_cost',
+    sortId: 'total_cost_subcon',
     width: 140,
     sx: {
       textAlign: 'right',
     },
     render: (row: ProjectList) =>
-      row.total_sub_con_cost
-        ? costDisplay(row.total_sub_con_cost, row.currency_symbol)
+      row.total_cost_subcon
+        ? costDisplay(row.total_cost_subcon, row.currency_symbol)
         : '-',
   },
   {
-    id: 'total_non_labor_cost',
+    id: 'total_cost_nonlabor',
     label: 'Non-Labor Cost',
     sortable: true,
-    sortId: 'total_non_labor_cost',
+    sortId: 'total_cost_nonlabor',
     width: 140,
     sx: {
       textAlign: 'right',
     },
     render: (row: ProjectList) =>
-      row.total_non_labor_cost
-        ? costDisplay(row.total_non_labor_cost, row.currency_symbol)
+      row.total_cost_nonlabor
+        ? costDisplay(row.total_cost_nonlabor, row.currency_symbol)
         : '-',
   },
   {

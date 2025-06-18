@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Box,
@@ -12,7 +13,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ListTableProps, RowData, SortOrder, Project } from './types';
 import TablePagination from './pagination';
 import TableSortHeader from './sort-header';
@@ -55,6 +56,19 @@ const AccordionTable = <T extends RowData>({
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
+  useEffect(() => {
+    if (data.length > 0) {
+      const accordionId = new Set<string>(
+        data
+          .filter(
+            (row) =>
+              Array.isArray(row.ProjectFiscal) && row.ProjectFiscal.length > 0
+          )
+          .map((row) => getRowId(row))
+      );
+      setExpandedRows(accordionId);
+    }
+  }, [data]);
   const handleToggleRowExpand = (rowId: string) => {
     setExpandedRows((prev) => {
       const newSet = new Set(prev);
@@ -102,7 +116,7 @@ const AccordionTable = <T extends RowData>({
   const isAvailableAction = actionMenuItems.some((it) => !it.hide);
 
   const childAvailable = (paginatedData as unknown as Project[]).some((row) =>
-    (row.project_fiscal_summary || []).some((summary) => summary.rid)
+    (row.ProjectFiscal || []).some((summary) => summary.project_fiscal_rid)
   );
 
   return (
@@ -390,8 +404,8 @@ const AccordionTable = <T extends RowData>({
                               }}
                             >
                               {colIndex === 0 &&
-                                (Array.isArray(row.project_fiscal_summary) &&
-                                row.project_fiscal_summary.length > 0 ? (
+                                (Array.isArray(row.ProjectFiscal) &&
+                                row.ProjectFiscal.length > 0 ? (
                                   <IconButton
                                     size='small'
                                     onClick={() => handleToggleRowExpand(rowId)}
@@ -510,7 +524,7 @@ const AccordionTable = <T extends RowData>({
                     </TableRow>
                     {/* Child Row */}
                     {isExpanded &&
-                      project.project_fiscal_summary?.map((summary, index) => (
+                      project.ProjectFiscal?.map((summary, index) => (
                         <TableRow
                           key={`${rowId}-summary-${index}`}
                           sx={{ bgcolor: '#f9f9f9' }}

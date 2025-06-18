@@ -460,21 +460,30 @@ export const FormData = (
             required: false,
           }),
           createTextField('total_effort_fte', 'Total FTE Effort', {
-            regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
+            // regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
+            // regexErrorMessage:
+            //   'Total FTE Effort must be a positive integer with up to 16 digits',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
-              'Total FTE Effort must be a positive integer with up to 16 digits',
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total FTE Effort',
           }),
           createTextField('total_effort_subcon', 'Total Sub Con Effort', {
-            regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
+            // regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
+            // regexErrorMessage:
+            //   'Total Sub Con Effort must be a positive integer with up to 16 digits',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
-              'Total Sub Con Effort must be a positive integer with up to 16 digits',
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Sub Con Effort',
           }),
           createTextField('total_effort', 'Total Effort In Hrs', {
-            regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
+            // regex: REGEX_PATTERNS.EFFORTS_INTEGER_NUMBER,
+            // regexErrorMessage:
+            //   'Effort In Hrs must be a positive integer with up to 16 digits',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
-              'Effort In Hrs must be a positive integer with up to 16 digits',
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
             placeholder: 'Enter Total Effort In Hrs',
           }),
           createTextField('total_cost_fte', 'Total FTE Cost', {

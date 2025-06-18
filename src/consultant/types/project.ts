@@ -30,10 +30,10 @@ export type ProjectList = {
   total_cost?: string;
   total_fte?: number;
   total_sub_con?: number;
-  total_non_labor_cost?: string;
+  total_cost_nonlabor?: string;
   total_fte_effort?: string;
-  total_sub_con_cost?: string;
-  total_fte_cost?: string;
+  total_cost_subcon?: string;
+  total_cost_fte?: string;
   qre?: string;
   is_rd_qualified?: string;
   qualified_research_expenditure?: string;
@@ -42,6 +42,7 @@ export type ProjectList = {
   fiscal_year: string;
   name?: string;
   project_code?: string;
+  project_fiscal_rid?: string;
 };
 
 export type Project = {
@@ -84,6 +85,7 @@ export interface ProjectListParams {
   accountNumber?: string;
   globalFilters?: globalFilters;
   timezone?: string;
+  bothParentAndChild?: boolean;
 }
 export enum Status {
   Active = 'active',
@@ -197,4 +199,5 @@ export interface NewProjectData {
   include_in_communication?: string;
   key_contact_status?: Status;
   project_fiscal_id?: string;
+  project_fiscal_rid?: string;
 }

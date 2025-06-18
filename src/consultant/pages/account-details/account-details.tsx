@@ -89,6 +89,7 @@ export const AccountDetails = () => {
 
   const defaultTab = searchParams.get('list');
   const [activeKey, setActiveKey] = useState(defaultTab as string);
+  const [toggleEnabled, setToggleEnabled] = useState(false);
 
   const [tableParams, setTableParams] = useState<ExportModule>({
     sortBy: 'created_datetime',
@@ -110,6 +111,7 @@ export const AccountDetails = () => {
   const handleExport = (
     exportType: 'resource' | 'cost' | 'skill' | 'project'
   ) => {
+    console.log('projectParams', projectParams);
     if (
       searchParams.get('list') !== 'resources' &&
       searchParams.get('list') !== 'projects'
@@ -133,7 +135,11 @@ export const AccountDetails = () => {
     };
 
     if (exportType === 'project') {
-      exportProjectData(exportType, { ...projectParams, timezone });
+      exportProjectData(exportType, {
+        ...projectParams,
+        timezone,
+        bothParentAndChild: toggleEnabled,
+      });
     } else {
       exportData(exportType, exportPayload);
     }
@@ -244,6 +250,8 @@ export const AccountDetails = () => {
             accountDetails={{ ...data, activeKey: 'Projects' }}
             setExportType={setExportType}
             setProjectParams={setProjectParams}
+            toggleEnabled={toggleEnabled}
+            setToggleEnabled={setToggleEnabled}
           />
         );
       case 'cases':

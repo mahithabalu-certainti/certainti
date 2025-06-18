@@ -42,7 +42,7 @@ export const ManageProjectsMockData: ProjectAccordionResponse = {
         currency_symbol: '$',
         region_name: null,
         created_datetime: '2025-06-16T09:26:03.234Z',
-        project_fiscal_summary: [
+        ProjectFiscal: [
           {
             project_code: 'PRC460',
             project_group: null,
@@ -67,6 +67,7 @@ export const ManageProjectsMockData: ProjectAccordionResponse = {
             project_rid: '8087694d-b28a-40db-a871-39479243e61e',
             created_datetime: '2025-06-16T09:26:03.272+00:00',
             rid: '8087694d-b28a-40db-a871-39479243e61s',
+            project_fiscal_rid: '',
           },
         ],
       },

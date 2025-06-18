@@ -150,7 +150,10 @@ export type Project = {
   currency_symbol: string;
   region_name: string | null;
   created_datetime: string;
-  project_fiscal_summary: ProjectFiscalSummary[];
+  rid?: string;
+  account_rid?: string;
+  project_fiscal_rid?: string;
+  ProjectFiscal: ProjectFiscalSummary[];
 };
 export type ProjectFiscalSummary = {
   project_code: string;
@@ -175,5 +178,6 @@ export type ProjectFiscalSummary = {
   modified_datetime: string;
   project_rid: string;
   created_datetime: string;
+  project_fiscal_rid: string;
   rid: string;
 };

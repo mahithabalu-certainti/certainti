@@ -24,6 +24,7 @@ interface IProjectTableProps {
   setTableParams: React.Dispatch<React.SetStateAction<ProjectListParams>>;
   setTotalCount: React.Dispatch<React.SetStateAction<number>>;
   refreshProjectsTrigger?: number;
+  toggleEnabled?: boolean;
 }
 
 export const ProjectTable: React.FC<IProjectTableProps> = ({
@@ -34,6 +35,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   setTableParams,
   setTotalCount,
   refreshProjectsTrigger,
+  toggleEnabled,
 }) => {
   const navigate = useNavigate();
   const { fiscalYear, filters } = useSelector<
@@ -54,7 +56,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   }, [appliedFilters, fiscalYear, filters]);
 
   const { data, isLoading, isError } = useAllProjects(
-    tableParams,
+    { ...tableParams, bothParentAndChild: toggleEnabled },
     undefined,
     refreshProjectsTrigger
   );
@@ -72,7 +74,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
   const handleEdit = (account: any) => {
     navigate(`/project/edit/${account?.project_fiscal_rid}`, {
       state: {
-        accountID: account?.rid,
+        accountID: account?.account_rid,
         projectID: account?.project_fiscal_rid,
         breadcrumbs: [{ label: 'Project' }, { label: account?.project_code }],
       },
@@ -105,12 +107,12 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
 
   const handleAccountName = (project: Project) => {
     const path = generatePath(PROJECT_DETAILS, {
-      projectid: project?.project_rid ?? null,
+      projectid: project?.project_fiscal_rid ?? null,
     });
     navigate(path, {
       state: {
-        accountID: project?.account_id,
-        projectID: project?.project_rid,
+        accountID: project?.account_rid,
+        projectID: project?.project_fiscal_rid,
       },
     });
   };

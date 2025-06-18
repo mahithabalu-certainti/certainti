@@ -11,7 +11,7 @@ import { useAccountProjects } from '../../../../services/project';
 import { PROJECT_CREATE, PROJECT_DETAILS } from '../../../../../routes';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { ProjectList, ProjectListParams } from '../../../../types/project';
-import { ListTable } from '../../../../../components/table';
+import { AccordionTable } from '../../../../../components/table';
 import { AccessRestricted } from '../../../../../components/account-restricted';
 import { checkPermission } from '../../../../../common-utils';
 import { AllModules, AllPermissions } from '../../../../../common-service';
@@ -28,6 +28,8 @@ interface ProjectsProps {
   activeKey?: string;
   setProjectParams: React.Dispatch<React.SetStateAction<ProjectListParams>>;
   setExportType?: (type: 'resource' | 'cost' | 'skill' | 'project') => void;
+  toggleEnabled: boolean;
+  setToggleEnabled: (val: boolean) => void;
 }
 
 const projectTabs: ResourceTabs[] = [
@@ -47,6 +49,8 @@ const Projects: React.FC<ProjectsProps> = ({
   accountDetails,
   setExportType,
   setProjectParams,
+  toggleEnabled,
+  setToggleEnabled,
 }) => {
   const navigate = useNavigate();
   const [projectsTabs, setProjectsTabs] = useState(projectTabs);
@@ -104,6 +108,7 @@ const Projects: React.FC<ProjectsProps> = ({
       filters: appliedFilters,
       fiscalYear: convertedFiscalYear,
       accountNumber: accountDetails?.data?.accountDetails?.account_rid || '',
+      bothParentAndChild: toggleEnabled,
     },
     projectOverviewIsEnable && projectViewAllIsEnable,
     refreshProjectsTrigger
@@ -149,10 +154,10 @@ const Projects: React.FC<ProjectsProps> = ({
     setSortField(sortBy);
   };
   const handleEdit = (account: any) => {
-    navigate(`/Project/edit/${account?.rid}`, {
+    navigate(`/Project/edit/${account?.project_fiscal_rid}`, {
       state: {
         accountID: account?.account_rid,
-        projectID: account?.rid,
+        projectID: account?.project_fiscal_rid,
         breadcrumbs: [{ label: 'Account' }, { label: account?.account_name }],
       },
     });
@@ -234,10 +239,13 @@ const Projects: React.FC<ProjectsProps> = ({
 
   const handleProject = (project: ProjectList) => {
     const path = generatePath(PROJECT_DETAILS, {
-      projectid: project?.rid,
+      projectid: project?.project_fiscal_rid ?? null,
     });
     navigate(path, {
-      state: { accountID: project?.account_rid, projectID: project?.rid },
+      state: {
+        accountID: project?.account_rid,
+        projectID: project?.project_fiscal_rid,
+      },
     });
   };
 
@@ -277,6 +285,8 @@ const Projects: React.FC<ProjectsProps> = ({
         handleSorting={handleSorting}
         sortFilterCount={sortFilterCount}
         setSortFilterCount={setSortFilterCount}
+        toggleEnabled={toggleEnabled}
+        setToggleEnabled={setToggleEnabled}
       />
       {projectOverviewIsEnable && projectViewAllIsEnable ? (
         <>
@@ -289,7 +299,7 @@ const Projects: React.FC<ProjectsProps> = ({
             headerButtons={headerButtons}
           />
           <div className='border border-[#CBD6E2]'>
-            <ListTable
+            <AccordionTable
               data={data?.projects as any}
               columns={projectColumns}
               getRowId={getRowId}
@@ -310,6 +320,12 @@ const Projects: React.FC<ProjectsProps> = ({
               sortBy={sortField}
               sortOrder={sortOrder}
               onSort={handleSort}
+              tableStyle={{ overflowY: 'hidden' }}
+              selectable={true}
+              onSelectionChange={(selectedIds) =>
+                console.log('Selected:', selectedIds)
+              }
+              component='global-project'
             />
           </div>
         </>
