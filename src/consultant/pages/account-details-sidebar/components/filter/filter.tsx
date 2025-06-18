@@ -10,7 +10,6 @@ import {
   Switch,
 } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
-import { arrowIcon, checkedIcon, closeIcon } from '../../../../../assets';
 import { getInitialStateForField } from '../../sidebar-pages/resources/utils';
 import {
   DateFilterOption,
@@ -49,6 +48,7 @@ import {
   SELECT_STYLES,
 } from '../../../../../components/filter-component/helpers';
 import { useLocation } from 'react-router-dom';
+import { ArrowIcon, CheckedIcon, CloseIcon } from '../../../../../assets';
 
 const Filter: React.FC<FilterComponentProps> = ({
   value,
@@ -707,8 +707,7 @@ const Filter: React.FC<FilterComponentProps> = ({
                           handleSystemFilter('system_filter', field.value)
                         }
                       >
-                        <img
-                          src={checkedIcon}
+                        <CheckedIcon
                           alt='checked-icon'
                           className='w-3 h-3 mt-[0.3px]'
                           style={{
@@ -736,8 +735,7 @@ const Filter: React.FC<FilterComponentProps> = ({
                         }`}
                         onClick={() => handleSortingSelection(field.value)}
                       >
-                        <img
-                          src={checkedIcon}
+                        <CheckedIcon
                           alt='checked-icon'
                           className='w-3 h-3 mt-[0.3px]'
                           style={{
@@ -789,7 +787,7 @@ const Filter: React.FC<FilterComponentProps> = ({
                             value={fieldValue}
                             className='min-w-[173px] max-w-[173px] h-[28px]'
                             IconComponent={(props) => (
-                              <img src={arrowIcon} alt='arrowIcon' {...props} />
+                              <ArrowIcon alt='arrowIcon' {...props} />
                             )}
                             onChange={(e) => {
                               const newFieldValue = e.target.value;
@@ -831,11 +829,7 @@ const Filter: React.FC<FilterComponentProps> = ({
                               );
                               return (
                                 <div className='flex items-center gap-1'>
-                                  <img
-                                    src={checkedIcon}
-                                    alt='checked'
-                                    className='w-3'
-                                  />
+                                  <CheckedIcon alt='checked' className='w-3' />
                                   <span className='max-w-[173px] text-ellipsis overflow-hidden'>
                                     {selectedField?.name || selected}
                                   </span>
@@ -862,8 +856,7 @@ const Filter: React.FC<FilterComponentProps> = ({
                                   gap: '4px',
                                 }}
                               >
-                                <img
-                                  src={checkedIcon}
+                                <CheckedIcon
                                   alt='checked'
                                   className='w-4 h-4'
                                 />
@@ -905,8 +898,7 @@ const Filter: React.FC<FilterComponentProps> = ({
                         }}
                         className='cursor-pointer pl-1'
                       >
-                        <img
-                          src={closeIcon}
+                        <CloseIcon
                           alt='closeIcon'
                           className='w-[12px] h-[12px]'
                         />
@@ -927,7 +919,7 @@ const Filter: React.FC<FilterComponentProps> = ({
           >
             <span className='font-normal text-[16px]'>+</span> Add Filter By
             Fields
-            <img src={arrowIcon} alt={'arrowIcon'} className='mt-0.5' />
+            <ArrowIcon alt='arrowIcon' className='mt-0.5' />
           </button>
         </div>
       </div>
@@ -978,7 +970,7 @@ const Filter: React.FC<FilterComponentProps> = ({
                   py: '1px',
                 }}
               >
-                <img src={checkedIcon} alt='checked' className='w-4 h-4 mr-1' />
+                <CheckedIcon alt='checked' className='w-4 h-4 mr-1' />
                 {field.name}
               </MenuItem>
             ))

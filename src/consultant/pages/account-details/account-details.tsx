@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, Suspense } from 'react';
 import {
   useLocation,
   useParams,
@@ -7,18 +7,18 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import {
-  accountDetailsIcon,
-  activitiesIcon,
-  attachmentsSideIcon,
-  casesIcon,
-  checklistIcon,
-  detailsIcon,
-  financialIcon,
-  importsIcon,
-  notesSideIcon,
-  projectsSideIcon,
-  resourcesIcon,
-  timeSheetIcon,
+  AccountDetailsIcon,
+  ActivitiesIcon,
+  AttachmentsSideIcon,
+  CasesIcon,
+  ChecklistIcon,
+  DetailsIcon,
+  FinancialIcon,
+  ImportsIcon,
+  NotesSideIcon,
+  ProjectsSideIcon,
+  ResourcesIcon,
+  TimeSheetIcon,
 } from '../../../assets';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../components';
 import { ACCOUNT } from '../../../routes';
@@ -284,99 +284,77 @@ export const AccountDetails = () => {
         key: 'details',
         id: AllModules.DETAILS,
         disabled: false,
-        icon: <img src={detailsIcon} alt='detailsIcon' className='w-4 h-4' />,
+        icon: DetailsIcon,
       },
       {
         name: 'Resources',
         key: 'resources',
         id: AllModules.RESOURCES,
         disabled: disable,
-        icon: (
-          <img src={resourcesIcon} alt='resourcesIcon' className='w-4 h-4' />
-        ),
+        icon: ResourcesIcon,
       },
       {
         name: 'Projects',
         key: 'projects',
         id: AllModules.PROJECTS,
         disabled: disable,
-        icon: (
-          <img
-            src={projectsSideIcon}
-            alt='projectsSideIcon'
-            className='w-4 h-4'
-          />
-        ),
+        icon: ProjectsSideIcon,
       },
       {
         name: 'Financial Highlights',
         key: 'financial',
         id: AllModules.FINANCIAL_HIGHLIGHTS,
         disabled: false,
-        icon: <img src={financialIcon} alt='financial' className='w-4 h-4' />,
+        icon: FinancialIcon,
       },
       {
         name: 'Cases',
         key: 'cases',
         id: AllModules.CASES,
         disabled: disable,
-        icon: <img src={casesIcon} alt='casesIcon' className='w-4 h-4' />,
+        icon: CasesIcon,
       },
       {
         name: 'Activities',
         key: 'activities',
         id: AllModules.ACTIVITIES,
         disabled: disable,
-        icon: (
-          <img src={activitiesIcon} alt='activitiesIcon' className='w-4 h-4' />
-        ),
+        icon: ActivitiesIcon,
       },
       {
         name: 'Notes',
         key: 'notes',
         id: AllModules.NOTES,
         disabled: disable,
-        icon: (
-          <img src={notesSideIcon} alt='notesSideIcon' className='w-4 h-4' />
-        ),
+        icon: NotesSideIcon,
       },
       {
         name: 'Attachments',
         key: 'attachments',
         id: AllModules.ATTACHMENTS,
         disabled: disable,
-        icon: (
-          <img
-            src={attachmentsSideIcon}
-            alt='attachmentsSideIcon'
-            className='w-4 h-4'
-          />
-        ),
+        icon: AttachmentsSideIcon,
       },
       {
         name: 'Checklist',
         key: 'checklist',
         id: AllModules.CHECKLISTS,
         disabled: disable,
-        icon: (
-          <img src={checklistIcon} alt='checklistIcon' className='w-4 h-4' />
-        ),
+        icon: ChecklistIcon,
       },
       {
         name: 'Timesheet',
         key: 'timesheet',
         id: AllModules.TIMESHEETS,
         disabled: disable,
-        icon: (
-          <img src={timeSheetIcon} alt='timeSheetIcon' className='w-4 h-4' />
-        ),
+        icon: TimeSheetIcon,
       },
       {
         name: 'Imports',
         key: 'imports',
         id: AllModules.IMPORTS,
         disabled: disable,
-        icon: <img src={importsIcon} alt='importsIcon' className='w-4 h-4' />,
+        icon: ImportsIcon,
       },
     ],
     [disable]
@@ -390,9 +368,12 @@ export const AccountDetails = () => {
         <PageHeader
           variant='sub'
           placeholder='Account Name'
-          icon={accountDetailsIcon}
-          iconBackgroundColor='#4B9BFF'
-          iconClasses='h-6 w-6 rounded'
+          icon={
+            <AccountDetailsIcon
+              className='h-6 w-6 rounded'
+              style={{ backgroundColor: '#4B9BFF' }}
+            />
+          }
           title={data?.data?.accountById?.account_name || 'Account Title'}
           totalRecords={5}
           actionItems={menuItems}
@@ -436,7 +417,7 @@ export const AccountDetails = () => {
               <CircularProgress />
             </div>
           ) : (
-            <>{renderContent()}</>
+            <Suspense fallback={null}>{renderContent()}</Suspense>
           )}
         </div>
       </div>

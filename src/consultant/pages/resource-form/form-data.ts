@@ -67,7 +67,6 @@ export const ResourceFormData = (
   cityLoading?: boolean,
   currencyLoading?: boolean,
   skillSubTypeLoading?: boolean,
-  disableFields?: boolean,
   disableCostAndSkill?: boolean,
   disableOrgname?: string,
   currentSkillType?: string[],
@@ -693,8 +692,11 @@ export const ResourceFormData = (
     ],
     [
       disableCostAndSkill,
-      disableFields,
       disableOrgname,
+      isAnyResourceNameFilled,
+      currentResource?.resource_firstname,
+      currentResource?.resource_lastname,
+      isResourceFullNameEmpty,
       country,
       states,
       stateLoading,
@@ -705,13 +707,13 @@ export const ResourceFormData = (
       currencyLoading,
       disableSkill,
       skillTypeOptions,
+      currentSkillType,
       skillSubTypeOptions,
       skillSubTypeLoading,
-      currentSkillType,
       currentskillSubType,
-      isResourceFullNameEmpty,
-      isAnyResourceNameFilled,
-      currentResource,
+      createResource,
     ]
   );
 };
+
+export default ResourceFormData;

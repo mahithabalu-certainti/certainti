@@ -11,7 +11,7 @@ import { useSelector } from 'react-redux';
 import { generatePath, useNavigate } from 'react-router-dom';
 import { PROJECT_DETAILS } from '../../../../../routes';
 import { ActionItem, Project } from '../../../../../components/table/types';
-import { editIcon } from '../../../../../assets';
+import { EditIcon } from '../../../../../assets';
 import { reshapeGlobalFilter } from '../../../../../common-utils';
 import { FilterState } from '../../../../types';
 import { AccordionTable } from '../../../../../components/table';
@@ -123,7 +123,7 @@ export const ProjectTable: React.FC<IProjectTableProps> = ({
     {
       label: 'Edit',
       onClick: (row: any) => handleEdit(row),
-      icon: editIcon,
+      icon: EditIcon,
       iconStyle: {
         filter:
           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',

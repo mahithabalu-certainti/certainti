@@ -1,6 +1,6 @@
 import { IconButton, Tooltip, TooltipProps } from '@mui/material';
-import React, { ReactNode, useEffect, useRef, useState } from 'react';
-import { copyIcon, tickIcon } from '../../assets';
+import React, { ReactNode, Suspense, useEffect, useRef, useState } from 'react';
+import { CopyIcon, TickIcon } from '../../assets';
 
 interface TruncateWithTooltipProps {
   text: string;
@@ -68,11 +68,11 @@ const TruncateWithTooltip = ({
           handleCopy(text);
         }}
       >
-        <img
-          src={copied ? tickIcon : copyIcon}
-          alt='copy-icon'
-          className='w-3.5 h-3.5'
-        />
+        {copied ? (
+          <TickIcon alt='tick-icon' className='w-3.5 h-3.5' />
+        ) : (
+          <CopyIcon alt='copy-icon' className='w-3.5 h-3.5' />
+        )}
       </IconButton>
     </div>
   ) : (
@@ -80,7 +80,11 @@ const TruncateWithTooltip = ({
   );
 
   return isOverflowing ? (
-    <Tooltip title={tooltipContent} arrow placement={placement}>
+    <Tooltip
+      title={<Suspense fallback={null}>{tooltipContent}</Suspense>}
+      arrow
+      placement={placement}
+    >
       <div ref={textRef} style={contentStyle} className={className}>
         {children || text}
       </div>

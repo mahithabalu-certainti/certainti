@@ -184,3 +184,5 @@ export const CreateProfile: React.FC = () => {
     </>
   );
 };
+
+export default CreateProfile;

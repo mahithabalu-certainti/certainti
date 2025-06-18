@@ -65,7 +65,7 @@ export interface ActionItem<T extends RowData> {
   label: string;
   onClick: (row: T) => void;
   disabled?: boolean;
-  icon?: string;
+  icon?: React.ElementType;
   iconStyle?: React.CSSProperties;
   hide?: boolean;
 }

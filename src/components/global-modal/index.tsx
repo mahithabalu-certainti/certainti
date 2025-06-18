@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { allAccountIcon, closeCircleIcon, closeIcon } from '../../assets';
+import { AllAccountIcon, CloseCircleIcon, CloseIcon } from '../../assets';
 import {
   AccountFilter,
   FilterState,
@@ -122,8 +122,7 @@ export const GlobalModal = ({
         <span className='text-[#2D3E4F] text-[20px] font-medium leading-[20px]'>
           Filters
         </span>
-        <img
-          src={closeCircleIcon}
+        <CloseCircleIcon
           alt='close'
           className='cursor-pointer h-[24px] w-[24px]'
           onClick={handleCloseModal}
@@ -141,8 +140,7 @@ export const GlobalModal = ({
                 Filter Types
               </p>
               <div className='flex items-center gap-3 h-[28px]'>
-                <img
-                  src={allAccountIcon}
+                <AllAccountIcon
                   alt='all account'
                   className='w-5 h-5'
                 />
@@ -260,8 +258,7 @@ export const GlobalModal = ({
                         >
                           {account.account_name}
                         </span>
-                        <img
-                          src={closeIcon}
+                        <CloseIcon
                           className='cursor-pointer'
                           alt='close'
                           onClick={() => handleFilterToggle(id, 'account')}
@@ -292,8 +289,7 @@ export const GlobalModal = ({
                           >
                             {child.account_name}
                           </span>
-                          <img
-                            src={closeIcon}
+                          <CloseIcon
                             className='cursor-pointer'
                             alt='close'
                             onClick={() =>

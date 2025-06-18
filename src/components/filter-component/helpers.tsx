@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import { FilterState } from '../../consultant/types/account-filter';
 import { useMemo } from 'react';
-import { arrowIcon, calendarIcon } from '../../assets';
+import { ArrowIcon, CalendarIcon } from '../../assets';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -122,9 +122,7 @@ export const NewDateFilterControl: React.FC<{
         value={state.date?.option || 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
         className='min-w-[110px] max-w-[110px] h-[28px]'
-        IconComponent={(props) => (
-          <img src={arrowIcon} alt='arrowIcon' {...props} />
-        )}
+        IconComponent={(props) => <ArrowIcon alt='arrowIcon' {...props} />}
         sx={{ ...SELECT_STYLES, ...OPERATOR_STYLE }}
         MenuProps={MENU_PROPS}
       >
@@ -156,7 +154,7 @@ export const NewDateFilterControl: React.FC<{
                 displayEmpty
                 inputProps={{ 'aria-label': 'Select Year' }}
                 IconComponent={(props) => (
-                  <img src={arrowIcon} alt='arrowIcon' {...props} />
+                  <ArrowIcon alt='arrowIcon' {...props} />
                 )}
                 sx={SELECT_STYLES}
                 MenuProps={MENU_PROPS}
@@ -205,11 +203,7 @@ export const NewDateFilterControl: React.FC<{
                 }
                 slots={{
                   openPickerIcon: () => (
-                    <img
-                      src={calendarIcon}
-                      alt='calendar'
-                      className='w-4 h-4'
-                    />
+                    <CalendarIcon alt='calendar' className='w-4 h-4' />
                   ),
                 }}
                 slotProps={{
@@ -269,7 +263,7 @@ export const NewDateFilterControl: React.FC<{
               shouldDisableDate={(date) => dayjs(date).isAfter(dayjs(), 'day')}
               slots={{
                 openPickerIcon: () => (
-                  <img src={calendarIcon} alt='calendar' className='w-4 h-4' />
+                  <CalendarIcon alt='calendar' className='w-4 h-4' />
                 ),
               }}
               slotProps={{
@@ -333,9 +327,7 @@ export const NewTextFilterControl: React.FC<{
         value={state.text?.option || 'contains'}
         onChange={(e) => onOptionChange(fieldName, e)}
         className='min-w-[110px] max-w-[110px] h-[28px]'
-        IconComponent={(props) => (
-          <img src={arrowIcon} alt='arrowIcon' {...props} />
-        )}
+        IconComponent={(props) => <ArrowIcon alt='arrowIcon' {...props} />}
         sx={{ ...SELECT_STYLES, ...OPERATOR_STYLE }}
         MenuProps={MENU_PROPS}
       >
@@ -393,7 +385,10 @@ export const NewMultiSelectFilterControl: React.FC<{
   options: string[];
   onChange: (fieldName: string, values: string[]) => void;
 }> = ({ fieldName, state, options, onChange }) => {
-  const selectedValues = state.multiSelect?.values || [];
+  const selectedValues = useMemo(
+    () => state.multiSelect?.values || [],
+    [state.multiSelect?.values]
+  );
 
   const menuItems = useMemo(() => {
     return options.map((option) => (
@@ -437,9 +432,7 @@ export const NewMultiSelectFilterControl: React.FC<{
         value={state.multiSelect?.values || []}
         onChange={(e) => onChange(fieldName, e.target.value as string[])}
         className='h-[28px]'
-        IconComponent={(props) => (
-          <img src={arrowIcon} alt='arrowIcon' {...props} />
-        )}
+        IconComponent={(props) => <ArrowIcon alt='arrowIcon' {...props} />}
         renderValue={(selected) => (selected as string[]).join(', ')}
         sx={SELECT_STYLES}
         MenuProps={{
@@ -486,9 +479,7 @@ export const NewNumberFilterControl: React.FC<{
         value={option}
         onChange={(e) => onOptionChange(fieldName, e)}
         className='min-w-[110px] max-w-[110px] h-[28px]'
-        IconComponent={(props) => (
-          <img src={arrowIcon} alt='arrowIcon' {...props} />
-        )}
+        IconComponent={(props) => <ArrowIcon alt='arrowIcon' {...props} />}
         sx={{ ...SELECT_STYLES, ...OPERATOR_STYLE }}
         MenuProps={MENU_PROPS}
       >
@@ -621,9 +612,7 @@ export const NewStatusFilterControl: React.FC<{
       value={state.status?.value || 'Active'}
       onChange={(e) => onOptionChange(fieldName, e)}
       className='h-[28px]'
-      IconComponent={(props) => (
-        <img src={arrowIcon} alt='arrowIcon' {...props} />
-      )}
+      IconComponent={(props) => <ArrowIcon alt='arrowIcon' {...props} />}
       sx={SELECT_STYLES}
       MenuProps={{
         ...MENU_PROPS,
@@ -667,9 +656,7 @@ export const NewBooleanFilterControl: React.FC<{
       value={state.boolean?.value ? 'true' : 'false'}
       onChange={(e) => onChange(fieldName, e.target.value === 'true')}
       className='h-[28px]'
-      IconComponent={(props) => (
-        <img src={arrowIcon} alt='arrowIcon' {...props} />
-      )}
+      IconComponent={(props) => <ArrowIcon alt='arrowIcon' {...props} />}
       sx={SELECT_STYLES}
       MenuProps={MENU_PROPS}
     >
@@ -754,9 +741,7 @@ export const KeyContactFilterControl: React.FC<{
         value={keyContactState.role.option}
         onChange={handleRoleOptionChange}
         className='min-w-[110px] max-w-[110px] h-[28px]'
-        IconComponent={(props) => (
-          <img src={arrowIcon} alt='arrowIcon' {...props} />
-        )}
+        IconComponent={(props) => <ArrowIcon alt='arrowIcon' {...props} />}
         sx={{
           ...SELECT_STYLES,
           '& .MuiSelect-select': {
@@ -794,9 +779,7 @@ export const KeyContactFilterControl: React.FC<{
           disabled={disabled}
           value={keyContactState.role.value}
           className='h-[28px] w-[181px] min-w-[181px] max-w-[181px]'
-          IconComponent={(props) => (
-            <img src={arrowIcon} alt='arrowIcon' {...props} />
-          )}
+          IconComponent={(props) => <ArrowIcon alt='arrowIcon' {...props} />}
           onChange={handleRoleValueChange}
           sx={{
             ...SELECT_STYLES,
@@ -845,9 +828,7 @@ export const KeyContactFilterControl: React.FC<{
             value={keyContactState.name.option}
             onChange={handleNameOptionChange}
             className='min-w-[110px] max-w-[110px] h-[28px]'
-            IconComponent={(props) => (
-              <img src={arrowIcon} alt='arrowIcon' {...props} />
-            )}
+            IconComponent={(props) => <ArrowIcon alt='arrowIcon' {...props} />}
             sx={{
               ...SELECT_STYLES,
               '& .MuiSelect-select': {
@@ -948,9 +929,7 @@ export const EnumSelectFilterControl: React.FC<{
         value={state?.enumSelect?.option?.toLowerCase() ?? 'equals'}
         onChange={(e) => onOptionChange(fieldName, e)}
         className='min-w-[110px] max-w-[110px] h-[28px]'
-        IconComponent={(props) => (
-          <img src={arrowIcon} alt='arrowIcon' {...props} />
-        )}
+        IconComponent={(props) => <ArrowIcon alt='arrowIcon' {...props} />}
         sx={{ ...SELECT_STYLES, ...OPERATOR_STYLE }}
         MenuProps={MENU_PROPS}
         name='option'
@@ -996,9 +975,7 @@ export const EnumSelectFilterControl: React.FC<{
               }
             }}
             className='h-[28px] w-[181px] min-w-[181px] max-w-[181px]'
-            IconComponent={(props) => (
-              <img src={arrowIcon} alt='arrowIcon' {...props} />
-            )}
+            IconComponent={(props) => <ArrowIcon alt='arrowIcon' {...props} />}
             sx={SELECT_STYLES}
             MenuProps={{
               ...MENU_PROPS,

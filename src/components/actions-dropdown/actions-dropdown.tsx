@@ -1,7 +1,7 @@
 import { Box, Button, Menu, MenuItem } from '@mui/material';
 import { styled, SxProps, Theme } from '@mui/material/styles';
 import React, { useState } from 'react';
-import { arrowUpIcon } from '../../assets';
+import { ArrowUpIcon } from '../../assets';
 import { ActionsDropdownItem } from '../../common-utils';
 
 interface ActionsDropdownProps {
@@ -54,8 +54,7 @@ const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
         onClick={handleClick}
         disableRipple
         endIcon={
-          <img
-            src={arrowUpIcon}
+          <ArrowUpIcon
             alt={open ? 'arrowUp' : 'arrowDown'}
             style={{
               filter:

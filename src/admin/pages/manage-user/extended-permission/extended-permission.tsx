@@ -56,8 +56,7 @@ export const ExtendedPermission: React.FC = () => {
         {/* Header Section */}
         <div className='w-full min-h-[50px] h-[50px] px-4 flex items-center justify-between border-b-1 border-[#CBD6E2]'>
           <div className='flex items-center gap-2'>
-            <img
-              src={ManageUserIcon}
+            <ManageUserIcon
               alt='manage user'
               className='w-8 h-8 rounded'
             />
@@ -111,3 +110,4 @@ export const ExtendedPermission: React.FC = () => {
     </>
   );
 };
+export default ExtendedPermission;

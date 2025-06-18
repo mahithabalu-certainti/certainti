@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { SxProps } from '@mui/material';
 import React from 'react';
-import { leftArrowIcon } from '../../../../../assets';
+import { LeftArrowIcon } from '../../../../../assets';
 import TextButton from '../../../../../components/button/text-button';
 import { Theme } from '@emotion/react';
 interface ResourceTableHeaderProps {
@@ -41,8 +41,7 @@ const ResourceTableHeader: React.FC<ResourceTableHeaderProps> = ({
               className='cursor-pointer w-[24px] h-[24px] flex justify-center items-center -ml-2'
               onClick={onBackClick}
             >
-              <img
-                src={leftArrowIcon}
+              <LeftArrowIcon
                 className='h-[12px]'
                 alt='leftArrowIcon'
               />
