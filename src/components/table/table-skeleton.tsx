@@ -115,7 +115,7 @@ const TableSkeleton: React.FC<TableSkeletonProps> = ({
             <TableCell>
               <Box
                 sx={{
-                  width: 80,
+                  width: 60,
                   height: 12,
                   borderRadius: '4px',
                   animation: 'pulse 1.5s ease-in-out infinite',

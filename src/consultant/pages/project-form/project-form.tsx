@@ -33,9 +33,9 @@ import { formatDateToYYYYMMDDWithTime } from '../account-details-sidebar/sidebar
 import SkeletonForm from '../../../components/form-builder/skeleton-form';
 
 const defaultKeyContactHeaders: KeyContactHeader[] = [
-  { name: 'key_contact_name', label: 'Contact Name', width: '190px' },
-  { name: 'key_contact_role', label: 'Role', width: '180px' },
-  { name: 'key_contact_email', label: 'Email', width: '180px' },
+  { name: 'key_contact_name', label: 'Key Contact Name', width: '190px' },
+  { name: 'key_contact_role', label: 'Key Contact Role', width: '180px' },
+  { name: 'key_contact_email', label: 'Key Contact Email', width: '180px' },
   // { name: 'key_contact_rid', label: 'Key Contact ID', width: '120px' },
   { name: 'is_primary_contact', label: 'Is Primary Contact?', width: '140px' },
   {
@@ -50,7 +50,7 @@ const defaultKeyContactHeaders: KeyContactHeader[] = [
   // },
   {
     name: 'key_contact_status',
-    label: 'Status',
+    label: 'Key Contact Status',
     width: '140px',
   },
   { name: 'button', label: '', width: '35px' },

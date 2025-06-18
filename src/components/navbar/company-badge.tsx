@@ -1,41 +1,22 @@
-import { useState } from 'react';
+// import { useState } from 'react';
+import { accountHomeIcon } from '../../assets';
 import { TruncateWithTooltip } from '../truncate-with-tooltip';
 
 interface CompanyBadgeProps {
   name: string;
-  logoUrl: string;
+  logoUrl?: string;
 }
 
-const CompanyBadge = ({ name, logoUrl }: CompanyBadgeProps) => {
-  const [imageError, setImageError] = useState(false);
-
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((word) => word[0])
-      .join('')
-      .slice(0, 2)
-      .toUpperCase();
-  };
-
+const CompanyBadge = ({ name }: CompanyBadgeProps) => {
   return (
-    <div className='inline-flex items-center gap-2 px-2 h-[24px] rounded-[2px] border border-[#CBD6E266] bg-[#495E744D]'>
-      {!imageError ? (
-        <div className='h-[24px] w-[24px] overflow-hidden'>
-          <img
-            src={logoUrl}
-            alt='company-logo'
-            className='w-full h-full object-contain'
-            onError={() => setImageError(true)}
-          />
-        </div>
-      ) : (
-        <div className='h-[16px] w-[18px] flex items-center justify-center text-[10px] font-bold text-white bg-[#7A8BA3] rounded'>
-          {getInitials(name)}
-        </div>
-      )}
+    <div className='inline-flex items-center gap-1.5 px-2 h-[24px] rounded-[2px] max-w-[200px]'>
+      <img
+        src={accountHomeIcon}
+        alt='company-icon'
+        className='w-3.5 h-3 mb-0.5'
+      />
       <TruncateWithTooltip text={name} maxWidth={170} placement='right'>
-        <span className='font-medium text-[13px] leading-[20px] text-nowrap text-[#FFFFFF] max-w-[170px] overflow-hidden text-ellipsis'>
+        <span className='font-bold text-[13px] leading-[20px] text-nowrap text-[#FFFFFF] max-w-[170px] overflow-hidden text-ellipsis'>
           {name}
         </span>
       </TruncateWithTooltip>
