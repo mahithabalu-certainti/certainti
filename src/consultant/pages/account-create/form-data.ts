@@ -17,10 +17,10 @@ import {
 import { closeIcon } from '../../../assets';
 
 export const newKeyContactFields = (roles: SelectOption[]) => [
-  createTextField('key_contact_name', 'Contact Name', {
+  createTextField('key_contact_name', 'Key Contact Name', {
     required: false,
     width: '190px',
-    placeholder: 'Enter Contact Name',
+    placeholder: 'Enter Key Contact Name',
     onChange: true,
     errorHandling: [
       {
@@ -48,17 +48,17 @@ export const newKeyContactFields = (roles: SelectOption[]) => [
       },
     ],
   }),
-  createSelectField('key_contact_role', 'Role', {
+  createSelectField('key_contact_role', 'Key Contact Role', {
     options: roles,
     width: '180px',
     required: false,
-    placeholder: 'Choose Role',
+    placeholder: 'Choose Key Contact Role',
     onChange: true,
   }),
-  createTextField('key_contact_email', 'Email', {
+  createTextField('key_contact_email', 'Key Contact Email', {
     required: false,
     width: '180px',
-    placeholder: 'Enter Email',
+    placeholder: 'Enter Key Contact Email',
     onChange: true,
     errorHandling: [
       {
@@ -92,7 +92,7 @@ export const newKeyContactFields = (roles: SelectOption[]) => [
   //   required: true,
   //   defaultValue: YesNo.No,
   // }),
-  createSelectField('key_contact_status', 'Status', {
+  createSelectField('key_contact_status', 'Key Contact Status', {
     required: false,
     width: '140px',
     options: STATUS_OPTIONS,
@@ -357,7 +357,7 @@ export const AccFormData = (
         sectionName: '',
         fillType: 'full',
         fields: [
-          createButton('Add key contact', '', {
+          createButton('Add Key Contact', '', {
             iconUrl: '',
             onClick: addNewKeyContact,
           }),
