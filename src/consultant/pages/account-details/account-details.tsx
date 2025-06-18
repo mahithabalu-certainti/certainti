@@ -111,7 +111,6 @@ export const AccountDetails = () => {
   const handleExport = (
     exportType: 'resource' | 'cost' | 'skill' | 'project'
   ) => {
-    console.log('projectParams', projectParams);
     if (
       searchParams.get('list') !== 'resources' &&
       searchParams.get('list') !== 'projects'

@@ -27,11 +27,10 @@ import {
   useUpdateProject,
 } from '../../services/project/project-create-service';
 import { useProjectDetail } from '../../services/project';
-import { STATUS_OPTIONS } from '../../../common-utils';
+import { getDateFormat, STATUS_OPTIONS } from '../../../common-utils';
 import { FormData, newKeyContactFields } from './form-data';
 import { formatDateToYYYYMMDDWithTime } from '../account-details-sidebar/sidebar-pages/resources/utils';
 import SkeletonForm from '../../../components/form-builder/skeleton-form';
-import dayjs from 'dayjs';
 
 const defaultKeyContactHeaders: KeyContactHeader[] = [
   { name: 'key_contact_name', label: 'Key Contact Name', width: '190px' },
@@ -83,10 +82,10 @@ const ProjectForm: React.FC = () => {
           : 'No',
         auto_access_rd: account?.auto_access_rd ? 'Yes' : 'No',
         project_enddate: account?.project_enddate
-          ? dayjs(account.project_enddate).format('YYYY-MM-DD')
+          ? getDateFormat(account.project_enddate)
           : '',
         project_startdate: account?.project_startdate
-          ? dayjs(account.project_startdate).format('YYYY-MM-DD')
+          ? getDateFormat(account.project_startdate)
           : '',
         created_on: formatDateToYYYYMMDDWithTime(account?.created_datetime),
         updated_on: formatDateToYYYYMMDDWithTime(account?.modified_datetime),

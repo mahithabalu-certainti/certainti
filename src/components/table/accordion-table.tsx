@@ -20,7 +20,7 @@ import TableSortHeader from './sort-header';
 import TableActionButton from './action-button';
 import { TruncateWithTooltip } from '../truncate-with-tooltip';
 import TableSkeleton from './table-skeleton';
-import { arrowDownIcon, childAccountIcon } from '../../assets';
+import { ArrowDownIcon, ChildAccountIcon } from '../../assets';
 
 const AccordionTable = <T extends RowData>({
   data = [],
@@ -411,8 +411,7 @@ const AccordionTable = <T extends RowData>({
                                     onClick={() => handleToggleRowExpand(rowId)}
                                     className='px-[0px] py-[0px] mx-[0px] my-[0px]'
                                   >
-                                    <img
-                                      src={arrowDownIcon}
+                                    <ArrowDownIcon
                                       alt='expand-icon'
                                       style={{
                                         transform: isExpanded
@@ -607,8 +606,7 @@ const AccordionTable = <T extends RowData>({
                                 >
                                   {colIndex === 0 && (
                                     <div className='flex items-center justify-center w-[18px] h-[17px] bg-[#425A76] ml-[32px] mr-[5px] rounded-[4px]'>
-                                      <img
-                                        src={childAccountIcon}
+                                      <ChildAccountIcon
                                         alt='childAccountIcon'
                                         className='w-[9px] h-[10px]'
                                       />
