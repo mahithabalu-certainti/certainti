@@ -4,7 +4,7 @@ import { CopyIcon, TickIcon } from '../../assets';
 
 interface TruncateWithTooltipProps {
   text: string;
-  maxWidth?: number; // Optional max width in pixels
+  maxWidth?: number | string;
   className?: string;
   children?: ReactNode;
   style?: React.CSSProperties;
@@ -53,7 +53,8 @@ const TruncateWithTooltip = ({
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap' as const,
-    maxWidth: maxWidth ? `${maxWidth}px` : '100%',
+    maxWidth:
+      typeof maxWidth === 'number' ? `${maxWidth}px` : maxWidth || '100%',
     ...style,
   };
 
