@@ -1164,7 +1164,7 @@ class ResourceCostSchemaService {
       if (resourceCostNumber.equals) {
         condition += ` AND LOWER(rc."r_number") = LOWER('${resourceCostNumber.equals}')`;
       } else if (resourceCostNumber.not_equals) {
-        condition += ` AND LOWER(rc."r_number") != LOWER('${resourceCostNumber.not_equals}') OR rc."r_number" IS NULL`;
+        condition += ` AND (LOWER(rc."r_number") != LOWER('${resourceCostNumber.not_equals}') OR rc."r_number" IS NULL)`;
       } else if (resourceCostNumber.contains) {
         condition += ` AND LOWER(rc."r_number") LIKE LOWER('%${resourceCostNumber.contains}%')`;
       } else if (resourceCostNumber.not_contains) {
