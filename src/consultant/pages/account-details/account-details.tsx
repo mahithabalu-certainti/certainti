@@ -12,7 +12,7 @@ import {
   AttachmentsSideIcon,
   CasesIcon,
   ChecklistIcon,
-  DeleteIcon,
+  DetailsIcon,
   FinancialIcon,
   ImportsIcon,
   NotesSideIcon,
@@ -276,7 +276,7 @@ export const AccountDetails = () => {
         key: 'details',
         id: AllModules.DETAILS,
         disabled: false,
-        icon: DeleteIcon,
+        icon: DetailsIcon,
       },
       {
         name: 'Resources',
