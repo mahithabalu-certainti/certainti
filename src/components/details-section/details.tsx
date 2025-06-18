@@ -90,7 +90,11 @@ const DetailsSection: React.FC<{
                   {item.label}
                 </div>
                 <div className='font-medium text-[13px] break-all overflow-hidden text-ellipsis whitespace-nowrap'>
-                  <TruncateWithTooltip text={String(item.value)} maxWidth={900}>
+                  <TruncateWithTooltip
+                    text={String(item.value)}
+                    maxWidth={'100%'}
+                    className='truncate max-w-full'
+                  >
                     {renderValue(item.value)}
                   </TruncateWithTooltip>
                 </div>
@@ -116,15 +120,16 @@ const DetailsSection: React.FC<{
                       item && (
                         <div
                           key={idx}
-                          className='grid grid-cols-[100px_auto] sm:grid-cols-[200px_auto] gap-x-2'
+                          className='grid grid-cols-[100px_auto] sm:grid-cols-[200px_auto] gap-x-2 min-w-0'
                         >
                           <div className='text-left font-semibold text-[13px] text-[#425A76] pr-1'>
                             {item.label}
                           </div>
-                          <div className='font-medium text-[13px]'>
+                          <div className='font-medium text-[13px] truncate min-w-0'>
                             <TruncateWithTooltip
                               text={String(item.value)}
-                              maxWidth={isAudit ? 300 : 170}
+                              maxWidth={'100%'}
+                              className='truncate max-w-full'
                             >
                               {renderValue(item.value, item.label)}
                             </TruncateWithTooltip>
