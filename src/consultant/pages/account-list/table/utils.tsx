@@ -1,6 +1,6 @@
 import { Box, Checkbox, IconButton, TableCell, TableRow } from '@mui/material';
-import React, { Fragment } from 'react';
-import { arrowDownIcon, childAccountIcon } from '../../../../assets';
+import React, { Fragment, Suspense } from 'react';
+import { ArrowDownIcon, ChildAccountIcon } from '../../../../assets';
 import { Account, ConvertedAccount } from '../../../types';
 import ActionButton from './action-button';
 import { TruncateWithTooltip } from '../../../../components';
@@ -154,8 +154,7 @@ export const renderRows = ({
                 onClick={() => handleRowClick(account.accountId)}
               >
                 {openRows.has(account.accountId) ? (
-                  <img
-                    src={arrowDownIcon}
+                  <ArrowDownIcon
                     alt='arrowUp'
                     style={{
                       filter:
@@ -164,8 +163,7 @@ export const renderRows = ({
                     className='h-[18px] w-[18px] mb-1'
                   />
                 ) : (
-                  <img
-                    src={arrowDownIcon}
+                  <ArrowDownIcon
                     alt='arrowDown'
                     style={{
                       transform: 'rotate(-90deg)',
@@ -357,8 +355,10 @@ export const renderRows = ({
             </TableCell>
           )}
         </TableRow>
-        {openRows.has(account.accountId) &&
-          renderChildRows(account.accountName)}
+        <Suspense fallback={null}>
+          {openRows.has(account.accountId) &&
+            renderChildRows(account.accountName)}
+        </Suspense>
         <TableRow
           sx={{
             '& .MuiTableCell-root': {
@@ -468,8 +468,7 @@ export const renderChildRows = ({
                     onClick={() => handleChildRowClick(account.accountId)}
                   >
                     {openChildRows.has(account.accountId) ? (
-                      <img
-                        src={arrowDownIcon}
+                      <ArrowDownIcon
                         alt='arrowUp'
                         style={{
                           filter:
@@ -478,8 +477,7 @@ export const renderChildRows = ({
                         className='h-[18px] w-[18px]'
                       />
                     ) : (
-                      <img
-                        src={arrowDownIcon}
+                      <ArrowDownIcon
                         alt='arrowDown'
                         style={{
                           transform: 'rotate(-90deg)',
@@ -494,8 +492,7 @@ export const renderChildRows = ({
                   <div className='w-[18px] h-[18px]'></div>
                 )}
                 <div className='flex items-center justify-center w-[18px] h-[17px] bg-[#425A76] rounded-[4px]'>
-                  <img
-                    src={childAccountIcon}
+                  <ChildAccountIcon
                     alt='childAccountIcon'
                     className='w-[9px] h-[10px]'
                   />
@@ -741,8 +738,7 @@ export const renderChildRows = ({
                   >
                     <Box className='inline-flex items-center gap-1 ml-[55px]'>
                       <div className='flex items-center justify-center w-[18px] h-[17px] bg-[#425A76] rounded-[4px]'>
-                        <img
-                          src={childAccountIcon}
+                        <ChildAccountIcon
                           alt='childAccountIcon'
                           className='w-[9px] h-[10px]'
                         />

@@ -1,5 +1,5 @@
 // import { useState } from 'react';
-import { accountHomeIcon } from '../../assets';
+import { AccountHomeIcon } from '../../assets';
 import { TruncateWithTooltip } from '../truncate-with-tooltip';
 
 interface CompanyBadgeProps {
@@ -10,8 +10,7 @@ interface CompanyBadgeProps {
 const CompanyBadge = ({ name }: CompanyBadgeProps) => {
   return (
     <div className='inline-flex items-center gap-1.5 px-2 h-[24px] rounded-[2px] max-w-[200px]'>
-      <img
-        src={accountHomeIcon}
+      <AccountHomeIcon
         alt='company-icon'
         className='w-3.5 h-3 mb-0.5'
       />

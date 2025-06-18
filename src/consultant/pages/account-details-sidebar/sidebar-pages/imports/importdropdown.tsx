@@ -1,7 +1,7 @@
 import { Box, Button, Menu, MenuItem } from '@mui/material';
 import { styled, SxProps } from '@mui/material/styles';
 import React, { useState } from 'react';
-import { arrowDownIcon, arrowUpIcon, addIcon } from '../../../../../assets';
+import { ArrowDownIcon, ArrowUpIcon, AddIcon } from '../../../../../assets';
 
 interface ImportDropdownItem {
   label: string;
@@ -66,10 +66,7 @@ const ActionImportDropdown: React.FC<ImportDropdownItemProps> = ({
           sx={{ flexGrow: 1, color: '#425A76' }}
           className='flex gap-1.5 items-center pl-2'
         >
-          {variant === 'filled' && (
-            <img src={addIcon} className='w-3 p-[1px]' />
-          )}{' '}
-          {label}
+          {variant === 'filled' && <AddIcon className='w-3 p-[1px]' />} {label}
         </Box>
         {split === 'true' && (
           <Box
@@ -83,15 +80,23 @@ const ActionImportDropdown: React.FC<ImportDropdownItemProps> = ({
           />
         )}
 
-        <img
-          src={open ? arrowUpIcon : arrowDownIcon}
-          alt={open ? 'arrowUp' : 'arrowDown'}
-          // style={{ filter: iconFilter }}
-          className='mr-1'
-          onClick={(event) =>
-            handleClick(event as unknown as React.MouseEvent<HTMLButtonElement>)
-          }
-        />
+        {open ? (
+          <ArrowUpIcon
+            alt='arrowUp'
+            className='mr-1'
+            onClick={(event: React.MouseEvent) =>
+              handleClick(event as React.MouseEvent<HTMLButtonElement>)
+            }
+          />
+        ) : (
+          <ArrowDownIcon
+            alt='arrowDown'
+            className='mr-1'
+            onClick={(event: React.MouseEvent) =>
+              handleClick(event as React.MouseEvent<HTMLButtonElement>)
+            }
+          />
+        )}
       </StyledButton>
 
       <Menu

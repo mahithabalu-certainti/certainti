@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { adminSubmenuActiveIcon, backIcon } from '../../assets';
+import { AdminSubmenuActiveIcon, BackIcon } from '../../assets';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { MenuItem } from '../../consultant/types';
@@ -88,7 +88,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
             className={`w-[18px] h-[18px] cursor-pointer transform transition-transform ${isCollapsed ? 'rotate-180' : ''}`}
             onClick={onToggleCollapse}
           >
-            <img src={backIcon} alt='Back' className='w-[18px] h-[18px]' />
+            <BackIcon alt='Back' className='w-[18px] h-[18px]' />
           </div>
         )}
       </div>
@@ -121,7 +121,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                   >
                     {item.icon ? (
                       <span className='flex items-center justify-center w-4 h-4'>
-                        {item.icon}
+                        <item.icon alt='icon' className='w-4 h-4 text-black' />
                       </span>
                     ) : (
                       <span className='uppercase text-[12px]'>
@@ -135,8 +135,7 @@ const SideMenuPanel: React.FC<SideMenuPanelProps> = ({
                   <span className='flex-1 truncate'>{item.name}</span>
                 )}
                 {!isCollapsed && (
-                  <img
-                    src={adminSubmenuActiveIcon}
+                  <AdminSubmenuActiveIcon
                     alt='active'
                     className={`w-[12px] h-[12px] transition-opacity duration-150 ${
                       activeKey === item.key

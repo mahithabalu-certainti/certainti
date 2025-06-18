@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import ActionImportDropdown from './importdropdown';
-import { importIcon, uploadIcon } from '../../../../../assets';
+import { ImportIcon, UploadIcon } from '../../../../../assets';
 import TextButton from '../../../../../components/button/text-button';
 import { uploadImportFile } from '../../../../services/import';
 import { UploadImportPayload } from '../../../../../common-service';
@@ -202,8 +202,7 @@ const Overview: React.FC<OverviewProps> = ({
     <div className='h-auto border border-[#CBD6E2] flex flex-col'>
       <div className='h-[50px] px-4 border-b border-[#CBD6E2] flex items-center justify-between'>
         <div className='flex items-center gap-2'>
-          <img
-            src={importIcon}
+          <ImportIcon
             alt='Import Icon'
             className='w-[24px] h-[24px]'
           />
@@ -267,8 +266,7 @@ const Overview: React.FC<OverviewProps> = ({
               : 'border-[#0176D3] cursor-pointer'
           }`}
         >
-          <img
-            src={uploadIcon}
+          <UploadIcon
             alt='Upload Icon'
             className='w-[36px] h-[24px]'
           />

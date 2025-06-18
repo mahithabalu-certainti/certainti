@@ -1,20 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { InfoSection, PageHeader, SideMenuPanel } from '../../../../components';
 import {
-  activitiesIcon,
-  attachmentsSideIcon,
-  casesIcon,
-  checklistIcon,
-  detailsIcon,
-  financialIcon,
-  interactionsIcon,
-  notesSideIcon,
-  projectDetailsIcon,
-  projectsSideIcon,
-  resourcesIcon,
-  techSummaryIcon,
+  ActivitiesIcon,
+  AttachmentsSideIcon,
+  CasesIcon,
+  ChecklistIcon,
+  DetailsIcon,
+  FinancialIcon,
+  InteractionsIcon,
+  NotesSideIcon,
+  ProjectDetailsIcon,
+  ProjectsSideIcon,
+  ResourcesIcon,
+  TechSummaryIcon,
 } from '../../../../assets';
 import { CircularProgress } from '@mui/material';
 import { useProjectDetail } from '../../../services/project';
@@ -35,89 +35,77 @@ const sideMenuItems: MenuItem[] = [
     key: 'projectDetails',
     id: AllModules.PROJECT_DETAILS,
     disabled: false,
-    icon: <img src={detailsIcon} alt='detailsIcon' className='w-4 h-4' />,
+    icon: DetailsIcon,
   },
   {
     name: 'Project Resources',
     key: 'projectResources',
     id: AllModules.PROJECT_RESOURCES,
     disabled: false,
-    icon: <img src={resourcesIcon} alt='resourcesIcon' className='w-4 h-4' />,
+    icon: ResourcesIcon,
   },
   {
     name: 'Projects Task',
     key: 'projectsTask',
     id: AllModules.PROJECT_TASK,
     disabled: false,
-    icon: (
-      <img src={projectsSideIcon} alt='projectsSideIcon' className='w-4 h-4' />
-    ),
+    icon: ProjectsSideIcon,
   },
   {
     name: 'Financial Highlights',
     key: 'financial',
     id: AllModules.PROJECT_FINANCIAL_HIGHLIGHTS,
     disabled: false,
-    icon: <img src={financialIcon} alt='financial' className='w-4 h-4' />,
+    icon: FinancialIcon,
   },
   {
     name: 'Interactions',
     key: 'interactions',
     id: AllModules.PROJECT_INTERACTIONS,
     disabled: false,
-    icon: (
-      <img src={interactionsIcon} alt='interactionsIcon' className='w-4 h-4' />
-    ),
+    icon: InteractionsIcon,
   },
   {
     name: 'Technical Summary',
     key: 'technicalSummary',
     id: AllModules.PROJECT_TECHNICAL_SUMMARY,
     disabled: false,
-    icon: (
-      <img src={techSummaryIcon} alt='techSummaryIcon' className='w-4 h-4' />
-    ),
+    icon: TechSummaryIcon,
   },
   {
     name: 'Cases',
     key: 'cases',
     id: AllModules.PROJECT_CASES,
     disabled: false,
-    icon: <img src={casesIcon} alt='casesIcon' className='w-4 h-4' />,
+    icon: CasesIcon,
   },
   {
     name: 'Activities',
     key: 'activities',
     id: AllModules.PROJECT_ACTIVITIES,
     disabled: false,
-    icon: <img src={activitiesIcon} alt='activitiesIcon' className='w-4 h-4' />,
+    icon: ActivitiesIcon,
   },
   {
     name: 'Notes',
     key: 'notes',
     id: AllModules.PROJECT_NOTES,
     disabled: false,
-    icon: <img src={notesSideIcon} alt='notesSideIcon' className='w-4 h-4' />,
+    icon: NotesSideIcon,
   },
   {
     name: 'Attachments',
     key: 'attachments',
     id: AllModules.PROJECT_ATTACHMENTS,
     disabled: false,
-    icon: (
-      <img
-        src={attachmentsSideIcon}
-        alt='attachmentsSideIcon'
-        className='w-4 h-4'
-      />
-    ),
+    icon: AttachmentsSideIcon,
   },
   {
     name: 'Checklists',
     key: 'checklists',
     id: AllModules.PROJECT_CHECKLISTS,
     disabled: false,
-    icon: <img src={checklistIcon} alt='checklistIcon' className='w-4 h-4' />,
+    icon: ChecklistIcon,
   },
 ];
 
@@ -273,9 +261,12 @@ export const ProjectDetails = () => {
         <PageHeader
           variant='sub'
           placeholder='Name'
-          icon={projectDetailsIcon}
-          iconBackgroundColor='#AF78FF'
-          iconClasses='h-8 w-8 rounded p-[6px]'
+          icon={
+            <ProjectDetailsIcon
+              className='h-6 w-6 rounded p-[4px]'
+              style={{ backgroundColor: '#AF78FF' }}
+            />
+          }
           //   title={data?.data?.accountById?.account_name || 'Project Title'}
           title={data?.data?.project?.project_name || 'Project Title'}
           totalRecords={5}
@@ -321,7 +312,7 @@ export const ProjectDetails = () => {
               <CircularProgress />
             </div>
           ) : (
-            <>{renderContent()}</>
+            <Suspense fallback={null}>{renderContent()}</Suspense>
           )}
         </div>
       </div>
