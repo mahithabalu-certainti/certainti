@@ -2772,7 +2772,7 @@ class SchemaService {
 
         const technicalConsultant = enrichedKeyContacts.find(
           (e: any) =>
-            e.role_name === "Technical Consultant" && e.is_primary_contact
+            e.role_name === "Client Project Technical Point of Contact" && e.is_primary_contact
         );
         const financialConsultant = enrichedKeyContacts.find(
           (e: any) =>
