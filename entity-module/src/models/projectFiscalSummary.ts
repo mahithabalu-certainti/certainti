@@ -261,6 +261,9 @@ export class ProjectFiscalSummary
   public project_point_of_contact?: string | null;
   public technical_point_of_contact?: string | null;
 
+  public comments?: string | null;
+  public project_description?: string | null;
+
   static initialize(sequelize: Sequelize, schema: string) {
     ProjectFiscalSummary.init(
       {
@@ -480,6 +483,14 @@ export class ProjectFiscalSummary
         },
         technical_point_of_contact: {
           type: DataTypes.STRING(100),
+          allowNull: true,
+        },
+        project_description: {
+          type: DataTypes.STRING(2000),
+          allowNull: true,
+        },
+        comments: {
+          type: DataTypes.STRING(2000),
           allowNull: true,
         },
       },

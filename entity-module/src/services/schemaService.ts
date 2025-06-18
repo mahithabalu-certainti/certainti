@@ -1395,8 +1395,8 @@ class SchemaService {
           Array.isArray(result) && result.length > 0 ? result[0] : null;
       }
 
-      project.dataValues = {
-        ...project.dataValues,
+      project = {
+        ...project,
         country_name: countryRow?.country_name || null,
         country_code: countryRow?.country_code || null,
         region_name: regionRow?.state_name || null,
@@ -1503,8 +1503,10 @@ class SchemaService {
         SELECT json_agg(pfs_sub ${applyChildSort ? `ORDER BY pfs_sub.${sort.sortCol} ${sort.sortOrder}` : ""})
         FROM (
           SELECT pfs.project_code, pfs.project_group, pfs.project_name, pfs.project_type, pfs.fiscal_year, pfs.project_client_group, acc.account_name, ps.qre,
-          COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name, pfs.total_effort_prj as total_effort, pfs.total_cost_prj as total_cost,
-          pfs.total_cost_fte_prj as total_cost_fte, pfs.total_cost_subcon_prj as total_cost_subcon, pfs.total_cost_nonlabor_prj as total_cost_nonlabor, pfs.assessment_status, pfs.created_datetime,
+          COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name, CAST(pfs.total_effort_prj AS TEXT) as total_effort, CAST(pfs.total_cost_prj AS TEXT) AS total_cost,
+          CAST(pfs.total_cost_fte_prj AS TEXT) AS total_cost_fte,
+          CAST(pfs.total_cost_subcon_prj AS TEXT) AS total_cost_subcon,
+          CAST(pfs.total_cost_nonlabor_prj AS TEXT) AS total_cost_nonlabor, pfs.assessment_status, pfs.created_datetime,
           pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, 
           pfs.project_rid, pfs.project_fiscal_rid, acc.rid
           FROM project_fiscal_summary pfs
@@ -1616,9 +1618,11 @@ class SchemaService {
         SELECT json_agg(pfs_sub ${applyChildSort ? `ORDER BY pfs_sub.${sort.sortCol} ${sort.sortOrder}` : ""})
         FROM (
           SELECT pfs.project_code, pfs.project_group, pfs.project_name, pfs.project_type, pfs.fiscal_year, pfs.project_client_group, acc.account_name, ps.qre,
-          COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name, pfs.total_effort_prj as total_effort, pfs.total_cost_prj as total_cost,
-          pfs.total_cost_fte_prj as total_cost_fte, pfs.total_cost_subcon_prj as total_cost_subcon, pfs.total_cost_nonlabor_prj as total_cost_nonlabor, pfs.assessment_status,
-          pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, pfs.project_rid, pfs.created_datetime, pfs.project_fiscal_rid, acc.rid
+          COALESCE(pfs.project_classification_other, pc.classification_name) AS classification_name, CAST(pfs.total_effort_prj AS TEXT) as total_effort, CAST(pfs.total_cost_prj AS TEXT) AS total_cost,
+          CAST(pfs.total_cost_fte_prj AS TEXT) AS total_cost_fte,
+          CAST(pfs.total_cost_subcon_prj AS TEXT) AS total_cost_subcon,
+          CAST(pfs.total_cost_nonlabor_prj AS TEXT) AS total_cost_nonlabor, pfs.assessment_status,
+          pfs.qre_final, pfs.project_point_of_contact, pfs.technical_point_of_contact, pfs.comments, pfs.modified_datetime, pfs.project_rid, pfs.created_datetime, pfs.project_fiscal_rid, pfs.account_rid
           FROM project_fiscal_summary pfs
           INNER JOIN account acc ON acc.rid = pfs.account_rid 
           LEFT JOIN project_classification pc on pc.rid = pfs.project_classification_rid
@@ -2812,7 +2816,7 @@ class SchemaService {
         );
 
         const industry = industryResult[0];
-        project.dataValues.industry_name =
+        project.industry_name =
           industry?.industry_name || project.industry_name;
       }
 
@@ -2855,7 +2859,7 @@ class SchemaService {
       }));
 
       return {
-        ...project.dataValues,
+        ...project,
         keyContact: enrichedKeyContacts,
       };
     } catch (err) {
@@ -2886,7 +2890,7 @@ class SchemaService {
       }
 
       return {
-        ...(project.dataValues || project),
+        ...(project),
         classification_name: classificationName,
       };
     } catch (err) {
