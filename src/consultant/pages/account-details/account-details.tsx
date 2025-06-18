@@ -272,13 +272,6 @@ export const AccountDetails = () => {
   const sideMenuItems = useMemo<MenuItem[]>(
     () => [
       {
-        name: 'Financial Highlights',
-        key: 'financial',
-        id: AllModules.FINANCIAL_HIGHLIGHTS,
-        disabled: false,
-        icon: <img src={financialIcon} alt='financial' className='w-4 h-4' />,
-      },
-      {
         name: 'Details',
         key: 'details',
         id: AllModules.DETAILS,
@@ -306,6 +299,13 @@ export const AccountDetails = () => {
             className='w-4 h-4'
           />
         ),
+      },
+      {
+        name: 'Financial Highlights',
+        key: 'financial',
+        id: AllModules.FINANCIAL_HIGHLIGHTS,
+        disabled: false,
+        icon: <img src={financialIcon} alt='financial' className='w-4 h-4' />,
       },
       {
         name: 'Cases',

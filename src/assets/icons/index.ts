@@ -107,6 +107,7 @@ import attachmentsSideIcon from './attachments-icon.svg';
 import comingSoon from './coming-soon.svg';
 import interactionsIcon from './interactions-icon.svg';
 import techSummaryIcon from './tech-summary.svg';
+import tickIcon from './tick-Icon.svg';
 
 export {
   accountDetailsIcon,
@@ -217,4 +218,5 @@ export {
   importsIcon,
   interactionsIcon,
   techSummaryIcon,
+  tickIcon,
 };
