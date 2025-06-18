@@ -248,7 +248,8 @@ export class ProjectFiscal
   public interaction_cc_list?: string | null;
   public assessment_status?: string | null;
   public claim_status?: string | null;
-  public comments?: string | null | undefined;
+  public comments?: string | null;
+  public project_description?: string | null;
 
   static initialize(sequelize: Sequelize, schema: string) {
     ProjectFiscal.init(
@@ -461,7 +462,11 @@ export class ProjectFiscal
         comments: {
           type: DataTypes.STRING(2000),
           allowNull: true,
-        }
+        },
+        project_description: {
+          type: DataTypes.STRING(2000),
+          allowNull: true,
+        },
       },
       {
         sequelize,

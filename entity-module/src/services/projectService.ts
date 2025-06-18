@@ -522,6 +522,8 @@ export class ProjectService {
 
         await this.assignCurrencyRid(projectData, mainDbInit);
 
+        projectData = await this.projectIngestion.enrichKeyContactsByProjectId(projectData, accountRNumber);
+
         projectData = await this.schemaService.insertProjectGeoData(
           projectData,
           mainDbInit
@@ -560,7 +562,7 @@ export class ProjectService {
 
   insertAccount(project: any, account: any,){
     return {
-      ...(project.dataValues || project),
+      ...(project),
       account_name: account.account_name,
       account_status:account.status
     }
@@ -889,8 +891,8 @@ export class ProjectService {
           "Customer Group": project.project_client_group || "-",
           "Project Effort (Hours)": project.total_effort || "-",
           "Project Cost": formatNumberForExport(project.total_cost, project.currency_symbol) || "-",
-          "FTE Cost": formatNumberForExport(project.total_fte_cost, project.currency_symbol) || "-",
-          "SubCon Cost": formatNumberForExport(project.total_subcon, project.currency_symbol) || "-",
+          "FTE Cost": formatNumberForExport(project.total_cost_fte, project.currency_symbol) || "-",
+          "SubCon Cost": formatNumberForExport(project.total_cost_subcon, project.currency_symbol) || "-",
           "Non-Labor Cost": formatNumberForExport(project.total_cost_nonlabor, project.currency_symbol) || "-",
           "Assessment Status": project.assessment_status || "-",
           "QRE%": project.qre || "-",
@@ -919,11 +921,11 @@ export class ProjectService {
               "Fiscal Year": fiscal.fiscal_year || "-",
               "Project Classification": fiscal.classification_name || "-",
               "Customer Group": fiscal.project_client_group || "-",
-              "Project Effort (Hours)": fiscal.total_effort || "-",
-              "Project Cost": formatNumberForExport(fiscal.total_cost, project.currency_symbol) || "-",
-              "FTE Cost": formatNumberForExport(fiscal.total_cost_fte, project.currency_symbol) || "-",
-              "SubCon Cost": formatNumberForExport(fiscal.total_cost_subcon, project.currency_symbol) || "-",
-              "Non-Labor Cost": formatNumberForExport(fiscal.total_cost_nonlabor, project.currency_symbol) || "-",
+              "Project Effort (Hours)": fiscal.total_effort_prj || "-",
+              "Project Cost": formatNumberForExport(fiscal.total_cost_prj, project.currency_symbol) || "-",
+              "FTE Cost": formatNumberForExport(fiscal.total_cost_fte_prj, project.currency_symbol) || "-",
+              "SubCon Cost": formatNumberForExport(fiscal.total_cost_subcon_prj, project.currency_symbol) || "-",
+              "Non-Labor Cost": formatNumberForExport(fiscal.total_cost_nonlabor_prj, project.currency_symbol) || "-",
               "Assessment Status": fiscal.assessment_status || "-",
               "QRE%": "-",
               "QRE": formatNumberForExport(fiscal.qre_final, project.currency_symbol) || "-",

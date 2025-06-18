@@ -1049,48 +1049,17 @@ class ProjectIngestionService {
             account_rid: accountData.rid,
             ...whereFiscal,
           },
-          attributes: [
-            ["rid", "project_fiscal_rid"],
-            "r_number",
-            "project_rid",
-            "eid",
-            "created_datetime",
-            "modified_datetime",
-            "created_by",
-            "modified_by",
-            "project_code",
-            "industry_rid",
-            "industry_name",
-            "fiscal_year",
-            "project_name",
-            "program_name",
-            "project_type",
-            "project_classification_rid",
-            "project_classification_other",
-            "project_client_group",
-            "project_group",
-            "auto_send_ai_interaction",
-            ["account_rid", "rid"],
-            "country_rid",
-            "region_rid",
-            "currency_rid",
-            "max_ai_interaction",
-            "expiry_duration",
-            "auto_access_rd",
-            "project_status",
-            "project_startdate",
-            "project_enddate",
-            "qre_final",
-            "comments",
-            ["total_fte_prj", "total_fte"],
-            "total_subcon_prj",
-            "total_nonlabor_prj",
-            ["total_effort_prj", "total_effort"],
-            ["total_cost_prj", "total_cost"],
-            ["total_cost_fte_prj", "total_cost_fte"],
-            ["total_cost_subcon_prj", "total_cost_subcon"],
-            ["total_cost_nonlabor_prj", "total_cost_nonlabor"]
-          ]
+          attributes: {
+            include: [
+              ["rid", "project_fiscal_rid"],
+              ["total_fte_prj", "total_fte"],
+              ["total_effort_prj", "total_effort"],
+              ["total_cost_prj", "total_cost"],
+              ["total_cost_fte_prj", "total_cost_fte"],
+              ["total_cost_subcon_prj", "total_cost_subcon"],
+              ["total_cost_nonlabor_prj", "total_cost_nonlabor"]
+            ]
+          }
         },
       ],
     });
@@ -1300,6 +1269,13 @@ class ProjectIngestionService {
         accountNumber
       );
 
+      projectData.forEach((e) => {
+        e.account_name = accountData.account_name
+        e.ProjectFiscal.forEach((val: any) => {
+          val.account_name = accountData.account_name
+        })
+      })
+
       projectData = await this.keyContacts.insertKeyRole(
         projectData,
         this.mainDbSequelize
@@ -1340,15 +1316,16 @@ class ProjectIngestionService {
         "Project Code": project.project_code || "-",
         "Name": project.project_name || "-",
         "Project Type": project.project_type || "-",
+        "Account Name": project.account_name || "-",
         "Fiscal Year": project.fiscal_year || "-",
         "Project Classification": project.classification_name || "-",
         "Customer Group": project.project_client_group || "-",
         "Project Group": project?.project_group || "-",
         "Project Effort (Hours)": project.total_effort || "-",
         "Project Cost": formatNumberForExport(project.total_cost, project.currency_symbol) || "-",
-        "FTE Cost": formatNumberForExport(project.total_fte_cost, project.currency_symbol) || "-",
-        "SubCon Cost": formatNumberForExport(project.total_sub_con, project.currency_symbol) || "-",
-        "Non-Labor Cost": formatNumberForExport(project.total_non_labor_cost, project.currency_symbol) || "-",
+        "FTE Cost": formatNumberForExport(project.total_cost_fte, project.currency_symbol) || "-",
+        "SubCon Cost": formatNumberForExport(project.total_cost_subcon, project.currency_symbol) || "-",
+        "Non-Labor Cost": formatNumberForExport(project.total_cost_nonlabor, project.currency_symbol) || "-",
         "Assessment Status": project.assessment_status || "-",
         "QRE %": project.qre || "-",
         "QRE": formatNumberForExport(project.qualified_research_expenditure, project.currency_symbol) || "-",
@@ -1369,15 +1346,16 @@ class ProjectIngestionService {
         "Project Code": fiscal.project_code || "-",
         "Name": fiscal.project_name || "-",
         "Project Type": fiscal.project_type || "-",
+        "Account Name": project.account_name || "-",
         "Fiscal Year": fiscal.fiscal_year || "-",
         "Project Classification": fiscal.classification_name || "-",
         "Customer Group": fiscal.project_client_group || "-",
         "Project Group": fiscal?.project_group || "-",
-        "Project Effort (Hours)": fiscal.total_effort || "-",
-        "Project Cost": formatNumberForExport(fiscal.total_cost, project.currency_symbol) || "-",
-        "FTE Cost": formatNumberForExport(fiscal.total_cost_fte, project.currency_symbol) || "-",
-        "SubCon Cost": formatNumberForExport(fiscal.total_cost_subcon, project.currency_symbol) || "-",
-        "Non-Labor Cost": formatNumberForExport(fiscal.total_cost_nonlabor, project.currency_symbol) || "-",
+        "Project Effort (Hours)": fiscal.total_effort_prj || "-",
+        "Project Cost": formatNumberForExport(fiscal.total_cost_prj, project.currency_symbol) || "-",
+        "FTE Cost": formatNumberForExport(fiscal.total_cost_fte_prj, project.currency_symbol) || "-",
+        "SubCon Cost": formatNumberForExport(fiscal.total_cost_subcon_prj, project.currency_symbol) || "-",
+        "Non-Labor Cost": formatNumberForExport(fiscal.total_cost_nonlabor_prj, project.currency_symbol) || "-",
         "Assessment Status": fiscal.assessment_status || "-",
         "QRE %": "-", // Only base project has QRE %
         "QRE": formatNumberForExport(fiscal.qre_final, project.currency_symbol) || "-",
@@ -1409,6 +1387,22 @@ class ProjectIngestionService {
       where: {
         rid: projectId,
       },
+      attributes: {
+        include: [
+          ['total_fte_prj', 'total_fte'],
+          ['total_subcon_prj', 'total_subcon'],
+          ['total_cost_prj', 'total_cost'],
+          ['total_effort_prj', 'total_effort'],
+          ['total_effort_fte_prj', 'total_effort_fte'],
+          ['total_effort_subcon_prj', 'total_effort_subcon'],
+          ['total_cost_fte_prj', 'total_cost_fte'],
+          ['total_cost_subcon_prj', 'total_cost_subcon'],
+          ['total_cost_nonlabor_prj', 'total_cost_nonlabor'],
+          ['country_rid', 'country'],
+          ['region_rid', 'region'],
+          ['currency_rid', 'currency'],
+        ]
+      }
     });
 
     return projectData;
@@ -1736,6 +1730,36 @@ class ProjectIngestionService {
 
     return enriched;
   }
+
+  async enrichKeyContactsByProjectId(project: any, accountNumber: string) {
+    const { KeyContact } = await this.getModels(accountNumber);
+  
+    const projectId = project.rid;
+  
+    const allIds = [...new Set([projectId])];
+    if (allIds.length === 0) return project;
+  
+    const keyContacts: any[] = await KeyContact.findAll({
+      where: {
+        entity_rid: allIds,
+      },
+      raw: true,
+    });
+  
+    const contactMap: Record<string, any[]> = {};
+    for (const kc of keyContacts) {
+      const refId = kc.entity_rid;
+      if (!contactMap[refId]) contactMap[refId] = [];
+      contactMap[refId].push(kc);
+    }
+
+    const enrichedProject = {
+      ...project.dataValues,
+      keyContact: contactMap[projectId] || [],
+    };
+  
+    return enrichedProject;
+  }  
 }
 
 export default ProjectIngestionService;
