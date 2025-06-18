@@ -2,6 +2,7 @@
 // import { FieldConfig, FilterState } from "../../../components/filter/filterType";
 
 import {
+  costStatusOptions,
   enumValueOptions,
   FieldConfig,
   FilterState,
@@ -9,6 +10,11 @@ import {
   resourceTypeOptions,
   statusOptions,
 } from '../../components/filter/filterType';
+import {
+  effortNumberOptions,
+  fiscalOptions,
+  textOptions,
+} from '../projects/utils';
 
 const requiredFieldFilterOptionsForText: { option: string; value: string }[] = [
   { option: 'Equals', value: 'equals' },
@@ -38,7 +44,7 @@ export const getCostFilterFields = (
   // { name: 'Resource Type', value: 'resource_type', type: 'enum', required: true, options: resourceTypeOptions, filterOptions: requiredFieldFilterOptionsForEnum },
   {
     name: 'Effective From',
-    value: 'effective_date',
+    value: 'effective_from',
     type: 'date',
     minDate: new Date('2000-01-01'),
     maxDate: new Date(),
@@ -53,21 +59,42 @@ export const getCostFilterFields = (
   {
     name: 'Currency',
     value: 'currency',
-    type: 'currencySelect',
+    type: 'enum',
     options: currencyOptions,
+    operatorOption: fiscalOptions,
   },
-  { name: 'Annual Compensation', value: 'annual', type: 'number' },
-  { name: 'Monthly Compensation', value: 'monthly', type: 'number' },
-  { name: 'Bi-Weekly Compensation', value: 'bi-weekly', type: 'number' },
-  { name: 'Weekly Compensation', value: 'weekly', type: 'number' },
-  { name: 'Daily Compensation', value: 'daily', type: 'number' },
-  { name: 'Hourly Compensation', value: 'hourly', type: 'number' },
+  {
+    name: 'Efforts in Hrs',
+    value: 'effort_in_hrs',
+    type: 'number',
+    operatorOption: effortNumberOptions,
+  },
+  { name: 'Salary', value: 'Salary', type: 'number' },
+  { name: 'Bonus', value: 'bonus', type: 'number' },
+  { name: 'Insurance', value: 'insurance', type: 'number' },
+  { name: 'Deductions', value: 'deductions', type: 'number' },
+  { name: 'Cost', value: 'resource_cost', type: 'number' },
   // { name: 'Org Name', value: 'resource_orgname', type: 'textCostAndSkill' },
-  // { name: 'Designation', value: 'resource_designation', type: 'textCostAndSkill' },
+  // {
+  //   name: 'Designation',
+  //   value: 'resource_designation',
+  //   type: 'textCostAndSkill',
+  // },
   // { name: 'Role', value: 'resource_role', type: 'textCostAndSkill' },
   { name: 'Comments', value: 'comments', type: 'textCostAndSkill' },
-  { name: 'Cost ID', value: 'r_number', type: 'textCostAndSkill' },
-  // { name: 'Semi-Annual', value: 'semi_annual', type: 'number' },
+  {
+    name: 'Status',
+    value: 'status',
+    type: 'enum',
+    options: costStatusOptions,
+    operatorOption: fiscalOptions,
+  },
+  {
+    name: 'Cost ID',
+    value: 'r_number',
+    type: 'textCostAndSkill',
+    operatorOption: textOptions,
+  },
   {
     name: 'Sort Options',
     value: 'sort_options',
