@@ -31,13 +31,6 @@ import { NotFound } from '../../not-found';
 
 const sideMenuItems: MenuItem[] = [
   {
-    name: 'Financial Highlights',
-    key: 'financial',
-    id: AllModules.PROJECT_FINANCIAL_HIGHLIGHTS,
-    disabled: false,
-    icon: FinancialIcon,
-  },
-  {
     name: 'Project Details',
     key: 'projectDetails',
     id: AllModules.PROJECT_DETAILS,
@@ -57,6 +50,13 @@ const sideMenuItems: MenuItem[] = [
     id: AllModules.PROJECT_TASK,
     disabled: false,
     icon: ProjectsSideIcon,
+  },
+  {
+    name: 'Financial Highlights',
+    key: 'financial',
+    id: AllModules.PROJECT_FINANCIAL_HIGHLIGHTS,
+    disabled: false,
+    icon: FinancialIcon,
   },
   {
     name: 'Interactions',

@@ -376,7 +376,7 @@ export const REGEX_PATTERNS = {
   MANAGER_REGEX: /^[A-Za-z\s.'-]*$/,
   MIN_NAME_REGEX: /^.{2,}$/,
   MAX_NAME_REGEX: /^.{0,128}$/,
-  MIN_ACCOUNT_NAME_REGEX: /^.{7,}$/,
+  MIN_ACCOUNT_NAME_REGEX: /^.{3,}$/,
   MAX_ACCOUNT_NAME_REGEX: /^.{0,125}$/,
   MAX_EMAIL_REGEX: /^.{0,254}$/,
   MAX_POSTAL_REGEX: /^.{1,20}$/,

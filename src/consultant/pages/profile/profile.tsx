@@ -1,7 +1,10 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { useManageUserDetail } from '../../../admin/service/manage-user-detail/manage-user-detail-service';
-import { AccountHomeIcon } from '../../../assets/icons';
+import {
+  AccountHomeIcon,
+  RealatedListDetailsIcon,
+} from '../../../assets/icons';
 import TextButton from '../../../components/button/text-button';
 import { RootState } from '../../../store/store';
 import { UserDetailComponent } from '../../../components';
@@ -12,9 +15,12 @@ import { AllPermissions } from '../../../common-service';
 export const Profile: React.FC = () => {
   const { userId } = useSelector((state: RootState) => state.auth);
   const userDetails = useManageUserDetail(userId as string);
-  const userDatas = userDetails.data?.data?.users;
+  const userData = userDetails.data?.data?.users;
+  const userDetail = userDetails.data?.data?.users;
+  const userFullName =
+    `${userDetail?.first_name || ''} ${userDetail?.last_name || ''}`.trim();
 
-  // Permission Mangement
+  // Permission Management
   const { permission } = useSelector((state: RootState) => state.permission);
   const isViewProfileEnable = checkPermission(
     permission,
@@ -28,32 +34,55 @@ export const Profile: React.FC = () => {
   if (!isViewProfileEnable) return <AccessRestricted />;
 
   return (
-    <>
-      <div className='flex justify-between items-center border-b-2 border-gray-200 px-10 py-6'>
-        <div className='flex items-center'>
-          <AccountHomeIcon className='h-10 w-10 bg-[#7D98B6] p-2.5 rounded' />
-          <div>
-            <h4 className='font-bold text-lg ml-2 leading-4'>My Information</h4>
+    <div className='flex flex-col h-[calc(100vh-64px)] w-full overflow-y-auto p-4 gap-3'>
+      <div className='w-full h-[55px] min-h-[50px] px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
+        <div className='flex items-center justify-center'>
+          <AccountHomeIcon
+            alt='manage user'
+            className='h-7 w-7 bg-[#7D98B6] p-1.5 rounded'
+          />
+          <div className='flex flex-col mx-2.5 pb-1'>
+            <div className='font-semibold text-[#7D98B6] text-[12px] pt-1'>
+              {`Profile > ${userDetail?.full_name ?? userFullName}`}
+            </div>
+            <div className='font-bold text-[16px] text-[#2D3E4F] -mt-1'>
+              My Information
+            </div>
           </div>
         </div>
-        <div className='flex gap-3'>
+        <div className='flex gap-2 items-center'>
           <TextButton
             label='Back'
-            sx={{
-              fontSize: '13px',
-              fontWeight: '700',
-              width: '49px',
-            }}
-            // variant='outlined'
-            // color='inherit'
             onClick={goBack}
+            sx={{
+              width: '49px',
+              minWidth: '49px',
+              fontWeight: 400,
+              fontSize: '13px',
+            }}
           />
         </div>
       </div>
-      <div className='m-4 border border-gray-200'>
-        <UserDetailComponent data={userDatas} loading={userDetails.isLoading} />
+      {/* User Details section  */}
+      <div className='flex flex-col gap-0 border border-[#CBD6E2] rounded-[2px]'>
+        <div className='flex items-center justify-between gap-4 h-[38px] py-1 px-2'>
+          <div className='flex items-center gap-2'>
+            <div>
+              <RealatedListDetailsIcon alt='details' className='w-6 h-6' />
+            </div>
+            <div className='text-[13px] text-[#2D3E4F] font-semibold'>
+              Details
+            </div>
+          </div>
+        </div>
+        <div>
+          <UserDetailComponent
+            data={userData}
+            loading={userDetails.isLoading}
+          />
+        </div>
       </div>
-    </>
+    </div>
   );
 };
 

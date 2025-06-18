@@ -1,5 +1,6 @@
-import { Tooltip } from '@mui/material';
+import { IconButton, Tooltip, TooltipProps } from '@mui/material';
 import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import { CopyIcon, TickIcon } from '../../assets';
 
 interface TruncateWithTooltipProps {
   text: string;
@@ -7,7 +8,8 @@ interface TruncateWithTooltipProps {
   className?: string;
   children?: ReactNode;
   style?: React.CSSProperties;
-  placement?: 'top' | 'bottom' | 'left' | 'right';
+  placement?: TooltipProps['placement'];
+  enableCopy?: boolean;
 }
 
 const TruncateWithTooltip = ({
@@ -17,9 +19,17 @@ const TruncateWithTooltip = ({
   children,
   style = {},
   placement = 'top',
+  enableCopy = true,
 }: TruncateWithTooltipProps) => {
   const [isOverflowing, setIsOverflowing] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
+  const [copied, setCopied] = useState<boolean>(false);
+
+  const handleCopy = (valueToCopy: string) => {
+    navigator.clipboard.writeText(valueToCopy);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
 
   useEffect(() => {
     const checkOverflow = () => {
@@ -47,8 +57,29 @@ const TruncateWithTooltip = ({
     ...style,
   };
 
+  const tooltipContent = enableCopy ? (
+    <div className='flex items-center gap-1'>
+      <span className='break-all max-w-[200px]'>{text}</span>
+      <IconButton
+        size='small'
+        onClick={(e) => {
+          e.stopPropagation();
+          handleCopy(text);
+        }}
+      >
+        {copied ? (
+          <TickIcon alt='tick-icon' className='w-3.5 h-3.5' />
+        ) : (
+          <CopyIcon alt='copy-icon' className='w-3.5 h-3.5' />
+        )}
+      </IconButton>
+    </div>
+  ) : (
+    text
+  );
+
   return isOverflowing ? (
-    <Tooltip title={text} arrow placement={placement}>
+    <Tooltip title={tooltipContent} arrow placement={placement}>
       <div ref={textRef} style={contentStyle} className={className}>
         {children || text}
       </div>

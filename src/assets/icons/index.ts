@@ -110,6 +110,7 @@ const icons = {
   user: () => import('./user.svg?react'),
   Vector: () => import('./Vector.svg?react'),
   verticalSeparatorIcon: () => import('./verticalSeparatorIcon.svg?react'),
+  tickIcon: () => import('./tick-Icon.svg?react'),
 };
 
 function createLazySvgIcon(name: keyof typeof icons) {
@@ -226,6 +227,7 @@ export const TaskTemplateIcon = createLazySvgIcon('taskTemplate');
 export const TechSummaryIcon = createLazySvgIcon('techSummaryIcon');
 export const TimeSheetIcon = createLazySvgIcon('timeSheetIcon');
 export const TimeLineIcon = createLazySvgIcon('timesheet');
+export const TickIcon = createLazySvgIcon('tickIcon');
 export const UploadIcon = createLazySvgIcon('Vector');
 export const UserIcon = createLazySvgIcon('user');
 export const VerticalSeparatorIcon = createLazySvgIcon('verticalSeparatorIcon');

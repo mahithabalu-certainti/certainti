@@ -69,6 +69,7 @@ export const Login: React.FC = () => {
         );
         const currentActiveRoute = accountNavItems.find(
           (menu) =>
+            !menu.noRedirect &&
             reShapeData.menus.find((item) => item.name === menu.id)?.is_enabled
         );
         localStorage.removeItem('loginInitiated');

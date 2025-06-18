@@ -84,6 +84,19 @@ const AccountTable: React.FC<Record<string, any>> = ({
       setAccounts(convertedData);
       setTotalCount(accountList.count || 0);
       setIsDataLoaded(true);
+
+      // Expand only those accounts which have children
+      const parentAccountNames = new Set(
+        convertedData.map((acc) => acc.parentAccount).filter(Boolean)
+      );
+      const expandableAccounts = convertedData.filter((acc) =>
+        parentAccountNames.has(acc.accountName)
+      );
+      const openRowsSet = new Set<string>(
+        expandableAccounts.map((acc) => acc.accountId)
+      );
+
+      setOpenRows(openRowsSet);
     } else {
       setIsDataLoaded(false);
     }
@@ -111,12 +124,12 @@ const AccountTable: React.FC<Record<string, any>> = ({
   };
 
   // Toggle expand/collapse state for a row
-  const handleRowClick = (accountName: string) => {
+  const handleRowClick = (accountId: string) => {
     const newOpenRows = new Set(openRows);
-    if (newOpenRows.has(accountName)) {
-      newOpenRows.delete(accountName);
+    if (newOpenRows.has(accountId)) {
+      newOpenRows.delete(accountId);
     } else {
-      newOpenRows.add(accountName);
+      newOpenRows.add(accountId);
     }
     setOpenRows(newOpenRows);
   };

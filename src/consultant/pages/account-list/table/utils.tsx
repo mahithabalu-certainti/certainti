@@ -20,7 +20,7 @@ interface RenderRowsProps {
   accounts: ConvertedAccount[];
   openRows: Set<string>;
   selectedRows: Set<number>;
-  handleRowClick: (accountName: string) => void;
+  handleRowClick: (accountId: string) => void;
   handleSelectRow: (index: number) => void;
   handleEdit: (account: Account) => void;
   handleDelete: (account: Account) => void;
@@ -82,7 +82,7 @@ export const renderRows = ({
       <React.Fragment key={account.accountName}>
         <TableRow
           hover
-          className={`${openRows.has(account.accountName) ? 'bg-[#F2F2F2]' : ''} group`}
+          className={`${openRows.has(account.accountId) ? 'bg-[#F2F2F2]' : ''} group`}
           selected={selectedRows.has(globalIndex as number)}
           sx={{
             '&:hover td': {
@@ -96,7 +96,7 @@ export const renderRows = ({
             },
             '& .MuiTableCell-root': {
               border: 'none',
-              borderBottom: openRows.has(account.accountName)
+              borderBottom: openRows.has(account.accountId)
                 ? '1px solid #CBD6E2 !important'
                 : 'none',
             },
@@ -106,9 +106,7 @@ export const renderRows = ({
             sx={{
               position: 'sticky',
               left: 0,
-              background: openRows.has(account.accountName)
-                ? '#F2F2F2'
-                : '#fff',
+              background: openRows.has(account.accountId) ? '#F2F2F2' : '#fff',
               zIndex: 7,
               width: '32px',
               maxWidth: '32px',
@@ -138,9 +136,7 @@ export const renderRows = ({
             sx={{
               position: 'sticky',
               left: '32px',
-              background: openRows.has(account.accountName)
-                ? '#F2F2F2'
-                : '#fff',
+              background: openRows.has(account.accountId) ? '#F2F2F2' : '#fff',
               zIndex: 6,
               fontWeight: '400 !important',
               color: '#2D3E4F !important',
@@ -155,9 +151,9 @@ export const renderRows = ({
                 size='small'
                 disableRipple
                 className='!p-0 !pr-1'
-                onClick={() => handleRowClick(account.accountName)}
+                onClick={() => handleRowClick(account.accountId)}
               >
-                {openRows.has(account.accountName) ? (
+                {openRows.has(account.accountId) ? (
                   <ArrowDownIcon
                     alt='arrowUp'
                     style={{
@@ -217,7 +213,12 @@ export const renderRows = ({
               textAlign: 'right',
             }}
           >
-            {account.totalProjects}
+            <TruncateWithTooltip
+              text={String(account.totalProjects)}
+              maxWidth={150}
+            >
+              {account.totalProjects}
+            </TruncateWithTooltip>
           </TableCell>
 
           <TableCell
@@ -228,7 +229,12 @@ export const renderRows = ({
               textAlign: 'right',
             }}
           >
-            {account.totalProjectHours}
+            <TruncateWithTooltip
+              text={String(account.totalProjectHours)}
+              maxWidth={180}
+            >
+              {account.totalProjectHours}
+            </TruncateWithTooltip>
           </TableCell>
           <TableCell
             sx={{
@@ -289,18 +295,33 @@ export const renderRows = ({
           <TableCell
             sx={{ width: '200px', maxWidth: '200px', minWidth: '200px' }}
           >
-            {account.financeExecutive || '-'}
+            <TruncateWithTooltip
+              text={String(account.financeExecutive)}
+              maxWidth={200}
+            >
+              {account.financeExecutive || '-'}
+            </TruncateWithTooltip>
           </TableCell>
 
           <TableCell
             sx={{ width: '160px', maxWidth: '160px', minWidth: '160px' }}
           >
-            {account.financeHead || '-'}
+            <TruncateWithTooltip
+              text={String(account.financeHead)}
+              maxWidth={160}
+            >
+              {account.financeHead || '-'}
+            </TruncateWithTooltip>
           </TableCell>
           <TableCell
             sx={{ width: '250px', maxWidth: '250px', minWidth: '240px' }}
           >
-            {account.professionalConsultant || '-'}
+            <TruncateWithTooltip
+              text={String(account.professionalConsultant)}
+              maxWidth={250}
+            >
+              {account.professionalConsultant || '-'}
+            </TruncateWithTooltip>
           </TableCell>
           <TableCell
             sx={{ width: '160px', maxWidth: '160px', minWidth: '160px' }}
@@ -335,7 +356,7 @@ export const renderRows = ({
           )}
         </TableRow>
         <Suspense fallback={null}>
-          {openRows.has(account.accountName) &&
+          {openRows.has(account.accountId) &&
             renderChildRows(account.accountName)}
         </Suspense>
         <TableRow
@@ -515,7 +536,12 @@ export const renderChildRows = ({
                 textAlign: 'right',
               }}
             >
-              {account.totalProjects}
+              <TruncateWithTooltip
+                text={String(account.totalProjects)}
+                maxWidth={150}
+              >
+                {account.totalProjects}
+              </TruncateWithTooltip>
             </TableCell>
             <TableCell
               sx={{
@@ -525,7 +551,12 @@ export const renderChildRows = ({
                 textAlign: 'right',
               }}
             >
-              {account.totalProjectHours}
+              <TruncateWithTooltip
+                text={String(account.totalProjectHours)}
+                maxWidth={180}
+              >
+                {account.totalProjectHours}
+              </TruncateWithTooltip>
             </TableCell>
             <TableCell
               sx={{
@@ -586,17 +617,32 @@ export const renderChildRows = ({
             <TableCell
               sx={{ width: '200px', maxWidth: '200px', minWidth: '200px' }}
             >
-              {account.financeExecutive || '-'}
+              <TruncateWithTooltip
+                text={String(account.financeExecutive)}
+                maxWidth={200}
+              >
+                {account.financeExecutive || '-'}
+              </TruncateWithTooltip>
             </TableCell>
             <TableCell
               sx={{ width: '160px', maxWidth: '160px', minWidth: '160px' }}
             >
-              {account.financeHead || '-'}
+              <TruncateWithTooltip
+                text={String(account.financeHead)}
+                maxWidth={160}
+              >
+                {account.financeHead || '-'}
+              </TruncateWithTooltip>
             </TableCell>
             <TableCell
               sx={{ width: '250px', maxWidth: '250px', minWidth: '250px' }}
             >
-              {account.professionalConsultant || '-'}
+              <TruncateWithTooltip
+                text={String(account.professionalConsultant)}
+                maxWidth={250}
+              >
+                {account.professionalConsultant || '-'}
+              </TruncateWithTooltip>
             </TableCell>
             <TableCell
               sx={{ width: '160px', maxWidth: '160px', minWidth: '160px' }}

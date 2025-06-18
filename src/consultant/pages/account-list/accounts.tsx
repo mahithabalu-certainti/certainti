@@ -196,7 +196,7 @@ export const Accounts: React.FC = () => {
                 Accounts
               </div>
               <div className='font-semibold text-[#7D98B6] text-[12px] -mt-1'>
-                {`All Accounts • ${totalCount} items`}
+                {`${totalCount} items`}
               </div>
             </div>
           </div>
@@ -221,7 +221,7 @@ export const Accounts: React.FC = () => {
               }}
             />
           )}
-          
+
           <div className='hidden border border-[#CBD6E2] w-[24px] h-[24px] justify-center items-center bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)]'>
             <ActionIcon alt='menu-icon' className='h-4' />
           </div>

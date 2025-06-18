@@ -149,7 +149,7 @@ export const Projects: React.FC = () => {
                 Projects
               </div>
               <div className='font-semibold text-[#7D98B6] text-[12px] -mt-1'>
-                {`All Projects • ${totalCount} items`}
+                {`${totalCount} items`}
               </div>
             </div>
           </div>
