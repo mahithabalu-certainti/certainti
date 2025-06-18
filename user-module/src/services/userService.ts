@@ -512,7 +512,8 @@ async getPermissionFieldsByIds(userId: string, permissionIds: string[]) {
             users.country || "",
             users.state || "",
             users.city || "",
-            users.org_id || ""
+            users.org_id || "",
+            users.is_consultant_firm
           );
           (users as any).dataValues.country_name = country;
           (users as any).dataValues.state_name = state;
@@ -1309,7 +1310,7 @@ async getAllUserPermission(userId: string, profileId: string) {
     return [sortBy, sortOrder];
   }
 
-  async getGeoData(countryId: string, stateId: string, cityId: string,orgId:string) {
+  async getGeoData(countryId: string, stateId: string, cityId: string,orgId:string,isConsultantFirm:boolean) {
     const mainDbSequelize = await initSequelize();
 
     let country: string | null = null;
@@ -1318,14 +1319,25 @@ async getAllUserPermission(userId: string, profileId: string) {
     let orgName: string | null = null;
 
     if (orgId) {
-      const [orgNameResult]: any[] = await mainDbSequelize.query(
+      if(isConsultantFirm)
+      {
+         const org = await OrganizationLicenses.findOne({
+          attributes: ["firm_name"]});
+         if (org) {
+            orgName = org.firm_name || "";
+         }
+      }
+      else
+      {
+        const [orgNameResult]: any[] = await mainDbSequelize.query(
         `SELECT organisation_name FROM account WHERE rid = :rid`,
         {
           replacements: { rid: orgId },
           type: "SELECT",
         }
-      );
-      orgName = orgNameResult?.organisation_name || null;
+        );
+        orgName = orgNameResult?.organisation_name || null;
+      }
     }
 
     if (countryId) {
