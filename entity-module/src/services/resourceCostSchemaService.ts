@@ -854,7 +854,7 @@ class ResourceCostSchemaService {
     let filterConditions = "";
 
     // Define field types for proper filter handling
-    const alphanumericFields = ["status","resource_code","comments"];
+    const alphanumericFields = ["status","resource_code"];
     const numericFields = [
       // "annual",
       // "monthly",
@@ -1054,7 +1054,7 @@ class ResourceCostSchemaService {
 
   processDefaultFilter(key: string, value: any): string {
     let tableAlias = "rc";
-
+    
   // Set alias based on key
   const aliasMapR = ["resource_name", "resource_orgname", "resource_designation", "resource_role"];
   const aliasMapAD = ["account_name"];
