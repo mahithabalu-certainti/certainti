@@ -649,7 +649,7 @@ processAlphanumericFilter(key: string, value: any): string {
     if (value.equals) {
       condition += ` AND LOWER(rs."${key}") = LOWER('${value.equals}')`;
     } else if (value.not_equals) {
-      condition += ` AND LOWER(rs."${key}") != LOWER('${value.not_equals}') OR rs."${key}" IS NULL`;
+      condition += ` AND (LOWER(rs."${key}") != LOWER('${value.not_equals}') OR rs."${key}" IS NULL)`;
     } else if (value.contains) {
       condition += ` AND LOWER(rs."${key}") LIKE LOWER('%${value.contains}%')`;
     } else if (value.not_contains) {
@@ -694,7 +694,7 @@ processAlphanumericFilter(key: string, value: any): string {
     if (value.equals !== undefined) {
       condition += ` AND ${tableAlias}."${key}" = ${value.equals}`;
     } else if (value.not_equals !== undefined) {
-      condition += ` AND ${tableAlias}."${key}" != ${value.not_equals} OR ${tableAlias}."${key}" IS NULL`;
+      condition += ` AND (${tableAlias}."${key}" != ${value.not_equals} OR ${tableAlias}."${key}" IS NULL)`;
     } else if (value.greater_than !== undefined) {
       condition += ` AND ${tableAlias}."${key}" > ${value.greater_than}`;
     } else if (value.less_than !== undefined) {
@@ -740,7 +740,7 @@ processAlphanumericFilter(key: string, value: any): string {
     if (value.equals) {
       condition += ` AND rs."${key}"::date = '${value.equals}'::date`;
     } else if (value.not_equals) {
-      condition += ` AND rs."${key}"::date != '${value.not_equals}'::date OR rs."${key}" IS NULL`;
+      condition += ` AND (rs."${key}"::date != '${value.not_equals}'::date OR rs."${key}" IS NULL)`;
     } else if (value.before) {
       condition += ` AND rs."${key}" < '${value.before}'`;
     } else if (value.after) {
@@ -802,9 +802,9 @@ processEnumFilter(key: string, value: any) {
     }
   } else if (value.not_equals !== undefined) {
     if (isUuidField) {
-      condition += ` AND ${tableAlias}."${key}" != '${value.not_equals}' OR ${tableAlias}."${key}" IS NULL`;
+      condition += ` AND (${tableAlias}."${key}" != '${value.not_equals}' OR ${tableAlias}."${key}" IS NULL)`;
     } else {
-      condition += ` AND LOWER(${tableAlias}."${key}") != LOWER('${value.not_equals}') OR ${tableAlias}."${key}" IS NULL`;
+      condition += ` AND (LOWER(${tableAlias}."${key}") != LOWER('${value.not_equals}') OR ${tableAlias}."${key}" IS NULL)`;
     }
   } else if (value.in && Array.isArray(value.in) && value.in.length > 0) {
     if (isUuidField) {
@@ -862,9 +862,9 @@ processDefaultFilter(key: string, value: any): string {
   // Handle not equals operator
   if (value.not_equals !== undefined) {
     if (typeof value.not_equals === "string") {
-      condition += ` AND LOWER(${tableAlias}."${key}") != LOWER('${value.not_equals}') OR ${tableAlias}."${key}" IS NULL`;
+      condition += ` AND (LOWER(${tableAlias}."${key}") != LOWER('${value.not_equals}') OR ${tableAlias}."${key}" IS NULL)`;
     } else {
-      condition += ` AND ${tableAlias}."${key}" != ${value.not_equals} OR ${tableAlias}."${key}" IS NULL`;
+      condition += ` AND (${tableAlias}."${key}" != ${value.not_equals} OR ${tableAlias}."${key}" IS NULL)`;
     }
   }
 

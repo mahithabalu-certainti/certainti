@@ -213,7 +213,7 @@ export class ResourceCost
           allowNull: true,
         },
         net_resource_cost: {
-          type: DataTypes.DECIMAL(18, 2),
+          type: DataTypes.DECIMAL(20, 2),
           allowNull: true,
         },
         resource_cost: {
