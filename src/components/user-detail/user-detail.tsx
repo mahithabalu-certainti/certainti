@@ -38,6 +38,14 @@ export const UserDetailComponent = ({ data, loading }: UserDetail) => {
       label: 'Phone Number',
       value: getValueOrDefault(data?.phone) || '-',
     },
+    {
+      label: 'Is Consultant Firm',
+      value: getValueOrDefault(data?.is_consultant_firm ? 'Yes' : 'No') || '-',
+    },
+    {
+      label: 'Org Name',
+      value: getValueOrDefault(data?.org_name) || '-',
+    },
   ];
 
   const addressInfo: DetailItem[] = [

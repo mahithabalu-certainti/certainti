@@ -178,7 +178,7 @@ export const AccFormData = (
             errorHandling: [
               {
                 regex: REGEX_PATTERNS.MIN_ACCOUNT_NAME_REGEX,
-                errorMessage: 'Name must be more than 6 characters long',
+                errorMessage: 'Name must be more than 2 characters long',
               },
               {
                 regex: REGEX_PATTERNS.MAX_ACCOUNT_NAME_REGEX,

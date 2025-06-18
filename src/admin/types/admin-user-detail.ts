@@ -48,6 +48,8 @@ export type User = {
   profile: Profile;
   business_teams: BusinessTeams;
   phone: string;
+  is_consultant_firm: string;
+  org_name: string;
 };
 
 // Response status types

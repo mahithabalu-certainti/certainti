@@ -19,7 +19,7 @@ const CompanyBadge = ({ name }: CompanyBadgeProps) => {
   // };
 
   return (
-    <div className='inline-flex items-center gap-2 px-2 h-[24px] rounded-[2px] max-w-[200px] bg-[#0BBFB7]'>
+    <div className='inline-flex items-center gap-2 px-2 h-[24px] rounded-[2px] max-w-[200px] border border-[#CBD6E266] bg-[#495E744D]'>
       {/* {!imageError ? (
         <div className='h-[24px] w-[24px] overflow-hidden'>
           <img

@@ -122,9 +122,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               ...newField,
               error: oldField?.error ?? newField.error,
               value: oldField?.value ?? newField.value,
-              ...(newField.name.startsWith('include_in_communication_')
-                ? { disabled: oldField?.disabled ?? newField.disabled }
-                : {}),
             };
           }),
         };
@@ -213,7 +210,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       const emailValue =
         constructFormData[emailField.name]?.toString().trim() || '';
       const isPrimary = constructFormData[primaryField.name] === 'yes';
-      const isActive = constructFormData[statusField.name] === 'active';
 
       // Name and Email requirements:
       // - If Include In Communications is Yes: Both are required
@@ -230,15 +226,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       const shouldUpdateName = nameField.required !== nameRequired;
       const shouldUpdateEmail = emailField.required !== emailRequired;
       const shouldUpdateRole = roleField.required !== roleRequired;
-      const shouldUpdateIncludeInComm =
-        includeInCommField.disabled !== (isPrimary && isActive);
 
-      if (
-        shouldUpdateName ||
-        shouldUpdateEmail ||
-        shouldUpdateRole ||
-        shouldUpdateIncludeInComm
-      ) {
+      if (shouldUpdateName || shouldUpdateEmail || shouldUpdateRole) {
         setFormData((prevFormData) =>
           prevFormData?.map((section) => {
             if (section.sectionName === 'key_contacts_list') {
@@ -253,19 +242,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   }
                   if (field.name === roleField.name && shouldUpdateRole) {
                     return { ...field, required: roleRequired };
-                  }
-                  if (
-                    field.name === includeInCommField.name &&
-                    shouldUpdateIncludeInComm
-                  ) {
-                    return {
-                      ...field,
-                      disabled:
-                        section.from === 'project'
-                          ? isPrimary && isActive
-                          : false,
-                      value: isPrimary && isActive ? 'yes' : field.value,
-                    };
                   }
                   return field;
                 }),
@@ -383,15 +359,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     const fieldDisabled = field.disabled ? ' bg-gray-100' : '';
 
     const handleChange = (value: FieldTypes, countryCode?: FieldTypes) => {
-      if (
-        field.name.startsWith('include_in_communication_') &&
-        formData?.some((section) =>
-          section.fields.some((f) => f.name === field.name && f.disabled)
-        )
-      ) {
-        return; // Prevent changes if disabled
-      }
-
       const newData = {
         ...constructFormData,
         [field.name]: value,
@@ -550,29 +517,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       otherStatus === 'active'
                     ) {
                       newData[key] = 'no';
-
-                      const otherCommKey = `include_in_communication_${otherIndex}`;
-                      newData[otherCommKey] = 'no';
-
-                      setFormData((prevFormData) =>
-                        prevFormData?.map((section) => ({
-                          ...section,
-                          fields: section.fields.map((f) => {
-                            if (f.name === otherCommKey)
-                              return { ...f, disabled: false };
-                            return f;
-                          }),
-                        }))
-                      );
                     }
                   }
                 });
 
                 newData[isPrimaryField] = 'yes';
-                const commFieldName = `include_in_communication_${currentIndex}`;
-                newData[commFieldName] = 'yes';
-                const otherStatusKey = `key_contact_status_${currentIndex}`;
-                const otherStatus = constructFormData[otherStatusKey];
 
                 setFormData((prevFormData) =>
                   prevFormData?.map((section) => ({
@@ -580,15 +529,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     fields: section.fields.map((f) => {
                       if (f.name === isPrimaryField)
                         return { ...f, value: 'yes' };
-                      if (f.name === commFieldName)
-                        return {
-                          ...f,
-                          disabled:
-                            section?.from === 'project' &&
-                            otherStatus === 'active'
-                              ? true
-                              : false,
-                        };
                       return f;
                     }),
                   }))
@@ -656,39 +596,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       otherStatus === 'active'
                     ) {
                       newData[key] = 'no';
-                      const otherCommKey = `include_in_communication_${otherIndex}`;
-                      newData[otherCommKey] = 'no';
-
-                      setFormData((prevFormData) =>
-                        prevFormData?.map((section) => ({
-                          ...section,
-                          fields: section.fields.map((f) => {
-                            if (f.name === otherCommKey)
-                              return { ...f, disabled: false };
-                            return f;
-                          }),
-                        }))
-                      );
                     }
                   }
                 });
-
-                const commFieldName = `include_in_communication_${currentIndex}`;
-                newData[commFieldName] = 'yes';
-
-                setFormData((prevFormData) =>
-                  prevFormData?.map((section) => ({
-                    ...section,
-                    fields: section.fields.map((f) => {
-                      if (f.name === commFieldName)
-                        return {
-                          ...f,
-                          disabled: section?.from === 'project' ? true : false,
-                        };
-                      return f;
-                    }),
-                  }))
-                );
 
                 setConstructFormData(newData);
               },
@@ -696,40 +606,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             return;
           }
         }
-        // No conflict — proceed
-        const commFieldName = `include_in_communication_${currentIndex}`;
-
-        newData[commFieldName] = 'yes';
-
-        setFormData((prevFormData) =>
-          prevFormData?.map((section) => ({
-            ...section,
-            fields: section.fields.map((f) => {
-              if (f.name === commFieldName)
-                return {
-                  ...f,
-                  disabled: section?.from === 'project' ? true : false,
-                };
-              return f;
-            }),
-          }))
-        );
-      }
-
-      // Handle is_primary_contact = no
-      if (field.name.startsWith('is_primary_contact_') && value === 'no') {
-        const currentIndex = parseInt(field.name.split('_').pop() || '0', 10);
-        const commFieldName = `include_in_communication_${currentIndex}`;
-
-        setFormData((prevFormData) =>
-          prevFormData?.map((section) => ({
-            ...section,
-            fields: section.fields.map((f) => {
-              if (f.name === commFieldName) return { ...f, disabled: false };
-              return f;
-            }),
-          }))
-        );
       }
 
       if (field.name.startsWith('key_contact_status_')) {
@@ -819,14 +695,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       );
                       const otherRoleKey = `key_contact_role_${otherIndex}`;
                       const otherStatusKey = `key_contact_status_${otherIndex}`;
-                      const otherCommKey = `include_in_communication_${otherIndex}`;
 
                       if (
                         constructFormData[otherRoleKey] === currentRole &&
                         constructFormData[otherStatusKey] === 'active'
                       ) {
                         newData[key] = 'no';
-                        newData[otherCommKey] = 'no';
                       }
                     }
                   });
@@ -2221,9 +2095,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     );
     const hasFields = visibleFields.length > 0;
     // const headerFields = visibleFields.slice(0, 7);
-    const headerFields = hasFields
-      ? visibleFields.slice(0, 7)
-      : keyContactHeaders.slice(0, 7);
+    const headerFields = keyContactHeaders.slice(0, 7);
     const fieldRows = chunkFields(visibleFields, 7);
     return (
       <div className='px-10'>

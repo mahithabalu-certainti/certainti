@@ -85,27 +85,22 @@ const AccountTable: React.FC<Record<string, any>> = ({
       setTotalCount(accountList.count || 0);
       setIsDataLoaded(true);
 
-      const globalFilters = filters as FilterState;
-
-      const fetchedAccountIds = new Set<string>(
-        convertedData.map((acc) => acc.accountId)
+      // Expand only those accounts which have children
+      const parentAccountNames = new Set(
+        convertedData.map((acc) => acc.parentAccount).filter(Boolean)
+      );
+      const expandableAccounts = convertedData.filter((acc) =>
+        parentAccountNames.has(acc.accountName)
+      );
+      const openRowsSet = new Set<string>(
+        expandableAccounts.map((acc) => acc.accountId)
       );
 
-      const newOpenRows = new Set<string>();
-
-      if (globalFilters.length > 0) {
-        for (const entry of globalFilters) {
-          if (fetchedAccountIds.has(entry.account)) {
-            newOpenRows.add(entry.account);
-          }
-        }
-      }
-
-      setOpenRows(newOpenRows);
+      setOpenRows(openRowsSet);
     } else {
       setIsDataLoaded(false);
     }
-  }, [loading, accountList, filters]);
+  }, [loading, accountList]);
 
   // Add this handler in the AccountTable component
   const handleAccountNameClick = (account: Account) => {
