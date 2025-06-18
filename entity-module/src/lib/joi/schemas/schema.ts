@@ -169,10 +169,10 @@ const costFieldValidator = (fieldName: string) => {
 
       const numValue = parseFloat(value);
       if (numValue > MAX_COST_VALUE) {
-        return helpers.error('number.maxCost');
-      }
+          return helpers.error('number.maxCost');
+        }
 
-      return value;
+        return value;
     })
     .allow('').allow(null)
     .messages({

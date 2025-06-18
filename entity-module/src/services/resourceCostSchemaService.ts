@@ -833,6 +833,7 @@ class ResourceCostSchemaService {
       "resource_orgname",
       "resource_role",
       "resource_designation",
+      "status",
       "comments",
     ];
     if (!validSortColumns.includes(sortBy)) {
@@ -853,7 +854,7 @@ class ResourceCostSchemaService {
     let filterConditions = "";
 
     // Define field types for proper filter handling
-    const alphanumericFields = ["status","resource_code"];
+    const alphanumericFields = ["status","resource_code","comments"];
     const numericFields = [
       // "annual",
       // "monthly",
@@ -914,7 +915,7 @@ class ResourceCostSchemaService {
     if (value.equals) {
       condition += ` AND LOWER(rc."${key}") = LOWER('${value.equals}')`;
     } else if (value.not_equals) {
-      condition += ` AND LOWER(rc."${key}") != LOWER('${value.not_equals}') OR rc."${key}" IS NULL`;
+      condition += ` AND (LOWER(rc."${key}") != LOWER('${value.not_equals}') OR rc."${key}" IS NULL)`;
     } else if (value.contains) {
       condition += ` AND LOWER(rc."${key}") LIKE LOWER('%${value.contains}%')`;
     } else if (value.not_contains) {
@@ -968,7 +969,7 @@ class ResourceCostSchemaService {
     if (value.equals !== undefined) {
       condition += ` AND rc."${key}" = ${value.equals}`;
     } else if (value.not_equals !== undefined) {
-      condition += ` AND rc."${key}" != ${value.not_equals} OR rc."${key}" IS NULL`;
+      condition += ` AND (rc."${key}" != ${value.not_equals} OR rc."${key}" IS NULL)`;
     } else if (value.greater_than !== undefined) {
       condition += ` AND rc."${key}" > ${value.greater_than}`;
     } else if (value.less_than !== undefined) {
@@ -1009,7 +1010,7 @@ class ResourceCostSchemaService {
     if (value.equals) {
       condition += ` AND rc."${key}"::date = '${value.equals}'::date`;
     } else if (value.not_equals) {
-      condition += ` AND rc."${key}"::date != '${value.not_equals}'::date OR rc."${key}" IS NULL`;
+      condition += ` AND (rc."${key}"::date != '${value.not_equals}'::date OR rc."${key}" IS NULL)`;
     } else if (value.before) {
       condition += ` AND rc."${key}" < '${value.before}'`;
     } else if (value.after) {
@@ -1079,12 +1080,12 @@ class ResourceCostSchemaService {
     } else if (value.not_equals !== undefined) {
       if (typeof value.not_equals === "string") {
         if (isUuidField) {
-          condition += ` AND ${tableAlias}."${key}" != '${value.not_equals}' OR ${tableAlias}."${key}" IS NULL`;
+          condition += ` AND (${tableAlias}."${key}" != '${value.not_equals}' OR ${tableAlias}."${key}" IS NULL)`;
         } else {
-          condition += ` AND LOWER(${tableAlias}."${key}") != LOWER('${value.not_equals}') OR ${tableAlias}."${key}" IS NULL`;
+          condition += ` AND (LOWER(${tableAlias}."${key}") != LOWER('${value.not_equals}') OR ${tableAlias}."${key}" IS NULL)`;
         }
       } else {
-        condition += ` AND ${tableAlias}."${key}" != ${value.not_equals} OR ${tableAlias}."${key}" IS NULL`;
+        condition += ` AND (${tableAlias}."${key}" != ${value.not_equals} OR ${tableAlias}."${key}" IS NULL)`;
       }
     } else if (value.contains !== undefined) {
       condition += ` AND LOWER(${tableAlias}."${key}") LIKE LOWER('%${value.contains}%')`;

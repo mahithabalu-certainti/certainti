@@ -812,7 +812,7 @@ class SchemaService {
           bonus numeric(18,2),
           resource_cost numeric(18,2),
           salary numeric(18,2),
-          net_resource_cost numeric(18,2),
+          net_resource_cost numeric(20,2),
           CONSTRAINT resource_cost_resource_rid_fkey FOREIGN KEY (resource_rid)
               REFERENCES "${schemaName}".resources (rid)
               ON UPDATE CASCADE
