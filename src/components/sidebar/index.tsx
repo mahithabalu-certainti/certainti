@@ -267,212 +267,109 @@ export const Sidebar: React.FC<SideBarProps> = ({
         },
       }}
     >
-      <div className='flex items-center justify-center h-[40px]'>
-        <Link aria-label='logo'>
-          {sidebarExpand ? (
-            <Logo alt='logo' className='h-[16px]' />
-          ) : (
-            <LogoSmall alt='logo' className='h-[18px]' />
-          )}
-        </Link>
-      </div>
+      <React.Suspense fallback={null}>
+        <div className='flex items-center justify-center h-[40px]'>
+          <Link aria-label='logo'>
+            {sidebarExpand ? (
+              <Logo alt='logo' className='h-[16px]' />
+            ) : (
+              <LogoSmall alt='logo' className='h-[18px]' />
+            )}
+          </Link>
+        </div>
+        <List
+          sx={{
+            mx: !sidebarExpand ? 'auto' : 'none',
+            mt: 0.5,
+            flexGrow: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+          }}
+        >
+          {!showAdminSidebar &&
+            accountMenus.map((item, i) => {
+              if (item.hide) return null;
+              if (item.type === 'divider') {
+                return <Fragment key={i} />;
+              }
+              const isAfterDivider =
+                i > 0 && accountNavItems[i - 1]?.type === 'divider';
 
-      <List
-        sx={{
-          mx: !sidebarExpand ? 'auto' : 'none',
-          mt: 0.5,
-          flexGrow: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
-        }}
-      >
-        {!showAdminSidebar &&
-          accountMenus.map((item, i) => {
-            if (item.hide) return null;
-            if (item.type === 'divider') {
-              return <Fragment key={i} />;
-            }
-            const isAfterDivider =
-              i > 0 && accountNavItems[i - 1]?.type === 'divider';
-
-            return (
-              <ListItem
-                key={i}
-                disablePadding
-                sx={{
-                  maxWidth: '170px',
-                  mx: 'auto',
-                  ...(isAfterDivider && { mt: 'auto' }),
-                }}
-              >
-                <ListItemButton
+              return (
+                <ListItem
+                  key={i}
+                  disablePadding
                   sx={{
-                    justifyContent: !sidebarExpand ? 'center' : 'flex-start',
-                    minHeight: 32,
-                    width: !sidebarExpand ? '32px' : '100%',
-                    height: !sidebarExpand ? '32px' : '32px',
-                    px: '4px',
-                    py: 0,
-                    mt: '4px',
-                    gap: '4px',
-                    borderRadius: '2px',
-                    backgroundColor:
-                      item.matchLink === trimmedPathname(1) ? '#FFFFFF33' : '',
-                    '&:hover': {
-                      backgroundColor: '#FFFFFF33',
-                    },
-                    transition: 'all 0.3s ease-in-out',
-                  }}
-                  onClick={() => {
-                    if (item.name === 'Logout') {
-                      handleLogout();
-                    } else {
-                      navigate(item.link);
-                    }
+                    maxWidth: '170px',
+                    mx: 'auto',
+                    ...(isAfterDivider && { mt: 'auto' }),
                   }}
                 >
-                  <Tooltip
-                    title={item.name}
-                    placement='right-end'
-                    slotProps={{
-                      tooltip: {
-                        sx: {
-                          backgroundColor: '#fff',
-                          color: 'rgba(0, 0, 0, 0.87)',
-                          boxShadow: 2,
-                          borderRadius: '4px',
-                        },
-                      },
-                      popper: {
-                        modifiers: [
-                          {
-                            name: 'offset',
-                            options: {
-                              offset: [30, -40],
-                            },
-                          },
-                        ],
-                      },
-                    }}
-                  >
-                    <ListItemIcon
-                      sx={{
-                        minWidth: '32px',
-                        height: '26px',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <item.icon alt='menu-icon' className='h-[16px]' />
-                    </ListItemIcon>
-                  </Tooltip>
-                  {sidebarExpand && (
-                    <ListItemText
-                      sx={{
-                        '& .MuiTypography-root': {
-                          fontWeight: 600,
-                          fontSize: '13px',
-                        },
-                      }}
-                      primary={item.name}
-                    />
-                  )}
-                </ListItemButton>
-              </ListItem>
-            );
-          })}
-        {showAdminSidebar && (
-          <ListItem disablePadding sx={{ maxWidth: '170px', mx: 'auto' }}>
-            <ListItemButton
-              sx={{
-                justifyContent: !sidebarExpand ? 'center' : 'flex-start',
-                minHeight: 32,
-                width: !sidebarExpand ? '32px' : '100%',
-                height: !sidebarExpand ? '32px' : '32px',
-                px: '4px',
-                py: 0,
-                mt: 0,
-                gap: '4px',
-                borderRadius: '2px',
-                '&:hover': {
-                  backgroundColor: 'transparent',
-                },
-              }}
-            >
-              <ListItemIcon
-                sx={{
-                  minWidth: '26px',
-                  height: '26px',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <AdministrationIcon alt='menu-icon' className='h-[16px]' />
-              </ListItemIcon>
-              {sidebarExpand && (
-                <ListItemText
-                  sx={{
-                    '& .MuiTypography-root': {
-                      fontWeight: 600,
-                      fontSize: '13px',
-                    },
-                  }}
-                  primary='Administration'
-                />
-              )}
-            </ListItemButton>
-          </ListItem>
-        )}
-        {showAdminSidebar &&
-          adminNavItems.map((item, index) => (
-            <div key={index}>
-              <ListItem
-                key={index}
-                disablePadding
-                sx={{ maxWidth: '170px', mx: 'auto', mt: '4px' }}
-              >
-                <ListItemButton
-                  sx={{
-                    display:
-                      !sidebarExpand && !noItemsOpen && !item.openStatus
-                        ? 'none'
-                        : 'flex',
-                    justifyContent: !sidebarExpand ? 'center' : 'flex-start',
-                    minHeight: 32,
-                    width: !sidebarExpand ? '32px' : '100%',
-                    height: !sidebarExpand ? '32px' : '32px',
-                    px: '4px',
-                    py: 0,
-                    mt: 0,
-                    gap: '4px',
-                    borderRadius: '2px',
-                    backgroundColor: item.openStatus ? '#FFFFFF33' : '',
-                    '&:hover': {
-                      backgroundColor: '#FFFFFF33',
-                    },
-                    transition: 'all 0.3s ease-in-out',
-                  }}
-                  onClick={() => handleToggle(index)}
-                >
-                  <ListItemIcon
+                  <ListItemButton
                     sx={{
-                      minWidth: '26px',
-                      height: '26px',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      justifyContent: !sidebarExpand ? 'center' : 'flex-start',
+                      minHeight: 32,
+                      width: !sidebarExpand ? '32px' : '100%',
+                      height: !sidebarExpand ? '32px' : '32px',
+                      px: '4px',
+                      py: 0,
+                      mt: '4px',
+                      gap: '4px',
+                      borderRadius: '2px',
+                      backgroundColor:
+                        item.matchLink === trimmedPathname(1)
+                          ? '#FFFFFF33'
+                          : '',
+                      '&:hover': {
+                        backgroundColor: '#FFFFFF33',
+                      },
+                      transition: 'all 0.3s ease-in-out',
+                    }}
+                    onClick={() => {
+                      if (item.name === 'Logout') {
+                        handleLogout();
+                      } else {
+                        navigate(item.link);
+                      }
                     }}
                   >
-                    <item.icon alt='menu-icon' className='h-[16px]' />
-                  </ListItemIcon>
-                  {sidebarExpand && (
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        width: '100%',
+                    <Tooltip
+                      title={item.name}
+                      placement='right-end'
+                      slotProps={{
+                        tooltip: {
+                          sx: {
+                            backgroundColor: '#fff',
+                            color: 'rgba(0, 0, 0, 0.87)',
+                            boxShadow: 2,
+                            borderRadius: '4px',
+                          },
+                        },
+                        popper: {
+                          modifiers: [
+                            {
+                              name: 'offset',
+                              options: {
+                                offset: [30, -40],
+                              },
+                            },
+                          ],
+                        },
                       }}
                     >
+                      <ListItemIcon
+                        sx={{
+                          minWidth: '32px',
+                          height: '26px',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <item.icon alt='menu-icon' className='h-[16px]' />
+                      </ListItemIcon>
+                    </Tooltip>
+                    {sidebarExpand && (
                       <ListItemText
                         sx={{
                           '& .MuiTypography-root': {
@@ -480,125 +377,231 @@ export const Sidebar: React.FC<SideBarProps> = ({
                             fontSize: '13px',
                           },
                         }}
-                        primary={item.title}
+                        primary={item.name}
                       />
-                      {item.subItemTitle.length > 0 && (
-                        <Suspense fallback={null}>
-                          {item.openStatus ? (
-                            <AdminChevronUpIcon
-                              alt='up'
-                              className='h-[16px] mr-0.5'
-                            />
-                          ) : (
-                            <AdminChevronDownIcon
-                              alt='down'
-                              className='h-[16px] mr-0.5'
-                            />
-                          )}
-                        </Suspense>
-                      )}
-                    </Box>
-                  )}
-                </ListItemButton>
-              </ListItem>
-              <Collapse in={item.openStatus}>
-                {item.subItemTitle &&
-                  item.subItemTitle.map((subItem, subIndex) => {
-                    if (subItem.hide) return null;
-                    return (
-                      <List
-                        key={subIndex}
-                        component='div'
+                    )}
+                  </ListItemButton>
+                </ListItem>
+              );
+            })}
+          {showAdminSidebar && (
+            <ListItem disablePadding sx={{ maxWidth: '170px', mx: 'auto' }}>
+              <ListItemButton
+                sx={{
+                  justifyContent: !sidebarExpand ? 'center' : 'flex-start',
+                  minHeight: 32,
+                  width: !sidebarExpand ? '32px' : '100%',
+                  height: !sidebarExpand ? '32px' : '32px',
+                  px: '4px',
+                  py: 0,
+                  mt: 0,
+                  gap: '4px',
+                  borderRadius: '2px',
+                  '&:hover': {
+                    backgroundColor: 'transparent',
+                  },
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: '26px',
+                    height: '26px',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <AdministrationIcon alt='menu-icon' className='h-[16px]' />
+                </ListItemIcon>
+                {sidebarExpand && (
+                  <ListItemText
+                    sx={{
+                      '& .MuiTypography-root': {
+                        fontWeight: 600,
+                        fontSize: '13px',
+                      },
+                    }}
+                    primary='Administration'
+                  />
+                )}
+              </ListItemButton>
+            </ListItem>
+          )}
+          {showAdminSidebar &&
+            adminNavItems.map((item, index) => (
+              <div key={index}>
+                <ListItem
+                  key={index}
+                  disablePadding
+                  sx={{ maxWidth: '170px', mx: 'auto', mt: '4px' }}
+                >
+                  <ListItemButton
+                    sx={{
+                      display:
+                        !sidebarExpand && !noItemsOpen && !item.openStatus
+                          ? 'none'
+                          : 'flex',
+                      justifyContent: !sidebarExpand ? 'center' : 'flex-start',
+                      minHeight: 32,
+                      width: !sidebarExpand ? '32px' : '100%',
+                      height: !sidebarExpand ? '32px' : '32px',
+                      px: '4px',
+                      py: 0,
+                      mt: 0,
+                      gap: '4px',
+                      borderRadius: '2px',
+                      backgroundColor: item.openStatus ? '#FFFFFF33' : '',
+                      '&:hover': {
+                        backgroundColor: '#FFFFFF33',
+                      },
+                      transition: 'all 0.3s ease-in-out',
+                    }}
+                    onClick={() => handleToggle(index)}
+                  >
+                    <ListItemIcon
+                      sx={{
+                        minWidth: '26px',
+                        height: '26px',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <item.icon alt='menu-icon' className='h-[16px]' />
+                    </ListItemIcon>
+                    {sidebarExpand && (
+                      <Box
                         sx={{
-                          fontWeight: 300,
-                          fontSize: '13px',
-                          maxWidth: '170px',
-                          mx: 'auto',
-                          mt: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          width: '100%',
                         }}
-                        disablePadding
                       >
-                        <ListItemButton
+                        <ListItemText
                           sx={{
-                            justifyContent: !sidebarExpand
-                              ? 'center'
-                              : 'flex-start',
-                            mt: 1,
-                            minHeight: 40,
-                            height: '40px',
-                            width: !sidebarExpand ? '40px' : '100%',
-                            px: '3px',
-                            borderRadius: '2px',
-                            '&:hover': {
-                              backgroundColor: '#FFFFFF33',
+                            '& .MuiTypography-root': {
+                              fontWeight: 600,
+                              fontSize: '13px',
                             },
                           }}
-                          onClick={() => navigate(subItem.link)}
+                          primary={item.title}
+                        />
+                        {item.subItemTitle.length > 0 && (
+                          <Suspense fallback={null}>
+                            {item.openStatus ? (
+                              <AdminChevronUpIcon
+                                alt='up'
+                                className='h-[16px] mr-0.5'
+                              />
+                            ) : (
+                              <AdminChevronDownIcon
+                                alt='down'
+                                className='h-[16px] mr-0.5'
+                              />
+                            )}
+                          </Suspense>
+                        )}
+                      </Box>
+                    )}
+                  </ListItemButton>
+                </ListItem>
+                <Collapse in={item.openStatus}>
+                  {item.subItemTitle &&
+                    item.subItemTitle.map((subItem, subIndex) => {
+                      if (subItem.hide) return null;
+                      return (
+                        <List
+                          key={subIndex}
+                          component='div'
+                          sx={{
+                            fontWeight: 300,
+                            fontSize: '13px',
+                            maxWidth: '170px',
+                            mx: 'auto',
+                            mt: '4px',
+                          }}
+                          disablePadding
                         >
-                          <ListItemIcon
+                          <ListItemButton
                             sx={{
-                              minWidth: '26px',
-                              height: '26px',
-                              alignItems: 'center',
-                              justifyContent: 'center',
+                              justifyContent: !sidebarExpand
+                                ? 'center'
+                                : 'flex-start',
+                              mt: 1,
+                              minHeight: 40,
+                              height: '40px',
+                              width: !sidebarExpand ? '40px' : '100%',
+                              px: '3px',
+                              borderRadius: '2px',
+                              '&:hover': {
+                                backgroundColor: '#FFFFFF33',
+                              },
                             }}
+                            onClick={() => navigate(subItem.link)}
                           >
-                            <subItem.icon
-                              alt='menu-icon'
-                              className='h-[16px]'
-                              style={{
-                                filter:
-                                  !sidebarExpand &&
-                                  matchCheck(subItem, trimmedPathname(2))
-                                    ? 'brightness(0) saturate(100%) invert(53%) sepia(89%) saturate(1295%) hue-rotate(340deg) brightness(99%) contrast(93%)'
-                                    : 'none',
-                              }}
-                            />
-                          </ListItemIcon>
-                          {sidebarExpand && (
-                            <Box
+                            <ListItemIcon
                               sx={{
-                                display: 'flex',
-                                justifyContent: 'flex-start',
-                                gap: 1,
+                                minWidth: '26px',
+                                height: '26px',
                                 alignItems: 'center',
-                                width: '100%',
+                                justifyContent: 'center',
                               }}
                             >
-                              <ListItemText
-                                sx={{
-                                  flex: 'unset',
-                                  '& .MuiTypography-root': {
-                                    fontWeight: matchCheck(
-                                      subItem,
-                                      trimmedPathname(2)
-                                    )
-                                      ? 400
-                                      : 300,
-                                    fontSize: '13px',
-                                    color: matchCheck(
-                                      subItem,
-                                      trimmedPathname(2)
-                                    )
-                                      ? '#F16137'
-                                      : '#FFFFFF',
-                                  },
+                              <subItem.icon
+                                alt='menu-icon'
+                                className='h-[16px]'
+                                style={{
+                                  filter:
+                                    !sidebarExpand &&
+                                    matchCheck(subItem, trimmedPathname(2))
+                                      ? 'brightness(0) saturate(100%) invert(53%) sepia(89%) saturate(1295%) hue-rotate(340deg) brightness(99%) contrast(93%)'
+                                      : 'none',
                                 }}
-                                primary={subItem.name}
                               />
-                              {matchCheck(subItem, trimmedPathname(2)) && (
-                                <AdminSubmenuActiveIcon className='h-[16px] w-[16px] mr-0.5' />
-                              )}
-                            </Box>
-                          )}
-                        </ListItemButton>
-                      </List>
-                    );
-                  })}
-              </Collapse>
-            </div>
-          ))}
-      </List>
+                            </ListItemIcon>
+                            {sidebarExpand && (
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  justifyContent: 'flex-start',
+                                  gap: 1,
+                                  alignItems: 'center',
+                                  width: '100%',
+                                }}
+                              >
+                                <ListItemText
+                                  sx={{
+                                    flex: 'unset',
+                                    '& .MuiTypography-root': {
+                                      fontWeight: matchCheck(
+                                        subItem,
+                                        trimmedPathname(2)
+                                      )
+                                        ? 400
+                                        : 300,
+                                      fontSize: '13px',
+                                      color: matchCheck(
+                                        subItem,
+                                        trimmedPathname(2)
+                                      )
+                                        ? '#F16137'
+                                        : '#FFFFFF',
+                                    },
+                                  }}
+                                  primary={subItem.name}
+                                />
+                                {matchCheck(subItem, trimmedPathname(2)) && (
+                                  <AdminSubmenuActiveIcon className='h-[16px] w-[16px] mr-0.5' />
+                                )}
+                              </Box>
+                            )}
+                          </ListItemButton>
+                        </List>
+                      );
+                    })}
+                </Collapse>
+              </div>
+            ))}
+        </List>
+      </React.Suspense>
     </Drawer>
   );
 };
