@@ -433,9 +433,10 @@ export class ProjectMapper {
       project_client_group: data.project_client_group || null,
       project_group: data.project_group || null,
       project_status: data.project_status || null,
-      country: data.country_rid || null,
+      project_description: data.project_description || null,
+      country_rid: data.country_rid || null,
       region_rid: data.region_rid || null,
-      comments_rid: data.comments || "",
+      comments: data.comments || "",
       currency_rid: data.currency_rid || null,
 
       total_fte_prj: data.total_fte || 0,
