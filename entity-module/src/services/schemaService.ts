@@ -1125,7 +1125,7 @@ class SchemaService {
         const [state]: any[] = await mainDbSequelize.query(
           `SELECT state_name FROM state WHERE rid = :rid`,
           {
-            replacements: { rid: resource.resource_region },
+            replacements: { rid: resource.region_rid },
             type: "SELECT",
           }
         );
