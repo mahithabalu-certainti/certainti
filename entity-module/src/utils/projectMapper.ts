@@ -95,7 +95,7 @@ export class ProjectMapper {
 
       total_fte_prj: data.total_fte || null,
       total_subcon_prj: data.total_subcon || null,
-      total_nonlabor_prj: data.total_cost_nonlabor || null,
+      total_nonlabor_prj: null,
       total_effort_prj: data.total_effort || null,
       total_cost_prj: data.total_cost || null,
 
@@ -103,6 +103,7 @@ export class ProjectMapper {
       total_effort_subcon_prj: data.total_effort_subcon || null,
       total_cost_fte_prj: data.total_cost_fte || null,
       total_cost_subcon_prj: data.total_cost_subcon || null,
+      total_cost_nonlabor_prj: data.total_cost_nonlabor || null,
 
       total_fte_from_prj_res: null,
       total_subcon_from_prj_res: null,

@@ -129,7 +129,9 @@ async accountList(
         },
         include: this.buildChildIncludes(),
         order: [["account_name", "ASC"]],
-        attributes: ['rid', 'account_name', 'parent_account_rid', 'currency_rid'] // Only select needed fields
+        attributes: ['rid', 'account_name', 'parent_account_rid', 'currency_rid', 'total_project_hours', 
+          'total_projects', 'total_project_cost'
+        ] // Only select needed fields
       });
 
       // Set USD currency for child accounts
