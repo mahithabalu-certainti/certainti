@@ -3,11 +3,16 @@ import { useState } from 'react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ResourceCostList } from '../../../../../types/resource-cost';
-import { useResourceCost } from '../../../../../services/resource-cost/resource-cost-service';
+import {
+  useResourceCost,
+  useUpdateCostAccept,
+} from '../../../../../services/resource-cost/resource-cost-service';
 import { RESOURCECOST } from '../../../../../../routes';
 import { ListTable } from '../../../../../../components/table';
 import { resourceCostColumns } from './columns';
 import { convertResourceCost } from './resource-cost-type';
+import { AcceptIcon, RejectIcon } from '../../../../../../assets';
+import { useToast } from '../../../../../../hooks';
 
 interface ResourceCostTableProps {
   fiscalYear?: number;
@@ -41,6 +46,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
   refreshCostTrigger,
 }) => {
   const navigate = useNavigate();
+  const { successToast } = useToast();
   const [rowsPerPage, setRowsPerPage] = useState<number>(100);
   const accountInActive =
     accountDetails?.data?.accountById?.status === 'inactive';
@@ -49,6 +55,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     data: costList,
     isLoading,
     error,
+    refetch,
   } = useResourceCost(
     {
       page: currentPage + 1,
@@ -70,7 +77,7 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
       state: { ...accountDetails, costInfo: data, cost: true },
     });
   };
-
+  const updateStatusAccept = useUpdateCostAccept();
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };
@@ -101,6 +108,67 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
     },
   ];
 
+  const handleAccept = (row: ResourceCostList) => {
+    const payload = {
+      rid: row?.rid,
+      accountNumber: accountDetails?.data?.accountById?.r_number,
+      action: 'accept',
+      type: row?.status,
+    };
+    updateStatusAccept.mutate(payload, {
+      onSuccess: (data) => {
+        successToast(data?.statusMessage || 'Status updated successfully');
+        refetch();
+      },
+    });
+  };
+
+  const handleReject = (row: ResourceCostList) => {
+    const payload = {
+      rid: row?.rid,
+      accountNumber: accountDetails?.data?.accountById?.r_number,
+      action: 'reject',
+      type: row?.status,
+    };
+    updateStatusAccept.mutate(payload, {
+      onSuccess: (data) => {
+        successToast(data?.statusMessage || 'Status updated successfully');
+        refetch();
+      },
+    });
+  };
+  const getConditionMenuItems = (row: ResourceCostList) => {
+    let statusLabel = '';
+    switch (row.status) {
+      case 'Duplicate':
+        statusLabel = 'Duplicate';
+        break;
+      case 'Anomaly':
+        statusLabel = 'Anomaly';
+        break;
+
+      default:
+        return [];
+    }
+
+    return [
+      {
+        label: statusLabel ? `Accept ${statusLabel}` : 'Accept',
+        onClick: handleAccept,
+        icon: AcceptIcon,
+        className:
+          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer  h-[24px] bg-[#3EA72F1A] hover:bg-[#3EA72F] hover:text-[#fff]',
+      },
+      {
+        label: statusLabel ? `Reject ${statusLabel}` : 'Reject',
+        onClick: handleReject,
+        icon: RejectIcon,
+        className:
+          'inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] cursor-pointer  h-[24px] bg-[#FF3C031A] hover:bg-[#FF3C03] hover:text-[#fff]',
+      },
+    ];
+  };
+
   const getRowId = (row: ResourceCostList) => row?.rid || '';
 
   return (
@@ -117,6 +185,9 @@ const ResourceCostTable: React.FC<ResourceCostTableProps> = ({
         actionWidth={80}
         actionDisplayMode='dropdown'
         actionMenuItems={actionMenuItems}
+        conditionMenuItems={(row: ResourceCostList) =>
+          getConditionMenuItems(row) || undefined
+        }
         loading={isLoading}
         error={error ? 'Failed to load resource cost data' : undefined}
         rowsPerPageOptions={[25, 50, 100]}

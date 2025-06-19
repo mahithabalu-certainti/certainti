@@ -10,7 +10,11 @@ import {
 } from '../../../common-utils';
 import { mockSkillLevelOptions } from '../../mockdata/resource-form';
 import { FormType, SelectOption } from '../../types';
-import { RESOURCE_STATUS_OPTIONS, RESOURCE_TYPE_OPTIONS } from './utils.tsx';
+import {
+  RESOURCE_STATUS_COST,
+  RESOURCE_STATUS_OPTIONS,
+  RESOURCE_TYPE_OPTIONS,
+} from './utils.tsx';
 
 // 1. Extract date constants
 const minYear = 2000;
@@ -19,6 +23,7 @@ const DATE_CONFIG = {
   FISCAL_YEARS_RANGE: 6,
   MIN_YEARS_BACK: 6,
   COST_FISCAL_YEARS_RANGE: currentYear - minYear + 1,
+  TOTAL_YEARS: 20,
 } as const;
 
 // 2. Extract fiscal years calculation
@@ -49,6 +54,7 @@ const getDateConstraints = (yearsBack: number) => {
 };
 
 export const fiscalYears = getFiscalYears(DATE_CONFIG.COST_FISCAL_YEARS_RANGE);
+const fiscalYearsCost = getFiscalYears(DATE_CONFIG.TOTAL_YEARS);
 export const skillStartDateYears = getSkillStartDateOptions(
   DATE_CONFIG.FISCAL_YEARS_RANGE
 );
@@ -76,7 +82,11 @@ export const ResourceFormData = (
   createResource?: boolean,
   isResourceFullNameEmpty?: boolean,
   isAnyResourceNameFilled?: boolean,
-  currentResource?: { resource_firstname: string; resource_lastname: string }
+  isresourceType?: boolean,
+  isSalaryRequired?: boolean,
+  isEditView?: boolean,
+  currentResource?: { resource_firstname: string; resource_lastname: string },
+  autoCalculatedValue?: number
 ): FormType[] => {
   return useMemo(
     () => [
@@ -106,10 +116,6 @@ export const ResourceFormData = (
                 errorMessage:
                   'Only letters, numbers, hyphens, and underscores are allowed.',
               },
-              // {
-              //   regex: REGEX_PATTERNS.NO_TRAILING_SPECIAL_REGEX,
-              //   errorMessage: 'Cannot end with a hyphen or underscore.',
-              // },
             ],
             placeholder: 'Enter Resource Code',
             disabled: disableCostAndSkill,
@@ -273,12 +279,6 @@ export const ResourceFormData = (
                 errorMessage:
                   'Allows only letters, Apostrophe, spaces, hyphens, and Periods.',
               },
-              // {
-              //   regex:
-              //     REGEX_PATTERNS.NO_LEADING_OR_TRAILING_SPECIAL_EXTENDED_REGEX,
-              //   errorMessage:
-              //     'Cannot start or end with a space or special character',
-              // },
             ],
           }),
           createSelectField('resource_status', 'Status', {
@@ -325,7 +325,7 @@ export const ResourceFormData = (
         hide: !disableCost,
         fields: [
           createSelectField('fiscal_year', 'Fiscal Year', {
-            options: fiscalYears,
+            options: fiscalYearsCost,
             placeholder: 'Choose Fiscal Year',
             required: true,
             onChange: true,
@@ -344,17 +344,11 @@ export const ResourceFormData = (
             required: false,
           }),
           createTextField('effort_in_hrs', 'Effort In Hrs', {
-            required: false,
+            required: true,
             placeholder: 'Enter Effort In Hrs',
-            regex: REGEX_PATTERNS.EFFORT_IN_HOURS_REGEX,
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
               'Only positive numbers allowed, up to 16 digits and 2 decimal places',
-            errorHandling: [
-              {
-                regex: REGEX_PATTERNS.MAX_EFFORT_IN_HOURS,
-                errorMessage: 'Maximum length exceeded.',
-              },
-            ],
           }),
           createDateField('financial_start_date', 'Effective From', {
             required: false,
@@ -367,95 +361,62 @@ export const ResourceFormData = (
             maxDate: currentDate,
             startDateLabel: 'financial_start_date',
           }),
-          // createEmptyField('', '', {
-          //   name: 'emptyData',
-          //   label: '',
-          //   type: '',
-          //   required: false,
-          // }),
-          createTextField('annual_cost', 'Annual Compensation', {
+          createTextField('salary', 'Salary', {
             required: false,
-            placeholder: 'Enter Annual Compensation',
-            regex: REGEX_PATTERNS.COST_REGEX,
+            placeholder: 'Enter Salary',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
-              'Only positive numbers allowed, up to 12 digits and 2 decimal places',
-            errorHandling: [
-              {
-                regex: REGEX_PATTERNS.MAX_COST_REVENUE,
-                errorMessage: 'Maximum length exceeded.',
-              },
-            ],
-            group: 'compensation',
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            hide: !isresourceType,
+            onChange: true,
           }),
-          createTextField('monthly_cost', 'Monthly Compensation', {
+          createTextField('bonus', 'Bonus', {
             required: false,
-            placeholder: 'Enter Monthly Compensation',
-            regex: REGEX_PATTERNS.COST_REGEX,
+            placeholder: 'Enter Bonus',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
-              'Only positive numbers allowed, up to 12 digits and 2 decimal places',
-            errorHandling: [
-              {
-                regex: REGEX_PATTERNS.MAX_COST_REVENUE,
-                errorMessage: 'Maximum length exceeded.',
-              },
-            ],
-            group: 'compensation',
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            hide: !isresourceType,
+            onChange: true,
           }),
-          createTextField('bi_weekly_cost', 'Bi-Weekly Compensation', {
+          createTextField('insurance', 'Insurance', {
             required: false,
-            placeholder: 'Enter Bi-Weekly Compensation',
-            regex: REGEX_PATTERNS.COST_REGEX,
+            placeholder: 'Enter Insurance',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
-              'Only positive numbers allowed, up to 12 digits and 2 decimal places',
-            errorHandling: [
-              {
-                regex: REGEX_PATTERNS.MAX_COST_REVENUE,
-                errorMessage: 'Maximum length exceeded.',
-              },
-            ],
-            group: 'compensation',
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            hide: !isresourceType,
+            onChange: true,
           }),
-          createTextField('weekly_cost', 'Weekly Compensation', {
+          createTextField('deductions', 'Deductions', {
             required: false,
-            placeholder: 'Enter Weekly Compensation',
-            regex: REGEX_PATTERNS.COST_REGEX,
+            placeholder: 'Enter Deductions',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
-              'Only positive numbers allowed, up to 12 digits and 2 decimal places',
-            errorHandling: [
-              {
-                regex: REGEX_PATTERNS.MAX_COST_REVENUE,
-                errorMessage: 'Maximum length exceeded.',
-              },
-            ],
-            group: 'compensation',
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            onChange: true,
           }),
-          createTextField('daily_cost', 'Daily Compensation', {
-            required: false,
-            placeholder: 'Enter Daily Compensation',
-            regex: REGEX_PATTERNS.COST_REGEX,
+          createTextField('resource_cost', 'Resource Cost', {
+            required: isSalaryRequired,
+            placeholder: 'Enter Cost',
+            regex: REGEX_PATTERNS.EFFORTS_NUMBER,
             regexErrorMessage:
-              'Only positive numbers allowed, up to 12 digits and 2 decimal places',
-            errorHandling: [
-              {
-                regex: REGEX_PATTERNS.MAX_COST_REVENUE,
-                errorMessage: 'Maximum length exceeded.',
-              },
-            ],
-            group: 'compensation',
+              'Only positive numbers allowed, up to 16 digits and 2 decimal places',
+            onChange: true,
           }),
-          createTextField('hourly_cost', 'Hourly Compensation', {
+          createTextField('net_resource_cost', 'Net Resource Cost', {
             required: false,
-            placeholder: 'Enter Hourly Compensation',
-            regex: REGEX_PATTERNS.COST_REGEX,
-            regexErrorMessage:
-              'Only positive numbers allowed, up to 12 digits and 2 decimal places',
-            errorHandling: [
-              {
-                regex: REGEX_PATTERNS.MAX_COST_REVENUE,
-                errorMessage: 'Maximum length exceeded.',
-              },
-            ],
-            group: 'compensation',
+            disabled: true,
+            defaultValue: autoCalculatedValue
+              ? autoCalculatedValue.toString()
+              : '0',
+          }),
+          createSelectField('resource_status', 'Status', {
+            options: RESOURCE_STATUS_COST,
+            placeholder: 'Choose Status',
+            required: false,
+            disabled: true,
+            hide: !isEditView,
           }),
         ],
       },
@@ -648,7 +609,6 @@ export const ResourceFormData = (
             placeholder: 'Enter Comments',
             regexErrorMessage: 'Max length exceeded.',
             regex: RESOURCE_REGEX.DESCRIPTION,
-            // disabled: disableCostAndSkill,
           }),
         ],
       },
@@ -711,7 +671,10 @@ export const ResourceFormData = (
       skillSubTypeOptions,
       skillSubTypeLoading,
       currentskillSubType,
+      isSalaryRequired,
+      isEditView,
       createResource,
+      autoCalculatedValue,
     ]
   );
 };

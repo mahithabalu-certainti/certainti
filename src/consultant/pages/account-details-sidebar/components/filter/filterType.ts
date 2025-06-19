@@ -107,6 +107,12 @@ export const statusOptions: { option: string; value: string }[] = [
   { option: 'Active', value: 'active' },
   { option: 'In-Active', value: 'inactive' },
 ];
+export const costStatusOptions: { option: string; value: string }[] = [
+  { option: 'Active', value: 'active' },
+  { option: 'In-Active', value: 'inactive' },
+  { option: 'Anomaly', value: 'anomaly' },
+  { option: 'Duplicate', value: 'duplicate' },
+];
 const minYear = 2000;
 const currentYear = new Date().getFullYear();
 const getFiscalYears = (range: number) => {
@@ -221,6 +227,4 @@ export interface FilterComponentProps {
   setCurrentPage: (page: number) => void;
   mode?: string;
   handleSorting?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
-  toggleEnabled?: boolean;
-  setToggleEnabled?: (val: boolean) => void;
 }

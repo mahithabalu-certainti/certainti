@@ -75,11 +75,12 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     if (!value.trim()) {
       return 'Field is required';
     }
-
-    if (value.length > 2000) {
-      return 'Input must be between 1 and 2,000 characters.';
+    if (value.length < 50) {
+      return 'Profile Description must be more than 49 characters.';
     }
-
+    if (value.length > 2000) {
+      return 'Profile Description must be between 50 and 2,000 characters.';
+    }
     return '';
   };
 

@@ -23,6 +23,13 @@ export const numberOptions: { option: string; value: string }[] = [
   { option: 'Between', value: 'between' },
   { option: 'Is-Empty', value: 'is_empty' },
 ];
+export const effortNumberOptions: { option: string; value: string }[] = [
+  { option: 'Equals', value: 'equals' },
+  { option: 'Not-Equals', value: 'not_equals' },
+  { option: 'Less-Than', value: 'less_than' },
+  { option: 'Greater-Than', value: 'greater_than' },
+  { option: 'Between', value: 'between' },
+];
 
 export const booleanOptions: { option: string; value: string }[] = [
   { option: 'IsTrue', value: 'isTrue' },

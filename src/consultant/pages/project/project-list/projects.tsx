@@ -19,6 +19,7 @@ import { AllModules, AllPermissions } from '../../../../common-service';
 import { AccessRestricted } from '../../../../components/account-restricted';
 import { exportProjectData } from '../../../services/project';
 import { useFetchClassification } from '../../../services/account';
+import { Switch } from '@mui/material';
 
 export const Projects: React.FC = () => {
   const [toggleEnabled, setToggleEnabled] = useState(false);
@@ -134,6 +135,11 @@ export const Projects: React.FC = () => {
       value: item.value,
     }))
   );
+  const handleToggleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (setToggleEnabled) {
+      setToggleEnabled(event.target.checked);
+    }
+  };
 
   if (!projectIsEnable) return <AccessRestricted />;
 
@@ -173,6 +179,15 @@ export const Projects: React.FC = () => {
         </div>
       </div>
       <div className='flex items-center justify-end h-[34px] min-h-[34px] px-4'>
+        <div className='flex items-center gap-2'>
+          <span className='text-sm text-gray-700'>Include Aggregation</span>
+          <Switch
+            checked={toggleEnabled}
+            onChange={handleToggleChange}
+            size='small'
+            color='success'
+          />
+        </div>
         <div className='relative'>
           <button
             aria-describedby={filterId}
@@ -205,8 +220,6 @@ export const Projects: React.FC = () => {
               setCurrentPage={setPage}
               mode={'date'}
               handleSorting={handleSorting}
-              toggleEnabled={toggleEnabled}
-              setToggleEnabled={setToggleEnabled}
             />
           </Suspense>
         </div>

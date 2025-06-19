@@ -39,7 +39,7 @@ const TableSortHeader: React.FC<TableSortHeaderProps> = ({
   return (
     <TableCell
       {...rest}
-      className={`group cursor-pointer ${open ? 'bg-[#F5F9FF]' : ''} hover:bg-[#F5F9FF]`}
+      className={`group ${open ? 'bg-[#F5F9FF]' : ''} hover:bg-[#F5F9FF]`}
     >
       <div className='flex items-center justify-between'>
         {label}
@@ -61,17 +61,17 @@ const TableSortHeader: React.FC<TableSortHeaderProps> = ({
             open || orderBy === columnId
               ? 'opacity-100'
               : 'opacity-0 group-hover:opacity-100'
-          } transition-opacity duration-150`}
+          } cursor-pointer transition-opacity duration-150`}
         >
           {orderBy === columnId ? (
             <SortIcon
               alt='sort-icon'
-              className={`w-[10px] h-[10px] mr-[1px] w-[13px] h-[13px] ${order === 'desc' ? 'scale-y-[-1]' : ''}`}
+              className={`mr-[1px] w-[13px] h-[13px] ${order === 'desc' ? 'scale-y-[-1]' : ''}`}
             />
           ) : (
             <ArrowIcon
               alt='arrow-icon'
-              className={`w-[10px] h-[10px] mr-[1px] w-[10px] h-[10px] ${order === 'desc' ? 'scale-y-[-1]' : ''}`}
+              className={`mr-[1px] w-[10px] h-[10px] ${order === 'desc' ? 'scale-y-[-1]' : ''}`}
             />
           )}
         </IconButton>
@@ -113,10 +113,7 @@ const TableSortHeader: React.FC<TableSortHeaderProps> = ({
             borderBottom: '1px solid #CBD6E2',
           }}
         >
-          <SortIcon
-            alt='Asc-sortIcon'
-            className='w-[16px] h-[16px] mr-[6px]'
-          />
+          <SortIcon alt='Asc-sortIcon' className='w-[16px] h-[16px] mr-[6px]' />
           Sort Ascending
         </MenuItem>
         <MenuItem
