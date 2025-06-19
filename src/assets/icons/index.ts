@@ -1,224 +1,235 @@
-import accountDetailsIcon from './account-details.svg';
-import accountHomeIcon from './account-home.svg';
-import accountSettingsIcon from './account-settings.svg';
-import accountsIcon from './accounts.svg';
-import actionIcon from './action.svg';
-import adminChevronDownIcon from './admin-chevron-down.svg';
-import adminChevronUpIcon from './admin-chevron-up.svg';
-import adminPermissionIcon from './admin-permission.svg';
-import adminSubmenuActiveIcon from './admin-submenu-active.svg';
-import adminTemplateIcon from './admin-template.svg';
-import administrationIcon from './administration.svg';
-import allAccountIcon from './all-account.svg';
-import arrowDownIcon from './arrow-down.svg';
-import fiscalYearArrowIcon from './fiscal-year-arrow-icon.svg';
-import arrowUpIcon from './arrow-up.svg';
-import arrowBackIcon from './arrowBackIcon.svg';
-import attachmentIcon from './attachment.svg';
-import burgerMenuIcon from './burgerMenuIcon.svg';
-import calendarIcon from './calendar.svg';
-import caseIcon from './case.svg';
-import checklistTemplateIcon from './checklist-template.svg';
-import chevronDownIcon from './chevron-down.svg';
-import chevronLeftIcon from './chevron-left.svg';
-import closeCircleIcon from './close-circle.svg';
-import closeIcon from './close.svg';
-import keyContactRemoveIcon from './key-contact-remove-icon.svg';
-import keyContactAddIcon from './key-contact-add-icon.svg';
-import configureSettingIcon from './configure-setting.svg';
-import createresourceIcon from './create-resource.svg';
-import dashboardIcon from './dashboard.svg';
-import downloadIcon from './download.svg';
-import editIcon from './edit.svg';
-import errorInfoIcon from './error-info-icon.svg';
-import emailTemplateIcon from './email-template.svg';
-import filterIcon from './filter.svg';
-import filterArrowRightIcon from './filterArrowRightIcon.svg';
-import globeIcon from './globe.svg';
-import helpIcon from './help.svg';
-import importIcon from './import-icon.svg';
-import importTemplateIcon from './import-template.svg';
-import interactionTemplateIcon from './interaction-template.svg';
-import leftArrowIcon from './left-arrow.svg';
-import logoSmall from './logo-small.svg';
-import logo from './logo.svg';
-import logoutIcon from './logout.svg';
-import manageGeoIcon from './manage-geo.svg';
-import manageGroupIcon from './manage-group.svg';
-import manageProfileIcon from './manage-profile.svg';
-import manageSettingsIcon from './manage-settings.svg';
-import manageUserAccessIcon from './manage-user-access.svg';
-import ManageUserIcon from './manage-user.svg';
-import managerUserIcon from './manager-user.svg';
-import menuIcon from './menu-icon.svg';
-import notesIcon from './notes.svg';
-import notificationIcon from './notification.svg';
-import phoneIcon from './phone.svg';
-import plusIcon from './plus.svg';
-import projectHeaderIcon from './projects-header.svg';
-import projectsIcon from './projects.svg';
-import profileIcon from './profile.svg';
-import projectsBook from './project-book.svg';
-import projectCreateIcon from './new-project.svg';
-import refreshIcon from './refresh.svg';
-import resourceHeaderIcon from './resource-header.svg';
-import resourceFilterIcon from './resourceFilterIcon.svg';
-import resourceProfileIcon from './resourceProfileIcon.svg';
-import searchBlackIcon from './search-black.svg';
-import searchIcon from './search.svg';
-import settingsIcon from './settings.svg';
-import surveyTemplateIcon from './survey-template.svg';
-import surveyIcon from './survey.svg';
-import taskTemplateIcon from './task-template.svg';
-import timesheetIcon from './timesheet.svg';
-import uploadIcon from './Vector.svg';
-import addIcon from './addicon.svg';
-import userIcon from './user.svg';
-import eyeIcon from './eye-icon.svg';
-import backIcon from './chevron-double-left.svg';
-import verticalSeparatorIcon from './verticalSeparatorIcon.svg';
-import realatedListDetailsIcon from './related-list-details-icon.svg';
-import detailsKeyContactErrorIcon from './details-key-contact-error-icon.svg';
-import deleteIcon from './delete-icon.svg';
-import projectDetailsIcon from './project-details.svg';
-import childAccountIcon from './child-account.svg';
-import arrowIcon from './arrow-icon.svg';
-import sortIcon from './sort-icon.svg';
-import newFilterIcon from './filter-icon.svg';
-import checkedIcon from './checked-icon.svg';
+import React from 'react';
 
-import menuArrowRight from './menu-arrow-right.svg';
-import menuArrowRightHover from './menu-arrow-right-hover.svg';
-import moduleArrowright from './module-arrow-right.svg';
-import checkboxChecked from './checkboxChecked.svg';
-import checkboxUnchecked from './checkboxUnChecked.svg';
-import copyIcon from './copy-icon.svg';
-import financialIcon from './financial-icon.svg';
-import detailsIcon from './details-icon.svg';
-import resourcesIcon from './resources-icon.svg';
-import projectsSideIcon from './projects-icon.svg';
-import casesIcon from './cases-icon.svg';
-import activitiesIcon from './activities-icon.svg';
-import notesSideIcon from './notes-icon.svg';
-import checklistIcon from './checklist-icon.svg';
-import timeSheetIcon from './timesheet-icon.svg';
-import importsIcon from './imports-icon.svg';
-import attachmentsSideIcon from './attachments-icon.svg';
-import comingSoon from './coming-soon.svg';
-import interactionsIcon from './interactions-icon.svg';
-import techSummaryIcon from './tech-summary.svg';
-import tickIcon from './tick-Icon.svg';
-import orgIcon from './org-icon.svg';
-
-export {
-  accountDetailsIcon,
-  accountHomeIcon,
-  accountSettingsIcon,
-  accountsIcon,
-  actionIcon,
-  addIcon,
-  adminChevronDownIcon,
-  adminChevronUpIcon,
-  administrationIcon,
-  adminPermissionIcon,
-  adminSubmenuActiveIcon,
-  adminTemplateIcon,
-  allAccountIcon,
-  arrowBackIcon,
-  arrowDownIcon,
-  fiscalYearArrowIcon,
-  arrowUpIcon,
-  arrowIcon,
-  attachmentIcon,
-  backIcon,
-  burgerMenuIcon,
-  calendarIcon,
-  caseIcon,
-  checkedIcon,
-  checklistTemplateIcon,
-  childAccountIcon,
-  chevronDownIcon,
-  chevronLeftIcon,
-  closeCircleIcon,
-  closeIcon,
-  copyIcon,
-  comingSoon,
-  detailsKeyContactErrorIcon,
-  keyContactRemoveIcon,
-  keyContactAddIcon,
-  configureSettingIcon,
-  createresourceIcon,
-  dashboardIcon,
-  downloadIcon,
-  eyeIcon,
-  editIcon,
-  errorInfoIcon,
-  emailTemplateIcon,
-  filterArrowRightIcon,
-  filterIcon,
-  globeIcon,
-  helpIcon,
-  importIcon,
-  importTemplateIcon,
-  interactionTemplateIcon,
-  leftArrowIcon,
-  logo,
-  logoSmall,
-  logoutIcon,
-  manageGeoIcon,
-  manageGroupIcon,
-  manageProfileIcon,
-  managerUserIcon,
-  manageSettingsIcon,
-  manageUserAccessIcon,
-  ManageUserIcon,
-  menuIcon,
-  newFilterIcon,
-  notesIcon,
-  notificationIcon,
-  phoneIcon,
-  plusIcon,
-  projectHeaderIcon,
-  projectsIcon,
-  profileIcon,
-  projectDetailsIcon,
-  projectCreateIcon,
-  projectsBook,
-  menuArrowRight,
-  menuArrowRightHover,
-  moduleArrowright,
-  checkboxChecked,
-  checkboxUnchecked,
-  refreshIcon,
-  resourceFilterIcon,
-  verticalSeparatorIcon,
-  resourceHeaderIcon,
-  resourceProfileIcon,
-  realatedListDetailsIcon,
-  searchBlackIcon,
-  searchIcon,
-  settingsIcon,
-  sortIcon,
-  surveyIcon,
-  surveyTemplateIcon,
-  taskTemplateIcon,
-  timesheetIcon,
-  uploadIcon,
-  userIcon,
-  deleteIcon,
-  financialIcon,
-  detailsIcon,
-  resourcesIcon,
-  attachmentsSideIcon,
-  projectsSideIcon,
-  casesIcon,
-  activitiesIcon,
-  notesSideIcon,
-  checklistIcon,
-  timeSheetIcon,
-  importsIcon,
-  interactionsIcon,
-  techSummaryIcon,
-  tickIcon,
-  orgIcon,
+const icons = {
+  accountDetails: () => import('./account-details.svg?react'),
+  accountHome: () => import('./account-home.svg?react'),
+  accountSettings: () => import('./account-settings.svg?react'),
+  accounts: () => import('./accounts.svg?react'),
+  activitiesIcon: () => import('./activities-icon.svg?react'),
+  action: () => import('./action.svg?react'),
+  addicon: () => import('./addicon.svg?react'),
+  administration: () => import('./administration.svg?react'),
+  adminChevronDown: () => import('./admin-chevron-down.svg?react'),
+  adminChevronUp: () => import('./admin-chevron-up.svg?react'),
+  adminPermission: () => import('./admin-permission.svg?react'),
+  adminSubmenuActive: () => import('./admin-submenu-active.svg?react'),
+  adminTemplate: () => import('./admin-template.svg?react'),
+  allAccount: () => import('./all-account.svg?react'),
+  arrowDown: () => import('./arrow-down.svg?react'),
+  arrowIcon: () => import('./arrow-icon.svg?react'),
+  arrowUp: () => import('./arrow-up.svg?react'),
+  arrowBackIcon: () => import('./arrowBackIcon.svg?react'),
+  attachment: () => import('./attachment.svg?react'),
+  attachmentsSideIcon: () => import('./attachments-icon.svg?react'),
+  burgerMenuIcon: () => import('./burgerMenuIcon.svg?react'),
+  calendar: () => import('./calendar.svg?react'),
+  case: () => import('./case.svg?react'),
+  casesIcon: () => import('./cases-icon.svg?react'),
+  checklistIcon: () => import('./checklist-icon.svg?react'),
+  checklistTemplate: () => import('./checklist-template.svg?react'),
+  checkboxChecked: () => import('./checkboxChecked.svg?react'),
+  checkboxUnChecked: () => import('./checkboxUnChecked.svg?react'),
+  checkedIcon: () => import('./checked-icon.svg?react'),
+  chevronDoubleLeft: () => import('./chevron-double-left.svg?react'),
+  chevronDown: () => import('./chevron-down.svg?react'),
+  chevronLeft: () => import('./chevron-left.svg?react'),
+  childAccount: () => import('./child-account.svg?react'),
+  closeCircle: () => import('./close-circle.svg?react'),
+  close: () => import('./close.svg?react'),
+  comingSoon: () => import('./coming-soon.svg?react'),
+  configureSetting: () => import('./configure-setting.svg?react'),
+  copyIcon: () => import('./copy-icon.svg?react'),
+  createResource: () => import('./create-resource.svg?react'),
+  dashboard: () => import('./dashboard.svg?react'),
+  deleteIcon: () => import('./delete-icon.svg?react'),
+  detailsKeyContactErrorIcon: () =>
+    import('./details-key-contact-error-icon.svg?react'),
+  detailsIcon: () => import('./details-icon.svg?react'),
+  download: () => import('./download.svg?react'),
+  edit: () => import('./edit.svg?react'),
+  emailTemplate: () => import('./email-template.svg?react'),
+  errorInfoIcon: () => import('./error-info-icon.svg?react'),
+  eyeIcon: () => import('./eye-icon.svg?react'),
+  filter: () => import('./filter.svg?react'),
+  filterArrowRightIcon: () => import('./filterArrowRightIcon.svg?react'),
+  financialIcon: () => import('./financial-icon.svg?react'),
+  fiscalYearArrowIcon: () => import('./fiscal-year-arrow-icon.svg?react'),
+  globe: () => import('./globe.svg?react'),
+  help: () => import('./help.svg?react'),
+  importIcon: () => import('./import-icon.svg?react'),
+  importTemplate: () => import('./import-template.svg?react'),
+  importsIcon: () => import('./imports-icon.svg?react'),
+  interactionTemplate: () => import('./interaction-template.svg?react'),
+  interactionsIcon: () => import('./interactions-icon.svg?react'),
+  keyContactAddIcon: () => import('./key-contact-add-icon.svg?react'),
+  keyContactRemoveIcon: () => import('./key-contact-remove-icon.svg?react'),
+  leftArrow: () => import('./left-arrow.svg?react'),
+  logo: () => import('./logo.svg?react'),
+  logoSmall: () => import('./logo-small.svg?react'),
+  logout: () => import('./logout.svg?react'),
+  manageGeo: () => import('./manage-geo.svg?react'),
+  manageGroup: () => import('./manage-group.svg?react'),
+  manageProfile: () => import('./manage-profile.svg?react'),
+  manageSettings: () => import('./manage-settings.svg?react'),
+  manageUser: () => import('./manage-user.svg?react'),
+  manageUserAccess: () => import('./manage-user-access.svg?react'),
+  managerUser: () => import('./manager-user.svg?react'),
+  menuArrowRight: () => import('./menu-arrow-right.svg?react'),
+  menuArrowRightHover: () => import('./menu-arrow-right-hover.svg?react'),
+  menuIcon: () => import('./menu-icon.svg?react'),
+  moduleArrowRight: () => import('./module-arrow-right.svg?react'),
+  newFilterIcon: () => import('./filter-icon.svg?react'),
+  newProject: () => import('./new-project.svg?react'),
+  notes: () => import('./notes.svg?react'),
+  notesSideIcon: () => import('./notes-icon.svg?react'),
+  notification: () => import('./notification.svg?react'),
+  phone: () => import('./phone.svg?react'),
+  plus: () => import('./plus.svg?react'),
+  profile: () => import('./profile.svg?react'),
+  projectBook: () => import('./project-book.svg?react'),
+  projectDetails: () => import('./project-details.svg?react'),
+  projectsHeader: () => import('./projects-header.svg?react'),
+  projects: () => import('./projects.svg?react'),
+  projectsSideIcon: () => import('./projects-icon.svg?react'),
+  relatedListDetailsIcon: () => import('./related-list-details-icon.svg?react'),
+  refresh: () => import('./refresh.svg?react'),
+  resourceFilterIcon: () => import('./resourceFilterIcon.svg?react'),
+  resourceHeader: () => import('./resource-header.svg?react'),
+  resourceProfileIcon: () => import('./resourceProfileIcon.svg?react'),
+  resourcesIcon: () => import('./resources-icon.svg?react'),
+  search: () => import('./search.svg?react'),
+  searchBlack: () => import('./search-black.svg?react'),
+  settings: () => import('./settings.svg?react'),
+  sortIcon: () => import('./sort-icon.svg?react'),
+  survey: () => import('./survey.svg?react'),
+  surveyTemplate: () => import('./survey-template.svg?react'),
+  taskTemplate: () => import('./task-template.svg?react'),
+  techSummaryIcon: () => import('./tech-summary.svg?react'),
+  timesheet: () => import('./timesheet.svg?react'),
+  timeSheetIcon: () => import('./timesheet-icon.svg?react'),
+  user: () => import('./user.svg?react'),
+  Vector: () => import('./Vector.svg?react'),
+  verticalSeparatorIcon: () => import('./verticalSeparatorIcon.svg?react'),
+  tickIcon: () => import('./tick-Icon.svg?react'),
+  orgIcon: () => import('./org-icon.svg?react'),
 };
+
+function createLazySvgIcon(name: keyof typeof icons) {
+  const importer = icons[name];
+  return React.lazy(importer);
+}
+
+export const AccountDetailsIcon = createLazySvgIcon('accountDetails');
+export const AccountHomeIcon = createLazySvgIcon('accountHome');
+export const AccountSettingsIcon = createLazySvgIcon('accountSettings');
+export const AccountsIcon = createLazySvgIcon('accounts');
+export const ActionIcon = createLazySvgIcon('action');
+export const ActivitiesIcon = createLazySvgIcon('activitiesIcon');
+export const AddIcon = createLazySvgIcon('addicon');
+export const AdminChevronDownIcon = createLazySvgIcon('adminChevronDown');
+export const AdminChevronUpIcon = createLazySvgIcon('adminChevronUp');
+export const AdminPermissionIcon = createLazySvgIcon('adminPermission');
+export const AdminSubmenuActiveIcon = createLazySvgIcon('adminSubmenuActive');
+export const AdminTemplateIcon = createLazySvgIcon('adminTemplate');
+export const AdministrationIcon = createLazySvgIcon('administration');
+export const AllAccountIcon = createLazySvgIcon('allAccount');
+export const ArrowBackIcon = createLazySvgIcon('arrowBackIcon');
+export const ArrowDownIcon = createLazySvgIcon('arrowDown');
+export const ArrowIcon = createLazySvgIcon('arrowIcon');
+export const ArrowUpIcon = createLazySvgIcon('arrowUp');
+export const AttachmentIcon = createLazySvgIcon('attachment');
+export const AttachmentsSideIcon = createLazySvgIcon('attachmentsSideIcon');
+export const BackIcon = createLazySvgIcon('chevronDoubleLeft');
+export const BurgerMenuIcon = createLazySvgIcon('burgerMenuIcon');
+export const CalendarIcon = createLazySvgIcon('calendar');
+export const CaseIcon = createLazySvgIcon('case');
+export const CasesIcon = createLazySvgIcon('casesIcon');
+export const ChecklistIcon = createLazySvgIcon('checklistIcon');
+export const ChecklistTemplateIcon = createLazySvgIcon('checklistTemplate');
+export const CheckboxChecked = createLazySvgIcon('checkboxChecked');
+export const CheckboxUnchecked = createLazySvgIcon('checkboxUnChecked');
+export const CheckedIcon = createLazySvgIcon('checkedIcon');
+export const ChildAccountIcon = createLazySvgIcon('childAccount');
+export const ChevronDownIcon = createLazySvgIcon('chevronDown');
+export const ChevronLeftIcon = createLazySvgIcon('chevronLeft');
+export const CloseCircleIcon = createLazySvgIcon('closeCircle');
+export const CloseIcon = createLazySvgIcon('close');
+export const ComingSoon = createLazySvgIcon('comingSoon');
+export const ConfigureSettingIcon = createLazySvgIcon('configureSetting');
+export const CopyIcon = createLazySvgIcon('copyIcon');
+export const CreateResourceIcon = createLazySvgIcon('createResource');
+export const DashboardIcon = createLazySvgIcon('dashboard');
+export const DeleteIcon = createLazySvgIcon('deleteIcon');
+export const DetailsIcon = createLazySvgIcon('detailsIcon');
+export const DetailsKeyContactErrorIcon = createLazySvgIcon(
+  'detailsKeyContactErrorIcon'
+);
+export const DownloadIcon = createLazySvgIcon('download');
+export const EditIcon = createLazySvgIcon('edit');
+export const EmailTemplateIcon = createLazySvgIcon('emailTemplate');
+export const ErrorInfoIcon = createLazySvgIcon('errorInfoIcon');
+export const EyeIcon = createLazySvgIcon('eyeIcon');
+export const FilterArrowRightIcon = createLazySvgIcon('filterArrowRightIcon');
+export const FilterIcon = createLazySvgIcon('filter');
+export const FinancialIcon = createLazySvgIcon('financialIcon');
+export const FiscalYearArrowIcon = createLazySvgIcon('fiscalYearArrowIcon');
+export const GlobeIcon = createLazySvgIcon('globe');
+export const HelpIcon = createLazySvgIcon('help');
+export const ImportIcon = createLazySvgIcon('importIcon');
+export const ImportTemplateIcon = createLazySvgIcon('importTemplate');
+export const ImportsIcon = createLazySvgIcon('importsIcon');
+export const InteractionTemplateIcon = createLazySvgIcon('interactionTemplate');
+export const InteractionsIcon = createLazySvgIcon('interactionsIcon');
+export const KeyContactAddIcon = createLazySvgIcon('keyContactAddIcon');
+export const KeyContactRemoveIcon = createLazySvgIcon('keyContactRemoveIcon');
+export const LeftArrowIcon = createLazySvgIcon('leftArrow');
+export const Logo = createLazySvgIcon('logo');
+export const LogoSmall = createLazySvgIcon('logoSmall');
+export const LogoutIcon = createLazySvgIcon('logout');
+export const ManageGeoIcon = createLazySvgIcon('manageGeo');
+export const ManageGroupIcon = createLazySvgIcon('manageGroup');
+export const ManageProfileIcon = createLazySvgIcon('manageProfile');
+export const ManageSettingsIcon = createLazySvgIcon('manageSettings');
+export const ManageUserAccessIcon = createLazySvgIcon('manageUserAccess');
+export const ManageUserIcon = createLazySvgIcon('manageUser');
+export const ManagerUserIcon = createLazySvgIcon('managerUser');
+export const MenuArrowRight = createLazySvgIcon('menuArrowRight');
+export const MenuArrowRightHover = createLazySvgIcon('menuArrowRightHover');
+export const MenuIcon = createLazySvgIcon('menuIcon');
+export const ModuleArrowRight = createLazySvgIcon('moduleArrowRight');
+export const NewFilterIcon = createLazySvgIcon('newFilterIcon');
+export const NotesIcon = createLazySvgIcon('notes');
+export const NotesSideIcon = createLazySvgIcon('notesSideIcon');
+export const NotificationIcon = createLazySvgIcon('notification');
+export const PhoneIcon = createLazySvgIcon('phone');
+export const PlusIcon = createLazySvgIcon('plus');
+export const ProfileIcon = createLazySvgIcon('profile');
+export const ProjectCreateIcon = createLazySvgIcon('newProject');
+export const ProjectDetailsIcon = createLazySvgIcon('projectDetails');
+export const ProjectHeaderIcon = createLazySvgIcon('projectsHeader');
+export const ProjectsBook = createLazySvgIcon('projectBook');
+export const ProjectsIcon = createLazySvgIcon('projects');
+export const ProjectsSideIcon = createLazySvgIcon('projectsSideIcon');
+export const RealatedListDetailsIcon = createLazySvgIcon(
+  'relatedListDetailsIcon'
+);
+export const RefreshIcon = createLazySvgIcon('refresh');
+export const ResourceFilterIcon = createLazySvgIcon('resourceFilterIcon');
+export const ResourceHeaderIcon = createLazySvgIcon('resourceHeader');
+export const ResourceProfileIcon = createLazySvgIcon('resourceProfileIcon');
+export const ResourcesIcon = createLazySvgIcon('resourcesIcon');
+export const SearchBlackIcon = createLazySvgIcon('searchBlack');
+export const SearchIcon = createLazySvgIcon('search');
+export const SettingsIcon = createLazySvgIcon('settings');
+export const SortIcon = createLazySvgIcon('sortIcon');
+export const SurveyIcon = createLazySvgIcon('survey');
+export const SurveyTemplateIcon = createLazySvgIcon('surveyTemplate');
+export const TaskTemplateIcon = createLazySvgIcon('taskTemplate');
+export const TechSummaryIcon = createLazySvgIcon('techSummaryIcon');
+export const TimeSheetIcon = createLazySvgIcon('timeSheetIcon');
+export const TimeLineIcon = createLazySvgIcon('timesheet');
+export const TickIcon = createLazySvgIcon('tickIcon');
+export const UploadIcon = createLazySvgIcon('Vector');
+export const UserIcon = createLazySvgIcon('user');
+export const VerticalSeparatorIcon = createLazySvgIcon('verticalSeparatorIcon');
+export const OrgIcon = createLazySvgIcon('orgIcon');

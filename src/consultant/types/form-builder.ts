@@ -48,7 +48,7 @@ export interface FormTypeFields {
   defaultValue?: string;
   errorHandling?: ErrorHandling[];
   onClick?: (event?: React.MouseEvent<HTMLElement>) => void;
-  iconUrl?: string;
+  iconUrl?: string | React.ElementType;
   assignDefaultValue?: boolean;
   dependantLabel?: string;
 }
@@ -87,7 +87,8 @@ export interface FieldType {
   required: boolean;
   minDate?: Date;
   maxDate?: Date;
-  iconUrl?: string;
+  iconUrl?: React.ElementType | string;
+
   options?: SelectOption[];
   regex?: RegExp;
   regexErrorMessage?: string;

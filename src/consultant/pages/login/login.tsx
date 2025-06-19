@@ -1,6 +1,6 @@
 import { useMsal } from '@azure/msal-react';
 import Box from '@mui/material/Box';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LeftPane, RightPane } from '.';
 import { fetchCurrentUserRole } from '../../../common-service/common-service';
@@ -17,13 +17,14 @@ import { checkPermission, reShapePermissionData } from '../../../common-utils';
 import { AllModules } from '../../../common-service';
 import { NOT_FOUND } from '../../../routes';
 import { accountNavItems } from '../../../components/sidebar/accounts-menu';
+import { InteractionStatus } from '@azure/msal-browser';
 
 /**
  * Login component handles the user authentication process.
  * It uses MSAL for authentication and navigates to the home page upon successful login.
  */
 export const Login: React.FC = () => {
-  const { instance } = useMsal();
+  const { instance, inProgress } = useMsal();
   const allAccount = instance.getAllAccounts();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const navigate = useNavigate();
@@ -31,17 +32,10 @@ export const Login: React.FC = () => {
   const { login } = useAuthHook();
   const { errorToast } = useToast();
   const t = useAppTranslation();
-  const fragment = useRef<string>(window.location.hash.slice(1));
-
-  useEffect(() => {
-    if (fragment.current) {
-      // add loader when return back from azure
-      setIsLoading(true);
-    }
-  }, [fragment]);
 
   useEffect(() => {
     if (allAccount.length > 0) {
+      setIsLoading(true);
       const getResponse = async () => {
         const { localAccountId, idToken, username, name, idTokenClaims } =
           allAccount[0];
@@ -78,6 +72,7 @@ export const Login: React.FC = () => {
             !menu.noRedirect &&
             reShapeData.menus.find((item) => item.name === menu.id)?.is_enabled
         );
+        localStorage.removeItem('loginInitiated');
         navigate(currentActiveRoute?.link || NOT_FOUND);
       };
       getResponse();
@@ -88,6 +83,7 @@ export const Login: React.FC = () => {
   const handleLogin = () => {
     setIsLoading(true);
     instance.loginRedirect().catch((e) => {
+      localStorage.removeItem('loginInitiated');
       setIsLoading(false);
       const err = e as Error;
       if (err?.message !== 'user_cancelled: User cancelled the flow.') {
@@ -100,9 +96,16 @@ export const Login: React.FC = () => {
   return (
     <Box className='min-h-screen flex'>
       <Box className='flex-1 grid md:grid-cols-2'>
-        <LeftPane handleLogin={handleLogin} isLoading={isLoading} />
+        <LeftPane
+          handleLogin={handleLogin}
+          isLoading={
+            inProgress === InteractionStatus.HandleRedirect || isLoading
+          }
+        />
         <RightPane />
       </Box>
     </Box>
   );
 };
+
+export default Login;

@@ -38,14 +38,15 @@ export const AppLayout: React.FC = () => {
     };
   }, []);
 
-  const switchSideBarMenus = () => {
+  const switchSideBarMenus = React.useCallback(() => {
     setShowAdminSidebar((prev) => !prev);
     localStorage.setItem('showAdminSidebar', JSON.stringify(!showAdminSidebar));
     const intendedRoute = showAdminSidebar
       ? checkConsultantRoute()?.link
       : ADMIN_MANAGE_USER;
     navigate(intendedRoute || MAIN_ROUTE);
-  };
+   // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showAdminSidebar]);
 
   const checkConsultantRoute = () => {
     return accountNavItems.find(
@@ -55,11 +56,11 @@ export const AppLayout: React.FC = () => {
     );
   };
 
-  const handleSidebarToggle = () => {
+  const handleSidebarToggle = React.useCallback(() => {
     const newState = !sidebarExpand;
     setSidebarExpand(newState);
     localStorage.setItem('sidebarExpand', JSON.stringify(newState));
-  };
+  }, [sidebarExpand]);
 
   return (
     <div className='flex h-screen overflow-x-hidden'>

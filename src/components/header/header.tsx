@@ -1,11 +1,10 @@
 import React from 'react';
 import {
-  accountHomeIcon,
-  accountSettingsIcon,
-  actionIcon,
-  downloadIcon,
-  filterIcon,
-  refreshIcon,
+  AccountSettingsIcon,
+  ActionIcon,
+  DownloadIcon,
+  FilterIcon,
+  RefreshIcon,
 } from '../../assets';
 import { ActionsDropdown } from '../actions-dropdown';
 import TextButton from '../button/text-button';
@@ -20,8 +19,7 @@ interface HeaderProps {
   subtitle?: string;
   placeholder?: string;
   totalRecords?: number;
-  icon?: string;
-  iconBackgroundColor?: string;
+  icon?:  React.ReactNode;
   actionItems?: ActionsDropdownItem[];
   primaryButton?: {
     label: string;
@@ -39,7 +37,6 @@ interface HeaderProps {
     button?: React.CSSProperties;
     header?: React.CSSProperties;
   };
-  iconClasses?: string;
   onFilterClick?: () => void;
   onRefreshClick?: () => void;
   onDownloadClick?: () => void;
@@ -53,9 +50,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
   subtitle,
   placeholder,
   totalRecords,
-  icon = accountHomeIcon,
-  iconClasses = 'h-[32px] w-[32px]  p-2.5 rounded',
-  iconBackgroundColor,
+  icon,
   actionItems = [],
   primaryButton,
   showFilter = false,
@@ -79,12 +74,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
       <div className='flex justify-between w-full'>
         <div className='flex w-[80%] max-w-[80%]'>
           <div className='flex items-center gap-3 w-full'>
-            <img
-              src={icon}
-              alt='menu-icon'
-              className={iconClasses}
-              style={{ backgroundColor: iconBackgroundColor }}
-            />
+            {icon}
             <div className='flex flex-col w-[90%]'>
               {variant === 'sub' && placeholder ? (
                 <div className='font-semibold text-[#7D98B6] text-[12px]'>
@@ -113,7 +103,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
                 className='border border-gray-300 p-2'
                 onClick={onFilterClick}
               >
-                <img src={filterIcon} alt='menu-icon' className='h-[15px]' />
+                <FilterIcon alt='menu-icon' className='h-[15px]' />
               </button>
             )}
           </div>
@@ -146,7 +136,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
                   className='flex border border-[#CBD6E2] w-[24px] h-[24px] bg-[linear-gradient(180deg,_#FFFFFF_0%,_#E4E6E7_100%)] justify-center items-center'
                   onClick={onRefreshClick}
                 >
-                  <img src={refreshIcon} alt='refresh-icon' className='h-4' />
+                  <RefreshIcon alt='refresh-icon' className='h-4' />
                 </button>
               )}
               {showDownload && showRefresh && (
@@ -157,7 +147,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
                   className='flex items-center justify-center w-1/2'
                   onClick={onDownloadClick}
                 >
-                  <img src={downloadIcon} alt='download-icon' className='h-4' />
+                  <DownloadIcon alt='download-icon' className='h-4' />
                 </button>
               )}
             </div>
@@ -171,7 +161,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
                 background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
               }}
             >
-              <img src={actionIcon} alt='menu-icon' className='h-4' />
+              <ActionIcon alt='menu-icon' className='h-4' />
             </button>
           )}
 
@@ -183,7 +173,7 @@ export const PageHeader: React.FC<HeaderProps> = ({
                 background: 'linear-gradient(180deg, #FFFFFF 0%, #E4E6E7 100%)',
               }}
             >
-              <img src={accountSettingsIcon} alt='menu-icon' className='h-4' />
+              <AccountSettingsIcon alt='menu-icon' className='h-4' />
             </button>
           )}
         </div>

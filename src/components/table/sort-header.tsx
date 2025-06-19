@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { TableCell, IconButton, Menu, MenuItem, SxProps } from '@mui/material';
-import { arrowIcon, sortIcon } from '../../assets';
+import { ArrowIcon, SortIcon } from '../../assets';
 import { Theme } from '@emotion/react';
 
 interface TableSortHeaderProps {
@@ -39,7 +39,7 @@ const TableSortHeader: React.FC<TableSortHeaderProps> = ({
   return (
     <TableCell
       {...rest}
-      className={`group cursor-pointer ${open ? 'bg-[#F5F9FF]' : ''} hover:bg-[#F5F9FF]`}
+      className={`group ${open ? 'bg-[#F5F9FF]' : ''} hover:bg-[#F5F9FF]`}
     >
       <div className='flex items-center justify-between'>
         {label}
@@ -61,13 +61,19 @@ const TableSortHeader: React.FC<TableSortHeaderProps> = ({
             open || orderBy === columnId
               ? 'opacity-100'
               : 'opacity-0 group-hover:opacity-100'
-          } transition-opacity duration-150`}
+          } cursor-pointer transition-opacity duration-150`}
         >
-          <img
-            src={orderBy === columnId ? sortIcon : arrowIcon}
-            alt={orderBy === columnId ? 'sort-icon' : 'arrowIcon'}
-            className={`w-[10px] h-[10px] mr-[1px] ${orderBy === columnId ? `w-[13px] h-[13px] ${order === 'desc' ? 'scale-y-[-1]' : ''}` : 'w-[10px] h-[10px]'}`}
-          />
+          {orderBy === columnId ? (
+            <SortIcon
+              alt='sort-icon'
+              className={`mr-[1px] w-[13px] h-[13px] ${order === 'desc' ? 'scale-y-[-1]' : ''}`}
+            />
+          ) : (
+            <ArrowIcon
+              alt='arrow-icon'
+              className={`mr-[1px] w-[10px] h-[10px] ${order === 'desc' ? 'scale-y-[-1]' : ''}`}
+            />
+          )}
         </IconButton>
       </div>
 
@@ -107,11 +113,7 @@ const TableSortHeader: React.FC<TableSortHeaderProps> = ({
             borderBottom: '1px solid #CBD6E2',
           }}
         >
-          <img
-            src={sortIcon}
-            alt={'Asc-sortIcon'}
-            className='w-[16px] h-[16px] mr-[6px]'
-          />
+          <SortIcon alt='Asc-sortIcon' className='w-[16px] h-[16px] mr-[6px]' />
           Sort Ascending
         </MenuItem>
         <MenuItem
@@ -124,9 +126,8 @@ const TableSortHeader: React.FC<TableSortHeaderProps> = ({
             color: '#2D3E4F',
           }}
         >
-          <img
-            src={sortIcon}
-            alt={'Desc-sortIcon'}
+          <SortIcon
+            alt='Desc-sortIcon'
             className='w-[16px] h-[16px] mr-[6px] scale-y-[-1]'
           />
           Sort Descending

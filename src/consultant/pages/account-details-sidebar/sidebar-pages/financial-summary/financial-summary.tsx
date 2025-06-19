@@ -7,7 +7,7 @@
 // import SummaryTab from './tab/summary';
 // import { a11yProps } from './utils';
 
-import { comingSoon } from '../../../../../assets';
+import { ComingSoon } from '../../../../../assets';
 
 // const FinancialSummary = () => {
 //   // State for current tab
@@ -88,7 +88,7 @@ import { comingSoon } from '../../../../../assets';
 const FinancialSummary = () => {
   return (
     <div className='flex items-center justify-center h-full'>
-      <img src={comingSoon} alt='comingSoon' />
+      <ComingSoon alt='comingSoon' />
     </div>
   );
 };

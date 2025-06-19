@@ -24,13 +24,13 @@ import React, { ChangeEvent, useEffect } from 'react';
 import PhoneInput, { CountryData } from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import {
-  calendarIcon,
-  closeIcon,
-  keyContactRemoveIcon,
-  keyContactAddIcon,
-  searchBlackIcon,
-  verticalSeparatorIcon,
-  errorInfoIcon,
+  CalendarIcon,
+  CloseIcon,
+  KeyContactRemoveIcon,
+  KeyContactAddIcon,
+  SearchBlackIcon,
+  VerticalSeparatorIcon,
+  ErrorInfoIcon,
 } from '../../assets';
 
 import { useLocation } from 'react-router-dom';
@@ -882,8 +882,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 {logo ? logo.name : 'No file selected'}
               </span>
               {logo && (
-                <img
-                  src={closeIcon}
+                <CloseIcon
                   alt='close-icon'
                   className='w-2.5 h-2.5 ml-2 cursor-pointer hover:brightness-90'
                   onClick={() => {
@@ -1057,8 +1056,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       case 'autocomplete':
         return (
           <div className='relative'>
-            <img
-              src={searchBlackIcon}
+            <SearchBlackIcon
               alt='search'
               className='absolute top-1/2 right-3 -translate-y-1/2 z-10'
             />
@@ -1242,10 +1240,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               }
               slots={{
                 openPickerIcon: () => (
-                  <img src={calendarIcon} alt='calendar' className='w-4 h-4' />
+                  <CalendarIcon alt='calendar' className='w-4 h-4' />
                 ),
                 clearIcon: () => (
-                  <img src={closeIcon} alt='calendar' className='w-2.5 h-2.5' />
+                  <CloseIcon alt='calendar' className='w-2.5 h-2.5' />
                 ),
               }}
               slotProps={{
@@ -1342,7 +1340,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               }}
               slots={{
                 clearIcon: () => (
-                  <img src={closeIcon} alt='calendar' className='w-2.5 h-2.5' />
+                  <CloseIcon alt='calendar' className='w-2.5 h-2.5' />
                 ),
               }}
               slotProps={{
@@ -1428,7 +1426,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             }}
           >
             <span>
-              <img src={keyContactAddIcon} alt='add-btn' className='w-5 h-5' />
+              <KeyContactAddIcon alt='add-btn' className='w-5 h-5' />
             </span>
             {field.name}
           </button>
@@ -2230,11 +2228,17 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                                 }}
                                 aria-label='Remove contact'
                               >
-                                <img
-                                  src={field.iconUrl || keyContactRemoveIcon}
-                                  alt='Remove'
-                                  style={{ width: 20, height: 20 }}
-                                />
+                                {field.iconUrl ? (
+                                  <field.iconUrl
+                                    alt='Icon'
+                                    style={{ width: 20, height: 20 }}
+                                  />
+                                ) : (
+                                  <KeyContactRemoveIcon
+                                    alt='Remove'
+                                    style={{ width: 20, height: 20 }}
+                                  />
+                                )}
                               </button>
                             </Tooltip>
                           ) : field.type === 'text' ? (
@@ -2257,8 +2261,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                                   }}
                                 >
                                   <span className='h-[28px] w-5 flex items-center justify-center absolute top-[3px] bg-[#FEF2F2] right-[2px] cursor-pointer'>
-                                    <img
-                                      src={errorInfoIcon}
+                                    <ErrorInfoIcon
                                       alt='error'
                                       className='w-5 h-3.5'
                                     />
@@ -2338,7 +2341,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       <span className='pl-[10px] text-[13px] text-[#425A76]'>
                         https://
                       </span>
-                      <img src={verticalSeparatorIcon} alt-='separtor' />
+                      <VerticalSeparatorIcon alt-='separtor' />
                       {getFields(field)}
                     </div>
                   </div>

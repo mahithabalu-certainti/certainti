@@ -8,7 +8,7 @@ import {
   Typography,
 } from '@mui/material';
 import React, { MouseEvent, useState } from 'react';
-import { arrowDownIcon } from '../../assets';
+import { ArrowDownIcon } from '../../assets';
 interface DropdownOption {
   value: string;
   label: string;
@@ -107,7 +107,7 @@ const Dropdown: React.FC<DropdownProps> = ({
     <Box>
       <Button
         variant='outlined'
-        endIcon={<img src={arrowDownIcon} alt='arrow-down' />}
+        endIcon={<ArrowDownIcon alt='arrow-down' />}
         onClick={handleOpen}
         sx={defaultButtonSx}
       >

@@ -7,7 +7,7 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { createresourceIcon, editIcon } from '../../../assets';
+import { CreateResourceIcon, EditIcon } from '../../../assets';
 import { Layout, OnChange, useGetAllCountries } from '../../../common-service';
 import { FormBuilder } from '../../../components';
 import TextButton from '../../../components/button/text-button';
@@ -592,7 +592,6 @@ const ResourceForm: React.FC = () => {
     city.isLoading,
     currency.isLoading,
     skillSubTypeLoading,
-    isEditView,
     state?.cost || state?.skill,
     disableOrgname,
     currentSkillType.skill_type,
@@ -612,11 +611,14 @@ const ResourceForm: React.FC = () => {
     <div className='resource-form-container'>
       <div className='h-[50px] border-box flex justify-between items-center border-b-2 border-gray-200 px-10 sticky top-0 z-10 bg-white'>
         <div className='flex items-center'>
-          <img
-            src={isEditView ? editIcon : createresourceIcon}
-            alt='menu-icon'
-            className={`${isEditView ? 'bg-[#7D98B6] p-1.5' : ''} h-6 w-6 rounded`}
-          />
+          {isEditView ? (
+            <EditIcon
+              alt='menu-icon'
+              className='bg-[#7D98B6] p-1.5 h-6 w-6 rounded'
+            />
+          ) : (
+            <CreateResourceIcon alt='menu-icon' className='h-6 w-6 rounded' />
+          )}
           <div>
             {/* {isEditView && !state?.skill && !state?.cost && (
               <h5 className='mb-1 ml-2 text-xs text-gray-500'>Edit Resource</h5>

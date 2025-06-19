@@ -6,7 +6,7 @@ export type MenuItem = {
   id: AllModules;
   hide?: boolean;
   disabled?: boolean;
-  icon?: React.ReactNode;
+  icon?: React.ElementType;
 };
 
 export type SidebarProps = {

@@ -8,7 +8,7 @@ import { ManageProfile, ManageProfileList } from '../../../types';
 import { useManageProfileList } from '../../../service';
 import { MANAGE_PROFILE } from '../../../../routes/routes';
 import { ActionItem } from '../../../../components/table/types';
-import { deleteIcon, editIcon } from '../../../../assets';
+import { DeleteIcon, EditIcon } from '../../../../assets';
 
 interface IUserTableProps {
   appliedFilters: Record<string, any>;
@@ -111,7 +111,7 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
     {
       label: 'Edit',
       onClick: (row: ManageProfileList) => handleEdit(row),
-      icon: editIcon,
+      icon: EditIcon,
       iconStyle: {
         filter:
           'brightness(0) saturate(100%) invert(25%) sepia(16%) saturate(592%) hue-rotate(164deg) brightness(93%) contrast(91%)',
@@ -121,7 +121,7 @@ export const ProfileTable: React.FC<IUserTableProps> = ({
     {
       label: 'Delete',
       onClick: (row: ManageProfileList) => handleDelete(row),
-      icon: deleteIcon,
+      icon: DeleteIcon,
       hide: !isProfileDeleteEnable,
     },
   ];

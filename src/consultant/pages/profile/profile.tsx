@@ -2,8 +2,8 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import { useManageUserDetail } from '../../../admin/service/manage-user-detail/manage-user-detail-service';
 import {
-  accountHomeIcon,
-  realatedListDetailsIcon,
+  AccountHomeIcon,
+  RealatedListDetailsIcon,
 } from '../../../assets/icons';
 import TextButton from '../../../components/button/text-button';
 import { RootState } from '../../../store/store';
@@ -37,8 +37,7 @@ export const Profile: React.FC = () => {
     <div className='flex flex-col h-[calc(100vh-64px)] w-full overflow-y-auto p-4 gap-3'>
       <div className='w-full h-[55px] min-h-[50px] px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
         <div className='flex items-center justify-center'>
-          <img
-            src={accountHomeIcon}
+          <AccountHomeIcon
             alt='manage user'
             className='h-7 w-7 bg-[#7D98B6] p-1.5 rounded'
           />
@@ -69,11 +68,7 @@ export const Profile: React.FC = () => {
         <div className='flex items-center justify-between gap-4 h-[38px] py-1 px-2'>
           <div className='flex items-center gap-2'>
             <div>
-              <img
-                src={realatedListDetailsIcon}
-                alt='details'
-                className='w-6 h-6'
-              />
+              <RealatedListDetailsIcon alt='details' className='w-6 h-6' />
             </div>
             <div className='text-[13px] text-[#2D3E4F] font-semibold'>
               Details
@@ -90,3 +85,5 @@ export const Profile: React.FC = () => {
     </div>
   );
 };
+
+export default Profile;

@@ -271,11 +271,11 @@ const ListTable = <T extends RowData>({
             {/* Data rows */}
             {!loading &&
               !error &&
-              paginatedData?.map((row) => {
+              paginatedData?.map((row, i) => {
                 const rowId = getRowId(row);
                 return (
                   <TableRow
-                    key={rowId}
+                    key={i}
                     hover
                     selected={selectedRows.has(rowId)}
                     className={`${hoverHighlight ? 'group' : ''}`}
@@ -408,12 +408,13 @@ const ListTable = <T extends RowData>({
                                       size='small'
                                       onClick={() => item.onClick(row)}
                                     >
-                                      <img
-                                        src={item.icon?.toString()}
-                                        alt='actionIcon'
-                                        className='w-4 h-4'
-                                        style={item.iconStyle}
-                                      />
+                                      {item.icon && (
+                                        <item.icon
+                                          alt='actionIcon'
+                                          className='w-4 h-4'
+                                          style={item.iconStyle}
+                                        />
+                                      )}
                                     </IconButton>
                                   </Tooltip>
                                 );

@@ -4,7 +4,7 @@ import { RootState } from '../../../store/store';
 import { checkPermission } from '../../../common-utils';
 import { MenuOption } from '../../../common-service';
 import { AccessRestricted } from '../../../components/account-restricted';
-import { comingSoon } from '../../../assets';
+import { ComingSoon } from '../../../assets';
 
 export const HomePage: React.FC = () => {
   // Permission Mangement
@@ -14,7 +14,9 @@ export const HomePage: React.FC = () => {
   if (!isDashboardEnable) return <AccessRestricted />;
   return (
     <div className='flex items-center justify-center h-full'>
-      <img src={comingSoon} alt='comingSoon' />
+      <ComingSoon alt='comingSoon' />
     </div>
   );
 };
+
+export default HomePage;

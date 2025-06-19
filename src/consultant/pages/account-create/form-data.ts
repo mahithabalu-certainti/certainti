@@ -14,7 +14,7 @@ import {
   STATUS_OPTIONS,
   YES_NO_OPTIONS,
 } from '../../../common-utils';
-import { closeIcon } from '../../../assets';
+import { CloseIcon } from '../../../assets';
 
 export const newKeyContactFields = (roles: SelectOption[]) => [
   createTextField('key_contact_name', 'Key Contact Name', {
@@ -97,8 +97,8 @@ export const newKeyContactFields = (roles: SelectOption[]) => [
     width: '140px',
     options: STATUS_OPTIONS,
   }),
-  createImgButton('button', closeIcon, {
-    width: '35px',
+  createImgButton('button', CloseIcon, {
+    width: '30px',
   }),
 ];
 

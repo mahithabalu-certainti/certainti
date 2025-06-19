@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ManageUserIcon, realatedListDetailsIcon } from '../../../assets/icons';
+import { ManageUserIcon, RealatedListDetailsIcon } from '../../../assets/icons';
 import ActionsDropdown from '../../../components/actions-dropdown/actions-dropdown';
 import TextButton from '../../../components/button/text-button';
 import { useManageUserDetail } from '../../service/manage-user-detail/manage-user-detail-service';
@@ -117,8 +117,7 @@ export const ManageUserDetails: React.FC = () => {
     <div className='flex flex-col h-[calc(100vh-64px)] w-full overflow-y-auto p-4 gap-3'>
       <div className='w-full h-[55px] min-h-[50px] px-4 flex items-center justify-between border border-[#CBD6E2] rounded-[4px]'>
         <div className='flex items-center justify-center'>
-          <img
-            src={ManageUserIcon}
+          <ManageUserIcon
             alt='manage user'
             className='h-7 w-7 rounded'
           />
@@ -162,8 +161,7 @@ export const ManageUserDetails: React.FC = () => {
         <Box className='flex items-center justify-between gap-4 h-[38px] py-1 px-2'>
           <Box className='flex items-center gap-2'>
             <Box>
-              <img
-                src={realatedListDetailsIcon}
+              <RealatedListDetailsIcon
                 alt='details'
                 className='w-6 h-6'
               />
@@ -205,3 +203,5 @@ export const ManageUserDetails: React.FC = () => {
     </div>
   );
 };
+
+export default ManageUserDetails;
