@@ -1041,7 +1041,7 @@ async acceptResourceCostStatus(id: string, accountNumber: string, action: string
     let { accountNumber: accountNumberFetched } =
       await this.schemaService.fetchAccountByNumber(accountNumber);
 
-    const schemaName = `platform_v2_${accountNumberFetched}`;
+    const schemaName = `trd365_${accountNumberFetched.replace(/\D/g, '')}`;
     const validateSchema = await resourceCostSchemaService.validateSchema(
       schemaName,
       "resource_cost"
