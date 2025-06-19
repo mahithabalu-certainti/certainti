@@ -919,7 +919,7 @@ const updateResourceCostSchema = Joi.object({
   .optional()
   .allow(null)
   .allow(""),
-  status: Joi.string().max(255).default("active").optional(),
+  status: Joi.string().max(255).default("Active").optional(),
   fiscal_year: Joi.number()
    .integer()
    .min(1000)
@@ -949,8 +949,8 @@ export const updateResourceDuplicateStatus = Joi.object({
       "any.required": "Action is required"
     }),
   accountNumber: Joi.string().max(255).required(),
-  type: Joi.string().valid("anomaly", "duplicate").required().messages({
-      "any.only": 'Type must be either "anomaly" or "duplicate"',
+  type: Joi.string().valid("Anomaly", "Duplicate").required().messages({
+      "any.only": 'Type must be either "Anomaly" or "Duplicate"',
       "any.required": "Type is required"
     }),
 });
@@ -1104,7 +1104,7 @@ const resourceCostSchema = Joi.object({
        "any.required": "Fiscal year is required",
     }),
   currency_rid: Joi.string().pattern(uuidRegex).optional().allow(null),
-  status: Joi.string().max(255).default("active"),
+  status: Joi.string().max(255).default("Active"),
   comments: Joi.string().optional().allow(null).allow(""),
   created_datetime: Joi.date()
     .iso()

@@ -507,13 +507,6 @@ class ResourceCostSchemaService {
         });
       }
 
-      resourceCost.forEach((rc: any) => {
-        rc.status = rc.status.toLowerCase() === "active" ? "Active" 
-        : rc.status.toLowerCase() === "anomaly" ? "Anomaly" 
-        : rc.status.toLowerCase() === "duplicate" ? "Duplicate" 
-        : "Inactive";
-      });
-
       return {
         statusCode: HttpStatus.SUCCESS,
         message: HttpStatus.SUCCESS_MESSAGE,
@@ -714,10 +707,7 @@ class ResourceCostSchemaService {
           "Designation": resource.resource_designation || "-",
           "Role": resource.resource_role || "-",
           "Comments": resource.comments || "-",
-          "Status": resource.status.toLowerCase() === "active" ? "Active" 
-          : resource.status.toLowerCase() === "anomaly" ? "Anomaly" 
-          : resource.status.toLowerCase() === "duplicate" ? "Duplicate" 
-          : "Inactive",
+          "Status": resource.status || "-",
           "Cost ID": resource.r_number || "-",
           // "Annual Compensation": formatNumberForExport(resource.annual_cost , resource.currency_symbol) || "-",
           // "Monthly Compensation": formatNumberForExport(resource.monthly_cost, resource.currency_symbol) || "-",
