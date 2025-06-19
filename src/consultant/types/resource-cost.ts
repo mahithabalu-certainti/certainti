@@ -63,6 +63,11 @@ export interface ResourceCostApiResponse extends CommonApiResponse {
     count: number;
   };
 }
+export interface ResourceCostStatusApiResponse extends CommonApiResponse {
+  data: {
+    updateStatus: number[];
+  };
+}
 
 export type ResourceCostSkillFormData = {
   accountNumber?: string;
@@ -137,4 +142,11 @@ export type ResourceCostPayload = {
   accountNumber?: string;
   status?: string;
   comments?: string;
+};
+
+export type ResourceStatusPayload = {
+  rid: string;
+  accountNumber: string;
+  action: string;
+  type: string;
 };

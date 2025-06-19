@@ -34,6 +34,7 @@ const ListTable = <T extends RowData>({
   actionWidth = 100,
   actionDisplayMode = 'dropdown',
   actionMenuItems = [],
+  conditionMenuItems,
   // State
   loading = false,
   error,
@@ -193,6 +194,18 @@ const ListTable = <T extends RowData>({
                   </TableCell>
                 )
               )}
+              {typeof conditionMenuItems === 'function' && (
+                <TableCell
+                  sx={{
+                    padding: '0px 8px',
+                    width: 280,
+                    minWidth: 280,
+                    maxWidth: 280,
+                  }}
+                >
+                  Condition
+                </TableCell>
+              )}
 
               {actionMenuItems?.length > 0 && isAvailableAction && (
                 <TableCell
@@ -273,6 +286,7 @@ const ListTable = <T extends RowData>({
               !error &&
               paginatedData?.map((row, i) => {
                 const rowId = getRowId(row);
+                const conditionItems = conditionMenuItems?.(row);
                 return (
                   <TableRow
                     key={i}
@@ -326,7 +340,6 @@ const ListTable = <T extends RowData>({
                         </Box>
                       </TableCell>
                     )}
-
                     {/* Data cells */}
                     {columns.map((column) => {
                       const isStatus = column.id === 'status';
@@ -368,6 +381,59 @@ const ListTable = <T extends RowData>({
                         </TableCell>
                       );
                     })}
+
+                    {Array.isArray(conditionItems) && (
+                      <TableCell
+                        sx={{
+                          padding: '0px 8px',
+                          width: 280,
+                          minWidth: 280,
+                          maxWidth: 280,
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {conditionItems.length > 0 ? (
+                          <Box className='w-full inline-flex items-center  gap-2'>
+                            {conditionItems.map((item, index) => {
+                              if (item.hide) return null;
+                              return (
+                                <button
+                                  key={index}
+                                  onClick={() => item.onClick(row)}
+                                  disabled={item.disabled}
+                                  className={item.className}
+                                >
+                                  {item.icon && (
+                                    <item.icon
+                                      alt='actionIcon'
+                                      style={{
+                                        width: '14px',
+                                        height: '14px',
+                                        ...item.iconStyle,
+                                      }}
+                                    />
+                                  )}
+
+                                  {item.label}
+                                </button>
+                              );
+                            })}
+                          </Box>
+                        ) : (
+                          <Typography
+                            component='span'
+                            sx={{
+                              color: '#6b7280',
+                              display: 'inline-block',
+                              width: '100%',
+                              textAlign: 'center',
+                            }}
+                          >
+                            -
+                          </Typography>
+                        )}
+                      </TableCell>
+                    )}
 
                     {/* Action buttons */}
                     {actionMenuItems &&
