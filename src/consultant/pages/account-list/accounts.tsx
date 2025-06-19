@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   AccountHomeIcon,
@@ -190,7 +190,10 @@ export const Accounts: React.FC = () => {
       <div className='flex items-center justify-between w-full h-[55px] min-h-[50px] border-b border-[#CBD6E2] px-4'>
         <div className='flex h-[33px]'>
           <div className='flex items-center justify-center'>
-            <AccountHomeIcon alt='menu-icon' className='h-7 w-7 bg-[#d16dd3] p-[7px] rounded' />
+            <AccountHomeIcon
+              alt='menu-icon'
+              className='h-7 w-7 bg-[#d16dd3] p-[7px] rounded'
+            />
             <div className='flex flex-col mx-2.5 pb-1'>
               <div className='font-bold text-[16px] text-[#2D3E4F]'>
                 Accounts
@@ -252,16 +255,18 @@ export const Accounts: React.FC = () => {
               </div>
             ) : null}
           </button>
-          <FilterModal
-            isOpen={isFilterOpen}
-            filterAnchorEl={anchorEl}
-            filterId={filterId}
-            filterFields={accountFilterFields}
-            setAppliedFilters={setAppliedFilters}
-            setPage={setPage}
-            handleCloseFilter={handleCloseFilter}
-            handleSorting={handleSorting}
-          />
+          <Suspense fallback={null}>
+            <FilterModal
+              isOpen={isFilterOpen}
+              filterAnchorEl={anchorEl}
+              filterId={filterId}
+              filterFields={accountFilterFields}
+              setAppliedFilters={setAppliedFilters}
+              setPage={setPage}
+              handleCloseFilter={handleCloseFilter}
+              handleSorting={handleSorting}
+            />
+          </Suspense>
         </div>
       </div>
       <div className='flex-1'>

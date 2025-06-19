@@ -27,7 +27,7 @@ import {
   useUpdateProject,
 } from '../../services/project/project-create-service';
 import { useProjectDetail } from '../../services/project';
-import { STATUS_OPTIONS } from '../../../common-utils';
+import { getDateFormat, STATUS_OPTIONS } from '../../../common-utils';
 import { FormData, newKeyContactFields } from './form-data';
 import { formatDateToYYYYMMDDWithTime } from '../account-details-sidebar/sidebar-pages/resources/utils';
 import SkeletonForm from '../../../components/form-builder/skeleton-form';
@@ -68,6 +68,7 @@ const ProjectForm: React.FC = () => {
   const { accountID, projectID, settings } = location.state || {};
   const breadcrumbs = location.state.breadcrumbs || [];
   const firstLine = breadcrumbs.map((crumb: any) => crumb.label).join(' > ');
+  const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
 
   const getProjectData = useProjectDetail(accountID, projectID);
   const account = getProjectData.data?.data?.project;
@@ -80,8 +81,12 @@ const ProjectForm: React.FC = () => {
           ? 'Yes'
           : 'No',
         auto_access_rd: account?.auto_access_rd ? 'Yes' : 'No',
-        project_enddate: account?.project_enddate,
-        project_startdate: account?.project_startdate,
+        project_enddate: account?.project_enddate
+          ? getDateFormat(account.project_enddate)
+          : '',
+        project_startdate: account?.project_startdate
+          ? getDateFormat(account.project_startdate)
+          : '',
         created_on: formatDateToYYYYMMDDWithTime(account?.created_datetime),
         updated_on: formatDateToYYYYMMDDWithTime(account?.modified_datetime),
         ...transformKeyContactsFromAPI(account?.keyContact || []),
@@ -103,7 +108,6 @@ const ProjectForm: React.FC = () => {
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
 
-  const isEditView = location.pathname.split('/').slice(-2, -1)[0] === 'edit';
   const defaultActiveValue = STATUS_OPTIONS[0].value;
   const commonSuccess = createProject.isSuccess || updateProject.isSuccess;
   useEffect(() => {

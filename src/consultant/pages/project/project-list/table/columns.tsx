@@ -3,11 +3,15 @@ import {
   formatDateToYYYYMMDDWithTime,
   valueDisplay,
 } from '../../../../../common-utils';
-import { ProjectTableColumn, ProjectList } from '../../../../types/project';
+import { Project } from '../../../../../components/table/types';
+import {
+  ProjectTableColumn,
+  // ProjectList
+} from '../../../../types/project';
 
 export const getAllProjectListColumns = (
-  onClick: (row: ProjectList) => void
-): ProjectTableColumn<ProjectList>[] => [
+  onClick: (row: Project) => void
+): ProjectTableColumn<Project>[] => [
   {
     id: 'project_code',
     label: 'Project Code',
@@ -23,7 +27,7 @@ export const getAllProjectListColumns = (
       borderRight: '1px solid #CBD6E2 !important',
       borderBottom: '1px solid #CBD6E2 !important',
     },
-    render: (row: ProjectList) =>
+    render: (row: Project) =>
       onClick ? (
         <span
           onClick={() => onClick(row)}
@@ -96,7 +100,7 @@ export const getAllProjectListColumns = (
     sx: {
       textAlign: 'right',
     },
-    render: (row: ProjectList) =>
+    render: (row: Project) =>
       row.total_effort ? valueDisplay(row.total_effort) : '-',
   },
   {
@@ -108,49 +112,49 @@ export const getAllProjectListColumns = (
     sx: {
       textAlign: 'right',
     },
-    render: (row: ProjectList) =>
+    render: (row: Project) =>
       row.total_cost ? costDisplay(row.total_cost, row.currency_symbol) : '-',
   },
   {
-    id: 'total_fte_cost',
+    id: 'total_cost_fte',
     label: 'FTE Cost',
     sortable: true,
-    sortId: 'total_fte_cost',
+    sortId: 'total_cost_fte',
     width: 140,
     sx: {
       textAlign: 'right',
     },
-    render: (row: ProjectList) =>
-      row.total_fte_cost
-        ? costDisplay(row.total_fte_cost, row.currency_symbol)
+    render: (row: Project) =>
+      row.total_cost_fte
+        ? costDisplay(row.total_cost_fte, row.currency_symbol)
         : '-',
   },
   {
-    id: 'total_sub_con_cost',
+    id: 'total_cost_subcon',
     label: 'SubCon Cost',
     sortable: true,
-    sortId: 'total_sub_con_cost',
+    sortId: 'total_cost_subcon',
     width: 140,
     sx: {
       textAlign: 'right',
     },
-    render: (row: ProjectList) =>
-      row.total_sub_con_cost
-        ? costDisplay(row.total_sub_con_cost, row.currency_symbol)
+    render: (row: Project) =>
+      row.total_cost_subcon
+        ? costDisplay(row.total_cost_subcon, row.currency_symbol)
         : '-',
   },
   {
-    id: 'total_non_labor_cost',
+    id: 'total_cost_nonlabor',
     label: 'Non-Labor Cost',
     sortable: true,
-    sortId: 'total_non_labor_cost',
+    sortId: 'total_cost_nonlabor',
     width: 140,
     sx: {
       textAlign: 'right',
     },
-    render: (row: ProjectList) =>
-      row.total_non_labor_cost
-        ? costDisplay(row.total_non_labor_cost, row.currency_symbol)
+    render: (row: Project) =>
+      row.total_cost_nonlabor
+        ? costDisplay(row.total_cost_nonlabor, row.currency_symbol)
         : '-',
   },
   {
@@ -169,22 +173,20 @@ export const getAllProjectListColumns = (
     sx: {
       textAlign: 'right',
     },
-    render: (row: ProjectList) =>
+    render: (row: Project) =>
       row.qre ? costDisplay(row.qre, row.currency_symbol) : '-',
   },
   {
-    id: 'qualified_research_expenditure',
+    id: 'qre_final',
     label: 'QRE',
     sortable: true,
-    sortId: 'qualified_research_expenditure',
+    sortId: 'qre_final',
     width: 130,
     sx: {
       textAlign: 'right',
     },
-    render: (row: ProjectList) =>
-      row.qualified_research_expenditure
-        ? costDisplay(row.qualified_research_expenditure, row.currency_symbol)
-        : '-',
+    render: (row: Project) =>
+      row.qre_final ? costDisplay(row.qre_final, row.currency_symbol) : '-',
   },
   {
     id: 'project_point_of_contact',
@@ -213,7 +215,7 @@ export const getAllProjectListColumns = (
     sortable: true,
     sortId: 'modified_datetime',
     width: 190,
-    render: (row: ProjectList) =>
+    render: (row: Project) =>
       row.modified_datetime
         ? formatDateToYYYYMMDDWithTime(row.modified_datetime)
         : '-',
