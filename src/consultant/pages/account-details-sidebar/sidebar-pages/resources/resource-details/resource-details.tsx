@@ -200,7 +200,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
 
   const employmentDetails: DetailItem[] = [
     {
-      label: 'Start Date',
+      label: 'Effective From',
       value: formatDateToYYYYMMDD(resourceData?.resource_startdate),
     },
     {
