@@ -100,7 +100,7 @@ async accountList(
       where: baseWhereClause,
       order,
       include: this.buildBaseIncludes(),
-      attributes: ['rid', 'account_name', 'currency_rid'] // Only select needed fields initially
+      attributes: ['rid', 'account_name', 'currency_rid', 'total_project_hours', 'total_projects', 'total_project_cost','total_projects_rd_credits', 'qualifying_project_hours_fed', 'qualifying_project_qre_fed', 'qualifying_project_rd_credits_fed','r_number','storage_type'] // Only select needed fields initially
     };
 
     // Only apply pagination if key_contact filter is NOT present
@@ -130,7 +130,7 @@ async accountList(
         include: this.buildChildIncludes(),
         order: [["account_name", "ASC"]],
         attributes: ['rid', 'account_name', 'parent_account_rid', 'currency_rid', 'total_project_hours', 
-          'total_projects', 'total_project_cost'
+          'total_projects', 'total_project_cost','total_projects_rd_credits', 'qualifying_project_hours_fed', 'qualifying_project_qre_fed', 'qualifying_project_rd_credits_fed','r_number','storage_type','parent_account_rid'
         ] // Only select needed fields
       });
 
